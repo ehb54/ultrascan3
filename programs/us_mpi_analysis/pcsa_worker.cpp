@@ -213,7 +213,8 @@ DbgLv(1) << "w:" << my_rank << ": MC : global_fit";
                         for ( int rr = 0; rr < radius_points; rr++, index++ )
                         {
                            double vari   = US_Math2::box_muller( 0.0, sigmas[ index ] );
-                           double datout = sim_data->value( jsc, rr ) + vari;
+                           double datout =
+                              US_SolveSim::mc_data_value( sim_data->value( jsc, rr ), vari, mc_odata[index], edata->ODlimit );
                            varrmsd      += sq( vari );
 if(ss<4 && rr<4)
  DbgLv(1) << "w:" << my_rank << ": ee ss rr" << ee << ss << rr << "index vari"
@@ -235,7 +236,8 @@ if(ss<4 && rr<4)
                      for ( int rr = 0; rr < radius_points; rr++, index++ )
                      {
                         double vari   = US_Math2::box_muller( 0.0, sigmas[ index ] );
-                        double datout = sim_data->value( ss, rr ) + vari;
+                        double datout =
+                           US_SolveSim::mc_data_value( sim_data->value( ss, rr ), vari, mc_odata[index], edata->ODlimit );
                         varrmsd      += sq( vari );
 
                         edata->setValue( ss, rr, datout );
@@ -422,6 +424,7 @@ DbgLv(1) << "newD:" << my_rank << ": is_simdat" << is_simdat;
                if ( is_simdat )
                {  // If simulation,residuals for MC; save and get sigmas
                   sim_data          = &sim_data1;
+                  mc_odata.clear();
 
                   if ( is_global_fit )
                   {  // Global-fit simdata,sigmas
@@ -449,6 +452,7 @@ DbgLv(1) << "newD:" << my_rank << ": is_simdat" << is_simdat;
                            {
                               sim_data->setValue( ksc, rr, mc_data[ jda++ ] );
                               sigmas << qAbs( mc_data[ jre++ ] );
+                              mc_odata << data_sets[ee]->run_data.value( ss, rr );
                            }
                         }
 DbgLv(1) << "newD:" << my_rank << ":    ee jda jre" << ee << jda << jre;
@@ -472,6 +476,14 @@ DbgLv(1) << "newD:" << my_rank << ":   jre mcsize" << jre << mc_data.size()
                      for ( int ss = 0; ss < scan_count; ss++ )  // Get sigmas
                         for ( int rr = 0; rr < radius_points; rr++ )
                            sigmas << qAbs( mc_data[ index++ ] );
+
+                     for ( int ss = 0; ss < scan_count; ss++ ) // Save data
+                     {
+                        for ( int rr = 0; rr < radius_points; rr++ )
+                        {
+                           mc_odata << edata->value( ss, rr );
+                        }
+                     }
 DbgLv(1) << "newD:" << my_rank << ":   index mcsize" << index << mc_data.size();
                   }
 

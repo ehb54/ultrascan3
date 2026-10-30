@@ -14,9 +14,11 @@
 //!
 //! "data" writes <runID>.RI.<cell>.A.260.auc and the edit file
 //! <runID>.e1.RI.<cell>.A.260.xml.  "cgrid" writes a custom-grid model file.
-//! Options of "data":  scans=<n> (default 30) and nobottom (an edit file
+//! Options of "data":  scans=<n> (default 30), nobottom (an edit file
 //! without <bottom>, as older edit files lack the element; us_edit always
-//! writes it, with radius 0 when it has none).
+//! writes it, with radius 0 when it has none), odlimit=<OD> (default 1.5),
+//! tinoise=<sd> and rinoise=<sd> (Gaussian TI noise per radius and RI noise
+//! per scan, drawn after the random noise; default none).
 
 #include <QtCore>
 #include <cmath>
@@ -103,8 +105,8 @@ double stretched_bottom( void )
 }
 
 // Velocity edit: meniscus, stretched bottom (0: no <bottom>), data
-//  range 6.0-7.1 cm, plateau and baseline
-bool write_edit( const QString& path, const QString& runID, const US_DataIO::RawData& raw, int cell, double bottom )
+//  range 6.0-7.1 cm, plateau, baseline and OD limit
+bool write_edit( const QString& path, const QString& runID, const US_DataIO::RawData& raw, int cell, double bottom, double odlimit )
 {
    US_DataIO::EditValues ev;
    ev.expType    = "Velocity";
@@ -120,7 +122,7 @@ bool write_edit( const QString& path, const QString& runID, const US_DataIO::Raw
    ev.rangeRight = 7.1;
    ev.plateau    = 7.0;
    ev.baseline   = 7.12;
-   ev.ODlimit    = 1.5;
+   ev.ODlimit    = odlimit;
 
    if ( US_DataIO::writeEdits( path, ev ) != US_DataIO::OK )
    {
@@ -174,15 +176,25 @@ US_Model sample_model( double scale )
    return model;
 }
 
-int write_data( const QString& outdir, const QString& runID, int cell, uint64_t seed, double scale, int scans, bool nobottom )
+// Options of a written dataset
+struct DataOptions
+{
+      int    scans    = kScans;
+      bool   nobottom = false;
+      double odlimit  = 1.5;
+      double tinoise  = 0.0; // TI noise sd
+      double rinoise  = 0.0; // RI noise sd
+};
+
+int write_data( const QString& outdir, const QString& runID, int cell, uint64_t seed, double scale, const DataOptions& opts )
 {
    QString            triple   = QString( "RI.%1.A.260" ).arg( cell );
    QString            aucname  = runID + "." + triple + ".auc";
    QString            editname = runID + ".e1." + triple + ".xml";
 
-   US_DataIO::RawData raw = skeleton( runID, cell, seed, scans );
+   US_DataIO::RawData raw = skeleton( runID, cell, seed, opts.scans );
    if ( US_DataIO::writeRawData( outdir + "/" + aucname, raw ) != US_DataIO::OK ||
-        !write_edit( outdir + "/" + editname, runID, raw, cell, nobottom ? 0.0 : stretched_bottom() ) )
+        !write_edit( outdir + "/" + editname, runID, raw, cell, opts.nobottom ? 0.0 : stretched_bottom(), opts.odlimit ) )
    {
       fprintf( stderr, "cannot write %s\n", qPrintable( aucname ) );
       return 1;
@@ -248,6 +260,36 @@ int write_data( const QString& outdir, const QString& runID, int cell, uint64_t 
       }
    }
 
+   // Systematic noise, drawn after the random noise so that data without
+   //  it stay the same
+   if ( opts.tinoise > 0.0 )
+   {
+      QVector<double> tinoise( raw.pointCount() );
+      for ( double& value : tinoise )
+      {
+         value = US_Math2::box_muller( 0.0, opts.tinoise );
+      }
+      for ( int ss = 0; ss < raw.scanCount(); ss++ )
+      {
+         for ( int rr = 0; rr < raw.pointCount(); rr++ )
+         {
+            raw.scanData[ss].rvalues[rr] += tinoise[rr];
+         }
+      }
+   }
+
+   if ( opts.rinoise > 0.0 )
+   {
+      for ( int ss = 0; ss < raw.scanCount(); ss++ )
+      {
+         double rinoise = US_Math2::box_muller( 0.0, opts.rinoise );
+         for ( int rr = 0; rr < raw.pointCount(); rr++ )
+         {
+            raw.scanData[ss].rvalues[rr] += rinoise;
+         }
+      }
+   }
+
    if ( US_DataIO::writeRawData( outdir + "/" + aucname, raw ) != US_DataIO::OK )
    {
       fprintf( stderr, "cannot rewrite %s\n", qPrintable( aucname ) );
@@ -307,20 +349,34 @@ int main( int argc, char* argv[] )
 
    if ( args.size() >= 7 && args[1] == "data" )
    {
-      int  scans    = kScans;
-      bool nobottom = false;
-      bool argsok   = true;
+      DataOptions opts;
+      bool        argsok = true;
 
       for ( int ii = 7; ii < args.size(); ii++ )
       {
          if ( args[ii].startsWith( "scans=" ) )
          {
-            scans  = args[ii].mid( 6 ).toInt( &argsok );
-            argsok = argsok && scans > 0;
+            opts.scans = args[ii].mid( 6 ).toInt( &argsok );
+            argsok     = argsok && opts.scans > 0;
          }
          else if ( args[ii] == "nobottom" )
          {
-            nobottom = true;
+            opts.nobottom = true;
+         }
+         else if ( args[ii].startsWith( "odlimit=" ) )
+         {
+            opts.odlimit = args[ii].mid( 8 ).toDouble( &argsok );
+            argsok       = argsok && opts.odlimit > 0.0;
+         }
+         else if ( args[ii].startsWith( "tinoise=" ) )
+         {
+            opts.tinoise = args[ii].mid( 8 ).toDouble( &argsok );
+            argsok       = argsok && opts.tinoise >= 0.0;
+         }
+         else if ( args[ii].startsWith( "rinoise=" ) )
+         {
+            opts.rinoise = args[ii].mid( 8 ).toDouble( &argsok );
+            argsok       = argsok && opts.rinoise >= 0.0;
          }
          else
          {
@@ -334,7 +390,7 @@ int main( int argc, char* argv[] )
          }
       }
 
-      return write_data( args[2], args[3], args[4].toInt(), args[5].toULongLong(), args[6].toDouble(), scans, nobottom );
+      return write_data( args[2], args[3], args[4].toInt(), args[5].toULongLong(), args[6].toDouble(), opts );
    }
 
    if ( args.size() == 4 && args[1] == "cgrid" )
@@ -344,6 +400,7 @@ int main( int argc, char* argv[] )
 
    fprintf( stderr,
             "usage: %s data <outdir> <runID> <cell> <seed> <scale> [scans=<n>] [nobottom]\n"
+            "            [odlimit=<OD>] [tinoise=<sd>] [rinoise=<sd>]\n"
             "       %s cgrid <outdir> <filename>\n",
             argv[0],
             argv[0] );

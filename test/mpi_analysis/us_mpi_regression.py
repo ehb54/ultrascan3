@@ -36,13 +36,18 @@ BASELINE_DIR = HERE / "baseline"
 
 # Dataset descriptors: (runID, cell, noise seed, concentration scale) and
 # optionally a dict of us_mpi_testdata options ("scans": scan count,
-# "nobottom": edit without <bottom>).  The experiment constants live in
+# "nobottom": edit without <bottom>, "odlimit": OD limit of the edit,
+# "tinoise"/"rinoise": sd of added TI/RI noise).  The experiment constants live in
 # us_mpi_testdata.cpp.
 DS_A = ("regA", 1, 11, 1.0)
 DS_B = ("regA", 2, 23, 0.6)
 # 31 x 185 points:  an odd number of Monte Carlo deviates per iteration
 DS_ODD = ("regA", 1, 11, 1.0, {"scans": 31})
 DS_NOBOTTOM = ("regA", 1, 11, 1.0, {"nobottom": True})
+# OD limit 0.8:  39 % of the points (the plateau of the early scans) are
+# left out of the fit; TI and RI noise of realistic size added
+DS_ODLIMIT = ("regA", 1, 11, 1.0,
+              {"odlimit": 0.8, "tinoise": 0.005, "rinoise": 0.01})
 
 GRID_2DSA = {
     "s_min": "1.0", "s_max": "10.0",
@@ -135,6 +140,11 @@ CASES = {
     },
     "2dsa_noise": {
         "method": "2DSA", "datasets": [DS_A], "np": 2,
+        "params": dict(GRID_2DSA, tinoise_option="1", rinoise_option="1"),
+    },
+    "2dsa_noise_odlimit": {
+        # TI and RI noise fit with large masked areas
+        "method": "2DSA", "datasets": [DS_ODLIMIT], "np": 2,
         "params": dict(GRID_2DSA, tinoise_option="1", rinoise_option="1"),
     },
     "2dsa_customgrid": {
@@ -290,6 +300,8 @@ def build_archive(name, case, testdata, casedir):
         opts = opts[0] if opts else {}
         extra = ["scans=%d" % opts["scans"]] if "scans" in opts else []
         extra += ["nobottom"] if opts.get("nobottom") else []
+        extra += ["%s=%s" % (key, opts[key])
+                  for key in ("odlimit", "tinoise", "rinoise") if key in opts]
         subprocess.run([testdata, "data", str(inputs), run_id, str(cell),
                         str(seed), str(scale)] + extra, check=True,
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

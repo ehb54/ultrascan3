@@ -7,6 +7,9 @@
 #include "us_memory.h"
 //#include "us_gui_settings.h"
 
+#include <algorithm>
+#include <cmath>
+
 // Define level-conditioned debug print that includes thread/processor
 #ifdef DbgLv
 #undef DbgLv
@@ -261,6 +264,7 @@ DbgLv(1) << "   CR:na nb nx" << navals << narows << nsolutes
    QVector< double > nnls_x( nsolutes, 0.0 );
    QVector< double > tinvec( ntinois,  0.0 );
    QVector< double > rinvec( nrinois,  0.0 );
+   QVector<bool>     odmask( ntotal, false ); // ODlimit-exceeded flags
 
    QVector< double > sv_norm( nsolutes, 0.0 );
 
@@ -309,6 +313,7 @@ DebugTime("BEG:calcres");
             if ( evalue >= odlim )
             {  // Where ODlimit is exceeded, substitute 0.0 and bump count
                evalue         = 0.0;
+               odmask[kb]     = true;
                kodl++;
 DbgLv(1)<<"subha_OD limit exceeded for scan no " << ss << rr << odlim << kodl;
             }
@@ -568,8 +573,7 @@ DbgLv(1)<<"stype==0 but from else part";
                {
                   for ( int rr = 0; rr < npoints; rr++ )
                   {  // Fill A with simulations (or zero where B has zero)
-// x  x  x  x  x  x  x  x
-                     if ( nnls_b[ bx++ ] != 0.0 )
+                     if ( !odmask[bx++] )
                      {
                         double sval    = simdat.value( ss, rr );
                         nnls_a[ ka++ ] = sval;
@@ -871,7 +875,7 @@ DbgLv(1) << "   CR: A-fill  bndthr" << banddthr << "kodl ksols" << kodl << ksols
                {
                   for ( int rr = 0; rr < npoints; rr++ )
                   {  // Fill A with simulations (or zero where B has zero)
-                     if ( nnls_b[ bx++ ] != 0.0 )
+                     if ( !odmask[bx++] )
                      {
                         double sval    = simdat.value( ss, rr );
                         nnls_a[ ka++ ] = sval;
@@ -1070,7 +1074,7 @@ int ks=ka;
                {
                   for ( int rr = 0; rr < npoints; rr++ )
                   {  // Fill A with simulations (or zero where B has zero)
-                     if ( nnls_b[ bx++ ] != 0.0 )
+                     if ( !odmask[bx++] )
                      {
                         double sval    = simdat.value( ss, rr );
                         nnls_a[ ka++ ] = sval;
@@ -1267,7 +1271,18 @@ if ( calc_ti || calc_ri )
    DbgLv( 1 ) << "  noise NNLS: noisflag" << noisflag << "nscans npoints" << dscans << dpoints << "nsolutes narows" << nsolutes
               << narows;
 
-   int nnlsrc = nnls_noise( noisflag, dscans, dpoints, nsolutes, narows, nnls_a, nnls_b, nnls_x, tinvec, rinvec, &abort );
+   int nnlsrc = nnls_noise( noisflag,
+                            dscans,
+                            dpoints,
+                            nsolutes,
+                            narows,
+                            nnls_a,
+                            nnls_b,
+                            nnls_x,
+                            tinvec,
+                            rinvec,
+                            &abort,
+                            ( kodl > 0 ) ? &odmask : nullptr );
 
    if ( nnlsrc == 1 )
    { // Iteration limit:  concentrations are feasible, but not optimal
@@ -1485,6 +1500,7 @@ DbgLv(1) << "CR:B s k" << sim_vals.solutes[cc].s*1.0e+13
    int    ktotal     = 0;
    int    scnx       = 0;
    int    kdsx       = 0;
+   int                     kmsk       = 0; // Data row index into odmask
    US_DataIO::RawData*     sdata = &sim_vals.sim_data;
    US_DataIO::RawData*     resid = &sim_vals.residuals;
    sim_vals.residuals            =  sim_vals.sim_data;
@@ -1512,6 +1528,11 @@ DbgLv(2) << "   CR:301  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
                           - rinvec[ ss + rinoffs ];
             resid->setValue( scnx, rr, resval );
 
+            if ( odmask[kmsk++] )
+            { // ODlimit exceeded:  not fitted, so not in the variance
+               continue;
+            }
+
             double r2    = sq( resval );
             variance    += r2;
             varidset    += r2;
@@ -1528,14 +1549,14 @@ DbgLv(1) << "CR: kdsx variance" << kdsx << varidset << variance;
    }
 
    sim_vals.variances.resize( dataset_count );
-   variance         /= (double)ktotal;    // Total sets variance
+   variance /= (double) qMax( ktotal, 1 ); // Total sets variance
    sim_vals.variance = variance;
    int kk    = 0;
 
    for ( int ee = offset; ee < lim_offs; ee++ )
    {  // Scale variances for each data set
-      sim_vals.variances[ kk ] = rmsds[ kk ] / (double)( kntva[ kk ] );
-DbgLv(1) << "CR:     kk variance" <<  sim_vals.variances[kk];
+      sim_vals.variances[kk] = rmsds[kk] / (double) qMax( kntva[kk], 1 );
+      DbgLv( 1 ) << "CR:     kk variance" << sim_vals.variances[kk];
       kk++;
    }
 
@@ -1807,6 +1828,373 @@ static void remove_noise_means( double*    vals,
    }
 }
 
+// Least-squares TI and/or RI noise of the data rows of one data set with
+//  masked (left out) rows.  The means of remove_noise_means only fit the
+//  noise where no row is masked:  with missing rows TI and RI noise are
+//  coupled, so for both the RI (or TI, whichever is shorter) values solve
+//  the reduced normal equations M w = rhs.  M is a weighted graph Laplacian
+//  that depends only on the mask; it is factored (LDL^T) once and reused
+//  for B and each A column.  Its null space (a constant shared by TI and RI
+//  noise) is pinned by skipping zero pivots, then shifted so that the TI
+//  noise has zero mean, as with remove_noise_means.
+//  A masked row may keep a weight mwt as an observation of zero noise
+//  (its A and B rows are zero):  mwt 0 is the fit over the unmasked rows
+//  only, mwt 1 the plain means over all rows
+namespace
+{
+class MaskedNoiseFit
+{
+   public:
+      MaskedNoiseFit( const bool*  masked,
+                      const int    nscans,
+                      const int    npoints,
+                      const bool   calc_ti,
+                      const bool   calc_ri,
+                      const double mwt ) :
+          masked( masked ),
+          nscans( nscans ),
+          npoints( npoints ),
+          calc_ti( calc_ti ),
+          calc_ri( calc_ri ),
+          mwt( mwt ),
+          rwt( std::sqrt( mwt ) ),
+          wsum_s( nscans, 0.0 ),
+          wsum_r( npoints, 0.0 ),
+          nmsk_s( nscans, 0 ),
+          nmsk_r( npoints, 0 ),
+          sum_s( nscans, 0.0 ),
+          sum_r( npoints, 0.0 )
+      {
+         for ( int ss = 0; ss < nscans; ss++ )
+         {
+            for ( int rr = 0; rr < npoints; rr++ )
+            {
+               const double ww = weight( ss, rr );
+               wsum_s[ss] += ww;
+               wsum_r[rr] += ww;
+
+               if ( masked[static_cast<size_t>( ss ) * npoints + rr] )
+               {
+                  nmsk_s[ss]++;
+                  nmsk_r[rr]++;
+               }
+            }
+         }
+
+         if ( calc_ti && calc_ri )
+         {
+            solve_s = ( nscans <= npoints );
+            factor();
+         }
+      }
+
+      // Subtract the fitted noise from the unmasked rows, set the masked
+      //  rows to their weighted residual, and return the RI (v_tilde) and
+      //  TI (v_bar) noise
+      void remove( double* vals, double* v_tilde, double* v_bar )
+      {
+         sum_s.fill( 0.0 );
+         sum_r.fill( 0.0 );
+
+         for ( int ss = 0; ss < nscans; ss++ )
+         {
+            for ( int rr = 0; rr < npoints; rr++ )
+            {
+               size_t kk = static_cast<size_t>( ss ) * npoints + rr;
+
+               if ( !masked[kk] )
+               {
+                  sum_s[ss] += vals[kk];
+                  sum_r[rr] += vals[kk];
+               }
+            }
+         }
+
+         QVector<double> u_s( nscans, 0.0 );  // RI noise
+         QVector<double> t_r( npoints, 0.0 ); // TI noise
+
+         if ( calc_ti && calc_ri )
+         {
+            QVector<double>&       w_a    = solve_s ? u_s : t_r;
+            QVector<double>&       w_b    = solve_s ? t_r : u_s;
+            const QVector<double>& sum_a  = solve_s ? sum_s : sum_r;
+            const QVector<double>& sum_b  = solve_s ? sum_r : sum_s;
+            const QVector<double>& wsum_b = solve_s ? wsum_r : wsum_s;
+            const int              na     = w_a.size();
+            const int              nb     = w_b.size();
+
+            for ( int aa = 0; aa < na; aa++ )
+            {
+               double rhs = sum_a[aa];
+
+               for ( int bb = 0; bb < nb; bb++ )
+               {
+                  if ( wsum_b[bb] > 0.0 )
+                  {
+                     rhs -= weight_ab( aa, bb ) * sum_b[bb] / wsum_b[bb];
+                  }
+               }
+
+               w_a[aa] = rhs;
+            }
+
+            solve( w_a );
+
+            for ( int bb = 0; bb < nb; bb++ )
+            {
+               if ( wsum_b[bb] == 0.0 )
+               {
+                  continue;
+               }
+
+               double val = sum_b[bb];
+
+               for ( int aa = 0; aa < na; aa++ )
+               {
+                  val -= weight_ab( aa, bb ) * w_a[aa];
+               }
+
+               w_b[bb] = val / wsum_b[bb];
+            }
+
+            // Shift the shared constant from TI to RI noise
+            double tmean = 0.0;
+            int    ktr   = 0;
+
+            for ( int rr = 0; rr < npoints; rr++ )
+            {
+               if ( wsum_r[rr] > 0.0 )
+               {
+                  tmean += t_r[rr];
+                  ktr++;
+               }
+            }
+
+            tmean = ( ktr > 0 ) ? ( tmean / ktr ) : 0.0;
+
+            for ( int rr = 0; rr < npoints; rr++ )
+            {
+               if ( wsum_r[rr] > 0.0 )
+               {
+                  t_r[rr] -= tmean;
+               }
+            }
+
+            for ( int ss = 0; ss < nscans; ss++ )
+            {
+               if ( wsum_s[ss] > 0.0 )
+               {
+                  u_s[ss] += tmean;
+               }
+            }
+         }
+
+         else if ( calc_ri )
+         { // Per-scan weighted means
+            for ( int ss = 0; ss < nscans; ss++ )
+            {
+               u_s[ss] = ( wsum_s[ss] > 0.0 ) ? ( sum_s[ss] / wsum_s[ss] ) : 0.0;
+            }
+         }
+
+         else if ( calc_ti )
+         { // Per-radius weighted means
+            for ( int rr = 0; rr < npoints; rr++ )
+            {
+               t_r[rr] = ( wsum_r[rr] > 0.0 ) ? ( sum_r[rr] / wsum_r[rr] ) : 0.0;
+            }
+         }
+
+         for ( int ss = 0; ss < nscans; ss++ )
+         {
+            for ( int rr = 0; rr < npoints; rr++ )
+            {
+               size_t kk = static_cast<size_t>( ss ) * npoints + rr;
+               vals[kk]  = masked[kk] ? ( -rwt * ( t_r[rr] + u_s[ss] ) ) : ( vals[kk] - t_r[rr] - u_s[ss] );
+            }
+         }
+
+         if ( calc_ri )
+         {
+            std::copy( u_s.cbegin(), u_s.cend(), v_tilde );
+         }
+
+         if ( calc_ti )
+         {
+            std::copy( t_r.cbegin(), t_r.cend(), v_bar );
+         }
+      }
+
+   private:
+      bool is_masked( const int aa, const int bb ) const
+      {
+         const int ss = solve_s ? aa : bb;
+         const int rr = solve_s ? bb : aa;
+         return masked[static_cast<size_t>( ss ) * npoints + rr];
+      }
+
+      double weight( const int ss, const int rr ) const
+      {
+         return masked[static_cast<size_t>( ss ) * npoints + rr] ? mwt : 1.0;
+      }
+
+      double weight_ab( const int aa, const int bb ) const
+      {
+         return is_masked( aa, bb ) ? mwt : 1.0;
+      }
+
+      // Build and factor M = diag(wsum_a) - sum over b of
+      //  (1/wsum_b) o_b o_b^T, o_b holding the weights of the a of b
+      void factor()
+      {
+         const QVector<double>& wsum_a  = solve_s ? wsum_s : wsum_r;
+         const QVector<double>& wsum_b  = solve_s ? wsum_r : wsum_s;
+         const QVector<int>&    nmsk_b  = solve_s ? nmsk_r : nmsk_s;
+         const int              na      = wsum_a.size();
+         const int              nb      = wsum_b.size();
+         double                 fullsum = 0.0; // Sum over the b without masked a
+         QVector<int>           aobs;
+
+         mfac.fill( 0.0, static_cast<qsizetype>( na ) * na );
+         zpiv.fill( false, na );
+
+         for ( int bb = 0; bb < nb; bb++ )
+         {
+            if ( wsum_b[bb] == 0.0 )
+            {
+               continue;
+            }
+
+            if ( nmsk_b[bb] == 0 )
+            {
+               fullsum += 1.0 / na;
+               continue;
+            }
+
+            aobs.clear();
+
+            for ( int aa = 0; aa < na; aa++ )
+            {
+               if ( weight_ab( aa, bb ) > 0.0 )
+               {
+                  aobs << aa;
+               }
+            }
+
+            const double wb = 1.0 / wsum_b[bb];
+
+            for ( int ja : aobs )
+            {
+               const double wj = weight_ab( ja, bb ) * wb;
+
+               for ( int ka : aobs )
+               {
+                  mfac[static_cast<size_t>( ja ) * na + ka] -= wj * weight_ab( ka, bb );
+               }
+            }
+         }
+
+         for ( int ja = 0; ja < na; ja++ )
+         {
+            double* mrow = mfac.data() + static_cast<size_t>( ja ) * na;
+
+            for ( int ka = 0; ka < na; ka++ )
+            {
+               mrow[ka] -= ( wsum_a[ka] > 0.0 && wsum_a[ja] > 0.0 ) ? fullsum : 0.0;
+            }
+
+            mrow[ja] += wsum_a[ja];
+         }
+
+         // In-place LDL^T (lower triangle:  L below, D on the diagonal)
+         for ( int kk = 0; kk < na; kk++ )
+         {
+            double* krow = mfac.data() + static_cast<size_t>( kk ) * na;
+            double  dk   = krow[kk];
+
+            for ( int jj = 0; jj < kk; jj++ )
+            {
+               dk -= krow[jj] * krow[jj] * mfac[static_cast<size_t>( jj ) * na + jj];
+            }
+
+            if ( dk <= 1.0e-10 * qMax( wsum_a[kk], 1.0 ) )
+            { // Zero pivot:  the row of the reduced matrix is zero
+               zpiv[kk] = true;
+               krow[kk] = 0.0;
+
+               for ( int ii = kk + 1; ii < na; ii++ )
+               {
+                  mfac[static_cast<size_t>( ii ) * na + kk] = 0.0;
+               }
+
+               continue;
+            }
+
+            krow[kk] = dk;
+
+            for ( int ii = kk + 1; ii < na; ii++ )
+            {
+               double* irow = mfac.data() + static_cast<size_t>( ii ) * na;
+               double  val  = irow[kk];
+
+               for ( int jj = 0; jj < kk; jj++ )
+               {
+                  val -= irow[jj] * krow[jj] * mfac[static_cast<size_t>( jj ) * na + jj];
+               }
+
+               irow[kk] = val / dk;
+            }
+         }
+      }
+
+      // Solve M w = rhs in place with the LDL^T factor (zero at zero pivots)
+      void solve( QVector<double>& ww ) const
+      {
+         const int na = ww.size();
+
+         for ( int ii = 0; ii < na; ii++ )
+         {
+            const double* irow = mfac.constData() + static_cast<size_t>( ii ) * na;
+
+            for ( int jj = 0; jj < ii; jj++ )
+            {
+               ww[ii] -= irow[jj] * ww[jj];
+            }
+         }
+
+         for ( int ii = 0; ii < na; ii++ )
+         {
+            ww[ii] = zpiv[ii] ? 0.0 : ( ww[ii] / mfac[static_cast<size_t>( ii ) * na + ii] );
+         }
+
+         for ( int ii = na - 1; ii >= 0; ii-- )
+         {
+            for ( int jj = ii + 1; jj < na; jj++ )
+            {
+               ww[ii] -= mfac[static_cast<size_t>( jj ) * na + ii] * ww[jj];
+            }
+         }
+      }
+
+      const bool*     masked;
+      const int       nscans;
+      const int       npoints;
+      const bool      calc_ti;
+      const bool      calc_ri;
+      const double    mwt;            // Weight of a masked row
+      const double    rwt;            // Its square root
+      bool            solve_s = true; // Solve for RI (else TI) noise
+      QVector<double> wsum_s;         // Row weights of each scan
+      QVector<double> wsum_r;         // Row weights of each radius
+      QVector<int>    nmsk_s;         // Masked rows of each scan
+      QVector<int>    nmsk_r;         // Masked rows of each radius
+      QVector<double> sum_s;
+      QVector<double> sum_r;
+      QVector<double> mfac; // Factored M, row-major
+      QVector<bool>   zpiv; // Zero-pivot flags
+};
+}
+
 // Compute concentrations by NNLS with TI and/or RI noise algebraically removed
 int US_SolveSim::nnls_noise( const int                noisflag,
                              const QVector<int>&      nscans,
@@ -1818,7 +2206,9 @@ int US_SolveSim::nnls_noise( const int                noisflag,
                              QVector<double>&         nnls_x,
                              QVector<double>&         tinvec,
                              QVector<double>&         rinvec,
-                             const std::atomic<bool>* abort_flag )
+                             const std::atomic<bool>* abort_flag,
+                             const QVector<bool>*     masked,
+                             const double             masked_weight )
 {
    const bool calc_ti = ( ( noisflag & 1 ) != 0 );
    const bool calc_ri = ( ( noisflag & 2 ) != 0 );
@@ -1826,10 +2216,18 @@ int US_SolveSim::nnls_noise( const int                noisflag,
    int        ntinois = 0; // TI noise values of all data sets
    int        nrinois = 0; // RI noise values of all data sets
 
+   size_t     ndrows = 0; // Data rows of all data sets
+
    for ( int ee = 0; ee < ndsets; ee++ )
    {
       ntinois += npoints[ee];
       nrinois += nscans[ee];
+      ndrows += static_cast<size_t>( nscans[ee] ) * npoints[ee];
+   }
+
+   if ( masked != nullptr && static_cast<size_t>( masked->size() ) < ndrows )
+   {
+      return 2;
    }
 
    QVector<double> a_tilde( nrinois, 0.0 ); // Data scan means
@@ -1853,23 +2251,55 @@ int US_SolveSim::nnls_noise( const int                noisflag,
       {
          return 3;
       }
-      remove_noise_means(
-         nnls_b.data() + krow, nscans[ee], npoints[ee], calc_ti, calc_ri, a_tilde.data() + kri, a_bar.data() + kti );
 
-      for ( int cc = 0; cc < nsolutes; cc++ )
-      {
-         /* Quit, Return code doesn't matter since calling function also returns without reading anything*/
-         if ( abort_flag && abort_flag->load( std::memory_order_relaxed ) )
+      const size_t nrows   = static_cast<size_t>( nscans[ee] ) * npoints[ee];
+      const bool*  dmasked = ( masked != nullptr ) ? ( masked->constData() + krow ) : nullptr;
+
+      if ( dmasked != nullptr && std::find( dmasked, dmasked + nrows, true ) == dmasked + nrows )
+      { // No masked rows in this data set:  the plain means are the fit
+         dmasked = nullptr;
+      }
+
+      if ( dmasked != nullptr )
+      { // Weighted least-squares noise
+         // Only the coupled TI and RI fit needs the masked rows' weight
+         MaskedNoiseFit nfit( dmasked, nscans[ee], npoints[ee], calc_ti, calc_ri, ( calc_ti && calc_ri ) ? masked_weight : 0.0 );
+
+         nfit.remove( nnls_b.data() + krow, a_tilde.data() + kri, a_bar.data() + kti );
+
+         for ( int cc = 0; cc < nsolutes; cc++ )
          {
-            return 3;
+            /* Quit, Return code doesn't matter since calling function also returns without reading anything*/
+            if ( abort_flag && abort_flag->load( std::memory_order_relaxed ) )
+            {
+               return 3;
+            }
+            nfit.remove( nnls_a.data() + static_cast<size_t>( cc ) * narows + krow,
+                         L_tildes.data() + static_cast<size_t>( cc ) * nrinois + kri,
+                         L_bars.data() + static_cast<size_t>( cc ) * ntinois + kti );
          }
-         remove_noise_means( nnls_a.data() + static_cast<size_t>( cc ) * narows + krow,
-                             nscans[ee],
-                             npoints[ee],
-                             calc_ti,
-                             calc_ri,
-                             L_tildes.data() + static_cast<size_t>( cc ) * nrinois + kri,
-                             L_bars.data() + static_cast<size_t>( cc ) * ntinois + kti );
+      }
+
+      else
+      {
+         remove_noise_means(
+            nnls_b.data() + krow, nscans[ee], npoints[ee], calc_ti, calc_ri, a_tilde.data() + kri, a_bar.data() + kti );
+
+         for ( int cc = 0; cc < nsolutes; cc++ )
+         {
+            /* Quit, Return code doesn't matter since calling function also returns without reading anything*/
+            if ( abort_flag && abort_flag->load( std::memory_order_relaxed ) )
+            {
+               return 3;
+            }
+            remove_noise_means( nnls_a.data() + static_cast<size_t>( cc ) * narows + krow,
+                                nscans[ee],
+                                npoints[ee],
+                                calc_ti,
+                                calc_ri,
+                                L_tildes.data() + static_cast<size_t>( cc ) * nrinois + kri,
+                                L_bars.data() + static_cast<size_t>( cc ) * ntinois + kti );
+         }
       }
 
       krow += static_cast<size_t>( nscans[ee] ) * npoints[ee];
