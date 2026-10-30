@@ -90,8 +90,10 @@ public:
 
         The server can also end the transaction itself by rolling it back,
         after a deadlock, or after a lock wait timeout when
-        innodb_rollback_on_timeout is set.  Statements run after the
-        transaction has ended, however it ended, run outside it.
+        innodb_rollback_on_timeout is set.  With that setting off, the default,
+        a lock wait timeout undoes only the statement that timed out and the
+        transaction stays open.  Statements run after the transaction has
+        ended, however it ended, run outside it.
 
         \param error Set to the reason when the begin fails, cleared otherwise.
         \return true if the transaction is open.
@@ -102,9 +104,12 @@ public:
 
         On false the transaction is still treated as open, so the caller rolls
         it back.  If the connection was lost during the commit, \p error says
-        that whether the commit took effect is unknown.  If the server had
-        already rolled the transaction back after a deadlock or lock wait
-        timeout, the commit is refused, since nothing written in it was kept.
+        that whether the commit took effect is unknown.  If the transaction
+        had already ended, the commit is refused, since a COMMIT then would
+        succeed without committing anything.  \p error names a deadlock when
+        the client saw one, and otherwise says only that some rows may have
+        been kept: a procedure that caught the deadlock or rolled back itself
+        looks the same as an implicit commit.
 
         \param error Set to the reason when the commit fails, cleared otherwise.
         \return true if the commit took effect; false if there was no open
@@ -119,9 +124,9 @@ public:
         \param error Set to the reason when the rollback fails, cleared otherwise.
         \return true if everything written since the begin was undone; false if
                  there was no open transaction, the rollback failed, or the
-                 transaction had already ended.  \p error then names the
-                 cause when it is known -- a deadlock or lock wait timeout --
-                 and otherwise says only that some rows may have been kept.
+                 transaction had already ended.  \p error then names a
+                 deadlock when the client saw one, and otherwise says only
+                 that some rows may have been kept.
     */
     virtual bool                 rollbackTransaction( QString& error ) = 0;
 

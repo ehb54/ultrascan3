@@ -35,6 +35,7 @@ TEST_F( NullDb, ExperimentRefusesNullConnection )
    EXPECT_EQ( experiment.saveToDB( false, nullptr, speedsteps ), IUS_DB2::NOT_CONNECTED );
    EXPECT_EQ( experiment.saveToDB_auto( false, nullptr, speedsteps, 1 ), IUS_DB2::NOT_CONNECTED );
    EXPECT_EQ( experiment.readFromDB( "run", nullptr, speedsteps ), IUS_DB2::NOT_CONNECTED );
+   // Without a connection this works on local files, so a null one is not an error.
    EXPECT_TRUE( US_Experiment::deleteRunPcsaMrecs( nullptr, "1", "run" ) );
 }
 
