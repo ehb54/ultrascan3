@@ -4,13 +4,20 @@
 // InnoDB answers a deadlock by rolling back the victim's whole transaction,
 // which ends it just as an implicit commit does.  These tests force a real
 // deadlock between two connections and check that the victim's commit and
-// rollback name the deadlock instead of claiming its rows were kept.
+// rollback name the deadlock instead of claiming its rows were kept, and that
+// a transaction ended without any error to the client is never committed.
 //
 // They need a MariaDB or MySQL server and skip without one.  Set
 //   US3_TEST_DB_HOST      host or host:port
-//   US3_TEST_DB_NAME      a scratch database; the test creates its own table
-//   US3_TEST_DB_USER
+//   US3_TEST_DB_NAME      a scratch database; the tests create their own
+//                         table and procedures
+//   US3_TEST_DB_USER      needs CREATE ROUTINE on that database, and PROCESS
+//                         to read INNODB_TRX while setting up the deadlock
 //   US3_TEST_DB_PASSWORD
+//
+// US_DB2 always connects over TLS with the client certificates in etc/mysql,
+// so the server must trust etc/mysql/ca-cert.pem.  Without that the connect
+// fails and the tests fail rather than skip.
 
 #include <gtest/gtest.h>
 
@@ -26,6 +33,13 @@ namespace
 {
 #ifndef NO_DB
 const char* const table = "us3_test_txn";
+
+// Rolls back the caller's transaction without returning an error, as a
+// procedure that catches a deadlock in a handler leaves it.
+const char* const rollbackProcedure = "us3_test_txn_rollback";
+
+// Returns a status row, then fails producing its data set.
+const char* const failingProcedure = "us3_test_txn_fail";
 
 struct LiveDb
 {
@@ -77,6 +91,18 @@ class US_DB2_LiveTransaction : public ::testing::Test
          first->rawQuery( QString( "DELETE FROM %1" ).arg( table ) );
          first->rawQuery( QString( "INSERT INTO %1 VALUES ( 1, 0 ), ( 2, 0 )" ).arg( table ) );
          ASSERT_EQ( scalar( *first, QString( "SELECT COUNT(*) FROM %1" ).arg( table ) ), "2" );
+
+         first->rawQuery( QString( "DROP PROCEDURE IF EXISTS %1" ).arg( rollbackProcedure ) );
+         first->rawQuery( QString( "CREATE PROCEDURE %1() BEGIN ROLLBACK; END" ).arg( rollbackProcedure ) );
+         first->rawQuery( QString( "DROP PROCEDURE IF EXISTS %1" ).arg( failingProcedure ) );
+         first->rawQuery(
+            QString( "CREATE PROCEDURE %1() BEGIN SELECT 0; SELECT * FROM us3_test_no_such_table; END" ).arg( failingProcedure ) );
+         ASSERT_EQ( scalar( *first,
+                            QString( "SELECT COUNT(*) FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = DATABASE() "
+                                     "AND ROUTINE_NAME IN ( '%1', '%2' )" )
+                               .arg( rollbackProcedure, failingProcedure ) ),
+                    "2" )
+            << "the test user needs CREATE ROUTINE";
       }
 
       void TearDown() override
@@ -84,6 +110,8 @@ class US_DB2_LiveTransaction : public ::testing::Test
          if ( first )
          {
             first->rawQuery( QString( "DROP TABLE IF EXISTS %1" ).arg( table ) );
+            first->rawQuery( QString( "DROP PROCEDURE IF EXISTS %1" ).arg( rollbackProcedure ) );
+            first->rawQuery( QString( "DROP PROCEDURE IF EXISTS %1" ).arg( failingProcedure ) );
          }
       }
 
@@ -183,6 +211,74 @@ TEST_F( US_DB2_LiveTransaction, RollbackAfterImplicitCommitDoesNotClaimACause )
    EXPECT_TRUE( error.contains( "may have been kept" ) ) << error.toStdString();
    EXPECT_FALSE( error.contains( "deadlock" ) ) << error.toStdString();
    EXPECT_EQ( scalar( *first, QString( "SELECT v FROM %1 WHERE id = 1" ).arg( table ) ), "1" );
+}
+
+// The transaction ends with no error the client could record, so only the
+// server status shows it.  A COMMIT now would succeed as a no-op.
+TEST_F( US_DB2_LiveTransaction, CommitAfterSilentRollbackIsRefused )
+{
+   QString error;
+   ASSERT_TRUE( first->beginTransaction( error ) ) << error.toStdString();
+   first->rawQuery( QString( "UPDATE %1 SET v = 1 WHERE id = 1" ).arg( table ) );
+   first->rawQuery( QString( "CALL %1()" ).arg( rollbackProcedure ) );
+
+   EXPECT_FALSE( first->commitTransaction( error ) );
+   EXPECT_TRUE( error.contains( "may have been kept" ) ) << error.toStdString();
+
+   EXPECT_FALSE( first->rollbackTransaction( error ) );
+   EXPECT_EQ( scalar( *first, QString( "SELECT v FROM %1 WHERE id = 1" ).arg( table ) ), "0" );
+}
+
+// With innodb_rollback_on_timeout off, the default, a timeout undoes only the
+// statement; the transaction and the writes before it are still there.
+TEST_F( US_DB2_LiveTransaction, CommitAfterLockWaitTimeoutKeepsEarlierWrites )
+{
+   if ( scalar( *first, "SELECT @@innodb_rollback_on_timeout" ) != "0" )
+   {
+      GTEST_SKIP() << "innodb_rollback_on_timeout is set on this server";
+   }
+
+   QString error;
+   ASSERT_TRUE( first->beginTransaction( error ) ) << error.toStdString();
+   ASSERT_TRUE( second->beginTransaction( error ) ) << error.toStdString();
+   second->rawQuery( QString( "UPDATE %1 SET v = 2 WHERE id = 2" ).arg( table ) );
+
+   first->rawQuery( "SET SESSION innodb_lock_wait_timeout = 1" );
+   first->rawQuery( QString( "UPDATE %1 SET v = 1 WHERE id = 1" ).arg( table ) );
+   first->rawQuery( QString( "UPDATE %1 SET v = 1 WHERE id = 2" ).arg( table ) );
+   ASSERT_TRUE( first->lastError().contains( "Lock wait timeout" ) ) << first->lastError().toStdString();
+
+   EXPECT_TRUE( first->commitTransaction( error ) ) << error.toStdString();
+   EXPECT_TRUE( second->rollbackTransaction( error ) ) << error.toStdString();
+   EXPECT_EQ( scalar( *first, QString( "SELECT v FROM %1 WHERE id = 1" ).arg( table ) ), "1" );
+   EXPECT_EQ( scalar( *first, QString( "SELECT v FROM %1 WHERE id = 2" ).arg( table ) ), "0" );
+}
+
+TEST_F( US_DB2_LiveTransaction, UnmatchedTransactionCallsAreRefused )
+{
+   QString error;
+   EXPECT_FALSE( first->commitTransaction( error ) );
+   EXPECT_EQ( error, QObject::tr( US_DB2::noTransactionMessage ).arg( "commitTransaction" ) );
+   EXPECT_FALSE( first->rollbackTransaction( error ) );
+   EXPECT_EQ( error, QObject::tr( US_DB2::noTransactionMessage ).arg( "rollbackTransaction" ) );
+
+   ASSERT_TRUE( first->beginTransaction( error ) ) << error.toStdString();
+   EXPECT_FALSE( first->beginTransaction( error ) );
+   EXPECT_EQ( error, QObject::tr( US_DB2::transactionOpenMessage ).arg( "beginTransaction" ) );
+
+   // The refused begin left the first transaction open.
+   EXPECT_TRUE( first->commitTransaction( error ) ) << error.toStdString();
+}
+
+// query() reads a CALL as a status set followed by a data set.  A failure on
+// the data set is the query's result, not the status row's OK.
+TEST_F( US_DB2_LiveTransaction, QueryReportsAFailureAfterTheStatusRow )
+{
+   first->query( QString( "CALL %1()" ).arg( failingProcedure ) );
+
+   EXPECT_EQ( first->lastErrno(), IUS_DB2::DBERROR );
+   EXPECT_TRUE( first->lastError().contains( "us3_test_no_such_table" ) ) << first->lastError().toStdString();
+   EXPECT_FALSE( first->next() );
 }
 #endif
 } // namespace
