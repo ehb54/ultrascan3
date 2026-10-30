@@ -34,6 +34,25 @@ QString storedArgument( const QString& query, int index )
 
    return body.split( "', '" ).value( index );
 }
+
+//! Undoes one level of escaping in a single pass, as the server reads it.
+QString unescaped( const QString& stored )
+{
+   QString value;
+   for ( int i = 0; i < stored.size(); ++i )
+   {
+      if ( stored[i] == '\\' && i + 1 < stored.size() )
+      {
+         ++i;
+         value += stored[i] == '0' ? QChar( '\0' ) : stored[i];
+      }
+      else
+      {
+         value += stored[i];
+      }
+   }
+   return value;
+}
 }
 
 TEST( UsDb2Escaping, ASingleQuoteIsEscapedOnce )
@@ -75,6 +94,17 @@ TEST( UsDb2Escaping, AnAlreadyEscapedValueIsEscapedAgain )
    EXPECT_EQ( twice.toStdString(), "<v desc=\\\\\\'x\\\\\\'/>" );
 }
 
+TEST( UsDb2Escaping, ANulIsEscapedSoItCannotEndTheQuery )
+{
+   // mysql_query() reads the query as a C string, so a raw NUL would cut it
+   // short at that point.
+   const QString value = QString( "a" ) + QChar( '\0' ) + "b";
+   const QString query = call( QStringList() << "new_model" << value );
+
+   EXPECT_FALSE( query.contains( QChar( '\0' ) ) );
+   EXPECT_EQ( storedArgument( query, 2 ).toStdString(), "a\\0b" );
+}
+
 TEST( UsDb2Escaping, EveryArgumentIsEscapedIncludingTheCredentials )
 {
    // The guid and password are quoted literals like every other argument,
@@ -89,13 +119,9 @@ TEST( UsDb2Escaping, AnXmlPayloadSurvivesComposeUnchangedApartFromEscaping )
    // Round-tripping the escape by hand is what the server does on the way in;
    // if these agree, the value stored is the value given.
    const QString xml = "<US_Noise><values count='2'><v r='5.8' n=\"0.1\"/>"
-                       "<v r='5.9' n='-0.2'/></values><path>a\\b</path></US_Noise>";
+                       "<v r='5.9' n='-0.2'/></values><path>a\\b\\'c\\\\</path></US_Noise>";
 
-   QString       stored = storedArgument( call( QStringList() << "new_noise" << xml ), 2 );
+   const QString stored = storedArgument( call( QStringList() << "new_noise" << xml ), 2 );
 
-   // Undo exactly one level, in the reverse of the order it was applied.
-   stored.replace( "\\'", "'" );
-   stored.replace( "\\\\", "\\" );
-
-   EXPECT_EQ( stored.toStdString(), xml.toStdString() );
+   EXPECT_EQ( unescaped( stored ).toStdString(), xml.toStdString() );
 }

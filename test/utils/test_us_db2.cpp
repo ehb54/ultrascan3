@@ -1,6 +1,7 @@
 //! \file test_us_db2.cpp
-// US_DB2::composeQuery(): stored-procedure invocation, credential placement and
-// argument escaping.  The rest of US_DB2 needs a live server.
+// US_DB2::composeQuery(): stored-procedure invocation and credential placement,
+// and how a refused procedure name fails the query.  The escaping itself is in
+// test_us_db2_escaping.cpp; the rest of US_DB2 needs a live server.
 
 #include "qt_test_base.h"
 #include "us_db2.h"
@@ -47,14 +48,6 @@ TEST( UsDb2Query, ArgumentsDifferingOnlyByKeywordAreOtherwiseIdentical )
    EXPECT_EQ( asCall.mid( QString( "CALL" ).size() ), asSelect.mid( QString( "SELECT" ).size() ) );
 }
 
-TEST( UsDb2Query, SingleQuotesInAnArgumentAreEscaped )
-{
-   // The argument delimiter is a single quote, so an unescaped quote in user
-   // data would terminate the literal early.
-   EXPECT_EQ( call( QStringList() << "find_buffer" << "O'Brien" ),
-              QString( "CALL find_buffer('%1', '%2', 'O\\'Brien')" ).arg( kGuid ).arg( kPw ) );
-}
-
 TEST( UsDb2Query, EveryQuoteInAnArgumentIsEscapedNotJustTheFirst )
 {
    EXPECT_EQ( call( QStringList() << "find_buffer" << "a'b'c" ),
@@ -85,26 +78,28 @@ TEST( UsDb2Query, OrdinaryProcedureNamesAreStillAccepted )
    EXPECT_FALSE( call( QStringList() << "Mixed_Case9" ).isEmpty() );
 }
 
-TEST( UsDb2Query, BackslashesInAnArgumentAreEscaped )
-{
-   // A trailing backslash would otherwise escape the closing delimiter under
-   // MySQL's default NO_BACKSLASH_ESCAPES=off and run the argument into the
-   // next one.
-   EXPECT_EQ( call( QStringList() << "p" << "path\\" ), QString( "CALL p('%1', '%2', 'path\\\\')" ).arg( kGuid ).arg( kPw ) );
-}
-
-TEST( UsDb2Query, ABackslashBeforeAQuoteIsEscapedExactlyOnce )
-{
-   // Order matters:  escaping the quote first would double the backslash the
-   // quote step inserts, producing a literal backslash and an open quote.
-   EXPECT_EQ( call( QStringList() << "p" << "a\\'b" ), QString( "CALL p('%1', '%2', 'a\\\\\\'b')" ).arg( kGuid ).arg( kPw ) );
-}
-
 TEST( UsDb2Query, AnEmptyArgumentListYieldsAnEmptyQuery )
 {
    // The procedure name is arguments[ 0 ]; an empty list has no procedure to
    // call.
    EXPECT_TRUE( US_DB2::composeQuery( "CALL", QStringList(), kGuid, kPw ).isEmpty() );
+}
+
+TEST( UsDb2Query, ARefusedProcedureNameFailsTheQueryWithItsOwnError )
+{
+   // Nothing is sent, so no connection is needed to see the refusal.
+   US_DB2        db;
+   const QString name = "p; DROP TABLE users";
+
+   EXPECT_EQ( db.statusQuery( QStringList() << name << "1" ), IUS_DB2::DBERROR );
+   EXPECT_EQ( db.lastError(), QObject::tr( US_DB2::invalidProcedureMessage ).arg( name ) );
+
+   EXPECT_EQ( db.functionQuery( QStringList() << "od'd" ), IUS_DB2::DBERROR );
+   EXPECT_EQ( db.lastError(), QObject::tr( US_DB2::invalidProcedureMessage ).arg( "od'd" ) );
+
+   db.query( QStringList() << "" );
+   EXPECT_EQ( db.lastErrno(), IUS_DB2::DBERROR );
+   EXPECT_FALSE( db.next() );
 }
 
 TEST( UsDb2Query, AnEmptyArgumentIsStillPassedAsAnEmptyLiteral )
