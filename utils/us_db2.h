@@ -103,13 +103,13 @@ public:
        "the transaction was already ended by an implicit commit, so the rows written before it were kept";
 
     /*! \brief Begin a transaction with START TRANSACTION. See IUS_DB2. */
-    bool          beginTransaction( QString& error ) final;
+    bool           beginTransaction( QString& error ) final;
 
     /*! \brief Commit the open transaction. See IUS_DB2. */
-    bool          commitTransaction( QString& error ) final;
+    bool           commitTransaction( QString& error ) final;
 
     /*! \brief Roll back the open transaction. See IUS_DB2. */
-    bool          rollbackTransaction( QString& error ) final;
+    bool           rollbackTransaction( QString& error ) final;
 
     /*! \brief Implements a simple query on the active database
         connection, cleaning up any unused results from a previous query.
@@ -336,10 +336,10 @@ public:
         \return The composed query, or an empty string if arguments is empty
                 or the procedure name is not a plain identifier
     */
-    static QString               composeQuery( const QString&     keyword,
-                                               const QStringList& arguments,
-                                               const QString&     guid,
-                                               const QString&     password );
+    static QString composeQuery( const QString&     keyword,
+                                 const QStringList& arguments,
+                                 const QString&     guid,
+                                 const QString&     password );
 
  private:
     bool       connected;
