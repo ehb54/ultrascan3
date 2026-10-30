@@ -42,8 +42,6 @@ class ReadDiskRunTest : public Us3FileTestBase
       QString               error;
 };
 
-// ---------------------------------------------------------------- happy path
-
 TEST_F( ReadDiskRunTest, ReadsAWholeRunInOneCall )
 {
    const DiskRun fixture =
@@ -151,8 +149,6 @@ TEST_F( ReadDiskRunTest, DoesNotLetOneStepInheritThePrevioussValues )
    }
 }
 
-// --------------------------------------------------- structural contradictions
-
 TEST_F( ReadDiskRunTest, RefusesADirectoryNameThatCannotBeARunId )
 {
    const QString bad = parentDir() + "/not a run id/";
@@ -258,8 +254,6 @@ TEST_F( ReadDiskRunTest, ReportsMixedRunIdsInOneDirectory )
    EXPECT_EQ( run.rawData.size(), 2 );
 }
 
-// ------------------------------------------------------- experiment failures
-
 TEST_F( ReadDiskRunTest, ReportsAMissingExperimentRecordWithItsPath )
 {
    const DiskRun fixture = us3test::writeDiskRun( parentDir(), "no-xml-run", "RA", { DatasetSpec{ 1, 'A', "280" } } );
@@ -337,8 +331,6 @@ TEST_F( ReadDiskRunTest, ReportsADatasetIdentityThatDisagreesWithItsDataFile )
    EXPECT_EQ( error,
               QString( US_ConvertIO::identityMismatchMessage ).arg( "1 / A / 280", fixture.rawGUIDs[0], donor.rawGUIDs[0] ) );
 }
-
-// ----------------------------------------------------------- what it will not do
 
 TEST_F( ReadDiskRunTest, DoesNotRequireEditsOrChemistryRecords )
 {

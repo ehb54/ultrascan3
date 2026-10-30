@@ -56,8 +56,6 @@ class EditedDataOpsTest : public ::testing::Test
       QString                                error;
 };
 
-// ------------------------------------------------------------ raw data lookup
-
 TEST_F( EditedDataOpsTest, LooksUpARawDataIdByGuid )
 {
    QStringList sent;
@@ -134,8 +132,6 @@ TEST_F( EditedDataOpsTest, RejectsANonNumericRawDataId )
    EXPECT_EQ( error, QString( US_ConvertIO::nonNumericRawDataIdMessage ).arg( kRawGUID, "abc" ) );
 }
 
-// ---------------------------------------------------------------- create
-
 TEST_F( EditedDataOpsTest, CreatesAnEditedDataRowWithTheAgreedArguments )
 {
    QStringList sent;
@@ -176,8 +172,6 @@ TEST_F( EditedDataOpsTest, LeavesTheIdAloneWhenCreationFails )
                  .arg( IUS_DB2::DBERROR ) );
 }
 
-// ---------------------------------------------------------------- update
-
 TEST_F( EditedDataOpsTest, UpdatesAnEditedDataRowWithTheAgreedArguments )
 {
    QStringList sent;
@@ -212,8 +206,6 @@ TEST_F( EditedDataOpsTest, ReportsTheRowAndTheFileWhenAnUpdateFails )
                  .arg( IUS_DB2::DBERROR ) );
 }
 
-// ------------------------------------------------------------------- blob
-
 TEST_F( EditedDataOpsTest, UploadsTheEditXmlThroughTheAgreedProcedure )
 {
    QString sentFile;
@@ -247,8 +239,6 @@ TEST_F( EditedDataOpsTest, ReportsTheBlobStatusItWasGiven )
                  .arg( QString() )
                  .arg( IUS_DB2::DBERROR ) );
 }
-
-// ---------------------------------------------------------- no connection
 
 TEST_F( EditedDataOpsTest, RefusesADisconnectedConnection )
 {
