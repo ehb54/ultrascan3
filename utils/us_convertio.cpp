@@ -329,10 +329,10 @@ int US_ConvertIO::uploadEditedDataBlob( IUS_DB2* db, int editedDataID, const QSt
    return IUS_DB2::OK;
 }
 
-QString US_ConvertIO::writeRawDataToDB( US_Experiment& ExpData, 
-                                       QList< US_Convert::TripleInfo >& triples,
-                                       const QString& dir,
-                                       IUS_DB2* db )
+QString US_ConvertIO::writeRawDataToDB( US_Experiment&                 ExpData,
+                                        QList<US_Convert::TripleInfo>& triples,
+                                        const QString&                 dir,
+                                        IUS_DB2*                       db )
 {
    const int channelID = 1;
    QString error = QString( "" );
@@ -348,8 +348,7 @@ QString US_ConvertIO::writeRawDataToDB( US_Experiment& ExpData,
 
    if ( status != US_DB2::OK )
    {
-      error += "Error returned deleting rawData\n" +
-               QString::number( status ) + " " + db->lastError() + "\n";
+      error += QObject::tr( deleteRawDataFailedMessage ).arg( QString::number( status ), db->lastError() );
       return error;
    }
 
@@ -361,8 +360,7 @@ QString US_ConvertIO::writeRawDataToDB( US_Experiment& ExpData,
 
    if ( status != US_DB2::OK )
    {
-      error += "Error returned deleting experiment solutions\n" +
-               QString::number( status ) + " " + db->lastError() + "\n";
+      error += QObject::tr( deleteExperimentSolutionsFailedMessage ).arg( QString::number( status ), db->lastError() );
       return error;
    }
 
@@ -374,8 +372,7 @@ QString US_ConvertIO::writeRawDataToDB( US_Experiment& ExpData,
 
    if ( status != US_DB2::OK )
    {
-      error += "Error returned deleting cell experiments\n" +
-               QString::number( status ) + " " + db->lastError() + "\n";
+      error += QObject::tr( deleteCellExperimentsFailedMessage ).arg( QString::number( status ), db->lastError() );
       return error;
    }
 
@@ -425,32 +422,23 @@ qDebug() << "cvio:WrRDB: trx" << trx << "soluGUID"
       
 //qDebug() << "cvio:WrRDB:   dkStat" << diskStatus << US_DB2::NO_SOLUTION;
          if ( diskStatus == US_DB2::NO_BUFFER )
-            error += "Error processing buffer " + 
-                     triple->solution.buffer.GUID + "\n" +
-                     "Buffer was not found in the database";
-      
+            error += QObject::tr( bufferNotFoundMessage ).arg( triple->solution.buffer.GUID );
+
          else if ( diskStatus == US_DB2::NO_ANALYTE )
-            error += "Error processing analyte \n" 
-                     "An analyte was not found in the database";
-      
+            error += QObject::tr( analyteNotFoundMessage );
+
          else if ( diskStatus == US_DB2::NO_SOLUTION )
-            error += "Error processing solution " + 
-                     triple->solution.solutionGUID + "\n" +
-                     "Solution was not found in the database";
-      
+            error += QObject::tr( solutionNotFoundMessage ).arg( triple->solution.solutionGUID );
+
          else if ( diskStatus != US_DB2::OK )
-            error += "Error saving solution to DB \n" +
-                     db->lastError();
-      
+            error += QObject::tr( saveSolutionFailedMessage ).arg( db->lastError() );
       }
       
       if ( triple->solution.solutionID == 0 )
       {
          // This means that we weren't successful in adding it db
-         error += "Error processing solution " + 
-                  triple->solution.solutionGUID + "\n" +
-                  "Solution was not found in the database";
-//qDebug() << "cvio:WrRDB:    NO SOL in DB";
+         error += QObject::tr( solutionNotFoundMessage ).arg( triple->solution.solutionGUID );
+         //qDebug() << "cvio:WrRDB:    NO SOL in DB";
       }
 
       q.clear();
@@ -481,26 +469,19 @@ qDebug() << "cvio:WrRDB: trx" << trx << "soluGUID"
 
          if ( writeStatus == US_DB2::DBERROR )
          {
-            error += "Error processing file:\n" + 
-                     dir + triple->tripleFilename + "\n" +
-                     db->lastError() + "\n" +
-                     "Could not open file or no data \n";
+            error += QObject::tr( aucFileUnreadableMessage ).arg( dir + triple->tripleFilename, db->lastError() );
          }
    
          else if ( writeStatus != US_DB2::OK )
          {
-            error += "Error returned processing file:\n" + 
-                     dir + triple->tripleFilename + "\n" +
-                     db->lastError() + "\n";
+            error += QObject::tr( aucFileFailedMessage ).arg( dir + triple->tripleFilename, db->lastError() );
          }
       }
 
       else
       {
-         error += "Error returned processing file:\n" + 
-                  dir + triple->tripleFilename + "\n" +
-                  db->lastError() + "\n";
-//qDebug() << "cvio:WrRDB:  new_raw ERR" << error;
+         error += QObject::tr( aucFileFailedMessage ).arg( dir + triple->tripleFilename, db->lastError() );
+         //qDebug() << "cvio:WrRDB:  new_raw ERR" << error;
       }
 
       int status;
@@ -553,8 +534,7 @@ qDebug() << "cvio:WrRDB: trx" << trx << "soluGUID"
             << s_expID;
          status = db->statusQuery( q );
          if ( status != IUS_DB2::OK )
-            error += "Error returned writing cell record: " + cellGUID + "\n" +
-                     QString::number(status) + " " + db->lastError() + "\n";
+            error += QObject::tr( cellRecordFailedMessage ).arg( cellGUID, QString::number( status ), db->lastError() );
       }
 
       // Associate solution in this triple with experiment
@@ -571,11 +551,10 @@ qDebug() << "cvio:WrRDB: newExp id solID chnID" << ExpData.expID
  << triple->solution.solutionID << channelID;
          if ( status != US_DB2::OK )
          {
-            error += QObject::tr( "MySQL error associating experiment %1\n"
-                                  " with solution %2\n"
-                                  " code: %3  error: %4\n" )
-                     .arg( ExpData.expID ).arg( triple->solution.solutionGUID )
-                     .arg( status ).arg( db->lastError() );
+            error +=
+               QObject::tr( experimentSolutionLinkFailedMessage )
+                  .arg(
+                     QString::number( ExpData.expID ), triple->solution.solutionGUID, QString::number( status ), db->lastError() );
          }
       }
    }
@@ -595,9 +574,7 @@ qDebug() << "cvio:WrRDB: newExp id solID chnID" << ExpData.expID
 
       if ( delete_status != US_DB2::OK )
       {
-         error += "MySQL error deleting experiment "
-               + QString::number( ExpData.expID ) 
-               + "\n" + db->lastError() + "\n";
+         error += QObject::tr( deleteExperimentFailedMessage ).arg( QString::number( ExpData.expID ), db->lastError() );
       }
 
 //qDebug() << "cvio:WrRDB: OUT *ERR*" << error;
@@ -609,9 +586,11 @@ qDebug() << "cvio:WrRDB: newExp id solID chnID" << ExpData.expID
 }
 
 // Function to read the experiment info and binary auc files to disk
-QString US_ConvertIO::readDBExperiment( QString runID, QString dir,
-					IUS_DB2* db, QVector< SP_SPEEDPROFILE >& speedsteps,
-					const QString invid_p )
+QString US_ConvertIO::readDBExperiment( QString                   runID,
+                                        QString                   dir,
+                                        IUS_DB2*                  db,
+                                        QVector<SP_SPEEDPROFILE>& speedsteps,
+                                        const QString             invid_p )
 
 {
    US_Experiment ExpData;                    // A local copy of experiment
@@ -748,10 +727,7 @@ qDebug() << "rDBE:    xdefs WRITTEN";
 }
 
 // Function to read the auc files to disk
-QString US_ConvertIO::readRawDataFromDB( US_Experiment& ExpData, 
-                                       QList< US_Convert::TripleInfo >& triples,
-                                       QString& dir,
-                                       IUS_DB2* db )
+QString US_ConvertIO::readRawDataFromDB( US_Experiment& ExpData, QList<US_Convert::TripleInfo>& triples, QString& dir, IUS_DB2* db )
 {
    // Get the rawDataID's that correspond to this experiment
 qDebug() << " rRDD: build raw list";
@@ -915,9 +891,7 @@ qDebug() << " rRDD: build TripleInfo";
    return( QString( "" ) );
 }
 
-int US_ConvertIO::checkDiskData( US_Experiment& ExpData,
-                                 QList< US_Convert::TripleInfo >& triples,
-                                 IUS_DB2* db )
+int US_ConvertIO::checkDiskData( US_Experiment& ExpData, QList<US_Convert::TripleInfo>& triples, IUS_DB2* db )
 {
    if ( US_Settings::us_inv_ID() == -1 )
       return US_DB2::NO_PERSON;
@@ -1082,9 +1056,7 @@ int US_ConvertIO::checkDiskData( US_Experiment& ExpData,
 }
 
 //Copy for use in Autoflow
-int US_ConvertIO::checkDiskData_auto( US_Experiment& ExpData,
-                                 QList< US_Convert::TripleInfo >& triples,
-                                 IUS_DB2* db )
+int US_ConvertIO::checkDiskData_auto( US_Experiment& ExpData, QList<US_Convert::TripleInfo>& triples, IUS_DB2* db )
 {
    if ( US_Settings::us_inv_ID() == -1 )
       return US_DB2::NO_PERSON;

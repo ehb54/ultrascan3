@@ -1,14 +1,15 @@
+//! \file test_us_convertio_writeraw.cpp
 // Failure injection at every write stage of US_ConvertIO::writeRawDataToDB().
 //
-// The writer takes an IUS_DB2* since the Phase 5 sweep, so a scripted stand-in
-// can fail one stored procedure at a time and the caller's reporting and
+// The writer takes an IUS_DB2*, so a scripted stand-in can fail one stored
+// procedure at a time and the caller's reporting and
 // cleanup can be checked without a server.  The live rollback contract is a
 // separate thing, established against a real database; what these pin is that
 // the writer notices each failure, says which one it was, and still runs the
 // cleanup that nontransactional GUI callers depend on.
 
-#include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 #include "mock_us_db2.h"
 
@@ -23,12 +24,10 @@
 #include <QStringList>
 
 using ::testing::_;
+using ::testing::An;
 using ::testing::Invoke;
 using ::testing::NiceMock;
 using ::testing::Return;
-using ::testing::An;
-using ::testing::HasSubstr;
-using ::testing::Not;
 
 namespace
 {
@@ -36,94 +35,93 @@ namespace
 //
 // Rows are scripted per procedure so the writer's two listing loops and its
 // solution lookup behave; anything not scripted returns OK with no rows.
-class ScriptedDb : public NiceMock< US_DB2_Mock >
+class ScriptedDb : public NiceMock<US_DB2_Mock>
 {
-public:
-   ScriptedDb()
-   {
-      rowsFor[ "get_solutionID_from_GUID" ] << ( QStringList() << "7" );
+   public:
+      ScriptedDb()
+      {
+         rowsFor["get_solutionID_from_GUID"] << ( QStringList() << "7" );
 
-      ON_CALL( *this, query( An< const QStringList& >() ) )
-         .WillByDefault( Invoke( this, &ScriptedDb::onQuery ) );
-      ON_CALL( *this, statusQuery( An< const QStringList& >() ) )
-         .WillByDefault( Invoke( this, &ScriptedDb::onStatusQuery ) );
-      ON_CALL( *this, next() )
-         .WillByDefault( Invoke( this, &ScriptedDb::onNext ) );
-      ON_CALL( *this, value( _ ) )
-         .WillByDefault( Invoke( this, &ScriptedDb::onValue ) );
-      ON_CALL( *this, lastErrno() )
-         .WillByDefault( Invoke( [ this ]{ return errno_; } ) );
-      ON_CALL( *this, lastError() )
-         .WillByDefault( Return( QString( "scripted failure" ) ) );
-      ON_CALL( *this, lastInsertID() )
-         .WillByDefault( Invoke( [ this ]{ return insertID; } ) );
-      ON_CALL( *this, writeBlobToDB( _, _, _ ) )
-         .WillByDefault( Invoke( this, &ScriptedDb::onBlob ) );
-   }
+         ON_CALL( *this, query( An<const QStringList&>() ) ).WillByDefault( Invoke( this, &ScriptedDb::onQuery ) );
+         ON_CALL( *this, statusQuery( An<const QStringList&>() ) ).WillByDefault( Invoke( this, &ScriptedDb::onStatusQuery ) );
+         ON_CALL( *this, next() ).WillByDefault( Invoke( this, &ScriptedDb::onNext ) );
+         ON_CALL( *this, value( _ ) ).WillByDefault( Invoke( this, &ScriptedDb::onValue ) );
+         ON_CALL( *this, lastErrno() ).WillByDefault( Invoke( [this] { return errno_; } ) );
+         ON_CALL( *this, lastError() ).WillByDefault( Return( QString( "scripted failure" ) ) );
+         ON_CALL( *this, lastInsertID() ).WillByDefault( Invoke( [this] { return insertID; } ) );
+         ON_CALL( *this, writeBlobToDB( _, _, _ ) ).WillByDefault( Invoke( this, &ScriptedDb::onBlob ) );
+      }
 
-   //! Make one procedure fail; everything else keeps succeeding.
-   void fail( const QString& procedure, int status = IUS_DB2::DBERROR )
-   {
-      statusFor[ procedure ] = status;
-   }
+      //! Make one procedure fail; everything else keeps succeeding.
+      void fail( const QString& procedure, int status = IUS_DB2::DBERROR )
+      {
+         statusFor[procedure] = status;
+      }
 
-   QStringList             called;      //!< procedure names, in call order
-   QStringList             blobs;       //!< blob procedures, in call order
-   QMap< QString, int >    statusFor;
-   int                     blobStatus = IUS_DB2::OK;
-   int                     insertID   = 55;
+      QStringList                called;  //!< procedure names, in call order
+      QStringList                blobs;   //!< blob procedures, in call order
+      QMap<QString, QStringList> argsFor; //!< last status-query arguments
+      QMap<QString, int>         statusFor;
+      int                        blobStatus = IUS_DB2::OK;
+      int                        insertID   = 55;
 
-private:
-   int scripted( const QString& procedure )
-   {
-      return statusFor.value( procedure, IUS_DB2::OK );
-   }
+   private:
+      int scripted( const QString& procedure )
+      {
+         return statusFor.value( procedure, IUS_DB2::OK );
+      }
 
-   void onQuery( const QStringList& args )
-   {
-      const QString procedure = args.value( 0 );
-      called << procedure;
-      errno_ = scripted( procedure );
-      pending.clear();
+      void onQuery( const QStringList& args )
+      {
+         const QString procedure = args.value( 0 );
+         called << procedure;
+         errno_ = scripted( procedure );
+         pending.clear();
 
-      if ( errno_ == IUS_DB2::OK )
-         for ( const QStringList& row : rowsFor.value( procedure ) )
-            pending.enqueue( row );
-   }
+         if ( errno_ == IUS_DB2::OK )
+         {
+            for ( const QStringList& row : rowsFor.value( procedure ) )
+            {
+               pending.enqueue( row );
+            }
+         }
+      }
 
-   int onStatusQuery( const QStringList& args )
-   {
-      const QString procedure = args.value( 0 );
-      called << procedure;
-      errno_ = scripted( procedure );
-      return errno_;
-   }
+      int onStatusQuery( const QStringList& args )
+      {
+         const QString procedure = args.value( 0 );
+         called << procedure;
+         argsFor[procedure] = args;
+         errno_             = scripted( procedure );
+         return errno_;
+      }
 
-   bool onNext()
-   {
-      if ( pending.isEmpty() )
-         return false;
+      bool onNext()
+      {
+         if ( pending.isEmpty() )
+         {
+            return false;
+         }
 
-      current = pending.dequeue();
-      return true;
-   }
+         current = pending.dequeue();
+         return true;
+      }
 
-   QVariant onValue( unsigned index )
-   {
-      return ( (int)index < current.size() ) ? QVariant( current[ index ] )
-                                             : QVariant();
-   }
+      QVariant onValue( unsigned index )
+      {
+         return ( (int) index < current.size() ) ? QVariant( current[index] ) : QVariant();
+      }
 
-   int onBlob( const QString&, const QString& procedure, const int )
-   {
-      blobs << procedure;
-      return blobStatus;
-   }
+      int onBlob( const QString&, const QString& procedure, const int )
+      {
+         blobs << procedure;
+         return blobStatus;
+      }
 
-   QMap< QString, QList< QStringList > > rowsFor;
-   QQueue< QStringList >                 pending;
-   QStringList                           current;
-   int                                   errno_ = IUS_DB2::OK;
+      QMap<QString, QList<QStringList>> rowsFor;
+      QQueue<QStringList>               pending;
+      QStringList                       current;
+      int                               errno_ = IUS_DB2::OK;
 };
 
 US_Experiment sampleExperiment()
@@ -139,7 +137,7 @@ US_Experiment sampleExperiment()
    return experiment;
 }
 
-QList< US_Convert::TripleInfo > sampleTriples()
+QList<US_Convert::TripleInfo> sampleTriples()
 {
    US_Convert::TripleInfo triple;
    triple.clear();
@@ -150,26 +148,34 @@ QList< US_Convert::TripleInfo > sampleTriples()
    triple.centerpiece           = 1;
    triple.solution.solutionID   = 7;
    triple.solution.solutionGUID = "11111111-2222-3333-4444-555555555555";
-   US_Util::uuid_parse( "66666666-7777-8888-9999-aaaaaaaaaaaa",
-                        (unsigned char*)triple.tripleGUID );
+   US_Util::uuid_parse( "66666666-7777-8888-9999-aaaaaaaaaaaa", (unsigned char*) triple.tripleGUID );
 
-   return QList< US_Convert::TripleInfo >() << triple;
+   return QList<US_Convert::TripleInfo>() << triple;
 }
 }
 
 class WriteRawDataInjectionTest : public ::testing::Test
 {
-protected:
-   QString write()
-   {
-      US_Experiment experiment          = sampleExperiment();
-      QList< US_Convert::TripleInfo > t = sampleTriples();
+   protected:
+      QString write()
+      {
+         US_Experiment                 experiment = sampleExperiment();
+         QList<US_Convert::TripleInfo> t          = sampleTriples();
 
-      return US_ConvertIO::writeRawDataToDB( experiment, t, "/runs/inject/",
-                                             &db );
-   }
+         return US_ConvertIO::writeRawDataToDB( experiment, t, "/runs/inject/", &db );
+      }
 
-   ScriptedDb db;
+      static QString status()
+      {
+         return QString::number( IUS_DB2::DBERROR );
+      }
+
+      static QString aucPath()
+      {
+         return "/runs/inject/inject-run.RA.1.A.280.auc";
+      }
+
+      ScriptedDb db;
 };
 
 TEST_F( WriteRawDataInjectionTest, WritesARunAndDoesNotCleanUpAfterItself )
@@ -191,7 +197,7 @@ TEST_F( WriteRawDataInjectionTest, StopsBeforeTheTriplesWhenTheRawDeleteFails )
 
    const QString error = write();
 
-   EXPECT_THAT( error.toStdString(), HasSubstr( "deleting rawData" ) );
+   EXPECT_EQ( error, QString( US_ConvertIO::deleteRawDataFailedMessage ).arg( status(), "scripted failure" ) );
 
    // Nothing was written, so there is nothing to clean up and no experiment
    // to delete.
@@ -204,8 +210,7 @@ TEST_F( WriteRawDataInjectionTest, ReportsAFailedExperimentSolutionDelete )
 {
    db.fail( "delete_experiment_solutions" );
 
-   EXPECT_THAT( write().toStdString(),
-                HasSubstr( "deleting experiment solutions" ) );
+   EXPECT_EQ( write(), QString( US_ConvertIO::deleteExperimentSolutionsFailedMessage ).arg( status(), "scripted failure" ) );
    EXPECT_FALSE( db.called.contains( "new_rawData" ) );
 }
 
@@ -213,8 +218,7 @@ TEST_F( WriteRawDataInjectionTest, ReportsAFailedCellExperimentDelete )
 {
    db.fail( "delete_cell_experiments" );
 
-   EXPECT_THAT( write().toStdString(),
-                HasSubstr( "deleting cell experiments" ) );
+   EXPECT_EQ( write(), QString( US_ConvertIO::deleteCellExperimentsFailedMessage ).arg( status(), "scripted failure" ) );
    EXPECT_FALSE( db.called.contains( "new_rawData" ) );
 }
 
@@ -224,8 +228,7 @@ TEST_F( WriteRawDataInjectionTest, NamesTheFileWhenTheRawRowFails )
 
    const QString error = write();
 
-   EXPECT_THAT( error.toStdString(),
-                HasSubstr( "inject-run.RA.1.A.280.auc" ) );
+   EXPECT_EQ( error, QString( US_ConvertIO::aucFileFailedMessage ).arg( aucPath(), "scripted failure" ) );
 
    // No row, so no blob was attempted.
    EXPECT_TRUE( db.blobs.isEmpty() );
@@ -240,8 +243,7 @@ TEST_F( WriteRawDataInjectionTest, NamesTheFileWhenTheRawBlobFails )
 
    const QString error = write();
 
-   EXPECT_THAT( error.toStdString(),
-                HasSubstr( "inject-run.RA.1.A.280.auc" ) );
+   EXPECT_EQ( error, QString( US_ConvertIO::aucFileUnreadableMessage ).arg( aucPath(), "scripted failure" ) );
    EXPECT_EQ( db.blobs, QStringList{ "upload_aucData" } );
    EXPECT_TRUE( db.called.contains( "delete_experiment" ) );
 }
@@ -252,7 +254,9 @@ TEST_F( WriteRawDataInjectionTest, ReportsAFailedCellRecord )
 
    const QString error = write();
 
-   EXPECT_THAT( error.toStdString(), HasSubstr( "writing cell record" ) );
+   const QString cellGUID = db.argsFor["new_cell_experiment"].value( 1 );
+   ASSERT_FALSE( cellGUID.isEmpty() );
+   EXPECT_EQ( error, QString( US_ConvertIO::cellRecordFailedMessage ).arg( cellGUID, status(), "scripted failure" ) );
    EXPECT_TRUE( db.called.contains( "delete_experiment" ) );
 }
 
@@ -262,8 +266,9 @@ TEST_F( WriteRawDataInjectionTest, ReportsAFailedExperimentSolutionLink )
 
    const QString error = write();
 
-   EXPECT_THAT( error.toStdString(),
-                HasSubstr( "associating experiment" ) );
+   EXPECT_EQ( error,
+              QString( US_ConvertIO::experimentSolutionLinkFailedMessage )
+                 .arg( "11", "11111111-2222-3333-4444-555555555555", status(), "scripted failure" ) );
    EXPECT_TRUE( db.called.contains( "delete_experiment" ) );
 }
 
@@ -276,10 +281,9 @@ TEST_F( WriteRawDataInjectionTest, AddsTheCleanupsOwnFailureToTheReport )
 
    const QString error = write();
 
-   EXPECT_THAT( error.toStdString(),
-                HasSubstr( "inject-run.RA.1.A.280.auc" ) );
-   EXPECT_THAT( error.toStdString(),
-                HasSubstr( "error deleting experiment 11" ) );
+   EXPECT_EQ( error,
+              QString( US_ConvertIO::aucFileFailedMessage ).arg( aucPath(), "scripted failure" ) +
+                 QString( US_ConvertIO::deleteExperimentFailedMessage ).arg( "11", "scripted failure" ) );
 }
 
 TEST_F( WriteRawDataInjectionTest, KeepsTheCleanupForNontransactionalCallers )
@@ -291,8 +295,8 @@ TEST_F( WriteRawDataInjectionTest, KeepsTheCleanupForNontransactionalCallers )
 
    write();
 
-   const int rawIndex     = db.called.indexOf( "new_rawData" );
-   const int deleteIndex  = db.called.indexOf( "delete_experiment" );
+   const int rawIndex    = db.called.indexOf( "new_rawData" );
+   const int deleteIndex = db.called.indexOf( "delete_experiment" );
 
    ASSERT_GE( rawIndex, 0 );
    ASSERT_GE( deleteIndex, 0 );

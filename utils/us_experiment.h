@@ -93,17 +93,17 @@ class US_UTIL_EXTERN US_Experiment
           \param    db For database access, an open database connection
           \param    speedsteps Reference to vector of experiment speed steps
       */
-      int saveToDB( bool, IUS_DB2*, QVector< SP_SPEEDPROFILE >& );
-      int saveToDB_auto( bool, IUS_DB2*, QVector< SP_SPEEDPROFILE >&, int );
-      
+      int saveToDB( bool, IUS_DB2*, QVector<SP_SPEEDPROFILE>& );
+      int saveToDB_auto( bool, IUS_DB2*, QVector<SP_SPEEDPROFILE>&, int );
+
       /*! \brief    Reads experiment information from the db
 
           \param runID  The run ID of the experiment.
           \param    db For database access, an open database connection
           \param    speedsteps Reference to vector of experiment speed steps
-          \returns  One of the US_DB2 error codes
+          \returns  One of the IUS_DB2 error codes
       */
-      int readFromDB( QString, IUS_DB2*, QVector< SP_SPEEDPROFILE >&, const QString = QString("")  );
+      int readFromDB( QString, IUS_DB2*, QVector<SP_SPEEDPROFILE>&, const QString = QString( "" ) );
 
       /*! \brief    Writes an xml file
 
@@ -194,7 +194,7 @@ class US_UTIL_EXTERN US_Experiment
           \param    runID   Run ID for which to delete records
           \returns          Flag if delete was OK;
       */
-      static bool deleteRunPcsaMrecs( IUS_DB2*, const QString, const QString );
+      static bool       deleteRunPcsaMrecs( IUS_DB2*, const QString, const QString );
 
       void clear( void ); //!< Function to reset all class variables to defaults
       void show ( void ); //!< Temporary function to display current exp info

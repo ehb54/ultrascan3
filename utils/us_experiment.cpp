@@ -2,11 +2,11 @@
 
 #include <QtCore>
 
-#include "us_settings.h"
-#include "us_db2.h"
-#include "us_util.h"
-#include "us_simparms.h"
+#include "ius_db2.h"
 #include "us_experiment.h"
+#include "us_settings.h"
+#include "us_simparms.h"
+#include "us_util.h"
 
 US_Experiment::US_Experiment( void )
 {
@@ -57,8 +57,7 @@ int US_Experiment::checkRunID_auto( int invID_passed, IUS_DB2* db )
    return US_DB2::OK;
 }
 
-int US_Experiment::saveToDB( bool update, IUS_DB2* db,
-                             QVector< SP_SPEEDPROFILE >& speedsteps )
+int US_Experiment::saveToDB( bool update, IUS_DB2* db, QVector<SP_SPEEDPROFILE>& speedsteps )
 {
 qDebug() << "Exp:svToDB: update" << update << "ss-count" << speedsteps.count();
    // Let's see if the project is in the db already
@@ -178,8 +177,7 @@ qDebug() << "Exp:svToDB:     ssstat=" << ssstat;
 }
 
 //Same as above but for AutoFlow with ExpData.invID set as owner
-int US_Experiment::saveToDB_auto( bool update, IUS_DB2* db,
-				  QVector< SP_SPEEDPROFILE >& speedsteps, int invID_passed )
+int US_Experiment::saveToDB_auto( bool update, IUS_DB2* db, QVector<SP_SPEEDPROFILE>& speedsteps, int invID_passed )
 {
 qDebug() << "Exp:svToDB: update" << update << "ss-count" << speedsteps.count();
    // Let's see if the project is in the db already
@@ -304,9 +302,7 @@ qDebug() << "Exp:svToDB:     ssstat=" << ssstat;
 
 
 // Function to read an experiment from DB
-int US_Experiment::readFromDB( QString runID, IUS_DB2* db,
-                               QVector< SP_SPEEDPROFILE >& speedsteps,
-			       const QString invid_p )
+int US_Experiment::readFromDB( QString runID, IUS_DB2* db, QVector<SP_SPEEDPROFILE>& speedsteps, const QString invid_p )
 {
    qDebug() << "US_Experiment::readFromDB, invid_p -- " << invid_p;
    
@@ -1167,8 +1163,7 @@ qDebug() << "importRIxml() error" << error;
 }
 
 // Delete pcsa_modelrecs for the current experiment run
-bool US_Experiment::deleteRunPcsaMrecs( IUS_DB2* db, const QString invID,
-                                                    const QString runID )
+bool US_Experiment::deleteRunPcsaMrecs( IUS_DB2* db, const QString invID, const QString runID )
 {
    bool is_ok         = true;
 

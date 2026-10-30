@@ -93,14 +93,18 @@ public:
                   const QString& user, const QString& password,
                   QString& err ) override;
 
+    //! Transaction error formats; %1 is the server's error text.
+    static constexpr const char* commitAutocommitMessage   = "transaction committed, but autocommit could not be restored: %1";
+    static constexpr const char* rollbackAutocommitMessage = "rollback succeeded, but autocommit could not be restored: %1";
+
     /*! \brief Begin a transaction on the active connection. */
-    bool beginTransaction( QString& error ) override;
+    bool                         beginTransaction( QString& error ) final;
 
     /*! \brief Commit the active transaction and restore autocommit. */
-    bool commitTransaction( QString& error ) override;
+    bool                         commitTransaction( QString& error ) final;
 
     /*! \brief Roll back the active transaction and restore autocommit. */
-    bool rollbackTransaction( QString& error ) override;
+    bool                         rollbackTransaction( QString& error ) final;
 
     /*! \brief Implements a simple query on the active database
         connection, cleaning up any unused results from a previous query.
@@ -335,7 +339,7 @@ private:
     //! but anything that talks to the connection without going through a
     //! query, transaction control included, has to clear it first or the
     //! server answers "Commands out of sync".
-    void       drainResults   ();
+    void       drainResults();
 
     QString    buildQuery      ( const QStringList& );
     QString    buildQuerySelect( const QStringList& );

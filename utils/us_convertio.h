@@ -161,6 +161,41 @@ class US_UTIL_EXTERN US_ConvertIO
       //! database error, %4 the status.
       static constexpr const char* uploadEditedDataFailedMessage = "Could not attach %1 to editedData record %2: %3 (status %4)";
 
+      // writeRawDataToDB() error formats.  Each ends in the status and/or the
+      // database error, and the writer appends them in the order they occur.
+      //! Clearing the run's rawData failed: %1 the status, %2 the database error.
+      static constexpr const char* deleteRawDataFailedMessage             = "Error returned deleting rawData\n%1 %2\n";
+      //! Clearing the run's solution links failed: %1 the status, %2 the
+      //! database error.
+      static constexpr const char* deleteExperimentSolutionsFailedMessage = "Error returned deleting experiment solutions\n%1 %2\n";
+      //! Clearing the run's cell records failed: %1 the status, %2 the
+      //! database error.
+      static constexpr const char* deleteCellExperimentsFailedMessage     = "Error returned deleting cell experiments\n%1 %2\n";
+      //! A triple's buffer is not in the database: %1 the buffer GUID.
+      static constexpr const char* bufferNotFoundMessage   = "Error processing buffer %1\nBuffer was not found in the database";
+      //! A triple's analyte is not in the database.
+      static constexpr const char* analyteNotFoundMessage  = "Error processing analyte \nAn analyte was not found in the database";
+      //! A triple's solution is not in the database: %1 the solution GUID.
+      static constexpr const char* solutionNotFoundMessage = "Error processing solution %1\nSolution was not found in the database";
+      //! Saving a triple's solution failed: %1 the database error.
+      static constexpr const char* saveSolutionFailedMessage = "Error saving solution to DB \n%1";
+      //! The auc file could not be read for upload: %1 the file, %2 the
+      //! database error.
+      static constexpr const char* aucFileUnreadableMessage  = "Error processing file:\n%1\n%2\nCould not open file or no data \n";
+      //! Writing a triple's rawData row or blob failed: %1 the file, %2 the
+      //! database error.
+      static constexpr const char* aucFileFailedMessage      = "Error returned processing file:\n%1\n%2\n";
+      //! Writing a cell record failed: %1 the cell GUID, %2 the status, %3 the
+      //! database error.
+      static constexpr const char* cellRecordFailedMessage   = "Error returned writing cell record: %1\n%2 %3\n";
+      //! Linking a solution to the experiment failed: %1 the experiment id, %2
+      //! the solution GUID, %3 the status, %4 the database error.
+      static constexpr const char* experimentSolutionLinkFailedMessage =
+         "MySQL error associating experiment %1\n with solution %2\n code: %3  error: %4\n";
+      //! Deleting the partly written experiment failed: %1 the experiment id,
+      //! %2 the database error.
+      static constexpr const char* deleteExperimentFailedMessage = "MySQL error deleting experiment %1\n%2\n";
+
       /*! \brief Create an editedData row.
 
           \param db           An opened db connection
@@ -201,8 +236,7 @@ class US_UTIL_EXTERN US_ConvertIO
           \param db         An opened db connection
           \param speedsteps Reference for returned experiment speed steps vector
       */
-      static QString readDBExperiment( QString, QString, IUS_DB2*,
-				       QVector< SP_SPEEDPROFILE >&, const QString = QString("") );
+      static QString readDBExperiment( QString, QString, IUS_DB2*, QVector<SP_SPEEDPROFILE>&, const QString = QString( "" ) );
 
       /*! \brief Writes a new DB rawData record for each triple
 
@@ -215,11 +249,7 @@ class US_UTIL_EXTERN US_ConvertIO
           \param dir     Local disk directory where auc files can be found
           \param db      An opened db connection
       */
-      static QString writeRawDataToDB(
-                 US_Experiment& , 
-                 QList< US_Convert::TripleInfo >& ,
-                 const QString&,
-                 IUS_DB2* = 0 );
+      static QString writeRawDataToDB( US_Experiment&, QList<US_Convert::TripleInfo>&, const QString&, IUS_DB2* = 0 );
 
       /*! \brief Checks some info that was read from disk with values from DB
 
@@ -231,21 +261,10 @@ class US_UTIL_EXTERN US_ConvertIO
                          cell/channel/wavelength defined by the xml file.
           \param db      An opened db connection
       */
-      static int checkDiskData( 
-                 US_Experiment&,
-                 QList< US_Convert::TripleInfo >& ,
-                 IUS_DB2* = 0 );
-      static int checkDiskData_auto( 
-                 US_Experiment&,
-                 QList< US_Convert::TripleInfo >& ,
-                 IUS_DB2* = 0 );
+      static int     checkDiskData( US_Experiment&, QList<US_Convert::TripleInfo>&, IUS_DB2* = 0 );
+      static int     checkDiskData_auto( US_Experiment&, QList<US_Convert::TripleInfo>&, IUS_DB2* = 0 );
 
    private:
-      static QString readRawDataFromDB( 
-                 US_Experiment& , 
-                 QList< US_Convert::TripleInfo >& ,
-                 QString& ,
-                 IUS_DB2* = 0 );
-      
+      static QString readRawDataFromDB( US_Experiment&, QList<US_Convert::TripleInfo>&, QString&, IUS_DB2* = 0 );
 };
 #endif
