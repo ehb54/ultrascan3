@@ -13,39 +13,39 @@
   "targets": {
     "macos-arm64": {
       "kind": "archive",
-      "asset": "us3-toolchain-macos-arm64-qt6-35610617987.1.tar.zst",
-      "sha256": "af348fd669c73118f28871ba544eb910c6b464a8bfec1e66715e9c89fbd529d4",
+      "asset": "us3-toolchain-macos-arm64-qt6-38681512299.1.tar.zst",
+      "sha256": "01da7c65b2d3548c6621aea50a5caa4d4d81a37775db3dffd60dd550c8c9fb94",
       "repository": "ehb54/ultrascan3",
       "release_tag": "toolchain",
-      "inputs_digest": "871f8bb1bceb423cbcd5253f565ce89fe2a7c26c4945ae2fd05bbab07880f26d"
+      "inputs_digest": "9edd7eb1de5abbebaeb3cc1151bdb85b327aa32847a5136aa499f4b72bc55e02"
     },
     "macos-x64": {
       "kind": "archive",
-      "asset": "us3-toolchain-macos-x64-qt6-35610617987.1.tar.zst",
-      "sha256": "5cab45dfffe93589bdb8a647829a2d1a793c5b84ec0552546a3368911057baac",
+      "asset": "us3-toolchain-macos-x64-qt6-38681512299.1.tar.zst",
+      "sha256": "4a4db2f77e473867872435ca2862e5eba5684c2a596461411f176f51a94b46b1",
       "repository": "ehb54/ultrascan3",
       "release_tag": "toolchain",
-      "inputs_digest": "2d88def6dbb89de2355e932e752bf2854b223e8e6dc050e01b9dbdd2170b5888"
+      "inputs_digest": "ec9843bc844bb12e107a66a84fbfd2823720f10fb7345fa68bcd78a8526f0f8c"
     },
     "windows-x64": {
       "kind": "archive",
-      "asset": "us3-toolchain-windows-x64-qt6-35610617987.1.tar.zst",
-      "sha256": "1a135f157142efd0e17b5c6b3a927fd2b183ba325af00340881e9c4b01a4e509",
+      "asset": "us3-toolchain-windows-x64-qt6-38681512299.1.tar.zst",
+      "sha256": "d01e01920b7c44eed9b4851b50a9e060b73f842a093969d3406922207158293c",
       "repository": "ehb54/ultrascan3",
       "release_tag": "toolchain",
-      "inputs_digest": "60b990044035fb1691ab224ed4f7b989d3599a950f8168b0d5aa1c081c2d17ae"
+      "inputs_digest": "6cf144bab9888c9fba0ece070230189cfa5613c212f57297ca876b00159ef396"
     },
     "ubuntu2404-x64": {
       "kind": "container",
       "image": "ghcr.io/ehb54/us3-toolchain-ubuntu2404",
-      "digest": "sha256:3a679bc0a764bd4855af7cd4bff3cc8748a6181b428edf2dcb7fc144932a4b62",
-      "inputs_digest": "7fd584752b9fa6b01ed4713e388a56a08b6ed60b21228e6075106662334634f4"
+      "digest": "sha256:e0f657dba9231441b6949f69e70d5187df3260cb0ae09172fd88808a8788f0c2",
+      "inputs_digest": "e3867dc41e9d1f29ce0ed58ea9d6e112cfc1a28e5eaa5a92e3b89ca81839e1b9"
     },
     "oraclelinux8-x64": {
       "kind": "container",
       "image": "ghcr.io/ehb54/us3-toolchain-oraclelinux8",
-      "digest": "sha256:18b3516331f5ce3873c07a2655da63f1784880db5169852bc20d9e8fe97bd25e",
-      "inputs_digest": "a62d9e4e939cb1134964db57eb71c23a0050df9affbb05110c1c9e54123d1db0"
+      "digest": "sha256:53073b60b5d9aca51d0dd7e3f4f6ad7e71dffa86c4cb6028c9b80ff31b447b2d",
+      "inputs_digest": "c353405f0fb33a162ddf22e54ffb2fee266d9cc2a210aae3d411365800a8668f"
     }
   }
 }

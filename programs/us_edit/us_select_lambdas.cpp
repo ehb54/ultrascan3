@@ -27,8 +27,10 @@ US_SelectLambdas::US_SelectLambdas( QVector< int > lambdas )
    // Read-only lambda list count text
    le_original   = us_lineedit( tr( "%1 original lambdas" )
                       .arg( nbr_orig ),   -1, true );
+   le_original->setAccessibleName( tr( "Original Lambda Count" ) );
    le_selected   = us_lineedit( tr( "%1 selected lambdas" )
                       .arg( nbr_select ), -1, true );
+   le_selected->setAccessibleName( tr( "Selected Lambda Count" ) );
 
    // Lambda list labels
    QLabel* lb_original = us_label( tr( "Original Lambdas" ) );
@@ -36,7 +38,11 @@ US_SelectLambdas::US_SelectLambdas( QVector< int > lambdas )
 
    // Lambda list widgets
    lw_original   = us_listwidget();
+   lw_original->setAccessibleName( tr( "Original Lambdas" ) );
+   lb_original->setBuddy( lw_original );
    lw_selected   = us_listwidget();
+   lw_selected->setAccessibleName( tr( "Selected Lambdas" ) );
+   lb_selected->setBuddy( lw_selected );
    lw_original->setSelectionMode( QAbstractItemView::ExtendedSelection );
    lw_selected->setSelectionMode( QAbstractItemView::ExtendedSelection );
 

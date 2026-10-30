@@ -83,7 +83,8 @@ HEADERS      = \
                us_theme.h               \
                us_tmst_plot.h           \
                us_widgets.h             \
-               us_widgets_dialog.h
+               us_widgets_dialog.h      \
+               us_gmp_progress.h
 
 SOURCES      = \
                us_abstractrotor_gui.cpp   \

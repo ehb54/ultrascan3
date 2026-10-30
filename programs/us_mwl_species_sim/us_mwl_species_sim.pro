@@ -5,6 +5,6 @@ TARGET        = us_mwl_species_sim
 
 HEADERS       = us_mwl_species_sim.h
 
-SOURCES       = main.cpp \
+SOURCES       = us_mwl_species_sim_main.cpp \
                 us_mwl_species_sim.cpp
 

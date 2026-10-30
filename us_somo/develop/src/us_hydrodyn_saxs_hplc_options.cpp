@@ -71,24 +71,12 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    AUTFBACK( rb_integral );
    connect( rb_integral, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
-#if 1 // QT_VERSION < 0x040000
    bg_bl_type = new QButtonGroup( this );
    int bg_pos = 0;
    bg_bl_type->setExclusive(true);
    bg_bl_type->addButton( rb_linear, bg_pos++ );
    bg_bl_type->addButton( rb_integral, bg_pos++ );
    // connect( bg_bl_type, SIGNAL( buttonClicked( int id ) ), SLOT( update_enables() ) );
-#else
-   bg_bl_type = new QGroupBox();
-   bg_bl_type->setFlat( true );
-
-   {
-      QHBoxLayout * bl = new QHBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
-      bl->addWidget( rb_linear );
-      bl->addWidget( rb_integral );
-      bg_bl_type->setLayout( bl );
-   }
-#endif
    
    cb_save_bl = new QCheckBox(this);
    // cb_save_bl->setText( us_tr( "Produce separate baseline curves " ) );
@@ -263,7 +251,6 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    rb_emggmg->setPalette( PALET_NORMAL );
    AUTFBACK( rb_emggmg );
 
-#if 1 // QT_VERSION < 0x040000
    bg_gaussian_type = new QButtonGroup( this );
    bg_pos = 0;
    bg_gaussian_type->setExclusive(true);
@@ -271,19 +258,6 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    bg_gaussian_type->addButton( rb_gmg, bg_pos++ );
    bg_gaussian_type->addButton( rb_emg, bg_pos++ );
    bg_gaussian_type->addButton( rb_emggmg, bg_pos++ );
-#else
-   bg_gaussian_type = new QGroupBox();
-   bg_gaussian_type->setFlat( true );
-   
-   {
-      QHBoxLayout * bl = new QHBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
-      bl->addWidget( rb_gauss );
-      bl->addWidget( rb_gmg );
-      bl->addWidget( rb_emg );
-      bl->addWidget( rb_emggmg );
-      bg_gaussian_type->setLayout( bl );
-   }
-#endif
 
    pb_clear_gauss =  new QPushButton ( us_tr( "Clear cached Gaussian values" ), this );
    pb_clear_gauss -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1) );

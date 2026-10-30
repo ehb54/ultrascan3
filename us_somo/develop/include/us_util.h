@@ -25,14 +25,9 @@
 
 #include "us.h"
 #include "us_extern.h"
-#if QT_VERSION < 0x040000
-# include "us_imgviewer.h"
-#endif
 
-#if QT_VERSION >= 0x050000
 # include <QtWidgets>
 # include <QDebug>
-#endif
 
 //standard C and C++ defs:
 
@@ -321,12 +316,10 @@ struct SA2d_control_variables
   double  minx, miny, maxx, maxy, maxz, xscaling, yscaling, zscaling, alpha, beta;
 };
 
-#if QT_VERSION >= 0x040000
 extern QString us_tr( QString );
 extern const char * us_trp( QString );
 extern void us_qdebug( QString );
 extern FILE * us_fopen( QString f, const char *mode );
-#endif
 
 class US_EXTERN US_Static {
  public:
@@ -336,14 +329,12 @@ class US_EXTERN US_Static {
    static int lvi_depth( QTreeWidgetItem *lvi );
    static QTreeWidgetItem * lv_lastItem( QTreeWidget *lv );
 
-#if QT_VERSION >= 0x040000
    static double getDouble(const QString & title, const QString & label, double value = 0, double min = -2147483647, double max = 2147483647, int decimals = 1, bool * ok = 0, QWidget * parent = 0, const char * name = 0 );
    static int getInteger(const QString & title, const QString & label, int value = 0, int min = -2147483647, int max = 2147483647, int step = 1, bool * ok = 0, QWidget * parent = 0, const char * name = 0 );
    static QString getItem(const QString & title, const QString & label, const QStringList & list, int current = 0, bool editable = true, bool * ok = 0, QWidget * parent = 0, const char * name = 0 );
    static QString getText(const QString & title, const QString & label, QLineEdit::EchoMode echo = QLineEdit::Normal, const QString & text = QString(), bool * ok = 0, QWidget * parent = 0, const char * name = 0 );
    // static FILE * us_fopen( QString f, const char *mode );
    static int us_message(const QString & title, const QString & text, const QString & buttonText = QString(), QWidget * parent = 0, const char * name = 0);
-#endif
 };
 
 #endif

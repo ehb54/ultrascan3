@@ -370,29 +370,24 @@ bool US_DB2::connect(
 #endif
 
 #ifdef NO_DB
-bool US_DB2::beginTransaction( QString& transaction_error )
+bool US_DB2::beginTransaction( QString& )
 {
-   transaction_error = "Database support is disabled";
    return false;
 }
-
-bool US_DB2::commitTransaction( QString& transaction_error )
+bool US_DB2::commitTransaction( QString& )
 {
-   transaction_error = "Database support is disabled";
    return false;
 }
-
-bool US_DB2::rollbackTransaction( QString& transaction_error )
+bool US_DB2::rollbackTransaction( QString& )
 {
-   transaction_error = "Database support is disabled";
    return false;
 }
 #else
 bool US_DB2::beginTransaction( QString& transaction_error )
 {
-   if ( ! connected )
+   if ( !connected )
    {
-      transaction_error = "Database is not connected";
+      transaction_error = QObject::tr( notConnectedMessage ).arg( "beginTransaction" );
       return false;
    }
 
@@ -411,9 +406,9 @@ bool US_DB2::beginTransaction( QString& transaction_error )
 
 bool US_DB2::commitTransaction( QString& transaction_error )
 {
-   if ( ! connected )
+   if ( !connected )
    {
-      transaction_error = "Database is not connected";
+      transaction_error = QObject::tr( notConnectedMessage ).arg( "commitTransaction" );
       return false;
    }
 
@@ -432,8 +427,7 @@ bool US_DB2::commitTransaction( QString& transaction_error )
 
    if ( mysql_autocommit( db, true ) != 0 )
    {
-      transaction_error = "transaction committed, but autocommit could not be "
-                          "restored: " + QString( mysql_error( db ) );
+      transaction_error = QObject::tr( commitAutocommitMessage ).arg( mysql_error( db ) );
       return true;
    }
 
@@ -443,9 +437,9 @@ bool US_DB2::commitTransaction( QString& transaction_error )
 
 bool US_DB2::rollbackTransaction( QString& transaction_error )
 {
-   if ( ! connected )
+   if ( !connected )
    {
-      transaction_error = "Database is not connected";
+      transaction_error = QObject::tr( notConnectedMessage ).arg( "rollbackTransaction" );
       return false;
    }
 
@@ -461,8 +455,7 @@ bool US_DB2::rollbackTransaction( QString& transaction_error )
 
    if ( mysql_autocommit( db, true ) != 0 )
    {
-      transaction_error = "rollback succeeded, but autocommit could not be "
-                          "restored: " + QString( mysql_error( db ) );
+      transaction_error = QObject::tr( rollbackAutocommitMessage ).arg( mysql_error( db ) );
       return true;
    }
 
@@ -472,7 +465,9 @@ bool US_DB2::rollbackTransaction( QString& transaction_error )
 #endif
 
 #ifdef NO_DB
-void US_DB2::drainResults(){}
+void US_DB2::drainResults()
+{
+}
 #else
 void US_DB2::drainResults()
 {
@@ -490,7 +485,9 @@ void US_DB2::drainResults()
 #endif
 
 #ifdef NO_DB
-void US_DB2::rawQuery( const QString& ){}
+void US_DB2::rawQuery( const QString& )
+{
+}
 #else
 void US_DB2::rawQuery( const QString& sqlQuery )
 {

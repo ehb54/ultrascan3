@@ -49,6 +49,7 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    usmode = false;
    us_prot_dev_mode = false;
    us_abde_mode = false;
+   us_velmwl_mode    = false;
    expPanelSet = false;
    
    global_reset = false;
@@ -398,6 +399,28 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
       return;
     }
 
+    // dataSource: read it straight from the parent run's autoflowHistory record
+    //(Instrument | dataDiskAUC | dataDiskAUC:Absorbance |
+    //dataDiskAUC:PseudoAbsorbance)
+    {
+       QStringList qhist;
+       qhist << "read_autoflow_history_record" << protocol_details["autoflowID"];
+       db.query( qhist );
+       if ( db.lastErrno() == US_DB2::OK )
+       {
+          while ( db.next() )
+          {
+             QString ds_hist = db.value( 27 ).toString(); // dataSource column
+             qDebug() << "PD load: dataSource passed, from autoflowHistory -- " << protocol_details["dataSource"] << ds_hist;
+             if ( !ds_hist.isEmpty() )
+             {
+                protocol_details["dataSource"] = ds_hist;
+                dataSource_pd                  = ds_hist;
+             }
+          }
+       }
+    }
+
   //Important: set investigator in US_Settings!!!
   QStringList query;
   query << "get_person_info" << protocol_details[ "invID_passed" ];
@@ -450,9 +473,21 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
 
   //set dataDisk flag if protocol refers dataDisk
   epanRotor->set_dataSource_public( protocol_details );
-  
+
+  // Vel-MWL: autoflow record's expType is authoritative (covers protocols
+  // lacking vel_mwl_prot)
+  if ( protocol_details["expType"] == "VELOCITY-MWL" )
+  {
+     currProto.rpRotor.vel_mwl_prot = true;
+  }
+
+  // Autoflow path: no dialog here -- forward Analysis Profile read progress as
+  // a signal (the caller that owns the "setting up experiment" message can show
+  // it)
+  aprof_progress_cb = [this]( int done, int total, const QString& detail ) { emit aprofile_read_progress( done, total, detail ); };
   initPanels();
-  
+  aprof_progress_cb = nullptr;
+
   qDebug() << "In load_protocol: currProto.investigator 2 --  " <<  currProto.investigator;
  
   //SET epanAProf->sdiag->loadProf TO epanAProf->sdiag->currProf
@@ -491,6 +526,13 @@ void US_ExperimentMain::unset_abde_mode_aprofile( void )
   //re-initialize respectively AProfile's report/reportItem portions
   // abde_sv_mode_change_reset_reports( "SV" ); 
   
+}
+
+// set | unset Vel-MWL mode
+void US_ExperimentMain::setUnset_velmwl_mode_aprofile( bool set_value )
+{
+   us_velmwl_mode                            = set_value;
+   epanAProfile->sdiag->velmwl_mode_aprofile = set_value;
 }
 
 //re-initialize respectively AProfile's report/reportItem portions
@@ -552,9 +594,6 @@ void US_ExperimentMain::us_mode_passed( void )
   this->tabWidget->setTabText( 7, "8: Submit");
   
 }
-
-
-	  
 
 void US_ExperimentMain::auto_mode_passed( void )
 {
@@ -679,65 +718,75 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    pb_project      = us_pushbutton( tr( "Select Project" ) );
    QPushButton* pb_protocol     = us_pushbutton( tr( "Load Protocol" ) );
                 le_runid        = us_lineedit( "", 0, false );
+                le_runid->setAccessibleName( tr( "Run Name" ) );
+                lb_runid->setBuddy( le_runid );
                 le_protocol     = us_lineedit( "", 0, false );
+                le_protocol->setAccessibleName( tr( "Protocol Name" ) );
                 le_project      = us_lineedit( "", 0, true  );
+                le_project->setAccessibleName( tr( "Project" ) );
 
-		//ct_tempera      = us_counter ( 2, 0,  40, 20 );
-		ct_tempera      = us_spinbox();
-		ct_tempera      ->setRange(0, 40);
-		ct_tempera      ->setValue(20);  
-		
-		//ct_tedelay      = us_counter ( 2, 0, 120, 10 );
-		ct_tedelay      = us_spinbox();
-		ct_tedelay      ->setRange(0, 120);
-		ct_tedelay      ->setValue(10);  
-		
-   int          ihgt            = pb_protocol->height();
-   QSpacerItem* spacer1         = new QSpacerItem( 20, ihgt );
-   QSpacerItem* spacer2         = new QSpacerItem( 20, ihgt );
+                //ct_tempera      = us_counter ( 2, 0,  40, 20 );
+                ct_tempera = us_spinbox();
+                ct_tempera->setRange( 0, 40 );
+                ct_tempera->setValue( 20 );
+                ct_tempera->setAccessibleName( tr( "Run Temperature" ) );
 
-   //ALEXEY: if autoflow mode, add label field
-   lb_label          = us_label( tr( "Label:" ) );
-   le_label          = us_lineedit( "", 0, false );
+                //ct_tedelay      = us_counter ( 2, 0, 120, 10 );
+                ct_tedelay = us_spinbox();
+                ct_tedelay->setRange( 0, 120 );
+                ct_tedelay->setValue( 10 );
+                ct_tedelay->setAccessibleName( tr( "Temperature-Equilibration Delay" ) );
+
+                int          ihgt    = pb_protocol->height();
+                QSpacerItem* spacer1 = new QSpacerItem( 20, ihgt );
+                QSpacerItem* spacer2 = new QSpacerItem( 20, ihgt );
+
+                //ALEXEY: if autoflow mode, add label field
+                lb_label = us_label( tr( "Label:" ) );
+                le_label = us_lineedit( "", 0, false );
+                le_label->setAccessibleName( tr( "Label" ) );
+                lb_label->setBuddy( le_label );
 
 
-   le_runid->setPlaceholderText("Enter Run ID to continue");
-   le_project->setPlaceholderText("Select Project to continue");
+                le_runid->setPlaceholderText( "Enter Run ID to continue" );
+                le_project->setPlaceholderText( "Select Project to continue" );
 
-   //temperature
-   ct_tempera->setSingleStep( 1 );
-   ct_tempera->setValue     ( 20 );
-   ct_tempera->adjustSize   ();
+                //temperature
+                ct_tempera->setSingleStep( 1 );
+                ct_tempera->setValue( 20 );
+                ct_tempera->adjustSize();
+                // QSpinBox has no "stepSize" property, so Qt's accessible interface always reads it as invalid (CRASH-01).
+                ct_tempera->setProperty( "stepSize", QVariant::fromValue( double( ct_tempera->singleStep() ) ) );
 
-   //delay
-   ct_tedelay->setSingleStep( 1 );
-   ct_tedelay->setValue     ( 10 );
-   ct_tedelay->adjustSize   ();
+                //delay
+                ct_tedelay->setSingleStep( 1 );
+                ct_tedelay->setValue( 10 );
+                ct_tedelay->adjustSize();
 
-   //IMPORTANT: set your own credentials (as in DB)
-   update_inv();
-   
-   // Set up an approprate investigator text
-   if ( US_Settings::us_inv_level() < 1 )
-      pb_investigator->setEnabled( false );
+                //IMPORTANT: set your own credentials (as in DB)
+                update_inv();
 
-   int id          = US_Settings::us_inv_ID();
-   QString invnbr  = ( id > 0 ) ?
-      QString::number( US_Settings::us_inv_ID() ) + ": "
-      : "";
-   QString invtxt  = invnbr + US_Settings::us_inv_name();
-   le_investigator = us_lineedit( invtxt, 0, true );
-DbgLv(1) << "EGGe:main: invtxt" << invtxt
- << "invlev" << US_Settings::us_inv_level()
- << "invenab" << pb_investigator->isEnabled();
-//*DEBUG*
-QStringList gxhosts;
-QList< QStringList > gxentrs;
-gxentrs = US_Settings::xpn_db_hosts();
-for (int jj=0;jj<gxentrs.count();jj++)
-{
- DbgLv(1) << "EGGe:main: jj xpnentr" << jj << gxentrs[jj];
-}
+                // Set up an approprate investigator text
+                if ( US_Settings::us_inv_level() < 1 )
+                {
+                   pb_investigator->setEnabled( false );
+                }
+
+                int     id      = US_Settings::us_inv_ID();
+                QString invnbr  = ( id > 0 ) ? QString::number( US_Settings::us_inv_ID() ) + ": " : "";
+                QString invtxt  = invnbr + US_Settings::us_inv_name();
+                le_investigator = us_lineedit( invtxt, 0, true );
+                le_investigator->setAccessibleName( tr( "Investigator" ) );
+                DbgLv( 1 ) << "EGGe:main: invtxt" << invtxt << "invlev" << US_Settings::us_inv_level() << "invenab"
+                           << pb_investigator->isEnabled();
+                //*DEBUG*
+                QStringList        gxhosts;
+                QList<QStringList> gxentrs;
+                gxentrs = US_Settings::xpn_db_hosts();
+                for ( int jj = 0; jj < gxentrs.count(); jj++ )
+                {
+                   DbgLv( 1 ) << "EGGe:main: jj xpnentr" << jj << gxentrs[jj];
+                }
 //*DEBUG*
 
    // Set defaults
@@ -921,7 +970,21 @@ void US_ExperGuiGeneral::label_name_entered( void )
     }
   */
   /***********************************************************************************/
-  
+
+  // Replace characters that are unsafe in paths (e.g. '/') with '_'
+  lname = US_RunProtocol::sanitize_name( lname );
+  if ( lname != old_lname )
+  {
+     QMessageBox::warning( this,
+                           tr( "Label Changed" ),
+                           tr( "The label may not contain any of the characters\n"
+                               "/ \\ : * ? \" < > |\n"
+                               "They have been replaced by underscores.\n"
+                               "New label:\n  " ) +
+                              lname );
+     changed = true;
+  }
+
   // Limit label's length to 60 characters
   if ( lname.length() > 60 )
     {
@@ -1136,16 +1199,22 @@ DbgLv(1) << "EGGe:ldPro: Disk-B: load_db" << load_db;
 
    if ( pdiag->exec() == QDialog::Accepted )
    {  // Accept in dialog:  get selected protocol name and its XML
-     DbgLv(1) << "EGGe:ldPro:  ACCEPT  prx" << prx << "sel proto" << protdata[prx][0] << "protID" << protdata[prx][2];
+      // One progress dialog, attached to the top-level window, for the whole
+      // load
+      mainw->load_progress()->setStage( 1, 0, tr( "Loading Protocol" ), tr( "Resetting experiment panels..." ), 100 );
+      mainw->load_progress()->setValue( 1 );
+      DbgLv( 1 ) << "EGGe:ldPro:  ACCEPT  prx" << prx << "sel proto" << protdata[prx][0] << "protID" << protdata[prx][2];
 
-     qDebug() << "In load_protocol: before RESET, currProto->investigator: -- " << currProto->investigator;
-     //ALEXEY: need to reset everything:
-     mainw->reset();
-     qDebug() << "In load_protocol: after RESET, currProto->investigator: -- " << currProto->investigator;
-     
+      qDebug() << "In load_protocol: before RESET, currProto->investigator: -- " << currProto->investigator;
+      //ALEXEY: need to reset everything:
+      mainw->reset();
+      qDebug() << "In load_protocol: after RESET, currProto->investigator: -- " << currProto->investigator;
+
       QString pname         = protdata[ prx ][ 0 ];
 
       // Get the protocol XML that matches the selected protocol name
+      mainw->load_progress()->setLabelText( tr( "Reading protocol..." ) );
+      mainw->load_progress()->setValue( 4 );
       protoID               = US_ProtocolUtil::read_record( pname, &xmlstr, NULL, dbP );
 DbgLv(1) << "EGGe:ldPro:  ACCEPT   read_record return len(xml)" << xmlstr.length()
 	 << "protoID" << protoID;
@@ -1162,6 +1231,8 @@ DbgLv(1) << "EGGe:ldPro:  REJECT";
    }
 
    // Now that we have a protocol XML, convert it to internal controls
+   mainw->load_progress()->setLabelText( tr( "Applying protocol..." ) );
+   mainw->load_progress()->setValue( 8 );
    QXmlStreamReader xmli( xmlstr );
    mainw->loadProto.fromXml( xmli );
    mainw->loadProto.protoID = protoID;
@@ -1201,8 +1272,9 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
    // Initialize all other panels using the new protocol
 
    qDebug() << "In load_protocol: currProto->investigator 1 --  " <<  currProto->investigator;
-      
-   mainw->initPanels();
+
+   mainw->initPanels_with_progress( true );
+   mainw->load_progress()->finish(); // before any warning message boxes below
    // If there is a linked AnalysisProfile, copy to loadAProto!!!
    //SET epanAProf->sdiag->loadProf TO epanAProf->sdiag->currProf
    US_AnaProfile aprof_curr_read   = *(mainw->get_aprofile());
@@ -1240,8 +1312,8 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
        QMessageBox::warning( this,
 			     tr( "Use of R&D Protocol in GMP Framework" ),
 			     msg_rd_in_gmp);
-       
-       mainw->initPanels();
+
+       mainw->initPanels_with_progress();
        return;
      }
 
@@ -1265,7 +1337,7 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
        qDebug() << "LEGACY[AFTER]mainw->currProto.rpSpeed.ssteps.size(), nsteps -- "
 		<< mainw->currProto.rpSpeed.ssteps.size() << mainw->currProto.rpSpeed.nstep;
 
-       mainw->initPanels();
+       mainw->initPanels_with_progress();
 
        return;
      }
@@ -1293,6 +1365,20 @@ void US_ExperGuiGeneral::update_protdata( void )
 void US_ExperGuiGeneral::changed_protocol( void )
 {
    QString protoname    = le_protocol->text();
+   QString old_pname    = protoname;
+   protoname            = US_RunProtocol::sanitize_name( protoname, true );
+
+   if ( protoname != old_pname )
+   { // Invalid characters were replaced: tell the
+      // user, update the edit box
+      QMessageBox::warning( this,
+                            tr( "Protocol Name Changed" ),
+                            tr( "The protocol name has been changed. It may consist only\n"
+                                "of alphanumeric characters or underscore or hyphen.\n"
+                                "New protocol name:\n  " ) +
+                               protoname );
+      le_protocol->setText( protoname );
+   }
 
    if ( pr_names.contains( protoname )  ||  protoname.trimmed() == "" )
    {
@@ -1366,6 +1452,7 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    // rpSubmt             = &(mainw->currProto.rpSubmt);
    ra_data_type = false;
    ra_data_sim  = false;
+   vel_mwl             = false;
 
    dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
@@ -1380,257 +1467,294 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    QLabel*      lb_calibr   = us_label( tr( "Calibration:" ) );
    QPushButton* pb_advrotor = us_pushbutton( tr( "Advanced Lab/Rotor/Calibration" ) );
    int          ihgt        = pb_advrotor->height();
-                cb_lab      = new QComboBox( this );
-                cb_rotor    = new QComboBox( this );
-                cb_calibr   = new QComboBox( this );
+   cb_lab                   = new QComboBox( this );
+   cb_lab->setAccessibleName( tr( "Laboratory" ) );
+   lb_lab->setBuddy( cb_lab );
+   cb_rotor = new QComboBox( this );
+   cb_rotor->setAccessibleName( tr( "Rotor" ) );
+   lb_rotor->setBuddy( cb_rotor );
+   cb_calibr = new QComboBox( this );
+   cb_calibr->setAccessibleName( tr( "Calibration" ) );
+   lb_calibr->setBuddy( cb_calibr );
    QSpacerItem* spacer1     = new QSpacerItem( 20, ihgt );
 
 
    QLabel*      lb_optima_banner    = us_banner( tr( "Select Optima Machine and Experiment Type " ) );
    //QLabel*      lb_instrument = us_label( tr( "Instrument:" ) );
-                lb_instrument = us_label( tr( "Instrument:" ) );
+   lb_instrument                    = us_label( tr( "Instrument:" ) );
    //le_instrument = us_lineedit(   "", 1, true );
-                cb_optima           = new QComboBox( this );
+   cb_optima                        = new QComboBox( this );
+   cb_optima->setAccessibleName( tr( "Instrument" ) );
+   lb_instrument->setBuddy( cb_optima );
    //QLabel*      lb_optima_connected = us_label( tr( "Connection Status: " ) );
-		lb_optima_connected = us_label( tr( "Connection Status: " ) );
-                le_optima_connected = us_lineedit( "", 0, true );
+   lb_optima_connected = us_label( tr( "Connection Status: " ) );
+   le_optima_connected = us_lineedit( "", 0, true );
+   le_optima_connected->setAccessibleName( tr( "Connection Status" ) );
+   lb_optima_connected->setBuddy( le_optima_connected );
 
-                lb_operator   = us_label( tr( "Select Operator:" ) );
-                cb_operator   = new QComboBox( this );
+   lb_operator = us_label( tr( "Select Operator:" ) );
+   cb_operator = new QComboBox( this );
+   cb_operator->setAccessibleName( tr( "Operator" ) );
+   lb_operator->setBuddy( cb_operator );
 
    QLabel*      lb_exptype    = us_label( tr( "Experiment Type:" ) );
-                cb_exptype    = new QComboBox( this );
+   cb_exptype                 = new QComboBox( this );
+   cb_exptype->setAccessibleName( tr( "Experiment Type" ) );
+   lb_exptype->setBuddy( cb_exptype );
 
-		//select data source from disk
-		ck_disksource = new QCheckBox( tr("Select Data Source:"), this );
-		ck_disksource ->setAutoFillBackground( true );
-		ck_disksource ->setChecked( false );
+                // add MWL experiment checkbox for Velocity
+                ck_velmwl = new QCheckBox( tr( "Treat as MWL" ), this );
+                ck_velmwl->setAutoFillBackground( true );
+                ck_velmwl->setChecked( false );
 
-		pb_importDisk   = us_pushbutton( tr( "Import .AUC Data" ) );
-		le_dataDiskPath = us_lineedit( "", 0, true );
+                //select data source from disk
+                ck_disksource = new QCheckBox( tr( "Select Data Source:" ), this );
+                ck_disksource->setAutoFillBackground( true );
+                ck_disksource->setChecked( false );
 
-		ck_absorbance_t = new QCheckBox( tr("Absorbance Data (RA):"), this );
-		ck_absorbance_t ->setAutoFillBackground( true );
-		ck_absorbance_t ->setChecked( false );
+                pb_importDisk   = us_pushbutton( tr( "Import .AUC Data" ) );
+                le_dataDiskPath = us_lineedit( "", 0, true );
 
-		ck_absorbance_pa = new QCheckBox( tr("Pseudo-Absorbance Data:"), this );
-		ck_absorbance_pa ->setAutoFillBackground( true );
-		ck_absorbance_pa ->setChecked( false );
-		
-		
+                ck_absorbance_t = new QCheckBox( tr( "Absorbance Data (RA):" ), this );
+                ck_absorbance_t->setAutoFillBackground( true );
+                ck_absorbance_t->setChecked( false );
 
-   int row     = 0;
-   genL->addWidget( lb_lab,          row,   0, 1, 1 );
-   genL->addWidget( cb_lab,          row++, 1, 1, 1 );
-   genL->addWidget( lb_rotor,        row,   0, 1, 1 );
-   genL->addWidget( cb_rotor,        row,   1, 1, 1 );
-   genL->addWidget( lb_calibr,       row,   2, 1, 1 );
-   genL->addWidget( cb_calibr,       row++, 3, 1, 1 );
-   genL->addItem  ( spacer1,         row++, 0, 1, 4 );
-   genL->addWidget( pb_advrotor,     row++, 0, 1, 4 );
-
-   row++;
-
-   genL->addItem  ( spacer1,         row++, 0, 1, 4 );
-   genL->addWidget( lb_optima_banner,row++, 0, 1, 4 );
+                ck_absorbance_pa = new QCheckBox( tr( "Pseudo-Absorbance Data:" ), this );
+                ck_absorbance_pa->setAutoFillBackground( true );
+                ck_absorbance_pa->setChecked( false );
 
 
-   genL->addWidget( lb_instrument,         row,     0, 1, 1 );
-   genL->addWidget( cb_optima,             row,     1, 1, 1 );
-   genL->addWidget( lb_optima_connected,   row,     2, 1, 1 );
-   genL->addWidget( le_optima_connected,   row++,   3, 1, 1 );
+                int row = 0;
+                genL->addWidget( lb_lab, row, 0, 1, 1 );
+                genL->addWidget( cb_lab, row++, 1, 1, 1 );
+                genL->addWidget( lb_rotor, row, 0, 1, 1 );
+                genL->addWidget( cb_rotor, row, 1, 1, 1 );
+                genL->addWidget( lb_calibr, row, 2, 1, 1 );
+                genL->addWidget( cb_calibr, row++, 3, 1, 1 );
+                genL->addItem( spacer1, row++, 0, 1, 4 );
+                genL->addWidget( pb_advrotor, row++, 0, 1, 4 );
 
-   genL->addWidget( lb_operator,        row,     0, 1, 1 );
-   genL->addWidget( cb_operator,        row++,   1, 1, 1 );
+                row++;
 
-   genL->addWidget( lb_exptype,         row,     0, 1, 1 );
-   genL->addWidget( cb_exptype,         row++,   1, 1, 1 );
-
-   genL->addWidget( ck_disksource,     row++,   0, 1, 4 );
-   genL->addWidget( pb_importDisk,     row,     1, 1, 1 );
-   genL->addWidget( le_dataDiskPath,   row++,   2, 1, 2 );
-   genL->addWidget( ck_absorbance_t,   row++,   1, 1, 1 );
-   genL->addWidget( ck_absorbance_pa,  row++,   1, 1, 1 );
+                genL->addItem( spacer1, row++, 0, 1, 4 );
+                genL->addWidget( lb_optima_banner, row++, 0, 1, 4 );
 
 
-   //connect checkbox & import
-   connect( ck_disksource, &QAbstractButton::toggled,
-	    this,           &US_ExperGuiRotor::importDiskChecked );
-   connect( pb_importDisk,      &QAbstractButton::clicked,
-	    this,           &US_ExperGuiRotor::importDisk );
-   // connect( ck_absorbance_t, SIGNAL( toggled     ( bool ) ),
-   // 	    this,           SLOT  ( dataDiskAbsChecked( bool ) ) );
-   connect( ck_absorbance_pa, &QAbstractButton::toggled,
-    	    this,           &US_ExperGuiRotor::dataDiskPseudoAbsChecked );
+                genL->addWidget( lb_instrument, row, 0, 1, 1 );
+                genL->addWidget( cb_optima, row, 1, 1, 1 );
+                genL->addWidget( lb_optima_connected, row, 2, 1, 1 );
+                genL->addWidget( le_optima_connected, row++, 3, 1, 1 );
 
-   genL->addItem  ( spacer1,         row++, 0, 1, 4 );
+                genL->addWidget( lb_operator, row, 0, 1, 1 );
+                genL->addWidget( cb_operator, row++, 1, 1, 1 );
 
-   //[NEW] Add gui for assigning operator(s) && reviewer(s)
-   QGridLayout*  revOperGMPRunGrid  = new QGridLayout();
-      
-   lb_operator_reviewer_banner    = us_banner( tr( "Assign Operator and Reviewer(s) " ) );
-   QFontMetrics m (lb_operator_reviewer_banner -> font()) ;
-   int RowHeight = m.lineSpacing() ;
-   lb_operator_reviewer_banner  -> setFixedHeight  (1.5 * RowHeight);
-   
-   lb_choose_oper      = us_label( "Choose Operator:" );
-   lb_choose_rev       = us_label( "Choose Reviewer:" );
-   lb_choose_appr      = us_label( "Choose Approver:" );
-   lb_choose_sme       = us_label( "Choose SME:" );
-   lb_opers_to_assign  = us_label( "Operator List:" );
-   lb_revs_to_assign   = us_label( "Reviewer List:" );
-   lb_apprs_to_assign  = us_label( "Approver List:" );
-   lb_smes_to_assign   = us_label( "SME List:" );
+                genL->addWidget( lb_exptype, row, 0, 1, 1 );
+                genL->addWidget( cb_exptype, row, 1, 1, 1 );
+                genL->addWidget( ck_velmwl, row++, 2, 1, 1 );
 
-   pb_add_oper      = us_pushbutton( tr( "Add to List" ) );
-   pb_remove_oper   = us_pushbutton( tr( "Remove Last" ) );
-   pb_add_rev       = us_pushbutton( tr( "Add to List" ) );
-   pb_remove_rev    = us_pushbutton( tr( "Remove Last" ) );
-   pb_add_appr      = us_pushbutton( tr( "Add to List" ) );
-   pb_remove_appr   = us_pushbutton( tr( "Remove Last" ) );
-   pb_add_sme       = us_pushbutton( tr( "Add to List" ) );
-   pb_remove_sme    = us_pushbutton( tr( "Remove Last" ) );
-
-   te_opers_to_assign    = us_textedit();
-   //te_opers_to_assign    ->setTextColor( Qt::blue );
-   te_opers_to_assign    -> setFixedHeight  ( RowHeight * 3 );
-   te_opers_to_assign    ->setFont( QFont( US_Widgets::fixedFont().family(),
-					 US_GuiSettings::fontSize() - 1) );
-   us_setReadOnly( te_opers_to_assign, true );
-
-   te_revs_to_assign    = us_textedit();
-   //te_revs_to_assign    ->setTextColor( Qt::blue );
-   te_revs_to_assign    -> setFixedHeight  ( RowHeight * 3 );
-   te_revs_to_assign    ->setFont( QFont( US_Widgets::fixedFont().family(),
-					 US_GuiSettings::fontSize() - 1) );
-   us_setReadOnly( te_revs_to_assign, true );
-
-   te_apprs_to_assign    = us_textedit();
-   //te_apprs_to_assign    ->setTextColor( Qt::blue );
-   te_apprs_to_assign    -> setFixedHeight  ( RowHeight * 3 );
-   te_apprs_to_assign    ->setFont( QFont( US_Widgets::fixedFont().family(),
-					 US_GuiSettings::fontSize() - 1) );
-   us_setReadOnly( te_apprs_to_assign, true );
-
-   te_smes_to_assign    = us_textedit();
-   //te_smes_to_assign    ->setTextColor( Qt::blue );
-   te_smes_to_assign    -> setFixedHeight  ( RowHeight * 3 );
-   te_smes_to_assign    ->setFont( QFont( US_Widgets::fixedFont().family(),
-					 US_GuiSettings::fontSize() - 1) );
-   us_setReadOnly( te_smes_to_assign, true );
-  
-   cb_choose_operator   = new QComboBox( this );
-   cb_choose_rev        = new QComboBox( this );
-   cb_choose_appr       = new QComboBox( this );
-   cb_choose_sme        = new QComboBox( this );
-
-   cb_choose_operator -> setObjectName("ChooseOper");
-   cb_choose_rev      -> setObjectName("ChooseRev");
-   cb_choose_appr     -> setObjectName("ChooseAppr");
-   cb_choose_sme      -> setObjectName("ChooseSme");
-   
-   row = 0;
-   //revOperGMPRunGrid -> addItem  ( spacer1,         row++, 0, 1, 15 );
-   revOperGMPRunGrid -> addWidget( lb_operator_reviewer_banner,row++, 0, 1, 15 );
-   
-   revOperGMPRunGrid -> addWidget( lb_choose_oper,         row,     0,  1,  2 );
-   revOperGMPRunGrid -> addWidget( cb_choose_operator,     row,     2,  1,  3 );
-   revOperGMPRunGrid -> addWidget( pb_add_oper,            row,     5,  1,  2 );
-
-   revOperGMPRunGrid -> addWidget( lb_choose_rev,          row,     8,  1,  2 );
-   revOperGMPRunGrid -> addWidget( cb_choose_rev,          row,     10, 1,  3 );
-   revOperGMPRunGrid -> addWidget( pb_add_rev,             row++,   13, 1,  2 );
-
-   revOperGMPRunGrid -> addWidget( lb_opers_to_assign,     row,     0,  1,  2 );
-   revOperGMPRunGrid -> addWidget( te_opers_to_assign,     row,     2,  1,  3 );
-   revOperGMPRunGrid -> addWidget( pb_remove_oper,         row,     5,  1,  2 );
-
-   revOperGMPRunGrid -> addWidget( lb_revs_to_assign,      row,     8,  1,  2 );
-   revOperGMPRunGrid -> addWidget( te_revs_to_assign,      row,     10, 1,  3 );
-   revOperGMPRunGrid -> addWidget( pb_remove_rev,          row++,   13, 1,  2 );
-
-   //Appr.
-   revOperGMPRunGrid -> addWidget( lb_choose_appr,         row,     0,  1,  2 );
-   revOperGMPRunGrid -> addWidget( cb_choose_appr,         row,     2,  1,  3 );
-   revOperGMPRunGrid -> addWidget( pb_add_appr,            row,     5,  1,  2 );
-
-   revOperGMPRunGrid -> addWidget( lb_choose_sme,         row,     8,  1,  2 );
-   revOperGMPRunGrid -> addWidget( cb_choose_sme,         row,     10,  1,  3 );
-   revOperGMPRunGrid -> addWidget( pb_add_sme,            row++,   13,  1,  2 );
+                genL->addWidget( ck_disksource, row++, 0, 1, 4 );
+                genL->addWidget( pb_importDisk, row, 1, 1, 1 );
+                genL->addWidget( le_dataDiskPath, row++, 2, 1, 2 );
+                genL->addWidget( ck_absorbance_t, row++, 1, 1, 1 );
+                genL->addWidget( ck_absorbance_pa, row++, 1, 1, 1 );
 
 
-   revOperGMPRunGrid -> addWidget( lb_apprs_to_assign,     row,     0,  1,  2 );
-   revOperGMPRunGrid -> addWidget( te_apprs_to_assign,     row,     2,  1,  3 );
-   revOperGMPRunGrid -> addWidget( pb_remove_appr,         row,     5,  1,  2 );
+                //connect checkbox & import
+                connect( ck_velmwl, &QAbstractButton::toggled, this, &US_ExperGuiRotor::velMwlChecked );
+                connect( ck_disksource, &QAbstractButton::toggled, this, &US_ExperGuiRotor::importDiskChecked );
+                connect( pb_importDisk, &QAbstractButton::clicked, this, &US_ExperGuiRotor::importDisk );
+                // connect( ck_absorbance_t, SIGNAL( toggled     ( bool ) ),
+                //             this,           SLOT  ( dataDiskAbsChecked( bool ) ) );
+                connect( ck_absorbance_pa, &QAbstractButton::toggled, this, &US_ExperGuiRotor::dataDiskPseudoAbsChecked );
 
-   revOperGMPRunGrid -> addWidget( lb_smes_to_assign,      row,     8,  1,  2 );
-   revOperGMPRunGrid -> addWidget( te_smes_to_assign,      row,     10, 1,  3 );
-   revOperGMPRunGrid -> addWidget( pb_remove_sme,          row,     13, 1,  2 );
-   
-   
-   connect( pb_add_oper, &QAbstractButton::clicked, this, &US_ExperGuiRotor::addOpertoList );
-   connect( pb_remove_oper, &QAbstractButton::clicked, this, &US_ExperGuiRotor::removeOperfromList );
-   connect( pb_add_rev, &QAbstractButton::clicked, this, &US_ExperGuiRotor::addRevtoList );
-   connect( pb_remove_rev, &QAbstractButton::clicked, this, &US_ExperGuiRotor::removeRevfromList );
-   connect( pb_add_appr, &QAbstractButton::clicked, this, &US_ExperGuiRotor::addApprtoList );
-   connect( pb_remove_appr, &QAbstractButton::clicked, this, &US_ExperGuiRotor::removeApprfromList );
-   connect( pb_add_sme, &QAbstractButton::clicked, this, &US_ExperGuiRotor::addSmetoList );
-   connect( pb_remove_sme, &QAbstractButton::clicked, this, &US_ExperGuiRotor::removeSmefromList );
-   
-   panel->addLayout( genL );
-   panel->addLayout( revOperGMPRunGrid ); 
-   panel->addStretch();
+                genL->addItem( spacer1, row++, 0, 1, 4 );
 
-   US_Passwd pw;
-   US_DB2* dbP     = ( sibSValue( "general", "dbdisk" ) == "DB" )
-                      ? new US_DB2( pw.getPasswd() ) : NULL;
-   if ( dbP != NULL )
-      US_Rotor::readLabsDB( labs, dbP );
-   else
-      US_Rotor::readLabsDisk( labs );
+                //[NEW] Add gui for assigning operator(s) && reviewer(s)
+                QGridLayout* revOperGMPRunGrid = new QGridLayout();
 
-   for ( int ii = 0; ii < labs.count(); ii++ )
-      sl_labs << QString::number( labs[ ii ].ID )
-                 + ": " + labs[ ii ].name;
+                lb_operator_reviewer_banner = us_banner( tr( "Assign Operator and Reviewer(s) " ) );
+                QFontMetrics m( lb_operator_reviewer_banner->font() );
+                int          RowHeight = m.lineSpacing();
+                lb_operator_reviewer_banner->setFixedHeight( 1.5 * RowHeight );
 
-   cb_lab->clear();
-   cb_lab->addItems( sl_labs );
+                lb_choose_oper     = us_label( "Choose Operator:" );
+                lb_choose_rev      = us_label( "Choose Reviewer:" );
+                lb_choose_appr     = us_label( "Choose Approver:" );
+                lb_choose_sme      = us_label( "Choose SME:" );
+                lb_opers_to_assign = us_label( "Operator List:" );
+                lb_revs_to_assign  = us_label( "Reviewer List:" );
+                lb_apprs_to_assign = us_label( "Approver List:" );
+                lb_smes_to_assign  = us_label( "SME List:" );
 
-   connect( cb_lab,       qOverload< int >( &QComboBox::activated ),
-            this,         &US_ExperGuiRotor::changeLab );
-   connect( cb_rotor,     qOverload< int >( &QComboBox::activated ),
-            this,         &US_ExperGuiRotor::changeRotor );
-   connect( cb_calibr,    qOverload< int >( &QComboBox::activated ),
-            this,         &US_ExperGuiRotor::changeCalib );
-   connect( pb_advrotor,  &QAbstractButton::clicked,
-            this,         &US_ExperGuiRotor::advRotor );
+                pb_add_oper    = us_pushbutton( tr( "Add to List" ) );
+                pb_add_oper->setAccessibleName( tr( "Add Operator to List" ) );
+                pb_remove_oper = us_pushbutton( tr( "Remove Last" ) );
+                pb_remove_oper->setAccessibleName( tr( "Remove Last Operator" ) );
+                pb_add_rev     = us_pushbutton( tr( "Add to List" ) );
+                pb_add_rev->setAccessibleName( tr( "Add Reviewer to List" ) );
+                pb_remove_rev  = us_pushbutton( tr( "Remove Last" ) );
+                pb_remove_rev->setAccessibleName( tr( "Remove Last Reviewer" ) );
+                pb_add_appr    = us_pushbutton( tr( "Add to List" ) );
+                pb_add_appr->setAccessibleName( tr( "Add Approver to List" ) );
+                pb_remove_appr = us_pushbutton( tr( "Remove Last" ) );
+                pb_remove_appr->setAccessibleName( tr( "Remove Last Approver" ) );
+                pb_add_sme     = us_pushbutton( tr( "Add to List" ) );
+                pb_add_sme->setAccessibleName( tr( "Add SME to List" ) );
+                pb_remove_sme  = us_pushbutton( tr( "Remove Last" ) );
+                pb_remove_sme->setAccessibleName( tr( "Remove Last SME" ) );
 
-   first_time_init = true;
-   curr_rotor      = 0;
-   changeLab( curr_rotor );
-   savePanel();
-   changed         = false;
-   message_instr_shown = false;
+                te_opers_to_assign = us_textedit();
+                //te_opers_to_assign    ->setTextColor( Qt::blue );
+                te_opers_to_assign->setFixedHeight( RowHeight * 3 );
+                te_opers_to_assign->setFont( QFont( US_Widgets::fixedFont().family(), US_GuiSettings::fontSize() - 1 ) );
+                us_setReadOnly( te_opers_to_assign, true );
+                te_opers_to_assign->setAccessibleName( tr( "Assigned Operators" ) );
 
-   //hide Operator Info:
-   lb_operator -> hide();
-   cb_operator -> hide();
+                te_revs_to_assign = us_textedit();
+                //te_revs_to_assign    ->setTextColor( Qt::blue );
+                te_revs_to_assign->setFixedHeight( RowHeight * 3 );
+                te_revs_to_assign->setFont( QFont( US_Widgets::fixedFont().family(), US_GuiSettings::fontSize() - 1 ) );
+                us_setReadOnly( te_revs_to_assign, true );
+                te_revs_to_assign->setAccessibleName( tr( "Assigned Reviewers" ) );
 
-   //hide import Disk for now
-   pb_importDisk   -> hide();
-   le_dataDiskPath -> hide();
-   ck_absorbance_t -> hide();
-   ck_absorbance_t -> setEnabled( false );
-   ck_absorbance_pa -> hide();
-   ck_absorbance_pa -> setEnabled( false );
-   importDataPath = "";
-   if ( mainw->us_prot_dev_mode )
-     ck_disksource->hide();
-     
-   initPanel();
+                te_apprs_to_assign = us_textedit();
+                //te_apprs_to_assign    ->setTextColor( Qt::blue );
+                te_apprs_to_assign->setFixedHeight( RowHeight * 3 );
+                te_apprs_to_assign->setFont( QFont( US_Widgets::fixedFont().family(), US_GuiSettings::fontSize() - 1 ) );
+                us_setReadOnly( te_apprs_to_assign, true );
+                te_apprs_to_assign->setAccessibleName( tr( "Assigned Approvers" ) );
 
-   first_time_init = false;
-   //currentOperator_index = 0;
+                te_smes_to_assign = us_textedit();
+                //te_smes_to_assign    ->setTextColor( Qt::blue );
+                te_smes_to_assign->setFixedHeight( RowHeight * 3 );
+                te_smes_to_assign->setFont( QFont( US_Widgets::fixedFont().family(), US_GuiSettings::fontSize() - 1 ) );
+                us_setReadOnly( te_smes_to_assign, true );
+                te_smes_to_assign->setAccessibleName( tr( "Assigned SMEs" ) );
+
+                cb_choose_operator = new QComboBox( this );
+                cb_choose_rev      = new QComboBox( this );
+                cb_choose_appr     = new QComboBox( this );
+                cb_choose_sme      = new QComboBox( this );
+
+                cb_choose_operator->setObjectName( "ChooseOper" );
+                cb_choose_rev->setObjectName( "ChooseRev" );
+                cb_choose_appr->setObjectName( "ChooseAppr" );
+                cb_choose_sme->setObjectName( "ChooseSme" );
+
+                cb_choose_operator->setAccessibleName( tr( "Choose Operator" ) );
+                cb_choose_rev->setAccessibleName( tr( "Choose Reviewer" ) );
+                cb_choose_appr->setAccessibleName( tr( "Choose Approver" ) );
+                cb_choose_sme->setAccessibleName( tr( "Choose SME" ) );
+
+                lb_choose_oper->setBuddy( cb_choose_operator );
+                lb_choose_rev->setBuddy( cb_choose_rev );
+                lb_choose_appr->setBuddy( cb_choose_appr );
+                lb_choose_sme->setBuddy( cb_choose_sme );
+
+                row = 0;
+                //revOperGMPRunGrid -> addItem  ( spacer1,         row++, 0, 1, 15 );
+                revOperGMPRunGrid->addWidget( lb_operator_reviewer_banner, row++, 0, 1, 15 );
+
+                revOperGMPRunGrid->addWidget( lb_choose_oper, row, 0, 1, 2 );
+                revOperGMPRunGrid->addWidget( cb_choose_operator, row, 2, 1, 3 );
+                revOperGMPRunGrid->addWidget( pb_add_oper, row, 5, 1, 2 );
+
+                revOperGMPRunGrid->addWidget( lb_choose_rev, row, 8, 1, 2 );
+                revOperGMPRunGrid->addWidget( cb_choose_rev, row, 10, 1, 3 );
+                revOperGMPRunGrid->addWidget( pb_add_rev, row++, 13, 1, 2 );
+
+                revOperGMPRunGrid->addWidget( lb_opers_to_assign, row, 0, 1, 2 );
+                revOperGMPRunGrid->addWidget( te_opers_to_assign, row, 2, 1, 3 );
+                revOperGMPRunGrid->addWidget( pb_remove_oper, row, 5, 1, 2 );
+
+                revOperGMPRunGrid->addWidget( lb_revs_to_assign, row, 8, 1, 2 );
+                revOperGMPRunGrid->addWidget( te_revs_to_assign, row, 10, 1, 3 );
+                revOperGMPRunGrid->addWidget( pb_remove_rev, row++, 13, 1, 2 );
+
+                //Appr.
+                revOperGMPRunGrid->addWidget( lb_choose_appr, row, 0, 1, 2 );
+                revOperGMPRunGrid->addWidget( cb_choose_appr, row, 2, 1, 3 );
+                revOperGMPRunGrid->addWidget( pb_add_appr, row, 5, 1, 2 );
+
+                revOperGMPRunGrid->addWidget( lb_choose_sme, row, 8, 1, 2 );
+                revOperGMPRunGrid->addWidget( cb_choose_sme, row, 10, 1, 3 );
+                revOperGMPRunGrid->addWidget( pb_add_sme, row++, 13, 1, 2 );
+
+
+                revOperGMPRunGrid->addWidget( lb_apprs_to_assign, row, 0, 1, 2 );
+                revOperGMPRunGrid->addWidget( te_apprs_to_assign, row, 2, 1, 3 );
+                revOperGMPRunGrid->addWidget( pb_remove_appr, row, 5, 1, 2 );
+
+                revOperGMPRunGrid->addWidget( lb_smes_to_assign, row, 8, 1, 2 );
+                revOperGMPRunGrid->addWidget( te_smes_to_assign, row, 10, 1, 3 );
+                revOperGMPRunGrid->addWidget( pb_remove_sme, row, 13, 1, 2 );
+
+
+                connect( pb_add_oper, &QAbstractButton::clicked, this, &US_ExperGuiRotor::addOpertoList );
+                connect( pb_remove_oper, &QAbstractButton::clicked, this, &US_ExperGuiRotor::removeOperfromList );
+                connect( pb_add_rev, &QAbstractButton::clicked, this, &US_ExperGuiRotor::addRevtoList );
+                connect( pb_remove_rev, &QAbstractButton::clicked, this, &US_ExperGuiRotor::removeRevfromList );
+                connect( pb_add_appr, &QAbstractButton::clicked, this, &US_ExperGuiRotor::addApprtoList );
+                connect( pb_remove_appr, &QAbstractButton::clicked, this, &US_ExperGuiRotor::removeApprfromList );
+                connect( pb_add_sme, &QAbstractButton::clicked, this, &US_ExperGuiRotor::addSmetoList );
+                connect( pb_remove_sme, &QAbstractButton::clicked, this, &US_ExperGuiRotor::removeSmefromList );
+
+                panel->addLayout( genL );
+                panel->addLayout( revOperGMPRunGrid );
+                panel->addStretch();
+
+                US_Passwd pw;
+                US_DB2*   dbP = ( sibSValue( "general", "dbdisk" ) == "DB" ) ? new US_DB2( pw.getPasswd() ) : NULL;
+                if ( dbP != NULL )
+                {
+                   US_Rotor::readLabsDB( labs, dbP );
+                }
+                else
+                {
+                   US_Rotor::readLabsDisk( labs );
+                }
+
+                for ( int ii = 0; ii < labs.count(); ii++ )
+                {
+                   sl_labs << QString::number( labs[ii].ID ) + ": " + labs[ii].name;
+                }
+
+                cb_lab->clear();
+                cb_lab->addItems( sl_labs );
+
+                connect( cb_lab, qOverload<int>( &QComboBox::activated ), this, &US_ExperGuiRotor::changeLab );
+                connect( cb_rotor, qOverload<int>( &QComboBox::activated ), this, &US_ExperGuiRotor::changeRotor );
+                connect( cb_calibr, qOverload<int>( &QComboBox::activated ), this, &US_ExperGuiRotor::changeCalib );
+                connect( pb_advrotor, &QAbstractButton::clicked, this, &US_ExperGuiRotor::advRotor );
+
+                first_time_init = true;
+                curr_rotor      = 0;
+                changeLab( curr_rotor );
+                savePanel();
+                changed             = false;
+                message_instr_shown = false;
+
+                //hide Operator Info:
+                lb_operator->hide();
+                cb_operator->hide();
+
+                //hide import Disk for now
+                pb_importDisk->hide();
+                le_dataDiskPath->hide();
+                ck_absorbance_t->hide();
+                ck_absorbance_t->setEnabled( false );
+                ck_absorbance_pa->hide();
+                ck_absorbance_pa->setEnabled( false );
+                importDataPath = "";
+                if ( mainw->us_prot_dev_mode )
+                {
+                   ck_disksource->hide();
+                }
+
+                initPanel();
+
+                first_time_init = false;
+                //currentOperator_index = 0;
 }
 
 
@@ -1641,9 +1765,11 @@ void US_ExperGuiRotor::reset_dataSource_public( void )
   ck_absorbance_t  ->setChecked( false );
   ck_absorbance_pa ->setChecked( false );
   ck_absorbance_pa ->setEnabled( false );
+  ck_velmwl->setChecked( false );
   importDataPath = "";
   ra_data_type = false;
   ra_data_sim  = false;
+  vel_mwl        = false;
 }
 
 void US_ExperGuiRotor::set_dataSource_public( QMap <QString, QString>& pd_details )
@@ -1660,7 +1786,8 @@ void US_ExperGuiRotor::set_dataSource_public( QMap <QString, QString>& pd_detail
   rpRotor->importData_absorbance_pa = false;
   ra_data_type = false;
   ra_data_sim  = false;
-  
+  vel_mwl                           = false;
+
   QString dataSource_pd = pd_details["dataSource"];
   if ( dataSource_pd.contains("dataDiskAUC") ) 
     {
@@ -1771,7 +1898,12 @@ void US_ExperGuiRotor::dataDiskPseudoAbsChecked( bool checked )
     }
 }
 
-
+// Velocity MWL checked
+void US_ExperGuiRotor::velMwlChecked( bool checked )
+{
+   vel_mwl = checked;
+   mainw->setUnset_velmwl_mode_aprofile( checked );
+}
 
 // Check import disk
 void US_ExperGuiRotor::importDiskChecked( bool checked )
@@ -1985,9 +2117,14 @@ void US_ExperGuiRotor::importDisk( void )
       QStringList chann_list = chan_wvls.keys();
       if ( chann_list.size() != 2 )
 	{
-	  wvl_inconsistent = true;
-	  break;
-	}
+      qDebug() << "no matching channel for " << cell_f << "\\" << chann_list << ", but that's fine ... if this is channel A...";
+
+      if ( chann_list[0] == "B" )
+      {
+         wvl_inconsistent = true;
+         break;
+      }
+   }
       else
 	{
 	  QStringList list1 = chan_wvls.value("A");
@@ -2003,13 +2140,12 @@ void US_ExperGuiRotor::importDisk( void )
 	}
     }
 
-  if ( wvl_inconsistent && !ra_data_sim && files.size() != 1 )
+    if ( wvl_inconsistent && !ra_data_sim && files.size() != 1 )
     {
-      QMessageBox::critical(this, "Bad Data", "Wavelengths mistatch for one or two cell/channels...");
-      return;
+       QMessageBox::critical( this, "Bad Data", "Wavelengths mistatch for one or two cell/channels..." );
+       return;
     }
-  
-  
+
   //proceed
   for ( int trx = 0; trx < files.size(); trx++ )
     {
@@ -2110,8 +2246,10 @@ void US_ExperGuiRotor::importDisk( void )
       ck_absorbance_t  -> setChecked( false );
       ck_absorbance_pa -> setChecked( false );
       ck_absorbance_pa -> setEnabled( false );
+      ck_velmwl->setChecked( false );
       ra_data_type = false;
       ra_data_sim  = false;
+      vel_mwl      = false;
 
       isMwl        = false;
       allData     .clear();
@@ -2644,19 +2782,26 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
 	}
       
       US_RunProtocol::RunProtoOptics::OpticSys os_a, os_b;
+      QString                                  a_ch_n = chann_list[i] + " / A";
       os_a.channel   = chann_list[i] + " / A, sample [right]";
       os_a.scan1     = scan1_str;
       os_a.scan2     = scan2_str;
       os_a.scan3     = scan3_str;
 
+      QString b_ch_n = chann_list[i] + " / B";
       os_b.channel   = chann_list[i] + " / B, reference [left]";
       os_b.scan1     = scan1_str;
       os_b.scan2     = scan2_str;
       os_b.scan3     = scan3_str;
 
-      rpOptic->chopts << os_a;
-      if ( ops_types.contains("RI") && !ra_data_sim )
-	rpOptic->chopts << os_b;
+      if ( channels_for_dataDisk.contains( a_ch_n ) )
+      {
+         rpOptic->chopts << os_a;
+      }
+      if ( channels_for_dataDisk.contains( b_ch_n ) && ops_types.contains( "RI" ) && !ra_data_sim )
+      {
+         rpOptic->chopts << os_b;
+      }
     }
   //rpOptic->nochan = chann_list.size()*2;
   rpOptic->nochan = rpOptic->chopts.size();
@@ -2673,30 +2818,38 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
 	continue;
 	
       //A channel
-      rng_a.channel = chann_list[i] + " / A, sample [right]";
-      rng_a.lo_rad  = 5.75;
-      rng_a.hi_rad  = 7.25;
-      for (int j=0; j<chann_to_wvls[ chann_list[i] + "A" ].size(); ++j )
-	{
-	  double wvl_c = chann_to_wvls[ chann_list[i] + "A" ][j].toDouble();
-	  rng_a.wvlens << wvl_c;
-	  qDebug() << "Wvl# " << j << " for channel, " << chann_list[i] + "A, is" << wvl_c; 
-	}
-      rpRange->chrngs << rng_a;
+      QString a_ch_n = chann_list[i] + " / A";
+      if ( channels_for_dataDisk.contains( a_ch_n ) )
+      {
+         rng_a.channel = chann_list[i] + " / A, sample [right]";
+         rng_a.lo_rad  = 5.75;
+         rng_a.hi_rad  = 7.25;
+         for ( int j = 0; j < chann_to_wvls[chann_list[i] + "A"].size(); ++j )
+         {
+            double wvl_c = chann_to_wvls[chann_list[i] + "A"][j].toDouble();
+            rng_a.wvlens << wvl_c;
+            qDebug() << "Wvl# " << j << " for channel, " << chann_list[i] + "A, is" << wvl_c;
+         }
+         rpRange->chrngs << rng_a;
+      }
 
       if ( ra_data_sim )
 	continue;
       //B channel
-      rng_b.channel = chann_list[i] + " / B, reference [left]";
-      rng_b.lo_rad  = 5.75;
-      rng_b.hi_rad  = 7.25;
-      for (int j=0; j<chann_to_wvls[ chann_list[i] + "B" ].size(); ++j )
-	{
-	  double wvl_c = chann_to_wvls[ chann_list[i] + "B" ][j].toDouble();
-	  rng_b.wvlens << wvl_c;
-	  qDebug() << "Wvl# " << j << " for channel, " << chann_list[i] + "B, is" << wvl_c; 
-	}
-      rpRange->chrngs << rng_b;
+      QString b_ch_n = chann_list[i] + " / B";
+      if ( channels_for_dataDisk.contains( b_ch_n ) )
+      {
+         rng_b.channel = chann_list[i] + " / B, reference [left]";
+         rng_b.lo_rad  = 5.75;
+         rng_b.hi_rad  = 7.25;
+         for ( int j = 0; j < chann_to_wvls[chann_list[i] + "B"].size(); ++j )
+         {
+            double wvl_c = chann_to_wvls[chann_list[i] + "B"][j].toDouble();
+            rng_b.wvlens << wvl_c;
+            qDebug() << "Wvl# " << j << " for channel, " << chann_list[i] + "B, is" << wvl_c;
+         }
+         rpRange->chrngs << rng_b;
+      }
     }
   //rpRange-> nranges = chann_list.size()*2;
   rpRange-> nranges = rpRange->chrngs.size();
@@ -2845,6 +2998,8 @@ qDebug() << "ASSIGNING INSTRUMENTS: " << instrument.name;
                    << "Other";
 
    cb_exptype->addItems( experimentTypes );
+
+   connect( cb_exptype, qOverload<int>( &QComboBox::activated ), this, &US_ExperGuiRotor::changeExpType );
    changeExpType( 0 );
 }
 
@@ -2941,6 +3096,17 @@ void US_ExperGuiRotor::changeExpType( int ndx )
 {
   //changed             = true;
   cb_exptype->setCurrentIndex( ndx );
+  QString exptype_sel = cb_exptype->currentText();
+
+  if ( exptype_sel == "Velocity" )
+  {
+     ck_velmwl->setVisible( true );
+  }
+  else
+  {
+     ck_velmwl->setVisible( false );
+     ck_velmwl->setChecked( false );
+  }
 }
 
 // Slot for change in Operator selection
@@ -3037,11 +3203,13 @@ DbgLv(1) << "EGR: chgRotor calibs count" << calibs.count();
 	  ck_absorbance_t  -> setChecked( false );
 	  ck_absorbance_pa -> setChecked( false );
 	  ck_absorbance_pa -> setEnabled( false);
-	  ra_data_type = false;
-	  ra_data_sim  = false;
+     ck_velmwl->setChecked( false );
+     ra_data_type = false;
+     ra_data_sim  = false;
+     vel_mwl      = false;
 
-	  importDisk_cleanProto();
-	}
+     importDisk_cleanProto();
+   }
       //to remember chosen rotor
       mainw->initCells();
    }
@@ -3182,7 +3350,8 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
 
    QLabel*  lb_total_time     = us_label( tr( "Total Time (without equilibration):" ) );
    le_total_time              = us_lineedit( "", 0, true  );
-   
+   le_total_time->setAccessibleName( tr( "Total Time" ) );
+
    QLayout* lo_delay_stage_sync  = us_checkbox( tr( "Synchronize Stage Delay with the 1st Speed Profile: " ), ck_sync_delay, false );
 
    connect( ck_sync_delay, &QAbstractButton::toggled,
@@ -3203,6 +3372,7 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    // ComboBox, counters, time-edits, spinbox
    sb_count            = us_spinbox();
    sb_count            ->setMinimum(1);  //ALEXEY BUG FIX
+   sb_count->setAccessibleName( tr( "Number of Speed Profiles" ) );
 
    if ( mainw->automode && !mainw->usmode )
      sb_count            ->setEnabled( false );
@@ -3216,22 +3386,31 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
 
    ct_speed ->setRange(1000,  80000);
    ct_speed ->setValue(100);
+   ct_speed->setAccessibleName( tr( "Rotor Speed" ) );
    ct_accel ->setRange(50, 1000);
    ct_accel ->setValue(50);
-   
-   
-    // QHBoxLayout* lo_durat                                             // ALEXEY
-    //                       = us_timeedit( tm_durat,  0, &sb_durat  );
-    // QHBoxLayout* lo_delay
-    //                       = us_timeedit( tm_delay,  0, &sb_delay  );
-    // QHBoxLayout* lo_scnint
-    //                       = us_timeedit( tm_scnint, 0, &sb_scnint );
+   ct_accel->setAccessibleName( tr( "Acceleration" ) );
 
+
+   // QHBoxLayout* lo_durat                                             // ALEXEY
+   //                       = us_timeedit( tm_durat,  0, &sb_durat  );
+   // QHBoxLayout* lo_delay
+   //                       = us_timeedit( tm_delay,  0, &sb_delay  );
+   // QHBoxLayout* lo_scnint
+   //                       = us_timeedit( tm_scnint, 0, &sb_scnint );
 
 
    QHBoxLayout* lo_duratlay        = us_ddhhmmsslay( 0, 0,0,0,1, &sb_durat_dd, &sb_durat_hh, &sb_durat_mm,  &sb_durat_ss ); // ALEXEY 0 - visible, 1 - hidden
+   sb_durat_dd->setAccessibleName( tr( "Active Scanning Time Days" ) );
+   sb_durat_hh->setAccessibleName( tr( "Active Scanning Time Hours" ) );
+   sb_durat_mm->setAccessibleName( tr( "Active Scanning Time Minutes" ) );
+   sb_durat_ss->setAccessibleName( tr( "Active Scanning Time Seconds" ) );
    QHBoxLayout* lo_delaylay_stage  = us_ddhhmmsslay( 0, 0,0,0,1, &sb_delay_st_dd, &sb_delay_st_hh, &sb_delay_st_mm,  &sb_delay_st_ss );
    sb_delay_st_dd->setEnabled(false);
+   sb_delay_st_dd->setAccessibleName( tr( "Stage Delay Days" ) );
+   sb_delay_st_hh->setAccessibleName( tr( "Stage Delay Hours" ) );
+   sb_delay_st_mm->setAccessibleName( tr( "Stage Delay Minutes" ) );
+   sb_delay_st_ss->setAccessibleName( tr( "Stage Delay Seconds" ) );
 
    //UV_vis
    QHBoxLayout* lo_delaylay        = us_ddhhmmsslay( 0, 0,0,0,0, &sb_delay_dd, &sb_delay_hh, &sb_delay_mm,  &sb_delay_ss );
@@ -3239,6 +3418,10 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    sb_delay_hh->setEnabled(false);
    sb_delay_mm->setEnabled(false);
    sb_delay_ss->setEnabled(false);
+   sb_delay_dd->setAccessibleName( tr( "Delay to First Scan Days (UV/visible)" ) );
+   sb_delay_hh->setAccessibleName( tr( "Delay to First Scan Hours (UV/visible)" ) );
+   sb_delay_mm->setAccessibleName( tr( "Delay to First Scan Minutes (UV/visible)" ) );
+   sb_delay_ss->setAccessibleName( tr( "Delay to First Scan Seconds (UV/visible)" ) );
 
    //Interference
    QHBoxLayout* lo_delaylay_int    = us_ddhhmmsslay( 0, 0,0,0,0, &sb_delay_int_dd, &sb_delay_int_hh, &sb_delay_int_mm,  &sb_delay_int_ss );
@@ -3246,17 +3429,30 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    sb_delay_int_hh->setEnabled(false);
    sb_delay_int_mm->setEnabled(false);
    sb_delay_int_ss->setEnabled(false);
+   sb_delay_int_dd->setAccessibleName( tr( "Delay to First Scan Days (Interference)" ) );
+   sb_delay_int_hh->setAccessibleName( tr( "Delay to First Scan Hours (Interference)" ) );
+   sb_delay_int_mm->setAccessibleName( tr( "Delay to First Scan Minutes (Interference)" ) );
+   sb_delay_int_ss->setAccessibleName( tr( "Delay to First Scan Seconds (Interference)" ) );
 
    //UV-vis
    QHBoxLayout* lo_scnintlay               = us_ddhhmmsslay( 0, 0,0,0,0, &sb_scnint_dd, &sb_scnint_hh, &sb_scnint_mm,  &sb_scnint_ss );
    sb_scnint_dd->setEnabled(false);
+   sb_scnint_dd->setAccessibleName( tr( "Scan Interval Days (UV/visible)" ) );
+   sb_scnint_hh->setAccessibleName( tr( "Scan Interval Hours (UV/visible)" ) );
+   sb_scnint_mm->setAccessibleName( tr( "Scan Interval Minutes (UV/visible)" ) );
+   sb_scnint_ss->setAccessibleName( tr( "Scan Interval Seconds (UV/visible)" ) );
 
    //Interference
    QHBoxLayout* lo_scnintlay_int           = us_ddhhmmsslay( 0, 0,0,0,0, &sb_scnint_int_dd, &sb_scnint_int_hh, &sb_scnint_int_mm,  &sb_scnint_int_ss );
    sb_scnint_int_dd->setEnabled(false);
+   sb_scnint_int_dd->setAccessibleName( tr( "Scan Interval Days (Interference)" ) );
+   sb_scnint_int_hh->setAccessibleName( tr( "Scan Interval Hours (Interference)" ) );
+   sb_scnint_int_mm->setAccessibleName( tr( "Scan Interval Minutes (Interference)" ) );
+   sb_scnint_int_ss->setAccessibleName( tr( "Scan Interval Seconds (Interference)" ) );
 
    le_maxrpm           = us_lineedit( tr( "Maximum speed for AN50 rotor:"
                                           "  50000 rpm" ), 0, true );
+   le_maxrpm->setAccessibleName( tr( "Rotor Maximum Speed" ) );
 
    // Default values
    nspeed              = 1;
@@ -4740,6 +4936,14 @@ DbgLv(1) << "EGCe:  nholes mxcels" << nholes << mxcels;
       clabl  ->setObjectName( strow + ": label" );
       cb_cenp->setObjectName( strow + ": centerpiece" );
       cb_wind->setObjectName( strow + ": windows" );
+      cb_cenp->setAccessibleName( tr( "Centerpiece (Cell %1)" ).arg( ii + 1 ) );
+      cb_wind->setAccessibleName( tr( "Windows (Cell %1)" ).arg( ii + 1 ) );
+      // Combo Name is always the selected value on Linux; buddy relations carry purpose instead.
+      clabl->setBuddy( cb_cenp );
+      // Zero size keeps this out of view without hide(), which would also hide it from AT-SPI.
+      QLabel* lb_wind_a11y = us_label( tr( "Windows" ) );
+      lb_wind_a11y->setFixedSize( 0, 0 );
+      lb_wind_a11y->setBuddy( cb_wind );
 
       genL->addWidget( clabl,   row,   0, 1, 1 );
       genL->addWidget( cb_cenp, row,   1, 1, 6 );
@@ -5039,8 +5243,10 @@ DbgLv(1) << "EGSo:  nholes mxrow" << nholes << mxrow;
       QString strow       = QString::number( ii );
       cclabl ->setObjectName( strow + ": label" );
       cb_solu->setObjectName( strow + ": solution" );
+      cb_solu->setAccessibleName( tr( "Solution (Channel %1)" ).arg( schan ) );
       pb_comm->setObjectName( strow + ": addcomm" );
       le_comm->setObjectName( strow + ": mancomm" );
+      le_comm->setAccessibleName( tr( "Solution Comment (Channel %1)" ).arg( schan ) );
 
       genL->addWidget( cclabl,  row,    0, 1, 2 );
       genL->addWidget( cb_solu, row,    2, 1, 3 );
@@ -5925,6 +6131,9 @@ DbgLv(1) << "EGOp:  nholes mxcels" << nholes << mxcels;
       ck_osys1->setObjectName( strow + ": optsys1" );
       ck_osys2->setObjectName( strow + ": optsys2" );
       ck_osys3->setObjectName( strow + ": optsys3" );
+      ck_osys1->setAccessibleName( tr( "%1 (Cell %2)" ).arg( opsys1 ).arg( scel ) );
+      ck_osys2->setAccessibleName( tr( "%1 (Cell %2)" ).arg( opsys2 ).arg( scel ) );
+      ck_osys3->setAccessibleName( tr( "%1 (Cell %2)" ).arg( opsys3 ).arg( scel ) );
 
       genL->addWidget( cclabl,   row,    0, 1, 1 );
       genL->addLayout( lo_osyss, row++,  1, 1, 3 );
@@ -7392,12 +7601,22 @@ DbgLv(1) << "EGUp:svRP:   prnames" << prnames;
           "Then click on <b>OK</b> to accept the new name<br/>"
           "or on <b>Cancel</b> to abort the Run Protocol save.<br/>" );
 
-   // Keep displaying the dialog text until a unique name is given
+   // Keep displaying the dialog text until a unique, path-safe name is given
+   newpname = US_RunProtocol::sanitize_name( newpname, true );
+   if ( newpname != old_protoname && !old_protoname.trimmed().isEmpty() )
+   {
+      QMessageBox::information( this,
+                                tr( "Protocol Name Changed" ),
+                                tr( "The protocol name may consist only of alphanumeric\n"
+                                    "characters, underscore or hyphen. It has been changed to:\n  " ) +
+                                   newpname );
+   }
    while( prnames.contains( newpname )  ||  newpname.trimmed().isEmpty() )
    {
       newpname            = QInputDialog::getText( this,
                                tr( "Enter New Run Protocol Name/Description" ),
                                msg, QLineEdit::Normal, newpname, &ok );
+      newpname            = US_RunProtocol::sanitize_name( newpname, true ); // [A-Za-z0-9_-] only
 
       if ( ! ok )
       {  // Cancel:  abort the save
@@ -8715,6 +8934,7 @@ void US_ExperGuiUpload::submitExperiment_dataDisk()
   protocol_details[ "operatorID" ]     = QString::number( rpRotor->operID );
   //define exp.Type
   QString exp_t = ( mainw->us_abde_mode ) ? "ABDE" : "VELOCITY";
+  exp_t                                = ( mainw->us_velmwl_mode ) ? "VELOCITY-MWL" : exp_t;
   protocol_details[ "expType" ] = exp_t;
   
   //protocol_details[ "experimentId" ]   = QString::number(ExpDefId);    // NULL  
@@ -9917,8 +10137,14 @@ void US_ExperGuiUpload::submitExperiment()
 	 //define exp.Type!!
 	 if ( mainw->us_abde_mode ) 
 	   protocol_details[ "expType" ] = "ABDE";
-	 else
-	   protocol_details[ "expType" ] = "VELOCITY";
+    else if ( mainw->us_velmwl_mode )
+    {
+       protocol_details["expType"] = "VELOCITY-MWL";
+    }
+    else
+    {
+       protocol_details["expType"] = "VELOCITY";
+    }
       }
       else
       {
@@ -10300,7 +10526,38 @@ void US_ExperGuiUpload::add_autoflow_record_dataDisk( QMap< QString, QString> & 
 	   qry. clear();
 	   qry << "new_autoflowAnalyisABDEstages_record" << protocol_details[ "autoflowID" ];
 	   db->statusQuery( qry );
-	 }
+    }
+
+    /************ IF VELOCITY-MWL - create the run's autoflowAnalysisVelMwl
+          ***/
+    /** (per-channel decisions, one row per run) AND ***/
+    /** autoflowAnalysisVelMwlStages (run-wide completion gate) records, ***/
+    /** up front -- mirroring how ABDE seeds both its data and Stages ***/
+    /** rows together just above. channelDecisions starts out as an empty
+          ***/
+    /** JSON object; each channel's key gets added later, one at a time, ***/
+    /** as US_MwlSpeciesFit records that channel's Accept/Reject decision.
+          ***/
+    /** analysisVelMwl starts 'unknown' and is claimed -> 'STARTED' once,
+          ***/
+    /** by US_Analysis_auto, when every channel has finally been decided ***/
+    /** (see finalize_velmwl_analysis_if_complete() in ***/
+    /** us_autoflow_analysis.cpp), gating the one-time switch to Report. ***/
+    else if ( protocol_details["expType"] == "VELOCITY-MWL" )
+    {
+       qry.clear();
+       qry << "new_autoflowAnalysisVelMwl_record" << protocol_details["autoflowID"];
+
+       qDebug() << "new_autoflowAnalysisVelMwl_record qry -- " << qry;
+       int autoflowAnalysisVelMwl_ID = db->functionQuery( qry );
+       qDebug() << "autoflowAnalysisVelMwl_ID: " << autoflowAnalysisVelMwl_ID;
+
+       qry.clear();
+       qry << "new_autoflowAnalyisVelMwlStages_record" << protocol_details["autoflowID"];
+
+       qDebug() << "new_autoflowAnalyisVelMwlStages_record qry -- " << qry;
+       db->statusQuery( qry );
+    }
      }
 }
 
@@ -10603,7 +10860,38 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
 	   qry. clear();
 	   qry << "new_autoflowAnalyisABDEstages_record" << protocol_details[ "autoflowID" ];
 	   db->statusQuery( qry );
-	 }
+    }
+
+    /************ IF VELOCITY-MWL - create the run's autoflowAnalysisVelMwl
+          ***/
+    /** (per-channel decisions, one row per run) AND ***/
+    /** autoflowAnalysisVelMwlStages (run-wide completion gate) records, ***/
+    /** up front -- mirroring how ABDE seeds both its data and Stages ***/
+    /** rows together just above. channelDecisions starts out as an empty
+          ***/
+    /** JSON object; each channel's key gets added later, one at a time, ***/
+    /** as US_MwlSpeciesFit records that channel's Accept/Reject decision.
+          ***/
+    /** analysisVelMwl starts 'unknown' and is claimed -> 'STARTED' once,
+          ***/
+    /** by US_Analysis_auto, when every channel has finally been decided ***/
+    /** (see finalize_velmwl_analysis_if_complete() in ***/
+    /** us_autoflow_analysis.cpp), gating the one-time switch to Report. ***/
+    else if ( protocol_details["expType"] == "VELOCITY-MWL" )
+    {
+       qry.clear();
+       qry << "new_autoflowAnalysisVelMwl_record" << protocol_details["autoflowID"];
+
+       qDebug() << "new_autoflowAnalysisVelMwl_record qry -- " << qry;
+       int autoflowAnalysisVelMwl_ID = db->functionQuery( qry );
+       qDebug() << "autoflowAnalysisVelMwl_ID: " << autoflowAnalysisVelMwl_ID;
+
+       qry.clear();
+       qry << "new_autoflowAnalyisVelMwlStages_record" << protocol_details["autoflowID"];
+
+       qDebug() << "new_autoflowAnalyisVelMwlStages_record qry -- " << qry;
+       db->statusQuery( qry );
+    }
      }
 }
 
@@ -10923,7 +11211,38 @@ void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & p
 	   qry. clear();
 	   qry << "new_autoflowAnalyisABDEstages_record" << protocol_details[ "autoflowID" ];
 	   db->statusQuery( qry );
-	 }
+    }
+
+    /************ IF VELOCITY-MWL - create the run's autoflowAnalysisVelMwl
+          ***/
+    /** (per-channel decisions, one row per run) AND ***/
+    /** autoflowAnalysisVelMwlStages (run-wide completion gate) records, ***/
+    /** up front -- mirroring how ABDE seeds both its data and Stages ***/
+    /** rows together just above. channelDecisions starts out as an empty
+          ***/
+    /** JSON object; each channel's key gets added later, one at a time, ***/
+    /** as US_MwlSpeciesFit records that channel's Accept/Reject decision.
+          ***/
+    /** analysisVelMwl starts 'unknown' and is claimed -> 'STARTED' once,
+          ***/
+    /** by US_Analysis_auto, when every channel has finally been decided ***/
+    /** (see finalize_velmwl_analysis_if_complete() in ***/
+    /** us_autoflow_analysis.cpp), gating the one-time switch to Report. ***/
+    else if ( protocol_details["expType"] == "VELOCITY-MWL" )
+    {
+       qry.clear();
+       qry << "new_autoflowAnalysisVelMwl_record" << protocol_details["autoflowID"];
+
+       qDebug() << "new_autoflowAnalysisVelMwl_record qry -- " << qry;
+       int autoflowAnalysisVelMwl_ID = db->functionQuery( qry );
+       qDebug() << "autoflowAnalysisVelMwl_ID: " << autoflowAnalysisVelMwl_ID;
+
+       qry.clear();
+       qry << "new_autoflowAnalyisVelMwlStages_record" << protocol_details["autoflowID"];
+
+       qDebug() << "new_autoflowAnalyisVelMwlStages_record qry -- " << qry;
+       db->statusQuery( qry );
+    }
      }
 }
 
