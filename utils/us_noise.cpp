@@ -149,7 +149,7 @@ int US_Noise::write( IUS_DB2* db )
       db->next();
       QString modelID = db->value( 0 ).toString();
 
-      // composeQuery owns SQL escaping.
+      // Passed raw: the query layer escapes every argument.
       contents = temp_contents;
 
       // Determine the edit ID

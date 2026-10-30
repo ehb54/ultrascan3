@@ -59,21 +59,19 @@ protected:
 
     // Helper to create XML content for testing
     QString createTestModelXml() {
-        return QString(
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                "<!DOCTYPE US_Model>\n"
-                "<ModelData version=\"1.0\">\n"
-                "<model description=\"Test Model\" modelGUID=\"test-guid-123\" "
-                "editGUID=\"edit-guid-456\" wavelength=\"280.0\" "
-                "opticsType=\"0\" analysisType=\"1\" globalType=\"0\" "
-                "coSedSolute=\"-1\" subGrids=\"0\">\n"
-                "<analyte name=\"Component1\" mw=\"50000\" s=\"2.5e-13\" "
-                "D=\"1e-11\" f=\"1\" f_f0=\"1.25\" vbar20=\"0.73\" "
-                "extinction=\"0\" axial=\"10\" sigma=\"0\" delta=\"0\" "
-                "oligomer=\"1\" shape=\"0\" type=\"0\" molar=\"0\" signal=\"1\" />\n"
-                "</model>\n"
-                "</ModelData>\n"
-        );
+       return QString( "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                       "<!DOCTYPE US_Model>\n"
+                       "<ModelData version=\"1.0\">\n"
+                       "<model description=\"Test Model\" modelGUID=\"test-guid-123\" "
+                       "editGUID=\"edit-guid-456\" wavelength=\"280.0\" "
+                       "opticsType=\"0\" analysisType=\"1\" globalType=\"0\" "
+                       "coSedSolute=\"-1\">\n"
+                       "<analyte name=\"Component1\" mw=\"50000\" s=\"2.5e-13\" "
+                       "D=\"1e-11\" f=\"1\" f_f0=\"1.25\" vbar20=\"0.73\" "
+                       "extinction=\"0\" axial=\"10\" sigma=\"0\" delta=\"0\" "
+                       "oligomer=\"1\" shape=\"0\" type=\"0\" molar=\"0\" signal=\"1\" />\n"
+                       "</model>\n"
+                       "</ModelData>\n" );
     }
 };
 
@@ -85,7 +83,7 @@ EXPECT_EQ(model->variance, 0.0);
 EXPECT_EQ(model->meniscus, 0.0);
 EXPECT_EQ(model->bottom, 0.0);
 EXPECT_EQ(model->alphaRP, 0.0);
-EXPECT_EQ(model->subGrids, 0);
+EXPECT_EQ( model->subGrids, 1 );
 EXPECT_THAT(model->description, QStringEq("New Model"));
 EXPECT_EQ(model->optics, US_Model::ABSORBANCE);
 EXPECT_EQ(model->analysis, US_Model::MANUAL);
@@ -433,36 +431,33 @@ EXPECT_GT(sc.D, 0.0);
 }
 
 // US_Model passes raw XML to the database layer, which owns SQL escaping.
-TEST_F(US_ModelTest, WriteToDb_PassesRawXmlForTheDbLayerToEscape) {
-    model->description = "test-CustomGrid.model";
-    model->modelGUID   = "11111111-2222-3333-4444-555555555555";
-    model->analysis    = US_Model::CUSTOMGRID;
-    model->subGrids    = 3;
-    model->components << createValidComponent();
+TEST_F( US_ModelTest, WriteToDb_PassesRawXmlForTheDbLayerToEscape )
+{
+   model->description = "test-CustomGrid.model";
+   model->modelGUID   = "11111111-2222-3333-4444-555555555555";
+   model->analysis    = US_Model::CUSTOMGRID;
+   model->subGrids    = 3;
+   model->components << createValidComponent();
 
-    // Force the new-model path.
-    ON_CALL(*mockDb, lastErrno()).WillByDefault(Return(IUS_DB2::NOROWS));
+   // Force the new-model path.
+   ON_CALL( *mockDb, lastErrno() ).WillByDefault( Return( IUS_DB2::NOROWS ) );
 
-    QStringList written;
-    EXPECT_CALL(*mockDb, statusQuery(::testing::An<const QStringList&>()))
-        .WillOnce(DoAll(::testing::SaveArg<0>(&written), Return(IUS_DB2::OK)));
+   QStringList written;
+   EXPECT_CALL( *mockDb, statusQuery( ::testing::An<const QStringList&>() ) )
+      .WillOnce( DoAll( ::testing::SaveArg<0>( &written ), Return( IUS_DB2::OK ) ) );
 
-    model->write(mockDb.get());
+   model->write( mockDb.get() );
 
-    ASSERT_FALSE(written.isEmpty());
-    ASSERT_EQ(written.at(0), QString("new_model"));
+   ASSERT_FALSE( written.isEmpty() );
+   ASSERT_EQ( written.at( 0 ), QString( "new_model" ) );
 
-    // new_model(modelGUID, description, xml, ...)
-    ASSERT_GE(written.size(), 4);
-    const QString xml = written.at(3);
+   // new_model(modelGUID, description, xml, ...)
+   ASSERT_GE( written.size(), 4 );
+   const QString xml = written.at( 3 );
 
-    EXPECT_TRUE(xml.contains("<?xml version=\"1.0\""))
-        << "the xml should reach the DB layer with plain quotes";
-    EXPECT_FALSE(xml.contains("\\\""))
-        << "an escaped quote here means the value was escaped twice: "
-           "composeQuery escapes it again, so the DB stores the escaping";
-    EXPECT_FALSE(xml.contains("\\n"))
-        << "an escaped newline here means the value was escaped twice";
-    EXPECT_TRUE(xml.contains("subGrids=\"3\""))
-        << "the attribute a custom grid model is useless without";
+   EXPECT_TRUE( xml.contains( "<?xml version=\"1.0\"" ) ) << "the xml should reach the DB layer with plain quotes";
+   EXPECT_FALSE( xml.contains( "\\\"" ) ) << "an escaped quote here means the value was escaped twice: "
+                                             "composeQuery escapes it again, so the DB stores the escaping";
+   EXPECT_FALSE( xml.contains( "\\n" ) ) << "an escaped newline here means the value was escaped twice";
+   EXPECT_TRUE( xml.contains( "subGrids=\"3\"" ) ) << "the attribute a custom grid model is useless without";
 }

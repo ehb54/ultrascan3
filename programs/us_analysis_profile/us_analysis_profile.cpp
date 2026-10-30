@@ -27,9 +27,10 @@ US_AnalysisProfileGui::US_AnalysisProfileGui() : US_Widgets()
    QGridLayout* statL     = new QGridLayout();
    QHBoxLayout* buttL     = new QHBoxLayout();
 
-   connection_status   = false;
-   automode            = false;
-   abde_mode_aprofile  = false;
+   connection_status    = false;
+   automode             = false;
+   abde_mode_aprofile   = false;
+   velmwl_mode_aprofile = false;
 
    // Create tab and panel widgets
    tabWidget           = us_tabwidget();
@@ -731,69 +732,133 @@ DbgLv(1) << "APG: ipro:  ap_xml length" << ap_xml.length();
 	     //Also, clean  currProf->ch_reports first  (since it will be re-created form DB here )
 	     currProf.ch_reports.clear();  // <-- Will this cause crash - as this omits "B:Interf." cannels ??
 
-	     // iterate over QMap ch_report_ids[ chdesc_alt ]
-	     QMap<QString, QList <int >>::iterator ri;
-	     for ( ri = currProf.ch_report_ids.begin(); ri != currProf.ch_report_ids.end(); ++ri )
-	       {
-		 QString channel_alt_desc = ri.key();
-		 //int     reportID         = ri.value();
+        // Progress bookkeeping: each report counts as 100 units, split
+        // across its items
+        int rep_total = 0, rep_done = 0;
+        for ( auto it = currProf.ch_report_ids.constBegin(); it != currProf.ch_report_ids.constEnd(); ++it )
+        {
+           rep_total += it.value().size();
+        }
+        const int RUNITS = 100;
 
-		 QList< int > reportIDs  = ri.value();
-		 
-		 //ALEXEY_NEW_REPORT: here ri.value() will be QList/QVector of reportIDs for a given channel
-		 //next will be cycle over this QList... 
+        // ONE DB connection for all reports (was: a new connection per
+        // report)
+        US_Passwd rpw;
+        US_DB2    rdb( rpw.getPasswd() );
+        bool      db_ok = true;
+        if ( rdb.lastErrno() != US_DB2::OK )
+        {
+           QMessageBox::warning(
+              this, tr( "Connection Problem" ), tr( "Reading Report: Could not connect to database: \n" ) + rdb.lastError() );
+           db_ok = false;
+        }
 
-		 QString wvl_read_abde;
-		 for (int rid = 0; rid < reportIDs.size(); ++rid )
-		   {
-		     int reportID = reportIDs[ rid ];
-		     qDebug() << "Reading reportItems form DB: channel_alt_desc, reportID  -- " << channel_alt_desc << ", " << reportID;
-		 
-		     //retrieve report from DB
-		     US_ReportGMP * reportFromDB = new US_ReportGMP();
-		     get_report_by_ID( reportFromDB, reportID );
-		     
-		     
-		     //ALEXEY_NEW_REPORT: here the QMap< QString, QMap < QString(wvl), US_ReportGMP > > currProf.ch_reports will be filled
-		     //Something like currProf.ch_reports[ channel_alt_desc ][ wvl ] -- where wvl == *reportFromDB->wavelength;
-		     // OR  wvl is returned from get_report_by_ID( reportFromDB, reportID );
+        if ( progress_cb && rep_total > 0 && db_ok )
+        {
+           progress_cb( 0, rep_total * RUNITS, tr( "Reading reports from DB..." ) );
+        }
 
-		     QString wvl_read = QString::number( reportFromDB->wavelength );
+        // iterate over QMap ch_report_ids[ chdesc_alt ]
+        QMap<QString, QList<int>>::iterator ri;
+        for ( ri = currProf.ch_report_ids.begin(); db_ok && ri != currProf.ch_report_ids.end(); ++ri )
+        {
+           QString    channel_alt_desc = ri.key();
+           // int     reportID         = ri.value();
 
-		     if ( reportIDs.size() == 1 )
-		       wvl_read_abde = wvl_read;
-		     
-		     //assign retieved report to currProf.ch_reports[ channel_alt_desc ];
-		     currProf.ch_reports[ channel_alt_desc ][ wvl_read ] = *reportFromDB;
+           QList<int> reportIDs = ri.value();
 
-		     qDebug() << "Filling currProf.ch_reports from DB: channel_alt_desc, wvl_read -- " << channel_alt_desc << ", " << wvl_read;
-		   }
+           // ALEXEY_NEW_REPORT: here ri.value() will be QList/QVector of
+           // reportIDs for a given channel next will be cycle over this
+           // QList...
 
-		 //In case of ABDE: the above loop would contain only 1 report (in DB: 1 report per channel [1st wvl])
-		 //For internal consistency, we need to populate (COPY) reports for the rest of wvls in the channel (will not be used)
-		 QList< double > ch_wavelengths = currProf.ch_wvls[ channel_alt_desc ];
-		 if ( abde_mode_aprofile
-		      && reportIDs.size() == 1
-		      && ch_wavelengths.size() > 1
-		      && !wvl_read_abde.isEmpty() )
-		   {
-		     qDebug() << "AProfile[ABDE]: reading from DB: replicating reports for MWL based on the 1st channel's wvl -- ";
-		     for ( int i=0; i<ch_wavelengths.size(); ++i )
-		       {
-			 QString c_wvl = QString::number ( ch_wavelengths[ i ] );
-			 if ( c_wvl == wvl_read_abde )
-			   {
-			     qDebug() << "Skipping 1st wvl: wvl = " << wvl_read_abde;
-			     continue;
-			   }
-			 
-			 qDebug() << "Filling wvl = " << c_wvl << ", with ref_wvl = " << wvl_read_abde;
-			 currProf.ch_reports[ channel_alt_desc ][ c_wvl ] = currProf.ch_reports[ channel_alt_desc ][ wvl_read_abde ];
-		       }
-		   }
-		 //END of replicating ch_reports for ABDE
-	       }
-	   }
+           QString    wvl_read_abde;
+           for ( int rid = 0; rid < reportIDs.size(); ++rid )
+           {
+              int reportID = reportIDs[rid];
+              qDebug() << "Reading reportItems form DB: channel_alt_desc, "
+                          "reportID  -- "
+                       << channel_alt_desc << ", " << reportID;
+
+              // retrieve report from DB
+              QString rep_detail =
+                 tr( "Reading report %1 of %2 (%3)..." ).arg( rep_done + 1 ).arg( rep_total ).arg( channel_alt_desc );
+              if ( progress_cb )
+              {
+                 progress_cb( rep_done * RUNITS, rep_total * RUNITS, rep_detail );
+              }
+
+              std::function<void( int, int )> item_cb;
+              if ( progress_cb )
+              {
+                 item_cb = [&]( int idone, int itotal )
+                 {
+                    if ( itotal <= 0 )
+                    {
+                       return;
+                    }
+                    progress_cb( rep_done * RUNITS + ( RUNITS * idone ) / itotal,
+                                 rep_total * RUNITS,
+                                 tr( "%1 item %2 of %3" ).arg( rep_detail ).arg( idone ).arg( itotal ) );
+                 };
+              }
+
+              US_ReportGMP* reportFromDB = new US_ReportGMP();
+              get_report_by_ID( reportFromDB, reportID, &rdb, item_cb );
+
+              // ALEXEY_NEW_REPORT: here the QMap< QString, QMap <
+              // QString(wvl), US_ReportGMP > > currProf.ch_reports will be
+              // filled Something like currProf.ch_reports[ channel_alt_desc
+              // ][ wvl ] -- where wvl == *reportFromDB->wavelength;
+              //  OR  wvl is returned from get_report_by_ID( reportFromDB,
+              //  reportID );
+
+              QString wvl_read = QString::number( reportFromDB->wavelength );
+
+              if ( reportIDs.size() == 1 )
+              {
+                 wvl_read_abde = wvl_read;
+              }
+
+              // assign retieved report to currProf.ch_reports[
+              // channel_alt_desc ];
+              currProf.ch_reports[channel_alt_desc][wvl_read] = *reportFromDB;
+              delete reportFromDB; // was leaked
+              ++rep_done;
+
+              qDebug() << "Filling currProf.ch_reports from DB: "
+                          "channel_alt_desc, wvl_read -- "
+                       << channel_alt_desc << ", " << wvl_read;
+           }
+
+           // In case of ABDE: the above loop would contain only 1 report
+           // (in DB: 1 report per channel [1st wvl]) For internal
+           // consistency, we need to populate (COPY) reports for the rest
+           // of wvls in the channel (will not be used)
+           QList<double> ch_wavelengths = currProf.ch_wvls[channel_alt_desc];
+           if ( abde_mode_aprofile && reportIDs.size() == 1 && ch_wavelengths.size() > 1 && !wvl_read_abde.isEmpty() )
+           {
+              qDebug() << "AProfile[ABDE]: reading from DB: replicating reports "
+                          "for MWL based on the 1st channel's wvl -- ";
+              for ( int i = 0; i < ch_wavelengths.size(); ++i )
+              {
+                 QString c_wvl = QString::number( ch_wavelengths[i] );
+                 if ( c_wvl == wvl_read_abde )
+                 {
+                    qDebug() << "Skipping 1st wvl: wvl = " << wvl_read_abde;
+                    continue;
+                 }
+
+                 qDebug() << "Filling wvl = " << c_wvl << ", with ref_wvl = " << wvl_read_abde;
+                 currProf.ch_reports[channel_alt_desc][c_wvl] = currProf.ch_reports[channel_alt_desc][wvl_read_abde];
+              }
+           }
+           // END of replicating ch_reports for ABDE
+        }
+        if ( progress_cb && rep_total > 0 )
+        {
+           progress_cb( rep_total * RUNITS, rep_total * RUNITS, QString() );
+        }
+      }
       }
    }
 
@@ -923,28 +988,38 @@ DbgLv(1) << "APG: ipro: nchn" << nchn << "call pGen iP";
 }
 
 //retrieve Report by ID from DB into ReportGMP structure
-void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int reportID )
+void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP*                          reportFromDB,
+                                              int                                    reportID,
+                                              US_DB2*                                db_in,
+                                              const std::function<void( int, int )>& item_cb )
 {
-  US_DB2* db  = NULL;
-  US_Passwd pw;
-  db            = new US_DB2( pw.getPasswd() );
-  if ( db->lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-			    tr( "Reading Report: Could not connect to database: \n" ) + db->lastError() );
-      return;
-    }
+   // Use caller's open connection if given; else connect here (and clean up on
+   // exit)
+   QScopedPointer<US_DB2> db_own;
+   US_DB2*                db = db_in;
+   if ( !db )
+   {
+      US_Passwd pw;
+      db_own.reset( new US_DB2( pw.getPasswd() ) );
+      db = db_own.data();
+      if ( db->lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::warning(
+            this, tr( "Connection Problem" ), tr( "Reading Report: Could not connect to database: \n" ) + db->lastError() );
+         return;
+      }
+   }
 
-  //Read parent Report
-  QStringList qry;
-  qry << "get_report_info_by_id" << QString::number( reportID );
-  qDebug() << "In get_report_by_ID(): query -- " << qry;
-  db->query( qry );
+   //Read parent Report
+   QStringList qry;
+   qry << "get_report_info_by_id" << QString::number( reportID );
+   qDebug() << "In get_report_by_ID(): query -- " << qry;
+   db->query( qry );
 
-  QString reportMaskJson;
-  
-  if ( db->lastErrno() == US_DB2::OK )      
-    {
+   QString reportMaskJson;
+
+   if ( db->lastErrno() == US_DB2::OK )
+   {
       while ( db->next() )
 	{
 	  reportFromDB->channel_name            = db->value( 0 ).toString();  
@@ -1031,7 +1106,7 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
       
       //was read from DB
       reportFromDB->DBread = true;
-    }
+   }
 
   //Read children: reportItems-by-reportID && insert them to parent report
   reportFromDB->reportItems.clear();
@@ -1054,33 +1129,42 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
 	}
       
       // reportItem information
-      foreach ( int ID, reportItemsIDs )
-	{
-	  qry.clear();
-	  qry  << QString( "get_report_item_info_by_id" )
-	       << QString::number( ID );
-	  db->query( qry );
-	  db->next();
+   const int n_items = reportItemsIDs.size();
+   int       i_item  = 0;
+   if ( item_cb )
+   {
+      item_cb( 0, n_items );
+   }
+   foreach ( int ID, reportItemsIDs )
+   {
+      qry.clear();
+      qry << QString( "get_report_item_info_by_id" ) << QString::number( ID );
+      db->query( qry );
+      db->next();
 
-	  US_ReportGMP::ReportItem reportItem_read;
-	  
-	  reportItem_read.type              =   db->value( 0 ).toString();
-	  reportItem_read.method            =   db->value( 1 ).toString();
-	  reportItem_read.range_low         =   db->value( 2 ).toString().toDouble();	   
-	  reportItem_read.range_high        =   db->value( 3 ).toString().toDouble();
-	  reportItem_read.integration_val   =   db->value( 4 ).toString().toDouble();	   
-	  reportItem_read.tolerance         =   db->value( 5 ).toString().toDouble();
-	  reportItem_read.total_percent     =   db->value( 6 ).toString().toDouble();
-	  reportItem_read.combined_plot     =   db->value( 7 ).toString().toInt();
-	  reportItem_read.ind_combined_plot =   db->value( 8 ).toString().toInt();
+      US_ReportGMP::ReportItem reportItem_read;
 
-	  reportItem_read.integration_val_sim   = -1;
-	  reportItem_read.total_percent_sim     = -1;
-	  reportItem_read.passed                = QString("N/A");
-  
-	  reportFromDB->reportItems.push_back( reportItem_read );
-	}
-      
+      reportItem_read.type              = db->value( 0 ).toString();
+      reportItem_read.method            = db->value( 1 ).toString();
+      reportItem_read.range_low         = db->value( 2 ).toString().toDouble();
+      reportItem_read.range_high        = db->value( 3 ).toString().toDouble();
+      reportItem_read.integration_val   = db->value( 4 ).toString().toDouble();
+      reportItem_read.tolerance         = db->value( 5 ).toString().toDouble();
+      reportItem_read.total_percent     = db->value( 6 ).toString().toDouble();
+      reportItem_read.combined_plot     = db->value( 7 ).toString().toInt();
+      reportItem_read.ind_combined_plot = db->value( 8 ).toString().toInt();
+
+      reportItem_read.integration_val_sim = -1;
+      reportItem_read.total_percent_sim   = -1;
+      reportItem_read.passed              = QString( "N/A" );
+
+      reportFromDB->reportItems.push_back( reportItem_read );
+
+      if ( item_cb )
+      {
+         item_cb( ++i_item, n_items );
+      }
+   }
     }
   else //No reportItem(s) for report in the DB: push default rpeortItem structure??
     {
@@ -1125,7 +1209,6 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
 	reportFromDB->reportItems.push_back( initItem );
     }
 }
-
 
 // Reset parameters to their defaults
 void US_AnalysisProfileGui::close_program( void )
@@ -1182,8 +1265,10 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
 //   genL       ->setObjectName( "GeneralLayout" );
    pb_aproname->setObjectName( "Aprof Button" );
    le_aproname->setObjectName( "Aprof LineEdit" );
+   le_aproname->setAccessibleName( tr( "Analysis Profile Name" ) );
    pb_protname->setObjectName( "Proto Button" );
    le_protname->setObjectName( "Proto LineEdit" );
+   le_protname->setAccessibleName( tr( "Protocol Name" ) );
 
    //pb_scan_excl->setObjectName( "Scan Exclusion" );
 
@@ -1546,11 +1631,17 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       
       QString stchan      = QString::number( ii ) + ": ";
       le_chann->setObjectName( stchan + "channel" );
+      le_chann->setAccessibleName( tr( "Channel (Row %1)" ).arg( ii + 1 ) );
       le_lcrat->setObjectName( stchan + "loadconc_ratio" );
+      le_lcrat->setAccessibleName( tr( "Load Concentration Ratio (Row %1)" ).arg( ii + 1 ) );
       le_lctol->setObjectName( stchan + "loadconc_tolerance" );
+      le_lctol->setAccessibleName( tr( "Load Concentration Tolerance (Row %1)" ).arg( ii + 1 ) );
       le_ldvol->setObjectName( stchan + "load_volume" );
+      le_ldvol->setAccessibleName( tr( "Load Volume (Row %1)" ).arg( ii + 1 ) );
       le_lvtol->setObjectName( stchan + "loadvol_tolerance" );
+      le_lvtol->setAccessibleName( tr( "Load Volume Tolerance (Row %1)" ).arg( ii + 1 ) );
       le_daend->setObjectName( stchan + "dataend" );
+      le_daend->setAccessibleName( tr( "Data End (Row %1)" ).arg( ii + 1 ) );
 
       //set Validators for fields
       le_lcrat ->setValidator(validator);
@@ -1584,9 +1675,11 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
 
       QLineEdit *le_ref_ch  =  us_lineedit( "", 0, true  );
       le_ref_ch ->setObjectName( stchan + "RefChan --chann_name--" + schan );
-      
+      le_ref_ch->setAccessibleName( tr( "Reference Channel" ) );
+
       sb_use_ref_ch  = us_spinbox();
       sb_use_ref_ch ->setObjectName( stchan + "RefUseChan --chann_name--" + schan );
+      sb_use_ref_ch->setAccessibleName( tr( "Use Reference Channel" ) );
       sb_use_ref_ch ->setMinimum( 0 );
       sb_use_ref_ch ->setMaximum( int(nchn/2.0) );
       sb_use_ref_ch -> setEnabled( false );
@@ -1640,6 +1733,7 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       ck_analysisrun ->setChecked( true );
       QString strow  = QString::number( ii );
       ck_analysisrun ->setObjectName( strow + ": Run" );
+      ck_analysisrun->setAccessibleName( tr( "Run Analysis (Channel %1)" ).arg( schan ) );
       genL->addWidget( ck_analysisrun,  row,  8, 1, 1, Qt::AlignHCenter );
       connect( ck_analysisrun, &QAbstractButton::toggled,
                this,           &US_AnaprofPanGen::runChecked );
@@ -1652,6 +1746,7 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       ck_reportrun ->setAutoFillBackground( true );
       ck_reportrun ->setChecked( true );
       ck_reportrun ->setObjectName( strow + ": RunReport" );
+      ck_reportrun->setAccessibleName( tr( "Run Report (Channel %1)" ).arg( schan ) );
       genL->addWidget( ck_reportrun,  row,  9, 1, 1, Qt::AlignHCenter );
       connect( ck_reportrun, &QAbstractButton::toggled,
                this,         &US_AnaprofPanGen::reportRunChecked );
@@ -1674,6 +1769,7 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       //Replicate Groups
       sb_repl_group  = us_spinbox();
       sb_repl_group->setObjectName( strow + ": Replicate --chann_name--" + schan );
+      sb_repl_group->setAccessibleName( tr( "Replicate Group (Channel %1)" ).arg( schan ) );
       sb_repl_group ->setMaximum( nchn );
       genL->addWidget( sb_repl_group,  row,  11, 1, 1, Qt::AlignHCenter );
       // connect( sb_repl_group, SIGNAL( clicked     ( ) ),
@@ -1688,6 +1784,7 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       ck_mwvprefs ->setAutoFillBackground( true );
       ck_mwvprefs ->setChecked( false );
       ck_mwvprefs ->setObjectName( strow + ": MWV" );
+      ck_mwvprefs->setAccessibleName( tr( "Multiwavelength Preferences (Channel %1)" ).arg( schan ) );
 
       connect( ck_mwvprefs, &QAbstractButton::toggled,
                this,        &US_AnaprofPanGen::mwvChecked );
@@ -2564,7 +2661,12 @@ void US_AnaprofPanGen::setReport( void )
    //abde
    if ( mainw->abde_mode_aprofile )
      reportGui->abde_mode_passed();
-   
+   // VELOCITY-MWL
+   else if ( mainw->velmwl_mode_aprofile )
+   {
+      reportGui->velmwl_mode_passed();
+   }
+
    reportGui->show();
 
 }
@@ -3086,52 +3188,90 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    le_kmax         = us_lineedit( "4", 0, false );
    le_kgrpts       = us_lineedit( "64", 0, false );
    le_grreps       = us_lineedit( "8", 0, false );
+   le_smin->setAccessibleName( tr( "Sedimentation Coefficient Minimum" ) );
+   le_smax->setAccessibleName( tr( "Sedimentation Coefficient Maximum" ) );
+   le_sgrpts->setAccessibleName( tr( "Sedimentation Coefficient Grid Points" ) );
+   le_kmin->setAccessibleName( tr( "Frictional Ratio Minimum" ) );
+   le_kmax->setAccessibleName( tr( "Frictional Ratio Maximum" ) );
+   le_kgrpts->setAccessibleName( tr( "Frictional Ratio Grid Points" ) );
+   le_grreps->setAccessibleName( tr( "Grid Repetitions" ) );
+   lb_smin->setBuddy( le_smin );
+   lb_smax->setBuddy( le_smax );
+   lb_sgrpts->setBuddy( le_sgrpts );
+   lb_kmin->setBuddy( le_kmin );
+   lb_kmax->setBuddy( le_kmax );
+   lb_kgrpts->setBuddy( le_kgrpts );
+   lb_grreps->setBuddy( le_grreps );
 
    le_custmg       = us_lineedit( "(none)", 0, true );
    le_custmg_name  = us_lineedit( "", 0, true );
    lb_custmg       = us_label ( tr( "CG GUID:" ) );
    lb_custmg_name  = us_label ( tr( "CG Name:" ) );
-   
+   le_custmg->setAccessibleName( tr( "Custom Grid GUID" ) );
+   le_custmg_name->setAccessibleName( tr( "Custom Grid Name" ) );
+   lb_custmg->setBuddy( le_custmg );
+   lb_custmg_name->setBuddy( le_custmg_name );
+
    ck_varyvb       = new QCheckBox( "VV", this );
    ck_varyvb->setPalette( US_GuiSettings::normalColor() );
    ck_varyvb->setChecked( false );
    ck_varyvb->setAutoFillBackground( true  );
    le_constk       = us_lineedit( "2", 0, false );
+   le_constk->setAccessibleName( tr( "Constant f/f0" ) );
+   lb_constk->setBuddy( le_constk );
 
    cb_chnsel       = new QComboBox( this );
    sl_chnsel       = sibLValue( "general", "channels" );
    cb_chnsel->addItems( sl_chnsel );
    cb_chnsel->setCurrentIndex( cchx );
+   cb_chnsel->setAccessibleName( tr( "Channel" ) );
+   lb_chnsel->setBuddy( cb_chnsel );
    ck_j1run        = new QCheckBox( tr( "Run" ), this );
    ck_j1run ->setPalette( US_GuiSettings::normalColor() );
    ck_j1run ->setChecked( true );
    ck_j1run ->setAutoFillBackground( true  );
+   ck_j1run->setAccessibleName( tr( "Run 2DSA" ) );
    ck_j2run        = new QCheckBox( tr( "Run" ), this );
    ck_j2run ->setPalette( US_GuiSettings::normalColor() );
    ck_j2run ->setChecked( true );
    ck_j2run ->setAutoFillBackground( true  );
+   ck_j2run->setAccessibleName( tr( "Run 2DSA-FM" ) );
    ck_j3run        = new QCheckBox( tr( "Run" ), this );
    ck_j3run ->setPalette( US_GuiSettings::normalColor() );
    ck_j3run ->setChecked( true );
    ck_j3run ->setAutoFillBackground( true  );
+   ck_j3run->setAccessibleName( tr( "Run FITMEN" ) );
    ck_j4run        = new QCheckBox( tr( "Run" ), this );
    ck_j4run ->setPalette( US_GuiSettings::normalColor() );
    ck_j4run ->setChecked( true );
    ck_j4run ->setAutoFillBackground( true  );
+   ck_j4run->setAccessibleName( tr( "Run 2DSA-IT" ) );
    ck_j5run        = new QCheckBox( tr( "Run" ), this );
    ck_j5run ->setPalette( US_GuiSettings::normalColor() );
    ck_j5run ->setChecked( true );
    ck_j5run ->setAutoFillBackground( true  );
+   ck_j5run->setAccessibleName( tr( "Run 2DSA-MC" ) );
    le_j2gpts       = us_lineedit( "10", 0, false );
    le_j2mrng       = us_lineedit( "0.03", 0, false );
    le_j2iter       = us_lineedit( "1", 0, false );
-   
+   le_j2gpts->setAccessibleName( tr( "Meniscus Grid Points" ) );
+   le_j2mrng->setAccessibleName( tr( "Meniscus Fit Range (cm)" ) );
+   le_j2iter->setAccessibleName( tr( "2DSA-FM Refinement Iterations" ) );
+   lb_j2gpts->setBuddy( le_j2gpts );
+   lb_j2mrng->setBuddy( le_j2mrng );
+   lb_j2iter->setBuddy( le_j2iter );
+
    ck_j3auto       = new QCheckBox( tr( "Auto-pick" ), this );
    ck_j3auto->setPalette( US_GuiSettings::normalColor() );
    ck_j3auto->setChecked( true );
    ck_j3auto->setAutoFillBackground( true  );
+   ck_j3auto->setAccessibleName( tr( "FITMEN Auto-pick" ) );
    le_j4iter       = us_lineedit( "10", 0, false );
    le_j5iter       = us_lineedit( "100", 0, false );
+   le_j4iter->setAccessibleName( tr( "2DSA-IT Refinement Iterations" ) );
+   le_j5iter->setAccessibleName( tr( "2DSA-MC Monte-Carlo Iterations" ) );
+   lb_j4iter->setBuddy( le_j4iter );
+   lb_j5iter->setBuddy( le_j5iter );
 
    // Create main layout rows
    int row     = 0;
@@ -3769,10 +3909,12 @@ DbgLv(1) << "APpc: IN";
 
    
    cb_curvtype     = new QComboBox( this );
+   cb_curvtype->setAccessibleName( tr( "Curve Type" ) );
    cb_curvtype->addItems( sl_curvtype );
    cb_curvtype->setCurrentIndex( 0 );
    
    cb_xaxistyp     = new QComboBox( this );
+   cb_xaxistyp->setAccessibleName( tr( "X-Axis Type" ) );
    //cb_xaxistyp->addItems( sl_axistype );
    cb_xaxistyp->addItems( sl_xaxistype );
    cb_xaxistyp->setEnabled( false );
@@ -3782,9 +3924,12 @@ DbgLv(1) << "APpc: IN";
 
    //Add objectName
    le_xmin      -> setObjectName( "xmin" );
+   le_xmin->setAccessibleName( tr( "X-Axis Minimum" ) );
    le_xmax      -> setObjectName( "xmax" );
+   le_xmax->setAccessibleName( tr( "X-Axis Maximum" ) );
 
    cb_yaxistyp     = new QComboBox( this );
+   cb_yaxistyp->setAccessibleName( tr( "Y-Axis Type" ) );
    //cb_yaxistyp->addItems( sl_axistype );
    cb_yaxistyp->addItems( sl_yaxistype );
    //cb_yaxistyp->setCurrentIndex( 1 );
@@ -3794,9 +3939,12 @@ DbgLv(1) << "APpc: IN";
 
    //Add objectName
    le_ymin      -> setObjectName( "ymin" );
+   le_ymin->setAccessibleName( tr( "Y-Axis Minimum" ) );
    le_ymax      -> setObjectName( "ymax" );
+   le_ymax->setAccessibleName( tr( "Y-Axis Maximum" ) );
 
    cb_zaxistyp     = new QComboBox( this );
+   cb_zaxistyp->setAccessibleName( tr( "Z-Axis Type" ) );
    cb_zaxistyp->addItems( sl_zaxistyp );
    cb_zaxistyp->setEnabled( false );
 
@@ -3804,38 +3952,55 @@ DbgLv(1) << "APpc: IN";
    le_zvalue       = us_lineedit( "0", 0, false );
    //Add objectName
    le_zvalue      -> setObjectName( "zvalue" );
-   
-   
+   le_zvalue->setAccessibleName( tr( "Z-Axis Value" ) );
+
+
    le_varcount     = us_lineedit( "10", 0, false );
    le_grfiters     = us_lineedit( "3", 0, false );
    le_crpoints     = us_lineedit( "200", 0, false );
+   le_varcount->setAccessibleName( tr( "Variations Count" ) );
+   le_grfiters->setAccessibleName( tr( "Grid Fit Iterations" ) );
+   le_crpoints->setAccessibleName( tr( "Curve Resolution Points" ) );
+   lb_varcount->setBuddy( le_varcount );
+   lb_grfiters->setBuddy( le_grfiters );
+   lb_crpoints->setBuddy( le_crpoints );
    ck_tregspec     = new QCheckBox( tr( "On-specified" ), this );
    ck_tregspec->setPalette( US_GuiSettings::normalColor() );
    ck_tregspec->setChecked( false );
    ck_tregspec->setAutoFillBackground( true  );
+   ck_tregspec->setAccessibleName( tr( "Tikhonov Regularization On-specified" ) );
    ck_tregauto     = new QCheckBox( tr( "On-auto" ), this );
    ck_tregauto->setPalette( US_GuiSettings::normalColor() );
    ck_tregauto->setChecked( false );
    ck_tregauto->setAutoFillBackground( true  );
+   ck_tregauto->setAccessibleName( tr( "Tikhonov Regularization On-auto" ) );
    le_regalpha     = us_lineedit( "0", 0, true );
    us_setReadOnly( le_regalpha, true );
+   le_regalpha->setAccessibleName( tr( "Regularization Alpha" ) );
+   lb_regalpha->setBuddy( le_regalpha );
    //le_mciters      = us_lineedit( "1", 0, false );
    le_mciters      = us_lineedit( "100", 0, true );
+   le_mciters->setAccessibleName( tr( "Monte-Carlo Iterations" ) );
+   lb_mciters->setBuddy( le_mciters );
    ck_tinoise      = new QCheckBox( "TI", this );
    ck_tinoise ->setPalette( US_GuiSettings::normalColor() );
    ck_tinoise ->setChecked( false );
    ck_tinoise ->setAutoFillBackground( true  );
+   ck_tinoise->setAccessibleName( tr( "Fit Time-Invariant Noise" ) );
    ck_rinoise      = new QCheckBox( "RI", this );
    ck_rinoise ->setPalette( US_GuiSettings::normalColor() );
    ck_rinoise ->setChecked( false );
    ck_rinoise ->setAutoFillBackground( true  );
+   ck_rinoise->setAccessibleName( tr( "Fit Radially-Invariant Noise" ) );
    QLabel*  lb_chnpro  = us_banner( tr( "Per-Channel Profile" ) );
    cb_chnsel       = new QComboBox( this );
    sl_chnsel       = sibLValue( "general", "channels" );
    cb_chnsel->addItems( sl_chnsel );
    cb_chnsel->setCurrentIndex( cchx );
-//   int ihgt            = lb_curvtype->height();
-//   QSpacerItem* spacer1 = new QSpacerItem( 20, ihgt );
+   cb_chnsel->setAccessibleName( tr( "Channel" ) );
+   lb_chnsel->setBuddy( cb_chnsel );
+   //   int ihgt            = lb_curvtype->height();
+   //   QSpacerItem* spacer1 = new QSpacerItem( 20, ihgt );
 
    // Create main layout rows
    int row             = 0;

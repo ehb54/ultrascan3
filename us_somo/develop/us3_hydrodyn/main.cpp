@@ -157,7 +157,6 @@ int main (int argc, char **argv)
    hydrodyn->show();
  //   a.setMainWidget(hydrodyn);
    a.setDesktopSettingsAware(false);
-#if QT_VERSION >= 0x040000
    {
       QString icon = 
          hydrodyn->USglobal->config_list.system_dir + "/etc/" + "somo3_icon_128x128.ico";
@@ -166,7 +165,6 @@ int main (int argc, char **argv)
          a.setWindowIcon( QIcon( icon ) );
       }
    }
-#endif
    return a.exec();
 }
 

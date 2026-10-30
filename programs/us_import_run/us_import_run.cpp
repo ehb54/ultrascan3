@@ -489,11 +489,9 @@ public:
 
       if ( ! db.rollbackTransaction( error ) )
          err() << "Rollback also failed: " << error << Qt::endl;
-      else if ( ! error.isEmpty() )
-         err() << "Rollback warning: " << error << Qt::endl;
    }
 
-   //! Called once the commit has succeeded, warning or not.
+   //! Called once the commit has succeeded.
    void disarm() { armed = false; }
 
 private:
@@ -775,9 +773,6 @@ int main( int argc, char* argv[] )
    }
 
    transaction.disarm();
-
-   if ( ! transaction_error.isEmpty() )
-      err() << "Commit warning: " << transaction_error << Qt::endl;
 
    out() << "loaded       : " << run.disk.runID << ", experimentID "
          << run.disk.experiment.expID << ", " << run.disk.triples.size()

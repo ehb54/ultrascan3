@@ -8,7 +8,6 @@
 #define DEGREE_SYMBOL UNICODE_DEGREE
 
 //! Color Palettes for GUI elements QT4/QT3
-#if QT_VERSION >= 0x040000
 #include "../include/us_gui_settings.h"
 #define PALET_FRAME  QPalette( US_GuiSettings::frameColor()  )
 #define PALET_NORMAL QPalette( US_GuiSettings::normalColor() )
@@ -17,17 +16,6 @@
 #define PALET_LISTB  QPalette( US_GuiSettings::editColor()   )
 #define PALET_PUSHB  QPalette( US_GuiSettings::pushbColor()  )
 #define AUTFBACK(x)  (x)->setAutoFillBackground(true)
-#else
-#define GLOCOLS USglobal->global_colors
-#define PALET3XA(a) QPalette((a))
-#define PALET_FRAME  PALET3XA(GLOCOLS.cg_frame)
-#define PALET_NORMAL PALET3XA(GLOCOLS.cg_normal)
-#define PALET_EDIT   PALET3XA(GLOCOLS.cg_edit)
-#define PALET_LABEL  PALET3XA(GLOCOLS.cg_label)
-#define PALET_LISTB  PALET3XA(GLOCOLS.cg_normal)
-#define PALET_PUSHB  QPalette(GLOCOLS.cg_pushb)
-#define AUTFBACK(x)
-#endif
 
 //! The version of UltraScan III
 #define US3_Version QString("1.0")

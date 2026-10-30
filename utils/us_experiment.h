@@ -83,8 +83,8 @@ class US_UTIL_EXTERN US_Experiment
 
           \param    db For database access, an open database connection
       */
-      int checkRunID( IUS_DB2* = 0 );
-      int checkRunID_auto( int invID_passed, IUS_DB2* = 0 );
+      int checkRunID( IUS_DB2* = nullptr );
+      int checkRunID_auto( int invID_passed, IUS_DB2* = nullptr );
 
       /*! \brief    Function to save the experiment information to db
 
@@ -93,17 +93,17 @@ class US_UTIL_EXTERN US_Experiment
           \param    db For database access, an open database connection
           \param    speedsteps Reference to vector of experiment speed steps
       */
-      int saveToDB( bool, IUS_DB2*, QVector< SP_SPEEDPROFILE >& );
-      int saveToDB_auto( bool, IUS_DB2*, QVector< SP_SPEEDPROFILE >&, int );
-      
+      int saveToDB( bool, IUS_DB2*, QVector<SP_SPEEDPROFILE>& );
+      int saveToDB_auto( bool, IUS_DB2*, QVector<SP_SPEEDPROFILE>&, int );
+
       /*! \brief    Reads experiment information from the db
 
           \param runID  The run ID of the experiment.
           \param    db For database access, an open database connection
           \param    speedsteps Reference to vector of experiment speed steps
-          \returns  One of the US_DB2 error codes
+          \returns  One of the IUS_DB2 error codes
       */
-      int readFromDB( QString, IUS_DB2*, QVector< SP_SPEEDPROFILE >&, const QString = QString("")  );
+      int readFromDB( QString, IUS_DB2*, QVector<SP_SPEEDPROFILE>&, const QString = QString( "" ) );
 
       /*! \brief    Writes an xml file
 
@@ -139,13 +139,10 @@ class US_UTIL_EXTERN US_Experiment
       /*! \brief    Reads an xml file, also returning its speed steps and a
                     description of any dataset/triple disagreement.
 
-          Same parsing as the four-argument overload, which is preserved for
-          callers that do not want diagnostics.  What this adds is what the
-          older one silently discarded: the serialized `<speedstep>` entries,
-          and the fact that an experiment `<dataset>` matched no triple or
-          matched one that a previous dataset had already claimed.  Both were
-          previously invisible -- readExperiment() falls past its `if ( found )`
-          with no else -- so a partial archive read as OK.
+          Same parsing as the four-argument overload, which is for callers
+          that do not want diagnostics.  This one also returns the serialized
+          `<speedstep>` entries, and reports an experiment `<dataset>` that
+          matched no triple or matched one a previous dataset already claimed.
 
           Speed steps are returned exactly as the file gives them.  They are
           not validated against the scans and no missing profile is computed;
@@ -165,10 +162,17 @@ class US_UTIL_EXTERN US_Experiment
                    datasets claimed the same triple, otherwise the same status
                    the four-argument overload would return
       */
-      int readFromDisk( QList< US_Convert::TripleInfo >&,
-                        QString, QString, QString,
-                        QVector< SP_SPEEDPROFILE >&,
-                        QString& );
+      int readFromDisk( QList<US_Convert::TripleInfo>&, QString, QString, QString, QVector<SP_SPEEDPROFILE>&, QString& );
+
+      //! \brief Detail formats of the diagnostic readFromDisk(), shared with
+      //! the tests; fill them with QString::arg().
+      //! Datasets claiming one triple: %1 the triple descriptions.
+      static constexpr const char* duplicatedDatasetMessage  = "The experiment record describes %1 more than once";
+      //! Datasets matching no data file: %1 the triple descriptions.
+      static constexpr const char* datasetWithoutDataMessage = "the experiment record describes %1, which has no data file";
+      //! Data files the XML does not describe: %1 the triple descriptions.
+      static constexpr const char* dataWithoutDatasetMessage =
+         "the data files include %1, which the experiment record does not describe";
 
       /*! \brief    Writes the radial intensity profile data to the HD
 
@@ -190,7 +194,7 @@ class US_UTIL_EXTERN US_Experiment
           \param    runID   Run ID for which to delete records
           \returns          Flag if delete was OK;
       */
-      static bool deleteRunPcsaMrecs( IUS_DB2*, const QString, const QString );
+      static bool       deleteRunPcsaMrecs( IUS_DB2*, const QString, const QString );
 
       void clear( void ); //!< Function to reset all class variables to defaults
       void show ( void ); //!< Temporary function to display current exp info
@@ -201,28 +205,25 @@ class US_UTIL_EXTERN US_Experiment
       //! \brief What one experiment-XML read collected beyond the record
       //!        itself.  Everything here is optional: the four-argument
       //!        readFromDisk() passes a default-constructed instance and
-      //!        ignores it, which is how its behavior stays unchanged.
+      //!        ignores it.
       struct DiskReadState
       {
-         //! Serialized speed steps, in file order, when wanted.
-         QVector< SP_SPEEDPROFILE >* speedsteps = nullptr;
+            //! Serialized speed steps, in file order, when wanted.
+            QVector<SP_SPEEDPROFILE>* speedsteps = nullptr;
 
-         //! Triple descriptions of datasets that matched no triple.
-         QStringList unmatched;
+            //! Triple descriptions of datasets that matched no triple.
+            QStringList               unmatched;
 
-         //! Triple descriptions claimed by more than one dataset.
-         QStringList duplicated;
+            //! Triple descriptions claimed by more than one dataset.
+            QStringList               duplicated;
 
-         //! Indexes of the triples a dataset filled in.
-         QSet< int > filled;
+            //! Indexes of the triples a dataset filled in.
+            QSet<int>                 filled;
       };
 
-      int  readFromDisk( QList< US_Convert::TripleInfo >&,
-                         QString, QString, QString, DiskReadState& );
+      int  readFromDisk( QList<US_Convert::TripleInfo>&, QString, QString, QString, DiskReadState& );
 
-      void readExperiment( QXmlStreamReader&, 
-                 QList< US_Convert::TripleInfo >&, QString , QString,
-                 DiskReadState& );
+      void readExperiment( QXmlStreamReader&, QList<US_Convert::TripleInfo>&, QString, QString, DiskReadState& );
 
       void readDataset( QXmlStreamReader&, US_Convert::TripleInfo& );
 

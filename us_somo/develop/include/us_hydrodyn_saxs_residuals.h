@@ -19,15 +19,10 @@
 
 #include "us_util.h"
 
-#if QT_VERSION >= 0x040000
 #include "qwt_plot_grid.h"
 #include "qwt_plot_curve.h"
 #include "qwt/scrollbar.h"
 #include "qwt/scrollzoomer.h"
-#else
-#  include "qwt/scrollbar.h"
-#  include "qwt/scrollzoomer.h"
-#endif
 
 //standard C and C++ defs:
 

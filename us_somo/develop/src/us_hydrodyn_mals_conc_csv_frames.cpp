@@ -77,10 +77,8 @@ void US_Hydrodyn_Mals_Conc_Csv_Frames::setupGUI()
    lbl_label_0->setPalette( PALET_FRAME );
    lbl_label_0->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-#if QT_VERSION > 0x040000
    AUTFBACK( lbl_label_0 );
    
-#endif
 
    col = 1 + 1;
    background->addWidget( lbl_label_0 , row , 0 , 1 + ( row ) - ( row ) , 1 + ( col++  ) - ( 0 ) );
@@ -99,10 +97,8 @@ void US_Hydrodyn_Mals_Conc_Csv_Frames::setupGUI()
    lbl_starttime->setPalette( PALET_LABEL );
    lbl_starttime->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
-#if QT_VERSION > 0x040000
    AUTFBACK( lbl_starttime );
    lbl_starttime->setToolTip( us_tr( "The starting time of the first point in dataset" ) );
-#endif
 
    background->addWidget( lbl_starttime, row, col++ );
 
@@ -118,9 +114,7 @@ void US_Hydrodyn_Mals_Conc_Csv_Frames::setupGUI()
    le_starttime->setPalette( PALET_NORMAL );
    connect( le_starttime, SIGNAL( textChanged( const QString & ) ), SLOT( update_starttime( const QString & )));
 
-#if QT_VERSION > 0x040000
    le_starttime->setToolTip( us_tr( "The starting time of the first point in dataset" ) );
-#endif
 
    background->addWidget( le_starttime, row, col++ );
    
@@ -140,10 +134,8 @@ void US_Hydrodyn_Mals_Conc_Csv_Frames::setupGUI()
    lbl_endtime->setPalette( PALET_LABEL );
    lbl_endtime->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
-#if QT_VERSION > 0x040000
    AUTFBACK( lbl_endtime );
    lbl_endtime->setToolTip( us_tr( "The starting time of the last point in dataset" ) );
-#endif
 
    background->addWidget( lbl_endtime, row, col++ );
 
@@ -159,9 +151,7 @@ void US_Hydrodyn_Mals_Conc_Csv_Frames::setupGUI()
    le_endtime->setPalette( PALET_NORMAL );
    connect( le_endtime, SIGNAL( textChanged( const QString & ) ), SLOT( update_endtime( const QString & )));
 
-#if QT_VERSION > 0x040000
    le_endtime->setToolTip( us_tr( "The starting time of the last point in dataset" ) );
-#endif
 
    background->addWidget( le_endtime, row, col++ );
    
@@ -181,10 +171,8 @@ void US_Hydrodyn_Mals_Conc_Csv_Frames::setupGUI()
    lbl_pointcount->setPalette( PALET_LABEL );
    lbl_pointcount->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
-#if QT_VERSION > 0x040000
    AUTFBACK( lbl_pointcount );
    lbl_pointcount->setToolTip( us_tr( "The number of points in dataset" ) );
-#endif
 
    background->addWidget( lbl_pointcount, row, col++ );
 
@@ -200,9 +188,7 @@ void US_Hydrodyn_Mals_Conc_Csv_Frames::setupGUI()
    le_pointcount->setPalette( PALET_NORMAL );
    connect( le_pointcount, SIGNAL( textChanged( const QString & ) ), SLOT( update_pointcount( const QString & )));
 
-#if QT_VERSION > 0x040000
    le_pointcount->setToolTip( us_tr( "The number of points in dataset" ) );
-#endif
 
    background->addWidget( le_pointcount, row, col++ );
    
@@ -222,10 +208,8 @@ void US_Hydrodyn_Mals_Conc_Csv_Frames::setupGUI()
    lbl_frame1t->setPalette( PALET_LABEL );
    lbl_frame1t->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
-#if QT_VERSION > 0x040000
    AUTFBACK( lbl_frame1t );
    lbl_frame1t->setToolTip( us_tr( "Enter the time of frame 1" ) );
-#endif
 
    background->addWidget( lbl_frame1t, row, col++ );
 
@@ -241,9 +225,7 @@ void US_Hydrodyn_Mals_Conc_Csv_Frames::setupGUI()
    le_frame1t->setPalette( PALET_NORMAL );
    connect( le_frame1t, SIGNAL( textChanged( const QString & ) ), SLOT( update_frame1t( const QString & )));
 
-#if QT_VERSION > 0x040000
    le_frame1t->setToolTip( us_tr( "Enter the time of frame 1" ) );
-#endif
 
    background->addWidget( le_frame1t, row, col++ );
    le_frame1t->setFocus();
@@ -263,10 +245,8 @@ void US_Hydrodyn_Mals_Conc_Csv_Frames::setupGUI()
    lbl_time2frame->setPalette( PALET_LABEL );
    lbl_time2frame->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
-#if QT_VERSION > 0x040000
    AUTFBACK( lbl_time2frame );
    lbl_time2frame->setToolTip( us_tr( "Enter the time length of a frame" ) );
-#endif
 
    background->addWidget( lbl_time2frame, row, col++ );
 
@@ -282,9 +262,7 @@ void US_Hydrodyn_Mals_Conc_Csv_Frames::setupGUI()
    le_time2frame->setPalette( PALET_NORMAL );
    connect( le_time2frame, SIGNAL( textChanged( const QString & ) ), SLOT( update_time2frame( const QString & )));
 
-#if QT_VERSION > 0x040000
    le_time2frame->setToolTip( us_tr( "Enter the time length of a frame" ) );
-#endif
 
    background->addWidget( le_time2frame, row, col++ );
    
@@ -305,10 +283,8 @@ void US_Hydrodyn_Mals_Conc_Csv_Frames::setupGUI()
    cb_startframe->setEnabled( true );
    cb_startframe->setFont( QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_startframe->setPalette( PALET_NORMAL );
-#if QT_VERSION > 0x040000
    AUTFBACK( cb_startframe );
    cb_startframe->setToolTip( us_tr( "Optionally specify the starting frame number to extract, default is frame number 1 if not checked" ) );
-#endif
 
    connect( cb_startframe, SIGNAL( clicked() ), SLOT( set_startframe() ) );
 
@@ -334,10 +310,8 @@ void US_Hydrodyn_Mals_Conc_Csv_Frames::setupGUI()
    lbl_startframenumber->setPalette( PALET_LABEL );
    lbl_startframenumber->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
-#if QT_VERSION > 0x040000
    AUTFBACK( lbl_startframenumber );
    
-#endif
 
    background->addWidget( lbl_startframenumber, row, col++ );
 
@@ -351,9 +325,7 @@ void US_Hydrodyn_Mals_Conc_Csv_Frames::setupGUI()
    le_startframenumber->setPalette( PALET_NORMAL );
    connect( le_startframenumber, SIGNAL( textChanged( const QString & ) ), SLOT( update_startframenumber( const QString & )));
 
-#if QT_VERSION > 0x040000
    
-#endif
 
    background->addWidget( le_startframenumber, row, col++ );
 
@@ -373,10 +345,8 @@ void US_Hydrodyn_Mals_Conc_Csv_Frames::setupGUI()
    cb_endframe->setEnabled( true );
    cb_endframe->setFont( QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_endframe->setPalette( PALET_NORMAL );
-#if QT_VERSION > 0x040000
    AUTFBACK( cb_endframe );
    cb_endframe->setToolTip( us_tr( "Optionally specify the ending frame number to extract, default is last frame number available" ) );
-#endif
 
    connect( cb_endframe, SIGNAL( clicked() ), SLOT( set_endframe() ) );
 
@@ -402,10 +372,8 @@ void US_Hydrodyn_Mals_Conc_Csv_Frames::setupGUI()
    lbl_endframenumber->setPalette( PALET_LABEL );
    lbl_endframenumber->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
-#if QT_VERSION > 0x040000
    AUTFBACK( lbl_endframenumber );
    
-#endif
 
    background->addWidget( lbl_endframenumber, row, col++ );
 
@@ -419,9 +387,7 @@ void US_Hydrodyn_Mals_Conc_Csv_Frames::setupGUI()
    le_endframenumber->setPalette( PALET_NORMAL );
    connect( le_endframenumber, SIGNAL( textChanged( const QString & ) ), SLOT( update_endframenumber( const QString & )));
 
-#if QT_VERSION > 0x040000
    
-#endif
 
    background->addWidget( le_endframenumber, row, col++ );
 
@@ -440,9 +406,7 @@ void US_Hydrodyn_Mals_Conc_Csv_Frames::setupGUI()
    pb_go->setPalette( PALET_PUSHB );
    connect( pb_go, SIGNAL( clicked() ), SLOT( go() ) );
 
-#if QT_VERSION > 0x040000
    pb_go->setToolTip( us_tr( "Process" ) );
-#endif
 
    if ( 0 == 10 ) {
        if ( col == 0 ) {
