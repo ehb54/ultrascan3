@@ -29,13 +29,15 @@ int US_Experiment::checkRunID( IUS_DB2* db )
    q << runID
      << QString::number( US_Settings::us_inv_ID() );
    db->query( q );
-   if ( db->lastErrno() == US_DB2::NOROWS )
-      return US_DB2::NOROWS;
-   
+   if ( db->lastErrno() == IUS_DB2::NOROWS )
+   {
+      return IUS_DB2::NOROWS;
+   }
+
    // Ok, let's update the experiment ID
    db->next();
    expID = db->value( 1 ).toString().toInt();
-   return US_DB2::OK;
+   return IUS_DB2::OK;
 }
 
 // Copy of checkRunID when invID propagated in autoflow
@@ -48,13 +50,15 @@ int US_Experiment::checkRunID_auto( int invID_passed, IUS_DB2* db )
      << QString::number( invID_passed );
    db->query( q );
    qDebug() << "checkRunID_auto(), query -- " << q;
-   if ( db->lastErrno() == US_DB2::NOROWS )
-      return US_DB2::NOROWS;
-   
+   if ( db->lastErrno() == IUS_DB2::NOROWS )
+   {
+      return IUS_DB2::NOROWS;
+   }
+
    // Ok, let's update the experiment ID
    db->next();
    expID = db->value( 1 ).toString().toInt();
-   return US_DB2::OK;
+   return IUS_DB2::OK;
 }
 
 int US_Experiment::saveToDB( bool update, IUS_DB2* db, QVector<SP_SPEEDPROFILE>& speedsteps )
@@ -62,13 +66,15 @@ int US_Experiment::saveToDB( bool update, IUS_DB2* db, QVector<SP_SPEEDPROFILE>&
 qDebug() << "Exp:svToDB: update" << update << "ss-count" << speedsteps.count();
    // Let's see if the project is in the db already
    int status = project.saveToDB( db );
-qDebug() << "Exp:svToDB: projsv status(+NO_PR)" << status << US_DB2::NO_PROJECT
- << "expID" << expID;
-   if ( status == US_DB2::NO_PROJECT )
+   qDebug() << "Exp:svToDB: projsv status(+NO_PR)" << status << IUS_DB2::NO_PROJECT << "expID" << expID;
+   if ( status == IUS_DB2::NO_PROJECT )
+   {
       return status;
-
-   else if ( status != US_DB2::OK )
+   }
+   else if ( status != IUS_DB2::OK )
+   {
       return status;
+   }
 
    // Get the RI information, if appropriate
    QByteArray RIxml;
@@ -81,13 +87,13 @@ qDebug() << "Exp:svToDB: projsv status(+NO_PR)" << status << US_DB2::NO_PROJECT
    int saveStatus = 0;
    QStringList q;
    status = checkRunID( db );
-   if ( status == US_DB2::OK && ! update )
+   if ( status == IUS_DB2::OK && !update )
    {
       // Then the runID exists already, and we're not updating
-      return US_DB2::DUPFIELD;
+      return IUS_DB2::DUPFIELD;
    }
 
-   if ( status == US_DB2::OK )
+   if ( status == IUS_DB2::OK )
    {
       // It's ok to update the existing experiment entry
       q.clear();
@@ -112,7 +118,7 @@ qDebug() << "Exp:svToDB: projsv status(+NO_PR)" << status << US_DB2::NO_PROJECT
       saveStatus = db->statusQuery( q );
    }
 
-   else if ( status == US_DB2::NOROWS )
+   else if ( status == IUS_DB2::NOROWS )
    {
       // Create new experiment entry
       q.clear();
@@ -173,26 +179,26 @@ int ssstat=
 qDebug() << "Exp:svToDB:     ssstat=" << ssstat;
    }
 
-   return US_DB2::OK;
+   return IUS_DB2::OK;
 }
 
 //Same as above but for AutoFlow with ExpData.invID set as owner
 int US_Experiment::saveToDB_auto( bool update, IUS_DB2* db, QVector<SP_SPEEDPROFILE>& speedsteps, int invID_passed )
 {
-qDebug() << "Exp:svToDB: update" << update << "ss-count" << speedsteps.count();
+   qDebug() << "Exp:svToDB: update" << update << "ss-count" << speedsteps.count();
    // Let's see if the project is in the db already
 
- int status = project.saveToDB_auto( invID_passed, db );    // ALEXEY -- invID_passed must be used !!!
- qDebug() << "Exp:svToDB: projsv status(+NO_PR)"
-	  << status << US_DB2::NO_PROJECT
-	  << "expID" << expID
-	  << invID_passed;
+   int status = project.saveToDB_auto( invID_passed, db ); // ALEXEY -- invID_passed must be used !!!
+   qDebug() << "Exp:svToDB: projsv status(+NO_PR)" << status << IUS_DB2::NO_PROJECT << "expID" << expID << invID_passed;
 
-   if ( status == US_DB2::NO_PROJECT )
+   if ( status == IUS_DB2::NO_PROJECT )
+   {
       return status;
-
-   else if ( status != US_DB2::OK )
+   }
+   else if ( status != IUS_DB2::OK )
+   {
       return status;
+   }
 
    // Get the RI information, if appropriate
    QByteArray RIxml;
@@ -205,13 +211,13 @@ qDebug() << "Exp:svToDB: update" << update << "ss-count" << speedsteps.count();
    int saveStatus = 0;
    QStringList q;
    status = checkRunID_auto( invID_passed, db );
-   if ( status == US_DB2::OK && ! update )
+   if ( status == IUS_DB2::OK && !update )
    {
       // Then the runID exists already, and we're not updating
-      return US_DB2::DUPFIELD;
+      return IUS_DB2::DUPFIELD;
    }
 
-   if ( status == US_DB2::OK )
+   if ( status == IUS_DB2::OK )
    {
       // It's ok to update the existing experiment entry
       q.clear();
@@ -236,7 +242,7 @@ qDebug() << "Exp:svToDB: update" << update << "ss-count" << speedsteps.count();
       saveStatus = db->statusQuery( q );
    }
 
-   else if ( status == US_DB2::NOROWS )
+   else if ( status == IUS_DB2::NOROWS )
    {
       // Create new experiment entry
       q.clear();
@@ -297,7 +303,7 @@ int ssstat=
 qDebug() << "Exp:svToDB:     ssstat=" << ssstat;
    }
 
-   return US_DB2::OK;
+   return IUS_DB2::OK;
 }
 
 
@@ -341,8 +347,10 @@ int US_Experiment::readFromDB( QString runID, IUS_DB2* db, QVector<SP_SPEEDPROFI
 qDebug() << "Exp:rdDB: ExpInfRun: xmlFile size" << xmlFile.size();
    }
 
-   else if ( db->lastErrno() == US_DB2::NOROWS )
-      return US_DB2::NO_EXPERIMENT;
+   else if ( db->lastErrno() == IUS_DB2::NOROWS )
+   {
+      return IUS_DB2::NO_EXPERIMENT;
+   }
 
    else
       return( db->lastErrno() );
@@ -445,19 +453,20 @@ qDebug() << "Exp:rdDB: importRIxml status" << status;
          // This isn't exactly an error; data is read but we don't have an
          // intensity profile
          RIProfile.clear();
-         return US_DB2::DBERROR;
+         return IUS_DB2::DBERROR;
       }
 
    }
 
    // If this is multi-speed, get speed steps for the experiment
    US_SimulationParameters::speedstepsFromDB( db, expID, speedsteps );
-qDebug() << "Exp:rdDB: speedsteps size expID" << speedsteps.size() << expID;
-if(speedsteps.size()>0)
- qDebug() << "Exp:rdDB:  ss0 rspeed avgspeed" << speedsteps[0].rotorspeed
-  << speedsteps[0].avg_speed;
+   qDebug() << "Exp:rdDB: speedsteps size expID" << speedsteps.size() << expID;
+   if ( speedsteps.size() > 0 )
+   {
+      qDebug() << "Exp:rdDB:  ss0 rspeed avgspeed" << speedsteps[0].rotorspeed << speedsteps[0].avg_speed;
+   }
 
-   return US_DB2::OK;
+   return IUS_DB2::OK;
 }
 
 int US_Experiment::saveToDisk(
@@ -1178,14 +1187,14 @@ bool US_Experiment::deleteRunPcsaMrecs( IUS_DB2* db, const QString invID, const 
       qry << "get_edit_desc_by_runID" << invID << runID;
       db->query( qry );
       int status          = db->lastErrno();
-qDebug() << "Exp:delMR: runID" << runID << "invID" << invID << "qry:" << qry << status << db->lastError();
-      if ( status == US_DB2::NOROWS )
-      {  // If no edits for run, no modelrecs, so return
+      qDebug() << "Exp:delMR: runID" << runID << "invID" << invID << "qry:" << qry << status << db->lastError();
+      if ( status == IUS_DB2::NOROWS )
+      { // If no edits for run, no modelrecs, so return
          return is_ok;
       }
-      else if ( status != US_DB2::OK )
-      {  // Return if query had an error
-qDebug() << qry << status << db->lastError();
+      else if ( status != IUS_DB2::OK )
+      { // Return if query had an error
+         qDebug() << qry << status << db->lastError();
          return false;
       }
       while( db->next() )
@@ -1199,10 +1208,10 @@ qDebug() << "Exp:delMR:  n(edtIDs)" << edtIDs.count();
       qry << "get_mrecs_desc" << invID;
       db->query( qry );
       status              = db->lastErrno();
-qDebug() << "Exp:delMR: qry:" << qry << status << db->lastError();
-      if ( status != US_DB2::OK )
+      qDebug() << "Exp:delMR: qry:" << qry << status << db->lastError();
+      if ( status != IUS_DB2::OK )
       {
-qDebug() << qry << status << db->lastError();
+         qDebug() << qry << status << db->lastError();
          return false;
       }
       while( db->next() )
@@ -1230,8 +1239,8 @@ qDebug() << "Exp:delMR:   mrcIDs[0]" << mrcIDs[0];
          qry.clear();
          qry << "delete_mrecs" << mrecID;
          status              = db->statusQuery( qry );
-qDebug() << "Exp:delMR:    ii" << ii << "mrecID" << mrecID << "stat" << status;
-         if ( status == US_DB2::OK )
+         qDebug() << "Exp:delMR:    ii" << ii << "mrecID" << mrecID << "stat" << status;
+         if ( status == IUS_DB2::OK )
          {
             kmrdel++;
          }
