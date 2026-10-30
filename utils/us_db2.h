@@ -35,6 +35,7 @@ public:
 
     /*! \brief Generic destructor for the US_DB2 class. Database connection
         is terminated and any resources in use are closed and deleted.
+        A transaction still open is rolled back first.
     */
     ~US_DB2() override;
 
@@ -93,17 +94,21 @@ public:
                   const QString& user, const QString& password,
                   QString& err ) override;
 
-    //! Transaction error formats; %1 is the server's error text.
-    static constexpr const char* commitAutocommitMessage   = "transaction committed, but autocommit could not be restored: %1";
-    static constexpr const char* rollbackAutocommitMessage = "rollback succeeded, but autocommit could not be restored: %1";
+    //! Transaction error formats; %1 is the refused operation or the server's error text.
+    static constexpr const char* transactionOpenMessage = "%1: a transaction is already open";
+    static constexpr const char* noTransactionMessage   = "%1: no transaction is open";
+    static constexpr const char* commitUnknownMessage =
+       "the connection was lost during the commit, so whether it took effect is unknown: %1";
+    static constexpr const char* implicitCommitMessage =
+       "the transaction was already ended by an implicit commit, so the rows written before it were kept";
 
-    /*! \brief Begin a transaction on the active connection. */
+    /*! \brief Begin a transaction with START TRANSACTION. See IUS_DB2. */
     bool                         beginTransaction( QString& error ) final;
 
-    /*! \brief Commit the active transaction and restore autocommit. */
+    /*! \brief Commit the open transaction. See IUS_DB2. */
     bool                         commitTransaction( QString& error ) final;
 
-    /*! \brief Roll back the active transaction and restore autocommit. */
+    /*! \brief Roll back the open transaction. See IUS_DB2. */
     bool                         rollbackTransaction( QString& error ) final;
 
     /*! \brief Implements a simple query on the active database
@@ -315,6 +320,7 @@ public:
 
 private:
     bool       connected;
+    bool       inTransaction = false;
 #ifndef NO_DB
     MYSQL*     db;
     MYSQL_RES* result;
