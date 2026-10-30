@@ -16,6 +16,7 @@
 #include "us_convert.h"
 #include "us_convertio.h"
 #include "us_dataIO.h"
+#include "us_experiment.h"
 #include "us_util.h"
 
 #include <QDir>
@@ -36,6 +37,25 @@ class ReadDiskRunTest : public Us3FileTestBase
       int read( const DiskRun& fixture )
       {
          return US_ConvertIO::readDiskRun( fixture.dir, run, error );
+      }
+
+      //! The experiment fields US_Experiment::clear() sets, which a record
+      //! that is missing or cut short never reaches.
+      void expectClearedExperiment() const
+      {
+         US_Experiment cleared;
+         cleared.clear();
+
+         EXPECT_EQ( run.experiment.expID, cleared.expID );
+         EXPECT_EQ( run.experiment.invID, cleared.invID );
+         EXPECT_EQ( run.experiment.labID, cleared.labID );
+         EXPECT_EQ( run.experiment.instrumentID, cleared.instrumentID );
+         EXPECT_EQ( run.experiment.operatorID, cleared.operatorID );
+         EXPECT_EQ( run.experiment.rotorID, cleared.rotorID );
+         EXPECT_EQ( run.experiment.calibrationID, cleared.calibrationID );
+         EXPECT_EQ( run.experiment.rotorCoeff1, cleared.rotorCoeff1 );
+         EXPECT_EQ( run.experiment.rotorCoeff2, cleared.rotorCoeff2 );
+         EXPECT_EQ( run.experiment.syncOK, cleared.syncOK );
       }
 
       US_ConvertIO::DiskRun run;
@@ -265,6 +285,7 @@ TEST_F( ReadDiskRunTest, ReportsAMissingExperimentRecordWithItsPath )
 
    // The raw data was already read and is still there for the caller.
    EXPECT_EQ( run.rawData.size(), 1 );
+   expectClearedExperiment();
 }
 
 TEST_F( ReadDiskRunTest, ReportsAMalformedExperimentRecord )
@@ -272,13 +293,19 @@ TEST_F( ReadDiskRunTest, ReportsAMalformedExperimentRecord )
    const DiskRun fixture = us3test::writeDiskRun( parentDir(), "bad-xml-run", "RA", { DatasetSpec{ 1, 'A', "280" } } );
    ASSERT_FALSE( fixture.dir.isEmpty() );
 
+   // Cut the record just after the <experiment> start tag, so none of the
+   // fields inside it are read.
    QFile xml( fixture.dir + "bad-xml-run.RA.xml" );
    ASSERT_TRUE( xml.open( QIODevice::ReadWrite ) );
-   ASSERT_TRUE( xml.resize( xml.size() / 2 ) );
+   const QByteArray content = xml.readAll();
+   const int        tagEnd  = content.indexOf( '>', content.indexOf( "<experiment " ) );
+   ASSERT_GT( tagEnd, 0 );
+   ASSERT_TRUE( xml.resize( tagEnd + 1 ) );
    xml.close();
 
    EXPECT_EQ( read( fixture ), US_Convert::BADXML );
    EXPECT_EQ( error, QString( US_ConvertIO::experimentMalformedMessage ).arg( fixture.dir + "bad-xml-run.RA.xml" ) );
+   expectClearedExperiment();
 }
 
 TEST_F( ReadDiskRunTest, NamesTheDatasetTheExperimentRecordDoesNotDescribe )

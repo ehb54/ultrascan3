@@ -48,6 +48,12 @@ int US_ConvertIO::readDiskRun( const QString& directory, DiskRun& run, QString& 
    run = DiskRun();
    error.clear();
 
+   // US_Experiment's constructor leaves its IDs uninitialized, and
+   // readFromDisk() sets only what the record holds, so a missing or
+   // truncated record would leave them indeterminate.  Callers rely on them,
+   // US_ConvertGui on expID to tell a disk-only run from a database one.
+   run.experiment.clear();
+
    // US_Convert::readUS3Disk() builds each path as `dir + filename` with no
    // separator of its own, so the separator has to be here.  Without it the
    // read gets past the empty-directory check and then fails opening
