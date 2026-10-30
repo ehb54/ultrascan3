@@ -1,5 +1,8 @@
 //! \file us_db2.cpp
 #include "us_db2.h"
+#ifndef NO_DB
+#include "errmsg.h"
+#endif
 #include "us_settings.h"
 #include "us_crypto.h"
 #include "us_gzip.h"
@@ -78,6 +81,14 @@ US_DB2::US_DB2( const QString& masterPW )
 US_DB2::~US_DB2()
 {
 #ifndef NO_DB
+   // Closing would end the transaction anyway; roll it back explicitly so a
+   // dangling one is undone by us, not by however the server treats the close.
+   if ( inTransaction && connected )
+   {
+      drainResults();
+      mysql_rollback( db );
+   }
+
   mysql_free_result( result );
   mysql_close(db);
 
@@ -391,15 +402,25 @@ bool US_DB2::beginTransaction( QString& transaction_error )
       return false;
    }
 
+   if ( inTransaction )
+   {
+      transaction_error = QObject::tr( transactionOpenMessage ).arg( "beginTransaction" );
+      return false;
+   }
+
    // Whatever ran before this call may have left results pending.
    drainResults();
 
-   if ( mysql_autocommit( db, false ) != 0 )
+   // START TRANSACTION rather than turning autocommit off: the server restores
+   // autocommit itself at the COMMIT or ROLLBACK, so there is no second step
+   // that can fail after the transaction has already ended.
+   if ( mysql_query( db, "START TRANSACTION" ) != 0 )
    {
       transaction_error = mysql_error( db );
       return false;
    }
 
+   inTransaction = true;
    transaction_error.clear();
    return true;
 }
@@ -412,6 +433,12 @@ bool US_DB2::commitTransaction( QString& transaction_error )
       return false;
    }
 
+   if ( !inTransaction )
+   {
+      transaction_error = QObject::tr( noTransactionMessage ).arg( "commitTransaction" );
+      return false;
+   }
+
    // The last query of the transaction left its results on the connection, and
    // a CALL left a status set behind them.  mysql_commit() talks to the server
    // directly rather than through rawQuery(), so without this it is answered
@@ -421,16 +448,23 @@ bool US_DB2::commitTransaction( QString& transaction_error )
 
    if ( mysql_commit( db ) != 0 )
    {
-      transaction_error = mysql_error( db );
+      // The server may have committed before the connection dropped; only a
+      // lost connection leaves that open, so only then is the outcome unknown.
+      const unsigned int code = mysql_errno( db );
+      if ( code == CR_SERVER_LOST || code == CR_SERVER_GONE_ERROR )
+      {
+         transaction_error = QObject::tr( commitUnknownMessage ).arg( mysql_error( db ) );
+      }
+      else
+      {
+         transaction_error = mysql_error( db );
+      }
+
+      // Still open as far as the caller is concerned: it rolls back next.
       return false;
    }
 
-   if ( mysql_autocommit( db, true ) != 0 )
-   {
-      transaction_error = QObject::tr( commitAutocommitMessage ).arg( mysql_error( db ) );
-      return true;
-   }
-
+   inTransaction = false;
    transaction_error.clear();
    return true;
 }
@@ -439,7 +473,14 @@ bool US_DB2::rollbackTransaction( QString& transaction_error )
 {
    if ( !connected )
    {
+      inTransaction     = false;
       transaction_error = QObject::tr( notConnectedMessage ).arg( "rollbackTransaction" );
+      return false;
+   }
+
+   if ( !inTransaction )
+   {
+      transaction_error = QObject::tr( noTransactionMessage ).arg( "rollbackTransaction" );
       return false;
    }
 
@@ -447,16 +488,24 @@ bool US_DB2::rollbackTransaction( QString& transaction_error )
    // that cannot run is a partial load left in place.
    drainResults();
 
+   inTransaction = false;
+
+   // The status of the last statement says whether the server still has the
+   // transaction open.  If a procedure's COMMIT or a DDL statement ended it,
+   // the rows written before that are permanent and the rollback cannot undo
+   // them, so a quiet success here would be a lie.
+   const bool ended_early = ( db->server_status & SERVER_STATUS_IN_TRANS ) == 0;
+
    if ( mysql_rollback( db ) != 0 )
    {
       transaction_error = mysql_error( db );
       return false;
    }
 
-   if ( mysql_autocommit( db, true ) != 0 )
+   if ( ended_early )
    {
-      transaction_error = QObject::tr( rollbackAutocommitMessage ).arg( mysql_error( db ) );
-      return true;
+      transaction_error = QObject::tr( implicitCommitMessage );
+      return false;
    }
 
    transaction_error.clear();

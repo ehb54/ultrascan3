@@ -5,7 +5,7 @@
 #include <QtCore>
 
 // The interface only: no signature here names the concrete connection type,
-// so nothing that includes this header has to pull in mysql.h with it.
+// so callers can pass a test double in place of a live connection.
 #include "ius_db2.h"
 #include "us_convert.h"
 #include "us_experiment.h"
@@ -254,7 +254,7 @@ class US_UTIL_EXTERN US_ConvertIO
           \param dir     Local disk directory where auc files can be found
           \param db      An opened db connection
       */
-      static QString writeRawDataToDB( US_Experiment&, QList<US_Convert::TripleInfo>&, const QString&, IUS_DB2* = 0 );
+      static QString writeRawDataToDB( US_Experiment&, QList<US_Convert::TripleInfo>&, const QString&, IUS_DB2* = nullptr );
 
       /*! \brief Checks some info that was read from disk with values from DB
 
@@ -266,10 +266,10 @@ class US_UTIL_EXTERN US_ConvertIO
                          cell/channel/wavelength defined by the xml file.
           \param db      An opened db connection
       */
-      static int     checkDiskData( US_Experiment&, QList<US_Convert::TripleInfo>&, IUS_DB2* = 0 );
-      static int     checkDiskData_auto( US_Experiment&, QList<US_Convert::TripleInfo>&, IUS_DB2* = 0 );
+      static int     checkDiskData( US_Experiment&, QList<US_Convert::TripleInfo>&, IUS_DB2* = nullptr );
+      static int     checkDiskData_auto( US_Experiment&, QList<US_Convert::TripleInfo>&, IUS_DB2* = nullptr );
 
    private:
-      static QString readRawDataFromDB( US_Experiment&, QList<US_Convert::TripleInfo>&, QString&, IUS_DB2* = 0 );
+      static QString readRawDataFromDB( US_Experiment&, QList<US_Convert::TripleInfo>&, QString&, IUS_DB2* = nullptr );
 };
 #endif
