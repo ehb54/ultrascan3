@@ -16,25 +16,31 @@
 */
 namespace US_EditedDataLoaders
 {
-   enum Status
-   {
-      INVALID_SELECTION = 1101,
-      NO_USABLE_PAIR     = 1102
-   };
+enum Status
+{
+   INVALID_SELECTION = 1101,
+   NO_USABLE_PAIR    = 1102
+};
 
-   int loadAutoflow( IUS_DB2* db, const QString& tripleName,
-                     const QString& runID, const QString& directory,
-                     QVector< US_DataIO::EditedData >& editedData,
-                     QVector< US_DataIO::RawData >& rawData,
-                     int& editedDataID, QString& error );
+int loadAutoflow( IUS_DB2*                        db,
+                  const QString&                  tripleName,
+                  const QString&                  runID,
+                  const QString&                  directory,
+                  QVector<US_DataIO::EditedData>& editedData,
+                  QVector<US_DataIO::RawData>&    rawData,
+                  int&                            editedDataID,
+                  QString&                        error );
 
-   int loadReporter( IUS_DB2* db, const QString& tripleName,
-                     const QString& runID, int requestedEditID,
-                     const QString& directory,
-                     QVector< US_DataIO::EditedData >& editedData,
-                     QVector< US_DataIO::RawData >& rawData,
-                     int& editedDataID, QString& editUpdated,
-                     QString& error );
+int loadReporter( IUS_DB2*                        db,
+                  const QString&                  tripleName,
+                  const QString&                  runID,
+                  int                             requestedEditID,
+                  const QString&                  directory,
+                  QVector<US_DataIO::EditedData>& editedData,
+                  QVector<US_DataIO::RawData>&    rawData,
+                  int&                            editedDataID,
+                  QString&                        editUpdated,
+                  QString&                        error );
 }
 
 #endif

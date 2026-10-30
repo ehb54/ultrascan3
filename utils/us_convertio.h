@@ -150,14 +150,14 @@ class US_UTIL_EXTERN US_ConvertIO
       */
       struct US_UTIL_EXTERN EditedDataReadRequest
       {
-         QString directory;                 //!< Destination directory
-         QString editFilename;              //!< Stored edit XML basename
-         QString rawFilename;               //!< Raw AUC basename, or empty
-         QString loadFilename;              //!< Logical edit name, or empty
-         int     editedDataID = -1;          //!< editedData primary key
-         int     rawDataID    = -1;          //!< rawData primary key
-         bool    downloadEdit = true;        //!< Fetch edit blob when true
-         bool    downloadRaw  = true;        //!< Fetch raw blob when true
+            QString directory;           //!< Destination directory
+            QString editFilename;        //!< Stored edit XML basename
+            QString rawFilename;         //!< Raw AUC basename, or empty
+            QString loadFilename;        //!< Logical edit name, or empty
+            int     editedDataID = -1;   //!< editedData primary key
+            int     rawDataID    = -1;   //!< rawData primary key
+            bool    downloadEdit = true; //!< Fetch edit blob when true
+            bool    downloadRaw  = true; //!< Fetch raw blob when true
       };
 
       //! Non-database failures returned by readEditedDataFromDB().
@@ -279,14 +279,10 @@ class US_UTIL_EXTERN US_ConvertIO
           handling for callers which need only the XML rather than a decoded
           edited/raw pair.
       */
-      static int downloadEditedDataBlob( IUS_DB2* db, int editedDataID,
-                                         const QString& filename,
-                                         QString& error );
+      static int                   downloadEditedDataBlob( IUS_DB2* db, int editedDataID, const QString& filename, QString& error );
 
       /*! \brief Download a raw AUC blob to a full destination path. */
-      static int downloadRawDataBlob( IUS_DB2* db, int rawDataID,
-                                      const QString& filename,
-                                      QString& error );
+      static int                   downloadRawDataBlob( IUS_DB2* db, int rawDataID, const QString& filename, QString& error );
 
       /*! \brief Download as requested and decode one edited/raw data pair.
 
@@ -299,10 +295,11 @@ class US_UTIL_EXTERN US_ConvertIO
                    EditedDataReadStatus value for request, filesystem, or
                    decode failures
       */
-      static int readEditedDataFromDB(
-         IUS_DB2* db, const EditedDataReadRequest& request,
-         QVector< US_DataIO::EditedData >& editedData,
-         QVector< US_DataIO::RawData >& rawData, QString& error );
+      static int                   readEditedDataFromDB( IUS_DB2*                        db,
+                                                         const EditedDataReadRequest&    request,
+                                                         QVector<US_DataIO::EditedData>& editedData,
+                                                         QVector<US_DataIO::RawData>&    rawData,
+                                                         QString&                        error );
 
       /*! \brief Reads entire experiment and auc files from the database,
                  save to HD

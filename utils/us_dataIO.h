@@ -362,8 +362,7 @@ class US_UTIL_EXTERN US_DataIO
           \param data         The location where the edited data is placed
       */
 
-      static int     loadData    ( const QString&, const QString&, 
-                                   EditedData& ); 
+      static int     loadData( const QString&, const QString&, EditedData& );
 
       /*! Return the raw AUC basename named by an edit-profile basename.
 

@@ -1315,29 +1315,35 @@ int US_DataIO::loadData( const QString&  directory,
 
 QString US_DataIO::rawFilenameForEdit( const QString& editFilename )
 {
-   const QString filename = QFileInfo( editFilename ).fileName();
-   const QStringList parts = filename.split( "." );
+   const QString     filename = QFileInfo( editFilename ).fileName();
+   const QStringList parts    = filename.split( "." );
 
    // loadData() indexes fields zero through four and interprets the final two
    // as wavelength and suffix.  Rejecting a shorter name here prevents that
    // later indexing from becoming an out-of-range access.
-   if ( parts.size() != 7  ||  parts.last().compare( "xml",
-                                                     Qt::CaseInsensitive ) != 0 )
+   if ( parts.size() != 7 || parts.last().compare( "xml", Qt::CaseInsensitive ) != 0 )
+   {
       return QString();
+   }
 
-   const QString filepart1 = filename.section( ".",  0, -7 );
-   const QString filepart2 = filename.section( ".", -5, -3 );
+   const QString filepart1  = filename.section( ".", 0, -7 );
+   const QString filepart2  = filename.section( ".", -5, -3 );
    QString       wavelength = filename.section( ".", -2, -2 );
 
-   if ( filepart1.isEmpty()  ||  filepart2.isEmpty()
-        ||  wavelength.isEmpty() )
+   if ( filepart1.isEmpty() || filepart2.isEmpty() || wavelength.isEmpty() )
+   {
       return QString();
+   }
 
-   if ( wavelength.contains( "-" )  &&  wavelength.contains( "@" ) )
+   if ( wavelength.contains( "-" ) && wavelength.contains( "@" ) )
+   {
       wavelength = wavelength.section( "@", -1, -1 );
+   }
 
    if ( wavelength.isEmpty() )
+   {
       return QString();
+   }
 
    return filepart1 + "." + filepart2 + "." + wavelength + ".auc";
 }
@@ -1364,7 +1370,9 @@ int US_DataIO::loadData( const QString&         directory,
    }
 
    if ( rawDataFile.isEmpty() )
+   {
       throw CANTOPEN;
+   }
 
 //qDebug() << "dIO:ldEd: editFilename" << editFilename;
 //qDebug() << "dIO:ldEd: rawDataFile" << rawDataFile;

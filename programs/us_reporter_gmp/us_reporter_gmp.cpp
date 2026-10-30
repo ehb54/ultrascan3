@@ -9,22 +9,22 @@
 #include <QPdfWriter>
 #include <QPrinter>
 
-#include "us_reporter_gmp.h"
-#include "us_edited_data_loaders.h"
+#include "../us/us_revision.h"
+#include "../us_fematch/us_thread_worker.h"
+#include "us_constants.h"
 #include "us_convertio.h"
-#include "us_settings.h"
+#include "us_defines.h"
+#include "us_edited_data_loaders.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
-#include "us_protocol_util.h"
-#include "us_math2.h"
-#include "us_constants.h"
-#include "us_solution_vals.h"
 #include "us_lamm_astfvm.h"
-#include "../us_fematch/us_thread_worker.h"
-#include "us_tmst_plot.h"
+#include "us_math2.h"
+#include "us_protocol_util.h"
+#include "us_reporter_gmp.h"
+#include "us_settings.h"
+#include "us_solution_vals.h"
 #include "us_tar.h"
-#include "us_defines.h"
-#include "../us/us_revision.h"
+#include "us_tmst_plot.h"
 
 #define MIN_NTC   25
 
@@ -5247,11 +5247,11 @@ void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   dataLoaded = false;
   buffLoaded = false;
   haveSim    = false;
-  
-  if ( ! loadData( triple_info_map ) )
+
+  if ( !loadData( triple_info_map ) )
   {
-    progress_msg->close();
-    return;
+     progress_msg->close();
+     return;
   }
   progress_msg->setValue( 1 );
   
@@ -5490,52 +5490,58 @@ QString  US_ReporterGMP::rg_tripleInfo()  { return tripleInfo;    }
 //Load rawData/editedData
 bool US_ReporterGMP::loadData( QMap < QString, QString > & triple_information )
 {
-  rawData.clear();
-  editedData.clear();
+   rawData.clear();
+   editedData.clear();
 
-  const auto fail = [ this ]( const QString& detail )
-  {
-    QApplication::restoreOverrideCursor();
-    QMessageBox::warning( this, tr( "Data Load Problem" ), detail );
-    return false;
-  };
+   const auto fail = [this]( const QString& detail )
+   {
+      QApplication::restoreOverrideCursor();
+      QMessageBox::warning( this, tr( "Data Load Problem" ), detail );
+      return false;
+   };
 
-  US_Passwd   pw;
-  US_DB2 db( pw.getPasswd() );
-    
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      return fail( tr( "There was an error connecting to the database:\n" )
-                   + db.lastError() );
-    }
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
 
-  const QString tripleName = triple_information[ "triple_name" ];
-  const QString runID      = triple_information[ "filename" ];
-  const int requestedEditID = Triple_to_ModelsDesc[ tripleName ][ "eID" ]
-                              .toInt();
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      return fail( tr( "There was an error connecting to the database:\n" ) + db.lastError() );
+   }
 
-  qDebug() << "In load Data: triple, eID (from modelsLink) -- "
-           << tripleName << requestedEditID;
+   const QString tripleName      = triple_information["triple_name"];
+   const QString runID           = triple_information["filename"];
+   const int     requestedEditID = Triple_to_ModelsDesc[tripleName]["eID"].toInt();
 
-  if ( requestedEditID < 1 )
-    return fail( tr( "No edited-data record is linked to triple %1." )
-                 .arg( tripleName ) );
-  int     editedDataID = -1;
-  QString editUpdated;
-  QString error;
-  const int status = US_EditedDataLoaders::loadReporter(
-     &db, tripleName, runID, requestedEditID,
-     US_Settings::resultDir() + "/" + runID,
-     editedData, rawData, editedDataID, editUpdated, error );
+   qDebug() << "In load Data: triple, eID (from modelsLink) -- " << tripleName << requestedEditID;
 
-  if ( status != IUS_DB2::OK )
-    return fail( error );
+   if ( requestedEditID < 1 )
+   {
+      return fail( tr( "No edited-data record is linked to triple %1." ).arg( tripleName ) );
+   }
+   int       editedDataID = -1;
+   QString   editUpdated;
+   QString   error;
+   const int status = US_EditedDataLoaders::loadReporter( &db,
+                                                          tripleName,
+                                                          runID,
+                                                          requestedEditID,
+                                                          US_Settings::resultDir() + "/" + runID,
+                                                          editedData,
+                                                          rawData,
+                                                          editedDataID,
+                                                          editUpdated,
+                                                          error );
 
-  eID_global  = editedDataID;
-  eID_updated = editUpdated;
+   if ( status != IUS_DB2::OK )
+   {
+      return fail( error );
+   }
 
-  qDebug() << "END of loadData(), eID_global: " << eID_global;
-  return true;
+   eID_global  = editedDataID;
+   eID_updated = editUpdated;
+
+   qDebug() << "END of loadData(), eID_global: " << eID_global;
+   return true;
 }
 
 //Load rawData/editedData
