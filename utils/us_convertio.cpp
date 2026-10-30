@@ -333,6 +333,11 @@ QString US_ConvertIO::writeRawDataToDB( US_Experiment&                 ExpData,
                                         const QString&                 dir,
                                         IUS_DB2*                       db )
 {
+   if ( db == nullptr )
+   {
+      return QObject::tr( IUS_DB2::notConnectedMessage ).arg( "writeRawDataToDB" );
+   }
+
    const int channelID = 1;
    QString error = QString( "" );
    QString sInvID = QString::number( ExpData.invID );
@@ -437,7 +442,6 @@ qDebug() << "cvio:WrRDB: trx" << trx << "soluGUID"
       {
          // This means that we weren't successful in adding it db
          error += QObject::tr( solutionNotFoundMessage ).arg( triple->solution.solutionGUID );
-         //qDebug() << "cvio:WrRDB:    NO SOL in DB";
       }
 
       q.clear();
@@ -480,7 +484,6 @@ qDebug() << "cvio:WrRDB: trx" << trx << "soluGUID"
       else
       {
          error += QObject::tr( aucFileFailedMessage ).arg( dir + triple->tripleFilename, db->lastError() );
-         //qDebug() << "cvio:WrRDB:  new_raw ERR" << error;
       }
 
       int status;
@@ -592,6 +595,11 @@ QString US_ConvertIO::readDBExperiment( QString                   runID,
                                         const QString             invid_p )
 
 {
+   if ( db == nullptr )
+   {
+      return QObject::tr( IUS_DB2::notConnectedMessage ).arg( "readDBExperiment" );
+   }
+
    US_Experiment ExpData;                    // A local copy of experiment
    QList< US_Convert::TripleInfo > triples;  // A local copy of triples
    qDebug() << "rDBE: call ExpData.readFromDB";
@@ -728,6 +736,11 @@ qDebug() << "rDBE:    xdefs WRITTEN";
 // Function to read the auc files to disk
 QString US_ConvertIO::readRawDataFromDB( US_Experiment& ExpData, QList<US_Convert::TripleInfo>& triples, QString& dir, IUS_DB2* db )
 {
+   if ( db == nullptr )
+   {
+      return QObject::tr( IUS_DB2::notConnectedMessage ).arg( "readRawDataFromDB" );
+   }
+
    // Get the rawDataID's that correspond to this experiment
 qDebug() << " rRDD: build raw list";
    QStringList q( "get_rawDataIDs" );
@@ -892,6 +905,11 @@ qDebug() << " rRDD: build TripleInfo";
 
 int US_ConvertIO::checkDiskData( US_Experiment& ExpData, QList<US_Convert::TripleInfo>& triples, IUS_DB2* db )
 {
+   if ( db == nullptr )
+   {
+      return IUS_DB2::NOT_CONNECTED;
+   }
+
    if ( US_Settings::us_inv_ID() == -1 )
       return US_DB2::NO_PERSON;
 
@@ -1057,6 +1075,11 @@ int US_ConvertIO::checkDiskData( US_Experiment& ExpData, QList<US_Convert::Tripl
 //Copy for use in Autoflow
 int US_ConvertIO::checkDiskData_auto( US_Experiment& ExpData, QList<US_Convert::TripleInfo>& triples, IUS_DB2* db )
 {
+   if ( db == nullptr )
+   {
+      return IUS_DB2::NOT_CONNECTED;
+   }
+
    if ( US_Settings::us_inv_ID() == -1 )
       return US_DB2::NO_PERSON;
 
