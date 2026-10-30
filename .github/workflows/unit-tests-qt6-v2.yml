@@ -46,6 +46,7 @@ jobs:
               - utils/**.h
               - utils/**.hpp
               - utils/CMakeLists.txt
+              - programs/us_sim_inputs_gen/**
               - test/**
               - '**/*.json'
               - admin/cmake/**

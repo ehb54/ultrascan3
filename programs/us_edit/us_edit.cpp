@@ -2,33 +2,34 @@
 
 #include <QApplication>
 //#include <QDomDocument>
-#include <QToolTip>
-#include <QMessageBox>
+#include "us_constants.h"
+#include "us_convertio.h"
+#include "us_edit.h"
+#include "us_edit_scan.h"
+#include "us_editor.h"
+#include "us_exclude_profile.h"
+#include "us_get_edit.h"
+#include "us_gui_settings.h"
+#include "us_images.h"
+#include "us_investigator.h"
+#include "us_license.h"
+#include "us_license_t.h"
+#include "us_load_auc.h"
+#include "us_math2.h"
+#include "us_passwd.h"
+#include "us_protocol_util.h"
+#include "us_report.h"
+#include "us_ri_noise.h"
+#include "us_run_details2.h"
+#include "us_select_lambdas.h"
+#include "us_settings.h"
+#include "us_util.h"
 #include <QLineF>
+#include <QMessageBox>
+#include <QToolTip>
+#include <qwt_picker_machine.h>
 #include <qwt_scale_div.h>
 #include <qwt_scale_map.h>
-#include <qwt_picker_machine.h>
-#include "us_edit.h"
-#include "us_exclude_profile.h"
-#include "us_select_lambdas.h"
-#include "us_ri_noise.h"
-#include "us_edit_scan.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_investigator.h"
-#include "us_run_details2.h"
-#include "us_math2.h"
-#include "us_util.h"
-#include "us_load_auc.h"
-#include "us_passwd.h"
-#include "us_get_edit.h"
-#include "us_constants.h"
-#include "us_images.h"
-#include "us_editor.h"
-#include "us_report.h"
-#include "us_protocol_util.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -12303,13 +12304,11 @@ DbgLv(1) << "AppPri: IN  dkdb" << disk_controls->db();
          return;
       }
 
-      QStringList q( "get_rawDataID_from_GUID" );
+      int     rawDataIDnum = -1;
+      QString opError;
 
-      q << US_Util::uuid_unparse( (uchar*)data.rawGUID );
-      dbP->query( q );
-
-      // Error check
-      if ( dbP->lastErrno() != US_DB2::OK )
+      if ( US_ConvertIO::findRawDataId( dbP, US_Util::uuid_unparse( (uchar*) data.rawGUID ), rawDataIDnum, opError ) !=
+           IUS_DB2::OK )
       {
          QMessageBox::warning( this,
            tr( "AUC Data is not in DB" ),
@@ -12318,10 +12317,8 @@ DbgLv(1) << "AppPri: IN  dkdb" << disk_controls->db();
          return;
       }
 
-      dbP->next();
-      QString rawDataID = dbP->value( 0 ).toString();
-
-      q.clear();
+      QString     rawDataID = QString::number( rawDataIDnum );
+      QStringList q;
       q << "get_editedDataIDs" << rawDataID;
 
       dbP->query( q );
@@ -12516,14 +12513,11 @@ void US_Edit::prior_equil( void )
          return;
       }
 
-      QStringList q( "get_rawDataID_from_GUID" );
+      int     rawDataIDnum = -1;
+      QString opError;
 
-      q << US_Util::uuid_unparse( (uchar*)data.rawGUID );
-
-      db.query( q );
-
-      // Error check
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( US_ConvertIO::findRawDataId( &db, US_Util::uuid_unparse( (uchar*) data.rawGUID ), rawDataIDnum, opError ) !=
+           IUS_DB2::OK )
       {
          QMessageBox::warning( this,
            tr( "AUC Data is not in DB" ),
@@ -12532,10 +12526,8 @@ void US_Edit::prior_equil( void )
          return;
       }
 
-      db.next();
-      QString rawDataID = db.value( 0 ).toString();
-
-      q.clear();
+      QString     rawDataID = QString::number( rawDataIDnum );
+      QStringList q;
       q << "get_editedDataIDs" << rawDataID;
 
       db.query( q );
@@ -12579,12 +12571,14 @@ void US_Edit::prior_equil( void )
       for ( int ii = 1; ii < outData.size(); ii++ )
       {
          data    = *outData[ ii ];
-         q.clear();
-         q << "get_rawDataID_from_GUID"
-           << US_Util::uuid_unparse( (uchar*)data.rawGUID );
-         db.query( q );
-         db.next();
-         rawDataID = db.value( 0 ).toString();
+
+         if ( US_ConvertIO::findRawDataId( &db, US_Util::uuid_unparse( (uchar*) data.rawGUID ), rawDataIDnum, opError ) !=
+              IUS_DB2::OK )
+         { // Without its raw record, this triple has no matching edit
+            cefnames << "";
+            continue;
+         }
+         rawDataID = QString::number( rawDataIDnum );
 
          q.clear();
          q << "get_editedDataIDs" << rawDataID;
@@ -14422,20 +14416,22 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
 int US_Edit::write_edit_db( IUS_DB2* dbP, QString& fname, QString& editGUID,
       QString& editID, QString& rawGUID )
 {
-   int idEdit;
+   // The database mechanics live in US_ConvertIO; what stays here is this
+   // program's own policy: which failures deserve which dialog, whether the
+   // record is created or updated, and the editIDs bookkeeping that only the
+   // editor keeps.  The numbered return codes are unchanged, because four call
+   // sites in this file branch on them.
+   int     idEdit;
+   int     rawDataID = -1;
+   QString error;
 
    if ( dbP == NULL )
    {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-         tr( "Could not connect to database \n" ) + dbP->lastError() );
+      QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) );
       return 1;
    }
 
-   QStringList query( "get_rawDataID_from_GUID" );
-   query << rawGUID;
-   dbP->query( query );
-
-   if ( dbP->lastErrno() != US_DB2::OK )
+   if ( US_ConvertIO::findRawDataId( dbP, rawGUID, rawDataID, error ) != IUS_DB2::OK )
    {
       QMessageBox::warning( this,
          tr( "AUC Data is not in DB" ),
@@ -14444,30 +14440,21 @@ int US_Edit::write_edit_db( IUS_DB2* dbP, QString& fname, QString& editGUID,
       return 2;
    }
 
-   dbP->next();
-   QString rawDataID = dbP->value( 0 ).toString();
-
-
-   // Save edit file to DB
-   query.clear();
+   US_ConvertIO::EditedDataRecord record;
+   record.rawDataID = rawDataID;
+   record.editGUID  = editGUID;
+   record.label     = runID;
+   record.filename  = fname;
 
    if ( editID.isEmpty() )
    {
-      query << "new_editedData" << rawDataID << editGUID << runID
-            << fname << "";
-
-      dbP->query( query );
-
-      if ( dbP->lastErrno() != US_DB2::OK )
+      if ( US_ConvertIO::createEditedData( dbP, record, idEdit, error ) != IUS_DB2::OK )
       {
-         QMessageBox::warning( this, tr( "Database Problem" ),
-            tr( "Could not insert metadata into the database\n" ) +
-                dbP->lastError() );
+         QMessageBox::warning( this, tr( "Database Problem" ), tr( "Could not insert metadata into the database\n" ) + error );
 
          return 3;
       }
 
-      idEdit   = dbP->lastInsertID();
       editID   = QString::number( idEdit );
       int dax  = editGUIDs.indexOf( editGUID );
       editIDs.replace( dax, editID );
@@ -14475,29 +14462,19 @@ int US_Edit::write_edit_db( IUS_DB2* dbP, QString& fname, QString& editGUID,
 
    else
    {
-      query << "update_editedData" << editID << rawDataID << editGUID
-            << runID << fname << "";
-      dbP->query( query );
+      idEdit = editID.toInt();
 
-      if ( dbP->lastErrno() != US_DB2::OK )
+      if ( US_ConvertIO::updateEditedData( dbP, idEdit, record, error ) != IUS_DB2::OK )
       {
-         QMessageBox::warning( this, tr( "Database Problem" ),
-            tr( "Could not update metadata in the database \n" ) +
-            dbP->lastError() );
+         QMessageBox::warning( this, tr( "Database Problem" ), tr( "Could not update metadata in the database \n" ) + error );
 
          return 4;
       }
-
-      idEdit   = editID.toInt();
    }
 
-   dbP->writeBlobToDB( workingDir + fname, "upload_editData", idEdit );
-
-   if ( dbP->lastErrno() != US_DB2::OK )
+   if ( US_ConvertIO::uploadEditedDataBlob( dbP, idEdit, workingDir + fname, error ) != IUS_DB2::OK )
    {
-      QMessageBox::warning( this, tr( "Database Problem" ),
-         tr( "Could not insert edit xml data into database \n" ) +
-         dbP->lastError() );
+      QMessageBox::warning( this, tr( "Database Problem" ), tr( "Could not insert edit xml data into database \n" ) + error );
       return 5;
    }
 
