@@ -267,7 +267,9 @@ bool US_DB2::connect( const QString& masterPW, QString& err )
 
    db_errno = OK;
    error = "";
-   
+   inTransaction        = false;
+   rolledBackByDeadlock = false;
+
    if ( ! connected )
    {
       db_errno = NOT_CONNECTED;
@@ -367,6 +369,8 @@ bool US_DB2::connect(
 
    db_errno = OK;
    error = "";
+   inTransaction        = false;
+   rolledBackByDeadlock = false;
    if ( ! connected )
    {
       db_errno = NOT_CONNECTED;
@@ -380,16 +384,19 @@ bool US_DB2::connect(
 #endif
 
 #ifdef NO_DB
-bool US_DB2::beginTransaction( QString& )
+bool US_DB2::beginTransaction( QString& transaction_error )
 {
+   transaction_error = QObject::tr( notConnectedMessage ).arg( "beginTransaction" );
    return false;
 }
-bool US_DB2::commitTransaction( QString& )
+bool US_DB2::commitTransaction( QString& transaction_error )
 {
+   transaction_error = QObject::tr( notConnectedMessage ).arg( "commitTransaction" );
    return false;
 }
-bool US_DB2::rollbackTransaction( QString& )
+bool US_DB2::rollbackTransaction( QString& transaction_error )
 {
+   transaction_error = QObject::tr( notConnectedMessage ).arg( "rollbackTransaction" );
    return false;
 }
 #else
@@ -419,8 +426,8 @@ bool US_DB2::beginTransaction( QString& transaction_error )
       return false;
    }
 
-   inTransaction       = true;
-   serverRollbackError = 0;
+   inTransaction        = true;
+   rolledBackByDeadlock = false;
    transaction_error.clear();
    return true;
 }
@@ -446,12 +453,13 @@ bool US_DB2::commitTransaction( QString& transaction_error )
    // step -- with the rollback that follows failing for the same reason.
    drainResults();
 
-   // A COMMIT after the server rolled the transaction back succeeds as a
-   // no-op, so check the cause first or the lost writes would be reported as
-   // committed.  An implicit commit needs no check: everything is kept then.
-   if ( serverRollbackError != 0 && transactionEndedEarly() )
+   // A COMMIT after the transaction has ended succeeds as a no-op, so check
+   // first or lost writes would be reported as committed.  The client does
+   // not always see what ended it: a procedure can catch a deadlock itself,
+   // or roll back on its own.
+   if ( transactionEndedEarly() )
    {
-      transaction_error = serverRollbackText();
+      transaction_error = transactionEndedText();
       return false;
    }
 
@@ -501,8 +509,7 @@ bool US_DB2::rollbackTransaction( QString& transaction_error )
 
    // If the server no longer has the transaction open, something ended it
    // before this call and the rollback below undoes nothing, so a quiet
-   // success here would be a lie.  Only the recorded error can say what ended
-   // it; without one it may have been an implicit commit or a rollback.
+   // success here would be a lie.
    const bool ended_early = transactionEndedEarly();
 
    if ( mysql_rollback( db ) != 0 )
@@ -513,7 +520,7 @@ bool US_DB2::rollbackTransaction( QString& transaction_error )
 
    if ( ended_early )
    {
-      transaction_error = serverRollbackError != 0 ? serverRollbackText() : QObject::tr( transactionEndedMessage );
+      transaction_error = transactionEndedText();
       return false;
    }
 
@@ -526,37 +533,34 @@ bool US_DB2::rollbackTransaction( QString& transaction_error )
 bool US_DB2::transactionEndedEarly()
 {
    // The status comes from the last statement that succeeded; an error packet
-   // does not carry one.  After a recorded error it may predate the server's
-   // rollback, so one empty statement brings it up to date.  A connection that
-   // cannot run even that has lost the transaction with it.
-   if ( serverRollbackError != 0 && mysql_query( db, "DO 0" ) != 0 )
+   // does not carry one, so it may predate a rollback by the server.  One
+   // empty statement brings it up to date.  A connection that cannot run even
+   // that has lost the transaction with it.
+   if ( mysql_query( db, "DO 0" ) != 0 )
    {
       return true;
    }
 
+   // The C API has no accessor for the status flags; MYSQL documents the field.
    return ( db->server_status & SERVER_STATUS_IN_TRANS ) == 0;
 }
 
 void US_DB2::noteStatementError()
 {
-   // InnoDB answers a deadlock, and a lock wait timeout when
-   // innodb_rollback_on_timeout is set, by rolling back the whole transaction.
-   // That ends it just as an implicit commit does, so remember the error while
-   // it is still on the connection; the next statement replaces it.
-   const unsigned int code = mysql_errno( db );
-
-   if ( inTransaction && ( code == ER_LOCK_DEADLOCK || code == ER_LOCK_WAIT_TIMEOUT ) )
+   // InnoDB always answers a deadlock by rolling back the whole transaction,
+   // so that error alone says what ended it.  A lock wait timeout does so only
+   // when innodb_rollback_on_timeout is set, and is not recorded.  Remember
+   // the error while it is still on the connection; the next statement
+   // replaces it.
+   if ( inTransaction && mysql_errno( db ) == ER_LOCK_DEADLOCK )
    {
-      serverRollbackError = code;
+      rolledBackByDeadlock = true;
    }
 }
 
-QString US_DB2::serverRollbackText() const
+QString US_DB2::transactionEndedText() const
 {
-   const QString cause =
-      serverRollbackError == ER_LOCK_DEADLOCK ? QObject::tr( "a deadlock" ) : QObject::tr( "a lock wait timeout" );
-
-   return QObject::tr( serverRollbackMessage ).arg( cause );
+   return QObject::tr( rolledBackByDeadlock ? serverRollbackMessage : transactionEndedMessage );
 }
 #endif
 
@@ -602,7 +606,17 @@ void US_DB2::rawQuery( const QString& sqlQuery )
    }
 
    else
+   {
       result = mysql_store_result( db );
+
+      // A statement without a result set gives NULL too; only an error code
+      // says that reading the result failed.
+      if ( result == NULL && mysql_errno( db ) != 0 )
+      {
+         error = QString( "MySQL error: " ) + mysql_error( db );
+         noteStatementError();
+      }
+   }
 }
 #endif
 
@@ -675,12 +689,18 @@ void US_DB2::query( const QString& sqlQuery )
       mysql_free_result( result );
       result = NULL;
 
-      if ( mysql_next_result( db ) != 0 )
+      const int next = mysql_next_result( db );
+
+      // The procedure failed after its status row, while producing its data.
+      if ( next > 0 )
       {
+         error    = QString( "MySQL error: " ) + mysql_error( db );
+         db_errno = DBERROR;
          noteStatementError();
+         return;
       }
 
-      else // get the result data
+      else if ( next == 0 ) // get the result data
       {
          result = mysql_store_result( db );
          if ( ! result )
