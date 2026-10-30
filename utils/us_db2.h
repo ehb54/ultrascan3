@@ -119,11 +119,13 @@ public:
         \param personPassword That investigator's US3 password
         \param err            Set to the reason on failure
     */
-    bool connectAuthenticated( const QString& host, const QString& dbname,
-                               const QString& user, const QString& password,
-                               const QString& personGUID,
-                               const QString& personPassword,
-                               QString& err );
+    bool                         connectAuthenticated( const QString& host,
+                                                       const QString& dbname,
+                                                       const QString& user,
+                                                       const QString& password,
+                                                       const QString& personGUID,
+                                                       const QString& personPassword,
+                                                       QString&       err );
 
     //! Transaction error formats; %1 is the refused operation or the server's error text.
     static constexpr const char* transactionOpenMessage = "%1: a transaction is already open";

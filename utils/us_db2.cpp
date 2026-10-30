@@ -382,24 +382,30 @@ bool US_DB2::connect(
 #endif
 
 #ifdef NO_DB
-bool US_DB2::connectAuthenticated( const QString&, const QString&,
-                                   const QString&, const QString&,
-                                   const QString&, const QString&,
+bool US_DB2::connectAuthenticated( const QString&,
+                                   const QString&,
+                                   const QString&,
+                                   const QString&,
+                                   const QString&,
+                                   const QString&,
                                    QString& err )
 {
    err = "Database support is disabled";
    return false;
 }
 #else
-bool US_DB2::connectAuthenticated( const QString& host, const QString& dbname,
+bool US_DB2::connectAuthenticated( const QString& host,
+                                   const QString& dbname,
                                    const QString& user,
                                    const QString& password,
                                    const QString& personGUID,
                                    const QString& personPassword,
-                                   QString& err )
+                                   QString&       err )
 {
-   if ( ! connect( host, dbname, user, password, err ) )
+   if ( !connect( host, dbname, user, password, err ) )
+   {
       return false;
+   }
 
    guid   = personGUID;
    userPW = personPassword;
@@ -409,9 +415,7 @@ bool US_DB2::connectAuthenticated( const QString& host, const QString& dbname,
    // reserves for a password is the empty email.  Both are escaped either way,
    // so a password carrying a quote or a backslash is a failed login rather
    // than a broken query.
-   query( composeQuery( "CALL",
-                        QStringList() << "validate_user" << userPW,
-                        guid, QString() ) );
+   query( composeQuery( "CALL", QStringList() << "validate_user" << userPW, guid, QString() ) );
 
    if ( db_errno != OK )
    {
