@@ -93,7 +93,7 @@ public:
         \param error Set to the reason when the begin fails, cleared otherwise.
         \return true if the transaction is open.
     */
-    virtual bool                 beginTransaction( QString& error )    = 0;
+    virtual bool                 beginTransaction( QString& error ) = 0;
 
     /*! \brief Commit the open transaction.
 
@@ -105,7 +105,7 @@ public:
         \return true if the commit took effect; false if there was no open
                  transaction or the server did not confirm the commit.
     */
-    virtual bool                 commitTransaction( QString& error )   = 0;
+    virtual bool                 commitTransaction( QString& error ) = 0;
 
     /*! \brief Roll back the open transaction.
 
