@@ -133,72 +133,70 @@ int US_Noise::write( bool db_access, const QString& filename, IUS_DB2* db )
 // write noise to db
 int US_Noise::write( IUS_DB2* db )
 {
-      // Create the noise xml file in a string
-      QByteArray       temp_contents;
-      QXmlStreamWriter xml( &temp_contents );
-      write_stream( xml );
+   // Create the noise xml file in a string.  It is passed raw: the query
+   // layer escapes every argument.
+   QByteArray       contents;
+   QXmlStreamWriter xml( &contents );
+   write_stream( xml );
 
-      QByteArray     contents;
-      QStringList    q;
+   QStringList q;
 
-      // Get type and model IDD
-      QString typen   = ( type == TI ) ? "ti_noise" : "ri_noise";
+   // Get type and model IDD
+   QString     typen = ( type == TI ) ? "ti_noise" : "ri_noise";
 
-      q << "get_modelID" << modelGUID;
-      db->query( q );
+   q << "get_modelID" << modelGUID;
+   db->query( q );
+   db->next();
+   QString modelID = db->value( 0 ).toString();
+
+   // Determine the edit ID
+   QString invID  = QString::number( US_Settings::us_inv_ID() );
+   QString editID = "0";
+   q.clear();
+   q << "get_model_desc" << invID;
+   db->query( q );
+   while ( db->next() )
+   {
+      if ( db->value( 0 ).toString() == modelID )
+      {
+         editID = db->value( 6 ).toString();
+         break;
+      }
+   }
+
+   // Generate a noise guid if necessary
+   // The guid may be valid from a disk read, but is not in the DB
+   if ( noiseGUID.size() != 36 )
+   {
+      noiseGUID = US_Util::new_guid();
+   }
+
+   q.clear();
+   q << "get_noiseID" << noiseGUID;
+
+   db->query( q );
+
+   q.clear();
+
+   if ( db->lastErrno() != IUS_DB2::OK )
+   {
+      q << "new_noise" << noiseGUID << editID << modelID << modelGUID << typen << description << contents;
+      message = QObject::tr( "created" );
+      //qDebug() << "get_noiseID stat GUID" << db->lastErrno() << noiseGUID;
+   }
+   else
+   {
       db->next();
-      QString modelID = db->value( 0 ).toString();
+      QString noiseID = db->value( 0 ).toString();
+      q << "update_noise" << noiseID << noiseGUID << editID << modelID << modelGUID << typen << description << contents;
+      message = QObject::tr( "updated" );
+      //qDebug() << "get_noiseID ID GUID" << noiseID << noiseGUID;
+   }
 
-      // Passed raw: the query layer escapes every argument.
-      contents = temp_contents;
-
-      // Determine the edit ID
-      QString invID   = QString::number( US_Settings::us_inv_ID() );
-      QString editID  = "0";
-      q.clear();
-      q << "get_model_desc" << invID;
-      db->query( q );
-      while( db->next() )
-      {
-         if ( db->value( 0 ).toString() == modelID )
-         {
-            editID         = db->value( 6 ).toString();
-            break;
-         }
-      }
-
-      // Generate a noise guid if necessary
-      // The guid may be valid from a disk read, but is not in the DB
-      if ( noiseGUID.size() != 36 ) noiseGUID = US_Util::new_guid();
-
-      q.clear();
-      q << "get_noiseID" << noiseGUID;
-      
-      db->query( q );
-      
-      q.clear();
-     
-      if ( db->lastErrno() != IUS_DB2::OK )
-      {
-         q << "new_noise" << noiseGUID << editID << modelID << modelGUID
-           << typen << description << contents;
-         message = QObject::tr( "created" );
-//qDebug() << "get_noiseID stat GUID" << db->lastErrno() << noiseGUID;
-      }
-      else
-      {
-         db->next();
-         QString noiseID = db->value( 0 ).toString();
-         q << "update_noise" << noiseID << noiseGUID << editID << modelID
-           << modelGUID << typen << description << contents;
-         message = QObject::tr( "updated" );
-//qDebug() << "get_noiseID ID GUID" << noiseID << noiseGUID;
-      }
-
-      return db->statusQuery( q );
-//int updstat = db->statusQuery( q );
-//qDebug() << "new/update_noise stat" << updstat;
-//return updstat;
+   return db->statusQuery( q );
+   //int updstat = db->statusQuery( q );
+   //qDebug() << "new/update_noise stat" << updstat;
+   //return updstat;
 }
 
 // write noise to local disk
