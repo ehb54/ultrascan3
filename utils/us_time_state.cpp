@@ -950,7 +950,6 @@ DbgLv(1) << "dbCreate: dbP fn ck" << dbP << tmst_fname << tmst_cksm;
    QString fnamedb;
    QString xdefs;
    QString cksumdb;
-   QByteArray defs_ld;
    tmstID             = 0;
    int expIDdb        = expID;
  
@@ -970,11 +969,9 @@ DbgLv(1) << "dbCreate: dbP fn ck" << dbP << tmst_fname << tmst_cksm;
          if ( tmstID > 0  &&  cksumxd == defs_cksm )
          {  // Xml definitions characters also match, return with existing DB
             if ( fnamedb != tmst_fname )
-            {  // If the file name differs, we must update the record
-               defs_ld = defs_da; // Passed raw: the query layer escapes it
+            { // If the file name differs, we must update the record
                query.clear();
-               query << "update_timestate" << idTmst << idExp
-                     << tmst_fname << defs_ld;
+               query << "update_timestate" << idTmst << idExp << tmst_fname << defs_da;
                dbP->statusQuery( query );
             }
 
@@ -989,10 +986,9 @@ DbgLv(1) << "dbCreate: dbP fn ck" << dbP << tmst_fname << tmst_cksm;
       }
    }
 
-   // Passed raw: the query layer escapes every argument.
-   defs_ld = defs_da;
+   // The definitions are passed raw: the query layer escapes every argument.
    query.clear();
-   query << "new_timestate" << idExp << tmst_fname << defs_ld;
+   query << "new_timestate" << idExp << tmst_fname << defs_da;
    stat         = dbP->statusQuery( query );
    int nsrtID   = dbP->lastInsertID();
    tmstID       = ( stat == IUS_DB2::OK  ||  stat == IUS_DB2::NOROWS )

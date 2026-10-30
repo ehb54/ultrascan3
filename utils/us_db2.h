@@ -107,13 +107,13 @@ public:
        "so some rows written in it may have been kept";
 
     /*! \brief Begin a transaction with START TRANSACTION. See IUS_DB2. */
-    bool           beginTransaction( QString& error ) final;
+    bool                         beginTransaction( QString& error ) final;
 
     /*! \brief Commit the open transaction. See IUS_DB2. */
-    bool           commitTransaction( QString& error ) final;
+    bool                         commitTransaction( QString& error ) final;
 
     /*! \brief Roll back the open transaction. See IUS_DB2. */
-    bool           rollbackTransaction( QString& error ) final;
+    bool                         rollbackTransaction( QString& error ) final;
 
     /*! \brief Implements a simple query on the active database
         connection, cleaning up any unused results from a previous query.
@@ -326,8 +326,8 @@ public:
 
         The guid and password are passed as the first two procedure
         arguments.  Every argument, the credentials included, has its
-        backslashes and single quotes escaped, so callers pass values raw.
-        No connection is involved.
+        backslashes, single quotes and NULs escaped, so callers pass values
+        raw.  No connection is involved.
 
         \param keyword    The leading SQL keyword, "CALL" or "SELECT"
 
@@ -340,10 +340,13 @@ public:
         \return The composed query, or an empty string if arguments is empty
                 or the procedure name is not a plain identifier
     */
-    static QString composeQuery( const QString&     keyword,
-                                 const QStringList& arguments,
-                                 const QString&     guid,
-                                 const QString&     password );
+    static QString               composeQuery( const QString&     keyword,
+                                               const QStringList& arguments,
+                                               const QString&     guid,
+                                               const QString&     password );
+
+    //! Error format when a procedure name is refused; %1 is the name.
+    static constexpr const char* invalidProcedureMessage = "not a valid procedure name: '%1'";
 
  private:
     bool       connected;
@@ -374,18 +377,25 @@ public:
     //! but anything that talks to the connection without going through a
     //! query, transaction control included, has to clear it first or the
     //! server answers "Commands out of sync".
-    void       drainResults();
+    void           drainResults();
 
     //! \brief True if the server no longer has a transaction open.
-    bool       transactionEndedEarly();
+    bool           transactionEndedEarly();
 
     //! \brief Records a failed statement's error if it rolled the open
     //!        transaction back.  Call while the error is still current.
-    void       noteStatementError();
+    void           noteStatementError();
 
     //! \brief Why the transaction ended before commit or rollback: the
     //!        deadlock if one was recorded, otherwise that rows may have been kept.
-    QString    transactionEndedText() const;
+    QString        transactionEndedText() const;
+
+    //! \brief Escapes \p value for use inside a single-quoted SQL literal.
+    static QString escapeLiteral( QString value );
+
+    //! \brief Fails a query whose procedure name composeQuery refused,
+    //!        without sending anything.  Returns DBERROR.
+    int            refuseArguments( const QStringList& arguments );
 
     QString    buildQuery      ( const QStringList& );
     QString    buildQuerySelect( const QStringList& );
