@@ -51,6 +51,7 @@ void WorkerThread2D::define_work( WorkPacket2D& workin )
    typeref     = workin.typeref;
 
    solutes_i   = workin.isolutes;
+   simcache    = workin.simcache;
 
    //dsets << workin.dsets[ 0 ];
    dset_wk              = *(workin.dsets[ 0 ]);  // local copy of data set
@@ -129,6 +130,7 @@ void WorkerThread2D::calc_residuals()
    }
 
    solvesim            = new US_SolveSim( dsets, thrn, true );
+   solvesim->set_sim_cache( simcache.get() );
 
    connect( solvesim, &US_SolveSim::work_progress,
             this,     &WorkerThread2D::forward_progress );

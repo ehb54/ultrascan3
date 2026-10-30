@@ -56,13 +56,25 @@ US_BufferGuiSelect::US_BufferGuiSelect( int *invID, int *select_db_disk,
    QLabel* lb_compressib = us_label( tr( "Compressibility:" ) );
 
    le_search             = us_lineedit();
+   le_search->setAccessibleName( tr( "Search" ) );
+   lb_search->setBuddy( le_search );
    le_density            = us_lineedit();
+   le_density->setAccessibleName( tr( "Density" ) );
+   lb_density->setBuddy( le_density );
    le_ph                 = us_lineedit( "7.0000" );
+   le_ph->setAccessibleName( tr( "pH" ) );
+   lb_ph->setBuddy( le_ph );
    le_viscosity          = us_lineedit();
+   le_viscosity->setAccessibleName( tr( "Viscosity" ) );
+   lb_viscosity->setBuddy( le_viscosity );
    le_compressib         = us_lineedit();
+   le_compressib->setAccessibleName( tr( "Compressibility" ) );
+   lb_compressib->setBuddy( le_compressib );
 
    lw_buffer_list        = us_listwidget();
+   lw_buffer_list->setAccessibleName( tr( "Buffers" ) );
    lw_buffer_comps       = us_listwidget();
+   lw_buffer_comps->setAccessibleName( tr( "Buffer Components" ) );
 
    QLabel* lb_temperature = us_label( tr( "Temperature:" ) );
    lb_temperature->setAlignment(Qt::AlignLeft);
@@ -986,14 +998,27 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
    lo_temp->addWidget(pb_temp20C);
 
    le_descrip          = us_lineedit( "" );
+   le_descrip->setAccessibleName( tr( "Description" ) );
+   lb_descrip->setBuddy( le_descrip );
    le_concen           = us_lineedit( "" );
+   le_concen->setAccessibleName( tr( "Component Concentration" ) );
    le_density          = us_lineedit( "" );
+   le_density->setAccessibleName( tr( "Density" ) );
+   lb_density->setBuddy( le_density );
    le_viscos           = us_lineedit( "" );
+   le_viscos->setAccessibleName( tr( "Viscosity" ) );
+   lb_viscos->setBuddy( le_viscos );
    le_ph               = us_lineedit( "7.0000" );
+   le_ph->setAccessibleName( tr( "pH" ) );
+   lb_ph->setBuddy( le_ph );
    le_compress         = us_lineedit( "0.0000e+0" );
+   le_compress->setAccessibleName( tr( "Compressibility" ) );
+   lb_compress->setBuddy( le_compress );
 
    lw_allcomps         = us_listwidget();
+   lw_allcomps->setAccessibleName( tr( "Available Components" ) );
    lw_bufcomps         = us_listwidget();
+   lw_bufcomps->setAccessibleName( tr( "Buffer Components" ) );
 
 
    QPalette upal       = lb_bselect->palette();
@@ -1768,7 +1793,9 @@ US_BufferGuiEdit::US_BufferGuiEdit( int *invID, int *select_db_disk,
    QLabel* lb_ph            = us_label( tr( "pH:" ) );
    //QLabel* bn_spacer        = us_banner( "" );
    le_descrip    = us_lineedit( buffer->description );
+   le_descrip->setAccessibleName( tr( "Description" ) );
    le_ph         = us_lineedit( QString::number( buffer->pH, 'f', 4 ) );
+   le_ph->setAccessibleName( tr( "pH" ) );
 
    bn_modbuf->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    //bn_spacer->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
@@ -1967,7 +1994,9 @@ US_BufferGuiSettings::US_BufferGuiSettings( int *invID, int *select_db_disk )
       : "";
 
    le_investigator = us_lineedit( number + US_Settings::us_inv_name() );
+   le_investigator->setAccessibleName( tr( "Investigator" ) );
    le_syncstat     = us_lineedit();
+   le_syncstat->setAccessibleName( tr( "Synchronization Status" ) );
    int idb_or_disk = from_db ? US_Disk_DB_Controls::DB
                              : US_Disk_DB_Controls::Disk;
    disk_controls   = new US_Disk_DB_Controls( idb_or_disk );
@@ -2232,21 +2261,37 @@ US_BufferComponentRequerster::US_BufferComponentRequerster(
    lb_visc = us_banner("Viscosity Coefficients");
    lb_dens = us_banner("Density Coefficients");
    le_name = us_lineedit("");
+   le_name->setAccessibleName( tr( "Component Name" ) );
    le_lrange = us_lineedit("");
+   le_lrange->setAccessibleName( tr( "Range Low" ) );
    le_urange = us_lineedit("");
+   le_urange->setAccessibleName( tr( "Range High" ) );
    le_unit = us_lineedit("");
+   le_unit->setAccessibleName( tr( "Unit" ) );
    le_density0 = us_lineedit("");
+   le_density0->setAccessibleName( tr( "Density Coefficient Independent of c" ) );
    le_density1 = us_lineedit("");
+   le_density1->setAccessibleName( tr( "Density Coefficient for sqrt(c) x1E3" ) );
    le_density2 = us_lineedit("");
+   le_density2->setAccessibleName( tr( "Density Coefficient for c x1E2" ) );
    le_density3 = us_lineedit("");
+   le_density3->setAccessibleName( tr( "Density Coefficient for c^2 x1E3" ) );
    le_density4 = us_lineedit("");
+   le_density4->setAccessibleName( tr( "Density Coefficient for c^3 x1E4" ) );
    le_density5 = us_lineedit("");
+   le_density5->setAccessibleName( tr( "Density Coefficient for c^4 x1E6" ) );
    le_viscosity0 = us_lineedit("");
+   le_viscosity0->setAccessibleName( tr( "Viscosity Coefficient Independent of c" ) );
    le_viscosity1 = us_lineedit("");
+   le_viscosity1->setAccessibleName( tr( "Viscosity Coefficient for sqrt(c) x1E3" ) );
    le_viscosity2 = us_lineedit("");
+   le_viscosity2->setAccessibleName( tr( "Viscosity Coefficient for c x1E2" ) );
    le_viscosity3 = us_lineedit("");
+   le_viscosity3->setAccessibleName( tr( "Viscosity Coefficient for c^2 x1E3" ) );
    le_viscosity4 = us_lineedit("");
+   le_viscosity4->setAccessibleName( tr( "Viscosity Coefficient for c^3 x1E4" ) );
    le_viscosity5 = us_lineedit("");
+   le_viscosity5->setAccessibleName( tr( "Viscosity Coefficient for c^4 x1E6" ) );
    QLabel* lb_range3 = us_label(tr("in M"));
    lb_density0 = us_label(tr("Density coefficient independent of c"));
    lb_density1 = us_label(tr("Density coefficient for sqrt(c) *1E3"));
@@ -2260,6 +2305,8 @@ US_BufferComponentRequerster::US_BufferComponentRequerster(
    lb_viscosity3 = us_label(tr("Viscosity coefficient for c<sup>2</sup> *1E3"));
    lb_viscosity4 = us_label(tr("Viscosity coefficient for c<sup>3</sup> *1E4"));
    lb_viscosity5 = us_label(tr("Viscosity coefficient for c<sup>4</sup> *1E6"));
+   lb_name->setBuddy( le_name );
+   lb_unit->setBuddy( le_unit );
    QGridLayout* gfbox   = us_checkbox( tr( "Gradient-Forming" ), ck_gf );
    int row = 0;
    main->addWidget(lb_description, row++, 0, 1, 7);

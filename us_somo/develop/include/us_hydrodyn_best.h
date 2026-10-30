@@ -13,9 +13,6 @@
 using namespace std;
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
 #endif
 
 class US_EXTERN US_Hydrodyn_Best : public QFrame
@@ -72,9 +69,7 @@ class US_EXTERN US_Hydrodyn_Best : public QFrame
 
    private:
       ScrollZoomer          *                 plot_data_zoomer;
-#if QT_VERSION >= 0x040000
       QwtPlotGrid           *                 grid_data;
-#endif
       QHBoxLayout           *                 hbl_points;
       mQLabel               *                 lbl_points;
       vector < QCheckBox * >                  cb_points;
@@ -206,9 +201,6 @@ class US_EXTERN US_Hydrodyn_Best : public QFrame
 };
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
 #endif
 
 #endif

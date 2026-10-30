@@ -31,37 +31,6 @@ US_Register::~US_Register()
 
 void US_Register::us_license()
 {
-#if QT_VERSION < 0x040000
-  proc = new QProcess(this);
-# ifndef Q_OS_MAC
-  proc->addArgument("us_license");
-# else
-  US_Config* USglobal = new US_Config();
-  QString basedir = USglobal->config_list.system_dir;
-  if ( basedir == ""  ||  ! QFile( basedir ).exists() )
-    basedir = "/Applications/UltraScanII";
-  QString applic  = basedir + "/bin/us_license.app";
-  if ( ! QFile( applic ).exists() )
-    applic  = "/Applications/UltraScanII/bin/us_license.app";
-  if ( ! QFile( applic ).exists() )
-    applic  = QDir::homePath() + "/ultrascan2/bin/us_license.app";
-  if ( ! QFile( applic ).exists() )
-    applic  = QDir::homePath() + "/ultrascan/bin/us_license.app";
-  proc->addArgument("open");
-  proc->addArgument("-a");
-  proc->addArgument( applic);
-# endif
-  
-  if ( ! proc->start() ) // Error
-  {
-    US_Static::us_message(
-        us_tr( "Please note:" ), 
-        us_tr( "There was a problem creating a sub process\n"
-            "for US_LICENSE\n\n"
-            "Please check and try again..." ) );
-    return;
-  }
-#else
   {
      QProcess * process = new QProcess( this );
      QString prog = "us_license";
@@ -94,7 +63,6 @@ void US_Register::us_license()
         return;
      }
   }
-#endif  
 }
 
 /*!

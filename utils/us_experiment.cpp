@@ -75,8 +75,8 @@ qDebug() << "Exp:svToDB: projsv status(+NO_PR)" << status << US_DB2::NO_PROJECT
    QByteArray RIxml;
    QByteArray RIxmlEscaped;
    createRIXml( RIxml );
-   // composeQuery owns SQL escaping.
-   RIxmlEscaped = RIxml;
+   //unsigned long length = db->mysqlEscapeString( RIxmlEscaped, RIxml, RIxml.size() );
+   db->mysqlEscapeString( RIxmlEscaped, RIxml, RIxml.size() );
 
    // Check for experiment runID in database
    int saveStatus = 0;
@@ -200,8 +200,8 @@ qDebug() << "Exp:svToDB: update" << update << "ss-count" << speedsteps.count();
    QByteArray RIxml;
    QByteArray RIxmlEscaped;
    createRIXml( RIxml );
-   // composeQuery owns SQL escaping.
-   RIxmlEscaped = RIxml;
+   //unsigned long length = db->mysqlEscapeString( RIxmlEscaped, RIxml, RIxml.size() );
+   db->mysqlEscapeString( RIxmlEscaped, RIxml, RIxml.size() );
 
    // Check for experiment runID in database
    int saveStatus = 0;
@@ -635,20 +635,18 @@ int US_Experiment::readFromDisk(
     QString runID,
     QString dirname )
 {
-   // No diagnostics wanted: the state goes nowhere and nothing is reported
-   // from it, so this stays exactly the read it has always been.
+   // No diagnostics wanted, so the collected state is discarded.
    DiskReadState state;
 
    return readFromDisk( triples, runType, runID, dirname, state );
 }
 
-int US_Experiment::readFromDisk(
-    QList< US_Convert::TripleInfo >& triples,
-    QString runType,
-    QString runID,
-    QString dirname,
-    QVector< SP_SPEEDPROFILE >& speedsteps,
-    QString& detail )
+int US_Experiment::readFromDisk( QList<US_Convert::TripleInfo>& triples,
+                                 QString                        runType,
+                                 QString                        runID,
+                                 QString                        dirname,
+                                 QVector<SP_SPEEDPROFILE>&      speedsteps,
+                                 QString&                       detail )
 {
    speedsteps.clear();
    detail.clear();
@@ -659,36 +657,42 @@ int US_Experiment::readFromDisk(
    const int status = readFromDisk( triples, runType, runID, dirname, state );
 
    if ( status != US_Convert::OK )
+   {
       return status;
+   }
 
    // Two datasets naming one triple means the archive cannot say which raw
    // dataset an identity belongs to.  Reported ahead of the merely-missing
    // cases because it is the one that would silently overwrite.
-   if ( ! state.duplicated.isEmpty() )
+   if ( !state.duplicated.isEmpty() )
    {
-      detail = QString( "The experiment record describes %1 more than once" )
-               .arg( state.duplicated.join( ", " ) );
+      detail = QObject::tr( duplicatedDatasetMessage ).arg( state.duplicated.join( ", " ) );
       return US_Convert::BADGUID;
    }
 
    QStringList unfilled;
 
    for ( int ii = 0; ii < triples.size(); ii++ )
-      if ( ! state.filled.contains( ii ) )
-         unfilled << triples[ ii ].tripleDesc;
+   {
+      if ( !state.filled.contains( ii ) )
+      {
+         unfilled << triples[ii].tripleDesc;
+      }
+   }
 
-   if ( ! state.unmatched.isEmpty()  ||  ! unfilled.isEmpty() )
+   if ( !state.unmatched.isEmpty() || !unfilled.isEmpty() )
    {
       QStringList parts;
 
-      if ( ! state.unmatched.isEmpty() )
-         parts << QString( "the experiment record describes %1, which has no "
-                           "data file" ).arg( state.unmatched.join( ", " ) );
+      if ( !state.unmatched.isEmpty() )
+      {
+         parts << QObject::tr( datasetWithoutDataMessage ).arg( state.unmatched.join( ", " ) );
+      }
 
-      if ( ! unfilled.isEmpty() )
-         parts << QString( "the data files include %1, which the experiment "
-                           "record does not describe" )
-                  .arg( unfilled.join( ", " ) );
+      if ( !unfilled.isEmpty() )
+      {
+         parts << QObject::tr( dataWithoutDatasetMessage ).arg( unfilled.join( ", " ) );
+      }
 
       detail = parts.join( "; " );
       return US_Convert::PARTIAL_XML;
@@ -697,12 +701,11 @@ int US_Experiment::readFromDisk(
    return US_Convert::OK;
 }
 
-int US_Experiment::readFromDisk(
-    QList< US_Convert::TripleInfo >& triples,
-    QString runType,
-    QString runID,
-    QString dirname,
-    DiskReadState& state )
+int US_Experiment::readFromDisk( QList<US_Convert::TripleInfo>& triples,
+                                 QString                        runType,
+                                 QString                        runID,
+                                 QString                        dirname,
+                                 DiskReadState&                 state )
 {
    // First figure out the xml file name, and try to open it
    QString filename = runID      + "." 
@@ -727,7 +730,7 @@ int US_Experiment::readFromDisk(
             this->expGUID        = a.value( "guid" ).toString();
             this->expType        = a.value( "type" ).toString();
             this->runID          = a.value( "runID" ).toString();
-            readExperiment ( xml, triples, runType, runID, state );
+            readExperiment( xml, triples, runType, runID, state );
          }
       }
    }
@@ -741,12 +744,11 @@ qDebug() << "readFromDisk() error" << error;
    return US_Convert::OK;
 }
 
-void US_Experiment::readExperiment( 
-     QXmlStreamReader& xml, 
-     QList< US_Convert::TripleInfo >& triples,
-     QString runType,
-     QString runID,
-     DiskReadState& state )
+void US_Experiment::readExperiment( QXmlStreamReader&              xml,
+                                    QList<US_Convert::TripleInfo>& triples,
+                                    QString                        runType,
+                                    QString                        runID,
+                                    DiskReadState&                 state )
 {
    while ( ! xml.atEnd() )
    {
@@ -846,17 +848,15 @@ void US_Experiment::readExperiment(
                }
             }
 
-            if ( ! found )
-            {  // No triple carries this description, so no data file does
-               // either.  The read continues -- callers that do not ask for
-               // diagnostics see exactly what they always saw.
+            if ( !found )
+            { // No triple carries this description, so no data file does
+               // either.  Recorded, and the read continues.
                state.unmatched << triple;
             }
 
             else if ( state.filled.contains( ndx ) )
-            {  // A previous dataset already claimed this triple.  Recorded
-               // before the fields are overwritten, which is what used to
-               // happen with nothing said.
+            { // A previous dataset already claimed this triple; its fields
+               // are overwritten below, so record that first.
                state.duplicated << triple;
             }
 
@@ -897,7 +897,7 @@ void US_Experiment::readExperiment(
          else if ( xml.name() == "speedstep" )
          {
             if ( state.speedsteps != nullptr )
-            {  // Declared inside the loop on purpose.  speedstepFromXml()
+            { // Declared inside the loop on purpose.  speedstepFromXml()
                // assigns a field only when its attribute is present, so a
                // profile reused across elements lets a step inherit the
                // previous step's values.  A fresh one per element means what

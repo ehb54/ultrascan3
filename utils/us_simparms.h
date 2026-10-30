@@ -49,17 +49,17 @@ class US_UTIL_EXTERN US_SimulationParameters
    //! \param rCalID New rotor calibration identifier to set and use for
    //!               coefficients (default = "0")
    //! \param cp     Centerpiece index (default = 0)
-   //! \param ch     Index to channel in centerpiece (default = 0) 
+   //! \param ch     Index to channel in centerpiece (default = 0)
    //! \return true when both centerpiece geometry and rotor calibration load.
-   bool setHardware( IUS_DB2* = NULL, QString = "0", int = 0, int = 0 );
+   bool                    setHardware( IUS_DB2* = NULL, QString = "0", int = 0, int = 0 );
 
    //! \brief Read hardware files to update bottom and rotor coefficients array
    //! \param rCalID New rotor calibration identifier to set and use for
    //!               coefficients (default = "0")
    //! \param cp     Centerpiece index (default = 0)
-   //! \param ch     Index to channel in centerpiece (default = 0) 
+   //! \param ch     Index to channel in centerpiece (default = 0)
    //! \return true when both centerpiece geometry and rotor calibration load.
-   bool setHardware( QString = "0", int = 0, int = 0 );
+   bool                    setHardware( QString = "0", int = 0, int = 0 );
 
    //! \brief Load simulation parameters from an xml file
    //! \param fname Full path name of file from which to load simulation
@@ -136,12 +136,13 @@ class US_UTIL_EXTERN US_SimulationParameters
    static int ssProfFromTimeState( US_TimeState*, QVector< SimSpeedProf >& );
 
    //! \brief Set edit radii from simulated cell geometry.
-   //! Bottom-side insets scale for short columns; optical offsets remain fixed.
-   //! \param edits    Reference to the edit values to fill in
-   //! \param meniscus Meniscus radius of the simulated cell
-   //! \param bottom   Bottom radius of the simulated cell
-   static void editRadiiFromCell( US_DataIO::EditValues& edits,
-                                  double meniscus, double bottom );
+   //! The data range spans the column from the first reading past the
+   //! meniscus spike to the bottom.
+   //! \param edits      Reference to the edit values to fill in
+   //! \param meniscus   Meniscus radius of the simulated cell
+   //! \param bottom     Bottom radius of the simulated cell
+   //! \param resolution Radial grid spacing of the simulated data
+   static void             editRadiiFromCell( US_DataIO::EditValues& edits, double meniscus, double bottom, double resolution );
 
    //! \brief Function to build an internal simulation speed step profile
    //!        vector from an internal TimeState object.

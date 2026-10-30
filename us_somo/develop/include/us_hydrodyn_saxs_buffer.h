@@ -22,10 +22,8 @@
 #include <QMouseEvent>
 #include <QCloseEvent>
 
-#if QT_VERSION >= 0x040000
 #include "qwt_plot_marker.h"
 #include "qwt_symbol.h"
-#endif
 
 #include "us_util.h"
 
@@ -44,9 +42,6 @@
 #include "qwt/scrollzoomer.h"
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
 #endif
 
 using namespace std;
@@ -194,10 +189,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
    private:
       ScrollZoomer  *plot_dist_zoomer;
-#if QT_VERSION >= 0x040000
       QwtPlotGrid   *grid_saxs;
       bool          legend_vis;
-#endif
 
       QPushButton   *pb_color_rotate;
 
@@ -336,17 +329,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       double                       join_mult_end;
       double                       join_mult_delta;
 
-#if QT_VERSION >= 0x040000
       map < QString, QwtPlotCurve * >     plotted_curves;
       vector < QwtPlotMarker * >          plotted_markers;
       QwtPlotCurve *                      wheel_curve;
       QwtPlotCurve *                      join_curve;
-#else
-      map < QString, long >               plotted_curves;
-      vector < long >                     plotted_markers;
-      long                                wheel_curve;
-      long                                join_curve;
-#endif
 
       mQLineEdit                   *le_last_focus;
 
@@ -354,11 +340,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void                         join_add_marker( double pos, 
                                                     QColor color, 
                                                     QString text, 
-#if QT_VERSION < 0x040000
-                                                    int 
-#else
                                                     Qt::Alignment
-#endif
                                                     align = Qt::AlignRight | Qt::AlignTop );
       void                         join_init_markers();
       void                         join_delete_markers();
@@ -488,9 +470,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
    
 };
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
 #endif
 
 #endif

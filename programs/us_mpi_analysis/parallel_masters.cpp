@@ -52,8 +52,9 @@ DbgLv(1) << "COMM_SPLIT (g r m)" << my_group << group_rank << my_rank
    }
 
 DbgLv(1) << "Final-my_rank" << my_rank << " msecs=" << startTime.msecsTo(QDateTime::currentDateTime());
-   MPI_Finalize();
-   exit( 0 );
+free_node_comm();
+MPI_Finalize();
+exit( 0 );
 }
 
 // Parse Task XML, mainly for max wall-time and master-groups-count
@@ -167,9 +168,14 @@ void US_MPI_Analysis::pmasters_supervisor()
    //   description. Then, send the iteration index as a trigger to begin
    //   an iteration loop; all groups do iteration 1.
 
+   // A 2DSA group master waits for a reply to every iteration-done message;
+   //  when no iterations are left it gets STOPITER
+   bool stop_groups = analysis_type.startsWith( "2DSA" );
+   QVector<bool> idle( mgroup_count, false ); // Stopped at the start,
+                                              //  memory not yet reported
+
    for ( int ii = 0; ii < mgroup_count; ii++ )
    {
-      mc_iteration++;
       master = ( ii == 0 ) ? 1 : ( ii * gcores_count );   // Master world rank
 
 DbgLv(1) << "SUPER: master msgs" << master << "analysisDate" << analysisDate;
@@ -188,6 +194,17 @@ DbgLv(1) << "SUPER: master msgs" << master << "analysisDate" << analysisDate;
                 master,
                 ADATE,
                 MPI_COMM_WORLD );
+
+      if ( stop_groups && mc_iteration >= mc_iterations )
+      { // More groups than iterations:  nothing to do for this group
+         MPI_Send( &mc_iteration, 1, MPI_INT, master, STOPITER, MPI_COMM_WORLD );
+
+         mstates[ii] = INIT;
+         idle[ii]    = true;
+         continue;
+      }
+
+      mc_iteration++;
 
       MPI_Send( &mc_iteration,
                 1,
@@ -263,6 +280,13 @@ DbgLv(1) << "SUPER:     UDPmsg:" << QString(msg);
 
       if ( udpmsg )  continue;                // Loop for next master message
 
+      if ( idle[status.MPI_SOURCE / gcores_count] )
+      { // Memory use of a group stopped at the start
+         idle[status.MPI_SOURCE / gcores_count] = false;
+         maxrssma += (long) ( iwork );
+         continue;
+      }
+
       // If here, the message was a signal that an MC iteration is complete.
       // Most commonly, the group master that just completed an iteration
       //   is sent the next iteration to begin.
@@ -287,6 +311,11 @@ DbgLv(1) << "SUPER: mgr kgr jgr" << mgroup << kgroup << jgroup
       {  // Just finished was last iteration for that group
          mstates[ kgroup ] = INIT;           // Mark as finished
          maxrssma += (long)( iwork );        // Sum in master maxrss
+
+         if ( stop_groups && tag == DONEITER )
+         { // The group master waits for an iteration; tell it to stop
+            MPI_Send( &iwork, 1, MPI_INT, master, STOPITER, MPI_COMM_WORLD );
+         }
 DbgLv(1) << "SUPER:  (A)maxrssma" << maxrssma << "iwork" << iwork;
 
          if ( nileft == 0 )
@@ -321,6 +350,17 @@ DbgLv(1) << "SUPER:  Send next iter" << iter_wk << "gr ma tg" << jgroup << maste
 
       mstates[ jgroup ] = WORKING;         // Mark group as busy
       max_rss();                           // Memory use of supervisor
+   }
+
+   // Memory use of the groups stopped at the start, if not yet received
+   for ( int ii = 0; ii < mgroup_count; ii++ )
+   {
+      if ( idle[ii] )
+      {
+         master = ( ii == 0 ) ? 1 : ( ii * gcores_count );
+         MPI_Recv( &iwork, 1, MPI_INT, master, DONELAST, MPI_COMM_WORLD, &status );
+         maxrssma += (long) ( iwork );
+      }
    }
 
    // In the parallel-masters case, the supervisor handles end-of-job
@@ -418,7 +458,7 @@ DbgLv(1) << "  MASTER:   Recv'd from super. (g r m)" << my_group << group_rank
    // Do the master loop for MC 2DSA or GA
    if ( analysis_type.startsWith( "2DSA" ) )
    {
-      pm_2dsa_master();
+      _2dsa_master();
    }
 
    else if ( analysis_type.startsWith( "GA" ) )
@@ -535,168 +575,6 @@ DbgLv(0) << "TMI: NEAR-ALLOW_TIME test:  mc_iters_left mc_iters_estim mc_iters"
    }
 
    return;
-}
-
-// Parallel-masters version of group 2DSA master
-void US_MPI_Analysis::pm_2dsa_master( void )
-{
-DbgLv(1) << "master start 2DSA" << startTime;
-   init_solutes();
-   fill_queue();
-
-   work_rss.resize( gcores_count );
-
-   current_dataset     = 0;
-   datasets_to_process = data_sets.size();
-
-   int iter     = 1;
-   int super    = 0;
-   MPI_Status status;
-
-   // Get 1st iteration (1) from supervisor
-   MPI_Recv( &iter,
-             1,
-             MPI_INT,
-             super,
-             MPI_ANY_TAG,
-             MPI_COMM_WORLD,
-             &status );
-
-   int tag      = status.MPI_TAG;
-   mc_iteration = iter;
-
-   while ( true )
-   {
-      int worker;
-//if ( max_depth > 1 )
-// DbgLv(1) << " master loop-TOP:  jq-empty?" << job_queue.isEmpty() << "   areReady?" << worker_status.contains(READY)
-//    << "  areWorking?" << worker_status.contains(WORKING);
-
-      // Give the jobs to the workers
-      while ( ! job_queue.isEmpty()  &&  worker_status.contains( READY ) )
-      {
-         worker    = ready_worker();
-
-         Sa_Job job              = job_queue.takeFirst();
-         submit( job, worker );
-         worker_depth [ worker ] = job.mpi_job.depth;
-         worker_status[ worker ] = WORKING;
-      }
-
-      // All done with the pass if no jobs are ready or running
-      if ( job_queue.isEmpty()  &&  ! worker_status.contains( WORKING ) ) 
-      {
-         QString progress = 
-            "Iteration: "    + QString::number( iterations ) +
-            "; Dataset: "    + QString::number( current_dataset + 1 ) +
-            "; Meniscus: (Run 1 of 1)" +
-            "; MonteCarlo: " + QString::number( mc_iteration );
-
-         send_udp( progress );
-
-         if ( ! job_queue.isEmpty() ) continue;
-
-         // Write out the model
-         max_rss();
-DbgLv(1) << "2dMast:    mc_iter" << mc_iteration
-   << "variance" << simulation_values.variance << "my_group" << my_group;
-
-         std::sort( simulation_values.solutes.begin(), simulation_values.solutes.end() );
-
-         write_model( simulation_values, US_Model::TWODSA );
-
-         if ( mc_iteration >= mc_iterations )
-         {
-            for ( int jj = 1; jj <= my_workers; jj++ )
-               maxrss += work_rss[ jj ];
-         }
-
-         // Tell the supervisor that an iteration is done
-         iter    = (int)maxrss;
-         tag     = ( mc_iteration < mc_iterations ) ?
-                   DONEITER : DONELAST;
-
-         MPI_Send( &iter,
-                   1,
-                   MPI_INT,
-                   super,
-                   tag,
-                   MPI_COMM_WORLD );
-
-         if ( mc_iteration < mc_iterations )
-         {
-            time_mc_iterations();
-
-            if ( mc_iteration < mc_iterations )
-            {
-               set_monteCarlo();
-
-               // Get new Monte Carlo iteration index from supervisor
-               MPI_Recv( &iter,
-                         1,
-                         MPI_INT,
-                         super,
-                         MPI_ANY_TAG,
-                         MPI_COMM_WORLD,
-                         &status );
-
-               tag      = status.MPI_TAG;
-
-               if ( tag == STARTLAST )
-                  mc_iterations = iter;
-
-               else if ( tag != STARTITER )
-               {
-                  DbgLv(0) << "Unexpected tag in PMG 2DSA Master" << tag;
-                  continue;
-               }
-
-               mc_iteration  = iter;
-            }
-         }
-
-         if ( ! job_queue.isEmpty() ) continue;
-
-         shutdown_all();  // All done
-         break;           // Break out of main loop.
-      }
-
-      // Wait for worker to send a message
-      int        sizes[ 4 ];
-
-      MPI_Recv( sizes, 
-                4, 
-                MPI_INT,
-                MPI_ANY_SOURCE,
-                MPI_ANY_TAG,
-                my_communicator,
-                &status);
-
-      worker = status.MPI_SOURCE;
-
-//if ( max_depth > 0 )
-// DbgLv(1) << " PMG master loop-BOTTOM:   status TAG" << status.MPI_TAG
-//  << MPI_Job::READY << MPI_Job::RESULTS << "  source" << status.MPI_SOURCE;
-      switch( status.MPI_TAG )
-      {
-         case MPI_Job::READY:   // Ready for work
-            worker_status[ worker ] = READY;
-            break;
-
-         case MPI_Job::RESULTS: // Return solute data
-            process_results( worker, sizes );
-            work_rss[ worker ] = sizes[ 3 ];
-            break;
-
-         default:  // Should never happen
-            QString msg =  "Master 2DSA:  Received invalid status " +
-                           QString::number( status.MPI_TAG );
-            abort( msg );
-            break;
-      }
-
-      max_rss();
-   }
 }
 
 // Parallel-masters version of GA group master

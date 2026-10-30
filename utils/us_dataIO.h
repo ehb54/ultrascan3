@@ -113,7 +113,7 @@ class US_UTIL_EXTERN US_DataIO
          int    xindex      ( double );      //!< Get index of X (radius) value
          double radius      ( int );         //!< Get radius value at index
          double scWavelength( int );         //!< Get wavelength value at index
-         double value       ( int, int );    //!< Get reading for scan,radius
+         double            value( int, int ) const;     //!< Get reading for scan,radius
          double reading     ( int, int );    //!< Get reading for scan,radius
          bool   setValue    ( int, int, double ); //!< Set reading value
          double std_dev     ( int, int );    //!< Get std.dev. for scan,radius
@@ -173,8 +173,8 @@ class US_UTIL_EXTERN US_DataIO
             plateau      = 0.0;
             baseline     = 0.0;
 
-	    bl_corr_slope = 0.0;
-	    bl_corr_yintercept = 0.0; 
+            bl_corr_slope      = 0.0;
+            bl_corr_yintercept = 0.0;
 
             //! Air Gap is only for interference data
             airGapLeft   = 0.0;
@@ -303,13 +303,11 @@ class US_UTIL_EXTERN US_DataIO
       */
       static int     readEdits   ( const QString&, EditValues& );
 
-      /*! Write edit parameters in XML format.
-          Sections with default values and lambdas are omitted.
+      /*! Write a set of edit parameters in xml format, as read by readEdits
           \param filename   The filename to be written
-          \param parameters The edit values to write
-          \returns          OK, or CANTOPEN if the file could not be opened
+          \param parameters The edit parameters to write
       */
-      static int     writeEdits  ( const QString&, const EditValues& );
+      static int     writeEdits( const QString&, const EditValues& );
 
       /*! A string describing the last read or write error
           \param code  The error code to be described

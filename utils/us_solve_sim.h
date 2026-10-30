@@ -5,15 +5,16 @@
 #include <QtCore>
 #include <algorithm>
 
-#include "us_model.h"
-#include "us_dataIO.h"
-#include "us_noise.h"
-#include "us_simparms.h"
-#include "us_solution.h"
-#include "us_solute.h"
-#include "us_zsolute.h"
 #include "us_astfem_math.h"
 #include "us_astfem_rsa.h"
+#include "us_dataIO.h"
+#include "us_model.h"
+#include "us_noise.h"
+#include "us_sim_cache.h"
+#include "us_simparms.h"
+#include "us_solute.h"
+#include "us_solution.h"
+#include "us_zsolute.h"
 
 #define SIMPARAMS US_SimulationParameters
 
@@ -89,7 +90,49 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     //! \param signal_wanted  Flag whether to emit progress signals
     US_SolveSim        ( QList< DataSet* >&, int, bool = false );
 
-  public slots:
+    //! \brief Non-negative least squares for concentrations with algebraic
+    //!        removal of time-invariant (TI) and/or radially-invariant (RI)
+    //!        noise, each data set having its own noise vectors
+    //!
+    //! For given concentrations, the least-squares TI noise (one value per
+    //! radius) and RI noise (one value per scan) of a data set are the mean
+    //! residuals over its scans and over its radii.  Eliminating them
+    //! projects the data and each simulation onto the complement of the
+    //! noise subspace:  the data rows of each data set are centered by their
+    //! per-scan means (RI), per-radius means (TI), or both.  The
+    //! concentrations are the NNLS solution of the projected system; the
+    //! noise vectors follow from the removed means.
+    //!
+    //! \param noisflag  Noise flag:  1 = TI, 2 = RI, 3 = TI and RI
+    //! \param nscans    Number of scans of each data set
+    //! \param npoints   Number of radial points of each data set
+    //! \param nsolutes  Number of solutes (columns of A)
+    //! \param narows    Rows in each A column:  the nscans*npoints data rows
+    //!                  (scan-major) of each data set in turn, followed by
+    //!                  any Tikhonov rows
+    //! \param nnls_a    A matrix, column-major (overwritten)
+    //! \param nnls_b    B vector with narows values (overwritten)
+    //! \param nnls_x    Output concentrations (nsolutes values)
+    //! \param tinvec    Output TI noise (npoints values of each data set in
+    //!                  turn), if noisflag has 1
+    //! \param rinvec    Output RI noise (nscans values of each data set in
+    //!                  turn), if noisflag has 2
+    //! \param abort_flag Optional pointer to a flag that stops the NNLS
+    //!                  solve (return code 3) when it becomes true
+    //! \returns         Return code of US_Math2::nnls
+    static int nnls_noise( int                      noisflag,
+                           const QVector<int>&      nscans,
+                           const QVector<int>&      npoints,
+                           int                      nsolutes,
+                           int                      narows,
+                           QVector<double>&         nnls_a,
+                           QVector<double>&         nnls_b,
+                           QVector<double>&         nnls_x,
+                           QVector<double>&         tinvec,
+                           QVector<double>&         rinvec,
+                           const std::atomic<bool>* abort_flag = nullptr );
+
+ public slots:
 
     //! \brief Static function to check if implied grid size is beyond limits
     //! \param data_sets The set of data sets for which to check
@@ -120,6 +163,14 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     //! \brief Set a flag so that the worker aborts at the earliest opportunity
     void abort_work    ( void );
 
+    //! \brief Reuse simulations from a cache, and store new ones in it
+    //! \param cache  Cache shared with other threads (or 0, the default,
+    //!               for none); it must outlive the calc_residuals calls
+    void        set_sim_cache( US_SimCache* cache )
+    {
+       simcache = cache;
+    }
+
   signals:
     //! \brief emit a signal that includes a progress step count
     void work_progress ( int );
@@ -137,65 +188,34 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     int                noisflag;      // Calc-noise flag (0-3 for no|ti|ri|both)
     int                dbg_level;     // Debug level
     bool               dbg_timing;    // Flag whether to print timings
-    bool               abort;         // Flag to abort at next opportunity
+    std::atomic<bool>  abort{ false }; // Flag to abort at next opportunity
     bool               calc_ti;       // Calculate-TI-noise flag
     bool               calc_ri;       // Calculate-RI-noise flag
     bool               banddthr;      // Band-forming data threshold peak enhance
     QDateTime          startCalc;     // Start calc time for elapsed time prints
 
-  private slots:
-    // Compute "a~", the average experiment signal at each time
-    void compute_a_tilde   ( QVector< double >&, const QVector< double >& );
+    US_SimCache*       simcache; // Simulation cache (or 0)
 
-    // Compute "L~s", the average signal at each radius
-    void compute_L_tildes  ( int, int,
-                                          QVector< double >&, 
-                                          const QVector< double >& );
+    // Data set key of the simulation cache, kept with the parameter values
+    // that the simulator may change (so the key is renewed when they do)
+    class DsetKey
+    {
+       public:
+          const DataSet*               dset;
+          const US_DataIO::EditedData* edata;
+          const void*                  tsobj;
+          int                          nspeeds;
+          int                          nsimprofs;
+          bool                         sim;
+          QByteArray                   key;
+    };
+    QList<DsetKey> dskeys; // Data set keys of a calc_residuals
 
-    // Compute "L~", the average model signal at each radius
-    void compute_L_tilde   ( QVector< double >&,
-                                          const QVector< double >& );
+    // Simulate a single-component model for a data set, or get the
+    //  simulation from the cache; returns the cache key (if any)
+    QByteArray     simulate( US_Model&, DataSet*, US_DataIO::EditedData*, US_DataIO::RawData& );
 
-    // Compute "L" 
-    void compute_L         ( int, int,
-                                          QVector< double >&,
-                                          const QVector< double >&,
-                                          const QVector< double >& );
-
-    // Compute "small_a" and "small_b" matrices for RI noise
-    void ri_small_a_and_b  ( int, int, int,
-                                          QVector< double >&,
-                                          QVector< double >&,
-                                          const QVector< double >&,
-                                          const QVector< double >&,
-                                          const QVector< double >&,
-                                          const QVector< double >& );
-
-    // Compute "small_a" and "small_b" matrices for TI noise
-    void ti_small_a_and_b  ( int, int, int,
-                                          QVector< double >&,
-                                          QVector< double >&,
-                                          const QVector< double >&,
-                                          const QVector< double >&,
-                                          const QVector< double >&,
-                                          const QVector< double >& );
-
-    // Compute "L_bar"
-    void compute_L_bar     ( QVector< double >&,
-                                          const QVector< double >&,
-                                          const QVector< double >& );
-
-    // Compute "a_bar"
-    void compute_a_bar     ( QVector< double >&,
-                                          const QVector< double >&,
-                                          const QVector< double >& );
-
-    // Compute "L_bar-s"
-    void compute_L_bars    ( int, int, int, int, 
-                                         QVector< double >&,
-                                          const QVector< double >&,
-                                          const QVector< double >& );
-
+ private slots:
     // Limit data to thresholds
     bool data_threshold    ( US_DataIO::RawData*,
                              double, double, double, double );

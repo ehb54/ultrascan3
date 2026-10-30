@@ -66,6 +66,9 @@ class US_MPI_Analysis : public QObject
         bool is_composite_job;   //!< Composite job flag
 
         MPI_Comm my_communicator; //!< MPI communicator
+        MPI_Comm         node_comm = MPI_COMM_NULL; //!< Ranks sharing this node's memory
+        int              node_rank = 0;             //!< Rank within node_comm
+        int              node_size = 1;             //!< Number of ranks on this node
 
         int current_dataset;      //!< Current dataset for global fit or composite
         int datasets_to_process;  //!< Datasets to process for global fit or composite
@@ -112,6 +115,7 @@ class US_MPI_Analysis : public QObject
         QVector< double > maxods;          //!< Maximum OD values
         QVector< double > mc_data;         //!< Monte Carlo data
         QVector< double > sigmas;          //!< Sigma values
+        QVector<double>   mc_base_data;    //!< 2DSA simulation of the unmodified data, indexed like sigmas
         QVector< long > work_rss;          //!< Work RSS
 
         double meniscus_range;   //!< Meniscus range (Master only)
@@ -129,6 +133,7 @@ class US_MPI_Analysis : public QObject
         int meniscus_points;     //!< Meniscus points
         int bottom_points;       //!< Bottom points
         int set_count;           //!< Set count
+        int               max_iters_all;       //!< Refinement iterations requested
 
         //! \enum WorkerStatus
         //! \brief Enumeration for worker statuses
@@ -136,7 +141,19 @@ class US_MPI_Analysis : public QObject
 
         //! \enum PMGTag
         //! \brief Enumeration for PMG tags
-        enum PMGTag { ADATESIZE=1000, ADATE, STARTITER, STARTLAST, UDPSIZE, UDPMSG, DONEITER, DONELAST };
+        enum PMGTag
+        {
+           ADATESIZE = 1000,
+           ADATE,
+           STARTITER,
+           STARTLAST,
+           UDPSIZE,
+           UDPMSG,
+           DONEITER,
+           DONELAST,
+           STOPITER,
+           MCBASE
+        };
 
         bool fit_meni;           //!< Fit meniscus flag
         bool fit_bott;           //!< Fit bottom flag
@@ -224,6 +241,7 @@ class US_MPI_Analysis : public QObject
                 MPI_Job mpi_job;                 //!< MPI job
                 QVector< US_Solute > solutes;    //!< Solutes list
                 QVector< US_ZSolute > zsolutes;  //!< Z solutes list
+                int                   seq = -1;  //!< Queue order within depth
         };
 
         QList< Sa_Job > job_queue; //!< Job queue
@@ -251,11 +269,32 @@ class US_MPI_Analysis : public QObject
             public:
                 int depth;                      //!< Depth of the result
                 int worker;                     //!< Worker index
+                int                   seq;                        //!< Queue order of the job
                 QVector< US_Solute > solutes;   //!< Solutes list
                 QVector< US_ZSolute > zsolutes; //!< Z solutes list
+                double                variance; //!< Fit variance
+                QVector<double>       variances; //!< Fit variances per dataset
+                QVector<double>       ti_noise;  //!< Fitted TI noise
+                QVector<double>       ri_noise;  //!< Fitted RI noise
         };
 
-        QList< Result > cached_results; //!< Cached results list
+        //! \class FitContext
+        //! \brief Simulation parameters shared by the jobs of a fit.
+        //!  Simulations depend on dataset, meniscus and bottom; a Monte
+        //!  Carlo iteration changes only the data.
+        class FitContext
+        {
+           public:
+              int    dataset      = -1;  //!< Dataset index
+              double meniscus     = 0.0; //!< Meniscus sent with jobs
+              double bottom       = 0.0; //!< Bottom sent with jobs
+              int    mc_iteration = 0;   //!< Monte Carlo iteration
+        };
+        FitContext    fit_context; //!< Current fit context
+
+        QList<Result> cached_results;   //!< Results not yet processed
+        int           job_seq_next = 0; //!< Next 2DSA job sequence number
+        QVector<int>  worker_seq;       //!< Sequence number of worker's job
 
         //! \class Bucket
         //! \brief Class representing a bucket for genetic algorithm.
@@ -360,6 +399,7 @@ class US_MPI_Analysis : public QObject
         void     send_udp      ( const QString& );
         void     abort         ( const QString&, int=-1 );
         long int max_rss       ( void );
+        static void            phys_memory( qint64&, qint64& );
         QString  par_key_value ( const QString, const QString );
 
         Gene     create_solutes( double, double, double,
@@ -371,6 +411,16 @@ class US_MPI_Analysis : public QObject
         // Master
         void     _2dsa_master      ( void );
         void     submit            ( Sa_Job&, int );
+        void                   run_2dsa_jobs( void );
+        void                   start_2dsa_dataset( int, bool );
+        QString                progress_2dsa( void );
+        int                    pm_next_unit( int );
+        bool                   pm_iteration_done( int, int& );
+        int                    pm_dataset_done( int );
+        void                   pm_send_mc_base( void );
+        void                   pm_recv_mc_base( void );
+        int                    pm_group_rss( void );
+        void                   wait_workers_ready( void );
         void     submit_pcsa       ( Sa_Job&, int );
         void     add_to_queue      ( Sa_Job& );
         void     process_results   ( int, const int* );
@@ -378,6 +428,12 @@ class US_MPI_Analysis : public QObject
         void     write_noise       ( US_Noise::NoiseType, const QVector< double>& );
         void     iterate           ( void );
         void     set_meniscus      ( void );
+        void                   set_menibott_values( int );
+        void                   begin_fit_context( void );
+        void                   create_node_comm( void );
+        void                   free_node_comm( void );
+        bool                   worker_fit_context( int, double, double );
+        double                 dataset_bottom( int );
         void     set_monteCarlo    ( void );
         void     write_output      ( void );
         void     write_global      ( void );
@@ -386,14 +442,13 @@ class US_MPI_Analysis : public QObject
         void     write_model       ( const SIMULATION&, US_Model::AnalysisType,
                                      bool = false );
         void     write_superg      ( const SIMULATION&, US_Model::AnalysisType );
-        void     stats_output      ( int, int, int,
-                                     QDateTime, QDateTime, QDateTime );
-        void     pm_2dsa_master    ( void );
+        void                   stats_output( int, int, int, QDateTime, QDateTime, QDateTime );
         void     pm_ga_master      ( void );
         void     pm_dmga_master    ( void );
         int      ready_worker      ( void );
-        int      low_working_depth ( void );
-        void     cache_result      ( Result& );
+        void                   process_ready_results( void );
+        bool                   job_pending_before( int, int );
+        bool                   job_pending_at( int );
         void     process_solutes   ( int&, int&, QVector< US_Solute >& );
         void     dset_matrices     ( int, int*,
                                      QVector< double >&, QVector< double >&,
@@ -406,6 +461,7 @@ class US_MPI_Analysis : public QObject
         void     _2dsa_worker      ( void );
 
         void     calc_residuals     ( int, int, SIMULATION& );
+        void                   debug_residuals( int, int, SIMULATION&, QVector<US_Solute>& );
 
         // GA Master
         void ga_master       ( void );
@@ -508,8 +564,7 @@ class US_MPI_Analysis : public QObject
         void    pm_cjobs_supervisor( void );
         void    pm_cjobs_master    ( void );
         void    pm_cjobs_worker    ( void );
-        void    time_datasets_left ( void );
-        void    pm_2dsa_cjmast     ( void );
+        void                   time_datasets_left( void );
         void    pm_ga_cjmast       ( void );
         void    pm_dmga_cjmast     ( void );
         void    pm_pcsa_cjmast     ( void );
