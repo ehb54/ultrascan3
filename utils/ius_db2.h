@@ -86,9 +86,12 @@ public:
         - every table written is transactional (InnoDB).  A MyISAM table keeps
           its rows through a rollback, and nothing reports it.
         - no statement in the transaction commits implicitly: a COMMIT inside a
-          stored procedure, or any DDL.  The rows written before it are kept;
-          rollbackTransaction() reports this one, because the server says the
-          transaction has ended.
+          stored procedure, or any DDL.  The rows written before it are kept.
+
+        The server can also end the transaction itself by rolling it back,
+        after a deadlock, or after a lock wait timeout when
+        innodb_rollback_on_timeout is set.  Statements run after the
+        transaction has ended, however it ended, run outside it.
 
         \param error Set to the reason when the begin fails, cleared otherwise.
         \return true if the transaction is open.
@@ -99,7 +102,9 @@ public:
 
         On false the transaction is still treated as open, so the caller rolls
         it back.  If the connection was lost during the commit, \p error says
-        that whether the commit took effect is unknown.
+        that whether the commit took effect is unknown.  If the server had
+        already rolled the transaction back after a deadlock or lock wait
+        timeout, the commit is refused, since nothing written in it was kept.
 
         \param error Set to the reason when the commit fails, cleared otherwise.
         \return true if the commit took effect; false if there was no open
@@ -114,7 +119,9 @@ public:
         \param error Set to the reason when the rollback fails, cleared otherwise.
         \return true if everything written since the begin was undone; false if
                  there was no open transaction, the rollback failed, or the
-                 transaction had already been ended by an implicit commit.
+                 transaction had already ended.  \p error then names the
+                 cause when it is known -- a deadlock or lock wait timeout --
+                 and otherwise says only that some rows may have been kept.
     */
     virtual bool                 rollbackTransaction( QString& error ) = 0;
 
