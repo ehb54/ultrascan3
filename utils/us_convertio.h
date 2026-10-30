@@ -65,10 +65,10 @@ class US_UTIL_EXTERN US_ConvertIO
           \param run       Filled as far as the read reached
           \param error     Set to specific context when the status is not OK
 
-          \returns A US_Convert::ioError value.  US_Convert::INVALID_RUN marks
-                   a structural contradiction with no honest existing code:
-                   an unusable run ID, no raw data, a raw dataset with no
-                   scans, or filenames carrying mixed run IDs or run types.
+          \returns A US_Convert::ioError value.  US_Convert::BAD_RUNID means
+                   the directory name cannot be a run ID and nothing was
+                   read.  US_Convert::INVALID_RUN means the filenames carry
+                   mixed run IDs or run types.
       */
       static int                   readDiskRun( const QString& directory, DiskRun& run, QString& error );
 
@@ -81,10 +81,6 @@ class US_UTIL_EXTERN US_ConvertIO
       static constexpr const char* noAucFilesMessage    = "No .auc files were found in %1";
       //! An .auc file that could not be read: %1 the directory.
       static constexpr const char* unreadableAucMessage = "A data file in %1 could not be read";
-      //! The read produced no raw data: %1 the directory.
-      static constexpr const char* noRawDataMessage     = "%1 holds no raw data";
-      //! A dataset without scans: %1 the triple description.
-      static constexpr const char* noScansMessage       = "The data file for %1 has no scans";
       //! Mixed run types: %1 the types found, %2 the one read.
       static constexpr const char* mixedRunTypesMessage = "the data files name more than one run type (%1); only %2 was read";
       //! Mixed run IDs: %1 the run IDs found.
@@ -103,12 +99,21 @@ class US_UTIL_EXTERN US_ConvertIO
       //! A mixed run that caused a disagreement: %1 the directory, %2 the
       //! mixed-run detail, %3 US_Experiment's detail.
       static constexpr const char* notOneRunCausedMessage      = "The run in %1 is not one run: %2. As a result, %3";
-      //! A triple the experiment XML names no file for: %1 the triple description.
-      static constexpr const char* noDataFileForTripleMessage  = "The experiment record names no data file for %1";
       //! A triple whose GUID differs from its .auc's: %1 the triple
       //! description, %2 the experiment's GUID, %3 the data file's GUID.
       static constexpr const char* identityMismatchMessage     = "The experiment record gives %1 the identity %2, "
                                                                  "but its data file carries %3";
+
+      /*! \brief Give each triple with an empty solution GUID the GUID of the
+          triple before it.
+
+          US_ConvertGui::loadUS3Disk() calls this before it reads the
+          solutions.  Leading triples with an empty GUID stay empty, since
+          there is nothing before them to take one from.
+
+          \param triples The triples of one run, in load order
+      */
+      static void                  fillSolutionGaps( QList<US_Convert::TripleInfo>& triples );
 
       /*! \brief The values an editedData row is created or updated with.
 
