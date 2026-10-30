@@ -262,9 +262,7 @@ class US_EditedDataLoadersTest : public QObject
             (int) IUS_DB2::OK );
          QCOMPARE( db.listQuery, QStringList() << "get_editedDataFilenamesIDs" << "demo" );
          QCOMPARE( editID, 12 );
-         QCOMPARE( db.blobCalls,
-                   QStringList() << "download_editData:12"
-                                 << "download_aucData:22" );
+         QCOMPARE( db.blobCalls, QStringList() << "download_editData:12" << "download_aucData:22" );
          QCOMPARE( edited.size(), 1 );
          QCOMPARE( raw.size(), 1 );
          QCOMPARE( raw[0].description, QString( "program loader fixture" ) );
@@ -351,14 +349,10 @@ class US_EditedDataLoadersTest : public QObject
          QCOMPARE( US_EditedDataLoaders::loadReporter(
                       &db, "1.A.280", "demo", 41, files.destination.path(), edited, raw, editID, updated, error ),
                    (int) IUS_DB2::OK );
-         QCOMPARE( db.listQuery,
-                   QStringList() << "get_editedDataFilenamesIDs_forReport"
-                                 << "demo" << "41" );
+         QCOMPARE( db.listQuery, QStringList() << "get_editedDataFilenamesIDs_forReport" << "demo" << "41" );
          QCOMPARE( editID, 41 );
          QCOMPARE( updated, QString( "2025-03-04 05:06:07" ) );
-         QCOMPARE( db.blobCalls,
-                   QStringList() << "download_editData:41"
-                                 << "download_aucData:51" );
+         QCOMPARE( db.blobCalls, QStringList() << "download_editData:41" << "download_aucData:51" );
          QCOMPARE( edited.size(), 1 );
          QCOMPARE( raw.size(), 1 );
       }
