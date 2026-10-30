@@ -63,8 +63,6 @@ class DiskRunRecordsTest : public Us3FileTestBase
       US_Experiment                 experiment;
 };
 
-// --------------------------------------------------------- experiment XML
-
 TEST_F( DiskRunRecordsTest, ReadsTheExperimentAndMatchesItToTheTriples )
 {
    const DiskRun run =
@@ -194,8 +192,6 @@ TEST_F( DiskRunRecordsTest, DoesNotReturnTheSerializedSpeedSteps )
    EXPECT_TRUE( text.contains( "rotorspeed=\"50000\"" ) );
 }
 
-// ------------------------------------------------------------- P record
-
 TEST_F( DiskRunRecordsTest, LoadsTheProjectRecordTheExperimentNames )
 {
    const DiskRun run = us3test::writeDiskRun( parentDir(), "project-run", "RA", { DatasetSpec{ 1, 'A', "280" } } );
@@ -229,8 +225,6 @@ TEST_F( DiskRunRecordsTest, ReportsNoProjectForAnEmptyGuid )
 
    EXPECT_EQ( project.readFromDisk( empty ), (int) IUS_DB2::NO_PROJECT );
 }
-
-// ------------------------------------------------------------- solutions
 
 TEST_F( DiskRunRecordsTest, ReportsNoSolutionForAGuidWithNoRecord )
 {
@@ -288,8 +282,6 @@ TEST_F( DiskRunRecordsTest, TheGuiCarriesThePrecedingSolutionForwardOverAGap )
    // Third triple names its own solution and is left alone.
    EXPECT_EQ( triples[2].solution.solutionGUID.toStdString(), run.solutionGUID.toStdString() );
 }
-
-// ---------------------------------------------------------- RI profile
 
 TEST_F( DiskRunRecordsTest, RoundTripsAnRiIntensityProfile )
 {

@@ -46,8 +46,6 @@ class ReadUS3DiskTest : public Us3FileTestBase
       QString                       runType;
 };
 
-// ---------------------------------------------------------------- happy path
-
 TEST_F( ReadUS3DiskTest, ReadsASingleVelocityRun )
 {
    const DiskRun run = us3test::writeDiskRun( parentDir(), "velocity-run", "RA", { DatasetSpec{ 1, 'A', "280" } } );
@@ -138,8 +136,6 @@ TEST_F( ReadUS3DiskTest, ClearsPriorResultsBeforeReading )
    EXPECT_EQ( triples.size(), 1 );
 }
 
-// ------------------------------------------------------------------ failures
-
 TEST_F( ReadUS3DiskTest, ReportsNoDataForADirectoryWithoutAucFiles )
 {
    const QString empty = parentDir() + "/empty-run/";
@@ -185,8 +181,8 @@ TEST_F( ReadUS3DiskTest, ReportsNoAucWhenADataFileCannotBeRead )
    EXPECT_EQ( read( run ), US_Convert::NOAUC );
 }
 
-// ---------------------------------------------------------------- permissive
-// readUS3Disk() accepts these; readDiskRun() is where they are reported.
+// readUS3Disk() accepts the inputs in the tests below; readDiskRun() is where
+// they are reported.
 
 TEST_F( ReadUS3DiskTest, AcceptsMixedRunTypesAndNamesTheRunAfterTheFirst )
 {
