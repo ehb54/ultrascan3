@@ -971,7 +971,7 @@ DbgLv(1) << "dbCreate: dbP fn ck" << dbP << tmst_fname << tmst_cksm;
          {  // Xml definitions characters also match, return with existing DB
             if ( fnamedb != tmst_fname )
             {  // If the file name differs, we must update the record
-               defs_ld = defs_da;   // composeQuery does the escaping
+               defs_ld = defs_da; // Passed raw: the query layer escapes it
                query.clear();
                query << "update_timestate" << idTmst << idExp
                      << tmst_fname << defs_ld;
@@ -989,7 +989,7 @@ DbgLv(1) << "dbCreate: dbP fn ck" << dbP << tmst_fname << tmst_cksm;
       }
    }
 
-   // composeQuery owns SQL escaping.
+   // Passed raw: the query layer escapes every argument.
    defs_ld = defs_da;
    query.clear();
    query << "new_timestate" << idExp << tmst_fname << defs_ld;

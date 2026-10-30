@@ -1178,9 +1178,9 @@ int US_Model::write( IUS_DB2* db )
       write_mm_stream( tso );
    }
 
-   // composeQuery owns SQL escaping; pre-escaping would store escape bytes.
+   // Passed raw: the query layer escapes every argument.
    contents = temporary;
-qDebug() << "model writedb contsize tempsize" << contents.size() << temporary.size();
+   qDebug() << "model writedb contsize tempsize" << contents.size() << temporary.size();
 
    QStringList q;
 

@@ -609,19 +609,22 @@ void US_DB2::query( const QStringList& arguments )
    query( buildQuery( arguments ) );
 }
 
-QString US_DB2::composeQuery( const QString&     keyword,
-                              const QStringList& arguments,
-                              const QString&     guid,
-                              const QString&     password )
+QString US_DB2::composeQuery( const QString& keyword, const QStringList& arguments, const QString& guid, const QString& password )
 {
    // The procedure name is arguments[ 0 ], so an empty list has nothing to call.
-   if ( arguments.isEmpty() ) return QString();
+   if ( arguments.isEmpty() )
+   {
+      return QString();
+   }
 
    // The name is a SQL identifier, not a quoted literal, so escaping cannot
    // make it safe -- it is interpolated as written.  Accept only a plain
    // identifier and refuse anything else rather than emit it.
    static const QRegularExpression procName( "\\A[A-Za-z_][A-Za-z0-9_]*\\z" );
-   if ( ! procName.match( arguments[ 0 ] ).hasMatch() ) return QString();
+   if ( !procName.match( arguments[0] ).hasMatch() )
+   {
+      return QString();
+   }
 
    // Backslash first:  escaping the quotes first would then double the
    // backslashes this step inserts.
@@ -632,16 +635,14 @@ QString US_DB2::composeQuery( const QString&     keyword,
       return value;
    };
 
-   // The credentials are quoted literals like every other argument and are
-   // escaped like them.  They used to be interpolated as written, which was
-   // survivable while both came from a stored profile and is not now that a
-   // caller can pass a password straight from a command line.
-   QString newquery = keyword + " " + arguments[ 0 ]
-                    + "('" + escaped( guid ) + "', '" + escaped( password )
-                    + "'";
+   // The guid and password are quoted literals like every other argument and
+   // are escaped the same way.
+   QString newquery = keyword + " " + arguments[0] + "('" + escaped( guid ) + "', '" + escaped( password ) + "'";
 
    for ( int i = 1; i < arguments.size(); i++ )
-      newquery += ", '" + escaped( arguments[ i ] ) + "'";
+   {
+      newquery += ", '" + escaped( arguments[i] ) + "'";
+   }
 
    newquery += ")";
 

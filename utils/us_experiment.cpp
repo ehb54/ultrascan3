@@ -77,11 +77,9 @@ qDebug() << "Exp:svToDB: update" << update << "ss-count" << speedsteps.count();
    }
 
    // Get the RI information, if appropriate
+   // Passed raw: the query layer escapes every argument.
    QByteArray RIxml;
-   QByteArray RIxmlEscaped;
    createRIXml( RIxml );
-   //unsigned long length = db->mysqlEscapeString( RIxmlEscaped, RIxml, RIxml.size() );
-   db->mysqlEscapeString( RIxmlEscaped, RIxml, RIxml.size() );
 
    // Check for experiment runID in database
    int saveStatus = 0;
@@ -97,23 +95,10 @@ qDebug() << "Exp:svToDB: update" << update << "ss-count" << speedsteps.count();
    {
       // It's ok to update the existing experiment entry
       q.clear();
-      q  << "update_experiment"
-         << QString::number( expID )
-         << QString( expGUID )
-         << QString::number( project.projectID )
-         << runID
-         << QString::number( labID )
-         << QString::number( instrumentID )
-         << QString::number( operatorID )
-         << QString::number( rotorID )
-         << QString::number( calibrationID )
-         << expType
-         << opticalSystem
-         << RIxmlEscaped
-         << runTemp
-         << label
-         << comments
-         << protocolGUID;
+      q << "update_experiment" << QString::number( expID ) << QString( expGUID ) << QString::number( project.projectID ) << runID
+        << QString::number( labID ) << QString::number( instrumentID ) << QString::number( operatorID )
+        << QString::number( rotorID ) << QString::number( calibrationID ) << expType << opticalSystem << RIxml << runTemp << label
+        << comments << protocolGUID;
 
       saveStatus = db->statusQuery( q );
    }
@@ -201,11 +186,9 @@ int US_Experiment::saveToDB_auto( bool update, IUS_DB2* db, QVector<SP_SPEEDPROF
    }
 
    // Get the RI information, if appropriate
+   // Passed raw: the query layer escapes every argument.
    QByteArray RIxml;
-   QByteArray RIxmlEscaped;
    createRIXml( RIxml );
-   //unsigned long length = db->mysqlEscapeString( RIxmlEscaped, RIxml, RIxml.size() );
-   db->mysqlEscapeString( RIxmlEscaped, RIxml, RIxml.size() );
 
    // Check for experiment runID in database
    int saveStatus = 0;
@@ -221,23 +204,10 @@ int US_Experiment::saveToDB_auto( bool update, IUS_DB2* db, QVector<SP_SPEEDPROF
    {
       // It's ok to update the existing experiment entry
       q.clear();
-      q  << "update_experiment"
-         << QString::number( expID )
-         << QString( expGUID )
-         << QString::number( project.projectID )
-         << runID
-         << QString::number( labID )
-         << QString::number( instrumentID )
-         << QString::number( operatorID )
-         << QString::number( rotorID )
-         << QString::number( calibrationID )
-         << expType
-         << opticalSystem
-         << RIxmlEscaped
-         << runTemp
-         << label
-         << comments
-         << protocolGUID;
+      q << "update_experiment" << QString::number( expID ) << QString( expGUID ) << QString::number( project.projectID ) << runID
+        << QString::number( labID ) << QString::number( instrumentID ) << QString::number( operatorID )
+        << QString::number( rotorID ) << QString::number( calibrationID ) << expType << opticalSystem << RIxml << runTemp << label
+        << comments << protocolGUID;
 
       saveStatus = db->statusQuery( q );
    }
