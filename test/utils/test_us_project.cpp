@@ -352,3 +352,106 @@ QString    guid = project->projectGUID;
 ASSERT_EQ(reloaded.readFromDisk(guid), IUS_DB2::OK);
 EXPECT_EQ(reloaded.goals, "revised goals");
 }
+// Database delete tests (ultrascan-tickets#1143): a project with linked
+// experiments must be kept, and its experiments listed for the user
+namespace
+{
+const QStringList linkedQuery = { "get_project_experiments", "42" };
+const QStringList deleteQuery = { "delete_project", "42" };
+}
+
+TEST_F( US_ProjectTest, LinkedExperiments_ListsTheLinkedRunIDs )
+{
+   populateTestProject();
+   EXPECT_CALL( *mockDb, statusQuery( ::testing::TypedEq<const QStringList&>( linkedQuery ) ) ).WillOnce( Return( IUS_DB2::OK ) );
+   EXPECT_CALL( *mockDb, query( ::testing::TypedEq<const QStringList&>( linkedQuery ) ) );
+   EXPECT_CALL( *mockDb, next() ).WillOnce( Return( true ) ).WillOnce( Return( true ) ).WillOnce( Return( false ) );
+   EXPECT_CALL( *mockDb, value( 1 ) ).WillOnce( Return( QVariant( "run-A" ) ) ).WillOnce( Return( QVariant( "run-B" ) ) );
+   EXPECT_CALL( *mockDb, lastErrno() ).WillRepeatedly( Return( IUS_DB2::OK ) );
+
+   QStringList runIDs;
+   EXPECT_EQ( project->linkedExperiments( mockDb.get(), runIDs ), IUS_DB2::OK );
+   EXPECT_EQ( runIDs, QStringList( { "run-A", "run-B" } ) );
+}
+
+TEST_F( US_ProjectTest, LinkedExperiments_NoRowsMeansNoneLinked )
+{
+   populateTestProject();
+   EXPECT_CALL( *mockDb, statusQuery( ::testing::TypedEq<const QStringList&>( linkedQuery ) ) )
+      .WillOnce( Return( IUS_DB2::NOROWS ) );
+   EXPECT_CALL( *mockDb, query( ::testing::An<const QStringList&>() ) ).Times( 0 );
+
+   QStringList runIDs = { "stale" };
+   EXPECT_EQ( project->linkedExperiments( mockDb.get(), runIDs ), IUS_DB2::OK );
+   EXPECT_TRUE( runIDs.isEmpty() );
+}
+
+TEST_F( US_ProjectTest, LinkedExperiments_MissingProcedureIsAnError )
+{
+   // An older db has no get_project_experiments; statusQuery() reports DBERROR
+   populateTestProject();
+   EXPECT_CALL( *mockDb, statusQuery( ::testing::TypedEq<const QStringList&>( linkedQuery ) ) )
+      .WillOnce( Return( IUS_DB2::DBERROR ) );
+   EXPECT_CALL( *mockDb, query( ::testing::An<const QStringList&>() ) ).Times( 0 );
+
+   QStringList runIDs;
+   EXPECT_EQ( project->linkedExperiments( mockDb.get(), runIDs ), IUS_DB2::DBERROR );
+   EXPECT_TRUE( runIDs.isEmpty() );
+}
+
+TEST_F( US_ProjectTest, LinkedExperiments_LooksUpTheProjectIDFromTheGUID )
+{
+   populateTestProject();
+   project->projectID       = 0; // selected from disk
+   const QStringList lookup = { "get_projectID_from_GUID", "test-guid-123" };
+   {
+      InSequence seq;
+      EXPECT_CALL( *mockDb, query( ::testing::TypedEq<const QStringList&>( lookup ) ) );
+      EXPECT_CALL( *mockDb, next() ).WillOnce( Return( true ) );
+      EXPECT_CALL( *mockDb, value( 0 ) ).WillOnce( Return( QVariant( "42" ) ) );
+      EXPECT_CALL( *mockDb, statusQuery( ::testing::TypedEq<const QStringList&>( linkedQuery ) ) )
+         .WillOnce( Return( IUS_DB2::NOROWS ) );
+   }
+
+   QStringList runIDs;
+   EXPECT_EQ( project->linkedExperiments( mockDb.get(), runIDs ), IUS_DB2::OK );
+   EXPECT_EQ( project->projectID, 42 );
+}
+
+TEST_F( US_ProjectTest, LinkedExperiments_ProjectNotInTheDbHasNoneLinked )
+{
+   populateTestProject();
+   project->projectID = 0;
+   EXPECT_CALL( *mockDb, next() ).WillOnce( Return( false ) );
+   EXPECT_CALL( *mockDb, statusQuery( ::testing::An<const QStringList&>() ) ).Times( 0 );
+
+   QStringList runIDs;
+   EXPECT_EQ( project->linkedExperiments( mockDb.get(), runIDs ), IUS_DB2::OK );
+   EXPECT_TRUE( runIDs.isEmpty() );
+}
+
+TEST_F( US_ProjectTest, DeleteFromDB_InUseKeepsTheProject )
+{
+   populateTestProject();
+   project->saveStatus = US_Project::BOTH;
+   EXPECT_CALL( *mockDb, statusQuery( ::testing::TypedEq<const QStringList&>( deleteQuery ) ) )
+      .WillOnce( Return( IUS_DB2::PROJECT_IN_USE ) );
+
+   EXPECT_EQ( project->deleteFromDB( mockDb.get() ), IUS_DB2::PROJECT_IN_USE );
+   EXPECT_EQ( project->projectID, 42 );
+   EXPECT_EQ( project->projectGUID, "test-guid-123" );
+   EXPECT_EQ( project->projectDesc, "Test description" );
+   EXPECT_EQ( project->saveStatus, US_Project::BOTH );
+}
+
+TEST_F( US_ProjectTest, DeleteFromDB_SuccessClearsTheProject )
+{
+   populateTestProject();
+   project->saveStatus = US_Project::BOTH;
+   EXPECT_CALL( *mockDb, statusQuery( ::testing::TypedEq<const QStringList&>( deleteQuery ) ) ).WillOnce( Return( IUS_DB2::OK ) );
+
+   EXPECT_EQ( project->deleteFromDB( mockDb.get() ), IUS_DB2::OK );
+   EXPECT_EQ( project->projectID, 0 );
+   EXPECT_TRUE( project->projectGUID.isEmpty() );
+   EXPECT_EQ( project->saveStatus, US_Project::NOT_SAVED );
+}

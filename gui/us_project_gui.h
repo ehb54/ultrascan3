@@ -431,6 +431,9 @@ class US_GUI_EXTERN US_ProjectGui : public US_WidgetsDialog
 
       QPushButton*            pb_accept;
 
+      bool                           confirmDelete( void );
+      void                           inUseWarning( const QStringList& );
+
    public slots:
       //! \brief Creates a new project
       void newProject         ( void );
