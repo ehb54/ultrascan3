@@ -1,5 +1,9 @@
 //! \file us_db2.cpp
 #include "us_db2.h"
+#ifndef NO_DB
+#include "errmsg.h"
+#include "mysqld_error.h"
+#endif
 #include "us_settings.h"
 #include "us_crypto.h"
 #include "us_gzip.h"
@@ -76,6 +80,14 @@ US_DB2::US_DB2( const QString& masterPW )
 US_DB2::~US_DB2()
 {
 #ifndef NO_DB
+   // Closing would end the transaction anyway; roll it back explicitly so a
+   // dangling one is undone by us, not by however the server treats the close.
+   if ( inTransaction && connected )
+   {
+      drainResults();
+      mysql_rollback( db );
+   }
+
   mysql_free_result( result );
   mysql_close(db);
 
@@ -255,7 +267,9 @@ bool US_DB2::connect( const QString& masterPW, QString& err )
 
    db_errno = OK;
    error = "";
-   
+   inTransaction        = false;
+   rolledBackByDeadlock = false;
+
    if ( ! connected )
    {
       db_errno = NOT_CONNECTED;
@@ -355,6 +369,8 @@ bool US_DB2::connect(
 
    db_errno = OK;
    error = "";
+   inTransaction        = false;
+   rolledBackByDeadlock = false;
    if ( ! connected )
    {
       db_errno = NOT_CONNECTED;
@@ -368,27 +384,239 @@ bool US_DB2::connect(
 #endif
 
 #ifdef NO_DB
-void US_DB2::rawQuery( const QString& ){}
-#else
-void US_DB2::rawQuery( const QString& sqlQuery )
+bool US_DB2::beginTransaction( QString& transaction_error )
 {
-   // Make sure that we clear out any unused
-   //   result sets
+   transaction_error = QObject::tr( notConnectedMessage ).arg( "beginTransaction" );
+   return false;
+}
+bool US_DB2::commitTransaction( QString& transaction_error )
+{
+   transaction_error = QObject::tr( notConnectedMessage ).arg( "commitTransaction" );
+   return false;
+}
+bool US_DB2::rollbackTransaction( QString& transaction_error )
+{
+   transaction_error = QObject::tr( notConnectedMessage ).arg( "rollbackTransaction" );
+   return false;
+}
+#else
+bool US_DB2::beginTransaction( QString& transaction_error )
+{
+   if ( !connected )
+   {
+      transaction_error = QObject::tr( notConnectedMessage ).arg( "beginTransaction" );
+      return false;
+   }
+
+   if ( inTransaction )
+   {
+      transaction_error = QObject::tr( transactionOpenMessage ).arg( "beginTransaction" );
+      return false;
+   }
+
+   // Whatever ran before this call may have left results pending.
+   drainResults();
+
+   // START TRANSACTION rather than turning autocommit off: the server restores
+   // autocommit itself at the COMMIT or ROLLBACK, so there is no second step
+   // that can fail after the transaction has already ended.
+   if ( mysql_query( db, "START TRANSACTION" ) != 0 )
+   {
+      transaction_error = mysql_error( db );
+      return false;
+   }
+
+   inTransaction        = true;
+   rolledBackByDeadlock = false;
+   transaction_error.clear();
+   return true;
+}
+
+bool US_DB2::commitTransaction( QString& transaction_error )
+{
+   if ( !connected )
+   {
+      transaction_error = QObject::tr( notConnectedMessage ).arg( "commitTransaction" );
+      return false;
+   }
+
+   if ( !inTransaction )
+   {
+      transaction_error = QObject::tr( noTransactionMessage ).arg( "commitTransaction" );
+      return false;
+   }
+
+   // The last query of the transaction left its results on the connection, and
+   // a CALL left a status set behind them.  mysql_commit() talks to the server
+   // directly rather than through rawQuery(), so without this it is answered
+   // with "Commands out of sync" and the whole transaction is lost at the last
+   // step -- with the rollback that follows failing for the same reason.
+   drainResults();
+
+   // A COMMIT after the transaction has ended succeeds as a no-op, so check
+   // first or lost writes would be reported as committed.  The client does
+   // not always see what ended it: a procedure can catch a deadlock itself,
+   // or roll back on its own.
+   if ( transactionEndedEarly() )
+   {
+      transaction_error = transactionEndedText();
+      return false;
+   }
+
+   if ( mysql_commit( db ) != 0 )
+   {
+      // The server may have committed before the connection dropped; only a
+      // lost connection leaves that open, so only then is the outcome unknown.
+      const unsigned int code = mysql_errno( db );
+      if ( code == CR_SERVER_LOST || code == CR_SERVER_GONE_ERROR )
+      {
+         transaction_error = QObject::tr( commitUnknownMessage ).arg( mysql_error( db ) );
+      }
+      else
+      {
+         transaction_error = mysql_error( db );
+      }
+
+      // Still open as far as the caller is concerned: it rolls back next.
+      return false;
+   }
+
+   inTransaction = false;
+   transaction_error.clear();
+   return true;
+}
+
+bool US_DB2::rollbackTransaction( QString& transaction_error )
+{
+   if ( !connected )
+   {
+      inTransaction     = false;
+      transaction_error = QObject::tr( notConnectedMessage ).arg( "rollbackTransaction" );
+      return false;
+   }
+
+   if ( !inTransaction )
+   {
+      transaction_error = QObject::tr( noTransactionMessage ).arg( "rollbackTransaction" );
+      return false;
+   }
+
+   // Same reason as commitTransaction(), and it matters more here: a rollback
+   // that cannot run is a partial load left in place.
+   drainResults();
+
+   inTransaction = false;
+
+   // If the server no longer has the transaction open, something ended it
+   // before this call and the rollback below undoes nothing, so a quiet
+   // success here would be a lie.
+   const bool ended_early = transactionEndedEarly();
+
+   if ( mysql_rollback( db ) != 0 )
+   {
+      transaction_error = mysql_error( db );
+      return false;
+   }
+
+   if ( ended_early )
+   {
+      transaction_error = transactionEndedText();
+      return false;
+   }
+
+   transaction_error.clear();
+   return true;
+}
+#endif
+
+#ifndef NO_DB
+bool US_DB2::transactionEndedEarly()
+{
+   // The status comes from the last statement that succeeded; an error packet
+   // does not carry one, so it may predate a rollback by the server.  One
+   // empty statement brings it up to date.  A connection that cannot run even
+   // that has lost the transaction with it.
+   if ( mysql_query( db, "DO 0" ) != 0 )
+   {
+      return true;
+   }
+
+   // The C API has no accessor for the status flags; MYSQL documents the field.
+   return ( db->server_status & SERVER_STATUS_IN_TRANS ) == 0;
+}
+
+void US_DB2::noteStatementError()
+{
+   // InnoDB always answers a deadlock by rolling back the whole transaction,
+   // so that error alone says what ended it.  A lock wait timeout does so only
+   // when innodb_rollback_on_timeout is set, and is not recorded.  Remember
+   // the error while it is still on the connection; the next statement
+   // replaces it.
+   if ( inTransaction && mysql_errno( db ) == ER_LOCK_DEADLOCK )
+   {
+      rolledBackByDeadlock = true;
+   }
+}
+
+QString US_DB2::transactionEndedText() const
+{
+   return QObject::tr( rolledBackByDeadlock ? serverRollbackMessage : transactionEndedMessage );
+}
+#endif
+
+#ifdef NO_DB
+void US_DB2::drainResults()
+{
+}
+#else
+void US_DB2::drainResults()
+{
    if ( result )
-      mysql_free_result( result ); 
+      mysql_free_result( result );
 
    while ( mysql_next_result( db ) == 0 )
    {
       result = mysql_store_result( db );
       mysql_free_result( result );
    }
+
+   // A procedure that failed part way reports it on the result set after the
+   // last good one, which ends the loop above.
+   noteStatementError();
+
    result = NULL;
+}
+#endif
+
+#ifdef NO_DB
+void US_DB2::rawQuery( const QString& )
+{
+}
+#else
+void US_DB2::rawQuery( const QString& sqlQuery )
+{
+   // Make sure that we clear out any unused
+   //   result sets
+   drainResults();
 
    if ( mysql_query( db, sqlQuery.toLatin1() ) != 0 )
+   {
       error = QString( "MySQL error: " ) + mysql_error( db );
+      noteStatementError();
+   }
 
    else
+   {
       result = mysql_store_result( db );
+
+      // A statement without a result set gives NULL too; only an error code
+      // says that reading the result failed.
+      if ( result == NULL && mysql_errno( db ) != 0 )
+      {
+         error = QString( "MySQL error: " ) + mysql_error( db );
+         noteStatementError();
+      }
+   }
 }
 #endif
 
@@ -440,6 +668,19 @@ void US_DB2::query( const QString& ) {}
 void US_DB2::query( const QString& sqlQuery )
 {
    this->rawQuery( sqlQuery );
+
+   // A statement the server refused outright leaves no result set, and
+   // rawQuery() reports that only through `error`.  Without this, db_errno
+   // still holds whatever the previous query returned, so lastErrno() answers
+   // OK for a query that never ran -- a lost connection, a deadlock, a
+   // lock-wait timeout.  statusQuery() has always defaulted to DBERROR for the
+   // same reason; this brings query() in line with it.
+   if ( mysql_errno( db ) != 0 )
+   {
+      db_errno = DBERROR;
+      return;
+   }
+
    if ( result )
    {
       // This is a 2-set result: status, then data
@@ -448,7 +689,18 @@ void US_DB2::query( const QString& sqlQuery )
       mysql_free_result( result );
       result = NULL;
 
-      if ( mysql_next_result( db ) == 0 ) // get the result data
+      const int next = mysql_next_result( db );
+
+      // The procedure failed after its status row, while producing its data.
+      if ( next > 0 )
+      {
+         error    = QString( "MySQL error: " ) + mysql_error( db );
+         db_errno = DBERROR;
+         noteStatementError();
+         return;
+      }
+
+      else if ( next == 0 ) // get the result data
       {
          result = mysql_store_result( db );
          if ( ! result )
@@ -625,7 +877,7 @@ int US_DB2::writeBlobToDB( const QString& filename,
    queryPtr += checksum.size();
    strcpy( queryPtr, "')\0" );
 
-/*
+   /*
    QByteArray sqlQuery2( escaped_length 
                        + queryPart1.size()
                        + checksum.size() + 7, '\0' );
@@ -637,25 +889,17 @@ int US_DB2::writeBlobToDB( const QString& filename,
    qDebug() << ( ( sqlQuery == sqlQuery2 ) ? "check equal" : "check not equal" );
    qDebug() << "check2 " << memcmp( sqlQuery.data(), sqlQuery2.data(), checkSize );
 */
- 
-   // We can't use standard methods since they use QStrings
-   // Clear out any unused result sets
-   if ( result )
-      mysql_free_result( result ); 
 
-   while ( mysql_next_result( db ) == 0 )
-   {
-      result = mysql_store_result( db );
-      mysql_free_result( result );
-   }
-   result = NULL;
+   // We can't use rawQuery() since it takes a QString
+   drainResults();
 
    if ( mysql_query( db, sqlQuery.data() ) != 0 )
    {
      error = QString( "MySQL error: " ) + mysql_error( db ); // ALEXEY: writing huge blob, MySql server has gone away...
-  
-      db_errno = DBERROR;
-      return DBERROR;
+     noteStatementError();
+
+     db_errno = DBERROR;
+     return DBERROR;
    }
 
    result   = mysql_store_result( db );
@@ -702,19 +946,12 @@ int US_DB2::readBlobFromDB( const QString& filename,
 
    // Make sure that we clear out any unused
    //   result sets
-   if ( result )
-      mysql_free_result( result ); 
-
-   while ( mysql_next_result( db ) == 0 )
-   {
-      result = mysql_store_result( db );
-      mysql_free_result( result );
-   }
-   result = NULL;
+   drainResults();
 
    if ( mysql_query( db, sqlQuery.toLatin1() ) != OK )
    {
       error = QString( "MySQL error: " ) + mysql_error( db );
+      noteStatementError();
       db_errno = DBERROR;
       return DBERROR;
    }
@@ -997,4 +1234,3 @@ bool US_DB2::configure_ssl( QString& err )
    return true;
 }
 #endif
-
