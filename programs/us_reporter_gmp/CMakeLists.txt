@@ -4,10 +4,12 @@
 set(REPORTER_GMP_SOURCES
         us_reporter_gmp_main.cpp
         us_reporter_gmp.cpp
+        ../us_edited_data_loaders.cpp
         )
 
 set(REPORTER_GMP_HEADERS
         us_reporter_gmp.h
+        ../us_edited_data_loaders.h
         )
 
 # Cross-directory sources as specified in .pro file
