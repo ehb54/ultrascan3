@@ -1165,24 +1165,21 @@ int US_Model::write( bool db_access, const QString& filename, IUS_DB2* db )
 // Write a model DB record
 int US_Model::write( IUS_DB2* db )
 {
-   // Create the model xml file in a stream
-   QByteArray temporary;
+   // Create the model xml file in a stream.  It is passed raw: the query
+   // layer escapes every argument.
    QByteArray contents;
 
    if ( ! monteCarlo  ||  nmcixs < 1 )
    {
-      QXmlStreamWriter xml( &temporary );
+      QXmlStreamWriter xml( &contents );
       write_stream( xml );
    }
 
    else
    {
-      QTextStream tso( &temporary );
+      QTextStream tso( &contents );
       write_mm_stream( tso );
    }
-
-   db->mysqlEscapeString( contents, temporary, temporary.size() );
-qDebug() << "model writedb contsize tempsize" << contents.size() << temporary.size();
 
    QStringList q;
 
@@ -1894,4 +1891,3 @@ void US_Model::debug( void )
       }
    }
 }
-

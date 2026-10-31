@@ -9,6 +9,8 @@
 #include "us_gzip.h"
 #include "us_util.h"
 
+#include <QRegularExpression>
+
 #define CIPHER \
 /* TLS 1.2 (Prioritize Galois/Counter Mode) */ \
 "ECDHE-ECDSA-AES256-GCM-SHA384:" \
@@ -191,8 +193,10 @@ bool US_DB2::test_secure_connection(
 
    // Let's see if the user can log in
    status    = false;
-   QString q = "CALL validate_user( '', '" + email + "', '" + pw + "' )";
-   
+   // validate_user takes (guid, email, password): no guid yet, and the email
+   // goes in the slot composeQuery reserves for the password.
+   QString q = composeQuery( "CALL", QStringList() << "validate_user" << pw, QString(), email );
+
    this->query( q );
 
    if ( db_errno != OK )
@@ -286,8 +290,10 @@ bool US_DB2::connect( const QString& masterPW, QString& err )
    userPW = US_Crypto::decrypt( cipher, masterPW, iv );
    guid   = defaultDB.at( 9 );
 
-   QString q = "CALL validate_user( '" + guid + "', '', '" + userPW + "' )";
-   
+   // validate_user takes (guid, email, password), so the password goes in the
+   // first caller-argument slot and the empty email in the password slot.
+   QString q = composeQuery( "CALL", QStringList() << "validate_user" << userPW, guid, QString() );
+
    this->query( q );
 
    if ( db_errno != OK )
@@ -654,12 +660,33 @@ int US_DB2::statusQuery( const QString& sqlQuery )
 
 int US_DB2::statusQuery( const QStringList& arguments )
 {
-   return statusQuery( buildQuery( arguments ) );
+   const QString composed = buildQuery( arguments );
+   if ( composed.isEmpty() )
+   {
+      return refuseArguments( arguments );
+   }
+
+   return statusQuery( composed );
 }
 
 int US_DB2::functionQuery( const QStringList& arguments )
 {
-   return statusQuery( buildQuerySelect( arguments ) );
+   const QString composed = buildQuerySelect( arguments );
+   if ( composed.isEmpty() )
+   {
+      return refuseArguments( arguments );
+   }
+
+   return statusQuery( composed );
+}
+
+int US_DB2::refuseArguments( const QStringList& arguments )
+{
+   // Nothing is sent, so clear what the last query left for next() to read.
+   drainResults();
+   db_errno = DBERROR;
+   error    = QObject::tr( invalidProcedureMessage ).arg( arguments.value( 0 ) );
+   return db_errno;
 }
 
 #ifdef NO_DB
@@ -734,45 +761,66 @@ void US_DB2::query( const QString& sqlQuery )
 
 void US_DB2::query( const QStringList& arguments )
 {
-   query( buildQuery( arguments ) );
+   const QString composed = buildQuery( arguments );
+   if ( composed.isEmpty() )
+   {
+      refuseArguments( arguments );
+      return;
+   }
+
+   query( composed );
+}
+
+QString US_DB2::escapeLiteral( QString value )
+{
+   // Backslash first:  escaping the quotes first would then double the
+   // backslashes this step inserts.  A NUL would end the query string early.
+   // This assumes the server's default sql_mode, without NO_BACKSLASH_ESCAPES.
+   value.replace( "\\", "\\\\" );
+   value.replace( "'", "\\'" );
+   value.replace( QChar( '\0' ), "\\0" );
+   return value;
+}
+
+QString US_DB2::composeQuery( const QString& keyword, const QStringList& arguments, const QString& guid, const QString& password )
+{
+   // The procedure name is arguments[ 0 ], so an empty list has nothing to call.
+   if ( arguments.isEmpty() )
+   {
+      return QString();
+   }
+
+   // The name is a SQL identifier, not a quoted literal, so escaping cannot
+   // make it safe -- it is interpolated as written.  Accept only a plain
+   // identifier and refuse anything else rather than emit it.
+   static const QRegularExpression procName( "\\A[A-Za-z_][A-Za-z0-9_]*\\z" );
+   if ( !procName.match( arguments[0] ).hasMatch() )
+   {
+      return QString();
+   }
+
+   // The guid and password are quoted literals like every other argument and
+   // are escaped the same way.
+   QString newquery = keyword + " " + arguments[0] + "('" + escapeLiteral( guid ) + "', '" + escapeLiteral( password ) + "'";
+
+   for ( int i = 1; i < arguments.size(); i++ )
+   {
+      newquery += ", '" + escapeLiteral( arguments[i] ) + "'";
+   }
+
+   newquery += ")";
+
+   return newquery;
 }
 
 QString US_DB2::buildQuery( const QStringList& arguments )
 {
-   QString newquery = "CALL " + arguments[ 0 ]
-                    + "('" + guid + "', '" + userPW + "'";
-
-   for ( int i = 1; i < arguments.size(); i++ )
-   {
-      QString arg = arguments[ i ];
-      arg.replace( "'", "\\'" );
-
-      newquery += ", '" + arg + "'";
-   }
-
-   newquery += ")";
-
-//qDebug() << "NewQuery:" << newquery;
-   return newquery;
+   return composeQuery( "CALL", arguments, guid, userPW );
 }
 
 QString US_DB2::buildQuerySelect( const QStringList& arguments )
 {
-   QString newquery = "SELECT " + arguments[ 0 ]
-                    + "('" + guid + "', '" + userPW + "'";
-
-   for ( int i = 1; i < arguments.size(); i++ )
-   {
-      QString arg = arguments[ i ];
-      arg.replace( "'", "\\'" );
-
-      newquery += ", '" + arg + "'";
-   }
-
-   newquery += ")";
-
-//qDebug() << "NewQuerySelect:" << newquery;
-   return newquery;
+   return composeQuery( "SELECT", arguments, guid, userPW );
 }
 
 #ifdef NO_DB
@@ -859,11 +907,8 @@ int US_DB2::writeBlobToDB( const QString& filename,
         QCryptographicHash::hash( blobData, QCryptographicHash::Md5 ).toHex();
 
    // Now let's start building the query
-   QString queryPart1 = "CALL " + procedure +
-                        "('"    + guid      + 
-                        "', '"  + userPW    + 
-                        "', "   + QString::number( tableID )   +
-                        ", '"   ;
+   QString queryPart1 = "CALL " + procedure + "('" + escapeLiteral( guid ) + "', '" + escapeLiteral( userPW ) + "', " +
+                        QString::number( tableID ) + ", '";
    QByteArray sqlQuery( escaped_length 
                       + queryPart1.size()
                       + checksum.size() + 7, '\0' );
@@ -935,11 +980,11 @@ int US_DB2::readBlobFromDB( const QString& filename,
     const QString& procedure, const int tableID )
 {
    // First let's build the query
-   QString sqlQuery = "CALL " + procedure +
-                      "('"    + guid      + 
-                      "', '"  + userPW    + 
-                      "', "   + QString::number( tableID )   +
-                      ")"   ;
+   const QString sqlQuery = composeQuery( "CALL", QStringList() << procedure << QString::number( tableID ), guid, userPW );
+   if ( sqlQuery.isEmpty() )
+   {
+      return refuseArguments( QStringList() << procedure );
+   }
 
    // We can't use standard methods because the
    // binary data doesn't all transfer
