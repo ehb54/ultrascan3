@@ -286,6 +286,11 @@ namespace US_WinData
       QObject::tr( "e-Signature Assignment" )
     },
 
+    { P_REASSIGN, 0, 0, "us_reassign_reviewers_gmp",
+      QObject::tr( "Loading Reassign Operators, Reviewers, Approvers Program" ),
+      QObject::tr( "Reassign Operators, Reviewers, Approvers" )
+    },
+
     { P_AUDIT, 0, 0, "us_audit_trail_gmp",
       QObject::tr( "Loading Audit Trail Program" ),
       QObject::tr( "Audit Trail" )
