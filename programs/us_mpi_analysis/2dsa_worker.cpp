@@ -20,7 +20,6 @@ void US_MPI_Analysis::_2dsa_worker( void )
 
       MPI_Send( x, 4, MPI_INT, MPI_Job::MASTER, MPI_Job::READY,
                 my_communicator ); // let master know we are ready
-      //if(my_rank==1)
       DbgLv( 1 ) << "w:" << my_rank << ": ready sent";
 
       // Blocking -- Wait for instructions
@@ -30,19 +29,16 @@ void US_MPI_Analysis::_2dsa_worker( void )
                 MPI_Job::MASTER,
                 MPI_Job::TAG0,
                 my_communicator,
-                &status );        // status not used
-//if(my_rank==1)
-DbgLv(1) << "w:" << my_rank << ": job_recvd  length" << job.length
- << "command" << job.command;
+                &status ); // status not used
+      DbgLv( 1 ) << "w:" << my_rank << ": job_recvd  length" << job.length << "command" << job.command;
 
       meniscus_value     = job.meniscus_value;
       bottom_value       = job.bottom_value;
-      int offset         = job.dataset_offset;
-      int dataset_count  = job.dataset_count;
+      const int offset         = job.dataset_offset;
+      const int dataset_count  = job.dataset_count;
       int job_length     = job.length;
-      int noisflag       = ( parameters[ "tinoise_option" ].toInt() > 0 ?  1 : 0 )
-                         + ( parameters[ "rinoise_option" ].toInt() > 0 ?  2 : 0 );
-DbgLv(1) << "w:" << my_rank << ": offs cnt" << offset << dataset_count;
+      const int noisflag = ( job_config.params.tinoise_option > 0 ? 1 : 0 ) + ( job_config.params.rinoise_option > 0 ? 2 : 0 );
+      DbgLv( 1 ) << "w:" << my_rank << ": offs cnt" << offset << dataset_count;
 
       switch( job.command )
       {
@@ -51,17 +47,15 @@ DbgLv(1) << "w:" << my_rank << ": offs cnt" << offset << dataset_count;
             {
                worker_fit_context( offset, meniscus_value, bottom_value );
 
-               US_SolveSim::Simulation simulation_values;
-               simulation_values.noisflag    = noisflag;
-               simulation_values.dbg_level   = dbg_level;
-               simulation_values.dbg_timing  = dbg_timing;
+               US_SolveSim::Simulation wsim_values;
+               wsim_values.noisflag   = noisflag;
+               wsim_values.dbg_level  = dbg_level;
+               wsim_values.dbg_timing = dbg_timing;
 
-//DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
-//if(my_rank==1)
-DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
-               simulation_values.solutes.resize( job.length );
+               DbgLv( 1 ) << "w:" << my_rank << ": sols size" << job.length;
+               wsim_values.solutes.resize( job.length );
 
-               MPI_Recv( simulation_values.solutes.data(), // Get solutes
+               MPI_Recv( wsim_values.solutes.data(), // Get solutes
                          job_length * solute_doubles,
                          MPI_DOUBLE,
                          MPI_Job::MASTER,
@@ -70,41 +64,31 @@ DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
                          &status );
 
                max_rss();
-//*DEBUG*
-//if(dbg_level>0 && my_rank==1)
-//if(my_rank==1)
-{
- int nn = simulation_values.solutes.size() - 1;
- int mm = nn/2;
- DbgLv(1) << "w:" << my_rank << ": offs dscnt" << offset << dataset_count
-  << "vbar s20wc cpbott dabott"
-  << data_sets[offset]->vbar20
-  << data_sets[offset]->s20w_correction
-  << data_sets[offset]->centerpiece_bottom
-  << data_sets[offset]->run_data.bottom;
- DbgLv(1) << "w:" << my_rank << ": sol0 solm soln"
-  << simulation_values.solutes[0].s << simulation_values.solutes[0].k
-  << simulation_values.solutes[mm].s << simulation_values.solutes[mm].k
-  << simulation_values.solutes[nn].s << simulation_values.solutes[nn].k;
-}
-//*DEBUG*
+               {
+                  const int nn = wsim_values.solutes.size() - 1;
+                  const int mm = nn / 2;
+                  DbgLv( 1 ) << "w:" << my_rank << ": offs dscnt" << offset << dataset_count << "vbar s20wc cpbott dabott"
+                             << data_sets[offset]->vbar20 << data_sets[offset]->s20w_correction
+                             << data_sets[offset]->centerpiece_bottom << data_sets[offset]->run_data.bottom;
+                  DbgLv( 1 ) << "w:" << my_rank << ": sol0 solm soln" << wsim_values.solutes[0].s << wsim_values.solutes[0].k
+                             << wsim_values.solutes[mm].s << wsim_values.solutes[mm].k << wsim_values.solutes[nn].s
+                             << wsim_values.solutes[nn].k;
+               }
 
-               calc_residuals( offset, dataset_count, simulation_values );
+               calc_residuals( offset, dataset_count, wsim_values );
 
                // Tell master we are sending back results
-               int size[ 4 ] = { (int)simulation_values.solutes.size(),
-                                 (int)simulation_values.ti_noise.size(),
-                                 (int)simulation_values.ri_noise.size(),
-                                 (int)max_rss() };
+               int size[4] = { (int) wsim_values.solutes.size(),
+                               (int) wsim_values.ti_noise.size(),
+                               (int) wsim_values.ri_noise.size(),
+                               (int) max_rss() };
 
-DbgLv(1) << "w:" << my_rank << ":   result sols size" << size[0]
- << "max_rss" << size[ 3 ];
-//*DEBUG*
-if(dbg_level==0 && my_rank==1) {
-DbgLv(1) << "w:" << my_rank << ":   result sols size" << size[0]
- << "nsscan" << simulation_values.sim_data.scanCount();
-}
-//*DEBUG*
+               DbgLv( 1 ) << "w:" << my_rank << ":   result sols size" << size[0] << "max_rss" << size[3];
+               if ( dbg_level == 0 && my_rank == 1 )
+               {
+                  DbgLv( 1 ) << "w:" << my_rank << ":   result sols size" << size[0] << "nsscan"
+                             << wsim_values.sim_data.scanCount();
+               }
                MPI_Send( size,
                          4,
                          MPI_INT,
@@ -113,36 +97,26 @@ DbgLv(1) << "w:" << my_rank << ":   result sols size" << size[0]
                          my_communicator );
 
                // Send back to master all of simulation_values
-               MPI_Send( simulation_values.solutes.data(),
-                         simulation_values.solutes.size() * solute_doubles,
+               MPI_Send( wsim_values.solutes.data(),
+                         wsim_values.solutes.size() * solute_doubles,
                          MPI_DOUBLE,
                          MPI_Job::MASTER,
                          MPI_Job::TAG0,
                          my_communicator );
 
-               MPI_Send( &simulation_values.variance,
-                         1,
+               MPI_Send( &wsim_values.variance, 1, MPI_DOUBLE, MPI_Job::MASTER, MPI_Job::TAG0, my_communicator );
+
+               MPI_Send( wsim_values.variances.data(), dataset_count, MPI_DOUBLE, MPI_Job::MASTER, MPI_Job::TAG0, my_communicator );
+
+               MPI_Send( wsim_values.ti_noise.data(),
+                         wsim_values.ti_noise.size(),
                          MPI_DOUBLE,
                          MPI_Job::MASTER,
                          MPI_Job::TAG0,
                          my_communicator );
 
-               MPI_Send( simulation_values.variances.data(),
-                         dataset_count,
-                         MPI_DOUBLE,
-                         MPI_Job::MASTER,
-                         MPI_Job::TAG0,
-                         my_communicator );
-
-               MPI_Send( simulation_values.ti_noise.data(),
-                         simulation_values.ti_noise.size(),
-                         MPI_DOUBLE,
-                         MPI_Job::MASTER,
-                         MPI_Job::TAG0,
-                         my_communicator );
-
-               MPI_Send( simulation_values.ri_noise.data(),
-                         simulation_values.ri_noise.size(),
+               MPI_Send( wsim_values.ri_noise.data(),
+                         wsim_values.ri_noise.size(),
                          MPI_DOUBLE,
                          MPI_Job::MASTER,
                          MPI_Job::TAG0,
@@ -152,117 +126,103 @@ DbgLv(1) << "w:" << my_rank << ":   result sols size" << size[0]
             break;
 
          case MPI_Job::NEWDATA:  // Reset data for Monte Carlo or global fit
-            { 
-               int  mc_iter    = job.solution;
+         {
+            const int mc_iter = job.solution;
 
-               //if ( dataset_count > 0  &&  mc_iter < 4 )
-               if ( is_global_fit  &&  mc_iter < 3  &&  my_rank < 3 )
-               {  // For global fits, check the memory requirements
-                  long memused    = max_rss();
-                  long memdata    = job_length * sizeof( double );
-                  int grid_reps   = qMax( parameters[ "uniform_grid" ].toInt(), 1 );
-                  double s_pts    = 60.0;
-                  double ff0_pts  = 60.0;
-                  if ( parameters.contains( "s_grid_points"   ) )
-                     s_pts   = parameters[ "s_grid_points"   ].toDouble();
-                  else if ( parameters.contains( "s_resolution"    ) )
-                     s_pts   = parameters[ "s_resolution"    ].toDouble() * grid_reps;
-                  if ( parameters.contains( "ff0_grid_points" ) )
-                     ff0_pts = parameters[ "ff0_grid_points" ].toDouble();
-                  else if ( parameters.contains( "ff0_resolution"  ) )
-                     ff0_pts = parameters[ "ff0_resolution"  ].toDouble() * grid_reps;
-                  int  nsstep     = (int)( s_pts );
-                  int  nkstep     = (int)( ff0_pts );
-                  //grid_reps       = US_Math2::best_grid_reps( nsstep, nkstep );
-                  int  maxsols    = nsstep * nkstep;
-                  long memamatr   = memdata * maxsols;
-                  long membmatr   = memdata;
-                  long memneed    = memdata + memamatr + membmatr;
-                  const double mb_bytes = ( 1024. * 1024. );
-                  const double gb_bytes = ( mb_bytes * 1024. );
-                  double gb_need  = (double)memneed / gb_bytes;
-                  gb_need         = qRound( gb_need * 1000.0 ) * 0.001;
-                  double gb_used  = (double)memused / mb_bytes;
-                  gb_used         = qRound( gb_used * 1000.0 ) * 0.001;
-                  qint64 memavail         = 0;
-                  qint64 memcurav         = 0; // Stays 0 where not reported (macOS)
-                  phys_memory( memavail, memcurav );
-                  double gb_avail = (double)memavail / gb_bytes;
-                  gb_avail        = qRound( gb_avail * 1000.0 ) * 0.001;
-                  double gb_curav = (double)memcurav / gb_bytes;
-                  gb_curav        = qRound( gb_curav * 1000.0 ) * 0.001;
+            //if ( dataset_count > 0  &&  mc_iter < 4 )
+            if ( is_global_fit && mc_iter < 3 && my_rank < 3 )
+            { // For global fits, check the memory requirements
+               const long   memused  = max_rss();
+               const long   memdata  = job_length * sizeof( double );
+               const double s_pts    = job_config.params.grid.s_points();
+               const double ff0_pts  = job_config.params.grid.ff0_points();
+               const int    nsstep   = (int) ( s_pts );
+               const int    nkstep   = (int) ( ff0_pts );
+               //grid_reps       = US_Math2::best_grid_reps( nsstep, nkstep );
+               const int    maxsols  = nsstep * nkstep;
+               const long   memamatr = memdata * maxsols;
+               const long   membmatr = memdata;
+               const long   memneed  = memdata + memamatr + membmatr;
+               const double mb_bytes = ( 1024. * 1024. );
+               const double gb_bytes = ( mb_bytes * 1024. );
+               double       gb_need  = (double) memneed / gb_bytes;
+               gb_need               = qRound( gb_need * 1000.0 ) * 0.001;
+               double gb_used        = (double) memused / mb_bytes;
+               gb_used               = qRound( gb_used * 1000.0 ) * 0.001;
+               qint64 memavail       = 0;
+               qint64 memcurav       = 0; // Stays 0 where not reported (macOS)
+               phys_memory( memavail, memcurav );
+               double gb_avail = (double) memavail / gb_bytes;
+               gb_avail        = qRound( gb_avail * 1000.0 ) * 0.001;
+               double gb_curav = (double) memcurav / gb_bytes;
+               gb_curav        = qRound( gb_curav * 1000.0 ) * 0.001;
 
-                  qDebug() << "++ Worker" << my_rank << ": MC iteration"
-                     << mc_iter << ": Memory Profile :"
-                     << "\n    Maximum memory used to this point" << memused
-                     << "\n    Composite data memory needed" << memdata
-                     << "\n    Maximum subgrid solute count" << maxsols
-                     << "\n    NNLS A matrix memory needed" << memamatr
-                     << "\n    NNLS B matrix memory needed" << membmatr
-                     << "\n    Total memory (GB) used" << gb_used
-                     << "\n    Total memory (GB) needed" << gb_need
-                     << "\n    Total memory (GB) available" << gb_avail
-                     << "\n    Memory (GB) currently available" << gb_curav;
-               }
+               qDebug() << "++ Worker" << my_rank << ": MC iteration" << mc_iter
+                        << ": Memory Profile :" << "\n    Maximum memory used to this point" << memused
+                        << "\n    Composite data memory needed" << memdata << "\n    Maximum subgrid solute count" << maxsols
+                        << "\n    NNLS A matrix memory needed" << memamatr << "\n    NNLS B matrix memory needed" << membmatr
+                        << "\n    Total memory (GB) used" << gb_used << "\n    Total memory (GB) needed" << gb_need
+                        << "\n    Total memory (GB) available" << gb_avail << "\n    Memory (GB) currently available" << gb_curav;
+            }
 
-               mc_data.resize( job_length );
+            mc_data.resize( job_length );
 
-               if ( mc_data.size() != job_length )
+            if ( mc_data.size() != job_length )
+            {
+               DbgLv( 0 ) << "*ERROR* mc_data.size() job_length" << mc_data.size() << job_length;
+            }
+
+            MPI_Barrier( my_communicator );
+
+            if ( my_rank == 1 || my_rank == 11 )
+            {
+               DbgLv( 1 ) << "newD:" << my_rank << " scld/newdat rcv : offs dsknt" << offset << dataset_count << "joblen"
+                          << job_length;
+            }
+            double dsum = 0.0;
+            // This is a receive
+            MPI_Bcast( mc_data.data(), job_length, MPI_DOUBLE, MPI_Job::MASTER, my_communicator );
+
+
+            if ( is_global_fit && dataset_count == 1 )
+            { // For global update to scaled data, extra value is new ODlimit
+               job_length--;
+               data_sets[offset]->run_data.ODlimit = mc_data[job_length];
+               if ( ( my_rank == 1 || my_rank == 11 ) )
                {
-                  DbgLv(0) << "*ERROR* mc_data.size() job_length"
-                     << mc_data.size() << job_length;
+                  DbgLv( 1 ) << "newD:" << my_rank << ":offset ODlimit" << offset << data_sets[offset]->run_data.ODlimit;
                }
+            }
 
-               MPI_Barrier( my_communicator );
+            int index = 0;
 
-if(my_rank==1 || my_rank==11)
-DbgLv(1) << "newD:" << my_rank << " scld/newdat rcv : offs dsknt"
- << offset << dataset_count << "joblen" << job_length;
-double dsum=0.0;
-               // This is a receive
-               MPI_Bcast( mc_data.data(),
-                          job_length,
-                          MPI_DOUBLE,
-                          MPI_Job::MASTER,
-                          my_communicator );
+            for ( int ee = offset; ee < offset + dataset_count; ee++ )
+            {
+               US_DataIO::EditedData* edata = &data_sets[ee]->run_data;
 
+               const int              scan_count    = edata->scanCount();
+               const int              radius_points = edata->pointCount();
 
-               if ( is_global_fit  &&  dataset_count == 1 )
-               {  // For global update to scaled data, extra value is new ODlimit
-                  job_length--;
-                  data_sets[ offset ]->run_data.ODlimit = mc_data[ job_length ];
-if( (my_rank==1||my_rank==11) )
-DbgLv(1) << "newD:" << my_rank << ":offset ODlimit" << offset
- << data_sets[ offset ]->run_data.ODlimit;
-               }
-
-               int index = 0;
-
-               for ( int ee = offset; ee < offset + dataset_count; ee++ )
+               const int              indxh = ( ( scan_count / 2 ) * radius_points ) + ( radius_points / 2 );
+               for ( int ss = 0; ss < scan_count; ss++ )
                {
-                  US_DataIO::EditedData* edata = &data_sets[ ee ]->run_data;
-
-                  int scan_count    = edata->scanCount();
-                  int radius_points = edata->pointCount();
-
-int indxh=((scan_count/2)*radius_points)+(radius_points/2);
-                  for ( int ss = 0; ss < scan_count; ss++ )
+                  for ( int rr = 0; rr < radius_points; rr++, index++ )
                   {
-                     for ( int rr = 0; rr < radius_points; rr++, index++ )
+                     edata->setValue( ss, rr, mc_data[index] );
+                     dsum += edata->value( ss, rr );
+                     if ( ( my_rank == 1 || my_rank == 11 ) &&
+                          ( index < 5 || index > ( job_length - 6 ) || ( index > ( indxh - 4 ) && index < ( indxh + 3 ) ) ) )
                      {
-                        edata->setValue( ss, rr, mc_data[ index ] );
-dsum+=edata->value(ss,rr);
-if( (my_rank==1||my_rank==11)
- && (index<5 || index>(job_length-6) || (index>(indxh-4)&&index<(indxh+3))) )
-DbgLv(1) << "newD:" << my_rank << ":index" << index << "edat" << edata->value(ss,rr)
- << "ee" << ee;
+                        DbgLv( 1 ) << "newD:" << my_rank << ":index" << index << "edat" << edata->value( ss, rr ) << "ee" << ee;
                      }
                   }
                }
-if(my_rank==1 || my_rank==11)
-DbgLv(1) << "newD:" << my_rank << "  length index" << job_length << index
- << "dsum" << dsum;
             }
+            if ( my_rank == 1 || my_rank == 11 )
+            {
+               DbgLv( 1 ) << "newD:" << my_rank << "  length index" << job_length << index << "dsum" << dsum;
+            }
+         }
 
             break;
 
@@ -283,7 +243,7 @@ bool US_MPI_Analysis::worker_fit_context( int offset, double meniscus, double bo
    data_sets[offset]->simparams.meniscus = meniscus;
    data_sets[offset]->simparams.bottom   = bottom;
 
-   bool sim_changed = ( fit_context.dataset != offset || fit_context.meniscus != meniscus || fit_context.bottom != bottom );
+   const bool sim_changed = ( fit_context.dataset != offset || fit_context.meniscus != meniscus || fit_context.bottom != bottom );
 
    fit_context.dataset  = offset;
    fit_context.meniscus = meniscus;

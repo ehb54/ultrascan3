@@ -24,17 +24,14 @@ void US_MPI_Analysis::pm_cjobs_start()
       group_rank--;
    }
 
-DbgLv(1) << "my_group" << my_group << "my_workers" << my_workers
- << "group_rank" << group_rank << "my_rank" << my_rank
- << "HOST=" << QHostInfo::localHostName();
+   DbgLv( 1 ) << "my_group" << my_group << "my_workers" << my_workers << "group_rank" << group_rank << "my_rank" << my_rank
+              << "HOST=" << QHostInfo::localHostName();
 
-DbgLv(1) << "MPI_Barrier" << my_rank;
+   DbgLv( 1 ) << "MPI_Barrier" << my_rank;
    // Synch up everyone then split into communicator groups
    MPI_Barrier( MPI_COMM_WORLD );
-   int sstat = MPI_Comm_split( MPI_COMM_WORLD, my_group, group_rank,
-                               &my_communicator );
-DbgLv(1) << "COMM_SPLIT (g r m)" << my_group << group_rank << my_rank
- << "stat" << sstat;
+   const int sstat = MPI_Comm_split( MPI_COMM_WORLD, my_group, group_rank, &my_communicator );
+   DbgLv( 1 ) << "COMM_SPLIT (g r m)" << my_group << group_rank << my_rank << "stat" << sstat;
 
    if ( my_rank == 0 )
    {  // Run parallel-masters supervisor             (world rank 0)
@@ -81,7 +78,7 @@ void US_MPI_Analysis::pm_cjobs_supervisor()
    {
       master = ( ii == 0 ) ? 1 : ( ii * gcores_count );   // Master world rank
 
-DbgLv(1) << "SUPER: master msgs" << master << "analysisDate" << analysisDate;
+      DbgLv( 1 ) << "SUPER: master msgs" << master << "analysisDate" << analysisDate;
       msg    = analysisDate.toLatin1();
       iwork  = msg.size();
       MPI_Send( &iwork,
@@ -122,7 +119,7 @@ DbgLv(1) << "SUPER: master msgs" << master << "analysisDate" << analysisDate;
       max_rss();
 
       // Get UDP message or dataset-done flag
-DbgLv(1) << "SUPER: wait on iter done/udp";
+      DbgLv( 1 ) << "SUPER: wait on iter done/udp";
       MPI_Recv( &iwork,
                 1,
                 MPI_INT,
@@ -136,39 +133,33 @@ DbgLv(1) << "SUPER: wait on iter done/udp";
       int  ittest = current_dataset + mgroup_count;
       master      = status.MPI_SOURCE;
       tag         = status.MPI_TAG;
-      QByteArray msg;
-DbgLv(1) << "SUPER:   wait recv'd iwork" << iwork << "master tag" << master << tag;
+      QByteArray rmsg;
+      DbgLv( 1 ) << "SUPER:   wait recv'd iwork" << iwork << "master tag" << master << tag;
 
       switch( tag )
       {
          case UDPSIZE:  // UDP message size: get the following UDP message string
             isize = iwork;
-            msg.resize( isize );
+            rmsg.resize( isize );
 
-DbgLv(1) << "SUPER: wait on UDPmsg - master" << master;
-            MPI_Recv( msg.data(),
-                      isize,
-                      MPI_BYTE,
-                      master,
-                      UDPMSG,
-                      MPI_COMM_WORLD,
-                      &status );
+            DbgLv( 1 ) << "SUPER: wait on UDPmsg - master" << master;
+            MPI_Recv( rmsg.data(), isize, MPI_BYTE, master, UDPMSG, MPI_COMM_WORLD, &status );
 
-DbgLv(1) << "SUPER:     UDPmsg:" << QString(msg);
-            send_udp( QString( msg ) );       // Send forwarded UDP message
+            DbgLv( 1 ) << "SUPER:     UDPmsg:" << QString( rmsg );
+            send_udp( QString( rmsg ) ); // Send forwarded UDP message
 
             udpmsg   = true;
             break;
 
          case DONELAST:  // Dataset done and it was the last in group
             islast   = true;
-DbgLv(1) << "SUPER:     DONELAST";
+            DbgLv( 1 ) << "SUPER:     DONELAST";
             break;
 
          case DONEITER:  // Dataset done
-//            islast   = ( ittest >= count_datasets ) ? true : islast;
-DbgLv(1) << "SUPER:     DONEITER  islast" << islast << "ittest currds cntds"
-         << ittest << current_dataset << count_datasets;
+            //            islast   = ( ittest >= count_datasets ) ? true : islast;
+            DbgLv( 1 ) << "SUPER:     DONEITER  islast" << islast << "ittest currds cntds" << ittest << current_dataset
+                       << count_datasets;
             break;
 
          default:
@@ -189,26 +180,26 @@ DbgLv(1) << "SUPER:     DONEITER  islast" << islast << "ittest currds cntds"
       //   used in the master group.
 
       master      = status.MPI_SOURCE;         // Master that has completed
-      int kgroup  = master / gcores_count;     // Group to which master belongs
-      int mgroup  = mstates.indexOf( READY );  // Find next ready master
+      const int kgroup = master / gcores_count;     // Group to which master belongs
+      const int mgroup = mstates.indexOf( READY );  // Find next ready master
 
-      int jgroup  = ( mgroup < 0 ) ? kgroup : mgroup; // Ready master index
+      const int jgroup  = ( mgroup < 0 ) ? kgroup : mgroup; // Ready master index
       mstates[ kgroup ] = READY;                      // Mark current as ready
-      int nileft  = mstates.count( WORKING );         // Masters left working
-DbgLv(1) << "SUPER: mgr kgr jgr" << mgroup << kgroup << jgroup
- << "left dsets dset" << nileft << count_datasets << current_dataset;
-      int kdset   = ( current_dataset / mgroup_count ) * mgroup_count;
+      const int nileft  = mstates.count( WORKING );   // Masters left working
+      DbgLv( 1 ) << "SUPER: mgr kgr jgr" << mgroup << kgroup << jgroup << "left dsets dset" << nileft << count_datasets
+                 << current_dataset;
+      const int kdset = ( current_dataset / mgroup_count ) * mgroup_count;
 
       if ( islast )    
       {  // Just finished was last dataset for that group
          mstates[ kgroup ] = INIT;             // Mark as finished
          maxrssma += (long)( iwork );          // Sum in master maxrss
-DbgLv(1) << "SUPER:  (A)maxrssma" << maxrssma << "iwork" << iwork;
+         DbgLv( 1 ) << "SUPER:  (A)maxrssma" << maxrssma << "iwork" << iwork;
 
          if ( nileft == 0 )
          {                                     // All are complete
             count_datasets = kdset + mgroup_count;
-DbgLv(1) << "SUPER: nileft==0  count_datasets" << count_datasets;
+            DbgLv( 1 ) << "SUPER: nileft==0  count_datasets" << count_datasets;
             break;
          }
 
@@ -224,8 +215,7 @@ DbgLv(1) << "SUPER: nileft==0  count_datasets" << count_datasets;
       tag         = ( ittest < count_datasets ) ? STARTITER : STARTLAST;
       master      = ( jgroup == 0 ) ? 1 : ( jgroup * gcores_count );
 
-DbgLv(1) << "SUPER:  Send curr_ds cnt_ds" << current_dataset << count_datasets
-         << "gr ma tg" << jgroup << master << tag;
+      DbgLv( 1 ) << "SUPER:  Send curr_ds cnt_ds" << current_dataset << count_datasets << "gr ma tg" << jgroup << master << tag;
       MPI_Send( &current_dataset,
                 1,
                 MPI_INT,
@@ -244,19 +234,17 @@ DbgLv(1) << "SUPER:  Send curr_ds cnt_ds" << current_dataset << count_datasets
 
    // Get job end time (after waiting, so it has the greatest time stamp)
    US_Sleep::msleep( 900 );
-   QDateTime endTime = QDateTime::currentDateTime();
+   const QDateTime endTime = QDateTime::currentDateTime();
 
    // Send message and build file with run-time statistics
    max_rss();                              // Max memory for supervisor
-DbgLv(1) << "SUPER:  maxrss maxrssma" << maxrss << maxrssma;
+   DbgLv( 1 ) << "SUPER:  maxrss maxrssma" << maxrss << maxrssma;
    maxrss       += maxrssma;               // Sum in master groups' use
 
-   int walltime  = qRound(
-      submitTime.msecsTo( endTime ) / 1000.0 );
-   int cputime   = qRound(
-      startTime .msecsTo( endTime ) / 1000.0 );
-   int maxrssmb  = qRound( (double)maxrss / 1024.0 );
-   int kc_iters  = data_sets.size();
+   const int walltime = qRound( submitTime.msecsTo( endTime ) / 1000.0 );
+   const int cputime  = qRound( startTime.msecsTo( endTime ) / 1000.0 );
+   const int maxrssmb = qRound( (double) maxrss / 1024.0 );
+   const int kc_iters = data_sets.size();
 
    stats_output( walltime, cputime, maxrssmb,
          submitTime, startTime, endTime );
@@ -265,12 +253,12 @@ DbgLv(1) << "SUPER:  maxrss maxrssma" << maxrss << maxrssma;
    update_outputs( true );
 
    // Send 'Finished' message.
-   int wt_hr      = walltime / 3600;
-   int wt_min     = ( walltime - wt_hr * 3600 ) / 60;
-   int wt_sec     = walltime - wt_hr * 3600 - wt_min * 60;
-   int ct_hr      = cputime / 3600;
-   int ct_min     = ( cputime - ct_hr * 3600 ) / 60;
-   int ct_sec     = cputime - ct_hr * 3600 - ct_min * 60;
+   const int wt_hr  = walltime / 3600;
+   const int wt_min = ( walltime - wt_hr * 3600 ) / 60;
+   const int wt_sec = walltime - wt_hr * 3600 - wt_min * 60;
+   const int ct_hr  = cputime / 3600;
+   const int ct_min = ( cputime - ct_hr * 3600 ) / 60;
+   const int ct_sec = cputime - ct_hr * 3600 - ct_min * 60;
    printf( "Us_Mpi_Analysis has finished successfully"
            " (Wall=%d:%02d:%02d Cpu=%d:%02d:%02d).\n"
            , wt_hr, wt_min, wt_sec, ct_hr, ct_min, ct_sec );
@@ -302,9 +290,8 @@ void US_MPI_Analysis::pm_cjobs_master()
    QByteArray msg;
 
    // Get analysis date for model descriptions from supervisor
-DbgLv(1) << "  MASTER   Recv from super. my_rank" << my_rank
- << "group" << my_group;
-   int super  = 0;
+   DbgLv( 1 ) << "  MASTER   Recv from super. my_rank" << my_rank << "group" << my_group;
+   const int super  = 0;
    int isize  = 0;
 
    MPI_Recv( &isize,
@@ -314,7 +301,7 @@ DbgLv(1) << "  MASTER   Recv from super. my_rank" << my_rank
              ADATESIZE,
              MPI_COMM_WORLD,
              &status );
-DbgLv(1) << "  MASTER:   wait recv'd isize" << isize;
+   DbgLv( 1 ) << "  MASTER:   wait recv'd isize" << isize;
 
    msg.resize( isize );
 
@@ -327,8 +314,8 @@ DbgLv(1) << "  MASTER:   wait recv'd isize" << isize;
              &status );
 
    analysisDate = QString( msg );
-DbgLv(1) << "  MASTER:   Recv'd from super. (g r m)" << my_group << group_rank
- << my_rank << "analysisDate" << analysisDate << "atype" << analysis_type;
+   DbgLv( 1 ) << "  MASTER:   Recv'd from super. (g r m)" << my_group << group_rank << my_rank << "analysisDate" << analysisDate
+              << "atype" << analysis_type;
 
    // Do the master loop for MC 2DSA or GA
    if ( analysis_type.startsWith( "2DSA" ) )
@@ -387,25 +374,26 @@ void US_MPI_Analysis::time_datasets_left()
    if ( current_dataset < 4 )
       return;                      // Don't bother until current_dataset 4
 
-   QDateTime currTime  = QDateTime::currentDateTime();
-   int curr_iter       = current_dataset + 1;
-   int mins_so_far     = ( startTime.secsTo( currTime ) + 59 ) / 60;
-   int mins_left_allow = max_walltime - mins_so_far;
+   const QDateTime currTime        = QDateTime::currentDateTime();
+   const int       curr_iter       = current_dataset + 1;
+   const int       mins_so_far     = ( startTime.secsTo( currTime ) + 59 ) / 60;
+   const int       mins_left_allow = max_walltime - mins_so_far;
    int ds_iters_left   = ( mins_left_allow * curr_iter ) / mins_so_far;
    ds_iters_left       = ( ds_iters_left / mgroup_count ) * mgroup_count;
-   int ds_iters_estim  = curr_iter + ds_iters_left;
+   const int ds_iters_estim        = curr_iter + ds_iters_left;
 
    if ( ds_iters_estim < count_datasets  &&  ds_iters_left < 4 )
    {  // In danger of exceeding allowed time:   reduce count of datasets
-      int old_dsiters     = count_datasets;
+      const int old_dsiters = count_datasets;
       count_datasets      = qMax( curr_iter, ds_iters_estim - 2 );
       int ac_iters_left   = count_datasets - curr_iter;
       ac_iters_left       = ( ac_iters_left / mgroup_count ) * mgroup_count;
       count_datasets      = curr_iter + ac_iters_left;
 
-      QString msg = tr( "Dataset count reduced from %1 to %2, "
-                        "due to max. time restrictions." )
-                    .arg( old_dsiters ).arg( count_datasets );
+      const QString msg = tr( "Dataset count reduced from %1 to %2, "
+                              "due to max. time restrictions." )
+                             .arg( old_dsiters )
+                             .arg( count_datasets );
       send_udp( msg );
 
       DbgLv(0) << "  Specified Maximum Wall-time minutes:" << max_walltime;
@@ -432,13 +420,12 @@ void US_MPI_Analysis::pm_ga_cjmast( void )
    datasets_to_process = data_sets.size();
    max_depth           = 0;
    calculated_solutes.clear();
-//DbgLv(1) << "master start GA" << startTime;
 
    // Set noise and debug flags
    simulation_values.noisflag   = 0;
    simulation_values.dbg_level  = dbg_level;
    simulation_values.dbg_timing = dbg_timing;
-DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
+   DbgLv( 0 ) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
    // Initialize best fitness
    best_genes  .reserve( gcores_count );
@@ -447,7 +434,7 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
    Fitness empty_fitness;
    empty_fitness.fitness = LARGE;
 
-   Gene working_gene( buckets.count(), US_Solute() );
+   const Gene working_gene( buckets.count(), US_Solute() );
 
    // Initialize arrays
    for ( int i = 0; i < gcores_count; i++ )
@@ -458,14 +445,14 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
       best_fitness << empty_fitness;
    }
 
-   QDateTime time = QDateTime::currentDateTime();
+   const QDateTime time = QDateTime::currentDateTime();
 
    // Handle Monte Carlo iterations.  There will always be at least 1.
    while ( true )
    {
       // Get MC iteration index from supervisor
       int iter       = 1;
-      int super      = 0;
+      const int  super      = 0;
       MPI_Status status;
 
       MPI_Recv( &iter,
@@ -477,7 +464,7 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
                 &status );
 
       int tag        = status.MPI_TAG;
-DbgLv(1) << "  MASTER: iter" << iter << "gr" << my_group << "tag" << tag;
+      DbgLv( 1 ) << "  MASTER: iter" << iter << "gr" << my_group << "tag" << tag;
       switch ( tag )
       {
          case STARTLAST:
@@ -497,36 +484,34 @@ DbgLv(1) << "  MASTER: iter" << iter << "gr" << my_group << "tag" << tag;
       std::sort( best_fitness.begin(), best_fitness.end() );
       simulation_values.solutes = best_genes[ best_fitness[ 0 ].index ];
 
-      int nisols      = simulation_values.solutes.size();
+      const int nisols = simulation_values.solutes.size();
 
       solutes_from_gene( simulation_values.solutes, nisols );
 
-DbgLv(1) << "GaMast: sols size" << simulation_values.solutes.size()
- << "buck size" << buckets.size();
-DbgLv(1) << "GaMast:   dset size" << data_sets.size();
-DbgLv(1) << "GaMast:   sol0.s" << simulation_values.solutes[0].s;
+      DbgLv( 1 ) << "GaMast: sols size" << simulation_values.solutes.size() << "buck size" << buckets.size();
+      DbgLv( 1 ) << "GaMast:   dset size" << data_sets.size();
+      DbgLv( 1 ) << "GaMast:   sol0.s" << simulation_values.solutes[0].s;
       calc_residuals( 0, data_sets.size(), simulation_values );
 
-DbgLv(1) << "GaMast:    calc_resids return";
+      DbgLv( 1 ) << "GaMast:    calc_resids return";
 
       // Write out the model, but skip if not 1st of iteration 1
-      bool do_write = ( mc_iteration > 1 ) ||
-                      ( mc_iteration == 1  &&  my_group == 0 );
-DbgLv(1) << "2dMast:    do_write" << do_write << "mc_iter" << mc_iteration
-   << "variance" << simulation_values.variance << "my_group" << my_group;
+      const bool do_write = ( mc_iteration > 1 ) || ( mc_iteration == 1 && my_group == 0 );
+      DbgLv( 1 ) << "2dMast:    do_write" << do_write << "mc_iter" << mc_iteration << "variance" << simulation_values.variance
+                 << "my_group" << my_group;
 
       std::sort( simulation_values.solutes.begin(), simulation_values.solutes.end() );
 
       // Convert given solute points to s,k for model output
-      double vbar20  = data_sets[ 0 ]->vbar20;
+      const double vbar20 = data_sets[0]->vbar20;
       QList< int > attrxs;
       attrxs << attr_x << attr_y << attr_z;
-      bool   have_s  = ( attrxs.indexOf( ATTR_S ) >= 0 );
-      bool   have_k  = ( attrxs.indexOf( ATTR_K ) >= 0 );
-      bool   have_w  = ( attrxs.indexOf( ATTR_W ) >= 0 );
-      bool   have_d  = ( attrxs.indexOf( ATTR_D ) >= 0 );
-      bool   have_f  = ( attrxs.indexOf( ATTR_F ) >= 0 );
-      bool   vary_v  = ( attr_z != ATTR_V );
+      const bool have_s = ( attrxs.indexOf( ATTR_S ) >= 0 );
+      const bool have_k = ( attrxs.indexOf( ATTR_K ) >= 0 );
+      const bool have_w = ( attrxs.indexOf( ATTR_W ) >= 0 );
+      const bool have_d = ( attrxs.indexOf( ATTR_D ) >= 0 );
+      const bool have_f = ( attrxs.indexOf( ATTR_F ) >= 0 );
+      const bool vary_v = ( attr_z != ATTR_V );
 
       for ( int gg = 0; gg < simulation_values.solutes.size(); gg++ )
       {
@@ -582,7 +567,7 @@ DbgLv(1) << "2dMast:    do_write" << do_write << "mc_iter" << mc_iteration
 
       // Tell the supervisor that an iteration is done
       iter    = (int)maxrss;
-DbgLv(1) << "GaMast:  iter done: maxrss" << iter << "tag" << tag << DONELAST;
+      DbgLv( 1 ) << "GaMast:  iter done: maxrss" << iter << "tag" << tag << DONELAST;
 
       MPI_Send( &iter,
                 1,
@@ -591,7 +576,7 @@ DbgLv(1) << "GaMast:  iter done: maxrss" << iter << "tag" << tag << DONELAST;
                 tag,
                 MPI_COMM_WORLD );
 
-DbgLv(1) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
+      DbgLv( 1 ) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
       if ( mc_iteration < mc_iterations )
       {     // Set up for next iteration
          if ( mc_iteration == 1 ) 
@@ -629,13 +614,12 @@ void US_MPI_Analysis::pm_dmga_cjmast( void )
    datasets_to_process = data_sets.size();
    max_depth           = 0;
    calculated_solutes.clear();
-//DbgLv(1) << "master start DMGA" << startTime;
 
    // Set noise and debug flags
    simulation_values.noisflag   = 0;
    simulation_values.dbg_level  = dbg_level;
    simulation_values.dbg_timing = dbg_timing;
-DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
+   DbgLv( 0 ) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
    // Build up the base structure of simulations and residuals
    if ( data_sets.size() == 1 )
@@ -660,7 +644,7 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
    best_fitness.reserve( gcores_count );
 
    // Read in the constraints model and build constraints
-   QString cmfname  = "../" + parameters[ "DC_model" ];
+   const QString cmfname = "../" + job_config.params.dc_model.value_or( "" );
    wmodel.load( cmfname );                   // Load the constraints model
    constraints.load_constraints( &wmodel );  // Build the constraints object
    constraints.get_work_model  ( &wmodel );  // Get the base work model
@@ -685,14 +669,14 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
       best_fitness << empty_fitness;
    }
 
-   QDateTime time = QDateTime::currentDateTime();
+   const QDateTime time = QDateTime::currentDateTime();
 
    // Handle Monte Carlo iterations.  There will always be at least 1.
    while ( true )
    {
       // Get MC iteration index from supervisor
       int iter       = 1;
-      int super      = 0;
+      const int  super      = 0;
       MPI_Status status;
 
       MPI_Recv( &iter,
@@ -704,7 +688,7 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
                 &status );
 
       int tag        = status.MPI_TAG;
-DbgLv(1) << "  MASTER: iter" << iter << "gr" << my_group << "tag" << tag;
+      DbgLv( 1 ) << "  MASTER: iter" << iter << "gr" << my_group << "tag" << tag;
       switch ( tag )
       {
          case STARTLAST:
@@ -735,8 +719,7 @@ DbgLv(1) << "  MASTER: iter" << iter << "gr" << my_group << "tag" << tag;
       // Output the model
 
       // Write out the model, but skip if not 1st of iteration 1
-      bool do_write = ( mc_iteration > 1 ) ||
-                      ( mc_iteration == 1  &&  my_group == 0 );
+      const bool do_write = ( mc_iteration > 1 ) || ( mc_iteration == 1 && my_group == 0 );
 
       if ( do_write )
       {
@@ -770,7 +753,7 @@ DbgLv(1) << "  MASTER: iter" << iter << "gr" << my_group << "tag" << tag;
 
       // Tell the supervisor that an iteration is done
       iter    = (int)maxrss;
-DbgLv(1) << "GaMast:  iter done: maxrss" << iter << "tag" << tag << DONELAST;
+      DbgLv( 1 ) << "GaMast:  iter done: maxrss" << iter << "tag" << tag << DONELAST;
 
       MPI_Send( &iter,
                 1,
@@ -779,7 +762,7 @@ DbgLv(1) << "GaMast:  iter done: maxrss" << iter << "tag" << tag << DONELAST;
                 tag,
                 MPI_COMM_WORLD );
 
-DbgLv(1) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
+      DbgLv( 1 ) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
       if ( mc_iteration < mc_iterations )
       {     // Set up for next iteration
          if ( mc_iteration == 1 ) 
@@ -813,18 +796,18 @@ DbgLv(1) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
 // Parallel-masters version of group PCSA master
 void US_MPI_Analysis::pm_pcsa_cjmast( void )
 {
-DbgLv(1) << my_rank << ": master start PCSA" << startTime;
+   DbgLv( 1 ) << my_rank << ": master start PCSA" << startTime;
    current_dataset     = 0;
    datasets_to_process = 1;  // Process one dataset at a time for now
 
    work_rss.resize( gcores_count );
 
-   int super           = 0;
+   const int super           = 0;
    int kcurve          = 0;
    int iter            = current_dataset;
    alpha               = 0.0;
    mc_iterations       = 0;
-   max_iterations      = parameters[ "gfit_iterations" ].toInt();
+   max_iterations            = job_config.params.gfit_iterations;
    MPI_Status status;
 
    // Get 1st dataset from supervisor
@@ -840,25 +823,22 @@ DbgLv(1) << my_rank << ": master start PCSA" << startTime;
    int ittest   = current_dataset + mgroup_count;
 
    init_pcsa_solutes();
-DbgLv(1) << my_rank << ": init sols return";
+   DbgLv( 1 ) << my_rank << ": init sols return";
    fill_pcsa_queue();
-DbgLv(1) << my_rank << ": fill queue return";
+   DbgLv( 1 ) << my_rank << ": fill queue return";
 
-DbgLv(1) << my_rank << ": recvd ds" << current_dataset << "mgc ittest" << mgroup_count << ittest;
+   DbgLv( 1 ) << my_rank << ": recvd ds" << current_dataset << "mgc ittest" << mgroup_count << ittest;
 
    while ( true )
    {
       int worker;
-      meniscus_value   = data_sets[ current_dataset ]->run_data.meniscus;
-//if ( max_depth > 1 )
-// DbgLv(1) << " master loop-TOP:  jq-empty?" << job_queue.isEmpty() << "   areReady?" << worker_status.contains(READY)
-//    << "  areWorking?" << worker_status.contains(WORKING);
+      meniscus_value = data_sets[current_dataset]->run_data.meniscus;
 
       // Give the jobs to the workers
       while ( ! job_queue.isEmpty()  &&  worker_status.contains( READY ) )
       {
          worker    = ready_worker();
-DbgLv(1) << my_rank << ": submit worker" << worker;
+         DbgLv( 1 ) << my_rank << ": submit worker" << worker;
 
          Sa_Job job              = job_queue.takeFirst();
          job.mpi_job.depth       = kcurve++;
@@ -872,7 +852,7 @@ DbgLv(1) << my_rank << ": submit worker" << worker;
          kcurve           = 0;
          std::sort( mrecs.begin(), mrecs.end() );
          US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
-         QString tripleID = edata->cell + edata->channel + edata->wavelength;
+         const QString          tripleID = edata->cell + edata->channel + edata->wavelength;
 
          simulation_values.variance   = mrecs[ 0 ].variance;
          simulation_values.zsolutes   = mrecs[ 0 ].csolutes;
@@ -975,21 +955,17 @@ DbgLv(1) << my_rank << ": submit worker" << worker;
                         << " : Intermediate archive was created.";
             }
 
-            US_DataIO::EditedData* edata
-                             = &data_sets[ current_dataset ]->run_data;
-            QString tripleID = edata->cell + edata->channel + edata->wavelength;
+            US_DataIO::EditedData* ds_edata  = &data_sets[current_dataset]->run_data;
+            const QString          ds_triple = ds_edata->cell + ds_edata->channel + ds_edata->wavelength;
 
             if ( simulation_values.noisflag == 0 )
             {
-               DbgLv(0) << my_rank << ": Dataset" << current_dataset + 1
-                        << "(" << tripleID << ")"
-                        << " : model was output.";
+               DbgLv( 0 ) << my_rank << ": Dataset" << current_dataset + 1 << "(" << ds_triple << ")" << " : model was output.";
             }
             else
             {
-               DbgLv(0) << my_rank << ": Dataset" << current_dataset + 1
-                        << "(" << tripleID << ")"
-                        << " : model/noise(s) were output.";
+               DbgLv( 0 ) << my_rank << ": Dataset" << current_dataset + 1 << "(" << ds_triple << ")"
+                          << " : model/noise(s) were output.";
             }
 
             time_datasets_left();
@@ -1006,7 +982,7 @@ DbgLv(1) << my_rank << ": submit worker" << worker;
                          &status );
 
                tag      = status.MPI_TAG;
-DbgLv(1) << "CJ_MAST Recv tag" << tag << "iter" << iter;
+               DbgLv( 1 ) << "CJ_MAST Recv tag" << tag << "iter" << iter;
 
                if ( tag == STARTLAST )
                   count_datasets  = iter + 1;
@@ -1022,7 +998,7 @@ DbgLv(1) << "CJ_MAST Recv tag" << tag << "iter" << iter;
                mc_iteration     = 0;
                mc_iterations    = 0;
                alpha            = 0.0;
-               max_iterations   = parameters[ "gfit_iterations" ].toInt();
+               max_iterations   = job_config.params.gfit_iterations;
                kcurve           = 0;
 
                fill_pcsa_queue();
@@ -1051,9 +1027,8 @@ DbgLv(1) << "CJ_MAST Recv tag" << tag << "iter" << iter;
 
       worker = status.MPI_SOURCE;
 
-//if ( max_depth > 0 )
- DbgLv(1) << my_rank << ": PMG master loop-BOTTOM:   status TAG" << status.MPI_TAG
-  << MPI_Job::READY << MPI_Job::RESULTS << "  source" << status.MPI_SOURCE;
+      DbgLv( 1 ) << my_rank << ": PMG master loop-BOTTOM:   status TAG" << status.MPI_TAG << MPI_Job::READY << MPI_Job::RESULTS
+                 << "  source" << status.MPI_SOURCE;
       switch( status.MPI_TAG )
       {
          case MPI_Job::READY:   // Ready for work
@@ -1066,8 +1041,7 @@ DbgLv(1) << "CJ_MAST Recv tag" << tag << "iter" << iter;
             break;
 
          default:  // Should never happen
-            QString msg =  "Master 2DSA:  Received invalid status " +
-                           QString::number( status.MPI_TAG );
+            const QString msg = "Master 2DSA:  Received invalid status " + QString::number( status.MPI_TAG );
             abort( msg );
             break;
       }

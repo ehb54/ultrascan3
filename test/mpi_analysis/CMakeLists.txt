@@ -15,6 +15,30 @@ endif()
 add_executable(us_mpi_testdata us_mpi_testdata.cpp)
 target_link_libraries(us_mpi_testdata PRIVATE ${US_MPI_TEST_UTILS} Qt::Core Qt::Xml)
 
+# Unit tests of the job XML reader (no MPI)
+set(US_MPI_SRC_DIR ${CMAKE_SOURCE_DIR}/programs/us_mpi_analysis)
+add_executable(test_us_mpi_jobconfig
+    test_us_mpi_jobconfig.cpp
+    ${US_MPI_SRC_DIR}/us_mpi_jobconfig.cpp)
+target_include_directories(test_us_mpi_jobconfig PRIVATE ${US_MPI_SRC_DIR})
+target_compile_definitions(test_us_mpi_jobconfig PRIVATE
+    US_MPI_TEST_JOBS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/jobs")
+target_link_libraries(test_us_mpi_jobconfig PRIVATE
+    ${US_MPI_TEST_UTILS} Qt::Core Qt::Xml gtest gtest_main)
+
+# Checks job files without MPI: us_mpi_jobcheck [-q] <hpcrequest.xml>...
+add_executable(us_mpi_jobcheck
+    us_mpi_jobcheck.cpp
+    ${US_MPI_SRC_DIR}/us_mpi_jobconfig.cpp)
+target_include_directories(us_mpi_jobcheck PRIVATE ${US_MPI_SRC_DIR})
+target_link_libraries(us_mpi_jobcheck PRIVATE ${US_MPI_TEST_UTILS} Qt::Core Qt::Xml)
+
+include(GoogleTest)
+gtest_discover_tests(test_us_mpi_jobconfig
+    PROPERTIES
+    LABELS gtest-unit-mpi_analysis
+    TIMEOUT 60)
+
 if(NOT Python3_Interpreter_FOUND)
     message(STATUS "test/mpi_analysis: Python3 not found, regression tests skipped")
     return()
@@ -37,6 +61,8 @@ set(US_MPI_CASES
     2dsa_composite_menbot
     2dsa_composite_menbot_pmasters
     2dsa_noise
+    2dsa_timestate
+    2dsa_composite_timestate
     2dsa_customgrid
     2dsa_global
     2dsa_global_mc
@@ -51,9 +77,43 @@ set(US_MPI_CASES
     2dsa_mc_np4
     pcsa_sl
     ga_basic
+    ga_np2
+    dmga_basic
 )
 
-foreach(case ${US_MPI_CASES})
+# Input-handling cases: defective or unusual job input (see INPUT_CASES)
+set(US_MPI_INPUT_CASES
+    input_hpcxml_missing
+    input_hpcxml_two
+    input_hpcxml_named
+    input_hpcxml_unreadable
+    input_walltime_jobxml_without
+    input_walltime_cmdline_precedence
+    input_ga_mutation_defaults
+    input_dmga_sigma_default
+    input_ga_negative_bucket
+    input_rotor_stretch_short
+    input_xml_truncated
+    input_jobxml_truncated
+    input_timestate_missing
+    input_master_abort
+    input_single_rank
+    input_load_fails_on_worker
+    input_invalid_number
+    input_missing_required
+    input_unknown_method
+    input_meniscus_points_negative
+    input_bucket_inverted
+    input_unknown_key
+    input_centerpiece_bottom_default
+)
+
+foreach(case ${US_MPI_CASES} ${US_MPI_INPUT_CASES})
+    if(case IN_LIST US_MPI_INPUT_CASES)
+        set(case_label input)
+    else()
+        set(case_label fit)
+    endif()
     add_test(NAME mpi_analysis_${case}
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/us_mpi_regression.py
             check ${case}
@@ -62,7 +122,7 @@ foreach(case ${US_MPI_CASES})
             --mpirun ${MPIEXEC_EXECUTABLE}
             --workdir ${CMAKE_CURRENT_BINARY_DIR}/work)
     set_tests_properties(mpi_analysis_${case} PROPERTIES
-        LABELS "mpi;regression"
+        LABELS "mpi;regression;${case_label}"
         TIMEOUT 600
         RESOURCE_LOCK mpi_analysis)
 endforeach()

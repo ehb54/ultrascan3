@@ -14,7 +14,7 @@ void US_MPI_Analysis::dmga_master( void )
    simulation_values.noisflag   = 0;
    simulation_values.dbg_level  = dbg_level;
    simulation_values.dbg_timing = dbg_timing;
-DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
+   DbgLv( 0 ) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
    if ( data_sets.size() == 1 )
    {
@@ -37,17 +37,16 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
    best_fitness.reserve( gcores_count );
 
    // Read in the constraints model and build constraints
-   QString cmfname  = "../" + parameters[ "DC_model" ];
+   const QString cmfname = "../" + job_config.params.dc_model.value_or( "" );
    wmodel.load( cmfname );                  // Load the constraints model
    constraints.load_constraints( &wmodel ); // Build the constraints object
    constraints.get_work_model  ( &wmodel ); // Get the base work model
-DbgLv(1) << "dmga_master: cmfname" << cmfname;
-DbgLv(1) << "dmga_master: wmodel #comps" << wmodel.components.size()
- << "#assoc" << wmodel.associations.size();
+   DbgLv( 1 ) << "dmga_master: cmfname" << cmfname;
+   DbgLv( 1 ) << "dmga_master: wmodel #comps" << wmodel.components.size() << "#assoc" << wmodel.associations.size();
 
    // Report on the constraints attribute values and ranges
 
-   DbgLv(0) << parameters[ "DC_model" ] << "Constraints --";
+   DbgLv( 0 ) << job_config.params.dc_model.value_or( "" ) << "Constraints --";
 
    QString attrtype = tr( "UNKNOWN" );
    US_dmGA_Constraints::AttribType atype;
@@ -55,23 +54,19 @@ DbgLv(1) << "dmga_master: wmodel #comps" << wmodel.components.size()
 
    for ( int mcompx = 0; mcompx < wmodel.components.size(); mcompx++ )
    {
-      int compno  = mcompx + 1;
-      int ncompc  = constraints.comp_constraints( mcompx, &cnsv, NULL );
+      const int compno    = mcompx + 1;
+      const int ncomp_cns = constraints.comp_constraints( mcompx, &cnsv, NULL );
 
-      DbgLv(0) << "  Component" << compno << ":";
-//DbgLv(0) << "mcompx ncompc c0atype" << mcompx << ncompc << cnsv[0].atype
-// << "_FF0" << US_dmGA_Constraints::ATYPE_FF0;
+      DbgLv( 0 ) << "  Component" << compno << ":";
 
-      for ( int cx = 0; cx < ncompc; cx++ )
+      for ( int cx = 0; cx < ncomp_cns; cx++ )
       {
-         atype       = cnsv[ cx ].atype;
-//DbgLv(0) << " cx" << cx << "atype" << atype;
-         bool floats = cnsv[ cx ].floats;
-         bool logscl = cnsv[ cx ].logscl;
-         double vmin = cnsv[ cx ].low;
-         double vmax = cnsv[ cx ].high;
-         attrtype    = tr( "UNKNOWN" );
-//DbgLv(0) << "  cx" << cx << "fl ls mn mx" << floats << logscl << vmin << vmax;
+         atype               = cnsv[cx].atype;
+         const bool   floats = cnsv[cx].floats;
+         const bool   logscl = cnsv[cx].logscl;
+         const double vmin   = cnsv[cx].low;
+         const double vmax   = cnsv[cx].high;
+         attrtype            = tr( "UNKNOWN" );
 
          if      ( atype == US_dmGA_Constraints::ATYPE_S    )
             attrtype = tr( "Segmentation Coefficient" );
@@ -90,26 +85,21 @@ DbgLv(1) << "dmga_master: wmodel #comps" << wmodel.components.size()
          else if ( atype == US_dmGA_Constraints::ATYPE_EXT  )
             attrtype = tr( "Extinction" );
 
-//DbgLv(0) << "  cx" << cx << "attrtype" << attrtype;
          if ( floats )
          {
-//DbgLv(0) << "      FLOATS";
             if ( logscl )
             {
-//DbgLv(0) << "       LOGSCL";
                DbgLv(0) << "    " << attrtype << "floats from "
                         << vmin << "to" << vmax << "(log scale)";
             }
             else
             {
-//DbgLv(0) << "       !LOGSCL";
                DbgLv(0) << "    " << attrtype << "floats from "
                         << vmin << "to" << vmax;
             }
          }
          else
          {
-//DbgLv(0) << "      !FLOATS";
             DbgLv(0) << "    " << attrtype << "is fixed at "
                      << vmin;
          }
@@ -118,9 +108,9 @@ DbgLv(1) << "dmga_master: wmodel #comps" << wmodel.components.size()
 
    for ( int assocx = 0; assocx < wmodel.associations.size(); assocx++ )
    {
-      int compno  = assocx + 1;
-      int nassoc  = constraints.assoc_constraints( assocx, &cnsv, NULL );
-      int ncomp   = wmodel.associations[ assocx ].rcomps.size();
+      const int compno = assocx + 1;
+      const int nassoc = constraints.assoc_constraints( assocx, &cnsv, NULL );
+      const int ncomp  = wmodel.associations[assocx].rcomps.size();
 
       DbgLv(0) << "  Reaction" << compno << ":";
 
@@ -144,10 +134,10 @@ DbgLv(1) << "dmga_master: wmodel #comps" << wmodel.components.size()
       for ( int rx = 0; rx < nassoc; rx++ )
       {
          atype       = cnsv[ rx ].atype;
-         bool floats = cnsv[ rx ].floats;
-         bool logscl = cnsv[ rx ].logscl;
-         double vmin = cnsv[ rx ].low;
-         double vmax = cnsv[ rx ].high;
+         const bool   floats = cnsv[rx].floats;
+         const bool   logscl = cnsv[rx].logscl;
+         const double vmin   = cnsv[rx].low;
+         const double vmax   = cnsv[rx].high;
          attrtype    = tr( "UNKNOWN" );
 
          if      ( atype == US_dmGA_Constraints::ATYPE_KD   )
@@ -175,8 +165,10 @@ DbgLv(1) << "dmga_master: wmodel #comps" << wmodel.components.size()
          }
       }
    }
-DbgLv(0) << " wmodel as1 K_d k_off" << wmodel.associations[0].k_d
- << wmodel.associations[0].k_off;
+   if ( !wmodel.associations.isEmpty() )
+   {
+      DbgLv( 0 ) << " wmodel as1 K_d k_off" << wmodel.associations[0].k_d << wmodel.associations[0].k_off;
+   }
 
    Fitness empty_fitness;
    empty_fitness.fitness = LARGE;
@@ -190,8 +182,6 @@ DbgLv(0) << " wmodel as1 K_d k_off" << wmodel.associations[0].k_d
                   wmodel.coSedSolute < 0  &&
                   data_sets[ 0 ]->compress == 0.0 );
    lfvari.fill( 0, nfvari );
-//DbgLv(0) << " wmodel DUMP";
-//wmodel.debug();
 
    // Initialize arrays
    for ( int ii = 0; ii < gcores_count; ii++ )
@@ -202,7 +192,7 @@ DbgLv(0) << " wmodel as1 K_d k_off" << wmodel.associations[0].k_d
       best_fitness << empty_fitness;
    }
 
-   QDateTime time = QDateTime::currentDateTime();
+   const QDateTime time = QDateTime::currentDateTime();
 
    // Handle Monte Carlo iterations.  There will always be at least 1.
    while ( true )
@@ -214,8 +204,7 @@ DbgLv(0) << " wmodel as1 K_d k_off" << wmodel.associations[0].k_d
       // Get the best-fit gene
 
       std::sort( best_fitness.begin(), best_fitness.end() );
-DbgLv(1) << "GaMast: EOML: fitness sorted  bfx" << best_fitness[0].index
-         << "bestdg size" << best_dgenes.size();
+      DbgLv( 1 ) << "GaMast: EOML: fitness sorted  bfx" << best_fitness[0].index << "bestdg size" << best_dgenes.size();
 
       Fitness* bfit  = &best_fitness[ 0 ];
       DbgLv(0) << "Last generation best RMSD" << sqrt( bfit->fitness );
@@ -224,25 +213,24 @@ DbgLv(1) << "GaMast: EOML: fitness sorted  bfx" << best_fitness[0].index
       {  // If gradient search method for all terminations, minimize now
          double aval;
          in_gsm         = true;
-         double fitness = bfit->fitness;
+         const double bfitness = bfit->fitness;
          dgene          = best_dgenes[ bfit->index ];
          int nlim       = 0;
 
-         bfit->fitness  = minimize_dmga( dgene, fitness );
+         bfit->fitness = minimize_dmga( dgene, bfitness );
 
          for ( int ii = 0; ii < nfloatc; ii++ )
          {  // Insure all the new gene attribute values are inside range
-            US_dmGA_Constraints::AttribType
-                 atype    = cns_flt[ ii ].atype;
-            int  mcompx   = cns_flt[ ii ].mcompx;
-            double vmin   = cns_flt[ ii ].low;
-            double vmax   = cns_flt[ ii ].high;
-            fetch_attr_value( aval, dgene, atype, mcompx );
+            const US_dmGA_Constraints::AttribType fatype = cns_flt[ii].atype;
+            const int                             mcompx = cns_flt[ii].mcompx;
+            const double                          vmin   = cns_flt[ii].low;
+            const double                          vmax   = cns_flt[ii].high;
+            fetch_attr_value( aval, dgene, fatype, mcompx );
 
             if ( aval < vmin  ||  aval > vmax )
             {
                aval          = qMax( vmin, qMin( vmax, aval ) );
-               store_attr_value( aval, dgene, atype, mcompx );
+               store_attr_value( aval, dgene, fatype, mcompx );
                nlim++;
             }
          }
@@ -259,15 +247,15 @@ DbgLv(1) << "GaMast: EOML: fitness sorted  bfx" << best_fitness[0].index
 
       // Compute the variance (fitness) for the final best-fit model
 
-DbgLv(1) << "GaMast: EOML: call calc_residuals";
+      DbgLv( 1 ) << "GaMast: EOML: call calc_residuals";
       calc_residuals_dmga( 0, data_sets.size(), simulation_values, dgene );
-DbgLv(1) << "GaMast: EOML: variance" << simulation_values.variance;
+      DbgLv( 1 ) << "GaMast: EOML: variance" << simulation_values.variance;
 
       // Output the model
 
       if ( data_sets.size() == 1 )
       {  // Output the single-data model
-DbgLv(1) << "GaMast: EOML: CALL write_output";
+         DbgLv( 1 ) << "GaMast: EOML: CALL write_output";
          write_output();
       }
       else
@@ -277,7 +265,7 @@ DbgLv(1) << "GaMast: EOML: CALL write_output";
 
       // Handle any MonteCarlo iteration logic
 
-DbgLv(1) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
+      DbgLv( 1 ) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
       mc_iteration++;
       if ( mc_iterations > 1 )
       {
@@ -293,16 +281,16 @@ DbgLv(1) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
 
             time_mc_iterations();
 
-DbgLv(1) << "GaMast:    set_gaMC call";
+            DbgLv( 1 ) << "GaMast:    set_gaMC call";
             set_dmga_MonteCarlo();
-DbgLv(1) << "GaMast:    set_gaMC  return";
+            DbgLv( 1 ) << "GaMast:    set_gaMC  return";
          }
          else
             break;
       }
       else
       {
-DbgLv(1) << "GaMast: FFrmsd: variance" << simulation_values.variance;
+         DbgLv( 1 ) << "GaMast: FFrmsd: variance" << simulation_values.variance;
          qDebug() << "Final Fit RMSD" << sqrt( simulation_values.variance );
          break;
       }
@@ -312,90 +300,57 @@ DbgLv(1) << "GaMast: FFrmsd: variance" << simulation_values.variance;
 
    // Report on the attribute values in the final model
 
-   US_Model* fmodel = &data_sets[ 0 ]->model;
-//*DEBUG
-double vsum=0.0;
-for (int ii=0; ii<simulation_values.sim_data.scanCount(); ii++)
- for (int jj=0; jj<simulation_values.sim_data.pointCount(); jj++ )
-  vsum += sq(simulation_values.sim_data.value(ii,jj));
-DbgLv(0) << "VSUM=" << vsum;
-int hh=simulation_values.sim_data.pointCount()/2;
-int ss=simulation_values.sim_data.scanCount();
-DbgLv(0) << "SDAT 0-3"
- << simulation_values.sim_data.value(0,hh)
- << simulation_values.sim_data.value(1,hh)
- << simulation_values.sim_data.value(2,hh)
- << simulation_values.sim_data.value(3,hh);
-DbgLv(0) << "SDAT *-n"
- << simulation_values.sim_data.value(ss-4,hh)
- << simulation_values.sim_data.value(ss-3,hh)
- << simulation_values.sim_data.value(ss-2,hh)
- << simulation_values.sim_data.value(ss-1,hh);
-DbgLv(0) << "MDL comp1 s,k,w,D,f"
- << fmodel->components[0].s    / data_sets[0]->s20w_correction
- << fmodel->components[0].f_f0
- << fmodel->components[0].mw
- << fmodel->components[0].D    / data_sets[0]->D20w_correction
- << fmodel->components[0].f;
-DbgLv(0) << "MDL comp2 s,k,w,D,f"
- << fmodel->components[1].s    / data_sets[0]->s20w_correction
- << fmodel->components[1].f_f0
- << fmodel->components[1].mw
- << fmodel->components[1].D    / data_sets[0]->D20w_correction
- << fmodel->components[1].f;
-DbgLv(0) << "MDL asoc1 Kd,koff"
- << fmodel->associations[0].k_d
- << fmodel->associations[0].k_off;
-DbgLv(0) << "DS dens visc manual temp"
- << data_sets[0]->density
- << data_sets[0]->viscosity
- << data_sets[0]->manual
- << data_sets[0]->temperature;
-US_SimulationParameters* simpar = &data_sets[0]->simparams;
-DbgLv(0) << "SIMP simpt mType gType rreso menis"
- << simpar->simpoints
- << simpar->meshType
- << simpar->gridType
- << simpar->radial_resolution
- << simpar->meniscus;
-DbgLv(0) << "SIMP bott temp rnoise tinoise rinoise"
- << simpar->bottom
- << simpar->temperature
- << simpar->rnoise
- << simpar->tinoise
- << simpar->rinoise;
-DbgLv(0) << "SIMP bform bvol bottpos rcoeffs"
- << simpar->band_forming
- << simpar->band_volume
- << simpar->bottom_position
- << simpar->rotorcoeffs[0]
- << simpar->rotorcoeffs[1];
-US_SimulationParameters::SpeedProfile* spstep = &simpar->speed_step[0];
-DbgLv(0) << "STEP0 durmin dlymin w2tf w2tl timf timl"
- << spstep->duration_minutes
- << spstep->delay_minutes
- << spstep->w2t_first
- << spstep->w2t_last
- << spstep->time_first
- << spstep->time_last;
-DbgLv(0) << "STEP0 speed accel accelf"
- << spstep->rotorspeed
- << spstep->acceleration
- << spstep->acceleration_flag; 
-//*DEBUG
+   US_Model* fmodel = &data_sets[0]->model;
+   double    vsum   = 0.0;
+   for ( int ii = 0; ii < simulation_values.sim_data.scanCount(); ii++ )
+   {
+      for ( int jj = 0; jj < simulation_values.sim_data.pointCount(); jj++ )
+      {
+         vsum += sq( simulation_values.sim_data.value( ii, jj ) );
+      }
+   }
+   DbgLv( 0 ) << "VSUM=" << vsum;
+   const int hh = simulation_values.sim_data.pointCount() / 2;
+   const int ss = simulation_values.sim_data.scanCount();
+   DbgLv( 0 ) << "SDAT 0-3" << simulation_values.sim_data.value( 0, hh ) << simulation_values.sim_data.value( 1, hh )
+              << simulation_values.sim_data.value( 2, hh ) << simulation_values.sim_data.value( 3, hh );
+   DbgLv( 0 ) << "SDAT *-n" << simulation_values.sim_data.value( ss - 4, hh ) << simulation_values.sim_data.value( ss - 3, hh )
+              << simulation_values.sim_data.value( ss - 2, hh ) << simulation_values.sim_data.value( ss - 1, hh );
+   DbgLv( 0 ) << "MDL comp1 s,k,w,D,f" << fmodel->components[0].s / data_sets[0]->s20w_correction << fmodel->components[0].f_f0
+              << fmodel->components[0].mw << fmodel->components[0].D / data_sets[0]->D20w_correction << fmodel->components[0].f;
+   if ( fmodel->components.size() > 1 )
+   {
+      DbgLv( 0 ) << "MDL comp2 s,k,w,D,f" << fmodel->components[1].s / data_sets[0]->s20w_correction << fmodel->components[1].f_f0
+                 << fmodel->components[1].mw << fmodel->components[1].D / data_sets[0]->D20w_correction << fmodel->components[1].f;
+   }
+   if ( !fmodel->associations.isEmpty() )
+   {
+      DbgLv( 0 ) << "MDL asoc1 Kd,koff" << fmodel->associations[0].k_d << fmodel->associations[0].k_off;
+   }
+   DbgLv( 0 ) << "DS dens visc manual temp" << data_sets[0]->density << data_sets[0]->viscosity << data_sets[0]->manual
+              << data_sets[0]->temperature;
+   US_SimulationParameters* simpar = &data_sets[0]->simparams;
+   DbgLv( 0 ) << "SIMP simpt mType gType rreso menis" << simpar->simpoints << simpar->meshType << simpar->gridType
+              << simpar->radial_resolution << simpar->meniscus;
+   DbgLv( 0 ) << "SIMP bott temp rnoise tinoise rinoise" << simpar->bottom << simpar->temperature << simpar->rnoise
+              << simpar->tinoise << simpar->rinoise;
+   DbgLv( 0 ) << "SIMP bform bvol bottpos rcoeffs" << simpar->band_forming << simpar->band_volume << simpar->bottom_position
+              << simpar->rotorcoeffs[0] << simpar->rotorcoeffs[1];
+   US_SimulationParameters::SpeedProfile* spstep = &simpar->speed_step[0];
+   DbgLv( 0 ) << "STEP0 durmin dlymin w2tf w2tl timf timl" << spstep->duration_minutes << spstep->delay_minutes << spstep->w2t_first
+              << spstep->w2t_last << spstep->time_first << spstep->time_last;
+   DbgLv( 0 ) << "STEP0 speed accel accelf" << spstep->rotorspeed << spstep->acceleration << spstep->acceleration_flag;
    DbgLv(0) << fmodel->description;
    DbgLv(0) << " Final Model Attribute Values --";
 
    for ( int mcompx = 0; mcompx < fmodel->components.size(); mcompx++ )
    {
-      int compno  = mcompx + 1;
-      int ncompc  = constraints.comp_constraints( mcompx, &cnsv, NULL );
+      const int compno    = mcompx + 1;
+      const int ncomp_cns = constraints.comp_constraints( mcompx, &cnsv, NULL );
 
-      DbgLv(0) << "  Component" << compno << ":";
-//DbgLv(0) << "   mcompx" << mcompx << "ncompc" << ncompc;
-//DbgLv(0) << "   at[n-2] at[n-1]" << cnsv[ncompc-2].atype << cnsv[ncompc-1].atype;
+      DbgLv( 0 ) << "  Component" << compno << ":";
 
-      for ( int cx = 0; cx < ncompc; cx++ )
+      for ( int cx = 0; cx < ncomp_cns; cx++ )
       {
          atype       = cnsv[ cx ].atype;
 
@@ -418,8 +373,7 @@ DbgLv(0) << "STEP0 speed accel accelf"
          else
             attrtype    = tr( "Unknown" );
 
-         double aval = constraints.fetch_attrib( fmodel->components[ mcompx ],
-                                                 atype );
+         const double aval = constraints.fetch_attrib( fmodel->components[mcompx], atype );
          DbgLv(0) << "    " << attrtype << "has a value of"
                   << aval;
       }
@@ -427,9 +381,9 @@ DbgLv(0) << "STEP0 speed accel accelf"
 
    for ( int assocx = 0; assocx < fmodel->associations.size(); assocx++ )
    {
-      int compno  = assocx + 1;
-      int nassoc  = constraints.assoc_constraints( assocx, &cnsv, NULL );
-      int ncomp   = fmodel->associations[ assocx ].rcomps.size();
+      const int compno = assocx + 1;
+      const int nassoc = constraints.assoc_constraints( assocx, &cnsv, NULL );
+      const int ncomp  = fmodel->associations[assocx].rcomps.size();
 
       DbgLv(0) << "  Reaction" << compno << ":";
 
@@ -459,8 +413,7 @@ DbgLv(0) << "STEP0 speed accel accelf"
          else if ( atype == US_dmGA_Constraints::ATYPE_KOFF )
             attrtype = tr( "k_Off Rate" );
 
-         double aval = constraints.fetch_attrib( fmodel->associations[ assocx ],
-                                                 atype );
+         const double aval = constraints.fetch_attrib( fmodel->associations[assocx], atype );
          DbgLv(0) << "    " << attrtype << "has a value of"
                   << aval;
       }
@@ -486,26 +439,24 @@ void US_MPI_Analysis::dmga_master_loop( void )
    static const int    min_generation = 10;
    static const int    _KS_BASE_      = 6;
    static const int    _KS_STEP_      = 3;
-   QString dbgtext   = parameters[ "debug_text" ];
-   QString s_ksbase  = par_key_value( dbgtext, "ksame_base" );
-   QString s_ksstep  = par_key_value( dbgtext, "ksame_step" );
+   const QString       s_ksbase       = job_config.debug_value( "ksame_base" );
+   const QString       s_ksstep       = job_config.debug_value( "ksame_step" );
    int ks_base       = s_ksbase.isEmpty() ? _KS_BASE_ : s_ksbase.toInt();
    int ks_step       = s_ksstep.isEmpty() ? _KS_STEP_ : s_ksstep.toInt();
    ks_base           = qMax( 2, ks_base );
    ks_step           = qMax( 1, ks_step );
-//   static const int    max_same_count = my_workers * 5;
-   int    max_same_count       = ( ks_base + ( nfloatc / ks_step ) * ks_step )
-                                 * my_workers;
+   //   static const int    max_same_count = my_workers * 5;
+   const int max_same_count           = ( ks_base + ( nfloatc / ks_step ) * ks_step ) * my_workers;
    int    avg_generation       = 0;
    bool   early_termination    = false;
    int    fitness_same_count   = 0;
    double best_overall_fitness = LARGE;
    int    tag;
    int    workers  = my_workers;
-DbgLv(1) << "dmga_master start loop:  gcores_count fitsize" << gcores_count
-   << best_fitness.size() << "best_overall" << best_overall_fitness;
-DbgLv(0) << "dmga_master start loop:  nfloatc max_same_count"
-    << nfloatc << max_same_count << "ks_base ks_step" << ks_base << ks_step;
+   DbgLv( 1 ) << "dmga_master start loop:  gcores_count fitsize" << gcores_count << best_fitness.size() << "best_overall"
+              << best_overall_fitness;
+   DbgLv( 0 ) << "dmga_master start loop:  nfloatc max_same_count" << nfloatc << max_same_count << "ks_base ks_step" << ks_base
+              << ks_step;
 
    // Reset best fitness for each worker
    for ( int i = 0; i < gcores_count; i++ )
@@ -556,8 +507,7 @@ DbgLv(0) << "dmga_master start loop:  nfloatc max_same_count"
             if ( avg > avg_generation )
             {
                avg_generation = avg;
-               int mc_iter    = mgroup_count < 2 ? ( mc_iteration + 1 )
-                                                 : mc_iteration;
+               const int mc_iter = mgroup_count < 2 ? ( mc_iteration + 1 ) : mc_iteration;
 
                QString progress =
                   "Avg. Generation: "  + QString::number( avg_generation );
@@ -582,7 +532,7 @@ DbgLv(0) << "dmga_master start loop:  nfloatc max_same_count"
             }
 
             // Get the best gene for the current generation from the worker
-DbgLv(1) << "  MAST: work" << worker << "Recv#2 nfloatc" << nfloatc;
+            DbgLv( 1 ) << "  MAST: work" << worker << "Recv#2 nfloatc" << nfloatc;
             MPI_Recv( dgmarker.data(),                 // MPI #2
                       nfloatc,
                       MPI_DOUBLE,  
@@ -591,8 +541,7 @@ DbgLv(1) << "  MAST: work" << worker << "Recv#2 nfloatc" << nfloatc;
                       my_communicator,
                       MPI_STATUS_IGNORE );
 
-DbgLv(1) << "  MAST: work" << worker << " dgm size" << dgmarker.size()
-         << "bestdg size" << best_dgenes.size();
+            DbgLv( 1 ) << "  MAST: work" << worker << " dgm size" << dgmarker.size() << "bestdg size" << best_dgenes.size();
             dgene_from_marker( dgmarker, dgene );
             best_dgenes[ worker ]  = dgene;
             max_rss();
@@ -604,13 +553,12 @@ DbgLv(1) << "  MAST: work" << worker << " dgm size" << dgmarker.size()
             fitness_round  = (double)qRound64( msg.fitness * fit_digit )
                              / fit_digit;
 
-DbgLv(1) << "  MAST: work" << worker << "fit msg,round,bestw,besto"
- << msg.fitness << fitness_round << best_fitness[worker].fitness
- << best_overall_fitness;
+            DbgLv( 1 ) << "  MAST: work" << worker << "fit msg,round,bestw,besto" << msg.fitness << fitness_round
+                       << best_fitness[worker].fitness << best_overall_fitness;
             // Set deme's best fitness
             if ( fitness_round < best_fitness[ worker ].fitness )
                best_fitness[ worker ].fitness = fitness_round;
-DbgLv(1) << "master: worker/fitness/best gene" << worker <<  msg.fitness << dgene_key( best_dgenes[worker] );
+            DbgLv( 1 ) << "master: worker/fitness/best gene" << worker << msg.fitness << dgene_key( best_dgenes[worker] );
 
             if ( ! early_termination )
             {  // Handle normal pre-early-termination updates
@@ -619,8 +567,8 @@ DbgLv(1) << "master: worker/fitness/best gene" << worker <<  msg.fitness << dgen
                {  // Report first best-fit RMSD
                   DbgLv(0) << "First Best Fit RMSD" << sqrt( fitness_round );
                }
-DbgLv(1) << "  MAST: work" << worker << "fit besto,round" << best_overall_fitness << fitness_round
- << "fit_power fit_digit msgfit" << fit_power << fit_digit << msg.fitness;
+               DbgLv( 1 ) << "  MAST: work" << worker << "fit besto,round" << best_overall_fitness << fitness_round
+                          << "fit_power fit_digit msgfit" << fit_power << fit_digit << msg.fitness;
 
                if ( fitness_round < best_overall_fitness )
                {  // Update over-all best fitness value (rounded)
@@ -641,19 +589,16 @@ DbgLv(1) << "  MAST: work" << worker << "fit besto,round" << best_overall_fitnes
                      << "deme results - Early Termination.";
                   early_termination = true;
                }
-
             }
-//DbgLv(1) << "  best_overall_fitness" << best_overall_fitness
-// << "fitness_same_count" << fitness_same_count
-// << " early_term?" << early_termination;
-if((worker%10)==1)
-DbgLv(1) << worker << ": best_overall_fitness" << best_overall_fitness
- << "fitness_same_count" << fitness_same_count
- << " early_term?" << early_termination;
+            if ( ( worker % 10 ) == 1 )
+            {
+               DbgLv( 1 ) << worker << ": best_overall_fitness" << best_overall_fitness << "fitness_same_count"
+                          << fitness_same_count << " early_term?" << early_termination;
+            }
 
             // Tell the worker to either stop or continue
-            tag            = early_termination ? FINISHED : GENERATION; 
-DbgLv(1) << "dgmast: Send#3 tag" << tag << "( FINISHED,GENERATION" << FINISHED << GENERATION << " )";
+            tag = early_termination ? FINISHED : GENERATION;
+            DbgLv( 1 ) << "dgmast: Send#3 tag" << tag << "( FINISHED,GENERATION" << FINISHED << GENERATION << " )";
 
             MPI_Send( &msg,            // MPI #3
                       0,               // Only interested in the tag 
@@ -664,7 +609,7 @@ DbgLv(1) << "dgmast: Send#3 tag" << tag << "( FINISHED,GENERATION" << FINISHED <
             break;
 
          case FINISHED:
-DbgLv(1) << "dgmast: Recv FINISH msg.size rsstotal" << msg.size << rsstotal;
+            DbgLv( 1 ) << "dgmast: Recv FINISH msg.size rsstotal" << msg.size << rsstotal;
             rsstotal += (long)msg.size;
             workers--;
             break;
@@ -672,10 +617,10 @@ DbgLv(1) << "dgmast: Recv FINISH msg.size rsstotal" << msg.size << rsstotal;
          case EMMIGRATE:
          {
             // First get a set of genes as a concatenated marker vector.
-            int gene_count    = msg.size;
+            const int         gene_count    = msg.size;
             int doubles_count = gene_count * nfloatc;
             QVector< double > emmigrants( doubles_count ) ;
-DbgLv(1) << "dgmast: Recv#4 EMMIG: gene_count doubles_count" << gene_count << doubles_count;
+            DbgLv( 1 ) << "dgmast: Recv#4 EMMIG: gene_count doubles_count" << gene_count << doubles_count;
 
             MPI_Recv( emmigrants.data(),  // MPI #4
                       doubles_count,
@@ -686,15 +631,10 @@ DbgLv(1) << "dgmast: Recv#4 EMMIG: gene_count doubles_count" << gene_count << do
                       MPI_STATUS_IGNORE );
 
             // Add the genes to the emmigres list
-            int emgx          = emigres.size();
-DbgLv(1) << "dgmast: Recv#4 EMMIG: emgx" << emgx;
+            const int emgx = emigres.size();
+            DbgLv( 1 ) << "dgmast: Recv#4 EMMIG: emgx" << emgx;
             marker_to_dgenes( emmigrants, emigres, emgx, gene_count );
-DbgLv(1) << "dgmast: Recv#4 EMMIG: emigres size" << emigres.size();
-
-//*DEBUG*
-//if(emigres[0][0].s<0.0)
-// DbgLv(0) << "MAST: **GENE s" << emigres[0][0].s << " Emigrant";
-//*DEBUG*
+            DbgLv( 1 ) << "dgmast: Recv#4 EMMIG: emigres size" << emigres.size();
 
             max_rss();
 
@@ -719,11 +659,11 @@ DbgLv(1) << "dgmast: Recv#4 EMMIG: emigres size" << emigres.size();
             }
             else
             {
-DbgLv(1) << "dgmast: Send#5 IMMIG: count==0 migr data" << immigrants.data();
+               DbgLv( 1 ) << "dgmast: Send#5 IMMIG: count==0 migr data" << immigrants.data();
                immigrants.resize( 1 );
             }
-DbgLv(1) << "dgmast: Send#5 IMMIG: immigrants size" << immigrants.size() << "doubles_count" << doubles_count
-         << "migr data" << immigrants.data();
+            DbgLv( 1 ) << "dgmast: Send#5 IMMIG: immigrants size" << immigrants.size() << "doubles_count" << doubles_count
+                       << "migr data" << immigrants.data();
 
             MPI_Send( immigrants.data(),   // MPI #5
                       doubles_count,
@@ -731,11 +671,7 @@ DbgLv(1) << "dgmast: Send#5 IMMIG: immigrants size" << immigrants.size() << "dou
                       worker,
                       IMMIGRATE,
                       my_communicator );
-DbgLv(1) << "dgmast:   Send#5 IMMIG: complete";
-//*DEBUG*
-//if(immigrants[0].s<0.0)
-// DbgLv(0) << "MAST: **GENE s" << immigrants[0].s << " Immigrant-to-send";
-//*DEBUG*
+            DbgLv( 1 ) << "dgmast:   Send#5 IMMIG: complete";
             break;
          }
       }
@@ -743,13 +679,12 @@ DbgLv(1) << "dgmast:   Send#5 IMMIG: complete";
       max_rss();
    }
 
-DbgLv(1) << "Master maxrss" << maxrss << " worker total rss" << rsstotal
- << "rank" << my_rank;
+   DbgLv( 1 ) << "Master maxrss" << maxrss << " worker total rss" << rsstotal << "rank" << my_rank;
    maxrss += rsstotal;
 
    if ( early_termination )
    {  // Report when we have reached early termination of generations
-      int mc_iter  = mgroup_count < 2 ? ( mc_iteration + 1 ) : mc_iteration;
+      const int mc_iter = mgroup_count < 2 ? ( mc_iteration + 1 ) : mc_iteration;
       DbgLv(0) << "Early termination at average generation" << avg
          << ", MC" << mc_iter;
    }
@@ -769,24 +704,24 @@ void US_MPI_Analysis::dmga_global_fit( void )
    // Point to current dataset
    US_DataIO::EditedData* data = &data_sets[ current_dataset ]->run_data;
 
-   int scan_count    = data->scanCount();
-   int radius_points = data->pointCount();
+   const int              scan_count    = data->scanCount();
+   const int              radius_points = data->pointCount();
    int index         = 0;
 
-   QVector< double > scaled_data( static_cast<qsizetype>( scan_count ) * radius_points );
+   QVector<double>        ds_scaled( static_cast<qsizetype>( scan_count ) * radius_points );
 
    // Scale the data
    for ( int s = 0; s < scan_count; s++ )
    {
       for ( int r = 0; r < radius_points; r++ )
       {
-         scaled_data[ index++ ] = data->value( s, r ) / concentration;
+         ds_scaled[index++] = data->value( s, r ) / concentration;
       }
    }
 
    // Send the scaled data to the workers
    MPI_Job job;
-   job.length         = scaled_data.size();
+   job.length         = ds_scaled.size();
    job.dataset_offset = current_dataset;
    job.dataset_count  = 1;
 
@@ -806,10 +741,10 @@ void US_MPI_Analysis::dmga_global_fit( void )
    // Get everybody synced up
    MPI_Barrier( my_communicator );
 
-   MPI_Bcast( scaled_data.data(),      // MPI #8
-              scaled_data.size(), 
-              MPI_DOUBLE, 
-              MPI_Job::MASTER, 
+   MPI_Bcast( ds_scaled.data(), // MPI #8
+              ds_scaled.size(),
+              MPI_DOUBLE,
+              MPI_Job::MASTER,
               my_communicator );
 
    // Go to the next dataset
@@ -832,8 +767,8 @@ void US_MPI_Analysis::set_dmga_gaussians( void )
 
    for ( int ee = 0; ee < data_sets.size(); ee++ )
    {
-      int nscan   = data_sets[ ee ]->run_data.scanCount();
-      int npoint  = data_sets[ ee ]->run_data.pointCount();
+      const int nscan  = data_sets[ee]->run_data.scanCount();
+      const int npoint = data_sets[ee]->run_data.pointCount();
 
       // Place the residuals magnitudes into a single vector for convenience
       for ( int ss = 0; ss < nscan; ss++, ks++ )
@@ -849,7 +784,7 @@ void US_MPI_Analysis::set_dmga_gaussians( void )
 // Set up next MonteCarlo iteration for dmGA
 void US_MPI_Analysis::set_dmga_MonteCarlo( void ) 
 {
-DbgLv(1) << "sdMC: mciter" << mc_iteration;
+   DbgLv( 1 ) << "sdMC: mciter" << mc_iteration;
    // This is almost the same as ga set_monteCarlo
    if ( mc_iteration <= mgroup_count )
    {
@@ -868,21 +803,20 @@ DbgLv(1) << "sdMC: mciter" << mc_iteration;
    {
       US_DataIO::EditedData* edata = &data_sets[ ee ]->run_data;
 
-      int scan_count    = edata->scanCount();
-      int radius_points = edata->pointCount();
+      const int              scan_count    = edata->scanCount();
+      const int              radius_points = edata->pointCount();
 
       for ( int ss = 0; ss < scan_count; ss++ )
       {
          for ( int rr = 0; rr < radius_points; rr++ )
          {
-            double variation = US_Math2::box_muller( 0.0, sigmas[ index ] );
+            const double variation = US_Math2::box_muller( 0.0, sigmas[index] );
             mc_data[ index ] = scaled_data.value( ss, rr ) + variation;
             index++;
          }
       }
    }
-DbgLv(1) << "sdMC: mc_data set index" << index
-         << "total_points" << total_points;
+   DbgLv( 1 ) << "sdMC: mc_data set index" << index << "total_points" << total_points;
 
    // Broadcast Monte Carlo data to all workers
    MPI_Job job;
@@ -939,8 +873,7 @@ void US_MPI_Analysis::dgene_from_marker( QVector< double >& dgm, DGene& dg )
 }
 
 // Get a marker vector of doubles from multiple dmga genes (models)
-void US_MPI_Analysis::dgenes_to_marker( QVector< double >& dgm,
-      QList< DGene >& dgenes, const int stgx, const int ngenes )
+void US_MPI_Analysis::dgenes_to_marker( QVector<double>& dgm, QList<DGene>& dglist, const int stgx, const int ngenes )
 {
    int mx       = 0;            // Initial marker index
    int gx       = stgx;         // Initial genes index
@@ -948,7 +881,7 @@ void US_MPI_Analysis::dgenes_to_marker( QVector< double >& dgm,
 
    for ( int kg = 0; kg < ngenes; kg++ )
    {  // Fetch each gene and store its float attribute values
-      wkgene        = dgenes[ gx++ ];
+      wkgene = dglist[gx++];
 
       for ( int ii = 0; ii < nfloatc; ii++ )
       {  // Fetch each gene float attribute value into the marker vector
@@ -959,12 +892,11 @@ void US_MPI_Analysis::dgenes_to_marker( QVector< double >& dgm,
 }
 
 // Get multiple dmga genes (models) from a marker vector of doubles
-void US_MPI_Analysis::marker_to_dgenes( QVector< double >& dgm,
-      QList< DGene >& dgenes, const int stgx, const int ngenes )
+void US_MPI_Analysis::marker_to_dgenes( QVector<double>& dgm, QList<DGene>& dglist, const int stgx, const int ngenes )
 {
    int mx       = 0;               // Initial marker index
    int gx       = stgx;            // Initial genes index
-   int igsize   = dgenes.size();   // Initial genes list size
+   int   igsize   = dglist.size();   // Initial genes list size
    DGene wkgene = wmodel;          // Base gene
 
    for ( int kg = 0; kg < ngenes; kg++ )
@@ -978,17 +910,19 @@ void US_MPI_Analysis::marker_to_dgenes( QVector< double >& dgm,
 
       if ( gx >= igsize )
       {
-         dgenes << wkgene;         // Append the constructed gene
+         dglist << wkgene; // Append the constructed gene
          igsize++;
       }
       else
-         dgenes[ gx ] = wkgene;    // Store the constructed gene
+         dglist[gx] = wkgene; // Store the constructed gene
    }
 }
 
 // Store a component/association attribute value
-bool US_MPI_Analysis::store_attr_value( double& aval, US_Model& model,
-      US_dmGA_Constraints::AttribType& atype, int& mcompx )
+bool US_MPI_Analysis::store_attr_value( const double&                          aval,
+                                        US_Model&                              model,
+                                        const US_dmGA_Constraints::AttribType& atype,
+                                        const int&                             mcompx )
 {
    bool is_ok  = true;
    US_Model::SimulationComponent* sc = NULL;
@@ -1044,8 +978,10 @@ bool US_MPI_Analysis::store_attr_value( double& aval, US_Model& model,
 }
 
 // Fetch a component/association attribute value
-bool US_MPI_Analysis::fetch_attr_value( double& aval, US_Model& model,
-      US_dmGA_Constraints::AttribType& atype, int& mcompx )
+bool US_MPI_Analysis::fetch_attr_value( double&                                aval,
+                                        US_Model&                              model,
+                                        const US_dmGA_Constraints::AttribType& atype,
+                                        const int&                             mcompx )
 {
    bool is_ok  = true;
    US_Model::SimulationComponent* sc = NULL;
@@ -1097,54 +1033,48 @@ bool US_MPI_Analysis::fetch_attr_value( double& aval, US_Model& model,
 }
 
 // Get an apply-ready model from a dmga gene
-void US_MPI_Analysis::model_from_dgene( US_Model& model, DGene& dgene )
+void US_MPI_Analysis::model_from_dgene( US_Model& model, DGene& dg ) const
 {
-   model        = dgene;           // Initialize the model
+   model = dg; // Initialize the model
 
-   model.update_coefficients();    // Compute missing coefficients
-//*DEBUG*
-if(group_rank<1) {
-DbgLv(2) << my_rank << "MFG:g-comp1 s,k,w,d,f"
- << dgene.components[0].s
- << dgene.components[0].f_f0
- << dgene.components[0].mw
- << dgene.components[0].D
- << dgene.components[0].f;
-DbgLv(2) << my_rank << "MFG:m-comp1 s,k,w,d,f"
- << model.components[0].s
- << model.components[0].f_f0
- << model.components[0].mw
- << model.components[0].D
- << model.components[0].f;
-}
-//*DEBUG*
+   model.update_coefficients(); // Compute missing coefficients
+   if ( group_rank < 1 )
+   {
+      DbgLv( 2 ) << my_rank << "MFG:g-comp1 s,k,w,d,f" << dg.components[0].s << dg.components[0].f_f0 << dg.components[0].mw
+                 << dg.components[0].D << dg.components[0].f;
+      DbgLv( 2 ) << my_rank << "MFG:m-comp1 s,k,w,d,f" << model.components[0].s << model.components[0].f_f0
+                 << model.components[0].mw << model.components[0].D << model.components[0].f;
+   }
 
    for ( int ii = 0; ii < model.associations.size(); ii++ )
    {  // Modify some coefficients based on associations
       US_Model::Association* as  = &model.associations[ ii ];
 
-      int nrco      = as->rcomps.size();                 // Components involved
-      int rpx       = nrco - 1;                          // Last comp index
-      int rc1       = as->rcomps[ 0 ];                   // Comp indexes
-      int rc2       = nrco == 2 ? rc1 : as->rcomps[ 1 ];
-      int rcp       = as->rcomps[ rpx ];
-      int st1       = as->stoichs[ 0 ];                  // Stoichiometries
-      int st2       = qAbs( as->stoichs[ 1 ] );
-      int stp       = qAbs( as->stoichs[ rpx ] );
-      double ff0p   = qMax( 1.0, model.components[ rcp ].f_f0 );
-      model.components[ rcp ] = dgene.components[ rcp ]; // Raw product comp
-if(group_rank<2)
-DbgLv(1) << my_rank << "MFG: ii" << ii << "nrco,rc1,rc2,rcp"
- << nrco << rc1 << rc2 << rcp << "st1,st2,stp" << st1 << st2 << stp;
+      const int              nrco = as->rcomps.size(); // Components involved
+      const int              rpx  = nrco - 1;          // Last comp index
+      const int              rc1  = as->rcomps[0];     // Comp indexes
+      const int              rc2  = nrco == 2 ? rc1 : as->rcomps[1];
+      const int              rcp  = as->rcomps[rpx];
+      const int              st1  = as->stoichs[0]; // Stoichiometries
+      const int              st2  = qAbs( as->stoichs[1] );
+      const int              stp  = qAbs( as->stoichs[rpx] );
+      const double           ff0p = qMax( 1.0, model.components[rcp].f_f0 );
+      model.components[rcp]       = dg.components[rcp]; // Raw product comp
+      if ( group_rank < 2 )
+      {
+         DbgLv( 1 ) << my_rank << "MFG: ii" << ii << "nrco,rc1,rc2,rcp" << nrco << rc1 << rc2 << rcp << "st1,st2,stp" << st1 << st2
+                    << stp;
+      }
 
       // Reset concentration for reactant(s) and product
-      double cval   = model.components[ rc1 ].signal_concentration;
+      const double cval                             = model.components[rc1].signal_concentration;
       model.components[ rc2 ].signal_concentration  = cval;
       //model.components[ rcp ].signal_concentration  = cval;
       model.components[ rcp ].signal_concentration  = 0.0;
-if(group_rank<2)
-DbgLv(1) << my_rank << "MFG:   orig cval wval vval" << cval
- << model.components[rcp].mw << model.components[rcp].vbar20;
+      if ( group_rank < 2 )
+      {
+         DbgLv( 1 ) << my_rank << "MFG:   orig cval wval vval" << cval << model.components[rcp].mw << model.components[rcp].vbar20;
+      }
 
       // Reset molecular weight and vbar for product
       double wval   = model.components[ rc1 ].mw         * (double)st1;
@@ -1170,10 +1100,11 @@ DbgLv(1) << my_rank << "MFG:   orig cval wval vval" << cval
 
       // Recompute coefficients with specified vbar,mw,f/f0
       model.calc_coefficients( model.components[ rcp ] );
-if(group_rank<2)
-DbgLv(1) << my_rank << "MFG:     rcp" << rcp << "c.s c.k c.mw c.vb"
- << model.components[rcp].s << model.components[rcp].f_f0
- << model.components[rcp].mw << model.components[rcp].vbar20;
+      if ( group_rank < 2 )
+      {
+         DbgLv( 1 ) << my_rank << "MFG:     rcp" << rcp << "c.s c.k c.mw c.vb" << model.components[rcp].s
+                    << model.components[rcp].f_f0 << model.components[rcp].mw << model.components[rcp].vbar20;
+      }
    }
 }
 

@@ -11,12 +11,16 @@
 //! Usage:
 //!   us_mpi_testdata data   <outdir> <runID> <cell> <seed> <scale> [options]
 //!   us_mpi_testdata cgrid  <outdir> <filename>
+//!   us_mpi_testdata dmga   <outdir> <filename>
 //!
 //! "data" writes <runID>.RI.<cell>.A.260.auc and the edit file
 //! <runID>.e1.RI.<cell>.A.260.xml.  "cgrid" writes a custom-grid model file.
-//! Options of "data":  scans=<n> (default 30) and nobottom (an edit file
+//! "dmga" writes a DMGA constraints model for the three simulated species.
+//! Options of "data":  scans=<n> (default 30), nobottom (an edit file
 //! without <bottom>, as older edit files lack the element; us_edit always
-//! writes it, with radius 0 when it has none).
+//! writes it, with radius 0 when it has none) and tmst (also the 1-second
+//! timestate file set <runID>.time_state.tmst/.xml the data were simulated
+//! with).
 
 #include <QtCore>
 #include <cmath>
@@ -26,6 +30,7 @@
 #include "us_astfem_math.h"
 #include "us_astfem_rsa.h"
 #include "us_dataIO.h"
+#include "us_dmga_constr.h"
 #include "us_math2.h"
 #include "us_model.h"
 #include "us_simparms.h"
@@ -174,7 +179,14 @@ US_Model sample_model( double scale )
    return model;
 }
 
-int write_data( const QString& outdir, const QString& runID, int cell, uint64_t seed, double scale, int scans, bool nobottom )
+int write_data( const QString& outdir,
+                const QString& runID,
+                int            cell,
+                uint64_t       seed,
+                double         scale,
+                int            scans,
+                bool           nobottom,
+                bool           with_tmst )
 {
    QString            triple   = QString( "RI.%1.A.260" ).arg( cell );
    QString            aucname  = runID + "." + triple + ".auc";
@@ -213,6 +225,20 @@ int write_data( const QString& outdir, const QString& runID, int cell, uint64_t 
    US_AstfemMath::initSimData( tsdat, edata, 0.0 );
    US_AstfemMath::writetimestate( tmst, simparams, tsdat );
    simparams.simSpeedsFromTimeState( tmst );
+
+   if ( with_tmst )
+   { // Also write the timestate file set as the LIMS includes it in a job
+      QString tmst_out = outdir + "/" + runID + ".time_state.tmst";
+      QString xml_in   = QString( tmst ).replace( ".tmst", ".xml" );
+      QString xml_out  = QString( tmst_out ).replace( ".tmst", ".xml" );
+      QFile::remove( tmst_out );
+      QFile::remove( xml_out );
+      if ( !QFile::copy( tmst, tmst_out ) || ( QFile::exists( xml_in ) && !QFile::copy( xml_in, xml_out ) ) )
+      {
+         fprintf( stderr, "cannot write %s\n", qPrintable( tmst_out ) );
+         return 1;
+      }
+   }
 
    // Convert the 20,W model to experimental space as US_SolveSim does
    US_Math2::SolutionData sd;
@@ -298,6 +324,55 @@ int write_custom_grid( const QString& outdir, const QString& filename )
    printf( "%s\n", qPrintable( filename ) );
    return 0;
 }
+int write_dmga_constraints( const QString& outdir, const QString& filename )
+{
+   // s and f/f0 float in a range around each simulated species, vbar is
+   //  fixed, the concentration floats
+   typedef US_dmGA_Constraints C;
+   US_Model                    bmodel = sample_model( 1.0 );
+   C                           constraints;
+   constraints.load_base_model( &bmodel );
+
+   QVector<C::Constraint> cnsv;
+   auto                   add = [&cnsv]( C::AttribType atype, int mcompx, double low, double high, bool floats )
+   {
+      C::Constraint cns;
+      cns.atype  = atype;
+      cns.mcompx = mcompx;
+      cns.low    = low;
+      cns.high   = floats ? high : low;
+      cns.floats = floats;
+      cns.logscl = false;
+      cnsv << cns;
+   };
+
+   for ( int ii = 0; ii < bmodel.components.size(); ii++ )
+   {
+      const US_Model::SimulationComponent& sc = bmodel.components[ii];
+      add( C::ATYPE_S, ii, sc.s * 0.85, sc.s * 1.15, true );
+      add( C::ATYPE_FF0, ii, sc.f_f0 * 0.85, sc.f_f0 * 1.15, true );
+      add( C::ATYPE_VBAR, ii, sc.vbar20, sc.vbar20, false );
+      add( C::ATYPE_CONC, ii, 0.05, 0.8, true );
+   }
+   constraints.load_constraints( cnsv );
+
+   US_Model cmodel;
+   if ( !constraints.get_constr_model( &cmodel ) )
+   {
+      fprintf( stderr, "cannot build constraints model\n" );
+      return 1;
+   }
+   cmodel.description = "regression dmga constraints";
+   cmodel.modelGUID   = "00000000-0000-4000-8000-00000000d6a0";
+
+   if ( cmodel.write( outdir + "/" + filename ) != 0 )
+   {
+      fprintf( stderr, "cannot write %s\n", qPrintable( filename ) );
+      return 1;
+   }
+   printf( "%s\n", qPrintable( filename ) );
+   return 0;
+}
 } // namespace
 
 int main( int argc, char* argv[] )
@@ -307,9 +382,10 @@ int main( int argc, char* argv[] )
 
    if ( args.size() >= 7 && args[1] == "data" )
    {
-      int  scans    = kScans;
-      bool nobottom = false;
-      bool argsok   = true;
+      int  scans     = kScans;
+      bool nobottom  = false;
+      bool with_tmst = false;
+      bool argsok    = true;
 
       for ( int ii = 7; ii < args.size(); ii++ )
       {
@@ -321,6 +397,10 @@ int main( int argc, char* argv[] )
          else if ( args[ii] == "nobottom" )
          {
             nobottom = true;
+         }
+         else if ( args[ii] == "tmst" )
+         {
+            with_tmst = true;
          }
          else
          {
@@ -334,7 +414,7 @@ int main( int argc, char* argv[] )
          }
       }
 
-      return write_data( args[2], args[3], args[4].toInt(), args[5].toULongLong(), args[6].toDouble(), scans, nobottom );
+      return write_data( args[2], args[3], args[4].toInt(), args[5].toULongLong(), args[6].toDouble(), scans, nobottom, with_tmst );
    }
 
    if ( args.size() == 4 && args[1] == "cgrid" )
@@ -342,9 +422,16 @@ int main( int argc, char* argv[] )
       return write_custom_grid( args[2], args[3] );
    }
 
+   if ( args.size() == 4 && args[1] == "dmga" )
+   {
+      return write_dmga_constraints( args[2], args[3] );
+   }
+
    fprintf( stderr,
-            "usage: %s data <outdir> <runID> <cell> <seed> <scale> [scans=<n>] [nobottom]\n"
-            "       %s cgrid <outdir> <filename>\n",
+            "usage: %s data <outdir> <runID> <cell> <seed> <scale> [scans=<n>] [nobottom] [tmst]\n"
+            "       %s cgrid <outdir> <filename>\n"
+            "       %s dmga  <outdir> <filename>\n",
+            argv[0],
             argv[0],
             argv[0] );
    return 2;
