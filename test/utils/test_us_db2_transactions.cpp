@@ -41,6 +41,10 @@ const char* const rollbackProcedure = "us3_test_txn_rollback";
 // Returns a status row, then fails producing its data set.
 const char* const failingProcedure = "us3_test_txn_fail";
 
+// Records the status it is given in @US3_LAST_ERRNO and returns no status set,
+// as US3 procedures do on an empty GUID or a failed verify_user.
+const char* const silentProcedure = "us3_test_txn_silent";
+
 struct LiveDb
 {
       QString host;
@@ -97,11 +101,26 @@ class US_DB2_LiveTransaction : public ::testing::Test
          first->rawQuery( QString( "DROP PROCEDURE IF EXISTS %1" ).arg( failingProcedure ) );
          first->rawQuery(
             QString( "CREATE PROCEDURE %1() BEGIN SELECT 0; SELECT * FROM us3_test_no_such_table; END" ).arg( failingProcedure ) );
+         first->rawQuery( QString( "DROP PROCEDURE IF EXISTS %1" ).arg( silentProcedure ) );
+         first->rawQuery( QString( "CREATE PROCEDURE %1( p INT ) BEGIN SET @US3_LAST_ERRNO = p; "
+                                   "SET @US3_LAST_ERROR = CONCAT( 'silent status ', p ); END" )
+                             .arg( silentProcedure ) );
+
+         // The US3 schema's status functions, created only where they are missing.
+         createdStatusFunctions = scalar( *first,
+                                          "SELECT COUNT(*) FROM information_schema.ROUTINES WHERE "
+                                          "ROUTINE_SCHEMA = DATABASE() AND ROUTINE_NAME = 'last_errno'" ) == "0";
+         if ( createdStatusFunctions )
+         {
+            first->rawQuery( "CREATE FUNCTION last_errno() RETURNS INT NO SQL RETURN @US3_LAST_ERRNO" );
+            first->rawQuery( "CREATE FUNCTION last_error() RETURNS TEXT NO SQL RETURN @US3_LAST_ERROR" );
+         }
+
          ASSERT_EQ( scalar( *first,
                             QString( "SELECT COUNT(*) FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = DATABASE() "
-                                     "AND ROUTINE_NAME IN ( '%1', '%2' )" )
-                               .arg( rollbackProcedure, failingProcedure ) ),
-                    "2" )
+                                     "AND ROUTINE_NAME IN ( '%1', '%2', '%3', 'last_errno', 'last_error' )" )
+                               .arg( rollbackProcedure, failingProcedure, silentProcedure ) ),
+                    "5" )
             << "the test user needs CREATE ROUTINE";
       }
 
@@ -112,6 +131,12 @@ class US_DB2_LiveTransaction : public ::testing::Test
             first->rawQuery( QString( "DROP TABLE IF EXISTS %1" ).arg( table ) );
             first->rawQuery( QString( "DROP PROCEDURE IF EXISTS %1" ).arg( rollbackProcedure ) );
             first->rawQuery( QString( "DROP PROCEDURE IF EXISTS %1" ).arg( failingProcedure ) );
+            first->rawQuery( QString( "DROP PROCEDURE IF EXISTS %1" ).arg( silentProcedure ) );
+            if ( createdStatusFunctions )
+            {
+               first->rawQuery( "DROP FUNCTION IF EXISTS last_errno" );
+               first->rawQuery( "DROP FUNCTION IF EXISTS last_error" );
+            }
          }
       }
 
@@ -157,6 +182,7 @@ class US_DB2_LiveTransaction : public ::testing::Test
 
       std::unique_ptr<US_DB2> first;
       std::unique_ptr<US_DB2> second;
+      bool                    createdStatusFunctions = false;
 };
 
 // The error handling every caller does after a failed query -- statusQuery()
@@ -279,6 +305,23 @@ TEST_F( US_DB2_LiveTransaction, QueryReportsAFailureAfterTheStatusRow )
    EXPECT_EQ( first->lastErrno(), IUS_DB2::DBERROR );
    EXPECT_TRUE( first->lastError().contains( "us3_test_no_such_table" ) ) << first->lastError().toStdString();
    EXPECT_FALSE( first->next() );
+}
+
+// A procedure that returns without its status set reports the status it
+// recorded, not the previous query's (ultrascan-tickets#1018).
+TEST_F( US_DB2_LiveTransaction, QueryReadsTheStatusOfAProcedureThatReturnsNoSet )
+{
+   first->query( "SELECT 0" );
+   ASSERT_EQ( first->lastErrno(), IUS_DB2::OK );
+
+   first->query( QString( "CALL %1( %2 )" ).arg( silentProcedure ).arg( IUS_DB2::EMPTY ) );
+   EXPECT_EQ( first->lastErrno(), IUS_DB2::EMPTY );
+   EXPECT_EQ( first->lastError(), QString( "silent status %1" ).arg( IUS_DB2::EMPTY ) );
+   EXPECT_FALSE( first->next() );
+
+   first->query( QString( "CALL %1( 0 )" ).arg( silentProcedure ) );
+   EXPECT_EQ( first->lastErrno(), IUS_DB2::OK );
+   EXPECT_TRUE( first->lastError().isEmpty() ) << first->lastError().toStdString();
 }
 #endif
 } // namespace

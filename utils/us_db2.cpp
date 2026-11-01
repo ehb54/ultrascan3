@@ -714,6 +714,26 @@ void US_DB2::query( const QString& sqlQuery )
       }
    }
 
+   // A procedure that returns before its status set -- an empty GUID, a
+   // failed verify_user -- still records its status in @US3_LAST_ERRNO.  Read
+   // it, or db_errno keeps the previous query's status, usually OK.
+   else if ( sqlQuery.trimmed().startsWith( "CALL", Qt::CaseInsensitive ) )
+   {
+      db_errno = DBERROR;
+      this->rawQuery( "SELECT last_errno()" );
+
+      if ( result )
+      {
+         row = mysql_fetch_row( result );
+         if ( row != NULL && row[0] != NULL )
+         {
+            db_errno = atoi( row[0] );
+         }
+         mysql_free_result( result );
+         result = NULL;
+      }
+   }
+
    if ( db_errno != 0 )
    {
       this->rawQuery( "SELECT last_error()" );
