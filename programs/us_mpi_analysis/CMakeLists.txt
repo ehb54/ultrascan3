@@ -14,6 +14,7 @@ add_executable(us_mpi_analysis
     ${src_dir}/2dsa_worker.cpp
     ${src_dir}/pmasters_compjob.cpp
     ${src_dir}/us_mpi_parse.cpp
+    ${src_dir}/us_mpi_jobconfig.cpp
     ${src_dir}/ga_worker.cpp
     ${src_dir}/pcsa_master.cpp
     ${src_dir}/parallel_masters.cpp

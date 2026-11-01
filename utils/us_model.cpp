@@ -626,7 +626,10 @@ int US_Model::load( const QString& filename )
    if ( result == IUS_DB2::NO_MODEL  &&  monteCarlo )
    {  // Handle a multi-model stream
       file.close();
-      file.open( QIODevice::ReadOnly | QIODevice::Text );
+      if ( !file.open( QIODevice::ReadOnly | QIODevice::Text ) )
+      {
+         return IUS_DB2::DBERROR;
+      }
 
       QTextStream tsi( &file );
 
