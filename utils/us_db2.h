@@ -35,6 +35,7 @@ public:
 
     /*! \brief Generic destructor for the US_DB2 class. Database connection
         is terminated and any resources in use are closed and deleted.
+        A transaction still open is rolled back first.
     */
     ~US_DB2() override;
 
@@ -92,6 +93,27 @@ public:
     bool connect( const QString& host, const QString& dbname,
                   const QString& user, const QString& password,
                   QString& err ) override;
+
+    //! Transaction error formats; %1 is the refused operation or the server's error text.
+    static constexpr const char* transactionOpenMessage = "%1: a transaction is already open";
+    static constexpr const char* noTransactionMessage   = "%1: no transaction is open";
+    static constexpr const char* commitUnknownMessage =
+       "the connection was lost during the commit, so whether it took effect is unknown: %1";
+    static constexpr const char* serverRollbackMessage =
+       "the server had already rolled the transaction back after a deadlock, so nothing written in it was kept "
+       "and anything run after that ran outside the transaction";
+    static constexpr const char* transactionEndedMessage =
+       "the transaction had already ended, by an implicit commit or a rollback by the server, "
+       "so some rows written in it may have been kept";
+
+    /*! \brief Begin a transaction with START TRANSACTION. See IUS_DB2. */
+    bool          beginTransaction( QString& error ) final;
+
+    /*! \brief Commit the open transaction. See IUS_DB2. */
+    bool          commitTransaction( QString& error ) final;
+
+    /*! \brief Roll back the open transaction. See IUS_DB2. */
+    bool          rollbackTransaction( QString& error ) final;
 
     /*! \brief Implements a simple query on the active database
         connection, cleaning up any unused results from a previous query.
@@ -302,6 +324,9 @@ public:
 
 private:
     bool       connected;
+    bool       inTransaction        = false;
+    //! A deadlock in the open transaction, after which the server rolled it back.
+    bool       rolledBackByDeadlock = false;
 #ifndef NO_DB
     MYSQL*     db;
     MYSQL_RES* result;
@@ -316,6 +341,28 @@ private:
     QString    caFile;
     QString    error;
     int        db_errno;
+
+    //! \brief Consume and discard any result sets still pending on the
+    //!        connection.
+    //!
+    //! Every query here leaves its results in place for value()/next() to
+    //! read, and a CALL leaves an extra status set behind that as well.  The
+    //! next query cleans up before it runs, so ordinary use never notices --
+    //! but anything that talks to the connection without going through a
+    //! query, transaction control included, has to clear it first or the
+    //! server answers "Commands out of sync".
+    void       drainResults();
+
+    //! \brief True if the server no longer has a transaction open.
+    bool       transactionEndedEarly();
+
+    //! \brief Records a failed statement's error if it rolled the open
+    //!        transaction back.  Call while the error is still current.
+    void       noteStatementError();
+
+    //! \brief Why the transaction ended before commit or rollback: the
+    //!        deadlock if one was recorded, otherwise that rows may have been kept.
+    QString    transactionEndedText() const;
 
     QString    buildQuery      ( const QStringList& );
     QString    buildQuerySelect( const QStringList& );

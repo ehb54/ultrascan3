@@ -76,6 +76,60 @@ public:
                          const QString& user, const QString& password,
                          QString& err) = 0;
 
+    /*! \brief Begin a transaction on the connection.
+
+        Transactions do not nest: a second begin before the commit or rollback
+        is refused.  Autocommit is suspended only until the commit or rollback,
+        so the connection is never left with it off.
+
+        The rollback undoes everything written since the begin only if:
+        - every table written is transactional (InnoDB).  A MyISAM table keeps
+          its rows through a rollback, and nothing reports it.
+        - no statement in the transaction commits implicitly: a COMMIT inside a
+          stored procedure, or any DDL.  The rows written before it are kept.
+
+        The server can also end the transaction itself by rolling it back,
+        after a deadlock, or after a lock wait timeout when
+        innodb_rollback_on_timeout is set.  With that setting off, the default,
+        a lock wait timeout undoes only the statement that timed out and the
+        transaction stays open.  Statements run after the transaction has
+        ended, however it ended, run outside it.
+
+        \param error Set to the reason when the begin fails, cleared otherwise.
+        \return true if the transaction is open.
+    */
+    virtual bool                 beginTransaction( QString& error ) = 0;
+
+    /*! \brief Commit the open transaction.
+
+        On false the transaction is still treated as open, so the caller rolls
+        it back.  If the connection was lost during the commit, \p error says
+        that whether the commit took effect is unknown.  If the transaction
+        had already ended, the commit is refused, since a COMMIT then would
+        succeed without committing anything.  \p error names a deadlock when
+        the client saw one, and otherwise says only that some rows may have
+        been kept: a procedure that caught the deadlock or rolled back itself
+        looks the same as an implicit commit.
+
+        \param error Set to the reason when the commit fails, cleared otherwise.
+        \return true if the commit took effect; false if there was no open
+                 transaction or the server did not confirm the commit.
+    */
+    virtual bool                 commitTransaction( QString& error ) = 0;
+
+    /*! \brief Roll back the open transaction.
+
+        The transaction is over afterwards whatever the result.
+
+        \param error Set to the reason when the rollback fails, cleared otherwise.
+        \return true if everything written since the begin was undone; false if
+                 there was no open transaction, the rollback failed, or the
+                 transaction had already ended.  \p error then names a
+                 deadlock when the client saw one, and otherwise says only
+                 that some rows may have been kept.
+    */
+    virtual bool                 rollbackTransaction( QString& error ) = 0;
+
     // Query methods (used in US_Project and tests)
     virtual void query(const QString& sqlQuery) = 0;
     virtual void query(const QStringList& arguments) = 0;
