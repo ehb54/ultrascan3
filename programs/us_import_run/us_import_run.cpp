@@ -33,8 +33,8 @@ QTextStream& err()
    return s;
 }
 
-//! solution.description is VARCHAR(80) in the LIMS schema.  Reject an
-//! archive before opening a transaction rather than letting new_solution()
+//! solution.description is VARCHAR(80) in the LIMS schema.  Reject a
+//! run before opening a transaction rather than letting new_solution()
 //! fail with LAST_INSERT_ID() == 0 and a misleading missing-solution error.
 constexpr int      MAX_SOLUTION_DESCRIPTION_CHARACTERS = 80;
 
@@ -83,9 +83,9 @@ const QList<RecordKind>& recordKinds()
 }
 
 //! Stage chemistry records under the names US_Solution expects.
-bool stageRecords( const QString& archive_dir, QMap<QString, int>& staged, QString& error )
+bool stageRecords( const QString& run_dir, QMap<QString, int>& staged, QString& error )
 {
-   QDir source( archive_dir );
+   QDir source( run_dir );
 
    for ( const RecordKind& kind : recordKinds() )
    {
@@ -99,7 +99,7 @@ bool stageRecords( const QString& archive_dir, QMap<QString, int>& staged, QStri
          return false;
       }
 
-      // Prevent a stale record from satisfying this archive's GUID lookup.
+      // Prevent a stale record from satisfying this run's GUID lookup.
       QDir existing( target_path );
       for ( const QString& stale : existing.entryList( QStringList( pattern ), QDir::Files ) )
       {
@@ -151,11 +151,11 @@ bool rejectExtraRuns( const QString& run_dir, const QString& run_id, QString& er
    }
 
    error = "Directory " + run_dir + " holds run " + run_id + " alongside experiment records for " + others.join( ", " ) +
-           "\nThis loads one run; split the archive by run ID first";
+           "\nThis loads one run; split the directory by run ID first";
    return false;
 }
 
-//! One of the archive's edit files, paired with the raw dataset it names.
+//! One of the run directory's edit files, paired with the raw dataset it names.
 struct EditFile
 {
       QString path;     //!< Full path, for the blob upload
@@ -208,7 +208,7 @@ bool collectEdits( const US_ConvertIO::DiskRun& run, QList<EditFile>& edits, QSt
          continue;
       }
 
-      // Ignore edits owned by another run in the archive.
+      // Ignore edits owned by another run in the directory.
       if ( match.captured( 1 ) != run_id )
       {
          continue;
@@ -415,7 +415,7 @@ bool prepareRun( const QString& run_dir, const QString& wanted_run, const QStrin
    if ( project.readFromDisk( project.projectGUID ) != US_DB2::OK )
    {
       error = "No project record for GUID " + project.projectGUID + " (run " + run_id +
-              ")\nThe archive must include the P record the "
+              ")\nThe run directory must include the P record the "
               "simulation wrote";
       return false;
    }
@@ -436,7 +436,7 @@ bool prepareRun( const QString& run_dir, const QString& wanted_run, const QStrin
       if ( solution.readFromDisk( guid ) != US_DB2::OK )
       {
          error = "No solution record for GUID " + guid + " (triple " + run.disk.triples[ii].tripleDesc + " of run " + run_id +
-                 ")\nThe archive must include the solution XML the simulation "
+                 ")\nThe run directory must include the solution XML the simulation "
                  "wrote";
          return false;
       }
@@ -557,7 +557,7 @@ int main( int argc, char* argv[] )
                                           "thing it does: it does not permit overwriting a run that is already "
                                           "loaded, which fails either way" );
    QCommandLineOption       dry_run_option( "dry-run",
-                                      "Read and validate the archive, then stop before database writes. "
+                                      "Read and validate the run directory, then stop before database writes. "
                                             "Record staging still uses --work-dir" );
 
    parser.addOptions( { dir_option,
@@ -610,31 +610,31 @@ int main( int argc, char* argv[] )
       return 1;
    }
 
-   QDir archive( parser.value( dir_option ) );
-   if ( !archive.exists() )
+   QDir source( parser.value( dir_option ) );
+   if ( !source.exists() )
    {
-      err() << "No such directory: " << archive.path() << Qt::endl;
+      err() << "No such directory: " << source.path() << Qt::endl;
       return 1;
    }
    // writeRawDataToDB and readFromDisk both build paths by plain concatenation,
    // so the separator has to be part of the string handed to them.
-   const QString archive_dir = archive.absolutePath() + "/";
+   const QString run_dir = source.absolutePath() + "/";
 
    const QString work_dir = parser.isSet( work_dir_option ) ? QDir( parser.value( work_dir_option ) ).absolutePath()
-                                                            : archive.absoluteFilePath( "../us_import_run" );
+                                                            : source.absoluteFilePath( "../us_import_run" );
 
    isolateSettings( work_dir + "/settings" );
    US_Settings::set_workBaseDir( work_dir );
 
    QMap<QString, int> staged;
    QString            stage_error;
-   if ( !stageRecords( archive_dir, staged, stage_error ) )
+   if ( !stageRecords( run_dir, staged, stage_error ) )
    {
       err() << stage_error << Qt::endl;
       return 1;
    }
 
-   out() << "archive      : " << archive_dir << Qt::endl;
+   out() << "run dir      : " << run_dir << Qt::endl;
    out() << "work dir     : " << work_dir << Qt::endl;
    out() << "staged       : " << staged["projects"] << " projects, " << staged["solutions"] << " solutions, " << staged["buffers"]
          << " buffers, " << staged["analytes"] << " analytes" << Qt::endl;
@@ -643,7 +643,7 @@ int main( int argc, char* argv[] )
    PreparedRun run;
    QString     prepare_error;
 
-   if ( !prepareRun( archive_dir, parser.value( run_id_option ), parser.value( run_type_option ).toUpper(), run, prepare_error ) )
+   if ( !prepareRun( run_dir, parser.value( run_id_option ), parser.value( run_type_option ).toUpper(), run, prepare_error ) )
    {
       err() << prepare_error << Qt::endl;
       return 2;
@@ -737,7 +737,7 @@ int main( int argc, char* argv[] )
    }
 
    // Create only.  The corpus is built into a fresh database, so a run ID that
-   // is already there is a duplicate archive rather than a revision, and
+   // is already there is a duplicate load rather than a revision, and
    // saveToDB() answers that with DUPFIELD instead of rewriting the run.  The
    // speed steps are the ones the experiment XML carried: saveToDB() rewrites
    // the rows from this vector, so passing the empty one it used to be given is
