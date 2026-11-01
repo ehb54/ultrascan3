@@ -1,6 +1,6 @@
 //! \file test_us_db2.cpp
 // US_DB2::composeQuery(): stored-procedure invocation and credential placement,
-// and how a refused procedure name fails the query.  The escaping itself is in
+// and how a refused procedure name fails the query and the blob transfers.  The escaping itself is in
 // test_us_db2_escaping.cpp; the rest of US_DB2 needs a live server.
 
 #include "qt_test_base.h"
@@ -8,6 +8,7 @@
 
 #include <QString>
 #include <QStringList>
+#include <QTemporaryFile>
 
 namespace
 {
@@ -100,6 +101,24 @@ TEST( UsDb2Query, ARefusedProcedureNameFailsTheQueryWithItsOwnError )
    db.query( QStringList() << "" );
    EXPECT_EQ( db.lastErrno(), IUS_DB2::DBERROR );
    EXPECT_FALSE( db.next() );
+}
+
+TEST( UsDb2Query, TheBlobTransfersRefuseAnInvalidProcedureName )
+{
+   // A readable, non-empty file, so only the procedure name can be refused.
+   QTemporaryFile file;
+   ASSERT_TRUE( file.open() );
+   file.write( "blob" );
+   file.close();
+
+   US_DB2        db;
+   const QString name = "p; DROP TABLE users";
+
+   EXPECT_EQ( db.writeBlobToDB( file.fileName(), name, 1 ), IUS_DB2::DBERROR );
+   EXPECT_EQ( db.lastError(), QObject::tr( US_DB2::invalidProcedureMessage ).arg( name ) );
+
+   EXPECT_EQ( db.readBlobFromDB( file.fileName(), "od'd", 1 ), IUS_DB2::DBERROR );
+   EXPECT_EQ( db.lastError(), QObject::tr( US_DB2::invalidProcedureMessage ).arg( "od'd" ) );
 }
 
 TEST( UsDb2Query, AnEmptyArgumentIsStillPassedAsAnEmptyLiteral )

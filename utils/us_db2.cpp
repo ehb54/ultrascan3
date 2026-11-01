@@ -853,6 +853,15 @@ QString US_DB2::escapeLiteral( QString value )
    return value;
 }
 
+bool US_DB2::isProcedureName( const QString& name )
+{
+   // The name is a SQL identifier, not a quoted literal, so escaping cannot
+   // make it safe -- it is interpolated as written.  Accept only a plain
+   // identifier so anything else is refused rather than emitted.
+   static const QRegularExpression procName( "\\A[A-Za-z_][A-Za-z0-9_]*\\z" );
+   return procName.match( name ).hasMatch();
+}
+
 QString US_DB2::composeQuery( const QString& keyword, const QStringList& arguments, const QString& guid, const QString& password )
 {
    // The procedure name is arguments[ 0 ], so an empty list has nothing to call.
@@ -861,11 +870,7 @@ QString US_DB2::composeQuery( const QString& keyword, const QStringList& argumen
       return QString();
    }
 
-   // The name is a SQL identifier, not a quoted literal, so escaping cannot
-   // make it safe -- it is interpolated as written.  Accept only a plain
-   // identifier and refuse anything else rather than emit it.
-   static const QRegularExpression procName( "\\A[A-Za-z_][A-Za-z0-9_]*\\z" );
-   if ( !procName.match( arguments[0] ).hasMatch() )
+   if ( !isProcedureName( arguments[0] ) )
    {
       return QString();
    }
@@ -942,6 +947,13 @@ int US_DB2::writeBlobToDB( const QString& , const QString& , const int ) { retur
 int US_DB2::writeBlobToDB( const QString& filename, 
     const QString& procedure, const int tableID )
 {
+   // The procedure name is pasted into the query below, so refuse it before
+   // reading the file.
+   if ( !isProcedureName( procedure ) )
+   {
+      return refuseArguments( QStringList() << procedure );
+   }
+
    // First let's read the file
    QFile fin( filename );
 

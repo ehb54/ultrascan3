@@ -426,7 +426,11 @@ public:
     //! \brief Escapes \p value for use inside a single-quoted SQL literal.
     static QString escapeLiteral( QString value );
 
-    //! \brief Fails a query whose procedure name composeQuery refused,
+    //! \brief True if \p name is a plain identifier that is safe to
+    //!        interpolate as a procedure name.
+    static bool    isProcedureName( const QString& name );
+
+    //! \brief Fails a query whose procedure name isProcedureName refused,
     //!        without sending anything.  Returns DBERROR.
     int            refuseArguments( const QStringList& arguments );
 
