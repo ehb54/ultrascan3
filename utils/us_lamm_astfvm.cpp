@@ -1585,8 +1585,8 @@ void US_LammAstfvm::AdjustSD( double t, int Nv, double *x, double *u,
    //double  vbar   = model.components[ 0 ].vbar20;
    double  vbar   = model.components[ comp_x ].vbar20;
    QElapsedTimer timer;
-   static int kst1=0;
-   static int kst2=0;
+   static thread_local int kst1=0;  // Debug timing, per thread
+   static thread_local int kst2=0;
 
    switch ( NonIdealCaseNo )
    {
