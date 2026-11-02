@@ -200,6 +200,7 @@ class US_GA_Initialize : public US_Widgets
       void autoAssignSb(   void );
       void resetSb(        void );
       void fill_lw_bins(   void );
+      void update_buttons( void );
       void save(           void );
       void reset(          void );
       void view(           void );

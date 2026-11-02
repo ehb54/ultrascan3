@@ -242,25 +242,25 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    connect( pb_lddistr, &QAbstractButton::clicked,
             this,       &US_GA_Initialize::load_distro );
 
-   pb_ldcolor    = us_pushbutton( tr( "Load Color File" ) );
+   pb_ldcolor    = us_pushbutton( tr( "Load Color File" ), false );
    connect( pb_ldcolor, &QAbstractButton::clicked,
             this,       &US_GA_Initialize::load_color );
 
-   pb_mandrsb    = us_pushbutton( tr( "Manually Draw Bins" ) );
+   pb_mandrsb    = us_pushbutton( tr( "Manually Draw Bins" ), false );
    pb_mandrsb->setCheckable( true );
    
    connect( pb_mandrsb, &QAbstractButton::toggled,
             this,       &US_GA_Initialize::manDrawSb );
 
-   pb_autassb    = us_pushbutton( tr( "Autoassign Solute Bins" ) );
+   pb_autassb    = us_pushbutton( tr( "Autoassign Solute Bins" ), false );
    connect( pb_autassb, &QAbstractButton::clicked,
             this,       &US_GA_Initialize::autoAssignSb );
 
-   pb_resetsb    = us_pushbutton( tr( "Reset Solute Bins" ) );
+   pb_resetsb    = us_pushbutton( tr( "Reset Solute Bins" ), false );
    connect( pb_resetsb, &QAbstractButton::clicked,
             this,       &US_GA_Initialize::resetSb );
 
-   pb_reset      = us_pushbutton( tr( "Reset" ) );
+   pb_reset      = us_pushbutton( tr( "Reset" ), false );
    connect( pb_reset,   &QAbstractButton::clicked,
             this,       &US_GA_Initialize::reset );
 
@@ -268,7 +268,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    connect( pb_view,    &QAbstractButton::clicked,
             this,       &US_GA_Initialize::view );
 
-   pb_save       = us_pushbutton( tr( "Save" ) );
+   pb_save       = us_pushbutton( tr( "Save" ), false );
    connect( pb_save,    &QAbstractButton::clicked,
             this,       &US_GA_Initialize::save );
 
@@ -405,6 +405,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
 
    // set up variables and initial state of GUI
    soludata   = new US_SoluteData();
+   monte_carlo = false;
    attr_x     = 0;          // default X type: s
    attr_y     = 1;          // default Y type: f/f0
    attr_z     = 3;          // default Z (fixed) type:  vbar
@@ -435,6 +436,10 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
       binPicker->setEnabled( !drawing );
    } );
    
+   connect( ct_wxbuck, &QwtCounter::valueChanged,
+            this, &US_GA_Initialize::update_buttons );
+   connect( ct_hybuck, &QwtCounter::valueChanged,
+            this, &US_GA_Initialize::update_buttons );
    reset();
 }
 
@@ -526,13 +531,13 @@ void US_GA_Initialize::reset( void )
    pb_view->setEnabled( false );
    ct_wxbuck->setEnabled( true );
    ct_hybuck->setEnabled( true );
-   pb_autassb->setEnabled( true );
+   update_buttons();
 }
 
 // save the GA data
 void US_GA_Initialize::save( void )
 {
-   if ( sk_distro.isEmpty() ) {
+   if ( sk_distro.isEmpty() || soludata->bucketsCount() == 0 ) {
       return;
    }
 
@@ -710,6 +715,28 @@ void US_GA_Initialize::autoAssignSb( void )
    }
 }
 
+// Keep actions available only when their required data exists.
+void US_GA_Initialize::update_buttons()
+{
+   const bool hasData = !sk_distro.isEmpty() && !xy_distro.isEmpty();
+   const bool hasBins = hasData && soludata->bucketsCount() > 0;
+   pb_mandrsb->setEnabled( hasData );
+   pb_ldcolor->setEnabled( hasData );
+   pb_loadsb ->setEnabled( hasData );
+   pb_autassb->setEnabled( hasData && !monte_carlo
+      && ct_wxbuck->value() > 0.0 && ct_hybuck->value() > 0.0 );
+   pb_resetsb->setEnabled( hasBins );
+   pb_save->setEnabled( hasBins );
+   pb_reset->setEnabled( hasData || !pfilts.isEmpty() );
+   // Saving alone enables report viewing; state refreshes must not re-enable it.
+   pb_view->setEnabled( hasBins && pb_view->isEnabled() );
+   if ( !hasData )
+   {
+      pb_mandrsb->setChecked( false );
+      pick->setEnabled( false );
+   }
+}
+
 void US_GA_Initialize::fill_lw_bins()
 {
    const QSignalBlocker blocker( lw_buckets );
@@ -732,6 +759,7 @@ void US_GA_Initialize::fill_lw_bins()
       QMessageBox::warning( this, tr( "Bin Count Warning" ),
          tr( "There are %1 bins, exceeding the limit of %2." ).arg( nbuks ).arg( max_buks ) );
    }
+   update_buttons();
 }
 
 // Reset solute bins
@@ -1193,7 +1221,7 @@ for ( int jj=0;jj<sk_distro.size();jj++ ) {
 
    ct_wxbuck->setDisabled( monte_carlo );
    ct_hybuck->setDisabled( monte_carlo );
-   pb_autassb->setDisabled( monte_carlo );
+   update_buttons();
 }
 
 // load the color map from a file
@@ -1658,6 +1686,7 @@ void US_GA_Initialize::select_prefilt( void )
 
 DbgLv(1) << "PreFilt: pfilts[0]" << ((nruns>0)?pfilts[0]:"(none)");
    le_prefilt->setText( pfmsg );
+   update_buttons();
 
    load_distro();
 }
