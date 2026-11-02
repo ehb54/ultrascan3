@@ -738,8 +738,8 @@ int main( int argc, char* argv[] )
    const QString inv_password = parser.isSet( investigator_password_option ) ? parser.value( investigator_password_option )
                                                                              : qEnvironmentVariable( "US3_INV_PASSWORD" );
 
-   US_DB2  db;
-   QString db_error;
+   US_DB2        db;
+   QString       db_error;
    if ( !db.connectAuthenticated( parser.value( host_option ),
                                   database,
                                   parser.value( user_option ),
