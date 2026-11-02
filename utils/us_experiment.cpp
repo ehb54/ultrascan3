@@ -726,7 +726,6 @@ int US_Experiment::readFromDisk( QList<US_Convert::TripleInfo>& triples,
    }
 
    bool error = xml.hasError();
-qDebug() << "readFromDisk() error" << error;
    f.close();
 
    if ( error ) return US_Convert::BADXML;
