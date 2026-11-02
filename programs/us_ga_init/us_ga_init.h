@@ -90,7 +90,6 @@ class US_GA_Initialize : public US_Widgets
       QPushButton*  pb_lddistr;
       QPushButton*  pb_ldcolor;
       QPushButton*  pb_mandrsb;
-      QPushButton*  pb_shrnksb;
       QPushButton*  pb_autassb;
       QPushButton*  pb_resetsb;
       QPushButton*  pb_loadsb;
