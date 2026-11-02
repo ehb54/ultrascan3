@@ -177,7 +177,6 @@ class US_GA_Initialize : public US_Widgets
       QString       mfilter;
       QString       editGUID;
       QString       binfpath;
-      QString       limit_key;
 
       QStringList   pfilts;
 

@@ -135,25 +135,25 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    lb_plxmin     = us_label( tr( "Min. s [S]:" ) );
    lb_plxmin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    le_plxmin     = us_lineedit();
-   connect( le_plxmin, &QLineEdit::returnPressed,
+   connect( le_plxmin, &QLineEdit::editingFinished,
             this,      &US_GA_Initialize::update_plxmin );
 
    lb_plxmax     = us_label( tr( "Max. s [S]:" ) );
    lb_plxmax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    le_plxmax= us_lineedit();
-   connect( le_plxmax, &QLineEdit::returnPressed,
+   connect( le_plxmax, &QLineEdit::editingFinished,
             this,      &US_GA_Initialize::update_plxmax );
 
    lb_plymin     = us_label( tr( "Min. f/f0:" ) );
    lb_plymin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    le_plymin     = us_lineedit();
-   connect( le_plymin, &QLineEdit::returnPressed,
+   connect( le_plymin, &QLineEdit::editingFinished,
             this,      &US_GA_Initialize::update_plymin );
    
    lb_plymax     = us_label( tr( "Max. f/f0:" ) );
    lb_plymax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    le_plymax     = us_lineedit();
-   connect( le_plymax, &QLineEdit::returnPressed,
+   connect( le_plymax, &QLineEdit::editingFinished,
             this,      &US_GA_Initialize::update_plymax );
 
            attr_x      = 0;
@@ -502,7 +502,6 @@ void US_GA_Initialize::reset( void )
    le_plymin->setReadOnly( true );
    le_plymax->setReadOnly( true );
 
-   limit_key.clear();
    manual_limits.clear();
    ck_manlim->setChecked( false );
 
@@ -893,7 +892,7 @@ double US_GA_Initialize::str2double( const QString& str, double val )
 {
   bool ok;
   double newval = str.toDouble( &ok );
-  if (ok)
+  if (ok && qIsFinite( newval ))
   {
     return newval;
   } else {
@@ -905,6 +904,9 @@ double US_GA_Initialize::str2double( const QString& str, double val )
 // update plot limit s min
 void US_GA_Initialize::update_plxmin()
 {
+  if ( sk_distro.isEmpty() || le_plxmin->isReadOnly() )
+    return;
+  const QSignalBlocker blocker( le_plxmin );
   double val = str2double( le_plxmin->text(), plxmin );
   if (val >= plxmax) {
     QString msg = "Minimum of the x-axis must be less than the maximum of it!";
@@ -912,10 +914,9 @@ void US_GA_Initialize::update_plxmin()
   } else {
     plxmin = val;
   }
-  if ( manual_limits.contains( limit_key ) )
-  {
-    manual_limits[ limit_key ][0] = plxmin;
-  }
+  le_plxmin->setText( QString::number( plxmin ) );
+  const QString limit_key = QString( "%1-%2" ).arg( anno_label( attr_x ), anno_label( attr_y ) );
+  manual_limits[ limit_key ] = { plxmin, plxmax, plymin, plymax };
 
   replot_data();
 }
@@ -923,6 +924,9 @@ void US_GA_Initialize::update_plxmin()
 // update plot limit s max
 void US_GA_Initialize::update_plxmax()
 {
+  if ( sk_distro.isEmpty() || le_plxmax->isReadOnly() )
+    return;
+  const QSignalBlocker blocker( le_plxmax );
   double val = str2double( le_plxmax->text(), plxmax);
   if (val <= plxmin) {
     QString msg = "Maximum of the x-axis must be greater than the minimum of it!";
@@ -931,10 +935,8 @@ void US_GA_Initialize::update_plxmax()
     plxmax= val;
   }
   le_plxmax->setText( QString::number( plxmax ) );
-  if ( manual_limits.contains( limit_key ) )
-  {
-    manual_limits[ limit_key ][1] = plxmax;
-  }
+  const QString limit_key = QString( "%1-%2" ).arg( anno_label( attr_x ), anno_label( attr_y ) );
+  manual_limits[ limit_key ] = { plxmin, plxmax, plymin, plymax };
 
   replot_data();
 }
@@ -942,6 +944,9 @@ void US_GA_Initialize::update_plxmax()
 // update plot limit f/f0 min
 void US_GA_Initialize::update_plymin()
 {
+  if ( sk_distro.isEmpty() || le_plymin->isReadOnly() )
+    return;
+  const QSignalBlocker blocker( le_plymin );
   double val = str2double( le_plymin->text(), plymin );
   if (val >= plymax) {
     QString msg = "Minimum of the y-axis must be less than the maximum of it!";
@@ -950,11 +955,8 @@ void US_GA_Initialize::update_plymin()
     plymin = val;
   }
   le_plymin->setText( QString::number( plymin ) );
-  le_plxmax->setText( QString::number( plxmax ) );
-  if ( manual_limits.contains( limit_key ) )
-  {
-    manual_limits[ limit_key ][2] = plymin;
-  }
+  const QString limit_key = QString( "%1-%2" ).arg( anno_label( attr_x ), anno_label( attr_y ) );
+  manual_limits[ limit_key ] = { plxmin, plxmax, plymin, plymax };
 
   replot_data();
 }
@@ -963,6 +965,9 @@ void US_GA_Initialize::update_plymin()
 // update plot limit f/f0 max
 void US_GA_Initialize::update_plymax()
 {
+  if ( sk_distro.isEmpty() || le_plymax->isReadOnly() )
+    return;
+  const QSignalBlocker blocker( le_plymax );
   double val = str2double( le_plymax->text(), plymax);
   if (val <= plymin) {
     QString msg = "Maximum of the y-axis must be greater than the minimum of it!";
@@ -971,11 +976,8 @@ void US_GA_Initialize::update_plymax()
     plymax= val;
   }
   le_plymax->setText( QString::number( plymax ) );
-  le_plxmax->setText( QString::number( plxmax ) );
-  if ( manual_limits.contains( limit_key ) )
-  {
-    manual_limits[ limit_key ][3] = plymax;
-  }
+  const QString limit_key = QString( "%1-%2" ).arg( anno_label( attr_x ), anno_label( attr_y ) );
+  manual_limits[ limit_key ] = { plxmin, plxmax, plymin, plymax };
 
   replot_data();
 }
@@ -1233,6 +1235,9 @@ void US_GA_Initialize::load_color()
 // set plot x,y limits
 void US_GA_Initialize::set_limits()
 {
+   if ( xy_distro.isEmpty() )
+      return;
+   const QString limit_key = QString( "%1-%2" ).arg( anno_label( attr_x ), anno_label( attr_y ) );
    soludata->setDistro( &xy_distro, attr_x, attr_y, attr_z );
    
    // find min,max for S distributions
@@ -1299,21 +1304,24 @@ DbgLv(1) << "SL: auto smin,max,inc" << smin << smax << sinc
    plxmax = smax;
    plymin = kmin;
    plymax = kmax;
+
+   QVector< double > manvec;
+   if ( manual_limits.contains( limit_key ) )
+   {
+      manvec = manual_limits.value( limit_key );
+   }
+   else
+   {
+      manvec << plxmin << plxmax << plymin << plymax;
+      manual_limits.insert( limit_key, manvec );
+   }
+
    if ( ck_manlim->isChecked() )
    {
-      if ( manual_limits.contains( limit_key) )
-      {
-         auto vec = manual_limits.value( limit_key );
-         plxmin = vec.at( 0 );
-         plxmax = vec.at( 1 );
-         plymin = vec.at( 2 );
-         plymax = vec.at( 3 );
-      } else
-      {
-         QVector< double > vec;
-         vec << plxmin << plxmax << plymin << plymax;
-         manual_limits.insert( limit_key, vec );
-      }
+      plxmin = manvec.at( 0 );
+      plxmax = manvec.at( 1 );
+      plymin = manvec.at( 2 );
+      plymax = manvec.at( 3 );
       le_plxmin->setReadOnly( false );
       le_plxmax->setReadOnly( false );
       le_plymin->setReadOnly( false );
@@ -1722,9 +1730,6 @@ void US_GA_Initialize::select_x_axis( int ival )
    rb_y_D   ->setEnabled( attr_x != ATTR_D );
    rb_y_rh  ->setEnabled( attr_x != ATTR_R );
    update_plot_labels();
-   QString label_x = anno_label( attr_x );
-   QString label_y = anno_label( attr_y );
-   limit_key = QString( "%1-%2" ).arg( label_x ).arg( label_y );
 
    if ( sk_distro.empty() )
    {
@@ -1749,9 +1754,6 @@ void US_GA_Initialize::select_y_axis( int ival )
    rb_x_D   ->setEnabled( attr_y != ATTR_D );
    rb_x_rh  ->setEnabled( attr_y != ATTR_R );
    update_plot_labels();
-   QString label_x = anno_label( attr_x );
-   QString label_y = anno_label( attr_y );
-   limit_key = QString( "%1-%2" ).arg( label_x ).arg( label_y );
 
    if ( sk_distro.empty() )
    {
