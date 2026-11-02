@@ -32,8 +32,10 @@ struct Experiment
    bool   fixed_grid;
 };
 
-// Speed step, scans and simulation parameters of an experiment, as
-//  us_astfem_sim sets them up;  no timestate is loaded
+// Speed step, scans and simulation parameters of an experiment;  no
+//  timestate is loaded.  Channel 'A' (not a simulation):  the timestate
+//  then derives the acceleration from the scans, as for measured data,
+//  and a speed profile of another experiment changes the result.
 void setup( const Experiment& exp, US_SimulationParameters& sp, US_DataIO::RawData& rdata )
 {
    const int    nscans = 20;
@@ -67,7 +69,7 @@ void setup( const Experiment& exp, US_SimulationParameters& sp, US_DataIO::RawDa
    rdata.type[1] = 'A';
    memset( rdata.rawGUID, 0, sizeof( rdata.rawGUID ) );
    rdata.cell        = 1;
-   rdata.channel     = 'S';
+   rdata.channel     = 'A';
    rdata.description = "Synthetic";
    for ( double rr = sp.meniscus; rr <= sp.bottom + 1.0e-9; rr += sp.radial_resolution )
    {
@@ -160,7 +162,7 @@ QStringList timestateDirs()
 //  and a floating species (moving mesh to the left)
 const std::vector<Experiment> experiments = {
    { 50000, 2.0, 4.0e-13, 6.0e-7, false },
-   { 30000, 3.0, 4.0e-13, 6.0e-7, false },
+   { 30000, 5.0, 4.0e-13, 6.0e-7, false },
    { 40000, 2.5, 7.0e-13, 4.0e-7, true },
    { 45000, 2.0, -2.0e-13, 5.0e-7, false },
 };
