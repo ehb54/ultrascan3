@@ -48,6 +48,10 @@ class US_UTIL_EXTERN US_SimRecord
           in their descriptions.
           \param models      Models in wavelength order.
           \param wavelengths One wavelength per model.
+          The description is the component names and the buffer
+          description, "names | buffer".  When that is longer than
+          US_Solution::descriptionLimit it becomes "N solutes | buffer", cut
+          to the limit if still too long.
           \param buffer      Simulation buffer.
           \returns           A solution, or an empty solution for empty or
                              unequal-length inputs.

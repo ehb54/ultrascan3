@@ -50,11 +50,6 @@ QTextStream& err()
    return s;
 }
 
-//! solution.description is VARCHAR(80) in the LIMS schema.  Reject a
-//! run before opening a transaction rather than letting new_solution()
-//! fail with LAST_INSERT_ID() == 0 and a misleading missing-solution error.
-constexpr int      MAX_SOLUTION_DESCRIPTION_CHARACTERS = 80;
-
 //! Databases accepted without --force.
 const QStringList& allowedDatabases()
 {
@@ -464,14 +459,17 @@ bool prepareRun( const QString& run_dir, const QString& wanted_run, const QStrin
          return false;
       }
 
+      // Reject an over-long description before opening a transaction, rather
+      // than let new_solution() fail with LAST_INSERT_ID() == 0 and a
+      // misleading missing-solution error.
       const int description_length = solution.solutionDesc.toUcs4().size();
-      if ( description_length > MAX_SOLUTION_DESCRIPTION_CHARACTERS )
+      if ( description_length > US_Solution::descriptionLimit )
       {
          error = "Solution " + guid + " in run " + run_id + " (triple " + run.disk.triples[ii].tripleDesc +
                  ") has a description of " + QString::number( description_length ) +
                  " characters; the "
                  "LIMS solution.description limit is " +
-                 QString::number( MAX_SOLUTION_DESCRIPTION_CHARACTERS );
+                 QString::number( US_Solution::descriptionLimit );
          return false;
       }
 
