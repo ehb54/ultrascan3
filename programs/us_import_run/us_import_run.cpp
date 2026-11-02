@@ -20,6 +20,7 @@
 #include <QDir>
 #include <QRegularExpression>
 #include <QSet>
+#include <QTemporaryDir>
 #include <QTextStream>
 
 #include "us_convert.h"
@@ -29,6 +30,7 @@
 #include "us_defines.h"
 #include "us_experiment.h"
 #include "us_settings.h"
+#include "us_simparms.h"
 #include "us_solution.h"
 #include "us_util.h"
 
@@ -74,14 +76,20 @@ const QRegularExpression& editFilePattern()
    return re;
 }
 
-//! Point US_Settings at \p root unless US3_SETTINGS_ROOT is already set, so a
-//! load neither reads nor writes the user's own settings.
+//! Point US_Settings at \p root, so a load neither reads nor writes the
+//! user's own settings.  Call before anything reads a setting: the store is
+//! chosen once per process.
 void isolateSettings( const QString& root )
 {
-   if ( !qEnvironmentVariableIsSet( "US3_SETTINGS_ROOT" ) )
-   {
-      qputenv( "US3_SETTINGS_ROOT", root.toUtf8() );
-   }
+   qputenv( "US3_SETTINGS_ROOT", root.toUtf8() );
+}
+
+//! Parse a personID option.  False unless \p text is a positive integer.
+bool parsePersonId( const QString& text, int& id )
+{
+   bool ok = false;
+   id      = text.toInt( &ok );
+   return ok && id > 0;
 }
 
 //! A chemistry record's filename prefix and staging directory.
@@ -103,8 +111,9 @@ const QList<RecordKind>& recordKinds()
 //! \brief Copy the run directory's P/S/B/A records into the data tree that
 //!        US_Project and US_Solution read them from.
 //!
-//! Records already in that tree are removed first.  The copies are renumbered
-//! from 1, because a record is found by the GUID inside it, not by its name.
+//! The data tree is in the private staging directory main() creates, so it
+//! starts empty.  The copies are renumbered from 1, because a record is found
+//! by the GUID inside it, not by its name.
 //! \param staged Set to the number of records copied, per staging directory.
 bool stageRecords( const QString& run_dir, QMap<QString, int>& staged, QString& error )
 {
@@ -120,13 +129,6 @@ bool stageRecords( const QString& run_dir, QMap<QString, int>& staged, QString& 
       {
          error = "Could not create the staging directory " + target_path;
          return false;
-      }
-
-      // Prevent a stale record from satisfying this run's GUID lookup.
-      QDir existing( target_path );
-      for ( const QString& stale : existing.entryList( QStringList( pattern ), QDir::Files ) )
-      {
-         existing.remove( stale );
       }
 
       int count = 0;
@@ -290,20 +292,18 @@ bool collectEdits( const US_ConvertIO::DiskRun& run, QList<EditFile>& edits, QSt
          return false;
       }
 
-      // The wavelength is checked against the triple rather than against
-      // raw.scanData[ 0 ].wavelength, because the scan value is not what the
-      // filenames carry.  US_Convert::readUS3Disk() builds the triple out of
-      // the .auc filename field, dividing it by 1000 for a WA run because that
-      // field is a radius; us_astfem_sim writes the sentinel 123 into that
-      // field when the scan wavelength is below 99; and US_Edit names its edit
-      // files from the triple.  Comparing the raw numeric text would reject a
-      // valid WA or sub-99 run.
-      const QString triple_wavelength = run.triples[raw_index].tripleDesc.section( " / ", 2, 2 );
+      // US_Edit names an edit file from its .auc filename, copying the
+      // wavelength field as written, so that field is what the edit name has
+      // to match.  Neither the triple nor the scan holds that text:
+      // readUS3Disk() divides the field by 1000 for a WA run, where it is a
+      // radius, and us_astfem_sim writes the sentinel 123 into it when the
+      // scan wavelength is below 99.
+      const QString auc_wavelength = run.triples[raw_index].tripleFilename.section( ".", -2, -2 );
 
-      if ( values.wavelength != triple_wavelength )
+      if ( values.wavelength != auc_wavelength )
       {
          error = "Edit file " + name + " is for wavelength " + values.wavelength + ", but raw data " + edit.dataGUID + " is " +
-                 triple_wavelength;
+                 auc_wavelength;
          return false;
       }
 
@@ -358,7 +358,7 @@ bool uploadEdits( const QList<EditFile>& edits, const QString& run_id, US_DB2* d
 
       if ( US_ConvertIO::findRawDataId( db, edit.dataGUID, rawDataID, error ) != US_DB2::OK )
       {
-         error = "No raw data record for GUID " + edit.dataGUID + ", named by edit file " + edit.name;
+         error = "No raw data record for GUID " + edit.dataGUID + ", named by edit file " + edit.name + " (" + error + ")";
          return false;
       }
 
@@ -540,32 +540,37 @@ int main( int argc, char* argv[] )
                                   "path" );
    QCommandLineOption       host_option( "host", "Database host, optionally host:port (default localhost)", "host", "localhost" );
    QCommandLineOption       db_option( "database",
-                                 "Database name. Required, and refused unless it is one of " + allowedDatabases().join( ", " ) +
-                                    " or --force is given",
+                                 "Database name. Required unless --dry-run is given, and refused unless it is one of " +
+                                    allowedDatabases().join( ", " ) + " or --force is given",
                                  "name" );
    QCommandLineOption       user_option( "user", "Database user", "user", "us3" );
-   QCommandLineOption       password_option( "password", "Database password", "password", "" );
+   QCommandLineOption       password_option( "password",
+                                       "Database password (default: $US3_DB_PASSWORD). Prefer the environment "
+                                             "variable: a command-line value is visible to other users",
+                                       "password" );
    QCommandLineOption       investigator_option( "investigator-id",
                                            "personID recorded as the owner of everything created. Defaults to the "
-                                                 "person the US3 credentials authenticate as",
+                                                 "person the US3 credentials authenticate as. Another person's ID is "
+                                                 "accepted, so the rows can be owned by someone other than the account "
+                                                 "that wrote them",
                                            "id" );
    QCommandLineOption       investigator_guid_option( "investigator-guid",
                                                 "personGUID of the US3 account to act as. Defaults to the investigator "
                                                       "GUID in the experiment XML",
                                                 "guid" );
    QCommandLineOption       investigator_password_option( "investigator-password",
-                                                    "Password of that US3 account. This is the US3 login, not the MySQL "
-                                                          "password given by --password",
-                                                    "password",
-                                                    "" );
+                                                    "Password of that US3 account (default: $US3_INV_PASSWORD). This is "
+                                                          "the US3 login, not the MySQL password given by --password",
+                                                    "password" );
    QCommandLineOption       operator_option( "operator-id",
                                        "personID recorded as the instrument operator, who must hold a permit "
                                              "for the instrument. Defaults to the operator in the experiment XML, or "
                                              "to the investigator when it names none",
                                        "id" );
    QCommandLineOption       work_dir_option( "work-dir",
-                                       "Scratch directory for staged solution records and isolated settings "
-                                             "(default: a 'us_import_run' directory beside --dir)",
+                                       "Directory to create the temporary staging directory in, which holds "
+                                             "the copied records and isolated settings and is removed on exit "
+                                             "(default: the system temporary directory)",
                                        "path" );
    QCommandLineOption       run_id_option( "run-id",
                                      "Refuse the load unless --dir holds this run. Selects nothing: the "
@@ -580,8 +585,8 @@ int main( int argc, char* argv[] )
                                           "thing it does: it does not permit overwriting a run that is already "
                                           "loaded, which fails either way" );
    QCommandLineOption       dry_run_option( "dry-run",
-                                      "Read and validate the run directory, then stop before database writes. "
-                                            "Record staging still uses --work-dir" );
+                                      "Read and validate the run directory, then stop before connecting to "
+                                            "the database" );
 
    parser.addOptions( { dir_option,
                         host_option,
@@ -619,17 +624,33 @@ int main( int argc, char* argv[] )
       err() << "--dir is required" << Qt::endl;
       return 1;
    }
-   if ( !parser.isSet( db_option ) )
+
+   // A dry run stops before connecting, so it needs no database.
+   const bool    dry_run  = parser.isSet( dry_run_option );
+   const QString database = parser.value( db_option );
+   if ( !dry_run && database.isEmpty() )
    {
       err() << "--database is required; there is no default" << Qt::endl;
       return 1;
    }
-
-   const QString database = parser.value( db_option );
-   if ( !allowedDatabases().contains( database ) && !parser.isSet( force_option ) )
+   if ( !dry_run && !allowedDatabases().contains( database ) && !parser.isSet( force_option ) )
    {
       err() << "Refusing to write to \"" << database << "\": expected one of " << allowedDatabases().join( ", " )
             << "\nPass --force to accept this name anyway." << Qt::endl;
+      return 1;
+   }
+
+   int investigator_id = 0;
+   if ( parser.isSet( investigator_option ) && !parsePersonId( parser.value( investigator_option ), investigator_id ) )
+   {
+      err() << "--investigator-id must be a positive integer, not \"" << parser.value( investigator_option ) << "\"" << Qt::endl;
+      return 1;
+   }
+
+   int operator_id = 0;
+   if ( parser.isSet( operator_option ) && !parsePersonId( parser.value( operator_option ), operator_id ) )
+   {
+      err() << "--operator-id must be a positive integer, not \"" << parser.value( operator_option ) << "\"" << Qt::endl;
       return 1;
    }
 
@@ -641,8 +662,23 @@ int main( int argc, char* argv[] )
    }
    const QString run_dir = source.absolutePath();
 
-   const QString work_dir = parser.isSet( work_dir_option ) ? QDir( parser.value( work_dir_option ) ).absolutePath()
-                                                            : source.absoluteFilePath( "../us_import_run" );
+   // Records are staged into a directory created here and removed on exit, so
+   // no existing directory, and none of the user's own records, is touched.
+   const QString work_parent =
+      parser.isSet( work_dir_option ) ? QDir( parser.value( work_dir_option ) ).absolutePath() : QDir::tempPath();
+   if ( !QDir().mkpath( work_parent ) )
+   {
+      err() << "Could not create " << work_parent << Qt::endl;
+      return 1;
+   }
+
+   QTemporaryDir work( work_parent + "/us_import_run-XXXXXX" );
+   if ( !work.isValid() )
+   {
+      err() << "Could not create a staging directory in " << work_parent << ": " << work.errorString() << Qt::endl;
+      return 1;
+   }
+   const QString work_dir = work.path();
 
    isolateSettings( work_dir + "/settings" );
    US_Settings::set_workBaseDir( work_dir );
@@ -673,7 +709,7 @@ int main( int argc, char* argv[] )
    out() << "run          : " << run.disk.runID << " : " << run.disk.runType << ", " << run.disk.triples.size() << " triples, "
          << run.edits.size() << " edits" << Qt::endl;
 
-   if ( parser.isSet( dry_run_option ) )
+   if ( dry_run )
    {
       out() << "dry run, nothing written to the database" << Qt::endl;
       return 0;
@@ -695,14 +731,21 @@ int main( int argc, char* argv[] )
 
    // connectAuthenticated() takes the credentials as arguments, so no database
    // profile is written into the user's settings.
+   // The environment keeps the passwords out of the process list; an option
+   // given on the command line still wins.
+   const QString db_password =
+      parser.isSet( password_option ) ? parser.value( password_option ) : qEnvironmentVariable( "US3_DB_PASSWORD" );
+   const QString inv_password = parser.isSet( investigator_password_option ) ? parser.value( investigator_password_option )
+                                                                             : qEnvironmentVariable( "US3_INV_PASSWORD" );
+
    US_DB2  db;
    QString db_error;
    if ( !db.connectAuthenticated( parser.value( host_option ),
                                   database,
                                   parser.value( user_option ),
-                                  parser.value( password_option ),
+                                  db_password,
                                   investigator_guid,
-                                  parser.value( investigator_password_option ),
+                                  inv_password,
                                   db_error ) )
    {
       err() << "Could not connect to " << database << " as " << investigator_guid << ": " << db_error << Qt::endl;
@@ -717,9 +760,9 @@ int main( int argc, char* argv[] )
       investigator = db.value( 0 ).toInt();
    }
 
-   if ( parser.isSet( investigator_option ) )
+   if ( investigator_id > 0 )
    {
-      investigator = parser.value( investigator_option ).toInt();
+      investigator = investigator_id;
    }
 
    if ( investigator <= 0 )
@@ -747,9 +790,9 @@ int main( int argc, char* argv[] )
    US_Settings::set_us_inv_ID( investigator );
 
    // Generated experiments use the investigator when no operator is set.
-   if ( parser.isSet( operator_option ) )
+   if ( operator_id > 0 )
    {
-      run.disk.experiment.operatorID = parser.value( operator_option ).toInt();
+      run.disk.experiment.operatorID = operator_id;
    }
    else if ( run.disk.experiment.operatorID <= 0 )
    {
@@ -771,6 +814,18 @@ int main( int argc, char* argv[] )
    if ( save_status != US_DB2::OK )
    {
       err() << "Could not save experiment " << run.disk.runID << " (status " << save_status << "): " << db.lastError() << Qt::endl;
+      return 3;
+   }
+
+   // saveToDB() does not report a failed speed-step insert, so count the rows
+   // it left rather than commit a run without its speed profile.
+   QVector<SP_SPEEDPROFILE> stored_steps;
+   const int                stored = US_SimulationParameters::speedstepsFromDB( &db, run.disk.experiment.expID, stored_steps );
+
+   if ( stored != run.disk.speedSteps.size() )
+   {
+      err() << "Experiment " << run.disk.runID << " has " << stored << " speed steps in the database, not "
+            << run.disk.speedSteps.size() << ": " << db.lastError() << Qt::endl;
       return 3;
    }
 
