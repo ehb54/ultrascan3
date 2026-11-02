@@ -13,6 +13,42 @@
 #include <unistd.h>
 #endif
 #include <algorithm>
+#include <vector>
+
+namespace
+{
+// Local stiffness matrices Stif[ nx ][ 4 ][ 4 ] of the ComputeCoefMatrix*
+//  functions.  They run once per solve and speed step, so the storage is kept
+//  between calls:  one buffer per thread (solves may run in threads), owned,
+//  so that it is freed at thread exit.  It only grows.  It is not cleared:
+//  CompLocalStif and CompLocalStifRect set all 16 values of each element
+//  they compute, and only computed elements are read.
+double*** stif_scratch( int nx )
+{
+   struct Scratch
+   {
+      std::vector< double >    values;
+      std::vector< double* >   rows;
+      std::vector< double** >  elems;
+   };
+   static thread_local Scratch sc;
+
+   if ( (int)sc.elems.size() < nx )
+   {
+      sc.values.assign( (size_t)nx * 16, 0.0 );
+      sc.rows  .resize( (size_t)nx * 4 );
+      sc.elems .resize( (size_t)nx );
+
+      for ( size_t ii = 0; ii < sc.rows.size(); ii++ )
+         sc.rows[ ii ]  = sc.values.data() + ii * 4;
+
+      for ( size_t kk = 0; kk < sc.elems.size(); kk++ )
+         sc.elems[ kk ] = sc.rows.data() + kk * 4;
+   }
+
+   return sc.elems.data();
+}
+} // namespace
 #if (defined(_WIN32) || defined(_WIN64) || defined(Q_OS_WIN))         // Include headers so getpid() works on Windows
 #include <windows.h>
 #include <psapi.h>
@@ -2577,9 +2613,7 @@ void US_Astfem_RSA::ComputeCoefMatrixFixedMesh(
 
    xA = x.data();
 
-   // Local stiffness matrices, per call (see calculate_ni)
-   double*** Stif  = NULL;
-   US_AstfemMath::initialize_3d( Nx, 4, 4, &Stif );
+   double*** Stif  = stif_scratch( Nx );   // Local stiffness matrices
 
    for ( int k = 0; k < Nx - 1; k++ )
    { // loop for all elem:  rectangles [ x_k, x_k+1 ] x [ 0, dt ]
@@ -2618,7 +2652,6 @@ void US_Astfem_RSA::ComputeCoefMatrixFixedMesh(
    CB[ 0 ][ k ]  = Stif[ m ][ 0 ][ 1 ] + Stif[ m ][ 0 ][ 2 ];  // j=0;
    CB[ 1 ][ k ]  = Stif[ m ][ 1 ][ 1 ] + Stif[ m ][ 1 ][ 2 ];  // j=1;
 
-   US_AstfemMath::clear_3d( Nx, 4, Stif );
 //*DEBUG
 int mm=Nx/2;
 DbgLv(1) << "RSA:CCMFM: CA0 sme" << CA[0][0] << CA[0][1] << CA[0][2]
@@ -2643,9 +2676,7 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshR(
    double       xd[ 4 ][ 2 ]; // coord for verices of quad elem
    xA = x.data();
 
-   // Local stiffness matrices, per call (see calculate_ni)
-   double*** Stif  = NULL;
-   US_AstfemMath::initialize_3d( Nx, 4, 4, &Stif );
+   double*** Stif  = stif_scratch( Nx );   // Local stiffness matrices
 
    // elem[0]: triangle
    xd[ 0 ][ 0 ] = xA[ 0 ];  xd[ 0 ][ 1 ] = 0.;
@@ -2716,7 +2747,6 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshR(
    CB[ 1 ][ k ] += Stif[ k  ][0][0] + Stif[ k  ][0][1] + Stif[ k ][0][2];
    CB[ 2 ][ k ]  = Stif[ k  ][1][0] + Stif[ k  ][1][1] + Stif[ k ][1][2];
 
-   US_AstfemMath::clear_3d( Nx, 4, Stif );
 }
 
 void US_Astfem_RSA::ComputeCoefMatrixMovingMeshL(
@@ -2726,9 +2756,7 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshL(
    double       xd[4][2];   // coord for verices of quad elem
    xA = x.data();
 
-   // Local stiffness matrices, per call (see calculate_ni)
-   double*** Stif  = NULL;
-   US_AstfemMath::initialize_3d( Nx, 4, 4, &Stif );
+   double*** Stif  = stif_scratch( Nx );   // Local stiffness matrices
 
    // elem[0]: triangle
    xd[0][0] = xA[0];
@@ -2798,7 +2826,6 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshL(
    CA[1][k]  = Stif[k  ][1][1] ;
    CB[0][k]  = Stif[k  ][0][1] ;
 
-   US_AstfemMath::clear_3d( Nx, 4, Stif );
 }
 
 // Given total concentration of a group of components involved,

@@ -7,6 +7,7 @@
 #include <QDir>
 #include <QTemporaryDir>
 #include <memory>
+#include <vector>
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
@@ -720,8 +721,12 @@ void US_AstfemMath::tridiag( double* a, double* b, double* c,
                              double* r, double* u, int N )
 {
    double bet = b[ 0 ];
-   // Scratch per call, never static:  solves may run in threads
-   QVector< double > gamvec( N );
+   // tridiag runs once per time step, so its scratch is kept between calls,
+   //  one buffer per thread (solves may run in threads).  It only grows, is
+   //  freed at thread exit, and every element read is written first.
+   static thread_local std::vector< double > gamvec;
+   if ( (int)gamvec.size() < N )
+      gamvec.resize( N );
    double* gam = gamvec.data();
 
    if ( bet == 0.0 )  { qDebug() << "Error 1 in tridiag"; return; }
