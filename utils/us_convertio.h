@@ -4,9 +4,10 @@
 
 #include <QtCore>
 
+// The interface only: no signature here names the concrete connection type,
+// so callers can pass a test double in place of a live connection.
 #include "ius_db2.h"
 #include "us_convert.h"
-#include "us_db2.h"
 #include "us_experiment.h"
 #include "us_extern.h"
 
@@ -25,6 +26,95 @@ struct cellInfo
 class US_UTIL_EXTERN US_ConvertIO
 {
    public:
+      /*! \brief One run as it exists on disk, loaded but not interpreted.
+
+          The value owns loaded domain data and nothing else: no widgets, no
+          database connection, no edit files, no load policy, no settings, no
+          temporary-directory lifecycle.
+      */
+      struct US_UTIL_EXTERN DiskRun
+      {
+            QString                       directory;  //!< With a trailing separator
+            QString                       runID;      //!< From the directory basename
+            QString                       runType;    //!< "RA", "RI", "IP", ...
+            QVector<US_DataIO::RawData>   rawData;    //!< One per AUC, filename order
+            QList<US_Convert::TripleInfo> triples;    //!< Parallel to rawData
+            QVector<SP_SPEEDPROFILE>      speedSteps; //!< As serialized; may be empty
+            US_Experiment                 experiment;
+      };
+
+      /*! \brief Read one run directory into a DiskRun.
+
+          A thin coordinator over the existing readers.  It reports structural
+          problems and does not reject them: it returns the most specific
+          status it can, fills `error` with the detail, and populates `run` as
+          far as the read got.  Whether a non-OK status ends the load is the
+          caller's decision; US_ConvertGui, for example, loads most of them
+          and shows the detail.
+
+          It does not split archives, require edits, connect to a database,
+          start a transaction, write records, stage files, change settings,
+          present dialogs, or reinterpret scientific data.
+
+          Speed steps are returned as the experiment XML gives them.  They are
+          never computed from the scans and never compared against them; see
+          US_Experiment::readFromDisk()'s diagnostic overload.
+
+          \param directory One run directory, with or without a trailing
+                           separator.  Its basename is the run ID.
+          \param run       Filled as far as the read reached
+          \param error     Set to specific context when the status is not OK
+
+          \returns A US_Convert::ioError value.  US_Convert::BAD_RUNID means
+                   the directory name cannot be a run ID and nothing was
+                   read.  US_Convert::INVALID_RUN means the filenames carry
+                   mixed run IDs or run types.
+      */
+      static int                   readDiskRun( const QString& directory, DiskRun& run, QString& error );
+
+      //! \brief readDiskRun() error formats, shared with the tests; fill them
+      //! with QString::arg().
+      //! A directory name that cannot be a run ID: %1 the name.
+      static constexpr const char* invalidRunIdMessage  = "\"%1\" cannot be a run ID: a run directory name may hold only letters, "
+                                                          "digits, the underscore and the hyphen, and at most 80 of them";
+      //! No .auc files: %1 the directory.
+      static constexpr const char* noAucFilesMessage    = "No .auc files were found in %1";
+      //! An .auc file that could not be read: %1 the directory.
+      static constexpr const char* unreadableAucMessage = "A data file in %1 could not be read";
+      //! Mixed run types: %1 the types found, %2 the one read.
+      static constexpr const char* mixedRunTypesMessage = "the data files name more than one run type (%1); only %2 was read";
+      //! Mixed run IDs: %1 the run IDs found.
+      static constexpr const char* mixedRunIdsMessage   = "the data files name more than one run (%1)";
+      //! The experiment XML could not be opened: %1 its path.
+      static constexpr const char* experimentUnopenableMessage = "The experiment record %1 could not be opened";
+      //! The experiment XML is malformed: %1 its path.
+      static constexpr const char* experimentMalformedMessage  = "The experiment record %1 is not well-formed XML";
+      //! The experiment XML and the .auc files disagree: %1 the XML file name,
+      //! %2 the directory, %3 US_Experiment's detail.
+      static constexpr const char* experimentDisagreesMessage  = "%1 and the data files in %2 disagree: %3";
+      //! Appended to an unreadable-experiment error: %1 the mixed-run detail.
+      static constexpr const char* alsoMixedRunMessage         = ". Also, %1";
+      //! A mixed run: %1 the directory, %2 the mixed-run detail.
+      static constexpr const char* notOneRunMessage            = "The run in %1 is not one run: %2";
+      //! A mixed run that caused a disagreement: %1 the directory, %2 the
+      //! mixed-run detail, %3 US_Experiment's detail.
+      static constexpr const char* notOneRunCausedMessage      = "The run in %1 is not one run: %2. As a result, %3";
+      //! A triple whose GUID differs from its .auc's: %1 the triple
+      //! description, %2 the experiment's GUID, %3 the data file's GUID.
+      static constexpr const char* identityMismatchMessage     = "The experiment record gives %1 the identity %2, "
+                                                                 "but its data file carries %3";
+
+      /*! \brief Give each triple with an empty solution GUID the GUID of the
+          triple before it.
+
+          US_ConvertGui::loadUS3Disk() calls this before it reads the
+          solutions.  Leading triples with an empty GUID stay empty, since
+          there is nothing before them to take one from.
+
+          \param triples The triples of one run, in load order
+      */
+      static void                  fillSolutionGaps( QList<US_Convert::TripleInfo>& triples );
+
       /*! \brief The values an editedData row is created or updated with.
 
           Only what the stored procedures take.  Deciding whether a record is
@@ -57,6 +147,59 @@ class US_UTIL_EXTERN US_ConvertIO
                    is the caller's decision.
       */
       static int     findRawDataId( IUS_DB2* db, const QString& rawGUID, int& rawDataID, QString& error );
+
+      //! \brief Edited-data error formats, shared with the tests; fill them
+      //! with QString::arg().
+      //! No raw data row for a GUID: %1 the GUID.
+      static constexpr const char* noRawDataRecordMessage     = "No raw data record exists for GUID %1";
+      //! The raw data lookup failed: %1 the GUID, %2 the database error, %3 the status.
+      static constexpr const char* rawDataLookupFailedMessage = "Could not look up the raw data record for GUID %1: %2 (status %3)";
+      //! A raw data id that is not a number: %1 the GUID, %2 the id as stored.
+      static constexpr const char* nonNumericRawDataIdMessage = "Raw data record for GUID %1 has a non-numeric id (\"%2\")";
+      //! Creating an editedData row failed: %1 the edit file, %2 the database
+      //! error, %3 the status.
+      static constexpr const char* createEditedDataFailedMessage = "Could not create the editedData record for %1: %2 (status %3)";
+      //! Updating an editedData row failed: %1 the row, %2 the edit file, %3
+      //! the database error, %4 the status.
+      static constexpr const char* updateEditedDataFailedMessage = "Could not update editedData record %1 for %2: %3 (status %4)";
+      //! Uploading the edit XML failed: %1 the file, %2 the row, %3 the
+      //! database error, %4 the status.
+      static constexpr const char* uploadEditedDataFailedMessage = "Could not attach %1 to editedData record %2: %3 (status %4)";
+
+      // writeRawDataToDB() error formats.  Each ends in the status and/or the
+      // database error, and the writer appends them in the order they occur.
+      //! Clearing the run's rawData failed: %1 the status, %2 the database error.
+      static constexpr const char* deleteRawDataFailedMessage             = "Error returned deleting rawData\n%1 %2\n";
+      //! Clearing the run's solution links failed: %1 the status, %2 the
+      //! database error.
+      static constexpr const char* deleteExperimentSolutionsFailedMessage = "Error returned deleting experiment solutions\n%1 %2\n";
+      //! Clearing the run's cell records failed: %1 the status, %2 the
+      //! database error.
+      static constexpr const char* deleteCellExperimentsFailedMessage     = "Error returned deleting cell experiments\n%1 %2\n";
+      //! A triple's buffer is not in the database: %1 the buffer GUID.
+      static constexpr const char* bufferNotFoundMessage   = "Error processing buffer %1\nBuffer was not found in the database";
+      //! A triple's analyte is not in the database.
+      static constexpr const char* analyteNotFoundMessage  = "Error processing analyte \nAn analyte was not found in the database";
+      //! A triple's solution is not in the database: %1 the solution GUID.
+      static constexpr const char* solutionNotFoundMessage = "Error processing solution %1\nSolution was not found in the database";
+      //! Saving a triple's solution failed: %1 the database error.
+      static constexpr const char* saveSolutionFailedMessage = "Error saving solution to DB \n%1";
+      //! The auc file could not be read for upload: %1 the file, %2 the
+      //! database error.
+      static constexpr const char* aucFileUnreadableMessage  = "Error processing file:\n%1\n%2\nCould not open file or no data \n";
+      //! Writing a triple's rawData row or blob failed: %1 the file, %2 the
+      //! database error.
+      static constexpr const char* aucFileFailedMessage      = "Error returned processing file:\n%1\n%2\n";
+      //! Writing a cell record failed: %1 the cell GUID, %2 the status, %3 the
+      //! database error.
+      static constexpr const char* cellRecordFailedMessage   = "Error returned writing cell record: %1\n%2 %3\n";
+      //! Linking a solution to the experiment failed: %1 the experiment id, %2
+      //! the solution GUID, %3 the status, %4 the database error.
+      static constexpr const char* experimentSolutionLinkFailedMessage =
+         "MySQL error associating experiment %1\n with solution %2\n code: %3  error: %4\n";
+      //! Deleting the partly written experiment failed: %1 the experiment id,
+      //! %2 the database error.
+      static constexpr const char* deleteExperimentFailedMessage = "MySQL error deleting experiment %1\n%2\n";
 
       /*! \brief Create an editedData row.
 
@@ -98,8 +241,7 @@ class US_UTIL_EXTERN US_ConvertIO
           \param db         An opened db connection
           \param speedsteps Reference for returned experiment speed steps vector
       */
-      static QString readDBExperiment( QString, QString, US_DB2*,
-				       QVector< SP_SPEEDPROFILE >&, const QString = QString("") );
+      static QString readDBExperiment( QString, QString, IUS_DB2*, QVector<SP_SPEEDPROFILE>&, const QString = QString( "" ) );
 
       /*! \brief Writes a new DB rawData record for each triple
 
@@ -112,11 +254,7 @@ class US_UTIL_EXTERN US_ConvertIO
           \param dir     Local disk directory where auc files can be found
           \param db      An opened db connection
       */
-      static QString writeRawDataToDB(
-                 US_Experiment& , 
-                 QList< US_Convert::TripleInfo >& ,
-                 const QString&,
-                 US_DB2* = 0 );
+      static QString writeRawDataToDB( US_Experiment&, QList<US_Convert::TripleInfo>&, const QString&, IUS_DB2* = nullptr );
 
       /*! \brief Checks some info that was read from disk with values from DB
 
@@ -128,21 +266,10 @@ class US_UTIL_EXTERN US_ConvertIO
                          cell/channel/wavelength defined by the xml file.
           \param db      An opened db connection
       */
-      static int checkDiskData( 
-                 US_Experiment&,
-                 QList< US_Convert::TripleInfo >& ,
-                 US_DB2* = 0 );
-      static int checkDiskData_auto( 
-                 US_Experiment&,
-                 QList< US_Convert::TripleInfo >& ,
-                 US_DB2* = 0 );
+      static int     checkDiskData( US_Experiment&, QList<US_Convert::TripleInfo>&, IUS_DB2* = nullptr );
+      static int     checkDiskData_auto( US_Experiment&, QList<US_Convert::TripleInfo>&, IUS_DB2* = nullptr );
 
    private:
-      static QString readRawDataFromDB( 
-                 US_Experiment& , 
-                 QList< US_Convert::TripleInfo >& ,
-                 QString& ,
-                 US_DB2* = 0 );
-      
+      static QString readRawDataFromDB( US_Experiment&, QList<US_Convert::TripleInfo>&, QString&, IUS_DB2* = nullptr );
 };
 #endif
