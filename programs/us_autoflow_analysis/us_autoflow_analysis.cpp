@@ -4700,6 +4700,7 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
     if ( !loadData( triple_info_map ) )
     {
        progress_msg->close();
+       resplot_done(); // restart the update timer stopped above
        return;
     }
     progress_msg->setValue( 1 );

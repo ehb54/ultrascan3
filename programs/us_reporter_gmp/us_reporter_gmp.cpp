@@ -4028,7 +4028,11 @@ void US_ReporterGMP::generate_report( void )
 
              for ( int j = 0; j < models_to_do.size(); ++j )
              {
-                simulate_triple( currentTripleName, models_to_do[j] );
+                // Without its data, this triple's plots would show the last one's.
+                if ( !simulate_triple( currentTripleName, models_to_do[j] ) )
+                {
+                   continue;
+                }
 
                 // Pseudo3D Distr.
                 gmp_busy( tr( "Plotting pseudo-3D distribution: %1, model %2" ).arg( currentTripleName ).arg( models_to_do[j] ) );
@@ -4136,7 +4140,11 @@ void US_ReporterGMP::generate_report( void )
                      perChanMask_edited.has_tripleModelPlot_items[triplename_alt][models_to_do[j]] ||
                      perChanMask_edited.has_tripleModelIndCombo_items[triplename_alt][models_to_do[j]] )
                 {
-                   simulate_triple( currentTripleName, models_to_do[j] );
+                   // Without its data, this triple's plots would show the last one's.
+                   if ( !simulate_triple( currentTripleName, models_to_do[j] ) )
+                   {
+                      continue;
+                   }
 
                    // Pseudo3D Distr.
                    gmp_busy(
@@ -5177,8 +5185,8 @@ DbgLv(1) << "ScMd:scan time(3)" << timer.elapsed();
    return wDescrs;
 }
 
-//simulate triple 
-void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_model )
+//simulate triple
+bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_model )
 {
    // Show msg while data downloaded and simulated
    // One dialog for the whole of Part 2 (never re-created per triple/model):
@@ -5248,10 +5256,10 @@ void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   buffLoaded = false;
   haveSim    = false;
 
+  // The progress dialog belongs to the whole report, so it stays open.
   if ( !loadData( triple_info_map ) )
   {
-     progress_msg->close();
-     return;
+     return false;
   }
   progress_msg->setValue( 1 );
   
@@ -5454,6 +5462,8 @@ void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   // Dialog stays up (next triple/model, combined plots, PDF...)
   qApp->processEvents();
 
+  return true;
+
   /*
   // Show plot
   resplotd = new US_ResidPlotFem( this, true );
@@ -5514,10 +5524,7 @@ bool US_ReporterGMP::loadData( QMap < QString, QString > & triple_information )
 
    qDebug() << "In load Data: triple, eID (from modelsLink) -- " << tripleName << requestedEditID;
 
-   if ( requestedEditID < 1 )
-   {
-      return fail( tr( "No edited-data record is linked to triple %1." ).arg( tripleName ) );
-   }
+   // loadReporter() refuses an edit ID below 1 with its own message.
    int       editedDataID = -1;
    QString   editUpdated;
    QString   error;

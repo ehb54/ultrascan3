@@ -45,7 +45,8 @@ int US_EditedDataLoaders::loadAutoflow( IUS_DB2*                        db,
    query << "get_editedDataFilenamesIDs" << runID;
    db->query( query );
 
-   if ( db->lastErrno() != IUS_DB2::OK )
+   // NOROWS is an empty result, reported below as no usable pair.
+   if ( db->lastErrno() != IUS_DB2::OK && db->lastErrno() != IUS_DB2::NOROWS )
    {
       return queryFailure( db, tripleName, error );
    }
@@ -122,7 +123,8 @@ int US_EditedDataLoaders::loadReporter( IUS_DB2*                        db,
    query << "get_editedDataFilenamesIDs_forReport" << runID << QString::number( requestedEditID );
    db->query( query );
 
-   if ( db->lastErrno() != IUS_DB2::OK )
+   // NOROWS is an empty result, reported below as no usable pair.
+   if ( db->lastErrno() != IUS_DB2::OK && db->lastErrno() != IUS_DB2::NOROWS )
    {
       return queryFailure( db, tripleName, error );
    }

@@ -225,11 +225,16 @@ TEST_F( EditedDataReadTest, DecodeFailureDoesNotPublishPartialRawData )
 
 TEST_F( EditedDataReadTest, InvalidNamesAreRejectedBeforeAnyDownload )
 {
-   US_ConvertIO::EditedDataReadRequest invalid = request();
-   invalid.editFilename                        = "../outside.xml";
-
    EXPECT_CALL( db, readBlobFromDB( _, _, _ ) ).Times( 0 );
-   EXPECT_EQ( US_ConvertIO::readEditedDataFromDB( &db, invalid, edited, loadedRaw, error ),
-              (int) US_ConvertIO::EDITED_DATA_INVALID_REQUEST );
-   EXPECT_FALSE( error.isEmpty() );
+
+   for ( const QString& name : { QString( "../outside.xml" ), QString( "." ), QString( ".." ) } )
+   {
+      US_ConvertIO::EditedDataReadRequest invalid = request();
+      invalid.editFilename                        = name;
+
+      EXPECT_EQ( US_ConvertIO::readEditedDataFromDB( &db, invalid, edited, loadedRaw, error ),
+                 (int) US_ConvertIO::EDITED_DATA_INVALID_REQUEST )
+         << name.toStdString();
+      EXPECT_FALSE( error.isEmpty() ) << name.toStdString();
+   }
 }

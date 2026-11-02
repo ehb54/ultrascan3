@@ -403,8 +403,8 @@ int US_ConvertIO::readEditedDataFromDB( IUS_DB2*                        db,
    const QString loadFilename = request.loadFilename.isEmpty() ? request.editFilename : request.loadFilename;
    const auto    isBasename   = []( const QString& filename )
    {
-      return !filename.isEmpty() && !filename.contains( "/" ) && !filename.contains( "\\" ) &&
-             QFileInfo( filename ).fileName() == filename;
+      return !filename.isEmpty() && filename != "." && filename != ".." && !filename.contains( "/" ) &&
+             !filename.contains( "\\" ) && QFileInfo( filename ).fileName() == filename;
    };
 
    if ( request.directory.trimmed().isEmpty() || !isBasename( request.editFilename ) || !isBasename( loadFilename ) )
@@ -495,7 +495,7 @@ int US_ConvertIO::readEditedDataFromDB( IUS_DB2*                        db,
    {
       status = US_DataIO::loadData( directory.absolutePath(), loadFilename, loadedEdits, loadedRaw );
    }
-   catch ( US_DataIO::ioError dataError )
+   catch ( const US_DataIO::ioError& dataError )
    {
       error = QString( "Could not decode edited data %1: %2 (status %3)" )
                  .arg( loadFilename, US_DataIO::errorString( dataError ) )

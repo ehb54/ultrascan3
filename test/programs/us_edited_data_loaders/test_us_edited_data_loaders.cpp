@@ -318,6 +318,24 @@ class US_EditedDataLoadersTest : public QObject
          QVERIFY( db.blobCalls.isEmpty() );
       }
 
+      void anEmptyLookupIsReportedAsNoUsablePair()
+      {
+         FixtureFiles files;
+         FakeDB       db = databaseFor( files );
+         db.status       = IUS_DB2::NOROWS;
+         db.rows.clear();
+         QVector<US_DataIO::EditedData> edited;
+         QVector<US_DataIO::RawData>    raw;
+         int                            editID = -1;
+         QString                        error;
+
+         QCOMPARE(
+            US_EditedDataLoaders::loadAutoflow( &db, "1.A.280", "demo", files.destination.path(), edited, raw, editID, error ),
+            (int) US_EditedDataLoaders::NO_USABLE_PAIR );
+         QVERIFY2( error.contains( "No usable edited/raw data pair" ), qPrintable( error ) );
+         QVERIFY( db.blobCalls.isEmpty() );
+      }
+
       void autoflowRejectsRowsForOtherTriples()
       {
          FixtureFiles files;
