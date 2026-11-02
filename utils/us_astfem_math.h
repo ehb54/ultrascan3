@@ -41,6 +41,20 @@ class US_UTIL_EXTERN US_AstfemMath
       static int  writetimestate( const QString& tmst_fpath, US_SimulationParameters& simparams,
                                   US_DataIO::RawData& sim_data );
 
+      //! \brief Load into simparams the simulation speed profile implied by
+      //!        its speed steps and the scans of sim_data, for a solve that
+      //!        has no timestate loaded.  The timestate goes through a file
+      //!        in a temporary directory of its own, which is removed again:
+      //!        the speed profile is never shared with another call, thread,
+      //!        process or experiment.
+      //! \param simparams   Simulation parameters, including speed steps info;
+      //!                    gets the TimeState object and the speed profile
+      //! \param sim_data    Raw data with scans to examine
+      //! \returns The number of speed profile steps loaded, or -1 if no
+      //!          timestate could be written
+      static int  timestate_from_speedsteps( US_SimulationParameters& simparams,
+                                             US_DataIO::RawData& sim_data );
+
       //! \brief Determine if first time step's acceleration is too low
       //! \param speedsteps  Vector of speed steps
       //! \param min_accel   Minimum reasonable acceleration value

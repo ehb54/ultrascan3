@@ -192,16 +192,8 @@ DbgLv(1)<< "RSA:calc: meniscus bottom" << af_params.current_meniscus << af_param
         simparams.sim_speed_prof.count() < 1 )
    {  // Timestate is not properly loaded
 DbgLv(1)<<"RSA:calc: timestate does not exist";
-#ifdef NO_DB
-      QString tmst_fpath = "../" + temp_Id_name() + ".time_state.tmst";
-
-      if ( ! QFile( tmst_fpath ).exists() )
-         US_AstfemMath::writetimestate( tmst_fpath, simparams, exp_data );
-#else
-      QString tmst_fpath = US_Settings::tmpDir() + "/" + temp_Id_name() + ".time_state.tmst";
-      US_AstfemMath::writetimestate( tmst_fpath, simparams, exp_data );
-#endif
-      simparams.simSpeedsFromTimeState( tmst_fpath );
+      // Build it from this experiment's speed steps, in a private file
+      US_AstfemMath::timestate_from_speedsteps( simparams, exp_data );
    }
    else
    {  // Timestate object and speed profile exist are properly loaded
@@ -848,16 +840,8 @@ QDateTime clcSt5 = QDateTime::currentDateTime();
            simparams.sim_speed_prof.count() < 1 )
       {  // Timestate is not properly loaded
 DbgLv(1) << "timestate file does not exist";
-#ifdef NO_DB
-         QString tmst_fpath = "../" + temp_Id_name() + ".time_state.tmst";
-
-         if ( ! QFile( tmst_fpath ).exists() )
-            US_AstfemMath::writetimestate( tmst_fpath, simparams, exp_data );
-#else
-         QString tmst_fpath = US_Settings::tmpDir() + "/" + temp_Id_name() + ".time_state.tmst";
-         US_AstfemMath::writetimestate( tmst_fpath, simparams, exp_data );
-#endif
-         simparams.simSpeedsFromTimeState( tmst_fpath );
+         // Build it from this experiment's speed steps, in a private file
+         US_AstfemMath::timestate_from_speedsteps( simparams, exp_data );
 DbgLv(1)<<"after writing timestate file" << simparams.sim_speed_prof.count();
       }
 
@@ -1585,30 +1569,18 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop, int step,
                                  US_AstfemMath::MfemData& simdata,
                                  bool accel )
 {
-#ifdef NO_DB
-   static int      Nsave  = 0;
-   static int      Nsavea = 0;
-   static double** CA = NULL;   // stiffness matrix on left hand side
-                                // CA[0...Ms-1][0...N-1][4]
-
-   static double** CB = NULL;   // stiffness matrix on right hand side
-                                // CB[0...Ms-1][0...N-1][4]
-
-   static double** CA1;         // for matrices used in acceleration
-   static double** CA2;
-   static double** CB1;
-   static double** CB2;
-#else
+   // The coefficient matrices are allocated per call (never in statics):
+   //  a process may run several solves at once in threads, and each solve
+   //  fills them with the coefficients of its own solute.
    double** CA = NULL;          // stiffness matrix on left hand side
                                 // CA[0...Ms-1][0...N-1][4]
 
    double** CB = NULL;          // stiffness matrix on right hand side
                                 // CB[0...Ms-1][0...N-1][4]
-   double** CA1;                // for matrices used in acceleration
-   double** CA2;
-   double** CB1;
-   double** CB2;
-#endif
+   double** CA1 = NULL;         // for matrices used in acceleration
+   double** CA2 = NULL;
+   double** CB1 = NULL;
+   double** CB2 = NULL;
    double*  C0 = NULL;     // C[m][j]: current/next concentration of
                            // m-th component at x_j
    double*  C1 = NULL;     // C[0...Ms-1][0....N-1]:
@@ -1682,33 +1654,8 @@ QDateTime clcSt9 = clcSt0;
    //--------------------------------------
    // Initialize the coefficient matrices
    // -------------------------------------
-#ifdef NO_DB
-   if  ( Nx > Nsave )
-   {
-      if  ( Nsave > 0 )
-      {
-         US_AstfemMath::clear_2d( 3, CA );
-         US_AstfemMath::clear_2d( 3, CB );
-      }
-      Nsave         = Nx;
-      US_AstfemMath::initialize_2d( 3, Nsave, &CA );
-      US_AstfemMath::initialize_2d( 3, Nsave, &CB );
-   }
-   else
-   {
-      for ( int ii = 0; ii < 3; ii++ )
-      {
-         for ( int jj = 0; jj < Nx; jj++ )
-         {
-            CA[ ii ][ jj ] = 0.0;
-            CB[ ii ][ jj ] = 0.0;
-         }
-      }
-   }
-#else
    US_AstfemMath::initialize_2d( 3, Nx, &CA );
    US_AstfemMath::initialize_2d( 3, Nx, &CB );
-#endif
 
    // Define the simulation grid type
    bool fixedGrid = ( simparams.gridType == US_SimulationParameters::FIXED );
@@ -1738,41 +1685,10 @@ ttT1+=(clcSt1.msecsTo(clcSt2));
    }
    else // For acceleration
    {
-#ifdef NO_DB
-      if  ( Nx > Nsavea )
-      {
-         if  ( Nsavea > 0 )
-         {
-            US_AstfemMath::clear_2d( 3, CA1 );
-            US_AstfemMath::clear_2d( 3, CB1 );
-            US_AstfemMath::clear_2d( 3, CA2 );
-            US_AstfemMath::clear_2d( 3, CB2 );
-         }
-         US_AstfemMath::initialize_2d( 3, Nx, &CA1 );
-         US_AstfemMath::initialize_2d( 3, Nx, &CA2 );
-         US_AstfemMath::initialize_2d( 3, Nx, &CB1 );
-         US_AstfemMath::initialize_2d( 3, Nx, &CB2 );
-         Nsavea = Nx;
-      }
-      else
-      {
-         for ( int ii = 0; ii < 3; ii++ )
-         {
-            for ( int jj = 0; jj < Nx; jj++ )
-            {
-               CA1[ ii ][ jj ] = 0.0;
-               CA2[ ii ][ jj ] = 0.0;
-               CB1[ ii ][ jj ] = 0.0;
-               CB2[ ii ][ jj ] = 0.0;
-            }
-         }
-      }
-#else
       US_AstfemMath::initialize_2d( 3, Nx, &CA1 );
       US_AstfemMath::initialize_2d( 3, Nx, &CA2 );
       US_AstfemMath::initialize_2d( 3, Nx, &CB1 );
       US_AstfemMath::initialize_2d( 3, Nx, &CB2 );
-#endif
       sw2 = 0.0;
       ComputeCoefMatrixFixedMesh( af_params.D[ 0 ], sw2, CA1, CB1 );
       sw2 = af_params.s[ 0 ] * sq( rpm_stop * M_PI / 30 );
@@ -2101,6 +2017,7 @@ clcSt8 = QDateTime::currentDateTime();
 DbgLv(1) << "RSA:emit ntime: sscn time" << simscan.time;
    emit new_time( simscan.time );
    qApp->processEvents();
+#endif
    US_AstfemMath::clear_2d( 3, CA );
    US_AstfemMath::clear_2d( 3, CB );
 
@@ -2111,7 +2028,6 @@ DbgLv(1) << "RSA:emit ntime: sscn time" << simscan.time;
       US_AstfemMath::clear_2d( 3, CA2 );
       US_AstfemMath::clear_2d( 3, CB2 );
    }
-#endif
 
 #ifdef TIMING_NI
 clcSt9 = QDateTime::currentDateTime();
@@ -2659,23 +2575,11 @@ void US_Astfem_RSA::ComputeCoefMatrixFixedMesh(
       DbgErr(1) << "***FixedMesh ERROR*** Nx x.size" << Nx << x.size()
          << " params.s[0] D sw2" << af_params.s[0] << D << sw2;
 
-#ifdef NO_DB
-   static int       Nsave = 0;
-   static double*** Stif  = NULL;
    xA = x.data();
 
-   if ( Nx > Nsave )
-   {
-      if ( Nsave > 0 )
-         US_AstfemMath::clear_3d( Nsave, 4, Stif );
-
-      Nsave = Nx + 200;
-      US_AstfemMath::initialize_3d( Nsave, 4, 4, &Stif );
-   }
-#else
+   // Local stiffness matrices, per call (see calculate_ni)
    double*** Stif  = NULL;
    US_AstfemMath::initialize_3d( Nx, 4, 4, &Stif );
-#endif
 
    for ( int k = 0; k < Nx - 1; k++ )
    { // loop for all elem:  rectangles [ x_k, x_k+1 ] x [ 0, dt ]
@@ -2714,9 +2618,7 @@ void US_Astfem_RSA::ComputeCoefMatrixFixedMesh(
    CB[ 0 ][ k ]  = Stif[ m ][ 0 ][ 1 ] + Stif[ m ][ 0 ][ 2 ];  // j=0;
    CB[ 1 ][ k ]  = Stif[ m ][ 1 ][ 1 ] + Stif[ m ][ 1 ][ 2 ];  // j=1;
 
-#ifndef NO_DB
    US_AstfemMath::clear_3d( Nx, 4, Stif );
-#endif
 //*DEBUG
 int mm=Nx/2;
 DbgLv(1) << "RSA:CCMFM: CA0 sme" << CA[0][0] << CA[0][1] << CA[0][2]
@@ -2741,22 +2643,9 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshR(
    double       xd[ 4 ][ 2 ]; // coord for verices of quad elem
    xA = x.data();
 
-#ifdef NO_DB
-   static int       Nsave = 0;
-   static double*** Stif  = NULL;
-
-   if ( Nx > Nsave )
-   {
-      if ( Nsave > 0 )
-         US_AstfemMath::clear_3d( Nsave, 4, Stif );
-
-      Nsave = Nx + 200;
-      US_AstfemMath::initialize_3d( Nsave, 4, 4, &Stif );
-   }
-#else
+   // Local stiffness matrices, per call (see calculate_ni)
    double*** Stif  = NULL;
    US_AstfemMath::initialize_3d( Nx, 4, 4, &Stif );
-#endif
 
    // elem[0]: triangle
    xd[ 0 ][ 0 ] = xA[ 0 ];  xd[ 0 ][ 1 ] = 0.;
@@ -2827,9 +2716,7 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshR(
    CB[ 1 ][ k ] += Stif[ k  ][0][0] + Stif[ k  ][0][1] + Stif[ k ][0][2];
    CB[ 2 ][ k ]  = Stif[ k  ][1][0] + Stif[ k  ][1][1] + Stif[ k ][1][2];
 
-#ifndef NO_DB
    US_AstfemMath::clear_3d( Nx, 4, Stif );
-#endif
 }
 
 void US_Astfem_RSA::ComputeCoefMatrixMovingMeshL(
@@ -2839,22 +2726,9 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshL(
    double       xd[4][2];   // coord for verices of quad elem
    xA = x.data();
 
-#ifdef NO_DB
-   static int       Nsave = 0;
-   static double*** Stif  = NULL;
-
-   if ( Nx > Nsave )
-   {
-      if ( Nsave > 0 )
-         US_AstfemMath::clear_3d( Nsave, 4, Stif );
-
-      Nsave = Nx + 200;
-      US_AstfemMath::initialize_3d( Nsave, 4, 4, &Stif );
-   }
-#else
+   // Local stiffness matrices, per call (see calculate_ni)
    double*** Stif  = NULL;
    US_AstfemMath::initialize_3d( Nx, 4, 4, &Stif );
-#endif
 
    // elem[0]: triangle
    xd[0][0] = xA[0];
@@ -2924,9 +2798,7 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshL(
    CA[1][k]  = Stif[k  ][1][1] ;
    CB[0][k]  = Stif[k  ][0][1] ;
 
-#ifndef NO_DB
    US_AstfemMath::clear_3d( Nx, 4, Stif );
-#endif
 }
 
 // Given total concentration of a group of components involved,
@@ -4283,14 +4155,6 @@ void US_Astfem_RSA::printsimparams( void )
    DbgLv(1) << "band_forming " << simparams.band_forming;
    DbgLv(1) << "band_volume " << simparams.band_volume;
    DbgLv(1) << "firstScanIsConcentration "<< simparams.firstScanIsConcentration;
-}
-
-// Returns a string with curent date_hr+minute+seconds
-QString US_Astfem_RSA::temp_Id_name()
-{
-   return  ( "p" + QString::number( getpid() ) +
-             "t" + QDateTime::currentDateTime().toUTC()
-                   .toString( "yyMMddhhmmss" ) );
 }
 
 // Sets the buffer
