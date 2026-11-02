@@ -418,11 +418,8 @@ bool US_DB2::connectAuthenticated( const QString& host,
    guid   = personGUID;
    userPW = personPassword;
 
-   // validate_user takes (guid, email, password), so the US3 password goes in
-   // the first caller-argument slot and the credential slot composeQuery
-   // reserves for a password is the empty email.  Both are escaped either way,
-   // so a password carrying a quote or a backslash is a failed login rather
-   // than a broken query.
+   // validate_user takes (guid, email, password), so the password goes in the
+   // first caller-argument slot and the empty email in the password slot.
    query( composeQuery( "CALL", QStringList() << "validate_user" << userPW, guid, QString() ) );
 
    if ( db_errno != OK )

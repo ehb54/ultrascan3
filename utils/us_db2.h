@@ -94,22 +94,20 @@ public:
                   const QString& user, const QString& password,
                   QString& err ) override;
 
-    /*! \brief Connect and authenticate from explicit values.
+    /*! \brief Connect and authenticate with explicit credentials.
 
-        The two-argument connect() reads a stored `QSettings` profile, and
-        writes one back when the account's email has changed.  A command-line
-        program has no profile and should not invent one, so this takes the
-        same values as arguments and touches no settings at all.
+        connect( masterPW, err ) reads the stored database profile, and writes
+        it back when the account's email has changed.  This takes the same
+        values as arguments and reads or writes no settings, for a program
+        that has no profile.
 
-        Opening the connection is not enough on its own: every stored procedure
-        takes the caller's identity as its first two arguments and refuses to
-        run until `validate_user` has established it, which is why this exists
-        alongside the four-argument connect() rather than replacing a caller's
-        use of it.
+        Unlike the connect() that takes host, database, user and password, it
+        also calls validate_user.  Every stored procedure takes the caller's
+        identity as its first two arguments and runs only after validate_user
+        has accepted it.
 
-        Deliberately not on IUS_DB2.  Consumers of the interface receive a
-        connection that is already open and authenticated; how it got that way
-        is the application's business.
+        Not on IUS_DB2: code using the interface receives a connection that is
+        already open and authenticated.
 
         \param host           Host name, optionally host:port
         \param dbname         Database name
@@ -118,6 +116,7 @@ public:
         \param personGUID     The US3 investigator's GUID
         \param personPassword That investigator's US3 password
         \param err            Set to the reason on failure
+        \return True if connected and authenticated
     */
     bool                         connectAuthenticated( const QString& host,
                                                        const QString& dbname,

@@ -1,6 +1,19 @@
 //! \file us_import_run.cpp
-//! \brief Load a generated AUC run into a US3 LIMS database.
-//! Uses the desktop experiment and raw-data persistence paths.
+//! \brief Load one AUC run from a US3 run directory into a LIMS database.
+//!
+//! The run is read and written with the desktop import's own code:
+//! US_ConvertIO::readDiskRun() to read it, then US_Experiment::saveToDB(),
+//! US_ConvertIO::writeRawDataToDB() and the edited-data calls to write it, all
+//! in one transaction that is rolled back on any failure.
+//!
+//! It checks more strictly than the desktop import.  It loads the LIMS test
+//! corpus, simulated runs that are loaded into a scratch database and dumped
+//! as seed data, so a run has to load exactly as generated.  Anything the
+//! desktop would repair or skip is refused instead.
+//!
+//! Exit status: 0 loaded, or validated with --dry-run; 1 bad arguments or the
+//! records could not be staged; 2 the run failed validation; 3 no investigator
+//! could be resolved or a database step failed.
 
 #include <QCommandLineParser>
 #include <QCoreApplication>
@@ -22,11 +35,13 @@
 namespace
 {
 
+//! Standard output.
 QTextStream& out()
 {
    static QTextStream s( stdout );
    return s;
 }
+//! Standard error.
 QTextStream& err()
 {
    static QTextStream s( stderr );
@@ -59,6 +74,8 @@ const QRegularExpression& editFilePattern()
    return re;
 }
 
+//! Point US_Settings at \p root unless US3_SETTINGS_ROOT is already set, so a
+//! load neither reads nor writes the user's own settings.
 void isolateSettings( const QString& root )
 {
    if ( !qEnvironmentVariableIsSet( "US3_SETTINGS_ROOT" ) )
@@ -74,6 +91,7 @@ struct RecordKind
       QString directory;
 };
 
+//! The record kinds staged from the run directory.
 const QList<RecordKind>& recordKinds()
 {
    // P records join S/B/A because the experiment XML names a project GUID and
@@ -82,7 +100,12 @@ const QList<RecordKind>& recordKinds()
    return kinds;
 }
 
-//! Stage chemistry records under the names US_Solution expects.
+//! \brief Copy the run directory's P/S/B/A records into the data tree that
+//!        US_Project and US_Solution read them from.
+//!
+//! Records already in that tree are removed first.  The copies are renumbered
+//! from 1, because a record is found by the GUID inside it, not by its name.
+//! \param staged Set to the number of records copied, per staging directory.
 bool stageRecords( const QString& run_dir, QMap<QString, int>& staged, QString& error )
 {
    QDir source( run_dir );
@@ -131,8 +154,8 @@ bool rejectExtraRuns( const QString& run_dir, const QString& run_id, QString& er
    // US_Convert::readUS3Disk() takes the first .auc file's run ID for the whole
    // directory, and readDiskRun() names the mixture when the .auc files
    // disagree.  Neither looks at the experiment records, so a directory holding
-   // one run's data beside another run's metadata still reads as one run.  A
-   // corpus load takes a directory that is exactly one run or nothing.
+   // one run's data beside another run's metadata still reads as one run.
+   // This program loads exactly one run, so the directory may hold nothing else.
    QStringList others;
 
    for ( const QString& name : QDir( run_dir ).entryList( QStringList( "*.xml" ), QDir::Files, QDir::Name ) )
@@ -164,7 +187,8 @@ struct EditFile
       QString dataGUID; //!< The rawDataGUID it applies to
 };
 
-//! Validate that edits belong to, and completely cover, the run's raw data.
+//! Find the run's edit files and check that each one matches a raw dataset
+//! and that every raw dataset has exactly one.
 bool collectEdits( const US_ConvertIO::DiskRun& run, QList<EditFile>& edits, QString& error )
 {
    const QString                      run_id   = run.runID;
@@ -300,7 +324,7 @@ bool collectEdits( const US_ConvertIO::DiskRun& run, QList<EditFile>& edits, QSt
       edits << edit;
    }
 
-   // Submission requires an edit for every raw dataset.
+   // LIMS cannot submit a dataset for analysis without its edit.
    QStringList missing;
    for ( auto it = raw_by_guid.cbegin(); it != raw_by_guid.cend(); ++it )
    {
@@ -321,12 +345,13 @@ bool collectEdits( const US_ConvertIO::DiskRun& run, QList<EditFile>& edits, QSt
    return true;
 }
 
+//! Create an editedData row and upload its blob for each edit, stopping at the
+//! first failure.
 bool uploadEdits( const QList<EditFile>& edits, const QString& run_id, US_DB2* db, QString& error )
 {
-   // Create-only: a corpus run is loaded into a scratch database once, so an
-   // edit that already has a record means the run is not what it claimed to
-   // be.  US_ConvertIO owns the mechanics; the policy of stopping at the first
-   // failure, and of never updating, is this program's.
+   // Create only: a run is loaded into a fresh database once, so an edit that
+   // already has a record means the run is not what it claims to be, and
+   // nothing is updated.
    for ( const EditFile& edit : edits )
    {
       int rawDataID = -1;
@@ -363,16 +388,17 @@ bool uploadEdits( const QList<EditFile>& edits, const QString& run_id, US_DB2* d
 struct PreparedRun
 {
       US_ConvertIO::DiskRun disk;  //!< Raw data, triples, experiment, speed steps
-      QList<EditFile>       edits; //!< Corpus-specific; not part of a disk run
+      QList<EditFile>       edits; //!< Found by collectEdits(); readDiskRun() does not read edits
 };
 
-//! Read and validate one run without touching the database.
+//! Read \p run_dir and validate it, loading its project and solutions from the
+//! staged records.  Touches no database.
 bool prepareRun( const QString& run_dir, const QString& wanted_run, const QString& wanted_type, PreparedRun& run, QString& error )
 {
    // Reading is shared with the desktop; the strictness is not.  readDiskRun()
-   // reports what it finds and leaves the verdict to its caller, and for a
-   // corpus load every one of those reports is fatal: a run that goes into a
-   // test database has to be exactly what it claims to be.
+   // reports what it finds and leaves the verdict to its caller, and here every
+   // one of those reports is fatal: a run that goes into a test database has
+   // to be exactly what it claims to be.
    const int status = US_ConvertIO::readDiskRun( run_dir, run.disk, error );
 
    if ( status != US_Convert::OK )
@@ -399,11 +425,9 @@ bool prepareRun( const QString& run_dir, const QString& wanted_run, const QStrin
       return false;
    }
 
-   // Project hydration, like chemistry hydration below, is corpus policy
-   // rather than part of reading a run.  The desktop reports a missing project
-   // and clears it; a corpus load refuses, because a run whose project cannot
-   // be resolved would have one minted for it at write time and the seed would
-   // stop being reproducible.
+   // The desktop import reports a missing project and clears it.  This refuses
+   // instead: a run loaded without its project has a new one created at write
+   // time, so the seed would differ on every build.
    US_Project& project = run.disk.experiment.project;
 
    if ( project.projectGUID.isEmpty() )
@@ -420,8 +444,7 @@ bool prepareRun( const QString& run_dir, const QString& wanted_run, const QStrin
       return false;
    }
 
-   // Chemistry hydration is corpus policy, not part of reading a run: the
-   // desktop recovers from a missing solution and this must not.
+   // The desktop import recovers from a missing solution; this refuses one.
    for ( int ii = 0; ii < run.disk.triples.size(); ii++ )
    {
       US_Solution& solution = run.disk.triples[ii].solution;
@@ -616,9 +639,7 @@ int main( int argc, char* argv[] )
       err() << "No such directory: " << source.path() << Qt::endl;
       return 1;
    }
-   // writeRawDataToDB and readFromDisk both build paths by plain concatenation,
-   // so the separator has to be part of the string handed to them.
-   const QString run_dir = source.absolutePath() + "/";
+   const QString run_dir = source.absolutePath();
 
    const QString work_dir = parser.isSet( work_dir_option ) ? QDir( parser.value( work_dir_option ) ).absolutePath()
                                                             : source.absoluteFilePath( "../us_import_run" );
@@ -672,9 +693,8 @@ int main( int argc, char* argv[] )
       return 3;
    }
 
-   // Connect from the values on the command line.  connectAuthenticated()
-   // exists so that this does not have to write a database profile into the
-   // user's settings to get validate_user run for it.
+   // connectAuthenticated() takes the credentials as arguments, so no database
+   // profile is written into the user's settings.
    US_DB2  db;
    QString db_error;
    if ( !db.connectAuthenticated( parser.value( host_option ),
@@ -736,12 +756,10 @@ int main( int argc, char* argv[] )
       run.disk.experiment.operatorID = investigator;
    }
 
-   // Create only.  The corpus is built into a fresh database, so a run ID that
-   // is already there is a duplicate load rather than a revision, and
-   // saveToDB() answers that with DUPFIELD instead of rewriting the run.  The
-   // speed steps are the ones the experiment XML carried: saveToDB() rewrites
-   // the rows from this vector, so passing the empty one it used to be given is
-   // what left every loaded run with no speed profile in the database.
+   // Create only: in a fresh database a run ID that is already present is a
+   // duplicate load, and saveToDB() returns DUPFIELD rather than rewriting the
+   // run.  saveToDB() writes the speed-step rows from the vector it is given,
+   // so this passes the steps the experiment XML carried.
    const int save_status = run.disk.experiment.saveToDB( false, &db, run.disk.speedSteps );
 
    if ( save_status == US_DB2::DUPFIELD )
