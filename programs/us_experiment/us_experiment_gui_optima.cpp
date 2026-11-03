@@ -7912,22 +7912,18 @@ void US_ExperGuiUpload::submitExperiment_confirm_dataDisk()
 	      gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run Submitter Form", "Please fill out GMP run submitter form:", user_submitter );
 	      
 	      int submit_map_size = gmp_submitter_map.keys().size();
-	      qDebug() << "Submitter map: "
-		       << gmp_submitter_map.keys()  << gmp_submitter_map.keys().size() << submit_map_size 
-		       << gmp_submitter_map.keys().isEmpty() 
-		       << gmp_submitter_map[ "User:" ]
-		       << gmp_submitter_map[ "Comment:" ]
-		       << gmp_submitter_map[ "Master Password:" ];
-	      
-	      //Enable GMP run submit ONLY if form was filled && password correct
-	      
-	      if ( submit_map_size > 0 ) 
-		{
-		  qDebug() << "Submitting GMP [Data Disk]...";
-		  submitExperiment_dataDisk();
-		}
-	    }
-	}
+         qDebug() << "Submitter map: " << gmp_submitter_map.keys() << gmp_submitter_map.keys().size() << submit_map_size
+                  << gmp_submitter_map.keys().isEmpty() << gmp_submitter_map["User:"] << gmp_submitter_map["Comment:"];
+
+         //Enable GMP run submit ONLY if form was filled && password correct
+
+         if ( submit_map_size > 0 )
+         {
+            qDebug() << "Submitting GMP [Data Disk]...";
+            submitExperiment_dataDisk();
+         }
+       }
+   }
       else
 	{
 	  qDebug() << "Will be no R&D submission...";
@@ -8341,22 +8337,18 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 	      gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run Submitter Form", "Please fill out GMP run submitter form:", user_submitter );
 	      
 	      int submit_map_size = gmp_submitter_map.keys().size();
-	      qDebug() << "Submitter map: "
-		       << gmp_submitter_map.keys()  << gmp_submitter_map.keys().size() << submit_map_size 
-		       << gmp_submitter_map.keys().isEmpty() 
-		       << gmp_submitter_map[ "User:" ]
-		       << gmp_submitter_map[ "Comment:" ]
-		       << gmp_submitter_map[ "Master Password:" ];
-	      
-	      //Enable GMP run submit ONLY if form was filled && password correct
-	      
-	      if ( submit_map_size > 0 ) 
-		{
-		  qDebug() << "Submitting GMP...";
-		  submitExperiment();
-		}
-	    }
-	}
+         qDebug() << "Submitter map: " << gmp_submitter_map.keys() << gmp_submitter_map.keys().size() << submit_map_size
+                  << gmp_submitter_map.keys().isEmpty() << gmp_submitter_map["User:"] << gmp_submitter_map["Comment:"];
+
+         //Enable GMP run submit ONLY if form was filled && password correct
+
+         if ( submit_map_size > 0 )
+         {
+            qDebug() << "Submitting GMP...";
+            submitExperiment();
+         }
+       }
+   }
       else
 	{
 	  qDebug() << "Submitting R&D...";
@@ -8519,84 +8511,86 @@ void US_ExperGuiUpload::submitExperiment_confirm_protDev()
 	  gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run Submitter Form", "Please fill out GMP run submitter form:", user_submitter );
 	  
 	  int submit_map_size = gmp_submitter_map.keys().size();
-	  qDebug() << "Submitter map: "
-		   << gmp_submitter_map.keys()  << gmp_submitter_map.keys().size() << submit_map_size 
-		   << gmp_submitter_map.keys().isEmpty() 
-		   << gmp_submitter_map[ "User:" ]
-		   << gmp_submitter_map[ "Comment:" ]
-		   << gmp_submitter_map[ "Master Password:" ];
-	  
-	  //Enable GMP run submit ONLY if form was filled && password correct
-	  
-	  if ( submit_map_size > 0 ) 
-	    {
-	      qDebug() << "Submitting [DEVELOPMENT] GMP...";
-	      
-	      //Warn user that ALL data (editPRofiles, model, noises, reports) will be deleted to this run
-	      QMessageBox msgBox_f;
-	      msgBox_f.setText(tr( "You are about to reinitialize the run based on the protocol:<br><br>" )
-			       + tr("<b>[OLD] Run Name:&emsp;</b>")  + protocol_details[ "protocolName" ]
-			       + tr("<br>")
-			       + tr("<b>[NEW] Run Name:&emsp;</b>") + currProto->protoname
-			       + tr("<br>") );
+     qDebug() << "Submitter map: " << gmp_submitter_map.keys() << gmp_submitter_map.keys().size() << submit_map_size
+              << gmp_submitter_map.keys().isEmpty() << gmp_submitter_map["User:"] << gmp_submitter_map["Comment:"];
 
-	      if ( !data_loc.contains("dataDisk") )
-		msgBox_f.setInformativeText( tr("<font color='red'><b>ATTENTION:</b></font> If you choose to Procceed, ")
-					     + tr("all existing edit profiles, models, and noises for this run will be deleted from DB, ")
-					     + tr("and the processing flow will be reinitialized from the 3. IMPORT stage by ")
-					     + tr("re-fetching the data from the Optima instriument.")
-					     + tr("<br><br><font color='red'><b>This action is not reversible. Proceed?</b></font>"));
-	      else
-		msgBox_f.setInformativeText( tr("<font color='red'><b>ATTENTION:</b></font> The development run ")
-					     + tr("will be based on the original data produced by the 'dataDisk-type' ")
-					     + tr("run with the GMP program; ")
-					     + tr("the data will be fetched from the respective LIMS DB;")
-					     + tr("the processing flow will be reinitialized from the 3. IMPORT stage. ")
-					     + tr("It is safe to manupulate the downloaded data (like dropping channels, or triples) - ")
-					     + tr("this will not affect the original data required for future development runs.")
-					     + tr("<br><br><font color='red'><b>Proceed?</b></font>"));
-	      
-	      msgBox_f.setWindowTitle(tr("Run Reinitialization"));
-	      QPushButton *Confirm   = msgBox_f.addButton(tr("Proceed"), QMessageBox::YesRole);
-	      QPushButton *Cancel    = msgBox_f.addButton(tr("Cancel"),  QMessageBox::RejectRole); 
-	      
-	      msgBox_f.setIcon(QMessageBox::Question);
-	      msgBox_f.exec();
-	      
-	      if (msgBox_f.clickedButton() == Cancel)
-		{
-		  return;
-		}
-	      else if (msgBox_f.clickedButton() == Confirm)
-		{
-		  mainw->protocol_details_passed[ "new_dataPath" ] = QString("");
-		  //Clear data -- for non-dataDisk (Optima) source
-		  if ( !protocol_details[ "dataSource" ]. contains("dataDiskAUC") )
-		    clearData_protDev();
-		  else
-		    {
-		      //download raw data from LIMS DB;
-		      //define mainw->protocol_details_passed[ "new_dataPath" ];
-		      sdiag_convert = new US_ConvertGui("AUTO");
-		      sdiag_convert->download_data_auto( mainw->protocol_details_passed );
+     //Enable GMP run submit ONLY if form was filled && password correct
 
-		      qDebug() << "PROT_DEV: new_dataPath -- "
-			       << mainw->protocol_details_passed[ "new_dataPath" ];
-		    }
-		  //qApp->processEvents();
-		  
-		  //Now procceed
-		  if ( have_run && rps_differ )
-		    {
-		      if ( saveRunProtocol() )
-			return;
-		      
-		      //Now actually submit: make record in 'autoflow' table with 'DEV' flag
-		      submitExperiment_protDev();
-		    }
-		}
-	    }
-	}
+     if ( submit_map_size > 0 )
+     {
+        qDebug() << "Submitting [DEVELOPMENT] GMP...";
+
+        //Warn user that ALL data (editPRofiles, model, noises, reports) will be deleted to this run
+        QMessageBox msgBox_f;
+        msgBox_f.setText( tr( "You are about to reinitialize the run based on the protocol:<br><br>" ) +
+                          tr( "<b>[OLD] Run Name:&emsp;</b>" ) + protocol_details["protocolName"] + tr( "<br>" ) +
+                          tr( "<b>[NEW] Run Name:&emsp;</b>" ) + currProto->protoname + tr( "<br>" ) );
+
+        if ( !data_loc.contains( "dataDisk" ) )
+        {
+           msgBox_f.setInformativeText(
+              tr( "<font color='red'><b>ATTENTION:</b></font> If you choose to Procceed, " ) +
+              tr( "all existing edit profiles, models, and noises for this run will be deleted from DB, " ) +
+              tr( "and the processing flow will be reinitialized from the 3. IMPORT stage by " ) +
+              tr( "re-fetching the data from the Optima instriument." ) +
+              tr( "<br><br><font color='red'><b>This action is not reversible. Proceed?</b></font>" ) );
+        }
+        else
+        {
+           msgBox_f.setInformativeText(
+              tr( "<font color='red'><b>ATTENTION:</b></font> The development run " ) +
+              tr( "will be based on the original data produced by the 'dataDisk-type' " ) + tr( "run with the GMP program; " ) +
+              tr( "the data will be fetched from the respective LIMS DB;" ) +
+              tr( "the processing flow will be reinitialized from the 3. IMPORT stage. " ) +
+              tr( "It is safe to manupulate the downloaded data (like dropping channels, or triples) - " ) +
+              tr( "this will not affect the original data required for future development runs." ) +
+              tr( "<br><br><font color='red'><b>Proceed?</b></font>" ) );
+        }
+
+        msgBox_f.setWindowTitle( tr( "Run Reinitialization" ) );
+        QPushButton* Confirm = msgBox_f.addButton( tr( "Proceed" ), QMessageBox::YesRole );
+        QPushButton* Cancel  = msgBox_f.addButton( tr( "Cancel" ), QMessageBox::RejectRole );
+
+        msgBox_f.setIcon( QMessageBox::Question );
+        msgBox_f.exec();
+
+        if ( msgBox_f.clickedButton() == Cancel )
+        {
+           return;
+        }
+        else if ( msgBox_f.clickedButton() == Confirm )
+        {
+           mainw->protocol_details_passed["new_dataPath"] = QString( "" );
+           //Clear data -- for non-dataDisk (Optima) source
+           if ( !protocol_details["dataSource"].contains( "dataDiskAUC" ) )
+           {
+              clearData_protDev();
+           }
+           else
+           {
+              //download raw data from LIMS DB;
+              //define mainw->protocol_details_passed[ "new_dataPath" ];
+              sdiag_convert = new US_ConvertGui( "AUTO" );
+              sdiag_convert->download_data_auto( mainw->protocol_details_passed );
+
+              qDebug() << "PROT_DEV: new_dataPath -- " << mainw->protocol_details_passed["new_dataPath"];
+           }
+           //qApp->processEvents();
+
+           //Now procceed
+           if ( have_run && rps_differ )
+           {
+              if ( saveRunProtocol() )
+              {
+                 return;
+              }
+
+              //Now actually submit: make record in 'autoflow' table with 'DEV' flag
+              submitExperiment_protDev();
+           }
+        }
+     }
+   }
     }
   else if (msgBox.clickedButton() == Cancel)
     {
