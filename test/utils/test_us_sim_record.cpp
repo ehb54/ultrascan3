@@ -59,7 +59,10 @@ TEST( UsSimRecordSolution, CutsADescriptionThatIsStillTooLong )
    const QString buffer = QString( 100, QChar( 'b' ) );
    const QString desc   = descriptionFor( { QString( 90, QChar( 'n' ) ) }, buffer );
 
-   EXPECT_EQ( desc.toUcs4().size(), US_Solution::descriptionLimit );
+   // A copy: EXPECT_EQ binds by reference, and under C++14 the constexpr
+   // member has no definition to bind to.
+   const int     limit = US_Solution::descriptionLimit;
+   EXPECT_EQ( desc.toUcs4().size(), limit );
    EXPECT_TRUE( desc.startsWith( "1 solute | bbb" ) ) << desc.toStdString();
 }
 
