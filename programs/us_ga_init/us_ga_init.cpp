@@ -219,7 +219,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    QLabel* lb_nsols = us_label( tr( "Number Solutes:" ) );
    lb_nsols->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
-   QLabel* lb_nbuks = us_label( tr( "Number Bins:" ) );
+   QLabel* lb_nbins = us_label( tr( "Number Bins:" ) );
    lb_nsols->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    le_nsols      = us_lineedit( "", -1, true );
@@ -338,7 +338,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    spec->addWidget( lw_buckets,   s_row++, 0, 1, 8 );
    spec->addWidget( lb_nsols,     s_row,   0, 1, 2 );
    spec->addWidget( le_nsols,     s_row,   2, 1, 2 );
-   spec->addWidget( lb_nbuks,     s_row,   4, 1, 2 );
+   spec->addWidget( lb_nbins,     s_row,   4, 1, 2 );
    spec->addWidget( le_nbuks,     s_row++, 6, 1, 2 );
    spec->addWidget( lb_info4,     s_row++, 0, 1, 8 );
    spec->addLayout( dkdb_cntrls,  s_row++, 0, 1, 8 );
@@ -943,8 +943,8 @@ void US_GA_Initialize::update_plxmin()
     plxmin = val;
   }
   le_plxmin->setText( QString::number( plxmin ) );
-  const QString limit_key = QString( "%1-%2" ).arg( anno_label( attr_x ), anno_label( attr_y ) );
-  manual_limits[ limit_key ] = { plxmin, plxmax, plymin, plymax };
+  int key = attr_x * 10 + attr_y;
+  manual_limits[ key ] = { plxmin, plxmax, plymin, plymax };
 
   replot_data();
 }
@@ -963,8 +963,8 @@ void US_GA_Initialize::update_plxmax()
     plxmax= val;
   }
   le_plxmax->setText( QString::number( plxmax ) );
-  const QString limit_key = QString( "%1-%2" ).arg( anno_label( attr_x ), anno_label( attr_y ) );
-  manual_limits[ limit_key ] = { plxmin, plxmax, plymin, plymax };
+  int key = attr_x * 10 + attr_y;
+  manual_limits[ key ] = { plxmin, plxmax, plymin, plymax };
 
   replot_data();
 }
@@ -983,8 +983,8 @@ void US_GA_Initialize::update_plymin()
     plymin = val;
   }
   le_plymin->setText( QString::number( plymin ) );
-  const QString limit_key = QString( "%1-%2" ).arg( anno_label( attr_x ), anno_label( attr_y ) );
-  manual_limits[ limit_key ] = { plxmin, plxmax, plymin, plymax };
+  int key = attr_x * 10 + attr_y;
+  manual_limits[ key ] = { plxmin, plxmax, plymin, plymax };
 
   replot_data();
 }
@@ -1004,8 +1004,8 @@ void US_GA_Initialize::update_plymax()
     plymax= val;
   }
   le_plymax->setText( QString::number( plymax ) );
-  const QString limit_key = QString( "%1-%2" ).arg( anno_label( attr_x ), anno_label( attr_y ) );
-  manual_limits[ limit_key ] = { plxmin, plxmax, plymin, plymax };
+  int key = attr_x * 10 + attr_y;
+  manual_limits[ key ] = { plxmin, plxmax, plymin, plymax };
 
   replot_data();
 }
@@ -1265,7 +1265,6 @@ void US_GA_Initialize::set_limits()
 {
    if ( xy_distro.isEmpty() )
       return;
-   const QString limit_key = QString( "%1-%2" ).arg( anno_label( attr_x ), anno_label( attr_y ) );
    soludata->setDistro( &xy_distro, attr_x, attr_y, attr_z );
    
    // find min,max for S distributions
@@ -1334,14 +1333,15 @@ DbgLv(1) << "SL: auto smin,max,inc" << smin << smax << sinc
    plymax = kmax;
 
    QVector< double > manvec;
-   if ( manual_limits.contains( limit_key ) )
+   int key = attr_x * 10 + attr_y;
+   if ( manual_limits.contains( key ) )
    {
-      manvec = manual_limits.value( limit_key );
+      manvec = manual_limits.value( key );
    }
    else
    {
       manvec << plxmin << plxmax << plymin << plymax;
-      manual_limits.insert( limit_key, manvec );
+      manual_limits.insert( key, manvec );
    }
 
    if ( ck_manlim->isChecked() )

@@ -126,7 +126,7 @@ class US_GA_Initialize : public US_Widgets
       QList< QwtPlotCurve* > bucket_curves;
 
 
-      QMap< QString, QVector< double > > manual_limits;
+      QMap< int, QVector< double > > manual_limits;
 
       double        resolu;
       double        plxmin;
