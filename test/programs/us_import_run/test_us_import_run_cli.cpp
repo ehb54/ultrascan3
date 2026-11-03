@@ -9,6 +9,7 @@
 #include <QProcess>
 
 #include "disk_run_fixture.h"
+#include "us_dataIO.h"
 
 class US_ImportRunCliTest : public QObject
 {
@@ -16,8 +17,9 @@ class US_ImportRunCliTest : public QObject
 
       QTemporaryDir scratch;
 
-      // Run the importer; return its exit code and stderr.
-      int           run( const QStringList& args, QString& err )
+      // Run the importer; return its exit code and stderr, and its stdout in
+      // out if given.
+      int           run( const QStringList& args, QString& err, QString* out = nullptr )
       {
          QProcess importer;
          importer.start( US_IMPORT_RUN_EXE, args );
@@ -27,6 +29,10 @@ class US_ImportRunCliTest : public QObject
             return -1;
          }
          err = QString::fromUtf8( importer.readAllStandardError() );
+         if ( out )
+         {
+            *out = QString::fromUtf8( importer.readAllStandardOutput() );
+         }
          return importer.exitCode();
       }
 
@@ -136,6 +142,52 @@ class US_ImportRunCliTest : public QObject
          QString err;
          QCOMPARE( run( { "--dir", fixture.dir, "--dry-run", "--work-dir", workParent() }, err ), 2 );
          QVERIFY2( err.contains( "No project record for GUID " + fixture.projectGUID ), qPrintable( err ) );
+      }
+
+      // The edit name carries the .auc filename's wavelength field verbatim,
+      // as US_Edit writes it: a wavelength for RA, a radius times 1000 for WA.
+      void aCompleteRunPassesTheDryRun_data()
+      {
+         QTest::addColumn<QString>( "runType" );
+         QTest::addColumn<QString>( "wavelength" );
+         QTest::newRow( "RA" ) << "RA" << "280";
+         QTest::newRow( "WA" ) << "WA" << "6500";
+      }
+
+      void aCompleteRunPassesTheDryRun()
+      {
+         QFETCH( QString, runType );
+         QFETCH( QString, wavelength );
+
+         const us3test::DiskRun fixture =
+            us3test::writeDiskRun( scratch.path(), "run-ok-" + runType, runType, { us3test::DatasetSpec{ 1, 'A', wavelength } } );
+         QVERIFY( !fixture.dir.isEmpty() );
+         QVERIFY( us3test::writeRunRecords( fixture ) );
+
+         QString err;
+         QString out;
+         QCOMPARE( run( { "--dir", fixture.dir, "--dry-run", "--work-dir", workParent() }, err, &out ), 0 );
+         QVERIFY2( out.contains( "1 triples, 1 edits" ), qPrintable( out + err ) );
+      }
+
+      void anEditForAnotherWavelengthIsRefused()
+      {
+         const us3test::DiskRun fixture =
+            us3test::writeDiskRun( scratch.path(), "run-wa-other", "WA", { us3test::DatasetSpec{ 1, 'A', "6500" } } );
+         QVERIFY( !fixture.dir.isEmpty() );
+         QVERIFY( us3test::writeRunRecords( fixture ) );
+
+         // Move the edit, name and XML together, to a radius the .auc is not.
+         const QString         original = fixture.dir + "run-wa-other.2601010000.WA.1.A.6500.xml";
+         US_DataIO::EditValues edit;
+         QCOMPARE( US_DataIO::readEdits( original, edit ), int( US_DataIO::OK ) );
+         QVERIFY( QFile::remove( original ) );
+         edit.wavelength = "6000";
+         QCOMPARE( US_DataIO::writeEdits( fixture.dir + "run-wa-other.2601010000.WA.1.A.6000.xml", edit ), int( US_DataIO::OK ) );
+
+         QString err;
+         QCOMPARE( run( { "--dir", fixture.dir, "--dry-run", "--work-dir", workParent() }, err ), 2 );
+         QVERIFY2( err.contains( "is for wavelength 6000, but raw data" ), qPrintable( err ) );
       }
 };
 

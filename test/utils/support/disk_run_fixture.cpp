@@ -2,7 +2,12 @@
 
 #include "disk_run_fixture.h"
 
+#include "us_analyte.h"
+#include "us_buffer.h"
 #include "us_dataIO.h"
+#include "us_project.h"
+#include "us_settings.h"
+#include "us_solution.h"
 
 #include <QDir>
 #include <QUuid>
@@ -68,6 +73,25 @@ US_DataIO::RawData buildRawData( const QString& runType, const DatasetSpec& spec
    }
 
    return data;
+}
+
+//! Copy the record in dataDir()/subdir that holds guid to target.
+bool copyRecord( const QString& subdir, const QString& guid, const QString& target )
+{
+   QDir dir( US_Settings::dataDir() + "/" + subdir );
+
+   for ( const QString& name : dir.entryList( QStringList( "*.xml" ), QDir::Files ) )
+   {
+      QFile file( dir.filePath( name ) );
+      if ( file.open( QIODevice::ReadOnly ) && file.readAll().contains( guid.toUtf8() ) )
+      {
+         file.close();
+         QFile::remove( target );
+         return QFile::copy( file.fileName(), target );
+      }
+   }
+
+   return false;
 }
 }
 
@@ -155,5 +179,82 @@ DiskRun writeDiskRun( const QString&                  parentDir,
    }
 
    return run;
+}
+
+bool writeRunRecords( const DiskRun& run )
+{
+   US_Buffer buffer;
+   buffer.GUID        = fixtureGuid( run.runID + "/buffer" );
+   buffer.bufferID    = "1";
+   buffer.description = "disk-run fixture buffer";
+
+   if ( !buffer.writeToDisk( run.dir + "B0000001.xml" ) )
+   {
+      return false;
+   }
+
+   US_Analyte analyte;
+   analyte.analyteGUID = fixtureGuid( run.runID + "/analyte" );
+   analyte.analyteID   = "1";
+   analyte.description = "disk-run fixture analyte";
+   analyte.mw          = 66000.0;
+   analyte.vbar20      = 0.73;
+
+   if ( analyte.write( false, run.dir + "A0000001.xml" ) != IUS_DB2::OK )
+   {
+      return false;
+   }
+
+   US_Solution::AnalyteInfo info;
+   info.analyte = analyte;
+   info.amount  = 1.0;
+
+   US_Solution solution;
+   solution.solutionID   = 1;
+   solution.solutionGUID = run.solutionGUID;
+   solution.solutionDesc = "disk-run fixture solution";
+   solution.buffer       = buffer;
+   solution.analyteInfo << info;
+   solution.saveToDisk();
+
+   US_Project project;
+   project.projectGUID = run.projectGUID;
+   project.projectDesc = "disk-run fixture project";
+   project.saveToDisk();
+
+   if ( !copyRecord( "solutions", run.solutionGUID, run.dir + "S0000001.xml" ) ||
+        !copyRecord( "projects", run.projectGUID, run.dir + "P0000001.xml" ) )
+   {
+      return false;
+   }
+
+   for ( int ii = 0; ii < run.aucFiles.size(); ii++ )
+   {
+      // <runID>.<type>.<cell>.<channel>.<wavelength>.auc
+      const QString&        auc = run.aucFiles[ii];
+
+      US_DataIO::EditValues edit;
+      edit.expType    = "Velocity";
+      edit.runID      = run.runID;
+      edit.cell       = auc.section( ".", -4, -4 );
+      edit.channel    = auc.section( ".", -3, -3 );
+      edit.wavelength = auc.section( ".", -2, -2 );
+      edit.editGUID   = fixtureGuid( run.runID + "/edit/" + QString::number( ii ) );
+      edit.dataGUID   = run.rawGUIDs[ii];
+      edit.meniscus   = 5.80;
+      edit.rangeLeft  = 5.81;
+      edit.rangeRight = 5.86;
+      edit.plateau    = 5.85;
+      edit.baseline   = 5.82;
+
+      const QString name = run.runID + ".2601010000." + auc.section( ".", -5, -2 ) + ".xml";
+
+      if ( US_DataIO::writeEdits( run.dir + name, edit ) != US_DataIO::OK )
+      {
+         return false;
+      }
+   }
+
+   return true;
 }
 }
