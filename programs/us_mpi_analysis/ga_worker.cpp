@@ -1334,7 +1334,12 @@ void US_MPI_Analysis::lamm_gsm_df( const US_Vector& vv, US_Vector& vd )
    US_Vector tt = vv;
 
 #ifdef UPDATE_FIT
-   if ( current_dataset == 0  &&  data_sets.size() == 1 )
+   // (With the normal-equation fitness and the simulation cache, a
+   //  perturbed gene costs one new simulation and a small NNLS through
+   //  get_fitness_v;  update_fitness re-solves the full QR NNLS and
+   //  simulates the whole multi-component model for every evaluation)
+   if ( current_dataset == 0  &&  data_sets.size() == 1  &&
+        ( ga_normal == 0  ||  ga_simcache == nullptr ) )
    {
       update_fitness( -1, tt );
 

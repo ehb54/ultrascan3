@@ -10,6 +10,7 @@ void US_MPI_Analysis::ga_master( void )
    max_depth           = 0;
    calculated_solutes.clear();
    setup_bucket_grid();          // Grid and soft-bucket limits (refinement)
+   setup_ga_simcache();          // Simulation cache (refinement)
 
    // Set noise and debug flags
    simulation_values.noisflag = job_config.params.tinoise_option > 0 ? 1 : 0;
