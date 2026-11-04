@@ -555,6 +555,9 @@ void US_MPI_Analysis::set_gaMonteCarlo( void )
          {
             const double variation = US_Math2::box_muller( 0.0, sigmas[index] );
             mc_data[ index ] = scaled_data.value( ks, rr ) + variation;
+            // The master's final NNLS and refinement fit the same data
+            //  as the workers
+            edata->setValue( ss, rr, mc_data[ index ] );
             index++;
          }
       }
