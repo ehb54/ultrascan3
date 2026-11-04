@@ -181,7 +181,7 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     //! \param sim_vals       Simulation (input solutes;  output solutes with
     //!                       non-zero concentration, variance, variances)
     //! \returns              Flag whether calculated
-    bool calc_variance_normal( int, int, Simulation& );
+    bool        calc_variance_normal( int, int, Simulation& );
 
     //! \brief Set a flag so that the worker aborts at the earliest opportunity
     void abort_work    ( void );

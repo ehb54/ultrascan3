@@ -162,16 +162,16 @@ bool write_edit( const QString& path, const QString& runID, const US_DataIO::Raw
 
 struct Species
 {
-   double s;   // Svedberg, 20,W
-   double ff0;
-   double c;
+      double s; // Svedberg, 20,W
+      double ff0;
+      double c;
 };
 
 // Three species spanning the 2DSA grid used by the regression jobs
-const QVector< Species > kSample = { { 2.5, 1.25, 0.25 }, { 4.5, 1.6, 0.40 }, { 7.0, 2.1, 0.30 } };
+const QVector<Species> kSample = { { 2.5, 1.25, 0.25 }, { 4.5, 1.6, 0.40 }, { 7.0, 2.1, 0.30 } };
 
 // Parse "s:f/f0:c,s:f/f0:c,..."
-bool parse_species( const QString& spec, QVector< Species >& species )
+bool                   parse_species( const QString& spec, QVector<Species>& species )
 {
    species.clear();
    for ( const QString& item : spec.split( ',', Qt::SkipEmptyParts ) )
@@ -192,7 +192,7 @@ bool parse_species( const QString& spec, QVector< Species >& species )
    return !species.isEmpty();
 }
 
-US_Model sample_model( const QVector< Species >& species, double scale )
+US_Model sample_model( const QVector<Species>& species, double scale )
 {
    US_Model model;
    for ( const Species& sp : species )
@@ -208,16 +208,16 @@ US_Model sample_model( const QVector< Species >& species, double scale )
    return model;
 }
 
-int write_data( const QString&            outdir,
-                const QString&            runID,
-                int                       cell,
-                uint64_t                  seed,
-                double                    scale,
-                int                       scans,
-                bool                      nobottom,
-                bool                      with_tmst,
-                const QVector< Species >& species,
-                double                    sigma )
+int write_data( const QString&          outdir,
+                const QString&          runID,
+                int                     cell,
+                uint64_t                seed,
+                double                  scale,
+                int                     scans,
+                bool                    nobottom,
+                bool                    with_tmst,
+                const QVector<Species>& species,
+                double                  sigma )
 {
    QString            triple   = QString( "RI.%1.A.260" ).arg( cell );
    QString            aucname  = runID + "." + triple + ".auc";
@@ -413,12 +413,12 @@ int main( int argc, char* argv[] )
 
    if ( args.size() >= 7 && args[1] == "data" )
    {
-      int                scans     = kScans;
-      bool               nobottom  = false;
-      bool               with_tmst = false;
-      bool               argsok    = true;
-      double             sigma     = kNoiseSigma;
-      QVector< Species > species   = kSample;
+      int              scans     = kScans;
+      bool             nobottom  = false;
+      bool             with_tmst = false;
+      bool             argsok    = true;
+      double           sigma     = kNoiseSigma;
+      QVector<Species> species   = kSample;
 
       for ( int ii = 7; ii < args.size(); ii++ )
       {

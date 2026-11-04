@@ -82,8 +82,7 @@ class US_UTIL_EXTERN US_SimCache
       //! \param simparams  Simulation parameters of the data set
       //! \param edata      Experiment data whose grid is simulated
       //! \returns          Key (a hash of the values)
-      QByteArray          dataset_key_memo( const US_SimulationParameters& simparams,
-                                            const US_DataIO::EditedData& edata );
+      QByteArray          dataset_key_memo( const US_SimulationParameters& simparams, const US_DataIO::EditedData& edata );
 
       //! \brief Turn the memo of data set keys on or off (default off)
       //!
@@ -153,7 +152,7 @@ class US_UTIL_EXTERN US_SimCache
       void                     make_room( qint64 );
 
       // Evict the least recently used simulations (LRU mode)
-      void                     evict_lru( qint64 );
+      void                          evict_lru( qint64 );
 
       mutable QReadWriteLock   lock;
       QHash<QByteArray, QByteArray> dskey_memo; // Data set keys by fingerprint
@@ -167,8 +166,8 @@ class US_UTIL_EXTERN US_SimCache
       qint64                   nrejected;
       std::atomic<qint64>      nhits;
       std::atomic<qint64>      nmisses;
-      bool                     key_memo;   // Memo of data set keys on
-      bool                     lru;        // Least-recently-used mode
-      qint64                   use_clock;  // Use clock (LRU mode)
+      bool                          key_memo;  // Memo of data set keys on
+      bool                          lru;       // Least-recently-used mode
+      qint64                        use_clock; // Use clock (LRU mode)
 };
 #endif

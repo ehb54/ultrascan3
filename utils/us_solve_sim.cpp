@@ -299,7 +299,7 @@ DebugTime("BEG:calcres");
       nscans         = edata->scanCount();
       double odlim   = edata->ODlimit;
 
-      double* pb     = nnls_b.data();
+      double* pb = nnls_b.data();
 
       for ( int ss = 0; ss < nscans; ss++ )
       {
@@ -307,8 +307,8 @@ DebugTime("BEG:calcres");
 
          for ( int rr = 0; rr < npoints; rr++ )
          {  // Fill the B matrix with experiment data (or zero)
-            double evalue  = ev[ rr ];
-//DbgLv(1)<<"subha_OD limit for scan "<< ss << rr << evalue << odlim;
+            double evalue = ev[rr];
+            //DbgLv(1)<<"subha_OD limit for scan "<< ss << rr << evalue << odlim;
 
             if ( evalue >= odlim )
             {  // Where ODlimit is exceeded, substitute 0.0 and bump count
@@ -324,7 +324,7 @@ DbgLv(1)<<"subha_OD limit exceeded for scan no " << ss << rr << odlim << kodl;
 #endif
 
             // Store the B value in a row for a dataset
-            pb[ kb++ ]     = evalue;
+            pb[kb++] = evalue;
             norm_b        += sq( evalue );
 
          }  //"rr"-based for loop
@@ -454,10 +454,14 @@ DbgLv(2) << "   CR:BF s20wcorr D20wcorr" << dset->s20w_correction
 
             // (simulate() initializes the simulation with the experiment's
             //  grid, unless it comes from the cache)
-DbgLv(2) << "   CR:111  rss now" << US_Memory::rss_now() << "cc" << cc;
+            DbgLv( 2 ) << "   CR:111  rss now" << US_Memory::rss_now() << "cc" << cc;
 
-DbgLv(2) << "   CR:112  rss now" << US_Memory::rss_now() << "cc" << cc;
-if (dbg_level>1 && thrnrank<2 && cc==0) { model.debug(); dset->simparams.debug(); }
+            DbgLv( 2 ) << "   CR:112  rss now" << US_Memory::rss_now() << "cc" << cc;
+            if ( dbg_level > 1 && thrnrank < 2 && cc == 0 )
+            {
+               model.debug();
+               dset->simparams.debug();
+            }
 
             // Check if timestate file exists or not
             if ( dset->simparams.tsobj == NULL  ||
@@ -544,7 +548,7 @@ DbgLv(1) << "   CR: A fill kodl" << kodl << "bndthr ksol" << banddthr << ksols
             if ( kodl == 0 )
             {  // Normal case of no ODlimit substitutions
 
-               double* pa     = nnls_a.data();
+               double* pa = nnls_a.data();
 
                for ( int ss = 0; ss < nscans; ss++ )
                {
@@ -552,8 +556,8 @@ DbgLv(1) << "   CR: A fill kodl" << kodl << "bndthr ksol" << banddthr << ksols
 
                   for ( int rr = 0; rr < npoints; rr++ )
                   {
-                     double sval    = sv[ rr ];
-                     pa[ ka++ ]     = sval;
+                     double sval = sv[rr];
+                     pa[ka++]    = sval;
                      norm_a        += sq( sval );
                      norm_e        += sq( sval );
                   }
@@ -864,7 +868,7 @@ DbgLv(1) << "   CR: A-fill  bndthr" << banddthr << "kodl ksols" << kodl << ksols
 
             if ( kodl == 0 )
             {  // Normal case of no ODlimit substitutions
-               double* pa     = nnls_a.data();
+               double* pa = nnls_a.data();
 
                for ( int ss = 0; ss < nscans; ss++ )
                {
@@ -872,8 +876,8 @@ DbgLv(1) << "   CR: A-fill  bndthr" << banddthr << "kodl ksols" << kodl << ksols
 
                   for ( int rr = 0; rr < npoints; rr++ )
                   {
-                     double sval    = sv[ rr ];
-                     pa[ ka++ ]     = sval;
+                     double sval = sv[rr];
+                     pa[ka++]    = sval;
                      norm_a        += sq( sval );
                   }
 // x  x  x  x  x  x  x  x
@@ -1069,7 +1073,7 @@ int ks=ka;
             // Populate the A matrix for the NNLS routine with simulation
             if ( kodl == 0 )
             {  // Normal case of no ODlimit substitutions
-               double* pa     = nnls_a.data();
+               double* pa = nnls_a.data();
 
                for ( int ss = 0; ss < nscans; ss++ )
                {
@@ -1077,8 +1081,8 @@ int ks=ka;
 
                   for ( int rr = 0; rr < npoints; rr++ )
                   {
-                     double sval    = sv[ rr ];
-                     pa[ ka++ ]     = sval;
+                     double sval = sv[rr];
+                     pa[ka++]    = sval;
                      norm_a        += sq( sval );
                   }
                }
@@ -1444,12 +1448,12 @@ if(soluval>1.0)
 
             for ( int ss = 0; ss < nscans; ss++, scnx++ )
             {
-               double*       sv = sdata->scanData[ scnx ].rvalues.data();
+               double*       sv = sdata->scanData[scnx].rvalues.data();
                const double* iv = idata->scanData.at( ss ).rvalues.constData();
 
                for ( int rr = 0; rr < npoints; rr++ )
                {
-                  sv[ rr ] += ( soluval * iv[ rr ] );
+                  sv[rr] += ( soluval * iv[rr] );
                }
             }
 DbgLv(2) << "   CR:231  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
@@ -1521,23 +1525,19 @@ DbgLv(2) << "   CR:301  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
       int    kntcs     = 0;
       double varidset  = 0.0;
 
-      const double* tiv = tinvec.constData() + tinoffs;
+      const double*           tiv = tinvec.constData() + tinoffs;
 
       for ( int ss = 0; ss < nscans; ss++, scnx++ )
       {  // Create residuals dset:  exp - sim - noise(s)
          const double* ev  = edata->scanData.at( ss ).rvalues.constData();
          const double* sv  = sdata->scanData.at( scnx ).rvalues.constData();
-         double*       rv  = resid->scanData[ scnx ].rvalues.data();
-         double        riv = rinvec[ ss + rinoffs ];
+         double*       rv  = resid->scanData[scnx].rvalues.data();
+         double        riv = rinvec[ss + rinoffs];
 
          for ( int rr = 0; rr < npoints; rr++ )
          {
-
-            double resval = ev[ rr ]
-                          - sv[ rr ]
-                          - tiv[ rr ]
-                          - riv;
-            rv[ rr ]      = resval;
+            double resval = ev[rr] - sv[rr] - tiv[rr] - riv;
+            rv[rr]        = resval;
 
             double r2    = sq( resval );
             variance    += r2;
@@ -1975,8 +1975,8 @@ bool US_SolveSim::calc_variance_normal( int offset, int dataset_count, Simulatio
       }
    }
 
-   double norm_cut = _NORM_CUTOFF_;
-   const QStringList dbgtxt = US_Settings::debug_text();
+   double            norm_cut = _NORM_CUTOFF_;
+   const QStringList dbgtxt   = US_Settings::debug_text();
 
    for ( const QString& dtext : dbgtxt )
    {
@@ -1992,15 +1992,15 @@ bool US_SolveSim::calc_variance_normal( int offset, int dataset_count, Simulatio
    dskeys.clear();
 
    // Per data set:  b'b, c = A'b and G = A'A (upper triangle, row-major)
-   const int                       ngram = nsolutes * nsolutes;
-   QVector<double>                 btb( dataset_count, 0.0 );
-   QVector<double>                 cvec( dataset_count * nsolutes, 0.0 );
-   QVector<double>                 gram( dataset_count * ngram, 0.0 );
-   QVector<int>                    npts( dataset_count, 0 );
-   QVector<US_DataIO::RawData>     sims( nsolutes * dataset_count );
-   QVector<QByteArray>             simkeys( nsolutes * dataset_count );
-   QVector<const double*>          sv( nsolutes );
-   US_Model                        model;
+   const int                   ngram = nsolutes * nsolutes;
+   QVector<double>             btb( dataset_count, 0.0 );
+   QVector<double>             cvec( dataset_count * nsolutes, 0.0 );
+   QVector<double>             gram( dataset_count * ngram, 0.0 );
+   QVector<int>                npts( dataset_count, 0 );
+   QVector<US_DataIO::RawData> sims( nsolutes * dataset_count );
+   QVector<QByteArray>         simkeys( nsolutes * dataset_count );
+   QVector<const double*>      sv( nsolutes );
+   US_Model                    model;
    model.components.resize( 1 );
 
    for ( int ee = offset; ee < lim_offs; ee++ )
@@ -2014,20 +2014,20 @@ bool US_SolveSim::calc_variance_normal( int offset, int dataset_count, Simulatio
       npts[kd]                       = nscans * npoints;
 
       for ( int cc = 0; cc < nsolutes; cc++ )
-      {  // Simulate each solute (standard s,k with constant vbar), as calc_residuals
+      { // Simulate each solute (standard s,k with constant vbar), as calc_residuals
          if ( abort )
          {
             return false;
          }
 
          US_Model::SimulationComponent& comp = model.components[0];
-         comp        = US_Model::SimulationComponent();
-         comp.s      = 0.0;
-         comp.D      = 0.0;
-         comp.mw     = 0.0;
-         comp.f      = 0.0;
-         comp.f_f0   = 0.0;
-         comp.vbar20 = dset->vbar20;
+         comp                                = US_Model::SimulationComponent();
+         comp.s                              = 0.0;
+         comp.D                              = 0.0;
+         comp.mw                             = 0.0;
+         comp.f                              = 0.0;
+         comp.f_f0                           = 0.0;
+         comp.vbar20                         = dset->vbar20;
          set_comp_attr( comp, sim_vals.solutes[cc], ATTR_S );
          set_comp_attr( comp, sim_vals.solutes[cc], ATTR_K );
          model.update_coefficients();
@@ -2055,7 +2055,7 @@ bool US_SolveSim::calc_variance_normal( int offset, int dataset_count, Simulatio
          for ( int rr = 0; rr < npoints; rr++ )
          {
             if ( ev[rr] >= odlim )
-            {  // OD limit substitutions:  only calc_residuals handles them
+            { // OD limit substitutions:  only calc_residuals handles them
                return false;
             }
 
@@ -2126,11 +2126,11 @@ bool US_SolveSim::calc_variance_normal( int offset, int dataset_count, Simulatio
       }
    }
 
-   const int nuse = use.size();
+   const int       nuse = use.size();
    QVector<double> xx( nsolutes, 0.0 );
 
    if ( nuse > 0 )
-   {  // Cholesky G = R'R (R upper triangular, column-major for nnls), R'd = c
+   { // Cholesky G = R'R (R upper triangular, column-major for nnls), R'd = c
       QVector<double> rr( nuse * nuse, 0.0 );
       QVector<double> dd( nuse, 0.0 );
       QVector<double> xu( nuse, 0.0 );
@@ -2156,7 +2156,7 @@ bool US_SolveSim::calc_variance_normal( int offset, int dataset_count, Simulatio
                double gjj = gtot[use[jj] * nsolutes + use[jj]];
 
                if ( !( sum > RCOND * gjj ) )
-               {  // (Nearly) dependent columns:  use the QR path
+               { // (Nearly) dependent columns:  use the QR path
                   return false;
                }
 
@@ -2166,7 +2166,7 @@ bool US_SolveSim::calc_variance_normal( int offset, int dataset_count, Simulatio
       }
 
       for ( int ii = 0; ii < nuse; ii++ )
-      {  // Forward substitution R'd = c
+      { // Forward substitution R'd = c
          double sum = ctot[use[ii]];
 
          for ( int kk = 0; kk < ii; kk++ )
@@ -2177,7 +2177,8 @@ bool US_SolveSim::calc_variance_normal( int offset, int dataset_count, Simulatio
          dd[ii] = sum / rr[ii + ii * nuse];
       }
 
-      int nnlsrc = US_Math2::nnls( rr.data(), nuse, nuse, nuse, dd.data(), xu.data(), nullptr, nullptr, nullptr, nullptr, 0, &abort );
+      int nnlsrc =
+         US_Math2::nnls( rr.data(), nuse, nuse, nuse, dd.data(), xu.data(), nullptr, nullptr, nullptr, nullptr, 0, &abort );
 
       if ( nnlsrc != 0 || abort )
       {
@@ -2203,7 +2204,7 @@ bool US_SolveSim::calc_variance_normal( int offset, int dataset_count, Simulatio
             continue;
          }
 
-         xc  += xx[ii] * cv[ii];
+         xc += xx[ii] * cv[ii];
          xgx += sq( xx[ii] ) * gm[ii * nsolutes + ii];
 
          for ( int jj = ii + 1; jj < nsolutes; jj++ )
@@ -2239,7 +2240,7 @@ bool US_SolveSim::calc_variance_normal( int offset, int dataset_count, Simulatio
    sim_vals.solutes.resize( kk );
 
    if ( simcache != nullptr )
-   {  // Keep the simulations of surviving solutes in the cache
+   { // Keep the simulations of surviving solutes in the cache
       for ( int cc = 0; cc < nsolutes; cc++ )
       {
          if ( xx[cc] > 0.0 )

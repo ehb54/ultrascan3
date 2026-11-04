@@ -123,16 +123,16 @@ class US_MPI_JobConfig
                   int     s_grid         = 100; //!< 100 if not given
                   int     k_grid         = 100; //!< 100 if not given
                   int     p_grid         = 100; //!< 100 if not given (DMGA)
-                  double  s_step         = 0.0; //!< Absolute s grid step (> 0: replaces s_grid)
-                  double  k_step         = 0.0; //!< Absolute k grid step (> 0: replaces k_grid)
-                  int     bucket_soft    = 0;   //!< 0 hard buckets, 1 soft walls, 2 Gaussian prior
-                  double  bucket_lambda  = 1.0; //!< Soft-bucket penalty weight, 1.0 if not given
-                  double  bucket_margin  = 0.5; //!< Soft-bucket extension in widths, 0.5 if not given
-                  qint64  sim_cache_mb   = -1;  //!< Simulation cache cap per rank in MB (0 off, -1 not given)
-                  int     sim_cache_lru  = 1;   //!< Simulation cache evicts by recent use (0 = default policy)
-                  int     ga_normal      = 0;   //!< Fitness from the normal equations (1; 0 = QR path)
-                  int     ga_normal_check = 0;  //!< Compare both fitness paths for every gene
-                  int     early_stop     = 1;   //!< Early termination (0 = run all generations)
+                  double  s_step          = 0.0; //!< Absolute s grid step (> 0: replaces s_grid)
+                  double  k_step          = 0.0; //!< Absolute k grid step (> 0: replaces k_grid)
+                  int     bucket_soft     = 0;   //!< 0 hard buckets, 1 soft walls, 2 Gaussian prior
+                  double  bucket_lambda   = 1.0; //!< Soft-bucket penalty weight, 1.0 if not given
+                  double  bucket_margin   = 0.5; //!< Soft-bucket extension in widths, 0.5 if not given
+                  qint64  sim_cache_mb    = -1;  //!< Simulation cache cap per rank in MB (0 off, -1 not given)
+                  int     sim_cache_lru   = 1;   //!< Simulation cache evicts by recent use (0 = default policy)
+                  int     ga_normal       = 0;   //!< Fitness from the normal equations (1; 0 = QR path)
+                  int     ga_normal_check = 0;   //!< Compare both fitness paths for every gene
+                  int     early_stop      = 1;   //!< Early termination (0 = run all generations)
                   double  bucket_fixed   = 0.0; //!< Fixed attribute value
                   QString xtype;                //!< Bucket x attribute
                   QString ytype;                //!< Bucket y attribute

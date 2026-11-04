@@ -317,8 +317,8 @@ class US_MPI_Analysis : public QObject
                 int    k_ghi; //!< Highest allowed k grid index
         };
 
-        int    bucket_soft   = 0;   //!< 0 hard buckets, 1 soft walls, 2 Gaussian prior
-        double bucket_lambda = 1.0; //!< Weight of the soft-bucket penalty
+        int                                        bucket_soft   = 0;   //!< 0 hard buckets, 1 soft walls, 2 Gaussian prior
+        double                                     bucket_lambda = 1.0; //!< Weight of the soft-bucket penalty
 
         int generation;       //!< Generation count
         int s_grid;           //!< S grid size
@@ -336,14 +336,14 @@ class US_MPI_Analysis : public QObject
         QList< SIMULATION > sim_values; //!< Simulation values list
         QMap< QString, double > fitness_map; //!< Fitness map
         int fitness_hits; //!< Fitness hits count
-        double fitness_secs = 0.0; //!< Worker seconds in fitness evaluations
-        US_SimCache* ga_simcache = nullptr; //!< Per-solute simulation cache (GA workers)
-        int    ga_normal       = 0;   //!< GA fitness from the normal equations (1; 0 = QR path)
-        int    ga_normal_check = 0;   //!< Compare both fitness paths for every gene
-        qint64 ga_normal_count = 0;   //!< Fitness values from the normal equations
-        qint64 ga_qr_count     = 0;   //!< ... from the QR path (fallback)
-        double ga_normal_dvar  = 0.0; //!< Check:  max relative variance difference
-        double ga_normal_dc    = 0.0; //!< Check:  max concentration difference / sum
+        double                                     fitness_secs    = 0.0;     //!< Worker seconds in fitness evaluations
+        US_SimCache*                               ga_simcache     = nullptr; //!< Per-solute simulation cache (GA workers)
+        int                                        ga_normal       = 0;   //!< GA fitness from the normal equations (1; 0 = QR path)
+        int                                        ga_normal_check = 0;   //!< Compare both fitness paths for every gene
+        qint64                                     ga_normal_count = 0;   //!< Fitness values from the normal equations
+        qint64                                     ga_qr_count     = 0;   //!< ... from the QR path (fallback)
+        double                                     ga_normal_dvar  = 0.0; //!< Check:  max relative variance difference
+        double                                     ga_normal_dc    = 0.0; //!< Check:  max concentration difference / sum
         QList< DGene > dgenes; //!< DGene list
         QList< DGene > best_dgenes; //!< Best DGene list (size is number of workers)
         US_dmGA_Constraints constraints; //!< Genetic algorithm constraints
@@ -495,18 +495,18 @@ class US_MPI_Analysis : public QObject
         void     _2dsa_worker      ( void );
 
         void     calc_residuals     ( int, int, SIMULATION& );
-        void     calc_fitness_residuals( int, int, SIMULATION& );
+        void                   calc_fitness_residuals( int, int, SIMULATION& );
         void                   debug_residuals( int, int, SIMULATION&, QVector<US_Solute>& );
 
         // GA Master
         void ga_master       ( void );
         void ga_master_loop  ( void );
         void ga_global_fit   ( void );
-        Gene refined_gene    ( const Gene& );
-        void   setup_bucket_grid ( void );
-        void   setup_ga_simcache ( void );
-        double bucket_penalty    ( const Gene&, int );
-        void   bound_solute      ( US_Solute&, int );
+        Gene                   refined_gene( const Gene& );
+        void                   setup_bucket_grid( void );
+        void                   setup_ga_simcache( void );
+        double                 bucket_penalty( const Gene&, int );
+        void                   bound_solute( US_Solute&, int );
         void set_gaMonteCarlo( void );
 
         // GA Worker

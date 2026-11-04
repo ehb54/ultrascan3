@@ -133,10 +133,11 @@ static void add_array( QByteArray& key, const QByteArray& values, bool fprint )
 // Values of the simulation parameters and experiment grid of a data set, or
 //  a fingerprint of them:  all scalar values, but only the address and size
 //  of each vector
-static void dataset_values( QByteArray& vals, const US_SimulationParameters& simparams,
-                            const US_DataIO::EditedData& edata, bool fprint )
+static void dataset_values( QByteArray&                    vals,
+                            const US_SimulationParameters& simparams,
+                            const US_DataIO::EditedData&   edata,
+                            bool                           fprint )
 {
-
    // Simulation parameters (a user mesh only matters for the USER mesh
    //  type;  programs keep other values in mesh_radius)
    if ( simparams.meshType == US_SimulationParameters::USER )
@@ -240,8 +241,7 @@ QByteArray US_SimCache::dataset_key( const US_SimulationParameters& simparams, c
 }
 
 // Key of a data set, computed once for each fingerprint of its values
-QByteArray US_SimCache::dataset_key_memo( const US_SimulationParameters& simparams,
-                                          const US_DataIO::EditedData& edata )
+QByteArray US_SimCache::dataset_key_memo( const US_SimulationParameters& simparams, const US_DataIO::EditedData& edata )
 {
    if ( !key_memo )
    {
@@ -460,8 +460,9 @@ void US_SimCache::evict_lru( qint64 need )
       uses << qMakePair( it.value().last_use, it.key() );
    }
 
-   std::sort( uses.begin(), uses.end(), []( const QPair<qint64, QByteArray>& a, const QPair<qint64, QByteArray>& b )
-              { return a.first < b.first; } );
+   std::sort( uses.begin(),
+              uses.end(),
+              []( const QPair<qint64, QByteArray>& a, const QPair<qint64, QByteArray>& b ) { return a.first < b.first; } );
 
    const qint64 target = max_bytes - max_bytes / 10 - need;
 

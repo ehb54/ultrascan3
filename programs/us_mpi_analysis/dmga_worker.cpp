@@ -27,7 +27,9 @@ void US_MPI_Analysis::dmga_worker( void )
    //  which would make all demes evolve identically:  offset it by rank
    const uint seed = job_config.params.seed;
    if ( seed != 0 )
-      US_Math2::randomize( seed + 7919u * (uint)my_rank );
+   {
+      US_Math2::randomize( seed + 7919u * (uint) my_rank );
+   }
 
    p_grid                       = job_config.params.ga.p_grid;
    const QString s_bsig         = job_config.debug_value( "base_sig" );
@@ -477,7 +479,7 @@ void US_MPI_Analysis::dmga_worker_loop( void )
          const int gene_index  = e_random();
          const int probability = u_random( p_plague );
          DbgLv( 1 ) << "gw:" << my_rank << ":  gg" << gg << "gene_index" << gene_index << "probability" << probability;
-         dgene            = old_genes[ fitness[ gene_index ].index ];
+         dgene = old_genes[fitness[gene_index].index];
 
          // Do a self-mutate on some genes
          if      ( probability < p_mutate    ) mutate_dgene( dgene );

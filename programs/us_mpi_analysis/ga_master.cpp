@@ -9,8 +9,8 @@ void US_MPI_Analysis::ga_master( void )
    datasets_to_process = count_datasets;
    max_depth           = 0;
    calculated_solutes.clear();
-   setup_bucket_grid();          // Grid and soft-bucket limits (refinement)
-   setup_ga_simcache();          // Simulation cache (refinement)
+   setup_bucket_grid(); // Grid and soft-bucket limits (refinement)
+   setup_ga_simcache(); // Simulation cache (refinement)
 
    // Set noise and debug flags
    simulation_values.noisflag = job_config.params.tinoise_option > 0 ? 1 : 0;
@@ -45,7 +45,7 @@ void US_MPI_Analysis::ga_master( void )
       ga_master_loop();
 
       std::sort( best_fitness.begin(), best_fitness.end() );
-      simulation_values.solutes = refined_gene( best_genes[ best_fitness[ 0 ].index ] );
+      simulation_values.solutes = refined_gene( best_genes[best_fitness[0].index] );
       const int nisols          = simulation_values.solutes.size();
       DbgLv( 1 ) << "GaMast: sols size" << nisols << "buck size" << buckets.size() << "dset size" << data_sets.size();
       DbgLv( 1 ) << "GaMast:  sol0.s .k .v .d" << simulation_values.solutes[0].s << simulation_values.solutes[0].k
@@ -195,7 +195,7 @@ void US_MPI_Analysis::ga_master_loop( void )
    }
 
    QList  < Gene > emigres;      // Holds genes passed as emmigrants
-   Gene            worker_gene( buckets.size() );  // Gene of a deme report
+   Gene            worker_gene( buckets.size() ); // Gene of a deme report
    QVector< int  > v_generations( gcores_count, 0 ); 
    int             sum = 0;
    int             avg = 0;
@@ -261,9 +261,9 @@ void US_MPI_Analysis::ga_master_loop( void )
             }
 
             // Get the best gene for the current generation from the worker
-            MPI_Recv( worker_gene.data(),              // MPI #2
+            MPI_Recv( worker_gene.data(), // MPI #2
                       buckets.size() * solute_doubles,
-                      MPI_DOUBLE,  
+                      MPI_DOUBLE,
                       worker,
                       GENE,
                       my_communicator,
@@ -284,7 +284,7 @@ void US_MPI_Analysis::ga_master_loop( void )
             if ( fitness_round < best_fitness[ worker ].fitness )
             {
                best_fitness[ worker ].fitness = fitness_round;
-               best_genes  [ worker ]         = worker_gene;
+               best_genes[worker]             = worker_gene;
             }
             g = "";
             for ( int i = 0; i < buckets.size(); i++ )
@@ -314,9 +314,7 @@ void US_MPI_Analysis::ga_master_loop( void )
                }
 
 
-               if ( fitness_same_count > max_same_count  &&
-                    avg_generation     > min_generation  &&
-                    job_config.params.ga.early_stop != 0 )
+               if ( fitness_same_count > max_same_count && avg_generation > min_generation && job_config.params.ga.early_stop != 0 )
                {  // Mark early termination at threshold same-fitness count
                   DbgLv(0) << "Fitness has not improved in the last"
                      << fitness_same_count
@@ -430,12 +428,12 @@ US_MPI_Analysis::Gene US_MPI_Analysis::refined_gene( const Gene& gene )
 
    for ( int bb = 0; bb < rgene.size(); bb++ )
    {
-      bound_solute( rgene[ bb ], bb );
+      bound_solute( rgene[bb], bb );
    }
 
    double rfitness = get_fitness( rgene );
-   DbgLv(0) << "Gradient search refinement: fitness" << gfitness
-            << "->" << rfitness << ( rfitness < gfitness ? "(kept)" : "(discarded)" );
+   DbgLv( 0 ) << "Gradient search refinement: fitness" << gfitness << "->" << rfitness
+              << ( rfitness < gfitness ? "(kept)" : "(discarded)" );
 
    return ( rfitness < gfitness ) ? rgene : gene;
 }
@@ -559,7 +557,7 @@ void US_MPI_Analysis::set_gaMonteCarlo( void )
             mc_data[ index ] = scaled_data.value( ks, rr ) + variation;
             // The master's final NNLS and refinement fit the same data
             //  as the workers
-            edata->setValue( ss, rr, mc_data[ index ] );
+            edata->setValue( ss, rr, mc_data[index] );
             index++;
          }
       }
