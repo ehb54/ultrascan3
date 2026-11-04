@@ -43,6 +43,7 @@
 #endif
 
 #include <thread>
+#include <chrono>
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -60,7 +61,11 @@
 using namespace zeno;
 
 Zeno::Zeno(MixedModel<double> * modelToProcess)
-  : mpiSize(1),
+  : pollCallback(nullptr),
+    pollData(nullptr),
+    pollIntervalMs(200),
+    stopRequested(false),
+    mpiSize(1),
     mpiRank(0),
     model(),
     modelBoundingSphere(),
@@ -261,6 +266,65 @@ Zeno::getTotalTime() const {
   return totalTimer.getTime();
 }
 
+// US-SOMO: polling hook, not in NIST ZENO 5.3.1.
+
+void
+Zeno::setPollCallback(PollCallback callback, void * data, int intervalMs) {
+  pollCallback   = callback;
+  pollData       = data;
+  pollIntervalMs = intervalMs > 0 ? intervalMs : 200;
+}
+
+bool
+Zeno::getStopRequested() const {
+  return stopRequested.load();
+}
+
+void
+Zeno::waitForThreads(std::thread * * threads,
+		     int numThreads,
+		     long long numRequested,
+		     ThreadProgress * progress) {
+
+  if (pollCallback != nullptr) {
+    std::unique_lock<std::mutex> lock(progress->mutex);
+
+    while (progress->numThreadsFinished < numThreads) {
+      progress->finished.wait_for(lock,
+				  std::chrono::milliseconds(pollIntervalMs));
+
+      if (progress->numThreadsFinished < numThreads) {
+	lock.unlock();
+
+	if (pollCallback(pollData, progress->numDone.load(), numRequested)) {
+	  stopRequested = true;
+	}
+
+	lock.lock();
+      }
+    }
+  }
+
+  for (int threadNum = 0; threadNum < numThreads; threadNum++) {
+    threads[threadNum]->join();
+  }
+}
+
+void
+Zeno::threadFinished(long long numNotYetReported,
+		     ThreadProgress * progress) {
+
+  progress->numDone += numNotYetReported;
+
+  {
+    std::lock_guard<std::mutex> lock(progress->mutex);
+
+    progress->numThreadsFinished++;
+  }
+
+  progress->finished.notify_all();
+}
+
 long long 
 Zeno::computeNumInProcess(int mpiSize, int mpiRank,
 			  long long totalNumSamples) const {
@@ -417,7 +481,8 @@ Zeno::getWalkOnSpheresResults
     long long estimatedNumWalksRemaining =
       parametersWalkOnSpheres.getMinTotalNumWalks();
 
-    while (estimatedNumWalksRemaining > 0) {
+    // US-SOMO: also end the iterations when a stop was requested
+    while (estimatedNumWalksRemaining > 0 && !stopRequested) {
 
       long long estimatedNumWalksRemainingInProcess = 
 	computeNumInProcess(mpiSize, 
@@ -502,6 +567,8 @@ Zeno::doWalkOnSpheres(ParametersWalkOnSpheres const & parameters,
 
   std::thread * * threads = new std::thread *[numThreads];
 
+  ThreadProgress progress;
+
   for (int threadNum = 0; threadNum < numThreads; threadNum++) {
 
     long long numWalksInThread = numWalksInProcess / numThreads;
@@ -519,12 +586,13 @@ Zeno::doWalkOnSpheres(ParametersWalkOnSpheres const & parameters,
 		      numWalksInThread,
 		      &totalTimer,
 		      &(threadRNGs->at(threadNum)),
-		      resultsZeno);
+		      resultsZeno,
+		      &stopRequested,
+		      &progress);
   }
 
-  for (int threadNum = 0; threadNum < numThreads; threadNum++) {
-    threads[threadNum]->join();
-  }
+  // US-SOMO: joins the threads, polling while they run
+  waitForThreads(threads, numThreads, numWalksInProcess, &progress);
 
   for (int threadNum = 0; threadNum < numThreads; threadNum++) {
     delete threads[threadNum];
@@ -543,7 +611,9 @@ Zeno::doWalkOnSpheresThread(ParametersWalkOnSpheres const * parameters,
 			    long long numWalks,
 			    Timer const * totalTimer,
 			    RandomNumberGenerator * randomNumberGenerator,
-			    ResultsZeno * resultsZeno) {
+			    ResultsZeno * resultsZeno,
+			    std::atomic<bool> const * stopRequested,
+			    ThreadProgress * progress) {
 
   const double shellThickness = parameters->getSkinThickness();
   
@@ -557,7 +627,15 @@ Zeno::doWalkOnSpheresThread(ParametersWalkOnSpheres const * parameters,
            *nearestSurfacePointFinder,
 	   shellThickness);
 
+  // US-SOMO: walks finished but not yet added to the progress count
+  long long numNotYetReported = 0;
+
   for (long long walkNum = 0; walkNum < numWalks; walkNum++) {
+
+    // US-SOMO: stop early if asked
+    if (stopRequested->load(std::memory_order_relaxed)) {
+      break;
+    }
 
     bool hitObject = false;
     int numSteps   = 0;
@@ -577,12 +655,24 @@ Zeno::doWalkOnSpheresThread(ParametersWalkOnSpheres const * parameters,
       resultsZeno->recordMiss(threadNum);
     }
 
+    // US-SOMO: count the finished walk, reporting in blocks
+    numNotYetReported++;
+
+    if (numNotYetReported == progressBlock) {
+      progress->numDone += numNotYetReported;
+
+      numNotYetReported = 0;
+    }
+
     if (parameters->getMaxRunTimeWasSet() &&
 	(totalTimer->getTime() > parameters->getMaxRunTime())) {
 
       break;
     }
   }
+
+  // US-SOMO: report the rest and tell the polling thread this one is done
+  threadFinished(numNotYetReported, progress);
 }
 
 void
@@ -632,7 +722,8 @@ Zeno::getInteriorResults
     long long estimatedNumSamplesRemaining =
       parametersInteriorSampling.getMinTotalNumSamples();
 
-    while (estimatedNumSamplesRemaining > 0) {
+    // US-SOMO: also end the iterations when a stop was requested
+    while (estimatedNumSamplesRemaining > 0 && !stopRequested) {
 
       long long estimatedNumSamplesRemainingInProcess = 
 	computeNumInProcess(mpiSize, 
@@ -710,6 +801,8 @@ Zeno::doInteriorSampling(ParametersInteriorSampling const & parameters,
 
   std::thread * * threads = new std::thread *[numThreads];
 
+  ThreadProgress progress;
+
   for (int threadNum = 0; threadNum < numThreads; threadNum++) {
 
     long long numSamplesInThread = numSamplesInProcess / numThreads;
@@ -727,12 +820,13 @@ Zeno::doInteriorSampling(ParametersInteriorSampling const & parameters,
 		      numSamplesInThread,
 		      &totalTimer,
 		      &(threadRNGs->at(threadNum)),
-		      resultsInterior);
+		      resultsInterior,
+		      &stopRequested,
+		      &progress);
   }
 
-  for (int threadNum = 0; threadNum < numThreads; threadNum++) {
-    threads[threadNum]->join();
-  }
+  // US-SOMO: joins the threads, polling while they run
+  waitForThreads(threads, numThreads, numSamplesInProcess, &progress);
 
   for (int threadNum = 0; threadNum < numThreads; threadNum++) {
     delete threads[threadNum];
@@ -751,7 +845,9 @@ Zeno::doInteriorSamplingThread(ParametersInteriorSampling const * parameters,
 			       long long numSamples,
 			       Timer const * totalTimer,
 			       RandomNumberGenerator * randomNumberGenerator,
-			       ResultsInterior * resultsInterior) {
+			       ResultsInterior * resultsInterior,
+			       std::atomic<bool> const * stopRequested,
+			       ThreadProgress * progress) {
 
   SamplerInterior<double, 
 		 RandomNumberGenerator,
@@ -761,7 +857,15 @@ Zeno::doInteriorSamplingThread(ParametersInteriorSampling const * parameters,
 	    *boundingSphere, 
 	    *insideOutsideTester);
 
+  // US-SOMO: samples finished but not yet added to the progress count
+  long long numNotYetReported = 0;
+
   for (long long sampleNum = 0; sampleNum < numSamples; sampleNum++) {
+
+    // US-SOMO: stop early if asked
+    if (stopRequested->load(std::memory_order_relaxed)) {
+      break;
+    }
 
     bool hitObject = false;
 
@@ -778,10 +882,22 @@ Zeno::doInteriorSamplingThread(ParametersInteriorSampling const * parameters,
       resultsInterior->recordMiss(threadNum);
     }
 
+    // US-SOMO: count the finished sample, reporting in blocks
+    numNotYetReported++;
+
+    if (numNotYetReported == progressBlock) {
+      progress->numDone += numNotYetReported;
+
+      numNotYetReported = 0;
+    }
+
     if (parameters->getMaxRunTimeWasSet() &&
 	(totalTimer->getTime() > parameters->getMaxRunTime())) {
 
       break;
     }
   }
+
+  // US-SOMO: report the rest and tell the polling thread this one is done
+  threadFinished(numNotYetReported, progress);
 }

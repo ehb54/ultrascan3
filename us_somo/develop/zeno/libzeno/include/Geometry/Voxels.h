@@ -50,7 +50,10 @@
 #include <cstdlib>
 #include <cstring>
 #include <cassert>
+// US-SOMO: ZENO_NO_VOXELS builds without zlib; loadFitsGz then fails
+#ifndef ZENO_NO_VOXELS
 #include <zlib.h>
+#endif
 
 #include "Vector3.h"
 #include "Cuboid.h"
@@ -116,6 +119,13 @@ Voxels<T>::~Voxels() {
 template <class T>
 bool 
 Voxels<T>::loadFitsGz(std::string const & inputFileName) {
+#ifdef ZENO_NO_VOXELS
+  // US-SOMO: built without zlib
+  std::cerr << "Error: voxel files are not supported in this build: "
+	    << inputFileName << std::endl;
+
+  return false;
+#else
 
   gzFile inputFile = gzopen(inputFileName.c_str(), "rb");
 
@@ -243,6 +253,7 @@ Voxels<T>::loadFitsGz(std::string const & inputFileName) {
   voxelsLoaded = true;
 
   return true;
+#endif
 }
 
 template <class T>

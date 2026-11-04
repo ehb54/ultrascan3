@@ -69,6 +69,7 @@ class MixedModel {
 
   void addSphere(Sphere<T> const & sphere);
   void addCuboid(Cuboid<T> const & cuboid);
+  void addTriangle(Triangle<T> const & triangle);
 
   bool loadVoxels(std::string const & inputFileName);
 
@@ -157,6 +158,30 @@ MixedModel<T>::addCuboid(Cuboid<T> const & cuboid) {
   }
   
   cuboids.push_back(cuboid);
+}
+
+/// Add a triangle to the model.  A closed, consistently wound mesh of
+/// triangles (counterclockwise seen from outside) describes a solid body.
+///
+template <class T>
+void
+MixedModel<T>::addTriangle(Triangle<T> const & triangle) {
+  assert(!trianglesLocked);
+
+  if (trianglesLocked) {
+    return;
+  }
+
+  Vector3<T> const v1 = triangle.getV1();
+  Vector3<T> const v2 = triangle.getV2();
+  Vector3<T> const v3 = triangle.getV3();
+
+  if ((v2 - v1).cross(v3 - v1).getMagnitudeSqr() == 0) {
+    std::cerr << "Warning: degenerate triangle" << std::endl
+	      << triangle << std::endl;
+  }
+
+  triangles.push_back(triangle);
 }
 
 

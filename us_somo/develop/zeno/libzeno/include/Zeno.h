@@ -42,6 +42,12 @@
 #include <string>
 #include <vector>
 
+// US-SOMO: for the polling hook below
+#include <atomic>
+#include <condition_variable>
+#include <mutex>
+#include <thread>
+
 #include "ParametersWalkOnSpheres.h"
 #include "ParametersInteriorSampling.h"
 #include "ParametersResults.h"
@@ -183,7 +189,55 @@ class Zeno {
   double getInteriorSamplingReductionTime() const;
   double getTotalTime() const;
 
+  // US-SOMO: polling hook, not in NIST ZENO 5.3.1.
+  //
+  /// A callback run on the calling thread about every intervalMs
+  /// milliseconds while walks or interior samples are running.  It gets the
+  /// number of walks (or samples) finished and the number requested in the
+  /// current batch.  Returning true asks the computation to stop; the walks
+  /// and samples already finished are kept.  Without a callback the threads
+  /// are simply joined, as in NIST ZENO.
+  ///
+  using PollCallback = bool (*)(void * data,
+				long long numDone,
+				long long numRequested);
+
+  void setPollCallback(PollCallback callback, void * data, int intervalMs);
+
+  /// True once a poll callback has asked the computation to stop.
+  ///
+  bool getStopRequested() const;
+
  private:
+  // US-SOMO: state the worker threads share with the polling thread.
+  //
+  struct ThreadProgress {
+    ThreadProgress() : numDone(0), numThreadsFinished(0) {}
+
+    std::atomic<long long> numDone;
+    std::mutex mutex;
+    std::condition_variable finished;
+    int numThreadsFinished;
+  };
+
+  /// US-SOMO: worker threads add to the progress count in blocks of this
+  /// many, to keep the shared counter from becoming a contention point.
+  ///
+  static constexpr long long progressBlock = 1024;
+
+  /// US-SOMO: waits for the worker threads, calling the poll callback (if
+  /// any) while they run, then joins them.
+  ///
+  void waitForThreads(std::thread * * threads,
+		      int numThreads,
+		      long long numRequested,
+		      ThreadProgress * progress);
+
+  /// US-SOMO: called by a worker thread when it has finished.
+  ///
+  static void threadFinished(long long numNotYetReported,
+			     ThreadProgress * progress);
+
   /// Divides a total number of samples as evenly as possible between a set of
   /// MPI processes of a certain size, and returns how many samples the MPI
   /// process of the given rank is responsible for.
@@ -247,7 +301,9 @@ class Zeno {
 			       long long numWalks,
 			       Timer const * totalTimer,
 			       RandomNumberGenerator * randomNumberGenerator,
-			       ResultsZeno * resultsZeno);
+			       ResultsZeno * resultsZeno,
+			       std::atomic<bool> const * stopRequested,
+			       ThreadProgress * progress);
 
   /// Perform Interior samples until the stopping condition is achieved
   /// (either number of walks or error) and perform a parallel reduction on
@@ -283,7 +339,15 @@ class Zeno {
 				  long long numSamples,
 				  Timer const * totalTimer,
 				  RandomNumberGenerator * randomNumberGenerator,
-				  ResultsInterior * resultsInterior);
+				  ResultsInterior * resultsInterior,
+				  std::atomic<bool> const * stopRequested,
+				  ThreadProgress * progress);
+
+  // US-SOMO: polling hook state
+  PollCallback pollCallback;
+  void * pollData;
+  int pollIntervalMs;
+  std::atomic<bool> stopRequested;
 
   int mpiSize;
   int mpiRank;

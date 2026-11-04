@@ -70,9 +70,11 @@ Units::getFactor(Mass fromUnit, Mass toUnit) {
 
   switch(fromUnit) {
   case Mass::Da:
-    return Uncertain<double>(6.02214*std::pow(10, 23), std::pow(10, 18 * 2));
+    // US-SOMO: CODATA 2014 value, as in SOMO's ZENO 5.0.1 copy
+    return Uncertain<double>(6.022140857*std::pow(10, 23), std::pow(10, 18 * 2));
   case Mass::kDa:
-    return Uncertain<double>(6.02214*std::pow(10, 20), std::pow(10, 15 * 2));
+    // US-SOMO: CODATA 2014 value, as in SOMO's ZENO 5.0.1 copy
+    return Uncertain<double>(6.022140857*std::pow(10, 20), std::pow(10, 15 * 2));
   case Mass::g:
     return 1;
   case Mass::kg:
@@ -179,6 +181,7 @@ Units::getName(Viscosity unit) {
 ///
 Uncertain<double> 
 Units::kB() {
-  return Uncertain<double>(1.38065*std::pow(10, -23), std::pow(10, -28 * 2));
+  // US-SOMO: CODATA 2014 value, as in SOMO's ZENO 5.0.1 copy
+  return Uncertain<double>(1.38064852*std::pow(10, -23), std::pow(10, -28 * 2));
 }
 

@@ -23,7 +23,8 @@ SOURCES		+= ../src/us_saxs_util_hydro_pat_hydro.cpp
 SOURCES		+= ../src/us_saxs_util_hydro_zeno_hydro.cpp
 
 SOURCES		+= ../src/us_zeno_cxx.cpp
-SOURCES		+= ../src/us_zeno_cxx_nf.cpp
+SOURCES		+= ../src/us_zeno_lib.cpp
+INCLUDEPATH		+= $$PWD/../zeno/libzeno/include $$PWD/../zeno/zeno-cli/src
 
 SOURCES		+= ../src/us_saxs_util_ift.cpp
 SOURCES		+= ../src/us_saxs_util_loads.cpp
