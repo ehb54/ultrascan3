@@ -1830,6 +1830,66 @@ void US_MPI_Analysis::calc_residuals( int         offset,
    }
 }
 
+// Variance and concentrations for a GA fitness:  from the normal equations
+//  where US_SolveSim handles the case (see calc_variance_normal), otherwise
+//  from calc_residuals.  The simulation and residual data are not set.
+void US_MPI_Analysis::calc_fitness_residuals( int offset, int dataset_count, SIMULATION& simu_values )
+{
+   if ( ga_normal == 0 || dbg_level > 0 )
+   {
+      ga_qr_count++;
+      calc_residuals( offset, dataset_count, simu_values );
+      return;
+   }
+
+   SIMULATION qr_values;
+
+   if ( ga_normal_check != 0 )
+   {
+      qr_values = simu_values;
+   }
+
+   US_SolveSim solvesim( data_sets, my_rank, false );
+   if ( ga_simcache != nullptr )
+      solvesim.set_sim_cache( ga_simcache );
+
+   if ( !solvesim.calc_variance_normal( offset, dataset_count, simu_values ) )
+   {
+      ga_qr_count++;
+      calc_residuals( offset, dataset_count, simu_values );
+      return;
+   }
+
+   ga_normal_count++;
+
+   if ( ga_normal_check != 0 )
+   {  // Compare with the QR path:  variance and concentrations
+      calc_residuals( offset, dataset_count, qr_values );
+      double dvar = qAbs( simu_values.variance - qr_values.variance ) / qMax( qr_values.variance, 1.0e-300 );
+      double csum = 0.0;
+      double dc   = 0.0;
+      QMap<QPair<double, double>, double> qrc;
+
+      for ( const US_Solute& sol : qr_values.solutes )
+      {
+         qrc[ qMakePair( sol.s, sol.k ) ] = sol.c;
+         csum += sol.c;
+      }
+
+      for ( const US_Solute& sol : simu_values.solutes )
+      {
+         dc = qMax( dc, qAbs( sol.c - qrc.value( qMakePair( sol.s, sol.k ), 0.0 ) ) );
+         qrc.remove( qMakePair( sol.s, sol.k ) );
+      }
+
+      for ( double cval : qrc )
+         dc = qMax( dc, cval );
+
+      ga_normal_dvar = qMax( ga_normal_dvar, dvar );
+      ga_normal_dc   = qMax( ga_normal_dc, dc / qMax( csum, 1.0e-300 ) );
+   }
+}
+
 // Print data, simulation and dataset values after a residuals calculation
 void US_MPI_Analysis::debug_residuals( int offset, int dataset_count, SIMULATION& simu_values, QVector<US_Solute>& isols )
 {

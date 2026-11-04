@@ -337,6 +337,12 @@ class US_MPI_Analysis : public QObject
         QMap< QString, double > fitness_map; //!< Fitness map
         int fitness_hits; //!< Fitness hits count
         US_SimCache* ga_simcache = nullptr; //!< Per-solute simulation cache (GA workers)
+        int    ga_normal       = 0;   //!< GA fitness from the normal equations (1; 0 = QR path)
+        int    ga_normal_check = 0;   //!< Compare both fitness paths for every gene
+        qint64 ga_normal_count = 0;   //!< Fitness values from the normal equations
+        qint64 ga_qr_count     = 0;   //!< ... from the QR path (fallback)
+        double ga_normal_dvar  = 0.0; //!< Check:  max relative variance difference
+        double ga_normal_dc    = 0.0; //!< Check:  max concentration difference / sum
         QList< DGene > dgenes; //!< DGene list
         QList< DGene > best_dgenes; //!< Best DGene list (size is number of workers)
         US_dmGA_Constraints constraints; //!< Genetic algorithm constraints
@@ -488,6 +494,7 @@ class US_MPI_Analysis : public QObject
         void     _2dsa_worker      ( void );
 
         void     calc_residuals     ( int, int, SIMULATION& );
+        void     calc_fitness_residuals( int, int, SIMULATION& );
         void                   debug_residuals( int, int, SIMULATION&, QVector<US_Solute>& );
 
         // GA Master

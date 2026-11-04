@@ -160,6 +160,29 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
                          QVector< double >* = 0, QVector< double >*  = 0,
                          QVector< double >* = 0 );
 
+    //! \brief Variance and concentrations of a few solutes from the normal
+    //!        equations (a fast calc_residuals for small solute sets)
+    //!
+    //! The Gram matrix G = A'A and c = A'b of the simulations A and the data
+    //! b are summed directly from the simulations;  the concentrations are
+    //! the NNLS solution of min |Rx - d| with G = R'R (Cholesky) and
+    //! R'd = c, which equals the NNLS solution of min |Ax - b|;  the variance
+    //! is (b'b - 2x'c + x'Gx) / N.  No A matrix, simulation sum or residuals
+    //! are built:  sim_vals.sim_data and sim_vals.residuals are not set.
+    //! Results agree with calc_residuals to rounding (about 1e-10 relative).
+    //!
+    //! Only the plain case is handled:  standard s,k solutes (solute type 0,
+    //! no zsolutes), no TI or RI noise, no Tikhonov regularization, no band
+    //! forming, no data at or above the OD limit, loaded time states, and a
+    //! well-conditioned G.  Otherwise nothing is changed and false is
+    //! returned:  call calc_residuals instead.
+    //! \param offset         Starting data-sets offset
+    //! \param dataset_count  Number of data sets for which to solve
+    //! \param sim_vals       Simulation (input solutes;  output solutes with
+    //!                       non-zero concentration, variance, variances)
+    //! \returns              Flag whether calculated
+    bool calc_variance_normal( int, int, Simulation& );
+
     //! \brief Set a flag so that the worker aborts at the earliest opportunity
     void abort_work    ( void );
 

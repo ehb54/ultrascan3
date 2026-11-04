@@ -161,6 +161,8 @@ void US_MPI_JobConfig::read_parameters( void )
    ga.bucket_lambda   = p.contains( "bucket_lambda" ) ? number( "bucket_lambda" ) : 1.0;
    ga.bucket_margin   = p.contains( "bucket_margin" ) ? number( "bucket_margin" ) : 0.5;
    ga.sim_cache_mb    = integer_or( "sim_cache_mb", -1 );
+   ga.ga_normal       = integer( "ga_normal" );
+   ga.ga_normal_check = integer( "ga_normal_check" );
    ga.bucket_fixed    = number( "bucket_fixed" );
    ga.xtype           = p.value( "xtype" );
    ga.ytype           = p.value( "ytype" );
@@ -782,6 +784,8 @@ const ParamSpec PARAMS[] = {
    { "bucket_lambda", Kind::Double, M_GA, 0, 0, NOLIM, nullptr },
    { "bucket_margin", Kind::Double, M_GA, 0, 0, NOLIM, nullptr },
    { "sim_cache_mb", Kind::Int, M_GA, 0, 0, NOLIM, nullptr },
+   { "ga_normal", Kind::Int, M_GA, 0, 0, 1, nullptr },
+   { "ga_normal_check", Kind::Int, M_GA, 0, 0, 1, nullptr },
    { "demes", Kind::Int, M_GA | M_DMGA, 0, 0, NOLIM, nullptr }, // Sent by the LIMS, not used
    { "DC_model", Kind::File, M_DMGA, M_DMGA, 0, 0, nullptr },
    // PCSA

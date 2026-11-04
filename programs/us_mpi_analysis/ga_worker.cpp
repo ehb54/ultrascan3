@@ -77,6 +77,13 @@ void US_MPI_Analysis::ga_worker( void )
             if ( ga_simcache != nullptr )
                DbgLv(0) << "    Deme" << grp_nbr << deme_nbr << ":"
                   << ga_simcache->stats_text();
+            DbgLv(0) << "    Deme" << grp_nbr << deme_nbr << ":"
+               << ga_normal_count << "fitness values from the normal equations,"
+               << ga_qr_count << "from QR";
+            if ( ga_normal_check != 0 )
+               DbgLv(0) << "    Deme" << grp_nbr << deme_nbr << ":"
+                  << "normal-equation check:  max rel. variance diff." << ga_normal_dvar
+                  << " max conc. diff. / total" << ga_normal_dc;
             break;
 
          case UPDATE:   
@@ -395,7 +402,7 @@ double US_MPI_Analysis::get_fitness( const Gene& gene )
    solutes_from_gene( sim.solutes, nisols );
 
    //DbTimMsg("  ++ call gf calc_residuals");
-   calc_residuals( current_dataset, datasets_to_process, sim );
+   calc_fitness_residuals( current_dataset, datasets_to_process, sim );
    //DbTimMsg("  ++  return calc_residuals");
 
    double    sfitness     = sim.variance;
@@ -1550,6 +1557,10 @@ void US_MPI_Analysis::setup_bucket_grid( void )
 {
    const US_MPI_JobConfig::Parameters::Ga& ga = job_config.params.ga;
 
+   // Fitness path (also used by the master)
+   ga_normal       = ga.ga_normal;
+   ga_normal_check = ga.ga_normal_check;
+
    s_grid = ga.s_grid;
    k_grid = ga.k_grid;
 
@@ -1676,7 +1687,10 @@ void US_MPI_Analysis::setup_ga_simcache( void )
    }
 
    if ( cap >= 16 * MB )
+   {  // Data sets live for the whole job:  their keys can be memorized
       ga_simcache = new US_SimCache( cap );
+      ga_simcache->set_key_memo( true );
+   }
 
    if ( my_rank == 1 )
       DbgLv(0) << "GA simulation cache per rank (MB):" << ( ( ga_simcache != nullptr ) ? cap / MB : 0 )
