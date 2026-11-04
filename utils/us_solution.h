@@ -42,6 +42,10 @@ class US_UTIL_EXTERN US_Solution
          BOTH                                 //!< The file has been saved to both HD and DB
       };
 
+      //! The longest description, in characters, that the LIMS
+      //! solution.description column (VARCHAR(80)) holds.
+      static constexpr int   descriptionLimit = 80;
+
       int              solutionID;         //!< The ID of the solution for this triple
       QString          solutionGUID;       //!< The GUID of the solution for this triple
       QString          solutionDesc;       //!< A description of the solution 

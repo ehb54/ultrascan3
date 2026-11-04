@@ -1,0 +1,12 @@
+us3_add_gui_test(test_us_edited_data_loaders
+        SOURCES
+            test_us_edited_data_loaders.cpp
+            ${CMAKE_SOURCE_DIR}/programs/us_edited_data_loaders.cpp
+            ${CMAKE_SOURCE_DIR}/programs/us_edited_data_loaders.h
+        LIBRARIES
+            UltraScan3::Utils_Static
+        INCLUDE_DIRECTORIES
+            ${CMAKE_SOURCE_DIR}/programs
+        LABELS
+            programs;data-loading
+        )

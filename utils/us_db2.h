@@ -94,6 +94,38 @@ public:
                   const QString& user, const QString& password,
                   QString& err ) override;
 
+    /*! \brief Connect and authenticate with explicit credentials.
+
+        connect( masterPW, err ) reads the stored database profile, and writes
+        it back when the account's email has changed.  This takes the same
+        values as arguments and reads or writes no settings, for a program
+        that has no profile.
+
+        Unlike the connect() that takes host, database, user and password, it
+        also calls validate_user.  Every stored procedure takes the caller's
+        identity as its first two arguments and runs only after validate_user
+        has accepted it.
+
+        Not on IUS_DB2: code using the interface receives a connection that is
+        already open and authenticated.
+
+        \param host           Host name, optionally host:port
+        \param dbname         Database name
+        \param user           Database user
+        \param password       That user's password
+        \param personGUID     The US3 investigator's GUID
+        \param personPassword That investigator's US3 password
+        \param err            Set to the reason on failure
+        \return True if connected and authenticated
+    */
+    bool                         connectAuthenticated( const QString& host,
+                                                       const QString& dbname,
+                                                       const QString& user,
+                                                       const QString& password,
+                                                       const QString& personGUID,
+                                                       const QString& personPassword,
+                                                       QString&       err );
+
     //! Transaction error formats; %1 is the refused operation or the server's error text.
     static constexpr const char* transactionOpenMessage = "%1: a transaction is already open";
     static constexpr const char* noTransactionMessage   = "%1: no transaction is open";

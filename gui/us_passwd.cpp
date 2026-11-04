@@ -176,19 +176,20 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
 	      {
 		pw = lineEdit->text();
 	      }
-	    qDebug() << lineEdit->text();
+         // Log field names only: values include the master password.
+         qDebug() << "Audit form field:" << lineEdit->objectName();
 
-	    form_map[ lineEdit->objectName() ] = lineEdit->text();
-	  }
-	//for e-Sigs, capture Approve/Reject status to form_map
-	foreach(QRadioButton * radioB, fields_radio)
-	  {
-	    if ( radioB->isChecked() )
-	      {
-		qDebug() << "RadioB checked-- " << radioB->objectName();
-		form_map[ "Decision:" ] = radioB->objectName();
-	      }
-	  }
+         form_map[lineEdit->objectName()] = lineEdit->text();
+     }
+     //for e-Sigs, capture Approve/Reject status to form_map
+     foreach ( QRadioButton* radioB, fields_radio )
+     {
+        if ( radioB->isChecked() )
+        {
+           qDebug() << "RadioB checked-- " << radioB->objectName();
+           form_map["Decision:"] = radioB->objectName();
+        }
+     }
       }
     else 
       {
