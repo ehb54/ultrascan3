@@ -484,6 +484,7 @@ class US_MPI_Analysis : public QObject
         void ga_master       ( void );
         void ga_master_loop  ( void );
         void ga_global_fit   ( void );
+        Gene refined_gene    ( const Gene& );
         void set_gaMonteCarlo( void );
 
         // GA Worker

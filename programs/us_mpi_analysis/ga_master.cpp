@@ -43,7 +43,7 @@ void US_MPI_Analysis::ga_master( void )
       ga_master_loop();
 
       std::sort( best_fitness.begin(), best_fitness.end() );
-      simulation_values.solutes = best_genes[ best_fitness[ 0 ].index ];
+      simulation_values.solutes = refined_gene( best_genes[ best_fitness[ 0 ].index ] );
       const int nisols          = simulation_values.solutes.size();
       DbgLv( 1 ) << "GaMast: sols size" << nisols << "buck size" << buckets.size() << "dset size" << data_sets.size();
       DbgLv( 1 ) << "GaMast:  sol0.s .k .v .d" << simulation_values.solutes[0].s << simulation_values.solutes[0].k
@@ -193,6 +193,7 @@ void US_MPI_Analysis::ga_master_loop( void )
    }
 
    QList  < Gene > emigres;      // Holds genes passed as emmigrants
+   Gene            worker_gene( buckets.size() );  // Gene of a deme report
    QVector< int  > v_generations( gcores_count, 0 ); 
    int             sum = 0;
    int             avg = 0;
@@ -258,7 +259,7 @@ void US_MPI_Analysis::ga_master_loop( void )
             }
 
             // Get the best gene for the current generation from the worker
-            MPI_Recv( best_genes[ worker ].data(),     // MPI #2
+            MPI_Recv( worker_gene.data(),              // MPI #2
                       buckets.size() * solute_doubles,
                       MPI_DOUBLE,  
                       worker,
@@ -277,9 +278,12 @@ void US_MPI_Analysis::ga_master_loop( void )
 
             DbgLv( 1 ) << "  MAST: work" << worker << "fit msg,round,bestw,besto" << msg.fitness << fitness_round
                        << best_fitness[worker].fitness << best_overall_fitness;
-            // Set deme's best fitness
+            // Set deme's best fitness, keeping the gene that has it
             if ( fitness_round < best_fitness[ worker ].fitness )
+            {
                best_fitness[ worker ].fitness = fitness_round;
+               best_genes  [ worker ]         = worker_gene;
+            }
             g = "";
             for ( int i = 0; i < buckets.size(); i++ )
             {
@@ -409,6 +413,29 @@ void US_MPI_Analysis::ga_master_loop( void )
       DbgLv(0) << "Early termination at average generation" << avg
          << ", MC" << mc_iter;
    }
+}
+
+// Refine a gene with the gradient search (Brookes & Demeler 2006):  off the
+//  s,k grid, but kept inside its buckets.  Returns the refined gene if it
+//  fits better, otherwise the gene itself.
+US_MPI_Analysis::Gene US_MPI_Analysis::refined_gene( const Gene& gene )
+{
+   Gene   rgene    = gene;
+   double gfitness = get_fitness( gene );
+
+   minimize( rgene, gfitness );
+
+   for ( int bb = 0; bb < rgene.size(); bb++ )
+   {
+      rgene[ bb ].s = qBound( buckets[ bb ].x_min, rgene[ bb ].s, buckets[ bb ].x_max );
+      rgene[ bb ].k = qBound( buckets[ bb ].y_min, rgene[ bb ].k, buckets[ bb ].y_max );
+   }
+
+   double rfitness = get_fitness( rgene );
+   DbgLv(0) << "Gradient search refinement: fitness" << gfitness
+            << "->" << rfitness << ( rfitness < gfitness ? "(kept)" : "(discarded)" );
+
+   return ( rfitness < gfitness ) ? rgene : gene;
 }
 
 void US_MPI_Analysis::ga_global_fit( void ) 
