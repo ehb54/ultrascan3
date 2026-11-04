@@ -63,8 +63,9 @@ GA = {"population": "200", "generations": "100", "crossover": "50", "mutation": 
       "p_mutate_s": "20", "p_mutate_k": "20", "p_mutate_sk": "20", "minimize_opt": "0",
       "mc_iterations": "1", "tinoise_option": "0", "rinoise_option": "0", "debug_level": "0"}
 BRANCH_EXTRA = {"ga_normal": "1"}   # speedup switch (branch only)
-BUCKET_GRID_STEPS = 4               # autoassign box size in 2DSA grid steps
+BUCKET_GRID_STEPS = 8               # autoassign box size in 2DSA grid steps
 PEAK_MIN_FRACTION = 0.01            # peaks below 1% of the signal are not counted
+PEAK_LINK_STEPS = 2.0               # solutes within this many grid steps form one peak
 
 reg = None   # us_mpi_regression module (from the branch checkout)
 
@@ -358,7 +359,7 @@ def auto_calc_bins(distro, mxsols, wsbuck, hfbuck):
 
 def peak_solutes(distro, ds, dk):
     """Peaks of a 2DSA-IT distribution:  clusters of solutes connected within
-    1.5 grid steps in s and f/f0, holding at least 1% of the signal.  Each peak
+    PEAK_LINK_STEPS grid steps in s and f/f0, holding at least 1% of the signal.  Each peak
     is returned as one solute at its signal-weighted centroid with the peak's
     total signal (autoassign then puts one box around each peak)."""
     n = len(distro)
@@ -372,7 +373,8 @@ def peak_solutes(distro, ds, dk):
 
     for i in range(n):
         for j in range(i + 1, n):
-            if abs(distro[i][0] - distro[j][0]) <= 1.5 * ds and abs(distro[i][1] - distro[j][1]) <= 1.5 * dk:
+            if (abs(distro[i][0] - distro[j][0]) <= PEAK_LINK_STEPS * ds
+                    and abs(distro[i][1] - distro[j][1]) <= PEAK_LINK_STEPS * dk):
                 parent[find(i)] = find(j)
     total = sum(c for (_s, _k, c) in distro)
     cl = {}
@@ -404,7 +406,10 @@ def stage_buckets(args):
         bks = auto_calc_bins(peaks, npk, BUCKET_GRID_STEPS * ds, BUCKET_GRID_STEPS * dk)
         res[name] = {"peaks": peaks, "box": [BUCKET_GRID_STEPS * ds, BUCKET_GRID_STEPS * dk],
                      "buckets": bks, "n_2dsa_solutes": len(distro)}
-        print("buckets %-12s %d peaks -> %d buckets" % (name, npk, len(bks)))
+        cover = [any(x0 <= t[0] <= x1 and y0 <= t[1] <= y1 for (x0, x1, y0, y1) in bks) for t in truth(name)]
+        res[name]["truth_covered"] = cover
+        print("buckets %-12s %d peaks -> %d buckets;  true species inside a bucket: %d/%d" %
+              (name, npk, len(bks), sum(cover), len(cover)))
         for b in bks:
             print("    s %.3f-%.3f  f/f0 %.3f-%.3f" % b)
     out.write_text(json.dumps(res, indent=1))
