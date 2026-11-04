@@ -43,7 +43,8 @@ BASELINE_DIR = HERE / "baseline"
 
 # Dataset descriptors: (runID, cell, noise seed, concentration scale) and
 # optionally a dict of us_mpi_testdata options ("scans": scan count,
-# "nobottom": edit without <bottom>).  The experiment constants live in
+# "nobottom": edit without <bottom>, "noise": noise sigma, "species": list
+# of (s in S, f/f0, concentration) replacing the default sample).  The experiment constants live in
 # us_mpi_testdata.cpp.
 DS_A = ("regA", 1, 11, 1.0)
 DS_B = ("regA", 2, 23, 0.6)
@@ -526,6 +527,10 @@ def build_archive(name, case, testdata, casedir):
         extra = ["scans=%d" % opts["scans"]] if "scans" in opts else []
         extra += ["nobottom"] if opts.get("nobottom") else []
         extra += ["tmst"] if case.get("timestate") == "given" else []
+        extra += ["noise=%g" % opts["noise"]] if "noise" in opts else []
+        if "species" in opts:
+            extra += ["species=" + ",".join("%g:%g:%g" % sp
+                                            for sp in opts["species"])]
         subprocess.run([testdata, "data", str(inputs), run_id, str(cell),
                         str(seed), str(scale)] + extra, check=True,
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
