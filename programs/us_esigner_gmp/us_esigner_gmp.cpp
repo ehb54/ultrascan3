@@ -4490,13 +4490,9 @@ void US_eSignaturesGMP::esign_report( void )
   gmp_esigning_map  = pw_at.getPasswd_auditTrail( "GMP e-Signing Form", "Please fill out GMP e-Signing form:", user_esignee );
   
   int gmp_esigning_map_size = gmp_esigning_map.keys().size();
-  qDebug() << "e-Signing map: "
-	   << gmp_esigning_map.keys()  << gmp_esigning_map.keys().size() << gmp_esigning_map_size
-	   << gmp_esigning_map.keys().isEmpty() 
-	   << gmp_esigning_map[ "User:" ]
-	   << gmp_esigning_map[ "Comment:" ]
-	   << gmp_esigning_map[ "Master Password:" ]
-	   << gmp_esigning_map[ "Decision:" ];
+  qDebug() << "e-Signing map: " << gmp_esigning_map.keys() << gmp_esigning_map.keys().size() << gmp_esigning_map_size
+           << gmp_esigning_map.keys().isEmpty() << gmp_esigning_map["User:"] << gmp_esigning_map["Comment:"]
+           << gmp_esigning_map["Decision:"];
 
   if ( gmp_esigning_map_size == 0 ||  gmp_esigning_map.keys().isEmpty() ) 
     return;

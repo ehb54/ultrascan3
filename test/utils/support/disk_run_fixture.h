@@ -3,9 +3,10 @@
 //
 // The disk-run tests start from archives UltraScan's own writers produce, not
 // from hand-rolled XML, so they test UltraScan's format rather than the
-// fixture's idea of it.  This helper only calls
-// US_DataIO::writeRawData(), US_Experiment::saveToDisk() and
-// US_DataIO::writeEdits(), and it never patches what they wrote.
+// fixture's idea of it.  This helper only calls UltraScan's own writers
+// (US_DataIO::writeRawData(), US_Experiment::saveToDisk(), the chemistry
+// records' disk writers and US_DataIO::writeEdits()), and it never patches what
+// they wrote.
 //
 // A negative test may copy a run this produced and corrupt it explicitly in its
 // own temporary directory.  That is the only sanctioned mutation.
@@ -59,6 +60,14 @@ DiskRun writeDiskRun( const QString&                  parentDir,
                       const QString&                  runType,
                       const QVector<DatasetSpec>&     datasets,
                       const QVector<SP_SPEEDPROFILE>& speedSteps = QVector<SP_SPEEDPROFILE>() );
+
+//! Add to a run what a headless simulation writes beside it: the P, S, B and A
+//! records its experiment names, and one edit per dataset, named from the
+//! dataset's .auc filename as US_Edit names it.
+//!
+//! The project and solution writers save into US_Settings::dataDir(), so this
+//! must run with isolated settings; their files are copied into the run.
+bool    writeRunRecords( const DiskRun& run );
 }
 
 #endif // DISK_RUN_FIXTURE_H

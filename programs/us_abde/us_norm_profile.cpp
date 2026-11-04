@@ -2555,13 +2555,9 @@ void US_Norm_Profile::save_auto( void )
      pw_at.getPasswd_auditTrail( "GMP Run ABDE Form", "Please fill out GMP run ABDE-Analysis form:", user_submitter );
    
    int gmp_submitter_map_size = gmp_submitter_map.keys().size();
-   qDebug() << "Submitter map: "
-	    << gmp_submitter_map.keys()  << gmp_submitter_map.keys().size() << gmp_submitter_map_size
-	    << gmp_submitter_map.keys().isEmpty() 
-	    << gmp_submitter_map[ "User:" ]
-	    << gmp_submitter_map[ "Comment:" ];
-   //<< gmp_submitter_map[ "Master Password:" ];
-   
+   qDebug() << "Submitter map: " << gmp_submitter_map.keys() << gmp_submitter_map.keys().size() << gmp_submitter_map_size
+            << gmp_submitter_map.keys().isEmpty() << gmp_submitter_map["User:"] << gmp_submitter_map["Comment:"];
+
    if ( gmp_submitter_map_size == 0 ||  gmp_submitter_map.keys().isEmpty() )
      {
        //revert_autoflowAnalysisABDEstages_record( prot_details["autoflowID"] );

@@ -120,6 +120,21 @@ US_Solution US_SimRecord::solution( const QList<US_Model>& models, const QList<d
    }
 
    desc += " | " + buffer.description;
+
+   // A description over the LIMS limit cannot be stored, so name the solute
+   // count instead of every solute, and cut anything still too long.
+   const int limit = US_Solution::descriptionLimit;
+   if ( desc.toUcs4().size() > limit )
+   {
+      const int count = first.components.size();
+      desc            = QString( "%1 %2 | %3" ).arg( count ).arg( count == 1 ? "solute" : "solutes" ).arg( buffer.description );
+   }
+   if ( desc.toUcs4().size() > limit )
+   {
+      const auto characters = desc.toUcs4();
+      desc                  = QString::fromUcs4( reinterpret_cast<const char32_t*>( characters.constData() ), limit );
+   }
+
    solution.solutionDesc = desc;
 
    return solution;
