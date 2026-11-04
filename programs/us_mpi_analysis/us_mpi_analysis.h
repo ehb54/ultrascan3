@@ -336,6 +336,7 @@ class US_MPI_Analysis : public QObject
         QList< SIMULATION > sim_values; //!< Simulation values list
         QMap< QString, double > fitness_map; //!< Fitness map
         int fitness_hits; //!< Fitness hits count
+        double fitness_secs = 0.0; //!< Worker seconds in fitness evaluations
         US_SimCache* ga_simcache = nullptr; //!< Per-solute simulation cache (GA workers)
         int    ga_normal       = 0;   //!< GA fitness from the normal equations (1; 0 = QR path)
         int    ga_normal_check = 0;   //!< Compare both fitness paths for every gene

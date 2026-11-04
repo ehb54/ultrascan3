@@ -74,6 +74,9 @@ void US_MPI_Analysis::ga_worker( void )
             DbgLv(0) << "    Deme" << grp_nbr << deme_nbr << ":"
                << fitness_hits << "fitness hits of" << fitness_count
                << " fitness checks   maxrss" << maxrss;
+            DbgLv(0) << "    Deme" << grp_nbr << deme_nbr << ": fitness time"
+               << fitness_secs << "s for" << fitness_count << "checks,"
+               << ( fitness_count - fitness_hits ) << "computed";
             if ( ga_simcache != nullptr )
                DbgLv(0) << "    Deme" << grp_nbr << deme_nbr << ":"
                   << ga_simcache->stats_text();
@@ -187,6 +190,7 @@ void US_MPI_Analysis::ga_worker_loop( void )
    fitness_map.clear();
    fitness_hits    = 0;
    fitness_count   = 0;
+   fitness_secs    = 0.0;
 
    max_rss();
 
@@ -199,11 +203,16 @@ void US_MPI_Analysis::ga_worker_loop( void )
 
       DbTimMsg( "Worker start rank/generation/elapsed-secs" );
       // Calculate fitness
+      QElapsedTimer fit_timer;
+      fit_timer.start();
+
       for ( int i = 0; i < population; i++ )
       {
          fitness[ i ].index   = i;
          fitness[ i ].fitness = get_fitness( genes[ i ] );
       }
+
+      fitness_secs += fit_timer.nsecsElapsed() * 1.0e-9;
 
       // Sort fitness
       std::sort( fitness.begin(), fitness.end() );

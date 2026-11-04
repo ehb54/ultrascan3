@@ -314,7 +314,8 @@ void US_MPI_Analysis::ga_master_loop( void )
 
 
                if ( fitness_same_count > max_same_count  &&
-                    avg_generation     > min_generation )
+                    avg_generation     > min_generation  &&
+                    job_config.params.ga.early_stop != 0 )
                {  // Mark early termination at threshold same-fitness count
                   DbgLv(0) << "Fitness has not improved in the last"
                      << fitness_same_count

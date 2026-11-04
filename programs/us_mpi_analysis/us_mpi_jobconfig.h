@@ -131,6 +131,7 @@ class US_MPI_JobConfig
                   qint64  sim_cache_mb   = -1;  //!< Simulation cache cap per rank in MB (0 off, -1 not given)
                   int     ga_normal      = 0;   //!< Fitness from the normal equations (1; 0 = QR path)
                   int     ga_normal_check = 0;  //!< Compare both fitness paths for every gene
+                  int     early_stop     = 1;   //!< Early termination (0 = run all generations)
                   double  bucket_fixed   = 0.0; //!< Fixed attribute value
                   QString xtype;                //!< Bucket x attribute
                   QString ytype;                //!< Bucket y attribute
