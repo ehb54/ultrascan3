@@ -2050,6 +2050,8 @@ bool US_SolveSim::calc_variance_normal( int offset, int dataset_count, Simulatio
             sv[cc] = sims[kd * nsolutes + cc].scanData.at( ss ).rvalues.constData();
          }
 
+         double bsqs = 0.0; // Per scan (pairwise-style summation)
+
          for ( int rr = 0; rr < npoints; rr++ )
          {
             if ( ev[rr] >= odlim )
@@ -2057,8 +2059,10 @@ bool US_SolveSim::calc_variance_normal( int offset, int dataset_count, Simulatio
                return false;
             }
 
-            bsq += sq( ev[rr] );
+            bsqs += sq( ev[rr] );
          }
+
+         bsq += bsqs;
 
          for ( int ii = 0; ii < nsolutes; ii++ )
          {
