@@ -19,6 +19,10 @@ Per run the score holds
   ok           all species within |ds| <= 2 %, |dk| <= 5 %, |dc| <= 5 %
                and decoy <= 2 %
 For Monte Carlo cases the spread of the iterations is reported as well.
+The case mc_calib simulates a new noise realization for every seed and
+compares the Monte Carlo spread with the spread of the fits over the
+realizations (and the coverage of the truth by mean +- 2 sd).
+Job parameters can be overridden for all cases with --set KEY=VALUE.
 
 Usage:
   ga_truth_eval.py --variant NAME=path/to/us_mpi_analysis [...]
@@ -81,6 +85,11 @@ CASES = {
     # Monte Carlo:  spread of the iterations
     "mc": {"species": BASE3, "buckets": BASE3_BUCKETS,
            "params": {"mc_iterations": "6"}},
+    # Monte Carlo calibration:  a new noise realization for every seed, so
+    #  the iteration spread can be compared with the spread of the fits over
+    #  realizations (see mc_calibration)
+    "mc_calib": {"species": BASE3, "buckets": BASE3_BUCKETS,
+                 "params": {"mc_iterations": "8"}, "new_noise": True},
 }
 
 NOISE = 0.004             # us_mpi_testdata default sigma
@@ -102,13 +111,15 @@ def molar_mass(s_sv, ff0):
     return m23 ** 1.5
 
 
-def regression_case(case, seed):
+def regression_case(case, seed, overrides=None):
     opts = {"species": case["species"]}
     if "noise" in case:
         opts["noise"] = case["noise"]
     params = dict(GA_PARAMS, seed=str(seed), **case.get("params", {}))
+    params.update(overrides or {})
+    data_seed = 1000 + seed if case.get("new_noise") else 11
     return {"method": "GA", "np": 4, "params": params,
-            "datasets": [("regA", 1, 11, 1.0, opts)],
+            "datasets": [("regA", 1, data_seed, 1.0, opts)],
             "buckets": case["buckets"]}
 
 
@@ -174,13 +185,57 @@ def run_one(variant, program, name, case, seed, args):
         workdir=str(Path(args.workdir) / variant / ("seed%d" % seed)),
         timeout=args.timeout)
     t0 = time.time()
-    summary = reg.run_case(name, regression_case(case, seed), rargs)
+    summary = reg.run_case(name, regression_case(case, seed, args.set), rargs)
     wall = time.time() - t0
     # One model file; an MC run holds one model per iteration
     (models,) = summary["models"].values()
     scores = [score_model(m, case) for m in models]
     return {"variant": variant, "case": name, "seed": seed, "wall": wall,
             "scores": scores}
+
+
+def mc_calibration(results, name, variants):
+    """Compare the Monte Carlo spread with the spread over realizations.
+
+    Each run fits its own noise realization.  Iteration 1 is the fit of the
+    data itself; the iterations together give the Monte Carlo mean and sd.
+    A calibrated Monte Carlo has an iteration sd close to the sd of the
+    iteration-1 fits over realizations, and its mean +- 2 sd covers the
+    truth in about 95 % of the realizations.
+    """
+    case = CASES[name]
+    lines = ["\n### %s: Monte Carlo calibration\n" % name,
+             "| variant | realizations | species | parameter | sd over "
+             "realizations % | mean MC sd % | ratio | coverage ±2 sd |",
+             "|---|---|---|---|---|---|---|---|"]
+    for variant in variants:
+        runs = [r for r in results
+                if r["case"] == name and r["variant"] == variant]
+        if len(runs) < 2:
+            continue
+        for ii, sp in enumerate(case["species"]):
+            for key, idx in (("s", 0), ("k", 1), ("c", 2)):
+                truth = sp[idx]
+                first, mc_sd, covered = [], [], 0
+                for r in runs:
+                    vals = [s["species"][ii][key] for s in r["scores"]
+                            if s["species"][ii][key] is not None]
+                    if len(vals) < 2:
+                        continue
+                    first.append(vals[0])
+                    mean, sd = statistics.mean(vals), statistics.stdev(vals)
+                    mc_sd.append(sd)
+                    covered += abs(mean - truth) <= 2.0 * sd
+                if len(first) < 2:
+                    continue
+                emp = 100.0 * statistics.stdev(first) / truth
+                mcs = 100.0 * statistics.mean(mc_sd) / truth
+                lines.append("| %s | %d | %d | %s | %.3g | %.3g | %.2f | %d/%d |"
+                             % (variant, len(first), ii + 1,
+                                {"s": "s", "k": "f/f0", "c": "conc."}[key],
+                                emp, mcs, mcs / emp if emp > 0 else float("nan"),
+                                covered, len(first)))
+    return "\n".join(lines) + "\n"
 
 
 def mean_sd(values):
@@ -206,6 +261,9 @@ def report(results, variants):
     lines = []
     for name in dict.fromkeys(r["case"] for r in results):
         case = CASES[name]
+        if case.get("new_noise"):
+            lines.append(mc_calibration(results, name, variants))
+            continue
         lines.append("\n### %s\n" % name)
         lines.append("Truth (s, f/f0, c): %s; %d buckets; noise %g; params %s\n"
                      % ("; ".join("%g, %g, %g" % sp for sp in case["species"]),
@@ -279,7 +337,11 @@ def main():
     parser.add_argument("--timeout", type=int, default=1800)
     parser.add_argument("--out", default="ga_truth_results.json")
     parser.add_argument("--report", help="re-print the report of --out")
+    parser.add_argument("--set", action="append", default=[],
+                        help="KEY=VALUE job parameter override for all cases "
+                             "(repeatable), e.g. regularization=0.1")
     args = parser.parse_args()
+    args.set = dict(kv.split("=", 1) for kv in args.set)
 
     variants = dict(v.split("=", 1) for v in args.variant)
     if args.report:
