@@ -460,6 +460,9 @@ double US_MPI_Analysis::get_fitness( const Gene& gene )
       }
    }
 
+   // Parsimony penalty (1 + (rf n)^2) on the variance; BD07 eq. 4 applies
+   //  it to the RMSD, which equals rf scaled by about sqrt(2) here.
+   //  Kept on the variance so that existing rf settings are unchanged.
    sfitness *= ( 1.0 + sq( regularization * solute_count ) );
    fitness_map.insert( key, sfitness );
    DbgLv( 2 ) << "get_fitness:  out fitness" << sfitness;
