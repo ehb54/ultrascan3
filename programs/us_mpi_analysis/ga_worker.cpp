@@ -329,12 +329,14 @@ void US_MPI_Analysis::ga_worker_loop( void )
       
       QList< Gene > old_genes = genes;
 
+      // Exchange emigrants first, while genes[] still matches the fitness
+      //  ranking (immigrants go to the slots after the elites)
+      const int immigrants = migrate_genes();
+
       // Create new generation from old
       // First copy elite genes
       for ( int g = 0; g < elitism; g++ )
          genes[ g ] = old_genes[ fitness[ g ].index ];
-
-      const int immigrants = migrate_genes();
 
       DbTimMsg( "Worker before elitism loop" );
 
@@ -343,7 +345,7 @@ void US_MPI_Analysis::ga_worker_loop( void )
          // Select a random gene from old population using exponential 
          //  distribution
          const int gene_index  = e_random();
-         Gene gene        = old_genes[ gene_index ];
+         Gene gene        = old_genes[ fitness[ gene_index ].index ];
          const int probability = u_random( p_plague );
 
          if      ( probability < p_mutate    ) mutate_gene( gene );
