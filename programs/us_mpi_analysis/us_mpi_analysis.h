@@ -309,7 +309,16 @@ class US_MPI_Analysis : public QObject
                 double y_max; //!< Maximum Y value
                 double ds;    //!< Delta S value
                 double dk;    //!< Delta K value
+                int    ns;    //!< Grid points in s inside the bucket
+                int    nk;    //!< Grid points in k inside the bucket
+                int    s_glo; //!< Lowest allowed s grid index (< 0: soft bucket)
+                int    s_ghi; //!< Highest allowed s grid index (> ns-1: soft bucket)
+                int    k_glo; //!< Lowest allowed k grid index
+                int    k_ghi; //!< Highest allowed k grid index
         };
+
+        int    bucket_soft   = 0;   //!< 0 hard buckets, 1 soft walls, 2 Gaussian prior
+        double bucket_lambda = 1.0; //!< Weight of the soft-bucket penalty
 
         int generation;       //!< Generation count
         int s_grid;           //!< S grid size
@@ -327,6 +336,7 @@ class US_MPI_Analysis : public QObject
         QList< SIMULATION > sim_values; //!< Simulation values list
         QMap< QString, double > fitness_map; //!< Fitness map
         int fitness_hits; //!< Fitness hits count
+        US_SimCache* ga_simcache = nullptr; //!< Per-solute simulation cache (GA workers)
         QList< DGene > dgenes; //!< DGene list
         QList< DGene > best_dgenes; //!< Best DGene list (size is number of workers)
         US_dmGA_Constraints constraints; //!< Genetic algorithm constraints
@@ -485,6 +495,10 @@ class US_MPI_Analysis : public QObject
         void ga_master_loop  ( void );
         void ga_global_fit   ( void );
         Gene refined_gene    ( const Gene& );
+        void   setup_bucket_grid ( void );
+        void   setup_ga_simcache ( void );
+        double bucket_penalty    ( const Gene&, int );
+        void   bound_solute      ( US_Solute&, int );
         void set_gaMonteCarlo( void );
 
         // GA Worker

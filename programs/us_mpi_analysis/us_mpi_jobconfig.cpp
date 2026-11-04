@@ -155,6 +155,12 @@ void US_MPI_JobConfig::read_parameters( void )
    ga.s_grid          = integer_or( "s_grid", 100 );
    ga.k_grid          = integer_or( "k_grid", 100 );
    ga.p_grid          = integer_or( "p_grid", 100 );
+   ga.s_step          = number( "s_step" );
+   ga.k_step          = number( "k_step" );
+   ga.bucket_soft     = integer( "bucket_soft" );
+   ga.bucket_lambda   = p.contains( "bucket_lambda" ) ? number( "bucket_lambda" ) : 1.0;
+   ga.bucket_margin   = p.contains( "bucket_margin" ) ? number( "bucket_margin" ) : 0.5;
+   ga.sim_cache_mb    = integer_or( "sim_cache_mb", -1 );
    ga.bucket_fixed    = number( "bucket_fixed" );
    ga.xtype           = p.value( "xtype" );
    ga.ytype           = p.value( "ytype" );
@@ -770,6 +776,12 @@ const ParamSpec PARAMS[] = {
    { "s_grid", Kind::Int, M_GA, 0, 1, NOLIM, nullptr },
    { "k_grid", Kind::Int, M_GA, 0, 1, NOLIM, nullptr },
    { "p_grid", Kind::Int, M_DMGA, 0, 1, NOLIM, nullptr },
+   { "s_step", Kind::Double, M_GA, 0, 0, NOLIM, nullptr },
+   { "k_step", Kind::Double, M_GA, 0, 0, NOLIM, nullptr },
+   { "bucket_soft", Kind::Int, M_GA, 0, 0, 2, nullptr },
+   { "bucket_lambda", Kind::Double, M_GA, 0, 0, NOLIM, nullptr },
+   { "bucket_margin", Kind::Double, M_GA, 0, 0, NOLIM, nullptr },
+   { "sim_cache_mb", Kind::Int, M_GA, 0, 0, NOLIM, nullptr },
    { "demes", Kind::Int, M_GA | M_DMGA, 0, 0, NOLIM, nullptr }, // Sent by the LIMS, not used
    { "DC_model", Kind::File, M_DMGA, M_DMGA, 0, 0, nullptr },
    // PCSA

@@ -1806,6 +1806,8 @@ void US_MPI_Analysis::calc_residuals( int         offset,
    }
 
    US_SolveSim solvesim( data_sets, my_rank, false );
+   if ( ga_simcache != nullptr )
+      solvesim.set_sim_cache( ga_simcache );
    solvesim.calc_residuals( offset, dataset_count, simu_values );
 
    simu_values.dbg_level = dbglvsv;

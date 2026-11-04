@@ -9,6 +9,7 @@ void US_MPI_Analysis::ga_master( void )
    datasets_to_process = count_datasets;
    max_depth           = 0;
    calculated_solutes.clear();
+   setup_bucket_grid();          // Grid and soft-bucket limits (refinement)
 
    // Set noise and debug flags
    simulation_values.noisflag = job_config.params.tinoise_option > 0 ? 1 : 0;
@@ -427,8 +428,7 @@ US_MPI_Analysis::Gene US_MPI_Analysis::refined_gene( const Gene& gene )
 
    for ( int bb = 0; bb < rgene.size(); bb++ )
    {
-      rgene[ bb ].s = qBound( buckets[ bb ].x_min, rgene[ bb ].s, buckets[ bb ].x_max );
-      rgene[ bb ].k = qBound( buckets[ bb ].y_min, rgene[ bb ].k, buckets[ bb ].y_max );
+      bound_solute( rgene[ bb ], bb );
    }
 
    double rfitness = get_fitness( rgene );

@@ -1,5 +1,6 @@
 #include "us_mpi_analysis.h"
 #include "us_math2.h"
+#include "us_memory.h"
 
 QDateTime elapsed = QDateTime::currentDateTime();
 #define ELAPSEDNOW (elapsed.msecsTo(QDateTime::currentDateTime()))
@@ -27,23 +28,9 @@ void US_MPI_Analysis::ga_worker( void )
    if ( seed != 0 )
       US_Math2::randomize( seed + 7919u * (uint)my_rank );
 
-   // Initialize grid values
-   s_grid = job_config.params.ga.s_grid;
-   k_grid = job_config.params.ga.k_grid;
-
-   static const double extn_s  = (double)( s_grid - 1 );
-   static const double extn_k  = (double)( k_grid - 1 );
-
-   for ( int b = 0; b < buckets.size(); b++ )
-   {
-      const double x_min = buckets[b].x_min;
-      const double x_max = buckets[b].x_max;
-      const double y_min = buckets[b].y_min;
-      const double y_max = buckets[b].y_max;
-
-      buckets[ b ].ds = ( x_max - x_min ) / extn_s;
-      buckets[ b ].dk = ( y_max - y_min ) / extn_k;
-   }
+   // Initialize grid values, soft-bucket limits and the simulation cache
+   setup_bucket_grid();
+   setup_ga_simcache();
 
    MPI_GA_MSG msg;
    MPI_Status status;
@@ -87,6 +74,9 @@ void US_MPI_Analysis::ga_worker( void )
             DbgLv(0) << "    Deme" << grp_nbr << deme_nbr << ":"
                << fitness_hits << "fitness hits of" << fitness_count
                << " fitness checks   maxrss" << maxrss;
+            if ( ga_simcache != nullptr )
+               DbgLv(0) << "    Deme" << grp_nbr << deme_nbr << ":"
+                  << ga_simcache->stats_text();
             break;
 
          case UPDATE:   
@@ -357,36 +347,20 @@ void US_MPI_Analysis::ga_worker_loop( void )
 
 void US_MPI_Analysis::align_gene( Gene& gene )
 {
-   const int grid_es = s_grid - 1;
-   const int grid_ek = k_grid - 1;
-
    for ( int i = 0; i < gene.size(); i++ )
    {
+      // Nearest grid point within the allowed grid range of the bucket
+      //  (the bucket itself, or beyond it for soft buckets)
+      const Bucket& bk = buckets[ i ];
       double s     = gene[ i ].s;
-      const double s_min = buckets[i].x_min;
-      const double ds    = s - s_min;
-
-      if ( ds < 0 )
-         s = s_min;
-      else
-      {
-         int gridpoint = qRound( ds / buckets[ i ].ds );
-         gridpoint     = qMin( grid_es, gridpoint );
-         s             = s_min + gridpoint * buckets[ i ].ds;
-      }
+      int    gs    = qRound( ( s - bk.x_min ) / bk.ds );
+      gs           = qBound( bk.s_glo, gs, bk.s_ghi );
+      s            = bk.x_min + gs * bk.ds;
 
       double k     = gene[ i ].k;
-      const double k_min = buckets[i].y_min;
-      const double dk    = k - k_min;
-
-      if ( dk < 0 )
-         k = k_min;
-      else
-      {
-         int gridpoint = qRound( dk / buckets[ i ].dk );
-         gridpoint     = qMin( grid_ek, gridpoint );
-         k             = k_min + gridpoint * buckets[ i ].dk;
-      }
+      int    gk    = qRound( ( k - bk.y_min ) / bk.dk );
+      gk           = qBound( bk.k_glo, gk, bk.k_ghi );
+      k            = bk.y_min + gk * bk.dk;
 
       gene[ i ].s = s;
       gene[i].k   = k;
@@ -464,6 +438,14 @@ double US_MPI_Analysis::get_fitness( const Gene& gene )
    //  it to the RMSD, which equals rf scaled by about sqrt(2) here.
    //  Kept on the variance so that existing rf settings are unchanged.
    sfitness *= ( 1.0 + sq( regularization * solute_count ) );
+
+   if ( bucket_soft != 0 )
+   {  // Soft-bucket prior, relative to the number of data points
+      int npoints = 0;
+      for ( int ee = current_dataset; ee < current_dataset + datasets_to_process; ee++ )
+         npoints += data_sets[ ee ]->run_data.scanCount() * data_sets[ ee ]->run_data.pointCount();
+      sfitness *= ( 1.0 + bucket_penalty( gene, npoints ) );
+   }
    fitness_map.insert( key, sfitness );
    DbgLv( 2 ) << "get_fitness:  out fitness" << sfitness;
    if ( dbg_level > 0 && fitness_map.size() == 20 )
@@ -559,28 +541,26 @@ void US_MPI_Analysis::mutate_gene( Gene& gene )
 void US_MPI_Analysis::mutate_s( US_Solute& solute, int b )
 {
    // Consider paramaterizing the sigma and x calculations
-   const double sigma = ( s_grid - 1 ) / ( 6.0 * ( log2( generation + 2 ) ) );
+   const double sigma = ( buckets[ b ].ns - 1 ) / ( 6.0 * ( log2( generation + 2 ) ) );
    const double x     = US_Math2::box_muller( 0.0, sigma );
    const double delta = qRound( x );
 
-   // Ensure new value is at a grid point and within bucket
+   // Ensure new value is at a grid point and within the allowed range
    solute.s += delta * buckets[ b ].ds;
-   solute.s  = qMax( solute.s, buckets[ b ].x_min );
-   solute.s  = qMin( solute.s, buckets[b].x_max );
+   bound_solute( solute, b );
 }
 
 void US_MPI_Analysis::mutate_k( US_Solute& solute, int b )
 {
    //static const double mutate_sigma = job_config.params.ga.mutate_sigma;
 
-   const double sigma = ( k_grid - 1 ) / ( 6.0 * ( log2( generation + 2 ) ) );
+   const double sigma = ( buckets[ b ].nk - 1 ) / ( 6.0 * ( log2( generation + 2 ) ) );
    const double x     = US_Math2::box_muller( 0.0, sigma );
    const double delta = qRound( x );
 
-   // Ensure new value is at a grid point and within bucket
+   // Ensure new value is at a grid point and within the allowed range
    solute.k += delta * buckets[ b ].dk;
-   solute.k  = qMax( solute.k, buckets[ b ].y_min );
-   solute.k  = qMin( solute.k, buckets[ b ].y_max );
+   bound_solute( solute, b );
 }
 
 void US_MPI_Analysis::cross_gene( Gene& gene, QList< Gene > old_genes )
@@ -689,8 +669,8 @@ US_MPI_Analysis::Gene US_MPI_Analysis::new_gene( void )
       const double x_min = buckets[b].x_min;
       const double y_min = buckets[b].y_min;
 
-      solute.s = x_min + u_random( s_grid ) * buckets[ b ].ds;
-      solute.k = y_min + u_random( k_grid ) * buckets[ b ].dk;
+      solute.s = x_min + u_random( buckets[ b ].ns ) * buckets[ b ].ds;
+      solute.k = y_min + u_random( buckets[ b ].nk ) * buckets[ b ].dk;
 
       gene << solute;
    }
@@ -1313,6 +1293,17 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
 
       ufitness /= (double) ( ntotal );
       ufitness *= ( 1.0 + sq( regularization * ksol ) );
+
+      if ( bucket_soft != 0 )
+      {  // Soft-bucket prior, as in get_fitness
+         Gene vgene( nsols );
+         for ( int cc = 0; cc < nsols; cc++ )
+         {
+            vgene[ cc ].s = v[ cc * 2 ];
+            vgene[ cc ].k = v[ cc * 2 + 1 ];
+         }
+         ufitness *= ( 1.0 + bucket_penalty( vgene, ntotal ) );
+      }
    }
 
    return ufitness;
@@ -1546,3 +1537,148 @@ void US_MPI_Analysis::solutes_from_gene( Gene& solutes, int nsols )
    }
 }
 
+
+// Grid of each bucket and, for soft buckets, the range beyond it.
+//  s_step, k_step (job parameters, > 0):  absolute grid step in s and f/f0,
+//   rounded so that the grid ends on the bucket edges;  otherwise s_grid,
+//   k_grid points per bucket (default 100).
+//  bucket_soft:  0 hard buckets (default);  1 soft walls (no penalty inside
+//   the bucket, quadratic outside);  2 Gaussian prior around the bucket
+//   centre (sd = half width).  Penalty weight bucket_lambda (default 1);
+//   soft buckets extend by bucket_margin (default 0.5) bucket widths.
+void US_MPI_Analysis::setup_bucket_grid( void )
+{
+   const US_MPI_JobConfig::Parameters::Ga& ga = job_config.params.ga;
+
+   s_grid = ga.s_grid;
+   k_grid = ga.k_grid;
+
+   const double s_step = ga.s_step;
+   const double k_step = ga.k_step;
+   bucket_soft         = ga.bucket_soft;
+   bucket_lambda       = ga.bucket_lambda;
+   const double margin = ( bucket_soft != 0 ) ? ga.bucket_margin : 0.0;
+
+   for ( int b = 0; b < buckets.size(); b++ )
+   {
+      Bucket& bk     = buckets[ b ];
+      double  ws     = bk.x_max - bk.x_min;
+      double  wk     = bk.y_max - bk.y_min;
+
+      bk.ns          = ( s_step > 0.0 ) ? qMax( 2, qRound( ws / s_step ) + 1 ) : s_grid;
+      bk.nk          = ( k_step > 0.0 ) ? qMax( 2, qRound( wk / k_step ) + 1 ) : k_grid;
+      bk.ds          = ws / (double)( bk.ns - 1 );
+      bk.dk          = wk / (double)( bk.nk - 1 );
+
+      // Outer limits:  s keeps its sign, f/f0 stays at least 1
+      double xlo     = bk.x_min - margin * ws;
+      double xhi     = bk.x_max + margin * ws;
+      double ylo     = bk.y_min - margin * wk;
+      double yhi     = bk.y_max + margin * wk;
+      if ( bk.x_min > 0.0 )  xlo = qMax( xlo, 0.5 * bk.x_min );
+      if ( bk.x_max < 0.0 )  xhi = qMin( xhi, 0.5 * bk.x_max );
+      if ( attr_y == ATTR_K )  ylo = qMax( ylo, qMin( 1.0, bk.y_min ) );
+
+      bk.s_glo       = -(int)qFloor( ( bk.x_min - xlo ) / bk.ds + 1e-9 );
+      bk.s_ghi       = bk.ns - 1 + (int)qFloor( ( xhi - bk.x_max ) / bk.ds + 1e-9 );
+      bk.k_glo       = -(int)qFloor( ( bk.y_min - ylo ) / bk.dk + 1e-9 );
+      bk.k_ghi       = bk.nk - 1 + (int)qFloor( ( yhi - bk.y_max ) / bk.dk + 1e-9 );
+   }
+
+   if ( my_rank < 2 )
+   {
+      DbgLv(0) << "GA grid: s_step" << s_step << "k_step" << k_step
+               << "bucket_soft" << bucket_soft << "lambda" << bucket_lambda
+               << "margin" << margin << "rank" << my_rank;
+      for ( int b = 0; b < buckets.size(); b++ )
+         DbgLv(1) << "  bucket" << b << "ns nk" << buckets[ b ].ns << buckets[ b ].nk
+                  << "ds dk" << buckets[ b ].ds << buckets[ b ].dk
+                  << "s range" << buckets[ b ].s_glo << buckets[ b ].s_ghi
+                  << "k range" << buckets[ b ].k_glo << buckets[ b ].k_ghi;
+   }
+}
+
+// Clamp a solute to the allowed range of its bucket:  the bucket itself
+//  (exact edges) for hard buckets, the extended grid range for soft ones
+void US_MPI_Analysis::bound_solute( US_Solute& solute, int b )
+{
+   const Bucket& bk = buckets[ b ];
+   double s_lo = ( bk.s_glo == 0 )         ? bk.x_min : bk.x_min + bk.s_glo * bk.ds;
+   double s_hi = ( bk.s_ghi == bk.ns - 1 ) ? bk.x_max : bk.x_min + bk.s_ghi * bk.ds;
+   double k_lo = ( bk.k_glo == 0 )         ? bk.y_min : bk.y_min + bk.k_glo * bk.dk;
+   double k_hi = ( bk.k_ghi == bk.nk - 1 ) ? bk.y_max : bk.y_min + bk.k_ghi * bk.dk;
+   solute.s    = qBound( s_lo, solute.s, s_hi );
+   solute.k    = qBound( k_lo, solute.k, k_hi );
+}
+
+// Soft-bucket penalty, used as fitness *= ( 1 + penalty ).  With the fitness
+//  a variance (SSR / N), this adds sigma^2 * lambda * sum(z^2) to SSR, i.e. a
+//  Gaussian prior for each solute in units of the noise:
+//   soft walls:  z = distance outside the bucket / bucket width
+//   Gaussian:    z = distance from the bucket centre / half width
+double US_MPI_Analysis::bucket_penalty( const Gene& gene, int npoints )
+{
+   if ( bucket_soft == 0 || npoints < 1 )
+      return 0.0;
+
+   double pen = 0.0;
+   int    nb  = qMin( gene.size(), buckets.size() );
+
+   for ( int b = 0; b < nb; b++ )
+   {
+      const Bucket& bk = buckets[ b ];
+      double ws = bk.x_max - bk.x_min;
+      double wk = bk.y_max - bk.y_min;
+      double s  = gene[ b ].s;
+      double k  = gene[ b ].k;
+      double zs, zk;
+
+      if ( bucket_soft == 1 )
+      {
+         zs = qMax( 0.0, qMax( bk.x_min - s, s - bk.x_max ) ) / ws;
+         zk = qMax( 0.0, qMax( bk.y_min - k, k - bk.y_max ) ) / wk;
+      }
+      else
+      {
+         zs = ( s - 0.5 * ( bk.x_min + bk.x_max ) ) / ( 0.5 * ws );
+         zk = ( k - 0.5 * ( bk.y_min + bk.y_max ) ) / ( 0.5 * wk );
+      }
+
+      pen += zs * zs + zk * zk;
+   }
+
+   return bucket_lambda * pen / (double)npoints;
+}
+
+// Per-solute simulation cache of a GA worker (kept over generations and
+//  Monte Carlo iterations; the key does not depend on the data readings).
+//  sim_cache_mb (job parameter):  cap per rank in MB, 0 = off.  Default:
+//  a quarter of the available memory shared by the ranks on this node,
+//  at most the US_SimCache default (4 GB; SimCache=off disables it).
+void US_MPI_Analysis::setup_ga_simcache( void )
+{
+   if ( ga_simcache != nullptr )
+      return;
+
+   const qint64 MB = 1024 * 1024;
+   qint64 cap;
+
+   if ( job_config.params.ga.sim_cache_mb >= 0 )
+   {
+      cap = job_config.params.ga.sim_cache_mb * MB;
+   }
+   else
+   {
+      int memavail = 0;
+      US_Memory::memory_profile( &memavail );
+      qint64 share = (qint64)( 0.25 * memavail / qMax( 1, node_size ) ) * MB;
+      cap = qMin( US_SimCache::default_max_bytes(), share );
+   }
+
+   if ( cap >= 16 * MB )
+      ga_simcache = new US_SimCache( cap );
+
+   if ( my_rank == 1 )
+      DbgLv(0) << "GA simulation cache per rank (MB):" << ( ( ga_simcache != nullptr ) ? cap / MB : 0 )
+               << "ranks on node" << node_size;
+}
