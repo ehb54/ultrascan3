@@ -21,6 +21,12 @@ void US_MPI_Analysis::ga_worker( void )
    count_datasets      = data_sets.size();
    datasets_to_process = count_datasets;
 
+   // With an explicit job seed every rank starts the same random sequence,
+   //  which would make all demes evolve identically:  offset it by rank
+   const uint seed = job_config.params.seed;
+   if ( seed != 0 )
+      US_Math2::randomize( seed + 7919u * (uint)my_rank );
+
    // Initialize grid values
    s_grid = job_config.params.ga.s_grid;
    k_grid = job_config.params.ga.k_grid;

@@ -22,6 +22,13 @@ void US_MPI_Analysis::dmga_worker( void )
    static const int    GR_INCR  = 10;
    current_dataset     = 0;
    datasets_to_process = data_sets.size();
+
+   // With an explicit job seed every rank starts the same random sequence,
+   //  which would make all demes evolve identically:  offset it by rank
+   const uint seed = job_config.params.seed;
+   if ( seed != 0 )
+      US_Math2::randomize( seed + 7919u * (uint)my_rank );
+
    p_grid                       = job_config.params.ga.p_grid;
    const QString s_bsig         = job_config.debug_value( "base_sig" );
    const QString s_grinc        = job_config.debug_value( "g_redo_inc" );
