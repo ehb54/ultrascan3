@@ -8,6 +8,8 @@
 #include "us_datafiles.h"
 #include "us_eprofile.h"
 
+constexpr int US_Solution::descriptionLimit;
+
 // The constructor clears out the data structure
 US_Solution::US_Solution()
 {
