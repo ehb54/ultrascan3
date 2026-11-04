@@ -40,7 +40,9 @@ US_SimCache::US_SimCache( qint64 max_bytes ) :
     nrejected( 0 ),
     nhits( 0 ),
     nmisses( 0 ),
-    key_memo( false )
+    key_memo( false ),
+    lru( false ),
+    use_clock( 0 )
 {
 }
 
@@ -313,6 +315,20 @@ qint64 US_SimCache::sim_bytes( const US_DataIO::RawData& simdat )
 // Get a simulation
 bool US_SimCache::fetch( const QByteArray& key, US_DataIO::RawData& simdat )
 {
+   if ( lru )
+   { // Least-recently-used mode:  note the use
+      QWriteLocker wlock( &lock );
+      auto         it = sims.find( key );
+
+      if ( it != sims.end() )
+      {
+         simdat              = it.value().simdat;
+         it.value().last_use = ++use_clock;
+         nhits++;
+         return true;
+      }
+   }
+   else
    {
       QReadLocker rlock( &lock );
       auto        it = sims.constFind( key );
@@ -334,6 +350,38 @@ bool US_SimCache::store( const QByteArray& key, const US_DataIO::RawData& simdat
 {
    QWriteLocker wlock( &lock );
    auto         it = sims.find( key );
+
+   if ( lru )
+   { // Least-recently-used mode:  survivor flags are not used
+      if ( it != sims.end() )
+      {
+         it.value().last_use = ++use_clock;
+         return true;
+      }
+
+      qint64 bytes = sim_bytes( simdat );
+
+      if ( bytes > max_bytes )
+      {
+         nrejected++;
+         return false;
+      }
+
+      if ( nbytes + bytes > max_bytes )
+      {
+         evict_lru( bytes );
+      }
+
+      Entry entry;
+      entry.simdat   = simdat;
+      entry.bytes    = bytes;
+      entry.survivor = false;
+      entry.last_use = ++use_clock;
+      sims.insert( key, entry );
+      nbytes += bytes;
+      nstored++;
+      return true;
+   }
 
    if ( it != sims.end() )
    { // Already stored:  possibly now a survivor (its key stays in evictable)
@@ -399,6 +447,45 @@ void US_SimCache::make_room( qint64 need )
    }
 }
 
+// Least-recently-used mode:  evict the least recently used simulations,
+//  down to 90% of the cap besides "need" bytes (so evictions come in
+//  batches, each costing one sort of the use times)
+void US_SimCache::evict_lru( qint64 need )
+{
+   QVector<QPair<qint64, QByteArray>> uses;
+   uses.reserve( sims.size() );
+
+   for ( auto it = sims.constBegin(); it != sims.constEnd(); ++it )
+   {
+      uses << qMakePair( it.value().last_use, it.key() );
+   }
+
+   std::sort( uses.begin(), uses.end(), []( const QPair<qint64, QByteArray>& a, const QPair<qint64, QByteArray>& b )
+              { return a.first < b.first; } );
+
+   const qint64 target = max_bytes - max_bytes / 10 - need;
+
+   for ( const auto& use : uses )
+   {
+      if ( nbytes <= target )
+      {
+         break;
+      }
+
+      auto it = sims.find( use.second );
+      nbytes -= it.value().bytes;
+      sims.erase( it );
+      nevicted++;
+   }
+}
+
+// Turn least-recently-used mode on or off
+void US_SimCache::set_lru( bool on )
+{
+   QWriteLocker wlock( &lock );
+   lru = on;
+}
+
 // Remove all simulations
 void US_SimCache::clear()
 {
@@ -435,12 +522,14 @@ QString US_SimCache::stats_text() const
    double hitpc  = ( nfetch > 0 ) ? ( 100.0 * st.hits / (double) nfetch ) : 0.0;
 
    return QObject::tr( "Simulation cache:  %1 of %2 simulations reused (%3%);"
-                       " %4 stored (%5 survivors) in %6 of %7 MB" )
+                       " %4 stored (%5 survivors) in %6 of %7 MB; %8 evicted, %9 rejected" )
       .arg( st.hits )
       .arg( nfetch )
       .arg( hitpc, 0, 'f', 1 )
       .arg( st.entries )
       .arg( st.survivors )
       .arg( (double) st.bytes / (double) MB, 0, 'f', 1 )
-      .arg( st.max_bytes / MB );
+      .arg( st.max_bytes / MB )
+      .arg( st.evicted )
+      .arg( st.rejected );
 }

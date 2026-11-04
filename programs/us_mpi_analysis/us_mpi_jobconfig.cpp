@@ -161,6 +161,7 @@ void US_MPI_JobConfig::read_parameters( void )
    ga.bucket_lambda   = p.contains( "bucket_lambda" ) ? number( "bucket_lambda" ) : 1.0;
    ga.bucket_margin   = p.contains( "bucket_margin" ) ? number( "bucket_margin" ) : 0.5;
    ga.sim_cache_mb    = integer_or( "sim_cache_mb", -1 );
+   ga.sim_cache_lru   = integer_or( "sim_cache_lru", 1 );
    ga.ga_normal       = integer( "ga_normal" );
    ga.ga_normal_check = integer( "ga_normal_check" );
    ga.early_stop      = integer_or( "early_stop", 1 );
@@ -785,6 +786,7 @@ const ParamSpec PARAMS[] = {
    { "bucket_lambda", Kind::Double, M_GA, 0, 0, NOLIM, nullptr },
    { "bucket_margin", Kind::Double, M_GA, 0, 0, NOLIM, nullptr },
    { "sim_cache_mb", Kind::Int, M_GA, 0, 0, NOLIM, nullptr },
+   { "sim_cache_lru", Kind::Int, M_GA, 0, 0, 1, nullptr },
    { "ga_normal", Kind::Int, M_GA, 0, 0, 1, nullptr },
    { "ga_normal_check", Kind::Int, M_GA, 0, 0, 1, nullptr },
    { "early_stop", Kind::Int, M_GA, 0, 0, 1, nullptr },

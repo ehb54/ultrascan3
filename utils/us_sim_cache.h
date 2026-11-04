@@ -96,6 +96,17 @@ class US_UTIL_EXTERN US_SimCache
       //! \param on  Flag to use the memo
       void                set_key_memo( bool on );
 
+      //! \brief Turn least-recently-used mode on or off (default off)
+      //!
+      //! In this mode survivor flags are not used:  when the cap is reached,
+      //! the least recently used (fetched or stored) simulations are evicted,
+      //! down to 90% of the cap.  Suits a search that keeps simulating new
+      //! solutes near those it reuses (GA), where nearly every solute
+      //! survives some NNLS and the default policy fills the cache with
+      //! survivors and then rejects all new simulations.
+      //! \param on  Flag to use LRU eviction
+      void                set_lru( bool on );
+
       //! \brief Key of a simulation
       //! \param dskey  Key of the data set (from dataset_key)
       //! \param comp   Simulated component (experimental space)
@@ -135,10 +146,14 @@ class US_UTIL_EXTERN US_SimCache
             US_DataIO::RawData simdat;
             qint64             bytes;
             bool               survivor;
+            qint64             last_use = 0; // Use clock value (LRU mode)
       };
 
       // Evict non-survivors, newest first, until "need" bytes fit
       void                     make_room( qint64 );
+
+      // Evict the least recently used simulations (LRU mode)
+      void                     evict_lru( qint64 );
 
       mutable QReadWriteLock   lock;
       QHash<QByteArray, QByteArray> dskey_memo; // Data set keys by fingerprint
@@ -153,5 +168,7 @@ class US_UTIL_EXTERN US_SimCache
       std::atomic<qint64>      nhits;
       std::atomic<qint64>      nmisses;
       bool                     key_memo;   // Memo of data set keys on
+      bool                     lru;        // Least-recently-used mode
+      qint64                   use_clock;  // Use clock (LRU mode)
 };
 #endif
