@@ -91,6 +91,24 @@ Each change is marked "US-SOMO" in the source.
    CODATA 2014 values in SOMO's ZENO 5.0.1 copy (6.022140857e23, 1.38064852e-23)
    rather than NIST's 6.02214e23 and 1.38065e-23.
 
+5. Compiler warnings (GCC and clang, -Wall -Wextra) are fixed in the code, not
+   silenced:
+   - libzeno/include/Geometry/{Vector3,Matrix3x3,Sphere,Cuboid,Triangle}.h: the
+     copy constructors, which copied every member, are defaulted, with a
+     defaulted copy assignment beside them (-Wdeprecated-copy).
+   - libzeno/include/Geometry/Vector3.h: operator[] no longer asserts that its
+     unsigned index is >= 0 (-Wtype-limits).
+   - libzeno/include/Geometry/Triangle.h: contains() leaves its unused point
+     parameter unnamed.
+   - libzeno/include/Geometry/MixedModel.h,
+     libzeno/src/Parameters{InteriorSampling,Results,WalkOnSpheres}.cc and
+     zeno-cli/src/ParametersLocal.cc: the MPI broadcast functions mark their
+     parameters unused when built without MPI.
+   - libzeno/include/ResultsCompiler.h, libzeno/src/ResultsCompiler.cc:
+     computeFormFactorsThread() loses its unused threadNum parameter.
+   - libzeno/include/ParametersResults.h, libzeno/src/ParametersResults.cc: the
+     unused member computeForm is removed.
+
 
 Updating to a newer NIST ZENO
 -----------------------------

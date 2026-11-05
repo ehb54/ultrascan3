@@ -60,7 +60,9 @@ class Matrix3x3
 {
  public:
   Matrix3x3();
-  Matrix3x3(const Matrix3x3<eleT> & matrix);
+  // US-SOMO: copy constructor and copy assignment defaulted (-Wdeprecated-copy)
+  Matrix3x3(const Matrix3x3<eleT> & matrix) = default;
+  Matrix3x3<eleT> & operator=(const Matrix3x3<eleT> & matrix) = default;
   Matrix3x3(const eleT * matrix);
   Matrix3x3(eleT matrix00, eleT matrix01, eleT matrix02,
 	    eleT matrix10, eleT matrix11, eleT matrix12,
@@ -142,14 +144,6 @@ Matrix3x3<eleT>::Matrix3x3()
 {
   for (int i = 0; i < 3*3; i++) {
     components[i] = 0;
-  }
-}
-
-template <class eleT>
-Matrix3x3<eleT>::Matrix3x3(const Matrix3x3<eleT> & matrix)
-{
-  for (int i = 0; i < 3*3; i++) {
-    components[i] = matrix.components[i];
   }
 }
 

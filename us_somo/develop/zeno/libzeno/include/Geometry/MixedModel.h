@@ -226,6 +226,8 @@ MixedModel<T>::mpiBroadcast(int root) {
       mpiBroadcastDeserialize(root);
     }
   }
+#else
+  (void)root; // US-SOMO: unused without MPI
 #endif
 }
 
@@ -302,6 +304,8 @@ MixedModel<T>::serializeMpiBroadcast(int root) const {
   mpiBcastLargeArray(root, geometryArraySize, geometryArray);
 
   delete [] geometryArray;
+#else
+  (void)root; // US-SOMO: unused without MPI
 #endif
 }
 
@@ -405,6 +409,8 @@ MixedModel<T>::mpiBroadcastDeserialize(int root) {
   assert(geometryArrayIndex == geometryArraySize);
 
   delete [] geometryArray;
+#else
+  (void)root; // US-SOMO: unused without MPI
 #endif
 }
 
@@ -505,6 +511,11 @@ MixedModel<T>::mpiBcastLargeArray(int root,
 
     countBroadcastSoFar += countToBroadcast;
   }
+#else
+  // US-SOMO: unused without MPI
+  (void)root;
+  (void)arraySize;
+  (void)array;
 #endif
 }
 
