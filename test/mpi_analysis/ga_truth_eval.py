@@ -85,6 +85,11 @@ CASES = {
     # Monte Carlo:  spread of the iterations
     "mc": {"species": BASE3, "buckets": BASE3_BUCKETS,
            "params": {"mc_iterations": "6"}},
+    # The middle species lies outside its bucket (for soft buckets):  solutes
+    #  are scored against the nearest species, wherever they are
+    "misplaced": {"species": BASE3, "nearest": True,
+                  "buckets": [(1.5, 3.5, 1.0, 1.6), (3.5, 4.2, 1.3, 2.0),
+                              (5.5, 8.5, 1.7, 2.6)]},
     # Monte Carlo calibration:  a new noise realization for every seed, so
     #  the iteration spread can be compared with the spread of the fits over
     #  realizations (see mc_calibration)
@@ -118,7 +123,8 @@ def regression_case(case, seed, overrides=None):
     params = dict(GA_PARAMS, seed=str(seed), **case.get("params", {}))
     params.update(overrides or {})
     data_seed = 1000 + seed if case.get("new_noise") else 11
-    return {"method": "GA", "np": 4, "params": params,
+    # (debug_log:  the run log holds the cache and fitness statistics)
+    return {"method": "GA", "np": 4, "params": params, "debug_log": True,
             "datasets": [("regA", 1, data_seed, 1.0, opts)],
             "buckets": case["buckets"]}
 
@@ -144,10 +150,18 @@ def score_model(model, case):
                 if in_bucket((s_sv * 1.0e-13, ff0), bb)]
         true_bucket.append(hits[0] if hits else None)
 
+    def nearest(sol):
+        return min(range(len(truth)), key=lambda ii: (
+            (sol[0] * 1.0e13 / truth[ii][0] - 1.0) ** 2
+            + (sol[1] / truth[ii][1] - 1.0) ** 2))
+
     species = []
-    for (s_sv, ff0, conc), bidx in zip(truth, true_bucket):
-        members = [sol for sol in sols
-                   if bidx is not None and in_bucket(sol, case["buckets"][bidx])]
+    for ispec, ((s_sv, ff0, conc), bidx) in enumerate(zip(truth, true_bucket)):
+        if case.get("nearest"):
+            members = [sol for sol in sols if nearest(sol) == ispec]
+        else:
+            members = [sol for sol in sols
+                       if bidx is not None and in_bucket(sol, case["buckets"][bidx])]
         csum = sum(sol[3] for sol in members)
         if csum > 0:
             s_fit = sum(sol[0] * sol[3] for sol in members) / csum * 1.0e13
@@ -162,8 +176,9 @@ def score_model(model, case):
                             "s": None, "k": None, "c": 0.0})
 
     used = set(b for b in true_bucket if b is not None)
-    decoy = sum(sol[3] for sol in sols
-                if not any(in_bucket(sol, case["buckets"][b]) for b in used))
+    decoy = 0.0 if case.get("nearest") else sum(
+        sol[3] for sol in sols
+        if not any(in_bucket(sol, case["buckets"][b]) for b in used))
     found = all(sp["ds"] is not None for sp in species)
     worst = {key: (max(abs(sp[key]) for sp in species) if found else None)
              for key in ("ds", "dk", "dc", "dM")}

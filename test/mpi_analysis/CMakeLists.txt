@@ -106,6 +106,27 @@ set(US_MPI_INPUT_CASES
     input_bucket_inverted
     input_unknown_key
     input_centerpiece_bottom_default
+    feature_cache_off
+    feature_cache_default_policy
+    feature_cache_large
+    feature_cache_small
+    feature_cache_reused
+    feature_normal
+    feature_normal_check
+    feature_noise_qr
+    feature_normal_noise
+    feature_grid_step
+    feature_grid_step_one_axis
+    feature_hard_misplaced
+    feature_soft_walls
+    feature_soft_gaussian
+    feature_soft_no_margin
+    feature_soft_margin
+    feature_soft_prior_strong
+    feature_early_stop
+    feature_no_early_stop
+    feature_invalid_soft
+    feature_invalid_step
 )
 
 foreach(case ${US_MPI_CASES} ${US_MPI_INPUT_CASES})
