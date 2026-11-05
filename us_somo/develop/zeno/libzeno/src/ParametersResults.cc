@@ -47,8 +47,7 @@
 using namespace zeno;
 
 ParametersResults::ParametersResults() 
-  : computeForm(false),
-    lengthScale(),
+  : lengthScale(),
     lengthScaleUnit(),
     lengthScaleWasSet(false),
     temperature(),
@@ -194,6 +193,8 @@ ParametersResults::mpiBroadcast(int root) {
       mpiBroadcastDeserialize(root);
     }
   }
+#else
+  (void)root; // US-SOMO: unused without MPI
 #endif
 }
 
@@ -223,6 +224,8 @@ ParametersResults::serializeMpiBroadcast(int root) const {
   parametersArray[14] = 0;
 
   MPI_Bcast(parametersArray, countToSend, MPI_DOUBLE, root, MPI_COMM_WORLD);
+#else
+  (void)root; // US-SOMO: unused without MPI
 #endif
 }
 
@@ -261,5 +264,7 @@ ParametersResults::mpiBroadcastDeserialize(int root) {
     setBuoyancyFactor(parametersArray[12]);
   }
 
+#else
+  (void)root; // US-SOMO: unused without MPI
 #endif
 }

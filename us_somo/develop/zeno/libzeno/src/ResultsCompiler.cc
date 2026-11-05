@@ -785,7 +785,6 @@ computeFormFactors(std::vector<Vector3<double> > const & interiorPoints,
 
     threads.emplace_back(&ResultsCompiler::computeFormFactorsThread,
 			 this,
-			 threadNum,
 			 interiorPoints,
 			 formFactorQs,
 			 threadStartPairIndex,
@@ -826,10 +825,10 @@ computeFormFactors(std::vector<Vector3<double> > const & interiorPoints,
   return formFactorsReduced;
 }
 
+// US-SOMO: unused threadNum parameter removed
 void
 ResultsCompiler::
-computeFormFactorsThread(int threadNum,
-			      std::vector<Vector3<double> > const & 
+computeFormFactorsThread(std::vector<Vector3<double> > const &
 			      interiorPoints,
 			      std::array<double, 
 			      ResultsCompiler::numFormFactors> const & 

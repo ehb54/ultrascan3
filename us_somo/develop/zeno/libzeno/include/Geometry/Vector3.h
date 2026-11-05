@@ -57,7 +57,9 @@ class Vector3
 {
  public:
   Vector3();
-  Vector3(const Vector3<eleT> & b);
+  // US-SOMO: copy constructor and copy assignment defaulted (-Wdeprecated-copy)
+  Vector3(const Vector3<eleT> & b) = default;
+  Vector3<eleT> & operator=(const Vector3<eleT> & b) = default;
   Vector3(eleT newX, eleT newY, eleT newZ);
 
   eleT getX() const;
@@ -177,12 +179,6 @@ template <class eleT>
 Vector3<eleT>::Vector3()
 {
   setXYZ(0, 0, 0);
-}
-
-template <class eleT>
-Vector3<eleT>::Vector3(const Vector3<eleT> & b)
-{
-  setXYZ(b.getX(), b.getY(), b.getZ());
 }
 
 template <class eleT>
@@ -410,7 +406,7 @@ void Vector3<eleT>::mult(int dimension, eleT b)
 template <class eleT>
 eleT &
 Vector3<eleT>::operator[](std::size_t idx) {
-  assert(idx >= 0 && idx < 3);
+  assert(idx < 3); // US-SOMO: idx is unsigned
 
   return components[idx];
 }
@@ -418,7 +414,7 @@ Vector3<eleT>::operator[](std::size_t idx) {
 template <class eleT>
 eleT const &
 Vector3<eleT>::operator[](std::size_t idx) const {
-  assert(idx >= 0 && idx < 3);
+  assert(idx < 3); // US-SOMO: idx is unsigned
 
   return components[idx];
 }
