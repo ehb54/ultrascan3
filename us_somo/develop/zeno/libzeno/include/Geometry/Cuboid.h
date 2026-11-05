@@ -55,7 +55,9 @@ template <class T>
 class Cuboid {
 public:
   Cuboid();
-  Cuboid(Cuboid<T> const & b);
+  // US-SOMO: copy constructor and copy assignment defaulted (-Wdeprecated-copy)
+  Cuboid(Cuboid<T> const & b) = default;
+  Cuboid<T> & operator=(Cuboid<T> const & b) = default;
   Cuboid(Vector3<T> const & minCoords, Vector3<T> const & maxCoords);
 
   void setMaxCoords(Vector3<T> const & maxCoords);
@@ -98,13 +100,6 @@ template <class T>
 Cuboid<T>::Cuboid()
 : maxCoords(),
   minCoords() {
-
-}
-
-template <class T>
-Cuboid<T>::Cuboid(Cuboid<T> const & b) 
-: maxCoords(b.maxCoords),
-  minCoords(b.minCoords) {
 
 }
 

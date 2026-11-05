@@ -15,8 +15,9 @@
 //    for command-line runs) and the GUI's stop flag is honored.
 //  - Results without units are printed without "(1)", as 5.0.1 did, so the
 //    .zno lines SOMO reads keep their form.
-//  - The default seed comes from std::random_device, and times are printed
-//    with a format that works on Windows.
+//  - The default seed comes from std::random_device.
+//  - Times are printed with "%F %T", as NIST does, except on Windows, where the C
+//    runtime may not support it and "%Y-%m-%d %H:%M:%S" is used instead.
 //  - No trajectory mode and no MPI.
 
 #include "../include/us_hydrodyn_zeno.h"
@@ -874,7 +875,13 @@ namespace {
       time_t rawtime;
       time( &rawtime );
       struct tm * timeinfo = localtime( &rawtime );
-      if ( timeinfo && strftime( buffer, sizeof( buffer ), "%Y-%m-%d %H:%M:%S", timeinfo ) ) {
+#if defined( Q_OS_WIN )
+      // the Windows C runtime may not support %F and %T, so spell them out there
+      size_t len = timeinfo ? strftime( buffer, sizeof( buffer ), "%Y-%m-%d %H:%M:%S", timeinfo ) : 0;
+#else
+      size_t len = timeinfo ? strftime( buffer, sizeof( buffer ), "%F %T", timeinfo ) : 0;
+#endif
+      if ( len ) {
          out << label << buffer << std::endl;
       }
    }

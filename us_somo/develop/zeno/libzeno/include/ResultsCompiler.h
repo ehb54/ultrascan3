@@ -165,9 +165,9 @@ private:
 		     formFactorQs,
 		     int numThreads) const;
 
+  // US-SOMO: unused threadNum parameter removed
   void
-  computeFormFactorsThread(int threadNum,
-			   std::vector<Vector3<double> > const & 
+  computeFormFactorsThread(std::vector<Vector3<double> > const &
 			   interiorPoints,
 			   std::array<double, 
 			   numFormFactors> const & 

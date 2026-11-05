@@ -254,6 +254,8 @@ ParametersWalkOnSpheres::mpiBroadcast(int root) {
       mpiBroadcastDeserialize(root);
     }
   }
+#else
+  (void)root; // US-SOMO: unused without MPI
 #endif
 }
 
@@ -297,6 +299,8 @@ ParametersWalkOnSpheres::serializeMpiBroadcast(int root) const {
 
   MPI_Bcast(longLongsArray, numLongLongsToSend, MPI_LONG_LONG,
 	    root, MPI_COMM_WORLD);
+#else
+  (void)root; // US-SOMO: unused without MPI
 #endif
 }
 
@@ -356,5 +360,7 @@ ParametersWalkOnSpheres::mpiBroadcastDeserialize(int root) {
   if ((bool)doublesArray[13]) {
     setLaunchRadius(doublesArray[12]);
   }
+#else
+  (void)root; // US-SOMO: unused without MPI
 #endif
 }

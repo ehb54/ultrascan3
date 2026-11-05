@@ -56,7 +56,9 @@ class Triangle {
 public:
   Triangle();
   
-  Triangle(Triangle<T> const & b);
+  // US-SOMO: copy constructor and copy assignment defaulted (-Wdeprecated-copy)
+  Triangle(Triangle<T> const & b) = default;
+  Triangle<T> & operator=(Triangle<T> const & b) = default;
   
   Triangle(Vector3<T> const & v1,
 	   Vector3<T> const & v2,
@@ -110,15 +112,6 @@ Triangle<T>::Triangle()
   v2(),
   v3(),
   normal() {
-
-}
-
-template <class T>
-Triangle<T>::Triangle(Triangle<T> const & b) 
-: v1(b.v1),
-  v2(b.v2),
-  v3(b.v3),
-  normal(b.normal) {
 
 }
 
@@ -380,9 +373,10 @@ Triangle<T>::getFarthestPoint(Vector3<T> const & queryPoint) const {
 /// Assuming General Position, a triangle will never contain a 3D point
 /// since it is 2D.
 ///
+// US-SOMO: point is unnamed because it is unused
 template <class T>
 bool
-Triangle<T>::contains(Vector3<T> const & point) const {
+Triangle<T>::contains(Vector3<T> const & /* point */) const {
   assert(0);
   
   return false;

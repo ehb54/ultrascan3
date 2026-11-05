@@ -203,6 +203,8 @@ void                                                                            
       mpiBroadcastDeserialize(root);
     }
   }
+  #else
+  (void)root; // US-SOMO: unused without MPI
   #endif
 }
 
@@ -219,6 +221,8 @@ ParametersLocal::serializeMpiBroadcast(int root) const {
  
   MPI_Bcast(longLongsArray, numLongLongsToSend, MPI_LONG_LONG,
 	    root, MPI_COMM_WORLD);
+#else
+  (void)root; // US-SOMO: unused without MPI
 #endif
 }
 
@@ -240,5 +244,7 @@ ParametersLocal::mpiBroadcastDeserialize(int root) {
   if ((bool)longLongsArray[1]) {
     mapInputFileNameWasSet = true;
   }
+#else
+  (void)root; // US-SOMO: unused without MPI
 #endif
 }

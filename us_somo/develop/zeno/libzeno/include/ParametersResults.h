@@ -88,9 +88,7 @@ private:
   void serializeMpiBroadcast(int root) const;
   void mpiBroadcastDeserialize(int root);
   
-  // Command-line parameters
-
-  bool computeForm;
+  // US-SOMO: unused member computeForm removed
 
   // .bod parameters
   

@@ -54,7 +54,9 @@ template <class T>
 class Sphere {
 public:
   Sphere();
-  Sphere(Sphere<T> const & b);
+  // US-SOMO: copy constructor and copy assignment defaulted (-Wdeprecated-copy)
+  Sphere(Sphere<T> const & b) = default;
+  Sphere<T> & operator=(Sphere<T> const & b) = default;
   Sphere(Vector3<T> const & center, T radius);
 
   void setCenter(Vector3<T> const & center);
@@ -96,13 +98,6 @@ template <class T>
 Sphere<T>::Sphere()
 : center(),
   radius() {
-
-}
-
-template <class T>
-Sphere<T>::Sphere(Sphere<T> const & b) 
-: center(b.center),
-  radius(b.radius) {
 
 }
 
