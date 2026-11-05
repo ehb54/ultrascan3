@@ -86,9 +86,8 @@ void US_MPI_Analysis::ga_worker( void )
                        << ga_qr_count << "from QR";
             if ( ga_normal_check != 0 )
             {
-               DbgLv( 0 ) << "    Deme" << grp_nbr << deme_nbr << ":"
-                          << "normal-equation check:  max rel. variance diff." << ga_normal_dvar << " max conc. diff. / total"
-                          << ga_normal_dc;
+               DbgLv( 0 ) << "    Deme" << grp_nbr << deme_nbr << ":" << "normal-equation check:  max rel. variance diff."
+                          << ga_normal_dvar << " max conc. diff. / total" << ga_normal_dc;
             }
             break;
 
