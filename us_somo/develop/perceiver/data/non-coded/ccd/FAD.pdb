@@ -1,0 +1,57 @@
+REMARK   1 FAD: model coordinates from the wwPDB Chemical Component Dictionary
+REMARK   1 (https://files.rcsb.org/ligands/view/FAD.cif), taken from PDB entry 1B4V,
+REMARK   1 heavy atoms only.
+HETATM    1  PA  FAD A   1      21.838   0.805  23.170  1.00  0.00           P
+HETATM    2  O1A FAD A   1      21.303  -0.519  22.722  1.00  0.00           O
+HETATM    3  O2A FAD A   1      21.242   1.938  22.745  1.00  0.00           O
+HETATM    4  O5B FAD A   1      21.519   0.682  24.644  1.00  0.00           O
+HETATM    5  C5B FAD A   1      21.897   1.643  25.685  1.00  0.00           C
+HETATM    6  C4B FAD A   1      20.997   1.330  26.945  1.00  0.00           C
+HETATM    7  O4B FAD A   1      21.460   2.224  28.053  1.00  0.00           O
+HETATM    8  C3B FAD A   1      19.460   1.622  26.806  1.00  0.00           C
+HETATM    9  O3B FAD A   1      18.671   0.579  27.290  1.00  0.00           O
+HETATM   10  C2B FAD A   1      19.298   2.973  27.574  1.00  0.00           C
+HETATM   11  O2B FAD A   1      18.004   3.122  28.103  1.00  0.00           O
+HETATM   12  C1B FAD A   1      20.276   2.783  28.699  1.00  0.00           C
+HETATM   13  N9A FAD A   1      20.801   4.020  29.267  1.00  0.00           N
+HETATM   14  C8A FAD A   1      21.154   5.153  28.575  1.00  0.00           C
+HETATM   15  N7A FAD A   1      21.668   6.097  29.360  1.00  0.00           N
+HETATM   16  C5A FAD A   1      21.563   5.585  30.631  1.00  0.00           C
+HETATM   17  C6A FAD A   1      21.927   6.147  31.932  1.00  0.00           C
+HETATM   18  N6A FAD A   1      22.352   7.373  32.098  1.00  0.00           N
+HETATM   19  N1A FAD A   1      21.585   5.362  32.997  1.00  0.00           N
+HETATM   20  C2A FAD A   1      21.028   4.127  32.847  1.00  0.00           C
+HETATM   21  N3A FAD A   1      20.758   3.492  31.695  1.00  0.00           N
+HETATM   22  C4A FAD A   1      21.094   4.244  30.607  1.00  0.00           C
+HETATM   23  N1  FAD A   1      21.113  -2.231  14.334  1.00  0.00           N
+HETATM   24  C2  FAD A   1      21.370  -3.317  13.619  1.00  0.00           C
+HETATM   25  O2  FAD A   1      22.472  -3.795  13.558  1.00  0.00           O
+HETATM   26  N3  FAD A   1      20.335  -4.062  12.992  1.00  0.00           N
+HETATM   27  C4  FAD A   1      19.064  -3.545  12.870  1.00  0.00           C
+HETATM   28  O4  FAD A   1      18.201  -4.199  12.324  1.00  0.00           O
+HETATM   29  C4X FAD A   1      18.842  -2.220  13.431  1.00  0.00           C
+HETATM   30  N5  FAD A   1      17.621  -1.643  13.324  1.00  0.00           N
+HETATM   31  C5X FAD A   1      17.401  -0.507  14.054  1.00  0.00           C
+HETATM   32  C6  FAD A   1      16.092   0.030  14.034  1.00  0.00           C
+HETATM   33  C7  FAD A   1      15.729   1.049  14.879  1.00  0.00           C
+HETATM   34  C7M FAD A   1      14.319   1.587  14.859  1.00  0.00           C
+HETATM   35  C8  FAD A   1      16.666   1.547  15.852  1.00  0.00           C
+HETATM   36  C8M FAD A   1      16.334   2.718  16.739  1.00  0.00           C
+HETATM   37  C9  FAD A   1      17.942   0.981  15.928  1.00  0.00           C
+HETATM   38  C9A FAD A   1      18.331   0.020  14.992  1.00  0.00           C
+HETATM   39  N10 FAD A   1      19.633  -0.566  14.994  1.00  0.00           N
+HETATM   40  C10 FAD A   1      19.892  -1.653  14.271  1.00  0.00           C
+HETATM   41  C1' FAD A   1      20.685   0.069  15.813  1.00  0.00           C
+HETATM   42  C2' FAD A   1      21.054  -0.797  17.045  1.00  0.00           C
+HETATM   43  O2' FAD A   1      19.858  -1.073  17.768  1.00  0.00           O
+HETATM   44  C3' FAD A   1      21.986   0.046  17.903  1.00  0.00           C
+HETATM   45  O3' FAD A   1      23.172   0.294  17.145  1.00  0.00           O
+HETATM   46  C4' FAD A   1      22.378  -0.732  19.167  1.00  0.00           C
+HETATM   47  O4' FAD A   1      21.231  -1.036  19.962  1.00  0.00           O
+HETATM   48  C5' FAD A   1      23.375   0.117  19.918  1.00  0.00           C
+HETATM   49  O5' FAD A   1      23.884  -0.652  21.183  1.00  0.00           O
+HETATM   50  P   FAD A   1      24.507   0.103  22.345  1.00  0.00           P
+HETATM   51  O1P FAD A   1      24.982  -0.991  23.309  1.00  0.00           O
+HETATM   52  O2P FAD A   1      25.437   1.054  21.950  1.00  0.00           O
+HETATM   53  O3P FAD A   1      23.473   0.866  23.032  1.00  0.00           O
+END
