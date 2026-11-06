@@ -618,7 +618,7 @@ US_AnaProfile::AnaProf2DSA::AnaProf2DSA()
    //rfiters     = 5;
    rfiters     = 10;
    mciters     = 100;
-   job1run     = true;
+   job1run     = false;   // 2DSA stage: not run by default (but selectable)
    job2run     = true;
    job3run     = true;
    job4run     = true;

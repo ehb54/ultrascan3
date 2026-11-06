@@ -3228,7 +3228,7 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    lb_chnsel->setBuddy( cb_chnsel );
    ck_j1run        = new QCheckBox( tr( "Run" ), this );
    ck_j1run ->setPalette( US_GuiSettings::normalColor() );
-   ck_j1run ->setChecked( true );
+   ck_j1run ->setChecked( false );   // 2DSA stage: unchecked by default (but selectable)
    ck_j1run ->setAutoFillBackground( true  );
    ck_j1run->setAccessibleName( tr( "Run 2DSA" ) );
    ck_j2run        = new QCheckBox( tr( "Run" ), this );
