@@ -351,6 +351,9 @@ def input_case(base, **changes):
 #               must lie inside one of them
 #   leaves      boxes:  at least one solute must lie outside all of them
 #   has_noise   the result must hold noise vectors
+#   log_distinct  (regex, n): at least n matches, all different
+#   log_agree   (regex, regex, rel. tol.): the first numbers each matches
+#               must agree
 # A case with "pending" documents a defect whose fix is still to come: it is
 # reported as XFAIL while it fails and as an error once it passes, so that
 # the marker gets removed.
@@ -546,6 +549,33 @@ FEATURE_CASES = {
     "feature_no_early_stop": ga_feature(
         {"population": "10", "generations": "150", "regularization": "0", "early_stop": "0"},
         expect={"log_absent": "Early Termination", "log": r"for 1500 checks"}),
+    # Seed 0 (the LIMS default):  every deme must get its own random
+    #  sequence.  Demes with the same sequence evolve identically and report
+    #  the same simulation cache use.
+    "feature_seed0_demes": ga_feature(
+        {"seed": "0"}, np=3,
+        expect={"finite": True,
+                "log_distinct": (r"Deme \d+ \d+ : \"?(Simulation cache:[^\"\n]*)", 2)}),
+    # Monte Carlo:  the sigmas come from the reported (refined) model of
+    #  iteration 1, the model whose simulation is the base of the synthetic
+    #  data
+    "feature_mc_sigma_model": ga_feature(
+        {"mc_iterations": "3"},
+        expect={"finite": True,
+                "log": r"Gradient search refinement",
+                "log_agree": (r"Fit RMSD ([\d.eE+-]+)\s+of MC_Iteration 1",
+                              r"MC_Iteration 1 Simulation RMSD \"?([\d.eE+-]+)", 1.0e-4)}),
+    # Parallel Monte Carlo groups refine their models too
+    "feature_mc_pmasters": ga_feature(
+        {"mc_iterations": "4"}, np=5, mgroupcount=2,
+        expect={"finite": True,
+                "log_min": {r"Gradient search refinement: fitness [\d.eE+-]+ -> ([\d.eE+-]+)": 0.0}}),
+    # The default cache size stays within the job's memory limit:  64 MB
+    #  for 2 ranks leaves too little for a cache
+    "feature_cache_job_limit": ga_feature(
+        env={"SLURM_MEM_PER_NODE": "64"},
+        expect={"same_as": "ga_np2", "log_absent": "Simulation cache:",
+                "log": r"cache per rank \(MB\): 0 .*job memory limit on node \(MB, 0 none\) 64 "}),
     # A wrong value is an orderly abort
     "feature_invalid_soft": input_case(
         "ga_np2", params=dict(GA_PARAMS, bucket_soft="3"),
@@ -704,6 +734,7 @@ def run_job(name, case, args):
     env.setdefault("OMPI_ALLOW_RUN_AS_ROOT_CONFIRM", "1")
     env.setdefault("OMPI_MCA_rmaps_base_oversubscribe", "1")
     env["QT_LOGGING_RULES"] = "*.debug=false"
+    env.update(case.get("env", {}))
 
     if case.get("debug_log"):
         env["QT_LOGGING_RULES"] = "*.debug=true"
@@ -969,6 +1000,21 @@ def check_input_case(name, case, args, reference):
         values = [float(v) for v in re.findall(pattern, text)]
         if not values or min(values) < limit:
             errors.append("log /%s/: %s below %g" % (pattern, values, limit))
+    if "log_distinct" in expect:
+        pattern, count = expect["log_distinct"]
+        values = re.findall(pattern, text)
+        if len(values) < count or len(set(values)) < len(values):
+            errors.append("log /%s/: %s not %d or more different values"
+                          % (pattern, values, count))
+    if "log_agree" in expect:
+        first, second, tol = expect["log_agree"]
+        one = re.search(first, text)
+        two = re.search(second, text)
+        if not one or not two:
+            errors.append("log does not match /%s/ and /%s/" % (first, second))
+        elif abs(float(one.group(1)) - float(two.group(1))) > tol * abs(float(two.group(1))):
+            errors.append("log values %s and %s differ by more than %g"
+                          % (one.group(1), two.group(1), tol))
     if "log_absent" in expect:
         found = re.search(r".*%s.*" % expect["log_absent"], text)
         if found:
