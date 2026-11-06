@@ -23,8 +23,7 @@
 //----------------------------------------------------------------------
 // Load a speed profile from the speed steps, through a private timestate
 //----------------------------------------------------------------------
-int US_AstfemMath::timestate_from_speedsteps( US_SimulationParameters& simparams,
-                                              US_DataIO::RawData&      sim_data )
+int US_AstfemMath::timestate_from_speedsteps( US_SimulationParameters& simparams, US_DataIO::RawData& sim_data )
 {
    int dbg_level = US_Settings::us_debug();
    // A directory per call:  a name made of process and time is not unique
@@ -35,23 +34,28 @@ int US_AstfemMath::timestate_from_speedsteps( US_SimulationParameters& simparams
    const QString base = US_Settings::tmpDir();
    QDir().mkpath( base );
 #endif
-   const QString pattern = QStringLiteral( "/us3-tmst-XXXXXX" );
-   std::unique_ptr< QTemporaryDir > tdir( new QTemporaryDir( base + pattern ) );
+   const QString                  pattern = QStringLiteral( "/us3-tmst-XXXXXX" );
+   std::unique_ptr<QTemporaryDir> tdir( new QTemporaryDir( base + pattern ) );
 
-   if ( ! tdir->isValid()  &&  base != QDir::tempPath() )
+   if ( !tdir->isValid() && base != QDir::tempPath() )
+   {
       tdir.reset( new QTemporaryDir( QDir::tempPath() + pattern ) );
+   }
 
-   if ( ! tdir->isValid() )
+   if ( !tdir->isValid() )
    {
       DbgLv( 0 ) << "US_AstfemMath::timestate_from_speedsteps: could not create"
-                    " a temporary directory in" << base << tdir->errorString();
+                    " a temporary directory in"
+                 << base << tdir->errorString();
       return -1;
    }
 
    const QString tmst_fpath = tdir->path() + "/speedsteps.time_state.tmst";
 
    if ( writetimestate( tmst_fpath, simparams, sim_data ) < 0 )
+   {
       return -1;
+   }
 
    // The TimeState is read with prefetch, so the files are no longer
    //  needed once loaded;  tdir removes them when it goes out of scope.
@@ -724,9 +728,11 @@ void US_AstfemMath::tridiag( double* a, double* b, double* c,
    // tridiag runs once per time step, so its scratch is kept between calls,
    //  one buffer per thread (solves may run in threads).  It only grows, is
    //  freed at thread exit, and every element read is written first.
-   static thread_local std::vector< double > gamvec;
-   if ( (int)gamvec.size() < N )
+   static thread_local std::vector<double> gamvec;
+   if ( (int) gamvec.size() < N )
+   {
       gamvec.resize( N );
+   }
    double* gam = gamvec.data();
 
    if ( bet == 0.0 )  { qDebug() << "Error 1 in tridiag"; return; }
@@ -1061,7 +1067,7 @@ DbgLv(2) << "MATHi: l_time e_time" << l_time << e_time << "expscan" << expscan;
 int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
                                 bool      use_time, int fscan, int lscan )
 {
-   static thread_local int rrdk = 0;  // Debug message count, per thread
+   static thread_local int rrdk             = 0; // Debug message count, per thread
    int dbg_level        = US_Settings::us_debug();
 //*TIMING*
 //static int ncall=0;

@@ -52,8 +52,7 @@ class US_UTIL_EXTERN US_AstfemMath
       //! \param sim_data    Raw data with scans to examine
       //! \returns The number of speed profile steps loaded, or -1 if no
       //!          timestate could be written
-      static int  timestate_from_speedsteps( US_SimulationParameters& simparams,
-                                             US_DataIO::RawData& sim_data );
+      static int         timestate_from_speedsteps( US_SimulationParameters& simparams, US_DataIO::RawData& sim_data );
 
       //! \brief Determine if first time step's acceleration is too low
       //! \param speedsteps  Vector of speed steps
