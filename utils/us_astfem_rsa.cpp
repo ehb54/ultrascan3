@@ -224,7 +224,7 @@ DbgLv(1)<< "RSA:calc: meniscus bottom" << af_params.current_meniscus << af_param
    af_data.bottom   = af_params.current_bottom;
    double omeg0     = 0.0;
    double omeg2     = 0.0;
-   simparams.sim    = ( exp_data.channel == 'S' );
+   set_sim_flag( exp_data );
 
    // Read in any timestate that exists and set up the internal
    //  simulation speed profile
@@ -232,8 +232,16 @@ DbgLv(1)<< "RSA:calc: meniscus bottom" << af_params.current_meniscus << af_param
         simparams.sim_speed_prof.count() < 1 )
    {  // Timestate is not properly loaded
 DbgLv(1)<<"RSA:calc: timestate does not exist";
-// Build it from this experiment's speed steps, in a private file
-US_AstfemMath::timestate_from_speedsteps( simparams, exp_data );
+// Build it from this experiment's speed steps, in a private file.
+//  On failure, simparams may still hold the default speed profile
+//  entry, so the profile size check below would not catch it.
+if ( US_AstfemMath::timestate_from_speedsteps( simparams, exp_data ) < 1 )
+{
+   DbgLv( 0 ) << "US_Astfem_RSA::calculate: no timestate could be built"
+                 " from the speed steps -- cannot simulate.  Check that"
+                 " the temporary directory exists and is writable.";
+   return -1;
+}
    }
    else
    {  // Timestate object and speed profile exist are properly loaded
@@ -874,14 +882,19 @@ QDateTime clcSt5 = QDateTime::currentDateTime();
       double step_speed;
       US_SimulationParameters::SpeedProfile* sp;
       US_AstfemMath::MfemData* ed = &af_data;
-      simparams.sim    = ( exp_data.channel == 'S' );
+      set_sim_flag( exp_data );
 
       if ( simparams.tsobj == NULL  ||
            simparams.sim_speed_prof.count() < 1 )
       {  // Timestate is not properly loaded
 DbgLv(1) << "timestate file does not exist";
 // Build it from this experiment's speed steps, in a private file
-US_AstfemMath::timestate_from_speedsteps( simparams, exp_data );
+if ( US_AstfemMath::timestate_from_speedsteps( simparams, exp_data ) < 1 )
+{
+   DbgLv( 0 ) << "US_Astfem_RSA::calculate: no timestate could be"
+                 " built from the speed steps -- cannot simulate.";
+   return -1;
+}
 DbgLv(1)<<"after writing timestate file" << simparams.sim_speed_prof.count();
       }
 
@@ -4184,6 +4197,20 @@ void US_Astfem_RSA::printsimparams( void )
    DbgLv(1) << "band_forming " << simparams.band_forming;
    DbgLv(1) << "band_volume " << simparams.band_volume;
    DbgLv(1) << "firstScanIsConcentration "<< simparams.firstScanIsConcentration;
+}
+
+// Flag simulated (rather than measured) experiment data in simparams.
+//  Threads may share one simparams (us_fematch does), and its owner sets the
+//  flag before starting them:  write it only when it changes, so that those
+//  threads only read it.
+void US_Astfem_RSA::set_sim_flag( const US_DataIO::RawData& exp_data )
+{
+   const bool is_sim = ( exp_data.channel == 'S' );
+
+   if ( simparams.sim != is_sim )
+   {
+      simparams.sim = is_sim;
+   }
 }
 
 // Sets the buffer

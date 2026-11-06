@@ -12,10 +12,13 @@
 #include "us_simparms.h"
 #include "us_time_state.h"
 #include <QDir>
+#include <QFile>
 #include <QStringList>
+#include <QTemporaryDir>
 #include <QVector>
 #include <cmath>
 #include <cstring>
+#include <memory>
 #include <thread>
 #include <vector>
 
@@ -93,8 +96,9 @@ void setup( const Experiment& exp, US_SimulationParameters& sp, US_DataIO::RawDa
    US_SimulationParameters::computeSpeedSteps( &rdata.scanData, sp.speed_step );
 }
 
-// All simulated values of an experiment, scan-major
-QVector<double> simulate( const Experiment& exp )
+// All simulated values of an experiment, scan-major;  rc, if given, gets
+//  the return code of calculate()
+QVector<double> simulate( const Experiment& exp, int* rc = nullptr )
 {
    US_Model model;
    model.components.resize( 1 );
@@ -113,7 +117,11 @@ QVector<double> simulate( const Experiment& exp )
 
    US_Astfem_RSA astfem( model, sp );
    astfem.set_debug_flag( 0 );
-   astfem.calculate( rdata );
+   const int status = astfem.calculate( rdata );
+   if ( rc != nullptr )
+   {
+      *rc = status;
+   }
 
    QVector<double> vals;
    for ( int ss = 0; ss < rdata.scanCount(); ss++ )
@@ -168,8 +176,56 @@ const std::vector<Experiment> experiments = {
 };
 } // namespace
 
+// The system temporary directory is shared with other test processes (ctest
+//  --parallel), whose timestate directories come and go in it.  Each test
+//  gets one of its own:  TMPDIR (Unix) and TMP/TEMP (Windows) are read by
+//  QDir::tempPath() at every call.
 class TestUSAstfemRsaThreads : public QtTestBase
 {
+   protected:
+      void SetUp() override
+      {
+         QtTestBase::SetUp();
+         tmpdir_ = std::make_unique<QTemporaryDir>( QDir::tempPath() + "/us3-astfem-test-XXXXXX" );
+         ASSERT_TRUE( tmpdir_->isValid() );
+
+         for ( const char* name : env_names )
+         {
+            saved_.push_back( { name, qEnvironmentVariableIsSet( name ), qgetenv( name ) } );
+            qputenv( name, QFile::encodeName( tmpdir_->path() ) );
+         }
+         ASSERT_EQ( QDir( QDir::tempPath() ).canonicalPath(), QDir( tmpdir_->path() ).canonicalPath() );
+      }
+
+      void TearDown() override
+      {
+         for ( const SavedEnv& env : saved_ )
+         {
+            if ( env.was_set )
+            {
+               qputenv( env.name, env.value );
+            }
+            else
+            {
+               qunsetenv( env.name );
+            }
+         }
+         saved_.clear();
+         tmpdir_.reset();
+         QtTestBase::TearDown();
+      }
+
+   private:
+      struct SavedEnv
+      {
+            const char* name;
+            bool        was_set;
+            QByteArray  value;
+      };
+
+      static constexpr const char*   env_names[] = { "TMPDIR", "TMP", "TEMP" };
+      std::unique_ptr<QTemporaryDir> tmpdir_;
+      std::vector<SavedEnv>          saved_;
 };
 
 // A solve without a loaded timestate gets the speed profile of its own
@@ -207,6 +263,61 @@ TEST_F( TestUSAstfemRsaThreads, TimestateFromSpeedstepsLeavesNoFiles )
 
    simulate( experiments[1] );
    EXPECT_EQ( timestateDirs(), before );
+}
+
+// Without a usable temporary directory, no timestate can be built:  the
+//  helper reports it and leaves no speed profile, and a solve fails cleanly
+//  (a new US_SimulationParameters has one default speed profile entry, which
+//  must not be mistaken for a loaded profile)
+TEST_F( TestUSAstfemRsaThreads, NoUsableTempDirFailsCleanly )
+{
+   // A directory cannot be made below a regular file
+   QTemporaryDir holder;
+   ASSERT_TRUE( holder.isValid() );
+   const QString blocker = holder.path() + "/not-a-dir";
+   {
+      QFile file( blocker );
+      ASSERT_TRUE( file.open( QIODevice::WriteOnly ) );
+   }
+   const QString unusable = blocker + "/tmp";
+
+   const QString saved_tmpdir = US_Settings::tmpDir();
+   US_Settings::set_tmpDir( unusable );
+   for ( const char* name : { "TMPDIR", "TMP", "TEMP" } )
+   {
+      qputenv( name, QFile::encodeName( unusable ) );
+   }
+
+   US_SimulationParameters sp;
+   US_DataIO::RawData      rdata;
+   setup( experiments[0], sp, rdata );
+   EXPECT_EQ( US_AstfemMath::timestate_from_speedsteps( sp, rdata ), -1 );
+   EXPECT_EQ( sp.sim_speed_prof.size(), 0 );
+
+   int rc = 0;
+   simulate( experiments[0], &rc );
+   EXPECT_EQ( rc, -1 );
+
+   US_Settings::set_tmpDir( saved_tmpdir ); // TearDown restores the environment
+}
+
+// A timestate whose definitions file is missing loads no speed profile:
+//  the load reports failure rather than a count of zero steps
+TEST_F( TestUSAstfemRsaThreads, TimestateWithoutDefinitionsFailsToLoad )
+{
+   US_SimulationParameters sp;
+   US_DataIO::RawData      rdata;
+   setup( experiments[0], sp, rdata );
+
+   QTemporaryDir dir;
+   ASSERT_TRUE( dir.isValid() );
+   const QString tmst = dir.path() + "/run.time_state.tmst";
+   ASSERT_GT( US_AstfemMath::writetimestate( tmst, sp, rdata ), 0 );
+   ASSERT_TRUE( QFile::remove( dir.path() + "/run.time_state.xml" ) );
+
+   EXPECT_EQ( sp.simSpeedsFromTimeState( tmst ), -1 );
+   EXPECT_EQ( sp.tsobj, nullptr );
+   EXPECT_EQ( sp.sim_speed_prof.size(), 0 );
 }
 
 // Solves in threads, each of its own experiment and without a loaded

@@ -186,6 +186,11 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     //! \brief Set a flag so that the worker aborts at the earliest opportunity
     void abort_work    ( void );
 
+    //! \brief Whether a simulation failed (calculate() returned an error),
+    //!        which stopped the work:  the results are not a valid fit, and
+    //!        calc_residuals() then sets the variances to NaN
+    bool        solve_failed( void ) const;
+
     //! \brief Reuse simulations from a cache, and store new ones in it
     //! \param cache  Cache shared with other threads (or 0, the default,
     //!               for none); it must outlive the calc_residuals calls
@@ -212,6 +217,7 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     int                dbg_level;     // Debug level
     bool               dbg_timing;    // Flag whether to print timings
     std::atomic<bool>  abort{ false }; // Flag to abort at next opportunity
+    std::atomic<bool>  sim_failed{ false }; // Flag that a simulation failed
     bool               calc_ti;       // Calculate-TI-noise flag
     bool               calc_ri;       // Calculate-RI-noise flag
     bool               banddthr;      // Band-forming data threshold peak enhance
@@ -237,6 +243,9 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     // Simulate a single-component model for a data set, or get the
     //  simulation from the cache; returns the cache key (if any)
     QByteArray     simulate( US_Model&, DataSet*, US_DataIO::EditedData*, US_DataIO::RawData& );
+
+    // Mark the results invalid if a simulation failed
+    void           mark_failed_solve( Simulation& );
 
  private slots:
     // Limit data to thresholds

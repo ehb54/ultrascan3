@@ -47,19 +47,32 @@ int US_AstfemMath::timestate_from_speedsteps( US_SimulationParameters& simparams
       DbgLv( 0 ) << "US_AstfemMath::timestate_from_speedsteps: could not create"
                     " a temporary directory in"
                  << base << tdir->errorString();
+      simparams.sim_speed_prof.clear(); // No profile:  not even the default
       return -1;
    }
 
    const QString tmst_fpath = tdir->path() + "/speedsteps.time_state.tmst";
 
-   if ( writetimestate( tmst_fpath, simparams, sim_data ) < 0 )
+   // The TimeState is read with prefetch, so the files are no longer
+   //  needed once loaded;  tdir removes them when it goes out of scope.
+   int           nsteps = -1;
+
+   if ( writetimestate( tmst_fpath, simparams, sim_data ) >= 0 )
    {
+      nsteps = simparams.simSpeedsFromTimeState( tmst_fpath );
+   }
+
+   if ( nsteps < 1 )
+   { // Leave no partial or stale profile behind:  a caller that checks
+      //  only the profile size must see that there is none.
+      DbgLv( 0 ) << "US_AstfemMath::timestate_from_speedsteps: no speed profile"
+                    " from the timestate in"
+                 << tdir->path();
+      simparams.sim_speed_prof.clear();
       return -1;
    }
 
-   // The TimeState is read with prefetch, so the files are no longer
-   //  needed once loaded;  tdir removes them when it goes out of scope.
-   return simparams.simSpeedsFromTimeState( tmst_fpath );
+   return nsteps;
 }
 
 //----------------------------------------------------------------------
@@ -261,7 +274,13 @@ if((scan_nbr>0)||(ii<(d1+2))||((ii>(tacc-2))&&(ii<(tacc+2)))||((ii+3)>d2))
    timestate.close_write_data();
    timestate.setTimeStateType( US_TimeState::TIMESTATE_TYPE::CALCULATED );
    timestate.setImportType( US_TimeState::IMPORT_TYPE::XLA );
-   timestate.write_defs( 1.0 );
+   if ( timestate.write_defs( 1.0 ) != 0 )
+   { // Without its definitions file, the timestate cannot be read back
+      DbgLv( 0 ) << "US_AstfemMath::writetimestate: could not write the time"
+                    " state definitions for"
+                 << tmst_fpath;
+      return -1;
+   }
 
    return timestate.time_count();
 }
