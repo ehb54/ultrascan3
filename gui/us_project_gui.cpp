@@ -613,18 +613,72 @@ void US_ProjectGui::deleteProject( void )
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
       US_DB2 db( masterPW );
-   
+
       if ( db.lastErrno() != IUS_DB2::OK )
       {
          db_error( db.lastError() );
          return;
       }
 
-      project.deleteFromDB( &db );
+      // Deleting a project unlinks its experiments, so refuse while any remain
+      QStringList runIDs;
+      int         status = project.linkedExperiments( &db, runIDs );
+
+      if ( status == IUS_DB2::DBERROR )
+      {
+         QMessageBox::warning( this,
+                               tr( "Project Not Deleted" ),
+                               tr( "Could not check whether any experiments are linked to\n"
+                                   "project \"%1\", so it was not deleted.\n\n"
+                                   "The database may need its stored procedures updated." )
+                                  .arg( project.projectDesc ) );
+         return;
+      }
+
+      if ( status != IUS_DB2::OK )
+      {
+         db_error( db.lastError() );
+         return;
+      }
+
+      if ( !runIDs.isEmpty() )
+      {
+         inUseWarning( runIDs );
+         return;
+      }
+
+      if ( !confirmDelete() )
+      {
+         return;
+      }
+
+      status = project.deleteFromDB( &db );
+
+      if ( status == IUS_DB2::PROJECT_IN_USE )
+      {
+         // An experiment was linked after the check above
+         QMessageBox::warning( this,
+                               tr( "Project Not Deleted" ),
+                               tr( "Project \"%1\" was not deleted:\n%2" ).arg( project.projectDesc, db.lastError() ) );
+         return;
+      }
+
+      if ( status != IUS_DB2::OK )
+      {
+         db_error( db.lastError() );
+         return;
+      }
    }
 
    else
+   {
+      if ( !confirmDelete() )
+      {
+         return;
+      }
+
       project.deleteFromDisk();
+   }
 
    project.clear();
    load();
@@ -633,6 +687,51 @@ void US_ProjectGui::deleteProject( void )
    QMessageBox::information( this,
          tr( "Delete results" ),
          tr( "Project Deleted" ) );
+}
+
+// Function to ask the user to confirm deleting the current project
+bool US_ProjectGui::confirmDelete( void )
+{
+   QString source = generalTab->disk_controls->db() ? tr( "the database" ) : tr( "disk" );
+
+   int     answer = QMessageBox::question( this,
+                                       tr( "Delete Project" ),
+                                       tr( "Delete project \"%1\" from %2?\n\n"
+                                               "This cannot be undone." )
+                                          .arg( project.projectDesc, source ),
+                                       QMessageBox::Yes | QMessageBox::No,
+                                       QMessageBox::No );
+
+   return ( answer == QMessageBox::Yes );
+}
+
+// Function to list the experiments that keep a project from being deleted
+void US_ProjectGui::inUseWarning( const QStringList& runIDs )
+{
+   const int nshow = 10;
+   QString   runs  = runIDs.mid( 0, nshow ).join( "\n   " );
+
+   if ( runIDs.size() > nshow )
+   {
+      runs += tr( "\n   ... and %1 more" ).arg( runIDs.size() - nshow );
+   }
+
+   QMessageBox msgBox( QMessageBox::Warning,
+                       tr( "Project Not Deleted" ),
+                       tr( "Project \"%1\" was not deleted, because %2 experiment(s)\n"
+                           "are linked to it:\n\n   %3\n\n"
+                           "Move them to another project or delete them\n"
+                           "before deleting this project." )
+                          .arg( project.projectDesc, QString::number( runIDs.size() ), runs ),
+                       QMessageBox::Ok,
+                       this );
+
+   if ( runIDs.size() > nshow )
+   {
+      msgBox.setDetailedText( runIDs.join( "\n" ) );
+   }
+
+   msgBox.exec();
 }
 
 // Function to change the data source (disk/db)
