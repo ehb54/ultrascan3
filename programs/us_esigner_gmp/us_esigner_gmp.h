@@ -355,14 +355,6 @@ class US_eSignaturesGMP : public US_Widgets
         //! \brief Load a GMP report from the database for separate assignment.
         void loadGMPReportDB_assigned_separate(void);
 
-        //! \brief Compose an updated ORA list.
-        //! \param runID The run ID.
-        //! \param oldORA The old ORA list.
-        //! \param newORA The new ORA list.
-        //! \param docType The document type.
-        //! \param eSignType The eSign type.
-        void compose_updated_ora_list(QString& runID, QString& oldORA, QString& newORA, QString docType, QString eSignType);
-
         //! \brief Parse an old ORA list.
         //! \param ora The ORA list.
         //! \return The parsed ORA list.
@@ -420,15 +412,6 @@ class US_eSignaturesGMP : public US_Widgets
         //! \return The composed JSON string.
         QString compose_updated_eSign_Json(int adminID, QString date, QString runID, QJsonArray revIDs, QJsonArray apprIDs,
                                             QMap< QString, QString > gmp_esigning_map, QString& eSignData);
-
-        //! \brief Compose an updated eSign JSON for separate assignment.
-        //! \param adminID The admin ID.
-        //! \param date The date.
-        //! \param runID The run ID.
-        //! \param eSignData The eSign data.
-        //! \param status The status.
-        //! \return The composed JSON string.
-        QString compose_updated_eSign_Json_sa(int adminID, QString date, QString runID, QString eSignData, QJsonArray status);
 
         //! \brief Write a PDF of eSignatures.
         //! \param runID The run ID.

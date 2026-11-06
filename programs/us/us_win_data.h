@@ -35,6 +35,7 @@ namespace US_WinData
         P_SOMO,         P_SOMOCONFIG,
 
         P_GMPACQ,       P_PROTOCOL,     P_GMPRPT,       P_ESIGN,
+        P_REASSIGN,
         P_AUDIT,
 
         P_RMSD,         P_INVESTIGATOR, P_BUFFER,
