@@ -25,11 +25,11 @@ namespace
 //!  timestate
 struct Experiment
 {
-   int    rpm;
-   double hours;
-   double sval;
-   double dval;
-   bool   fixed_grid;
+      int    rpm;
+      double hours;
+      double sval;
+      double dval;
+      bool   fixed_grid;
 };
 
 // Speed step, scans and simulation parameters of an experiment;  no
@@ -193,7 +193,7 @@ TEST_F( TestUSAstfemRsaThreads, TimestateIsPerExperiment )
 // The temporary timestate of a solve is not left behind
 TEST_F( TestUSAstfemRsaThreads, TimestateFromSpeedstepsLeavesNoFiles )
 {
-   const QStringList before = timestateDirs();
+   const QStringList       before = timestateDirs();
 
    US_SimulationParameters sp;
    US_DataIO::RawData      rdata;

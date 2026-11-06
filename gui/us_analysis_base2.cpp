@@ -471,7 +471,7 @@ void US_AnalysisBase2::update( int selection )
 
    if ( need_tsfile )
      {
-       US_AstfemMath::timestate_from_speedsteps( simulationParameters, sdata );
+        US_AstfemMath::timestate_from_speedsteps( simulationParameters, sdata );
      }
 
    // Compute speed steps from sim speed profile

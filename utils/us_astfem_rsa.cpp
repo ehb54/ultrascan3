@@ -27,23 +27,27 @@ double*** stif_scratch( int nx )
 {
    struct Scratch
    {
-      std::vector< double >    values;
-      std::vector< double* >   rows;
-      std::vector< double** >  elems;
+         std::vector<double>   values;
+         std::vector<double*>  rows;
+         std::vector<double**> elems;
    };
    static thread_local Scratch sc;
 
-   if ( (int)sc.elems.size() < nx )
+   if ( (int) sc.elems.size() < nx )
    {
-      sc.values.assign( (size_t)nx * 16, 0.0 );
-      sc.rows  .resize( (size_t)nx * 4 );
-      sc.elems .resize( (size_t)nx );
+      sc.values.assign( (size_t) nx * 16, 0.0 );
+      sc.rows.resize( (size_t) nx * 4 );
+      sc.elems.resize( (size_t) nx );
 
       for ( size_t ii = 0; ii < sc.rows.size(); ii++ )
-         sc.rows[ ii ]  = sc.values.data() + ii * 4;
+      {
+         sc.rows[ii] = sc.values.data() + ii * 4;
+      }
 
       for ( size_t kk = 0; kk < sc.elems.size(); kk++ )
-         sc.elems[ kk ] = sc.rows.data() + kk * 4;
+      {
+         sc.elems[kk] = sc.rows.data() + kk * 4;
+      }
    }
 
    return sc.elems.data();
@@ -228,8 +232,8 @@ DbgLv(1)<< "RSA:calc: meniscus bottom" << af_params.current_meniscus << af_param
         simparams.sim_speed_prof.count() < 1 )
    {  // Timestate is not properly loaded
 DbgLv(1)<<"RSA:calc: timestate does not exist";
-      // Build it from this experiment's speed steps, in a private file
-      US_AstfemMath::timestate_from_speedsteps( simparams, exp_data );
+// Build it from this experiment's speed steps, in a private file
+US_AstfemMath::timestate_from_speedsteps( simparams, exp_data );
    }
    else
    {  // Timestate object and speed profile exist are properly loaded
@@ -876,8 +880,8 @@ QDateTime clcSt5 = QDateTime::currentDateTime();
            simparams.sim_speed_prof.count() < 1 )
       {  // Timestate is not properly loaded
 DbgLv(1) << "timestate file does not exist";
-         // Build it from this experiment's speed steps, in a private file
-         US_AstfemMath::timestate_from_speedsteps( simparams, exp_data );
+// Build it from this experiment's speed steps, in a private file
+US_AstfemMath::timestate_from_speedsteps( simparams, exp_data );
 DbgLv(1)<<"after writing timestate file" << simparams.sim_speed_prof.count();
       }
 
@@ -1613,7 +1617,7 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop, int step,
 
    double** CB = NULL;          // stiffness matrix on right hand side
                                 // CB[0...Ms-1][0...N-1][4]
-   double** CA1 = NULL;         // for matrices used in acceleration
+   double** CA1 = NULL; // for matrices used in acceleration
    double** CA2 = NULL;
    double** CB1 = NULL;
    double** CB2 = NULL;
@@ -2613,7 +2617,7 @@ void US_Astfem_RSA::ComputeCoefMatrixFixedMesh(
 
    xA = x.data();
 
-   double*** Stif  = stif_scratch( Nx );   // Local stiffness matrices
+   double*** Stif = stif_scratch( Nx ); // Local stiffness matrices
 
    for ( int k = 0; k < Nx - 1; k++ )
    { // loop for all elem:  rectangles [ x_k, x_k+1 ] x [ 0, dt ]
@@ -2676,7 +2680,7 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshR(
    double       xd[ 4 ][ 2 ]; // coord for verices of quad elem
    xA = x.data();
 
-   double*** Stif  = stif_scratch( Nx );   // Local stiffness matrices
+   double*** Stif = stif_scratch( Nx ); // Local stiffness matrices
 
    // elem[0]: triangle
    xd[ 0 ][ 0 ] = xA[ 0 ];  xd[ 0 ][ 1 ] = 0.;
@@ -2745,8 +2749,7 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshR(
    // elem[k]: triangle
    CA[ 1 ][ k ] += Stif[ k  ][2][0] + Stif[ k  ][2][1] + Stif[ k ][2][2];
    CB[ 1 ][ k ] += Stif[ k  ][0][0] + Stif[ k  ][0][1] + Stif[ k ][0][2];
-   CB[ 2 ][ k ]  = Stif[ k  ][1][0] + Stif[ k  ][1][1] + Stif[ k ][1][2];
-
+   CB[2][k] = Stif[k][1][0] + Stif[k][1][1] + Stif[k][1][2];
 }
 
 void US_Astfem_RSA::ComputeCoefMatrixMovingMeshL(
@@ -2756,7 +2759,7 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshL(
    double       xd[4][2];   // coord for verices of quad elem
    xA = x.data();
 
-   double*** Stif  = stif_scratch( Nx );   // Local stiffness matrices
+   double*** Stif = stif_scratch( Nx ); // Local stiffness matrices
 
    // elem[0]: triangle
    xd[0][0] = xA[0];
@@ -2824,8 +2827,7 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshL(
    // elem[k]: triangle
    CA[0][k]  = Stif[k  ][2][1] ;
    CA[1][k]  = Stif[k  ][1][1] ;
-   CB[0][k]  = Stif[k  ][0][1] ;
-
+   CB[0][k]  = Stif[k][0][1];
 }
 
 // Given total concentration of a group of components involved,
