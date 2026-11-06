@@ -36,7 +36,7 @@ static std::string  read_text( const std::string& path )
 //  (e.g. "max" in cgroup v2)
 static qint64 read_number( const std::string& path )
 {
-   std::string text = read_text( path );
+   const std::string text = read_text( path );
 
    if ( text.empty() || text[0] < '0' || text[0] > '9' )
    {
@@ -86,7 +86,7 @@ static qint64 env_number( const char* name )
    }
 
    char*  end    = nullptr;
-   qint64 number = strtoll( text, &end, 10 );
+   const qint64 number = strtoll( text, &end, 10 );
    return ( end != text && number > 0 ) ? number : 0;
 }
 
@@ -209,12 +209,12 @@ bool US_MPI_MemLimit::node_memory( qint64& total, qint64& available, const Paths
 }
 
 // Default cache capacity of one rank
-qint64 US_MPI_MemLimit::default_cache_bytes( qint64 job_limit,
-                                             qint64 node_available,
-                                             int    node_ranks,
-                                             double share,
-                                             qint64 max_bytes,
-                                             qint64 fallback_bytes )
+qint64 US_MPI_MemLimit::default_cache_bytes( const qint64 job_limit,
+                                             const qint64 node_available,
+                                             const int    node_ranks,
+                                             const double share,
+                                             const qint64 max_bytes,
+                                             const qint64 fallback_bytes )
 {
    qint64 memory = ( job_limit > 0 ) ? job_limit : -1;
 
@@ -229,5 +229,5 @@ qint64 US_MPI_MemLimit::default_cache_bytes( qint64 job_limit,
    }
 
    const qint64 rank_bytes = memory / qMax( 1, node_ranks );
-   return qMin( max_bytes, (qint64) ( share * (double) rank_bytes ) );
+   return qMin( max_bytes, static_cast<qint64>( share * static_cast<double>( rank_bytes ) ) );
 }
