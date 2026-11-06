@@ -129,7 +129,7 @@ US_MPI_Analysis::US_MPI_Analysis( int nargs, QStringList& cmdargs ) : QObject()
 
    // The parameter defaults are part of job_config.params
    const uint seed = job_config.params.seed;
-   US_Math2::randomize( seed );
+   deme_seed       = US_Math2::randomize( seed ); // Seed 0: from the time
 
    read_task_parameters( jxmlfili, cmd_task_params );
    announce_start( tarfile );
@@ -163,6 +163,17 @@ US_MPI_Analysis::US_MPI_Analysis( int nargs, QStringList& cmdargs ) : QObject()
 
    // Collective over all ranks, so before any masters-group split
    create_node_comm();
+
+   // One seed for all ranks:  the job seed, or for seed 0 the time seed of
+   //  rank 0 (the ranks' own time seeds can match, within a millisecond).
+   //  The GA and DMGA workers offset it by rank, so every deme gets its own
+   //  random sequence, on one node and across nodes.
+   MPI_Bcast( &deme_seed, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD );
+
+   if ( seed == 0 && my_rank == 0 )
+   {
+      DbgLv( 0 ) << "Random seed from the time:" << deme_seed;
+   }
 
    if ( mgroup_count < 2 )
    {
@@ -1312,6 +1323,16 @@ void US_MPI_Analysis::create_node_comm( void )
    {
       DbgLv( 0 ) << "Node communicator: nodes" << node_count << "ranks on master node" << node_size;
    }
+}
+
+// Seed the random generator of a GA or DMGA deme:  the shared seed offset
+//  by the world rank, so that no two demes draw the same sequence
+void US_MPI_Analysis::seed_deme_random( void )
+{
+   uint seed = deme_seed + 7919u * static_cast<uint>( my_rank );
+
+   // (0 would ask randomize() for a time seed)
+   US_Math2::randomize( ( seed != 0 ) ? seed : 1u );
 }
 
 void US_MPI_Analysis::free_node_comm( void )

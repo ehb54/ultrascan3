@@ -44,9 +44,8 @@ void US_MPI_Analysis::ga_master( void )
    {
       ga_master_loop();
 
-      std::sort( best_fitness.begin(), best_fitness.end() );
-      simulation_values.solutes = refined_gene( best_genes[best_fitness[0].index] );
-      const int nisols          = simulation_values.solutes.size();
+      report_best_gene();
+      const int nisols = simulation_values.solutes.size();
       DbgLv( 1 ) << "GaMast: sols size" << nisols << "buck size" << buckets.size() << "dset size" << data_sets.size();
       DbgLv( 1 ) << "GaMast:  sol0.s .k .v .d" << simulation_values.solutes[0].s << simulation_values.solutes[0].k
                  << simulation_values.solutes[0].v << simulation_values.solutes[0].d;
@@ -280,8 +279,10 @@ void US_MPI_Analysis::ga_master_loop( void )
 
             DbgLv( 1 ) << "  MAST: work" << worker << "fit msg,round,bestw,besto" << msg.fitness << fitness_round
                        << best_fitness[worker].fitness << best_overall_fitness;
-            // Set deme's best fitness, keeping the gene that has it
-            if ( fitness_round < best_fitness[ worker ].fitness )
+            // Set deme's best fitness, keeping the gene that has it.  A
+            //  deme's best never gets worse (elitism), so on a tie of the
+            //  rounded fitness the newer gene is at least as good:  keep it.
+            if ( fitness_round <= best_fitness[worker].fitness )
             {
                best_fitness[ worker ].fitness = fitness_round;
                best_genes[worker]             = worker_gene;
@@ -416,11 +417,25 @@ void US_MPI_Analysis::ga_master_loop( void )
    }
 }
 
+// The model to report:  the best gene of the demes, refined.  It is kept
+//  in fit_gene, so that the Monte Carlo sigmas come from the same model as
+//  the base of the synthetic data (the simulation of this model).
+void US_MPI_Analysis::report_best_gene( void )
+{
+   std::sort( best_fitness.begin(), best_fitness.end() );
+   fit_gene                  = refined_gene( best_genes[best_fitness[0].index] );
+   simulation_values.solutes = fit_gene;
+}
+
 // Refine a gene with the gradient search (Brookes & Demeler 2006):  off the
 //  s,k grid, but kept inside its buckets.  Returns the refined gene if it
 //  fits better, otherwise the gene itself.
 US_MPI_Analysis::Gene US_MPI_Analysis::refined_gene( const Gene& gene )
 {
+   // Fitness values of earlier Monte Carlo iterations, data sets or global
+   //  fit phases are for other data
+   fitness_map.clear();
+
    Gene   rgene    = gene;
    double gfitness = get_fitness( gene );
 
@@ -523,7 +538,8 @@ void US_MPI_Analysis::set_gaMonteCarlo( void )
       //meniscus_values << -1.0;
       max_depth   = 0;  // Make the datasets compatible
       calculated_solutes.clear();
-      calculated_solutes << best_genes[ best_fitness[ 0 ].index ];
+      // The reported model, whose simulation is the base (scaled_data)
+      calculated_solutes << fit_gene;
       const int ncsols = calculated_solutes[0].size();
       DbgLv( 1 ) << "sgMC: bfgenes stored" << ncsols;
 

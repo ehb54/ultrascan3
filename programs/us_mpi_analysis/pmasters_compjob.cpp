@@ -420,6 +420,8 @@ void US_MPI_Analysis::pm_ga_cjmast( void )
    datasets_to_process = data_sets.size();
    max_depth           = 0;
    calculated_solutes.clear();
+   setup_bucket_grid(); // Grid and soft-bucket limits (refinement)
+   setup_ga_simcache(); // Simulation cache (refinement)
 
    // Set noise and debug flags
    simulation_values.noisflag   = 0;
@@ -481,8 +483,7 @@ void US_MPI_Analysis::pm_ga_cjmast( void )
 
       ga_master_loop();
 
-      std::sort( best_fitness.begin(), best_fitness.end() );
-      simulation_values.solutes = best_genes[ best_fitness[ 0 ].index ];
+      report_best_gene();
 
       const int nisols = simulation_values.solutes.size();
 

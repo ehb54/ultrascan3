@@ -1,6 +1,6 @@
 #include "us_math2.h"
-#include "us_memory.h"
 #include "us_mpi_analysis.h"
+#include "us_mpi_memlimit.h"
 
 QDateTime elapsed = QDateTime::currentDateTime();
 #define ELAPSEDNOW (elapsed.msecsTo(QDateTime::currentDateTime()))
@@ -22,13 +22,9 @@ void US_MPI_Analysis::ga_worker( void )
    count_datasets      = data_sets.size();
    datasets_to_process = count_datasets;
 
-   // With an explicit job seed every rank starts the same random sequence,
-   //  which would make all demes evolve identically:  offset it by rank
-   const uint seed = job_config.params.seed;
-   if ( seed != 0 )
-   {
-      US_Math2::randomize( seed + 7919u * (uint) my_rank );
-   }
+   // All ranks share one seed (deme_seed), which would make all demes
+   //  evolve identically:  offset it by rank
+   seed_deme_random();
 
    // Initialize grid values, soft-bucket limits and the simulation cache
    setup_bucket_grid();
@@ -1590,6 +1586,37 @@ void US_MPI_Analysis::setup_bucket_grid( void )
    bucket_lambda       = ga.bucket_lambda;
    const double margin = ( bucket_soft != 0 ) ? ga.bucket_margin : 0.0;
 
+   // Outer limits of a soft bucket in one attribute, kept physical:  s
+   //  keeps its sign, f/f0 stays at least 1, and MW, vbar, D and f stay
+   //  positive (at least half the lower bucket edge, or the edge itself
+   //  for a bucket that does not start above 0)
+   auto         outer_limits = [margin]( int attr, double vmin, double vmax, double& lo, double& hi )
+   {
+      const double width = vmax - vmin;
+      lo                 = vmin - margin * width;
+      hi                 = vmax + margin * width;
+
+      if ( attr == ATTR_K )
+      {
+         lo = qMax( lo, qMin( 1.0, vmin ) );
+      }
+      else if ( vmin > 0.0 )
+      {
+         lo = qMax( lo, 0.5 * vmin );
+      }
+      else if ( attr == ATTR_S )
+      {
+         if ( vmax < 0.0 )
+         {
+            hi = qMin( hi, 0.5 * vmax );
+         }
+      }
+      else
+      {
+         lo = vmin;
+      }
+   };
+
    for ( int b = 0; b < buckets.size(); b++ )
    {
       Bucket& bk = buckets[b];
@@ -1601,23 +1628,9 @@ void US_MPI_Analysis::setup_bucket_grid( void )
       bk.ds = ws / (double) ( bk.ns - 1 );
       bk.dk = wk / (double) ( bk.nk - 1 );
 
-      // Outer limits:  s keeps its sign, f/f0 stays at least 1
-      double xlo = bk.x_min - margin * ws;
-      double xhi = bk.x_max + margin * ws;
-      double ylo = bk.y_min - margin * wk;
-      double yhi = bk.y_max + margin * wk;
-      if ( bk.x_min > 0.0 )
-      {
-         xlo = qMax( xlo, 0.5 * bk.x_min );
-      }
-      if ( bk.x_max < 0.0 )
-      {
-         xhi = qMin( xhi, 0.5 * bk.x_max );
-      }
-      if ( attr_y == ATTR_K )
-      {
-         ylo = qMax( ylo, qMin( 1.0, bk.y_min ) );
-      }
+      double xlo, xhi, ylo, yhi;
+      outer_limits( attr_x, bk.x_min, bk.x_max, xlo, xhi );
+      outer_limits( attr_y, bk.y_min, bk.y_max, ylo, yhi );
 
       bk.s_glo = -(int) qFloor( ( bk.x_min - xlo ) / bk.ds + 1e-9 );
       bk.s_ghi = bk.ns - 1 + (int) qFloor( ( xhi - bk.x_max ) / bk.ds + 1e-9 );
@@ -1694,8 +1707,11 @@ double US_MPI_Analysis::bucket_penalty( const Gene& gene, int npoints )
 // Per-solute simulation cache of a GA worker (kept over generations and
 //  Monte Carlo iterations; the key does not depend on the data readings).
 //  sim_cache_mb (job parameter):  cap per rank in MB, 0 = off.  Default:
-//  a quarter of the available memory shared by the ranks on this node,
-//  at most the US_SimCache default (4 GB; SimCache=off disables it).
+//  a quarter of this rank's share of the memory the job may use on this
+//  node (the tightest of the Slurm allocation, the cgroup limit and the
+//  node's available memory, divided by the ranks on the node), at most
+//  4 GB;  512 MB where none of these is known.  Found by reading files and
+//  the environment, without starting a process.
 void US_MPI_Analysis::setup_ga_simcache( void )
 {
    if ( ga_simcache != nullptr )
@@ -1703,8 +1719,18 @@ void US_MPI_Analysis::setup_ga_simcache( void )
       return;
    }
 
-   const qint64 MB = 1024 * 1024;
-   qint64       cap;
+   static const qint64 MB          = 1024 * 1024;
+   static const qint64 MAX_MB      = 4096; // Largest default cap
+   static const qint64 FALLBACK_MB = 512;  // Default cap if no memory size is known
+   const qint64        job_limit   = US_MPI_MemLimit::job_limit( node_size );
+   qint64              node_total  = -1;
+   qint64              node_avail  = -1;
+   qint64              cap;
+
+   if ( !US_MPI_MemLimit::node_memory( node_total, node_avail ) )
+   {
+      node_avail = -1;
+   }
 
    if ( job_config.params.ga.sim_cache_mb >= 0 )
    {
@@ -1712,10 +1738,7 @@ void US_MPI_Analysis::setup_ga_simcache( void )
    }
    else
    {
-      int memavail = 0;
-      US_Memory::memory_profile( &memavail );
-      qint64 share = (qint64) ( 0.25 * memavail / qMax( 1, node_size ) ) * MB;
-      cap          = qMin( US_SimCache::default_max_bytes(), share );
+      cap = US_MPI_MemLimit::default_cache_bytes( job_limit, node_avail, node_size, 0.25, MAX_MB * MB, FALLBACK_MB * MB );
    }
 
    if ( cap >= 16 * MB )
@@ -1729,6 +1752,13 @@ void US_MPI_Analysis::setup_ga_simcache( void )
    if ( my_rank == 1 )
    {
       DbgLv( 0 ) << "GA simulation cache per rank (MB):" << ( ( ga_simcache != nullptr ) ? cap / MB : 0 ) << "ranks on node"
-                 << node_size;
+                 << node_size << "job memory limit on node (MB, 0 none)" << job_limit / MB << "node available (MB)"
+                 << ( ( node_avail >= 0 ) ? node_avail / MB : -1 );
+   }
+
+   if ( my_rank == 1 && job_config.params.ga.sim_cache_mb > 0 && job_limit > 0 && cap > job_limit / qMax( 1, node_size ) / 2 )
+   {
+      DbgLv( 0 ) << "Warning:  sim_cache_mb" << cap / MB << "is more than half of the job memory per rank on this node"
+                 << job_limit / qMax( 1, node_size ) / MB << "MB";
    }
 }

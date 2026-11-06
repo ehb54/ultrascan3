@@ -21,6 +21,8 @@
 #define DATASET          US_SolveSim::DataSet
 #define DGene            US_Model
 
+// us_math2.h defines a fallback DbgLv if it is included first
+#undef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
 #define DbTiming if(dbg_timing)qDebug()   //!< debug-timing-conditioned qDebug()
 
@@ -70,6 +72,7 @@ class US_MPI_Analysis : public QObject
         MPI_Comm         node_comm = MPI_COMM_NULL; //!< Ranks sharing this node's memory
         int              node_rank = 0;             //!< Rank within node_comm
         int              node_size = 1;             //!< Number of ranks on this node
+        uint             deme_seed = 0;             //!< Random seed shared by all ranks (job seed or rank 0's time seed)
 
         int current_dataset;      //!< Current dataset for global fit or composite
         int datasets_to_process;  //!< Datasets to process for global fit or composite
@@ -327,6 +330,7 @@ class US_MPI_Analysis : public QObject
         int fitness_count;    //!< Fitness count
 
         typedef QVector< US_Solute > Gene; //!< Gene type
+        Gene                                       fit_gene; //!< Gene of the model the GA master reported last
 
         double regularization; //!< Regularization value
         double concentration_threshold; //!< Concentration threshold
@@ -495,6 +499,7 @@ class US_MPI_Analysis : public QObject
         void     _2dsa_worker      ( void );
 
         void     calc_residuals     ( int, int, SIMULATION& );
+        void                   seed_deme_random( void );
         void                   calc_fitness_residuals( int, int, SIMULATION& );
         void                   debug_residuals( int, int, SIMULATION&, QVector<US_Solute>& );
 
@@ -503,6 +508,7 @@ class US_MPI_Analysis : public QObject
         void ga_master_loop  ( void );
         void ga_global_fit   ( void );
         Gene                   refined_gene( const Gene& );
+        void                   report_best_gene( void );
         void                   setup_bucket_grid( void );
         void                   setup_ga_simcache( void );
         double                 bucket_penalty( const Gene&, int );
