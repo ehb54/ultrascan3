@@ -85,7 +85,7 @@ static qint64 env_number( const char* name )
       return 0;
    }
 
-   char*  end    = nullptr;
+   char*        end    = nullptr;
    const qint64 number = strtoll( text, &end, 10 );
    return ( end != text && number > 0 ) ? number : 0;
 }
