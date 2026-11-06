@@ -2131,7 +2131,7 @@ bool US_SolveSim::calc_variance_normal( int offset, int dataset_count, Simulatio
 
    if ( nuse > 0 )
    { // Cholesky G = R'R (R upper triangular, column-major for nnls), R'd = c
-      QVector<double> rr( nuse * nuse, 0.0 );
+      QVector<double> rr( static_cast<qsizetype>( nuse ) * nuse, 0.0 );
       QVector<double> dd( nuse, 0.0 );
       QVector<double> xu( nuse, 0.0 );
       const double    RCOND = 1.0e-10; // Minimum pivot^2 / diagonal

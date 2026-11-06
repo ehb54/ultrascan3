@@ -3,6 +3,7 @@
 #define US_DATAIO_H
 
 #include "us_extern.h"
+#include <QXmlStreamReader>
 
 //! \brief Data structures and methods to read/write experimental data
 //!
