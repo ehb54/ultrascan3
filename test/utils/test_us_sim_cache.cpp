@@ -353,3 +353,189 @@ TEST_F( TestUSSimCache, ConcurrentUseIsSafe )
    EXPECT_LE( st.bytes, st.max_bytes );
    EXPECT_EQ( st.survivors, 12 ); // Keys 0, 5, ..., 55 always fit
 }
+
+// --- Least-recently-used mode --------------------------------------------------
+
+TEST_F( TestUSSimCache, LruEvictsLeastRecentlyUsedInABatch )
+{
+   US_SimCache cache( 10 * sbytes );
+   cache.set_lru( true );
+   for ( int ii = 0; ii < 10; ii++ )
+   {
+      ASSERT_TRUE( cache.store( key( ii ), makeSim( ii ), false ) );
+   }
+
+   // A fetch counts as a use, so key 0 is no longer the oldest
+   US_DataIO::RawData fetched;
+   ASSERT_TRUE( cache.fetch( key( 0 ), fetched ) );
+
+   // Room for one more means going down to 90% of the cap besides the new one
+   ASSERT_TRUE( cache.store( key( 10 ), makeSim( 10 ), false ) );
+   EXPECT_EQ( cache.stats().evicted, 2 );
+   EXPECT_EQ( cache.stats().rejected, 0 );
+   EXPECT_LE( cache.stats().bytes, cache.stats().max_bytes );
+
+   EXPECT_FALSE( cache.fetch( key( 1 ), fetched ) );
+   EXPECT_FALSE( cache.fetch( key( 2 ), fetched ) );
+   for ( int ii : { 0, 3, 4, 5, 6, 7, 8, 9, 10 } )
+   {
+      ASSERT_TRUE( cache.fetch( key( ii ), fetched ) ) << ii;
+      EXPECT_TRUE( sameValues( fetched, makeSim( ii ) ) ) << ii;
+   }
+}
+
+TEST_F( TestUSSimCache, LruIgnoresSurvivorFlags )
+{
+   // The default policy would refuse the new simulations here
+   US_SimCache cache( 4 * sbytes );
+   cache.set_lru( true );
+   for ( int ii = 0; ii < 12; ii++ )
+   {
+      EXPECT_TRUE( cache.store( key( ii ), makeSim( ii ), true ) ) << ii;
+   }
+   US_DataIO::RawData fetched;
+   EXPECT_TRUE( cache.fetch( key( 11 ), fetched ) );
+   EXPECT_FALSE( cache.fetch( key( 0 ), fetched ) );
+   EXPECT_EQ( cache.stats().rejected, 0 );
+   EXPECT_GT( cache.stats().evicted, 0 );
+   EXPECT_LE( cache.stats().bytes, cache.stats().max_bytes );
+}
+
+TEST_F( TestUSSimCache, LruStoringAgainCountsAsUse )
+{
+   US_SimCache cache( 10 * sbytes );
+   cache.set_lru( true );
+   for ( int ii = 0; ii < 10; ii++ )
+   {
+      ASSERT_TRUE( cache.store( key( ii ), makeSim( ii ), false ) );
+   }
+   ASSERT_TRUE( cache.store( key( 0 ), makeSim( 0 ), false ) );
+   EXPECT_EQ( cache.stats().entries, 10 ); // Not stored twice
+
+   ASSERT_TRUE( cache.store( key( 10 ), makeSim( 10 ), false ) );
+   US_DataIO::RawData fetched;
+   EXPECT_TRUE( cache.fetch( key( 0 ), fetched ) );
+   EXPECT_FALSE( cache.fetch( key( 1 ), fetched ) );
+}
+
+TEST_F( TestUSSimCache, LruRejectsASimulationLargerThanTheCap )
+{
+   US_SimCache cache( sbytes - 1 );
+   cache.set_lru( true );
+   EXPECT_FALSE( cache.store( key( 0 ), makeSim( 0 ), false ) );
+   EXPECT_EQ( cache.stats().rejected, 1 );
+   EXPECT_EQ( cache.stats().entries, 0 );
+}
+
+TEST_F( TestUSSimCache, StatsTextReportsEvictedAndRejected )
+{
+   US_SimCache cache( 2 * sbytes );
+   cache.set_lru( true );
+   for ( int ii = 0; ii < 4; ii++ )
+   {
+      cache.store( key( ii ), makeSim( ii ), false );
+   }
+   const QString text = cache.stats_text();
+   EXPECT_TRUE( text.contains( QString( "%1 evicted" ).arg( cache.stats().evicted ) ) ) << text.toStdString();
+   EXPECT_TRUE( text.contains( "0 rejected" ) ) << text.toStdString();
+}
+
+TEST_F( TestUSSimCache, LruConcurrentUseIsSafe )
+{
+   US_SimCache cache( 40 * sbytes );
+   cache.set_lru( true );
+   std::atomic<int> wrong{ 0 };
+   QList<QThread*>  threads;
+   for ( int tt = 0; tt < 6; tt++ )
+   {
+      threads << QThread::create(
+         [&cache, &wrong, tt]()
+         {
+            for ( int ii = 0; ii < 400; ii++ )
+            {
+               const int          kk = ( ii * 7 + tt ) % 60;
+               US_DataIO::RawData simdat;
+               if ( cache.fetch( key( kk ), simdat ) )
+               {
+                  if ( !sameValues( simdat, makeSim( kk ) ) )
+                  {
+                     wrong++;
+                  }
+               }
+               else
+               {
+                  cache.store( key( kk ), makeSim( kk ), false );
+               }
+            }
+         } );
+   }
+   for ( QThread* thr : threads )
+   {
+      thr->start();
+   }
+   for ( QThread* thr : threads )
+   {
+      thr->wait();
+      delete thr;
+   }
+
+   EXPECT_EQ( wrong.load(), 0 );
+   EXPECT_LE( cache.stats().bytes, cache.stats().max_bytes );
+}
+
+// --- Memo of data set keys -----------------------------------------------------
+
+TEST_F( TestUSSimCache, KeyMemoReturnsTheDatasetKey )
+{
+   US_SimulationParameters simparams;
+   US_DataIO::EditedData   edata;
+   makeDataSet( simparams, edata );
+   const QByteArray full = US_SimCache::dataset_key( simparams, edata );
+
+   US_SimCache      cache( 10 * sbytes );
+   EXPECT_EQ( cache.dataset_key_memo( simparams, edata ), full ); // Memo off (default)
+   cache.set_key_memo( true );
+   EXPECT_EQ( cache.dataset_key_memo( simparams, edata ), full );
+   EXPECT_EQ( cache.dataset_key_memo( simparams, edata ), full ); // From the memo
+}
+
+TEST_F( TestUSSimCache, KeyMemoSeesScalarAndResizedChanges )
+{
+   US_SimulationParameters simparams;
+   US_DataIO::EditedData   edata;
+   makeDataSet( simparams, edata );
+   US_SimCache cache( 10 * sbytes );
+   cache.set_key_memo( true );
+   const QByteArray first = cache.dataset_key_memo( simparams, edata );
+
+   simparams.meniscus = 5.95;
+   EXPECT_NE( cache.dataset_key_memo( simparams, edata ), first );
+   EXPECT_EQ( cache.dataset_key_memo( simparams, edata ), US_SimCache::dataset_key( simparams, edata ) );
+   simparams.meniscus = 5.9;
+   EXPECT_EQ( cache.dataset_key_memo( simparams, edata ), first );
+
+   edata.xvalues << 7.0;
+   EXPECT_NE( cache.dataset_key_memo( simparams, edata ), first );
+}
+
+TEST_F( TestUSSimCache, KeyMemoLimitationAndClear )
+{
+   // Documented limit of the memo:  a value changed in place (same address and
+   //  size) is not seen.  Without the memo, or after clear(), it is.
+   US_SimulationParameters simparams;
+   US_DataIO::EditedData   edata;
+   makeDataSet( simparams, edata );
+   US_SimCache cache( 10 * sbytes );
+   cache.set_key_memo( true );
+   const QByteArray first = cache.dataset_key_memo( simparams, edata );
+
+   edata.xvalues[3] += 0.001;
+   EXPECT_EQ( cache.dataset_key_memo( simparams, edata ), first );
+
+   cache.clear();
+   EXPECT_NE( cache.dataset_key_memo( simparams, edata ), first );
+
+   cache.set_key_memo( false );
+   edata.xvalues[3] += 0.001;
+   EXPECT_EQ( cache.dataset_key_memo( simparams, edata ), US_SimCache::dataset_key( simparams, edata ) );
+}
