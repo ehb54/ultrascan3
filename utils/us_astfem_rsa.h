@@ -299,6 +299,10 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
       void   GlobalStiff      ( double*, double**, double**,
                                 double, double );
 
+      //!< Sets simparams.sim from the data channel, writing it only when
+      //!< it changes (threads may share one simparams)
+      void                                    set_sim_flag( const US_DataIO::RawData& );
+
       //!< Writes a temporary timestate file if not found
       //!< Input  : 1. A string with date+hrs+mins+seconds
       //!<        : 2. Experimental data set

@@ -1288,12 +1288,29 @@ DbgLv(1) << "SP:ssToDB:  w2t" << spi->w2t_first << spi->w2t_last
 //  speed profile vector implied.
 int US_SimulationParameters::simSpeedsFromTimeState( const QString tmst_fpath )
 {
-   tsobj            = new US_TimeState();        // Create TimeState
-   tsobj->open_read_data( tmst_fpath, true );    // Open with prefetch
-   ssProfFromTimeState( tsobj, sim_speed_prof ); // Create SSP vector
    int dbg_level    = US_Settings::us_debug();
-DbgLv(1) << "SP: ssFts: ispeed" << sim_speed_prof[0].rotorspeed
- << "ssp count" << sim_speed_prof.count();
+   tsobj            = new US_TimeState(); // Create TimeState
+
+   if ( tsobj->open_read_data( tmst_fpath, true ) != 0 ) // Open with prefetch
+   {                                                     // Unreadable timestate (data or definitions file):  no speed profile
+      DbgLv( 0 ) << "SP: ssFts: could not read time state" << tmst_fpath << tsobj->last_error_message();
+      delete tsobj;
+      tsobj = NULL;
+      sim_speed_prof.clear();
+      return -1;
+   }
+
+   if ( ssProfFromTimeState( tsobj, sim_speed_prof ) < 0 ) // Create SSP vector
+   {
+      DbgLv( 0 ) << "SP: ssFts: time state lacks needed keys" << tmst_fpath;
+      delete tsobj;
+      tsobj = NULL;
+      sim_speed_prof.clear();
+      return -1;
+   }
+
+   DbgLv( 1 ) << "SP: ssFts: ispeed" << ( sim_speed_prof.isEmpty() ? 0 : sim_speed_prof[0].rotorspeed ) << "ssp count"
+              << sim_speed_prof.count();
    return sim_speed_prof.count();                // Return number steps
 }
 
