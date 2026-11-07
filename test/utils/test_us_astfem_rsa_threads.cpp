@@ -176,6 +176,9 @@ const std::vector<Experiment> experiments = {
 };
 } // namespace
 
+// Environment variables that set the system temporary directory
+const char* const tmp_env_names[] = { "TMPDIR", "TMP", "TEMP" };
+
 // The system temporary directory is shared with other test processes (ctest
 //  --parallel), whose timestate directories come and go in it.  Each test
 //  gets one of its own:  TMPDIR (Unix) and TMP/TEMP (Windows) are read by
@@ -189,7 +192,7 @@ class TestUSAstfemRsaThreads : public QtTestBase
          tmpdir_ = std::make_unique<QTemporaryDir>( QDir::tempPath() + "/us3-astfem-test-XXXXXX" );
          ASSERT_TRUE( tmpdir_->isValid() );
 
-         for ( const char* name : env_names )
+         for ( const char* name : tmp_env_names )
          {
             saved_.push_back( { name, qEnvironmentVariableIsSet( name ), qgetenv( name ) } );
             qputenv( name, QFile::encodeName( tmpdir_->path() ) );
@@ -223,7 +226,6 @@ class TestUSAstfemRsaThreads : public QtTestBase
             QByteArray  value;
       };
 
-      static constexpr const char*   env_names[] = { "TMPDIR", "TMP", "TEMP" };
       std::unique_ptr<QTemporaryDir> tmpdir_;
       std::vector<SavedEnv>          saved_;
 };
@@ -283,7 +285,7 @@ TEST_F( TestUSAstfemRsaThreads, NoUsableTempDirFailsCleanly )
 
    const QString saved_tmpdir = US_Settings::tmpDir();
    US_Settings::set_tmpDir( unusable );
-   for ( const char* name : { "TMPDIR", "TMP", "TEMP" } )
+   for ( const char* name : tmp_env_names )
    {
       qputenv( name, QFile::encodeName( unusable ) );
    }
