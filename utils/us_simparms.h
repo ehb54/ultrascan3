@@ -259,10 +259,44 @@ class US_UTIL_EXTERN US_SimulationParameters
          double  temperature_drift = 0.0;   //!< Steady temperature change, degrees C per hour
    };
 
+   //! \brief Interference optics, from an <interference> element.
+   //! An IP run then records fringes on the interference detector's grid, with
+   //! the interference noise model in place of the absorbance one.
+   class US_UTIL_EXTERN InterferenceSettings
+   {
+      public:
+         bool   given             = false;   //!< The simparams file has an <interference> element
+         double start             = 5.80;    //!< First radius, cm
+         int    points            = 2048;    //!< Detector points
+         double resolution        = 0.00068; //!< Point spacing, cm
+         double scale             = 3.3;     //!< Fringes per unit of signal (loading)
+         double random            = 0.0015;  //!< Random noise sigma, fringes
+         double offset            = 0.02;    //!< Per-scan baseline offset sigma, fringes
+         double structure         = 0.01;    //!< Fixed radial structure sigma, fringes
+         double jump_rate         = 0.02;    //!< Chance per scan of an integer fringe jump
+         double step_fraction     = 0.5;     //!< Share of jumps that are steps at a radius, not whole-scan
+         double meniscus_artifact = 1.5;     //!< Least meniscus spike height, as a multiple of the loading
+   };
+
+   //! \brief A wavelength scan, from a <wavelength_scan> element.
+   //! A WI run records intensity across wavelengths at one radius.
+   class US_UTIL_EXTERN WavelengthScanSettings
+   {
+      public:
+         bool                 given    = false; //!< The simparams file has a <wavelength_scan> element
+         double               position = 6.5;   //!< Radius scanned, cm
+         double               start    = 180.0; //!< First wavelength, nm
+         double               end      = 800.0; //!< Last wavelength, nm
+         double               step     = 1.0;   //!< Wavelength increment, nm
+         QMap<double, double> spectrum;         //!< Sample extinction by wavelength, from <point> children
+   };
+
    IntensitySettings intensity; //!< Intensity mode for RI output
    WindowSettings    window;    //!< Fixed instrument window; off unless given
    ScheduleSettings  schedule;  //!< Staggered scan times; off unless given
    TelemetrySettings telemetry; //!< Recorded speed and temperature variation; off unless given
+   InterferenceSettings   interference;    //!< Interference optics for IP runs; off unless given
+   WavelengthScanSettings wavelength_scan; //!< Wavelength scan for WI runs; off unless given
 
    //! Each distinct RPM value in a series of speeds 
    class US_UTIL_EXTERN  SpeedProfile

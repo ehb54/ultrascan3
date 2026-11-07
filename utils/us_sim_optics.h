@@ -24,8 +24,10 @@
 class US_UTIL_EXTERN US_SimOptics
 {
    public:
-      using Intensity = US_SimulationParameters::IntensitySettings;
-      using Window    = US_SimulationParameters::WindowSettings;
+      using Intensity      = US_SimulationParameters::IntensitySettings;
+      using Window         = US_SimulationParameters::WindowSettings;
+      using Interference   = US_SimulationParameters::InterferenceSettings;
+      using WavelengthScan = US_SimulationParameters::WavelengthScanSettings;
 
       //! Radius at the center of the light profile, cm.
       static constexpr double profileCenter    = 6.5;
@@ -119,6 +121,58 @@ class US_UTIL_EXTERN US_SimOptics
                                            double                    buffer_od,
                                            US_DataIO::RawData&       sample,
                                            US_DataIO::RawData&       reference );
+
+      //! \brief A problem with interference settings, or empty if they are usable.
+      static QString          interferenceProblem( const Interference& settings );
+
+      //! \brief The interference detector's radii.
+      static QVector<double>  interferenceRadii( const Interference& settings );
+
+      /*! \brief Record a liquid-region concentration as interference fringes.
+          Resamples onto the interference grid, which need not reach the
+          bottom: before the meniscus nothing, at the meniscus a spike, in the
+          liquid the data times scale, past the bottom the ceiling (or the last
+          liquid value). Then adds, in fringes, a fixed radial structure shared
+          by every scan, a baseline offset per scan, occasional whole-fringe
+          jumps (a whole-scan offset, or a step from a random radius outward)
+          and random noise. Values above ceiling, when it is above 0, are cut.
+          \param data      Signal on any ascending radial grid. Replaced.
+          \param structure Set to the fixed radial structure, per grid point.
+          \param offsets   Set to each scan's offset including whole-scan jumps.
+      */
+      static void             toInterference( US_DataIO::RawData& data,
+                                              const Interference& settings,
+                                              double              meniscus,
+                                              double              bottom,
+                                              double              loading,
+                                              double              ceiling,
+                                              QVector<double>&    structure,
+                                              QVector<double>&    offsets );
+
+      //! \brief A problem with wavelength-scan settings for this cell, or empty.
+      static QString          wavelengthScanProblem( const WavelengthScan& settings, double meniscus, double bottom );
+
+      //! \brief The scanned wavelengths: start, start + step, ..., up to end.
+      static QVector<double>  scanWavelengths( const WavelengthScan& settings );
+
+      //! \brief The spectrum at each wavelength, linearly interpolated.
+      static QVector<double>  extinctionAt( const WavelengthScan& settings, const QVector<double>& wavelengths );
+
+      /*! \brief Record a wavelength scan at one radius.
+          Each scan's absorbance at the scan position is spread across the
+          wavelengths in proportion to the spectrum (normalized to its
+          maximum). The sample sees the source through that absorbance and the
+          buffer, the reference through the buffer. The x-axis becomes the
+          wavelengths and each scan's wavelength field the radius, as UltraScan
+          stores an Optima wavelength scan.
+          \param buffer_od Buffer absorbance at each scanned wavelength.
+      */
+      static void             toWavelengthScan( const US_DataIO::RawData& absorbance,
+                                                const Intensity&          intensity,
+                                                const WavelengthScan&     settings,
+                                                const QVector<double>&    buffer_od,
+                                                US_DataIO::RawData&       sample,
+                                                US_DataIO::RawData&       reference );
 };
 
 #endif

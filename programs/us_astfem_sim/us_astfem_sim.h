@@ -131,6 +131,8 @@ class US_Astfem_Sim : public US_Widgets
       void   baseline       ( void );
       void   random_noise   ( void );
       bool                             intensity_mode( void ) const;  // Writing RI intensities
+      bool                             wavelength_scan_mode( void ) const; // Writing a WI wavelength scan
+      bool                             interference_mode( void ) const;    // Writing IP fringes with the interference model
       bool                             intensity_noise( void ) const; // Counts noise replaces absorbance random noise
       double                           buffer_absorbance( const US_DataIO::RawData& ) const; // Buffer OD at the data's wavelength
       QString                          schedule_problem( void ) const; // Unusable schedule or telemetry settings

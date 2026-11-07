@@ -69,11 +69,14 @@ class US_UTIL_EXTERN US_SimCli
       static constexpr const char* channelRowMismatchMessage = "--channel %1 is centerpiece row %2, but "
                                                                "--centerpiece-channel selects row %3";
       //! --runtype RI with a channel that has no reference partner: %1 channel.
-      static constexpr const char* intensityChannelMessage   = "--runtype RI writes a sample channel and its reference; "
+      static constexpr const char* intensityChannelMessage   = "--runtype RI and WI write a sample channel and its reference; "
                                                                "give --channel A, C, E or G, not %1";
       //! --runtype RI together with --od-limit.
-      static constexpr const char* intensityOdLimitMessage   = "--od-limit does not apply to --runtype RI, whose "
+      static constexpr const char* intensityOdLimitMessage   = "--od-limit does not apply to --runtype RI or WI, whose "
                                                                "readings fall to dark counts instead of being clipped";
+      //! --runtype WI without the simparams element that describes the scan.
+      static constexpr const char* wavelengthScanMessage     = "--runtype WI needs a <wavelength_scan> element in the "
+                                                               "simparams: the radius, the wavelengths and the spectrum";
       //! Simulation parameters with other than one speed step: %1 file, %2 step count.
       static constexpr const char* speedStepCountMessage     = "%1 has %2 speed steps; only one can be simulated";
 

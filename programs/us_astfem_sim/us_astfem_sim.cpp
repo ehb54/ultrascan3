@@ -436,9 +436,29 @@ int US_Astfem_Sim::init_from_args( const US_SimCliArgs& args )
       }
    }
 
-   if ( intensity_mode() )
+   if ( interference_mode() )
+   {
+      const QString problem = US_SimOptics::interferenceProblem( simparams.interference );
+      if ( !problem.isEmpty() )
+      {
+         reportHeadlessLoadFailure( "simparams", problem, errors_to_cl, gui_needed, error_occured );
+      }
+   }
+
+   if ( intensity_mode() || wavelength_scan_mode() )
    {
       QString problem = US_SimOptics::intensityProblem( simparams.intensity );
+      if ( wavelength_scan_mode() )
+      {
+         if ( !simparams.wavelength_scan.given )
+         {
+            problem = US_SimCli::wavelengthScanMessage;
+         }
+         else if ( problem.isEmpty() )
+         { // The position is checked against the cell when the run is saved.
+            problem = US_SimOptics::wavelengthScanProblem( simparams.wavelength_scan, 0.0, 0.0 );
+         }
+      }
       if ( US_SimOptics::referenceChannel( sim_channel ) == 0 )
       {
          problem = QString( US_SimCli::intensityChannelMessage ).arg( QChar( sim_channel ) );
@@ -1285,6 +1305,11 @@ void US_Astfem_Sim::ri_noise( void )
 {
    csv_data_ri.clear();
    if ( simparams.rinoise == 0.0 ) return;
+   // Interference records its own offsets, in fringes, when it is saved.
+   if ( interference_mode() )
+   {
+      return;
+   }
 
 
    QStringList header;
@@ -1321,6 +1346,10 @@ void US_Astfem_Sim::ri_noise( void )
 void US_Astfem_Sim::baseline( void )
 {
    if ( simparams.baseline == 0.0 ) return;
+   if ( interference_mode() )
+   {
+      return;
+   }
 
    // Add a constant baseline offset
    int scan_offset = 0;
@@ -1343,9 +1372,20 @@ bool US_Astfem_Sim::intensity_mode( void ) const
    return run_type == "RI";
 }
 
+bool US_Astfem_Sim::wavelength_scan_mode( void ) const
+{
+   return run_type == "WI";
+}
+
+bool US_Astfem_Sim::interference_mode( void ) const
+{
+   return run_type == "IP" && simparams.interference.given;
+}
+
 bool US_Astfem_Sim::intensity_noise( void ) const
 {
-   return intensity_mode() && ( simparams.intensity.read_noise > 0.0 || simparams.intensity.shot_noise > 0.0 );
+   return ( intensity_mode() || wavelength_scan_mode() ) &&
+          ( simparams.intensity.read_noise > 0.0 || simparams.intensity.shot_noise > 0.0 );
 }
 
 QString US_Astfem_Sim::schedule_problem( void ) const
@@ -1436,7 +1476,7 @@ void US_Astfem_Sim::random_noise( void )
 {
    if ( simparams.rnoise == 0.0 && simparams.lrnoise == 0.0) return;
    // Intensity mode records counts noise instead; adding both would double it.
-   if ( intensity_noise() )
+   if ( intensity_noise() || interference_mode() )
    {
       return;
    }
@@ -1498,6 +1538,11 @@ void US_Astfem_Sim::ti_noise( void )
 {
    csv_data_ti.clear();
    if ( simparams.tinoise == 0.0 ) return;
+   // Interference records its own radial structure, in fringes, when saved.
+   if ( interference_mode() )
+   {
+      return;
+   }
 
    QVector< double > tinoise;
    // all speed steps are assumed to have the same number of the radial points of a single scan
@@ -1833,7 +1878,8 @@ DbgLv(1) << "ASIM:svscn: 1-speed file paths"  << odir << tmst_fpath;
       QString                cell       = QString::number( sim_data.cell );
       QString                channel    = QString( sim_data.channel );
       double                 wavelength = sim_data.scanData.first().wavelength;
-      QString                wl         = ( wavelength < 99 ) ? QString( "123" ) : QString::number( wavelength );
+      // A wavelength scan's field holds its radius, which takes the sentinel.
+      QString                wl = ( wavelength < 99 || wavelength_scan_mode() ) ? QString( "123" ) : QString::number( wavelength );
 
       // saveToDisk() parses tripleDesc using the " / " separator.
       US_Experiment          experiment = US_SimRecord::experiment( rotor, simparams, edit_runid, runType, guid_seed );
@@ -1851,7 +1897,7 @@ DbgLv(1) << "ASIM:svscn: 1-speed file paths"  << odir << tmst_fpath;
       triples << triple;
 
       // Intensity mode also wrote a reference dataset on the partner channel.
-      const bool    has_ref     = intensity_mode() && jd < ref_raw_guids.size();
+      const bool    has_ref     = ( intensity_mode() || wavelength_scan_mode() ) && jd < ref_raw_guids.size();
       const QString ref_channel = has_ref ? QString( QChar( US_SimOptics::referenceChannel( sim_data.channel ) ) ) : QString();
       if ( has_ref )
       {
@@ -1885,7 +1931,19 @@ DbgLv(1) << "ASIM:svscn: 1-speed file paths"  << odir << tmst_fpath;
          ev, af_params.current_meniscus, af_params.current_bottom, simparams.radial_resolution );
       ev.ODlimit = has_ref ? sample_max[jd] : US_SimRecord::maxOD( sim_data );
 
-      if ( US_DataIO::writeEdits( edir + fname, ev ) != US_DataIO::OK )
+      // A wavelength scan has no radial boundary: its edit is the scanned range.
+      const auto write_edit = [this]( const QString& path, US_DataIO::EditValues& values )
+      {
+         if ( !wavelength_scan_mode() )
+         {
+            return US_DataIO::writeEdits( path, values ) == US_DataIO::OK;
+         }
+         values.rangeLeft  = simparams.wavelength_scan.start;
+         values.rangeRight = US_SimOptics::scanWavelengths( simparams.wavelength_scan ).last();
+         return US_SimRecord::writeRangeEdit( path, values );
+      };
+
+      if ( !write_edit( edir + fname, ev ) )
       { // Report headless save failures without a modal dialog.
          qDebug() << "Error: could not write edit file" << edir + fname;
          return false;
@@ -1899,7 +1957,7 @@ DbgLv(1) << "ASIM:svscn: 1-speed file paths"  << odir << tmst_fpath;
          ev.dataGUID             = ref_raw_guids[jd];
          ev.ODlimit              = ref_max[jd];
 
-         if ( US_DataIO::writeEdits( edir + ref_fname, ev ) != US_DataIO::OK )
+         if ( !write_edit( edir + ref_fname, ev ) )
          {
             qDebug() << "Error: could not write edit file" << edir + ref_fname;
             return false;
@@ -2030,7 +2088,8 @@ DbgLv(1) << "Sim:SV: reset s1plat" << s1plat;
    } else
    { // Headless: clip at --od-limit if given, else leave readings unclipped.
       maxrad  = brad;
-      dthresh = ( od_limit > 0.0 ) ? od_limit : maxc;
+      // Interference clips in fringes, after its scale, in toInterference().
+      dthresh = ( od_limit > 0.0 && !interference_mode() ) ? od_limit : maxc;
       // Keep the meniscus spike, twice s1plat, within the threshold too.
       s1plat  = qMin( s1plat, ( dthresh * 0.5 ) );
    }
@@ -2080,7 +2139,34 @@ DbgLv(1) << "Sim:SV: reset s1plat" << s1plat;
    }
 
 
-   if ( simparams.window.given )
+   if ( interference_mode() )
+   { // The interference detector's own grid, in fringes, with its noise model.
+      QVector<double> structure;
+      QVector<double> offsets;
+      US_SimOptics::toInterference( sim_data, simparams.interference, mrad, brad, total_conc, od_limit, structure, offsets );
+
+      // The ground truth an analysis fits, in the files the absorbance noise uses.
+      QVector<double> times;
+      for ( const US_DataIO::Scan& scan : sim_data.scanData )
+      {
+         times << scan.seconds;
+      }
+      csv_data_ti.setData( { "Radial Points (cm)", "TI noise (fringes)" }, { sim_data.xvalues, structure } );
+      csv_data_ri.resize( qMax( (int) csv_data_ri.size(), i1 + 1 ) );
+      csv_data_ri[i1].setData( { "Time (s)", "RI noise (fringes)" }, { times, offsets } );
+      progress->setValue( total_scans );
+   }
+   else if ( wavelength_scan_mode() )
+   { // Read at one radius when written below; the radial solution stays.
+      const QString problem = US_SimOptics::wavelengthScanProblem( simparams.wavelength_scan, mrad, brad );
+      if ( !problem.isEmpty() )
+      {
+         qDebug() << "Error:" << problem;
+         return false;
+      }
+      progress->setValue( total_scans );
+   }
+   else if ( simparams.window.given )
    { // The instrument's fixed window: air, the cell, and past the bottom.
       const QString problem = US_SimOptics::windowProblem( simparams.window, mrad, brad );
       if ( !problem.isEmpty() )
@@ -2161,18 +2247,30 @@ DbgLv(1) << "Sim:SV:  run_id_from_save_xla" << run_id;
    QString schann    = QString( QChar( sim_data.channel ) );
    int     cell      = sim_data.cell;
    int     wvlen     = qRound( sim_data.scanData[ 0 ].wavelength );
-           wvlen     = ( wvlen < 99 ) ? 123 : wvlen;
+   wvlen             = ( wvlen < 99 || wavelength_scan_mode() ) ? 123 : wvlen;
    QString ofname    = QString( "%1/%2.%3.%4.%5.%6.auc" )
       .arg( dirname ).arg( run_id ).arg( stype ).arg( cell )
       .arg( schann  ).arg( wvlen  );
 
    int wstat = US_DataIO::OK;
 
-   if ( intensity_mode() )
+   if ( intensity_mode() || wavelength_scan_mode() )
    { // The sample sector on this channel, the reference on its partner.
       US_DataIO::RawData sample;
       US_DataIO::RawData reference;
-      US_SimOptics::toIntensity( sim_data, simparams.intensity, mrad, brad, buffer_absorbance( sim_data ), sample, reference );
+      if ( wavelength_scan_mode() )
+      {
+         QVector<double> buffer_od;
+         for ( double wavelength : US_SimOptics::scanWavelengths( simparams.wavelength_scan ) )
+         {
+            buffer_od << US_SimOptics::bufferOD( buffer, wavelength, simparams.cp_pathlen );
+         }
+         US_SimOptics::toWavelengthScan( sim_data, simparams.intensity, simparams.wavelength_scan, buffer_od, sample, reference );
+      }
+      else
+      {
+         US_SimOptics::toIntensity( sim_data, simparams.intensity, mrad, brad, buffer_absorbance( sim_data ), sample, reference );
+      }
 
       const QString guid = US_SimRecord::guid( guid_seed, QString( "raw.ref.%1" ).arg( i1 ) );
       US_Util::uuid_parse( guid, (uchar*) reference.rawGUID );

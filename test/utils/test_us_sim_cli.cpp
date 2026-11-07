@@ -160,6 +160,8 @@ TEST_F( US_SimCliTest, BothSimulatorsAcceptIntensityRuns )
    EXPECT_EQ( args.run_type, "RI" );
    ASSERT_EQ( parse( US_SimCli::MwlSpecies, { "--runtype", "RI" } ), -1 );
    EXPECT_EQ( args.run_type, "RI" );
+   ASSERT_EQ( parse( US_SimCli::Astfem, { "--runtype", "WI" } ), -1 );
+   EXPECT_EQ( args.run_type, "WI" );
 }
 
 TEST_F( US_SimCliTest, FlagsParseWithoutQtWarnings )
@@ -189,7 +191,7 @@ TEST_F( US_SimCliTest, InvalidValuesAreRejected )
       { "cell", "9" },
       { "channel", "X" },
       { "channel", "AB" },
-      { "runtype", "WI" },
+      { "runtype", "WA" },
       { "edit-timestamp", "abc" },
       { "edit-timestamp", "2413320000" },
       { "description", "" },
@@ -211,8 +213,8 @@ TEST_F( US_SimCliTest, InvalidValuesAreRejected )
 
 TEST_F( US_SimCliTest, InvalidValueMessageSaysWhatIsExpected )
 {
-   EXPECT_EQ( US_SimCli::invalidValueMessage( "runtype", "WI" ),
-              "Invalid --runtype WI; expected one of " + US_SimCli::runTypes().join( ", " ) );
+   EXPECT_EQ( US_SimCli::invalidValueMessage( "runtype", "WA" ),
+              "Invalid --runtype WA; expected one of " + US_SimCli::runTypes().join( ", " ) );
    EXPECT_EQ( US_SimCli::invalidValueMessage( "cell", "9" ), "Invalid --cell 9; expected 1 to 8" );
    EXPECT_EQ( US_SimCli::invalidValueMessage( "od-limit", "0" ), "Invalid --od-limit 0; expected a finite number greater than 0" );
 }

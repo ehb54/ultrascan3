@@ -242,3 +242,188 @@ TEST( US_SimOpticsTest, SimparamsRoundTripTheSettingsOnlyWhenGiven )
    EXPECT_FALSE( loaded.intensity.given );
    EXPECT_FALSE( loaded.window.given );
 }
+
+namespace
+{
+US_SimOptics::Interference quietInterference()
+{
+   US_SimOptics::Interference settings;
+   settings.random            = 0.0;
+   settings.offset            = 0.0;
+   settings.structure         = 0.0;
+   settings.jump_rate         = 0.0;
+   settings.meniscus_artifact = 0.0;
+   return settings;
+}
+
+US_SimOptics::WavelengthScan smallScan()
+{
+   US_SimOptics::WavelengthScan settings;
+   settings.given           = true;
+   settings.start           = 250.0;
+   settings.end             = 270.0;
+   settings.spectrum[250.0] = 500.0;
+   settings.spectrum[260.0] = 1000.0;
+   settings.spectrum[270.0] = 500.0;
+   return settings;
+}
+}
+
+TEST( US_SimOpticsTest, InterferenceUsesItsOwnGridAndScale )
+{
+   US_DataIO::RawData         data = absorbance( 5.87, 7.2, 2, plateau );
+   QVector<double>            structure;
+   QVector<double>            offsets;
+   US_SimOptics::Interference settings = quietInterference();
+   US_SimOptics::toInterference( data, settings, 5.87, 7.2, 1.0, 0.0, structure, offsets );
+
+   ASSERT_EQ( data.xvalues.size(), 2048 );
+   EXPECT_DOUBLE_EQ( data.xvalues.first(), 5.80 );
+   EXPECT_NEAR( data.xvalues.last(), 5.80 + 2047 * 0.00068, 1e-9 );
+   EXPECT_EQ( data.scanData[0].rvalues.size(), 2048 );
+   EXPECT_DOUBLE_EQ( data.scanData[0].delta_r, 0.00068 );
+   EXPECT_DOUBLE_EQ( data.scanData[0].rvalues[data.xindex( 5.83 )], 0.0 );       // before the meniscus
+   EXPECT_NEAR( data.scanData[0].rvalues[data.xindex( 6.5 )], 0.8 * 3.3, 1e-9 ); // fringes
+   EXPECT_EQ( offsets, QVector<double>( { 0.0, 0.0 } ) );
+}
+
+TEST( US_SimOpticsTest, InterferenceNoiseHasTheRequestedSizes )
+{
+   US_DataIO::RawData         data = absorbance( 5.87, 7.2, 400, plateau );
+   QVector<double>            structure;
+   QVector<double>            offsets;
+   US_SimOptics::Interference settings = quietInterference();
+   settings.random                     = 0.002;
+   settings.offset                     = 0.02;
+   settings.structure                  = 0.01;
+   US_Math2::randomize( 3 );
+   US_SimOptics::toInterference( data, settings, 5.87, 7.2, 1.0, 0.0, structure, offsets );
+
+   double sum = 0.0, sum2 = 0.0;
+   for ( double value : structure )
+   {
+      sum += value;
+      sum2 += value * value;
+   }
+   EXPECT_NEAR( std::sqrt( sum2 / structure.size() - std::pow( sum / structure.size(), 2 ) ), 0.01, 1e-9 );
+
+   double osum2 = 0.0;
+   for ( double value : offsets )
+   {
+      osum2 += value * value;
+   }
+   EXPECT_NEAR( std::sqrt( osum2 / offsets.size() ), 0.02, 0.003 );
+
+   // What is left on the plateau once structure and offset are taken out is the random noise.
+   const US_DataIO::Scan& scan  = data.scanData[10];
+   double                 dsum2 = 0.0;
+   int                    count = 0;
+   for ( int jj = data.xindex( 6.4 ); jj < data.xindex( 6.9 ); jj++ )
+   {
+      const double here = scan.rvalues[jj] - structure[jj];
+      const double next = scan.rvalues[jj + 1] - structure[jj + 1];
+      dsum2 += ( next - here ) * ( next - here );
+      count++;
+   }
+   EXPECT_NEAR( std::sqrt( dsum2 / count / 2.0 ), 0.002, 0.0003 );
+}
+
+TEST( US_SimOpticsTest, InterferenceJumpsAreWholeFringes )
+{
+   US_DataIO::RawData         data = absorbance( 5.87, 7.2, 50, plateau );
+   QVector<double>            structure;
+   QVector<double>            offsets;
+   US_SimOptics::Interference settings = quietInterference();
+   settings.jump_rate                  = 1.0;
+   settings.step_fraction              = 0.0; // every jump is a whole-scan offset
+   US_Math2::randomize( 11 );
+   US_SimOptics::toInterference( data, settings, 5.87, 7.2, 1.0, 0.0, structure, offsets );
+   for ( double offset : offsets )
+   {
+      EXPECT_TRUE( offset == 1.0 || offset == -1.0 || offset == 2.0 || offset == -2.0 ) << offset;
+   }
+}
+
+TEST( US_SimOpticsTest, InterferenceClipsInFringes )
+{
+   US_DataIO::RawData data = absorbance( 5.87, 7.2, 1, plateau );
+   QVector<double>    structure;
+   QVector<double>    offsets;
+   US_SimOptics::toInterference( data, quietInterference(), 5.87, 7.2, 1.0, 2.0, structure, offsets );
+   for ( double value : data.scanData[0].rvalues )
+   {
+      EXPECT_LE( value, 2.0 );
+   }
+}
+
+TEST( US_SimOpticsTest, InterferenceSettingsAreChecked )
+{
+   EXPECT_TRUE( US_SimOptics::interferenceProblem( US_SimOptics::Interference() ).isEmpty() );
+   US_SimOptics::Interference settings;
+   settings.scale = 0.0;
+   EXPECT_FALSE( US_SimOptics::interferenceProblem( settings ).isEmpty() );
+   settings           = US_SimOptics::Interference();
+   settings.jump_rate = 1.5;
+   EXPECT_FALSE( US_SimOptics::interferenceProblem( settings ).isEmpty() );
+}
+
+TEST( US_SimOpticsTest, WavelengthScanGeometryIsChecked )
+{
+   US_SimOptics::WavelengthScan settings = smallScan();
+   EXPECT_EQ( US_SimOptics::scanWavelengths( settings ).size(), 21 );
+   EXPECT_TRUE( US_SimOptics::wavelengthScanProblem( settings, 5.87, 7.2 ).isEmpty() );
+   EXPECT_FALSE( US_SimOptics::wavelengthScanProblem( settings, 6.6, 7.2 ).isEmpty() ); // radius in air
+   settings.end = 280.0;                                                                // past the spectrum
+   EXPECT_FALSE( US_SimOptics::wavelengthScanProblem( settings, 5.87, 7.2 ).isEmpty() );
+   settings.spectrum.clear();
+   EXPECT_FALSE( US_SimOptics::wavelengthScanProblem( settings, 5.87, 7.2 ).isEmpty() );
+
+   US_SimOptics::WavelengthScan real = smallScan();
+   real.start                        = 180.0;
+   real.end                          = 800.0;
+   real.spectrum[180.0]              = 900.0;
+   real.spectrum[800.0]              = 0.0;
+   EXPECT_EQ( US_SimOptics::scanWavelengths( real ).size(), 621 );
+}
+
+TEST( US_SimOpticsTest, WavelengthScanFollowsBeerLambertAtItsRadius )
+{
+   const US_DataIO::RawData           data     = absorbance( 5.87, 7.2, 2, plateau );
+   const US_SimOptics::WavelengthScan settings = smallScan();
+   US_DataIO::RawData                 sample;
+   US_DataIO::RawData                 reference;
+   US_SimOptics::toWavelengthScan( data, quiet(), settings, {}, sample, reference );
+
+   ASSERT_EQ( sample.xvalues.size(), 21 );
+   EXPECT_DOUBLE_EQ( sample.xvalues.first(), 250.0 );
+   EXPECT_EQ( reference.channel, 'B' );
+   EXPECT_DOUBLE_EQ( sample.scanData[0].wavelength, 6.5 ); // the radius, as an Optima wavelength scan stores it
+   EXPECT_DOUBLE_EQ( sample.scanData[0].delta_r, 1.0 );
+   const QVector<double>& is = sample.scanData[0].rvalues;
+   const QVector<double>& ir = reference.scanData[0].rvalues;
+   EXPECT_NEAR( std::log10( ir[10] / is[10] ), 0.8, 1e-9 );     // 260 nm, the spectrum's peak
+   EXPECT_NEAR( std::log10( ir[0] / is[0] ), 0.8 * 0.5, 1e-9 ); // 250 nm, half the peak
+   EXPECT_NEAR( ir[10], US_SimOptics::sourceIntensity( quiet(), 6.5, 260.0 ), 1e-9 );
+}
+
+TEST( US_SimOpticsTest, SimparamsRoundTripInterferenceAndWavelengthScan )
+{
+   QTemporaryDir dir;
+   ASSERT_TRUE( dir.isValid() );
+   US_SimulationParameters given;
+   given.interference.given  = true;
+   given.interference.scale  = 0.16;
+   given.interference.points = 1024;
+   given.wavelength_scan     = smallScan();
+   const QString path        = dir.filePath( "given.xml" );
+   ASSERT_EQ( given.save_simparms( path ), 0 );
+
+   US_SimulationParameters loaded;
+   ASSERT_EQ( loaded.load_simparms( path ), 0 );
+   EXPECT_TRUE( loaded.interference.given );
+   EXPECT_DOUBLE_EQ( loaded.interference.scale, 0.16 );
+   EXPECT_EQ( loaded.interference.points, 1024 );
+   EXPECT_TRUE( loaded.wavelength_scan.given );
+   EXPECT_EQ( loaded.wavelength_scan.spectrum, given.wavelength_scan.spectrum );
+   EXPECT_DOUBLE_EQ( loaded.wavelength_scan.end, 270.0 );
+}

@@ -887,6 +887,8 @@ int US_SimulationParameters::load_simparms( QString fname )
       window    = WindowSettings();
       schedule  = ScheduleSettings();
       telemetry = TelemetrySettings();
+      interference    = InterferenceSettings();
+      wavelength_scan = WavelengthScanSettings();
 
       while ( ! xml.atEnd() )
       {
@@ -1014,6 +1016,60 @@ int US_SimulationParameters::load_simparms( QString fname )
             number( "end", window.end );
             number( "resolution", window.resolution );
             number( "meniscus_artifact", window.meniscus_artifact );
+         }
+
+         else if ( xml.isStartElement() && xml.name() == "interference" )
+         {
+            a                  = xml.attributes();
+            interference       = InterferenceSettings();
+            interference.given = true;
+            const auto number  = [&a]( const char* name, double& field )
+            {
+               const QString value = a.value( name ).toString();
+               if ( !value.isEmpty() )
+               {
+                  field = value.toDouble();
+               }
+            };
+            number( "start", interference.start );
+            number( "resolution", interference.resolution );
+            number( "scale", interference.scale );
+            number( "random", interference.random );
+            number( "offset", interference.offset );
+            number( "structure", interference.structure );
+            number( "jump_rate", interference.jump_rate );
+            number( "step_fraction", interference.step_fraction );
+            number( "meniscus_artifact", interference.meniscus_artifact );
+            if ( !a.value( "points" ).isEmpty() )
+            {
+               interference.points = a.value( "points" ).toString().toInt();
+            }
+         }
+
+         else if ( xml.isStartElement() && xml.name() == "wavelength_scan" )
+         {
+            a                     = xml.attributes();
+            wavelength_scan       = WavelengthScanSettings();
+            wavelength_scan.given = true;
+            const auto number     = [&a]( const char* name, double& field )
+            {
+               const QString value = a.value( name ).toString();
+               if ( !value.isEmpty() )
+               {
+                  field = value.toDouble();
+               }
+            };
+            number( "position", wavelength_scan.position );
+            number( "start", wavelength_scan.start );
+            number( "end", wavelength_scan.end );
+            number( "step", wavelength_scan.step );
+         }
+
+         else if ( xml.isStartElement() && xml.name() == "point" && wavelength_scan.given )
+         { // A spectrum point of the wavelength scan above
+            a = xml.attributes();
+            wavelength_scan.spectrum.insert( a.value( "wavelength" ).toString().toDouble(),
+                                             a.value( "extinction" ).toString().toDouble() );
          }
 
          else if ( xml.isStartElement() && xml.name() == "schedule" )
@@ -1170,6 +1226,39 @@ int US_SimulationParameters::save_simparms( QString fname )
          xml.writeAttribute( "read_noise", QString::number( intensity.read_noise ) );
          xml.writeAttribute( "shot_noise", QString::number( intensity.shot_noise ) );
          xml.writeAttribute( "dark", QString::number( intensity.dark ) );
+         xml.writeEndElement();
+      }
+
+      if ( interference.given )
+      {
+         xml.writeStartElement( "interference" );
+         xml.writeAttribute( "start", QString::number( interference.start ) );
+         xml.writeAttribute( "points", QString::number( interference.points ) );
+         xml.writeAttribute( "resolution", QString::number( interference.resolution ) );
+         xml.writeAttribute( "scale", QString::number( interference.scale ) );
+         xml.writeAttribute( "random", QString::number( interference.random ) );
+         xml.writeAttribute( "offset", QString::number( interference.offset ) );
+         xml.writeAttribute( "structure", QString::number( interference.structure ) );
+         xml.writeAttribute( "jump_rate", QString::number( interference.jump_rate ) );
+         xml.writeAttribute( "step_fraction", QString::number( interference.step_fraction ) );
+         xml.writeAttribute( "meniscus_artifact", QString::number( interference.meniscus_artifact ) );
+         xml.writeEndElement();
+      }
+
+      if ( wavelength_scan.given )
+      {
+         xml.writeStartElement( "wavelength_scan" );
+         xml.writeAttribute( "position", QString::number( wavelength_scan.position ) );
+         xml.writeAttribute( "start", QString::number( wavelength_scan.start ) );
+         xml.writeAttribute( "end", QString::number( wavelength_scan.end ) );
+         xml.writeAttribute( "step", QString::number( wavelength_scan.step ) );
+         for ( auto it = wavelength_scan.spectrum.constBegin(); it != wavelength_scan.spectrum.constEnd(); ++it )
+         {
+            xml.writeStartElement( "point" );
+            xml.writeAttribute( "wavelength", QString::number( it.key() ) );
+            xml.writeAttribute( "extinction", QString::number( it.value() ) );
+            xml.writeEndElement();
+         }
          xml.writeEndElement();
       }
 

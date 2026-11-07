@@ -288,7 +288,7 @@ const QVector<Option>& options()
 
 QStringList US_SimCli::runTypes()
 {
-   return { "RA", "RI", "IP", "FI" };
+   return { "RA", "RI", "IP", "FI", "WI" };
 }
 
 QString US_SimCli::invalidValueMessage( const QString& option, const QString& value )

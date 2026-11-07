@@ -966,6 +966,15 @@ int US_MwlSpeciesSim::init_from_args( const US_SimCliArgs& args )
       }
    }
 
+   if ( run_type == "WI" )
+   { // A wavelength scan reads one radius of one solution; us_astfem_sim writes it.
+      reportHeadlessLoadFailure( "runtype",
+                                 "us_mwl_species_sim does not write wavelength scans (WI); use us_astfem_sim",
+                                 errors_to_cl,
+                                 gui_needed,
+                                 error_occured );
+   }
+
    if ( intensity_mode() )
    {
       QString problem = US_SimOptics::intensityProblem( simparams.intensity );

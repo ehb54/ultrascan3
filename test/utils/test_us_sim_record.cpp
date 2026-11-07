@@ -73,3 +73,28 @@ TEST( UsSimRecordSolution, CountsCharactersNotBytes )
    const QString name = QString( 40, QChar( 0x00B5 ) ); // micro sign
    EXPECT_EQ( descriptionFor( { name }, "PBS" ), name + " | PBS" );
 }
+
+TEST( US_SimRecordRangeEdit, WritesOnlyTheDataRange )
+{
+   QTemporaryDir dir;
+   ASSERT_TRUE( dir.isValid() );
+   US_DataIO::EditValues ev;
+   ev.runID           = "run";
+   ev.editGUID        = "e";
+   ev.dataGUID        = "d";
+   ev.cell            = "1";
+   ev.channel         = "B";
+   ev.wavelength      = "123";
+   ev.rangeLeft       = 180.0;
+   ev.rangeRight      = 800.0;
+   const QString path = dir.filePath( "run.WI.xml" );
+   ASSERT_TRUE( US_SimRecord::writeRangeEdit( path, ev ) );
+   QFile file( path );
+   ASSERT_TRUE( file.open( QIODevice::ReadOnly ) );
+   const QString text = file.readAll();
+   EXPECT_TRUE( text.startsWith( "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE UltraScanEdits>" ) );
+   EXPECT_TRUE( text.contains( "<data_range left=\"180.00000000\" right=\"800.00000000\"/>" ) ) << text.toStdString();
+   EXPECT_TRUE( text.contains( "<rawDataGUID value=\"d\"/>" ) );
+   EXPECT_TRUE( text.contains( "channel=\"B\"" ) );
+   EXPECT_FALSE( text.contains( "meniscus" ) );
+}
