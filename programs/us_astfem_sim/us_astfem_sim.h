@@ -66,6 +66,9 @@ class US_Astfem_Sim : public US_Widgets
       char           sim_channel        = 'S'; //!< Output channel
       uint noise_seed = 0; //!< Noise generator seed from --noise-seed or chosen for a started run; 0 leaves the generator as it is
       double od_limit   = 0.0;              //!< Headless clip threshold from --od-limit; 0 leaves readings unclipped
+      QVector<double>            schedule_firsts;           //!< Schedule: each speed step's first cycle start
+      QVector<int>               schedule_counts;           //!< Schedule: each speed step's scan count
+      bool                       run_tmst_recorded = false; //!< The time state already holds the run's record
       QVector<QString>           ref_raw_guids; //!< RI: reference dataset raw GUID per speed step, set by save_xla
       QVector<double>            sample_max;    //!< RI: largest sample intensity per speed step, for its edit file
       QVector<double>            ref_max;       //!< RI: largest reference intensity per speed step, for its edit file
@@ -130,6 +133,8 @@ class US_Astfem_Sim : public US_Widgets
       bool                             intensity_mode( void ) const;  // Writing RI intensities
       bool                             intensity_noise( void ) const; // Counts noise replaces absorbance random noise
       double                           buffer_absorbance( const US_DataIO::RawData& ) const; // Buffer OD at the data's wavelength
+      QString                          schedule_problem( void ) const; // Unusable schedule or telemetry settings
+      QString                          record_run_telemetry( void );   // Turn the time state into the run's record
       void   ti_noise       ( void );
       void                             derive_speed_data( void );
       US_DataIO::Scan&                 noise_scan( int, int, int );

@@ -27,6 +27,7 @@
 #include "us_sim_optics.h"
 #include "us_sim_params_gui.h"
 #include "us_sim_record.h"
+#include "us_sim_schedule.h"
 #include "us_time_state.h"
 #include "us_util.h"
 
@@ -427,6 +428,14 @@ int US_Astfem_Sim::init_from_args( const US_SimCliArgs& args )
       od_limit = args.od_limit;
    }
 
+   {
+      const QString problem = schedule_problem();
+      if ( !problem.isEmpty() )
+      {
+         reportHeadlessLoadFailure( "simparams", problem, errors_to_cl, gui_needed, error_occured );
+      }
+   }
+
    if ( intensity_mode() )
    {
       QString problem = US_SimOptics::intensityProblem( simparams.intensity );
@@ -810,6 +819,9 @@ DbgLv(1) << "==SimPar:MAIN:SetP";
    double previous_speed = 0.0;
    double previous_time  = 0.0;
    double previous_w2t   = 0.0;
+   schedule_firsts.clear();
+   schedule_counts.clear();
+   run_tmst_recorded = false;
    for ( int jj = 0; jj < nstep; jj++ )
    {
       US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[jj];
@@ -831,9 +843,17 @@ DbgLv(1) << "==SimPar:MAIN:SetP";
       scandata.plateau     = 0.0;
       scandata.delta_r     = simparams.radial_resolution;
       scandata.rvalues.fill( 0.0, points );
+      if ( simparams.schedule.given )
+      {
+         schedule_firsts << previous_time + delay;
+         schedule_counts << sp->scans;
+      }
       for ( int s = 0; s < sp->scans; s++ )
       {
-         scandata.seconds = static_cast<double>( qRound( previous_time + delay + time_between_scans * s ) );
+         // A schedule staggers this channel's slot within the run's cycles.
+         scandata.seconds = simparams.schedule.given
+                               ? static_cast<double>( US_SimSchedule::scanTime( simparams.schedule, previous_time + delay, s ) )
+                               : static_cast<double>( qRound( previous_time + delay + time_between_scans * s ) );
          scandata.omega2t = US_AstfemMath::calc_omega2t(
             previous_w2t, previous_speed, previous_time, target_speed, sp->acceleration, scandata.seconds );
          if ( s == 0 )
@@ -854,9 +874,20 @@ DbgLv(1) << "==SimPar:MAIN:SetP";
          DbgLv( 1 ) << "SimPar:MAIN:SetP: js time omega2t " << s << scandata.seconds << scandata.omega2t;
          sim_data_all.scanData << scandata;
       }
+      if ( simparams.schedule.given && sp->scans > 0 )
+      { // Chain from the last cycle's start, which every slot of the run shares.
+         const double cycle_last =
+            qRound( previous_time + delay + ( sp->scans - 1 ) * US_SimSchedule::cycleSeconds( simparams.schedule ) );
+         previous_w2t =
+            US_AstfemMath::calc_omega2t( previous_w2t, previous_speed, previous_time, target_speed, sp->acceleration, cycle_last );
+         previous_time = cycle_last;
+      }
+      else
+      {
+         previous_time = sp->time_last;
+         previous_w2t  = sp->w2t_last;
+      }
       previous_speed = target_speed;
-      previous_time  = sp->time_last;
-      previous_w2t   = sp->w2t_last;
    }
 
    // Create a timestate for this speed profile set
@@ -875,7 +906,23 @@ DbgLv(1) << "==SimPar:MAIN:SetP";
                             .toString( "yyMMddhhmmss" )
                           + ".time_state.tmst";
 
-   if ( US_AstfemMath::writetimestate( tmst_tfpath, simparams, sim_data_all ) < 0 )
+   // A scheduled run's time state marks every slot's scans, not just this
+   // channel's: the speed steps are read back from its first and last marked
+   // scans, and they must come out the same for every channel of the run.
+   US_DataIO::RawData marked = sim_data_all;
+   if ( simparams.schedule.given && !sim_data_all.scanData.isEmpty() )
+   {
+      const QMap<int, int> markers = US_SimSchedule::runMarkers( simparams.schedule, schedule_firsts, schedule_counts );
+      marked.scanData.clear();
+      for ( int seconds : markers.keys() )
+      {
+         US_DataIO::Scan scan = sim_data_all.scanData[0];
+         scan.seconds         = seconds;
+         marked.scanData << scan;
+      }
+   }
+
+   if ( US_AstfemMath::writetimestate( tmst_tfpath, simparams, marked ) < 0 )
    {
       qDebug() << "Error: could not write time state" << tmst_tfpath;
    }
@@ -1295,6 +1342,84 @@ bool US_Astfem_Sim::intensity_noise( void ) const
    return intensity_mode() && ( simparams.intensity.read_noise > 0.0 || simparams.intensity.shot_noise > 0.0 );
 }
 
+QString US_Astfem_Sim::schedule_problem( void ) const
+{
+   if ( simparams.telemetry.given )
+   {
+      const QString problem = US_SimSchedule::telemetryProblem( simparams.telemetry );
+      if ( !problem.isEmpty() )
+      {
+         return problem;
+      }
+   }
+   if ( !simparams.schedule.given )
+   {
+      return QString();
+   }
+   const QString problem = US_SimSchedule::scheduleProblem( simparams.schedule );
+   if ( !problem.isEmpty() )
+   {
+      return problem;
+   }
+   // The time state ends with the last speed step, so every slot's scans must fit.
+   double end = 0.0;
+   for ( int jd = 0; jd < simparams.speed_step.size() && jd < schedule_firsts.size(); jd++ )
+   {
+      const US_SimulationParameters::SpeedProfile& sp = simparams.speed_step[jd];
+      end += sp.duration_hours * 3600.0 + sp.duration_minutes * 60.0;
+      const int last = US_SimSchedule::scanTime(
+         simparams.schedule, schedule_firsts[jd], schedule_counts[jd] - 1, 0, simparams.schedule.slot_seconds.size() - 1 );
+      if ( last > end )
+      {
+         return QString( "speed step %1's last scheduled scan, at %2 s, is after the step ends at %3 s; "
+                         "give it fewer scans or a longer duration" )
+            .arg( jd + 1 )
+            .arg( last )
+            .arg( end );
+      }
+   }
+   return QString();
+}
+
+QString US_Astfem_Sim::record_run_telemetry( void )
+{
+   if ( run_tmst_recorded || ( !simparams.schedule.given && !simparams.telemetry.given ) )
+   {
+      return QString();
+   }
+   if ( !QFile( tmst_tfpath ).exists() )
+   {
+      return "no time state to record the run's schedule and telemetry in";
+   }
+
+   // The physics already read its speed profile, so the file can now become
+   // the run's record: every slot's scan markers and the recorded telemetry.
+   const QMap<int, int>         markers = simparams.schedule.given
+                                             ? US_SimSchedule::runMarkers( simparams.schedule, schedule_firsts, schedule_counts )
+                                             : QMap<int, int>();
+   QVector<US_SimSchedule::Row> rows;
+   const QString                error =
+      US_SimSchedule::recordRun( tmst_tfpath, simparams.schedule.given ? &markers : nullptr, simparams.telemetry, rows );
+   if ( !error.isEmpty() )
+   {
+      return error;
+   }
+
+   if ( simparams.telemetry.given )
+   { // The scan headers record what the time state records.
+      for ( US_DataIO::RawData& data : sim_datas )
+      {
+         if ( !US_SimSchedule::recordScans( data, rows ) )
+         {
+            return "a scan time is outside the time state";
+         }
+      }
+   }
+
+   run_tmst_recorded = true;
+   return QString();
+}
+
 double US_Astfem_Sim::buffer_absorbance( const US_DataIO::RawData& data ) const
 {
    const double wavelength = data.scanData.isEmpty() ? 0.0 : data.scanData[0].wavelength;
@@ -1480,6 +1605,13 @@ DbgLv(1) << "ASIM:svscn: IN";
 
 bool US_Astfem_Sim::save_simulation( QString odir, bool supress_dialog, bool write_records )
 {
+   const QString record_error = record_run_telemetry();
+   if ( !record_error.isEmpty() )
+   {
+      qDebug() << "Error:" << record_error;
+      return false;
+   }
+
    QString run_id      = odir.section( "/", -1, -1 );
    int nstep           = simparams.speed_step.size();
    QString xdef_tfpath = QString( tmst_tfpath ).replace( ".tmst", ".xml" );

@@ -24,6 +24,7 @@
 #include "us_sim_optics.h"
 #include "us_sim_params_gui.h"
 #include "us_sim_record.h"
+#include "us_sim_schedule.h"
 #include "us_util.h"
 #include <limits>
 
@@ -957,6 +958,14 @@ int US_MwlSpeciesSim::init_from_args( const US_SimCliArgs& args )
       delete disk_controls;
    }
 
+   {
+      const QString problem = schedule_problem();
+      if ( !problem.isEmpty() )
+      {
+         reportHeadlessLoadFailure( "simparams", problem, errors_to_cl, gui_needed, error_occured );
+      }
+   }
+
    if ( intensity_mode() )
    {
       QString problem = US_SimOptics::intensityProblem( simparams.intensity );
@@ -1179,6 +1188,40 @@ bool US_MwlSpeciesSim::save_sims_to( const QString& save_dir )
    sample_max.resize( nmodels );
    ref_max.resize( nmodels );
 
+   // A schedule or telemetry makes the time state the run's record, and the
+   // scan headers then read their speed, omega2t and temperature from it.
+   const bool    record_run = simparams.schedule.given || simparams.telemetry.given;
+   const QString run_tfpath = impdir + orunid + ".time_state.tmst";
+   if ( record_run )
+   {
+      if ( writeTimeState( run_tfpath, simparams, synData[0] ) == 0 )
+      {
+         qDebug() << "Error: could not write time state" << run_tfpath;
+         return false;
+      }
+      const US_SimulationParameters::SpeedProfile& sp = simparams.speed_step[0];
+      const QMap<int, int>                         markers =
+         simparams.schedule.given
+                                    ? US_SimSchedule::runMarkers( simparams.schedule, { static_cast<double>( sp.time_first ) }, { sp.scans } )
+                                    : QMap<int, int>();
+      QVector<US_SimSchedule::Row> rows;
+      const QString                error =
+         US_SimSchedule::recordRun( run_tfpath, simparams.schedule.given ? &markers : nullptr, simparams.telemetry, rows );
+      if ( !error.isEmpty() )
+      {
+         qDebug() << "Error:" << error;
+         return false;
+      }
+      for ( int jm = 0; jm < synData.size() && simparams.telemetry.given; jm++ )
+      {
+         if ( !US_SimSchedule::recordScans( synData[jm], rows ) )
+         {
+            qDebug() << "Error: a scan time is outside the time state";
+            return false;
+         }
+      }
+   }
+
    for ( int jm = 0; jm < nmodels; jm++ )
    {
       QString mdesc      = models[ jm ].description;
@@ -1239,8 +1282,8 @@ bool US_MwlSpeciesSim::save_sims_to( const QString& save_dir )
    QString tfpath     = impdir + tfname;
    DbgLv( 1 ) << " svsim: sc0 time" << synData[0].scanData[0].seconds;
 
-   // Zero indicates a time-state write failure.
-   if ( writeTimeState( tfpath, simparams, synData[0] ) == 0 )
+   // Zero indicates a time-state write failure. A recorded run wrote it above.
+   if ( !record_run && writeTimeState( tfpath, simparams, synData[0] ) == 0 )
    {
       qDebug() << "Error: could not write time state" << tfpath;
       return false;
@@ -1681,6 +1724,42 @@ void US_MwlSpeciesSim::add_baseline( US_DataIO::RawData& rdata )
 
 // Add per-point random noise. rnoise scales with the total concentration,
 // lrnoise with the local value; both may be active at once.
+QString US_MwlSpeciesSim::schedule_problem( void ) const
+{
+   if ( simparams.telemetry.given )
+   {
+      const QString problem = US_SimSchedule::telemetryProblem( simparams.telemetry );
+      if ( !problem.isEmpty() )
+      {
+         return problem;
+      }
+   }
+   if ( !simparams.schedule.given || simparams.speed_step.isEmpty() )
+   {
+      return QString();
+   }
+   const QString problem = US_SimSchedule::scheduleProblem( simparams.schedule, qMax( 1, (int) models.count() ) );
+   if ( !problem.isEmpty() )
+   {
+      return problem;
+   }
+   // The time state ends with the speed step, so every slot's scans must fit.
+   const US_SimulationParameters::SpeedProfile& sp  = simparams.speed_step[0];
+   const double                                 end = sp.duration_hours * 3600.0 + sp.duration_minutes * 60.0;
+   const int own  = US_SimSchedule::scanTime( simparams.schedule, sp.time_first, sp.scans - 1, models.count() - 1 );
+   const int last = qMax(
+      own,
+      US_SimSchedule::scanTime( simparams.schedule, sp.time_first, sp.scans - 1, 0, simparams.schedule.slot_seconds.size() - 1 ) );
+   if ( last > end )
+   {
+      return QString( "the last scheduled scan, at %1 s, is after the speed step ends at %2 s; "
+                      "give it fewer scans or a longer duration" )
+         .arg( last )
+         .arg( end );
+   }
+   return QString();
+}
+
 bool US_MwlSpeciesSim::intensity_mode( void ) const
 {
    return run_type == "RI";
@@ -1830,6 +1909,18 @@ DbgLv(1) << "rdata:  dltr sc1" << rdata.scanData[1].delta_r;
    rdata.channel       = sim_channel.at( 0 ).toLatin1();
    for ( int js = 0; js < nscan; js++ )
       rdata.scanData[ js ].wavelength = mwavelen;
+
+   if ( simparams.schedule.given )
+   { // Each wavelength is scanned in turn within this channel's slot.
+      const US_SimulationParameters::SpeedProfile& sp    = simparams.speed_step[0];
+      const double                                 w2fac = sq( sp.rotorspeed * M_PI / 30.0 );
+      for ( int js = 0; js < nscan; js++ )
+      {
+         US_DataIO::Scan& scan = rdata.scanData[js];
+         scan.seconds          = US_SimSchedule::scanTime( simparams.schedule, sp.time_first, js, tripx );
+         scan.omega2t          = sp.w2t_first + ( scan.seconds - sp.time_first ) * w2fac;
+      }
+   }
 
 DbgLv(1) << "bldraw:  tripx" << tripx;
    US_Astfem_RSA* astfem = new US_Astfem_RSA( models[ tripx ], simparams );

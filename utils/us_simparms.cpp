@@ -885,6 +885,8 @@ int US_SimulationParameters::load_simparms( QString fname )
       // Off unless this file gives them.
       intensity = IntensitySettings();
       window    = WindowSettings();
+      schedule  = ScheduleSettings();
+      telemetry = TelemetrySettings();
 
       while ( ! xml.atEnd() )
       {
@@ -1014,6 +1016,52 @@ int US_SimulationParameters::load_simparms( QString fname )
             number( "meniscus_artifact", window.meniscus_artifact );
          }
 
+         else if ( xml.isStartElement() && xml.name() == "schedule" )
+         {
+            a              = xml.attributes();
+            schedule       = ScheduleSettings();
+            schedule.given = true;
+            for ( const QString& value : a.value( "slots" ).toString().split( ",", Qt::SkipEmptyParts ) )
+            {
+               schedule.slot_seconds << value.trimmed().toDouble();
+            }
+            if ( !a.value( "slot" ).isEmpty() )
+            {
+               schedule.slot = a.value( "slot" ).toString().toInt();
+            }
+            if ( !a.value( "wavelength_seconds" ).isEmpty() )
+            {
+               schedule.wavelength_seconds = a.value( "wavelength_seconds" ).toString().toDouble();
+            }
+            if ( !a.value( "interval" ).isEmpty() )
+            {
+               schedule.interval = a.value( "interval" ).toString().toDouble();
+            }
+         }
+
+         else if ( xml.isStartElement() && xml.name() == "telemetry" )
+         {
+            a               = xml.attributes();
+            telemetry       = TelemetrySettings();
+            telemetry.given = true;
+            if ( !a.value( "seed" ).isEmpty() )
+            {
+               telemetry.seed = a.value( "seed" ).toString().toUInt();
+            }
+            if ( !a.value( "rpm_jitter" ).isEmpty() )
+            {
+               telemetry.rpm_jitter = a.value( "rpm_jitter" ).toString().toDouble();
+            }
+            if ( !a.value( "temperature_sd" ).isEmpty() )
+            {
+               telemetry.temperature_sd = a.value( "temperature_sd" ).toString().toDouble();
+            }
+            if ( !a.value( "temperature_drift" ).isEmpty() )
+            {
+               telemetry.temperature_drift = a.value( "temperature_drift" ).toString().toDouble();
+            }
+         }
+
          else if ( xml.isStartElement()  &&  xml.name() == "usermesh" )
          {
             a     = xml.attributes();
@@ -1122,6 +1170,31 @@ int US_SimulationParameters::save_simparms( QString fname )
          xml.writeAttribute( "read_noise", QString::number( intensity.read_noise ) );
          xml.writeAttribute( "shot_noise", QString::number( intensity.shot_noise ) );
          xml.writeAttribute( "dark", QString::number( intensity.dark ) );
+         xml.writeEndElement();
+      }
+
+      if ( schedule.given )
+      {
+         QStringList slot_list;
+         for ( double seconds : schedule.slot_seconds )
+         {
+            slot_list << QString::number( seconds );
+         }
+         xml.writeStartElement( "schedule" );
+         xml.writeAttribute( "slots", slot_list.join( "," ) );
+         xml.writeAttribute( "slot", QString::number( schedule.slot ) );
+         xml.writeAttribute( "wavelength_seconds", QString::number( schedule.wavelength_seconds ) );
+         xml.writeAttribute( "interval", QString::number( schedule.interval ) );
+         xml.writeEndElement();
+      }
+
+      if ( telemetry.given )
+      {
+         xml.writeStartElement( "telemetry" );
+         xml.writeAttribute( "seed", QString::number( telemetry.seed ) );
+         xml.writeAttribute( "rpm_jitter", QString::number( telemetry.rpm_jitter ) );
+         xml.writeAttribute( "temperature_sd", QString::number( telemetry.temperature_sd ) );
+         xml.writeAttribute( "temperature_drift", QString::number( telemetry.temperature_drift ) );
          xml.writeEndElement();
       }
 

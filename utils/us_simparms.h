@@ -232,8 +232,37 @@ class US_UTIL_EXTERN US_SimulationParameters
          double meniscus_artifact = 1.5;   //!< Least meniscus spike height, as a multiple of the loading
    };
 
+   //! \brief Scan scheduling, from a <schedule> element.
+   //! A run's cells are scanned in turn, one slot each, in cycles. Every
+   //! channel of a run is given the same slots and its own slot index, so
+   //! each can compute the whole run's scan times.
+   class US_UTIL_EXTERN ScheduleSettings
+   {
+      public:
+         bool            given = false;             //!< The simparams file has a <schedule> element
+         QVector<double> slot_seconds;              //!< Seconds each cell's slot takes, in scan order
+         int             slot               = 0;    //!< This channel's slot
+         double          wavelength_seconds = 40.0; //!< Seconds between a multi-wavelength cell's wavelengths
+         double          interval           = 0.0;  //!< Seconds between cycle starts; 0 runs cycles back to back
+   };
+
+   //! \brief Recorded telemetry, from a <telemetry> element.
+   //! Changes what the TimeState and scan headers record, never the
+   //! sedimentation, which runs at the set speed and temperature.
+   class US_UTIL_EXTERN TelemetrySettings
+   {
+      public:
+         bool    given             = false; //!< The simparams file has a <telemetry> element
+         quint32 seed              = 1;     //!< Seeds the telemetry stream; a run's channels share it
+         double  rpm_jitter        = 2.0;   //!< Largest recorded departure from the set speed, rpm
+         double  temperature_sd    = 0.1;   //!< Spread of the recorded temperature, degrees C
+         double  temperature_drift = 0.0;   //!< Steady temperature change, degrees C per hour
+   };
+
    IntensitySettings intensity; //!< Intensity mode for RI output
    WindowSettings    window;    //!< Fixed instrument window; off unless given
+   ScheduleSettings  schedule;  //!< Staggered scan times; off unless given
+   TelemetrySettings telemetry; //!< Recorded speed and temperature variation; off unless given
 
    //! Each distinct RPM value in a series of speeds 
    class US_UTIL_EXTERN  SpeedProfile
