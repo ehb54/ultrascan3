@@ -1203,16 +1203,32 @@ bool US_MwlSpeciesSim::save_sims_to( const QString& save_dir )
    const QString run_tfpath = impdir + orunid + ".time_state.tmst";
    if ( record_run )
    {
-      if ( writeTimeState( run_tfpath, simparams, synData[0] ) == 0 )
-      {
-         qDebug() << "Error: could not write time state" << run_tfpath;
-         return false;
-      }
       const US_SimulationParameters::SpeedProfile& sp = simparams.speed_step[0];
       const QMap<int, int>                         markers =
          simparams.schedule.given
                                     ? US_SimSchedule::runMarkers( simparams.schedule, { static_cast<double>( sp.time_first ) }, { sp.scans } )
                                     : QMap<int, int>();
+
+      // The record is written as us_astfem_sim writes it, marking every
+      // slot's scans, so all the runs of one experiment record one time state.
+      US_DataIO::RawData marked = synData[0];
+      if ( simparams.schedule.given )
+      {
+         marked.scanData.clear();
+         for ( int seconds : markers.keys() )
+         {
+            US_DataIO::Scan scan = synData[0].scanData[0];
+            scan.seconds         = seconds;
+            marked.scanData << scan;
+         }
+      }
+      US_SimulationParameters record_params = simparams;
+      record_params.sim                     = true;
+      if ( US_AstfemMath::writetimestate( run_tfpath, record_params, marked ) < 0 )
+      {
+         qDebug() << "Error: could not write time state" << run_tfpath;
+         return false;
+      }
       QVector<US_SimSchedule::Row> rows;
       const QString                error =
          US_SimSchedule::recordRun( run_tfpath, simparams.schedule.given ? &markers : nullptr, simparams.telemetry, rows );
@@ -1221,7 +1237,8 @@ bool US_MwlSpeciesSim::save_sims_to( const QString& save_dir )
          qDebug() << "Error:" << error;
          return false;
       }
-      for ( int jm = 0; jm < synData.size() && simparams.telemetry.given; jm++ )
+      // The scan headers record what the time state records.
+      for ( int jm = 0; jm < synData.size(); jm++ )
       {
          if ( !US_SimSchedule::recordScans( synData[jm], rows ) )
          {

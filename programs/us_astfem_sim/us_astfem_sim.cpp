@@ -274,6 +274,9 @@ int US_Astfem_Sim::init_from_args( const US_SimCliArgs& args )
          // The file omits bottom_position; mirror the loaded at-rest bottom.
          // An explicit --centerpiece overrides it below.
          simparams.bottom_position = simparams.bottom;
+         // set_parameters() rebuilds the speed steps from its time state on
+         // every call; a run's record is written from the steps as loaded.
+         loaded_steps              = simparams.speed_step;
          set_parameters();
       }
       delete dialog;
@@ -1443,6 +1446,25 @@ QString US_Astfem_Sim::record_run_telemetry( void )
    const QMap<int, int>         markers = simparams.schedule.given
                                              ? US_SimSchedule::runMarkers( simparams.schedule, schedule_firsts, schedule_counts )
                                              : QMap<int, int>();
+   if ( simparams.schedule.given && !loaded_steps.isEmpty() )
+   { // Rewritten from the steps as loaded, so every channel and simulator of a
+      // run records the same rows however often its parameters were set up.
+      US_SimulationParameters record_params = simparams;
+      record_params.speed_step              = loaded_steps;
+      record_params.sim                     = true;
+      US_DataIO::RawData marked             = sim_data_all;
+      marked.scanData.clear();
+      for ( int seconds : markers.keys() )
+      {
+         US_DataIO::Scan scan = sim_data_all.scanData.value( 0 );
+         scan.seconds         = seconds;
+         marked.scanData << scan;
+      }
+      if ( US_AstfemMath::writetimestate( tmst_tfpath, record_params, marked ) < 0 )
+      {
+         return "could not write the time state " + tmst_tfpath;
+      }
+   }
    QVector<US_SimSchedule::Row> rows;
    const QString                error =
       US_SimSchedule::recordRun( tmst_tfpath, simparams.schedule.given ? &markers : nullptr, simparams.telemetry, rows );
@@ -1930,6 +1952,12 @@ DbgLv(1) << "ASIM:svscn: 1-speed file paths"  << odir << tmst_fpath;
       US_SimulationParameters::editRadiiFromCell(
          ev, af_params.current_meniscus, af_params.current_bottom, simparams.radial_resolution );
       ev.ODlimit = has_ref ? sample_max[jd] : US_SimRecord::maxOD( sim_data );
+      if ( interference_mode() )
+      { // The interference detector need not reach the bottom; edit only what it saw.
+         const QVector<double> radii = US_SimOptics::interferenceRadii( simparams.interference );
+         ev.rangeLeft                = qMax( ev.rangeLeft, radii.first() );
+         ev.rangeRight               = qMin( ev.rangeRight, radii.last() );
+      }
 
       // A wavelength scan has no radial boundary: its edit is the scanned range.
       const auto write_edit = [this]( const QString& path, US_DataIO::EditValues& values )
