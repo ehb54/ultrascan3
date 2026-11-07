@@ -49,6 +49,12 @@
 //! reads or writes it:  ranks announce their use of a generation in its
 //! user count, and leave a generation being emptied alone.
 //!
+//! Room:  the cache may hold less than its window.  Its room (bytes it may
+//! hold now) starts where the job's predicted peak leaves space below its
+//! memory limit, and is set again (fit_room_to_peak) once the watch has seen
+//! the job's real peak, e.g. after the first refinement iteration.  A cache
+//! full at its room takes more simulations again when the room grows.
+//!
 //! Memory pressure:  the cache gives way to the job's own memory.  A thread on
 //! the node's first rank (start_watch) compares the job's use with its limit,
 //! the node's available memory and the free shared memory.  Under soft
@@ -84,7 +90,27 @@ class US_MPI_NodeSimCache : public US_SimCache
       //!                   the slot table
       //! \param policy     What to keep once the cache is full (the same on
       //!                   every rank of the node)
-      US_MPI_NodeSimCache( MPI_Comm node_comm, qint64 max_bytes, qint64 sim_bytes, Policy policy = KEEP_FIRST );
+      //! \param room_bytes Bytes the cache may hold at first (negative: all
+      //!                   of max_bytes); taken from the node's first rank
+      //! \param space_bytes Free bytes of the file system that will hold the
+      //!                   window (negative: unknown).  The node's first rank
+      //!                   checks before the collective allocation that the
+      //!                   window fits it and the node's memory:  otherwise
+      //!                   no rank allocates and the cache is not valid().
+      US_MPI_NodeSimCache( MPI_Comm node_comm,
+                           qint64   max_bytes,
+                           qint64   sim_bytes,
+                           Policy   policy      = KEEP_FIRST,
+                           qint64   room_bytes  = -1,
+                           qint64   space_bytes = -1 );
+
+      //! \brief Bytes of the whole window of a cache (header, slot table and
+      //!        data) of the given capacity
+      static qint64 window_bytes( qint64 max_bytes, qint64 sim_bytes, Policy policy );
+
+      //! \brief Largest capacity, at most wanted, whose whole window fits 90 %
+      //!        of the free bytes of its file system (negative: unknown)
+      static qint64 fit_window( qint64 wanted, qint64 space_bytes, qint64 sim_bytes, Policy policy );
 
       //! \brief Free the shared window (collective over the node communicator)
       ~US_MPI_NodeSimCache() override;
@@ -142,11 +168,34 @@ class US_MPI_NodeSimCache : public US_SimCache
       //! \brief Watch the memory use from a thread (on the node's first rank)
       void   start_watch( const Watch& settings );
 
+      //! \brief Set the bytes the cache may hold (at most its window's data
+      //!        area).  Any rank may call it at any time; less room keeps what
+      //!        is stored, but adds nothing until the cache is below it.
+      void   set_room( qint64 bytes );
+
+      //! \brief Bytes the cache may hold now
+      qint64 room() const;
+
+      //! \brief Highest use of the job's own memory on this node that the
+      //!        watch has seen, without the cache (0: none seen)
+      qint64 job_peak() const;
+
+      //! \brief Set the room from the job's peak the watch has seen:  the
+      //!        cache and the peak times margin stay below the limit at which
+      //!        the watch stops adding (node's first rank, with the watch).
+      //!        Returns the new room, or -1 if unchanged (no limit, no peak).
+      qint64 fit_room_to_peak( double margin );
+
       //! \brief Number of times the cache was emptied for lack of memory
       qint64 releases() const;
 
       //! \brief Bytes returned to the system by emptying under pressure
       qint64 released_bytes() const;
+
+      //! \brief Bytes of memory the cache holds now:  the pages written and
+      //!        not released (more than stats().bytes after a rotation, as
+      //!        an emptied generation keeps its pages until refilled)
+      qint64 resident_bytes() const;
 
       //! \brief Counts of the whole node:  this rank's fetch and store counts
       //!        summed over the node's ranks (collective over node_comm)

@@ -20,10 +20,10 @@ class US_MPI_NodeSimCache::Generation
    public:
       std::atomic<qint64> data_used; // Bytes of the data area taken
       std::atomic<qint64> entries;   // Simulations stored
-      std::atomic<int>    full;      // Flag:  no room left for more
+      std::atomic<qint64> full;      // Room at which no more fitted (0: not full)
+      std::atomic<qint64> resident;  // Bytes of the data area written since its pages were released
       std::atomic<int>    epoch;     // Odd while the generation is emptied
       std::atomic<int>    users;     // Ranks reading or writing it
-      int                 pad;       // (alignment)
 };
 
 // Shared header of the window
@@ -33,8 +33,11 @@ class US_MPI_NodeSimCache::Header
       std::atomic<int>    current;  // Generation simulations are stored in
       std::atomic<int>    rotating; // Flag:  a rank empties a generation
       std::atomic<int>    pressure; // Memory pressure:  no adding if nonzero
+      int                 pad;      // (alignment)
       std::atomic<qint64> releases; // Times emptied under pressure
       std::atomic<qint64> released; // Bytes returned to the system
+      std::atomic<qint64> room;     // Bytes of a generation's data it may hold
+      std::atomic<qint64> job_peak; // Job's own peak use the watch has seen
       Generation          gen[2];
 };
 
@@ -67,8 +70,74 @@ static qint64 align8( qint64 bytes )
    return ( bytes + 7 ) & ~(qint64) 7;
 }
 
+namespace
+{
+// Sizes of the generations of a window
+class WindowLayout
+{
+   public:
+      WindowLayout( qint64 max_bytes, qint64 sim_bytes, int ngens )
+      {
+         // Table of a generation at most half full when its data area is
+         gen_size  = align8( qMax( (qint64) 0, max_bytes ) / ngens );
+         gen_slots = 2 * ( gen_size / qMax( (qint64) 1024, sim_bytes ) ) + 1024;
+         nslots    = gen_slots * ngens;
+         data_size = gen_size * ngens;
+      }
+
+      qint64 gen_size;  // Bytes of the data of a generation
+      qint64 gen_slots; // Slots of a generation
+      qint64 nslots;    // Slots of all generations
+      qint64 data_size; // Bytes of the data of all generations
+};
+} // namespace
+
+// Bytes of the whole window of a cache:  header, slot table and data
+qint64 US_MPI_NodeSimCache::window_bytes( qint64 max_bytes, qint64 sim_bytes, Policy policy )
+{
+   WindowLayout lay( max_bytes, sim_bytes, ( policy == RECENT ) ? 2 : 1 );
+   return align8( sizeof( Header ) ) + align8( lay.nslots * (qint64) sizeof( Slot ) ) + lay.data_size;
+}
+
+// Largest capacity, at most wanted, whose whole window fits 90 % of the
+//  free space of the file system holding it (negative: unknown).  The rest
+//  stays free for others (and the MPI implementation's own segments):  a
+//  page touched beyond the free space kills the process with a bus error.
+qint64 US_MPI_NodeSimCache::fit_window( qint64 wanted, qint64 space_bytes, qint64 sim_bytes, Policy policy )
+{
+   if ( space_bytes < 0 || wanted <= 0 )
+   {
+      return qMax( (qint64) 0, wanted );
+   }
+
+   const qint64 usable = space_bytes / 10 * 9;
+   qint64       cap    = wanted;
+
+   // The window grows a little faster than the capacity (its table):  scale
+   //  down, then step down until it fits
+   for ( int tries = 0; tries < 64 && cap > 0; tries++ )
+   {
+      const qint64 total = window_bytes( cap, sim_bytes, policy );
+
+      if ( total <= usable )
+      {
+         return cap;
+      }
+
+      const qint64 scaled = (qint64) ( (double) cap * (double) usable / (double) total ) - 4096;
+      cap                 = qMin( cap - 4096, scaled );
+   }
+
+   return 0;
+}
+
 // Create the cache (collective over node_comm)
-US_MPI_NodeSimCache::US_MPI_NodeSimCache( MPI_Comm node_comm, qint64 max_bytes, qint64 sim_bytes, Policy policy ) :
+US_MPI_NodeSimCache::US_MPI_NodeSimCache( MPI_Comm node_comm,
+                                          qint64   max_bytes,
+                                          qint64   sim_bytes,
+                                          Policy   policy,
+                                          qint64   room_bytes,
+                                          qint64   space_bytes ) :
     US_SimCache( 0 ),
     comm( node_comm ),
     window( MPI_WIN_NULL ),
@@ -93,17 +162,41 @@ US_MPI_NodeSimCache::US_MPI_NodeSimCache( MPI_Comm node_comm, qint64 max_bytes, 
    int node_rank = 0;
    MPI_Comm_rank( comm, &node_rank );
 
-   // Table of a generation at most half full when its data area is
-   gen_size            = align8( qMax( (qint64) 0, max_bytes ) / ngens );
-   gen_slots           = 2 * ( gen_size / qMax( (qint64) 1024, sim_bytes ) ) + 1024;
-   data_size           = gen_size * ngens;
-   nslots              = gen_slots * ngens;
+   WindowLayout lay( max_bytes, sim_bytes, ngens );
+   gen_size            = lay.gen_size;
+   gen_slots           = lay.gen_slots;
+   data_size           = lay.data_size;
+   nslots              = lay.nslots;
    qint64 header_bytes = align8( sizeof( Header ) );
    qint64 table_bytes  = align8( nslots * (qint64) sizeof( Slot ) );
    qint64 total_bytes  = header_bytes + table_bytes + data_size;
 
+   // A failed allocation inside the collective cannot be undone everywhere:
+   //  Open MPI leaves the other ranks waiting in it, MPICH aborts.  So the
+   //  node's first rank checks first that the window can be had (the free
+   //  space of its file system, the node's memory), and all ranks skip the
+   //  allocation together if not.
+   int    can_allocate = 1;
+
+   if ( node_rank == 0 )
+   {
+      qint64     node_total = -1;
+      qint64     node_avail = -1;
+      const bool fits_space = ( space_bytes < 0 || total_bytes <= space_bytes / 10 * 9 );
+      const bool fits_node  = ( !US_MPI_MemLimit::node_memory( node_total, node_avail ) || total_bytes <= node_total / 2 );
+      can_allocate          = ( max_bytes > 0 && fits_space && fits_node ) ? 1 : 0;
+   }
+
+   MPI_Bcast( &can_allocate, 1, MPI_INT, 0, comm );
+
+   if ( can_allocate == 0 )
+   {
+      return;
+   }
+
    // The node's first rank allocates all of the window; report a failure
    //  instead of aborting, so that every rank can go on without a cache
+   //  (where the MPI implementation returns from the collective)
    MPI_Comm_set_errhandler( comm, MPI_ERRORS_RETURN );
    char* mybase = nullptr;
    int   rc = MPI_Win_allocate_shared( ( node_rank == 0 ) ? (MPI_Aint) total_bytes : 0, 1, MPI_INFO_NULL, comm, &mybase, &window );
@@ -149,12 +242,15 @@ US_MPI_NodeSimCache::US_MPI_NodeSimCache( MPI_Comm node_comm, qint64 max_bytes, 
       header->pressure.store( 0 );
       header->releases.store( 0 );
       header->released.store( 0 );
+      header->room.store( gen_size );
+      header->job_peak.store( 0 );
 
       for ( int gg = 0; gg < 2; gg++ )
       {
          header->gen[gg].data_used.store( 0 );
          header->gen[gg].entries.store( 0 );
          header->gen[gg].full.store( 0 );
+         header->gen[gg].resident.store( 0 );
          header->gen[gg].epoch.store( 0 );
          header->gen[gg].users.store( 0 );
       }
@@ -162,6 +258,11 @@ US_MPI_NodeSimCache::US_MPI_NodeSimCache( MPI_Comm node_comm, qint64 max_bytes, 
       for ( qint64 ii = 0; ii < nslots; ii++ )
       {
          new ( &table[ii].state ) std::atomic<int>( EMPTY );
+      }
+
+      if ( room_bytes >= 0 )
+      {
+         set_room( room_bytes );
       }
    }
 
@@ -340,7 +441,8 @@ bool US_MPI_NodeSimCache::fetch( const QByteArray& key, US_DataIO::RawData& simd
 //  already
 int US_MPI_NodeSimCache::store_in( int gg, const QByteArray& digest, const US_DataIO::RawData& simdat )
 {
-   Generation& gen = header->gen[gg];
+   Generation&  gen  = header->gen[gg];
+   const qint64 room = header->room.load( std::memory_order_relaxed );
 
    while ( true )
    {
@@ -353,9 +455,16 @@ int US_MPI_NodeSimCache::store_in( int gg, const QByteArray& digest, const US_Da
          return ( state == READY || state == FILLING ) ? STORED : SKIPPED;
       }
 
-      if ( slot == nullptr || gen.full.load( std::memory_order_relaxed ) != 0 )
-      { // No room
-         gen.full.store( 1, std::memory_order_relaxed );
+      if ( slot == nullptr )
+      { // Table full:  no more room, however large the room becomes
+         gen.full.store( gen_size, std::memory_order_relaxed );
+         return NO_ROOM;
+      }
+
+      const qint64 full_at = gen.full.load( std::memory_order_relaxed );
+
+      if ( full_at != 0 && full_at >= room )
+      { // Full at this room
          return NO_ROOM;
       }
 
@@ -371,20 +480,30 @@ int US_MPI_NodeSimCache::store_in( int gg, const QByteArray& digest, const US_Da
 
       QByteArray   packed = pack( simdat );
       const qint64 size   = packed.size();
-      const qint64 room   = align8( size );
+      const qint64 need   = align8( size );
       qint64       offset = gen.data_used.load( std::memory_order_relaxed );
 
       // Reserve the bytes only if they fit, so that data_used never passes
-      //  the end of the generation
+      //  the room (at most the end of the generation)
       do
       {
-         if ( offset + room > gen_size )
-         { // Data area full:  keep the digest, so the key is not tried again
-            gen.full.store( 1, std::memory_order_relaxed );
+         if ( offset + need > room )
+         { // Data area full at this room:  keep the digest, so the key is
+            //  not tried again
+            gen.full.store( room, std::memory_order_relaxed );
             slot->state.store( DEAD, std::memory_order_release );
             return NO_ROOM;
          }
-      } while ( !gen.data_used.compare_exchange_weak( offset, offset + room, std::memory_order_relaxed ) );
+      } while ( !gen.data_used.compare_exchange_weak( offset, offset + need, std::memory_order_relaxed ) );
+
+      // The pages written stay in memory until released, also after the
+      //  generation is emptied by a rotation
+      const qint64 end      = offset + need;
+      qint64       resident = gen.resident.load( std::memory_order_relaxed );
+
+      while ( resident < end && !gen.resident.compare_exchange_weak( resident, end, std::memory_order_relaxed ) )
+      {
+      }
 
       memcpy( data + gg * gen_size + offset, packed.constData(), size );
       slot->offset = offset;
@@ -418,6 +537,16 @@ bool US_MPI_NodeSimCache::store( const QByteArray& key, const US_DataIO::RawData
 
          return false;
       }
+   }
+
+   if ( header->room.load( std::memory_order_relaxed ) <= 0 )
+   { // No room yet (e.g. before the job's peak is known):  do not rotate
+      if ( !survivor )
+      {
+         rank_rejected.fetch_add( 1, std::memory_order_relaxed );
+      }
+
+      return false;
    }
 
    QByteArray digest = QCryptographicHash::hash( key, QCryptographicHash::Sha256 );
@@ -535,7 +664,14 @@ bool US_MPI_NodeSimCache::release_pages( int gg )
    // MADV_REMOVE frees the pages of tmpfs (MPICH, Open MPI in /dev/shm),
    //  of System V shared memory and of a file on a disk file system that
    //  can punch holes (Open MPI's session directory on ext4, xfs, btrfs)
-   return ( last <= first || madvise( reinterpret_cast<void*>( first ), last - first, MADV_REMOVE ) == 0 );
+   const bool released = ( last <= first || madvise( reinterpret_cast<void*>( first ), last - first, MADV_REMOVE ) == 0 );
+
+   if ( released )
+   {
+      header->gen[gg].resident.store( 0, std::memory_order_relaxed );
+   }
+
+   return released;
 #else
    // (MS-MPI:  a paging file section has no way to drop its pages here)
    Q_UNUSED( gg );
@@ -592,7 +728,7 @@ void US_MPI_NodeSimCache::empty_under_pressure( qint64 used )
          std::this_thread::yield();
       }
 
-      const qint64 held = gen.data_used.load( std::memory_order_relaxed );
+      const qint64 held = gen.resident.load( std::memory_order_relaxed );
       empty( gg );
 
       if ( release_pages( gg ) )
@@ -616,17 +752,24 @@ void US_MPI_NodeSimCache::empty_under_pressure( qint64 used )
    }
 }
 
-// Bytes the cache holds in memory now
+// Bytes the cache holds in memory now:  the pages written and not yet
+//  released (an emptied generation keeps them until it is used again)
 qint64 US_MPI_NodeSimCache::bytes_held() const
 {
    qint64 bytes = 0;
 
    for ( int gg = 0; gg < ngens; gg++ )
    {
-      bytes += header->gen[gg].data_used.load( std::memory_order_relaxed );
+      bytes += header->gen[gg].resident.load( std::memory_order_relaxed );
    }
 
    return bytes;
+}
+
+// Bytes of memory the cache holds now (see bytes_held)
+qint64 US_MPI_NodeSimCache::resident_bytes() const
+{
+   return bytes_held();
 }
 
 // Look at the memory use until told to stop.  The job's cgroup is read often,
@@ -636,7 +779,7 @@ void US_MPI_NodeSimCache::watch_loop()
    const std::chrono::milliseconds interval( 50 );
    std::unique_lock<std::mutex>    guard( watch_lock );
    int                             tick       = 0;
-   qint64                          scanned    = -1;
+   qint64                          scanned    = -1; // Private memory of the node's ranks
    US_MPI_MemLimit::Pressure       slow_press = US_MPI_MemLimit::NONE;
 
    while ( !watch_wake.wait_for( guard, interval, [this] { return watch_stop; } ) )
@@ -645,7 +788,7 @@ void US_MPI_NodeSimCache::watch_loop()
 
       if ( tick++ % 4 == 0 )
       {
-         scanned = US_MPI_MemLimit::private_bytes( node_pids ) + bytes_held();
+         scanned = US_MPI_MemLimit::private_bytes( node_pids );
 
          qint64 total = 0;
          qint64 avail = 0;
@@ -655,8 +798,20 @@ void US_MPI_NodeSimCache::watch_loop()
          slow_press             = qMax( slow_press, US_MPI_MemLimit::shm_pressure( shm_bytes, data_size ) );
       }
 
-      const qint64              used  = qMax( scanned, US_MPI_MemLimit::cgroup_usage( watch.cgroup ) );
+      // The cache's part is counted as it is now:  a give-back since the
+      //  last scan must not count as still held (or the next look would
+      //  give back again, under pressure that is gone)
+      const qint64 held = bytes_held();
+      const qint64 used = qMax( ( scanned >= 0 ) ? scanned + held : -1, US_MPI_MemLimit::cgroup_usage( watch.cgroup ) );
       US_MPI_MemLimit::Pressure press = qMax( slow_press, US_MPI_MemLimit::limit_pressure( used, watch.job_limit ) );
+
+      // The job's own use, without the cache (charged to the job as well)
+      const qint64              own = used - held;
+
+      if ( used >= 0 && own > header->job_peak.load( std::memory_order_relaxed ) )
+      {
+         header->job_peak.store( own, std::memory_order_relaxed );
+      }
 
       if ( watch.stress )
       { // Test:  let the ranks add for a while, then stop them, then empty
@@ -665,8 +820,8 @@ void US_MPI_NodeSimCache::watch_loop()
 
       header->pressure.store( ( press == US_MPI_MemLimit::NONE ) ? 0 : 1, std::memory_order_relaxed );
 
-      if ( press == US_MPI_MemLimit::HARD && bytes_held() > 0 )
-      {
+      if ( press == US_MPI_MemLimit::HARD && stats().bytes > 0 )
+      { // (Something to empty:  pages that cannot be released stay held)
          empty_under_pressure( used );
          scanned = -1;
 
@@ -699,6 +854,40 @@ qint64 US_MPI_NodeSimCache::released_bytes() const
    return header->released.load( std::memory_order_relaxed );
 }
 
+// Set the bytes the cache may hold:  each generation gets its part
+void US_MPI_NodeSimCache::set_room( qint64 bytes )
+{
+   const qint64 per_gen = qMin( gen_size, ( qMax( (qint64) 0, bytes ) / ngens ) & ~(qint64) 7 );
+   header->room.store( per_gen, std::memory_order_relaxed );
+}
+
+// Bytes the cache may hold now
+qint64 US_MPI_NodeSimCache::room() const
+{
+   return header->room.load( std::memory_order_relaxed ) * ngens;
+}
+
+// Highest use of the job's own memory the watch has seen
+qint64 US_MPI_NodeSimCache::job_peak() const
+{
+   return header->job_peak.load( std::memory_order_relaxed );
+}
+
+// Set the room from the job's peak the watch has seen
+qint64 US_MPI_NodeSimCache::fit_room_to_peak( double margin )
+{
+   const qint64 peak = job_peak();
+   const qint64 fit  = US_MPI_MemLimit::cache_room( watch.job_limit, peak, margin );
+
+   if ( fit < 0 || peak <= 0 )
+   {
+      return -1;
+   }
+
+   set_room( fit );
+   return room();
+}
+
 // Counts of this rank, with the node's entries and bytes
 US_SimCache::Stats US_MPI_NodeSimCache::stats() const
 {
@@ -711,7 +900,7 @@ US_SimCache::Stats US_MPI_NodeSimCache::stats() const
    st.entries   = 0;
    st.survivors = 0;
    st.bytes     = 0;
-   st.max_bytes = data_size;
+   st.max_bytes = room();
 
    for ( int gg = 0; gg < ngens; gg++ )
    {

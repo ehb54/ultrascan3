@@ -37,6 +37,10 @@ def run(name, case, args, debug_text):
     env.setdefault("OMPI_ALLOW_RUN_AS_ROOT_CONFIRM", "1")
     env.setdefault("OMPI_MCA_rmaps_base_oversubscribe", "1")
     env["QT_LOGGING_RULES"] = "*.debug=true"   # for the cache report
+    env["QT_FORCE_STDERR_LOGGING"] = "1"       # not the debugger (Windows)
+    if args.cache_mb > 0:
+        # 2DSA has a cache only with a job memory limit or a size from the host
+        env.setdefault("US3_SIM_CACHE_MB", str(args.cache_mb))
 
     cmd = R.mpirun_command(args.mpirun, args.np) + [
         args.program, "-walltime", "600", "-mgroupcount", str(args.mgroupcount),
@@ -74,6 +78,9 @@ def main():
     parser.add_argument("--refine", type=int, default=5,
                         help="refinement iterations")
     parser.add_argument("--mc", type=int, default=1, help="Monte Carlo iterations")
+    parser.add_argument("--cache-mb", dest="cache_mb", type=int, default=4096,
+                        help="US3_SIM_CACHE_MB for hosts without a job memory"
+                             " limit (0: leave unset)")
     args = parser.parse_args()
 
     args.program = str(Path(args.program).resolve())

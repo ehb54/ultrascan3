@@ -112,6 +112,20 @@ class US_MPI_MemLimit
       //! \brief Capacity that fits the free shared memory (negative: unknown)
       static qint64      fit_shared_memory( qint64 wanted, qint64 shm_bytes );
 
+      //! \brief Predicted bytes one rank needs to solve a set of solutes (the
+      //!        estimate of the 2DSA fit control, per thread):  the simulations
+      //!        and matrices of the solutes, data and noise terms
+      //! \param readings     Readings (scans times points) of the data
+      //! \param solutes      Solutes solved at once
+      //! \param noise_terms  1 for TI noise, 2 for RI noise, 3 for both
+      static qint64      solve_bytes( qint64 readings, qint64 solutes, int noise_terms );
+
+      //! \brief Bytes the cache may hold while the job's own use peaks at
+      //!        job_peak:  the cache and the peak times margin stay below the
+      //!        share of the limit at which the memory watch stops adding.
+      //!        0 if there is no room; -1 if there is no limit.
+      static qint64      cache_room( qint64 job_limit, qint64 job_peak, double margin );
+
       //! \brief Pressure from a job's use of its limit
       enum Pressure
       {

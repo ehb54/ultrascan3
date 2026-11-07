@@ -36,6 +36,12 @@ void US_MPI_Analysis::pcsa_worker( void )
                 &status ); // status not used
       DbgLv( 1 ) << "w:" << my_rank << ": job_recvd  length" << job.length << "command" << job.command;
 
+      if ( job.command == MPI_Job::FITCACHE )
+      { // Fit this node's cache room to the job's peak, then report ready
+         fit_sim_cache_room();
+         continue;
+      }
+
       const int              offset         = job.dataset_offset;
       const int              dataset_count  = job.dataset_count;
       int job_length     = job.length;

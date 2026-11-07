@@ -76,6 +76,7 @@ class US_MPI_Analysis : public QObject
         uint             deme_seed = 0;             //!< Random seed shared by all ranks (job seed or rank 0's time seed)
         US_MPI_NodeSimCache* sim_cache = nullptr;       //!< Simulations shared by the node's ranks (or none)
         QVector<int>         node_leaders;              //!< World ranks of the first rank of each node
+        bool                 sim_room_fitted = false;   //!< The caches' room was fitted to the job's peak
 
         int current_dataset;      //!< Current dataset for global fit or composite
         int datasets_to_process;  //!< Datasets to process for global fit or composite
@@ -216,7 +217,8 @@ class US_MPI_Analysis : public QObject
                    SHUTDOWN,
                    NEWDATA,
                    PROCESS_MC,
-                   CLEARCACHE
+                   CLEARCACHE,
+                   FITCACHE
                 };
 
                 //! \enum Status
@@ -486,6 +488,9 @@ class US_MPI_Analysis : public QObject
         void                   create_sim_cache( void );
         US_SimCache*           solver_cache( void ) const;
         void                   clear_sim_caches( void );
+        void                   fit_sim_cache_rooms( void );
+        void                   fit_sim_cache_room( void );
+        qint64                 predicted_node_bytes( void );
         qint64                 job_memory_limit( const US_MPI_MemLimit::Cgroup& );
         qint64                 sim_cache_bytes( qint64, bool, bool, qint64 );
         bool                   worker_fit_context( int, double, double );
