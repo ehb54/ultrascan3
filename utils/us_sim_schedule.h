@@ -48,29 +48,29 @@ class US_UTIL_EXTERN US_SimSchedule
 
       //! \brief A problem with schedule settings, or empty if they are usable.
       //! \param wavelengths The channel's wavelength count, which must fit its slot.
-      static QString        scheduleProblem( const Schedule& settings, int wavelengths = 1 );
+      static QString            scheduleProblem( const Schedule& settings, int wavelengths = 1 );
 
       //! \brief A problem with telemetry settings, or empty if they are usable.
-      static QString        telemetryProblem( const Telemetry& settings );
+      static QString            telemetryProblem( const Telemetry& settings );
 
       //! \brief Seconds between cycle starts.
-      static double         cycleSeconds( const Schedule& settings );
+      static double             cycleSeconds( const Schedule& settings );
 
       //! \brief Seconds from a cycle's start to a slot's start.
-      static double         slotOffset( const Schedule& settings, int slot );
+      static double             slotOffset( const Schedule& settings, int slot );
 
       //! \brief When one scan happens, in whole seconds.
       //! \param first      Time of the first cycle's start in this speed step.
       //! \param scan       Scan index within the step, from 0.
       //! \param wavelength Wavelength index within a multi-wavelength slot.
       //! \param slot       Slot; -1 for the settings' own slot.
-      static int            scanTime( const Schedule& settings, double first, int scan, int wavelength = 0, int slot = -1 );
+      static int                scanTime( const Schedule& settings, double first, int scan, int wavelength = 0, int slot = -1 );
 
       //! \brief Every slot's scan start in the run, mapped to its cycle number.
       //! Cycle numbers count from 1 across the run's speed steps.
       //! \param firsts First cycle start of each speed step.
       //! \param counts Scans in each speed step.
-      static QMap<int, int> runMarkers( const Schedule& settings, const QVector<double>& firsts, const QVector<int>& counts );
+      static QMap<int, int>     runMarkers( const Schedule& settings, const QVector<double>& firsts, const QVector<int>& counts );
 
       //! \brief A copy of data with one scan, like its first, at each marker's time.
       //! Written through US_AstfemMath::writetimestate, it marks the run's
@@ -83,21 +83,21 @@ class US_UTIL_EXTERN US_SimSchedule
                                                 const QVector<US_SimulationParameters::SpeedProfile>& two );
 
       //! \brief Replace every record's scan number with the run's markers.
-      static void           applyMarkers( QVector<Row>& rows, const QMap<int, int>& markers );
+      static void               applyMarkers( QVector<Row>& rows, const QMap<int, int>& markers );
 
       //! \brief Add recorded speed jitter and temperature variation.
       //! Speed jitters only where the set speed holds; omega2t is
       //! re-integrated from the recorded speed.
-      static void           applyTelemetry( QVector<Row>& rows, const Telemetry& settings );
+      static void               applyTelemetry( QVector<Row>& rows, const Telemetry& settings );
 
       //! \brief Read a TimeState's records and its field keys and formats.
-      static bool           readRows( const QString& tmst_path, QVector<Row>& rows, QStringList& keys, QStringList& formats );
+      static bool               readRows( const QString& tmst_path, QVector<Row>& rows, QStringList& keys, QStringList& formats );
 
       //! \brief Write records as a TimeState with the given keys and formats.
-      static bool           writeRows( const QString&      tmst_path,
-                                       const QVector<Row>& rows,
-                                       const QStringList&  keys,
-                                       const QStringList&  formats );
+      static bool               writeRows( const QString&      tmst_path,
+                                           const QVector<Row>& rows,
+                                           const QStringList&  keys,
+                                           const QStringList&  formats );
 
       /*! \brief Rewrite a TimeState as the run's recorded one.
           Replaces its scan markers with the run's, when given, and adds the
@@ -105,14 +105,14 @@ class US_UTIL_EXTERN US_SimSchedule
           \param rows Set to the records written.
           \returns An error message, or empty on success.
       */
-      static QString        recordRun( const QString&        tmst_path,
-                                       const QMap<int, int>* markers,
-                                       const Telemetry&      telemetry,
-                                       QVector<Row>&         rows );
+      static QString            recordRun( const QString&        tmst_path,
+                                           const QMap<int, int>* markers,
+                                           const Telemetry&      telemetry,
+                                           QVector<Row>&         rows );
 
       //! \brief Set each scan's rpm, omega2t and temperature from the record at its time.
       //! \returns False if a scan's time has no record.
-      static bool           recordScans( US_DataIO::RawData& data, const QVector<Row>& rows );
+      static bool               recordScans( US_DataIO::RawData& data, const QVector<Row>& rows );
 };
 
 #endif

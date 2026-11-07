@@ -1444,15 +1444,15 @@ QString US_Astfem_Sim::record_run_telemetry( void )
 
    // The physics already read its speed profile, so the file can now become
    // the run's record: every slot's scan markers and the recorded telemetry.
-   const QMap<int, int>         markers = simparams.schedule.given
-                                             ? US_SimSchedule::runMarkers( simparams.schedule, schedule_firsts, schedule_counts )
-                                             : QMap<int, int>();
+   const QMap<int, int>    markers       = simparams.schedule.given
+                                              ? US_SimSchedule::runMarkers( simparams.schedule, schedule_firsts, schedule_counts )
+                                              : QMap<int, int>();
    // Written afresh from the speed steps as given on every save, so every
    // channel and simulator of a run records the same rows however often its
    // parameters were set up, and a second save does not record twice.
-   US_SimulationParameters      record_params = simparams;
-   record_params.speed_step                   = loaded_steps;
-   record_params.sim                          = true;
+   US_SimulationParameters record_params = simparams;
+   record_params.speed_step              = loaded_steps;
+   record_params.sim                     = true;
    US_DataIO::RawData marked = simparams.schedule.given ? US_SimSchedule::markedData( sim_data_all, markers ) : sim_data_all;
    if ( US_AstfemMath::writetimestate( tmst_tfpath, record_params, marked ) < 0 )
    {

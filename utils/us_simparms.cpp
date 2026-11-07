@@ -922,10 +922,10 @@ int US_SimulationParameters::load_simparms( QString fname )
       int     kk;
       speed_step.clear();
       // Off unless this file gives them.
-      intensity = IntensitySettings();
-      window    = WindowSettings();
-      schedule  = ScheduleSettings();
-      telemetry = TelemetrySettings();
+      intensity       = IntensitySettings();
+      window          = WindowSettings();
+      schedule        = ScheduleSettings();
+      telemetry       = TelemetrySettings();
       interference    = InterferenceSettings();
       wavelength_scan = WavelengthScanSettings();
 

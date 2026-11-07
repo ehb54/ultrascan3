@@ -85,9 +85,9 @@ class US_MwlSpeciesSim : public US_Widgets
         void    add_ri_noise( US_DataIO::RawData& rdata, double total_conc, int model_index );
         void    add_baseline( US_DataIO::RawData& rdata );
         void    add_random_noise( US_DataIO::RawData& rdata, double total_conc );
-        bool    intensity_mode( void ) const;  // Writing RI intensities
+        bool    intensity_mode( void ) const;   // Writing RI intensities
         QString schedule_problem( void ) const; // Unusable schedule or telemetry settings
-        bool    intensity_noise( void ) const; // Counts noise replaces absorbance random noise
+        bool    intensity_noise( void ) const;  // Counts noise replaces absorbance random noise
         void    add_ti_noise( US_DataIO::RawData& rdata, double total_conc, int model_index );
         void    save_csv_noise( US_CSV_Data& csv );
 

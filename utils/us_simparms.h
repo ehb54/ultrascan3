@@ -291,10 +291,10 @@ class US_UTIL_EXTERN US_SimulationParameters
          QMap<double, double> spectrum;         //!< Sample extinction by wavelength, from <point> children
    };
 
-   IntensitySettings intensity; //!< Intensity mode for RI output
-   WindowSettings    window;    //!< Fixed instrument window; off unless given
-   ScheduleSettings  schedule;  //!< Staggered scan times; off unless given
-   TelemetrySettings telemetry; //!< Recorded speed and temperature variation; off unless given
+   IntensitySettings      intensity;       //!< Intensity mode for RI output
+   WindowSettings         window;          //!< Fixed instrument window; off unless given
+   ScheduleSettings       schedule;        //!< Staggered scan times; off unless given
+   TelemetrySettings      telemetry;       //!< Recorded speed and temperature variation; off unless given
    InterferenceSettings   interference;    //!< Interference optics for IP runs; off unless given
    WavelengthScanSettings wavelength_scan; //!< Wavelength scan for WI runs; off unless given
 
