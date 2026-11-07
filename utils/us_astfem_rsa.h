@@ -299,11 +299,9 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
       void   GlobalStiff      ( double*, double**, double**,
                                 double, double );
 
-      //!< Used for naming the temporary timestate file
-      //!< if needed in us_astfem_rsa
-      //!< Input : Current time in date+hrs+mins+seconds
-      //!< Output: A string with date+hrs+mins+seconds
-      QString temp_Id_name() ;
+      //!< Sets simparams.sim from the data channel, writing it only when
+      //!< it changes (threads may share one simparams)
+      void                                    set_sim_flag( const US_DataIO::RawData& );
 
       //!< Writes a temporary timestate file if not found
       //!< Input  : 1. A string with date+hrs+mins+seconds

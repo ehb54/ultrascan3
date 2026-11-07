@@ -1244,6 +1244,17 @@ TEST_F( TestUSSolveSimCache, FitIsUnchangedByCacheInThreads )
    expectSameFit( 1024LL * 1024 * 1024, true );
 }
 
+// The same fit in threads without a cache:  solves in threads must not share
+//  scratch storage
+TEST_F( TestUSSolveSimCache, FitInThreadsWithoutCache )
+{
+   noisflag                       = 3;
+   const QVector<double> expected = fit2dsa( nullptr, false );
+   ASSERT_GT( expected.size(), 0 );
+   const QVector<double> threaded = fit2dsa( nullptr, true );
+   EXPECT_EQ( firstDifference( threaded, expected ), -1 ) << "sizes " << threaded.size() << " " << expected.size();
+}
+
 TEST_F( TestUSSolveSimCache, FitIsUnchangedBySmallCache )
 {
    // Room for 12 of the 40 grid simulations:  non-survivors are refused or
