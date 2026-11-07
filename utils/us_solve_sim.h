@@ -188,7 +188,8 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
 
     //! \brief Whether a simulation failed (calculate() returned an error),
     //!        which stopped the work:  the results are not a valid fit, and
-    //!        calc_residuals() then sets the variances to NaN
+    //!        calc_residuals() then sets the variance, and the variance of
+    //!        each data set, to NaN
     bool        solve_failed( void ) const;
 
     //! \brief Reuse simulations from a cache, and store new ones in it
@@ -244,8 +245,9 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     //  simulation from the cache; returns the cache key (if any)
     QByteArray     simulate( US_Model&, DataSet*, US_DataIO::EditedData*, US_DataIO::RawData& );
 
-    // Mark the results invalid if a simulation failed
-    void           mark_failed_solve( Simulation& );
+    // Mark the results invalid (NaN variance, one NaN variance per data
+    //  set) if a simulation failed
+    void           mark_failed_solve( Simulation&, int );
 
  private slots:
     // Limit data to thresholds

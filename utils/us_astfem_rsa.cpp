@@ -4,14 +4,13 @@
 #include "us_hardware.h"
 #include "us_math2.h"
 #include "us_memory.h"
-#include "us_stiffbase.h"
 #include "us_settings.h"
 #include "us_sleep.h"
-#include "us_util.h"
+#include "us_stiffbase.h"
 #include "us_time_state.h"
-#if !(defined(_WIN32) || defined(_WIN64) || defined(Q_OS_WIN))
-#include <unistd.h>
-#endif
+#include "us_util.h"
+#include <QMutex>
+#include <QMutexLocker>
 #include <algorithm>
 #include <vector>
 
@@ -53,11 +52,6 @@ double*** stif_scratch( int nx )
    return sc.elems.data();
 }
 } // namespace
-#if (defined(_WIN32) || defined(_WIN64) || defined(Q_OS_WIN))         // Include headers so getpid() works on Windows
-#include <windows.h>
-#include <psapi.h>
-#include <process.h>
-#endif
 
 #if 0                   // Set to 1 to enable RA timing prints
 #define TIMING_RA_INC 500
@@ -228,25 +222,9 @@ DbgLv(1)<< "RSA:calc: meniscus bottom" << af_params.current_meniscus << af_param
 
    // Read in any timestate that exists and set up the internal
    //  simulation speed profile
-   if ( simparams.tsobj == NULL  ||
-        simparams.sim_speed_prof.count() < 1 )
-   {  // Timestate is not properly loaded
-DbgLv(1)<<"RSA:calc: timestate does not exist";
-// Build it from this experiment's speed steps, in a private file.
-//  On failure, simparams may still hold the default speed profile
-//  entry, so the profile size check below would not catch it.
-if ( US_AstfemMath::timestate_from_speedsteps( simparams, exp_data ) < 1 )
-{
-   DbgLv( 0 ) << "US_Astfem_RSA::calculate: no timestate could be built"
-                 " from the speed steps -- cannot simulate.  Check that"
-                 " the temporary directory exists and is writable.";
-   return -1;
-}
-   }
-   else
-   {  // Timestate object and speed profile exist are properly loaded
-DbgLv(1) << "RSA:calc : timestate exists and timestateobject,sscount="
- << simparams.tsobj << simparams.sim_speed_prof.count();
+   if ( ensure_timestate( exp_data ) < 0 )
+   {
+      return -1;
    }
 
    int nstep    = simparams.speed_step.size();     // Number of speed steps
@@ -884,24 +862,9 @@ QDateTime clcSt5 = QDateTime::currentDateTime();
       US_AstfemMath::MfemData* ed = &af_data;
       set_sim_flag( exp_data );
 
-      if ( simparams.tsobj == NULL  ||
-           simparams.sim_speed_prof.count() < 1 )
-      {  // Timestate is not properly loaded
-DbgLv(1) << "timestate file does not exist";
-// Build it from this experiment's speed steps, in a private file
-if ( US_AstfemMath::timestate_from_speedsteps( simparams, exp_data ) < 1 )
-{
-   DbgLv( 0 ) << "US_Astfem_RSA::calculate: no timestate could be"
-                 " built from the speed steps -- cannot simulate.";
-   return -1;
-}
-DbgLv(1)<<"after writing timestate file" << simparams.sim_speed_prof.count();
-      }
-
-      else
-      {  // Timestate exists and is loaded properly
-DbgLv(1) << "rsa : timestate file exists and timestateobject = "
- << simparams.tsobj << simparams.sim_speed_prof.count() ;
+      if ( ensure_timestate( exp_data ) < 0 )
+      {
+         return -1;
       }
 DbgLv(1) << "SS2: ss size" << simparams.speed_step.size()
  << "ssp size" << simparams.sim_speed_prof.size();
@@ -4197,6 +4160,37 @@ void US_Astfem_RSA::printsimparams( void )
    DbgLv(1) << "band_forming " << simparams.band_forming;
    DbgLv(1) << "band_volume " << simparams.band_volume;
    DbgLv(1) << "firstScanIsConcentration "<< simparams.firstScanIsConcentration;
+}
+
+// Make sure simparams has a timestate and speed profile loaded:  if not,
+//  build them from this experiment's speed steps, in a private file.
+//  Threads may share one simparams (us_fematch's ThreadWorker holds a
+//  reference), so the check and the build are done under a lock:  one thread
+//  builds the timestate, and the others find it complete.  Returns 0, or -1
+//  if no timestate could be built (then the speed profile is empty, not
+//  the default entry of a new US_SimulationParameters).
+int US_Astfem_RSA::ensure_timestate( US_DataIO::RawData& exp_data )
+{
+   static QMutex timestate_mutex;
+   QMutexLocker  lock( &timestate_mutex );
+
+   if ( simparams.tsobj != NULL && simparams.sim_speed_prof.count() > 0 )
+   {
+      DbgLv( 1 ) << "RSA:calc: timestate exists:  timestateobject,sscount=" << simparams.tsobj << simparams.sim_speed_prof.count();
+      return 0;
+   }
+
+   DbgLv( 1 ) << "RSA:calc: timestate does not exist";
+   if ( US_AstfemMath::timestate_from_speedsteps( simparams, exp_data ) < 1 )
+   {
+      DbgLv( 0 ) << "US_Astfem_RSA::calculate: no timestate could be built"
+                    " from the speed steps -- cannot simulate.  Check that"
+                    " the temporary directory exists and is writable.";
+      return -1;
+   }
+
+   DbgLv( 1 ) << "RSA:calc: timestate built:  sscount" << simparams.sim_speed_prof.count();
+   return 0;
 }
 
 // Flag simulated (rather than measured) experiment data in simparams.
