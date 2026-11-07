@@ -727,6 +727,12 @@ def run_job(name, case, args):
     if casedir.exists():
         shutil.rmtree(casedir)
     casedir.mkdir(parents=True)
+    if getattr(args, "debug_text", None):
+        # Debug text switches, e.g. "SimCache=off" or "SimCacheMB=1"
+        # Added to any debug_text the case has itself
+        own = case["params"].get("debug_text", "")
+        dtext = ",".join(t for t in (own, args.debug_text) if t)
+        case = dict(case, params=dict(case["params"], debug_text=dtext))
     archive = build_archive(name, case, args.testdata, casedir)
 
     env = dict(os.environ)
@@ -1051,6 +1057,9 @@ def main():
     parser.add_argument("--mpirun", default="mpirun")
     parser.add_argument("--workdir", default="mpi_regression_work")
     parser.add_argument("--timeout", type=int, default=540)
+    parser.add_argument("--debug-text", dest="debug_text", default="",
+                        help="debug_text entries added to every case,"
+                             " e.g. SimCache=off or SimCacheMB=1")
     args = parser.parse_args()
 
     if args.command == "list":

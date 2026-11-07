@@ -825,6 +825,7 @@ void US_MPI_Analysis::begin_fit_context( void )
    meniscus_value = ( meniscus_points == 1 ) ? data_sets[current_dataset]->run_data.meniscus : meniscus_values[meniscus_run];
    bottom_value   = ( bottom_points == 1 ) ? dataset_bottom( current_dataset ) : bottom_values[bottom_run];
 
+   const bool had_context = ( fit_context.dataset >= 0 );
    const bool sim_changed =
       ( fit_context.dataset != current_dataset || fit_context.meniscus != meniscus_value || fit_context.bottom != bottom_value );
 
@@ -835,6 +836,45 @@ void US_MPI_Analysis::begin_fit_context( void )
 
    DbgLv( 1 ) << "FitContext: ds" << current_dataset << "men" << meniscus_value << "bot" << bottom_value << "mc" << mc_iteration
               << "sim_changed" << sim_changed;
+
+   // Simulations of an earlier dataset or meniscus/bottom point are not
+   //  reused:  free their room.  Parallel-masters groups may work on
+   //  different fits at the same time, so only a single master clears.
+   if ( sim_changed && had_context && sim_cache != nullptr && mgroup_count < 2 )
+   {
+      clear_sim_caches();
+   }
+
+   if ( sim_changed && sim_cache != nullptr )
+   { // Memorized data set keys hold for one fit context
+      sim_cache->forget_dataset_keys();
+   }
+}
+
+// Clear the simulation cache of every node while all workers are idle:
+//  the master clears its own node and has the first rank of every other
+//  node clear that node's cache; jobs follow only after they have answered.
+void US_MPI_Analysis::clear_sim_caches( void )
+{
+   wait_workers_ready(); // No READY outstanding:  every worker waits for a job
+
+   sim_cache->clear(); // The master is the first rank of its node
+
+   MPI_Job job;
+   job.command = MPI_Job::CLEARCACHE;
+
+   for ( int leader : node_leaders )
+   {
+      if ( leader == my_rank )
+      {
+         continue;
+      }
+
+      MPI_Send( &job, sizeof( MPI_Job ), MPI_BYTE, leader, MPI_Job::MASTER, my_communicator );
+      worker_status[leader] = INIT; // Answers with READY when done
+   }
+
+   wait_workers_ready();
 }
 
 // Bottom of a dataset: the edited bottom if given, else the centerpiece
