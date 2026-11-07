@@ -150,6 +150,40 @@ QMap<int, int> US_SimSchedule::runMarkers( const Schedule& settings, const QVect
    return markers;
 }
 
+US_DataIO::RawData US_SimSchedule::markedData( const US_DataIO::RawData& data, const QMap<int, int>& markers )
+{
+   US_DataIO::RawData marked = data;
+   marked.scanData.clear();
+   for ( int seconds : markers.keys() )
+   {
+      US_DataIO::Scan scan = data.scanData.value( 0 );
+      scan.seconds         = seconds;
+      marked.scanData << scan;
+   }
+   return marked;
+}
+
+bool US_SimSchedule::sameSpeedSteps( const QVector<US_SimulationParameters::SpeedProfile>& one,
+                                     const QVector<US_SimulationParameters::SpeedProfile>& two )
+{
+   if ( one.size() != two.size() )
+   {
+      return false;
+   }
+   for ( int jj = 0; jj < one.size(); jj++ )
+   {
+      const US_SimulationParameters::SpeedProfile& a = one[jj];
+      const US_SimulationParameters::SpeedProfile& b = two[jj];
+      if ( a.rotorspeed != b.rotorspeed || a.scans != b.scans || a.duration_hours != b.duration_hours ||
+           a.duration_minutes != b.duration_minutes || a.delay_hours != b.delay_hours || a.delay_minutes != b.delay_minutes ||
+           a.acceleration != b.acceleration || a.acceleration_flag != b.acceleration_flag )
+      {
+         return false;
+      }
+   }
+   return true;
+}
+
 void US_SimSchedule::applyMarkers( QVector<Row>& rows, const QMap<int, int>& markers )
 {
    for ( Row& row : rows )
@@ -278,13 +312,18 @@ bool US_SimSchedule::writeRows( const QString&      tmst_path,
             timestate.set_value( keys[jj], qRound( value ) );
          }
       }
-      timestate.flush_record();
+      if ( timestate.flush_record() != 0 )
+      {
+         return false;
+      }
    }
-   timestate.close_write_data();
+   if ( timestate.close_write_data() != 0 )
+   {
+      return false;
+   }
    timestate.setTimeStateType( US_TimeState::TIMESTATE_TYPE::CALCULATED );
    timestate.setImportType( US_TimeState::IMPORT_TYPE::XLA );
-   timestate.write_defs( 1.0 );
-   return true;
+   return timestate.write_defs( 1.0 ) == 0;
 }
 
 QString US_SimSchedule::recordRun( const QString&        tmst_path,

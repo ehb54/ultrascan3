@@ -427,3 +427,19 @@ TEST( US_SimOpticsTest, SimparamsRoundTripInterferenceAndWavelengthScan )
    EXPECT_EQ( loaded.wavelength_scan.spectrum, given.wavelength_scan.spectrum );
    EXPECT_DOUBLE_EQ( loaded.wavelength_scan.end, 270.0 );
 }
+
+TEST( US_SimOpticsTest, InterferenceStructureIsSharedByEverySpeedStep )
+{
+   US_SimOptics::Interference settings = quietInterference();
+   settings.structure                  = 0.01;
+   QVector<double> structure;
+   QVector<double> offsets;
+   US_Math2::randomize( 5 );
+   US_DataIO::RawData first = absorbance( 5.87, 7.2, 2, plateau );
+   US_SimOptics::toInterference( first, settings, 5.87, 7.2, 1.0, 0.0, structure, offsets );
+   const QVector<double> drawn  = structure;
+   US_DataIO::RawData    second = absorbance( 5.87, 7.2, 2, plateau );
+   US_SimOptics::toInterference( second, settings, 5.87, 7.2, 1.0, 0.0, structure, offsets );
+   EXPECT_EQ( structure, drawn );
+   EXPECT_EQ( first.scanData[0].rvalues[100], second.scanData[0].rvalues[100] );
+}

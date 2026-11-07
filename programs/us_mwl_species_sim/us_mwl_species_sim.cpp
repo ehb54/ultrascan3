@@ -1211,17 +1211,7 @@ bool US_MwlSpeciesSim::save_sims_to( const QString& save_dir )
 
       // The record is written as us_astfem_sim writes it, marking every
       // slot's scans, so all the runs of one experiment record one time state.
-      US_DataIO::RawData marked = synData[0];
-      if ( simparams.schedule.given )
-      {
-         marked.scanData.clear();
-         for ( int seconds : markers.keys() )
-         {
-            US_DataIO::Scan scan = synData[0].scanData[0];
-            scan.seconds         = seconds;
-            marked.scanData << scan;
-         }
-      }
+      US_DataIO::RawData      marked = simparams.schedule.given ? US_SimSchedule::markedData( synData[0], markers ) : synData[0];
       US_SimulationParameters record_params = simparams;
       record_params.sim                     = true;
       if ( US_AstfemMath::writetimestate( run_tfpath, record_params, marked ) < 0 )

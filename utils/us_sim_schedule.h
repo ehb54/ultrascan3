@@ -72,6 +72,16 @@ class US_UTIL_EXTERN US_SimSchedule
       //! \param counts Scans in each speed step.
       static QMap<int, int> runMarkers( const Schedule& settings, const QVector<double>& firsts, const QVector<int>& counts );
 
+      //! \brief A copy of data with one scan, like its first, at each marker's time.
+      //! Written through US_AstfemMath::writetimestate, it marks the run's
+      //! scans in a time state. data must hold at least one scan.
+      static US_DataIO::RawData markedData( const US_DataIO::RawData& data, const QMap<int, int>& markers );
+
+      //! \brief Whether two speed-step lists describe the same run: speeds,
+      //! scan counts, durations, delays and accelerations.
+      static bool               sameSpeedSteps( const QVector<US_SimulationParameters::SpeedProfile>& one,
+                                                const QVector<US_SimulationParameters::SpeedProfile>& two );
+
       //! \brief Replace every record's scan number with the run's markers.
       static void           applyMarkers( QVector<Row>& rows, const QMap<int, int>& markers );
 

@@ -388,10 +388,11 @@ class US_AstfemSimPersistTest : public QObject
          }
       }
 
-      void intensityRunTypesAreRejected()
+      void unsupportedRunTypesAreRejected()
       {
-         // Simulated concentration cannot be tagged as intensity data.
-         for ( const QString& type : { QString( "RI" ), QString( "WI" ) } )
+         // RI and WI are written as intensities (test_us_astfem_optics_gui);
+         // multi-wavelength intensity and unknown tags are not run types.
+         for ( const QString& type : { QString( "WA" ), QString( "XX" ) } )
          {
             QVERIFY2( rejectedRun( { "--runtype", type }, 1 ).contains( US_SimCli::invalidValueMessage( "runtype", type ) ),
                       qPrintable( type ) );

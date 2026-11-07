@@ -125,6 +125,10 @@ class US_UTIL_EXTERN US_SimOptics
       //! \brief A problem with interference settings, or empty if they are usable.
       static QString          interferenceProblem( const Interference& settings );
 
+      //! \brief A problem with an interference grid for this cell, or empty.
+      //! The grid must hold the meniscus, or the edit has none to find.
+      static QString          interferenceGeometryProblem( const Interference& settings, double meniscus, double bottom );
+
       //! \brief The interference detector's radii.
       static QVector<double>  interferenceRadii( const Interference& settings );
 
@@ -137,7 +141,9 @@ class US_UTIL_EXTERN US_SimOptics
           jumps (a whole-scan offset, or a step from a random radius outward)
           and random noise. Values above ceiling, when it is above 0, are cut.
           \param data      Signal on any ascending radial grid. Replaced.
-          \param structure Set to the fixed radial structure, per grid point.
+          \param structure The fixed radial structure, per grid point: used as
+                           given when it has one value per point, so the speed
+                           steps of a run share it; otherwise drawn and set.
           \param offsets   Set to each scan's offset including whole-scan jumps.
       */
       static void             toInterference( US_DataIO::RawData& data,

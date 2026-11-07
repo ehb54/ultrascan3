@@ -274,9 +274,6 @@ int US_Astfem_Sim::init_from_args( const US_SimCliArgs& args )
          // The file omits bottom_position; mirror the loaded at-rest bottom.
          // An explicit --centerpiece overrides it below.
          simparams.bottom_position = simparams.bottom;
-         // set_parameters() rebuilds the speed steps from its time state on
-         // every call; a run's record is written from the steps as loaded.
-         loaded_steps              = simparams.speed_step;
          set_parameters();
       }
       delete dialog;
@@ -795,6 +792,15 @@ DbgLv(1) << "SimPar:MAIN:simp: nspeed" << simparams.speed_step.count()
 
 void US_Astfem_Sim::set_parameters( void )
 {
+   // Below, the speed steps are rebuilt from this call's time state. A run's
+   // record is written from the steps as they were given instead, by the
+   // simparams file or the parameters dialog: any change from the last
+   // rebuilt steps is a newly given set.
+   if ( !US_SimSchedule::sameSpeedSteps( simparams.speed_step, rebuilt_steps ) )
+   {
+      loaded_steps = simparams.speed_step;
+   }
+
    meniscus_ar   = simparams.meniscus; // Meniscus at rest
    simparams.sim = true;
    pb_start  ->setEnabled( true );
@@ -847,7 +853,6 @@ DbgLv(1) << "==SimPar:MAIN:SetP";
    double previous_w2t   = 0.0;
    schedule_firsts.clear();
    schedule_counts.clear();
-   run_tmst_recorded = false;
    for ( int jj = 0; jj < nstep; jj++ )
    {
       US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[jj];
@@ -938,14 +943,8 @@ DbgLv(1) << "==SimPar:MAIN:SetP";
    US_DataIO::RawData marked = sim_data_all;
    if ( simparams.schedule.given && !sim_data_all.scanData.isEmpty() )
    {
-      const QMap<int, int> markers = US_SimSchedule::runMarkers( simparams.schedule, schedule_firsts, schedule_counts );
-      marked.scanData.clear();
-      for ( int seconds : markers.keys() )
-      {
-         US_DataIO::Scan scan = sim_data_all.scanData[0];
-         scan.seconds         = seconds;
-         marked.scanData << scan;
-      }
+      marked = US_SimSchedule::markedData( sim_data_all,
+                                           US_SimSchedule::runMarkers( simparams.schedule, schedule_firsts, schedule_counts ) );
    }
 
    if ( US_AstfemMath::writetimestate( tmst_tfpath, simparams, marked ) < 0 )
@@ -959,6 +958,7 @@ DbgLv(1) << "==SimPar:MAIN:SetP";
    // omega2t) from the time state, as the analysis programs do when they load
    // a run, so the steps this run records match what they will derive.
    simparams.speedstepsFromSSprof();
+   rebuilt_steps = simparams.speed_step;
    if ( dbg_level > 0 )
    {
       simparams.debug();
@@ -1001,6 +1001,7 @@ void US_Astfem_Sim::start_simulation( void )
 {
    //DbgLv(1) << "start_simulation is called";
    sim_failed = false;
+   interference_structure.clear(); // a new run draws its own fixed structure
 
    int           size_cv = system.components.size(); // Number of components in the system
    QVector<bool> reactVec( size_cv );                // Boolean array showing reaction case between system
@@ -1432,7 +1433,7 @@ QString US_Astfem_Sim::schedule_problem( void ) const
 
 QString US_Astfem_Sim::record_run_telemetry( void )
 {
-   if ( run_tmst_recorded || ( !simparams.schedule.given && !simparams.telemetry.given ) )
+   if ( !simparams.schedule.given && !simparams.telemetry.given )
    {
       return QString();
    }
@@ -1446,24 +1447,16 @@ QString US_Astfem_Sim::record_run_telemetry( void )
    const QMap<int, int>         markers = simparams.schedule.given
                                              ? US_SimSchedule::runMarkers( simparams.schedule, schedule_firsts, schedule_counts )
                                              : QMap<int, int>();
-   if ( simparams.schedule.given && !loaded_steps.isEmpty() )
-   { // Rewritten from the steps as loaded, so every channel and simulator of a
-      // run records the same rows however often its parameters were set up.
-      US_SimulationParameters record_params = simparams;
-      record_params.speed_step              = loaded_steps;
-      record_params.sim                     = true;
-      US_DataIO::RawData marked             = sim_data_all;
-      marked.scanData.clear();
-      for ( int seconds : markers.keys() )
-      {
-         US_DataIO::Scan scan = sim_data_all.scanData.value( 0 );
-         scan.seconds         = seconds;
-         marked.scanData << scan;
-      }
-      if ( US_AstfemMath::writetimestate( tmst_tfpath, record_params, marked ) < 0 )
-      {
-         return "could not write the time state " + tmst_tfpath;
-      }
+   // Written afresh from the speed steps as given on every save, so every
+   // channel and simulator of a run records the same rows however often its
+   // parameters were set up, and a second save does not record twice.
+   US_SimulationParameters      record_params = simparams;
+   record_params.speed_step                   = loaded_steps;
+   record_params.sim                          = true;
+   US_DataIO::RawData marked = simparams.schedule.given ? US_SimSchedule::markedData( sim_data_all, markers ) : sim_data_all;
+   if ( US_AstfemMath::writetimestate( tmst_tfpath, record_params, marked ) < 0 )
+   {
+      return "could not write the time state " + tmst_tfpath;
    }
    QVector<US_SimSchedule::Row> rows;
    const QString                error =
@@ -1484,7 +1477,6 @@ QString US_Astfem_Sim::record_run_telemetry( void )
       }
    }
 
-   run_tmst_recorded = true;
    return QString();
 }
 
@@ -1951,7 +1943,20 @@ DbgLv(1) << "ASIM:svscn: 1-speed file paths"  << odir << tmst_fpath;
 
       US_SimulationParameters::editRadiiFromCell(
          ev, af_params.current_meniscus, af_params.current_bottom, simparams.radial_resolution );
-      ev.ODlimit = has_ref ? sample_max[jd] : US_SimRecord::maxOD( sim_data );
+      // A clipped run's edit excludes the clipped readings (the solver drops
+      // readings at or above ODlimit); otherwise nothing written is excluded.
+      if ( has_ref )
+      {
+         ev.ODlimit = sample_max[jd];
+      }
+      else if ( od_limit > 0.0 )
+      {
+         ev.ODlimit = od_limit;
+      }
+      else
+      {
+         ev.ODlimit = ( interference_mode() && jd < written_max.size() ) ? written_max[jd] : US_SimRecord::maxOD( sim_data );
+      }
       if ( interference_mode() )
       { // The interference detector need not reach the bottom; edit only what it saw.
          const QVector<double> radii = US_SimOptics::interferenceRadii( simparams.interference );
@@ -2169,9 +2174,18 @@ DbgLv(1) << "Sim:SV: reset s1plat" << s1plat;
 
    if ( interference_mode() )
    { // The interference detector's own grid, in fringes, with its noise model.
-      QVector<double> structure;
-      QVector<double> offsets;
+      const QString problem = US_SimOptics::interferenceGeometryProblem( simparams.interference, mrad, brad );
+      if ( !problem.isEmpty() )
+      {
+         qDebug() << "Error:" << problem;
+         return false;
+      }
+      // One fixed structure for the whole run, shared by its speed steps.
+      QVector<double>& structure = interference_structure;
+      QVector<double>  offsets;
       US_SimOptics::toInterference( sim_data, simparams.interference, mrad, brad, total_conc, od_limit, structure, offsets );
+      written_max.resize( qMax( (int) written_max.size(), i1 + 1 ) );
+      written_max[i1] = US_SimRecord::maxOD( sim_data );
 
       // The ground truth an analysis fits, in the files the absorbance noise uses.
       QVector<double> times;

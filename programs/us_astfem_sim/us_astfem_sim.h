@@ -68,8 +68,10 @@ class US_Astfem_Sim : public US_Widgets
       double od_limit   = 0.0;              //!< Headless clip threshold from --od-limit; 0 leaves readings unclipped
       QVector<double>            schedule_firsts;           //!< Schedule: each speed step's first cycle start
       QVector<int>               schedule_counts;           //!< Schedule: each speed step's scan count
-      bool                       run_tmst_recorded = false; //!< The time state already holds the run's record
-      QVector<US_SimulationParameters::SpeedProfile> loaded_steps;              //!< Speed steps as loaded from --simparams
+      QVector<US_SimulationParameters::SpeedProfile> loaded_steps;              //!< Speed steps as given, for the run's record
+      QVector<US_SimulationParameters::SpeedProfile> rebuilt_steps;             //!< Speed steps as set_parameters last rebuilt them
+      QVector<double>                                interference_structure;    //!< Interference: the run's fixed radial structure
+      QVector<double>                                written_max; //!< Interference: largest fringe value written per speed step
       QVector<QString>           ref_raw_guids; //!< RI: reference dataset raw GUID per speed step, set by save_xla
       QVector<double>            sample_max;    //!< RI: largest sample intensity per speed step, for its edit file
       QVector<double>            ref_max;       //!< RI: largest reference intensity per speed step, for its edit file

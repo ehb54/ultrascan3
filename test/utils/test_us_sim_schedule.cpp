@@ -1,8 +1,10 @@
 //! \file test_us_sim_schedule.cpp
 #include "qt_test_base.h"
+#include "us_sim_optics.h"
 #include "us_sim_schedule.h"
 #include "us_simparms.h"
 
+#include <QDir>
 #include <QTemporaryDir>
 
 #include <cmath>
@@ -206,4 +208,82 @@ TEST( US_SimScheduleTest, SimparamsRoundTripScheduleAndTelemetryOnlyWhenGiven )
    ASSERT_EQ( loaded.load_simparms( plain_path ), 0 );
    EXPECT_FALSE( loaded.schedule.given );
    EXPECT_FALSE( loaded.telemetry.given );
+}
+
+TEST( US_SimScheduleTest, WritingRowsReportsAFailedDefinitionsFile )
+{
+   QTemporaryDir dir;
+   ASSERT_TRUE( dir.isValid() );
+   // The definitions file is written beside the records; a directory in its
+   // place makes that write fail.
+   ASSERT_TRUE( QDir( dir.path() ).mkdir( "run.time_state.xml" ) );
+   const QStringList keys{ "Time", "RawSpeed", "SetSpeed", "Omega2T", "Temperature", "Step", "Scan" };
+   const QStringList formats{ "I4", "F4", "I4", "F4", "F4", "I2", "I2" };
+   EXPECT_FALSE( US_SimSchedule::writeRows( dir.filePath( "run.time_state.tmst" ), physics( 10 ), keys, formats ) );
+}
+
+TEST( US_SimScheduleTest, SimparamsKeepFullPrecision )
+{
+   QTemporaryDir dir;
+   ASSERT_TRUE( dir.isValid() );
+   US_SimulationParameters given;
+   given.schedule                        = threeCells( 0 );
+   given.schedule.slot_seconds           = { 123.4567, 23.0 };
+   given.intensity.given                 = true;
+   given.intensity.source_counts         = 1234567.0;
+   given.wavelength_scan.given           = true;
+   given.wavelength_scan.spectrum[260.0] = 43824.57;
+   const QString path                    = dir.filePath( "precise.xml" );
+   ASSERT_EQ( given.save_simparms( path ), 0 );
+
+   US_SimulationParameters loaded;
+   ASSERT_EQ( loaded.load_simparms( path ), 0 );
+   EXPECT_EQ( loaded.schedule.slot_seconds, given.schedule.slot_seconds );
+   EXPECT_DOUBLE_EQ( loaded.intensity.source_counts, 1234567.0 );
+   EXPECT_DOUBLE_EQ( loaded.wavelength_scan.spectrum.value( 260.0 ), 43824.57 );
+}
+
+TEST( US_SimScheduleTest, MarkedDataHasOneScanPerMarkerLikeTheFirst )
+{
+   US_DataIO::RawData data;
+   US_DataIO::Scan    scan;
+   scan.seconds     = 500;
+   scan.temperature = 20.0;
+   scan.rpm         = 45000.0;
+   data.scanData << scan << scan;
+   const US_DataIO::RawData marked = US_SimSchedule::markedData( data, { { 113, 1 }, { 136, 1 }, { 182, 2 } } );
+   ASSERT_EQ( marked.scanData.size(), 3 );
+   EXPECT_EQ( marked.scanData[0].seconds, 113 );
+   EXPECT_EQ( marked.scanData[2].seconds, 182 );
+   EXPECT_DOUBLE_EQ( marked.scanData[1].rpm, 45000.0 );
+}
+
+TEST( US_SimScheduleTest, SpeedStepsCompareByWhatDefinesTheRun )
+{
+   QVector<US_SimulationParameters::SpeedProfile> one( 1 );
+   one[0].rotorspeed                                  = 45000;
+   one[0].scans                                       = 30;
+   one[0].duration_hours                              = 2;
+   one[0].duration_minutes                            = 30.0;
+   QVector<US_SimulationParameters::SpeedProfile> two = one;
+   two[0].time_first                                  = 113; // derived values do not make a different run
+   two[0].w2t_first                                   = 1.0e9;
+   EXPECT_TRUE( US_SimSchedule::sameSpeedSteps( one, two ) );
+   two[0].rotorspeed = 50000;
+   EXPECT_FALSE( US_SimSchedule::sameSpeedSteps( one, two ) );
+   two                     = one;
+   two[0].duration_minutes = 30.1667; // what the time-state rebuild adds
+   EXPECT_FALSE( US_SimSchedule::sameSpeedSteps( one, two ) );
+   EXPECT_FALSE( US_SimSchedule::sameSpeedSteps( one, {} ) );
+}
+
+TEST( US_SimScheduleTest, InterferenceGridMustHoldTheMeniscus )
+{
+   US_SimulationParameters::InterferenceSettings settings;
+   EXPECT_TRUE( US_SimOptics::interferenceGeometryProblem( settings, 5.87, 7.2 ).isEmpty() );
+   settings.start = 6.3;
+   EXPECT_FALSE( US_SimOptics::interferenceGeometryProblem( settings, 5.87, 7.2 ).isEmpty() );
+   settings.start  = 5.0;
+   settings.points = 100; // ends at 5.0673, before the meniscus
+   EXPECT_FALSE( US_SimOptics::interferenceGeometryProblem( settings, 5.87, 7.2 ).isEmpty() );
 }

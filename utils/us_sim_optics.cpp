@@ -304,6 +304,20 @@ QString US_SimOptics::interferenceProblem( const Interference& settings )
    return QString();
 }
 
+QString US_SimOptics::interferenceGeometryProblem( const Interference& settings, double meniscus, double bottom )
+{
+   const QVector<double> radii = interferenceRadii( settings );
+   if ( radii.isEmpty() || !( radii.first() < meniscus && radii.last() > meniscus ) )
+   {
+      return QString( "interference grid %1-%2 cm does not hold the meniscus at %3 cm (cell to %4 cm)" )
+         .arg( radii.value( 0 ) )
+         .arg( radii.isEmpty() ? 0.0 : radii.last() )
+         .arg( meniscus )
+         .arg( bottom );
+   }
+   return QString();
+}
+
 QVector<double> US_SimOptics::interferenceRadii( const Interference& settings )
 {
    QVector<double> radii( qMax( settings.points, 0 ) );
@@ -334,9 +348,14 @@ void US_SimOptics::toInterference( US_DataIO::RawData& data,
    }
 
    // A fixed radial structure: a few slow waves across the window, scaled to
-   // the requested spread. Shared by every scan.
-   structure.fill( 0.0, points );
-   if ( settings.structure > 0.0 )
+   // the requested spread. Shared by every scan, and by every speed step of a
+   // run once it has been drawn.
+   const bool drawn = structure.size() == points;
+   if ( !drawn )
+   {
+      structure.fill( 0.0, points );
+   }
+   if ( !drawn && settings.structure > 0.0 )
    {
       const double span = radii.last() - radii.first();
       for ( int kk = 0; kk < 6; kk++ )
