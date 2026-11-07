@@ -1288,30 +1288,36 @@ DbgLv(1) << "SP:ssToDB:  w2t" << spi->w2t_first << spi->w2t_last
 //  speed profile vector implied.
 int US_SimulationParameters::simSpeedsFromTimeState( const QString tmst_fpath )
 {
-   int dbg_level    = US_Settings::us_debug();
-   tsobj            = new US_TimeState(); // Create TimeState
+   int                   dbg_level = US_Settings::us_debug();
+   // Load into locals, and set tsobj only once the timestate is complete:
+   //  never dereference or delete tsobj here, which a copy of these
+   //  parameters (or, wrongly, another thread) may still be using.
+   US_TimeState*         tstate    = new US_TimeState(); // Create TimeState
+   QVector<SimSpeedProf> ssprof;
 
-   if ( tsobj->open_read_data( tmst_fpath, true ) != 0 ) // Open with prefetch
-   {                                                     // Unreadable timestate (data or definitions file):  no speed profile
-      DbgLv( 0 ) << "SP: ssFts: could not read time state" << tmst_fpath << tsobj->last_error_message();
-      delete tsobj;
+   if ( tstate->open_read_data( tmst_fpath, true ) != 0 ) // Open with prefetch
+   {                                                      // Unreadable timestate (data or definitions file):  no speed profile
+      DbgLv( 0 ) << "SP: ssFts: could not read time state" << tmst_fpath << tstate->last_error_message();
+      delete tstate;
       tsobj = NULL;
       sim_speed_prof.clear();
       return -1;
    }
 
-   if ( ssProfFromTimeState( tsobj, sim_speed_prof ) < 0 ) // Create SSP vector
+   if ( ssProfFromTimeState( tstate, ssprof ) < 0 ) // Create SSP vector
    {
       DbgLv( 0 ) << "SP: ssFts: time state lacks needed keys" << tmst_fpath;
-      delete tsobj;
+      delete tstate;
       tsobj = NULL;
       sim_speed_prof.clear();
       return -1;
    }
 
+   tsobj          = tstate;
+   sim_speed_prof = ssprof;
    DbgLv( 1 ) << "SP: ssFts: ispeed" << ( sim_speed_prof.isEmpty() ? 0 : sim_speed_prof[0].rotorspeed ) << "ssp count"
               << sim_speed_prof.count();
-   return sim_speed_prof.count();                // Return number steps
+   return sim_speed_prof.count(); // Return number steps
 }
 
 // Set the edit radii implied by a simulated cell geometry.

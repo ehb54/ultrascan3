@@ -96,9 +96,8 @@ void setup( const Experiment& exp, US_SimulationParameters& sp, US_DataIO::RawDa
    US_SimulationParameters::computeSpeedSteps( &rdata.scanData, sp.speed_step );
 }
 
-// All simulated values of an experiment, scan-major;  rc, if given, gets
-//  the return code of calculate()
-QVector<double> simulate( const Experiment& exp, int* rc = nullptr )
+// The one-species model of an experiment
+US_Model makeModel( const Experiment& exp )
 {
    US_Model model;
    model.components.resize( 1 );
@@ -110,7 +109,28 @@ QVector<double> simulate( const Experiment& exp, int* rc = nullptr )
    sc.mw                             = 0.0;
    sc.f                              = 0.0;
    sc.signal_concentration           = 1.0;
+   return model;
+}
 
+// All values of simulation data, scan-major
+QVector<double> values( US_DataIO::RawData& rdata )
+{
+   QVector<double> vals;
+   for ( int ss = 0; ss < rdata.scanCount(); ss++ )
+   {
+      for ( int rr = 0; rr < rdata.pointCount(); rr++ )
+      {
+         vals << rdata.value( ss, rr );
+      }
+   }
+   return vals;
+}
+
+// All simulated values of an experiment, scan-major;  rc, if given, gets
+//  the return code of calculate()
+QVector<double> simulate( const Experiment& exp, int* rc = nullptr )
+{
+   US_Model                model = makeModel( exp );
    US_SimulationParameters sp;
    US_DataIO::RawData      rdata;
    setup( exp, sp, rdata );
@@ -122,16 +142,7 @@ QVector<double> simulate( const Experiment& exp, int* rc = nullptr )
    {
       *rc = status;
    }
-
-   QVector<double> vals;
-   for ( int ss = 0; ss < rdata.scanCount(); ss++ )
-   {
-      for ( int rr = 0; rr < rdata.pointCount(); rr++ )
-      {
-         vals << rdata.value( ss, rr );
-      }
-   }
-   return vals;
+   return values( rdata );
 }
 
 // Index of the first value that differs bitwise, or -1
@@ -320,6 +331,53 @@ TEST_F( TestUSAstfemRsaThreads, TimestateWithoutDefinitionsFailsToLoad )
    EXPECT_EQ( sp.simSpeedsFromTimeState( tmst ), -1 );
    EXPECT_EQ( sp.tsobj, nullptr );
    EXPECT_EQ( sp.sim_speed_prof.size(), 0 );
+}
+
+// Solves in threads that share one simparams with no timestate loaded (as
+//  us_fematch's ThreadWorker does):  one of them builds the timestate, the
+//  others use it, and all give the values of the same solve alone.  Without
+//  the lock around the timestate build this aborts in 3 of 3 runs.
+TEST_F( TestUSAstfemRsaThreads, SharedSimparamsWithoutTimestate )
+{
+   const Experiment&     exp      = experiments[0];
+   const QVector<double> expected = simulate( exp );
+   ASSERT_GT( expected.size(), 0 );
+
+   for ( int pass = 0; pass < 40; pass++ )
+   {
+      US_SimulationParameters shared;
+      US_DataIO::RawData      rdata;
+      setup( exp, shared, rdata );
+      ASSERT_EQ( shared.tsobj, nullptr );
+      shared.sim = ( rdata.channel == 'S' ); // Set by the owner, as us_fematch does
+
+      const int                       nthreads = 8;
+      std::vector<US_DataIO::RawData> sims( nthreads, rdata );
+      std::vector<int>                rcs( nthreads, 1 );
+      std::vector<std::thread>        workers;
+      for ( int tt = 0; tt < nthreads; tt++ )
+      {
+         workers.emplace_back(
+            [tt, &exp, &shared, &sims, &rcs]()
+            {
+               US_Model      model = makeModel( exp );
+               US_Astfem_RSA astfem( model, shared );
+               astfem.set_debug_flag( 0 );
+               rcs[tt] = astfem.calculate( sims[tt] );
+            } );
+      }
+      for ( std::thread& worker : workers )
+      {
+         worker.join();
+      }
+
+      EXPECT_NE( shared.tsobj, nullptr );
+      for ( int tt = 0; tt < nthreads; tt++ )
+      {
+         EXPECT_EQ( rcs[tt], 0 ) << "pass " << pass << " thread " << tt;
+         EXPECT_EQ( firstDifference( values( sims[tt] ), expected ), -1 ) << "pass " << pass << " thread " << tt;
+      }
+   }
 }
 
 // Solves in threads, each of its own experiment and without a loaded

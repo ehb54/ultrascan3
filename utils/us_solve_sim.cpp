@@ -519,7 +519,7 @@ if ( simcache != nullptr )
 DbgLv( 2 ) << "   CR:114  rss now" << US_Memory::rss_now() << "cc" << cc;
 if ( abort )
 {
-   mark_failed_solve( sim_vals );
+   mark_failed_solve( sim_vals, dataset_count );
    return;
 }
 
@@ -847,7 +847,7 @@ DbgLv(1) << "CR: sdat:"
 #endif
             if ( abort )
             {
-               mark_failed_solve( sim_vals );
+               mark_failed_solve( sim_vals, dataset_count );
                return;
             }
 
@@ -1055,7 +1055,7 @@ DbgLv(1) << "solve_sim_3: timestate file does not exist" << tmst_fpath << dset->
             }
             if ( abort )
             {
-               mark_failed_solve( sim_vals );
+               mark_failed_solve( sim_vals, dataset_count );
                return;
             }
 
@@ -2347,13 +2347,14 @@ QByteArray US_SolveSim::simulate( US_Model& model, DataSet* dset, US_DataIO::Edi
 }
 
 // After a stop:  if a simulation failed, mark the results invalid, so that
-//  they cannot be taken for a fit
-void US_SolveSim::mark_failed_solve( Simulation& sim_vals )
+//  they cannot be taken for a fit.  The failure comes before calc_residuals
+//  sizes the variances, so they are sized here:  one per data set.
+void US_SolveSim::mark_failed_solve( Simulation& sim_vals, int dataset_count )
 {
    if ( sim_failed.load( std::memory_order_relaxed ) )
    {
       sim_vals.variance = qQNaN();
-      sim_vals.variances.fill( qQNaN() );
+      sim_vals.variances.fill( qQNaN(), dataset_count );
    }
 }
 

@@ -299,16 +299,14 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
       void   GlobalStiff      ( double*, double**, double**,
                                 double, double );
 
+      //!< Loads a timestate built from the speed steps into simparams if
+      //!< none is loaded, under a lock (threads may share one simparams).
+      //!< Returns 0, or -1 if none could be built
+      int                                     ensure_timestate( US_DataIO::RawData& );
+
       //!< Sets simparams.sim from the data channel, writing it only when
       //!< it changes (threads may share one simparams)
       void                                    set_sim_flag( const US_DataIO::RawData& );
-
-      //!< Writes a temporary timestate file if not found
-      //!< Input  : 1. A string with date+hrs+mins+seconds
-      //!<        : 2. Experimental data set
-      //!< Output : A timestate structure containing information
-      //            for each second
-      int writetimestate(const QString& ,US_DataIO::RawData& ) ;
 
       //!< Loads the experimental data and converts into "MfemData" type
       //!< Input  : experimental data ( RawData )
