@@ -52,7 +52,7 @@ class US_UTIL_EXTERN US_SimCli
       };
 
       //! \brief Supported optical data types.
-      //! RI and WI would need conversion to intensity; WA and WI are wavelength scans.
+      //! RI writes sample and reference intensities; WA and WI are wavelength scans.
       static QStringList           runTypes();
 
       //! \brief The error parse() reports for an invalid option value.
@@ -68,6 +68,12 @@ class US_UTIL_EXTERN US_SimCli
       //! %1 channel letter, %2 its row, %3 the selected row.
       static constexpr const char* channelRowMismatchMessage = "--channel %1 is centerpiece row %2, but "
                                                                "--centerpiece-channel selects row %3";
+      //! --runtype RI with a channel that has no reference partner: %1 channel.
+      static constexpr const char* intensityChannelMessage   = "--runtype RI writes a sample channel and its reference; "
+                                                               "give --channel A, C, E or G, not %1";
+      //! --runtype RI together with --od-limit.
+      static constexpr const char* intensityOdLimitMessage   = "--od-limit does not apply to --runtype RI, whose "
+                                                               "readings fall to dark counts instead of being clipped";
       //! Simulation parameters with other than one speed step: %1 file, %2 step count.
       static constexpr const char* speedStepCountMessage     = "%1 has %2 speed steps; only one can be simulated";
 

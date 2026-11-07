@@ -174,8 +174,10 @@ const QVector<Option>& options()
       { All,
         { "runtype" },
         "Two-character optical data type to tag the output with (" + US_SimCli::runTypes().join( ", " ) +
-           "; default RA). Affects the type tag and the derived file names only -- "
-           "the simulated data is identical for every type",
+           "; default RA). RA, IP and FI change only the type tag and the derived "
+           "file names. RI writes intensities instead of absorbance: a sample "
+           "dataset on the given channel and a reference dataset on its partner "
+           "(A/B, C/D, E/F, G/H), shaped by the simparams <intensity> element",
         "runtype",
         "one of " + US_SimCli::runTypes().join( ", " ),
         []( const QString& value, US_SimCliArgs& args )
@@ -286,7 +288,7 @@ const QVector<Option>& options()
 
 QStringList US_SimCli::runTypes()
 {
-   return { "RA", "IP", "FI" };
+   return { "RA", "RI", "IP", "FI" };
 }
 
 QString US_SimCli::invalidValueMessage( const QString& option, const QString& value )

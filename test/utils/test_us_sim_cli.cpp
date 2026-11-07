@@ -144,6 +144,14 @@ TEST_F( US_SimCliTest, OdLimitBelongsToAstfemOnly )
    EXPECT_TRUE( output.contains( "--od-limit" ) );
 }
 
+TEST_F( US_SimCliTest, BothSimulatorsAcceptIntensityRuns )
+{
+   ASSERT_EQ( parse( US_SimCli::Astfem, { "--runtype", "ri" } ), -1 );
+   EXPECT_EQ( args.run_type, "RI" );
+   ASSERT_EQ( parse( US_SimCli::MwlSpecies, { "--runtype", "RI" } ), -1 );
+   EXPECT_EQ( args.run_type, "RI" );
+}
+
 TEST_F( US_SimCliTest, InvalidValuesAreRejected )
 {
    const QList<QStringList> cases = {
@@ -159,7 +167,6 @@ TEST_F( US_SimCliTest, InvalidValuesAreRejected )
       { "cell", "9" },
       { "channel", "X" },
       { "channel", "AB" },
-      { "runtype", "RI" },
       { "runtype", "WI" },
       { "edit-timestamp", "abc" },
       { "edit-timestamp", "2413320000" },
@@ -182,8 +189,8 @@ TEST_F( US_SimCliTest, InvalidValuesAreRejected )
 
 TEST_F( US_SimCliTest, InvalidValueMessageSaysWhatIsExpected )
 {
-   EXPECT_EQ( US_SimCli::invalidValueMessage( "runtype", "RI" ),
-              "Invalid --runtype RI; expected one of " + US_SimCli::runTypes().join( ", " ) );
+   EXPECT_EQ( US_SimCli::invalidValueMessage( "runtype", "WI" ),
+              "Invalid --runtype WI; expected one of " + US_SimCli::runTypes().join( ", " ) );
    EXPECT_EQ( US_SimCli::invalidValueMessage( "cell", "9" ), "Invalid --cell 9; expected 1 to 8" );
    EXPECT_EQ( US_SimCli::invalidValueMessage( "od-limit", "0" ), "Invalid --od-limit 0; expected a finite number greater than 0" );
 }

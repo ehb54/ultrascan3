@@ -24,6 +24,7 @@
 #include "us_rotor_gui.h"
 #include "us_settings.h"
 #include "us_sim_inputs.h"
+#include "us_sim_optics.h"
 #include "us_sim_params_gui.h"
 #include "us_sim_record.h"
 #include "us_time_state.h"
@@ -424,6 +425,23 @@ int US_Astfem_Sim::init_from_args( const US_SimCliArgs& args )
    if ( args.od_limit > 0.0 )
    {
       od_limit = args.od_limit;
+   }
+
+   if ( intensity_mode() )
+   {
+      QString problem = US_SimOptics::intensityProblem( simparams.intensity );
+      if ( US_SimOptics::referenceChannel( sim_channel ) == 0 )
+      {
+         problem = QString( US_SimCli::intensityChannelMessage ).arg( QChar( sim_channel ) );
+      }
+      else if ( od_limit > 0.0 )
+      {
+         problem = US_SimCli::intensityOdLimitMessage;
+      }
+      if ( !problem.isEmpty() )
+      {
+         reportHeadlessLoadFailure( "runtype", problem, errors_to_cl, gui_needed, error_occured );
+      }
    }
    // set movie flag if needed
    if ( args.movie )
@@ -1267,9 +1285,30 @@ void US_Astfem_Sim::baseline( void )
    }
 }
 
+bool US_Astfem_Sim::intensity_mode( void ) const
+{
+   return run_type == "RI";
+}
+
+bool US_Astfem_Sim::intensity_noise( void ) const
+{
+   return intensity_mode() && ( simparams.intensity.read_noise > 0.0 || simparams.intensity.shot_noise > 0.0 );
+}
+
+double US_Astfem_Sim::buffer_absorbance( const US_DataIO::RawData& data ) const
+{
+   const double wavelength = data.scanData.isEmpty() ? 0.0 : data.scanData[0].wavelength;
+   return US_SimOptics::bufferOD( buffer, wavelength, simparams.cp_pathlen );
+}
+
 void US_Astfem_Sim::random_noise( void )
 {
    if ( simparams.rnoise == 0.0 && simparams.lrnoise == 0.0) return;
+   // Intensity mode records counts noise instead; adding both would double it.
+   if ( intensity_noise() )
+   {
+      return;
+   }
    // Add random noise
    if ( simparams.rnoise != 0.0 && simparams.lrnoise != 0.0)
    {
@@ -1673,6 +1712,18 @@ DbgLv(1) << "ASIM:svscn: 1-speed file paths"  << odir << tmst_fpath;
       QList<US_Convert::TripleInfo> triples;
       triples << triple;
 
+      // Intensity mode also wrote a reference dataset on the partner channel.
+      const bool    has_ref     = intensity_mode() && jd < ref_raw_guids.size();
+      const QString ref_channel = has_ref ? QString( QChar( US_SimOptics::referenceChannel( sim_data.channel ) ) ) : QString();
+      if ( has_ref )
+      {
+         US_Convert::TripleInfo ref_triple = triple;
+         ref_triple.tripleID               = 2;
+         ref_triple.tripleDesc             = cell + " / " + ref_channel + " / " + wl;
+         US_Util::uuid_parse( ref_raw_guids[jd], reinterpret_cast<uchar*>( ref_triple.tripleGUID ) );
+         triples << ref_triple;
+      }
+
       if ( experiment.saveToDisk( triples, runType, edit_runid, edir, speed_steps ) != US_Convert::OK )
       {
          qDebug() << "Error: could not write the experiment record for" << edit_runid;
@@ -1694,12 +1745,27 @@ DbgLv(1) << "ASIM:svscn: 1-speed file paths"  << odir << tmst_fpath;
 
       US_SimulationParameters::editRadiiFromCell(
          ev, af_params.current_meniscus, af_params.current_bottom, simparams.radial_resolution );
-      ev.ODlimit = US_SimRecord::maxOD( sim_data );
+      ev.ODlimit = has_ref ? sample_max[jd] : US_SimRecord::maxOD( sim_data );
 
       if ( US_DataIO::writeEdits( edir + fname, ev ) != US_DataIO::OK )
       { // Report headless save failures without a modal dialog.
          qDebug() << "Error: could not write edit file" << edir + fname;
          return false;
+      }
+
+      if ( has_ref )
+      {
+         const QString ref_fname = edit_runid + "." + now + "." + runType + "." + cell + "." + ref_channel + "." + wl + ".xml";
+         ev.channel              = ref_channel;
+         ev.editGUID             = US_SimRecord::guid( guid_seed, "edit.ref." + edit_runid );
+         ev.dataGUID             = ref_raw_guids[jd];
+         ev.ODlimit              = ref_max[jd];
+
+         if ( US_DataIO::writeEdits( edir + ref_fname, ev ) != US_DataIO::OK )
+         {
+            qDebug() << "Error: could not write edit file" << edir + ref_fname;
+            return false;
+         }
       }
    }
 
@@ -1876,57 +1942,77 @@ DbgLv(1) << "Sim:SV: reset s1plat" << s1plat;
    }
 
 
-   points             = (int)( ( maxrad - mrad ) / grid_res ) + 31;
-
-   progress->setRange( 1, total_scans );
-   progress->reset();
-
-   QVector< double > tconc_v( points );
-   double* temp_conc  = tconc_v.data();
-   double  rad        = mrad - 30.0 * grid_res;
-   sim_data.xvalues.resize( points );
-   lb_progress->setText( "Writing..." );
-
-   for ( int jp = 0; jp < points; jp++ )
-   {
-      sim_data.xvalues[ jp ] = rad;
-      rad  += grid_res;
+   if ( simparams.window.given )
+   { // The instrument's fixed window: air, the cell, and past the bottom.
+      const QString problem = US_SimOptics::windowProblem( simparams.window, mrad, brad );
+      if ( !problem.isEmpty() )
+      {
+         qDebug() << "Error:" << problem;
+         return false;
+      }
+      // In intensity mode the buffer and the region past the bottom are
+      // applied as light, by toIntensity() below.
+      const double air_sigma = intensity_noise() ? 0.0 : total_conc * simparams.rnoise / 100.0;
+      const double buffer_od = intensity_mode() ? 0.0 : buffer_absorbance( sim_data );
+      // In absorbance mode the clip threshold also caps the meniscus spike.
+      const double cap       = intensity_mode() ? 0.0 : dthresh;
+      US_SimOptics::toWindow( sim_data, simparams.window, mrad, brad, total_conc, air_sigma, buffer_od, cap, cap );
+      progress->setValue( total_scans );
    }
-
-   for ( int js = 0; js < total_scans; js++ )
+   else
    {
-      US_DataIO::Scan* scan = &sim_data.scanData[ js ];
+      points = (int) ( ( maxrad - mrad ) / grid_res ) + 31;
 
-      for ( int jp = 30; jp < points; jp++ )
-      {  // Position the computed concentration values after the first 30
-         temp_conc[ jp ] = scan->rvalues[ jp - 30 ];
-      }
+      progress->setRange( 1, total_scans );
+      progress->reset();
 
-      for ( int jp = 0; jp < 30; jp++ )
-      {  // Zero the first 30 points
-         temp_conc[ jp ] = 0.0;
-      }
-
-      temp_conc[ 30 ] = s1plat * 2.0;   // Put a spike at the meniscus
-
-      scan->rvalues.resize( points );
-
-      // Resize and clear the interpolation bitmap for the output readings.
-      scan->interpolated.fill( '\0', ( points + 7 ) / 8 );
+      QVector<double> tconc_v( points );
+      double*         temp_conc = tconc_v.data();
+      double          rad       = mrad - 30.0 * grid_res;
+      sim_data.xvalues.resize( points );
+      lb_progress->setText( "Writing..." );
 
       for ( int jp = 0; jp < points; jp++ )
-      {  // Store the values: first 30 then computed values
-         scan->rvalues[ jp ] = temp_conc[ jp ];
+      {
+         sim_data.xvalues[jp] = rad;
+         rad += grid_res;
       }
 
-      progress->setValue( ( js + 1 ) );
-//DbgLv(2) << "WD:sc secs" << scan->seconds;
-//if ( ii == 0 || (ii+1) == total_scans ) {
-//DbgLv(2) << "WD:S0:c00" << scan->rvalues[0];
-//DbgLv(2) << "WD:S0:c01" << scan->rvalues[1];
-//DbgLv(2) << "WD:S0:c30" << scan->rvalues[30];
-//DbgLv(2) << "WD:S0:cn1" << scan->rvalues[points-2];
-//DbgLv(2) << "WD:S0:cnn" << scan->rvalues[points-1]; }
+      for ( int js = 0; js < total_scans; js++ )
+      {
+         US_DataIO::Scan* scan = &sim_data.scanData[js];
+
+         for ( int jp = 30; jp < points; jp++ )
+         { // Position the computed concentration values after the first 30
+            temp_conc[jp] = scan->rvalues[jp - 30];
+         }
+
+         for ( int jp = 0; jp < 30; jp++ )
+         { // Zero the first 30 points
+            temp_conc[jp] = 0.0;
+         }
+
+         temp_conc[30] = s1plat * 2.0; // Put a spike at the meniscus
+
+         scan->rvalues.resize( points );
+
+         // Resize and clear the interpolation bitmap for the output readings.
+         scan->interpolated.fill( '\0', ( points + 7 ) / 8 );
+
+         for ( int jp = 0; jp < points; jp++ )
+         { // Store the values: first 30 then computed values
+            scan->rvalues[jp] = temp_conc[jp];
+         }
+
+         progress->setValue( ( js + 1 ) );
+         //DbgLv(2) << "WD:sc secs" << scan->seconds;
+         //if ( ii == 0 || (ii+1) == total_scans ) {
+         //DbgLv(2) << "WD:S0:c00" << scan->rvalues[0];
+         //DbgLv(2) << "WD:S0:c01" << scan->rvalues[1];
+         //DbgLv(2) << "WD:S0:c30" << scan->rvalues[30];
+         //DbgLv(2) << "WD:S0:cn1" << scan->rvalues[points-2];
+         //DbgLv(2) << "WD:S0:cnn" << scan->rvalues[points-1]; }
+      }
    }
 
    QString run_id    = dirname.section( "/", -1, -1 );
@@ -1942,7 +2028,43 @@ DbgLv(1) << "Sim:SV:  run_id_from_save_xla" << run_id;
       .arg( dirname ).arg( run_id ).arg( stype ).arg( cell )
       .arg( schann  ).arg( wvlen  );
 
-   int wstat        = US_DataIO::writeRawData( ofname, sim_data );
+   int wstat = US_DataIO::OK;
+
+   if ( intensity_mode() )
+   { // The sample sector on this channel, the reference on its partner.
+      US_DataIO::RawData sample;
+      US_DataIO::RawData reference;
+      US_SimOptics::toIntensity( sim_data, simparams.intensity, mrad, brad, buffer_absorbance( sim_data ), sample, reference );
+
+      const QString guid = US_SimRecord::guid( guid_seed, QString( "raw.ref.%1" ).arg( i1 ) );
+      US_Util::uuid_parse( guid, (uchar*) reference.rawGUID );
+
+      const int nstep = simparams.speed_step.size();
+      ref_raw_guids.resize( nstep );
+      sample_max.resize( nstep );
+      ref_max.resize( nstep );
+      ref_raw_guids[i1] = guid;
+      sample_max[i1]    = US_SimRecord::maxOD( sample );
+      ref_max[i1]       = US_SimRecord::maxOD( reference );
+
+      const QString refname = QString( "%1/%2.%3.%4.%5.%6.auc" )
+                                 .arg( dirname )
+                                 .arg( run_id )
+                                 .arg( stype )
+                                 .arg( cell )
+                                 .arg( QChar( reference.channel ) )
+                                 .arg( wvlen );
+      wstat = US_DataIO::writeRawData( ofname, sample );
+      if ( wstat == US_DataIO::OK )
+      {
+         ofname = refname;
+         wstat  = US_DataIO::writeRawData( ofname, reference );
+      }
+   }
+   else
+   {
+      wstat = US_DataIO::writeRawData( ofname, sim_data );
+   }
 DbgLv(1) << "Sim:SV: after_write_rawdata" << ofname;
 
    if ( wstat != US_DataIO::OK )

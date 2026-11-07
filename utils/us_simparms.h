@@ -206,6 +206,35 @@ class US_UTIL_EXTERN US_SimulationParameters
    double    cp_angle;          //!< Angle of centerpiece sector
    double    cp_width;          //!< Width of centerpiece channel if rectangular
 
+   //! \brief Intensity-mode settings, from an <intensity> element.
+   //! Used when a simulator writes RI data: the absorbance is turned into the
+   //! intensities a sample (A) and a reference (B) sector record.
+   class US_UTIL_EXTERN IntensitySettings
+   {
+      public:
+         bool   given         = false;  //!< The simparams file has an <intensity> element
+         double source_counts = 9000.0; //!< Light-source intensity at the window center, in counts
+         bool   curved        = true;   //!< Radial light profile: curved (true) or flat
+         double read_noise    = 12.0;   //!< Read noise a, in counts
+         double shot_noise    = 0.24;   //!< Shot-noise factor b: sigma(I) = sqrt( a^2 + b I ); 12-60 counts over 3.6k-14k
+         double dark          = 20.0;   //!< Counts recorded where no light reaches the detector
+   };
+
+   //! \brief Instrument window settings, from a <window> element.
+   //! Data covers this fixed radial window instead of starting at the meniscus.
+   class US_UTIL_EXTERN WindowSettings
+   {
+      public:
+         bool   given             = false; //!< The simparams file has a <window> element
+         double start             = 5.75;  //!< First radius, cm
+         double end               = 7.25;  //!< Radius one step past the last point, cm
+         double resolution        = 0.001; //!< Point spacing, cm
+         double meniscus_artifact = 1.5;   //!< Least meniscus spike height, as a multiple of the loading
+   };
+
+   IntensitySettings intensity; //!< Intensity mode for RI output
+   WindowSettings    window;    //!< Fixed instrument window; off unless given
+
    //! Each distinct RPM value in a series of speeds 
    class US_UTIL_EXTERN  SpeedProfile
    {

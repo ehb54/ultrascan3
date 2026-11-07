@@ -85,6 +85,8 @@ class US_MwlSpeciesSim : public US_Widgets
         void    add_ri_noise( US_DataIO::RawData& rdata, double total_conc, int model_index );
         void    add_baseline( US_DataIO::RawData& rdata );
         void    add_random_noise( US_DataIO::RawData& rdata, double total_conc );
+        bool    intensity_mode( void ) const;  // Writing RI intensities
+        bool    intensity_noise( void ) const; // Counts noise replaces absorbance random noise
         void    add_ti_noise( US_DataIO::RawData& rdata, double total_conc, int model_index );
         void    save_csv_noise( US_CSV_Data& csv );
 
@@ -118,6 +120,9 @@ class US_MwlSpeciesSim : public US_Widgets
         QVector<double> mtconcs; //!< Model concentrations
 
         QVector<US_DataIO::RawData> synData; //!< Synthetic data vector
+        QVector<QString>            ref_raw_guids;       //!< RI: reference dataset raw GUID per wavelength, set on save
+        QVector<double>             sample_max;          //!< RI: largest sample intensity per wavelength, for its edit file
+        QVector<double>             ref_max;             //!< RI: largest reference intensity per wavelength, for its edit file
         QList<US_Model> models;              //!< List of models
         QVector<bool> have_p1;               //!< Flags for p1 availability
 

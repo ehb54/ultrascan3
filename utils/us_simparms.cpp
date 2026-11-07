@@ -882,6 +882,9 @@ int US_SimulationParameters::load_simparms( QString fname )
       QString astr;
       int     kk;
       speed_step.clear();
+      // Off unless this file gives them.
+      intensity = IntensitySettings();
+      window    = WindowSettings();
 
       while ( ! xml.atEnd() )
       {
@@ -970,6 +973,45 @@ int US_SimulationParameters::load_simparms( QString fname )
             speedstepFromXml( xml, sp );
 
             speed_step.append( sp );
+         }
+
+         else if ( xml.isStartElement() && xml.name() == "intensity" )
+         {
+            a                 = xml.attributes();
+            intensity         = IntensitySettings();
+            intensity.given   = true;
+            const auto number = [&a]( const char* name, double& field )
+            {
+               const QString value = a.value( name ).toString();
+               if ( !value.isEmpty() )
+               {
+                  field = value.toDouble();
+               }
+            };
+            number( "source_counts", intensity.source_counts );
+            number( "read_noise", intensity.read_noise );
+            number( "shot_noise", intensity.shot_noise );
+            number( "dark", intensity.dark );
+            intensity.curved = a.value( "profile" ).toString() != "flat";
+         }
+
+         else if ( xml.isStartElement() && xml.name() == "window" )
+         {
+            a                 = xml.attributes();
+            window            = WindowSettings();
+            window.given      = true;
+            const auto number = [&a]( const char* name, double& field )
+            {
+               const QString value = a.value( name ).toString();
+               if ( !value.isEmpty() )
+               {
+                  field = value.toDouble();
+               }
+            };
+            number( "start", window.start );
+            number( "end", window.end );
+            number( "resolution", window.resolution );
+            number( "meniscus_artifact", window.meniscus_artifact );
          }
 
          else if ( xml.isStartElement()  &&  xml.name() == "usermesh" )
@@ -1069,6 +1111,28 @@ int US_SimulationParameters::save_simparms( QString fname )
          spi = &speed_step[ ii ];
 
          speedstepToXml( xml, spi );
+      }
+
+      // Written only when given, so files without them round-trip unchanged.
+      if ( intensity.given )
+      {
+         xml.writeStartElement( "intensity" );
+         xml.writeAttribute( "source_counts", QString::number( intensity.source_counts ) );
+         xml.writeAttribute( "profile", intensity.curved ? "curved" : "flat" );
+         xml.writeAttribute( "read_noise", QString::number( intensity.read_noise ) );
+         xml.writeAttribute( "shot_noise", QString::number( intensity.shot_noise ) );
+         xml.writeAttribute( "dark", QString::number( intensity.dark ) );
+         xml.writeEndElement();
+      }
+
+      if ( window.given )
+      {
+         xml.writeStartElement( "window" );
+         xml.writeAttribute( "start", QString::number( window.start ) );
+         xml.writeAttribute( "end", QString::number( window.end ) );
+         xml.writeAttribute( "resolution", QString::number( window.resolution ) );
+         xml.writeAttribute( "meniscus_artifact", QString::number( window.meniscus_artifact ) );
+         xml.writeEndElement();
       }
 
       xml.writeEndElement  ();   // params
