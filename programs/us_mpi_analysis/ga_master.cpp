@@ -439,7 +439,19 @@ US_MPI_Analysis::Gene US_MPI_Analysis::refined_gene( const Gene& gene )
    Gene   rgene    = gene;
    double gfitness = get_fitness( gene );
 
+   // Off-grid points of the search are hardly repeated:  keep them out of
+   //  the node's shared simulation cache (the grid solutes still come from it)
+   if ( sim_cache != nullptr )
+   {
+      sim_cache->set_store_enabled( false );
+   }
+
    minimize( rgene, gfitness );
+
+   if ( sim_cache != nullptr )
+   {
+      sim_cache->set_store_enabled( true );
+   }
 
    for ( int bb = 0; bb < rgene.size(); bb++ )
    {

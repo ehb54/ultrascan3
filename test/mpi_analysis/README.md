@@ -11,6 +11,7 @@ and compare the fitted models with stored baselines.
 | `ga_truth_eval.py` | Scores GA fits of samples with known composition against the truth, for several seeds and builds (see below). |
 | `us_mpi_regression.py` | Builds the job archive (hpcrequest XML in the LIMS format), runs the case, reduces `analysis-results.tar` to a JSON summary and compares it with `baseline/<case>.json`. |
 | `test_us_mpi_jobconfig.cpp` | Unit tests (GoogleTest, no MPI) of `US_MPI_JobConfig`, the hpcrequest XML reader. |
+| `test_us_mpi_memlimit.cpp` | Unit tests (GoogleTest, no MPI) of `US_MPI_MemLimit`, the job's memory limit and use. |
 | `us_mpi_jobcheck.cpp` | `us_mpi_jobcheck [-q] <hpcrequest.xml>...`: reads and validates job files as `us_mpi_analysis` does, without MPI and data. |
 | `jobs/*.xml` | Anonymized hpcrequest files written by the LIMS (2DSA with noise, GA with buckets, 2DSA custom grid, PCSA) for the unit tests. |
 | `baseline/*.json` | Reference summaries: per model the RMSD, the signal-weighted moments of s, f/f0 and vbar, the solute list, and any TI/RI noise vectors. |
@@ -163,6 +164,82 @@ python3 test/mpi_analysis/ga_truth_eval.py \
 Results accumulate in `--out` (default `ga_truth_results.json`), so an
 interrupted evaluation resumes where it stopped; `--report <file>` prints
 the tables again.
+
+## Simulation cache
+
+`us_mpi_analysis` reuses simulations through a cache shared by the ranks of
+each node.  The cache stores simulations exactly, so every case must give
+the same result with and without it.  `--debug-text` passes a `debug_text`
+job parameter to every case:
+
+```bash
+python3 test/mpi_analysis/us_mpi_regression.py check all --debug-text SimCache=off ...
+python3 test/mpi_analysis/us_mpi_regression.py check all --debug-text SimCacheMB=1 ...
+```
+
+What a full cache keeps depends on the method.  2DSA and PCSA keep the
+first simulations and store no more:  they repeat the same solutes
+(refinement and Monte Carlo iterations, meniscus and bottom points), and of
+a repeated sequence longer than the cache the first part is reused, while
+discarding the oldest simulations would reuse none.  GA keeps the
+simulations used last:  the cache holds two generations of half the size,
+a hit in the older one is copied into the current one, and when the current
+one is full the older one is emptied and becomes current.  The survivor
+flag does not help here, since nearly every solute of a GA gene has a
+nonzero concentration.  The off-grid points of the GA gradient search are
+not stored.  `SimCachePolicy=first` or `recent` overrides the choice.
+Each rank computes the key of a data set (a SHA-256 of its grid and
+simulation parameters) once per fit context, not on every fitness
+evaluation, and fills a simulation's grid only when it is not in the cache.
+GA, 100 genes, 40 generations, 4 ranks (about 185 MB of simulations):
+
+| Cache | first | recent |
+|---|---|---|
+| 3.9 GB | 81 % reused | 81 % reused |
+| 50 MB | 36 % | 81 % |
+| 20 MB | 17 % | 76 % |
+
+The cache gives way to the job's own memory.  The limit is the tightest of
+Slurm's `--mem` or `--mem-per-cpu` and the job's cgroup; the capacity is at
+most half of it and must fit the free space of the file system that holds
+the shared window.  That place depends on the MPI implementation (MPICH:
+`/dev/shm`; Open MPI: its session directory, which may be on a disk; System
+V shared memory; MS-MPI: the paging file), so the node's first rank maps a
+small window at the start and looks it up in `/proc/self/maps`.  A GA sizes
+its cache with the job parameters `sim_cache_mb` (MB per rank, the node's
+cache gets that times its ranks; 0 turns it off) and `sim_cache_lru` (0
+keeps the first simulations); by default a quarter of the memory its ranks
+may use, at most 4 GB per rank, and no cache below 16 MB per rank.  Should
+the shared window not be allocated, a GA falls back to a cache in each rank.
+While the job runs, a thread on each node's first rank compares the use with
+the limit, the node's available memory and the free shared memory (MPI is
+initialized with `MPI_THREAD_FUNNELED` for it; the thread makes no MPI
+calls).  Above 75 % of the limit no
+rank adds to the cache, except that a GA empties its older generation to make
+room.  Above 88 % the whole cache is emptied and its pages are returned to the
+system.  The run then only has to compute some simulations again, and the
+result stays the same.  The report at the end says how often this happened.
+`SimCacheLimitMB=N` sets a limit for tests.  `SimCacheStress=1` empties the
+cache over and over while the ranks use it.
+
+CTest repeats a few cases (`ctest -L simcache`):  with the cache off, with a
+1 MB cache, too small for the fit (2DSA and PCSA store hardly anything, GA
+empties a generation every few simulations), with a 1 MB cache and the
+recent policy for every method, and with `NodeSplit=2`, which makes two
+groups of ranks act as separate nodes with separate caches (a test switch
+for multi-node behavior on one machine), with `SimCacheLimitMB=1` and with
+`SimCacheStress=1`.
+
+### Benchmark
+
+`us_mpi_benchmark.py` times a larger 2DSA job (default 64 × 64 grid, 5
+refinement iterations) with the cache off and on and prints the speedup,
+the node cache reports and whether the RMSDs agree:
+
+```bash
+python3 test/mpi_analysis/us_mpi_benchmark.py --program build/bin/us_mpi_analysis \
+    --testdata build/bin/us_mpi_testdata --np 8 --grid 64 --refine 5 [--mc 3] [--mgroupcount 2]
+```
 
 ## Updating baselines
 

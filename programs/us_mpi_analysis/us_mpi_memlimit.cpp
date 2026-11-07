@@ -3,13 +3,32 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
+
+#ifdef Q_OS_UNIX
+#include <sys/statvfs.h>
+#endif
+
+#ifdef Q_OS_LINUX
+#include <linux/magic.h>
+#include <sys/vfs.h>
+#endif
+
+// Shares of a limit at which to stop adding to the cache and to empty it.
+//  They leave room for what the ranks allocate between two looks at the use.
+static const double SOFT_SHARE = 0.75;
+static const double HARD_SHARE = 0.88;
+
+// Shares of the node's memory available at which to do the same
+static const double NODE_SOFT = 0.05;
+static const double NODE_HARD = 0.025;
 
 // Limits at or above this mean "none" (cgroup v1 reports a huge number)
 static const qint64 NO_LIMIT = (qint64) 1 << 60;
 static const qint64 MB       = 1024 * 1024;
 
 // Read a whole small file (empty if it cannot be read, as on a system without
-//  these files, where then no limit is found)
+//  these files, where then no limit or pressure is found)
 static std::string  read_text( const std::string& path )
 {
    std::string text;
@@ -36,7 +55,7 @@ static std::string  read_text( const std::string& path )
 //  (e.g. "max" in cgroup v2)
 static qint64 read_number( const std::string& path )
 {
-   const std::string text = read_text( path );
+   std::string text = read_text( path );
 
    if ( text.empty() || text[0] < '0' || text[0] > '9' )
    {
@@ -85,8 +104,8 @@ static qint64 env_number( const char* name )
       return 0;
    }
 
-   char*        end    = nullptr;
-   const qint64 number = strtoll( text, &end, 10 );
+   char*  end    = nullptr;
+   qint64 number = strtoll( text, &end, 10 );
    return ( end != text && number > 0 ) ? number : 0;
 }
 
@@ -109,8 +128,9 @@ qint64 US_MPI_MemLimit::slurm_limit( int node_ranks )
 }
 
 // The tightest limit of this process's cgroup and its parents
-qint64 US_MPI_MemLimit::cgroup_limit( const Paths& paths )
+US_MPI_MemLimit::Cgroup US_MPI_MemLimit::find_cgroup( const Paths& paths )
 {
+   Cgroup      cgroup;
    std::string text = read_text( paths.proc + "/self/cgroup" );
    std::string v1_path;
    std::string v2_path;
@@ -148,13 +168,13 @@ qint64 US_MPI_MemLimit::cgroup_limit( const Paths& paths )
 
    if ( !have_v1 && !have_v2 )
    {
-      return 0;
+      return cgroup;
    }
 
    const std::string base       = have_v1 ? paths.cgroup + "/memory" : paths.cgroup;
    std::string       path       = have_v1 ? v1_path : v2_path;
    const std::string limit_name = have_v1 ? "memory.limit_in_bytes" : "memory.max";
-   qint64            tightest   = 0;
+   const std::string usage_name = have_v1 ? "memory.usage_in_bytes" : "memory.current";
 
    // From this process's level up to the root.  In a container the path of
    //  the host may not exist: such levels are passed over.
@@ -168,9 +188,12 @@ qint64 US_MPI_MemLimit::cgroup_limit( const Paths& paths )
       const std::string dir   = base + ( path == "/" ? std::string() : path );
       const qint64      limit = read_number( dir + "/" + limit_name );
 
-      if ( limit > 0 && limit < NO_LIMIT && ( tightest == 0 || limit < tightest ) )
+      if ( limit > 0 && limit < NO_LIMIT && ( cgroup.limit == 0 || limit <= cgroup.limit ) )
       {
-         tightest = limit;
+         cgroup.limit      = limit;
+         cgroup.usage_file = dir + "/" + usage_name;
+         cgroup.stat_file  = dir + "/memory.stat";
+         cgroup.inactive   = have_v1 ? "total_inactive_file" : "inactive_file";
       }
 
       if ( path == "/" || path.empty() )
@@ -182,7 +205,13 @@ qint64 US_MPI_MemLimit::cgroup_limit( const Paths& paths )
       path         = ( slash == 0 || slash == std::string::npos ) ? std::string( "/" ) : path.substr( 0, slash );
    }
 
-   return tightest;
+   return cgroup;
+}
+
+// The tightest limit of this process's cgroup and its parents
+qint64 US_MPI_MemLimit::cgroup_limit( const Paths& paths )
+{
+   return find_cgroup( paths ).limit;
 }
 
 // The tightest of the Slurm and cgroup limits
@@ -199,6 +228,127 @@ qint64 US_MPI_MemLimit::job_limit( int node_ranks, const Paths& paths )
    return ( slurm > 0 ) ? slurm : cgroup;
 }
 
+// Bytes used at the cgroup level, without reclaimable file pages
+qint64 US_MPI_MemLimit::cgroup_usage( const Cgroup& cgroup )
+{
+   if ( cgroup.limit <= 0 )
+   {
+      return -1;
+   }
+
+   const qint64 usage = read_number( cgroup.usage_file );
+
+   if ( usage < 0 )
+   {
+      return -1;
+   }
+
+   const qint64 inactive = keyed_value( read_text( cgroup.stat_file ), cgroup.inactive );
+   return qMax( (qint64) 0, usage - qMax( (qint64) 0, inactive ) );
+}
+
+// Bytes free in the shared memory file system
+qint64 US_MPI_MemLimit::shm_free( const Paths& paths )
+{
+   return fs_free( paths.shm );
+}
+
+// Bytes free in the file system of a directory
+qint64 US_MPI_MemLimit::fs_free( const std::string& dir )
+{
+#ifdef Q_OS_UNIX
+   struct statvfs info;
+
+   if ( dir.empty() || statvfs( dir.c_str(), &info ) != 0 || info.f_blocks == 0 )
+   {
+      return -1;
+   }
+
+   return (qint64) info.f_bavail * (qint64) info.f_frsize;
+#else
+   Q_UNUSED( dir );
+   return -1;
+#endif
+}
+
+// Whether a directory is on a file system in memory
+int US_MPI_MemLimit::in_memory_fs( const std::string& dir )
+{
+#ifdef Q_OS_LINUX
+   struct statfs info;
+
+   if ( dir.empty() || statfs( dir.c_str(), &info ) != 0 )
+   {
+      return -1;
+   }
+
+   const unsigned long type = (unsigned long) info.f_type;
+   return ( type == TMPFS_MAGIC || type == RAMFS_MAGIC || type == HUGETLBFS_MAGIC ) ? 1 : 0;
+#else
+   Q_UNUSED( dir );
+   return -1;
+#endif
+}
+
+// Directory of the file whose mapping holds an address.  Lines of the map:
+//  "start-end perms offset dev inode [path]", the path maybe followed by
+//  " (deleted)" (MPI implementations unlink the file once all ranks map it).
+std::string US_MPI_MemLimit::mapped_dir( const void* address, const Paths& paths )
+{
+   const std::string text = read_text( paths.proc + "/self/maps" );
+   const quintptr    addr = (quintptr) address;
+   size_t            pos  = 0;
+
+   while ( pos < text.size() )
+   {
+      size_t end       = text.find( '\n', pos );
+      end              = ( end == std::string::npos ) ? text.size() : end;
+      std::string line = text.substr( pos, end - pos );
+      pos              = end + 1;
+
+      char*          after = nullptr;
+      const quintptr first = (quintptr) strtoull( line.c_str(), &after, 16 );
+      if ( after == nullptr || *after != '-' )
+      {
+         continue;
+      }
+      const quintptr last = (quintptr) strtoull( after + 1, nullptr, 16 );
+
+      if ( addr < first || addr >= last )
+      {
+         continue;
+      }
+
+      // The path is the first field starting with '/'
+      const size_t slash = line.find( " /" );
+
+      if ( slash == std::string::npos )
+      {
+         return std::string(); // Anonymous memory
+      }
+
+      std::string       path    = line.substr( slash + 1 );
+      const std::string deleted = " (deleted)";
+
+      if ( path.size() > deleted.size() && path.compare( path.size() - deleted.size(), deleted.size(), deleted ) == 0 )
+      {
+         path.resize( path.size() - deleted.size() );
+      }
+
+      // System V shared memory ("/SYSV<key>") and a shared anonymous mapping
+      //  ("/dev/zero") are not files of a file system with a size
+      if ( path.compare( 0, 5, "/SYSV" ) == 0 || path == "/dev/zero" )
+      {
+         return std::string();
+      }
+
+      const size_t last_slash = path.rfind( '/' );
+      return ( last_slash == 0 ) ? std::string( "/" ) : path.substr( 0, last_slash );
+   }
+
+   return std::string();
+}
+
 // The node's total and available bytes
 bool US_MPI_MemLimit::node_memory( qint64& total, qint64& available, const Paths& paths )
 {
@@ -206,6 +356,84 @@ bool US_MPI_MemLimit::node_memory( qint64& total, qint64& available, const Paths
    total                  = keyed_value( text, "MemTotal" ) * 1024;
    available              = keyed_value( text, "MemAvailable" ) * 1024;
    return ( total > 0 && available >= 0 );
+}
+
+// Bytes of private memory of the given processes
+qint64 US_MPI_MemLimit::private_bytes( const std::vector<long>& pids, const Paths& paths )
+{
+   qint64 bytes = 0;
+
+   for ( long pid : pids )
+   {
+      const qint64 anon = keyed_value( read_text( paths.proc + "/" + std::to_string( pid ) + "/status" ), "RssAnon" );
+      bytes += qMax( (qint64) 0, anon ) * 1024;
+   }
+
+   return bytes;
+}
+
+// Capacity that fits the free shared memory:  touching a page beyond it
+//  would kill the process with a bus error
+qint64 US_MPI_MemLimit::fit_shared_memory( qint64 wanted, qint64 shm_bytes )
+{
+   return ( shm_bytes < 0 ) ? wanted : qMin( wanted, shm_bytes / 10 * 9 );
+}
+
+// Cache capacity allowed for a wanted capacity
+qint64 US_MPI_MemLimit::allowed_capacity( qint64 wanted, qint64 job_limit, qint64 shm_bytes )
+{
+   qint64 allowed = fit_shared_memory( wanted, shm_bytes );
+   return ( job_limit > 0 ) ? qMin( allowed, job_limit / 2 ) : allowed;
+}
+
+// Pressure for bytes used of a limit
+US_MPI_MemLimit::Pressure US_MPI_MemLimit::limit_pressure( qint64 used, qint64 limit )
+{
+   if ( limit <= 0 || used < 0 )
+   {
+      return NONE;
+   }
+
+   if ( (double) used > HARD_SHARE * (double) limit )
+   {
+      return HARD;
+   }
+
+   return ( (double) used > SOFT_SHARE * (double) limit ) ? SOFT : NONE;
+}
+
+// Pressure for the node's available memory
+US_MPI_MemLimit::Pressure US_MPI_MemLimit::node_pressure( qint64 total, qint64 available )
+{
+   if ( total <= 0 || available < 0 )
+   {
+      return NONE;
+   }
+
+   if ( (double) available < NODE_HARD * (double) total )
+   {
+      return HARD;
+   }
+
+   return ( (double) available < NODE_SOFT * (double) total ) ? SOFT : NONE;
+}
+
+// Pressure for the free bytes in shared memory
+US_MPI_MemLimit::Pressure US_MPI_MemLimit::shm_pressure( qint64 shm_bytes, qint64 capacity )
+{
+   if ( shm_bytes < 0 )
+   {
+      return NONE;
+   }
+
+   const qint64 margin = qMax( 64 * MB, capacity / 20 );
+
+   if ( shm_bytes < margin / 2 )
+   {
+      return HARD;
+   }
+
+   return ( shm_bytes < margin ) ? SOFT : NONE;
 }
 
 // Default cache capacity of one rank

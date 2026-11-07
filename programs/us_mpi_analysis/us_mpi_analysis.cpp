@@ -53,7 +53,10 @@ int main( int argc, char* argv[] )
    qInstallMessageHandler( myMessageOutput );
 #endif
 
-   MPI_Init( &argc, &argv );
+   // Only the main thread calls MPI;  the simulation cache's memory watch
+   //  runs in a thread of its own (see create_sim_cache)
+   int thread_level = MPI_THREAD_SINGLE;
+   MPI_Init_thread( &argc, &argv, MPI_THREAD_FUNNELED, &thread_level );
    const QCoreApplication application( argc, argv );
 
    QStringList cmdargs;
@@ -163,6 +166,7 @@ US_MPI_Analysis::US_MPI_Analysis( int nargs, QStringList& cmdargs ) : QObject()
 
    // Collective over all ranks, so before any masters-group split
    create_node_comm();
+   create_sim_cache();
 
    // One seed for all ranks:  the job seed, or for seed 0 the time seed of
    //  rank 0 (the ranks' own time seeds can match, within a millisecond).
@@ -1306,18 +1310,38 @@ void US_MPI_Analysis::choose_groups( void )
 
 
 // Create the communicator of the ranks on this node, which can share
-//  memory (MPI_COMM_TYPE_SHARED).  Not used yet; a node-wide simulation
-//  cache will be built on it.
+//  memory (MPI_COMM_TYPE_SHARED).  The simulation cache is shared over it.
 void US_MPI_Analysis::create_node_comm( void )
 {
-   MPI_Comm_split_type( MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, my_rank, MPI_INFO_NULL, &node_comm );
+   // Debug text "NodeSplit=N" (for tests) splits the ranks into N groups
+   //  that act as separate nodes, each with its own shared memory
+   const int nsplit = job_config.debug_value( "NodeSplit" ).toInt();
+
+   if ( nsplit > 1 )
+   {
+      MPI_Comm_split( MPI_COMM_WORLD, my_rank % nsplit, my_rank, &node_comm );
+   }
+   else
+   {
+      MPI_Comm_split_type( MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, my_rank, MPI_INFO_NULL, &node_comm );
+   }
    MPI_Comm_rank( node_comm, &node_rank );
    MPI_Comm_size( node_comm, &node_size );
 
-   // Number of nodes: count the node leaders (node rank 0)
-   int leader     = ( node_rank == 0 ) ? 1 : 0;
-   int node_count = 0;
-   MPI_Allreduce( &leader, &node_count, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
+   // World ranks of the node leaders (node rank 0)
+   QVector<int> node_ranks( proc_count );
+   MPI_Allgather( &node_rank, 1, MPI_INT, node_ranks.data(), 1, MPI_INT, MPI_COMM_WORLD );
+   node_leaders.clear();
+
+   for ( int rr = 0; rr < proc_count; rr++ )
+   {
+      if ( node_ranks[rr] == 0 )
+      {
+         node_leaders << rr;
+      }
+   }
+
+   int node_count = node_leaders.size();
 
    if ( my_rank == 0 )
    {
@@ -1335,8 +1359,267 @@ void US_MPI_Analysis::seed_deme_random( void )
    US_Math2::randomize( ( seed != 0 ) ? seed : 1u );
 }
 
+// The simulation cache for the solver:  the node's shared cache, else the
+//  GA's per-rank cache (made only when there is no shared cache), else none
+US_SimCache* US_MPI_Analysis::solver_cache( void ) const
+{
+   if ( sim_cache != nullptr )
+   {
+      return sim_cache;
+   }
+
+   return ga_simcache;
+}
+
+// Create the simulation cache shared by the ranks of this node (collective
+//  over node_comm).  Its size comes from the node's first rank.
+void US_MPI_Analysis::create_sim_cache( void )
+{
+   // The GA job parameters sim_cache_mb and sim_cache_lru set the cache of
+   //  a GA (as for a cache of each rank:  the node gets the size per rank
+   //  times its ranks).  The GA keeps the simulations used last, unless
+   //  sim_cache_lru is 0; the other methods repeat the same solutes and keep
+   //  the first ones.  Debug text SimCachePolicy=first or recent overrides.
+   const bool                  is_ga       = analysis_type.startsWith( "GA" );
+   const QString               policy_text = job_config.debug_value( "SimCachePolicy" ).toLower();
+   US_MPI_NodeSimCache::Policy policy =
+      ( is_ga || analysis_type.startsWith( "DMGA" ) ) ? US_MPI_NodeSimCache::RECENT : US_MPI_NodeSimCache::KEEP_FIRST;
+
+   if ( is_ga && job_config.params.ga.sim_cache_lru == 0 )
+   {
+      policy = US_MPI_NodeSimCache::KEEP_FIRST;
+   }
+
+   if ( policy_text == "first" )
+   {
+      policy = US_MPI_NodeSimCache::KEEP_FIRST;
+   }
+   else if ( policy_text == "recent" )
+   {
+      policy = US_MPI_NodeSimCache::RECENT;
+   }
+
+   // Where this MPI implementation keeps shared windows:  the cache must fit
+   //  the free space there
+   const std::string          backing = US_MPI_NodeSimCache::probe_backing( node_comm );
+
+   // The node's first rank finds the limits of this job on this node
+   US_MPI_NodeSimCache::Watch watch;
+   qint64                     cap = 0;
+
+   if ( node_rank == 0 )
+   {
+      watch.cgroup           = US_MPI_MemLimit::find_cgroup();
+      watch.job_limit        = job_memory_limit( watch.cgroup );
+      watch.stress           = ( job_config.debug_value( "SimCacheStress" ).toInt() != 0 );
+      watch.shm_dir          = backing;
+      const qint64 shm_bytes = backing.empty() ? US_MPI_MemLimit::shm_free() : US_MPI_MemLimit::fs_free( backing );
+      cap                    = sim_cache_bytes( watch.job_limit, policy == US_MPI_NodeSimCache::RECENT, is_ga, shm_bytes );
+   }
+
+   MPI_Bcast( &cap, 1, MPI_LONG_LONG, 0, node_comm );
+
+   if ( cap <= 0 )
+   {
+      if ( my_rank == 0 )
+      {
+         DbgLv( 0 ) << "Simulation caching is off";
+      }
+      return;
+   }
+
+   // Expected bytes of one simulation:  the smallest data set grid
+   qint64 sim_bytes = 0;
+
+   for ( int ee = 0; ee < data_sets.size(); ee++ )
+   {
+      US_DataIO::EditedData& edata   = data_sets[ee]->run_data;
+      qint64                 nscans  = edata.scanCount();
+      qint64                 npoints = edata.pointCount();
+      qint64                 nbytes  = nscans * ( npoints * 8 + 128 ) + npoints * 8 + 256;
+      sim_bytes                      = ( ee == 0 ) ? nbytes : qMin( sim_bytes, nbytes );
+   }
+
+   sim_cache = new US_MPI_NodeSimCache( node_comm, cap, sim_bytes, policy );
+
+   if ( !sim_cache->valid() )
+   { // A GA falls back to a cache in each rank (setup_ga_simcache)
+      delete sim_cache;
+      sim_cache        = nullptr;
+      rank_cache_bytes = is_ga ? cap / qMax( 1, node_size ) : 0;
+   }
+   else
+   { // The data sets live for the whole job:  memorize their keys (forgotten
+      //  when the fit context changes)
+      sim_cache->set_key_memo( true );
+
+      // The memory watch is a thread that makes no MPI calls:  MPI must allow
+      //  threads, though (MPI_THREAD_FUNNELED)
+      int thread_level = MPI_THREAD_SINGLE;
+      MPI_Query_thread( &thread_level );
+
+      if ( node_rank == 0 && thread_level >= MPI_THREAD_FUNNELED )
+      {
+         if ( !sim_cache->backing().empty() )
+         { // The window itself, rather than the probe
+            watch.shm_dir = sim_cache->backing();
+         }
+         sim_cache->start_watch( watch );
+      }
+      else if ( node_rank == 0 )
+      {
+         DbgLv( 0 ) << "Simulation cache: no memory watch, as MPI provides no threads (level" << thread_level << ")";
+      }
+   }
+
+   if ( my_rank == 0 )
+   {
+      const QString where = backing.empty() ? QString( "shared memory" ) : QString::fromStdString( backing );
+      const int     inmem = US_MPI_MemLimit::in_memory_fs( backing );
+      DbgLv( 0 ) << "Simulation cache:" << ( sim_cache ? "shared by the ranks of each node," : "could not be allocated;" )
+                 << cap / ( 1024 * 1024 ) << "MB per node in" << where << ( inmem == 0 ? "(on a disk)," : "," )
+                 << ( policy == US_MPI_NodeSimCache::RECENT ? "keeps the simulations used last" : "keeps the first simulations" )
+                 << "; job memory limit" << watch.job_limit / ( 1024 * 1024 ) << "MB";
+   }
+}
+
+// The bytes this job may use on this node (0: no limit known):  the tightest
+//  of the Slurm allocation, the cgroup and debug text "SimCacheLimitMB=N"
+qint64 US_MPI_Analysis::job_memory_limit( const US_MPI_MemLimit::Cgroup& cgroup )
+{
+   qint64 limit = 0;
+
+   auto   tighten = [&limit]( qint64 bytes )
+   {
+      if ( bytes > 0 )
+      {
+         limit = ( limit > 0 ) ? qMin( limit, bytes ) : bytes;
+      }
+   };
+
+   tighten( US_MPI_MemLimit::slurm_limit( node_size ) );
+   tighten( cgroup.limit );
+   tighten( job_config.debug_value( "SimCacheLimitMB" ).toLongLong() * 1024 * 1024 );
+   return limit;
+}
+
+// Bytes of the simulation cache of this node, which must fit the free bytes
+//  of the file system holding it (shm_bytes, negative: unknown).  Debug text
+//  "SimCache=off" turns caching off and "SimCacheMB=N" sets N megabytes.
+//  A GA takes the job parameter sim_cache_mb (MB per rank, 0 off) or else a
+//  quarter of the memory its ranks may use on this node, at most 4 GB per
+//  rank;  less than 16 MB per rank is not worth a cache.  The other methods
+//  by default get their share (ranks / cores) of 80% of the node memory, but
+//  at most a quarter of the memory now available, half of the job's limit
+//  and most of the free shared memory.  A cache of recent simulations needs
+//  little:  a GA reuses nearly as much with 4 GB per data set as with all it
+//  can get.
+qint64 US_MPI_Analysis::sim_cache_bytes( qint64 job_limit, bool recent, bool is_ga, qint64 shm_bytes )
+{
+   const qint64 MB = 1024 * 1024;
+
+   if ( QStringList( { "off", "0", "false", "no" } ).contains( job_config.debug_value( "SimCache" ), Qt::CaseInsensitive ) )
+   {
+      return 0;
+   }
+
+   bool          found  = false;
+   bool          ok     = false;
+   const QString mbtext = job_config.debug_value( "SimCacheMB", &found );
+   const qint64  mbset  = mbtext.toLongLong( &ok );
+
+   if ( found && ok )
+   {
+      return US_MPI_MemLimit::fit_shared_memory( qMax( (qint64) 0, mbset ) * MB, shm_bytes );
+   }
+
+   if ( is_ga )
+   {
+      static const qint64 MAX_MB      = 4096; // Largest default size per rank
+      static const qint64 FALLBACK_MB = 512;  // Default size per rank if no memory size is known
+      static const qint64 MIN_MB      = 16;   // Smallest cache worth having per rank
+      qint64              node_total  = -1;
+      qint64              node_avail  = -1;
+
+      if ( !US_MPI_MemLimit::node_memory( node_total, node_avail ) )
+      {
+         node_avail = -1;
+      }
+
+      const qint64 mbpar = job_config.params.ga.sim_cache_mb;
+      qint64       rank_cap =
+         ( mbpar >= 0 )
+                  ? mbpar * MB
+                  : US_MPI_MemLimit::default_cache_bytes( job_limit, node_avail, node_size, 0.25, MAX_MB * MB, FALLBACK_MB * MB );
+      rank_cap = ( rank_cap >= MIN_MB * MB ) ? rank_cap : 0;
+
+      if ( my_rank == 0 )
+      {
+         DbgLv( 0 ) << "GA simulation cache per rank (MB):" << rank_cap / MB << "ranks on node" << node_size
+                    << "job memory limit on node (MB, 0 none)" << job_limit / MB << "node available (MB)"
+                    << ( ( node_avail >= 0 ) ? node_avail / MB : -1 );
+
+         if ( mbpar > 0 && job_limit > 0 && rank_cap > job_limit / qMax( 1, node_size ) / 2 )
+         {
+            DbgLv( 0 ) << "Warning:  sim_cache_mb" << rank_cap / MB << "is more than half of the job memory per rank on this node"
+                       << job_limit / qMax( 1, node_size ) / MB << "MB";
+         }
+      }
+
+      return US_MPI_MemLimit::fit_shared_memory( rank_cap * qMax( 1, node_size ), shm_bytes );
+   }
+
+   int memavail = 0;
+   int memtotal = 0;
+   US_Memory::memory_profile( &memavail, &memtotal );
+   int    ncores = qMax( 1, QThread::idealThreadCount() );
+   double share  = 0.8 * (double) memtotal * (double) qMin( node_size, ncores ) / (double) ncores;
+   double capmb  = qMin( share, 0.25 * (double) memavail );
+   qint64 wanted = qMax( (qint64) 0, (qint64) capmb ) * MB;
+
+   if ( recent )
+   {
+      wanted = qMin( wanted, 4096 * MB * qMax( 1, (int) data_sets.size() ) );
+   }
+
+   return US_MPI_MemLimit::allowed_capacity( wanted, job_limit, shm_bytes );
+}
+
+// Free the simulation cache and the node communicator (collective over the
+//  node's ranks).  The node's first rank reports the cache use.
 void US_MPI_Analysis::free_node_comm( void )
 {
+   if ( sim_cache != nullptr )
+   {
+      US_SimCache::Stats st     = sim_cache->node_stats();
+      qint64             nfetch = st.hits + st.misses;
+
+      if ( node_rank == 0 )
+      {
+         char hostname[MPI_MAX_PROCESSOR_NAME];
+         int  hlen = 0;
+         MPI_Get_processor_name( hostname, &hlen );
+         QString text = QString( "Simulation cache (%1): %2 of %3 simulations reused (%4%);"
+                                 " %5 stored in %6 of %7 MB; %8 not stored for lack of room; %9 evicted;"
+                                 " emptied %10 times for lack of memory, freeing %11 MB" )
+                           .arg( QString::fromLatin1( hostname, hlen ) )
+                           .arg( st.hits )
+                           .arg( nfetch )
+                           .arg( nfetch > 0 ? 100.0 * st.hits / nfetch : 0.0, 0, 'f', 1 )
+                           .arg( st.entries )
+                           .arg( st.bytes / 1048576.0, 0, 'f', 1 )
+                           .arg( st.max_bytes / 1048576 )
+                           .arg( st.rejected )
+                           .arg( st.evicted )
+                           .arg( sim_cache->releases() )
+                           .arg( sim_cache->released_bytes() / 1048576 );
+         qDebug().noquote() << text;
+      }
+
+      delete sim_cache;
+      sim_cache = nullptr;
+   }
+
    if ( node_comm != MPI_COMM_NULL )
    {
       MPI_Comm_free( &node_comm );
@@ -1827,10 +2110,7 @@ void US_MPI_Analysis::calc_residuals( int         offset,
    }
 
    US_SolveSim solvesim( data_sets, my_rank, false );
-   if ( ga_simcache != nullptr )
-   {
-      solvesim.set_sim_cache( ga_simcache );
-   }
+   solvesim.set_sim_cache( solver_cache() );
    solvesim.calc_residuals( offset, dataset_count, simu_values );
 
    simu_values.dbg_level = dbglvsv;
@@ -1873,10 +2153,7 @@ void US_MPI_Analysis::calc_fitness_residuals( int offset, int dataset_count, SIM
    }
 
    US_SolveSim solvesim( data_sets, my_rank, false );
-   if ( ga_simcache != nullptr )
-   {
-      solvesim.set_sim_cache( ga_simcache );
-   }
+   solvesim.set_sim_cache( solver_cache() );
 
    if ( !solvesim.calc_variance_normal( offset, dataset_count, simu_values ) )
    {
@@ -2143,6 +2420,7 @@ void US_MPI_Analysis::write_global( void )
    {
       // 2DSA: Recompute the global fit and save A and b matrices for later use
       US_SolveSim solvesim( data_sets, my_rank, false );
+      solvesim.set_sim_cache( sim_cache );
       solvesim.calc_residuals( 0, data_sets.size(), wksim_vals, false,
                                &gl_nnls_a, &gl_nnls_b );
       DbgLv( 0 ) << "WrGlob:  glob recompute nsols" << wksim_vals.solutes.size() << "globrec A,b sizes" << gl_nnls_a.size()
@@ -2258,6 +2536,7 @@ void US_MPI_Analysis::write_global( void )
    {  // GA:  Compute and output each dataset model
       //      wksim_vals           = simulation_values;
       US_SolveSim solvesim( data_sets, my_rank, false );
+      solvesim.set_sim_cache( sim_cache );
       solvesim.calc_residuals( 0, data_sets.size(), wksim_vals, false,
                                &gl_nnls_a, &gl_nnls_b );
       DbgLv( 1 ) << "WrGlob:  glob recompute nsols" << wksim_vals.solutes.size() << "globrec A,b sizes" << gl_nnls_a.size()
@@ -2344,6 +2623,7 @@ void US_MPI_Analysis::write_global( void )
    else if ( mdl_type == US_Model::PCSA )
    {  // PCSA: Recompute the global fit and save A and b matrices for later use
       US_SolveSim solvesim( data_sets, my_rank, false );
+      solvesim.set_sim_cache( sim_cache );
       solvesim.calc_residuals( 0, data_sets.size(), wksim_vals, false,
                                &gl_nnls_a, &gl_nnls_b );
       nsolutes             = gsim->zsolutes.size();
