@@ -7,7 +7,8 @@ and compare the fitted models with stored baselines.
 
 | File | Purpose |
 |---|---|
-| `us_mpi_testdata.cpp` | Writes a simulated velocity dataset, a DMGA constraints model and a custom-grid model with the UltraScan writers (`US_DataIO::writeRawData`, `US_DataIO::writeEdits`, `US_Model::write`). Three species, 30 scans, 60 krpm, edited bottom at the stretched centerpiece bottom as `us_edit` writes it, noise σ = 0.004 from the seeded `US_Math2` generator. Options of `data`: `scans=<n>`, `nobottom` (edit without `<bottom>`) and `tmst` (also write the timestate file set). |
+| `us_mpi_testdata.cpp` | Writes a simulated velocity dataset, a DMGA constraints model and a custom-grid model with the UltraScan writers (`US_DataIO::writeRawData`, `US_DataIO::writeEdits`, `US_Model::write`). Three species, 30 scans, 60 krpm, edited bottom at the stretched centerpiece bottom as `us_edit` writes it, noise σ = 0.004 from the seeded `US_Math2` generator. Options of `data`: `scans=<n>`, `nobottom` (edit without `<bottom>`), `tmst` (also write the timestate file set), `noise=<sigma>` and `species=<s>:<f/f0>:<c>[,...]` (another sample). |
+| `ga_truth_eval.py` | Scores GA fits of samples with known composition against the truth, for several seeds and builds (see below). |
 | `us_mpi_regression.py` | Builds the job archive (hpcrequest XML in the LIMS format), runs the case, reduces `analysis-results.tar` to a JSON summary and compares it with `baseline/<case>.json`. |
 | `test_us_mpi_jobconfig.cpp` | Unit tests (GoogleTest, no MPI) of `US_MPI_JobConfig`, the hpcrequest XML reader. |
 | `us_mpi_jobcheck.cpp` | `us_mpi_jobcheck [-q] <hpcrequest.xml>...`: reads and validates job files as `us_mpi_analysis` does, without MPI and data. |
@@ -140,6 +141,28 @@ python3 test/mpi_analysis/us_mpi_regression.py check 2dsa_mc \
 ```
 
 `check input` runs all input cases.
+
+## GA known-truth evaluation
+
+`ga_truth_eval.py` is not a pass/fail test.  It simulates samples of known
+composition (three species, the same with empty "decoy" buckets and the
+parsimony penalty, the same at 2.5 times the noise, two species with equal
+s, five species, wide buckets, and a Monte Carlo run), fits each with the GA
+for several seeds and reports the fit RMSD relative to the noise, the
+number of solutes, the signal in decoy buckets and the errors of s, f/f0,
+concentration and molar mass of each species.  Several builds can be
+compared in one call:
+
+```bash
+python3 test/mpi_analysis/ga_truth_eval.py \
+    --variant before=old/bin/us_mpi_analysis \
+    --variant after=build/bin/us_mpi_analysis \
+    --testdata build/bin/us_mpi_testdata --seeds 1,2,3,4,5,6
+```
+
+Results accumulate in `--out` (default `ga_truth_results.json`), so an
+interrupted evaluation resumes where it stopped; `--report <file>` prints
+the tables again.
 
 ## Updating baselines
 

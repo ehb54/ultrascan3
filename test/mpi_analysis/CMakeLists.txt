@@ -26,6 +26,13 @@ target_compile_definitions(test_us_mpi_jobconfig PRIVATE
 target_link_libraries(test_us_mpi_jobconfig PRIVATE
     ${US_MPI_TEST_UTILS} Qt::Core Qt::Xml gtest gtest_main)
 
+# Unit tests of the job's memory limit (no MPI)
+add_executable(test_us_mpi_memlimit
+    test_us_mpi_memlimit.cpp
+    ${US_MPI_SRC_DIR}/us_mpi_memlimit.cpp)
+target_include_directories(test_us_mpi_memlimit PRIVATE ${US_MPI_SRC_DIR})
+target_link_libraries(test_us_mpi_memlimit PRIVATE Qt::Core gtest gtest_main)
+
 # Checks job files without MPI: us_mpi_jobcheck [-q] <hpcrequest.xml>...
 add_executable(us_mpi_jobcheck
     us_mpi_jobcheck.cpp
@@ -35,6 +42,10 @@ target_link_libraries(us_mpi_jobcheck PRIVATE ${US_MPI_TEST_UTILS} Qt::Core Qt::
 
 include(GoogleTest)
 gtest_discover_tests(test_us_mpi_jobconfig
+    PROPERTIES
+    LABELS gtest-unit-mpi_analysis
+    TIMEOUT 60)
+gtest_discover_tests(test_us_mpi_memlimit
     PROPERTIES
     LABELS gtest-unit-mpi_analysis
     TIMEOUT 60)
@@ -106,6 +117,31 @@ set(US_MPI_INPUT_CASES
     input_bucket_inverted
     input_unknown_key
     input_centerpiece_bottom_default
+    feature_cache_off
+    feature_cache_default_policy
+    feature_cache_large
+    feature_cache_small
+    feature_cache_reused
+    feature_normal
+    feature_normal_check
+    feature_noise_qr
+    feature_normal_noise
+    feature_grid_step
+    feature_grid_step_one_axis
+    feature_hard_misplaced
+    feature_soft_walls
+    feature_soft_gaussian
+    feature_soft_no_margin
+    feature_soft_margin
+    feature_soft_prior_strong
+    feature_early_stop
+    feature_seed0_demes
+    feature_mc_sigma_model
+    feature_mc_pmasters
+    feature_cache_job_limit
+    feature_no_early_stop
+    feature_invalid_soft
+    feature_invalid_step
 )
 
 foreach(case ${US_MPI_CASES} ${US_MPI_INPUT_CASES})

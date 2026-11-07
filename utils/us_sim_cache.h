@@ -73,6 +73,39 @@ class US_UTIL_EXTERN US_SimCache
       //! \returns          Key (a hash of the values)
       static QByteArray   dataset_key( const US_SimulationParameters& simparams, const US_DataIO::EditedData& edata );
 
+      //! \brief Key of a data set, as dataset_key;  with the memo on (see
+      //!        set_key_memo), computed once for each fingerprint of its values
+      //!
+      //! The fingerprint holds all scalar values but only the address and size
+      //! of each vector (radii, time states, scan interpolation flags), so it
+      //! is cheap.
+      //! \param simparams  Simulation parameters of the data set
+      //! \param edata      Experiment data whose grid is simulated
+      //! \returns          Key (a hash of the values)
+      QByteArray          dataset_key_memo( const US_SimulationParameters& simparams, const US_DataIO::EditedData& edata );
+
+      //! \brief Turn the memo of data set keys on or off (default off)
+      //!
+      //! The memo does not see vector values that change in place (same
+      //! address and size), nor a freed vector whose address and size are
+      //! reused with other values.  Turn it on only where the simulation
+      //! parameters and experiment grids of the data sets are not changed so
+      //! for the life of the cache (us_mpi_analysis GA:  data sets live for
+      //! the whole job).
+      //! \param on  Flag to use the memo
+      void                set_key_memo( bool on );
+
+      //! \brief Turn least-recently-used mode on or off (default off)
+      //!
+      //! In this mode survivor flags are not used:  when the cap is reached,
+      //! the least recently used (fetched or stored) simulations are evicted,
+      //! down to 90% of the cap.  Suits a search that keeps simulating new
+      //! solutes near those it reuses (GA), where nearly every solute
+      //! survives some NNLS and the default policy fills the cache with
+      //! survivors and then rejects all new simulations.
+      //! \param on  Flag to use LRU eviction
+      void                set_lru( bool on );
+
       //! \brief Key of a simulation
       //! \param dskey  Key of the data set (from dataset_key)
       //! \param comp   Simulated component (experimental space)
@@ -112,12 +145,17 @@ class US_UTIL_EXTERN US_SimCache
             US_DataIO::RawData simdat;
             qint64             bytes;
             bool               survivor;
+            qint64             last_use = 0; // Use clock value (LRU mode)
       };
 
       // Evict non-survivors, newest first, until "need" bytes fit
       void                     make_room( qint64 );
 
+      // Evict the least recently used simulations (LRU mode)
+      void                          evict_lru( qint64 );
+
       mutable QReadWriteLock   lock;
+      QHash<QByteArray, QByteArray> dskey_memo; // Data set keys by fingerprint
       QHash<QByteArray, Entry> sims;
       QList<QByteArray>        evictable; // Non-survivors, stored order
       qint64                   max_bytes;
@@ -128,5 +166,8 @@ class US_UTIL_EXTERN US_SimCache
       qint64                   nrejected;
       std::atomic<qint64>      nhits;
       std::atomic<qint64>      nmisses;
+      bool                          key_memo;  // Memo of data set keys on
+      bool                          lru;       // Least-recently-used mode
+      qint64                        use_clock; // Use clock (LRU mode)
 };
 #endif

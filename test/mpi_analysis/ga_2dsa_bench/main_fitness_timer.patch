@@ -1,0 +1,63 @@
+diff --git a/programs/us_mpi_analysis/ga_master.cpp b/programs/us_mpi_analysis/ga_master.cpp
+index 86181ad..25bcc4c 100644
+--- a/programs/us_mpi_analysis/ga_master.cpp
++++ b/programs/us_mpi_analysis/ga_master.cpp
+@@ -309,7 +309,8 @@ void US_MPI_Analysis::ga_master_loop( void )
+ 
+ 
+                if ( fitness_same_count > max_same_count  &&
+-                    avg_generation     > min_generation )
++                    avg_generation     > min_generation  &&
++                    qEnvironmentVariableIntValue( "US_GA_NO_EARLY_STOP" ) == 0 )
+                {  // Mark early termination at threshold same-fitness count
+                   DbgLv(0) << "Fitness has not improved in the last"
+                      << fitness_same_count
+diff --git a/programs/us_mpi_analysis/ga_worker.cpp b/programs/us_mpi_analysis/ga_worker.cpp
+index c5b490f..6170809 100644
+--- a/programs/us_mpi_analysis/ga_worker.cpp
++++ b/programs/us_mpi_analysis/ga_worker.cpp
+@@ -81,6 +81,9 @@ void US_MPI_Analysis::ga_worker( void )
+             DbgLv(0) << "    Deme" << grp_nbr << deme_nbr << ":"
+                << fitness_hits << "fitness hits of" << fitness_count
+                << " fitness checks   maxrss" << maxrss;
++            DbgLv(0) << "    Deme" << grp_nbr << deme_nbr << ": fitness time"
++               << fitness_secs << "s for" << fitness_count << "checks,"
++               << ( fitness_count - fitness_hits ) << "computed";
+             break;
+ 
+          case UPDATE:   
+@@ -184,6 +187,7 @@ void US_MPI_Analysis::ga_worker_loop( void )
+    fitness_map.clear();
+    fitness_hits    = 0;
+    fitness_count   = 0;
++   fitness_secs    = 0.0;
+ 
+    max_rss();
+ 
+@@ -196,11 +200,14 @@ void US_MPI_Analysis::ga_worker_loop( void )
+ 
+       DbTimMsg( "Worker start rank/generation/elapsed-secs" );
+       // Calculate fitness
++      QElapsedTimer fit_timer;
++      fit_timer.start();
+       for ( int i = 0; i < population; i++ )
+       {
+          fitness[ i ].index   = i;
+          fitness[ i ].fitness = get_fitness( genes[ i ] );
+       }
++      fitness_secs += fit_timer.nsecsElapsed() * 1.0e-9;
+ 
+       // Sort fitness
+       std::sort( fitness.begin(), fitness.end() );
+diff --git a/programs/us_mpi_analysis/us_mpi_analysis.h b/programs/us_mpi_analysis/us_mpi_analysis.h
+index 311611d..3f61541 100644
+--- a/programs/us_mpi_analysis/us_mpi_analysis.h
++++ b/programs/us_mpi_analysis/us_mpi_analysis.h
+@@ -327,6 +327,7 @@ class US_MPI_Analysis : public QObject
+         QList< SIMULATION > sim_values; //!< Simulation values list
+         QMap< QString, double > fitness_map; //!< Fitness map
+         int fitness_hits; //!< Fitness hits count
++        double fitness_secs = 0.0; //!< Worker seconds in fitness evaluations
+         QList< DGene > dgenes; //!< DGene list
+         QList< DGene > best_dgenes; //!< Best DGene list (size is number of workers)
+         US_dmGA_Constraints constraints; //!< Genetic algorithm constraints
