@@ -519,6 +519,7 @@ if ( simcache != nullptr )
 DbgLv( 2 ) << "   CR:114  rss now" << US_Memory::rss_now() << "cc" << cc;
 if ( abort )
 {
+   mark_failed_solve( sim_vals, dataset_count );
    return;
 }
 
@@ -844,7 +845,11 @@ DbgLv(1) << "CR: sdat:"
  << simdat.value(ms, 0) << simdat.value(ms,mp) << simdat.value(ms,lp)
  << simdat.value(ls, 0) << simdat.value(ls,mp) << simdat.value(ls,lp);
 #endif
-            if ( abort ) return;
+            if ( abort )
+            {
+               mark_failed_solve( sim_vals, dataset_count );
+               return;
+            }
 
             if ( banddthr )
             {  // If band forming, hold data within thresholds; skip if all-zero
@@ -1048,7 +1053,11 @@ DbgLv(1) << "solve_sim_3: timestate file does not exist" << tmst_fpath << dset->
             {
                rawsim = simdat; //  (shared unless modified)
             }
-            if ( abort ) return;
+            if ( abort )
+            {
+               mark_failed_solve( sim_vals, dataset_count );
+               return;
+            }
 
             if ( banddthr )
             {  // If band forming, hold data within thresholds; skip if all-zero
@@ -2037,6 +2046,11 @@ bool US_SolveSim::calc_variance_normal( int offset, int dataset_count, Simulatio
          simkeys[kd * nsolutes + cc] = simulate( model, dset, edata, sims[kd * nsolutes + cc] );
       }
 
+      if ( abort )
+      { // Includes a failed simulation:  do not fit with it
+         return false;
+      }
+
       double* gm  = gram.data() + kd * ngram;
       double* cv  = cvec.data() + kd * nsolutes;
       double  bsq = 0.0;
@@ -2313,14 +2327,40 @@ QByteArray US_SolveSim::simulate( US_Model& model, DataSet* dset, US_DataIO::Edi
 
    astfem_rsa.set_debug_flag( dbg_level );
 
-   astfem_rsa.calculate( simdat );
+   const int rc = astfem_rsa.calculate( simdat );
 
-   if ( simcache != 0 )
+   if ( rc < 0 )
+   { // A failed solve leaves the simulation unusable (all zero):  neither
+      //  cache it nor fit with it.  Stop the work and flag the failure.
+      DbgLv( 0 ) << "US_SolveSim::simulate: w" << thrnrank << "the simulation failed (" << rc << ") -- stopping the fit";
+      sim_failed.store( true, std::memory_order_relaxed );
+      abort.store( true, std::memory_order_relaxed );
+      return QByteArray();
+   }
+
+   if ( simcache != 0 && rc == 0 )
    {
       simcache->store( simkey, simdat, false );
    }
 
    return simkey;
+}
+
+// After a stop:  if a simulation failed, mark the results invalid, so that
+//  they cannot be taken for a fit.  The failure comes before calc_residuals
+//  sizes the variances, so they are sized here:  one per data set.
+void US_SolveSim::mark_failed_solve( Simulation& sim_vals, int dataset_count )
+{
+   if ( sim_failed.load( std::memory_order_relaxed ) )
+   {
+      sim_vals.variance = qQNaN();
+      sim_vals.variances.fill( qQNaN(), dataset_count );
+   }
+}
+
+bool US_SolveSim::solve_failed() const
+{
+   return sim_failed.load( std::memory_order_relaxed );
 }
 
 // Debug message with thread/processor number and elapsed time value

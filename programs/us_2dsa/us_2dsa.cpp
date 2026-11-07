@@ -1348,10 +1348,7 @@ bool US_2dsa::prep_fit_dataset( int drow )
 
    if ( need_tsfile )
    {
-      QString tmst_fpath = US_Settings::tmpDir() + "/" + temp_Id_name() + ".time_state.tmst";
-      US_AstfemMath::writetimestate( tmst_fpath, dset.simparams, sdata );
-
-      dset.simparams.simSpeedsFromTimeState( tmst_fpath );
+      US_AstfemMath::timestate_from_speedsteps( dset.simparams, sdata );
       DbgLv( 1 ) << "2dsa : timestate newly created.  timestateobject = " << dset.simparams.tsobj << "exp_steps=" << exp_steps
                  << "sspknt" << dset.simparams.sim_speed_prof.count();
    }
@@ -2179,13 +2176,6 @@ void US_2dsa::close_all()
    }
 
    close();
-}
-
-// Construct a temporary filename based on pid and time
-QString US_2dsa::temp_Id_name()
-{
-   return ( "p" + QString::number( getpid() ) + "t" +
-            QDateTime::currentDateTime().toUTC().toString( "yyMMddhhmmss" ) );
 }
 
 void US_2dsa::reset() {

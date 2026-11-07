@@ -4,8 +4,11 @@
 #include "us_astfem_math.h"
 #include "us_constants.h"
 #include "us_math2.h"
+#include "us_settings.h"
 #include "us_sim_cache.h"
 #include "us_solve_sim.h"
+#include <QFile>
+#include <QPair>
 #include <QTemporaryDir>
 #include <QVector>
 #include <algorithm>
@@ -734,6 +737,60 @@ TEST_F( TestUSSolveSimCalcResiduals, RemovesTiAndRiNoise )
    EXPECT_LT( maxDiff( fittedConc( input.solutes, sim.solutes ), conc ), 1e-8 );
 }
 
+// A solve that fails (here:  no timestate loaded, and nowhere to build one)
+//  is not taken for a fit:  the variance and the variance of each data set
+//  are NaN, and the failure is reported
+TEST_F( TestUSSolveSimCalcResiduals, FailedSolveGivesNaNVariances )
+{
+   // A directory cannot be made below a regular file
+   const QString blocker = tmpdir.filePath( "not-a-dir" );
+   {
+      QFile file( blocker );
+      ASSERT_TRUE( file.open( QIODevice::WriteOnly ) );
+   }
+   const QString                  unusable = blocker + "/tmp";
+
+   const char* const              env_names[] = { "TMPDIR", "TMP", "TEMP" };
+   QList<QPair<bool, QByteArray>> saved_env;
+   for ( const char* name : env_names )
+   {
+      saved_env << qMakePair( qEnvironmentVariableIsSet( name ), qgetenv( name ) );
+      qputenv( name, QFile::encodeName( unusable ) );
+   }
+   const QString saved_tmpdir = US_Settings::tmpDir();
+   US_Settings::set_tmpDir( unusable );
+
+   dset.simparams.tsobj = nullptr; // Unload the timestate
+   dset.simparams.sim_speed_prof.clear();
+
+   US_SolveSim::Simulation input;
+   input.solutes << US_Solute( 3.0e-13, 1.5 ) << US_Solute( 5.0e-13, 2.0 );
+   input.noisflag              = 0;
+   input.alpha                 = 0.0;
+   input.maxrss                = 0;
+   US_SolveSim::Simulation sim = input;
+   US_SolveSim             solvesim( dsets, 1, false );
+   solvesim.calc_residuals( 0, 1, sim );
+
+   US_Settings::set_tmpDir( saved_tmpdir );
+   for ( int ii = 0; ii < saved_env.size(); ii++ )
+   {
+      if ( saved_env[ii].first )
+      {
+         qputenv( env_names[ii], saved_env[ii].second );
+      }
+      else
+      {
+         qunsetenv( env_names[ii] );
+      }
+   }
+
+   EXPECT_TRUE( solvesim.solve_failed() );
+   EXPECT_TRUE( qIsNaN( sim.variance ) );
+   ASSERT_EQ( sim.variances.size(), 1 );
+   EXPECT_TRUE( qIsNaN( sim.variances[0] ) );
+}
+
 TEST_F( TestUSSolveSimCalcResiduals, GlobalFitRemovesNoiseOfEachDataSet )
 {
    // Two data sets fitted together:  the second has scans 2-10 and every
@@ -1242,6 +1299,17 @@ TEST_F( TestUSSolveSimCache, FitIsUnchangedByCacheInThreads )
 {
    noisflag = 3;
    expectSameFit( 1024LL * 1024 * 1024, true );
+}
+
+// The same fit in threads without a cache:  solves in threads must not share
+//  scratch storage
+TEST_F( TestUSSolveSimCache, FitInThreadsWithoutCache )
+{
+   noisflag                       = 3;
+   const QVector<double> expected = fit2dsa( nullptr, false );
+   ASSERT_GT( expected.size(), 0 );
+   const QVector<double> threaded = fit2dsa( nullptr, true );
+   EXPECT_EQ( firstDifference( threaded, expected ), -1 ) << "sizes " << threaded.size() << " " << expected.size();
 }
 
 TEST_F( TestUSSolveSimCache, FitIsUnchangedBySmallCache )

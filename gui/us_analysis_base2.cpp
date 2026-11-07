@@ -471,12 +471,7 @@ void US_AnalysisBase2::update( int selection )
 
    if ( need_tsfile )
      {
-       QString temp_Id_name = ( "p" + QString::number( getpid() ) + "t" +
-            QDateTime::currentDateTime().toUTC().toString( "yyMMddhhmmss" ) );
-       QString tmp_tmst_fpath = US_Settings::tmpDir() + "/" + temp_Id_name + ".time_state.tmst";
-       US_AstfemMath::writetimestate( tmp_tmst_fpath, simulationParameters, sdata );
-
-       simulationParameters.simSpeedsFromTimeState( tmp_tmst_fpath );
+        US_AstfemMath::timestate_from_speedsteps( simulationParameters, sdata );
      }
 
    // Compute speed steps from sim speed profile
