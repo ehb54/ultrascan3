@@ -357,7 +357,8 @@ int US_SimCli::parse( Tool tool, const QStringList& arguments, US_SimCliArgs& ar
       }
 
       args.given          = args.given || name != "no-db";
-      const QString value = parser.value( name );
+      // A flag has no value; asking for one makes Qt print a warning.
+      const QString value = option->value_name.isEmpty() ? QString() : parser.value( name );
       if ( !option->apply( value, args ) )
       {
          output = invalidValueMessage( name, value );

@@ -4,6 +4,16 @@
 
 #include <climits>
 
+namespace
+{
+QStringList qtMessages;
+
+void        collectMessage( QtMsgType, const QMessageLogContext&, const QString& message )
+{
+   qtMessages << message;
+}
+}
+
 class US_SimCliTest : public QtTestBase
 {
    protected:
@@ -150,6 +160,18 @@ TEST_F( US_SimCliTest, BothSimulatorsAcceptIntensityRuns )
    EXPECT_EQ( args.run_type, "RI" );
    ASSERT_EQ( parse( US_SimCli::MwlSpecies, { "--runtype", "RI" } ), -1 );
    EXPECT_EQ( args.run_type, "RI" );
+}
+
+TEST_F( US_SimCliTest, FlagsParseWithoutQtWarnings )
+{
+   qtMessages.clear();
+   const QtMessageHandler previous = qInstallMessageHandler( collectMessage );
+   const int              status   = parse( US_SimCli::Astfem, { "--errors-cl", "--close", "--start", "--no-db", "--movie" } );
+   qInstallMessageHandler( previous );
+
+   EXPECT_EQ( status, -1 );
+   EXPECT_TRUE( args.errors_cl && args.close && args.start && args.no_db && args.movie );
+   EXPECT_TRUE( qtMessages.isEmpty() ) << qtMessages.join( "\n" ).toStdString();
 }
 
 TEST_F( US_SimCliTest, InvalidValuesAreRejected )
