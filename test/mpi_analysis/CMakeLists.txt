@@ -139,6 +139,9 @@ set(US_MPI_INPUT_CASES
     feature_mc_sigma_model
     feature_mc_pmasters
     feature_cache_job_limit
+    feature_2dsa_cache_no_limit
+    feature_2dsa_cache_host_size
+    feature_2dsa_cache_room
     feature_no_early_stop
     feature_invalid_soft
     feature_invalid_step
@@ -169,8 +172,10 @@ endforeach()
 # empties a generation of the cache again and again), with the recent policy
 # for every method, with the ranks split into two pseudo-nodes (separate
 # caches; the master has the other node clear its cache), with a job limit too
-# small for any cache, and with the cache emptied over and over while the ranks
-# use it (as under memory pressure).
+# small for any cache, with one that leaves no room for the predicted peak, and
+# with the cache emptied over and over while the ranks use it (as under memory
+# pressure).  2DSA and PCSA have a cache only with a job limit (or a size from
+# US3_SIM_CACHE_MB), so the variants that need one set a 4 GB limit.
 set(US_MPI_CACHE_CASES
     2dsa_refine_np4
     2dsa_mc_pmasters3
@@ -183,7 +188,8 @@ set(US_MPI_CACHE_CASES
 )
 
 foreach(variant "off;SimCache=off" "small;SimCacheMB=1" "recent;SimCacheMB=1,SimCachePolicy=recent"
-                "nodes;NodeSplit=2" "limit;SimCacheLimitMB=1" "stress;SimCacheStress=1")
+                "nodes;NodeSplit=2,SimCacheLimitMB=4096" "limit;SimCacheLimitMB=1"
+                "room;SimCacheLimitMB=200" "stress;SimCacheStress=1,SimCacheLimitMB=4096")
     list(GET variant 0 tag)
     list(GET variant 1 dtext)
     add_test(NAME mpi_analysis_simcache_${tag}

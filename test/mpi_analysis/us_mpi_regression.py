@@ -576,6 +576,23 @@ FEATURE_CASES = {
         env={"SLURM_MEM_PER_NODE": "64"},
         expect={"same_as": "ga_np2", "log_absent": "Simulation cache:",
                 "log": r"cache per rank \(MB\): 0 .*job memory limit on node \(MB, 0 none\) 64 "}),
+    # 2DSA had no cache before the node's cache:  without a job memory limit
+    #  (where a container or Slurm sets none) it gets none, unless the host
+    #  sets a size for it
+    "feature_2dsa_cache_no_limit": input_case(
+        "2dsa_refine_np4", debug_log=True,
+        expect={"same_as": "2dsa_refine_np4",
+                "log": r"Simulation caching is off: no job memory limit"
+                       r"|Simulation cache: .*job memory limit [1-9]\d* MB"}),
+    "feature_2dsa_cache_host_size": input_case(
+        "2dsa_refine_np4", debug_log=True, env={"US3_SIM_CACHE_MB": "64"},
+        expect={"same_as": "2dsa_refine_np4",
+                "log": r"Simulation cache: shared by the ranks of each node, \d+ MB"}),
+    # With a limit, the cache starts with the room the predicted peak leaves
+    "feature_2dsa_cache_room": input_case(
+        "2dsa_refine_np4", debug_log=True, params=lambda p: dict(p, debug_text="SimCacheLimitMB=8192"),
+        expect={"same_as": "2dsa_refine_np4",
+                "log": r"job memory limit 8192 MB; room \d+ MB for a predicted peak of [1-9]\d* MB"}),
     # A wrong value is an orderly abort
     "feature_invalid_soft": input_case(
         "ga_np2", params=dict(GA_PARAMS, bucket_soft="3"),

@@ -239,6 +239,29 @@ TEST( MemLimitRules, AllowedCapacity )
    EXPECT_EQ( US_MPI_MemLimit::fit_shared_memory( 8000 * MB, 1000 * MB ), 900 * MB );
 }
 
+// The estimate of the 2DSA fit control:  17.2 MB, and 2.28 times the bytes of
+//  the simulations of the solutes, four data vectors and the noise terms
+TEST( MemLimitRules, SolveBytes )
+{
+   const double fixed = 17.20 * MB;
+   EXPECT_NEAR( (double) US_MPI_MemLimit::solve_bytes( 0, 0, 0 ), fixed, 1.0 );
+   // 200 scans of 500 points, 96 solutes, TI noise:  101 vectors
+   EXPECT_NEAR( (double) US_MPI_MemLimit::solve_bytes( 100000, 96, 1 ), fixed + 2.28 * 100000.0 * 101 * 8, 1.0 );
+   EXPECT_GT( US_MPI_MemLimit::solve_bytes( 100000, 96, 3 ), US_MPI_MemLimit::solve_bytes( 100000, 96, 1 ) );
+   EXPECT_NEAR( (double) US_MPI_MemLimit::solve_bytes( -5, -5, -1 ), fixed, 1.0 );
+}
+
+// The cache and the peak times the margin stay below 75 % of the limit
+TEST( MemLimitRules, CacheRoom )
+{
+   EXPECT_EQ( US_MPI_MemLimit::cache_room( 1000 * MB, 400 * MB, 1.25 ), 250 * MB );
+   EXPECT_EQ( US_MPI_MemLimit::cache_room( 1000 * MB, 700 * MB, 1.25 ), 0 );
+   EXPECT_EQ( US_MPI_MemLimit::cache_room( 1000 * MB, 0, 1.25 ), 750 * MB );
+   EXPECT_EQ( US_MPI_MemLimit::cache_room( 0, 400 * MB, 1.25 ), -1 );
+   // A 2DSA that peaks at 595 MB under a 650 MB limit gets no room
+   EXPECT_EQ( US_MPI_MemLimit::cache_room( 650 * MB, 595 * MB, 1.10 ), 0 );
+}
+
 TEST( MemLimitRules, Pressure )
 {
    using L = US_MPI_MemLimit;

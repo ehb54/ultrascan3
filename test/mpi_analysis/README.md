@@ -191,6 +191,14 @@ not stored.  `SimCachePolicy=first` or `recent` overrides the choice.
 Each rank computes the key of a data set (a SHA-256 of its grid and
 simulation parameters) once per fit context, not on every fitness
 evaluation, and fills a simulation's grid only when it is not in the cache.
+A 2DSA master with a single masters group clears every node's cache when
+the data set or the meniscus/bottom point changes.  Parallel masters groups
+fit different points at once, so no master may clear the cache:  2DSA and
+PCSA with more than one group keep the simulations used last (RECENT), which
+follow the groups' current fits, instead of the first fits' forever.  A
+single PCSA master never clears the cache, so a full cache keeps the
+simulations of the first fit context; Monte Carlo iterations of one context
+reuse them.
 GA, 100 genes, 40 generations, 4 ranks (about 185 MB of simulations):
 
 | Cache | first | recent |
@@ -207,10 +215,45 @@ the shared window.  That place depends on the MPI implementation (MPICH:
 V shared memory; MS-MPI: the paging file), so the node's first rank maps a
 small window at the start and looks it up in `/proc/self/maps`.  A GA sizes
 its cache with the job parameters `sim_cache_mb` (MB per rank, the node's
-cache gets that times its ranks; 0 turns it off) and `sim_cache_lru` (0
-keeps the first simulations); by default a quarter of the memory its ranks
-may use, at most 4 GB per rank, and no cache below 16 MB per rank.  Should
-the shared window not be allocated, a GA falls back to a cache in each rank.
+cache gets that times its ranks; 0 turns it off) and `sim_cache_lru`; by
+default a quarter of the memory its ranks may use, at most 4 GB per rank,
+and no cache below 16 MB per rank.  `sim_cache_lru=0` makes the node's
+cache keep the first simulations (KEEP_FIRST, nothing more is stored once
+it is full).  Should the shared window not be allocated, or shared memory hold
+less than half of the GA's cache (a container's 64 MB `/dev/shm`), a GA
+falls back to a cache in each rank, in the rank's own memory, for which
+`sim_cache_lru=0` selects `US_SimCache`'s own policy (it evicts
+non-survivors first).
+
+The whole window, its slot table included, is fitted to 90 % of the free
+space of its file system (a page touched beyond the free space kills the
+process with a bus error).  Before the collective allocation the node's
+first rank checks that the window fits that space and half of the node's
+memory, and if not no rank allocates:  a failure inside
+`MPI_Win_allocate_shared` on one rank cannot be undone (Open MPI leaves the
+other ranks waiting in it, MPICH aborts them).  The report at the end gives
+the bytes stored and the memory the cache holds, which is more after a
+rotation of RECENT:  an emptied generation keeps its pages until it is
+filled again.
+
+2DSA, PCSA and DMGA had no cache before the node's cache and must not fail
+for it where they fit their memory without it.  They get a cache only with
+a job memory limit, or with a size the host sets for the cache of each job
+in the environment variable `US3_SIM_CACHE_MB` (a LIMS server, whose
+database and web server share the node, sets it to what it can spare per
+job; with a full queue all jobs' caches together stay within that times the
+jobs).  Without either the run logs "Simulation caching is off".  With a
+limit, the cache must leave room for the job's own peak, which comes while
+the workers solve their first subgrids, before the watch can react.  So the
+cache may at first hold only what the job's predicted peak leaves below 75
+% of the limit:  each rank's memory at the start plus what it needs to solve
+a subgrid and half a subgrid of survivors (the estimate of the 2DSA fit
+control:  17.2 MB plus 2.28 times the bytes of the solutes' simulations,
+four data vectors and the noise terms), times 1.25.  After the first
+refinement iteration (or the fit, without refinement), when the watch has
+seen the job's real peak, the master has every node's cache fit its room to
+that peak times 1.10.  The log shows the room at the start and after.
+Parallel masters groups keep the room of the prediction.
 While the job runs, a thread on each node's first rank compares the use with
 the limit, the node's available memory and the free shared memory (MPI is
 initialized with `MPI_THREAD_FUNNELED` for it; the thread makes no MPI
@@ -225,10 +268,12 @@ cache over and over while the ranks use it.
 CTest repeats a few cases (`ctest -L simcache`):  with the cache off, with a
 1 MB cache, too small for the fit (2DSA and PCSA store hardly anything, GA
 empties a generation every few simulations), with a 1 MB cache and the
-recent policy for every method, and with `NodeSplit=2`, which makes two
-groups of ranks act as separate nodes with separate caches (a test switch
-for multi-node behavior on one machine), with `SimCacheLimitMB=1` and with
-`SimCacheStress=1`.
+recent policy for every method, and with `NodeSplit=2` and a 4 GB limit,
+which makes two groups of ranks act as separate nodes with separate caches
+(a test switch for multi-node behavior on one machine), with
+`SimCacheLimitMB=1`, with a limit that leaves no room for the predicted peak
+(`SimCacheLimitMB=200`), and with `SimCacheStress=1` and a 4 GB limit.  Input cases check
+that 2DSA without a limit has no cache, and has one with `US3_SIM_CACHE_MB`.
 
 ### Benchmark
 

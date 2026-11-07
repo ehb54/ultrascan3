@@ -386,6 +386,31 @@ qint64 US_MPI_MemLimit::allowed_capacity( qint64 wanted, qint64 job_limit, qint6
    return ( job_limit > 0 ) ? qMin( allowed, job_limit / 2 ) : allowed;
 }
 
+// Predicted bytes one rank needs to solve a set of solutes:  the estimate of
+//  the 2DSA fit control (US_AnalysisControl2D::grid_change), a fixed 17.2 MB
+//  and 2.28 times the bytes of the solutes' simulations, four data vectors
+//  and the noise terms
+qint64 US_MPI_MemLimit::solve_bytes( qint64 readings, qint64 solutes, int noise_terms )
+{
+   const double fixed_mb = 17.20;
+   const double factor   = 2.28;
+   const qint64 columns  = qMax( (qint64) 0, solutes ) + 4 + qMax( 0, noise_terms );
+   const double data     = (double) qMax( (qint64) 0, readings ) * (double) columns * sizeof( double );
+   return (qint64) ( fixed_mb * MB + factor * data );
+}
+
+// Bytes the cache may hold while the job's own use peaks at job_peak
+qint64 US_MPI_MemLimit::cache_room( qint64 job_limit, qint64 job_peak, double margin )
+{
+   if ( job_limit <= 0 )
+   {
+      return -1;
+   }
+
+   const double room = SOFT_SHARE * (double) job_limit - margin * (double) qMax( (qint64) 0, job_peak );
+   return ( room > 0.0 ) ? (qint64) room : 0;
+}
+
 // Pressure for bytes used of a limit
 US_MPI_MemLimit::Pressure US_MPI_MemLimit::limit_pressure( qint64 used, qint64 limit )
 {
