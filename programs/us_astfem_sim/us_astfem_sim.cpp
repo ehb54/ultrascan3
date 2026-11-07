@@ -420,6 +420,11 @@ int US_Astfem_Sim::init_from_args( const US_SimCliArgs& args )
    {
       noise_seed = args.noise_seed;
    }
+
+   if ( args.od_limit > 0.0 )
+   {
+      od_limit = args.od_limit;
+   }
    // set movie flag if needed
    if ( args.movie )
    {
@@ -1819,9 +1824,11 @@ DbgLv(1) << "Sim:SV: reset s1plat" << s1plat;
          dthresh        = maxc;
       }
    } else
-   { // Headless: match the GUI's cancel-dialog default of no clipping.
+   { // Headless: clip at --od-limit if given, else leave readings unclipped.
       maxrad  = brad;
-      dthresh = maxc;
+      dthresh = ( od_limit > 0.0 ) ? od_limit : maxc;
+      // Keep the meniscus spike, twice s1plat, within the threshold too.
+      s1plat  = qMin( s1plat, ( dthresh * 0.5 ) );
    }
 
 

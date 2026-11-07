@@ -29,6 +29,7 @@ TEST_F( US_SimCliTest, NoOptionsLeavesEverythingUnset )
    EXPECT_EQ( args.cell, 0 );
    EXPECT_EQ( args.channel, 0 );
    EXPECT_EQ( args.noise_seed, 0u );
+   EXPECT_EQ( args.od_limit, 0.0 );
 }
 
 TEST_F( US_SimCliTest, NoDbAloneDoesNotCountAsGiven )
@@ -125,12 +126,35 @@ TEST_F( US_SimCliTest, OptionsBelongToTheirSimulator )
    EXPECT_TRUE( output.contains( "models" ) );
 }
 
+TEST_F( US_SimCliTest, OdLimitIsStored )
+{
+   ASSERT_EQ( parse( US_SimCli::Astfem, { "--od-limit", "3.5" } ), -1 );
+   EXPECT_DOUBLE_EQ( args.od_limit, 3.5 );
+   EXPECT_TRUE( args.given );
+}
+
+TEST_F( US_SimCliTest, OdLimitBelongsToAstfemOnly )
+{
+   EXPECT_EQ( parse( US_SimCli::MwlSpecies, { "--od-limit", "3" } ), 1 );
+   EXPECT_TRUE( output.contains( "od-limit" ) );
+
+   EXPECT_EQ( parse( US_SimCli::MwlSpecies, { "--help" } ), 0 );
+   EXPECT_FALSE( output.contains( "--od-limit" ) );
+   EXPECT_EQ( parse( US_SimCli::Astfem, { "--help" } ), 0 );
+   EXPECT_TRUE( output.contains( "--od-limit" ) );
+}
+
 TEST_F( US_SimCliTest, InvalidValuesAreRejected )
 {
    const QList<QStringList> cases = {
       { "noise-seed", "0" },
       { "noise-seed", "abc" },
       { "noise-seed", QString::number( quint64( UINT_MAX ) + 1 ) },
+      { "od-limit", "0" },
+      { "od-limit", "-1.5" },
+      { "od-limit", "abc" },
+      { "od-limit", "inf" },
+      { "od-limit", "nan" },
       { "cell", "0" },
       { "cell", "9" },
       { "channel", "X" },
@@ -161,6 +185,7 @@ TEST_F( US_SimCliTest, InvalidValueMessageSaysWhatIsExpected )
    EXPECT_EQ( US_SimCli::invalidValueMessage( "runtype", "RI" ),
               "Invalid --runtype RI; expected one of " + US_SimCli::runTypes().join( ", " ) );
    EXPECT_EQ( US_SimCli::invalidValueMessage( "cell", "9" ), "Invalid --cell 9; expected 1 to 8" );
+   EXPECT_EQ( US_SimCli::invalidValueMessage( "od-limit", "0" ), "Invalid --od-limit 0; expected a finite number greater than 0" );
 }
 
 TEST_F( US_SimCliTest, HelpListsOnlyThisSimulatorsOptions )

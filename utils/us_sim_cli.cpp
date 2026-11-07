@@ -9,6 +9,7 @@
 #include <QRegularExpression>
 
 #include <climits>
+#include <cmath>
 #include <functional>
 
 namespace
@@ -258,6 +259,24 @@ const QVector<Option>& options()
               return false;
            }
            args.noise_seed = seed;
+           return true;
+        } },
+      { US_SimCli::Astfem,
+        { "od-limit" },
+        "Clip every reading above this value to it before saving, as the GUI "
+        "clip dialog does. Keeps the bottom-of-cell pile-up from widening the "
+        ".auc 16-bit range; omitted, no clipping",
+        "value",
+        "a finite number greater than 0",
+        []( const QString& value, US_SimCliArgs& args )
+        {
+           bool         ok    = false;
+           const double limit = value.toDouble( &ok );
+           if ( !ok || !std::isfinite( limit ) || limit <= 0.0 )
+           {
+              return false;
+           }
+           args.od_limit = limit;
            return true;
         } },
    };
