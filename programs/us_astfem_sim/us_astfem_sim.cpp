@@ -777,7 +777,10 @@ void US_Astfem_Sim::set_parameters( void )
    pb_start  ->setEnabled( true );
 DbgLv(1) << "SimPar:MAIN:SetP:  nspeed" << simparams.speed_step.count()
  << "speed0" << simparams.speed_step[0].rotorspeed << "meniscus_ar" << meniscus_ar;
-simparams.debug();
+if ( dbg_level > 0 )
+{
+   simparams.debug();
+}
 DbgLv(1) << "==SimPar:MAIN:SetP";
 
    // Initialize all-speed raw data
@@ -928,12 +931,15 @@ DbgLv(1) << "==SimPar:MAIN:SetP";
    }
 
    simparams.simSpeedsFromTimeState( tmst_tfpath );
-//*DEBUG*
-DbgLv(1) << "ASIM: === speed steps from SSprof ===";
-simparams.speedstepsFromSSprof();
-simparams.debug();
-DbgLv(1) << "ASIM: === speed steps from SSprof ===";
-//*DEBUG*
+
+   // Rebuild the speed steps (delay, first and last scan times and their
+   // omega2t) from the time state, as the analysis programs do when they load
+   // a run, so the steps this run records match what they will derive.
+   simparams.speedstepsFromSSprof();
+   if ( dbg_level > 0 )
+   {
+      simparams.debug();
+   }
 
    // Report simulation parameters
    change_status();

@@ -97,7 +97,10 @@ int US_AstfemMath::writetimestate( const QString&           tmst_fpath,
 
 DbgLv(1)<< "AMATH:wrts: number of speeds=" << nspeed
  << "Time state file path=" << tmst_fpath;
-simparams.debug();
+if ( dbg_level > 0 )
+{
+   simparams.debug();
+}
    timestate.set_key( "Time",        "I4" );
    timestate.set_key( "RawSpeed",    "F4" );
    timestate.set_key( "SetSpeed",    "I4" );
