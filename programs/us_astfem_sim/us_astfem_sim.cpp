@@ -1951,7 +1951,11 @@ DbgLv(1) << "ASIM:svscn: 1-speed file paths"  << odir << tmst_fpath;
       }
       else if ( od_limit > 0.0 )
       {
-         ev.ODlimit = od_limit;
+         // The .auc stores the clip as a float, which can read back just below
+         // od_limit. Sitting 1e-5 of the limit below it still catches every
+         // clipped reading, and is under one 16-bit step (1/65535 of the range),
+         // so no reading stored below the clip reaches it.
+         ev.ODlimit = od_limit * ( 1.0 - 1.0e-5 );
       }
       else
       {

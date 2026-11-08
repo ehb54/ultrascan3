@@ -210,7 +210,41 @@ class US_AstfemSimOpticsTest : public QObject
          }
          QVERIFY2( peak <= 1.5 + 1e-6, qPrintable( QString::number( peak ) ) );
          const QString edit = file( "clipped", QString( "*.%1.RA.*.xml" ).arg( kEditStamp ) );
-         QCOMPARE( attributeOf( edit, "od_limit", "value" ).toDouble(), 1.5 );
+         QVERIFY( qAbs( attributeOf( edit, "od_limit", "value" ).toDouble() - 1.5 ) < 1e-4 );
+      }
+
+      // The solver drops readings at or above the edit's OD limit. With a limit
+      // a float cannot hold exactly, such as 0.9, every clipped reading read
+      // back from the .auc must still reach the edit's limit, and no reading
+      // below the clip may.
+      void inexactLimitStillExcludesEveryClippedReading()
+      {
+         QCOMPARE( simulate( "clipinexact", "<window/>\n", { "--od-limit", "0.9" } ), 0 );
+         US_DataIO::RawData data;
+         QVERIFY( read( file( "clipinexact", "*.RA.*.auc" ), data ) );
+         const QString edit  = file( "clipinexact", QString( "*.%1.RA.*.xml" ).arg( kEditStamp ) );
+         const double  limit = attributeOf( edit, "od_limit", "value" ).toDouble();
+         QVERIFY( qAbs( limit - 0.9 ) < 1e-4 );
+         double peak = 0.0;
+         for ( const US_DataIO::Scan& scan : data.scanData )
+         {
+            for ( double value : scan.rvalues )
+            {
+               peak = qMax( peak, value );
+            }
+         }
+         int clipped  = 0;
+         int excluded = 0;
+         for ( const US_DataIO::Scan& scan : data.scanData )
+         {
+            for ( double value : scan.rvalues )
+            {
+               clipped += ( value == peak ) ? 1 : 0;
+               excluded += ( value >= limit ) ? 1 : 0;
+            }
+         }
+         QVERIFY( clipped > 1 );
+         QCOMPARE( excluded, clipped );
       }
 
       void intensityRunWritesSampleAndReference()
@@ -285,7 +319,7 @@ class US_AstfemSimOpticsTest : public QObject
          const QString edit  = file( "fringes", QString( "*.%1.IP.*.xml" ).arg( kEditStamp ) );
          const double  right = attributeOf( edit, "data_range", "right" ).toDouble();
          QVERIFY2( right <= data.xvalues.last() + 1e-6, qPrintable( QString::number( right ) ) );
-         QCOMPARE( attributeOf( edit, "od_limit", "value" ).toDouble(), 5.0 );
+         QVERIFY( qAbs( attributeOf( edit, "od_limit", "value" ).toDouble() - 5.0 ) < 1e-4 );
       }
 
       // A detector grid that misses the meniscus cannot be edited; refuse it.
