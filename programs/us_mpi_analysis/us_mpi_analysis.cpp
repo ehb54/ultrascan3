@@ -1411,18 +1411,14 @@ void US_MPI_Analysis::create_sim_cache( void )
 
    // Where this MPI implementation keeps shared windows:  the cache must fit
    //  the free space there
-   const std::string          backing = US_MPI_NodeSimCache::probe_backing( node_comm );
+   const std::string backing = US_MPI_NodeSimCache::probe_backing( node_comm );
 
    // The job's predicted peak on this node (2DSA, PCSA, DMGA:  a GA keeps
    //  its own sizing, as with a cache of each rank)
-   const qint64               predicted = is_ga ? 0 : predicted_node_bytes();
+   const qint64      predicted = is_ga ? 0 : predicted_node_bytes();
 
-   // The node's first rank finds the limits of this job on this node.  With
-   //  a limit, the cache may at first hold what the predicted peak leaves
-   //  below it; once the job's real peak is known, the master has the room
-   //  fitted to it (fit_sim_cache_rooms).
    // Expected bytes of one simulation:  the smallest data set grid
-   qint64                     sim_bytes = 0;
+   qint64            sim_bytes = 0;
 
    for ( int ee = 0; ee < data_sets.size(); ee++ )
    {
@@ -1433,6 +1429,10 @@ void US_MPI_Analysis::create_sim_cache( void )
       sim_bytes                      = ( ee == 0 ) ? nbytes : qMin( sim_bytes, nbytes );
    }
 
+   // The node's first rank finds the limits of this job on this node.  With
+   //  a limit, the cache may at first hold what the predicted peak leaves
+   //  below it; once the job's real peak is known, the master has the room
+   //  fitted to it (fit_sim_cache_rooms).
    static const double        PREDICTED_MARGIN = 1.25; // On the predicted peak
    US_MPI_NodeSimCache::Watch watch;
    qint64                     sizes[3]  = { 0, 0, 0 }; // Capacity, wanted capacity, GA cache of each rank
@@ -1919,10 +1919,13 @@ void US_MPI_Analysis::send_udp( const QString& message )
    }
 }
 
-// Update and return the maximum memory used
+// Update and return the maximum memory used.  The ranks' values are summed
+//  for the job's memory, so the node's shared cache is counted only once.
 long int US_MPI_Analysis::max_rss( void )
 {
-   return (long int)US_Memory::rss_max( maxrss );
+   const long int correction = ( sim_cache != nullptr ) ? (long int) ( sim_cache->rss_correction() / 1024 ) : 0L;
+   maxrss                    = qMax( maxrss, US_Memory::rss_now() + correction );
+   return maxrss;
 }
 
 // Return the total and currently available physical memory in bytes.

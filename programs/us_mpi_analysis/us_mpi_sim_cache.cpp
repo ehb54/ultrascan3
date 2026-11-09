@@ -152,6 +152,8 @@ US_MPI_NodeSimCache::US_MPI_NodeSimCache( MPI_Comm node_comm,
     gen_slots( 0 ),
     gen_size( 0 ),
     store_on( true ),
+    total_size( 0 ),
+    first_rank( false ),
     watch_stop( false ),
     rank_hits( 0 ),
     rank_misses( 0 ),
@@ -269,7 +271,9 @@ US_MPI_NodeSimCache::US_MPI_NodeSimCache( MPI_Comm node_comm,
    MPI_Win_sync( window );
    MPI_Barrier( comm );
    MPI_Win_sync( window );
-   base = ptr;
+   base       = ptr;
+   total_size = total_bytes;
+   first_rank = ( node_rank == 0 );
 
    // The memory watch of the node's first rank reads the use of all its ranks
    int  node_size = 1;
@@ -846,6 +850,25 @@ void US_MPI_NodeSimCache::start_watch( const Watch& settings )
 qint64 US_MPI_NodeSimCache::releases() const
 {
    return header->releases.load( std::memory_order_relaxed );
+}
+
+// Bytes to add to this rank's RSS so that the node counts the cache once.
+//  (The RSS of a process includes the shared pages it has touched.)
+qint64 US_MPI_NodeSimCache::rss_correction() const
+{
+   if ( base == nullptr )
+   {
+      return 0;
+   }
+
+   const qint64 mapped = US_MPI_MemLimit::mapped_rss( (quintptr) base, (quintptr) base + (quintptr) total_size );
+
+   if ( mapped < 0 )
+   {
+      return 0;
+   }
+
+   return ( first_rank ? resident_bytes() + total_size - data_size : 0 ) - mapped;
 }
 
 // Bytes returned to the system by emptying under pressure
