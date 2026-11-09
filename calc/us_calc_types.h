@@ -79,7 +79,8 @@ enum class Issue
    NonFiniteValue,        //!< An input value is NaN or infinite
    InvalidRange,          //!< A range has low > high or a non-finite bound
    UnsupportedQuantity,   //!< The calculation does not support the quantity
-   NoEligibleMembers      //!< No member of a group can be used
+   NoEligibleMembers,     //!< No member of a group can be used
+   SeriesTooShort         //!< A series is too short for the requested operation
 };
 
 //! \brief A condition found while calculating.

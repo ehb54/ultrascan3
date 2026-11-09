@@ -143,6 +143,12 @@ SOURCES      = us_ana_profile.cpp   \
                us_xpn_data.cpp      \
                us_zsolute.cpp
 
+# The calculation library (calc/) is compiled into this library, so every
+# qmake build that makes libus_utils, including the HPC build, has it.
+INCLUDEPATH  += ../calc
+HEADERS      += $$files(../calc/us_calc_*.h)
+SOURCES      += $$files(../calc/us_calc_*.cpp)
+
 # Only include us_crypto when not on a supercomputer
 
 !contains( DEFINES, NO_DB ) {

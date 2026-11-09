@@ -22,6 +22,7 @@
 #include "us_calc_matching.h"
 #include "us_calc_range.h"
 #include "us_calc_replicate.h"
+#include "us_calc_smoothing.h"
 #include "us_calc_tolerance.h"
 #include "us_calc_units.h"
 
@@ -279,5 +280,32 @@ TEST_F( UsCalcFixtures, ReplicateGroupsMatchTheOracle )
                  tol.sd_abs_of_mean * std::fabs( e["fraction_mean"].toDouble() ) );
       const ToleranceCheck check{ ToleranceRule::RelativePercentOfTarget, item["target"].toDouble(), item["tolerance"].toDouble() };
       EXPECT_EQ( passes( *r.mean_fraction_percent, check ), e["pass_relative"].toBool() );
+   }
+}
+
+// The library reproduces the smoothing captured from US_Math2 before the
+// extraction (fixtures/expected/legacy_smoothing.json), exactly.
+TEST( UsCalcLegacyCaptures, SmoothingMatchesTheCapture )
+{
+   const QJsonObject captured = readJson( "expected/legacy_smoothing.json" );
+   ASSERT_FALSE( captured.isEmpty() );
+   for ( auto it = captured.begin(); it != captured.end(); ++it )
+   {
+      SCOPED_TRACE( it.key().toStdString() );
+      // Keys are n<points>_smooth<width>; the series is (i*i % 7) + 0.25*i.
+      const int           n      = it.key().section( '_', 0, 0 ).mid( 1 ).toInt();
+      const int           smooth = it.key().section( '_', 1, 1 ).mid( 6 ).toInt();
+      std::vector<double> values;
+      for ( int i = 0; i < n; ++i )
+      {
+         values.push_back( ( i * i % 7 ) + 0.25 * i );
+      }
+      EXPECT_TRUE( gaussian_smoothing( values, smooth ).empty() );
+      const QJsonArray expected = it.value().toArray();
+      ASSERT_EQ( static_cast<int>( values.size() ), expected.size() );
+      for ( int i = 0; i < expected.size(); ++i )
+      {
+         EXPECT_EQ( values[i], expected[i].toDouble() ) << "index " << i;
+      }
    }
 }

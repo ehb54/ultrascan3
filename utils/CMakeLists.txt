@@ -102,6 +102,7 @@ target_include_directories(us_utils
 # Core Qt libraries + OpenSSL (always needed — us_crypto.cpp uses EVP directly)
 target_link_libraries(us_utils
         PUBLIC
+        UltraScan3::Calc
         Qt::Core
         Qt::Xml
         Qt::Network
@@ -176,6 +177,7 @@ if(BUILD_TESTING OR US3_PREFER_STATIC)
     # Core Qt libraries + OpenSSL (always needed)
     target_link_libraries(us_utils_static
             PUBLIC
+            UltraScan3::Calc
             Qt::Core
             Qt::Xml
             Qt::Network

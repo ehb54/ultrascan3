@@ -5,9 +5,10 @@
 #include <dlfcn.h>
 #endif
 
-#include "us_math2.h"
+#include "../calc/us_calc_smoothing.h"
 #include "us_constants.h"
 #include "us_dataIO.h"
+#include "us_math2.h"
 #include "us_matrix.h"
 #include "us_settings.h"
 
@@ -732,8 +733,7 @@ DbgLv(1) << QObject::tr("dataCorr: factor: sed=%1, diff=%2").arg(d.s20w_correcti
 
 double US_Math2::normal_distribution( double sigma, double mean, double x )
 {
-   double exponent = -sq( ( x - mean ) / sigma ) / 2.0;
-   return exp( exponent ) / sqrt( 2.0 * M_PI * sq( sigma ) );
+   return US_Calc::normal_distribution( sigma, mean, x );
 }
 
 double US_Math2::time_correction(
@@ -1420,121 +1420,14 @@ int US_Math2::_nnls_h12 (
 
 void US_Math2::gaussian_smoothing( QVector< double >& array, int smooth )
 {
-   if ( smooth <= 1 ) return;
-
-   // Apply a normalized Gaussian smoothing kernel that goes out 
-   // to 2 standard deviations
-
-   int points = array.size();
-   
-   QVector< double > temp_array( points );
-   QVector< double > y_weights( smooth );
-   double            x_weight;
-   
-   temp_array = array;
-   
-   // Standard deviation = 1.0, Mean = 0;
-   x_weight         = 0.0;
-   y_weights[ 0 ]   = normal_distribution( 1.0, 0.0, x_weight ); 
-   double increment = 2.0 / (double)smooth;
-   
-   // Only calculate half a Gaussian, since the other side is symmetric
-   for ( int i = 1; i < smooth; i++ )
+   // A width the series cannot support leaves the series unchanged.
+   std::vector<double> values( array.begin(), array.end() );
+   if ( US_Calc::gaussian_smoothing( values, smooth ).empty() )
    {
-      x_weight      += increment;
-      y_weights[ i ] = normal_distribution( 1.0, 0.0, x_weight );
-   }
-
-   // First, take care of the left border, using an "appearing frame" algorithm,
-   // starting with half a frame visible:
-
-   for ( int j = 0; j < smooth; j++ )   // Loop over all border point centers
-   {
-      double sum      = 0.0;
-      double sum_y    = 0.0;
-      int    position = 0;
-
-      // Sum all applicable points on the left of center
-      for ( int k = j - 1; k >= 0; k-- )
+      for ( int ii = 0; ii < array.size(); ii++ )
       {
-         position++;
-         sum   += y_weights[ position ] * temp_array[ k ];  
-         sum_y += y_weights[ position ];
+         array[ii] = values[ii];
       }
-
-      position = 0;
-
-      // Sum the weighted points right of center, including center
-      for ( int k = j; k < j + smooth; k++ )
-      {
-         sum   += y_weights[ position ] * temp_array[ k ];  
-         sum_y += y_weights[ position ];
-         position++;
-      }
-
-      // Normalize by the sum of all weights that were used
-      array[ j ] = sum / sum_y;
-   }
-
-   // Now deal with all non-border points:
-   for ( int j = smooth; j < points - smooth; j++ ) 
-   {
-      double sum      = 0.0;
-      double sum_y    = 0.0;
-      int    position = 0;
-      
-      // Sum all applicable points on the left of center
-      for ( int k = j - 1; k >= j - smooth + 1; k-- )
-      {
-         position++;
-         sum   += y_weights[ position ] * temp_array[ k ];   
-         sum_y += y_weights[ position ];
-      }
-
-      position = 0;
-      
-      // Sum the weighted points right of center, including center
-      for ( int k = j; k < j + smooth; k++ )
-      {
-         sum   += y_weights[ position ] * temp_array[ k ];  
-         sum_y += y_weights[ position ];
-         position++;
-      }
-
-      // Normalize by the sum of all weights that were used
-      array[ j ] = sum / sum_y;
-   }
-
-   // Now deal with all points from the right border, using a "disappearing
-   // frame" algorithm, starting with a full frame minus 1 point visible:
-
-   // Loop over all right-border points
-   for ( int j = points - smooth; j < points; j++ )
-   {
-      double sum      = 0.0;
-      double sum_y    = 0.0;
-      int    position = 0;
-      
-      // Sum all points on the left of center
-      for ( int k = j - 1; k >= j - smooth + 1; k-- )
-      {
-         position++;
-         sum   += y_weights[ position ] * temp_array[ k ]; 
-         sum_y += y_weights[ position ];
-      }
-
-      position = 0;
-
-      // Right of center, including center
-      for ( int k = j; k < points; k++ )
-      {
-         sum   += y_weights[ position ] * temp_array[ k ]; 
-         sum_y += y_weights[ position ];
-         position++;
-      }
-
-      // normalize by the sum of all weights that were used
-      array[ j ] = sum / sum_y;
    }
 }
 

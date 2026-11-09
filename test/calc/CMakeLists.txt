@@ -8,6 +8,7 @@
 # Unit tests of the us_calc library.  They link only the library and
 # GoogleTest:  no Qt, GUI, database or display.
 add_executable(test_us_calc
+        test_us_calc_preparation.cpp
         test_us_calc_rules.cpp
         test_us_calc_units.cpp
         test_us_calc_validation.cpp
