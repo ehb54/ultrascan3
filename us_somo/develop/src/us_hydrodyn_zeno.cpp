@@ -1,5 +1,6 @@
 #include "../include/us_hydrodyn_zeno.h"
 #include <QRegularExpression>
+#include <QRandomGenerator>
 //Added by qt3to4:
 #include <QTextStream>
 #include "../include/us_unicode.h"
@@ -13594,8 +13595,10 @@ bool US_Hydrodyn_Zeno::run(
       // argv[ argc++ ] = strdup( QString( "%1" ).arg( threads ).toLatin1().data() );
       argv[ argc++ ] = strdup( QString( "--num-threads=%1" ).arg( threads ).toLatin1().data() );
 
-      argv[ argc++ ] = strdup( QString( "--seed=%1" ).arg( QDateTime::currentSecsSinceEpoch() ).toLatin1().data() );
-      us_qdebug( QString( "current datetime %1" ).arg( argv[ argc - 1 ] ) );
+      // a new seed for every run: ZENO gives the same results for the same seed, and
+      // runs (e.g. Zeno repetitions) can start within the same second
+      argv[ argc++ ] = strdup( QString( "--seed=%1" ).arg( QRandomGenerator::global()->bounded( 0x7fffffff ) ).toLatin1().data() );
+      us_qdebug( QString( "zeno seed %1" ).arg( argv[ argc - 1 ] ) );
 
       int progress_steps = 100;
 

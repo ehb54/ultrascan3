@@ -594,7 +594,7 @@ SOURCES *= \
 #  us_win.cpp \
         src/us_write_config.cpp \
         src/us_zeno_cxx.cpp \
-        src/us_zeno_cxx_nf.cpp \
+        src/us_zeno_lib.cpp \
         src/qwt/scrollbar.cpp \
         src/qwt/scrollzoomer.cpp \
         src/us_gui_settings.cpp \
@@ -993,8 +993,7 @@ HEADERS *= \
 #  us_widgets.h \
 #  us_win.h \
         include/us_write_config.h \
-        include/us_zeno_cxx.h \
-        include/us_zeno_cxx_nf.h \
+        zeno/us_somo_zeno_config.h \
         include/us3_extern.h \
         include/us3_defines.h \
         include/us_gui_settings.h \
@@ -1046,3 +1045,8 @@ QT += opengl network
 # (ehb54/ultrascan-tickets#1012). Header-only, and no longer needs QtConcurrent or
 # Eigen -- the solver that used them is now a separate program, ehb54/grpy-cpp.
 INCLUDEPATH += $$PWD/include $$PWD/grpy
+
+# --- NIST ZENO (zeno/) -------------------------------------------------------
+# NIST ZENO 5.3.1 vendored with a few US-SOMO changes; see zeno/README.US-SOMO.
+# src/us_zeno_lib.cpp compiles the library, src/us_zeno_cxx.cpp is SOMO's driver.
+INCLUDEPATH += $$PWD/zeno/libzeno/include $$PWD/zeno/zeno-cli/src
