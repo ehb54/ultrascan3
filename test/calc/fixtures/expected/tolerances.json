@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "note": "Acceptance tolerances for the calculation library (extraction plan E02). Expected values from calc_oracle.py are exact for the double inputs, so these limits cover only the floating-point error of the code under test.",
+ "note": "Acceptance tolerances for the calculation library. Expected values from calc_oracle.py are exact for the double inputs, so these limits cover only the floating-point error of the code under test.",
  "exact": {
   "applies_to": ["component selection and counts", "pass/fail results", "method matching", "replicate member counts", "model load result, description and component count", "JSON round trip of any double (shortest round-trip text)"],
   "rule": "identical"

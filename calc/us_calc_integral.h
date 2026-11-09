@@ -7,10 +7,9 @@
 //! divisions + 1 boundary-fraction levels the solute where the accumulated
 //! concentration first reaches the level.
 //!
-//! It corrects the desktop reduction (extraction plan gap 10,
-//! ehb54/ultrascan-tickets#1214):  solutes with equal s, D, mw and f/f0 are
-//! merged wherever they appear, nothing else is rescaled, and the order is
-//! total, so the accumulated concentration ends at 1 and the result does not
+//! It corrects the desktop reduction (ehb54/ultrascan-tickets#1214):
+//! solutes with equal s, D, mw and f/f0 are merged wherever they appear,
+//! nothing else is rescaled, and the order is total, so the accumulated concentration ends at 1 and the result does not
 //! depend on component order or on the C++ library.
 #ifndef US_CALC_INTEGRAL_H
 #define US_CALC_INTEGRAL_H

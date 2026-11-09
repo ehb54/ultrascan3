@@ -181,7 +181,7 @@ TEST_F( UsCalcFixtures, RangeSummariesMatchTheOracle )
       {
          ASSERT_TRUE( r.fraction_percent.has_value() );
          EXPECT_LE( std::fabs( *r.fraction_percent - e["fraction"].toDouble() ), tol.fraction_abs );
-         // The legacy double arithmetic in the legacy order (gap 12)
+         // The legacy double arithmetic in the legacy order
          EXPECT_EQ( *r.fraction_percent, e["fraction_double"].toDouble() );
          if ( e.contains( "pass_pp" ) && !e["pass_pp"].isNull() )
          {
@@ -288,7 +288,7 @@ TEST_F( UsCalcFixtures, ReplicateGroupsMatchTheOracle )
 }
 
 // The library reproduces the smoothing captured from US_Math2 before the
-// extraction (fixtures/expected/legacy_smoothing.json) within the legacy
+// library replaced it (fixtures/expected/legacy_smoothing.json) within the legacy
 // series tolerance:  the capture was made by a build that fused multiply-adds,
 // which us_calc does not (us_calc_fp.h).
 TEST( UsCalcLegacyCaptures, SmoothingMatchesTheCapture )
@@ -358,7 +358,7 @@ TEST( UsCalcComposite, KeyMatchesQStringAsprintf )
 }
 
 // Each Monte Carlo fixture's composite equals the one US_Model::load built
-// before the extraction (checked by calc_oracle.py against legacy_models.json).
+// before the library replaced it (checked by calc_oracle.py against legacy_models.json).
 TEST_F( UsCalcFixtures, CompositesMatchTheFixtures )
 {
    int composites = 0;
@@ -497,7 +497,7 @@ TEST_F( UsCalcFixtures, IntegralDistributionsMatchUsIntegral )
    EXPECT_EQ( compared, 14 ); // 11 fitted and 3 edge models without duplicates
 }
 
-// With duplicates the result is corrected (gap 10):  the three equal solutes
+// With duplicates the result is corrected:  the three equal solutes
 // at 4.5 S (0.2 + 0.2 + 0.1) and the different one (0.1) give 60 % at 4.5 S
 // and the solute at 6.0 S the remaining 40 %, whatever the order.
 TEST_F( UsCalcFixtures, IntegralDistributionMergesDuplicates )

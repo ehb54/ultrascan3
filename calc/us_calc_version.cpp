@@ -1,7 +1,6 @@
 //! \file us_calc_version.cpp
 #include "us_calc_fp.h" // first:  floating-point policy
-//! The descriptions state the rules decided in the extraction plan
-//! (doc/UltraScan_Calculation_Library_Extraction_Plan.docx, edition 8).
+//! The descriptions state the rule each algorithm follows.
 #include "us_calc_version.h"
 
 namespace US_Calc

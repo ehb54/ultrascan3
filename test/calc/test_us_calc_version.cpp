@@ -25,7 +25,7 @@ TEST( UsCalcVersion, AlgorithmsAreNamedVersionedAndDescribed )
       EXPECT_FALSE( a.description.empty() ) << a.name;
       EXPECT_TRUE( names.insert( a.name ).second ) << "duplicate " << a.name;
    }
-   // The calculations in the extraction scope
+   // The calculations the library provides
    for ( const char* name : { "range_summary",
                               "replicate_summary",
                               "tolerance",
