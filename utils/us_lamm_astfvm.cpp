@@ -1293,14 +1293,15 @@ void US_LammAstfvm::LammStepSedDiff_C( double t, double dt, int M0,
    double* phiL    = phi         + 3;
    double* phiR    = phiL        + 6; 
 QElapsedTimer timer;
-static int ktim1=0;
-static int ktim2=0;
-static int ktim3=0;
-static int ktim4=0;
-static int ktim5=0;
-static int ktim6=0;
-static int ktim7=0;
-static int ktim8=0;
+// Debug timing, per thread (solves may run in threads)
+static thread_local int ktim1 = 0;
+static thread_local int ktim2 = 0;
+static thread_local int ktim3 = 0;
+static thread_local int ktim4 = 0;
+static thread_local int ktim5 = 0;
+static thread_local int ktim6 = 0;
+static thread_local int ktim7 = 0;
+static thread_local int ktim8 = 0;
 timer.start();
 
    // calculate Sv, Dv at t+dt on xg=(xl, xr)
@@ -1585,8 +1586,8 @@ void US_LammAstfvm::AdjustSD( double t, int Nv, double *x, double *u,
    //double  vbar   = model.components[ 0 ].vbar20;
    double  vbar   = model.components[ comp_x ].vbar20;
    QElapsedTimer timer;
-   static int kst1=0;
-   static int kst2=0;
+   static thread_local int kst1 = 0; // Debug timing, per thread
+   static thread_local int kst2 = 0;
 
    switch ( NonIdealCaseNo )
    {

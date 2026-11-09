@@ -31,10 +31,14 @@ SOURCES      += us_mpi_analysis.cpp  \
                 parallel_masters.cpp \
                 pmasters_compjob.cpp \
                 us_mpi_parse.cpp     \
-                us_mpi_jobconfig.cpp
+                us_mpi_jobconfig.cpp \
+                us_mpi_sim_cache.cpp \
+                us_mpi_memlimit.cpp
 
 HEADERS      += us_mpi_analysis.h \
-                us_mpi_jobconfig.h
+                us_mpi_jobconfig.h \
+                us_mpi_sim_cache.h \
+                us_mpi_memlimit.h
 
 INCLUDEPATH  += ../../utils /usr/include/mysql
 DEPENDPATH   += ../../utils

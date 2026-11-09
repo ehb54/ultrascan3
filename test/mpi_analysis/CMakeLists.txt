@@ -26,6 +26,13 @@ target_compile_definitions(test_us_mpi_jobconfig PRIVATE
 target_link_libraries(test_us_mpi_jobconfig PRIVATE
     ${US_MPI_TEST_UTILS} Qt::Core Qt::Xml gtest gtest_main)
 
+# Unit tests of the job's memory limit and use (no MPI)
+add_executable(test_us_mpi_memlimit
+    test_us_mpi_memlimit.cpp
+    ${US_MPI_SRC_DIR}/us_mpi_memlimit.cpp)
+target_include_directories(test_us_mpi_memlimit PRIVATE ${US_MPI_SRC_DIR})
+target_link_libraries(test_us_mpi_memlimit PRIVATE Qt::Core gtest gtest_main)
+
 # Checks job files without MPI: us_mpi_jobcheck [-q] <hpcrequest.xml>...
 add_executable(us_mpi_jobcheck
     us_mpi_jobcheck.cpp
@@ -35,6 +42,10 @@ target_link_libraries(us_mpi_jobcheck PRIVATE ${US_MPI_TEST_UTILS} Qt::Core Qt::
 
 include(GoogleTest)
 gtest_discover_tests(test_us_mpi_jobconfig
+    PROPERTIES
+    LABELS gtest-unit-mpi_analysis
+    TIMEOUT 60)
+gtest_discover_tests(test_us_mpi_memlimit
     PROPERTIES
     LABELS gtest-unit-mpi_analysis
     TIMEOUT 60)
@@ -106,6 +117,34 @@ set(US_MPI_INPUT_CASES
     input_bucket_inverted
     input_unknown_key
     input_centerpiece_bottom_default
+    feature_cache_off
+    feature_cache_default_policy
+    feature_cache_large
+    feature_cache_small
+    feature_cache_reused
+    feature_normal
+    feature_normal_check
+    feature_noise_qr
+    feature_normal_noise
+    feature_grid_step
+    feature_grid_step_one_axis
+    feature_hard_misplaced
+    feature_soft_walls
+    feature_soft_gaussian
+    feature_soft_no_margin
+    feature_soft_margin
+    feature_soft_prior_strong
+    feature_early_stop
+    feature_seed0_demes
+    feature_mc_sigma_model
+    feature_mc_pmasters
+    feature_cache_job_limit
+    feature_2dsa_cache_no_limit
+    feature_2dsa_cache_host_size
+    feature_2dsa_cache_room
+    feature_no_early_stop
+    feature_invalid_soft
+    feature_invalid_step
 )
 
 foreach(case ${US_MPI_CASES} ${US_MPI_INPUT_CASES})
@@ -123,6 +162,46 @@ foreach(case ${US_MPI_CASES} ${US_MPI_INPUT_CASES})
             --workdir ${CMAKE_CURRENT_BINARY_DIR}/work)
     set_tests_properties(mpi_analysis_${case} PROPERTIES
         LABELS "mpi;regression;${case_label}"
+        TIMEOUT 600
+        RESOURCE_LOCK mpi_analysis)
+endforeach()
+
+# The node-shared simulation cache must not change results:  repeat cases
+# with the cache off, with a cache too small for the fit (2DSA and PCSA keep
+# the first simulations and store no more; GA keeps the recent ones and
+# empties a generation of the cache again and again), with the recent policy
+# for every method, with the ranks split into two pseudo-nodes (separate
+# caches; the master has the other node clear its cache), with a job limit too
+# small for any cache, with one that leaves no room for the predicted peak, and
+# with the cache emptied over and over while the ranks use it (as under memory
+# pressure).  2DSA and PCSA have a cache only with a job limit (or a size from
+# US3_SIM_CACHE_MB), so the variants that need one set a 4 GB limit.
+set(US_MPI_CACHE_CASES
+    2dsa_refine_np4
+    2dsa_mc_pmasters3
+    2dsa_menbot
+    2dsa_composite_menbot
+    2dsa_composite_menbot_pmasters
+    pcsa_sl
+    ga_np2
+    ga_basic
+)
+
+foreach(variant "off;SimCache=off" "small;SimCacheMB=1" "recent;SimCacheMB=1,SimCachePolicy=recent"
+                "nodes;NodeSplit=2,SimCacheLimitMB=4096" "limit;SimCacheLimitMB=1"
+                "room;SimCacheLimitMB=200" "stress;SimCacheStress=1,SimCacheLimitMB=4096")
+    list(GET variant 0 tag)
+    list(GET variant 1 dtext)
+    add_test(NAME mpi_analysis_simcache_${tag}
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/us_mpi_regression.py
+            check ${US_MPI_CACHE_CASES}
+            --debug-text ${dtext}
+            --program $<TARGET_FILE:us_mpi_analysis>
+            --testdata $<TARGET_FILE:us_mpi_testdata>
+            --mpirun ${MPIEXEC_EXECUTABLE}
+            --workdir ${CMAKE_CURRENT_BINARY_DIR}/work_simcache_${tag})
+    set_tests_properties(mpi_analysis_simcache_${tag} PROPERTIES
+        LABELS "mpi;regression;simcache"
         TIMEOUT 600
         RESOURCE_LOCK mpi_analysis)
 endforeach()

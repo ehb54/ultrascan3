@@ -113,6 +113,13 @@ void US_MPI_Analysis::_2dsa_master( void )
       // All done with the pass: no jobs are ready or running
       send_udp( progress_2dsa() );
 
+      // The job's peak is known after the first refinement iteration (its
+      //  jobs carry the survivors as well), or after the fit without one
+      if ( iterations >= 2 || max_iterations <= 1 )
+      {
+         fit_sim_cache_rooms();
+      }
+
       // Iterative refinement
       if ( max_iterations > 1 )
       {
@@ -825,6 +832,7 @@ void US_MPI_Analysis::begin_fit_context( void )
    meniscus_value = ( meniscus_points == 1 ) ? data_sets[current_dataset]->run_data.meniscus : meniscus_values[meniscus_run];
    bottom_value   = ( bottom_points == 1 ) ? dataset_bottom( current_dataset ) : bottom_values[bottom_run];
 
+   const bool had_context = ( fit_context.dataset >= 0 );
    const bool sim_changed =
       ( fit_context.dataset != current_dataset || fit_context.meniscus != meniscus_value || fit_context.bottom != bottom_value );
 
@@ -835,6 +843,105 @@ void US_MPI_Analysis::begin_fit_context( void )
 
    DbgLv( 1 ) << "FitContext: ds" << current_dataset << "men" << meniscus_value << "bot" << bottom_value << "mc" << mc_iteration
               << "sim_changed" << sim_changed;
+
+   // Simulations of an earlier dataset or meniscus/bottom point are not
+   //  reused:  free their room.  Parallel-masters groups may work on
+   //  different fits at the same time, so only a single master clears.
+   if ( sim_changed && had_context && sim_cache != nullptr && mgroup_count < 2 )
+   {
+      clear_sim_caches();
+   }
+
+   if ( sim_changed && sim_cache != nullptr )
+   { // Memorized data set keys hold for one fit context
+      sim_cache->forget_dataset_keys();
+   }
+}
+
+// Clear the simulation cache of every node while all workers are idle:
+//  the master clears its own node and has the first rank of every other
+//  node clear that node's cache; jobs follow only after they have answered.
+void US_MPI_Analysis::clear_sim_caches( void )
+{
+   wait_workers_ready(); // No READY outstanding:  every worker waits for a job
+
+   sim_cache->clear(); // The master is the first rank of its node
+
+   MPI_Job job;
+   job.command = MPI_Job::CLEARCACHE;
+
+   for ( int leader : node_leaders )
+   {
+      if ( leader == my_rank )
+      {
+         continue;
+      }
+
+      MPI_Send( &job, sizeof( MPI_Job ), MPI_BYTE, leader, MPI_Job::MASTER, my_communicator );
+      worker_status[leader] = INIT; // Answers with READY when done
+   }
+
+   wait_workers_ready();
+}
+
+// Fit the room of every node's cache to the job's peak memory use, once:
+//  the cache started with the room the predicted peak leaves, and now each
+//  node's memory watch has seen the real one.  Called while all workers are
+//  idle, after the first refinement iteration (or the first fit, if there
+//  is no refinement).  Parallel-masters groups do not share their workers'
+//  nodes' leaders, so their caches keep the room of the prediction.
+void US_MPI_Analysis::fit_sim_cache_rooms( void )
+{
+   if ( sim_room_fitted || mgroup_count > 1 )
+   {
+      return;
+   }
+
+   // Each node sized its own cache, so every node's leader is asked (one
+   //  without a cache just answers)
+   sim_room_fitted = true;
+   wait_workers_ready();
+   fit_sim_cache_room(); // The master is the first rank of its node
+
+   MPI_Job job;
+   job.command = MPI_Job::FITCACHE;
+
+   for ( int leader : node_leaders )
+   {
+      if ( leader == my_rank )
+      {
+         continue;
+      }
+
+      MPI_Send( &job, sizeof( MPI_Job ), MPI_BYTE, leader, MPI_Job::MASTER, my_communicator );
+      worker_status[leader] = INIT; // Answers with READY when done
+   }
+
+   wait_workers_ready();
+}
+
+// Fit this node's cache room to the job's peak the memory watch has seen
+//  (the node's first rank).  Without a limit or a watch the room stays.
+void US_MPI_Analysis::fit_sim_cache_room( void )
+{
+   static const double OBSERVED_MARGIN = 1.10; // On the peak seen
+
+   if ( sim_cache == nullptr || node_rank != 0 )
+   {
+      return;
+   }
+
+   const qint64 before = sim_cache->room();
+   const qint64 after  = sim_cache->fit_room_to_peak( OBSERVED_MARGIN );
+
+   if ( after >= 0 )
+   {
+      qDebug().noquote() << QString( "Simulation cache: room %1 MB -> %2 MB for the job's peak of %3 MB on rank %4's node" )
+                               .arg( before / ( 1024 * 1024 ) )
+                               .arg( after / ( 1024 * 1024 ) )
+                               .arg( sim_cache->job_peak() / ( 1024 * 1024 ) )
+                               .arg( my_rank );
+   }
 }
 
 // Bottom of a dataset: the edited bottom if given, else the centerpiece

@@ -43,7 +43,8 @@ BASELINE_DIR = HERE / "baseline"
 
 # Dataset descriptors: (runID, cell, noise seed, concentration scale) and
 # optionally a dict of us_mpi_testdata options ("scans": scan count,
-# "nobottom": edit without <bottom>).  The experiment constants live in
+# "nobottom": edit without <bottom>, "noise": noise sigma, "species": list
+# of (s in S, f/f0, concentration) replacing the default sample).  The experiment constants live in
 # us_mpi_testdata.cpp.
 DS_A = ("regA", 1, 11, 1.0)
 DS_B = ("regA", 2, 23, 0.6)
@@ -342,6 +343,17 @@ def input_case(base, **changes):
 #   loose_vs    case whose RMSD this run must not exceed by more than 15 %
 #   log         regex the run log must match
 #   log_absent  regex the run log must not match
+#   log_max     {regex with a number group: limit}; each match must not exceed it
+#   log_min     {regex with a number group: limit}; each match must reach it
+#   rmsd_below  the fit RMSD must be below this value
+#   rmsd_above  the fit RMSD must be above this value
+#   within      boxes (s_min, s_max, f/f0_min, f/f0_max; s in S): every solute
+#               must lie inside one of them
+#   leaves      boxes:  at least one solute must lie outside all of them
+#   has_noise   the result must hold noise vectors
+#   log_distinct  (regex, n): at least n matches, all different
+#   log_agree   (regex, regex, rel. tol.): the first numbers each matches
+#               must agree
 # A case with "pending" documents a defect whose fix is still to come: it is
 # reported as XFAIL while it fails and as an error once it passes, so that
 # the marker gets removed.
@@ -446,6 +458,151 @@ INPUT_CASES = {
         expect={"same_as": "2dsa_basic", "log": r"[Uu]nknown parameter.*s_mx"}),
 }
 
+# GA features.  One worker (np 2) makes a GA reproducible on one platform, so
+# what must not change the fit can be required to reproduce ga_np2 exactly.
+# The middle bucket of MISPLACED ends below the true species at s = 4.5.
+MISPLACED = [(1.5, 3.5, 1.0, 1.6), (3.5, 4.2, 1.3, 2.0), (5.5, 8.5, 1.7, 2.6)]
+GA_LONGER = {"population": "60", "generations": "40", "regularization": "0"}
+
+
+def ga_feature(params=None, base_params=None, **changes):
+    merged = dict(GA_PARAMS, **(base_params or {}), **(params or {}))
+    return input_case("ga_np2", params=merged, debug_log=True, **changes)
+
+
+FEATURE_CASES = {
+    # The simulation cache must not change the fit, in any configuration
+    "feature_cache_off": ga_feature(
+        {"sim_cache_mb": "0"},
+        expect={"same_as": "ga_np2", "log_absent": "Simulation cache:"}),
+    "feature_cache_default_policy": ga_feature(
+        {"sim_cache_lru": "0"},
+        expect={"same_as": "ga_np2", "log": "Simulation cache:"}),
+    # Evicting must not change the fit either:  the smallest cap, in a run
+    #  that needs about 46 MB of simulations
+    "feature_cache_large": ga_feature(
+        base_params=GA_LONGER, expect={"log": r" 0 evicted, 0 rejected"}),
+    "feature_cache_small": ga_feature(
+        {"sim_cache_mb": "16"}, base_params=GA_LONGER,
+        expect={"same_as": "feature_cache_large",
+                "log": r"[1-9]\d* evicted, 0 rejected"}),
+    "feature_cache_reused": ga_feature(
+        expect={"same_as": "ga_np2", "log_min": {r"simulations reused \((\d+\.\d+)%\)": 20.0}}),
+    # Normal equations:  same quality, agreement with QR for every gene
+    "feature_normal": ga_feature(
+        {"ga_normal": "1"},
+        expect={"loose_vs": "ga_np2",
+                "log_min": {r"(\d+) fitness values from the normal equations": 1},
+                "log": r" 0 from QR"}),
+    "feature_normal_check": ga_feature(
+        {"ga_normal": "1", "ga_normal_check": "1"},
+        expect={"loose_vs": "ga_np2",
+                "log_max": {r"max rel\. variance diff\. ([\d.eE+-]+)": 1.0e-7,
+                            r"max conc\. diff\. / total ([\d.eE+-]+)": 1.0e-5}}),
+    # GA workers do not fit noise, only the master does:  with the normal
+    #  equations its refinement and final fit must fall back and fit the noise
+    "feature_noise_qr": ga_feature(
+        {"tinoise_option": "1"}, expect={"has_noise": True}),
+    "feature_normal_noise": ga_feature(
+        {"ga_normal": "1", "tinoise_option": "1"},
+        expect={"finite": True, "has_noise": True, "loose_vs": "feature_noise_qr",
+                "log_min": {r"(\d+) fitness values from the normal equations": 1}}),
+    # Absolute grid step:  points per bucket from the step (debug level 1 logs
+    #  the grid), rounded so that the grid ends on the bucket edges
+    "feature_grid_step": ga_feature(
+        {"s_step": "1.0", "k_step": "0.25", "debug_level": "1"},
+        expect={"within": GA_BUCKETS, "finite": True,
+                "log": r"(?s)bucket 0 ns nk 3 3 .*bucket 1 ns nk 3 4 .*bucket 2 ns nk 4 5 "}),
+    "feature_grid_step_one_axis": ga_feature(
+        {"k_step": "0.25", "debug_level": "1"},
+        expect={"within": GA_BUCKETS,
+                "log": r"(?s)bucket 0 ns nk 100 3 .*bucket 2 ns nk 100 5 "}),
+    # Soft buckets:  a true species outside its bucket
+    "feature_hard_misplaced": ga_feature(
+        base_params=GA_LONGER, buckets=MISPLACED,
+        expect={"within": MISPLACED, "rmsd_above": 0.0055}),
+    "feature_soft_walls": ga_feature(
+        {"bucket_soft": "1", "bucket_lambda": "0"}, base_params=GA_LONGER, buckets=MISPLACED,
+        expect={"leaves": MISPLACED, "rmsd_below": 0.0045,
+                "within": [(1.0, 4.5, 1.0, 1.9), (3.15, 4.55, 1.0, 2.35), (4.0, 10.0, 1.25, 3.05)]}),
+    "feature_soft_gaussian": ga_feature(
+        {"bucket_soft": "2", "bucket_lambda": "0"}, base_params=GA_LONGER, buckets=MISPLACED,
+        expect={"leaves": MISPLACED, "rmsd_below": 0.0045}),
+    # Margin 0 leaves no room, and walls cost nothing inside:  as hard buckets
+    "feature_soft_no_margin": ga_feature(
+        {"bucket_soft": "1", "bucket_margin": "0"},
+        expect={"same_as": "ga_np2", "within": GA_BUCKETS}),
+    # The margin limits how far a solute may go (0.1 widths, bucket 2 of 0.7)
+    "feature_soft_margin": ga_feature(
+        {"bucket_soft": "1", "bucket_lambda": "0", "bucket_margin": "0.1"},
+        base_params=GA_LONGER, buckets=MISPLACED,
+        expect={"rmsd_above": 0.0045,
+                "within": [(1.3, 3.7, 0.94, 1.66), (3.43, 4.27, 1.23, 2.07), (5.2, 8.8, 1.61, 2.69)]}),
+    # A heavy prior holds each solute near its bucket centre
+    "feature_soft_prior_strong": ga_feature(
+        {"bucket_soft": "2", "bucket_lambda": "1000000"}, base_params=GA_LONGER,
+        expect={"within": [(2.3, 2.7, 1.2, 1.4), (4.3, 4.7, 1.55, 1.75), (6.8, 7.2, 2.05, 2.25)]}),
+    # Early termination, and running all generations
+    "feature_early_stop": ga_feature(
+        {"population": "10", "generations": "400", "regularization": "0"},
+        expect={"log": "Early Termination"}),
+    "feature_no_early_stop": ga_feature(
+        {"population": "10", "generations": "150", "regularization": "0", "early_stop": "0"},
+        expect={"log_absent": "Early Termination", "log": r"for 1500 checks"}),
+    # Seed 0 (the LIMS default):  every deme must get its own random
+    #  sequence.  Demes with the same sequence evolve identically and report
+    #  the same simulation cache use.
+    "feature_seed0_demes": ga_feature(
+        {"seed": "0"}, np=3,
+        expect={"finite": True,
+                "log_distinct": (r"Deme \d+ \d+ : \"?(Simulation cache:[^\"\n]*)", 2)}),
+    # Monte Carlo:  the sigmas come from the reported (refined) model of
+    #  iteration 1, the model whose simulation is the base of the synthetic
+    #  data
+    "feature_mc_sigma_model": ga_feature(
+        {"mc_iterations": "3"},
+        expect={"finite": True,
+                "log": r"Gradient search refinement",
+                "log_agree": (r"Fit RMSD ([\d.eE+-]+)\s+of MC_Iteration 1",
+                              r"MC_Iteration 1 Simulation RMSD \"?([\d.eE+-]+)", 1.0e-4)}),
+    # Parallel Monte Carlo groups refine their models too
+    "feature_mc_pmasters": ga_feature(
+        {"mc_iterations": "4"}, np=5, mgroupcount=2,
+        expect={"finite": True,
+                "log_min": {r"Gradient search refinement: fitness [\d.eE+-]+ -> ([\d.eE+-]+)": 0.0}}),
+    # The default cache size stays within the job's memory limit:  64 MB
+    #  for 2 ranks leaves too little for a cache
+    "feature_cache_job_limit": ga_feature(
+        env={"SLURM_MEM_PER_NODE": "64"},
+        expect={"same_as": "ga_np2", "log_absent": "Simulation cache:",
+                "log": r"cache per rank \(MB\): 0 .*job memory limit on node \(MB, 0 none\) 64 "}),
+    # 2DSA had no cache before the node's cache:  without a job memory limit
+    #  (where a container or Slurm sets none) it gets none, unless the host
+    #  sets a size for it
+    "feature_2dsa_cache_no_limit": input_case(
+        "2dsa_refine_np4", debug_log=True,
+        expect={"same_as": "2dsa_refine_np4",
+                "log": r"Simulation caching is off: no job memory limit"
+                       r"|Simulation cache: .*job memory limit [1-9]\d* MB"}),
+    "feature_2dsa_cache_host_size": input_case(
+        "2dsa_refine_np4", debug_log=True, env={"US3_SIM_CACHE_MB": "64"},
+        expect={"same_as": "2dsa_refine_np4",
+                "log": r"Simulation cache: shared by the ranks of each node, \d+ MB"}),
+    # With a limit, the cache starts with the room the predicted peak leaves
+    "feature_2dsa_cache_room": input_case(
+        "2dsa_refine_np4", debug_log=True, params=lambda p: dict(p, debug_text="SimCacheLimitMB=8192"),
+        expect={"same_as": "2dsa_refine_np4",
+                "log": r"job memory limit 8192 MB; room \d+ MB for a predicted peak of [1-9]\d* MB"}),
+    # A wrong value is an orderly abort
+    "feature_invalid_soft": input_case(
+        "ga_np2", params=dict(GA_PARAMS, bucket_soft="3"),
+        expect={"abort": "bucket_soft"}),
+    "feature_invalid_step": input_case(
+        "ga_np2", params=dict(GA_PARAMS, s_step="-1"),
+        expect={"abort": "s_step"}),
+}
+INPUT_CASES.update(FEATURE_CASES)
+
 # Default comparison tolerances.  RMSD differences are relative; solute
 # distribution moments are compared relative to their scale.
 DEFAULT_TOL = {"rmsd_rel": 1e-6, "moment_rel": 1e-4, "noise_abs": 1e-6}
@@ -526,6 +683,10 @@ def build_archive(name, case, testdata, casedir):
         extra = ["scans=%d" % opts["scans"]] if "scans" in opts else []
         extra += ["nobottom"] if opts.get("nobottom") else []
         extra += ["tmst"] if case.get("timestate") == "given" else []
+        extra += ["noise=%g" % opts["noise"]] if "noise" in opts else []
+        if "species" in opts:
+            extra += ["species=" + ",".join("%g:%g:%g" % sp
+                                            for sp in opts["species"])]
         subprocess.run([testdata, "data", str(inputs), run_id, str(cell),
                         str(seed), str(scale)] + extra, check=True,
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -583,6 +744,12 @@ def run_job(name, case, args):
     if casedir.exists():
         shutil.rmtree(casedir)
     casedir.mkdir(parents=True)
+    if getattr(args, "debug_text", None):
+        # Debug text switches, e.g. "SimCache=off" or "SimCacheMB=1"
+        # Added to any debug_text the case has itself
+        own = case["params"].get("debug_text", "")
+        dtext = ",".join(t for t in (own, args.debug_text) if t)
+        case = dict(case, params=dict(case["params"], debug_text=dtext))
     archive = build_archive(name, case, args.testdata, casedir)
 
     env = dict(os.environ)
@@ -590,9 +757,12 @@ def run_job(name, case, args):
     env.setdefault("OMPI_ALLOW_RUN_AS_ROOT_CONFIRM", "1")
     env.setdefault("OMPI_MCA_rmaps_base_oversubscribe", "1")
     env["QT_LOGGING_RULES"] = "*.debug=false"
+    env.update(case.get("env", {}))
 
     if case.get("debug_log"):
         env["QT_LOGGING_RULES"] = "*.debug=true"
+        # (On Windows qDebug goes to the debugger unless told otherwise)
+        env["QT_FORCE_STDERR_LOGGING"] = "1"
 
     cmd = mpirun_command(args.mpirun, case["np"]) + [args.program]
     cmd += case.get("args", ["-walltime", "60",
@@ -787,6 +957,36 @@ def all_finite(summary):
                for v in vals)
 
 
+def in_boxes(solute, boxes):
+    """Whether a [s, f/f0, ...] solute lies inside one of the boxes (s in S)."""
+    s_sv, ff0 = solute[0] * 1.0e13, solute[1]
+    eps = 1.0e-6
+    return any(xmin - eps <= s_sv <= xmax + eps and ymin - eps <= ff0 <= ymax + eps
+               for (xmin, xmax, ymin, ymax) in boxes)
+
+
+def check_fit(summary, expect):
+    """Check the fitted models against the rmsd and solute limits of a case."""
+    errors = []
+    for fname, models in summary["models"].items():
+        for model in models:
+            if "rmsd_below" in expect and model["rmsd"] >= expect["rmsd_below"]:
+                errors.append("%s: rmsd %.6g not below %g"
+                              % (fname, model["rmsd"], expect["rmsd_below"]))
+            if "rmsd_above" in expect and model["rmsd"] <= expect["rmsd_above"]:
+                errors.append("%s: rmsd %.6g not above %g"
+                              % (fname, model["rmsd"], expect["rmsd_above"]))
+            if "within" in expect:
+                errors += ["%s: solute s %.4g S, f/f0 %.4g outside the limits"
+                           % (fname, sol[0] * 1.0e13, sol[1])
+                           for sol in model["solutes"]
+                           if not in_boxes(sol, expect["within"])]
+            if "leaves" in expect and all(in_boxes(sol, expect["leaves"])
+                                          for sol in model["solutes"]):
+                errors.append("%s: no solute left the buckets" % fname)
+    return errors
+
+
 def check_input_case(name, case, args, reference):
     """Run an input case; return a list of errors (empty if it passed)."""
     case = dict(case, timeout=min(args.timeout, case.get("timeout", INPUT_TIMEOUT)))
@@ -815,6 +1015,29 @@ def check_input_case(name, case, args, reference):
     errors = []
     if "log" in expect and not re.search(expect["log"], text):
         errors.append("log does not match /%s/" % expect["log"])
+    for pattern, limit in expect.get("log_max", {}).items():
+        values = [float(v) for v in re.findall(pattern, text)]
+        if not values or max(values) > limit:
+            errors.append("log /%s/: %s exceeds %g" % (pattern, values, limit))
+    for pattern, limit in expect.get("log_min", {}).items():
+        values = [float(v) for v in re.findall(pattern, text)]
+        if not values or min(values) < limit:
+            errors.append("log /%s/: %s below %g" % (pattern, values, limit))
+    if "log_distinct" in expect:
+        pattern, count = expect["log_distinct"]
+        values = re.findall(pattern, text)
+        if len(values) < count or len(set(values)) < len(values):
+            errors.append("log /%s/: %s not %d or more different values"
+                          % (pattern, values, count))
+    if "log_agree" in expect:
+        first, second, tol = expect["log_agree"]
+        one = re.search(first, text)
+        two = re.search(second, text)
+        if not one or not two:
+            errors.append("log does not match /%s/ and /%s/" % (first, second))
+        elif abs(float(one.group(1)) - float(two.group(1))) > tol * abs(float(two.group(1))):
+            errors.append("log values %s and %s differ by more than %g"
+                          % (one.group(1), two.group(1), tol))
     if "log_absent" in expect:
         found = re.search(r".*%s.*" % expect["log_absent"], text)
         if found:
@@ -825,6 +1048,9 @@ def check_input_case(name, case, args, reference):
         got = job_statistics(results).get(key)
         if got != value:
             errors.append("job_statistics %s=%s, expected %s" % (key, got, value))
+    errors += check_fit(summary, expect)
+    if expect.get("has_noise") and not summary["noises"]:
+        errors.append("result holds no noise")
     if expect.get("finite") and not all_finite(summary):
         errors.append("result contains non-finite values")
     if "same_as" in expect:
@@ -848,6 +1074,9 @@ def main():
     parser.add_argument("--mpirun", default="mpirun")
     parser.add_argument("--workdir", default="mpi_regression_work")
     parser.add_argument("--timeout", type=int, default=540)
+    parser.add_argument("--debug-text", dest="debug_text", default="",
+                        help="debug_text entries added to every case,"
+                             " e.g. SimCache=off or SimCacheMB=1")
     args = parser.parse_args()
 
     if args.command == "list":
@@ -875,7 +1104,8 @@ def main():
     def reference(ref):
         # Reference result for an input case, run once
         if ref not in references:
-            references[ref] = run_case(ref + "_ref", CASES[ref], args)
+            references[ref] = run_case(ref + "_ref",
+                                       CASES.get(ref) or INPUT_CASES[ref], args)
         return references[ref]
 
     failed = 0

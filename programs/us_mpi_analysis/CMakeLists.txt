@@ -6,6 +6,7 @@
 # is explicitly set.
 
 find_package(MPI REQUIRED CXX)
+find_package(Threads REQUIRED)
 
 set(src_dir ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -15,6 +16,8 @@ add_executable(us_mpi_analysis
     ${src_dir}/pmasters_compjob.cpp
     ${src_dir}/us_mpi_parse.cpp
     ${src_dir}/us_mpi_jobconfig.cpp
+    ${src_dir}/us_mpi_sim_cache.cpp
+    ${src_dir}/us_mpi_memlimit.cpp
     ${src_dir}/ga_worker.cpp
     ${src_dir}/pcsa_master.cpp
     ${src_dir}/parallel_masters.cpp
@@ -29,6 +32,7 @@ target_link_libraries(us_mpi_analysis
     PRIVATE
         us_program_common
         MPI::MPI_CXX
+        Threads::Threads
 )
 
 target_include_directories(us_mpi_analysis

@@ -11,6 +11,7 @@
 #include "us_math2.h"
 #include "us_model.h"
 #include "us_mpi_jobconfig.h"
+#include "us_mpi_sim_cache.h"
 #include "us_noise.h"
 #include "us_pcsa_modelrec.h"
 #include "us_simparms.h"
@@ -21,6 +22,8 @@
 #define DATASET          US_SolveSim::DataSet
 #define DGene            US_Model
 
+// us_math2.h defines a fallback DbgLv if it is included first
+#undef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
 #define DbTiming if(dbg_timing)qDebug()   //!< debug-timing-conditioned qDebug()
 
@@ -70,6 +73,10 @@ class US_MPI_Analysis : public QObject
         MPI_Comm         node_comm = MPI_COMM_NULL; //!< Ranks sharing this node's memory
         int              node_rank = 0;             //!< Rank within node_comm
         int              node_size = 1;             //!< Number of ranks on this node
+        uint             deme_seed = 0;             //!< Random seed shared by all ranks (job seed or rank 0's time seed)
+        US_MPI_NodeSimCache* sim_cache = nullptr;       //!< Simulations shared by the node's ranks (or none)
+        QVector<int>         node_leaders;              //!< World ranks of the first rank of each node
+        bool                 sim_room_fitted = false;   //!< The caches' room was fitted to the job's peak
 
         int current_dataset;      //!< Current dataset for global fit or composite
         int datasets_to_process;  //!< Datasets to process for global fit or composite
@@ -202,7 +209,17 @@ class US_MPI_Analysis : public QObject
 
                 //! \enum Command
                 //! \brief Enumeration for MPI job commands
-                enum Command { IDLE, PROCESS, WAIT, SHUTDOWN, NEWDATA, PROCESS_MC };
+                enum Command
+                {
+                   IDLE,
+                   PROCESS,
+                   WAIT,
+                   SHUTDOWN,
+                   NEWDATA,
+                   PROCESS_MC,
+                   CLEARCACHE,
+                   FITCACHE
+                };
 
                 //! \enum Status
                 //! \brief Enumeration for MPI job statuses
@@ -309,7 +326,16 @@ class US_MPI_Analysis : public QObject
                 double y_max; //!< Maximum Y value
                 double ds;    //!< Delta S value
                 double dk;    //!< Delta K value
+                int    ns;    //!< Grid points in s inside the bucket
+                int    nk;    //!< Grid points in k inside the bucket
+                int    s_glo; //!< Lowest allowed s grid index (< 0: soft bucket)
+                int    s_ghi; //!< Highest allowed s grid index (> ns-1: soft bucket)
+                int    k_glo; //!< Lowest allowed k grid index
+                int    k_ghi; //!< Highest allowed k grid index
         };
+
+        int                                        bucket_soft   = 0;   //!< 0 hard buckets, 1 soft walls, 2 Gaussian prior
+        double                                     bucket_lambda = 1.0; //!< Weight of the soft-bucket penalty
 
         int generation;       //!< Generation count
         int s_grid;           //!< S grid size
@@ -318,6 +344,7 @@ class US_MPI_Analysis : public QObject
         int fitness_count;    //!< Fitness count
 
         typedef QVector< US_Solute > Gene; //!< Gene type
+        Gene                                       fit_gene; //!< Gene of the model the GA master reported last
 
         double regularization; //!< Regularization value
         double concentration_threshold; //!< Concentration threshold
@@ -327,6 +354,15 @@ class US_MPI_Analysis : public QObject
         QList< SIMULATION > sim_values; //!< Simulation values list
         QMap< QString, double > fitness_map; //!< Fitness map
         int fitness_hits; //!< Fitness hits count
+        double                                     fitness_secs    = 0.0;     //!< Worker seconds in fitness evaluations
+        US_SimCache* ga_simcache      = nullptr; //!< Per-rank simulation cache (GA, if the node cache could not be made)
+        qint64       rank_cache_bytes = 0;       //!< Size of ga_simcache (0: none)
+        int                                        ga_normal       = 0;   //!< GA fitness from the normal equations (1; 0 = QR path)
+        int                                        ga_normal_check = 0;   //!< Compare both fitness paths for every gene
+        qint64                                     ga_normal_count = 0;   //!< Fitness values from the normal equations
+        qint64                                     ga_qr_count     = 0;   //!< ... from the QR path (fallback)
+        double                                     ga_normal_dvar  = 0.0; //!< Check:  max relative variance difference
+        double                                     ga_normal_dc    = 0.0; //!< Check:  max concentration difference / sum
         QList< DGene > dgenes; //!< DGene list
         QList< DGene > best_dgenes; //!< Best DGene list (size is number of workers)
         US_dmGA_Constraints constraints; //!< Genetic algorithm constraints
@@ -449,6 +485,14 @@ class US_MPI_Analysis : public QObject
         void                   begin_fit_context( void );
         void                   create_node_comm( void );
         void                   free_node_comm( void );
+        void                   create_sim_cache( void );
+        US_SimCache*           solver_cache( void ) const;
+        void                   clear_sim_caches( void );
+        void                   fit_sim_cache_rooms( void );
+        void                   fit_sim_cache_room( void );
+        qint64                 predicted_node_bytes( void );
+        qint64                 job_memory_limit( const US_MPI_MemLimit::Cgroup& );
+        qint64                 sim_cache_bytes( qint64, bool, bool, qint64 );
         bool                   worker_fit_context( int, double, double );
         double                 dataset_bottom( int );
         void     set_monteCarlo    ( void );
@@ -478,12 +522,20 @@ class US_MPI_Analysis : public QObject
         void     _2dsa_worker      ( void );
 
         void     calc_residuals     ( int, int, SIMULATION& );
+        void                   seed_deme_random( void );
+        void                   calc_fitness_residuals( int, int, SIMULATION& );
         void                   debug_residuals( int, int, SIMULATION&, QVector<US_Solute>& );
 
         // GA Master
         void ga_master       ( void );
         void ga_master_loop  ( void );
         void ga_global_fit   ( void );
+        Gene                   refined_gene( const Gene& );
+        void                   report_best_gene( void );
+        void                   setup_bucket_grid( void );
+        void                   setup_ga_simcache( void );
+        double                 bucket_penalty( const Gene&, int );
+        void                   bound_solute( US_Solute&, int );
         void set_gaMonteCarlo( void );
 
         // GA Worker
