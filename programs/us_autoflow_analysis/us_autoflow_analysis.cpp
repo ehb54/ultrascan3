@@ -184,8 +184,8 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
 // Stage names are compared as whole strings, so e.g. "2DSA" does not match "2DSA_FM" or "2DSA_IT".
 static QSet<QString> us_statusJsonStages( const QString& status_json )
 {
-   QSet<QString>   stages;
-   QJsonDocument   jdoc = QJsonDocument::fromJson( status_json.toUtf8() );
+   QSet<QString> stages;
+   QJsonDocument jdoc = QJsonDocument::fromJson( status_json.toUtf8() );
 
    if ( !jdoc.isObject() )
    {
@@ -193,7 +193,7 @@ static QSet<QString> us_statusJsonStages( const QString& status_json )
       return stages;
    }
 
-   QJsonObject jobj = jdoc.object();
+   QJsonObject      jobj = jdoc.object();
 
    // "to_process": array of stage-name strings
    const QJsonArray to_process = jobj.value( "to_process" ).toArray();
@@ -438,8 +438,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       Canceled_triples[ triple_name ]  = false;
       History_read[ triple_name ]      = false;
 
-      Process_2dsafm[ triple_name ] = us_statusJsonStages( status_json ).contains( "2DSA_FM" );
-	
+      Process_2dsafm[triple_name] = us_statusJsonStages( status_json ).contains( "2DSA_FM" );
+
       //Define triple's channels
       QStringList triple_name_parts = triple_name.split(".");
       channels_all << triple_name_parts[0] + "." + triple_name_parts[1];
@@ -520,7 +520,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       job4run      = json_stages.contains( "2DSA_IT" );
       job5run      = json_stages.contains( "2DSA_MC" );
       job6run_pcsa = json_stages.contains( "PCSA" );
-          
+
       triple_name_width = fmet.horizontalAdvance( triple_curr );
       
       qDebug() << "Triple,  width:  " << triple_curr << ", " << triple_name_width;

@@ -1519,7 +1519,9 @@ DbgLv(1) << "AP2d:inP:  parms_to_gui complete";
    // (do NOT force it back to checked), and just make sure it is editable.
    bool vel_mwl_mode = mainw->velmwl_mode_aprofile;
    if ( vel_mwl_mode )
+   {
       ck_j5run->setChecked( false );
+   }
    ck_j5run->setEnabled( !vel_mwl_mode );
    le_j5iter->setEnabled( !vel_mwl_mode );
 }
@@ -1835,7 +1837,9 @@ DbgLv(1) << "APpc:inP:   parms_to_gui complete";
 // (do NOT force it back to unchecked), and just make sure it is editable.
 bool vel_mwl_mode = mainw->velmwl_mode_aprofile;
 if ( vel_mwl_mode )
+{
    ck_nopcsa->setChecked( true );
+}
 ck_nopcsa->setEnabled( !vel_mwl_mode );
 }
 
