@@ -15,12 +15,14 @@
 #include <QJsonObject>
 #include <QString>
 
+#include <algorithm>
 #include <cmath>
 #include <map>
 #include <random>
 #include <string>
 
 #include "us_calc_composite.h"
+#include "us_calc_integral.h"
 #include "us_calc_matching.h"
 #include "us_calc_range.h"
 #include "us_calc_replicate.h"
@@ -424,4 +426,116 @@ TEST( UsCalcComposite, MergesByKeyAndAverages )
    EXPECT_EQ( r.source_index[0], 2u );
    EXPECT_DOUBLE_EQ( r.model.components[1].signal_concentration, 0.2 / 2 );
    EXPECT_EQ( r.model.description, "run.1A260.e1_a2611090000_2DSA-MC_000001_mcN002.model" );
+}
+
+namespace
+{
+const std::pair<const char*, DistributionAxis> kAxes[] = { { "s", DistributionAxis::Sedimentation },
+                                                           { "ff0", DistributionAxis::FrictionalRatio },
+                                                           { "mw", DistributionAxis::MolecularWeight },
+                                                           { "D", DistributionAxis::Diffusion },
+                                                           { "vbar", DistributionAxis::PartialSpecificVolume },
+                                                           { "Rh", DistributionAxis::HydrodynamicRadius } };
+
+const std::vector<double>&                     series( const IntegralDistribution& d, DistributionAxis axis )
+{
+   switch ( axis )
+   {
+      case DistributionAxis::Sedimentation:
+         return d.s;
+      case DistributionAxis::FrictionalRatio:
+         return d.f_f0;
+      case DistributionAxis::MolecularWeight:
+         return d.mw;
+      case DistributionAxis::Diffusion:
+         return d.D;
+      case DistributionAxis::PartialSpecificVolume:
+         return d.vbar20;
+      case DistributionAxis::HydrodynamicRadius:
+         return d.rh;
+   }
+   return d.s;
+}
+} // namespace
+
+// Without duplicate solutes the corrected distribution is the one US_Integral
+// drew (fixtures/expected/legacy_integral.json), on every axis.
+TEST_F( UsCalcFixtures, IntegralDistributionsMatchUsIntegral )
+{
+   const QJsonObject captured = readJson( "expected/legacy_integral.json" );
+   const double      rel      = readJson( "expected/tolerances.json" )["legacy_series"].toObject()["relative"].toDouble();
+   int               compared = 0;
+   for ( auto it = captured.begin(); it != captured.end(); ++it )
+   {
+      // Single models only; "overlay/..." entries combine them.
+      QString file = it.key();
+      if ( file.startsWith( "overlay/" ) || file.contains( "duplicates" ) )
+      {
+         continue;
+      }
+      std::string key = file.startsWith( "edge/" ) ? file.toStdString() : file.mid( 7 ).toStdString(); // drop "models/"
+      key += inputs.count( key + "#composite" ) ? "#composite" : "#model";
+      SCOPED_TRACE( key );
+      const Model& model = inputs.at( key );
+      for ( const auto& axis : kAxes )
+      {
+         const QJsonObject curve = it.value().toObject()[axis.first].toArray()[0].toObject();
+         const QJsonArray  xs    = curve["x"].toArray();
+         const QJsonArray  ys    = curve["y"].toArray();
+         const auto        d     = integral_distribution( model, axis.second );
+         ASSERT_TRUE( d.diagnostics.empty() || !has_error( d.diagnostics ) ) << axis.first;
+         const std::vector<double>& x = series( d, axis.second );
+         ASSERT_EQ( static_cast<int>( x.size() ), xs.size() ) << axis.first;
+         for ( int i = 0; i < xs.size(); ++i )
+         {
+            EXPECT_NEAR( x[i], xs[i].toDouble(), rel * std::fabs( xs[i].toDouble() ) + 1e-300 ) << axis.first << " " << i;
+            EXPECT_NEAR( d.boundary_fractions[i], ys[i].toDouble(), 1e-15 ) << axis.first << " " << i;
+         }
+      }
+      ++compared;
+   }
+   EXPECT_EQ( compared, 14 ); // 11 fitted and 3 edge models without duplicates
+}
+
+// With duplicates the result is corrected (gap 10):  the three equal solutes
+// at 4.5 S (0.2 + 0.2 + 0.1) and the different one (0.1) give 60 % at 4.5 S
+// and the solute at 6.0 S the remaining 40 %, whatever the order.
+TEST_F( UsCalcFixtures, IntegralDistributionMergesDuplicates )
+{
+   const Model& model    = inputs.at( "edge/edge_duplicates_ties.model.xml#model" );
+   Model        reversed = model;
+   std::reverse( reversed.components.begin(), reversed.components.end() );
+   for ( const Model* m : std::vector<const Model*>{ &model, &reversed } )
+   {
+      const auto d = integral_distribution( *m, DistributionAxis::Sedimentation );
+      ASSERT_FALSE( has_error( d.diagnostics ) );
+      for ( size_t i = 0; i < d.s.size(); ++i )
+      {
+         // The level on the boundary itself (0.6) is decided by rounding.
+         if ( std::fabs( d.boundary_fractions[i] - 0.6 ) < 1e-9 )
+         {
+            continue;
+         }
+         EXPECT_DOUBLE_EQ( d.s[i], d.boundary_fractions[i] < 0.6 ? 4.5 : 6.0 ) << i;
+      }
+   }
+   const auto a = integral_distribution( model, DistributionAxis::Diffusion );
+   const auto b = integral_distribution( reversed, DistributionAxis::Diffusion );
+   EXPECT_EQ( a.D, b.D );
+}
+
+TEST( UsCalcIntegral, InvalidInputs )
+{
+   EXPECT_TRUE( has_error( integral_distribution( Model(), DistributionAxis::Sedimentation ).diagnostics ) );
+   Model zero;
+   zero.components = { Component{ 4.5e-13, 0, 0, 0, 1.6, 0.72, 0.0 } };
+   EXPECT_TRUE( has_error( integral_distribution( zero, DistributionAxis::Sedimentation ).diagnostics ) );
+   Model one;
+   one.components = { Component{ 4.5e-13, 0, 0, 0, 1.6, 0.72, 1.0 } };
+   IntegralSettings narrow;
+   narrow.divisions = 10;
+   narrow.smoothing = 10; // 11 levels cannot take a width of 10
+   const auto d     = integral_distribution( one, DistributionAxis::Sedimentation, narrow );
+   EXPECT_TRUE( has_error( d.diagnostics ) );
+   EXPECT_EQ( d.s.size(), 11u ); // unsmoothed series are still returned
 }
