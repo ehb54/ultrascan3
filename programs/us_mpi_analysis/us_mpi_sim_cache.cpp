@@ -154,6 +154,7 @@ US_MPI_NodeSimCache::US_MPI_NodeSimCache( MPI_Comm node_comm,
     store_on( true ),
     total_size( 0 ),
     first_rank( false ),
+    shared_start( -1 ),
     watch_stop( false ),
     rank_hits( 0 ),
     rank_misses( 0 ),
@@ -234,6 +235,9 @@ US_MPI_NodeSimCache::US_MPI_NodeSimCache( MPI_Comm node_comm,
    header = reinterpret_cast<Header*>( ptr );
    table  = reinterpret_cast<Slot*>( ptr + header_bytes );
    data   = ptr + header_bytes + table_bytes;
+
+   // Before any page of the window is touched:  growth from here is the cache
+   shared_start = US_MPI_MemLimit::shared_rss();
 
    if ( node_rank == 0 )
    { // Empty header and table
@@ -856,17 +860,19 @@ qint64 US_MPI_NodeSimCache::releases() const
 //  (The RSS of a process includes the shared pages it has touched.)
 qint64 US_MPI_NodeSimCache::rss_correction() const
 {
-   if ( base == nullptr )
+   if ( base == nullptr || shared_start < 0 )
    {
       return 0;
    }
 
-   const qint64 mapped = US_MPI_MemLimit::mapped_rss( (quintptr) base, (quintptr) base + (quintptr) total_size );
+   const qint64 shared_now = US_MPI_MemLimit::shared_rss();
 
-   if ( mapped < 0 )
+   if ( shared_now < 0 )
    {
       return 0;
    }
+
+   const qint64 mapped = qMax( (qint64) 0, shared_now - shared_start );
 
    return ( first_rank ? resident_bytes() + total_size - data_size : 0 ) - mapped;
 }

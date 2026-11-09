@@ -71,9 +71,10 @@ class US_MPI_MemLimit
       //!        file (anonymous or System V shared memory) or if unknown.
       static std::string mapped_dir( const void* address, const Paths& paths = Paths() );
 
-      //! \brief Resident bytes this process has mapped in an address range,
-      //!        from its smaps (-1 if unknown, e.g. not on Linux)
-      static qint64      mapped_rss( quintptr first, quintptr last, const Paths& paths = Paths() );
+      //! \brief Resident bytes of this process in shared mappings, from its
+      //!        statm (-1 if unknown, e.g. not on Linux).  Cheap enough to
+      //!        call for every message.
+      static qint64      shared_rss( const Paths& paths = Paths() );
 
       //! \brief Bytes free in the file system of a directory (-1 if unknown)
       static qint64      fs_free( const std::string& dir );

@@ -200,8 +200,9 @@ class US_MPI_NodeSimCache : public US_SimCache
       //! \brief Bytes to add to this rank's RSS so that the ranks of the node
       //!        together count the cache once:  each rank drops the pages of
       //!        the window it has mapped, and the node's first rank adds what
-      //!        the cache holds.  0 where a rank's pages are unknown (not
-      //!        on Linux).
+      //!        the cache holds.  A rank's pages of the window are the growth
+      //!        of its shared memory since the window was made.  0 where
+      //!        that is unknown (not on Linux).
       qint64 rss_correction() const;
 
       //! \brief Counts of the whole node:  this rank's fetch and store counts
@@ -258,22 +259,23 @@ class US_MPI_NodeSimCache : public US_SimCache
       void                    watch_loop();
       qint64                  bytes_held() const;
 
-      MPI_Comm                comm;        // Node communicator
-      MPI_Win                 window;      // Shared window
-      char*                   base;        // Start of the window in this process
-      Header*                 header;      // Shared header
-      Slot*                   table;       // Shared slot table
-      char*                   data;        // Shared data area
-      qint64                  nslots;      // Number of slots
-      qint64                  data_size;   // Bytes of the data area
-      Policy                  keep;        // Policy
-      int                     ngens;       // Generations:  1 (KEEP_FIRST) or 2 (RECENT)
-      qint64                  gen_slots;   // Slots of a generation
-      qint64                  gen_size;    // Bytes of the data area of a generation
-      std::atomic<bool>       store_on;    // Flag:  this rank stores simulations
-      std::string             backing_dir; // File system of the window (node's first rank)
-      qint64                  total_size;  // Bytes of the whole window
-      bool                    first_rank;  // Flag:  the node's first rank
+      MPI_Comm                comm;         // Node communicator
+      MPI_Win                 window;       // Shared window
+      char*                   base;         // Start of the window in this process
+      Header*                 header;       // Shared header
+      Slot*                   table;        // Shared slot table
+      char*                   data;         // Shared data area
+      qint64                  nslots;       // Number of slots
+      qint64                  data_size;    // Bytes of the data area
+      Policy                  keep;         // Policy
+      int                     ngens;        // Generations:  1 (KEEP_FIRST) or 2 (RECENT)
+      qint64                  gen_slots;    // Slots of a generation
+      qint64                  gen_size;     // Bytes of the data area of a generation
+      std::atomic<bool>       store_on;     // Flag:  this rank stores simulations
+      std::string             backing_dir;  // File system of the window (node's first rank)
+      qint64                  total_size;   // Bytes of the whole window
+      bool                    first_rank;   // Flag:  the node's first rank
+      qint64                  shared_start; // Rank's shared bytes before the window was used
 
       // Memory watch (only on the node's first rank)
       Watch                   watch;
