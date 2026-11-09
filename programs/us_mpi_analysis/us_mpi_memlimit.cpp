@@ -7,6 +7,7 @@
 
 #ifdef Q_OS_UNIX
 #include <sys/statvfs.h>
+#include <unistd.h>
 #endif
 
 #ifdef Q_OS_LINUX
@@ -411,42 +412,26 @@ qint64 US_MPI_MemLimit::cache_room( qint64 job_limit, qint64 job_peak, double ma
    return ( room > 0.0 ) ? (qint64) room : 0;
 }
 
-// Resident bytes this process has mapped in an address range:  the Rss
-//  fields of the mappings that overlap it
-qint64 US_MPI_MemLimit::mapped_rss( const quintptr first, const quintptr last, const Paths& paths )
+// Resident bytes of this process in shared mappings:  the third field of
+//  statm, in pages.  The kernel keeps this as a counter, so reading it costs
+//  about what reading the RSS does;  smaps would walk every mapping's pages.
+qint64 US_MPI_MemLimit::shared_rss( const Paths& paths )
 {
-   const std::string text = read_text( paths.proc + "/self/smaps" );
+#ifdef Q_OS_UNIX
+   long long size     = 0;
+   long long resident = 0;
+   long long shared   = 0;
 
-   if ( text.empty() )
+   if ( sscanf( read_text( paths.proc + "/self/statm" ).c_str(), "%lld %lld %lld", &size, &resident, &shared ) != 3 )
    {
       return -1;
    }
 
-   qint64 kbytes  = 0;
-   bool   overlap = false;
-   size_t pos     = 0;
-
-   while ( pos < text.size() )
-   {
-      size_t end             = text.find( '\n', pos );
-      end                    = ( end == std::string::npos ) ? text.size() : end;
-      const std::string line = text.substr( pos, end - pos );
-      pos                    = end + 1;
-
-      char*          after = nullptr;
-      const quintptr start = (quintptr) strtoull( line.c_str(), &after, 16 );
-
-      if ( after != line.c_str() && *after == '-' )
-      { // The header of a mapping
-         overlap = ( start < last && (quintptr) strtoull( after + 1, nullptr, 16 ) > first );
-      }
-      else if ( overlap && line.compare( 0, 4, "Rss:" ) == 0 )
-      {
-         kbytes += strtoll( line.c_str() + 4, nullptr, 10 );
-      }
-   }
-
-   return kbytes * 1024;
+   return (qint64) shared * (qint64) sysconf( _SC_PAGESIZE );
+#else
+   Q_UNUSED( paths );
+   return -1;
+#endif
 }
 
 // Pressure for bytes used of a limit

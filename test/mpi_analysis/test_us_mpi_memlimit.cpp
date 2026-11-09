@@ -216,33 +216,28 @@ TEST_F( MemLimit, MappedDirOfSharedWindows )
 }
 
 // The pages of a shared window a rank has touched, to count the cache once
-TEST_F( MemLimit, MappedRssOfAnAddressRange )
+#ifdef Q_OS_UNIX
+TEST_F( MemLimit, SharedRssIsTheThirdFieldOfStatm )
 {
-   write( "proc/self/smaps",
-          "00400000-00452000 r-xp 00000000 08:02 173521      /usr/bin/us_mpi_analysis\n"
-          "Size:                328 kB\n"
-          "Rss:                 100 kB\n"
-          "7f0000000000-7f0000100000 rw-s 00000000 00:1a 4242        /dev/shm/mpich (deleted)\n"
-          "Size:               1024 kB\n"
-          "Rss:                 512 kB\n"
-          "AnonHugePages:         0 kB\n"
-          "7f0000100000-7f0000200000 rw-s 00100000 00:1a 4242        /dev/shm/mpich (deleted)\n"
-          "Size:               1024 kB\n"
-          "Rss:                  64 kB\n"
-          "7f1000000000-7f1000100000 rw-p 00000000 00:00 0 \n"
-          "Size:               1024 kB\n"
-          "Rss:                1024 kB\n" );
+   write( "proc/self/statm", "5000 900 3 40 0 700 0\n" );
+   const qint64 three = US_MPI_MemLimit::shared_rss( paths );
+   write( "proc/self/statm", "5000 900 7 40 0 700 0\n" );
+   const qint64 seven = US_MPI_MemLimit::shared_rss( paths );
 
-   using L = US_MPI_MemLimit;
-   EXPECT_EQ( L::mapped_rss( 0x7f0000000000ULL, 0x7f0000100000ULL, paths ), 512 * 1024 );
-   EXPECT_EQ( L::mapped_rss( 0x7f0000000000ULL, 0x7f0000200000ULL, paths ), 576 * 1024 );
-   EXPECT_EQ( L::mapped_rss( 0x7f00000ff000ULL, 0x7f0000101000ULL, paths ), 576 * 1024 );
-   EXPECT_EQ( L::mapped_rss( 0x7f2000000000ULL, 0x7f2000001000ULL, paths ), 0 );
+   EXPECT_GT( three, 0 );
+   EXPECT_EQ( seven * 3, three * 7 );
 }
 
-TEST_F( MemLimit, NoSmapsFile )
+TEST_F( MemLimit, MalformedStatm )
 {
-   EXPECT_EQ( US_MPI_MemLimit::mapped_rss( 0x1000, 0x2000, paths ), -1 );
+   write( "proc/self/statm", "5000 900\n" );
+   EXPECT_EQ( US_MPI_MemLimit::shared_rss( paths ), -1 );
+}
+#endif
+
+TEST_F( MemLimit, NoStatmFile )
+{
+   EXPECT_EQ( US_MPI_MemLimit::shared_rss( paths ), -1 );
 }
 
 TEST_F( MemLimit, NoMapsFile )
