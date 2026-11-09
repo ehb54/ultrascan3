@@ -23,42 +23,6 @@
 
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 
-// LessThan method for S_Solute sed
-bool distro_lessthan_s(const S_Solute &solu1, const S_Solute &solu2)
-{  // TRUE iff  (s1<s2) || (s1==s2 && d1<d2)
-   return ( solu1.s < solu2.s );
-}
-
-// LessThan method for S_Solute m.mass
-bool distro_lessthan_w(const S_Solute &solu1, const S_Solute &solu2)
-{
-    return (solu1.w < solu2.w );
-}
-
-// LessThan method for S_Solute frac
-bool distro_lessthan_k(const S_Solute &solu1, const S_Solute &solu2)
-{
-    return (solu1.k < solu2.k );
-}
-
-// LessThan method for S_Solute diff
-bool distro_lessthan_d(const S_Solute &solu1, const S_Solute &solu2)
-{
-    return (solu1.d < solu2.d );
-}
-
-// LessThan method for S_Solute vbar
-bool distro_lessthan_v(const S_Solute &solu1, const S_Solute &solu2)
-{
-    return (solu1.v < solu2.v );
-}
-
-// LessThan method for S_Solute hydrodynamic radius
-bool distro_lessthan_r(const S_Solute &solu1, const S_Solute &solu2)
-{
-    return (solu1.r < solu2.r );
-}
-
 // US_Integral class constructor
 US_Integral::US_Integral() : US_Widgets()
 {
@@ -204,6 +168,7 @@ US_Integral::US_Integral() : US_Widgets()
    ct_boundaryPct->setValue( 100 );
    ct_boundaryPos->setValue(  0 );
    ct_smoothing  ->setValue(  1 );
+   limit_smoothing(); // the initial maximum must fit the initial divisions
 
    connect( ct_division,    &QwtCounter::valueChanged,
             this,           &US_Integral::update_divis );
@@ -753,13 +718,8 @@ void US_Integral::load_distro()
 // Create distributions from a loaded model
 void US_Integral::load_distro( US_Model model, QString mdescr )
 {
-   IntegralDisSys  tsys;
-   S_Solute        sol_in;
-   S_Solute        sol_nm;
-   S_Solute        sol_bf;
-   QList<S_Solute> wk_distro;
+   IntegralDisSys tsys;
 
-   model.update_coefficients(); // fill in any missing coefficients
 
    QString mdesc = mdescr.section( mdescr.left( 1 ), 1, 1 );
 
@@ -856,70 +816,22 @@ DbgLv(1) << "LD:  edata: desc run cell chan"
    QString bmanu;
    QString errmsg;
 
-   int nsolmc  = model.components.size();
-
-   // Read in and set distribution s,k,c,... values
-   double tot_conc = 0.0;
-
-   for ( int jj = 0; jj < nsolmc; jj++ )
+   // The integral distribution is calculated by us_calc from the model's
+   // components (US_Calc::integral_distribution completes the coefficients).
+   tsys.calc_model.description = model.description.toStdString();
+   for ( const US_Model::SimulationComponent& sc : model.components )
    {
-      sol_in.s  = model.components[ jj ].s * 1.0e13;
-      sol_in.k  = model.components[ jj ].f_f0;
-      sol_in.c  = model.components[ jj ].signal_concentration;
-      sol_in.w  = model.components[ jj ].mw;
-      sol_in.v  = model.components[ jj ].vbar20;
-      sol_in.d  = model.components[ jj ].D * 1.0e7;
-      sol_in.f  = model.components[ jj ].f;
-      sol_in.r  = model.components[ jj ].f / ( 6e-9 * M_PI * VISC_20W );
-
-      tsys.in_distro << sol_in;
-      wk_distro << sol_in;
-
-      tot_conc += sol_in.c;
-if ( jj<3   ||  (jj+4)>nsolmc )
- DbgLv(1) << "LD:    jj" << jj << "soli s,d,c,t"
-  << sol_in.s << sol_in.d << sol_in.c << tot_conc;
-   }
-   // Lets store the total concentration
-   tsys.tot_conc = tot_conc;
-
-   // Sort and reduce distributions, then normalize
-   sort_distro( wk_distro, false );
-
-   tsys.nm_distro.clear();
-   int nsolin = tsys.in_distro.size();
-   int nsolnm = wk_distro.size();
-DbgLv(1) << "LD: totconc" << tot_conc << "nsolin nsolnm" << nsolin << nsolnm;
-   for ( int jj = 0; jj < nsolnm; jj++ )
-   {
-      sol_nm      = wk_distro[ jj ];  // Solute point
-      sol_nm.c   /= tot_conc;         // Normalized concentration
-      tsys.nm_distro << sol_nm;       // Saved to "normalized" distro
-if ( jj<3   ||  (jj+4)>nsolnm )
- DbgLv(1) << "LD:    jj" << jj << "soln s,d,c"
-  << sol_nm.s << sol_nm.d << sol_nm.c;
-   }
-DbgLv(1) << "LD: nsolin nsolnm" << nsolin << nsolnm << tsys.nm_distro.size();
-
-   // Create version of distribution with boundary fraction
-
-   tsys.bo_distro.clear();                // Boundary distro
-   double sum_co  = 0.0;
-
-   for ( int jj = 0; jj < nsolnm; jj++ )
-   {
-      sol_nm      = tsys.nm_distro[ jj ]; // Norm'd solute point
-      sum_co     += sol_nm.c;             // Concentration integration
-      sol_bf      = sol_nm;               // Boundary fraction solute point
-      sol_bf.f    = sum_co;               // With boundary fraction for "f"
-      tsys.bo_distro << sol_bf;           // Save to boundary distro
-if ( jj<3   ||  (jj+4)>nsolnm )
- DbgLv(1) << "LD:    jj" << jj << "solb s,d,c,f"
-  << sol_bf.s << sol_bf.d << sol_bf.c << sol_bf.f;
+      US_Calc::Component c;
+      c.s                    = sc.s;
+      c.D                    = sc.D;
+      c.mw                   = sc.mw;
+      c.f                    = sc.f;
+      c.f_f0                 = sc.f_f0;
+      c.vbar20               = sc.vbar20;
+      c.signal_concentration = sc.signal_concentration;
+      tsys.calc_model.components.push_back( c );
    }
 
-   // Update current distribution record
-DbgLv(1) << "LD:  call alldis.append";
    alldis.append( tsys );
 DbgLv(1) << "LD:   retn fr alldis.append";
 
@@ -1036,41 +948,6 @@ void US_Integral::select_x_axis_auto( int attr )
    select_x_axis( attr );
 }
 
-void US_Integral::resort_sol( QVector<IntegralDisSys>& list_dist )
-{
-   // Go through all dsitributions
-   for ( int jj = 0; jj < list_dist.size(); jj++ )
-   {
-      S_Solute        sol_nm;
-      S_Solute        sol_bf;
-      QList<S_Solute> wk_distro = list_dist[jj].in_distro;
-      // Sort the distribution again
-      sort_distro( wk_distro, true );
-
-      list_dist[jj].nm_distro.clear();
-      int nsolnm = wk_distro.size();
-
-      // Redo Normalization
-      for ( int ii = 0; ii < nsolnm; ii++ )
-      {
-         sol_nm = wk_distro[ii];
-         sol_nm.c /= list_dist[jj].tot_conc;
-         list_dist[jj].nm_distro << sol_nm;
-      }
-      // Create version of distribution with boundary fraction
-      list_dist[jj].bo_distro.clear();
-      double sum_co = 0.0;
-      for ( int ii = 0; ii < nsolnm; ii++ )
-      {
-         sol_nm = list_dist[jj].nm_distro[ii]; // norm'd solute point
-         sum_co += sol_nm.c;                   // concentration integral
-         sol_bf   = sol_nm;                    // boundary fraction solute point
-         sol_bf.f = sum_co;                    // with boundary fraction for "f"
-         list_dist[jj].bo_distro << sol_bf;    // save to boundary distros
-      }
-   }
-}
-
 // Determine type of plot currently selected
 int US_Integral::plot_x_select()
 {
@@ -1082,91 +959,6 @@ int US_Integral::plot_x_select()
    plotx       = rb_x_vbar->isChecked() ? ATTR_V : plotx;
    plotx       = rb_x_rh  ->isChecked() ? ATTR_R : plotx;
    return plotx;
-}
-
-// Sort distribution solute list by s,d values and optionally reduce
-void US_Integral::sort_distro( QList< S_Solute >& listsols,
-      bool reduce)
-{
-   int sizi = listsols.size();
-
-   if ( sizi < 2 )
-      return;        // nothing need be done for 1-element list
-
-   // sort distro solute list depending on selected plot
-   switch (this->plot_x)
-   {
-      case ATTR_D: std::sort( listsols.begin(), listsols.end(), distro_lessthan_d);
-         break;
-      case ATTR_W: std::sort( listsols.begin(), listsols.end(), distro_lessthan_w);
-         break;
-      case ATTR_K: std::sort( listsols.begin(), listsols.end(), distro_lessthan_k);
-         break;
-      case ATTR_S: std::sort( listsols.begin(), listsols.end(), distro_lessthan_s);
-         break;
-      case ATTR_V: std::sort( listsols.begin(), listsols.end(), distro_lessthan_v);
-         break;
-      case ATTR_R: std::sort( listsols.begin(), listsols.end(), distro_lessthan_r);
-         break;
-   }
-
-   // check reduce flag
-
-   if ( reduce )
-   {     // skip any duplicates in sorted list
-      S_Solute sol1;
-      S_Solute sol2;
-      QList< S_Solute > reduced;
-      QList< S_Solute >::iterator jj = listsols.begin();
-      sol1     = *jj;
-      reduced.append( *jj );     // output first entry
-      int kdup = 0;
-      int jdup = 0;
-
-
-      while ( (++jj) != listsols.end() )
-      {     // loop to compare each entry to previous
-          sol2    = *jj;         // solute entry
-
-          if ( sol1.s != sol2.s  ||  sol1.d != sol2.d || sol1.w != sol2.w || sol1.k != sol2.k)
-          {   // not a duplicate, so output to temporary list
-             reduced.append( sol2 );
-             jdup    = 0;
-          }
-
-          else
-          {  // duplicate, so sum c value;
-             sol2.c += sol1.c;   // sum c value
-             sol2.s  = ( sol1.s + sol2.s ) * 0.5;  // average values
-             sol2.d  = ( sol1.d + sol2.d ) * 0.5;
-             sol2.w  = ( sol1.w + sol2.w ) * 0.5;
-             sol2.k  = ( sol1.k + sol2.k ) * 0.5;
-             sol2.v  = ( sol1.v + sol2.v ) * 0.5;
-             sol2.r  = ( sol1.r + sol2.r ) * 0.5;
-             reduced.replace( reduced.size() - 1, sol2 );
-             kdup    = qMax( kdup, ++jdup );
-          }
-
-          sol1    = sol2;        // save entry for next iteration
-      }
-
-      if ( kdup > 0 )
-      {   // if some reduction happened, replace list with reduced version
-         double sc = 1.0 / (double)( kdup + 1 );
-DbgLv(1) << "KDUP" << kdup;
-//sc = 1.0;
-
-         for ( int ii = 0; ii < reduced.size(); ii++ )
-         {  // first scale c values by reciprocal of maximum replicate count
-            reduced[ ii ].c *= sc;
-         }
-
-         listsols = reduced;
-DbgLv(1) << " reduced-size" << reduced.size();
-      }
-   }
-DbgLv(1) << " sol-size" << listsols.size();
-   return;
 }
 
 // Reset Disk_DB control whenever data source is changed in any dialog
@@ -1251,10 +1043,8 @@ DbgLv(1) << "rmvdis:Accepted";
    }
 
    // Build and plot updated data
-   resort_sol(alldis); // (Re-)Sort distro if required
-   build_bf_dists();    // (Re-)build boundary fraction distributions
-   build_bf_vects();    // (Re-)build boundary fraction vectors
-DbgLv(1) << "rmvdis:plot_data";
+   build_bf_vects(); // (Re-)build the boundary fraction vectors
+   DbgLv( 1 ) << "rmvdis:plot_data";
    plot_data();
 DbgLv(1) << "rmvdis:DONE";
 }
@@ -1265,159 +1055,96 @@ void US_Integral::select_x_axis( int ival )
 {
 DbgLv(1) << "sel_x:  ival" << ival;
    plot_x     = ival;
-   resort_sol(alldis);
-   build_bf_dists();    // Build the boundary fraction distributions
-   build_bf_vects();    // Build the boundary fraction vectors
+   build_bf_vects(); // (Re-)build the boundary fraction vectors
 
    plot_data();         // Plot data
 }
 
-// Generate the BF version of the current distribution
-void US_Integral::build_bf_distro( int modx )
-{
-   if ( alldis.size() <= modx )
-      return;
-
-   IntegralDisSys* tsys = (IntegralDisSys*) &alldis.at( modx );
-   DbgLv( 1 ) << "BldBf: modx" << modx;
-
-   tsys->bf_distro.clear();
-   int    nsolbo    = tsys->bo_distro.size();
-   double bfrac     = ct_boundaryPos->value() * 0.01;
-   double bfextn    = ct_boundaryPct->value() * 0.01;
-   int    ksolbf    = (int)( ct_division ->value() );
-   int    nsolbf    = ksolbf + 1;
-   double bfincr    = bfextn / (double)ksolbf;
-DbgLv(1) << "BldBf: bfrac bfextn bfincr" << bfrac << bfextn << bfincr
- << "nsolbo nsolbf" << nsolbo << nsolbf << (bfextn/bfincr) << ksolbf;
-   int    j2        = 0;
-
-   // Create solute points with specified boundary fraction extent
-   for ( int kk = 0; kk < nsolbf; kk++ )
-   {
-      while ( j2 < nsolbo )
-      {  // Position boundary fraction within input distribution
-         if ( bfrac <= tsys->bo_distro[ j2 ].f  ||
-              j2 == ( nsolbo - 1 ) )
-            break;
-         j2++;
-      }
-
-      // Set values for current output fraction
-      S_Solute sol_bf  = tsys->bo_distro[ j2 ];
-      sol_bf.f         = bfrac;                   // Boundary fraction
-int kk2=kk*2;
-if (kk<3 || (kk+4)>nsolbf || (((kk2>(nsolbf-4))&&(kk2<nsolbf+4))))
- DbgLv(1) << "BldBf:  kk bfrac" << kk << bfrac << "j2" << j2
-  << "f s d" << sol_bf.f << sol_bf.s << sol_bf.d;
- 
-
-      tsys->bf_distro << sol_bf;  // Solute point at boundary fraction
-      bfrac           += bfincr;  // Bump to next boundary fraction
-   }
-
-DbgLv(1) << "BldBf: nsolbo nsolbf" << nsolbo << nsolbf;
-}
-
-// Generate the BoundaryFraction version of all distributions
-void US_Integral::build_bf_dists()
-{
-   int ndists       = alldis.size();
-   if ( ndists < 1 )
-      return;
-   for ( int jj = 0; jj < ndists; jj++ )
-   {  // Build bfrac distro for each model
-      build_bf_distro( jj );
-   }
-}
-
-// Generate the BoundaryFraction-associated vectors
+// Build the boundary-fraction vectors of every distribution with us_calc
 void US_Integral::build_bf_vects()
 {
-   int    nsmoo     = (int)( ct_smoothing->value() );
-DbgLv(1) << "BldVc: nsmoo" << nsmoo;
-   QVector< double > v_dens;
-   QVector< double > v_seds;
+   v_bfracs.clear();
+   v_sedcs.clear();
+   v_difcs.clear();
+   v_mmass.clear();
+   v_frats.clear();
+   v_vbars.clear();
+   v_rhs.clear();
 
-   // Build the boundary fractions (x) vector
    int ndists       = alldis.size();
    if ( ndists < 1 )
       return;
-   int npoints      = alldis[ 0 ].bf_distro.size();
-   v_bfracs.clear();
-   v_bfracs.reserve( npoints );
-   for ( int jj = 0; jj < npoints; jj++ )
-   {  // Grab each fraction from 1st model's distro
-      v_bfracs << alldis[ 0 ].bf_distro[ jj ].f;
-   }
-DbgLv(1) << "BldVc: bf 0 1 k n" << v_bfracs[0] << v_bfracs[1]
- << v_bfracs[npoints-2] << v_bfracs[npoints-1];
 
-   // Build vectors for each model
-   v_sedcs.clear();
+   US_Calc::DistributionAxis axis = US_Calc::DistributionAxis::Sedimentation;
+   switch ( plot_x )
+   {
+      case ATTR_K:
+         axis = US_Calc::DistributionAxis::FrictionalRatio;
+         break;
+      case ATTR_W:
+         axis = US_Calc::DistributionAxis::MolecularWeight;
+         break;
+      case ATTR_D:
+         axis = US_Calc::DistributionAxis::Diffusion;
+         break;
+      case ATTR_V:
+         axis = US_Calc::DistributionAxis::PartialSpecificVolume;
+         break;
+      case ATTR_R:
+         axis = US_Calc::DistributionAxis::HydrodynamicRadius;
+         break;
+      default:
+         axis = US_Calc::DistributionAxis::Sedimentation;
+         break;
+   }
+
+   US_Calc::IntegralSettings settings;
+   settings.divisions               = (int) ( ct_division->value() );
+   settings.boundary_start_percent  = ct_boundaryPos->value();
+   settings.boundary_extent_percent = ct_boundaryPct->value();
+   settings.smoothing               = (int) ( ct_smoothing->value() );
+
    v_sedcs.resize( ndists );
-   v_difcs.clear();
    v_difcs.resize( ndists );
-   v_mmass.clear();
    v_mmass.resize( ndists );
-   v_frats.clear();
    v_frats.resize( ndists );
-   v_vbars.clear();
    v_vbars.resize( ndists );
-   v_rhs  .clear();
    v_rhs  .resize( ndists );
 
    for ( int ii = 0; ii < ndists; ii++ )
    {
-      v_sedcs[ ii ].clear();
-      v_difcs[ ii ].clear();
-      v_sedcs[ ii ].reserve( npoints );
-      v_difcs[ ii ].reserve( npoints );
-      v_mmass[ ii ].clear();
-      v_mmass[ ii ].reserve( npoints );
-      v_frats[ ii ].clear();
-      v_frats[ ii ].reserve( npoints );
-      v_vbars[ ii ].clear();
-      v_vbars[ ii ].reserve( npoints );
-      v_rhs  [ ii ].clear();
-      v_rhs  [ ii ].reserve( npoints );
+      const US_Calc::IntegralDistribution dist = US_Calc::integral_distribution( alldis[ii].calc_model, axis, settings );
 
-
-      // Build vectors of s and D for this model
-      for ( int jj = 0; jj < npoints; jj++ )
-      {  // Append values for each bf-point for this model
-         v_sedcs[ ii ] << alldis[ ii ].bf_distro[ jj ].s;
-         v_difcs[ ii ] << alldis[ ii ].bf_distro[ jj ].d;
-         v_mmass[ ii ] << alldis[ ii ].bf_distro[ jj ].w;
-         v_frats[ ii ] << alldis[ ii ].bf_distro[ jj ].k;
-         v_vbars[ ii ] << alldis[ ii ].bf_distro[ jj ].v;
-         v_rhs  [ ii ] << alldis[ ii ].bf_distro[ jj ].r;
+      for ( const US_Calc::Diagnostic& d : dist.diagnostics )
+      {
+         if ( d.severity == US_Calc::Severity::Error )
+         {
+            qDebug() << "US_Integral:" << alldis[ii].label << QString::fromStdString( d.detail );
+         }
       }
-DbgLv(1) << "BldVc: ii" << ii << "se 0 1 k n" << v_sedcs[ii][0] << v_sedcs[ii][1]
- << v_sedcs[ii][npoints-2] << v_sedcs[ii][npoints-1];
-DbgLv(1) << "BldVc:     di 0 1 k n" << v_difcs[ii][0] << v_difcs[ii][1]
- << v_difcs[ii][npoints-2] << v_difcs[ii][npoints-1];
 
-      if ( nsmoo > 1 )
-      {  // Apply gaussian smoothing to vectors
-         US_Math2::gaussian_smoothing( v_sedcs[ ii ], nsmoo );
-         US_Math2::gaussian_smoothing( v_difcs[ ii ], nsmoo );
-         US_Math2::gaussian_smoothing (v_mmass[ ii ], nsmoo );
-         US_Math2::gaussian_smoothing (v_frats[ ii ], nsmoo );
-         US_Math2::gaussian_smoothing (v_vbars[ ii ], nsmoo );
-         US_Math2::gaussian_smoothing (v_rhs  [ ii ], nsmoo );
+      if ( ii == 0 )
+      {
+         v_bfracs = QVector<double>( dist.boundary_fractions.begin(), dist.boundary_fractions.end() );
       }
+
+      v_sedcs[ii] = QVector<double>( dist.s.begin(), dist.s.end() );
+      v_difcs[ii] = QVector<double>( dist.D.begin(), dist.D.end() );
+      v_mmass[ii] = QVector<double>( dist.mw.begin(), dist.mw.end() );
+      v_frats[ii] = QVector<double>( dist.f_f0.begin(), dist.f_f0.end() );
+      v_vbars[ii] = QVector<double>( dist.vbar20.begin(), dist.vbar20.end() );
+      v_rhs[ii]   = QVector<double>( dist.rh.begin(), dist.rh.end() );
    }
+}
 
-#if 0
-   QVector< double >             v_bfracs;
-   QVector< double >             v_vbars;
-   QVector< double >             v_mmass;
-   QVector< double >             v_hrads;
-   QVector< QVector< double > >  v_frats;
-   QVector< QVector< double > >  v_sedcs;
-   QVector< QVector< double > >  v_difcs;
-#endif
+// Limit the smoothing width to what the division count supports:  half the
+// divisions, made odd, keeps division count + 1 >= 2 * width - 1.
+void US_Integral::limit_smoothing()
+{
+   double mx_smoo = ct_division->value() * 0.5;
+   int    nsmoo   = (int) mx_smoo;
+   nsmoo += ( ( nsmoo & 1 ) == 0 ) ? 1 : 0;
+   ct_smoothing->setMaximum( qMax( nsmoo, 1 ) );
 }
 
 // Set annotation title for a plot index
@@ -1471,23 +1198,15 @@ QString US_Integral::ptype_text( int pltndx )
 void US_Integral::update_divis( double dval )
 {
 DbgLv(1) << "UpdDiv:" << dval;
-   resort_sol(alldis);
-   build_bf_dists();    // (Re-)build boundary fraction distributions
-   build_bf_vects();    // (Re-)build boundary fraction vectors
-   plot_data();         // Plot data
-
-   // Also limit percent so upper limit is 100.0
-   double mx_bpct    = 100.0 - ct_boundaryPos->value();
-   ct_boundaryPct->setMaximum( mx_bpct );
+// Limit percent so upper limit is 100.0, and smoothing to half the
+// divisions (odd), before building with the new settings
+double mx_bpct = 100.0 - ct_boundaryPos->value();
+ct_boundaryPct->setMaximum( mx_bpct );
 DbgLv(1) << "UpdDiv:  mx_bpct" << mx_bpct;
+limit_smoothing();
 
-   // Limit smoothing so upper limit half of divisions and odd
-   double mx_smoo    = ct_division->value() * 0.5;
-   int nsmoo         = (int)mx_smoo;
-   nsmoo            += ( ( nsmoo & 1 ) == 0 ) ? 1 : 0;
-   mx_smoo           = nsmoo;
-DbgLv(1) << "UpdDiv:  mx_smoo" << mx_smoo;
-   ct_smoothing  ->setMaximum( mx_smoo );
+build_bf_vects(); // (Re-)build the boundary fraction vectors
+plot_data();      // Plot data
 }
 
 // Write a CSV file from given vectors

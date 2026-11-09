@@ -10,20 +10,18 @@
 #include "us_spectrodata.h"
 #include "us_plot.h"
 
-#include "qwt_plot_marker.h"
+#include "../../calc/us_calc_integral.h"
 #include "qwt_plot_layout.h"
-#include "qwt_plot_zoomer.h"
+#include "qwt_plot_marker.h"
 #include "qwt_plot_panner.h"
-#include "qwt_scale_widget.h"
+#include "qwt_plot_zoomer.h"
 #include "qwt_scale_draw.h"
+#include "qwt_scale_widget.h"
 
 //! \brief Distribution structure
 typedef struct integral_distro_sys
 {
-      QList<S_Solute> in_distro;    //!< Raw input distribution
-      QList<S_Solute> nm_distro;    //!< Normalized concentration distribution
-      QList<S_Solute> bo_distro;    //!< Boundary distribution with original points
-      QList<S_Solute> bf_distro;    //!< Boundary fractions distribution
+      US_Calc::Model  calc_model;   //!< The model the integral distribution is calculated from
       QString         run_name;     //!< Distribution run name
       QString         analys_name;  //!< Distribution analysis name
       QString         method;       //!< Model method (e.g., "2DSA")
@@ -32,16 +30,8 @@ typedef struct integral_distro_sys
       QString         label;        //!< Distribution label (channel description)
       int             distro_type;  //!< Distribution type flag
       int             solutionID;   //!< Associated solution database ID
-      double          tot_conc;     //!< Total concentration
 } IntegralDisSys;
 
-//! \brief Less-than function for sorting distributions by S_Solute attribute
-bool distro_lessthan_s(const S_Solute&, const S_Solute&);
-bool distro_lessthan_k(const S_Solute&, const S_Solute&);
-bool distro_lessthan_w(const S_Solute&, const S_Solute&);
-bool distro_lessthan_d(const S_Solute&, const S_Solute&);
-bool distro_lessthan_v(const S_Solute&, const S_Solute&);
-bool distro_lessthan_r(const S_Solute&, const S_Solute&);
 
 //! \brief Class for displaying models in pseudo-3D
 class US_Integral : public US_Widgets
@@ -201,20 +191,11 @@ class US_Integral : public US_Widgets
         //! \param method Method for loading
         void load_distro(US_Model model, QString method);
 
-        //! \brief Slot to resort solution
-        //! \param distributions Vector of distributions to be resorted
-        void    resort_sol( QVector<IntegralDisSys>& distributions );
-
         //! \brief Slot to reset the interface
         void reset();
 
         //! \brief Slot to save the current state
         void save();
-
-        //! \brief Slot to sort distribution
-        //! \param solutes List of solutes to be sorted
-        //! \param ascending Whether to sort in ascending order
-        void sort_distro(QList< S_Solute >& solutes, bool ascending);
 
         //! \brief Slot to remove distribution
         void remove_distro();
@@ -223,15 +204,13 @@ class US_Integral : public US_Widgets
         //! \param index Index of the selected x-axis
         void select_x_axis(int index);
 
-        //! \brief Slot to build boundary fraction distribution
-        //! \param index Index of the boundary fraction
-        void build_bf_distro(int index);
-
-        //! \brief Slot to build boundary fraction distributions
-        void build_bf_dists();
-
-        //! \brief Slot to build boundary fraction vectors
+        //! \brief Build the boundary-fraction vectors of every distribution
+        //! with us_calc, from the current axis and controls.
         void build_bf_vects();
+
+        //! \brief Limit the smoothing width to what the division count
+        //! supports (division count + 1 >= 2 * width - 1).
+        void    limit_smoothing();
 
         //! \brief Slot to select x-axis for plotting
         //! \return Selected x-axis index
