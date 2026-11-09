@@ -2,7 +2,7 @@
 
 # WIN32 program that does a make all clean and regenerates makefiles from .pro files
 
-for d in utils gui programs/*
+for d in calc utils gui programs/*
 do
    if [ ! -d $d                          ]; then continue; fi
    if [ $d == "programs/config2"         ]; then continue; fi

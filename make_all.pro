@@ -2,11 +2,15 @@ TEMPLATE = subdirs
 TARGET = UltraScan
 VERSION = 4.0.$$system(git log --oneline | wc -l)
 
-SUBDIRS = qwtplot3d utils gui
+SUBDIRS = qwtplot3d calc utils gui
 
 ## define subdir target qwtplot3d
 qwtplot3d.file = qwtplot3d/qwtplot3d.pro
 qwtplot3d.makefile = Makefile
+
+## define subdir target calc (no dependencies)
+calc.file = calc/libus_calc.pro
+calc.makefile = Makefile
 
 ## define subdir target utils
 utils.depends = qwtplot3d
