@@ -31,282 +31,343 @@
 //////////////////////////////////////////////////////////////////////////////////////
 namespace
 {
-  //serialize (compact, one line) -- the form stored in the DB
-  QString jsonToString( const QJsonObject& obj )
-  {
-    return QString::fromUtf8( QJsonDocument( obj ).toJson( QJsonDocument::Compact ) );
-  }
-  QString jsonToString( const QJsonArray& arr )
-  {
-    return QString::fromUtf8( QJsonDocument( arr ).toJson( QJsonDocument::Compact ) );
-  }
+//serialize (compact, one line) -- the form stored in the DB
+QString jsonToString( const QJsonObject& obj )
+{
+   return QString::fromUtf8( QJsonDocument( obj ).toJson( QJsonDocument::Compact ) );
+}
+QString jsonToString( const QJsonArray& arr )
+{
+   return QString::fromUtf8( QJsonDocument( arr ).toJson( QJsonDocument::Compact ) );
+}
 
-  //names: trimmed, no blanks, no duplicates, original order kept
-  QStringList cleanNames( const QStringList& in )
-  {
-    QStringList out;
-    for ( const QString& n : in )
+//names: trimmed, no blanks, no duplicates, original order kept
+QStringList cleanNames( const QStringList& in )
+{
+   QStringList out;
+   for ( const QString& n : in )
+   {
+      QString name = n.trimmed();
+      if ( !name.isEmpty() && !out.contains( name ) )
       {
-	QString name = n.trimmed();
-	if ( !name.isEmpty() && !out.contains( name ) )
-	  out << name;
+         out << name;
       }
-    return out;
-  }
+   }
+   return out;
+}
 
-  //one party per line (text of a QTextEdit) -> clean list of names
-  QStringList namesFromLines( const QString& text )
-  {
-    return cleanNames( text.split( "\n" ) );
-  }
+//one party per line (text of a QTextEdit) -> clean list of names
+QStringList namesFromLines( const QString& text )
+{
+   return cleanNames( text.split( "\n" ) );
+}
 
-  //append names that are not in the list yet
-  void appendUnique( QStringList& list, const QStringList& add )
-  {
-    for ( const QString& n : add )
+//append names that are not in the list yet
+void appendUnique( QStringList& list, const QStringList& add )
+{
+   for ( const QString& n : add )
+   {
       if ( !list.contains( n ) )
-	list << n;
-  }
+      {
+         list << n;
+      }
+   }
+}
 
-  QJsonArray namesToJsonArray( const QStringList& names )
-  {
-    QJsonArray arr;
-    for ( const QString& n : names )
+QJsonArray namesToJsonArray( const QStringList& names )
+{
+   QJsonArray arr;
+   for ( const QString& n : names )
+   {
       arr.append( n );
-    return arr;
-  }
+   }
+   return arr;
+}
 
-  //"12. Savelyev, Alexey"
-  QString personLabel( int u_ID, const QString& u_fname, const QString& u_lname )
-  {
-    return QString::number( u_ID ) + ". " + u_lname + ", " + u_fname;
-  }
+//"12. Savelyev, Alexey"
+QString personLabel( int u_ID, const QString& u_fname, const QString& u_lname )
+{
+   return QString::number( u_ID ) + ". " + u_lname + ", " + u_fname;
+}
 
-  //{"to_sign":[...], "signed":[...]}  -- eSignStatusJson
-  QString buildEsignStatusJson( const QStringList& to_sign, const QJsonArray& esigned )
-  {
-    QJsonObject obj;
-    obj[ "to_sign" ] = namesToJsonArray( to_sign );
-    obj[ "signed" ]  = esigned;
-    return jsonToString( obj );
-  }
+//{"to_sign":[...], "signed":[...]}  -- eSignStatusJson
+QString buildEsignStatusJson( const QStringList& to_sign, const QJsonArray& esigned )
+{
+   QJsonObject obj;
+   obj["to_sign"] = namesToJsonArray( to_sign );
+   obj["signed"]  = esigned;
+   return jsonToString( obj );
+}
 
-  //{"Person":..., "timeDate":..., "Comment":...}  -- one entry of createUpdateLogJson
-  QJsonObject buildLogEntry( const QString& person, const QString& timeDate, const QString& comment )
-  {
-    QJsonObject entry;
-    entry[ "Person" ]   = person;
-    entry[ "timeDate" ] = timeDate;
-    entry[ "Comment" ]  = comment;
-    return entry;
-  }
+//{"Person":..., "timeDate":..., "Comment":...}  -- one entry of createUpdateLogJson
+QJsonObject buildLogEntry( const QString& person, const QString& timeDate, const QString& comment )
+{
+   QJsonObject entry;
+   entry["Person"]   = person;
+   entry["timeDate"] = timeDate;
+   entry["Comment"]  = comment;
+   return entry;
+}
 
-  //Decision (APPROVE | REJECT) recorded in eSignStatusJson for a party who already eSigned;
-  //empty if the party has not signed, or no decision was recorded
-  QString decisionOf( const QString& name, const QString& eSignStatusJson )
-  {
-    QJsonObject obj = QJsonDocument::fromJson( eSignStatusJson.toUtf8() ).object();
-    for ( const QJsonValue& v : obj.value( "signed" ).toArray() )
+//Decision (APPROVE | REJECT) recorded in eSignStatusJson for a party who already eSigned;
+//empty if the party has not signed, or no decision was recorded
+QString decisionOf( const QString& name, const QString& eSignStatusJson )
+{
+   QJsonObject obj = QJsonDocument::fromJson( eSignStatusJson.toUtf8() ).object();
+   for ( const QJsonValue& v : obj.value( "signed" ).toArray() )
+   {
+      QJsonObject signee = v.toObject();
+      if ( signee.contains( name ) )
       {
-	QJsonObject signee = v.toObject();
-	if ( signee.contains( name ) )
-	  return signee.value( name ).toObject().value( "Decision" ).toString().trimmed();
+         return signee.value( name ).toObject().value( "Decision" ).toString().trimmed();
       }
-    return QString();
-  }
+   }
+   return QString();
+}
 
-  //rich text for a party who eSigned: "SIGNED: APPROVE" (APPROVE green, REJECT red);
-  //plain text of it, e.g. "(SIGNED: APPROVE)", is parsed back by mergeRole()
-  QString signedLabelHtml( const QString& decision )
-  {
-    QString html = "(<font color=\"Red\"><b>SIGNED</b></font>";
-    if ( !decision.isEmpty() )
+//rich text for a party who eSigned: "SIGNED: APPROVE" (APPROVE green, REJECT red);
+//plain text of it, e.g. "(SIGNED: APPROVE)", is parsed back by mergeRole()
+QString signedLabelHtml( const QString& decision )
+{
+   QString html = "(<font color=\"Red\"><b>SIGNED</b></font>";
+   if ( !decision.isEmpty() )
+   {
+      QString col = ( decision.toUpper() == "APPROVE" ) ? "DarkGreen" : "Red";
+      html += ": <font color=\"" + col + "\"><b>" + decision + "</b></font>";
+   }
+   return html + ")";
+}
+
+//Result of merging one role (operators | reviewers | approvers) for stand-alone reassign
+struct RoleMerge
+{
+      QStringList names;   //all parties of the role, to be stored in the role's JSON list
+      QStringList to_sign; //those who still have to eSign
+      QString     html;    //text for the "Assigned ..." box
+};
+
+//  existing_ora : current text of the "Assigned ..." box, one party per line, each ending
+//                 in "(SIGNED: APPROVE|REJECT)", "(SIGNED)" or "(NOT SIGNED)"
+//  new_ora      : text of the "... to Assign" box (one party per line), OR the red
+//                 "cannot be reassigned" message when the role is locked
+//
+//  Rules, applied per role:
+//   - parties who ALREADY eSigned are always kept (cannot be reassigned);
+//   - if the role is locked (all signed) -> nothing else is added;
+//   - if new parties were specified      -> they REPLACE the not-yet-signed parties;
+//   - if nothing was specified           -> not-yet-signed parties are KEPT as they are.
+RoleMerge mergeRole( const QString& existing_ora, const QString& new_ora )
+{
+   RoleMerge              r;
+
+   QStringList            signed_names, unsigned_names;
+   QMap<QString, QString> signed_decision;
+   QStringList            existing_lines = existing_ora.split( "\n" );
+   existing_lines.removeAll( QString( "" ) );
+   for ( const QString& line : existing_lines )
+   {
+      QString name = line.split( "(" )[0].trimmed();
+      if ( name.isEmpty() )
       {
-	QString col = ( decision.toUpper() == "APPROVE" ) ? "DarkGreen" : "Red";
-	html += ": <font color=\"" + col + "\"><b>" + decision + "</b></font>";
-      }
-    return html + ")";
-  }
-
-  //Result of merging one role (operators | reviewers | approvers) for stand-alone reassign
-  struct RoleMerge
-  {
-    QStringList names;     //all parties of the role, to be stored in the role's JSON list
-    QStringList to_sign;   //those who still have to eSign
-    QString     html;      //text for the "Assigned ..." box
-  };
-
-  //  existing_ora : current text of the "Assigned ..." box, one party per line, each ending
-  //                 in "(SIGNED: APPROVE|REJECT)", "(SIGNED)" or "(NOT SIGNED)"
-  //  new_ora      : text of the "... to Assign" box (one party per line), OR the red
-  //                 "cannot be reassigned" message when the role is locked
-  //
-  //  Rules, applied per role:
-  //   - parties who ALREADY eSigned are always kept (cannot be reassigned);
-  //   - if the role is locked (all signed) -> nothing else is added;
-  //   - if new parties were specified      -> they REPLACE the not-yet-signed parties;
-  //   - if nothing was specified           -> not-yet-signed parties are KEPT as they are.
-  RoleMerge mergeRole( const QString& existing_ora, const QString& new_ora )
-  {
-    RoleMerge r;
-
-    QStringList signed_names, unsigned_names;
-    QMap<QString, QString> signed_decision;
-    QStringList existing_lines = existing_ora.split( "\n" );
-    existing_lines.removeAll( QString( "" ) );
-    for ( const QString& line : existing_lines )
-      {
-	QString name = line.split( "(" )[0].trimmed();
-	if ( name.isEmpty() )
-	  continue;
-
-	if ( line.contains( "NOT SIGNED" ) )
-	  unsigned_names << name;
-	else
-	  {
-	    signed_names << name;
-	    //line looks like "12. Name(SIGNED: APPROVE)" or "12. Name(SIGNED)"
-	    if ( line.contains( "SIGNED:" ) )
-	      signed_decision[ name ] = line.section( "SIGNED:", 1 ).remove( ")" ).trimmed();
-	  }
+         continue;
       }
 
-    //Already eSigned: always kept
-    for ( const QString& n : signed_names )
+      if ( line.contains( "NOT SIGNED" ) )
       {
-	r.names << n;
-	r.html  += n + signedLabelHtml( signed_decision.value( n ) ) + "<br>";
+         unsigned_names << name;
       }
+      else
+      {
+         signed_names << name;
+         //line looks like "12. Name(SIGNED: APPROVE)" or "12. Name(SIGNED)"
+         if ( line.contains( "SIGNED:" ) )
+         {
+            signed_decision[name] = line.section( "SIGNED:", 1 ).remove( ")" ).trimmed();
+         }
+      }
+   }
 
-    //Locked role (all eSigned): nothing more to add
-    if ( new_ora.contains( "cannot be reassigned" ) )
+   //Already eSigned: always kept
+   for ( const QString& n : signed_names )
+   {
+      r.names << n;
+      r.html += n + signedLabelHtml( signed_decision.value( n ) ) + "<br>";
+   }
+
+   //Locked role (all eSigned): nothing more to add
+   if ( new_ora.contains( "cannot be reassigned" ) )
+   {
       return r;
+   }
 
-    //Parties requested for this role (no blanks, no duplicates, none already signed)
-    QStringList requested = namesFromLines( new_ora );
-    bool        specified = !requested.isEmpty();
-    QStringList new_names;
-    for ( const QString& n : requested )
+   //Parties requested for this role (no blanks, no duplicates, none already signed)
+   QStringList requested = namesFromLines( new_ora );
+   bool        specified = !requested.isEmpty();
+   QStringList new_names;
+   for ( const QString& n : requested )
+   {
       if ( !signed_names.contains( n ) )
-	new_names << n;
-
-    //Nothing specified -> keep the not-yet-signed parties as they are
-    QStringList to_add = specified ? new_names : unsigned_names;
-
-    for ( const QString& n : to_add )
       {
-	r.names   << n;
-	r.to_sign << n;
-	r.html    += n + "(<font color=\"Blue\"><b>NOT SIGNED</b></font>)<br>";
+         new_names << n;
       }
+   }
 
-    return r;
-  }
+   //Nothing specified -> keep the not-yet-signed parties as they are
+   QStringList to_add = specified ? new_names : unsigned_names;
 
-  //names out of the text of an "Assigned ..." box: "12. Name(SIGNED: APPROVE)\n13. Name(NOT SIGNED)" -> 12. Name, 13. Name
-  QStringList namesFromAssignedText( const QString& text )
-  {
-    QStringList names;
-    for ( const QString& line : text.split( "\n" ) )
+   for ( const QString& n : to_add )
+   {
+      r.names << n;
+      r.to_sign << n;
+      r.html += n + "(<font color=\"Blue\"><b>NOT SIGNED</b></font>)<br>";
+   }
+
+   return r;
+}
+
+//names out of the text of an "Assigned ..." box: "12. Name(SIGNED: APPROVE)\n13. Name(NOT SIGNED)" -> 12. Name, 13. Name
+QStringList namesFromAssignedText( const QString& text )
+{
+   QStringList names;
+   for ( const QString& line : text.split( "\n" ) )
+   {
       names << line.split( "(" )[0];
-    return cleanNames( names );
-  }
+   }
+   return cleanNames( names );
+}
 
-  //same parties, regardless of the order?
-  bool sameParties( const QStringList& a, const QStringList& b )
-  {
-    if ( a.size() != b.size() )
+//same parties, regardless of the order?
+bool sameParties( const QStringList& a, const QStringList& b )
+{
+   if ( a.size() != b.size() )
+   {
       return false;
-    for ( const QString& n : a )
+   }
+   for ( const QString& n : a )
+   {
       if ( !b.contains( n ) )
-	return false;
-    return true;
-  }
+      {
+         return false;
+      }
+   }
+   return true;
+}
 
-  //rich text describing what changes in one role: who is removed, who is added, who stays.
-  //Empty string if the role does not change.
-  QString describeRoleChange( const QString& title, const QStringList& old_names, const QStringList& new_names )
-  {
-    if ( sameParties( old_names, new_names ) )
+//rich text describing what changes in one role: who is removed, who is added, who stays.
+//Empty string if the role does not change.
+QString describeRoleChange( const QString& title, const QStringList& old_names, const QStringList& new_names )
+{
+   if ( sameParties( old_names, new_names ) )
+   {
       return QString();
+   }
 
-    QString html = "<b>" + title.toHtmlEscaped() + ":</b><br>";
-    for ( const QString& n : old_names )
+   QString html = "<b>" + title.toHtmlEscaped() + ":</b><br>";
+   for ( const QString& n : old_names )
+   {
       if ( !new_names.contains( n ) )
-	html += "&nbsp;&nbsp;<font color='red'>Removed:</font> " + n.toHtmlEscaped() + "<br>";
-    for ( const QString& n : new_names )
+      {
+         html += "&nbsp;&nbsp;<font color='red'>Removed:</font> " + n.toHtmlEscaped() + "<br>";
+      }
+   }
+   for ( const QString& n : new_names )
+   {
       if ( !old_names.contains( n ) )
-	html += "&nbsp;&nbsp;<font color='darkgreen'>Added:</font> <b>" + n.toHtmlEscaped() + "</b><br>";
-    for ( const QString& n : new_names )
+      {
+         html += "&nbsp;&nbsp;<font color='darkgreen'>Added:</font> <b>" + n.toHtmlEscaped() + "</b><br>";
+      }
+   }
+   for ( const QString& n : new_names )
+   {
       if ( old_names.contains( n ) )
-	html += "&nbsp;&nbsp;<font color='gray'>Kept: " + n.toHtmlEscaped() + "</font><br>";
-    return html + "<br>";
-  }
+      {
+         html += "&nbsp;&nbsp;<font color='gray'>Kept: " + n.toHtmlEscaped() + "</font><br>";
+      }
+   }
+   return html + "<br>";
+}
 
-  //person id: "12. Savelyev, Alexey" -> "12"   (a person is identified by the ID, not by the spelling)
-  QString personId( const QString& name )
-  {
-    return name.section( ".", 0, 0 ).trimmed();
-  }
+//person id: "12. Savelyev, Alexey" -> "12"   (a person is identified by the ID, not by the spelling)
+QString personId( const QString& name )
+{
+   return name.section( ".", 0, 0 ).trimmed();
+}
 
-  //names from a stored JSON array text, e.g. ["12. Savelyev, Alexey","101. Brookes, Emre"]
-  QStringList namesFromJsonList( const QString& jsonArrayText )
-  {
-    QStringList out;
-    for ( const QJsonValue& v : QJsonDocument::fromJson( jsonArrayText.toUtf8() ).array() )
+//names from a stored JSON array text, e.g. ["12. Savelyev, Alexey","101. Brookes, Emre"]
+QStringList namesFromJsonList( const QString& jsonArrayText )
+{
+   QStringList out;
+   for ( const QJsonValue& v : QJsonDocument::fromJson( jsonArrayText.toUtf8() ).array() )
+   {
       out << v.toString();
-    return cleanNames( out );
-  }
+   }
+   return cleanNames( out );
+}
 
-  //A person can hold only ONE role (operator | reviewer | approver).
-  //Returns those who appear in more than one of the given role lists.
-  QStringList duplicatePersons( const QList< QStringList >& roles )
-  {
-    QStringList dups, seen;
-    for ( const QStringList& role : roles )
+//A person can hold only ONE role (operator | reviewer | approver).
+//Returns those who appear in more than one of the given role lists.
+QStringList duplicatePersons( const QList<QStringList>& roles )
+{
+   QStringList dups, seen;
+   for ( const QStringList& role : roles )
+   {
+      QStringList in_role; //count a person once per role
+      for ( const QString& n : role )
       {
-	QStringList in_role;                         //count a person once per role
-	for ( const QString& n : role )
-	  if ( !in_role.contains( personId( n ) ) )
-	    in_role << personId( n );
-
-	for ( int i = 0; i < in_role.size(); ++i )
-	  {
-	    if ( seen.contains( in_role[i] ) )
-	      {
-		for ( const QString& n : role )
-		  if ( personId( n ) == in_role[i] && !dups.contains( n ) )
-		    dups << n;
-	      }
-	    else
-	      seen << in_role[i];
-	  }
+         if ( !in_role.contains( personId( n ) ) )
+         {
+            in_role << personId( n );
+         }
       }
-    return dups;
-  }
 
-  //Is "person" (about to be added to role thisRole: 0=operator, 1=reviewer, 2=approver) already
-  //holding another role? Returns that role's name, or an empty string.
-  //  ex : text of the three "Assigned ..." boxes;  to : text of the three "... to Assign" boxes.
-  //  sa : stand-alone reassign: a role's final members are the parties who already signed plus
-  //       either the new ones (if any were specified) or the unsigned ones as they are;
-  //       otherwise a role's members are just what is in its "to Assign" box.
-  QString roleHeldElsewhere( const QString& person, int thisRole, bool sa,
-			     const QStringList& ex, const QStringList& to )
-  {
-    static const char* roleName[3] = { "operator", "reviewer", "approver" };
-    for ( int r = 0; r < 3; ++r )
+      for ( int i = 0; i < in_role.size(); ++i )
       {
-	if ( r == thisRole )
-	  continue;
-
-	QStringList members = sa ? mergeRole( ex[r], to[r] ).names : namesFromLines( to[r] );
-	for ( const QString& m : members )
-	  if ( personId( m ) == personId( person ) )
-	    return QString( roleName[r] );
+         if ( seen.contains( in_role[i] ) )
+         {
+            for ( const QString& n : role )
+            {
+               if ( personId( n ) == in_role[i] && !dups.contains( n ) )
+               {
+                  dups << n;
+               }
+            }
+         }
+         else
+         {
+            seen << in_role[i];
+         }
       }
-    return QString();
-  }
+   }
+   return dups;
+}
+
+//Is "person" (about to be added to role thisRole: 0=operator, 1=reviewer, 2=approver) already
+//holding another role? Returns that role's name, or an empty string.
+//  ex : text of the three "Assigned ..." boxes;  to : text of the three "... to Assign" boxes.
+//  sa : stand-alone reassign: a role's final members are the parties who already signed plus
+//       either the new ones (if any were specified) or the unsigned ones as they are;
+//       otherwise a role's members are just what is in its "to Assign" box.
+QString roleHeldElsewhere( const QString& person, int thisRole, bool sa, const QStringList& ex, const QStringList& to )
+{
+   static const char* roleName[3] = { "operator", "reviewer", "approver" };
+   for ( int r = 0; r < 3; ++r )
+   {
+      if ( r == thisRole )
+      {
+         continue;
+      }
+
+      QStringList members = sa ? mergeRole( ex[r], to[r] ).names : namesFromLines( to[r] );
+      for ( const QString& m : members )
+      {
+         if ( personId( m ) == personId( person ) )
+         {
+            return QString( roleName[r] );
+         }
+      }
+   }
+   return QString();
+}
 }
 
 // Constructor
@@ -787,8 +848,8 @@ US_eSignaturesGMP::US_eSignaturesGMP( QStringList reassign ) : US_Widgets()
 					 US_GuiSettings::fontSize() - 1) );
   us_setReadOnly( te_apprs_to_assign, true );
   te_apprs_to_assign->setPlaceholderText( tr( "(leave empty to keep current)" ) );
-  
-  
+
+
   cb_choose_operator   = new QComboBox( this );
   cb_choose_operator->setAccessibleName( tr( "Choose Operator" ) );
   cb_choose_rev        = new QComboBox( this );
@@ -1662,10 +1723,12 @@ void US_eSignaturesGMP::init_grevs( void )
       data.invID     = db.value( 0 ).toInt();
       data.lastName  = db.value( 1 ).toString();
       data.firstName = db.value( 2 ).toString();
-            
+
       //reassign program: level 2 must be able to choose any reviewer/approver for their own runs
-      if ( !reassign_revs_sep  &&  lev < 3  &&  inv != data.invID )
-	continue;
+      if ( !reassign_revs_sep && lev < 3 && inv != data.invID )
+      {
+         continue;
+      }
 
       g_reviewers << data;
       //populate lists
@@ -1729,10 +1792,12 @@ void US_eSignaturesGMP::init_gapprs( void )
       data.invID     = db.value( 0 ).toInt();
       data.lastName  = db.value( 1 ).toString();
       data.firstName = db.value( 2 ).toString();
-            
+
       //reassign program: level 2 must be able to choose any reviewer/approver for their own runs
-      if ( !reassign_revs_sep  &&  lev < 3  &&  inv != data.invID )
-	continue;
+      if ( !reassign_revs_sep && lev < 3 && inv != data.invID )
+      {
+         continue;
+      }
 
       g_apprs << data;
       //populate lists
@@ -2103,17 +2168,18 @@ void US_eSignaturesGMP::selectGMPRun( void )
 //for stand-alone reassign program
 void US_eSignaturesGMP::selectGMPRun_sa( void )
 {
-  //User Level 3 and above: any run;  User Level 2: own runs only;  User Level 1 and below: not allowed
-  if ( US_Settings::us_inv_level() < 2 )
-    {
-      QMessageBox::warning( this, tr( "Insufficient User Level" ),
-			    tr( "Reassigning Operator(s), Reviewer(s) and Approver(s) requires "
-				"User Level 2 or higher "
-				"(Level 2: your own runs only; Level 3 and above: any run).<br><br>"
-				"Your current User Level is <b>%1</b>." )
-			    .arg( US_Settings::us_inv_level() ) );
+   //User Level 3 and above: any run;  User Level 2: own runs only;  User Level 1 and below: not allowed
+   if ( US_Settings::us_inv_level() < 2 )
+   {
+      QMessageBox::warning( this,
+                            tr( "Insufficient User Level" ),
+                            tr( "Reassigning Operator(s), Reviewer(s) and Approver(s) requires "
+                                "User Level 2 or higher "
+                                "(Level 2: your own runs only; Level 3 and above: any run).<br><br>"
+                                "Your current User Level is <b>%1</b>." )
+                               .arg( US_Settings::us_inv_level() ) );
       return;
-    }
+   }
 
   /* Here, we need to list all completed GMP runs (i.e. from autoflowHistory) */
   /* For HISTORY, check if GMP reports for these runs are NOT completely eSigned */
@@ -2286,21 +2352,21 @@ void US_eSignaturesGMP::set_revOper_panel_gui_sa( void )
 
   //records created before "one person - one role" was enforced may violate it:
   //e-signatures are stored by person, so such a record cannot be reassigned correctly here
-  QStringList multi_role_rec =
-    duplicatePersons( QList< QStringList >() << namesFromJsonList( eSign_details[ "operatorListJson" ] )
-					     << namesFromJsonList( eSign_details[ "reviewersListJson" ] )
-					     << namesFromJsonList( eSign_details[ "approversListJson" ] ) );
+  QStringList multi_role_rec = duplicatePersons( QList<QStringList>() << namesFromJsonList( eSign_details["operatorListJson"] )
+                                                                      << namesFromJsonList( eSign_details["reviewersListJson"] )
+                                                                      << namesFromJsonList( eSign_details["approversListJson"] ) );
   if ( !multi_role_rec.isEmpty() )
-    {
-      QMessageBox::warning( this, tr( "Inconsistent e-Sign Record" ),
-			    tr( "<font color='red'><b>ATTENTION:</b> </font> In this GMP run the following person(s) "
-				"are assigned to more than one role (operator, reviewer, approver):<br><br>"
-				"<b>%1</b><br><br>"
-				"A person can hold only ONE role, and an e-signature is recorded per person, "
-				"so the status shown for such a person is not reliable and this record cannot be "
-				"changed here until it is corrected in the database." )
-			    .arg( multi_role_rec.join( "<br>" ) ) );
-    }
+  {
+     QMessageBox::warning( this,
+                           tr( "Inconsistent e-Sign Record" ),
+                           tr( "<font color='red'><b>ATTENTION:</b> </font> In this GMP run the following person(s) "
+                               "are assigned to more than one role (operator, reviewer, approver):<br><br>"
+                               "<b>%1</b><br><br>"
+                               "A person can hold only ONE role, and an e-signature is recorded per person, "
+                               "so the status shown for such a person is not reliable and this record cannot be "
+                               "changed here until it is corrected in the database." )
+                              .arg( multi_role_rec.join( "<br>" ) ) );
+  }
 
   operators_info. clear();
   reviewers_info. clear();
@@ -2404,11 +2470,13 @@ QString US_eSignaturesGMP::get_assigned_oper_revs_sa( QString role, QJsonDocumen
   
   QJsonArray jsonDoc_array  = jsonDoc.array();
   for (int i = 0; i < jsonDoc_array.size(); ++i )
-    {
-      QString name = jsonDoc_array[i].toString().trimmed();
-      if ( !name.isEmpty() )
-	assigned_list << name;
-    }
+  {
+     QString name = jsonDoc_array[i].toString().trimmed();
+     if ( !name.isEmpty() )
+     {
+        assigned_list << name;
+     }
+  }
 
   int esigned_all = 0;
   for ( int ii = 0; ii < assigned_list.count(); ii++ )
@@ -2416,11 +2484,15 @@ QString US_eSignaturesGMP::get_assigned_oper_revs_sa( QString role, QJsonDocumen
       //Check eSign status
       QString estatus = check_revs_esign_status_sa( assigned_list[ ii ], esign_det );
       QString stat_str;
-      if ( estatus.contains("NOT") )
-	stat_str = "(<font color=\"Blue\"><b>" + estatus + "</b></font>)";
-      else   //signed: show the decision (APPROVE | REJECT) as well
-	stat_str = signedLabelHtml( decisionOf( assigned_list[ ii ], esign_det[ "eSignStatusJson" ] ) );
-      
+      if ( estatus.contains( "NOT" ) )
+      {
+         stat_str = "(<font color=\"Blue\"><b>" + estatus + "</b></font>)";
+      }
+      else //signed: show the decision (APPROVE | REJECT) as well
+      {
+         stat_str = signedLabelHtml( decisionOf( assigned_list[ii], esign_det["eSignStatusJson"] ) );
+      }
+
       smry += assigned_list[ ii ] + stat_str;
       if ( ii != assigned_list.count() -1 )
 	smry += "<br>";
@@ -2429,31 +2501,37 @@ QString US_eSignaturesGMP::get_assigned_oper_revs_sa( QString role, QJsonDocumen
 	++esigned_all;
     }
 
-  // A role is "completed" (LOCKED: cannot be reassigned) ONLY if it has parties
-  // assigned and ALL of them have eSigned. A role with some parties not yet signed
-  // (or with nobody assigned) stays open for reassignment.
-  bool role_completed = ( assigned_list.count() > 0 && esigned_all == assigned_list.count() );
-  
-  /// fill main maps
-  if ( role.contains("operator") )
+    // A role is "completed" (LOCKED: cannot be reassigned) ONLY if it has parties
+    // assigned and ALL of them have eSigned. A role with some parties not yet signed
+    // (or with nobody assigned) stays open for reassignment.
+    bool role_completed = ( assigned_list.count() > 0 && esigned_all == assigned_list.count() );
+
+    /// fill main maps
+    if ( role.contains( "operator" ) )
     {
       operators_info[ "operators" ] = smry;
       if ( role_completed )
-	operators_info[ "completed" ] = "YES";
+      {
+         operators_info["completed"] = "YES";
+      }
     }
   
   if ( role.contains("reviewer") )
     {
-      reviewers_info[ "reviewers" ] = smry; 
+      reviewers_info[ "reviewers" ] = smry;
       if ( role_completed )
-	reviewers_info[ "completed" ] = "YES";
+      {
+         reviewers_info["completed"] = "YES";
+      }
     }
 
   if ( role.contains("approver") )
     {
       approvers_info[ "approvers" ] = smry;
       if ( role_completed )
-	approvers_info[ "completed" ] = "YES";
+      {
+         approvers_info["completed"] = "YES";
+      }
     }
   
   return smry;
@@ -2565,7 +2643,7 @@ int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflow
 
       AutoflowBaseRow row = baseRows.at( irow );
       bool skip = ( row.devRecord == "Processed" );
-      QString skip_reason = skip ? "devRecord is Processed (protocol development record)" : "";
+      QString         skip_reason = skip ? "devRecord is Processed (protocol development record)" : "";
 
       /* Check for HISTORY -- if autoflowGMPReportEsign where ID=devRecord EXISTS!!! */
       /* If not - GMP report completely eSigned, so do not include in the list (cont.) */
@@ -2574,11 +2652,11 @@ int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflow
 	  QMap<QString,QString> eSign_rec = read_autoflowGMPReportEsign_record( row.id );
 
 	  if ( eSign_rec.isEmpty() )
-	    {
-	      skip = true;
-	      skip_reason = "no open autoflowGMPReportEsign record (report fully eSigned, or none created)";
-	    }
-	}
+     {
+        skip        = true;
+        skip_reason = "no open autoflowGMPReportEsign record (report fully eSigned, or none created)";
+     }
+   }
 
       if ( !skip )
 	{
@@ -2615,12 +2693,12 @@ int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflow
 
 	  autoflowentry << status << row.gmpRun;
 
-	  //Check user level && GUID; if <3, check if the user is operator || investigator
-	  //
-	  //Stand-alone reassign program: level >= 3 -- any run; level 2 -- own runs only; level <= 1 -- none
-	  //(the level is also checked in selectGMPRun_sa() and assignOperRevs_sa()).
-	  //For all other callers the original rule stays: level <3 sees only own runs.
-	  /* ORIGINAL (kept for reference):
+     //Check user level && GUID; if <3, check if the user is operator || investigator
+     //
+     //Stand-alone reassign program: level >= 3 -- any run; level 2 -- own runs only; level <= 1 -- none
+     //(the level is also checked in selectGMPRun_sa() and assignOperRevs_sa()).
+     //For all other callers the original rule stays: level <3 sees only own runs.
+     /* ORIGINAL (kept for reference):
 	  if ( US_Settings::us_inv_level() < 3 )
 	    {
 	      if ( user_id && user_id == row.invID.toInt() )
@@ -2635,36 +2713,38 @@ int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflow
 	      nrecs++;
 	    }
 	  */
-	  //Stand-alone reassign:  level >= 3 : any run;  level 2 : own runs only;  level <= 1 : none.
-	  //All other callers:      level >= 3 : any run;  level < 3 : own runs only.
-	  int  ulev    = US_Settings::us_inv_level();
-	  bool own_run = ( user_id && user_id == row.invID.toInt() );
-	  bool include_run = reassign_revs_sep ? ( ulev >= 3 || ( ulev == 2 && own_run ) )
-	                                       : ( ulev >= 3 || own_run );
+     //Stand-alone reassign:  level >= 3 : any run;  level 2 : own runs only;  level <= 1 : none.
+     //All other callers:      level >= 3 : any run;  level < 3 : own runs only.
+     int  ulev        = US_Settings::us_inv_level();
+     bool own_run     = ( user_id && user_id == row.invID.toInt() );
+     bool include_run = reassign_revs_sep ? ( ulev >= 3 || ( ulev == 2 && own_run ) ) : ( ulev >= 3 || own_run );
 
-	  if ( include_run )
-	    {
-	      autoflowdata  << autoflowentry;
-	      nrecs++;
-	      qDebug() << "list_all_autoflow_records(" << type << "): INCLUDED autoflowID" << row.id << runname;
-	    }
-	  else
-	    qDebug() << "list_all_autoflow_records(" << type << "): SKIPPED autoflowID" << row.id << runname
-		     << ": not allowed for this user (own runs only below level 3; none below level 2 when reassigning)";
-	}
-      else
-	qDebug() << "list_all_autoflow_records(" << type << "): SKIPPED autoflowID" << row.id << row.runname
-		 << ":" << skip_reason;
+     if ( include_run )
+     {
+        autoflowdata << autoflowentry;
+        nrecs++;
+        qDebug() << "list_all_autoflow_records(" << type << "): INCLUDED autoflowID" << row.id << runname;
+     }
+     else
+     {
+        qDebug() << "list_all_autoflow_records(" << type << "): SKIPPED autoflowID" << row.id << runname
+                 << ": not allowed for this user (own runs only below level 3; none below level 2 when reassigning)";
+     }
+   }
+   else
+   {
+      qDebug() << "list_all_autoflow_records(" << type << "): SKIPPED autoflowID" << row.id << row.runname << ":" << skip_reason;
+   }
 
       if ( progress )
 	{
 	  progress->setValue( irow + 1 );
-	  QString scanText = ( type == "HISTORY" ) ?
-	    ( reassign_revs_sep ?
-	      tr( "Looking for completed GMP runs with an open e-Signature record (all users)..." ) :
-	      tr( "Scanning completed GMP runs for outstanding e-Signatures..." ) ) :
-	    tr( "Scanning current GMP runs..." );
-	  progress->setLabelText( tr( "<b>Please Wait</b><br>%1<br>"
+     QString scanText =
+        ( type == "HISTORY" )
+           ? ( reassign_revs_sep ? tr( "Looking for completed GMP runs with an open e-Signature record (all users)..." )
+                                 : tr( "Scanning completed GMP runs for outstanding e-Signatures..." ) )
+           : tr( "Scanning current GMP runs..." );
+     progress->setLabelText( tr( "<b>Please Wait</b><br>%1<br>"
 				       "%2 of %3 checked, %4 record(s) found" )
 				     .arg( scanText ).arg( irow + 1 ).arg( baseRows.size() ).arg( nrecs ) );
 	  qApp->processEvents();
@@ -2948,23 +3028,23 @@ void US_eSignaturesGMP::setUnsetPb_operRev( void )
   QString e_apprList = te_apprs_to_assign->toPlainText();
 
   if ( reassign_revs_sep )
-    {
-      // Stand-alone reassign: each role is handled independently.
-      // A role whose parties have ALL eSigned is locked (its "to assign" box only holds
-      // the red "cannot be reassigned" message).  Any other role can be changed, so the
-      // button is enabled as soon as at least one UNLOCKED role has new party(ies) in it.
-      // An unlocked role left empty simply keeps its current assignment.
-      bool operLocked = ( operators_info.value( "completed" )  == "YES" );
-      bool revLocked  = ( reviewers_info.value( "completed" )  == "YES" );
-      bool apprLocked = ( approvers_info.value( "completed" )  == "YES" );
+  {
+     // Stand-alone reassign: each role is handled independently.
+     // A role whose parties have ALL eSigned is locked (its "to assign" box only holds
+     // the red "cannot be reassigned" message).  Any other role can be changed, so the
+     // button is enabled as soon as at least one UNLOCKED role has new party(ies) in it.
+     // An unlocked role left empty simply keeps its current assignment.
+     bool operLocked = ( operators_info.value( "completed" ) == "YES" );
+     bool revLocked  = ( reviewers_info.value( "completed" ) == "YES" );
+     bool apprLocked = ( approvers_info.value( "completed" ) == "YES" );
 
-      bool changeOper = !operLocked && !e_operList.trimmed().isEmpty();
-      bool changeRev  = !revLocked  && !e_revList .trimmed().isEmpty();
-      bool changeAppr = !apprLocked && !e_apprList.trimmed().isEmpty();
+     bool changeOper = !operLocked && !e_operList.trimmed().isEmpty();
+     bool changeRev  = !revLocked && !e_revList.trimmed().isEmpty();
+     bool changeAppr = !apprLocked && !e_apprList.trimmed().isEmpty();
 
-      pb_set_operRev -> setEnabled( changeOper || changeRev || changeAppr );
-      return;
-    }
+     pb_set_operRev->setEnabled( changeOper || changeRev || changeAppr );
+     return;
+  }
 
   if ( e_operList.isEmpty() || e_revList.isEmpty() || e_apprList.isEmpty()  )
     pb_set_operRev -> setEnabled( false );
@@ -2989,39 +3069,43 @@ void US_eSignaturesGMP::addOpertoList( void )
 				.arg( c_oper ) );
       return;
     }
-  
-  //stand-alone reassign: a party who already eSigned in this role cannot be (re)assigned
-  if ( reassign_revs_sep && te_operator_names->toPlainText().contains( c_oper + "(SIGNED" ) )
+
+    //stand-alone reassign: a party who already eSigned in this role cannot be (re)assigned
+    if ( reassign_revs_sep && te_operator_names->toPlainText().contains( c_oper + "(SIGNED" ) )
     {
-      QMessageBox::information( this, tr( "Cannot add Operator" ),
-				tr( "<font color='red'><b>ATTENTION:</b> </font> Selected operator: <br><br>"
-				    "<font ><b>%1</b><br><br>"
-				    "has already eSigned and cannot be reassigned.<br>"
-				    "Please choose other operator." )
-				.arg( c_oper ) );
-      return;
+       QMessageBox::information( this,
+                                 tr( "Cannot add Operator" ),
+                                 tr( "<font color='red'><b>ATTENTION:</b> </font> Selected operator: <br><br>"
+                                     "<font ><b>%1</b><br><br>"
+                                     "has already eSigned and cannot be reassigned.<br>"
+                                     "Please choose other operator." )
+                                    .arg( c_oper ) );
+       return;
     }
 
-  //a person can hold only ONE role (operator | reviewer | approver)
-  {
-    QString other_role =
-      roleHeldElsewhere( c_oper, 0, reassign_revs_sep,
-			 QStringList() << te_operator_names->toPlainText() << te_reviewer_names->toPlainText()
-				       << te_appr_names->toPlainText(),
-			 QStringList() << te_opers_to_assign->toPlainText() << te_revs_to_assign->toPlainText()
-				       << te_apprs_to_assign->toPlainText() );
-    if ( !other_role.isEmpty() )
-      {
-	QMessageBox::information( this, tr( "Cannot add Operator" ),
-				  tr( "<font color='red'><b>ATTENTION:</b> </font> Selected operator: <br><br>"
-				      "<font ><b>%1</b><br><br>"
-				      "already holds the role of <b>%2</b>.<br>"
-				      "A person can hold only ONE role: operator, OR reviewer, OR approver.<br>"
-				      "Please choose other operator." )
-				  .arg( c_oper ).arg( other_role ) );
-	return;
-      }
-  }
+    //a person can hold only ONE role (operator | reviewer | approver)
+    {
+       QString other_role = roleHeldElsewhere(
+          c_oper,
+          0,
+          reassign_revs_sep,
+          QStringList() << te_operator_names->toPlainText() << te_reviewer_names->toPlainText() << te_appr_names->toPlainText(),
+          QStringList() << te_opers_to_assign->toPlainText() << te_revs_to_assign->toPlainText()
+                        << te_apprs_to_assign->toPlainText() );
+       if ( !other_role.isEmpty() )
+       {
+          QMessageBox::information( this,
+                                    tr( "Cannot add Operator" ),
+                                    tr( "<font color='red'><b>ATTENTION:</b> </font> Selected operator: <br><br>"
+                                        "<font ><b>%1</b><br><br>"
+                                        "already holds the role of <b>%2</b>.<br>"
+                                        "A person can hold only ONE role: operator, OR reviewer, OR approver.<br>"
+                                        "Please choose other operator." )
+                                       .arg( c_oper )
+                                       .arg( other_role ) );
+          return;
+       }
+    }
 
   te_opers_to_assign->append( c_oper );
   setUnsetPb_operRev();
@@ -3059,39 +3143,43 @@ void US_eSignaturesGMP::addRevtoList( void )
 				.arg( c_rev ) );
       return;
     }
-  
-  //stand-alone reassign: a party who already eSigned in this role cannot be (re)assigned
-  if ( reassign_revs_sep && te_reviewer_names->toPlainText().contains( c_rev + "(SIGNED" ) )
+
+    //stand-alone reassign: a party who already eSigned in this role cannot be (re)assigned
+    if ( reassign_revs_sep && te_reviewer_names->toPlainText().contains( c_rev + "(SIGNED" ) )
     {
-      QMessageBox::information( this, tr( "Cannot add Reviewer" ),
-				tr( "<font color='red'><b>ATTENTION:</b> </font> Selected reviewer: <br><br>"
-				    "<font ><b>%1</b><br><br>"
-				    "has already eSigned and cannot be reassigned.<br>"
-				    "Please choose other reviewer." )
-				.arg( c_rev ) );
-      return;
+       QMessageBox::information( this,
+                                 tr( "Cannot add Reviewer" ),
+                                 tr( "<font color='red'><b>ATTENTION:</b> </font> Selected reviewer: <br><br>"
+                                     "<font ><b>%1</b><br><br>"
+                                     "has already eSigned and cannot be reassigned.<br>"
+                                     "Please choose other reviewer." )
+                                    .arg( c_rev ) );
+       return;
     }
 
-  //a person can hold only ONE role (operator | reviewer | approver)
-  {
-    QString other_role =
-      roleHeldElsewhere( c_rev, 1, reassign_revs_sep,
-			 QStringList() << te_operator_names->toPlainText() << te_reviewer_names->toPlainText()
-				       << te_appr_names->toPlainText(),
-			 QStringList() << te_opers_to_assign->toPlainText() << te_revs_to_assign->toPlainText()
-				       << te_apprs_to_assign->toPlainText() );
-    if ( !other_role.isEmpty() )
-      {
-	QMessageBox::information( this, tr( "Cannot add Reviewer" ),
-				  tr( "<font color='red'><b>ATTENTION:</b> </font> Selected reviewer: <br><br>"
-				      "<font ><b>%1</b><br><br>"
-				      "already holds the role of <b>%2</b>.<br>"
-				      "A person can hold only ONE role: operator, OR reviewer, OR approver.<br>"
-				      "Please choose other reviewer." )
-				  .arg( c_rev ).arg( other_role ) );
-	return;
-      }
-  }
+    //a person can hold only ONE role (operator | reviewer | approver)
+    {
+       QString other_role = roleHeldElsewhere(
+          c_rev,
+          1,
+          reassign_revs_sep,
+          QStringList() << te_operator_names->toPlainText() << te_reviewer_names->toPlainText() << te_appr_names->toPlainText(),
+          QStringList() << te_opers_to_assign->toPlainText() << te_revs_to_assign->toPlainText()
+                        << te_apprs_to_assign->toPlainText() );
+       if ( !other_role.isEmpty() )
+       {
+          QMessageBox::information( this,
+                                    tr( "Cannot add Reviewer" ),
+                                    tr( "<font color='red'><b>ATTENTION:</b> </font> Selected reviewer: <br><br>"
+                                        "<font ><b>%1</b><br><br>"
+                                        "already holds the role of <b>%2</b>.<br>"
+                                        "A person can hold only ONE role: operator, OR reviewer, OR approver.<br>"
+                                        "Please choose other reviewer." )
+                                       .arg( c_rev )
+                                       .arg( other_role ) );
+          return;
+       }
+    }
 
   te_revs_to_assign->append( c_rev );
 
@@ -3132,39 +3220,43 @@ void US_eSignaturesGMP::addApprtoList( void )
 				.arg( c_appr) );
       return;
     }
-  
-  //stand-alone reassign: a party who already eSigned in this role cannot be (re)assigned
-  if ( reassign_revs_sep && te_appr_names->toPlainText().contains( c_appr + "(SIGNED" ) )
+
+    //stand-alone reassign: a party who already eSigned in this role cannot be (re)assigned
+    if ( reassign_revs_sep && te_appr_names->toPlainText().contains( c_appr + "(SIGNED" ) )
     {
-      QMessageBox::information( this, tr( "Cannot add Approver" ),
-				tr( "<font color='red'><b>ATTENTION:</b> </font> Selected approver: <br><br>"
-				    "<font ><b>%1</b><br><br>"
-				    "has already eSigned and cannot be reassigned.<br>"
-				    "Please choose other approver." )
-				.arg( c_appr ) );
-      return;
+       QMessageBox::information( this,
+                                 tr( "Cannot add Approver" ),
+                                 tr( "<font color='red'><b>ATTENTION:</b> </font> Selected approver: <br><br>"
+                                     "<font ><b>%1</b><br><br>"
+                                     "has already eSigned and cannot be reassigned.<br>"
+                                     "Please choose other approver." )
+                                    .arg( c_appr ) );
+       return;
     }
 
-  //a person can hold only ONE role (operator | reviewer | approver)
-  {
-    QString other_role =
-      roleHeldElsewhere( c_appr, 2, reassign_revs_sep,
-			 QStringList() << te_operator_names->toPlainText() << te_reviewer_names->toPlainText()
-				       << te_appr_names->toPlainText(),
-			 QStringList() << te_opers_to_assign->toPlainText() << te_revs_to_assign->toPlainText()
-				       << te_apprs_to_assign->toPlainText() );
-    if ( !other_role.isEmpty() )
-      {
-	QMessageBox::information( this, tr( "Cannot add Approver" ),
-				  tr( "<font color='red'><b>ATTENTION:</b> </font> Selected approver: <br><br>"
-				      "<font ><b>%1</b><br><br>"
-				      "already holds the role of <b>%2</b>.<br>"
-				      "A person can hold only ONE role: operator, OR reviewer, OR approver.<br>"
-				      "Please choose other approver." )
-				  .arg( c_appr ).arg( other_role ) );
-	return;
-      }
-  }
+    //a person can hold only ONE role (operator | reviewer | approver)
+    {
+       QString other_role = roleHeldElsewhere(
+          c_appr,
+          2,
+          reassign_revs_sep,
+          QStringList() << te_operator_names->toPlainText() << te_reviewer_names->toPlainText() << te_appr_names->toPlainText(),
+          QStringList() << te_opers_to_assign->toPlainText() << te_revs_to_assign->toPlainText()
+                        << te_apprs_to_assign->toPlainText() );
+       if ( !other_role.isEmpty() )
+       {
+          QMessageBox::information( this,
+                                    tr( "Cannot add Approver" ),
+                                    tr( "<font color='red'><b>ATTENTION:</b> </font> Selected approver: <br><br>"
+                                        "<font ><b>%1</b><br><br>"
+                                        "already holds the role of <b>%2</b>.<br>"
+                                        "A person can hold only ONE role: operator, OR reviewer, OR approver.<br>"
+                                        "Please choose other approver." )
+                                       .arg( c_appr )
+                                       .arg( other_role ) );
+          return;
+       }
+    }
 
   te_apprs_to_assign->append( c_appr );
 
@@ -3192,24 +3284,25 @@ void US_eSignaturesGMP::removeApprfromList( void )
 //Assign operators & reviewers for the current GMP run: for SA
 void US_eSignaturesGMP::assignOperRevs_sa( void )
 {
-  //User Level 3 and above: any run;  User Level 2: own runs only;  User Level 1 and below: not allowed
-  if ( US_Settings::us_inv_level() < 2 )
-    {
-      QMessageBox::warning( this, tr( "Insufficient User Level" ),
-			    tr( "Reassigning Operator(s), Reviewer(s) and Approver(s) requires "
-				"User Level 2 or higher "
-				"(Level 2: your own runs only; Level 3 and above: any run)." ) );
+   //User Level 3 and above: any run;  User Level 2: own runs only;  User Level 1 and below: not allowed
+   if ( US_Settings::us_inv_level() < 2 )
+   {
+      QMessageBox::warning( this,
+                            tr( "Insufficient User Level" ),
+                            tr( "Reassigning Operator(s), Reviewer(s) and Approver(s) requires "
+                                "User Level 2 or higher "
+                                "(Level 2: your own runs only; Level 3 and above: any run)." ) );
       return;
-    }
+   }
 
-  if ( US_Settings::us_inv_level() < 3 &&
-       gmp_run_details[ "invID_passed" ].toInt() != US_Settings::us_inv_ID() )
-    {
-      QMessageBox::warning( this, tr( "Not Your Run" ),
-			    tr( "With User Level 2 you can reassign Operator(s), Reviewer(s) and Approver(s) "
-				"only for your own GMP runs." ) );
+   if ( US_Settings::us_inv_level() < 3 && gmp_run_details["invID_passed"].toInt() != US_Settings::us_inv_ID() )
+   {
+      QMessageBox::warning( this,
+                            tr( "Not Your Run" ),
+                            tr( "With User Level 2 you can reassign Operator(s), Reviewer(s) and Approver(s) "
+                                "only for your own GMP runs." ) );
       return;
-    }
+   }
 
   //save existign operators && reviewers:
   QString exsisting_oper_list = te_operator_names->toPlainText();
@@ -3234,26 +3327,27 @@ void US_eSignaturesGMP::assignOperRevs_sa( void )
 
   /* first check if respective sections are NOT allowed for reassigning */
   /* if partially signed, keep those who already signed, then the rest (new ones) */
-  RoleMerge opers = mergeRole( exsisting_oper_list, oper_list );
-  RoleMerge revs  = mergeRole( exsisting_rev_list,  rev_list );
-  RoleMerge apprs = mergeRole( exsisting_appr_list, appr_list );
+  RoleMerge   opers = mergeRole( exsisting_oper_list, oper_list );
+  RoleMerge   revs  = mergeRole( exsisting_rev_list, rev_list );
+  RoleMerge   apprs = mergeRole( exsisting_appr_list, appr_list );
 
   //a person can hold only ONE role: refuse to save otherwise
-  QStringList multi_role = duplicatePersons( QList< QStringList >() << opers.names << revs.names << apprs.names );
+  QStringList multi_role = duplicatePersons( QList<QStringList>() << opers.names << revs.names << apprs.names );
   if ( !multi_role.isEmpty() )
-    {
-      QMessageBox::warning( this, tr( "One Person - One Role" ),
-			    tr( "<font color='red'><b>ATTENTION:</b> </font> The following person(s) would hold "
-				"more than one role (operator, reviewer, approver):<br><br>"
-				"<b>%1</b><br><br>"
-				"A person can hold only ONE role. Nothing has been changed." )
-			    .arg( multi_role.join( "<br>" ) ) );
-      return;
-    }
+  {
+     QMessageBox::warning( this,
+                           tr( "One Person - One Role" ),
+                           tr( "<font color='red'><b>ATTENTION:</b> </font> The following person(s) would hold "
+                               "more than one role (operator, reviewer, approver):<br><br>"
+                               "<b>%1</b><br><br>"
+                               "A person can hold only ONE role. Nothing has been changed." )
+                              .arg( multi_role.join( "<br>" ) ) );
+     return;
+  }
 
-  QString opers_updated = opers.html;
-  QString revs_updated  = revs.html;
-  QString apprs_updated = apprs.html;
+  QString     opers_updated = opers.html;
+  QString     revs_updated  = revs.html;
+  QString     apprs_updated = apprs.html;
 
   //those who still have to eSign (a person holding several roles is listed once)
   QStringList updated_to_sign_list;
@@ -3265,7 +3359,7 @@ void US_eSignaturesGMP::assignOperRevs_sa( void )
   QString operListJsonArray = jsonToString( namesToJsonArray( opers.names ) );
   QString revListJsonArray  = jsonToString( namesToJsonArray( revs.names ) );
   QString apprListJsonArray = jsonToString( namesToJsonArray( apprs.names ) );
-    
+
   qDebug() << "operListJsonArray -- " << operListJsonArray;
   qDebug() << "revListJsonArray -- "  << revListJsonArray;
   qDebug() << "apprListJsonArray -- " << apprListJsonArray;
@@ -3342,24 +3436,34 @@ void US_eSignaturesGMP::assignOperRevs_sa( void )
   QStringList old_rev_names  = namesFromAssignedText( exsisting_rev_list );
   QStringList old_appr_names = namesFromAssignedText( exsisting_appr_list );
 
-  bool oper_changed = !sameParties( old_oper_names, opers.names );
-  bool rev_changed  = !sameParties( old_rev_names,  revs.names );
-  bool appr_changed = !sameParties( old_appr_names, apprs.names );
+  bool        oper_changed = !sameParties( old_oper_names, opers.names );
+  bool        rev_changed  = !sameParties( old_rev_names, revs.names );
+  bool        appr_changed = !sameParties( old_appr_names, apprs.names );
 
   //unchanged role: new == old (so that it is logged as "NONE")
-  if ( !oper_changed ) new_opers = old_opers;
-  if ( !rev_changed  ) new_revs  = old_revs;
-  if ( !appr_changed ) new_apprs = old_apprs;
+  if ( !oper_changed )
+  {
+     new_opers = old_opers;
+  }
+  if ( !rev_changed )
+  {
+     new_revs = old_revs;
+  }
+  if ( !appr_changed )
+  {
+     new_apprs = old_apprs;
+  }
 
-  //check if at least one of the operator OR reviewer OR approver lists has been changed 
+  //check if at least one of the operator OR reviewer OR approver lists has been changed
   if ( !oper_changed && !rev_changed && !appr_changed )
-    {
-      qDebug() << "Operators and Reviewers and Approvers are the same...";
-      QMessageBox::information( this, tr( "NO CHANGES!" ),
-				tr( "Existing and to-be assigned "
-				    "Operator(s), Reviewer(s), and Approver(s) " 
-				    "lists are the same.<br><br>"
-				    "Nothing will be changed..."));
+  {
+     qDebug() << "Operators and Reviewers and Approvers are the same...";
+     QMessageBox::information( this,
+                               tr( "NO CHANGES!" ),
+                               tr( "Existing and to-be assigned "
+                                   "Operator(s), Reviewer(s), and Approver(s) "
+                                   "lists are the same.<br><br>"
+                                   "Nothing will be changed..." ) );
       
 	  return;
     }
@@ -3369,23 +3473,34 @@ void US_eSignaturesGMP::assignOperRevs_sa( void )
   QMessageBox msg_rev;
   msg_rev.setWindowTitle(tr("Operator(s), Reviewer(s), Approver(s) Change"));
   //show only the role(s) that change: who is removed / added / kept
-  QString changes_html =
-    describeRoleChange( tr( "Operators" ), old_oper_names, opers.names ) +
-    describeRoleChange( tr( "Reviewers" ), old_rev_names,  revs.names )  +
-    describeRoleChange( tr( "Approvers" ), old_appr_names, apprs.names );
+  QString changes_html = describeRoleChange( tr( "Operators" ), old_oper_names, opers.names ) +
+                         describeRoleChange( tr( "Reviewers" ), old_rev_names, revs.names ) +
+                         describeRoleChange( tr( "Approvers" ), old_appr_names, apprs.names );
 
   QStringList unchanged_roles;
-  if ( !oper_changed ) unchanged_roles << tr( "Operators" );
-  if ( !rev_changed  ) unchanged_roles << tr( "Reviewers" );
-  if ( !appr_changed ) unchanged_roles << tr( "Approvers" );
+  if ( !oper_changed )
+  {
+     unchanged_roles << tr( "Operators" );
+  }
+  if ( !rev_changed )
+  {
+     unchanged_roles << tr( "Reviewers" );
+  }
+  if ( !appr_changed )
+  {
+     unchanged_roles << tr( "Approvers" );
+  }
 
   QString msg_text = tr( "<font color='red'><b>ATTENTION:</b> </font><br>"
-			 "You are about to change the following assignment(s): <br><br>" ) + changes_html;
+                         "You are about to change the following assignment(s): <br><br>" ) +
+                     changes_html;
   if ( !unchanged_roles.isEmpty() )
-    msg_text += tr( "<font color='gray'>Not changed: %1</font><br><br>" ).arg( unchanged_roles.join( ", " ) );
+  {
+     msg_text += tr( "<font color='gray'>Not changed: %1</font><br><br>" ).arg( unchanged_roles.join( ", " ) );
+  }
 
   msg_rev.setText( msg_text );
-  
+
   msg_rev.setInformativeText( QString( tr( "Do you want to Proceed?" )));
   
   QPushButton *Accept    = msg_rev.addButton(tr("Proceed"), QMessageBox::YesRole);
@@ -3396,51 +3511,43 @@ void US_eSignaturesGMP::assignOperRevs_sa( void )
   
   if (msg_rev.clickedButton() == Accept)
     {
-      //1: updated eSignStatusJson
-      //   (parties who already signed are carried over untouched, incl. Decision/Comment/timeDate)
-      QString eSignStatusJson_updated = buildEsignStatusJson( updated_to_sign_list, esigned_array );
-      qDebug() << "eSignStatusJson_updated -- " << eSignStatusJson_updated;
-      
-      //2: updated admin log
-      QString logJsonUpdateTime = compose_updated_admin_logJson( u_ID, u_fname, u_lname,
-								 old_opers, new_opers,
-								 old_revs, new_revs,
-								 old_apprs, new_apprs ) ;
-      qDebug() << "logJsonUpdateTimeJsonObject -- "  << logJsonUpdateTime;
-      
-      
-      qry. clear();
-      qry << "update_gmp_review_record_by_admin"
-	  << eSign_details[ "ID" ]
-	  << gmp_run_details[ "autoflowID" ]
-	  << operListJsonArray
-	  << revListJsonArray
-	  << apprListJsonArray
-	  << eSign_details[ "smeListJson" ]  //do NOT change SME!
-	  << eSignStatusJson_updated
-	  << logJsonUpdateTime;
-      
-      qDebug() << "update_gmp_review_record_by_admin, qry -- " << qry;
-      int db_status = db->statusQuery( qry );
+       //1: updated eSignStatusJson
+       //   (parties who already signed are carried over untouched, incl. Decision/Comment/timeDate)
+       QString eSignStatusJson_updated = buildEsignStatusJson( updated_to_sign_list, esigned_array );
+       qDebug() << "eSignStatusJson_updated -- " << eSignStatusJson_updated;
 
-      if ( db_status != US_DB2::OK )
-	{
-	  QMessageBox::warning( this, tr( "eSign Record Update Problem" ),
-				tr( "autoflowGMPReportEsign: could not update the record!<br><br>%1" )
-				.arg( db->lastError() ) );
-	  return;
-	}
+       //2: updated admin log
+       QString logJsonUpdateTime =
+          compose_updated_admin_logJson( u_ID, u_fname, u_lname, old_opers, new_opers, old_revs, new_revs, old_apprs, new_apprs );
+       qDebug() << "logJsonUpdateTimeJsonObject -- " << logJsonUpdateTime;
 
-      //Reload everything from DB so that the screen (and the lock state of each role)
-      //reflects the saved record -- needed for any further reassignment of this run:
-      te_opers_to_assign -> clear();
-      te_revs_to_assign  -> clear();
-      te_apprs_to_assign -> clear();
-      cb_choose_operator -> clear();
-      pb_set_operRev     -> setEnabled( false );
-      set_revOper_panel_gui_sa();
-      
-      qApp->processEvents();  
+
+       qry.clear();
+       qry << "update_gmp_review_record_by_admin" << eSign_details["ID"] << gmp_run_details["autoflowID"] << operListJsonArray
+           << revListJsonArray << apprListJsonArray << eSign_details["smeListJson"] //do NOT change SME!
+           << eSignStatusJson_updated << logJsonUpdateTime;
+
+       qDebug() << "update_gmp_review_record_by_admin, qry -- " << qry;
+       int db_status = db->statusQuery( qry );
+
+       if ( db_status != US_DB2::OK )
+       {
+          QMessageBox::warning( this,
+                                tr( "eSign Record Update Problem" ),
+                                tr( "autoflowGMPReportEsign: could not update the record!<br><br>%1" ).arg( db->lastError() ) );
+          return;
+       }
+
+       //Reload everything from DB so that the screen (and the lock state of each role)
+       //reflects the saved record -- needed for any further reassignment of this run:
+       te_opers_to_assign->clear();
+       te_revs_to_assign->clear();
+       te_apprs_to_assign->clear();
+       cb_choose_operator->clear();
+       pb_set_operRev->setEnabled( false );
+       set_revOper_panel_gui_sa();
+
+       qApp->processEvents();  
     }
   else
     {
@@ -3453,14 +3560,16 @@ void US_eSignaturesGMP::assignOperRevs_sa( void )
 //parse ex. ora lists to readable
 QString US_eSignaturesGMP::parse_old_ora( QString ex_ora )
 {
-  //each line: "12. Name(SIGNED: APPROVE)" | "12. Name(SIGNED)" | "12. Name(NOT SIGNED)" -> "12. Name"
-  QStringList r_list_list;
-  for ( const QString& line : ex_ora.split("\n") )
-    {
-      QString name = line.split("(")[0].trimmed();
+   //each line: "12. Name(SIGNED: APPROVE)" | "12. Name(SIGNED)" | "12. Name(NOT SIGNED)" -> "12. Name"
+   QStringList r_list_list;
+   for ( const QString& line : ex_ora.split( "\n" ) )
+   {
+      QString name = line.split( "(" )[0].trimmed();
       if ( !name.isEmpty() )
-	r_list_list << name;
-    }
+      {
+         r_list_list << name;
+      }
+   }
 
   return r_list_list. join(", ");
 }
@@ -3522,27 +3631,28 @@ void US_eSignaturesGMP::assignOperRevs( void )
   QStringList appr_listList = namesFromLines( appr_list );
 
   //a person can hold only ONE role: refuse to save otherwise
-  QStringList multi_role = duplicatePersons( QList< QStringList >() << oper_listList << rev_listList << appr_listList );
+  QStringList multi_role = duplicatePersons( QList<QStringList>() << oper_listList << rev_listList << appr_listList );
   if ( !multi_role.isEmpty() )
-    {
-      QMessageBox::warning( this, tr( "One Person - One Role" ),
-			    tr( "<font color='red'><b>ATTENTION:</b> </font> The following person(s) would hold "
-				"more than one role (operator, reviewer, approver):<br><br>"
-				"<b>%1</b><br><br>"
-				"A person can hold only ONE role. Nothing has been changed." )
-			    .arg( multi_role.join( "<br>" ) ) );
-      return;
-    }
+  {
+     QMessageBox::warning( this,
+                           tr( "One Person - One Role" ),
+                           tr( "<font color='red'><b>ATTENTION:</b> </font> The following person(s) would hold "
+                               "more than one role (operator, reviewer, approver):<br><br>"
+                               "<b>%1</b><br><br>"
+                               "A person can hold only ONE role. Nothing has been changed." )
+                              .arg( multi_role.join( "<br>" ) ) );
+     return;
+  }
 
   QString operListJsonArray = jsonToString( namesToJsonArray( oper_listList ) );
   QString revListJsonArray  = jsonToString( namesToJsonArray( rev_listList ) );
   QString apprListJsonArray = jsonToString( namesToJsonArray( appr_listList ) );
-  QString smeListJsonArray  = jsonToString( QJsonArray() );   //Empty for now... [to be populated from te_sem...]
+  QString smeListJsonArray  = jsonToString( QJsonArray() ); //Empty for now... [to be populated from te_sem...]
 
   qDebug() << "operListJsonArray -- " << operListJsonArray;
   qDebug() << "revListJsonArray -- "  << revListJsonArray;
   qDebug() << "apprListJsonArray -- " << apprListJsonArray;
-  qDebug() << "smeListJsonArray -- "  << smeListJsonArray;
+  qDebug() << "smeListJsonArray -- " << smeListJsonArray;
 
   //Minimum structure of eSignStatusJson field: everybody still has to sign (a person holding several roles is listed once)
   QStringList oper_rev_joinedList;
@@ -3551,7 +3661,7 @@ void US_eSignaturesGMP::assignOperRevs( void )
   appendUnique( oper_rev_joinedList, appr_listList );
 
   QString eSignStatusJson = buildEsignStatusJson( oper_rev_joinedList, QJsonArray() );
-  
+
   qDebug() << "operRevToSignJsonObject -- "  << eSignStatusJson;
 
   //DB 
@@ -3588,8 +3698,8 @@ void US_eSignaturesGMP::assignOperRevs( void )
   QString current_date = date.toString("MM-dd-yyyy hh:mm:ss");
 
   QJsonObject logFirstTimeObj;
-  logFirstTimeObj[ "Created by" ] = QJsonArray{ buildLogEntry( personLabel( u_ID, u_fname, u_lname ),
-							    current_date, "Created first time" ) };
+  logFirstTimeObj["Created by"] =
+     QJsonArray{ buildLogEntry( personLabel( u_ID, u_fname, u_lname ), current_date, "Created first time" ) };
   QString logJsonFirstTime = jsonToString( logFirstTimeObj );
   qDebug() << "logJsonFirstTimeJsonObject -- "  << logJsonFirstTime;
 
@@ -3857,28 +3967,29 @@ QString US_eSignaturesGMP::compose_updated_admin_logJson( int u_ID, QString u_fn
       return e_logJson;
     }
 
-  QJsonObject logObj = jsonDoc.object();
+    QJsonObject logObj = jsonDoc.object();
 
-  //count keys containing "Updated by":
-  int update_count = 0;
-  for ( const QString& key : logObj.keys() )
+    //count keys containing "Updated by":
+    int         update_count = 0;
+    for ( const QString& key : logObj.keys() )
     {
-      if ( key.contains( "Updated by" ) )
-	++update_count;
+       if ( key.contains( "Updated by" ) )
+       {
+          ++update_count;
+       }
     }
 
-  QString comment =
-    "Operator(s) replacement:"  + compare_ora_lists( old_opers, new_opers ) + ";" +
-    "Reviewer(s) replacement:"  + compare_ora_lists( old_revs,  new_revs )  + ";" +
-    "Approver(s) replacement:"  + compare_ora_lists( old_apprs, new_apprs );
+    QString comment = "Operator(s) replacement:" + compare_ora_lists( old_opers, new_opers ) + ";" +
+                      "Reviewer(s) replacement:" + compare_ora_lists( old_revs, new_revs ) + ";" +
+                      "Approver(s) replacement:" + compare_ora_lists( old_apprs, new_apprs );
 
-  QString current_date = QDateTime::currentDateTime().toString( "MM-dd-yyyy hh:mm:ss" );
+    QString current_date = QDateTime::currentDateTime().toString( "MM-dd-yyyy hh:mm:ss" );
 
-  //Appended portion: "Updated by (N)":[{ Person, timeDate, Comment }]
-  logObj[ QString( "Updated by (%1)" ).arg( update_count ) ] =
-    QJsonArray{ buildLogEntry( personLabel( u_ID, u_fname, u_lname ), current_date, comment ) };
+    //Appended portion: "Updated by (N)":[{ Person, timeDate, Comment }]
+    logObj[QString( "Updated by (%1)" ).arg( update_count )] =
+       QJsonArray{ buildLogEntry( personLabel( u_ID, u_fname, u_lname ), current_date, comment ) };
 
-  return jsonToString( logObj );
+    return jsonToString( logObj );
 }
 
 //check for ora lists
@@ -5439,42 +5550,44 @@ QString US_eSignaturesGMP::compose_updated_eSign_Json( int u_ID, QString u_fname
   // "to_sign" section: everybody except the current e-signee
   QStringList to_sign_left;
   QString     current_esignee_name;
-    
+
   for (int i=0; i < to_esign_array.size(); ++i )
     {
-      QString current_reviewer    = to_esign_array[i].toString();
-      QString current_reviewer_id = current_reviewer. section( ".", 0, 0 );
+       QString current_reviewer    = to_esign_array[i].toString();
+       QString current_reviewer_id = current_reviewer.section( ".", 0, 0 );
 
-      qDebug() << "Curr reviewer: " << current_reviewer;
+       qDebug() << "Curr reviewer: " << current_reviewer;
 
-      if ( u_ID == current_reviewer_id.toInt() )
-	{
-	  current_esignee_name = current_reviewer;
-	  continue;
+       if ( u_ID == current_reviewer_id.toInt() )
+       {
+          current_esignee_name = current_reviewer;
+          continue;
 	}
 
-      to_sign_left << current_reviewer;
+   to_sign_left << current_reviewer;
     }
 
-  if ( current_esignee_name.isEmpty() )   //should not happen: current user not in "to_sign"
-    current_esignee_name = personLabel( u_ID, u_fname, u_lname );
-  
+    if ( current_esignee_name.isEmpty() ) //should not happen: current user not in "to_sign"
+    {
+       current_esignee_name = personLabel( u_ID, u_fname, u_lname );
+    }
+
   //update global e-Sign status:
-  eSignStatusAll_updated = to_sign_left.isEmpty() ? "YES" : "NO";
+    eSignStatusAll_updated = to_sign_left.isEmpty() ? "YES" : "NO";
 
-  // "signed" section: the existing ones, plus the current e-signee
-  QJsonObject current_esignee_data;
-  current_esignee_data[ "Comment" ]  = comment_esignee;
-  current_esignee_data[ "Decision" ] = decision_esignee;          //(APPROVE | REJECT)
-  current_esignee_data[ "timeDate" ] = QDateTime::currentDateTimeUtc().toString( "MM-dd-yyyy hh:mm:ss" ) + " (UTC)";
+    // "signed" section: the existing ones, plus the current e-signee
+    QJsonObject current_esignee_data;
+    current_esignee_data["Comment"]  = comment_esignee;
+    current_esignee_data["Decision"] = decision_esignee; //(APPROVE | REJECT)
+    current_esignee_data["timeDate"] = QDateTime::currentDateTimeUtc().toString( "MM-dd-yyyy hh:mm:ss" ) + " (UTC)";
 
-  QJsonObject current_esignee;
-  current_esignee[ current_esignee_name ] = current_esignee_data;
+    QJsonObject current_esignee;
+    current_esignee[current_esignee_name] = current_esignee_data;
 
-  QJsonArray esigned_updated = esigned_array;     //existing e-signees stay untouched
-  esigned_updated.append( current_esignee );
+    QJsonArray esigned_updated = esigned_array; //existing e-signees stay untouched
+    esigned_updated.append( current_esignee );
 
-  return buildEsignStatusJson( to_sign_left, esigned_updated );
+    return buildEsignStatusJson( to_sign_left, esigned_updated );
 }
 
 
