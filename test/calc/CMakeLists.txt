@@ -8,6 +8,7 @@
 # Unit tests of the us_calc library.  They link only the library and
 # GoogleTest:  no Qt, GUI, database or display.
 add_executable(test_us_calc
+        test_us_calc_rules.cpp
         test_us_calc_units.cpp
         test_us_calc_validation.cpp
         test_us_calc_version.cpp
@@ -17,6 +18,15 @@ set_target_properties(test_us_calc PROPERTIES AUTOMOC OFF AUTOUIC OFF AUTORCC OF
 include(GoogleTest)
 # One label, as in test/utils; ctest -L calc and -L gtest both match it.
 gtest_discover_tests(test_us_calc PROPERTIES LABELS gtest-unit-calc TIMEOUT 60)
+
+# The reporting calculations against the calculation fixtures.  Qt Core
+# reads the JSON fixture files; the library does not use Qt.
+add_executable(test_us_calc_fixtures test_us_calc_fixtures.cpp)
+target_link_libraries(test_us_calc_fixtures PRIVATE UltraScan3::Calc Qt::Core gtest gtest_main)
+target_compile_definitions(test_us_calc_fixtures PRIVATE
+        CALC_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures")
+set_target_properties(test_us_calc_fixtures PROPERTIES AUTOMOC OFF AUTOUIC OFF AUTORCC OFF)
+gtest_discover_tests(test_us_calc_fixtures PROPERTIES LABELS gtest-unit-calc TIMEOUT 60)
 
 find_package(Python3 COMPONENTS Interpreter)
 if(Python3_Interpreter_FOUND)

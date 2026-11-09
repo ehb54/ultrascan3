@@ -16,11 +16,19 @@ CONFIG      -= qt
 DESTDIR      = ../lib
 OBJECTS_DIR  = ./obj
 
-HEADERS      = us_calc_types.h      \
+HEADERS      = us_calc_matching.h   \
+               us_calc_range.h      \
+               us_calc_replicate.h  \
+               us_calc_tolerance.h  \
+               us_calc_types.h      \
                us_calc_units.h      \
                us_calc_validation.h \
                us_calc_version.h
 
-SOURCES      = us_calc_units.cpp      \
+SOURCES      = us_calc_matching.cpp   \
+               us_calc_range.cpp      \
+               us_calc_replicate.cpp  \
+               us_calc_tolerance.cpp  \
+               us_calc_units.cpp      \
                us_calc_validation.cpp \
                us_calc_version.cpp

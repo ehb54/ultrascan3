@@ -78,7 +78,8 @@ enum class Issue
    NegativeConcentration, //!< A component has a negative concentration
    NonFiniteValue,        //!< An input value is NaN or infinite
    InvalidRange,          //!< A range has low > high or a non-finite bound
-   UnsupportedQuantity    //!< The calculation does not support the quantity
+   UnsupportedQuantity,   //!< The calculation does not support the quantity
+   NoEligibleMembers      //!< No member of a group can be used
 };
 
 //! \brief A condition found while calculating.

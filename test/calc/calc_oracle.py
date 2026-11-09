@@ -416,9 +416,15 @@ def edge_items():
 def compute_expected(models, items):
     out = {"schema": 1, "models": {}, "ranges": [], "replicates": [], "total_concentration": []}
     for key, model in sorted(models.items()):
+        # The model as the calculations receive it, so that tests in other
+        # languages need no model reader:  components in their order, each
+        # [s, D, mw, f, f_f0, vbar20, signal] as the doubles UltraScan reads.
         out["models"][key] = dict(whole_model(model),
                                   description=model["description"],
-                                  label=analysis_label(model["description"]))
+                                  label=analysis_label(model["description"]),
+                                  reporter=model["reporter"],
+                                  components=[[c[k] for k in ("s", "D", "mw", "f", "f_f0", "vbar20", "signal")]
+                                              for c in model["components"]])
     for sample, block in sorted(items["samples"].items()):
         for key, model in sorted(models.items()):
             if model["case"] not in block["cases"]:

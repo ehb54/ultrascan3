@@ -39,6 +39,10 @@ std::vector<AlgorithmVersion> algorithms()
         "Gaussian smoothing as US_Math2::gaussian_smoothing; widths the series cannot support "
         "(fewer than 2*width-1 points) are rejected" },
       { "solute_statistics", 1, "Concentration-weighted statistics of one attribute as US_SoluteData::outputStats" },
+      { "report_item_matching",
+        1,
+        "A report item applies to a model when every '-' part of its method (PCSA methods count as PCSA) "
+        "occurs in the model's analysis label, as distrib_info" },
    };
 }
 
