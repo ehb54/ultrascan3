@@ -6,6 +6,7 @@
 #endif
 
 #include "../calc/us_calc_smoothing.h"
+#include "../calc/us_calc_statistics.h"
 #include "us_constants.h"
 #include "us_dataIO.h"
 #include "us_math2.h"
@@ -114,41 +115,12 @@ double US_Math2::linefit( double** x       , double** y    , double* slope,
                           double* intercept, double*  sigma, double* correlation, 
                           int     arraysize )
 {
-   double sumx      = 0.0;
-   double sumy      = 0.0;
-   double sumxy     = 0.0;
-   double sumx_sq   = 0.0;
-   double sumy_sq   = 0.0;
-   double sumchi_sq = 0.0;
-   double average;
-   
-   for ( int i = 0; i < arraysize; i++ ) sumy += (*y)[ i ]; 
-   
-   average = sumy / arraysize;
-   
-   for ( int i = 0; i < arraysize; i++ )
-   {
-      sumx      += (*x)[ i ];
-      sumxy     += (*x)[ i ] * (*y)[ i ];
-      sumx_sq   += (*x)[ i ] * (*x)[ i ];
-      sumy_sq   += (*y)[ i ] * (*y)[ i ];
-
-      sumchi_sq += ( (*y)[ i ] - average ) * ( (*y)[ i ] - average );
-   }
-
-   *slope       = ( arraysize * sumxy   - sumx * sumy ) / 
-                  ( arraysize * sumx_sq - sumx * sumx );
-
-   *intercept   = ( sumy - *slope * sumx ) / arraysize;
-   
-   *correlation = ( arraysize * sumxy - sumx * sumy ) /
-                  ( sqrt( arraysize * sumx_sq - sumx * sumx ) * 
-                    sqrt( arraysize * sumy_sq - sumy * sumy )
-                  );
-   
-   *sigma       = sqrt( sumchi_sq ) / arraysize;
-   
-   return average;
+   const US_Calc::LineFit fit = US_Calc::linefit( *x, *y, arraysize );
+   *slope                     = fit.slope;
+   *intercept                 = fit.intercept;
+   *correlation               = fit.correlation;
+   *sigma                     = fit.sigma;
+   return fit.average;
 }
 /*
 float US_Math2::linefit( float** x        , float** y    , float* slope, 

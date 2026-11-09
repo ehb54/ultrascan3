@@ -1,5 +1,6 @@
 //! \file us_calc_units.cpp
 #include "us_calc_units.h"
+#include "us_calc_fp.h" // first:  floating-point policy
 
 namespace US_Calc
 {

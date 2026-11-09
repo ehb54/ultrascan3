@@ -1,11 +1,15 @@
 //! \file us_solutedata.cpp
 
 #include "us_solutedata.h"
-#include "us_ga_init.h"
+#include "../../calc/us_calc_statistics.h"
+#include "us_constants.h"
 #include "us_defines.h"
+#include "us_ga_init.h"
 #include "us_math2.h"
 #include "us_settings.h"
-#include "us_constants.h"
+
+#include <limits>
+#include <vector>
 
 // bucket vertex LessThan routine
 bool buck_vx_lessthan( const bucket &buck1, const bucket &buck2 )
@@ -1137,193 +1141,33 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
       QList< qreal >& concs, bool details, QString title )
 {
    QString str1;
-   QString str2;
-   int     nvals      = vals.size();
-   int     nbins      = 50;
-   qreal   vsiz       = (qreal)nvals;
-   qreal   binsz      = 50.0;
-   qreal   vlo        = 9.9e30;
-   qreal   vhi        = -9.9e30;
+   QString                         str2;
 
-   QVector< qreal > xpvec( qMax( nvals, nbins ) );
-   QVector< qreal > ypvec( qMax( nvals, nbins ) );
-
-   qreal   *xplot     = xpvec.data();
-   qreal   *yplot     = ypvec.data();
-   qreal   vsum       = 0.0;
-   qreal   vm2        = 0.0;
-   qreal   vm3        = 0.0;
-   qreal   vm4        = 0.0;
-   qreal   vmean;
-   qreal   vctot_square = 0.0;
-   qreal   mode_cen;
-   qreal   mode_lo;
-   qreal   mode_hi;
-   qreal   conf99lo;
-   qreal   conf99hi;
-   qreal   conf95lo;
-   qreal   conf95hi;
-   qreal   skew;
-   qreal   kurto;
-   qreal   vmedi;
-   qreal   slope;
-   qreal   vicep;
-   qreal   sigma;
-   qreal   corr;
-   qreal   sdevi;
-   qreal   sderr;
-   qreal   vari;
-   qreal   area;
-   qreal   bininc;
-   qreal   val;
-   qreal   conc;
-   qreal   vctot = 0.0;
-
-   // get basic min,max,mean information
-
-   for ( int jj = 0; jj < nvals; jj++ )
-   {
-      val       = vals.at( jj );
-      conc      = concs.at( jj );
-      vsum     += ( val * conc );
-      vctot    += conc;
-      vlo       = qMin( vlo, val );
-      vhi       = qMax( vhi, val );
-      xplot[jj] = (qreal)jj;
-      yplot[jj] = val;
-   }
-
-   vmean     = vsum / vctot;
-
-   // get difference information
-
-   for ( int jj = 0; jj < nvals; jj++ )
-   {
-      val       = vals.at( jj );
-      conc      = concs.at( jj );
-      qreal dif = val - vmean;
-      qreal dsq = dif * dif;
-      vm2      += dsq * conc;           // diff squared
-      vm3      += ( dsq * dif ) * conc; // cubed
-      vm4      += ( dsq * dsq ) * conc; // to the 4th
-      vctot_square += conc * conc;
-   }
-
-   vm2      *= vctot_square / (vctot*vctot - vctot_square);
-   vm3      *= vctot_square / (vctot*vctot - vctot_square);
-   vm4      *= vctot_square / (vctot*vctot - vctot_square);
-   skew      = vm3 / pow( vm2, 1.5 );
-   kurto     = vm4 / pow( vm2, 2.0 ) - 3.0;
-   vmedi     = ( vlo + vhi ) / 2.0;
-
-   // do line fit (mainly for corr value)
-
-   US_Math2::linefit( &xplot, &yplot, &slope, &vicep, &sigma, &corr, nvals );
-
-   // standard deviation and error
-
-   sdevi     = pow( vm2, 0.5 );
-   sderr     = sdevi / pow( vsiz, 0.5 );
-   vari      = vm2;
-   area      = 0.0;
-
-   bininc    = ( vhi - vlo ) / binsz;
-
-   // mode and confidence
-
-   for ( int ii = 0; ii < nbins; ii++ )
-   {
-      xplot[ii] = vlo + bininc * (qreal)ii;
-      yplot[ii] = 0.0;
-
-      for ( int jj = 0; jj < nvals; jj++ )
-      {
-         val       = vals.at( jj );
-
-         if ( val >= xplot[ ii ]  &&  val < ( xplot[ ii ] + bininc ) )
-         {
-            yplot[ii] += ( concs.at( jj ) );
-         }
-      }
-
-      area     += yplot[ ii ] * bininc;
-   }
-
-   double fvdif     = qAbs( ( vhi - vlo ) / vlo );
-   bool is_constant = ( fvdif < 0.0001 );
-   val       = -1.0;
-   int thisb = 0;
-
-   for ( int ii = 0; ii < nbins; ii++ )
-   {
-      if ( yplot[ii] > val )
-      {
-         val       = yplot[ ii ];
-         thisb     = ii;
-      }
-   }
-
-   mode_lo   = xplot[ thisb ];
-   mode_hi   = mode_lo + bininc;
-   mode_cen  = ( mode_lo + mode_hi ) / 2.0;
-   conf99lo  = vmean - 2.576 * sdevi;
-   conf99hi  = vmean + 2.576 * sdevi;
-   conf95lo  = vmean - 1.960 * sdevi;
-   conf95hi  = vmean + 1.960 * sdevi;
-
-   QVector <int> idxs(nvals, 0);
-   for ( int jj = 0; jj < nvals; jj++ )
-   {
-       idxs[jj] = jj;
-   }
-   std::sort(idxs.begin(), idxs.end(),
-             [&vals](int a, int b) { return vals[a] < vals[b]; });
-   QVector<qreal> vals_sorted;
-   QVector<qreal> concs_sorted;
-   for ( int jj = 0; jj < nvals; jj++ )
-   {
-       int id = idxs.at(jj);
-       vals_sorted << vals.at(id);
-       concs_sorted << concs.at(id);
-   }
-
-   qreal lo99 = vctot * 0.005;
-   qreal hi99 = vctot * 0.995;
-   qreal lo95 = vctot * 0.025;
-   qreal hi95 = vctot * 0.975;
-
-   qreal acc_conc = 0;
-   int lo99_id  = -1;
-   int hi99_id  = -1;
-   int lo95_id  = -1;
-   int hi95_id  = -1;
-
-   for ( int jj = 0; jj < nvals; jj++ )
-   {
-       acc_conc += concs_sorted.at(jj);
-       if (acc_conc >= lo99 && lo99_id == -1)
-       {
-           lo99_id = jj;
-       }
-       if (acc_conc >= lo95 && lo95_id == -1)
-       {
-           lo95_id = jj;
-       }
-
-       if (acc_conc > hi99 && hi99_id == -1)
-       {
-           hi99_id = jj - 1;
-       }
-       if (acc_conc > hi95 && hi95_id == -1)
-       {
-           hi95_id = jj - 1;
-       }
-   }
-
-   conf99lo = vals_sorted.at(lo99_id);
-   conf99hi = vals_sorted.at(hi99_id);
-   conf95lo = vals_sorted.at(lo95_id);
-   conf95hi = vals_sorted.at(hi95_id);
+   // The statistics come from us_calc; undefined ones print as nan.
+   const std::vector<double>       values( vals.begin(), vals.end() );
+   const std::vector<double>       concentrations( concs.begin(), concs.end() );
+   const US_Calc::SoluteStatistics st          = US_Calc::solute_statistics( values, concentrations );
+   const double                    nan         = std::numeric_limits<double>::quiet_NaN();
+   const qreal                     vlo         = st.minimum;
+   const qreal                     vhi         = st.maximum;
+   const qreal                     vmean       = st.mean.value_or( nan );
+   const qreal                     vmedi       = st.midrange.value_or( nan );
+   const qreal                     skew        = st.skew.value_or( nan );
+   const qreal                     kurto       = st.kurtosis.value_or( nan );
+   const qreal                     mode_lo     = st.mode_low.value_or( nan );
+   const qreal                     mode_hi     = st.mode_high.value_or( nan );
+   const qreal                     mode_cen    = st.mode_center.value_or( nan );
+   const qreal                     conf95lo    = st.confidence95_low.value_or( nan );
+   const qreal                     conf95hi    = st.confidence95_high.value_or( nan );
+   const qreal                     conf99lo    = st.confidence99_low.value_or( nan );
+   const qreal                     conf99hi    = st.confidence99_high.value_or( nan );
+   const qreal                     sdevi       = st.standard_deviation.value_or( nan );
+   const qreal                     sderr       = st.standard_error.value_or( nan );
+   const qreal                     vari        = st.variance.value_or( nan );
+   const qreal                     corr        = st.correlation.value_or( nan );
+   const qreal                     area        = st.area.value_or( nan );
+   const qreal                     binsz       = st.bins;
+   const bool                      is_constant = st.constant;
 
    if ( details  &&  is_constant )
    {

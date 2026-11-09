@@ -16,6 +16,9 @@ CONFIG      -= qt
 DESTDIR      = ../lib
 OBJECTS_DIR  = ./obj
 
+# No floating-point contraction (FMA); see us_calc_fp.h
+!win32-msvc*: QMAKE_CXXFLAGS += -ffp-contract=off
+
 HEADERS      = $$files(us_calc_*.h)
 
 SOURCES      = $$files(us_calc_*.cpp)

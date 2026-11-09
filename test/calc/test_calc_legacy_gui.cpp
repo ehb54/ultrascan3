@@ -303,6 +303,26 @@ class US_CalcLegacyTest : public QObject
                data.outputStats( ts, vals, concs, true, attr.first );
                ts.flush();
                per[attr.first] = text;
+
+               // Every value is counted, so the printed area is the total
+               // concentration times the bin width, (max - min) / 50.
+               static const QRegularExpression areaLine( "Distribution Area:\\s+(\\S+)" );
+               const QRegularExpressionMatch   m = areaLine.match( text );
+               if ( m.hasMatch() )
+               {
+                  double total = 0.0, lo = vals.first(), hi = vals.first();
+                  for ( int i = 0; i < vals.size(); ++i )
+                  {
+                     total += concs[i];
+                     lo = qMin( lo, vals[i] );
+                     hi = qMax( hi, vals[i] );
+                  }
+                  const double expected = total * ( hi - lo ) / 50.0;
+                  const double printed  = m.captured( 1 ).toDouble();
+                  QVERIFY2( std::fabs( printed - expected ) <= 0.5e-4 * std::fabs( expected ) + 1e-300,
+                            qPrintable( file + " " + attr.first + ": area " + m.captured( 1 ) + ", expected " +
+                                        QString::number( expected, 'e', 4 ) ) );
+               }
             }
             captured[file] = per;
          }

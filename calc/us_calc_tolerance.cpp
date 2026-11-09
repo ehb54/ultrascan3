@@ -1,5 +1,6 @@
 //! \file us_calc_tolerance.cpp
 #include "us_calc_tolerance.h"
+#include "us_calc_fp.h" // first:  floating-point policy
 
 #include <cmath>
 

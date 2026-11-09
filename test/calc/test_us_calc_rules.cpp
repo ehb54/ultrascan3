@@ -6,9 +6,12 @@
 
 #include <cmath>
 #include <limits>
+#include <random>
+#include <vector>
 
 #include "us_calc_matching.h"
 #include "us_calc_replicate.h"
+#include "us_calc_statistics.h"
 #include "us_calc_tolerance.h"
 
 using namespace US_Calc;
@@ -137,4 +140,61 @@ TEST( UsCalcMatching, MethodParts )
    EXPECT_TRUE( method_matches( "PCSA-SL", pc ) ); // reduced to PCSA
    EXPECT_TRUE( method_matches( "PCSA-IS", pc ) ); // also PCSA:  the reporter ignores the curve type
    EXPECT_FALSE( method_matches( "GA", it ) );
+}
+
+// Every value is counted once, the maximum included, so the area is the
+// total concentration times the bin width.
+TEST( UsCalcStatistics, AreaCountsEveryValueIncludingTheMaximum )
+{
+   const SoluteStatistics st = solute_statistics( { 1.0, 2.0, 3.0 }, { 1.0, 1.0, 1.0 } );
+   ASSERT_TRUE( st.area.has_value() );
+   EXPECT_NEAR( *st.area, 3.0 * ( 2.0 / 50.0 ), 1e-15 );
+
+   std::mt19937_64                        rng( 7 );
+   std::uniform_real_distribution<double> u( 0.0, 1.0 );
+   for ( int t = 0; t < 2000; ++t )
+   {
+      const int           n = 2 + t % 40;
+      std::vector<double> v( n ), c( n );
+      double              total = 0.0;
+      for ( int i = 0; i < n; ++i )
+      {
+         v[i] = ( 1 + 9 * u( rng ) ) * 1e-13;
+         c[i] = u( rng );
+         total += c[i];
+      }
+      const SoluteStatistics s = solute_statistics( v, c );
+      ASSERT_TRUE( s.area.has_value() );
+      EXPECT_NEAR( *s.area, total * ( s.maximum - s.minimum ) / 50.0, 1e-12 * total * ( s.maximum - s.minimum ) / 50.0 );
+   }
+}
+
+TEST( UsCalcStatistics, UndefinedValuesAreEmpty )
+{
+   // One nonzero concentration:  the weighted variance divides by zero.
+   const SoluteStatistics one = solute_statistics( { 1.0, 2.0 }, { 1.0, 0.0 } );
+   EXPECT_FALSE( one.variance.has_value() );
+   EXPECT_FALSE( has_error( one.diagnostics ) );
+   EXPECT_FALSE( one.diagnostics.empty() );
+   // No values
+   EXPECT_TRUE( has_error( solute_statistics( {}, {} ).diagnostics ) );
+   // A dominant first value gives the first value as both upper limits
+   // (the legacy index is set to -1 and then corrected to 0)
+   const SoluteStatistics dom = solute_statistics( { 1.0, 2.0, 3.0 }, { 1000.0, 1.0, 1.0 } );
+   ASSERT_TRUE( dom.confidence99_high.has_value() );
+   EXPECT_EQ( *dom.confidence99_high, 1.0 );
+   // A single value has no upper index
+   const SoluteStatistics single = solute_statistics( { 2.0 }, { 1.0 } );
+   EXPECT_FALSE( single.confidence99_high.has_value() );
+}
+
+TEST( UsCalcStatistics, LineFitOfALine )
+{
+   const double  x[] = { 0, 1, 2, 3 };
+   const double  y[] = { 1, 3, 5, 7 };
+   const LineFit f   = linefit( x, y, 4 );
+   EXPECT_DOUBLE_EQ( f.slope, 2.0 );
+   EXPECT_DOUBLE_EQ( f.intercept, 1.0 );
+   EXPECT_DOUBLE_EQ( f.correlation, 1.0 );
+   EXPECT_DOUBLE_EQ( f.average, 4.0 );
 }

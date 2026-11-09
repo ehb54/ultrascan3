@@ -1,5 +1,6 @@
 //! \file us_calc_composite.cpp
 #include "us_calc_composite.h"
+#include "us_calc_fp.h" // first:  floating-point policy
 
 #include "us_calc_matching.h"
 #include "us_calc_version.h"

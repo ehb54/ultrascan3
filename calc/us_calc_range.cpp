@@ -1,5 +1,6 @@
 //! \file us_calc_range.cpp
 #include "us_calc_range.h"
+#include "us_calc_fp.h" // first:  floating-point policy
 
 #include "us_calc_units.h"
 #include "us_calc_validation.h"

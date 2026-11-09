@@ -286,7 +286,9 @@ TEST_F( UsCalcFixtures, ReplicateGroupsMatchTheOracle )
 }
 
 // The library reproduces the smoothing captured from US_Math2 before the
-// extraction (fixtures/expected/legacy_smoothing.json), exactly.
+// extraction (fixtures/expected/legacy_smoothing.json) within the legacy
+// series tolerance:  the capture was made by a build that fused multiply-adds,
+// which us_calc does not (us_calc_fp.h).
 TEST( UsCalcLegacyCaptures, SmoothingMatchesTheCapture )
 {
    const QJsonObject captured = readJson( "expected/legacy_smoothing.json" );
@@ -307,7 +309,7 @@ TEST( UsCalcLegacyCaptures, SmoothingMatchesTheCapture )
       ASSERT_EQ( static_cast<int>( values.size() ), expected.size() );
       for ( int i = 0; i < expected.size(); ++i )
       {
-         EXPECT_EQ( values[i], expected[i].toDouble() ) << "index " << i;
+         EXPECT_NEAR( values[i], expected[i].toDouble(), 1e-12 * std::fabs( expected[i].toDouble() ) + 1e-300 ) << "index " << i;
       }
    }
 }

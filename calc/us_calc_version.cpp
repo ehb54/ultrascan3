@@ -1,4 +1,5 @@
 //! \file us_calc_version.cpp
+#include "us_calc_fp.h" // first:  floating-point policy
 //! The descriptions state the rules decided in the extraction plan
 //! (doc/UltraScan_Calculation_Library_Extraction_Plan.docx, edition 8).
 #include "us_calc_version.h"
@@ -38,7 +39,10 @@ std::vector<AlgorithmVersion> algorithms()
         1,
         "Gaussian smoothing as US_Math2::gaussian_smoothing; widths the series cannot support "
         "(fewer than 2*width-1 points) are rejected" },
-      { "solute_statistics", 1, "Concentration-weighted statistics of one attribute as US_SoluteData::outputStats" },
+      { "solute_statistics",
+        1,
+        "Concentration-weighted statistics of one attribute as US_SoluteData::outputStats, with 50 bins "
+        "that partition the range so every value, the maximum included, is counted once" },
       { "report_item_matching",
         1,
         "A report item applies to a model when every '-' part of its method (PCSA methods count as PCSA) "

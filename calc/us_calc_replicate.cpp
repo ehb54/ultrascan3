@@ -1,5 +1,6 @@
 //! \file us_calc_replicate.cpp
 #include "us_calc_replicate.h"
+#include "us_calc_fp.h" // first:  floating-point policy
 
 #include "us_calc_version.h"
 
