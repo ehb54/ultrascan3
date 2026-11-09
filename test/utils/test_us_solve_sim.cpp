@@ -4,8 +4,11 @@
 #include "us_astfem_math.h"
 #include "us_constants.h"
 #include "us_math2.h"
+#include "us_settings.h"
 #include "us_sim_cache.h"
 #include "us_solve_sim.h"
+#include <QFile>
+#include <QPair>
 #include <QTemporaryDir>
 #include <QVector>
 #include <algorithm>
@@ -734,6 +737,60 @@ TEST_F( TestUSSolveSimCalcResiduals, RemovesTiAndRiNoise )
    EXPECT_LT( maxDiff( fittedConc( input.solutes, sim.solutes ), conc ), 1e-8 );
 }
 
+// A solve that fails (here:  no timestate loaded, and nowhere to build one)
+//  is not taken for a fit:  the variance and the variance of each data set
+//  are NaN, and the failure is reported
+TEST_F( TestUSSolveSimCalcResiduals, FailedSolveGivesNaNVariances )
+{
+   // A directory cannot be made below a regular file
+   const QString blocker = tmpdir.filePath( "not-a-dir" );
+   {
+      QFile file( blocker );
+      ASSERT_TRUE( file.open( QIODevice::WriteOnly ) );
+   }
+   const QString                  unusable = blocker + "/tmp";
+
+   const char* const              env_names[] = { "TMPDIR", "TMP", "TEMP" };
+   QList<QPair<bool, QByteArray>> saved_env;
+   for ( const char* name : env_names )
+   {
+      saved_env << qMakePair( qEnvironmentVariableIsSet( name ), qgetenv( name ) );
+      qputenv( name, QFile::encodeName( unusable ) );
+   }
+   const QString saved_tmpdir = US_Settings::tmpDir();
+   US_Settings::set_tmpDir( unusable );
+
+   dset.simparams.tsobj = nullptr; // Unload the timestate
+   dset.simparams.sim_speed_prof.clear();
+
+   US_SolveSim::Simulation input;
+   input.solutes << US_Solute( 3.0e-13, 1.5 ) << US_Solute( 5.0e-13, 2.0 );
+   input.noisflag              = 0;
+   input.alpha                 = 0.0;
+   input.maxrss                = 0;
+   US_SolveSim::Simulation sim = input;
+   US_SolveSim             solvesim( dsets, 1, false );
+   solvesim.calc_residuals( 0, 1, sim );
+
+   US_Settings::set_tmpDir( saved_tmpdir );
+   for ( int ii = 0; ii < saved_env.size(); ii++ )
+   {
+      if ( saved_env[ii].first )
+      {
+         qputenv( env_names[ii], saved_env[ii].second );
+      }
+      else
+      {
+         qunsetenv( env_names[ii] );
+      }
+   }
+
+   EXPECT_TRUE( solvesim.solve_failed() );
+   EXPECT_TRUE( qIsNaN( sim.variance ) );
+   ASSERT_EQ( sim.variances.size(), 1 );
+   EXPECT_TRUE( qIsNaN( sim.variances[0] ) );
+}
+
 TEST_F( TestUSSolveSimCalcResiduals, GlobalFitRemovesNoiseOfEachDataSet )
 {
    // Two data sets fitted together:  the second has scans 2-10 and every
@@ -1244,6 +1301,17 @@ TEST_F( TestUSSolveSimCache, FitIsUnchangedByCacheInThreads )
    expectSameFit( 1024LL * 1024 * 1024, true );
 }
 
+// The same fit in threads without a cache:  solves in threads must not share
+//  scratch storage
+TEST_F( TestUSSolveSimCache, FitInThreadsWithoutCache )
+{
+   noisflag                       = 3;
+   const QVector<double> expected = fit2dsa( nullptr, false );
+   ASSERT_GT( expected.size(), 0 );
+   const QVector<double> threaded = fit2dsa( nullptr, true );
+   EXPECT_EQ( firstDifference( threaded, expected ), -1 ) << "sizes " << threaded.size() << " " << expected.size();
+}
+
 TEST_F( TestUSSolveSimCache, FitIsUnchangedBySmallCache )
 {
    // Room for 12 of the 40 grid simulations:  non-survivors are refused or
@@ -1337,4 +1405,179 @@ TEST_F( TestUSSolveSimCache, CustomGridFitIsUnchanged )
    EXPECT_EQ( firstDifference( fitCustom( &cache ), expected ), -1 );
    EXPECT_EQ( firstDifference( fitCustom( &cache ), expected ), -1 );
    EXPECT_EQ( cache.stats().hits, input.zsolutes.size() );
+}
+
+// --- Normal-equation fitness ---------------------------------------------------
+
+class TestUSSolveSimNormal : public TestUSSolveSimCalcResiduals
+{
+   protected:
+      void SetUp() override
+      {
+         TestUSSolveSimCalcResiduals::SetUp();
+
+         US_SolveSim::Simulation truth;
+         truth.solutes << US_Solute( 2.5e-13, 1.25 ) << US_Solute( 4.5e-13, 1.6 ) << US_Solute( 6.5e-13, 2.1 );
+         QVector<double> amatrix = basis( truth );
+         ASSERT_EQ( amatrix.size(), 3 * NTOTAL );
+
+         setData( amatrix, QVector<double>{ 0.3, 0.5, 0.2 }, QVector<double>( NPOINTS, 0.0 ), QVector<double>( NSCANS, 0.0 ) );
+         for ( int ss = 0; ss < NSCANS; ss++ )
+         {
+            for ( int rr = 0; rr < NPOINTS; rr++ )
+            { // Reproducible noise, sigma about 0.003
+               dset.run_data.scanData[ss].rvalues[rr] += 0.004 * sin( 12.9898 * ss + 78.233 * rr );
+            }
+         }
+      }
+
+      // Plain case:  QR and normal equations must give the same solution
+      void expectSameAsQr( const QVector<US_Solute>& solutes, int count = 1 )
+      {
+         US_SolveSim::Simulation qr;
+         qr.solutes                 = solutes;
+         US_SolveSim::Simulation ne = qr;
+         US_SolveSim             solvesim( dsets, 1, false );
+         solvesim.calc_residuals( 0, count, qr );
+         US_SolveSim nesim( dsets, 1, false );
+         ASSERT_TRUE( nesim.calc_variance_normal( 0, count, ne ) );
+
+         EXPECT_NEAR( ne.variance / qr.variance, 1.0, 1.0e-8 );
+         ASSERT_EQ( ne.variances.size(), qr.variances.size() );
+         for ( int kd = 0; kd < qr.variances.size(); kd++ )
+         {
+            EXPECT_NEAR( ne.variances[kd] / qr.variances[kd], 1.0, 1.0e-8 ) << kd;
+         }
+
+         ASSERT_EQ( ne.solutes.size(), qr.solutes.size() );
+         for ( int cc = 0; cc < qr.solutes.size(); cc++ )
+         {
+            EXPECT_EQ( ne.solutes[cc].s, qr.solutes[cc].s ) << cc;
+            EXPECT_EQ( ne.solutes[cc].k, qr.solutes[cc].k ) << cc;
+            EXPECT_NEAR( ne.solutes[cc].c / qr.solutes[cc].c, 1.0, 1.0e-6 ) << cc;
+         }
+      }
+};
+
+TEST_F( TestUSSolveSimNormal, MatchesQr )
+{
+   ASSERT_NE( dset.simparams.tsobj, nullptr );
+   expectSameAsQr( { US_Solute( 2.4e-13, 1.3 ), US_Solute( 4.6e-13, 1.55 ), US_Solute( 6.4e-13, 2.0 ) } );
+}
+
+TEST_F( TestUSSolveSimNormal, MatchesQrWithInactiveSolutes )
+{
+   // Solutes that get no signal:  the NNLS bound constraints are active
+   expectSameAsQr( { US_Solute( 1.0e-13, 3.5 ),
+                     US_Solute( 2.5e-13, 1.25 ),
+                     US_Solute( 4.5e-13, 1.6 ),
+                     US_Solute( 6.5e-13, 2.1 ),
+                     US_Solute( 12.0e-13, 1.1 ),
+                     US_Solute( 15.0e-13, 3.0 ) } );
+}
+
+TEST_F( TestUSSolveSimNormal, MatchesQrForManySolutes )
+{
+   QVector<US_Solute> solutes;
+   for ( int ii = 0; ii < 16; ii++ )
+   {
+      solutes << US_Solute( ( 1.5 + 0.6 * ii ) * 1.0e-13, 1.2 + 0.09 * ii );
+   }
+   expectSameAsQr( solutes );
+}
+
+TEST_F( TestUSSolveSimNormal, MatchesQrForAGlobalFit )
+{
+   US_SolveSim::DataSet second = dset;
+   for ( int ss = 0; ss < NSCANS; ss++ )
+   {
+      for ( int rr = 0; rr < NPOINTS; rr++ )
+      {
+         second.run_data.scanData[ss].rvalues[rr] *= 0.6;
+      }
+   }
+   dsets << &second;
+   expectSameAsQr( { US_Solute( 2.4e-13, 1.3 ), US_Solute( 4.6e-13, 1.55 ), US_Solute( 6.4e-13, 2.0 ) }, 2 );
+}
+
+TEST_F( TestUSSolveSimNormal, ReusesTheCache )
+{
+   const QVector<US_Solute> solutes = { US_Solute( 2.4e-13, 1.3 ), US_Solute( 4.6e-13, 1.55 ) };
+   US_SimCache              cache( 1024LL * 1024 * 1024 );
+   US_SolveSim::Simulation  plain, first, second;
+   plain.solutes = first.solutes = second.solutes = solutes;
+
+   US_SolveSim nocache( dsets, 1, false );
+   ASSERT_TRUE( nocache.calc_variance_normal( 0, 1, plain ) );
+   US_SolveSim solvesim( dsets, 1, false );
+   solvesim.set_sim_cache( &cache );
+   ASSERT_TRUE( solvesim.calc_variance_normal( 0, 1, first ) );
+   EXPECT_EQ( cache.stats().hits, 0 );
+   ASSERT_TRUE( solvesim.calc_variance_normal( 0, 1, second ) );
+   EXPECT_EQ( cache.stats().hits, 2 );
+
+   EXPECT_EQ( first.variance, plain.variance );
+   EXPECT_EQ( second.variance, plain.variance );
+}
+
+TEST_F( TestUSSolveSimNormal, ZeroDataGiveNoSolutes )
+{
+   for ( US_DataIO::Scan& scan : dset.run_data.scanData )
+   {
+      scan.rvalues.fill( 0.0 );
+   }
+   US_SolveSim::Simulation sim;
+   sim.solutes << US_Solute( 2.4e-13, 1.3 ) << US_Solute( 4.6e-13, 1.55 );
+   US_SolveSim solvesim( dsets, 1, false );
+   ASSERT_TRUE( solvesim.calc_variance_normal( 0, 1, sim ) );
+   EXPECT_EQ( sim.solutes.size(), 0 );
+   EXPECT_EQ( sim.variance, 0.0 );
+}
+
+TEST_F( TestUSSolveSimNormal, RefusesWhatItDoesNotHandle )
+{
+   const QVector<US_Solute> solutes = { US_Solute( 2.4e-13, 1.3 ), US_Solute( 4.6e-13, 1.55 ) };
+   US_SolveSim              solvesim( dsets, 1, false );
+
+   auto                     refused = [&]( US_SolveSim::Simulation sim )
+   {
+      const double variance = sim.variance;
+      const int    nsols    = sim.solutes.size();
+      EXPECT_FALSE( solvesim.calc_variance_normal( 0, 1, sim ) );
+      EXPECT_EQ( sim.variance, variance );
+      EXPECT_EQ( sim.solutes.size(), nsols );
+   };
+
+   US_SolveSim::Simulation plain;
+   plain.solutes = solutes;
+
+   { // TI and RI noise
+      US_SolveSim::Simulation sim = plain;
+      sim.noisflag                = 3;
+      refused( sim );
+   }
+   { // Tikhonov regularization
+      US_SolveSim::Simulation sim = plain;
+      sim.alpha                   = 0.5;
+      refused( sim );
+   }
+   { // No solutes
+      refused( US_SolveSim::Simulation() );
+   }
+   { // Nearly dependent columns
+      US_SolveSim::Simulation sim = plain;
+      sim.solutes << solutes[0];
+      refused( sim );
+   }
+   { // Data at or above the OD limit
+      const double odlimit  = dset.run_data.ODlimit;
+      dset.run_data.ODlimit = 0.1;
+      refused( plain );
+      dset.run_data.ODlimit = odlimit;
+   }
+   { // Non-standard solute type
+      dset.solute_type = 1;
+      refused( plain );
+      dset.solute_type = 0;
+   }
 }

@@ -618,3 +618,72 @@ TEST( US_MPI_JobConfig, DebugValues )
    EXPECT_FALSE( found );
    EXPECT_EQ( config.debug_value( "base" ), "" ); // Exact keys only
 }
+
+// --- GA feature parameters ---------------------------------------------------
+
+namespace
+{
+const QString GA_JOB = "<population value=\"30\"/><generations value=\"15\"/>"
+                       "<bucket x_min=\"1\" x_max=\"2\" y_min=\"1\" y_max=\"2\"/>";
+}
+
+TEST( US_MPI_JobConfig, GaFeatureDefaults )
+{
+   Config config = validated( GA_JOB, "GA" );
+   EXPECT_TRUE( config.errors.isEmpty() ) << all_of( config );
+   EXPECT_TRUE( config.warnings.isEmpty() ) << all_of( config );
+
+   const auto& ga = config.params.ga;
+   EXPECT_EQ( ga.s_step, 0.0 );
+   EXPECT_EQ( ga.k_step, 0.0 );
+   EXPECT_EQ( ga.bucket_soft, 0 );
+   EXPECT_EQ( ga.bucket_lambda, 1.0 );
+   EXPECT_EQ( ga.bucket_margin, 0.5 );
+   EXPECT_EQ( ga.sim_cache_mb, -1 ); // Not given: automatic size
+   EXPECT_EQ( ga.sim_cache_lru, 1 );
+   EXPECT_EQ( ga.ga_normal, 0 );
+   EXPECT_EQ( ga.ga_normal_check, 0 );
+   EXPECT_EQ( ga.early_stop, 1 );
+}
+
+TEST( US_MPI_JobConfig, GaFeatureValuesAreReadAndKnown )
+{
+   Config config = validated( GA_JOB + "<s_step value=\"0.05\"/><k_step value=\"0.02\"/><bucket_soft value=\"2\"/>"
+                                       "<bucket_lambda value=\"3.5\"/><bucket_margin value=\"0.25\"/>"
+                                       "<sim_cache_mb value=\"0\"/><sim_cache_lru value=\"0\"/>"
+                                       "<ga_normal value=\"1\"/><ga_normal_check value=\"1\"/><early_stop value=\"0\"/>",
+                              "GA" );
+   EXPECT_TRUE( config.errors.isEmpty() ) << all_of( config );
+   EXPECT_TRUE( config.warnings.isEmpty() ) << all_of( config ); // None is an unknown parameter
+
+   const auto& ga = config.params.ga;
+   EXPECT_EQ( ga.s_step, 0.05 );
+   EXPECT_EQ( ga.k_step, 0.02 );
+   EXPECT_EQ( ga.bucket_soft, 2 );
+   EXPECT_EQ( ga.bucket_lambda, 3.5 );
+   EXPECT_EQ( ga.bucket_margin, 0.25 );
+   EXPECT_EQ( ga.sim_cache_mb, 0 ); // Given as 0: off, not automatic
+   EXPECT_EQ( ga.sim_cache_lru, 0 );
+   EXPECT_EQ( ga.ga_normal, 1 );
+   EXPECT_EQ( ga.ga_normal_check, 1 );
+   EXPECT_EQ( ga.early_stop, 0 );
+}
+
+TEST( US_MPI_JobConfig, GaFeatureValuesAreRangeChecked )
+{
+   for ( const char* bad : { "<s_step value=\"-1\"/>",
+                             "<k_step value=\"abc\"/>",
+                             "<bucket_soft value=\"3\"/>",
+                             "<bucket_soft value=\"-1\"/>",
+                             "<bucket_lambda value=\"-0.5\"/>",
+                             "<bucket_margin value=\"-0.5\"/>",
+                             "<sim_cache_mb value=\"-1\"/>",
+                             "<sim_cache_lru value=\"2\"/>",
+                             "<ga_normal value=\"2\"/>",
+                             "<ga_normal_check value=\"2\"/>",
+                             "<early_stop value=\"2\"/>" } )
+   {
+      Config config = validated( GA_JOB + bad, "GA" );
+      EXPECT_EQ( config.errors.size(), 1 ) << bad << ": " << all_of( config );
+   }
+}

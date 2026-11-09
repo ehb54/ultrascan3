@@ -129,7 +129,7 @@ US_MPI_Analysis::US_MPI_Analysis( int nargs, QStringList& cmdargs ) : QObject()
 
    // The parameter defaults are part of job_config.params
    const uint seed = job_config.params.seed;
-   US_Math2::randomize( seed );
+   deme_seed       = US_Math2::randomize( seed ); // Seed 0: from the time
 
    read_task_parameters( jxmlfili, cmd_task_params );
    announce_start( tarfile );
@@ -163,6 +163,17 @@ US_MPI_Analysis::US_MPI_Analysis( int nargs, QStringList& cmdargs ) : QObject()
 
    // Collective over all ranks, so before any masters-group split
    create_node_comm();
+
+   // One seed for all ranks:  the job seed, or for seed 0 the time seed of
+   //  rank 0 (the ranks' own time seeds can match, within a millisecond).
+   //  The GA and DMGA workers offset it by rank, so every deme gets its own
+   //  random sequence, on one node and across nodes.
+   MPI_Bcast( &deme_seed, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD );
+
+   if ( seed == 0 && my_rank == 0 )
+   {
+      DbgLv( 0 ) << "Random seed from the time:" << deme_seed;
+   }
 
    if ( mgroup_count < 2 )
    {
@@ -1314,6 +1325,16 @@ void US_MPI_Analysis::create_node_comm( void )
    }
 }
 
+// Seed the random generator of a GA or DMGA deme:  the shared seed offset
+//  by the world rank, so that no two demes draw the same sequence
+void US_MPI_Analysis::seed_deme_random( void )
+{
+   uint seed = deme_seed + 7919u * static_cast<uint>( my_rank );
+
+   // (0 would ask randomize() for a time seed)
+   US_Math2::randomize( ( seed != 0 ) ? seed : 1u );
+}
+
 void US_MPI_Analysis::free_node_comm( void )
 {
    if ( node_comm != MPI_COMM_NULL )
@@ -1806,6 +1827,10 @@ void US_MPI_Analysis::calc_residuals( int         offset,
    }
 
    US_SolveSim solvesim( data_sets, my_rank, false );
+   if ( ga_simcache != nullptr )
+   {
+      solvesim.set_sim_cache( ga_simcache );
+   }
    solvesim.calc_residuals( offset, dataset_count, simu_values );
 
    simu_values.dbg_level = dbglvsv;
@@ -1825,6 +1850,70 @@ void US_MPI_Analysis::calc_residuals( int         offset,
       {
          debug_residuals( offset, dataset_count, simu_values, isols );
       }
+   }
+}
+
+// Variance and concentrations for a GA fitness:  from the normal equations
+//  where US_SolveSim handles the case (see calc_variance_normal), otherwise
+//  from calc_residuals.  The simulation and residual data are not set.
+void US_MPI_Analysis::calc_fitness_residuals( int offset, int dataset_count, SIMULATION& simu_values )
+{
+   if ( ga_normal == 0 || dbg_level > 0 )
+   {
+      ga_qr_count++;
+      calc_residuals( offset, dataset_count, simu_values );
+      return;
+   }
+
+   SIMULATION qr_values;
+
+   if ( ga_normal_check != 0 )
+   {
+      qr_values = simu_values;
+   }
+
+   US_SolveSim solvesim( data_sets, my_rank, false );
+   if ( ga_simcache != nullptr )
+   {
+      solvesim.set_sim_cache( ga_simcache );
+   }
+
+   if ( !solvesim.calc_variance_normal( offset, dataset_count, simu_values ) )
+   {
+      ga_qr_count++;
+      calc_residuals( offset, dataset_count, simu_values );
+      return;
+   }
+
+   ga_normal_count++;
+
+   if ( ga_normal_check != 0 )
+   { // Compare with the QR path:  variance and concentrations
+      calc_residuals( offset, dataset_count, qr_values );
+      double dvar = qAbs( simu_values.variance - qr_values.variance ) / qMax( qr_values.variance, 1.0e-300 );
+      double csum = 0.0;
+      double dc   = 0.0;
+      QMap<QPair<double, double>, double> qrc;
+
+      for ( const US_Solute& sol : qr_values.solutes )
+      {
+         qrc[qMakePair( sol.s, sol.k )] = sol.c;
+         csum += sol.c;
+      }
+
+      for ( const US_Solute& sol : simu_values.solutes )
+      {
+         dc = qMax( dc, qAbs( sol.c - qrc.value( qMakePair( sol.s, sol.k ), 0.0 ) ) );
+         qrc.remove( qMakePair( sol.s, sol.k ) );
+      }
+
+      for ( double cval : qrc )
+      {
+         dc = qMax( dc, cval );
+      }
+
+      ga_normal_dvar = qMax( ga_normal_dvar, dvar );
+      ga_normal_dc   = qMax( ga_normal_dc, dc / qMax( csum, 1.0e-300 ) );
    }
 }
 

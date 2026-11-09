@@ -22,6 +22,11 @@ void US_MPI_Analysis::dmga_worker( void )
    static const int    GR_INCR  = 10;
    current_dataset     = 0;
    datasets_to_process = data_sets.size();
+
+   // All ranks share one seed (deme_seed), which would make all demes
+   //  evolve identically:  offset it by rank
+   seed_deme_random();
+
    p_grid                       = job_config.params.ga.p_grid;
    const QString s_bsig         = job_config.debug_value( "base_sig" );
    const QString s_grinc        = job_config.debug_value( "g_redo_inc" );
@@ -449,13 +454,15 @@ void US_MPI_Analysis::dmga_worker_loop( void )
          generation   = 0;
       }
 
+      // Exchange emigrants first, while dgenes[] still matches the fitness
+      //  ranking (immigrants go to the slots after the elites)
+      const int immigr_count = migrate_dgenes();
+
       // Create new generation from old
       // First copy elite genes
       for ( int gg = 0; gg < elitism; gg++ )
          dgenes[ gg ] = old_genes[ fitness[ gg ].index ];
       DbgLv( 1 ) << "gw:" << my_rank << ": elites copied";
-
-      const int immigr_count = migrate_dgenes();
       DbgLv( 1 ) << "gw:" << my_rank << ": immigr_count" << immigr_count << "dgenes,old sizes" << dgenes.size() << old_genes.size()
                  << population;
 
@@ -468,7 +475,7 @@ void US_MPI_Analysis::dmga_worker_loop( void )
          const int gene_index  = e_random();
          const int probability = u_random( p_plague );
          DbgLv( 1 ) << "gw:" << my_rank << ":  gg" << gg << "gene_index" << gene_index << "probability" << probability;
-         dgene            = old_genes[ gene_index ];
+         dgene = old_genes[fitness[gene_index].index];
 
          // Do a self-mutate on some genes
          if      ( probability < p_mutate    ) mutate_dgene( dgene );

@@ -125,10 +125,6 @@ class US_2dsa : public US_AnalysisBase2
         //! \return Pointer to an integer.
         int* mw_base_rss();
 
-        //! \brief Get the temporary ID name.
-        //! \return QString of the temporary ID name.
-        QString temp_Id_name();
-
         //! \brief true when this instance was constructed via the
         //! protocol_details-taking (auto) constructor -- gates the
         //! headless load()/fit/save path exactly as US_MwlSpeciesFit::
