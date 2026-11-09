@@ -126,7 +126,27 @@ current code.  The fixtures capture today's behavior.
    user-set smoothing width (1-100), so any division count below
    `2*smoothing-2` reaches this in the desktop program (#1214).  The
    captured cases stay within the precondition.
-8. **Range bound scaling.**  The reporter scales bounds with `pow(10,-13)`,
+8. **Floating-point contraction.**  Compilers may fuse a multiply and an
+   add (FMA), which changes the last bits and, where a value sits on a bin
+   edge or a difference cancels exactly, the result itself.  Legacy results
+   therefore already differed between builds (arm64, GCC defaults,
+   -march=native).  us_calc is compiled without contraction (us_calc_fp.h),
+   so it gives the same doubles everywhere.  It equals the legacy code
+   compiled without contraction bit for bit; the MPI regression cases were
+   unchanged.
+9. **Histogram area missed the maximum.**  outputStats tested each of its
+   50 bins against edge + width, which rounds differently from the next
+   edge, and left the last bin open, so the maximum value was counted or
+   not depending on rounding.  us_calc partitions the range so every value
+   is counted once (decided 9 November 2026); the area is the total
+   concentration times the bin width.  The "Median" outputStats prints is
+   the midrange.
+10. **Captures regenerated.**  After items 8 and 9, the legacy captures were
+   regenerated from the current code.  Against the previous captures:  model
+   loads and integral curves are identical; 241 of 1159 smoothing values
+   differ by at most 3.6e-16 relative; outputStats differs in the area of 55
+   of 250 blocks and in the mode and confidence limits of 4 edge-model blocks.
+11. **Range bound scaling.**  The reporter scales bounds with `pow(10,-13)`,
    `pow(10,-7)` and `pow(10,3)` in one path and with literals in the other.
    They agree exactly on the reference platform (checked over 100 000
    bounds); the exact-bound edge fixtures guard this.
