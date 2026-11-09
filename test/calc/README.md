@@ -1,9 +1,9 @@
 # Calculation-library fixtures and regression tests
 
-Reference data for extracting the reporting calculations into one library
-(extraction plan task E02).  The library and its callers must reproduce these
-results; a change to any of them is a scientific decision, recorded with the
-change.
+Reference data and regression tests for the calculation library `us_calc`
+(`calc/`) and the desktop programs that use it.  The library and its callers
+must reproduce these results; a change to any of them is a scientific
+decision, recorded with the change.
 
 ## Contents
 
@@ -14,11 +14,11 @@ change.
 | `fixtures/edge/*.model.xml` | Hand-made models for edge cases: no components, zero total, one component, values on range bounds, a negative concentration, duplicates and equal-s ties. |
 | `fixtures/report_items.json` | Report items (type, method, range, target, tolerance) for each sample, replicate groups and edge items.  Designed once by `calc_oracle.py design`. |
 | `fixtures/expected/reporting.json` | Expected range, total-concentration and replicate results from `calc_oracle.py`. |
-| `fixtures/expected/legacy_*.json` | Outputs of the current UltraScan code on the fixtures, captured by `test_calc_legacy_gui`. |
+| `fixtures/expected/legacy_*.json` | Outputs of the desktop code on the fixtures (model loading, us_ga_init statistics, US_Integral curves, smoothing), captured by `test_calc_legacy_gui`.  They equal the code before the library replaced it, except for the changes listed below. |
 | `fixtures/expected/tolerances.json` | Acceptance tolerances. |
 | `make_fitted_models.py` | Fits the samples, reusing `../mpi_analysis/us_mpi_regression.py`. |
 | `calc_oracle.py` | Independent expected values for the reporter's range and replicate calculations. |
-| `test_calc_legacy_gui.cpp` | Runs the current UltraScan calculations on the fixtures and compares with the captured outputs. |
+| `test_calc_legacy_gui.cpp` | Runs the desktop calculations on the fixtures and compares with the captured outputs. |
 
 ## Samples and fits
 
@@ -43,7 +43,7 @@ Every simulated dataset uses the experiment of `us_mpi_testdata` (30 scans,
   fraction as the reporter computes it in double arithmetic.
 - **Model loading, us_ga_init statistics, US_Integral distributions and
   Gaussian smoothing** are callable, so `test_calc_legacy_gui` runs the
-  current code and compares with its captured output.
+  desktop code and compares with its captured output.
 
 The fitted-model fixtures keep every component at least a relative 1e-6 from
 every range bound, and every fraction at least 1e-6 percentage points from its
@@ -80,10 +80,11 @@ CALC_FIXTURES_UPDATE=1 <build>/bin/test_calc_legacy_gui
 Paths given to `make_fitted_models.py` must be absolute; each job runs in its
 own directory.
 
-## Legacy behavior found while building the fixtures
+## Legacy behavior and what the library does
 
-These need recorded scientific decisions before the library replaces the
-current code.  The fixtures capture today's behavior.
+Behavior of the desktop code found while building the fixtures, and how
+`us_calc` handles it.  Items 3, 4 and 7 were reported in
+ehb54/ultrascan-tickets#1214.
 
 1. **Monte Carlo composite.**  `US_Model::load` turns a Monte Carlo file into
    one composite model (`load_multi_model`):  components are merged when the
@@ -91,62 +92,70 @@ current code.  The fixtures capture today's behavior.
    concentration is the sum divided by the iteration count, every other
    attribute comes from the last matching component, and the description
    gains `_mcN<count>`.  The reporter calculates on this composite.  Merging
-   by printed text rather than by value is part of the scientific result.
+   by printed text rather than by value is part of the scientific result, so
+   the library keeps it, formatting the keys as Qt does (exact ties round
+   away from zero).
 2. **Tolerance edges depend on rounding.**  `edge_duplicates_ties` has an
    exact fraction of 60 % against a 50 ± 10 % target.  Whether it passes
-   depends on the order and rounding of the double sums (it passes as the
-   reporter sums today).  A library that sums differently can change the
-   result at an exact edge.
-3. **Unstable sort in US_Integral.**  `sort_distro` compares only the axis
-   value (the comment on `distro_lessthan_s` describes a tie-break on D that
-   the code does not have) and uses `std::sort`, which is not stable.  The
-   order of equal values, and so which exact duplicates end up adjacent and
-   are merged, depends on the component order and differs between libc++
-   and libstdc++ from about 20 components (ehb54/ultrascan-tickets#1214).
-4. **Duplicate reduction shrinks the distribution.**  After merging adjacent
-   exact duplicates, `sort_distro` multiplies every concentration, including
-   non-duplicates, by 1/(k+1), k being the longest run of duplicates, while
-   `resort_sol` normalizes by the original total.  The cumulative sum then
-   ends at 1/(k+1) and the last component receives the remaining fractions;
-   the same solutes in two orders gave 70 % and about 35 % at one s value
-   (#1214).
+   depends on the order and rounding of the double sums; it passes as the
+   reporter sums.  The library sums in the same order, so results on an
+   edge match existing reports.
+3. **Unstable sort in US_Integral.**  The desktop `sort_distro` compared only
+   the axis value (the comment on `distro_lessthan_s` described a tie-break
+   on D that the code did not have) and used `std::sort`, which is not
+   stable.  The order of equal values, and so which exact duplicates ended
+   up adjacent and were merged, depended on the component order and differed
+   between libc++ and libstdc++ from about 20 components.  The library sorts
+   on a total order with `std::stable_sort`, and US_Integral uses it.
+4. **Duplicate reduction shrank the distribution.**  After merging adjacent
+   exact duplicates, the desktop `sort_distro` multiplied every
+   concentration, including non-duplicates, by 1/(k+1), k being the longest
+   run of duplicates, while `resort_sol` normalized by the original total.
+   The cumulative sum then ended at 1/(k+1) and the last component received
+   the remaining fractions; the same solutes in two orders gave 70 % and
+   about 35 % at one s value.  The library merges solutes with equal s, D,
+   MW and f/f0 wherever they appear (concentrations summed, vbar and radius
+   averaged), rescales nothing, and the cumulative sum ends at 1.  The
+   `edge_duplicates_ties` curves in `legacy_integral.json` are the corrected
+   ones; every other curve equals the desktop code before the change.
 5. **Zero totals.**  `distrib_info` divides by a zero total without a guard
    (NaN or infinity); `velmwl_range_fraction` returns 0; `US_Integral`
    normalizes by the total; `outputStats` divides by the total weight;
    `US_Model::constant_vbar` and `constant_ff0` read the first component of
-   an empty model.  Empty and zero-total models are therefore excluded from
-   the captured legacy outputs.
+   an empty model.  The library reports an empty model or a zero total as an
+   error and returns no value; the desktop output is unchanged.  Empty and
+   zero-total models are excluded from the captured outputs.
 6. **Unsupported types.**  An item type outside s, D, MW and f/f0 selects
    nothing in `distrib_info` (fraction 0) but is reported unsupported by
-   `velmwl_range_fraction`.
-7. **Gaussian smoothing past the array.**  `US_Math2::gaussian_smoothing`
-   needs at least `2*smooth-1` points.  With fewer, its border loops read
-   and write past the array; a Qt build with bounds assertions aborts.
-   `US_Integral` smooths series of division count + 1 points with a
-   user-set smoothing width (1-100), so any division count below
-   `2*smoothing-2` reaches this in the desktop program (#1214).  The
-   captured cases stay within the precondition.
+   `velmwl_range_fraction`.  The library reports it unsupported; the reporter
+   still shows 0 %.
+7. **Gaussian smoothing past the array.**  `gaussian_smoothing` needs at
+   least `2*smooth-1` points; with fewer, its border loops read and write
+   past the array, and a Qt build with bounds assertions aborts.  US_Integral
+   reached this because its smoothing control started with a maximum of 100
+   while the division count started at 100.  The library rejects such a
+   series and leaves it unchanged, `US_Math2::gaussian_smoothing` leaves it
+   unchanged, and US_Integral limits the smoothing to what the division
+   count supports from the start.  The captured cases stay within the
+   precondition.
 8. **Floating-point contraction.**  Compilers may fuse a multiply and an
    add (FMA), which changes the last bits and, where a value sits on a bin
    edge or a difference cancels exactly, the result itself.  Legacy results
-   therefore already differed between builds (arm64, GCC defaults,
-   -march=native).  us_calc is compiled without contraction (us_calc_fp.h),
-   so it gives the same doubles everywhere.  It equals the legacy code
-   compiled without contraction bit for bit; the MPI regression cases were
-   unchanged.
-9. **Histogram area missed the maximum.**  outputStats tested each of its
+   therefore differed between builds (arm64, GCC defaults, -march=native).
+   us_calc is compiled without contraction (`us_calc_fp.h`), so it gives the
+   same doubles everywhere, and equals the legacy code compiled without
+   contraction bit for bit.  The captures are made without contraction; the
+   smoothing captures differ from an FMA build of the legacy code by at most
+   3.6e-16 relative.
+9. **Histogram area missed the maximum.**  `outputStats` tested each of its
    50 bins against edge + width, which rounds differently from the next
    edge, and left the last bin open, so the maximum value was counted or
    not depending on rounding.  us_calc partitions the range so every value
-   is counted once (decided 9 November 2026); the area is the total
-   concentration times the bin width.  The "Median" outputStats prints is
-   the midrange.
-10. **Captures regenerated.**  After items 8 and 9, the legacy captures were
-   regenerated from the current code.  Against the previous captures:  model
-   loads and integral curves are identical; 241 of 1159 smoothing values
-   differ by at most 3.6e-16 relative; outputStats differs in the area of 55
-   of 250 blocks and in the mode and confidence limits of 4 edge-model blocks.
-11. **Range bound scaling.**  The reporter scales bounds with `pow(10,-13)`,
+   is counted once, and the area is the total concentration times the bin
+   width.  In `legacy_output_stats.json` this differs from the earlier code
+   in the area of 55 of 250 blocks and in the mode and confidence limits of
+   4 edge-model blocks.  The "Median" `outputStats` prints is the midrange.
+10. **Range bound scaling.**  The reporter scales bounds with `pow(10,-13)`,
    `pow(10,-7)` and `pow(10,3)` in one path and with literals in the other.
    They agree exactly on the reference platform (checked over 100 000
    bounds); the exact-bound edge fixtures guard this.
