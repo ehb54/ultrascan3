@@ -1,0 +1,42 @@
+{
+ "schema": 1,
+ "note": "Acceptance tolerances for the calculation library (extraction plan E02). Expected values from calc_oracle.py are exact for the double inputs, so these limits cover only the floating-point error of the code under test.",
+ "exact": {
+  "applies_to": ["component selection and counts", "pass/fail results", "method matching", "replicate member counts", "model load result, description and component count", "JSON round trip of any double (shortest round-trip text)"],
+  "rule": "identical"
+ },
+ "sums": {
+  "applies_to": ["total concentration C", "in-range concentration R", "replicate mean of R"],
+  "relative": 1e-12
+ },
+ "fractions_percent": {
+  "applies_to": ["range fraction 100*R/C", "velmwl range fraction", "replicate mean fraction"],
+  "absolute_percentage_points": 1e-9
+ },
+ "weighted_means": {
+  "applies_to": ["whole-model weighted means (sum x*c / C)", "within-range weighted means (sum x*c / R)"],
+  "relative": 1e-12
+ },
+ "standard_deviations": {
+  "applies_to": ["replicate population SD of R and of the fraction"],
+  "absolute_relative_to_mean": 1e-9
+ },
+ "legacy_series": {
+  "applies_to": ["composite Monte Carlo components", "US_Integral integral-distribution curves", "gaussian_smoothing output"],
+  "relative": 1e-12,
+  "absolute_of_series_max": 1e-14
+ },
+ "legacy_printed_statistics": {
+  "applies_to": ["us_ga_init outputStats text (%6.4e and %e)"],
+  "rule": "same text; each printed number may differ by one unit in its last digit"
+ },
+ "displayed_report_values": {
+  "applies_to": ["values compared with reporter HTML"],
+  "rule": "within half a unit of the last displayed digit"
+ },
+ "fixture_design_guards": {
+  "component_to_range_bound_relative": 1e-6,
+  "fraction_to_tolerance_edge_percentage_points": 1e-6,
+  "note": "Fitted-model fixtures keep this distance so that floating-point differences cannot change selection or pass/fail. The edge fixtures place values on bounds and tolerance edges on purpose."
+ }
+}

@@ -41,6 +41,7 @@ function(us3_add_gui_test target)
 endfunction()
 
 add_subdirectory(utils)
+add_subdirectory(calc)
 
 # GUI tests require the DB-enabled GUI library; NO_DB builds run utils tests.
 if(TARGET UltraScan3::Gui_Static)

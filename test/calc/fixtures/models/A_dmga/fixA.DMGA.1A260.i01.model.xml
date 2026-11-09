@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE US_Model>
+<ModelData version="1.0">
+    <model description="fixA.1A260.ee1_a2611090000_DMGA_000001_i01.model" modelGUID="af1a76db-313e-484f-8621-bc94abf447b5" editGUID="00000000-0000-4000-8000-000000000011" wavelength="260" variance="2.26554e-05" meniscus="5.9" coSedSolute="-1" opticsType="0" analysisType="9" globalType="0" requestGUID="00000000-0000-4000-8000-000000000001" dataDescrip="us_mpi_analysis regression data fixA">
+        <analyte name="New Component" mw="27094.7" s="2.35805e-13" D="7.54127e-07" f="5.36697e-08" f_f0="1.4375" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.216978"/>
+        <analyte name="New Component" mw="65796.6" s="4.43988e-13" D="5.84714e-07" f="6.92197e-08" f_f0="1.37933" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.435889"/>
+        <analyte name="New Component" mw="222288" s="7.00403e-13" D="2.73028e-07" f="1.4824e-07" f_f0="1.96865" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.297297"/>
+    </model>
+</ModelData>

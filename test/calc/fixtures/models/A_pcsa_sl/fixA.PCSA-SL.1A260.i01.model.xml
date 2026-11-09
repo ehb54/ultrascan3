@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE US_Model>
+<ModelData version="1.0">
+    <model description="fixA.1A260.ee1_a2611090000_PCSA-SL_000001_i01.model" modelGUID="9efb87e6-b1f2-4753-8a18-7b70be587964" editGUID="00000000-0000-4000-8000-000000000011" wavelength="260" variance="6.63187e-05" meniscus="5.9" coSedSolute="-1" opticsType="0" analysisType="5" globalType="0" requestGUID="00000000-0000-4000-8000-000000000001" dataDescrip="us_mpi_analysis regression data fixA">
+        <analyte name="SC0001" mw="31878.4" s="2e-13" D="5.43636e-07" f="7.44501e-08" f_f0="1.88889" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.140098"/>
+        <analyte name="SC0002" mw="62746.6" s="3e-13" D="4.14292e-07" f="9.76939e-08" f_f0="1.97778" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.0748069"/>
+        <analyte name="SC0003" mw="103190" s="4e-13" D="3.3589e-07" f="1.20497e-07" f_f0="2.06667" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.242531"/>
+        <analyte name="SC0004" mw="153616" s="5e-13" D="2.82039e-07" f="1.43504e-07" f_f0="2.15556" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.201458"/>
+        <analyte name="SC0005" mw="286586" s="7e-13" D="2.1165e-07" f="1.91229e-07" f_f0="2.33333" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.281835"/>
+        <analyte name="SC0006" mw="370338" s="8e-13" D="1.87183e-07" f="2.16225e-07" f_f0="2.42222" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.00923246"/>
+        <analyte name="SC0007" mw="575576" s="1e-12" D="1.50547e-07" f="2.68844e-07" f_f0="2.6" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.000136461"/>
+    </model>
+</ModelData>
