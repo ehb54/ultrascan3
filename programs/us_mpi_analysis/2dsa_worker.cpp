@@ -40,92 +40,96 @@ void US_MPI_Analysis::_2dsa_worker( void )
       const int noisflag = ( job_config.params.tinoise_option > 0 ? 1 : 0 ) + ( job_config.params.rinoise_option > 0 ? 2 : 0 );
       DbgLv( 1 ) << "w:" << my_rank << ": offs cnt" << offset << dataset_count;
 
-      switch( job.command )
+      switch ( job.command )
       {
-
-         case MPI_Job::PROCESS:  // Process solutes
+         case MPI_Job::PROCESS: // Process solutes
+         {
+            worker_fit_context( offset, meniscus_value, bottom_value );
+
+            US_SolveSim::Simulation wsim_values;
+            wsim_values.noisflag   = noisflag;
+            wsim_values.dbg_level  = dbg_level;
+            wsim_values.dbg_timing = dbg_timing;
+
+            DbgLv( 1 ) << "w:" << my_rank << ": sols size" << job.length;
+            wsim_values.solutes.resize( job.length );
+
+            MPI_Recv( wsim_values.solutes.data(), // Get solutes
+                      job_length * solute_doubles,
+                      MPI_DOUBLE,
+                      MPI_Job::MASTER,
+                      MPI_Job::TAG0,
+                      my_communicator,
+                      &status );
+
+            max_rss();
             {
-               worker_fit_context( offset, meniscus_value, bottom_value );
-
-               US_SolveSim::Simulation wsim_values;
-               wsim_values.noisflag   = noisflag;
-               wsim_values.dbg_level  = dbg_level;
-               wsim_values.dbg_timing = dbg_timing;
-
-               DbgLv( 1 ) << "w:" << my_rank << ": sols size" << job.length;
-               wsim_values.solutes.resize( job.length );
-
-               MPI_Recv( wsim_values.solutes.data(), // Get solutes
-                         job_length * solute_doubles,
-                         MPI_DOUBLE,
-                         MPI_Job::MASTER,
-                         MPI_Job::TAG0,
-                         my_communicator,
-                         &status );
-
-               max_rss();
-               {
-                  const int nn = wsim_values.solutes.size() - 1;
-                  const int mm = nn / 2;
-                  DbgLv( 1 ) << "w:" << my_rank << ": offs dscnt" << offset << dataset_count << "vbar s20wc cpbott dabott"
-                             << data_sets[offset]->vbar20 << data_sets[offset]->s20w_correction
-                             << data_sets[offset]->centerpiece_bottom << data_sets[offset]->run_data.bottom;
-                  DbgLv( 1 ) << "w:" << my_rank << ": sol0 solm soln" << wsim_values.solutes[0].s << wsim_values.solutes[0].k
-                             << wsim_values.solutes[mm].s << wsim_values.solutes[mm].k << wsim_values.solutes[nn].s
-                             << wsim_values.solutes[nn].k;
-               }
-
-               calc_residuals( offset, dataset_count, wsim_values );
-
-               // Tell master we are sending back results
-               int size[4] = { (int) wsim_values.solutes.size(),
-                               (int) wsim_values.ti_noise.size(),
-                               (int) wsim_values.ri_noise.size(),
-                               (int) max_rss() };
-
-               DbgLv( 1 ) << "w:" << my_rank << ":   result sols size" << size[0] << "max_rss" << size[3];
-               if ( dbg_level == 0 && my_rank == 1 )
-               {
-                  DbgLv( 1 ) << "w:" << my_rank << ":   result sols size" << size[0] << "nsscan"
-                             << wsim_values.sim_data.scanCount();
-               }
-               MPI_Send( size,
-                         4,
-                         MPI_INT,
-                         MPI_Job::MASTER,
-                         MPI_Job::RESULTS,
-                         my_communicator );
-
-               // Send back to master all of simulation_values
-               MPI_Send( wsim_values.solutes.data(),
-                         wsim_values.solutes.size() * solute_doubles,
-                         MPI_DOUBLE,
-                         MPI_Job::MASTER,
-                         MPI_Job::TAG0,
-                         my_communicator );
-
-               MPI_Send( &wsim_values.variance, 1, MPI_DOUBLE, MPI_Job::MASTER, MPI_Job::TAG0, my_communicator );
-
-               MPI_Send( wsim_values.variances.data(), dataset_count, MPI_DOUBLE, MPI_Job::MASTER, MPI_Job::TAG0, my_communicator );
-
-               MPI_Send( wsim_values.ti_noise.data(),
-                         wsim_values.ti_noise.size(),
-                         MPI_DOUBLE,
-                         MPI_Job::MASTER,
-                         MPI_Job::TAG0,
-                         my_communicator );
-
-               MPI_Send( wsim_values.ri_noise.data(),
-                         wsim_values.ri_noise.size(),
-                         MPI_DOUBLE,
-                         MPI_Job::MASTER,
-                         MPI_Job::TAG0,
-                         my_communicator );
+               const int nn = wsim_values.solutes.size() - 1;
+               const int mm = nn / 2;
+               DbgLv( 1 ) << "w:" << my_rank << ": offs dscnt" << offset << dataset_count << "vbar s20wc cpbott dabott"
+                          << data_sets[offset]->vbar20 << data_sets[offset]->s20w_correction
+                          << data_sets[offset]->centerpiece_bottom << data_sets[offset]->run_data.bottom;
+               DbgLv( 1 ) << "w:" << my_rank << ": sol0 solm soln" << wsim_values.solutes[0].s << wsim_values.solutes[0].k
+                          << wsim_values.solutes[mm].s << wsim_values.solutes[mm].k << wsim_values.solutes[nn].s
+                          << wsim_values.solutes[nn].k;
             }
 
+            calc_residuals( offset, dataset_count, wsim_values );
+
+            // Tell master we are sending back results
+            int size[4] = { (int) wsim_values.solutes.size(),
+                            (int) wsim_values.ti_noise.size(),
+                            (int) wsim_values.ri_noise.size(),
+                            (int) max_rss() };
+
+            DbgLv( 1 ) << "w:" << my_rank << ":   result sols size" << size[0] << "max_rss" << size[3];
+            if ( dbg_level == 0 && my_rank == 1 )
+            {
+               DbgLv( 1 ) << "w:" << my_rank << ":   result sols size" << size[0] << "nsscan" << wsim_values.sim_data.scanCount();
+            }
+            MPI_Send( size, 4, MPI_INT, MPI_Job::MASTER, MPI_Job::RESULTS, my_communicator );
+
+            // Send back to master all of simulation_values
+            MPI_Send( wsim_values.solutes.data(),
+                      wsim_values.solutes.size() * solute_doubles,
+                      MPI_DOUBLE,
+                      MPI_Job::MASTER,
+                      MPI_Job::TAG0,
+                      my_communicator );
+
+            MPI_Send( &wsim_values.variance, 1, MPI_DOUBLE, MPI_Job::MASTER, MPI_Job::TAG0, my_communicator );
+
+            MPI_Send( wsim_values.variances.data(), dataset_count, MPI_DOUBLE, MPI_Job::MASTER, MPI_Job::TAG0, my_communicator );
+
+            MPI_Send( wsim_values.ti_noise.data(),
+                      wsim_values.ti_noise.size(),
+                      MPI_DOUBLE,
+                      MPI_Job::MASTER,
+                      MPI_Job::TAG0,
+                      my_communicator );
+
+            MPI_Send( wsim_values.ri_noise.data(),
+                      wsim_values.ri_noise.size(),
+                      MPI_DOUBLE,
+                      MPI_Job::MASTER,
+                      MPI_Job::TAG0,
+                      my_communicator );
+         }
+
+         break;
+
+         case MPI_Job::CLEARCACHE: // Clear this node's simulation cache
+            if ( sim_cache != nullptr )
+            {
+               sim_cache->clear();
+            }
             break;
 
-         case MPI_Job::NEWDATA:  // Reset data for Monte Carlo or global fit
+         case MPI_Job::FITCACHE: // Fit this node's cache room to the job's peak
+            fit_sim_cache_room();
+            break;
+
+         case MPI_Job::NEWDATA: // Reset data for Monte Carlo or global fit
          {
             const int mc_iter = job.solution;
 
@@ -224,12 +228,12 @@ void US_MPI_Analysis::_2dsa_worker( void )
             }
          }
 
-            break;
+         break;
 
          default:
             repeat_loop = false;
             break;
-      }  // switch
+      } // switch
    }  // repeat_loop
 }
 
@@ -248,6 +252,11 @@ bool US_MPI_Analysis::worker_fit_context( int offset, double meniscus, double bo
    fit_context.dataset  = offset;
    fit_context.meniscus = meniscus;
    fit_context.bottom   = bottom;
+
+   if ( sim_changed && sim_cache != nullptr )
+   { // Memorized data set keys hold for one fit context
+      sim_cache->forget_dataset_keys();
+   }
 
    return sim_changed;
 }

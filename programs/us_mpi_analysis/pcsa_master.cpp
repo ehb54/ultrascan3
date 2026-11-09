@@ -70,6 +70,13 @@ void US_MPI_Analysis::pcsa_master( void )
       {  // No jobs left in the queue and no workers still busy
          DbgLv( 1 ) << "pcsa_mast:   END PASS mrecs size" << mrecs.size();
          kcurve           = 0;
+
+         // The job's peak is known after the first refinement iteration,
+         //  or after the fit without one
+         if ( iterations >= 2 || max_iterations <= 1 )
+         {
+            fit_sim_cache_rooms();
+         }
          std::sort( mrecs.begin(), mrecs.end() );                      // Sort curve model records
          edata            = &data_sets[ current_dataset ]->run_data;
          const QString tripleID = edata->cell + edata->channel + edata->wavelength;

@@ -261,6 +261,40 @@ TEST_F( TestUSSimCache, DatasetKeyCoversGridAndParameters )
    EXPECT_NE( US_SimCache::dataset_key( simparams2, edata ), dskey );
 }
 
+TEST_F( TestUSSimCache, DatasetKeyMemoGivesTheSameKeys )
+{
+   US_SimulationParameters simparams;
+   US_DataIO::EditedData   edata;
+   makeDataSet( simparams, edata );
+   const QByteArray dskey = US_SimCache::dataset_key( simparams, edata );
+
+   US_SimCache      cache( 1024 * 1024 );
+   EXPECT_EQ( cache.dataset_key_memo( simparams, edata ), dskey ); // Memo off
+   cache.set_key_memo( true );
+   EXPECT_EQ( cache.dataset_key_memo( simparams, edata ), dskey );
+   EXPECT_EQ( cache.dataset_key_memo( simparams, edata ), dskey ); // Memorized
+
+   // Scalars are compared by value
+   simparams.meniscus += 0.01;
+   const QByteArray menkey = US_SimCache::dataset_key( simparams, edata );
+   EXPECT_NE( menkey, dskey );
+   EXPECT_EQ( cache.dataset_key_memo( simparams, edata ), menkey );
+   edata.scanData[2].seconds += 1.0;
+   EXPECT_EQ( cache.dataset_key_memo( simparams, edata ), US_SimCache::dataset_key( simparams, edata ) );
+
+   // Vectors by address:  a copy (new storage) gets its own key, and a
+   //  vector changed in place needs forget_dataset_keys()
+   US_DataIO::EditedData edata2 = edata;
+   edata2.xvalues[4] += 1.0e-9; // Detaches from edata
+   EXPECT_EQ( cache.dataset_key_memo( simparams, edata2 ), US_SimCache::dataset_key( simparams, edata2 ) );
+   const QByteArray before = cache.dataset_key_memo( simparams, edata2 );
+   edata2.xvalues[5] += 1.0e-9;                                      // In place
+   EXPECT_EQ( cache.dataset_key_memo( simparams, edata2 ), before ); // Stale
+   cache.forget_dataset_keys();
+   EXPECT_EQ( cache.dataset_key_memo( simparams, edata2 ), US_SimCache::dataset_key( simparams, edata2 ) );
+   EXPECT_NE( cache.dataset_key_memo( simparams, edata2 ), before );
+}
+
 TEST_F( TestUSSimCache, SimKeyCoversComponent )
 {
    const QByteArray              dskey( 32, 'd' );
@@ -538,4 +572,121 @@ TEST_F( TestUSSimCache, KeyMemoLimitationAndClear )
    cache.set_key_memo( false );
    edata.xvalues[3] += 0.001;
    EXPECT_EQ( cache.dataset_key_memo( simparams, edata ), US_SimCache::dataset_key( simparams, edata ) );
+}
+
+// ---------------------------------------------------------------------------
+// Serialization for caches shared between processes
+// ---------------------------------------------------------------------------
+
+namespace
+{
+// A simulation with every field set, including ones the simulator copies
+//  from the experiment grid
+US_DataIO::RawData makeFullSim()
+{
+   US_DataIO::RawData simdat = makeSim( 0.25 );
+   memcpy( simdat.type, "RA", 2 );
+   for ( int ii = 0; ii < 16; ii++ )
+   {
+      simdat.rawGUID[ii] = (char) ( 17 * ii + 3 );
+   }
+   simdat.description = QString::fromUtf8( "sim \xc2\xb5 test" );
+   for ( int ss = 0; ss < simdat.scanData.size(); ss++ )
+   {
+      US_DataIO::Scan& scan = simdat.scanData[ss];
+      scan.temperature      = 20.1 + ss;
+      scan.rpm              = 50000.0;
+      scan.omega2t          = 1.0e10 * ( ss + 1 ) / 3.0;
+      scan.wavelength       = 280.0;
+      scan.plateau          = 0.7 + ss / 7.0;
+      scan.delta_r          = 0.001;
+      scan.nz_stddev        = ( ss == 1 );
+      scan.stddevs          = QVector<double>( scan.rvalues.size(), ss == 1 ? 0.01 : 0.0 );
+      scan.interpolated     = QByteArray( 2, (char) ss );
+   }
+   return simdat;
+}
+} // namespace
+
+TEST( SimCachePack, RoundTripRestoresEveryField )
+{
+   US_DataIO::RawData in    = makeFullSim();
+   QByteArray         bytes = US_SimCache::pack( in );
+   US_DataIO::RawData out;
+
+   ASSERT_TRUE( US_SimCache::unpack( bytes.constData(), bytes.size(), out ) );
+
+   EXPECT_EQ( memcmp( out.type, in.type, 2 ), 0 );
+   EXPECT_EQ( memcmp( out.rawGUID, in.rawGUID, 16 ), 0 );
+   EXPECT_EQ( out.cell, in.cell );
+   EXPECT_EQ( out.channel, in.channel );
+   EXPECT_EQ( out.description, in.description );
+   EXPECT_TRUE( sameValues( in, out ) );
+   ASSERT_EQ( out.scanData.size(), in.scanData.size() );
+
+   for ( int ss = 0; ss < in.scanData.size(); ss++ )
+   {
+      SCOPED_TRACE( ss );
+      const US_DataIO::Scan& a = in.scanData[ss];
+      const US_DataIO::Scan& b = out.scanData[ss];
+      EXPECT_EQ( memcmp( &a.temperature, &b.temperature, sizeof( double ) ), 0 );
+      EXPECT_EQ( memcmp( &a.omega2t, &b.omega2t, sizeof( double ) ), 0 );
+      EXPECT_EQ( memcmp( &a.plateau, &b.plateau, sizeof( double ) ), 0 );
+      EXPECT_EQ( a.rpm, b.rpm );
+      EXPECT_EQ( a.seconds, b.seconds );
+      EXPECT_EQ( a.wavelength, b.wavelength );
+      EXPECT_EQ( a.delta_r, b.delta_r );
+      EXPECT_EQ( a.nz_stddev, b.nz_stddev );
+      EXPECT_EQ( a.stddevs, b.stddevs );
+      EXPECT_EQ( a.interpolated, b.interpolated );
+   }
+}
+
+TEST( SimCachePack, TruncatedOrPaddedBytesAreRejected )
+{
+   QByteArray         bytes = US_SimCache::pack( makeFullSim() );
+   US_DataIO::RawData out;
+
+   for ( int cut : { 0, 1, 18, (int) bytes.size() / 2, (int) bytes.size() - 1 } )
+   {
+      SCOPED_TRACE( cut );
+      EXPECT_FALSE( US_SimCache::unpack( bytes.constData(), cut, out ) );
+   }
+
+   QByteArray padded = bytes + QByteArray( 4, '\0' );
+   EXPECT_FALSE( US_SimCache::unpack( padded.constData(), padded.size(), out ) );
+}
+
+TEST( SimCacheVirtual, SubclassOverridesFetchAndStore )
+{
+   // A store that only counts calls, used through a base-class pointer as
+   //  US_SolveSim uses its cache
+   class CountingCache : public US_SimCache
+   {
+      public:
+         CountingCache() : US_SimCache( 0 )
+         {
+         }
+         bool fetch( const QByteArray&, US_DataIO::RawData& ) override
+         {
+            fetches++;
+            return false;
+         }
+         bool store( const QByteArray&, const US_DataIO::RawData&, bool ) override
+         {
+            stores++;
+            return true;
+         }
+         int fetches = 0;
+         int stores  = 0;
+   };
+
+   std::unique_ptr<CountingCache> counting( new CountingCache );
+   US_SimCache*                   cache  = counting.get();
+   US_DataIO::RawData             simdat = makeSim( 1.0 );
+
+   EXPECT_FALSE( cache->fetch( "k", simdat ) );
+   EXPECT_TRUE( cache->store( "k", simdat, false ) );
+   EXPECT_EQ( counting->fetches, 1 );
+   EXPECT_EQ( counting->stores, 1 );
 }

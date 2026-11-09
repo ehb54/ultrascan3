@@ -93,6 +93,58 @@ US_SolveSim::Simulation::Simulation()
    noisflag      = 0;
 }
 
+// Fill an A column (from index ka on) with a simulation.  Where pb is given
+//  (OD limit substitutions in B), a point whose B value (from index bx on)
+//  is a substituted zero gets zero in A, and bx is advanced too.  The squares
+//  of the values go to norm_a and, if given, to norm_e.
+static void fill_a_column( const US_DataIO::RawData& simdat,
+                           const double*             pb,
+                           int&                      bx,
+                           QVector<double>&          nnls_a,
+                           int&                      ka,
+                           const int                 nscans,
+                           const int                 npoints,
+                           double&                   norm_a,
+                           double*                   norm_e )
+{
+   double* pa = nnls_a.data();
+
+   for ( int ss = 0; ss < nscans; ss++ )
+   {
+      const double* sv = simdat.scanData.at( ss ).rvalues.constData();
+
+      // (The sums keep the order of the points:  the same bits as before)
+      if ( pb == nullptr && norm_e == nullptr )
+      { // No substitutions:  the plain copy (the hot path)
+         for ( int rr = 0; rr < npoints; rr++ )
+         {
+            const double sval = sv[rr];
+            pa[ka++]          = sval;
+            norm_a += sq( sval );
+         }
+         continue;
+      }
+
+      for ( int rr = 0; rr < npoints; rr++ )
+      {
+         if ( pb != nullptr && pb[bx++] == 0.0 )
+         {
+            pa[ka++] = 0.0;
+            continue;
+         }
+
+         const double sval = sv[rr];
+         pa[ka++]          = sval;
+         norm_a += sq( sval );
+
+         if ( norm_e != nullptr )
+         {
+            *norm_e += sq( sval );
+         }
+      }
+   }
+}
+
 // Append the Tikhonov rows of one A column: ksolutes values, the alpha
 //  diagonal element at row colx.  The column length is ksolutes (the solutes
 //  count before any norm cut), as the rebuild after norm cuts assumes.
@@ -549,21 +601,8 @@ DbgLv(1) << "   CR: A fill kodl" << kodl << "bndthr ksol" << banddthr << ksols
             if ( kodl == 0 )
             {  // Normal case of no ODlimit substitutions
 
-               double* pa = nnls_a.data();
-
-               for ( int ss = 0; ss < nscans; ss++ )
-               {
-                  const double* sv = simdat.scanData.at( ss ).rvalues.constData();
-
-                  for ( int rr = 0; rr < npoints; rr++ )
-                  {
-                     double sval = sv[rr];
-                     pa[ka++]    = sval;
-                     norm_a        += sq( sval );
-                     norm_e        += sq( sval );
-                  }
-               }
-DbgLv(1) << " T0O0:norm_of_the_vector" << norm_a << sim_vals.solutes[cc].s << sim_vals.solutes[cc].k;
+               fill_a_column( simdat, nullptr, bx, nnls_a, ka, nscans, npoints, norm_a, &norm_e );
+               DbgLv( 1 ) << " T0O0:norm_of_the_vector" << norm_a << sim_vals.solutes[cc].s << sim_vals.solutes[cc].k;
                //------------------------------------------------
 
 //DbgLv(2) << "   CR:116  rss now" << US_Memory::rss_now() << "cc" << cc;
@@ -578,25 +617,7 @@ DbgLv(1) << " T0O0:norm_of_the_vector" << norm_a << sim_vals.solutes[cc].s << si
             {  // Special case where ODlimit substitutions are in B matrix
 DbgLv(1)<<"stype==0 but from else part";
 
-               for ( int ss = 0; ss < nscans; ss++ )
-               {
-                  for ( int rr = 0; rr < npoints; rr++ )
-                  {  // Fill A with simulations (or zero where B has zero)
-// x  x  x  x  x  x  x  x
-                     if ( nnls_b[ bx++ ] != 0.0 )
-                     {
-                        double sval    = simdat.value( ss, rr );
-                        nnls_a[ ka++ ] = sval;
-                        norm_a        += sq( sval );
-                        norm_e        += sq( sval );
-                     }
-
-                     else
-                     {
-                        nnls_a[ ka++ ] = 0.0;
-                     }
-                  }
-               }
+fill_a_column( simdat, nnls_b.constData(), bx, nnls_a, ka, nscans, npoints, norm_a, &norm_e );
 DbgLv(1) << " T0O1:norm_of_the_vector" << norm_a << sim_vals.solutes[cc].s << sim_vals.solutes[cc].k;
             }
 
@@ -873,40 +894,11 @@ DbgLv(1) << "   CR: A-fill  bndthr" << banddthr << "kodl ksols" << kodl << ksols
 
             if ( kodl == 0 )
             {  // Normal case of no ODlimit substitutions
-               double* pa = nnls_a.data();
-
-               for ( int ss = 0; ss < nscans; ss++ )
-               {
-                  const double* sv = simdat.scanData.at( ss ).rvalues.constData();
-
-                  for ( int rr = 0; rr < npoints; rr++ )
-                  {
-                     double sval = sv[rr];
-                     pa[ka++]    = sval;
-                     norm_a        += sq( sval );
-                  }
-// x  x  x  x  x  x  x  x
-               }
+               fill_a_column( simdat, nullptr, bx, nnls_a, ka, nscans, npoints, norm_a, nullptr );
             }
             else
             {  // Special case where ODlimit substitutions are in B matrix
-               for ( int ss = 0; ss < nscans; ss++ )
-               {
-                  for ( int rr = 0; rr < npoints; rr++ )
-                  {  // Fill A with simulations (or zero where B has zero)
-                     if ( nnls_b[ bx++ ] != 0.0 )
-                     {
-                        double sval    = simdat.value( ss, rr );
-                        nnls_a[ ka++ ] = sval;
-                        norm_a        += sq( sval );
-                     }
-                     else
-                     {
-                        nnls_a[ ka++ ] = 0.0;
-// x  x  x  x  x  x  x  x
-                     }
-                  }
-               }
+               fill_a_column( simdat, nnls_b.constData(), bx, nnls_a, ka, nscans, npoints, norm_a, nullptr );
             }
 
 //DbgLv(1) << "CR: ks ka" << ks << ka
@@ -1082,38 +1074,11 @@ int ks=ka;
             // Populate the A matrix for the NNLS routine with simulation
             if ( kodl == 0 )
             {  // Normal case of no ODlimit substitutions
-               double* pa = nnls_a.data();
-
-               for ( int ss = 0; ss < nscans; ss++ )
-               {
-                  const double* sv = simdat.scanData.at( ss ).rvalues.constData();
-
-                  for ( int rr = 0; rr < npoints; rr++ )
-                  {
-                     double sval = sv[rr];
-                     pa[ka++]    = sval;
-                     norm_a        += sq( sval );
-                  }
-               }
+               fill_a_column( simdat, nullptr, bx, nnls_a, ka, nscans, npoints, norm_a, nullptr );
             }
             else
             {  // Special case where ODlimit substitutions are in B matrix
-               for ( int ss = 0; ss < nscans; ss++ )
-               {
-                  for ( int rr = 0; rr < npoints; rr++ )
-                  {  // Fill A with simulations (or zero where B has zero)
-                     if ( nnls_b[ bx++ ] != 0.0 )
-                     {
-                        double sval    = simdat.value( ss, rr );
-                        nnls_a[ ka++ ] = sval;
-                        norm_a        += sq( sval );
-                     }
-                     else
-                     {
-                        nnls_a[ ka++ ] = 0.0;
-                     }
-                  }
-               }
+               fill_a_column( simdat, nnls_b.constData(), bx, nnls_a, ka, nscans, npoints, norm_a, nullptr );
             }
 DbgLv(1) << "CR: ks ka" << ks << ka
  << "nnA s...k" << nnls_a[ks] << nnls_a[ks+1]
