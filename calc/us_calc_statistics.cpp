@@ -53,86 +53,25 @@ std::optional<double> finite( double v )
 {
    return std::isfinite( v ) ? std::optional<double>( v ) : std::nullopt;
 }
-} // namespace
 
-SoluteStatistics solute_statistics( const std::vector<double>& vals, const std::vector<double>& concs )
+// 50 bins that partition [minimum, maximum]:  bin ii holds the values from
+// its edge up to the next bin's edge, and the last bin also holds the
+// maximum.  Every value is counted once, so the area is the total
+// concentration times the bin width.  (The desktop code tested each bin
+// against edge + width, which rounds differently from the next edge, and
+// left the last bin open, so the maximum was counted or not depending on
+// rounding.)  Fills the bin edges and concentrations and returns the area.
+double histogram( const std::vector<double>& vals,
+                  const std::vector<double>& concs,
+                  int                        nbins,
+                  double                     vlo,
+                  double                     vhi,
+                  double                     bininc,
+                  std::vector<double>&       xplot,
+                  std::vector<double>&       yplot )
 {
-   SoluteStatistics st;
-   st.algorithm    = *algorithm( "solute_statistics" );
    const int nvals = static_cast<int>( vals.size() );
-   st.count        = vals.size();
-   if ( vals.empty() || concs.size() != vals.size() )
-   {
-      st.diagnostics.push_back( { Issue::EmptyModel,
-                                  Severity::Error,
-                                  vals.empty() ? "there are no values" : "values and concentrations differ in length" } );
-      return st;
-   }
-
-   // The calculation of US_SoluteData::outputStats, in its order.
-   const int           nbins = 50;
-   const double        vsiz  = (double) nvals;
-   const double        binsz = 50.0;
-   double              vlo   = 9.9e30;
-   double              vhi   = -9.9e30;
-
-   std::vector<double> xplot( std::max( nvals, nbins ) );
-   std::vector<double> yplot( std::max( nvals, nbins ) );
-   double              vsum         = 0.0;
-   double              vm2          = 0.0;
-   double              vm3          = 0.0;
-   double              vm4          = 0.0;
-   double              vctot_square = 0.0;
-   double              vctot        = 0.0;
-
-   for ( int jj = 0; jj < nvals; jj++ )
-   {
-      const double val  = vals[jj];
-      const double conc = concs[jj];
-      vsum += ( val * conc );
-      vctot += conc;
-      vlo       = ( vlo < val ) ? vlo : val; // qMin
-      vhi       = ( vhi < val ) ? val : vhi; // qMax
-      xplot[jj] = (double) jj;
-      yplot[jj] = val;
-   }
-
-   const double vmean = vsum / vctot;
-
-   for ( int jj = 0; jj < nvals; jj++ )
-   {
-      const double val  = vals[jj];
-      const double conc = concs[jj];
-      const double dif  = val - vmean;
-      const double dsq  = dif * dif;
-      vm2 += dsq * conc;
-      vm3 += ( dsq * dif ) * conc;
-      vm4 += ( dsq * dsq ) * conc;
-      vctot_square += conc * conc;
-   }
-
-   vm2 *= vctot_square / ( vctot * vctot - vctot_square );
-   vm3 *= vctot_square / ( vctot * vctot - vctot_square );
-   vm4 *= vctot_square / ( vctot * vctot - vctot_square );
-   const double  skew  = vm3 / pow( vm2, 1.5 );
-   const double  kurto = vm4 / pow( vm2, 2.0 ) - 3.0;
-   const double  vmedi = ( vlo + vhi ) / 2.0;
-
-   const LineFit fit = linefit( xplot.data(), yplot.data(), nvals );
-
-   const double  sdevi  = pow( vm2, 0.5 );
-   const double  sderr  = sdevi / pow( vsiz, 0.5 );
-   const double  vari   = vm2;
-   double        area   = 0.0;
-   const double  bininc = ( vhi - vlo ) / binsz;
-
-   // 50 bins that partition [minimum, maximum]:  bin ii holds the values
-   // from its edge up to the next bin's edge, and the last bin also holds
-   // the maximum.  Every value is counted once, so the area is the total
-   // concentration times the bin width.  (The desktop code tested each bin
-   // against edge + width, which rounds differently from the next edge, and
-   // left the last bin open, so the maximum was counted or not depending on
-   // rounding.)
+   double    area  = 0.0;
    for ( int ii = 0; ii < nbins; ii++ )
    {
       xplot[ii] = vlo + bininc * (double) ii;
@@ -154,12 +93,14 @@ SoluteStatistics solute_statistics( const std::vector<double>& vals, const std::
 
       area += yplot[ii] * bininc;
    }
+   return area;
+}
 
-   const double vdif  = ( vhi - vlo ) / vlo;
-   const double fvdif = vdif >= 0.0 ? vdif : -vdif; // qAbs
-   double       val   = -1.0;
-   int          thisb = 0;
-
+// The first bin with the highest concentration.
+int mode_bin( const std::vector<double>& yplot, int nbins )
+{
+   double val   = -1.0;
+   int    thisb = 0;
    for ( int ii = 0; ii < nbins; ii++ )
    {
       if ( yplot[ii] > val )
@@ -168,8 +109,151 @@ SoluteStatistics solute_statistics( const std::vector<double>& vals, const std::
          thisb = ii;
       }
    }
+   return thisb;
+}
 
-   const double     mode_lo  = xplot[thisb];
+// US_DmgaMcStats::compute_statistics, in its order.  The common part (count,
+// minimum, maximum, weighted mean, line-fit input) is already in st, xplot
+// and yplot.
+void monte_carlo_statistics( WeightedStatistics&        st,
+                             const std::vector<double>& vals,
+                             const std::vector<double>& concs,
+                             double                     vmean,
+                             std::vector<double>&       xplot,
+                             std::vector<double>&       yplot )
+{
+   const int    nvals = static_cast<int>( vals.size() );
+   const int    nbins = 50;
+   const double vsiz  = (double) nvals;
+   const double binsz = 50.0;
+   const double vlo   = st.minimum;
+   const double vhi   = st.maximum;
+   st.constant        = ( vlo == vhi );
+
+   if ( st.constant )
+   {
+      st.median             = finite( vmean );
+      st.mode_center        = finite( vmean );
+      st.skew               = 0.0;
+      st.kurtosis           = 0.0;
+      st.mode_low           = 0.0;
+      st.mode_high          = 0.0;
+      st.confidence95_low   = finite( vmean );
+      st.confidence95_high  = finite( vmean );
+      st.confidence99_low   = finite( vmean );
+      st.confidence99_high  = finite( vmean );
+      st.variance           = 0.0;
+      st.correlation        = 0.0;
+      st.standard_deviation = 0.0;
+      st.standard_error     = 0.0;
+      st.area               = 0.0;
+      return;
+   }
+
+   double vm2 = 0.0;
+   double vm3 = 0.0;
+   double vm4 = 0.0;
+   for ( int jj = 0; jj < nvals; jj++ )
+   {
+      const double dif = vals[jj] - vmean;
+      const double dsq = dif * dif;
+      vm2 += dsq;
+      vm3 += ( dsq * dif );
+      vm4 += ( dsq * dsq );
+   }
+   vm2 /= vsiz;
+   vm3 /= vsiz;
+   vm4 /= vsiz;
+   const double        skew  = vm3 / pow( vm2, 1.5 );
+   const double        kurto = vm4 / pow( vm2, 2.0 ) - 3.0;
+
+   const LineFit       fit = linefit( xplot.data(), yplot.data(), nvals );
+
+   std::vector<double> wkvls = vals;
+   std::sort( wkvls.begin(), wkvls.end() );
+   const int hx    = nvals / 2;
+   double    vmedi = wkvls[hx];
+   if ( ( hx * 2 ) == nvals )
+   {
+      vmedi = ( vmedi + wkvls[hx - 1] ) * 0.5;
+   }
+
+   const double sdevi  = pow( vm2, 0.5 );
+   const double sderr  = sdevi / pow( vsiz, 0.5 );
+   const double bininc = ( vhi - vlo ) / binsz;
+   const double area   = histogram( vals, concs, nbins, vlo, vhi, bininc, xplot, yplot );
+
+   const double mode_lo  = xplot[mode_bin( yplot, nbins )];
+   const double mode_hi  = mode_lo + bininc;
+   const double mode_cen = ( mode_lo + mode_hi ) * 0.5;
+
+   st.median             = finite( vmedi );
+   st.skew               = finite( skew );
+   st.kurtosis           = finite( kurto );
+   st.variance           = finite( vm2 );
+   st.standard_deviation = finite( sdevi );
+   st.standard_error     = finite( sderr );
+   st.correlation        = finite( fit.correlation );
+   st.area               = finite( area );
+   st.mode_low           = finite( mode_lo );
+   st.mode_high          = finite( mode_hi );
+   st.mode_center        = finite( mode_cen );
+   st.confidence99_low   = finite( vmean - 2.576 * sdevi );
+   st.confidence99_high  = finite( vmean + 2.576 * sdevi );
+   st.confidence95_low   = finite( vmean - 1.960 * sdevi );
+   st.confidence95_high  = finite( vmean + 1.960 * sdevi );
+}
+
+// US_SoluteData::outputStats, in its order.  The common part is already in
+// st, xplot and yplot.
+void distribution_statistics( WeightedStatistics&        st,
+                              const std::vector<double>& vals,
+                              const std::vector<double>& concs,
+                              double                     vmean,
+                              double                     vctot,
+                              std::vector<double>&       xplot,
+                              std::vector<double>&       yplot )
+{
+   const int    nvals        = static_cast<int>( vals.size() );
+   const int    nbins        = 50;
+   const double vsiz         = (double) nvals;
+   const double binsz        = 50.0;
+   const double vlo          = st.minimum;
+   const double vhi          = st.maximum;
+   double       vm2          = 0.0;
+   double       vm3          = 0.0;
+   double       vm4          = 0.0;
+   double       vctot_square = 0.0;
+
+   for ( int jj = 0; jj < nvals; jj++ )
+   {
+      const double val  = vals[jj];
+      const double conc = concs[jj];
+      const double dif  = val - vmean;
+      const double dsq  = dif * dif;
+      vm2 += dsq * conc;
+      vm3 += ( dsq * dif ) * conc;
+      vm4 += ( dsq * dsq ) * conc;
+      vctot_square += conc * conc;
+   }
+
+   vm2 *= vctot_square / ( vctot * vctot - vctot_square );
+   vm3 *= vctot_square / ( vctot * vctot - vctot_square );
+   vm4 *= vctot_square / ( vctot * vctot - vctot_square );
+   const double     skew  = vm3 / pow( vm2, 1.5 );
+   const double     kurto = vm4 / pow( vm2, 2.0 ) - 3.0;
+
+   const LineFit    fit = linefit( xplot.data(), yplot.data(), nvals );
+
+   const double  sdevi  = pow( vm2, 0.5 );
+   const double  sderr  = sdevi / pow( vsiz, 0.5 );
+   const double  bininc = ( vhi - vlo ) / binsz;
+   const double     area   = histogram( vals, concs, nbins, vlo, vhi, bininc, xplot, yplot );
+
+   const double     vdif  = ( vhi - vlo ) / vlo;
+   const double     fvdif = vdif >= 0.0 ? vdif : -vdif; // qAbs
+
+   const double     mode_lo  = xplot[mode_bin( yplot, nbins )];
    const double     mode_hi  = mode_lo + bininc;
    const double     mode_cen = ( mode_lo + mode_hi ) / 2.0;
 
@@ -219,12 +303,8 @@ SoluteStatistics solute_statistics( const std::vector<double>& vals, const std::
       }
    }
 
-   st.minimum            = vlo;
-   st.maximum            = vhi;
    st.constant           = fvdif < 0.0001;
-   st.mean               = finite( vmean );
-   st.midrange           = finite( vmedi );
-   st.variance           = finite( vari );
+   st.variance           = finite( vm2 );
    st.standard_deviation = finite( sdevi );
    st.standard_error     = finite( sderr );
    st.skew               = finite( skew );
@@ -244,10 +324,6 @@ SoluteStatistics solute_statistics( const std::vector<double>& vals, const std::
    st.confidence99_low  = quantile( lo99_id );
    st.confidence99_high = quantile( hi99_id );
 
-   if ( vctot == 0.0 )
-   {
-      st.diagnostics.push_back( { Issue::ZeroTotal, Severity::Error, "the total concentration is zero" } );
-   }
    if ( !st.variance )
    {
       st.diagnostics.push_back(
@@ -256,6 +332,67 @@ SoluteStatistics solute_statistics( const std::vector<double>& vals, const std::
    if ( !st.confidence95_low || !st.confidence95_high || !st.confidence99_low || !st.confidence99_high )
    {
       st.diagnostics.push_back( { Issue::EmptyRange, Severity::Warning, "a confidence limit is undefined" } );
+   }
+}
+} // namespace
+
+WeightedStatistics weighted_statistics( const std::vector<double>& vals,
+                                        const std::vector<double>& concs,
+                                        StatisticsConvention       convention )
+{
+   WeightedStatistics st;
+   st.algorithm    = *algorithm( "weighted_statistics" );
+   st.convention   = convention;
+   const int nvals = static_cast<int>( vals.size() );
+   st.count        = vals.size();
+   if ( vals.empty() || concs.size() != vals.size() )
+   {
+      st.diagnostics.push_back( { Issue::EmptyModel,
+                                  Severity::Error,
+                                  vals.empty() ? "there are no values" : "values and concentrations differ in length" } );
+      return st;
+   }
+
+   // Minimum, maximum and weighted mean, and the line-fit input (each value
+   // against its index), as both desktop calculations start.
+   const int           nbins = 50;
+   double              vlo   = 9.9e30;
+   double              vhi   = -9.9e30;
+   std::vector<double> xplot( std::max( nvals, nbins ) );
+   std::vector<double> yplot( std::max( nvals, nbins ) );
+   double              vsum  = 0.0;
+   double              vctot = 0.0;
+
+   for ( int jj = 0; jj < nvals; jj++ )
+   {
+      const double val  = vals[jj];
+      const double conc = concs[jj];
+      vsum += ( val * conc );
+      vctot += conc;
+      vlo       = ( vlo < val ) ? vlo : val; // qMin
+      vhi       = ( vhi < val ) ? val : vhi; // qMax
+      xplot[jj] = (double) jj;
+      yplot[jj] = val;
+   }
+
+   const double vmean = vsum / vctot;
+   st.minimum         = vlo;
+   st.maximum         = vhi;
+   st.mean            = finite( vmean );
+   st.midrange        = finite( ( vlo + vhi ) / 2.0 );
+
+   if ( convention == StatisticsConvention::MonteCarloIterations )
+   {
+      monte_carlo_statistics( st, vals, concs, vmean, xplot, yplot );
+   }
+   else
+   {
+      distribution_statistics( st, vals, concs, vmean, vctot, xplot, yplot );
+   }
+
+   if ( vctot == 0.0 )
+   {
+      st.diagnostics.insert( st.diagnostics.begin(), { Issue::ZeroTotal, Severity::Error, "the total concentration is zero" } );
    }
    return st;
 }

@@ -1146,7 +1146,8 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
    // The statistics come from us_calc; undefined ones print as nan.
    const std::vector<double>       values( vals.begin(), vals.end() );
    const std::vector<double>       concentrations( concs.begin(), concs.end() );
-   const US_Calc::SoluteStatistics st          = US_Calc::solute_statistics( values, concentrations );
+   const US_Calc::WeightedStatistics st =
+      US_Calc::weighted_statistics( values, concentrations, US_Calc::StatisticsConvention::ConcentrationDistribution );
    const double                    nan         = std::numeric_limits<double>::quiet_NaN();
    const qreal                     vlo         = st.minimum;
    const qreal                     vhi         = st.maximum;

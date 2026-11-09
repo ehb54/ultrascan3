@@ -142,11 +142,24 @@ TEST( UsCalcMatching, MethodParts )
    EXPECT_FALSE( method_matches( "GA", it ) );
 }
 
+namespace
+{
+WeightedStatistics distribution( const std::vector<double>& v, const std::vector<double>& c )
+{
+   return weighted_statistics( v, c, StatisticsConvention::ConcentrationDistribution );
+}
+
+WeightedStatistics iterations( const std::vector<double>& v, const std::vector<double>& c )
+{
+   return weighted_statistics( v, c, StatisticsConvention::MonteCarloIterations );
+}
+} // namespace
+
 // Every value is counted once, the maximum included, so the area is the
 // total concentration times the bin width.
 TEST( UsCalcStatistics, AreaCountsEveryValueIncludingTheMaximum )
 {
-   const SoluteStatistics st = solute_statistics( { 1.0, 2.0, 3.0 }, { 1.0, 1.0, 1.0 } );
+   const WeightedStatistics st = distribution( { 1.0, 2.0, 3.0 }, { 1.0, 1.0, 1.0 } );
    ASSERT_TRUE( st.area.has_value() );
    EXPECT_NEAR( *st.area, 3.0 * ( 2.0 / 50.0 ), 1e-15 );
 
@@ -163,7 +176,7 @@ TEST( UsCalcStatistics, AreaCountsEveryValueIncludingTheMaximum )
          c[i] = u( rng );
          total += c[i];
       }
-      const SoluteStatistics s = solute_statistics( v, c );
+      const WeightedStatistics s = distribution( v, c );
       ASSERT_TRUE( s.area.has_value() );
       EXPECT_NEAR( *s.area, total * ( s.maximum - s.minimum ) / 50.0, 1e-12 * total * ( s.maximum - s.minimum ) / 50.0 );
    }
@@ -172,20 +185,66 @@ TEST( UsCalcStatistics, AreaCountsEveryValueIncludingTheMaximum )
 TEST( UsCalcStatistics, UndefinedValuesAreEmpty )
 {
    // One nonzero concentration:  the weighted variance divides by zero.
-   const SoluteStatistics one = solute_statistics( { 1.0, 2.0 }, { 1.0, 0.0 } );
+   const WeightedStatistics one = distribution( { 1.0, 2.0 }, { 1.0, 0.0 } );
    EXPECT_FALSE( one.variance.has_value() );
    EXPECT_FALSE( has_error( one.diagnostics ) );
    EXPECT_FALSE( one.diagnostics.empty() );
    // No values
-   EXPECT_TRUE( has_error( solute_statistics( {}, {} ).diagnostics ) );
+   EXPECT_TRUE( has_error( distribution( {}, {} ).diagnostics ) );
    // A dominant first value gives the first value as both upper limits
    // (the legacy index is set to -1 and then corrected to 0)
-   const SoluteStatistics dom = solute_statistics( { 1.0, 2.0, 3.0 }, { 1000.0, 1.0, 1.0 } );
+   const WeightedStatistics dom = distribution( { 1.0, 2.0, 3.0 }, { 1000.0, 1.0, 1.0 } );
    ASSERT_TRUE( dom.confidence99_high.has_value() );
    EXPECT_EQ( *dom.confidence99_high, 1.0 );
    // A single value has no upper index
-   const SoluteStatistics single = solute_statistics( { 2.0 }, { 1.0 } );
+   const WeightedStatistics single = distribution( { 2.0 }, { 1.0 } );
    EXPECT_FALSE( single.confidence99_high.has_value() );
+}
+
+// Monte Carlo iterations:  weighted mean, unweighted moments about it,
+// the median of the values and normal confidence intervals.
+TEST( UsCalcStatistics, MonteCarloIterations )
+{
+   const WeightedStatistics st = iterations( { 4.0, 1.0, 3.0, 2.0 }, { 1.0, 1.0, 1.0, 1.0 } );
+   ASSERT_TRUE( st.mean && st.median && st.variance && st.standard_deviation );
+   EXPECT_EQ( *st.mean, 2.5 );
+   EXPECT_EQ( *st.median, 2.5 ); // even count:  mean of the middle two
+   EXPECT_EQ( *st.variance, 1.25 );
+   EXPECT_DOUBLE_EQ( *st.confidence95_low, 2.5 - 1.960 * std::sqrt( 1.25 ) );
+   EXPECT_DOUBLE_EQ( *st.confidence99_high, 2.5 + 2.576 * std::sqrt( 1.25 ) );
+   EXPECT_FALSE( st.constant );
+
+   // Only the mean is weighted
+   const WeightedStatistics w = iterations( { 1.0, 2.0, 3.0 }, { 2.0, 1.0, 1.0 } );
+   EXPECT_EQ( *w.mean, 7.0 / 4.0 );
+   EXPECT_EQ( *w.median, 2.0 ); // odd count:  the middle value
+   const double d1 = 1.0 - 1.75, d2 = 2.0 - 1.75, d3 = 3.0 - 1.75;
+   EXPECT_EQ( *w.variance, ( d1 * d1 + d2 * d2 + d3 * d3 ) / 3.0 );
+
+   // The area counts the maximum, as in the distribution convention
+   EXPECT_NEAR( *w.area, 4.0 * ( 2.0 / 50.0 ), 1e-15 );
+}
+
+TEST( UsCalcStatistics, MonteCarloConstantValues )
+{
+   const WeightedStatistics st = iterations( { 2.0, 2.0, 2.0 }, { 1.0, 3.0, 1.0 } );
+   EXPECT_TRUE( st.constant );
+   EXPECT_EQ( *st.mean, 2.0 );
+   EXPECT_EQ( *st.median, 2.0 );
+   EXPECT_EQ( *st.mode_center, 2.0 );
+   EXPECT_EQ( *st.mode_low, 0.0 );
+   EXPECT_EQ( *st.confidence99_low, 2.0 );
+   EXPECT_EQ( *st.standard_deviation, 0.0 );
+   EXPECT_EQ( *st.area, 0.0 );
+   EXPECT_TRUE( st.diagnostics.empty() );
+
+   // Nearly equal values are constant only in the distribution convention
+   EXPECT_FALSE( iterations( { 1.0, 1.0 + 1e-6 }, { 1.0, 1.0 } ).constant );
+   EXPECT_TRUE( distribution( { 1.0, 1.0 + 1e-6 }, { 1.0, 1.0 } ).constant );
+   // The median is only defined for iterations
+   EXPECT_FALSE( distribution( { 1.0, 2.0 }, { 1.0, 1.0 } ).median.has_value() );
+   // A zero total is an error in both
+   EXPECT_TRUE( has_error( iterations( { 1.0, 2.0 }, { 0.0, 0.0 } ).diagnostics ) );
 }
 
 TEST( UsCalcStatistics, LineFitOfALine )

@@ -155,7 +155,21 @@ ehb54/ultrascan-tickets#1214.
    width.  In `legacy_output_stats.json` this differs from the earlier code
    in the area of 55 of 250 blocks and in the mode and confidence limits of
    4 edge-model blocks.  The "Median" `outputStats` prints is the midrange.
-10. **Range bound scaling.**  The reporter scales bounds with `pow(10,-13)`,
+   `US_DmgaMcStats::compute_statistics` (DMGA-MC, us_fematch) had a copy of
+   the same histogram and now uses the library too, so its area and mode
+   change in the same way.
+10. **Two definitions of weighted statistics.**  `outputStats` and
+   `compute_statistics` share the minimum, maximum, weighted mean, line fit
+   and histogram but define the rest differently:  `outputStats` treats the
+   values as a distribution weighted by concentration (weighted moments with
+   a bias factor, weighted quantiles as confidence intervals, the midrange as
+   "Median", a relative 1e-4 spread as constant); `compute_statistics`
+   treats each value as one Monte Carlo iteration (unweighted moments about
+   the weighted mean, the median of the values, mean -/+ 1.960 and 2.576
+   standard deviations as confidence intervals, only equal values as
+   constant).  `weighted_statistics` provides both as named conventions, so
+   each program keeps its own definitions.
+11. **Range bound scaling.**  The reporter scales bounds with `pow(10,-13)`,
    `pow(10,-7)` and `pow(10,3)` in one path and with literals in the other.
    They agree exactly on the reference platform (checked over 100 000
    bounds); the exact-bound edge fixtures guard this.

@@ -38,10 +38,11 @@ std::vector<AlgorithmVersion> algorithms()
         1,
         "Gaussian smoothing as US_Math2::gaussian_smoothing; widths the series cannot support "
         "(fewer than 2*width-1 points) are rejected" },
-      { "solute_statistics",
+      { "weighted_statistics",
         1,
-        "Concentration-weighted statistics of one attribute as US_SoluteData::outputStats, with 50 bins "
-        "that partition the range so every value, the maximum included, is counted once" },
+        "Weighted statistics of one attribute in two conventions:  a concentration distribution as "
+        "US_SoluteData::outputStats and Monte Carlo iterations as US_DmgaMcStats::compute_statistics, "
+        "both with 50 bins that partition the range so every value, the maximum included, is counted once" },
       { "report_item_matching",
         1,
         "A report item applies to a model when every '-' part of its method (PCSA methods count as PCSA) "

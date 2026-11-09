@@ -32,7 +32,7 @@ TEST( UsCalcVersion, AlgorithmsAreNamedVersionedAndDescribed )
                               "mc_composite",
                               "integral_distribution",
                               "gaussian_smoothing",
-                              "solute_statistics",
+                              "weighted_statistics",
                               "report_item_matching" } )
    {
       EXPECT_TRUE( names.count( name ) ) << name;

@@ -1,7 +1,10 @@
 //! \file us_dmga_mc_stats.cpp
 
 #include "us_dmga_mc_stats.h"
-#include "us_math2.h"
+#include "../../calc/us_calc_statistics.h"
+
+#include <limits>
+#include <vector>
 
 // Class of static functions for DMGA-MC statistics
 
@@ -191,184 +194,47 @@ bool US_DmgaMcStats::compute_statistics( const int nvals,
       QVector< double >& vals, QVector< double >& concs,
       QVector< double >& stats )
 {
-   bool is_fixed      = false;
-   const int stsiz    = 23;
-   int     nbins      = 50;
-   double  vsiz       = (double)nvals;
-   double  binsz      = 50.0;
-   double  vlo        = 9.9e30;
-   double  vhi        = -9.9e30;
+   // The statistics come from us_calc; undefined ones are nan.
+   const std::vector<double>         values( vals.begin(), vals.begin() + nvals );
+   const std::vector<double>         weights( concs.begin(), concs.begin() + nvals );
+   const US_Calc::WeightedStatistics st =
+      US_Calc::weighted_statistics( values, weights, US_Calc::StatisticsConvention::MonteCarloIterations );
+   const double nan      = std::numeric_limits<double>::quiet_NaN();
+   const double mode_cen = st.mode_center.value_or( nan );
+   const double conf95lo = st.confidence95_low.value_or( nan );
+   const double conf95hi = st.confidence95_high.value_or( nan );
+   const double conf99lo = st.confidence99_low.value_or( nan );
+   const double conf99hi = st.confidence99_high.value_or( nan );
 
-   QVector< double > xpvec( qMax( nvals, nbins ) );
-   QVector< double > ypvec( qMax( nvals, nbins ) );
+   stats.resize( 23 );
+   stats[0]         = st.minimum;                            // Minimum
+   stats[1]         = st.maximum;                            // Maximum
+   stats[2]         = st.mean.value_or( nan );               // Mean
+   stats[3]         = st.median.value_or( nan );             // Median
+   stats[4]         = st.skew.value_or( nan );               // Skew
+   stats[5]         = st.kurtosis.value_or( nan );           // Kurtosis
+   stats[6]         = st.mode_low.value_or( nan );           // Lower Mode
+   stats[7]         = st.mode_high.value_or( nan );          // Upper Mode
+   stats[8]         = mode_cen;                              // Mode Center
+   stats[9]         = conf95lo;                              // 95% Confidence Interval Low
+   stats[10]        = conf95hi;                              // 95% Confidence Interval High
+   stats[11]        = conf99lo;                              // 99% Confidence Interval Low
+   stats[12]        = conf99hi;                              // 99% Confidence Interval High
+   stats[13]        = st.standard_deviation.value_or( nan ); // Standard Deviation
+   stats[14]        = st.standard_error.value_or( nan );     // Standard Error
+   stats[15]        = st.variance.value_or( nan );           // Variance
+   stats[16]        = st.correlation.value_or( nan );        // Correlation Coefficient
+   stats[17]        = st.bins;                               // Number of Bins
+   stats[18]        = st.area.value_or( nan );               // Distribution Area
+   // Confidence limits relative to the mode center; equal to the mean
+   // when the values are constant.
+   const bool fixed = st.constant;
+   stats[19]        = fixed ? stats[2] : conf95hi - mode_cen; // 95% Confidence Limit Low
+   stats[20]        = fixed ? stats[2] : mode_cen - conf95lo; // 95% Confidence Limit High
+   stats[21]        = fixed ? stats[2] : conf99hi - mode_cen; // 99% Confidence Limit Low
+   stats[22]        = fixed ? stats[2] : mode_cen - conf99lo; // 99% Confidence Limit High
 
-   double  *xplot     = xpvec.data();
-   double  *yplot     = ypvec.data();
-   double  vsum       = 0.0;
-   double  vm2        = 0.0;
-   double  vm3        = 0.0;
-   double  vm4        = 0.0;
-   double  vmean, vmedi;
-   double  mode_cen, mode_lo, mode_hi;
-   double  conf99lo, conf99hi, conf95lo, conf95hi;
-   double  clim99lo, clim99hi, clim95lo, clim95hi;
-   double  skew, kurto, slope, vicep, sigma;
-   double  corr, sdevi, sderr, vari, area;
-   double  bininc, val, conc;
-   double  vctot = 0.0;
-
-   stats.resize( stsiz );
-
-   // Get basic min,max,mean information
-
-   for ( int jj = 0; jj < nvals; jj++ )
-   {
-      val       = vals.at( jj );
-      conc      = concs.at( jj );
-      vsum     += ( val * conc );
-      vctot    += conc;
-      vlo       = qMin( vlo, val );
-      vhi       = qMax( vhi, val );
-      xplot[jj] = (double)jj;
-      yplot[jj] = val;
-   }
-
-   vmean     = vsum / vctot;
-   is_fixed  = ( vlo == vhi );
-
-   if ( is_fixed )
-   {  // Values are the same, special statistics for fixed attribute
-      vmedi     = vmean;
-qDebug() << "DmS:cSt:     FIXED  medi mean" << vmedi;
-      mode_cen  = vmean;
-      skew      = 0.0;
-      kurto     = 0.0;
-      mode_lo   = 0.0;
-      mode_hi   = 0.0;
-      conf95lo  = vmean;
-      conf95hi  = vmean;
-      conf99lo  = vmean;
-      conf99hi  = vmean;
-      clim95lo  = vmean;
-      clim95hi  = vmean;
-      clim99lo  = vmean;
-      clim99hi  = vmean;
-      vari      = 0.0;
-      corr      = 0.0;
-      sdevi     = 0.0;
-      sderr     = 0.0;
-      area      = 0.0;
-   }
-
-   else
-   {  // Values are not the same, so statistics need to be computed
-
-      for ( int jj = 0; jj < nvals; jj++ )
-      {  // Get difference information
-         val       = vals.at( jj );
-         double dif = val - vmean;
-         double dsq = dif * dif;
-         vm2      += dsq;           // diff squared
-         vm3      += ( dsq * dif ); // cubed
-         vm4      += ( dsq * dsq ); // to the 4th
-      }
-
-      vm2      /= vsiz;
-      vm3      /= vsiz;
-      vm4      /= vsiz;
-      skew      = vm3 / pow( vm2, 1.5 );
-      kurto     = vm4 / pow( vm2, 2.0 ) - 3.0;
-
-      // Do line fit (mainly for corr value)
-      US_Math2::linefit( &xplot, &yplot, &slope, &vicep, &sigma, &corr, nvals );
-
-      // Sort Y values and determine median
-      QVector< double > wkvls = vals;
-      std::sort( wkvls.begin(), wkvls.end() );
-      int hx    = nvals / 2;
-      vmedi     = wkvls[ hx ];
-      if ( ( hx * 2 ) == nvals )
-         vmedi     = ( vmedi + wkvls[ hx - 1 ] ) * 0.5;
-qDebug() << "DmS:cSt:     FLT  hx vmedi vhx" << hx << vmedi << wkvls[hx];
-
-      // Standard deviation and error
-      sdevi     = pow( vm2, 0.5 );
-      sderr     = sdevi / pow( vsiz, 0.5 );
-      vari      = vm2;
-      area      = 0.0;
-
-      bininc    = ( vhi - vlo ) / binsz;
-
-      // Mode and confidence
-      for ( int ii = 0; ii < nbins; ii++ )
-      {
-         xplot[ii] = vlo + bininc * (double)ii;
-         yplot[ii] = 0.0;
-
-         for ( int jj = 0; jj < nvals; jj++ )
-         {
-            val       = vals.at( jj );
-
-            if ( val >= xplot[ ii ]  &&  val < ( xplot[ ii ] + bininc ) )
-            {
-               yplot[ii] += ( concs.at( jj ) );
-            }
-         }
-
-         area     += yplot[ ii ] * bininc;
-      }
-
-      //double fvdif     = qAbs( ( vhi - vlo ) / vlo );
-      val       = -1.0;
-      int thisb = 0;
-
-      for ( int ii = 0; ii < nbins; ii++ )
-      {
-         if ( yplot[ii] > val )
-         {
-            val       = yplot[ ii ];
-            thisb     = ii;
-         }
-      }
-
-      mode_lo   = xplot[ thisb ];
-      mode_hi   = mode_lo + bininc;
-      mode_cen  = ( mode_lo + mode_hi ) * 0.5;
-      conf99lo  = vmean - 2.576 * sdevi;
-      conf99hi  = vmean + 2.576 * sdevi;
-      conf95lo  = vmean - 1.960 * sdevi;
-      conf95hi  = vmean + 1.960 * sdevi;
-      clim95lo  = conf95hi - mode_cen;
-      clim95hi  = mode_cen - conf95lo;
-      clim99lo  = conf99hi - mode_cen;
-      clim99hi  = mode_cen - conf99lo;
-   }
-
-   stats[  0 ]  = vlo;        // Minimum
-   stats[  1 ]  = vhi;        // Minimum
-   stats[  2 ]  = vmean;      // Mean
-   stats[  3 ]  = vmedi;      // Median
-   stats[  4 ]  = skew;       // Skew
-   stats[  5 ]  = kurto;      // Kurtosis
-   stats[  6 ]  = mode_lo;    // Lower Mode
-   stats[  7 ]  = mode_hi;    // Upper Mode
-   stats[  8 ]  = mode_cen;   // Mode Center
-   stats[  9 ]  = conf95lo;   // 95% Confidence Interval Low
-   stats[ 10 ]  = conf95hi;   // 95% Confidence Interval High
-   stats[ 11 ]  = conf99lo;   // 99% Confidence Interval Low
-   stats[ 12 ]  = conf99hi;   // 99% Confidence Interval High
-   stats[ 13 ]  = sdevi;      // Standard Deviation
-   stats[ 14 ]  = sderr;      // Standard Error
-   stats[ 15 ]  = vari;       // Variance
-   stats[ 16 ]  = corr;       // Correlation Coefficient
-   stats[ 17 ]  = binsz;      // Number of Bins
-   stats[ 18 ]  = area;       // Distribution Area
-   stats[ 19 ]  = clim95lo;   // 95% Confidence Limit Low
-   stats[ 20 ]  = clim95hi;   // 95% Confidence Limit High
-   stats[ 21 ]  = clim99lo;   // 99% Confidence Limit Low
-   stats[ 22 ]  = clim99hi;   // 99% Confidence Limit High
-
-   return is_fixed;
+   return st.constant;
 }
 
 // Build Model attribute statistics from iteration models
