@@ -5,8 +5,7 @@
 //! multiply and an add into one instruction (FMA), which rounds once
 //! instead of twice; where they do depends on the compiler, the target and
 //! the shape of the surrounding code.  The library turns this contraction
-//! off so that it gives the same doubles on every platform, in the desktop
-//! programs and in the service alike.  The build files set the same option
+//! off so that it gives the same doubles on every platform.  The build files set the same option
 //! (-ffp-contract=off); the pragmas also cover builds that compile these
 //! files with other flags, such as libus_utils.pro.
 #ifndef US_CALC_FP_H

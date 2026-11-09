@@ -2,8 +2,8 @@
 //! \brief Value types of the UltraScan calculation library.
 //!
 //! The library holds the scientific calculations that the desktop programs
-//! and the LIMS share.  Its public interface uses only standard C++:  no Qt,
-//! widgets, database access, HTTP or report formatting.  Callers convert
+//! share.  Its public interface uses only standard C++:  no Qt,
+//! widgets, database access or report formatting.  Callers convert
 //! their own data into these types.
 #ifndef US_CALC_TYPES_H
 #define US_CALC_TYPES_H

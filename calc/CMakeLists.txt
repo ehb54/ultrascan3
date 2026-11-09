@@ -1,9 +1,8 @@
 # UltraScan3 calculation library (us_calc)
 #
-# The first module library of the headless service layer:  the reporting
-# calculations shared by the desktop programs and the LIMS.  It is plain
-# C++17 with no Qt, GUI, database or HTTP dependency, so every build profile
-# can build and link it.
+# The reporting calculations shared by the desktop programs.  It is plain
+# C++17 with no Qt, GUI or database dependency, so every build profile can
+# build and link it.
 
 file(GLOB CALC_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 file(GLOB CALC_HEADERS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.h")

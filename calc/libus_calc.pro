@@ -1,6 +1,6 @@
 # UltraScan3 calculation library (us_calc), qmake build
 #
-# Plain C++17 without Qt, GUI, database or HTTP dependencies (see
+# Plain C++17 without Qt, GUI or database dependencies (see
 # CMakeLists.txt).  Built as a static library into ../lib like the other
 # UltraScan libraries; library.pri is not used because it adds Qt and the
 # database and archive libraries.
