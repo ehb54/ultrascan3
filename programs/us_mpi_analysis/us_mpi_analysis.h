@@ -11,6 +11,7 @@
 #include "us_math2.h"
 #include "us_model.h"
 #include "us_mpi_jobconfig.h"
+#include "us_mpi_sim_cache.h"
 #include "us_noise.h"
 #include "us_pcsa_modelrec.h"
 #include "us_simparms.h"
@@ -73,6 +74,9 @@ class US_MPI_Analysis : public QObject
         int              node_rank = 0;             //!< Rank within node_comm
         int              node_size = 1;             //!< Number of ranks on this node
         uint             deme_seed = 0;             //!< Random seed shared by all ranks (job seed or rank 0's time seed)
+        US_MPI_NodeSimCache* sim_cache = nullptr;       //!< Simulations shared by the node's ranks (or none)
+        QVector<int>         node_leaders;              //!< World ranks of the first rank of each node
+        bool                 sim_room_fitted = false;   //!< The caches' room was fitted to the job's peak
 
         int current_dataset;      //!< Current dataset for global fit or composite
         int datasets_to_process;  //!< Datasets to process for global fit or composite
@@ -205,7 +209,17 @@ class US_MPI_Analysis : public QObject
 
                 //! \enum Command
                 //! \brief Enumeration for MPI job commands
-                enum Command { IDLE, PROCESS, WAIT, SHUTDOWN, NEWDATA, PROCESS_MC };
+                enum Command
+                {
+                   IDLE,
+                   PROCESS,
+                   WAIT,
+                   SHUTDOWN,
+                   NEWDATA,
+                   PROCESS_MC,
+                   CLEARCACHE,
+                   FITCACHE
+                };
 
                 //! \enum Status
                 //! \brief Enumeration for MPI job statuses
@@ -341,7 +355,8 @@ class US_MPI_Analysis : public QObject
         QMap< QString, double > fitness_map; //!< Fitness map
         int fitness_hits; //!< Fitness hits count
         double                                     fitness_secs    = 0.0;     //!< Worker seconds in fitness evaluations
-        US_SimCache*                               ga_simcache     = nullptr; //!< Per-solute simulation cache (GA workers)
+        US_SimCache* ga_simcache      = nullptr; //!< Per-rank simulation cache (GA, if the node cache could not be made)
+        qint64       rank_cache_bytes = 0;       //!< Size of ga_simcache (0: none)
         int                                        ga_normal       = 0;   //!< GA fitness from the normal equations (1; 0 = QR path)
         int                                        ga_normal_check = 0;   //!< Compare both fitness paths for every gene
         qint64                                     ga_normal_count = 0;   //!< Fitness values from the normal equations
@@ -470,6 +485,14 @@ class US_MPI_Analysis : public QObject
         void                   begin_fit_context( void );
         void                   create_node_comm( void );
         void                   free_node_comm( void );
+        void                   create_sim_cache( void );
+        US_SimCache*           solver_cache( void ) const;
+        void                   clear_sim_caches( void );
+        void                   fit_sim_cache_rooms( void );
+        void                   fit_sim_cache_room( void );
+        qint64                 predicted_node_bytes( void );
+        qint64                 job_memory_limit( const US_MPI_MemLimit::Cgroup& );
+        qint64                 sim_cache_bytes( qint64, bool, bool, qint64 );
         bool                   worker_fit_context( int, double, double );
         double                 dataset_bottom( int );
         void     set_monteCarlo    ( void );

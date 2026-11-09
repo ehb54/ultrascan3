@@ -74,9 +74,9 @@ void US_MPI_Analysis::ga_worker( void )
                << " fitness checks   maxrss" << maxrss;
             DbgLv( 0 ) << "    Deme" << grp_nbr << deme_nbr << ": fitness time" << fitness_secs << "s for" << fitness_count
                        << "checks," << ( fitness_count - fitness_hits ) << "computed";
-            if ( ga_simcache != nullptr )
-            {
-               DbgLv( 0 ) << "    Deme" << grp_nbr << deme_nbr << ":" << ga_simcache->stats_text();
+            if ( solver_cache() != nullptr )
+            { // This rank's use of the cache (of the node's shared cache, too)
+               DbgLv( 0 ) << "    Deme" << grp_nbr << deme_nbr << ":" << solver_cache()->stats_text();
             }
             DbgLv( 0 ) << "    Deme" << grp_nbr << deme_nbr << ":" << ga_normal_count << "fitness values from the normal equations,"
                        << ga_qr_count << "from QR";
@@ -1341,7 +1341,7 @@ void US_MPI_Analysis::lamm_gsm_df( const US_Vector& vv, US_Vector& vd )
    //  perturbed gene costs one new simulation and a small NNLS through
    //  get_fitness_v;  update_fitness re-solves the full QR NNLS and
    //  simulates the whole multi-component model for every evaluation)
-   if ( current_dataset == 0 && data_sets.size() == 1 && ( ga_normal == 0 || ga_simcache == nullptr ) )
+   if ( current_dataset == 0 && data_sets.size() == 1 && ( ga_normal == 0 || solver_cache() == nullptr ) )
    {
       update_fitness( -1, tt );
 
@@ -1704,61 +1704,27 @@ double US_MPI_Analysis::bucket_penalty( const Gene& gene, int npoints )
    return bucket_lambda * pen / (double) npoints;
 }
 
-// Per-solute simulation cache of a GA worker (kept over generations and
-//  Monte Carlo iterations; the key does not depend on the data readings).
-//  sim_cache_mb (job parameter):  cap per rank in MB, 0 = off.  Default:
-//  a quarter of this rank's share of the memory the job may use on this
-//  node (the tightest of the Slurm allocation, the cgroup limit and the
-//  node's available memory, divided by the ranks on the node), at most
-//  4 GB;  512 MB where none of these is known.  Found by reading files and
-//  the environment, without starting a process.
+// Per-solute simulation cache of a GA rank, kept over generations and Monte
+//  Carlo iterations (the key does not depend on the data readings).  Only a
+//  fallback:  a GA uses the cache shared by the node's ranks, sized by the
+//  job parameters sim_cache_mb and sim_cache_lru (create_sim_cache).  Made
+//  here only if that cache was wanted but its shared window could not be
+//  allocated, with the same size per rank.
 void US_MPI_Analysis::setup_ga_simcache( void )
 {
-   if ( ga_simcache != nullptr )
+   if ( ga_simcache != nullptr || sim_cache != nullptr || rank_cache_bytes <= 0 )
    {
       return;
    }
 
-   static const qint64 MB          = 1024 * 1024;
-   static const qint64 MAX_MB      = 4096; // Largest default cap
-   static const qint64 FALLBACK_MB = 512;  // Default cap if no memory size is known
-   const qint64        job_limit   = US_MPI_MemLimit::job_limit( node_size );
-   qint64              node_total  = -1;
-   qint64              node_avail  = -1;
-   qint64              cap;
-
-   if ( !US_MPI_MemLimit::node_memory( node_total, node_avail ) )
-   {
-      node_avail = -1;
-   }
-
-   if ( job_config.params.ga.sim_cache_mb >= 0 )
-   {
-      cap = job_config.params.ga.sim_cache_mb * MB;
-   }
-   else
-   {
-      cap = US_MPI_MemLimit::default_cache_bytes( job_limit, node_avail, node_size, 0.25, MAX_MB * MB, FALLBACK_MB * MB );
-   }
-
-   if ( cap >= 16 * MB )
-   { // Data sets live for the whole job:  their keys can be memorized
-      ga_simcache = new US_SimCache( cap );
-      ga_simcache->set_key_memo( true );
-      // Nearly every GA solute survives some NNLS:  evict by recent use
-      ga_simcache->set_lru( job_config.params.ga.sim_cache_lru != 0 );
-   }
+   // Data sets live for the whole job:  their keys can be memorized
+   ga_simcache = new US_SimCache( rank_cache_bytes );
+   ga_simcache->set_key_memo( true );
+   // Nearly every GA solute survives some NNLS:  evict by recent use
+   ga_simcache->set_lru( job_config.params.ga.sim_cache_lru != 0 );
 
    if ( my_rank == 1 )
    {
-      DbgLv( 0 ) << "GA simulation cache per rank (MB):" << ( ( ga_simcache != nullptr ) ? cap / MB : 0 ) << "ranks on node"
-                 << node_size << "job memory limit on node (MB, 0 none)" << job_limit / MB << "node available (MB)"
-                 << ( ( node_avail >= 0 ) ? node_avail / MB : -1 );
-   }
-
-   if ( my_rank == 1 && job_config.params.ga.sim_cache_mb > 0 && job_limit > 0 && cap > job_limit / qMax( 1, node_size ) / 2 )
-   {
-      DbgLv( 0 ) << "Warning:  sim_cache_mb" << cap / MB << "is more than half of the job memory per rank on this node"
-                 << job_limit / qMax( 1, node_size ) / MB << "MB";
+      DbgLv( 0 ) << "GA simulation cache in each rank instead (MB):" << rank_cache_bytes / ( 1024 * 1024 );
    }
 }
