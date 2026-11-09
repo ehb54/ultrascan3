@@ -17,8 +17,10 @@
 
 #include <cmath>
 #include <map>
+#include <random>
 #include <string>
 
+#include "us_calc_composite.h"
 #include "us_calc_matching.h"
 #include "us_calc_range.h"
 #include "us_calc_replicate.h"
@@ -308,4 +310,116 @@ TEST( UsCalcLegacyCaptures, SmoothingMatchesTheCapture )
          EXPECT_EQ( values[i], expected[i].toDouble() ) << "index " << i;
       }
    }
+}
+
+// The composite key must be the same text QString::asprintf makes in
+// US_Model, including at the rounding points of both fields.
+TEST( UsCalcComposite, KeyMatchesQStringAsprintf )
+{
+   std::mt19937_64                        rng( 4711 );
+   std::uniform_real_distribution<double> s_dist( 0.1, 20.0 ), k_dist( 1.0, 4.0 );
+   int                                    mismatches = 0;
+   for ( int i = 0; i < 1000000; ++i )
+   {
+      double s = s_dist( rng ) * 1e-13;
+      double k = k_dist( rng );
+      if ( i % 4 == 1 )
+      {
+         k = std::round( k * 1e5 ) / 1e5 + 0.5e-5; // on a 5th-decimal rounding point
+      }
+      if ( i % 4 == 2 )
+      {
+         s = ( std::round( s * 1e17 ) / 1e4 + 0.5e-4 ) * 1e-13; // on a 4th-decimal point in S
+      }
+      if ( i % 10 == 3 )
+      {
+         s = -s; // negative s
+      }
+      if ( i % 10 == 7 )
+      {
+         s = ( std::floor( s_dist( rng ) * 16.0 ) / 32.0 ) * 1e-13; // exact binary ties
+         k = std::floor( k * 64.0 ) / 64.0 + 1.0 / 128.0 * ( i % 20 == 7 ? -1 : 1 );
+      }
+      if ( i % 1000 == 9 )
+      {
+         s = ( i % 2000 == 9 ? -1 : 1 ) * 3.0e-19; // rounds to zero
+      }
+      const std::string qt = QString::asprintf( "%10.4f %8.5f", s * 1.0e+13, k ).toStdString();
+      if ( qt != mc_solute_key( s, k ) && ++mismatches <= 5 )
+      {
+         ADD_FAILURE() << "s " << s << " k " << k << ": " << qt << " vs " << mc_solute_key( s, k );
+      }
+   }
+   EXPECT_EQ( mismatches, 0 );
+}
+
+// Each Monte Carlo fixture's composite equals the one US_Model::load built
+// before the extraction (checked by calc_oracle.py against legacy_models.json).
+TEST_F( UsCalcFixtures, CompositesMatchTheFixtures )
+{
+   int composites = 0;
+   for ( const auto& entry : inputs )
+   {
+      const std::string& key = entry.first;
+      if ( key.size() < 10 || key.compare( key.size() - 10, 10, "#composite" ) != 0 )
+      {
+         continue;
+      }
+      SCOPED_TRACE( key );
+      const std::string  file = key.substr( 0, key.size() - 10 );
+      std::vector<Model> iterations;
+      for ( int it = 1; inputs.count( file + "#iter" + std::to_string( it ) ); ++it )
+      {
+         iterations.push_back( inputs.at( file + "#iter" + std::to_string( it ) ) );
+      }
+      ASSERT_GE( iterations.size(), 2u );
+      const CompositeResult r        = mc_composite( iterations );
+      const Model&          expected = entry.second;
+      ASSERT_TRUE( r.diagnostics.empty() );
+      EXPECT_EQ( r.model.description, expected.description );
+      ASSERT_EQ( r.model.components.size(), expected.components.size() );
+      for ( std::size_t i = 0; i < expected.components.size(); ++i )
+      {
+         const Component& a = r.model.components[i];
+         const Component& e = expected.components[i];
+         EXPECT_EQ( a.s, e.s ) << i;
+         EXPECT_EQ( a.D, e.D ) << i;
+         EXPECT_EQ( a.mw, e.mw ) << i;
+         EXPECT_EQ( a.f, e.f ) << i;
+         EXPECT_EQ( a.f_f0, e.f_f0 ) << i;
+         EXPECT_EQ( a.vbar20, e.vbar20 ) << i;
+         EXPECT_EQ( a.signal_concentration, e.signal_concentration ) << i;
+      }
+      ++composites;
+   }
+   EXPECT_EQ( composites, 3 );
+}
+
+TEST( UsCalcComposite, InvalidIterations )
+{
+   EXPECT_TRUE( has_error( mc_composite( {} ).diagnostics ) );
+   Model one;
+   one.components.push_back( Component{ 4.5e-13, 5e-7, 75000.0, 0.0, 1.6, 0.72, 0.5 } );
+   Model empty;
+   EXPECT_TRUE( has_error( mc_composite( { one, empty } ).diagnostics ) );
+}
+
+// f/f0 varies and vbar is constant:  the key's second field is f/f0, so
+// solutes differing only in f/f0 stay apart and equal ones merge.
+TEST( UsCalcComposite, MergesByKeyAndAverages )
+{
+   Model a, b;
+   a.description           = "run.1A260.e1_a2611090000_2DSA-MC_000001_mc0001.model";
+   a.components            = { Component{ 4.5e-13, 5e-7, 75000.0, 0.0, 1.6, 0.72, 0.4 },
+                               Component{ 4.5e-13, 4e-7, 90000.0, 0.0, 1.9, 0.72, 0.2 } };
+   b.description           = "run.1A260.e1_a2611090000_2DSA-MC_000001_mc0002.model";
+   b.components            = { Component{ 4.5e-13, 5.1e-7, 75001.0, 0.0, 1.6, 0.72, 0.6 } };
+   const CompositeResult r = mc_composite( { a, b } );
+   ASSERT_TRUE( r.diagnostics.empty() );
+   ASSERT_EQ( r.model.components.size(), 2u );
+   EXPECT_DOUBLE_EQ( r.model.components[0].signal_concentration, ( 0.4 + 0.6 ) / 2 );
+   EXPECT_EQ( r.model.components[0].D, 5.1e-7 ); // from the last match
+   EXPECT_EQ( r.source_index[0], 2u );
+   EXPECT_DOUBLE_EQ( r.model.components[1].signal_concentration, 0.2 / 2 );
+   EXPECT_EQ( r.model.description, "run.1A260.e1_a2611090000_2DSA-MC_000001_mcN002.model" );
 }

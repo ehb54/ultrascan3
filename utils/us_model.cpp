@@ -1,6 +1,7 @@
 //! \file us_model.cpp
 #include "us_model.h"
 #include "../calc/us_calc_coefficients.h"
+#include "../calc/us_calc_composite.h"
 #include "us_constants.h"
 #include "us_math2.h"
 #include "us_settings.h"
@@ -688,78 +689,59 @@ int US_Model::load_multi_model( QTextStream& tsi )
       }
    }
 
-   QVector< SimulationComponent >  mmcomps;
-   QVector< Association >          mmassos;
-   int ncnstv    = 0;
-   int ncnstk    = 0;
+   // Load every iteration, then build the composite in us_calc.
+   QVector<SimulationComponent> mmcomps;
+   QVector<Association>         mmassos;
+   std::vector<US_Calc::Model>  iterations;
 
-   // Build composite components and associations
    for ( int ii = 0; ii < nmcixs; ii++ )
    {
-      mcont            = mcixmls[ ii ];
+      mcont = mcixmls[ii];
       QXmlStreamReader xml( mcont );
       load_stream( xml );
 
       mmcomps << components;
       mmassos << associations;
 
-      if ( constant_vbar() )  ncnstv++;
-      if ( constant_ff0()  )  ncnstk++;
+      US_Calc::Model iteration;
+      iteration.description = mdesc.toStdString();
+      for ( const SimulationComponent& sc : components )
+      {
+         US_Calc::Component c;
+         c.s                    = sc.s;
+         c.D                    = sc.D;
+         c.mw                   = sc.mw;
+         c.f                    = sc.f;
+         c.f_f0                 = sc.f_f0;
+         c.vbar20               = sc.vbar20;
+         c.signal_concentration = sc.signal_concentration;
+         iteration.components.push_back( c );
+      }
+      iterations.push_back( iteration );
    }
 
-   // Compress and scale components to only unique solute points
+   const US_Calc::CompositeResult composite = US_Calc::mc_composite( iterations );
 
    components  .clear();
    associations.clear();
-   double sclnrm = 1.0 / (double)nmcixs;    // Scale for concentrations
-   bool cnst_vb  = ( ncnstv >= ncnstk );    // Flag for constant vbar
-   QStringList sklist;                      // List of all solute points
-   QStringList skvals;                      // List of unique solute points
 
-   for ( int ii = 0; ii < mmcomps.size(); ii++ )
-   {  // Build list of solute point strings and list of unique ones
-      double sval   = mmcomps[ ii ].s * 1.0e+13;
-      double kval   = cnst_vb ? mmcomps[ ii ].f_f0 : mmcomps[ ii ].vbar20;
-      QString skval = QString::asprintf( "%10.4f %8.5f", sval, kval );
-      sklist << skval; 
-      if ( ! skvals.contains( skval ) )
-         skvals << skval;
+   if ( US_Calc::has_error( composite.diagnostics ) )
+   {
+      return IUS_DB2::NO_MODEL;
    }
 
-   int nskl      = sklist.size();
-   int nskv      = skvals.size();
-   skvals.sort();                     // Sort solute points
-   SimulationComponent scomp;
-
-   for ( int ii = 0; ii < nskv; ii ++ )
-   {  // Average concentration at each unique solute point
-      QString skval = skvals[ ii ];   // Identifying solute point string
-      double conc   = 0.0;
-
-      for ( int jj = 0; jj < nskl; jj++ )
-      {  // Search all solute points
-         if ( skval == sklist[ jj ] )
-         {  // If a match, sum the concentration
-            scomp      = mmcomps[ jj ];
-            conc      += scomp.signal_concentration;
-         }
-      }
-
-      scomp.name                 = QString::asprintf( "SC%04d", ii + 1 );
-      scomp.signal_concentration = conc * sclnrm;
+   for ( size_t ii = 0; ii < composite.source_index.size(); ii++ )
+   { // The full record of the last matching component, with the averaged concentration
+      SimulationComponent scomp  = mmcomps[(int) composite.source_index[ii]];
+      scomp.name                 = QString::asprintf( "SC%04d", (int) ii + 1 );
+      scomp.signal_concentration = composite.model.components[ii].signal_concentration;
       components << scomp;
    }
 
    if ( mmassos.size() > 0 )
       associations << mmassos[ 0 ];
 
-   QString mdsc1 = QString( mdesc ).section( ".",  0, -3 );
-   QString mdsc2 = QString( mdesc ).section( ".", -2, -2 )
-                                   .section( "_",  0, -2 );
-   QString mdsc3 = QString( mdesc ).section( ".", -1, -1 );
-   QString miter = QString::asprintf( "_mcN%03i", nmcixs );
-   description   = mdsc1 + "." + mdsc2 + miter + "." + mdsc3;
-qDebug() << "MDL:LMM: miter" << miter << "desc" << description << mdesc;
+   description = QString::fromStdString( composite.model.description );
 
    return result;
 }
