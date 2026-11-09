@@ -197,6 +197,13 @@ class US_MPI_NodeSimCache : public US_SimCache
       //!        an emptied generation keeps its pages until refilled)
       qint64 resident_bytes() const;
 
+      //! \brief Bytes to add to this rank's RSS so that the ranks of the node
+      //!        together count the cache once:  each rank drops the pages of
+      //!        the window it has mapped, and the node's first rank adds what
+      //!        the cache holds.  0 where a rank's pages are unknown (not
+      //!        on Linux).
+      qint64 rss_correction() const;
+
       //! \brief Counts of the whole node:  this rank's fetch and store counts
       //!        summed over the node's ranks (collective over node_comm)
       Stats  node_stats() const;
@@ -265,6 +272,8 @@ class US_MPI_NodeSimCache : public US_SimCache
       qint64                  gen_size;    // Bytes of the data area of a generation
       std::atomic<bool>       store_on;    // Flag:  this rank stores simulations
       std::string             backing_dir; // File system of the window (node's first rank)
+      qint64                  total_size;  // Bytes of the whole window
+      bool                    first_rank;  // Flag:  the node's first rank
 
       // Memory watch (only on the node's first rank)
       Watch                   watch;

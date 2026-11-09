@@ -262,6 +262,10 @@ rank adds to the cache, except that a GA empties its older generation to make
 room.  Above 88 % the whole cache is emptied and its pages are returned to the
 system.  The run then only has to compute some simulations again, and the
 result stays the same.  The report at the end says how often this happened.
+The job's memory in `job_statistics.xml` (`maxmemory`) counts the node's
+cache once:  each rank leaves out the pages of the window it has mapped and
+the node's first rank adds what the cache holds (on Linux; elsewhere a rank's
+pages are unknown and each rank's RSS still includes those it touched).
 `SimCacheLimitMB=N` sets a limit for tests.  `SimCacheStress=1` empties the
 cache over and over while the ranks use it.
 
