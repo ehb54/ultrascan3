@@ -101,10 +101,15 @@ current code.  The fixtures capture today's behavior.
    value (the comment on `distro_lessthan_s` describes a tie-break on D that
    the code does not have) and uses `std::sort`, which is not stable.  The
    order of equal values, and so which exact duplicates end up adjacent and
-   are merged, can differ between C++ libraries.
-4. **Duplicate reduction scales every component.**  After merging adjacent
+   are merged, depends on the component order and differs between libc++
+   and libstdc++ from about 20 components (ehb54/ultrascan-tickets#1214).
+4. **Duplicate reduction shrinks the distribution.**  After merging adjacent
    exact duplicates, `sort_distro` multiplies every concentration, including
-   non-duplicates, by 1/(k+1), k being the longest run of duplicates.
+   non-duplicates, by 1/(k+1), k being the longest run of duplicates, while
+   `resort_sol` normalizes by the original total.  The cumulative sum then
+   ends at 1/(k+1) and the last component receives the remaining fractions;
+   the same solutes in two orders gave 70 % and about 35 % at one s value
+   (#1214).
 5. **Zero totals.**  `distrib_info` divides by a zero total without a guard
    (NaN or infinity); `velmwl_range_fraction` returns 0; `US_Integral`
    normalizes by the total; `outputStats` divides by the total weight;
@@ -117,10 +122,10 @@ current code.  The fixtures capture today's behavior.
 7. **Gaussian smoothing past the array.**  `US_Math2::gaussian_smoothing`
    needs at least `2*smooth-1` points.  With fewer, its border loops read
    and write past the array; a Qt build with bounds assertions aborts.
-   `US_Integral` passes a series as long as the division count (0-100) with
-   a user-set smoothing width (1-100), so a short division count and a wide
-   smoothing reach this in the desktop program.  The captured cases stay
-   within the precondition.
+   `US_Integral` smooths series of division count + 1 points with a
+   user-set smoothing width (1-100), so any division count below
+   `2*smoothing-2` reaches this in the desktop program (#1214).  The
+   captured cases stay within the precondition.
 8. **Range bound scaling.**  The reporter scales bounds with `pow(10,-13)`,
    `pow(10,-7)` and `pow(10,3)` in one path and with literals in the other.
    They agree exactly on the reference platform (checked over 100 000
