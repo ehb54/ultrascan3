@@ -262,7 +262,14 @@ void distribution_statistics( WeightedStatistics&        st,
    {
       idxs[jj] = jj;
    }
-   std::sort( idxs.begin(), idxs.end(), [&vals]( int a, int b ) { return vals[a] < vals[b]; } );
+   // Values in ascending order, equal values by ascending concentration, so
+   // the quantiles depend only on the data.  (The desktop code sorted on the
+   // value alone with std::sort, which orders equal values differently on
+   // each C++ library and for each component order.)
+   std::stable_sort( idxs.begin(),
+                     idxs.end(),
+                     [&vals, &concs]( int a, int b )
+                     { return vals[a] < vals[b] || ( vals[a] == vals[b] && concs[a] < concs[b] ); } );
    std::vector<double> vals_sorted;
    std::vector<double> concs_sorted;
    for ( int jj = 0; jj < nvals; jj++ )

@@ -4,6 +4,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
 #include <limits>
 #include <random>
@@ -203,6 +204,36 @@ TEST( UsCalcStatistics, UndefinedValuesAreEmpty )
 
 // Monte Carlo iterations:  weighted mean, unweighted moments about it,
 // the median of the values and normal confidence intervals.
+// Equal values are ordered by concentration, so the weighted confidence
+// intervals do not depend on component order (or on the C++ library).
+TEST( UsCalcStatistics, ConfidenceIntervalsIgnoreComponentOrder )
+{
+   // The cumulative concentration passes 97.5 % inside the two 2.0 values:
+   // in ascending concentration order at the second, otherwise at the first.
+   std::vector<double>      v   = { 1.0, 2.0, 2.0, 3.0 };
+   std::vector<double>      c   = { 0.5, 0.48, 0.01, 0.01 };
+   const WeightedStatistics ref = distribution( v, c );
+   ASSERT_TRUE( ref.confidence95_high.has_value() );
+   EXPECT_EQ( *ref.confidence95_high, 2.0 );
+   std::vector<int> idx = { 0, 1, 2, 3 };
+   std::mt19937_64  rng( 3 );
+   for ( int t = 0; t < 200; ++t )
+   {
+      std::shuffle( idx.begin(), idx.end(), rng );
+      std::vector<double> pv, pc;
+      for ( int i : idx )
+      {
+         pv.push_back( v[i] );
+         pc.push_back( c[i] );
+      }
+      const WeightedStatistics s = distribution( pv, pc );
+      EXPECT_EQ( s.confidence95_low, ref.confidence95_low );
+      EXPECT_EQ( s.confidence95_high, ref.confidence95_high );
+      EXPECT_EQ( s.confidence99_low, ref.confidence99_low );
+      EXPECT_EQ( s.confidence99_high, ref.confidence99_high );
+   }
+}
+
 TEST( UsCalcStatistics, MonteCarloIterations )
 {
    const WeightedStatistics st = iterations( { 4.0, 1.0, 3.0, 2.0 }, { 1.0, 1.0, 1.0, 1.0 } );

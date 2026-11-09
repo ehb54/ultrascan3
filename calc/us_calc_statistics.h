@@ -82,9 +82,10 @@ struct WeightedStatistics
       //! total concentration times the bin width.
       std::optional<double>   area;
       int                     bins = 50;
-      //! ConcentrationDistribution:  the first value where the cumulative
-      //! concentration reaches 2.5 % (0.5 %), and the value before the one
-      //! where it exceeds 97.5 % (99.5 %).  MonteCarloIterations:  the mean
+      //! ConcentrationDistribution:  with the values in ascending order (equal
+      //! values by ascending concentration), the first value where the
+      //! cumulative concentration reaches 2.5 % (0.5 %), and the value before
+      //! the one where it exceeds 97.5 % (99.5 %).  MonteCarloIterations:  the mean
       //! -/+ 1.960 (2.576) standard deviations.
       std::optional<double>   confidence95_low;
       std::optional<double>   confidence95_high;

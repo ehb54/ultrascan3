@@ -155,6 +155,12 @@ ehb54/ultrascan-tickets#1214.
    width.  In `legacy_output_stats.json` this differs from the earlier code
    in the area of 55 of 250 blocks and in the mode and confidence limits of
    4 edge-model blocks.  The "Median" `outputStats` prints is the midrange.
+   The weighted confidence intervals sorted the values alone with
+   `std::sort`, so with equal values of different concentration (common on
+   2DSA grids) they differed between libc++ and libstdc++ and with component
+   order.  us_calc orders equal values by concentration; this changed the
+   intervals of 3 of 75 blocks in `legacy_output_stats.json` against the
+   macOS (libc++) output.
    `US_DmgaMcStats::compute_statistics` (DMGA-MC, us_fematch) had a copy of
    the same histogram and now uses the library too, so its area and mode
    change in the same way.
