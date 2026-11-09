@@ -3981,16 +3981,32 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q2_start_text( const QString & text )
 
    if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
+      // signals blocked: the wheel must not write its (clamped) value back into the field while it is typed in
+      qwtw_wheel->blockSignals( true );
       qwtw_wheel->setValue( text.toDouble() );
-      disconnect( le_guinier_q_start, SIGNAL( textChanged( const QString & ) ), 0, 0 );
-      le_guinier_q_start->setText( QString( "%1" ).arg( sqrt( text.toDouble() ) ) );
-      connect   ( le_guinier_q_start, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_q_start_text( const QString & ) ) );
+      qwtw_wheel->blockSignals( false );
    }
+
+   // typed in (setText(), as from the wheel, clears isModified()) and not yet a valid range:
+   // leave the end of the range and the fits alone until it is
+   if ( le_guinier_q2_start->isModified() &&
+        text.toDouble() > le_guinier_q2_end->text().toDouble() )
+   {
+      guinier_plot->replot();
+      guinier_plot_errors->replot();
+      return;
+   }
+
+   // guinier_analysis() takes the fit range from the hidden q fields, so keep them in step
+   disconnect( le_guinier_q_start, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+   le_guinier_q_start->setText( QString( "%1" ).arg( sqrt( text.toDouble() ), 0, 'g', 17 ) );
+   connect   ( le_guinier_q_start, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_q_start_text( const QString & ) ) );
 
    if ( text.toDouble() > le_guinier_q2_end->text().toDouble() )
    {
       le_guinier_q2_end->setText( text );
    } else {
+      guinier_analysis();
       guinier_residuals();
       guinier_range();
       guinier_plot->replot();
@@ -4014,16 +4030,32 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q2_end_text( const QString & text )
    guinier_markers[ 3 ]->setXValue( text.toDouble() );
    if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
+      // signals blocked: the wheel must not write its (clamped) value back into the field while it is typed in
+      qwtw_wheel->blockSignals( true );
       qwtw_wheel->setValue( text.toDouble() );
-      disconnect( le_guinier_q_end, SIGNAL( textChanged( const QString & ) ), 0, 0 );
-      le_guinier_q_end->setText( QString( "%1" ).arg( sqrt( text.toDouble() ) ) );
-      connect   ( le_guinier_q_end, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_q_end_text( const QString & ) ) );
+      qwtw_wheel->blockSignals( false );
    }
+
+   // typed in (setText(), as from the wheel, clears isModified()) and not yet a valid range:
+   // leave the start of the range and the fits alone until it is
+   if ( le_guinier_q2_end->isModified() &&
+        text.toDouble() < le_guinier_q2_start->text().toDouble() )
+   {
+      guinier_plot->replot();
+      guinier_plot_errors->replot();
+      return;
+   }
+
+   // guinier_analysis() takes the fit range from the hidden q fields, so keep them in step
+   disconnect( le_guinier_q_end, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+   le_guinier_q_end->setText( QString( "%1" ).arg( sqrt( text.toDouble() ), 0, 'g', 17 ) );
+   connect   ( le_guinier_q_end, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_q_end_text( const QString & ) ) );
 
    if ( text.toDouble() < le_guinier_q2_start->text().toDouble() )
    {
       le_guinier_q2_start->setText( text );
    } else {
+      guinier_analysis();
       guinier_residuals();
       guinier_range();
       guinier_plot->replot();
