@@ -91,10 +91,13 @@ class US_AstfemSimOpticsTest : public QObject
 
       // Simulate with extra simparams elements and options; return the exit code.
       // The run is saved as <outRoot>/<name>/<name>.*.
-      int                 simulate( const QString& name, const QString& elements, const QStringList& options )
+      int                 simulate( const QString&     name,
+                                    const QString&     elements,
+                                    const QStringList& options,
+                                    const QString&     paramsTemplate = QString( kSimParams ) )
       {
          const QString params = inputs + "/" + name + ".simparams.xml";
-         if ( !writeText( params, QString( kSimParams ).arg( elements ) ) || !QDir().mkpath( outRoot + "/" + name ) )
+         if ( !writeText( params, paramsTemplate.arg( elements ) ) || !QDir().mkpath( outRoot + "/" + name ) )
          {
             return -1;
          }
@@ -119,6 +122,17 @@ class US_AstfemSimOpticsTest : public QObject
             return -1;
          }
          return sim.exitStatus() == QProcess::NormalExit ? sim.exitCode() : -1;
+      }
+
+      QString twoSpeedParams() const
+      {
+         QString       params( kSimParams );
+         const int     start = params.indexOf( "<speedstep " );
+         const int     end   = params.indexOf( "/>", start ) + 2;
+         const QString step  = params.mid( start, end - start );
+         params.replace(
+            start, end - start, QString( step ).replace( "45000", "30000" ) + "\n" + QString( step ).replace( "45000", "50000" ) );
+         return params;
       }
 
       QString dir( const QString& name ) const
@@ -306,6 +320,84 @@ class US_AstfemSimOpticsTest : public QObject
             QVERIFY2( qAbs( scan.temperature - row.temperature ) < 0.001, qPrintable( at ) );
             QVERIFY( row.scan > 0 );
          }
+      }
+
+      void scheduledSpeedStepsMatchTimeState_data()
+      {
+         QTest::addColumn<bool>( "telemetry" );
+         QTest::newRow( "schedule-only" ) << false;
+         QTest::newRow( "with-telemetry" ) << true;
+      }
+
+      // Regression for #616: step two must start after the configured 40-minute
+      // first step, not after its final scan cycle at 343 seconds.
+      void scheduledSpeedStepsMatchTimeState()
+      {
+         QFETCH( bool, telemetry );
+         QByteArray sharedTimeState;
+         for ( int slot = 0; slot < 2; slot++ )
+         {
+            const QString name     = QString( "multispeed%1_%2" ).arg( telemetry ).arg( slot );
+            QString       elements = QString( "<schedule slots=\"23,23\" slot=\"%1\"/>\n" ).arg( slot );
+            if ( telemetry )
+            {
+               elements += "<telemetry seed=\"7\"/>\n";
+            }
+            // Slot 1 also rebuilds the grid after applying centerpiece geometry.
+            const QStringList options = slot == 0 ? QStringList{} : QStringList{ "--centerpiece", "2" };
+            QCOMPARE( simulate( name, elements, options, twoSpeedParams() ), 0 );
+            for ( int step = 0; step < 2; step++ )
+            {
+               const int          rpm = step == 0 ? 30000 : 50000;
+               const QString      run = name + QString( "-%1" ).arg( rpm, 6, 10, QChar( '0' ) );
+               US_DataIO::RawData data;
+               QVERIFY2( read( file( run, "*.auc" ), data ), qPrintable( run ) );
+               QCOMPARE( data.scanData.size(), 6 );
+               const QString    tmst   = file( run, "*.time_state.tmst" );
+               const QByteArray digest = sha256( tmst );
+               QVERIFY( !digest.isEmpty() );
+               if ( sharedTimeState.isEmpty() )
+               {
+                  sharedTimeState = digest;
+               }
+               QCOMPARE( digest, sharedTimeState );
+               QVector<US_SimSchedule::Row> rows;
+               QStringList                  keys;
+               QStringList                  formats;
+               QVERIFY( US_SimSchedule::readRows( tmst, rows, keys, formats ) );
+               for ( int scan = 0; scan < data.scanData.size(); scan++ )
+               {
+                  const US_DataIO::Scan& header  = data.scanData[scan];
+                  const int              seconds = qRound( header.seconds );
+                  QVERIFY( seconds >= 0 && seconds < rows.size() );
+                  const US_SimSchedule::Row& row = rows[seconds];
+                  QCOMPARE( row.time, seconds );
+                  QCOMPARE( row.step, step + 1 );
+                  QCOMPARE( qRound( header.rpm ), rpm );
+                  QCOMPARE( row.set_speed, rpm );
+                  QCOMPARE( qRound( row.raw_speed / 100.0 ) * 100, rpm );
+                  QCOMPARE( seconds, step * 2400 + 113 + slot * 23 + scan * 46 );
+                  QVERIFY( row.scan > 0 );
+                  if ( telemetry )
+                  {
+                     QVERIFY( qAbs( header.omega2t - row.omega2t ) <= 1e-6 * row.omega2t );
+                  }
+               }
+            }
+         }
+      }
+
+      void scheduledScansMustFitTheirOwnSpeedStep()
+      {
+         QString   params = twoSpeedParams();
+         // The last slot's last scan is 366 seconds into each step: it fits
+         // the first 40-minute step, but not a six-minute second step.
+         const int second = params.indexOf( "<speedstep ", params.indexOf( "<speedstep " ) + 1 );
+         params.replace(
+            params.indexOf( "duration_mins=\"40\"", second ), QString( "duration_mins=\"40\"" ).size(), "duration_mins=\"6\"" );
+         QCOMPARE( simulate( "overflow", "<schedule slots=\"23,23\" slot=\"0\"/>\n", {}, params ), 2 );
+         QVERIFY( file( "overflow-030000", "*.auc" ).isEmpty() );
+         QVERIFY( file( "overflow-050000", "*.auc" ).isEmpty() );
       }
 
       void interferenceRunUsesItsDetectorGrid()

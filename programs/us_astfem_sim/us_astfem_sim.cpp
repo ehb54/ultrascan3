@@ -800,6 +800,10 @@ void US_Astfem_Sim::set_parameters( void )
    {
       loaded_steps = simparams.speed_step;
    }
+   if ( simparams.schedule.given )
+   { // Rebuilding a hardware-dependent grid must keep the configured step windows.
+      simparams.speed_step = loaded_steps;
+   }
 
    meniscus_ar   = simparams.meniscus; // Meniscus at rest
    simparams.sim = true;
@@ -906,12 +910,12 @@ DbgLv(1) << "==SimPar:MAIN:SetP";
          sim_data_all.scanData << scandata;
       }
       if ( simparams.schedule.given && sp->scans > 0 )
-      { // Chain from the last cycle's start, which every slot of the run shares.
-         const double cycle_last =
-            qRound( previous_time + delay + ( sp->scans - 1 ) * US_SimSchedule::cycleSeconds( simparams.schedule ) );
+      { // Chain from the configured step end, as writetimestate() does.
+         // The final scan cycle can be much earlier, but does not end the step.
+         const double step_end = previous_time + duration;
          previous_w2t =
-            US_AstfemMath::calc_omega2t( previous_w2t, previous_speed, previous_time, target_speed, sp->acceleration, cycle_last );
-         previous_time = cycle_last;
+            US_AstfemMath::calc_omega2t( previous_w2t, previous_speed, previous_time, target_speed, sp->acceleration, step_end );
+         previous_time = step_end;
       }
       else
       {
@@ -1411,12 +1415,13 @@ QString US_Astfem_Sim::schedule_problem( void ) const
    {
       return problem;
    }
-   // The time state ends with the last speed step, so every slot's scans must fit.
-   double end = 0.0;
-   for ( int jd = 0; jd < simparams.speed_step.size() && jd < schedule_firsts.size(); jd++ )
+   // Validate against the configured window, not the timing rebuilt from scan
+   // markers by speedstepsFromSSprof(). Every slot must fit in its own step.
+   for ( int jd = 0; jd < loaded_steps.size() && jd < schedule_firsts.size(); jd++ )
    {
-      const US_SimulationParameters::SpeedProfile& sp = simparams.speed_step[jd];
-      end += sp.duration_hours * 3600.0 + sp.duration_minutes * 60.0;
+      const US_SimulationParameters::SpeedProfile& sp    = loaded_steps[jd];
+      const double                                 delay = qRound( sp.delay_hours * 3600.0 + sp.delay_minutes * 60.0 );
+      const double end  = schedule_firsts[jd] - delay + qRound( sp.duration_hours * 3600.0 + sp.duration_minutes * 60.0 );
       const int last = US_SimSchedule::scanTime(
          simparams.schedule, schedule_firsts[jd], schedule_counts[jd] - 1, 0, simparams.schedule.slot_seconds.size() - 1 );
       if ( last > end )
