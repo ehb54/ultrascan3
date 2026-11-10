@@ -278,8 +278,10 @@ class US_eSignaturesGMP : public US_Widgets
 
         //! \brief Read an autoflow GMP report eSign record.
         //! \param reportID The ID of the report.
+        //! \param db Optional open connection to reuse. Pass one when calling in a loop;
+        //!        if NULL a connection is opened for this call only and closed on return.
         //! \return The details of the eSign record.
-        QMap<QString, QString> read_autoflowGMPReportEsign_record(QString reportID);
+        QMap<QString, QString> read_autoflowGMPReportEsign_record(QString reportID, US_DB2* db = NULL);
 
         //! \brief Get assigned operators and reviewers from a JSON document.
         //! \param doc The JSON document.

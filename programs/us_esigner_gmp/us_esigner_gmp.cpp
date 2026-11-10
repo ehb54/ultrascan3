@@ -3,6 +3,7 @@
 #include <QPainter>
 #include <QProgressDialog>
 #include <QApplication>
+#include <QScopedPointer>
 #include <QKeyEvent>
 //#include <QThread>    
 
@@ -2547,7 +2548,8 @@ int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflow
   QStringList qry;
   
   US_Passwd pw( this );
-  US_DB2* db = new US_DB2( pw.getPasswd() );
+  QScopedPointer< US_DB2 > db_holder( new US_DB2( pw.getPasswd() ) );   // closed on every return path
+  US_DB2* db = db_holder.data();
   
   if ( db->lastErrno() != US_DB2::OK )
     {
@@ -2649,7 +2651,7 @@ int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflow
       /* If not - GMP report completely eSigned, so do not include in the list (cont.) */
       if ( !skip && type == "HISTORY" )
 	{
-	  QMap<QString,QString> eSign_rec = read_autoflowGMPReportEsign_record( row.id );
+	  QMap<QString,QString> eSign_rec = read_autoflowGMPReportEsign_record( row.id, db );   // reuse the scan's connection
 
 	  if ( eSign_rec.isEmpty() )
      {
@@ -2819,7 +2821,8 @@ QMap< QString, QString>  US_eSignaturesGMP::read_autoflow_record( int autoflowID
    // Check DB connection
    US_Passwd pw( this );
    QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   QScopedPointer< US_DB2 > db_holder( new US_DB2( masterpw ) );   // closed on every return path
+   US_DB2* db = db_holder.data();
 
    QMap <QString, QString> run_info;
    
@@ -2902,7 +2905,8 @@ QStringList US_eSignaturesGMP::read_operators( QString optima_id )
   QStringList instr_opers;
   
   US_Passwd pw( this );
-  US_DB2* db = new US_DB2( pw.getPasswd() );
+  QScopedPointer< US_DB2 > db_holder( new US_DB2( pw.getPasswd() ) );   // closed on every return path
+  US_DB2* db = db_holder.data();
   
   if ( db->lastErrno() != US_DB2::OK )
     {
@@ -2937,19 +2941,29 @@ QStringList US_eSignaturesGMP::read_operators( QString optima_id )
 
 
 //read eSign GMP record for assigned oper(s) && rev(s) && status
-QMap< QString, QString> US_eSignaturesGMP::read_autoflowGMPReportEsign_record( QString aID)
+//  db_in : optional, already-open connection to reuse.  Callers that read many records in a loop
+//          (list_all_autoflow_records(), list_all_gmp_reports_db()) MUST pass one, otherwise
+//          a connection is opened (and closed again on return) for every single record.
+QMap< QString, QString> US_eSignaturesGMP::read_autoflowGMPReportEsign_record( QString aID, US_DB2* db_in )
 {
   QMap< QString, QString> eSign_record;
-  
-  US_Passwd pw( this );
-  US_DB2* db = new US_DB2( pw.getPasswd() );
-  
-  if ( db->lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
-			    tr( "Could not connect to database \n" ) + db->lastError() );
 
-      return eSign_record;
+  QScopedPointer< US_DB2 > db_own;       // only used when no connection was passed in
+  US_DB2* db = db_in;
+
+  if ( !db )
+    {
+      US_Passwd pw( this );
+      db_own.reset( new US_DB2( pw.getPasswd() ) );
+      db = db_own.data();
+
+      if ( db->lastErrno() != US_DB2::OK )
+        {
+          QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
+                                tr( "Could not connect to database \n" ) + db->lastError() );
+
+          return eSign_record;
+        }
     }
 
   QStringList qry;
@@ -4424,7 +4438,7 @@ int US_eSignaturesGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReports
       QStringList gmpreportentry;
 
       //check if report has assigned operator(s) & reviewer(s)
-      QMap< QString, QString > eSign = read_autoflowGMPReportEsign_record( row.autoflowHistoryID );
+      QMap< QString, QString > eSign = read_autoflowGMPReportEsign_record( row.autoflowHistoryID, db );   // reuse the caller's connection
       QString operatorListJson  = eSign[ "operatorListJson" ];
       QString reviewersListJson = eSign[ "reviewersListJson" ];
       QString approversListJson = eSign[ "approversListJson" ];
