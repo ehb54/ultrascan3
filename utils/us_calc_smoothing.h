@@ -11,7 +11,7 @@ namespace US_Calc
 {
 //! \brief The normal probability density with standard deviation sigma and
 //! the given mean, at x.  A sigma of zero gives no finite value.
-double              normal_distribution( double sigma, double mean, double x );
+US_UTIL_EXTERN double normal_distribution( double sigma, double mean, double x );
 
 //! \brief Smooth a series with a normalized Gaussian kernel reaching two
 //! standard deviations over width points on each side.
@@ -22,7 +22,7 @@ double              normal_distribution( double sigma, double mean, double x );
 //! A width of 1 or less leaves the series unchanged.  A series shorter
 //! than 2*width-1 points cannot be smoothed with that width:  it is left
 //! unchanged and a SeriesTooShort error is returned.
-QVector<Diagnostic> gaussian_smoothing( QVector<double>& values, int width );
+US_UTIL_EXTERN QVector<Diagnostic> gaussian_smoothing( QVector<double>& values, int width );
 } // namespace US_Calc
 
 #endif

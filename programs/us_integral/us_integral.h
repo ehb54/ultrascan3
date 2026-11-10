@@ -10,13 +10,13 @@
 #include "us_spectrodata.h"
 #include "us_plot.h"
 
-#include "../../calc/us_calc_integral.h"
 #include "qwt_plot_layout.h"
 #include "qwt_plot_marker.h"
 #include "qwt_plot_panner.h"
 #include "qwt_plot_zoomer.h"
 #include "qwt_scale_draw.h"
 #include "qwt_scale_widget.h"
+#include "us_calc_integral.h"
 
 //! \brief Distribution structure
 typedef struct integral_distro_sys
@@ -205,7 +205,7 @@ class US_Integral : public US_Widgets
         void select_x_axis(int index);
 
         //! \brief Build the boundary-fraction vectors of every distribution
-        //! with us_calc, from the current axis and controls.
+        //! with US_Calc, from the current axis and controls.
         void build_bf_vects();
 
         //! \brief Limit the smoothing width to what the division count

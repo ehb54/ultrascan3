@@ -1,6 +1,6 @@
 //! \file test_us_calc_rules.cpp
 // Tolerance rules, replicate summaries and report item matching of the
-// calculation library, with hand-checked values.
+// US_Calc calculations, with hand-checked values.
 
 #include <gtest/gtest.h>
 

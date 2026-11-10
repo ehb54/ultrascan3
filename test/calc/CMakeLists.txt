@@ -1,12 +1,19 @@
-# Calculation-library fixtures and tests (see README.md).
+# Calculation fixtures and tests (see README.md).
 #
 # calc_oracle.py checks that fixtures/expected/reporting.json still follows
 # from the fixture models and report items.  test_calc_legacy_gui runs the
 # current UltraScan calculations on the fixtures and compares them with the
 # captured outputs in fixtures/expected.
 
-# Unit tests of the us_calc library.  They link only the library (QtCore)
-# and GoogleTest:  no GUI, database or display.
+# The calculations are part of us_utils; the tests link it as test/utils
+# does (static when available).  No GUI, database or display is used.
+if(TARGET UltraScan3::Utils_Static)
+    set(US_CALC_LINK_TARGET UltraScan3::Utils_Static)
+else()
+    set(US_CALC_LINK_TARGET UltraScan3::Utils)
+endif()
+
+# Unit tests of the calculations (namespace US_Calc).
 add_executable(test_us_calc
         test_us_calc_preparation.cpp
         test_us_calc_rules.cpp
@@ -14,16 +21,15 @@ add_executable(test_us_calc
         test_us_calc_validation.cpp
         test_us_calc_version.cpp
         )
-target_link_libraries(test_us_calc PRIVATE UltraScan3::Calc gtest gtest_main)
+target_link_libraries(test_us_calc PRIVATE ${US_CALC_LINK_TARGET} gtest gtest_main)
 set_target_properties(test_us_calc PROPERTIES AUTOMOC OFF AUTOUIC OFF AUTORCC OFF)
 include(GoogleTest)
 # One label, as in test/utils; ctest -L calc and -L gtest both match it.
 gtest_discover_tests(test_us_calc PROPERTIES LABELS gtest-unit-calc TIMEOUT 60)
 
-# The reporting calculations against the calculation fixtures.  Qt Core
-# reads the JSON fixture files; the library does not use Qt.
+# The reporting calculations against the calculation fixtures.
 add_executable(test_us_calc_fixtures test_us_calc_fixtures.cpp)
-target_link_libraries(test_us_calc_fixtures PRIVATE UltraScan3::Calc Qt::Core gtest gtest_main)
+target_link_libraries(test_us_calc_fixtures PRIVATE ${US_CALC_LINK_TARGET} Qt::Core gtest gtest_main)
 target_compile_definitions(test_us_calc_fixtures PRIVATE
         CALC_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures")
 set_target_properties(test_us_calc_fixtures PROPERTIES AUTOMOC OFF AUTOUIC OFF AUTORCC OFF)

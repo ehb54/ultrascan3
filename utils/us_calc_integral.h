@@ -62,7 +62,9 @@ struct IntegralDistribution
 //! model without components or with a zero total concentration is an
 //! error; so is a smoothing width the levels cannot support, in which case
 //! the series are left unsmoothed.
-IntegralDistribution integral_distribution( const Model& model, DistributionAxis axis, const IntegralSettings& settings = {} );
+US_UTIL_EXTERN IntegralDistribution integral_distribution( const Model&            model,
+                                                           DistributionAxis        axis,
+                                                           const IntegralSettings& settings = {} );
 } // namespace US_Calc
 
 #endif

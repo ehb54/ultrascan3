@@ -1,5 +1,5 @@
 //! \file us_calc_validation.h
-//! \brief Input checks of the calculation library.
+//! \brief Input checks of the US_Calc calculations.
 #ifndef US_CALC_VALIDATION_H
 #define US_CALC_VALIDATION_H
 
@@ -15,11 +15,11 @@ namespace US_Calc
 //! Warnings:  negative concentrations (the legacy calculations accept them;
 //! a replicate group excludes members whose in-range concentration is
 //! negative).
-QVector<Diagnostic> validate_model( const Model& model );
+US_UTIL_EXTERN QVector<Diagnostic> validate_model( const Model& model );
 
 //! \brief Diagnostics for a range:  an error for non-finite bounds or
 //! low > high.  A range with low == high is valid.
-QVector<Diagnostic> validate_range( const Range& range );
+US_UTIL_EXTERN QVector<Diagnostic> validate_range( const Range& range );
 } // namespace US_Calc
 
 #endif

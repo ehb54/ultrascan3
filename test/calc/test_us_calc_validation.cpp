@@ -1,5 +1,5 @@
 //! \file test_us_calc_validation.cpp
-// Input checks of the calculation library.
+// Input checks of the US_Calc calculations.
 
 #include <gtest/gtest.h>
 
@@ -66,7 +66,7 @@ TEST( UsCalcValidation, NonFiniteValuesAreErrors )
    }
 }
 
-// The legacy calculations accept negative concentrations; the library warns.
+// The legacy calculations accept negative concentrations; US_Calc warns.
 TEST( UsCalcValidation, NegativeConcentrationIsAWarning )
 {
    Model m;

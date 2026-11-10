@@ -24,7 +24,7 @@ struct LineFit
 //! \brief Fit a line to n points.  Like US_Math2::linefit, this does not
 //! check its input:  fewer than two distinct x, or a constant y, gives
 //! non-finite values.
-LineFit linefit( const double* x, const double* y, int n );
+US_UTIL_EXTERN LineFit linefit( const double* x, const double* y, int n );
 
 //! \brief The two definitions of the weighted statistics in UltraScan.
 enum class StatisticsConvention
@@ -95,9 +95,9 @@ struct WeightedStatistics
 };
 
 //! \brief Statistics of values weighted by concentrations of equal length.
-WeightedStatistics weighted_statistics( const QVector<double>& values,
-                                        const QVector<double>& concentrations,
-                                        StatisticsConvention   convention );
+US_UTIL_EXTERN WeightedStatistics weighted_statistics( const QVector<double>& values,
+                                                       const QVector<double>& concentrations,
+                                                       StatisticsConvention   convention );
 } // namespace US_Calc
 
 #endif

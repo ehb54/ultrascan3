@@ -1,5 +1,5 @@
 //! \file us_calc_version.h
-//! \brief Library and algorithm versions of the calculation library.
+//! \brief Interface and algorithm versions of the US_Calc calculations.
 #ifndef US_CALC_VERSION_H
 #define US_CALC_VERSION_H
 
@@ -11,17 +11,17 @@
 
 namespace US_Calc
 {
-//! \brief Version of the library's public interface (major.minor.patch).
+//! \brief Version of the US_Calc interface (major.minor.patch).
 //!
 //! The major number changes when the interface changes incompatibly.  It
 //! is independent of the algorithm versions, which record the rules.
-QString                         library_version();
+US_UTIL_EXTERN QString library_version();
 
-//! \brief Every algorithm of the library with its current version.
-QVector<AlgorithmVersion>       algorithms();
+//! \brief Every US_Calc algorithm with its current version.
+US_UTIL_EXTERN QVector<AlgorithmVersion> algorithms();
 
 //! \brief The current version of the named algorithm, if it exists.
-std::optional<AlgorithmVersion> algorithm( const QString& name );
+US_UTIL_EXTERN std::optional<AlgorithmVersion> algorithm( const QString& name );
 } // namespace US_Calc
 
 #endif

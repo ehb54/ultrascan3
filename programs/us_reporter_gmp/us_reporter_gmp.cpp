@@ -9,13 +9,13 @@
 #include <QPdfWriter>
 #include <QPrinter>
 
-#include "../../calc/us_calc_matching.h"
-#include "../../calc/us_calc_range.h"
-#include "../../calc/us_calc_replicate.h"
-#include "../../calc/us_calc_tolerance.h"
-#include "../../calc/us_calc_units.h"
 #include "../us/us_revision.h"
 #include "../us_fematch/us_thread_worker.h"
+#include "us_calc_matching.h"
+#include "us_calc_range.h"
+#include "us_calc_replicate.h"
+#include "us_calc_tolerance.h"
+#include "us_calc_units.h"
 #include "us_constants.h"
 #include "us_convertio.h"
 #include "us_defines.h"
@@ -4482,7 +4482,7 @@ QString US_ReporterGMP::html_header_velmwl( QString title, QString runName, QStr
 }
 
 // Percent of the model's concentration within a report item's range, from
-// us_calc.  An item type that is not a range type is unsupported; a total
+// US_Calc.  An item type that is not a range type is unsupported; a total
 // that is not positive gives 0.
 static double velmwl_range_fraction( const US_Model& mdl, const QString& type, double low, double high, bool& supported )
 {
@@ -10114,7 +10114,7 @@ QString US_ReporterGMP::get_replicate_group_number( QString ch_alt_desc )
 //Get Integration Results from same Replicate subGroup | same-wvl | same-report-items: 
 QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP::ReportItem ref_report_item, QString u_wvl, QStringList channs_for_wvl )
 {
-   // Members of the group, as us_calc range results
+   // Members of the group, as US_Calc range results
    QVector<US_Calc::RangeResult> members;
    QMap<QString, double>         results;
 
@@ -10196,7 +10196,7 @@ QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP:
    }
    }
 
-   // Mean and population SD from us_calc; a group without members gives 0.
+   // Mean and population SD from US_Calc; a group without members gives 0.
    const US_Calc::ReplicateResult group = US_Calc::replicate_summary( members );
    results["int_av"]                    = group.mean_range_concentration.value_or( 0.0 );
    results["tot_percent_av"]            = group.mean_fraction_percent.value_or( 0.0 );
@@ -10284,7 +10284,7 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
       maxv        = qMax( vval, maxv );
    }
 
-   // Weight averages and total concentration from us_calc; an undefined
+   // Weight averages and total concentration from US_Calc; an undefined
    // average prints as nan, as the division by a zero total did.
    const US_Calc::ModelMeans means = US_Calc::model_means( model_used.calc_model() );
    const double              nan_v = std::numeric_limits<double>::quiet_NaN();
@@ -10834,7 +10834,7 @@ model_used.components[ ii ].vbar20 ),
 
       QString                                range = "[" + QString::number( low ) + " - " + QString::number( high ) + "]";
 
-      // Integrate over model_used with us_calc:  inclusive range in report
+      // Integrate over model_used with US_Calc:  inclusive range in report
       // units, sums in component order.  Values the arithmetic leaves
       // undefined print as nan, as the divisions by zero did; an item type
       // that is not a range type selects nothing (fraction 0).

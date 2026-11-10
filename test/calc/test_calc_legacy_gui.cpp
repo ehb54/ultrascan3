@@ -13,7 +13,7 @@
 //
 // Set CALC_FIXTURES_UPDATE=1 to write the captured outputs instead of
 // comparing them.  Do that only when a change of legacy behavior is intended
-// and recorded; the library must reproduce these outputs.
+// and recorded; US_Calc must reproduce these outputs.
 
 #include "us3_gui_test_main.h"
 

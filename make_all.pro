@@ -2,15 +2,11 @@ TEMPLATE = subdirs
 TARGET = UltraScan
 VERSION = 4.0.$$system(git log --oneline | wc -l)
 
-SUBDIRS = qwtplot3d calc utils gui
+SUBDIRS = qwtplot3d utils gui
 
 ## define subdir target qwtplot3d
 qwtplot3d.file = qwtplot3d/qwtplot3d.pro
 qwtplot3d.makefile = Makefile
-
-## define subdir target calc (no dependencies)
-calc.file = calc/libus_calc.pro
-calc.makefile = Makefile
 
 ## define subdir target utils
 utils.depends = qwtplot3d
@@ -32,6 +28,6 @@ for(tmp, PROGRAMS){
 pro_file_name = $$basename(tmp)
 pro_name = $$section(pro_file_name,.pro,0,0 )
 SUBDIRS += $$pro_name
-$$val_escape(pro_name).depends = qwtplot3d calc utils gui
+$$val_escape(pro_name).depends = qwtplot3d utils gui
 $$val_escape(pro_name).subdir = programs/$$val_escape(pro_name)
 }

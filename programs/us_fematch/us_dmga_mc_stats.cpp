@@ -1,7 +1,7 @@
 //! \file us_dmga_mc_stats.cpp
 
 #include "us_dmga_mc_stats.h"
-#include "../../calc/us_calc_statistics.h"
+#include "us_calc_statistics.h"
 
 #include <limits>
 
@@ -193,7 +193,7 @@ bool US_DmgaMcStats::compute_statistics( const int nvals,
       QVector< double >& vals, QVector< double >& concs,
       QVector< double >& stats )
 {
-   // The statistics come from us_calc; undefined ones are nan.
+   // The statistics come from US_Calc; undefined ones are nan.
    const US_Calc::WeightedStatistics st = US_Calc::weighted_statistics(
       vals.mid( 0, nvals ), concs.mid( 0, nvals ), US_Calc::StatisticsConvention::MonteCarloIterations );
    const double nan      = std::numeric_limits<double>::quiet_NaN();

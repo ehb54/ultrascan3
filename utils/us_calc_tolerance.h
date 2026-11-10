@@ -7,6 +7,8 @@
 #ifndef US_CALC_TOLERANCE_H
 #define US_CALC_TOLERANCE_H
 
+#include "us_extern.h"
+
 #include <QString>
 
 namespace US_Calc
@@ -37,10 +39,10 @@ struct ToleranceCheck
 };
 
 //! \brief True when the value passes the check.  A NaN value fails.
-bool    passes( double value, const ToleranceCheck& check );
+US_UTIL_EXTERN bool    passes( double value, const ToleranceCheck& check );
 
 //! \brief The name of a rule, for provenance.
-QString tolerance_rule_name( ToleranceRule rule );
+US_UTIL_EXTERN QString tolerance_rule_name( ToleranceRule rule );
 } // namespace US_Calc
 
 #endif

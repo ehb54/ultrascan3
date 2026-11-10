@@ -2,7 +2,7 @@
 #include "us_calc_coefficients.h"
 #include "us_calc_fp.h" // first:  floating-point policy
 
-#include "us_calc_constants.h"
+#include "us_constants.h"
 
 #include <QtMath>
 

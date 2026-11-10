@@ -1,7 +1,7 @@
 //! \file us_solutedata.cpp
 
 #include "us_solutedata.h"
-#include "../../calc/us_calc_statistics.h"
+#include "us_calc_statistics.h"
 #include "us_constants.h"
 #include "us_defines.h"
 #include "us_ga_init.h"
@@ -1142,7 +1142,7 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
    QString str1;
    QString                           str2;
 
-   // The statistics come from us_calc; undefined ones print as nan.
+   // The statistics come from US_Calc; undefined ones print as nan.
    const US_Calc::WeightedStatistics st =
       US_Calc::weighted_statistics( vals.toVector(), concs.toVector(), US_Calc::StatisticsConvention::ConcentrationDistribution );
    const double nan         = std::numeric_limits<double>::quiet_NaN();

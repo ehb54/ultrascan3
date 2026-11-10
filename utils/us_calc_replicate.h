@@ -35,7 +35,7 @@ struct ReplicateResult
 //!
 //! A member is used when its in-range concentration is not negative and
 //! its fraction is defined.  Others are left out with a warning.
-ReplicateResult replicate_summary( const QVector<RangeResult>& members );
+US_UTIL_EXTERN ReplicateResult replicate_summary( const QVector<RangeResult>& members );
 } // namespace US_Calc
 
 #endif

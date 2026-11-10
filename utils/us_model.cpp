@@ -1,7 +1,7 @@
 //! \file us_model.cpp
 #include "us_model.h"
-#include "../calc/us_calc_coefficients.h"
-#include "../calc/us_calc_composite.h"
+#include "us_calc_coefficients.h"
+#include "us_calc_composite.h"
 #include "us_constants.h"
 #include "us_math2.h"
 #include "us_settings.h"
@@ -163,7 +163,7 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
    return ok;
 }
 
-// A component as the calculation library takes it
+// A component as the US_Calc calculations take it
 US_Calc::Component US_Model::calc_component( const SimulationComponent& sc )
 {
    US_Calc::Component c;
@@ -177,7 +177,7 @@ US_Calc::Component US_Model::calc_component( const SimulationComponent& sc )
    return c;
 }
 
-// The model as the calculation library takes it
+// The model as the US_Calc calculations take it
 US_Calc::Model US_Model::calc_model( void ) const
 {
    US_Calc::Model cm;
@@ -708,7 +708,7 @@ int US_Model::load_multi_model( QTextStream& tsi )
       }
    }
 
-   // Load every iteration, then build the composite in us_calc.
+   // Load every iteration, then build the composite in US_Calc.
    QVector<SimulationComponent> mmcomps;
    QVector<Association>         mmassos;
    QVector<US_Calc::Model>      iterations;

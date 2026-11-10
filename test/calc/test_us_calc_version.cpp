@@ -1,5 +1,5 @@
 //! \file test_us_calc_version.cpp
-// Library and algorithm versions of the calculation library.
+// Interface and algorithm versions of the US_Calc calculations.
 
 #include <gtest/gtest.h>
 
@@ -27,7 +27,7 @@ TEST( UsCalcVersion, AlgorithmsAreNamedVersionedAndDescribed )
       EXPECT_FALSE( names.contains( a.name ) ) << "duplicate " << a.name;
       names.insert( a.name );
    }
-   // The calculations the library provides
+   // The calculations US_Calc provides
    for ( const char* name : { "range_summary",
                               "replicate_summary",
                               "tolerance",

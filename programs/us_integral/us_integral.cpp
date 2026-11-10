@@ -816,7 +816,7 @@ DbgLv(1) << "LD:  edata: desc run cell chan"
    QString bmanu;
    QString errmsg;
 
-   // The integral distribution is calculated by us_calc from the model's
+   // The integral distribution is calculated by US_Calc from the model's
    // components (US_Calc::integral_distribution completes the coefficients).
    tsys.calc_model = model.calc_model();
 
@@ -1048,7 +1048,7 @@ DbgLv(1) << "sel_x:  ival" << ival;
    plot_data();         // Plot data
 }
 
-// Build the boundary-fraction vectors of every distribution with us_calc
+// Build the boundary-fraction vectors of every distribution with US_Calc
 void US_Integral::build_bf_vects()
 {
    v_bfracs.clear();

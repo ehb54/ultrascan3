@@ -1,8 +1,8 @@
-# Calculation-library fixtures and regression tests
+# Calculation fixtures and regression tests
 
-Reference data and regression tests for the calculation library `us_calc`
-(`calc/`) and the desktop programs that use it.  The library and its callers
-must reproduce these results; a change to any of them is a scientific
+Reference data and regression tests for the shared calculations (namespace
+`US_Calc`, the `us_calc_*` files in `utils/`) and the desktop programs that
+use them.  The calculations and their callers must reproduce these results; a change to any of them is a scientific
 decision, recorded with the change.
 
 ## Contents
@@ -14,7 +14,7 @@ decision, recorded with the change.
 | `fixtures/edge/*.model.xml` | Hand-made models for edge cases: no components, zero total, one component, values on range bounds, a negative concentration, duplicates and equal-s ties. |
 | `fixtures/report_items.json` | Report items (type, method, range, target, tolerance) for each sample, replicate groups and edge items.  Designed once by `calc_oracle.py design`. |
 | `fixtures/expected/reporting.json` | Expected range, total-concentration and replicate results from `calc_oracle.py`. |
-| `fixtures/expected/legacy_*.json` | Outputs of the desktop code on the fixtures (model loading, us_ga_init statistics, US_Integral curves, smoothing), captured by `test_calc_legacy_gui`.  They equal the code before the library replaced it, except for the changes listed below. |
+| `fixtures/expected/legacy_*.json` | Outputs of the desktop code on the fixtures (model loading, us_ga_init statistics, US_Integral curves, smoothing), captured by `test_calc_legacy_gui`.  They equal the code before US_Calc replaced it, except for the changes listed below. |
 | `fixtures/expected/tolerances.json` | Acceptance tolerances. |
 | `make_fitted_models.py` | Fits the samples, reusing `../mpi_analysis/us_mpi_regression.py`. |
 | `calc_oracle.py` | Independent expected values for the reporter's range and replicate calculations. |
@@ -80,10 +80,10 @@ CALC_FIXTURES_UPDATE=1 <build>/bin/test_calc_legacy_gui
 Paths given to `make_fitted_models.py` must be absolute; each job runs in its
 own directory.
 
-## Legacy behavior and what the library does
+## Legacy behavior and what US_Calc does
 
 Behavior of the desktop code found while building the fixtures, and how
-`us_calc` handles it.  Items 3, 4 and 7 were reported in
+`US_Calc` handles it.  Items 3, 4 and 7 were reported in
 ehb54/ultrascan-tickets#1214.
 
 1. **Monte Carlo composite.**  `US_Model::load` turns a Monte Carlo file into
@@ -93,19 +93,19 @@ ehb54/ultrascan-tickets#1214.
    attribute comes from the last matching component, and the description
    gains `_mcN<count>`.  The reporter calculates on this composite.  Merging
    by printed text rather than by value is part of the scientific result, so
-   the library keeps it and makes the keys with the same
+   US_Calc keeps it and makes the keys with the same
    `QString::asprintf` call.
 2. **Tolerance edges depend on rounding.**  `edge_duplicates_ties` has an
    exact fraction of 60 % against a 50 ± 10 % target.  Whether it passes
    depends on the order and rounding of the double sums; it passes as the
-   reporter sums.  The library sums in the same order, so results on an
+   reporter sums.  US_Calc sums in the same order, so results on an
    edge match existing reports.
 3. **Unstable sort in US_Integral.**  The desktop `sort_distro` compared only
    the axis value (the comment on `distro_lessthan_s` described a tie-break
    on D that the code did not have) and used `std::sort`, which is not
    stable.  The order of equal values, and so which exact duplicates ended
    up adjacent and were merged, depended on the component order and differed
-   between libc++ and libstdc++ from about 20 components.  The library sorts
+   between libc++ and libstdc++ from about 20 components.  US_Calc sorts
    on a total order with `std::stable_sort`, and US_Integral uses it.
 4. **Duplicate reduction shrank the distribution.**  After merging adjacent
    exact duplicates, the desktop `sort_distro` multiplied every
@@ -113,7 +113,7 @@ ehb54/ultrascan-tickets#1214.
    run of duplicates, while `resort_sol` normalized by the original total.
    The cumulative sum then ended at 1/(k+1) and the last component received
    the remaining fractions; the same solutes in two orders gave 70 % and
-   about 35 % at one s value.  The library merges solutes with equal s, D,
+   about 35 % at one s value.  US_Calc merges solutes with equal s, D,
    MW and f/f0 wherever they appear (concentrations summed, vbar and radius
    averaged), rescales nothing, and the cumulative sum ends at 1.  The
    `edge_duplicates_ties` curves in `legacy_integral.json` are the corrected
@@ -122,18 +122,18 @@ ehb54/ultrascan-tickets#1214.
    (NaN or infinity); `velmwl_range_fraction` returns 0; `US_Integral`
    normalizes by the total; `outputStats` divides by the total weight;
    `US_Model::constant_vbar` and `constant_ff0` read the first component of
-   an empty model.  The library reports an empty model or a zero total as an
+   an empty model.  US_Calc reports an empty model or a zero total as an
    error and returns no value; the desktop output is unchanged.  Empty and
    zero-total models are excluded from the captured outputs.
 6. **Unsupported types.**  An item type outside s, D, MW and f/f0 selects
    nothing in `distrib_info` (fraction 0) but is reported unsupported by
-   `velmwl_range_fraction`.  The library reports it unsupported; the reporter
+   `velmwl_range_fraction`.  US_Calc reports it unsupported; the reporter
    still shows 0 %.
 7. **Gaussian smoothing past the array.**  `gaussian_smoothing` needs at
    least `2*smooth-1` points; with fewer, its border loops read and write
    past the array, and a Qt build with bounds assertions aborts.  US_Integral
    reached this because its smoothing control started with a maximum of 100
-   while the division count started at 100.  The library rejects such a
+   while the division count started at 100.  US_Calc rejects such a
    series and leaves it unchanged, `US_Math2::gaussian_smoothing` leaves it
    unchanged, and US_Integral limits the smoothing to what the division
    count supports from the start.  The captured cases stay within the
@@ -142,7 +142,7 @@ ehb54/ultrascan-tickets#1214.
    add (FMA), which changes the last bits and, where a value sits on a bin
    edge or a difference cancels exactly, the result itself.  Legacy results
    therefore differed between builds (arm64, GCC defaults, -march=native).
-   us_calc is compiled without contraction (`us_calc_fp.h`), so it gives the
+   US_Calc is compiled without contraction (`us_calc_fp.h`), so it gives the
    same doubles everywhere, and equals the legacy code compiled without
    contraction bit for bit.  The captures are made without contraction; the
    smoothing captures differ from an FMA build of the legacy code by at most
@@ -150,7 +150,7 @@ ehb54/ultrascan-tickets#1214.
 9. **Histogram area missed the maximum.**  `outputStats` tested each of its
    50 bins against edge + width, which rounds differently from the next
    edge, and left the last bin open, so the maximum value was counted or
-   not depending on rounding.  us_calc partitions the range so every value
+   not depending on rounding.  US_Calc partitions the range so every value
    is counted once, and the area is the total concentration times the bin
    width.  In `legacy_output_stats.json` this differs from the earlier code
    in the area of 55 of 250 blocks and in the mode and confidence limits of
@@ -158,11 +158,11 @@ ehb54/ultrascan-tickets#1214.
    The weighted confidence intervals sorted the values alone with
    `std::sort`, so with equal values of different concentration (common on
    2DSA grids) they differed between libc++ and libstdc++ and with component
-   order.  us_calc orders equal values by concentration; this changed the
+   order.  US_Calc orders equal values by concentration; this changed the
    intervals of 3 of 75 blocks in `legacy_output_stats.json` against the
    macOS (libc++) output.
    `US_DmgaMcStats::compute_statistics` (DMGA-MC, us_fematch) had a copy of
-   the same histogram and now uses the library too, so its area and mode
+   the same histogram and now uses US_Calc too, so its area and mode
    change in the same way.
 10. **Two definitions of weighted statistics.**  `outputStats` and
    `compute_statistics` share the minimum, maximum, weighted mean, line fit

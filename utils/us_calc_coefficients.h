@@ -19,7 +19,7 @@ namespace US_Calc
 //! - Returns false when no valid pair is present.
 //! - When the frictional coefficient changes by more than 10 %, f takes the
 //!   new value; if the concentration was zero it takes the old f.
-bool calc_coefficients( Component& component );
+US_UTIL_EXTERN bool calc_coefficients( Component& component );
 } // namespace US_Calc
 
 #endif

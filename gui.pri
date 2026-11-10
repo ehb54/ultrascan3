@@ -15,7 +15,7 @@ QT          += openglwidgets
 CONFIG       += $$DEBUGORRELEASE qt thread warn widgets
 
 unix {
-  LIBS       += -L../../lib -lus_gui -lus_utils -lus_calc
+  LIBS       += -L../../lib -lus_gui -lus_utils
   LIBS       += -lcrypto
   LIBS       += $$QWTLIB
   ##LIBS       += -lqwtplot3d-qt4 -lGLU
@@ -41,7 +41,7 @@ win32 {
   LIBS       += -L$$OPENSSL/lib -lssl -lcrypto
   LIBS       += $$MINGWDIR/lib/libws2_32.a $$MINGWDIR/lib/libadvapi32.a
   LIBS       += $$MINGWDIR/lib/libgdi32.a $$MINGWDIR/lib/libuser32.a
-  LIBS       += -L../../lib -lus_gui$${VER} -lus_utils$${VER} -lus_calc
+  LIBS       += -L../../lib -lus_gui$${VER} -lus_utils$${VER}
 
   # Applications must see the shared libraries as imports.  Without these the
   # us_gui/us_utils and qwt classes lose __declspec(dllimport) in application
@@ -58,7 +58,7 @@ win32 {
 
 macx {
   CONFIG     += x86_64
-  LIBS       += -L../../lib -lus_gui -lus_utils -lus_calc
+  LIBS       += -L../../lib -lus_gui -lus_utils
   LIBS       += $$QWTLIB 
   LIBS       += -L../../lib -lmysqlclient -framework QtOpenGL
   DEFINES    += MAC OSX 

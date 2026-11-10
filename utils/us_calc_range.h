@@ -5,7 +5,7 @@
 //! (us_reporter_gmp.cpp:  distrib_info and velmwl_range_fraction) for the
 //! same model:  bounds are scaled and compared as there, and every sum runs
 //! in component order with the same double operations.  Where the reporter
-//! divides by zero, the library leaves the value empty and adds a
+//! divides by zero, US_Calc leaves the value empty and adds a
 //! diagnostic.
 #ifndef US_CALC_RANGE_H
 #define US_CALC_RANGE_H
@@ -55,10 +55,10 @@ struct ModelMeans
 //! converted with to_model_units.  Supported quantities are s, D, MW and
 //! f/f0, the reporter's range types; vbar gives an UnsupportedQuantity
 //! error.  An invalid range or model gives an error and no fraction.
-RangeResult range_summary( const Model& model, const Range& range );
+US_UTIL_EXTERN RangeResult range_summary( const Model& model, const Range& range );
 
 //! \brief The concentration-weighted means of a whole model.
-ModelMeans  model_means( const Model& model );
+US_UTIL_EXTERN ModelMeans  model_means( const Model& model );
 } // namespace US_Calc
 
 #endif

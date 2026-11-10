@@ -1,13 +1,13 @@
 //! \file test_us_calc_preparation.cpp
-// Coefficient preparation and smoothing of the calculation library.
+// Coefficient preparation and smoothing of the US_Calc calculations.
 
 #include <gtest/gtest.h>
 
 #include <QVector>
 
 #include "us_calc_coefficients.h"
-#include "us_calc_constants.h"
 #include "us_calc_smoothing.h"
+#include "us_constants.h"
 
 using namespace US_Calc;
 

@@ -1,5 +1,5 @@
 //! \file test_us_calc_fixtures.cpp
-// The us_calc reporting calculations against the calculation fixtures.
+// The US_Calc reporting calculations against the calculation fixtures.
 //
 // fixtures/expected/reporting.json holds every fixture model as the
 // calculations receive it and the expected results from calc_oracle.py,
@@ -286,10 +286,10 @@ TEST_F( UsCalcFixtures, ReplicateGroupsMatchTheOracle )
    }
 }
 
-// The library reproduces the smoothing captured from US_Math2 before the
+// US_Calc reproduces the smoothing captured from US_Math2 before the
 // library replaced it (fixtures/expected/legacy_smoothing.json) within the legacy
 // series tolerance:  the capture was made by a build that fused multiply-adds,
-// which us_calc does not (us_calc_fp.h).
+// which US_Calc does not (us_calc_fp.h).
 TEST( UsCalcLegacyCaptures, SmoothingMatchesTheCapture )
 {
    const QJsonObject captured = readJson( "expected/legacy_smoothing.json" );
@@ -316,7 +316,7 @@ TEST( UsCalcLegacyCaptures, SmoothingMatchesTheCapture )
 }
 
 // Each Monte Carlo fixture's composite equals the one US_Model::load built
-// before the library replaced it (checked by calc_oracle.py against legacy_models.json).
+// before US_Calc replaced it (checked by calc_oracle.py against legacy_models.json).
 TEST_F( UsCalcFixtures, CompositesMatchTheFixtures )
 {
    int composites = 0;

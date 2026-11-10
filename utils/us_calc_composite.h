@@ -30,7 +30,7 @@ struct CompositeResult
 //! \brief The text that identifies a solute point:  QString::asprintf of
 //! "%10.4f %8.5f" with s in S (s * 1e13) and the second value (f/f0 or
 //! vbar20).
-QString         mc_solute_key( double s, double second );
+US_UTIL_EXTERN QString         mc_solute_key( double s, double second );
 
 //! \brief Build the composite model of Monte Carlo iterations.
 //!
@@ -44,7 +44,7 @@ QString         mc_solute_key( double s, double second );
 //!   field replaced by _mcN<iterations>:
 //!   a.b.c_d_mc0001.model gives a.b.c_d_mcN003.model for 3 iterations.
 //! - No iterations, or an iteration without components, is an error.
-CompositeResult mc_composite( const QVector<Model>& iterations );
+US_UTIL_EXTERN CompositeResult mc_composite( const QVector<Model>& iterations );
 } // namespace US_Calc
 
 #endif

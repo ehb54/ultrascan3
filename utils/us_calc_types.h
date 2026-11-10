@@ -1,11 +1,13 @@
 //! \file us_calc_types.h
-//! \brief Value types of the UltraScan calculation library.
+//! \brief Value types of the UltraScan calculations (namespace US_Calc).
 //!
-//! The library holds the scientific calculations that the desktop programs
-//! share.  It uses QtCore only:  no widgets, database access, file reading
-//! or report formatting.
+//! The us_calc_* files of us_utils hold the scientific calculations that the
+//! desktop programs share.  They use QtCore only:  no widgets, database
+//! access, file reading or report formatting.
 #ifndef US_CALC_TYPES_H
 #define US_CALC_TYPES_H
+
+#include "us_extern.h"
 
 #include <QString>
 #include <QVector>
@@ -106,7 +108,7 @@ struct AlgorithmVersion
 };
 
 //! \brief True when any diagnostic is an error.
-bool has_error( const QVector<Diagnostic>& diagnostics );
+US_UTIL_EXTERN bool has_error( const QVector<Diagnostic>& diagnostics );
 } // namespace US_Calc
 
 #endif

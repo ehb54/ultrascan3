@@ -5,8 +5,8 @@
 #include <dlfcn.h>
 #endif
 
-#include "../calc/us_calc_smoothing.h"
-#include "../calc/us_calc_statistics.h"
+#include "us_calc_smoothing.h"
+#include "us_calc_statistics.h"
 #include "us_constants.h"
 #include "us_dataIO.h"
 #include "us_math2.h"

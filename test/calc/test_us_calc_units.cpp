@@ -1,5 +1,5 @@
 //! \file test_us_calc_units.cpp
-// Units and quantity access of the calculation library.
+// Units and quantity access of the US_Calc calculations.
 
 #include <gtest/gtest.h>
 
