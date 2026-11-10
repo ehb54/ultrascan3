@@ -408,38 +408,84 @@ void US_Project::deleteFromDisk( void )
 }
 
 // Function to delete a project from db
-void US_Project::deleteFromDB( IUS_DB2* db )
+int US_Project::deleteFromDB( IUS_DB2* db )
 {
-   QStringList q;
-   if ( projectID == 0 )
-   {
-      // Then probably user selected from disk but is trying to delete from db,
-      // so let's try to get the db projectID from the GUID
-      q.clear();
-      q << "get_projectID_from_GUID"
-        << projectGUID;
-      db->query( q );
-   
-      if ( db->next() )
-         projectID = db->value( 0 ).toInt();
-
-    }
+   int status = IUS_DB2::OK;
+   lookupProjectID( db );
 
    if ( projectID > 0 ) // otherwise it's not there to delete
    {
-      q.clear();
+      QStringList q;
       q << "delete_project"
         << QString::number( projectID );
-   
-      int status = db->statusQuery( q );
-      if ( status != IUS_DB2::OK )
-         qDebug() << "MySQL error: " << db->lastError();
 
+      status = db->statusQuery( q );
+
+      // Keep the project if it is in use or the delete failed
+      if ( status != IUS_DB2::OK )
+      {
+         qDebug() << "MySQL error: " << db->lastError();
+         return status;
+      }
    }
 
    clear();
 
    saveStatus = ( saveStatus == BOTH ) ? HD_ONLY : NOT_SAVED;
+   return status;
+}
+
+// Function to list the run IDs of the db experiments linked to the project
+int US_Project::linkedExperiments( IUS_DB2* db, QStringList& runIDs )
+{
+   runIDs.clear();
+   lookupProjectID( db );
+
+   if ( projectID <= 0 ) // not in the db, so nothing is linked to it
+   {
+      return IUS_DB2::OK;
+   }
+
+   QStringList q;
+   q << "get_project_experiments" << QString::number( projectID );
+
+   // statusQuery() returns DBERROR when the db predates this procedure;
+   //  query() would just leave the previous status in place
+   int status = db->statusQuery( q );
+
+   if ( status == IUS_DB2::OK )
+   {
+      db->query( q );
+
+      while ( db->next() )
+      {
+         runIDs << db->value( 1 ).toString();
+      }
+
+      status = db->lastErrno();
+   }
+
+   return ( status == IUS_DB2::NOROWS ) ? IUS_DB2::OK : status;
+}
+
+// Function to get the db projectID from the GUID, if it is not known yet
+void US_Project::lookupProjectID( IUS_DB2* db )
+{
+   if ( projectID != 0 )
+   {
+      return;
+   }
+
+   // Then probably user selected from disk but is working with the db,
+   // so let's try to get the db projectID from the GUID
+   QStringList q;
+   q << "get_projectID_from_GUID" << projectGUID;
+   db->query( q );
+
+   if ( db->next() )
+   {
+      projectID = db->value( 0 ).toInt();
+   }
 }
 
 // Function to find the file name of a project on disk, if it exists

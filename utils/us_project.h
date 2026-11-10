@@ -86,11 +86,24 @@ public:
     //! \brief    Function to delete the current project from disk, if it exists
     void deleteFromDisk();
 
-    /*! \brief    Function to delete the current project from the db, if it exists
+    /*! \brief    Function to delete the current project from the db, if it exists.
+                  The project is kept, and PROJECT_IN_USE returned, while any
+                  experiment is linked to it.
 
         \param    db For database access, an open database connection
+        \return   One of the IUS_DB2 error codes
     */
-    void deleteFromDB( IUS_DB2* db );
+    int  deleteFromDB( IUS_DB2* db );
+
+    /*! \brief    Function to list the experiments in the db that are linked to
+                  the current project
+
+        \param    db For database access, an open database connection
+        \param    runIDs The function will return the run IDs here, empty if none
+        \return   One of the IUS_DB2 error codes. DBERROR if the db has no
+                  get_project_experiments procedure.
+    */
+    int  linkedExperiments( IUS_DB2* db, QStringList& runIDs );
 
     /*! \brief    Function to find the filename of a project on disk, if it exists.
                   Returns true if successful, false otherwise
@@ -114,5 +127,6 @@ private:
 
     void readProjectInfo( QXmlStreamReader& xml );
     QString get_filename( const QString& path, bool& newFile );
+    void    lookupProjectID( IUS_DB2* db );
 };
 #endif
