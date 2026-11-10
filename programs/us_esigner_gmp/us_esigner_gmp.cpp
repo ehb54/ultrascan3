@@ -2946,25 +2946,25 @@ QStringList US_eSignaturesGMP::read_operators( QString optima_id )
 //          a connection is opened (and closed again on return) for every single record.
 QMap<QString, QString> US_eSignaturesGMP::read_autoflowGMPReportEsign_record( QString aID, US_DB2* db_in )
 {
-  QMap< QString, QString> eSign_record;
+   QMap<QString, QString> eSign_record;
 
-  QScopedPointer<US_DB2>  db_own; // only used when no connection was passed in
-  US_DB2*                 db = db_in;
+   QScopedPointer<US_DB2> db_own; // only used when no connection was passed in
+   US_DB2*                db = db_in;
 
-  if ( !db )
-  {
-     US_Passwd pw( this );
-     db_own.reset( new US_DB2( pw.getPasswd() ) );
-     db = db_own.data();
+   if ( !db )
+   {
+      US_Passwd pw( this );
+      db_own.reset( new US_DB2( pw.getPasswd() ) );
+      db = db_own.data();
 
-     if ( db->lastErrno() != US_DB2::OK )
-     {
-        QMessageBox::warning(
-           this, tr( "LIMS DB Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
+      if ( db->lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::warning(
+            this, tr( "LIMS DB Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
 
-        return eSign_record;
-     }
-    }
+         return eSign_record;
+      }
+   }
 
   QStringList qry;
   qry << "get_gmp_review_info_by_autoflowID" << aID;
