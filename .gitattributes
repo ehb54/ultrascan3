@@ -1,0 +1,3 @@
+# Calculation test fixtures written by the fixture scripts and tests; collapsed in GitHub diffs
+test/calc/fixtures/** linguist-generated
+test/calc/fixtures/expected/tolerances.json -linguist-generated
