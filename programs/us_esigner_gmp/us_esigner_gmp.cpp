@@ -2751,7 +2751,7 @@ int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflow
                                 .arg( baseRows.size() )
                                 .arg( nrecs ) );
      qApp->processEvents();
-	}
+   }
     }
 
   qDebug() << "in listallautolfow, autoflowdata -- " << autoflowdata;
