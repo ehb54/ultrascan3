@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 
-#include <vector>
+#include <QVector>
 
 #include "us_calc_coefficients.h"
 #include "us_calc_constants.h"
@@ -79,8 +79,8 @@ TEST( UsCalcCoefficients, InvalidInputs )
 
 TEST( UsCalcSmoothing, WidthOneOrLessChangesNothing )
 {
-   std::vector<double> v    = { 1, 5, 2, 8, 3 };
-   const auto          orig = v;
+   QVector<double> v    = { 1, 5, 2, 8, 3 };
+   const auto      orig = v;
    EXPECT_TRUE( gaussian_smoothing( v, 1 ).empty() );
    EXPECT_TRUE( gaussian_smoothing( v, 0 ).empty() );
    EXPECT_EQ( v, orig );
@@ -90,11 +90,11 @@ TEST( UsCalcSmoothing, ShortSeriesAreRejectedUnchanged )
 {
    for ( int width : { 2, 3, 10, 60 } )
    {
-      std::vector<double> v( 2 * width - 2, 1.5 );
+      QVector<double> v( 2 * width - 2, 1.5 );
       v[0]            = 7.0;
       const auto orig = v;
       auto       d    = gaussian_smoothing( v, width );
-      ASSERT_EQ( d.size(), 1u ) << width;
+      ASSERT_EQ( d.size(), 1 ) << width;
       EXPECT_EQ( d[0].issue, Issue::SeriesTooShort );
       EXPECT_EQ( d[0].severity, Severity::Error );
       EXPECT_EQ( v, orig );
@@ -103,7 +103,7 @@ TEST( UsCalcSmoothing, ShortSeriesAreRejectedUnchanged )
 
 TEST( UsCalcSmoothing, ShortestAcceptedSeriesAndConstants )
 {
-   std::vector<double> v( 2 * 5 - 1, 2.5 ); // a constant stays constant
+   QVector<double> v( 2 * 5 - 1, 2.5 ); // a constant stays constant
    EXPECT_TRUE( gaussian_smoothing( v, 5 ).empty() );
    for ( double x : v )
    {

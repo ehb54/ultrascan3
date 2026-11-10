@@ -4,9 +4,10 @@
 
 #include "us_calc_version.h"
 
+#include <QtGlobal>
+
 #include <algorithm>
 #include <cmath>
-#include <string>
 
 namespace US_Calc
 {
@@ -61,14 +62,14 @@ std::optional<double> finite( double v )
 // against edge + width, which rounds differently from the next edge, and
 // left the last bin open, so the maximum was counted or not depending on
 // rounding.)  Fills the bin edges and concentrations and returns the area.
-double histogram( const std::vector<double>& vals,
-                  const std::vector<double>& concs,
-                  int                        nbins,
-                  double                     vlo,
-                  double                     vhi,
-                  double                     bininc,
-                  std::vector<double>&       xplot,
-                  std::vector<double>&       yplot )
+double histogram( const QVector<double>& vals,
+                  const QVector<double>& concs,
+                  int                    nbins,
+                  double                 vlo,
+                  double                 vhi,
+                  double                 bininc,
+                  QVector<double>&       xplot,
+                  QVector<double>&       yplot )
 {
    const int nvals = static_cast<int>( vals.size() );
    double    area  = 0.0;
@@ -97,7 +98,7 @@ double histogram( const std::vector<double>& vals,
 }
 
 // The first bin with the highest concentration.
-int mode_bin( const std::vector<double>& yplot, int nbins )
+int mode_bin( const QVector<double>& yplot, int nbins )
 {
    double val   = -1.0;
    int    thisb = 0;
@@ -115,12 +116,12 @@ int mode_bin( const std::vector<double>& yplot, int nbins )
 // US_DmgaMcStats::compute_statistics, in its order.  The common part (count,
 // minimum, maximum, weighted mean, line-fit input) is already in st, xplot
 // and yplot.
-void monte_carlo_statistics( WeightedStatistics&        st,
-                             const std::vector<double>& vals,
-                             const std::vector<double>& concs,
-                             double                     vmean,
-                             std::vector<double>&       xplot,
-                             std::vector<double>&       yplot )
+void monte_carlo_statistics( WeightedStatistics&    st,
+                             const QVector<double>& vals,
+                             const QVector<double>& concs,
+                             double                 vmean,
+                             QVector<double>&       xplot,
+                             QVector<double>&       yplot )
 {
    const int    nvals = static_cast<int>( vals.size() );
    const int    nbins = 50;
@@ -164,12 +165,12 @@ void monte_carlo_statistics( WeightedStatistics&        st,
    vm2 /= vsiz;
    vm3 /= vsiz;
    vm4 /= vsiz;
-   const double        skew  = vm3 / pow( vm2, 1.5 );
-   const double        kurto = vm4 / pow( vm2, 2.0 ) - 3.0;
+   const double    skew  = vm3 / pow( vm2, 1.5 );
+   const double    kurto = vm4 / pow( vm2, 2.0 ) - 3.0;
 
-   const LineFit       fit = linefit( xplot.data(), yplot.data(), nvals );
+   const LineFit   fit = linefit( xplot.data(), yplot.data(), nvals );
 
-   std::vector<double> wkvls = vals;
+   QVector<double> wkvls = vals;
    std::sort( wkvls.begin(), wkvls.end() );
    const int hx    = nvals / 2;
    double    vmedi = wkvls[hx];
@@ -206,13 +207,13 @@ void monte_carlo_statistics( WeightedStatistics&        st,
 
 // US_SoluteData::outputStats, in its order.  The common part is already in
 // st, xplot and yplot.
-void distribution_statistics( WeightedStatistics&        st,
-                              const std::vector<double>& vals,
-                              const std::vector<double>& concs,
-                              double                     vmean,
-                              double                     vctot,
-                              std::vector<double>&       xplot,
-                              std::vector<double>&       yplot )
+void distribution_statistics( WeightedStatistics&    st,
+                              const QVector<double>& vals,
+                              const QVector<double>& concs,
+                              double                 vmean,
+                              double                 vctot,
+                              QVector<double>&       xplot,
+                              QVector<double>&       yplot )
 {
    const int    nvals        = static_cast<int>( vals.size() );
    const int    nbins        = 50;
@@ -240,24 +241,24 @@ void distribution_statistics( WeightedStatistics&        st,
    vm2 *= vctot_square / ( vctot * vctot - vctot_square );
    vm3 *= vctot_square / ( vctot * vctot - vctot_square );
    vm4 *= vctot_square / ( vctot * vctot - vctot_square );
-   const double     skew  = vm3 / pow( vm2, 1.5 );
-   const double     kurto = vm4 / pow( vm2, 2.0 ) - 3.0;
+   const double  skew  = vm3 / pow( vm2, 1.5 );
+   const double  kurto = vm4 / pow( vm2, 2.0 ) - 3.0;
 
-   const LineFit    fit = linefit( xplot.data(), yplot.data(), nvals );
+   const LineFit fit = linefit( xplot.data(), yplot.data(), nvals );
 
    const double  sdevi  = pow( vm2, 0.5 );
    const double  sderr  = sdevi / pow( vsiz, 0.5 );
    const double  bininc = ( vhi - vlo ) / binsz;
-   const double     area   = histogram( vals, concs, nbins, vlo, vhi, bininc, xplot, yplot );
+   const double  area   = histogram( vals, concs, nbins, vlo, vhi, bininc, xplot, yplot );
 
-   const double     vdif  = ( vhi - vlo ) / vlo;
-   const double     fvdif = vdif >= 0.0 ? vdif : -vdif; // qAbs
+   const double  vdif  = ( vhi - vlo ) / vlo;
+   const double  fvdif = qAbs( vdif );
 
-   const double     mode_lo  = xplot[mode_bin( yplot, nbins )];
-   const double     mode_hi  = mode_lo + bininc;
-   const double     mode_cen = ( mode_lo + mode_hi ) / 2.0;
+   const double  mode_lo  = xplot[mode_bin( yplot, nbins )];
+   const double  mode_hi  = mode_lo + bininc;
+   const double  mode_cen = ( mode_lo + mode_hi ) / 2.0;
 
-   std::vector<int> idxs( nvals, 0 );
+   QVector<int>  idxs( nvals, 0 );
    for ( int jj = 0; jj < nvals; jj++ )
    {
       idxs[jj] = jj;
@@ -270,8 +271,8 @@ void distribution_statistics( WeightedStatistics&        st,
                      idxs.end(),
                      [&vals, &concs]( int a, int b )
                      { return vals[a] < vals[b] || ( vals[a] == vals[b] && concs[a] < concs[b] ); } );
-   std::vector<double> vals_sorted;
-   std::vector<double> concs_sorted;
+   QVector<double> vals_sorted;
+   QVector<double> concs_sorted;
    for ( int jj = 0; jj < nvals; jj++ )
    {
       vals_sorted.push_back( vals[idxs[jj]] );
@@ -343,32 +344,30 @@ void distribution_statistics( WeightedStatistics&        st,
 }
 } // namespace
 
-WeightedStatistics weighted_statistics( const std::vector<double>& vals,
-                                        const std::vector<double>& concs,
-                                        StatisticsConvention       convention )
+WeightedStatistics weighted_statistics( const QVector<double>& vals, const QVector<double>& concs, StatisticsConvention convention )
 {
    WeightedStatistics st;
    st.algorithm    = *algorithm( "weighted_statistics" );
    st.convention   = convention;
    const int nvals = static_cast<int>( vals.size() );
    st.count        = vals.size();
-   if ( vals.empty() || concs.size() != vals.size() )
+   if ( vals.isEmpty() || concs.size() != vals.size() )
    {
       st.diagnostics.push_back( { Issue::EmptyModel,
                                   Severity::Error,
-                                  vals.empty() ? "there are no values" : "values and concentrations differ in length" } );
+                                  vals.isEmpty() ? "there are no values" : "values and concentrations differ in length" } );
       return st;
    }
 
    // Minimum, maximum and weighted mean, and the line-fit input (each value
    // against its index), as both desktop calculations start.
-   const int           nbins = 50;
-   double              vlo   = 9.9e30;
-   double              vhi   = -9.9e30;
-   std::vector<double> xplot( std::max( nvals, nbins ) );
-   std::vector<double> yplot( std::max( nvals, nbins ) );
-   double              vsum  = 0.0;
-   double              vctot = 0.0;
+   const int       nbins = 50;
+   double          vlo   = 9.9e30;
+   double          vhi   = -9.9e30;
+   QVector<double> xplot( qMax( nvals, nbins ) );
+   QVector<double> yplot( qMax( nvals, nbins ) );
+   double          vsum  = 0.0;
+   double          vctot = 0.0;
 
    for ( int jj = 0; jj < nvals; jj++ )
    {
@@ -376,8 +375,8 @@ WeightedStatistics weighted_statistics( const std::vector<double>& vals,
       const double conc = concs[jj];
       vsum += ( val * conc );
       vctot += conc;
-      vlo       = ( vlo < val ) ? vlo : val; // qMin
-      vhi       = ( vhi < val ) ? val : vhi; // qMax
+      vlo       = qMin( vlo, val );
+      vhi       = qMax( vhi, val );
       xplot[jj] = (double) jj;
       yplot[jj] = val;
    }
@@ -399,7 +398,7 @@ WeightedStatistics weighted_statistics( const std::vector<double>& vals,
 
    if ( vctot == 0.0 )
    {
-      st.diagnostics.insert( st.diagnostics.begin(), { Issue::ZeroTotal, Severity::Error, "the total concentration is zero" } );
+      st.diagnostics.prepend( { Issue::ZeroTotal, Severity::Error, "the total concentration is zero" } );
    }
    return st;
 }

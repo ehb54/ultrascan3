@@ -5,8 +5,8 @@
 
 #include "us_calc_types.h"
 
+#include <QString>
 #include <optional>
-#include <string>
 
 namespace US_Calc
 {
@@ -28,10 +28,10 @@ double                  component_value( const Component& component, Quantity qu
 //! \brief The quantity named by a report item type ("s", "D", "MW",
 //! "f/f0"), as stored in autoflowReportItem.type.  Other types, including
 //! "vbar", are not range types of the reporter and give no value.
-std::optional<Quantity> quantity_from_report_type( const std::string& type );
+std::optional<Quantity> quantity_from_report_type( const QString& type );
 
 //! \brief The short name of a quantity ("s", "D", "MW", "f/f0", "vbar").
-std::string             quantity_name( Quantity quantity );
+QString                 quantity_name( Quantity quantity );
 } // namespace US_Calc
 
 #endif

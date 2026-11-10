@@ -2,84 +2,27 @@
 #include "us_calc_matching.h"
 #include "us_calc_fp.h" // first:  floating-point policy
 
-#include <vector>
+#include <QStringList>
 
 namespace US_Calc
 {
-namespace
+QString analysis_label( const QString& description )
 {
-std::vector<std::string> split( const std::string& text, char separator )
-{
-   // Like QString::split with empty parts kept.
-   std::vector<std::string> parts;
-   std::string::size_type   from = 0;
-   while ( true )
+   QString label = description.section( '.', -2, -2 ).section( '_', 1, -1 );
+   if ( label.isEmpty() )
    {
-      std::string::size_type at = text.find( separator, from );
-      if ( at == std::string::npos )
-      {
-         parts.push_back( text.substr( from ) );
-         return parts;
-      }
-      parts.push_back( text.substr( from, at - from ) );
-      from = at + 1;
-   }
-}
-} // namespace
-
-std::string text_section( const std::string& text, char separator, int start, int end )
-{
-   const std::vector<std::string> fields = split( text, separator );
-   const int                      n      = static_cast<int>( fields.size() );
-   if ( start < 0 )
-   {
-      start += n;
-   }
-   if ( end < 0 )
-   {
-      end += n;
-   }
-   if ( start >= n || end < 0 || start > end )
-   {
-      return "";
-   }
-   if ( start < 0 )
-   {
-      start = 0;
-   }
-   if ( end >= n )
-   {
-      end = n - 1;
-   }
-   std::string out;
-   for ( int i = start; i <= end; ++i )
-   {
-      if ( i > start )
-      {
-         out += separator;
-      }
-      out += fields[i];
-   }
-   return out;
-}
-
-std::string analysis_label( const std::string& description )
-{
-   std::string label = text_section( text_section( description, '.', -2, -2 ), '_', 1, -1 );
-   if ( label.empty() )
-   {
-      label = text_section( description, '.', 0, -2 );
+      label = description.section( '.', 0, -2 );
    }
    return label;
 }
 
-bool method_matches( const std::string& item_method, const std::string& model_description )
+bool method_matches( const QString& item_method, const QString& model_description )
 {
-   const std::string method = item_method.find( "PCSA" ) != std::string::npos ? "PCSA" : item_method;
-   const std::string label  = analysis_label( model_description );
-   for ( const std::string& part : split( method, '-' ) )
+   const QString method = item_method.contains( "PCSA" ) ? QString( "PCSA" ) : item_method;
+   const QString label  = analysis_label( model_description );
+   for ( const QString& part : method.split( '-' ) )
    {
-      if ( label.find( part ) == std::string::npos )
+      if ( !label.contains( part ) )
       {
          return false;
       }

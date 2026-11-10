@@ -5,8 +5,8 @@
 # current UltraScan calculations on the fixtures and compares them with the
 # captured outputs in fixtures/expected.
 
-# Unit tests of the us_calc library.  They link only the library and
-# GoogleTest:  no Qt, GUI, database or display.
+# Unit tests of the us_calc library.  They link only the library (QtCore)
+# and GoogleTest:  no GUI, database or display.
 add_executable(test_us_calc
         test_us_calc_preparation.cpp
         test_us_calc_rules.cpp

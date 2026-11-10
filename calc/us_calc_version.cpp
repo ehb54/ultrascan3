@@ -5,12 +5,12 @@
 
 namespace US_Calc
 {
-std::string library_version()
+QString library_version()
 {
-   return "0.1.0";
+   return "0.2.0";
 }
 
-std::vector<AlgorithmVersion> algorithms()
+QVector<AlgorithmVersion> algorithms()
 {
    return {
       { "range_summary",
@@ -50,7 +50,7 @@ std::vector<AlgorithmVersion> algorithms()
    };
 }
 
-std::optional<AlgorithmVersion> algorithm( const std::string& name )
+std::optional<AlgorithmVersion> algorithm( const QString& name )
 {
    for ( const AlgorithmVersion& a : algorithms() )
    {

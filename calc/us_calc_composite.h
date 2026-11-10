@@ -8,9 +8,8 @@
 
 #include "us_calc_types.h"
 
-#include <cstddef>
-#include <string>
-#include <vector>
+#include <QString>
+#include <QVector>
 
 namespace US_Calc
 {
@@ -19,18 +18,19 @@ struct CompositeResult
 {
       //! Components in key order, each a copy of its last matching source
       //! component with the concentration averaged over the iterations.
-      Model                    model;
+      Model               model;
       //! For each component:  the index of its last matching source
       //! component, counting the iterations' components in order.  Callers
       //! with richer component records copy the record at this index.
-      std::vector<std::size_t> source_index;
-      std::vector<Diagnostic>  diagnostics;
-      AlgorithmVersion         algorithm;
+      QVector<int>        source_index;
+      QVector<Diagnostic> diagnostics;
+      AlgorithmVersion    algorithm;
 };
 
-//! \brief The text that identifies a solute point:  "%10.4f %8.5f" of s in
-//! S (s * 1e13) and of the second value (f/f0 or vbar20).
-std::string     mc_solute_key( double s, double second );
+//! \brief The text that identifies a solute point:  QString::asprintf of
+//! "%10.4f %8.5f" with s in S (s * 1e13) and the second value (f/f0 or
+//! vbar20).
+QString         mc_solute_key( double s, double second );
 
 //! \brief Build the composite model of Monte Carlo iterations.
 //!
@@ -44,7 +44,7 @@ std::string     mc_solute_key( double s, double second );
 //!   field replaced by _mcN<iterations>:
 //!   a.b.c_d_mc0001.model gives a.b.c_d_mcN003.model for 3 iterations.
 //! - No iterations, or an iteration without components, is an error.
-CompositeResult mc_composite( const std::vector<Model>& iterations );
+CompositeResult mc_composite( const QVector<Model>& iterations );
 } // namespace US_Calc
 
 #endif

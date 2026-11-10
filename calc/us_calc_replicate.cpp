@@ -5,40 +5,38 @@
 #include "us_calc_version.h"
 
 #include <cmath>
-#include <string>
 
 namespace US_Calc
 {
-ReplicateResult replicate_summary( const std::vector<RangeResult>& members )
+ReplicateResult replicate_summary( const QVector<RangeResult>& members )
 {
    ReplicateResult result;
    result.member_count = members.size();
    result.algorithm    = *algorithm( "replicate_summary" );
 
-   std::vector<double> rs;
-   std::vector<double> fs;
-   for ( std::size_t i = 0; i < members.size(); ++i )
+   QVector<double> rs;
+   QVector<double> fs;
+   for ( int i = 0; i < members.size(); ++i )
    {
       const RangeResult& m = members[i];
       if ( m.range_concentration < 0.0 )
       {
-         result.diagnostics.push_back(
-            { Issue::NegativeConcentration,
-              Severity::Warning,
-              "member " + std::to_string( i ) + " has a negative in-range concentration and is not used" } );
+         result.diagnostics.push_back( { Issue::NegativeConcentration,
+                                         Severity::Warning,
+                                         QString( "member %1 has a negative in-range concentration and is not used" ).arg( i ) } );
          continue;
       }
       if ( !m.fraction_percent )
       {
          result.diagnostics.push_back(
-            { Issue::ZeroTotal, Severity::Warning, "member " + std::to_string( i ) + " has no fraction and is not used" } );
+            { Issue::ZeroTotal, Severity::Warning, QString( "member %1 has no fraction and is not used" ).arg( i ) } );
          continue;
       }
       rs.push_back( m.range_concentration );
       fs.push_back( *m.fraction_percent );
    }
    result.used_count = rs.size();
-   if ( rs.empty() )
+   if ( rs.isEmpty() )
    {
       result.diagnostics.push_back( { Issue::NoEligibleMembers, Severity::Error, "no member of the group can be used" } );
       return result;
@@ -49,7 +47,7 @@ ReplicateResult replicate_summary( const std::vector<RangeResult>& members )
    const double n     = static_cast<double>( rs.size() );
    double       r_sum = 0.0;
    double       f_sum = 0.0;
-   for ( std::size_t i = 0; i < rs.size(); ++i )
+   for ( int i = 0; i < rs.size(); ++i )
    {
       r_sum += rs[i];
       f_sum += fs[i];
@@ -58,7 +56,7 @@ ReplicateResult replicate_summary( const std::vector<RangeResult>& members )
    const double f_mean = f_sum / n;
    double       r_dev  = 0.0;
    double       f_dev  = 0.0;
-   for ( std::size_t i = 0; i < rs.size(); ++i )
+   for ( int i = 0; i < rs.size(); ++i )
    {
       r_dev += ( r_mean - rs[i] ) * ( r_mean - rs[i] );
       f_dev += ( f_mean - fs[i] ) * ( f_mean - fs[i] );

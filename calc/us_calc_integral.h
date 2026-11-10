@@ -16,7 +16,7 @@
 
 #include "us_calc_types.h"
 
-#include <vector>
+#include <QVector>
 
 namespace US_Calc
 {
@@ -45,15 +45,15 @@ struct IntegralSettings
 //! f/f0, vbar20 in mL/g, and the hydrodynamic radius f / (6e-9 pi eta20w).
 struct IntegralDistribution
 {
-      std::vector<double>     boundary_fractions; //!< the levels
-      std::vector<double>     s;
-      std::vector<double>     D;
-      std::vector<double>     mw;
-      std::vector<double>     f_f0;
-      std::vector<double>     vbar20;
-      std::vector<double>     rh;
-      std::vector<Diagnostic> diagnostics;
-      AlgorithmVersion        algorithm;
+      QVector<double>     boundary_fractions; //!< the levels
+      QVector<double>     s;
+      QVector<double>     D;
+      QVector<double>     mw;
+      QVector<double>     f_f0;
+      QVector<double>     vbar20;
+      QVector<double>     rh;
+      QVector<Diagnostic> diagnostics;
+      AlgorithmVersion    algorithm;
 };
 
 //! \brief The integral distribution of a model along an axis.

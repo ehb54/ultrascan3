@@ -5,9 +5,8 @@
 
 #include "us_calc_types.h"
 
-#include <cstddef>
+#include <QVector>
 #include <optional>
-#include <vector>
 
 namespace US_Calc
 {
@@ -53,52 +52,52 @@ enum class StatisticsConvention
 //! diagnostics.
 struct WeightedStatistics
 {
-      StatisticsConvention    convention = StatisticsConvention::ConcentrationDistribution;
-      std::size_t             count      = 0;
-      double                  minimum    = 0.0;
-      double                  maximum    = 0.0;
+      StatisticsConvention  convention = StatisticsConvention::ConcentrationDistribution;
+      int                   count      = 0;
+      double                minimum    = 0.0;
+      double                maximum    = 0.0;
       //! ConcentrationDistribution:  |(maximum - minimum) / minimum| < 1e-4.
       //! MonteCarloIterations:  minimum == maximum; the moments, the line
       //! fit, the area and the mode bounds are then 0, and the median, the
       //! mode center and the confidence intervals equal the mean.
-      bool                    constant = false;
-      std::optional<double>   mean;     //!< sum(v*c) / sum(c)
-      std::optional<double>   midrange; //!< (minimum + maximum) / 2; outputStats prints it as "Median"
+      bool                  constant   = false;
+      std::optional<double> mean;     //!< sum(v*c) / sum(c)
+      std::optional<double> midrange; //!< (minimum + maximum) / 2; outputStats prints it as "Median"
       //! The median of the values, unweighted (MonteCarloIterations only)
-      std::optional<double>   median;
-      std::optional<double>   variance;
-      std::optional<double>   standard_deviation;
-      std::optional<double>   standard_error; //!< standard deviation / sqrt(count)
-      std::optional<double>   skew;
-      std::optional<double>   kurtosis; //!< excess kurtosis
+      std::optional<double> median;
+      std::optional<double> variance;
+      std::optional<double> standard_deviation;
+      std::optional<double> standard_error; //!< standard deviation / sqrt(count)
+      std::optional<double> skew;
+      std::optional<double> kurtosis; //!< excess kurtosis
       //! Correlation of the values with their index (a line fit)
-      std::optional<double>   correlation;
+      std::optional<double> correlation;
       //! Highest of 50 equal bins between minimum and maximum (low, high, center)
-      std::optional<double>   mode_low;
-      std::optional<double>   mode_high;
-      std::optional<double>   mode_center;
+      std::optional<double> mode_low;
+      std::optional<double> mode_high;
+      std::optional<double> mode_center;
       //! Sum of bin concentrations times bin width.  Every value is in
       //! exactly one bin, the last including the maximum, so this is the
       //! total concentration times the bin width.
-      std::optional<double>   area;
-      int                     bins = 50;
+      std::optional<double> area;
+      int                   bins = 50;
       //! ConcentrationDistribution:  with the values in ascending order (equal
       //! values by ascending concentration), the first value where the
       //! cumulative concentration reaches 2.5 % (0.5 %), and the value before
       //! the one where it exceeds 97.5 % (99.5 %).  MonteCarloIterations:  the mean
       //! -/+ 1.960 (2.576) standard deviations.
-      std::optional<double>   confidence95_low;
-      std::optional<double>   confidence95_high;
-      std::optional<double>   confidence99_low;
-      std::optional<double>   confidence99_high;
-      std::vector<Diagnostic> diagnostics;
-      AlgorithmVersion        algorithm;
+      std::optional<double> confidence95_low;
+      std::optional<double> confidence95_high;
+      std::optional<double> confidence99_low;
+      std::optional<double> confidence99_high;
+      QVector<Diagnostic>   diagnostics;
+      AlgorithmVersion      algorithm;
 };
 
 //! \brief Statistics of values weighted by concentrations of equal length.
-WeightedStatistics weighted_statistics( const std::vector<double>& values,
-                                        const std::vector<double>& concentrations,
-                                        StatisticsConvention       convention );
+WeightedStatistics weighted_statistics( const QVector<double>& values,
+                                        const QVector<double>& concentrations,
+                                        StatisticsConvention   convention );
 } // namespace US_Calc
 
 #endif

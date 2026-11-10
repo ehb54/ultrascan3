@@ -4,8 +4,7 @@
 // fixtures/expected/reporting.json holds every fixture model as the
 // calculations receive it and the expected results from calc_oracle.py,
 // which are exact for those inputs.  The tolerances come from
-// fixtures/expected/tolerances.json.  Qt Core is used here only to read the
-// JSON files; the library itself has no Qt dependency.
+// fixtures/expected/tolerances.json.
 
 #include <gtest/gtest.h>
 
@@ -13,13 +12,12 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QMap>
 #include <QString>
+#include <QVector>
 
 #include <algorithm>
 #include <cmath>
-#include <map>
-#include <random>
-#include <string>
 
 #include "us_calc_composite.h"
 #include "us_calc_integral.h"
@@ -27,6 +25,7 @@
 #include "us_calc_range.h"
 #include "us_calc_replicate.h"
 #include "us_calc_smoothing.h"
+#include "us_calc_test_print.h"
 #include "us_calc_tolerance.h"
 #include "us_calc_units.h"
 
@@ -39,7 +38,7 @@ QJsonObject readJson( const QString& name )
    QFile file( QStringLiteral( CALC_FIXTURE_DIR ) + "/" + name );
    if ( !file.open( QIODevice::ReadOnly ) )
    {
-      ADD_FAILURE() << "cannot read " << name.toStdString();
+      ADD_FAILURE() << "cannot read " << name;
       return QJsonObject();
    }
    return QJsonDocument::fromJson( file.readAll() ).object();
@@ -70,7 +69,7 @@ bool nearRel( double actual, double expected, double rel )
 Model toModel( const QJsonObject& m )
 {
    Model model;
-   model.description = m["description"].toString().toStdString();
+   model.description = m["description"].toString();
    for ( const QJsonValue& v : m["components"].toArray() )
    {
       const QJsonArray a = v.toArray();
@@ -101,16 +100,16 @@ QJsonObject itemFor( const QJsonObject& items, const QJsonObject& result )
 
 Range toRange( const QJsonObject& item )
 {
-   const std::string type = item["type"].toString().toStdString();
-   Range             range;
-   auto              q = quantity_from_report_type( type );
-   range.quantity      = q ? *q : Quantity::PartialSpecificVolume; // "vbar":  not a range type
-   range.low           = item["low"].toDouble();
-   range.high          = item["high"].toDouble();
+   const QString type = item["type"].toString();
+   Range         range;
+   auto          q = quantity_from_report_type( type );
+   range.quantity  = q ? *q : Quantity::PartialSpecificVolume; // "vbar":  not a range type
+   range.low       = item["low"].toDouble();
+   range.high      = item["high"].toDouble();
    return range;
 }
 
-bool hasIssue( const std::vector<Diagnostic>& d, Issue issue )
+bool hasIssue( const QVector<Diagnostic>& d, Issue issue )
 {
    for ( const Diagnostic& x : d )
    {
@@ -135,14 +134,14 @@ class UsCalcFixtures : public ::testing::Test
          const QJsonObject models = expected["models"].toObject();
          for ( auto it = models.begin(); it != models.end(); ++it )
          {
-            inputs[it.key().toStdString()] = toModel( it.value().toObject() );
+            inputs[it.key()] = toModel( it.value().toObject() );
          }
       }
 
-      QJsonObject                  expected;
-      QJsonObject                  items;
-      Tolerances                   tol{};
-      std::map<std::string, Model> inputs;
+      QJsonObject          expected;
+      QJsonObject          items;
+      Tolerances           tol{};
+      QMap<QString, Model> inputs;
 };
 } // namespace
 
@@ -152,12 +151,12 @@ TEST_F( UsCalcFixtures, RangeSummariesMatchTheOracle )
    for ( const QJsonValue& v : expected["ranges"].toArray() )
    {
       const QJsonObject e    = v.toObject();
-      const std::string key  = e["model"].toString().toStdString();
+      const QString     key  = e["model"].toString();
       const QJsonObject item = itemFor( items, e );
-      SCOPED_TRACE( key + " item " + std::to_string( e["item"].toInt() ) + " (" + e["sample"].toString().toStdString() + ")" );
-      const Model& model = inputs.at( key );
+      SCOPED_TRACE( key + " item " + QString::number( e["item"].toInt() ) + " (" + e["sample"].toString() + ")" );
+      const Model model = inputs.value( key );
 
-      EXPECT_EQ( method_matches( item["method"].toString().toStdString(), model.description ), e["matched"].toBool() );
+      EXPECT_EQ( method_matches( item["method"].toString(), model.description ), e["matched"].toBool() );
 
       const RangeResult r = range_summary( model, toRange( item ) );
       if ( !e["supported"].toBool() )
@@ -211,9 +210,9 @@ TEST_F( UsCalcFixtures, WholeModelMeansMatchTheOracle )
    const QJsonObject models = expected["models"].toObject();
    for ( auto it = models.begin(); it != models.end(); ++it )
    {
-      SCOPED_TRACE( it.key().toStdString() );
+      SCOPED_TRACE( it.key() );
       const QJsonObject e = it.value().toObject();
-      const ModelMeans  m = model_means( inputs.at( it.key().toStdString() ) );
+      const ModelMeans  m = model_means( inputs.value( it.key() ) );
       EXPECT_EQ( static_cast<int>( m.component_count ), e["ncomp"].toInt() );
       EXPECT_TRUE( nearRel( m.total_concentration, e["C"].toDouble(), tol.sums_rel ) );
       const std::pair<const char*, std::optional<double>> means[] = {
@@ -239,8 +238,8 @@ TEST_F( UsCalcFixtures, TotalConcentrationChecksMatchTheOracle )
    for ( const QJsonValue& v : expected["total_concentration"].toArray() )
    {
       const QJsonObject e = v.toObject();
-      SCOPED_TRACE( e["model"].toString().toStdString() );
-      const double         c = model_means( inputs.at( e["model"].toString().toStdString() ) ).total_concentration;
+      SCOPED_TRACE( e["model"].toString() );
+      const double         c = model_means( inputs.value( e["model"].toString() ) ).total_concentration;
       const ToleranceCheck check{ ToleranceRule::RelativePercentOfTarget, e["target"].toDouble(), e["tolerance"].toDouble() };
       EXPECT_EQ( passes( c, check ), e["pass_relative"].toBool() );
    }
@@ -254,7 +253,7 @@ TEST_F( UsCalcFixtures, ReplicateGroupsMatchTheOracle )
    const QJsonObject models = expected["models"].toObject();
    for ( int g = 0; g < groups.size(); ++g )
    {
-      SCOPED_TRACE( "group " + std::to_string( g ) );
+      SCOPED_TRACE( "group " + QString::number( g ) );
       const QJsonObject group = groups[g].toObject();
       const QJsonObject e     = exp[g].toObject();
       const QJsonObject item  = group["item"].toObject();
@@ -265,12 +264,12 @@ TEST_F( UsCalcFixtures, ReplicateGroupsMatchTheOracle )
       }
       // The oracle uses the reporter's representation of each member, in
       // sorted key order.
-      std::vector<RangeResult> members;
+      QVector<RangeResult> members;
       for ( auto it = models.begin(); it != models.end(); ++it )
       {
          if ( cases.contains( it.key().section( '/', 0, 0 ) ) && it.value().toObject()["reporter"].toBool() )
          {
-            members.push_back( range_summary( inputs.at( it.key().toStdString() ), toRange( item ) ) );
+            members.push_back( range_summary( inputs.value( it.key() ), toRange( item ) ) );
          }
       }
       const ReplicateResult r = replicate_summary( members );
@@ -297,11 +296,11 @@ TEST( UsCalcLegacyCaptures, SmoothingMatchesTheCapture )
    ASSERT_FALSE( captured.isEmpty() );
    for ( auto it = captured.begin(); it != captured.end(); ++it )
    {
-      SCOPED_TRACE( it.key().toStdString() );
+      SCOPED_TRACE( it.key() );
       // Keys are n<points>_smooth<width>; the series is (i*i % 7) + 0.25*i.
-      const int           n      = it.key().section( '_', 0, 0 ).mid( 1 ).toInt();
-      const int           smooth = it.key().section( '_', 1, 1 ).mid( 6 ).toInt();
-      std::vector<double> values;
+      const int       n      = it.key().section( '_', 0, 0 ).mid( 1 ).toInt();
+      const int       smooth = it.key().section( '_', 1, 1 ).mid( 6 ).toInt();
+      QVector<double> values;
       for ( int i = 0; i < n; ++i )
       {
          values.push_back( ( i * i % 7 ) + 0.25 * i );
@@ -316,73 +315,32 @@ TEST( UsCalcLegacyCaptures, SmoothingMatchesTheCapture )
    }
 }
 
-// The composite key must be the same text QString::asprintf makes in
-// US_Model, including at the rounding points of both fields.
-TEST( UsCalcComposite, KeyMatchesQStringAsprintf )
-{
-   std::mt19937_64                        rng( 4711 );
-   std::uniform_real_distribution<double> s_dist( 0.1, 20.0 ), k_dist( 1.0, 4.0 );
-   int                                    mismatches = 0;
-   for ( int i = 0; i < 1000000; ++i )
-   {
-      double s = s_dist( rng ) * 1e-13;
-      double k = k_dist( rng );
-      if ( i % 4 == 1 )
-      {
-         k = std::round( k * 1e5 ) / 1e5 + 0.5e-5; // on a 5th-decimal rounding point
-      }
-      if ( i % 4 == 2 )
-      {
-         s = ( std::round( s * 1e17 ) / 1e4 + 0.5e-4 ) * 1e-13; // on a 4th-decimal point in S
-      }
-      if ( i % 10 == 3 )
-      {
-         s = -s; // negative s
-      }
-      if ( i % 10 == 7 )
-      {
-         s = ( std::floor( s_dist( rng ) * 16.0 ) / 32.0 ) * 1e-13; // exact binary ties
-         k = std::floor( k * 64.0 ) / 64.0 + 1.0 / 128.0 * ( i % 20 == 7 ? -1 : 1 );
-      }
-      if ( i % 1000 == 9 )
-      {
-         s = ( i % 2000 == 9 ? -1 : 1 ) * 3.0e-19; // rounds to zero
-      }
-      const std::string qt = QString::asprintf( "%10.4f %8.5f", s * 1.0e+13, k ).toStdString();
-      if ( qt != mc_solute_key( s, k ) && ++mismatches <= 5 )
-      {
-         ADD_FAILURE() << "s " << s << " k " << k << ": " << qt << " vs " << mc_solute_key( s, k );
-      }
-   }
-   EXPECT_EQ( mismatches, 0 );
-}
-
 // Each Monte Carlo fixture's composite equals the one US_Model::load built
 // before the library replaced it (checked by calc_oracle.py against legacy_models.json).
 TEST_F( UsCalcFixtures, CompositesMatchTheFixtures )
 {
    int composites = 0;
-   for ( const auto& entry : inputs )
+   for ( auto entry = inputs.cbegin(); entry != inputs.cend(); ++entry )
    {
-      const std::string& key = entry.first;
-      if ( key.size() < 10 || key.compare( key.size() - 10, 10, "#composite" ) != 0 )
+      const QString& key = entry.key();
+      if ( !key.endsWith( "#composite" ) )
       {
          continue;
       }
       SCOPED_TRACE( key );
-      const std::string  file = key.substr( 0, key.size() - 10 );
-      std::vector<Model> iterations;
-      for ( int it = 1; inputs.count( file + "#iter" + std::to_string( it ) ); ++it )
+      const QString  file = key.left( key.size() - 10 );
+      QVector<Model> iterations;
+      for ( int it = 1; inputs.contains( file + "#iter" + QString::number( it ) ); ++it )
       {
-         iterations.push_back( inputs.at( file + "#iter" + std::to_string( it ) ) );
+         iterations << inputs.value( file + "#iter" + QString::number( it ) );
       }
-      ASSERT_GE( iterations.size(), 2u );
+      ASSERT_GE( iterations.size(), 2 );
       const CompositeResult r        = mc_composite( iterations );
-      const Model&          expected = entry.second;
+      const Model&          expected = entry.value();
       ASSERT_TRUE( r.diagnostics.empty() );
       EXPECT_EQ( r.model.description, expected.description );
       ASSERT_EQ( r.model.components.size(), expected.components.size() );
-      for ( std::size_t i = 0; i < expected.components.size(); ++i )
+      for ( int i = 0; i < expected.components.size(); ++i )
       {
          const Component& a = r.model.components[i];
          const Component& e = expected.components[i];
@@ -420,10 +378,10 @@ TEST( UsCalcComposite, MergesByKeyAndAverages )
    b.components            = { Component{ 4.5e-13, 5.1e-7, 75001.0, 0.0, 1.6, 0.72, 0.6 } };
    const CompositeResult r = mc_composite( { a, b } );
    ASSERT_TRUE( r.diagnostics.empty() );
-   ASSERT_EQ( r.model.components.size(), 2u );
+   ASSERT_EQ( r.model.components.size(), 2 );
    EXPECT_DOUBLE_EQ( r.model.components[0].signal_concentration, ( 0.4 + 0.6 ) / 2 );
    EXPECT_EQ( r.model.components[0].D, 5.1e-7 ); // from the last match
-   EXPECT_EQ( r.source_index[0], 2u );
+   EXPECT_EQ( r.source_index[0], 2 );
    EXPECT_DOUBLE_EQ( r.model.components[1].signal_concentration, 0.2 / 2 );
    EXPECT_EQ( r.model.description, "run.1A260.e1_a2611090000_2DSA-MC_000001_mcN002.model" );
 }
@@ -437,7 +395,7 @@ const std::pair<const char*, DistributionAxis> kAxes[] = { { "s", DistributionAx
                                                            { "vbar", DistributionAxis::PartialSpecificVolume },
                                                            { "Rh", DistributionAxis::HydrodynamicRadius } };
 
-const std::vector<double>&                     series( const IntegralDistribution& d, DistributionAxis axis )
+const QVector<double>&                         series( const IntegralDistribution& d, DistributionAxis axis )
 {
    switch ( axis )
    {
@@ -473,10 +431,10 @@ TEST_F( UsCalcFixtures, IntegralDistributionsMatchUsIntegral )
       {
          continue;
       }
-      std::string key = file.startsWith( "edge/" ) ? file.toStdString() : file.mid( 7 ).toStdString(); // drop "models/"
-      key += inputs.count( key + "#composite" ) ? "#composite" : "#model";
+      QString key = file.startsWith( "edge/" ) ? file : file.mid( 7 ); // drop "models/"
+      key += inputs.contains( key + "#composite" ) ? "#composite" : "#model";
       SCOPED_TRACE( key );
-      const Model& model = inputs.at( key );
+      const Model model = inputs.value( key );
       for ( const auto& axis : kAxes )
       {
          const QJsonObject curve = it.value().toObject()[axis.first].toArray()[0].toObject();
@@ -484,7 +442,7 @@ TEST_F( UsCalcFixtures, IntegralDistributionsMatchUsIntegral )
          const QJsonArray  ys    = curve["y"].toArray();
          const auto        d     = integral_distribution( model, axis.second );
          ASSERT_TRUE( d.diagnostics.empty() || !has_error( d.diagnostics ) ) << axis.first;
-         const std::vector<double>& x = series( d, axis.second );
+         const QVector<double>& x = series( d, axis.second );
          ASSERT_EQ( static_cast<int>( x.size() ), xs.size() ) << axis.first;
          for ( int i = 0; i < xs.size(); ++i )
          {
@@ -502,10 +460,10 @@ TEST_F( UsCalcFixtures, IntegralDistributionsMatchUsIntegral )
 // and the solute at 6.0 S the remaining 40 %, whatever the order.
 TEST_F( UsCalcFixtures, IntegralDistributionMergesDuplicates )
 {
-   const Model& model    = inputs.at( "edge/edge_duplicates_ties.model.xml#model" );
-   Model        reversed = model;
+   const Model model    = inputs.value( "edge/edge_duplicates_ties.model.xml#model" );
+   Model       reversed = model;
    std::reverse( reversed.components.begin(), reversed.components.end() );
-   for ( const Model* m : std::vector<const Model*>{ &model, &reversed } )
+   for ( const Model* m : QVector<const Model*>{ &model, &reversed } )
    {
       const auto d = integral_distribution( *m, DistributionAxis::Sedimentation );
       ASSERT_FALSE( has_error( d.diagnostics ) );

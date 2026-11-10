@@ -3,27 +3,29 @@
 
 #include <gtest/gtest.h>
 
-#include <regex>
-#include <set>
+#include <QRegularExpression>
+#include <QSet>
 
+#include "us_calc_test_print.h"
 #include "us_calc_version.h"
 
 using namespace US_Calc;
 
 TEST( UsCalcVersion, LibraryVersionIsSemantic )
 {
-   EXPECT_TRUE( std::regex_match( library_version(), std::regex( "[0-9]+\\.[0-9]+\\.[0-9]+" ) ) );
+   EXPECT_TRUE( QRegularExpression( "^[0-9]+\\.[0-9]+\\.[0-9]+$" ).match( library_version() ).hasMatch() );
 }
 
 TEST( UsCalcVersion, AlgorithmsAreNamedVersionedAndDescribed )
 {
-   std::set<std::string> names;
+   QSet<QString> names;
    for ( const AlgorithmVersion& a : algorithms() )
    {
-      EXPECT_FALSE( a.name.empty() );
+      EXPECT_FALSE( a.name.isEmpty() );
       EXPECT_GE( a.version, 1 ) << a.name;
-      EXPECT_FALSE( a.description.empty() ) << a.name;
-      EXPECT_TRUE( names.insert( a.name ).second ) << "duplicate " << a.name;
+      EXPECT_FALSE( a.description.isEmpty() ) << a.name;
+      EXPECT_FALSE( names.contains( a.name ) ) << "duplicate " << a.name;
+      names.insert( a.name );
    }
    // The calculations the library provides
    for ( const char* name : { "range_summary",
@@ -35,7 +37,7 @@ TEST( UsCalcVersion, AlgorithmsAreNamedVersionedAndDescribed )
                               "weighted_statistics",
                               "report_item_matching" } )
    {
-      EXPECT_TRUE( names.count( name ) ) << name;
+      EXPECT_TRUE( names.contains( name ) ) << name;
    }
 }
 

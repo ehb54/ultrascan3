@@ -8,11 +8,13 @@
 #include <cmath>
 #include <limits>
 #include <random>
-#include <vector>
+
+#include <QVector>
 
 #include "us_calc_matching.h"
 #include "us_calc_replicate.h"
 #include "us_calc_statistics.h"
+#include "us_calc_test_print.h"
 #include "us_calc_tolerance.h"
 
 using namespace US_Calc;
@@ -52,7 +54,7 @@ TEST( UsCalcTolerance, NanFailsEveryRule )
                                 ToleranceRule::ExclusiveMinimum } )
    {
       EXPECT_FALSE( passes( nan, { rule, 50.0, 10.0 } ) ) << tolerance_rule_name( rule );
-      EXPECT_FALSE( tolerance_rule_name( rule ).empty() );
+      EXPECT_FALSE( tolerance_rule_name( rule ).isEmpty() );
    }
 }
 
@@ -70,7 +72,7 @@ RangeResult member( double r, std::optional<double> fraction )
 TEST( UsCalcReplicate, MeanAndPopulationSd )
 {
    const ReplicateResult r = replicate_summary( { member( 0.2, 20.0 ), member( 0.4, 40.0 ), member( 0.6, 60.0 ) } );
-   EXPECT_EQ( r.used_count, 3u );
+   EXPECT_EQ( r.used_count, 3 );
    EXPECT_DOUBLE_EQ( *r.mean_range_concentration, 0.4 );
    EXPECT_DOUBLE_EQ( *r.mean_fraction_percent, 40.0 );
    EXPECT_NEAR( *r.sd_fraction_percent, std::sqrt( 800.0 / 3.0 ), 1e-12 ); // divisor N, not N-1
@@ -81,7 +83,7 @@ TEST( UsCalcReplicate, MeanAndPopulationSd )
 TEST( UsCalcReplicate, OneMemberHasZeroSd )
 {
    const ReplicateResult r = replicate_summary( { member( 0.3, 30.0 ) } );
-   EXPECT_EQ( r.used_count, 1u );
+   EXPECT_EQ( r.used_count, 1 );
    EXPECT_EQ( *r.sd_fraction_percent, 0.0 );
    EXPECT_EQ( *r.mean_fraction_percent, 30.0 );
 }
@@ -90,35 +92,23 @@ TEST( UsCalcReplicate, NegativeAndUndefinedMembersAreLeftOut )
 {
    const ReplicateResult r =
       replicate_summary( { member( -0.1, -10.0 ), member( 0.4, std::nullopt ), member( 0.2, 20.0 ), member( 0.4, 40.0 ) } );
-   EXPECT_EQ( r.member_count, 4u );
-   EXPECT_EQ( r.used_count, 2u );
+   EXPECT_EQ( r.member_count, 4 );
+   EXPECT_EQ( r.used_count, 2 );
    EXPECT_DOUBLE_EQ( *r.mean_fraction_percent, 30.0 );
-   EXPECT_EQ( r.diagnostics.size(), 2u );
+   EXPECT_EQ( r.diagnostics.size(), 2 );
    EXPECT_FALSE( has_error( r.diagnostics ) );
 }
 
 TEST( UsCalcReplicate, NoUsableMemberIsAnError )
 {
-   for ( const auto& members : { std::vector<RangeResult>{}, std::vector<RangeResult>{ member( -0.1, -10.0 ) } } )
+   for ( const auto& members : { QVector<RangeResult>{}, QVector<RangeResult>{ member( -0.1, -10.0 ) } } )
    {
       const ReplicateResult r = replicate_summary( members );
-      EXPECT_EQ( r.used_count, 0u );
+      EXPECT_EQ( r.used_count, 0 );
       EXPECT_FALSE( r.mean_fraction_percent.has_value() );
       EXPECT_FALSE( r.sd_fraction_percent.has_value() );
       EXPECT_TRUE( has_error( r.diagnostics ) );
    }
-}
-
-// QString::section semantics, checked against Qt by hand.
-TEST( UsCalcMatching, TextSection )
-{
-   EXPECT_EQ( text_section( "a.b.c.d", '.', -2, -2 ), "c" );
-   EXPECT_EQ( text_section( "a.b.c.d", '.', 0, -2 ), "a.b.c" );
-   EXPECT_EQ( text_section( "x_y_z", '_', 1, -1 ), "y_z" );
-   EXPECT_EQ( text_section( "plain", '.', -2, -2 ), "" );
-   EXPECT_EQ( text_section( "plain", '.', 0, -2 ), "" );
-   EXPECT_EQ( text_section( "a..b", '.', 1, 1 ), "" ); // empty fields count
-   EXPECT_EQ( text_section( "a.b", '.', 5, 6 ), "" );
 }
 
 TEST( UsCalcMatching, AnalysisLabel )
@@ -131,9 +121,9 @@ TEST( UsCalcMatching, AnalysisLabel )
 
 TEST( UsCalcMatching, MethodParts )
 {
-   const std::string it = "fixA.1A260.ee1_a2611090000_2DSA-IT_000001_i01.model";
-   const std::string mc = "fixA.1A260.ee1_a2611090000_2DSA-MC_000001_mcN003.model";
-   const std::string pc = "fixA.1A260.ee1_a2611090000_PCSA-SL_000001_i01.model";
+   const QString it = "fixA.1A260.ee1_a2611090000_2DSA-IT_000001_i01.model";
+   const QString mc = "fixA.1A260.ee1_a2611090000_2DSA-MC_000001_mcN003.model";
+   const QString pc = "fixA.1A260.ee1_a2611090000_PCSA-SL_000001_i01.model";
    EXPECT_TRUE( method_matches( "2DSA-IT", it ) );
    EXPECT_FALSE( method_matches( "2DSA-MC", it ) );
    EXPECT_TRUE( method_matches( "2DSA-MC", mc ) );
@@ -145,12 +135,12 @@ TEST( UsCalcMatching, MethodParts )
 
 namespace
 {
-WeightedStatistics distribution( const std::vector<double>& v, const std::vector<double>& c )
+WeightedStatistics distribution( const QVector<double>& v, const QVector<double>& c )
 {
    return weighted_statistics( v, c, StatisticsConvention::ConcentrationDistribution );
 }
 
-WeightedStatistics iterations( const std::vector<double>& v, const std::vector<double>& c )
+WeightedStatistics iterations( const QVector<double>& v, const QVector<double>& c )
 {
    return weighted_statistics( v, c, StatisticsConvention::MonteCarloIterations );
 }
@@ -168,9 +158,9 @@ TEST( UsCalcStatistics, AreaCountsEveryValueIncludingTheMaximum )
    std::uniform_real_distribution<double> u( 0.0, 1.0 );
    for ( int t = 0; t < 2000; ++t )
    {
-      const int           n = 2 + t % 40;
-      std::vector<double> v( n ), c( n );
-      double              total = 0.0;
+      const int       n = 2 + t % 40;
+      QVector<double> v( n ), c( n );
+      double          total = 0.0;
       for ( int i = 0; i < n; ++i )
       {
          v[i] = ( 1 + 9 * u( rng ) ) * 1e-13;
@@ -210,17 +200,17 @@ TEST( UsCalcStatistics, ConfidenceIntervalsIgnoreComponentOrder )
 {
    // The cumulative concentration passes 97.5 % inside the two 2.0 values:
    // in ascending concentration order at the second, otherwise at the first.
-   std::vector<double>      v   = { 1.0, 2.0, 2.0, 3.0 };
-   std::vector<double>      c   = { 0.5, 0.48, 0.01, 0.01 };
+   QVector<double>          v   = { 1.0, 2.0, 2.0, 3.0 };
+   QVector<double>          c   = { 0.5, 0.48, 0.01, 0.01 };
    const WeightedStatistics ref = distribution( v, c );
    ASSERT_TRUE( ref.confidence95_high.has_value() );
    EXPECT_EQ( *ref.confidence95_high, 2.0 );
-   std::vector<int> idx = { 0, 1, 2, 3 };
-   std::mt19937_64  rng( 3 );
+   QVector<int>    idx = { 0, 1, 2, 3 };
+   std::mt19937_64 rng( 3 );
    for ( int t = 0; t < 200; ++t )
    {
       std::shuffle( idx.begin(), idx.end(), rng );
-      std::vector<double> pv, pc;
+      QVector<double> pv, pc;
       for ( int i : idx )
       {
          pv.push_back( v[i] );

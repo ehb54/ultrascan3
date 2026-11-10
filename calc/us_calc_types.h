@@ -2,15 +2,15 @@
 //! \brief Value types of the UltraScan calculation library.
 //!
 //! The library holds the scientific calculations that the desktop programs
-//! share.  Its public interface uses only standard C++:  no Qt,
-//! widgets, database access or report formatting.  Callers convert
-//! their own data into these types.
+//! share.  It uses QtCore only:  no widgets, database access, file reading
+//! or report formatting.
 #ifndef US_CALC_TYPES_H
 #define US_CALC_TYPES_H
 
+#include <QString>
+#include <QVector>
+
 #include <optional>
-#include <string>
-#include <vector>
 
 namespace US_Calc
 {
@@ -45,9 +45,9 @@ struct Component
 //! the legacy calculations exactly, also at tolerance edges.
 struct Model
 {
-      std::vector<Component> components;
-      std::string            description; //!< UltraScan model description
-      bool                   monte_carlo = false;
+      QVector<Component> components;
+      QString            description; //!< UltraScan model description
+      bool               monte_carlo = false;
 };
 
 //! \brief A closed range of one quantity, in report units.
@@ -89,9 +89,9 @@ enum class Issue
 //! defined is left empty and explained by a diagnostic.
 struct Diagnostic
 {
-      Issue       issue    = Issue::EmptyModel;
-      Severity    severity = Severity::Error;
-      std::string detail; //!< Human-readable explanation
+      Issue    issue    = Issue::EmptyModel;
+      Severity severity = Severity::Error;
+      QString  detail; //!< Human-readable explanation
 };
 
 //! \brief The name and version of the algorithm that produced a result.
@@ -100,13 +100,13 @@ struct Diagnostic
 //! change, so stored results can be traced to the rule that made them.
 struct AlgorithmVersion
 {
-      std::string name;
-      int         version = 0;
-      std::string description;
+      QString name;
+      int     version = 0;
+      QString description;
 };
 
 //! \brief True when any diagnostic is an error.
-bool has_error( const std::vector<Diagnostic>& diagnostics );
+bool has_error( const QVector<Diagnostic>& diagnostics );
 } // namespace US_Calc
 
 #endif

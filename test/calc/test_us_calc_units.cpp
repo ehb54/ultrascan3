@@ -5,6 +5,7 @@
 
 #include <cmath>
 
+#include "us_calc_test_print.h"
 #include "us_calc_units.h"
 
 using namespace US_Calc;

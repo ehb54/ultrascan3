@@ -26,7 +26,7 @@ bool passes( double value, const ToleranceCheck& check )
    return false;
 }
 
-std::string tolerance_rule_name( ToleranceRule rule )
+QString tolerance_rule_name( ToleranceRule rule )
 {
    switch ( rule )
    {

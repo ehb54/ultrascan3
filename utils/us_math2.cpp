@@ -1393,14 +1393,7 @@ int US_Math2::_nnls_h12 (
 void US_Math2::gaussian_smoothing( QVector< double >& array, int smooth )
 {
    // A width the series cannot support leaves the series unchanged.
-   std::vector<double> values( array.begin(), array.end() );
-   if ( US_Calc::gaussian_smoothing( values, smooth ).empty() )
-   {
-      for ( int ii = 0; ii < array.size(); ii++ )
-      {
-         array[ii] = values[ii];
-      }
-   }
+   US_Calc::gaussian_smoothing( array, smooth );
 }
 
 // Calculate the weighted average of temperature-corrected vbars

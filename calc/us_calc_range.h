@@ -12,42 +12,41 @@
 
 #include "us_calc_types.h"
 
-#include <cstddef>
+#include <QVector>
 #include <optional>
-#include <vector>
 
 namespace US_Calc
 {
 //! \brief Concentration of a model within a range.
 struct RangeResult
 {
-      Range                   range;
-      std::size_t             component_count     = 0;   //!< Components in the model
-      std::size_t             selected_count      = 0;   //!< Components within the range
-      double                  total_concentration = 0.0; //!< C:  sum of all concentrations
-      double                  range_concentration = 0.0; //!< R:  sum within the range
+      Range                 range;
+      int                   component_count     = 0;   //!< Components in the model
+      int                   selected_count      = 0;   //!< Components within the range
+      double                total_concentration = 0.0; //!< C:  sum of all concentrations
+      double                range_concentration = 0.0; //!< R:  sum within the range
       //! 100 * R / C, computed as (R / C) * 100; empty when C is zero.
-      std::optional<double>   fraction_percent;
+      std::optional<double> fraction_percent;
       //! sum(x * c) / R over the range, x being the range quantity in model
       //! units; empty when R is zero.
-      std::optional<double>   within_range_mean;
-      std::vector<Diagnostic> diagnostics;
-      AlgorithmVersion        algorithm;
+      std::optional<double> within_range_mean;
+      QVector<Diagnostic>   diagnostics;
+      AlgorithmVersion      algorithm;
 };
 
 //! \brief Concentration-weighted means of a whole model, in model units:
 //! sum(x * c) / C for each quantity; empty when C is zero.
 struct ModelMeans
 {
-      std::size_t             component_count     = 0;
-      double                  total_concentration = 0.0;
-      std::optional<double>   s;
-      std::optional<double>   D;
-      std::optional<double>   mw;
-      std::optional<double>   f_f0;
-      std::optional<double>   vbar20;
-      std::vector<Diagnostic> diagnostics;
-      AlgorithmVersion        algorithm;
+      int                   component_count     = 0;
+      double                total_concentration = 0.0;
+      std::optional<double> s;
+      std::optional<double> D;
+      std::optional<double> mw;
+      std::optional<double> f_f0;
+      std::optional<double> vbar20;
+      QVector<Diagnostic>   diagnostics;
+      AlgorithmVersion      algorithm;
 };
 
 //! \brief The concentration of a model within a range.

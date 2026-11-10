@@ -93,8 +93,8 @@ ehb54/ultrascan-tickets#1214.
    attribute comes from the last matching component, and the description
    gains `_mcN<count>`.  The reporter calculates on this composite.  Merging
    by printed text rather than by value is part of the scientific result, so
-   the library keeps it, formatting the keys as Qt does (exact ties round
-   away from zero).
+   the library keeps it and makes the keys with the same
+   `QString::asprintf` call.
 2. **Tolerance edges depend on rounding.**  `edge_duplicates_ties` has an
    exact fraction of 60 % against a 50 ± 10 % target.  Whether it passes
    depends on the order and rounding of the double sums; it passes as the

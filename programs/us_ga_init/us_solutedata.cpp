@@ -9,7 +9,6 @@
 #include "us_settings.h"
 
 #include <limits>
-#include <vector>
 
 // bucket vertex LessThan routine
 bool buck_vx_lessthan( const bucket &buck1, const bucket &buck2 )
@@ -1144,10 +1143,8 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
    QString                           str2;
 
    // The statistics come from us_calc; undefined ones print as nan.
-   const std::vector<double>         values( vals.begin(), vals.end() );
-   const std::vector<double>         concentrations( concs.begin(), concs.end() );
    const US_Calc::WeightedStatistics st =
-      US_Calc::weighted_statistics( values, concentrations, US_Calc::StatisticsConvention::ConcentrationDistribution );
+      US_Calc::weighted_statistics( vals.toVector(), concs.toVector(), US_Calc::StatisticsConvention::ConcentrationDistribution );
    const double nan         = std::numeric_limits<double>::quiet_NaN();
    const qreal  vlo         = st.minimum;
    const qreal  vhi         = st.maximum;

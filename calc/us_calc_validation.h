@@ -5,7 +5,7 @@
 
 #include "us_calc_types.h"
 
-#include <vector>
+#include <QVector>
 
 namespace US_Calc
 {
@@ -15,11 +15,11 @@ namespace US_Calc
 //! Warnings:  negative concentrations (the legacy calculations accept them;
 //! a replicate group excludes members whose in-range concentration is
 //! negative).
-std::vector<Diagnostic> validate_model( const Model& model );
+QVector<Diagnostic> validate_model( const Model& model );
 
 //! \brief Diagnostics for a range:  an error for non-finite bounds or
 //! low > high.  A range with low == high is valid.
-std::vector<Diagnostic> validate_range( const Range& range );
+QVector<Diagnostic> validate_range( const Range& range );
 } // namespace US_Calc
 
 #endif

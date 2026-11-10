@@ -33,7 +33,6 @@
 #include "us_tmst_plot.h"
 #include <limits>
 #include <optional>
-#include <vector>
 
 #define MIN_NTC   25
 
@@ -4482,43 +4481,19 @@ QString US_ReporterGMP::html_header_velmwl( QString title, QString runName, QStr
    return s;
 }
 
-// Fraction (%) of a model's total signal concentration whose component values
-// of given type lie within [low,high] -- the same integration (and range units)
-// as used for the VELOCITY report; supported = false for unknown types
-// The model as the us_calc calculations receive it
-static US_Calc::Model calc_model( const US_Model& mdl )
-{
-   US_Calc::Model cm;
-   cm.description = mdl.description.toStdString();
-   cm.monte_carlo = mdl.monteCarlo;
-   for ( const US_Model::SimulationComponent& sc : mdl.components )
-   {
-      US_Calc::Component c;
-      c.s                    = sc.s;
-      c.D                    = sc.D;
-      c.mw                   = sc.mw;
-      c.f                    = sc.f;
-      c.f_f0                 = sc.f_f0;
-      c.vbar20               = sc.vbar20;
-      c.signal_concentration = sc.signal_concentration;
-      cm.components.push_back( c );
-   }
-   return cm;
-}
-
 // Percent of the model's concentration within a report item's range, from
 // us_calc.  An item type that is not a range type is unsupported; a total
 // that is not positive gives 0.
 static double velmwl_range_fraction( const US_Model& mdl, const QString& type, double low, double high, bool& supported )
 {
-   const std::optional<US_Calc::Quantity> quantity = US_Calc::quantity_from_report_type( type.toStdString() );
+   const std::optional<US_Calc::Quantity> quantity = US_Calc::quantity_from_report_type( type );
    supported                                       = quantity.has_value();
    if ( !supported )
    {
       return 0.0;
    }
 
-   const US_Calc::RangeResult r = US_Calc::range_summary( calc_model( mdl ), { *quantity, low, high } );
+   const US_Calc::RangeResult r = US_Calc::range_summary( mdl.calc_model(), { *quantity, low, high } );
    if ( !( r.total_concentration > 0.0 ) )
    {
       return 0.0;
@@ -10140,11 +10115,11 @@ QString US_ReporterGMP::get_replicate_group_number( QString ch_alt_desc )
 QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP::ReportItem ref_report_item, QString u_wvl, QStringList channs_for_wvl )
 {
    // Members of the group, as us_calc range results
-   std::vector<US_Calc::RangeResult> members;
-   QMap<QString, double>             results;
+   QVector<US_Calc::RangeResult> members;
+   QMap<QString, double>         results;
 
    //iterate over UR_ReportsGMPs && pick ones correspondning to 'chan_desc_alt.contains("ch_wvls[i]")' && wavelength == u_wvl;
-   int                               nchna = currAProf.pchans.count();
+   int                           nchna = currAProf.pchans.count();
    for ( int i = 0; i < channs_for_wvl.size(); ++i ) //over channels for a given wvl in Replicate group:
    {
       US_ReportGMP reportGMP;
@@ -10311,7 +10286,7 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 
    // Weight averages and total concentration from us_calc; an undefined
    // average prints as nan, as the division by a zero total did.
-   const US_Calc::ModelMeans means = US_Calc::model_means( calc_model( model_used ) );
+   const US_Calc::ModelMeans means = US_Calc::model_means( model_used.calc_model() );
    const double              nan_v = std::numeric_limits<double>::quiet_NaN();
    const double              sum_c = means.total_concentration;
 
@@ -10842,7 +10817,7 @@ model_used.components[ ii ].vbar20 ),
 			  tr( "Fraction % from Model (target):" ),
 			  tr( "Tolerance, %:"),
 			  tr( "PASSED ?" ));
-       const US_Calc::Model range_model = calc_model( model_used );
+       const US_Calc::Model range_model = model_used.calc_model();
        for ( int kk = 0; kk < report_items_number; ++kk )
 	 {
 	   US_ReportGMP::ReportItem curr_item = reportGMP-> reportItems[ kk ];
@@ -10863,7 +10838,7 @@ model_used.components[ ii ].vbar20 ),
       // units, sums in component order.  Values the arithmetic leaves
       // undefined print as nan, as the divisions by zero did; an item type
       // that is not a range type selects nothing (fraction 0).
-      const std::optional<US_Calc::Quantity> quantity = US_Calc::quantity_from_report_type( type.toStdString() );
+      const std::optional<US_Calc::Quantity> quantity = US_Calc::quantity_from_report_type( type );
       const US_Calc::RangeResult             range_result =
          US_Calc::range_summary( range_model, { quantity.value_or( US_Calc::Quantity::PartialSpecificVolume ), low, high } );
       const double nan_r      = std::numeric_limits<double>::quiet_NaN();
@@ -10875,7 +10850,7 @@ model_used.components[ ii ].vbar20 ),
          US_Calc::passes( frac_tot_m, { US_Calc::ToleranceRule::AbsolutePercentagePoints, frac_tot_r, frac_tot_tol_r } ) ? "YES"
                                                                                                                               : "NO";
 
-      const bool method_identity = US_Calc::method_matches( curr_item.method.toStdString(), model_used.description.toStdString() );
+      const bool method_identity = US_Calc::method_matches( curr_item.method, model_used.description );
 
       //if ( mdla.contains ( method ) )
       if ( method_identity )

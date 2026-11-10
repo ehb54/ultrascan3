@@ -48,7 +48,7 @@ double component_value( const Component& component, Quantity quantity )
    return 0.0;
 }
 
-std::optional<Quantity> quantity_from_report_type( const std::string& type )
+std::optional<Quantity> quantity_from_report_type( const QString& type )
 {
    if ( type == "s" )
    {
@@ -69,7 +69,7 @@ std::optional<Quantity> quantity_from_report_type( const std::string& type )
    return std::nullopt;
 }
 
-std::string quantity_name( Quantity quantity )
+QString quantity_name( Quantity quantity )
 {
    switch ( quantity )
    {

@@ -3,6 +3,8 @@
 
 #include <gtest/gtest.h>
 
+#include <QVector>
+
 #include <limits>
 
 #include "us_calc_validation.h"
@@ -23,11 +25,11 @@ Component component( double s, double c )
    return x;
 }
 
-bool has_issue( const std::vector<Diagnostic>& d, Issue issue, Severity severity )
+bool has_issue( const QVector<Diagnostic>& d, Issue issue, Severity severity )
 {
    for ( const Diagnostic& x : d )
    {
-      if ( x.issue == issue && x.severity == severity && !x.detail.empty() )
+      if ( x.issue == issue && x.severity == severity && !x.detail.isEmpty() )
       {
          return true;
       }
@@ -72,7 +74,7 @@ TEST( UsCalcValidation, NegativeConcentrationIsAWarning )
    auto d       = validate_model( m );
    EXPECT_TRUE( has_issue( d, Issue::NegativeConcentration, Severity::Warning ) );
    EXPECT_FALSE( has_error( d ) );
-   EXPECT_EQ( d.size(), 1u ); // reported once per model
+   EXPECT_EQ( d.size(), 1 ); // reported once per model
 }
 
 TEST( UsCalcValidation, Ranges )

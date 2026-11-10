@@ -4,7 +4,7 @@
 
 #include "us_calc_constants.h"
 
-#include <cmath>
+#include <QtMath>
 
 namespace US_Calc
 {
@@ -12,14 +12,6 @@ namespace
 {
 // Ideal gas constant times 20 degrees C in Kelvin
 constexpr double kRT = R_GC * K20;
-// M_PI, which <cmath> does not define on every platform
-constexpr double kPi = 3.14159265358979323846;
-
-// qAbs:  the comparison keeps -0.0 and NaN as US_Model handled them.
-inline double    absolute( double x )
-{
-   return x >= 0.0 ? x : -x;
-}
 } // namespace
 
 bool calc_coefficients( Component& component )
@@ -51,9 +43,9 @@ bool calc_coefficients( Component& component )
       component.vbar20 = vbar;
    }
 
-   vol_fac  = 0.75 / kPi; // various factors used in calcs below
+   vol_fac  = 0.75 / M_PI; // various factors used in calcs below
    onethird = 1.0 / 3.0;
-   rsph_fac = 0.06 * kPi * VISC_20W;
+   rsph_fac = 0.06 * M_PI * VISC_20W;
 
    s    = component.s; // component coefficient values
    D    = component.D;
@@ -81,7 +73,7 @@ bool calc_coefficients( Component& component )
          // calc_model_coefficient_documentation.pdf, equation 14, with
          // adjustments for units in poise.
          double numer = 0.02 * vbar * s * VISC_20W * f_f0;
-         f0           = 0.09 * VISC_20W * kPi * sqrt( numer / buoyancyb );
+         f0           = 0.09 * VISC_20W * M_PI * sqrt( numer / buoyancyb );
          fv           = f_f0 * f0;
          D            = kRT / ( AVOGADRO * fv );
          mw           = s * kRT / ( D * buoyancyb );
@@ -96,7 +88,7 @@ bool calc_coefficients( Component& component )
          fv            = mw * buoyancyb / ( s20w * AVOGADRO );
          double ff0sv  = f_f0;
          f_f0          = fv / f0;
-         double ffdif  = absolute( ff0sv - f_f0 );
+         double ffdif  = qAbs( ff0sv - f_f0 );
          f_f0          = ( ffdif < 1.e-5 ) ? ff0sv : f_f0;
       }
 
@@ -165,8 +157,8 @@ bool calc_coefficients( Component& component )
       {
          fv               = kRT / ( AVOGADRO * D );
          f0               = fv / f_f0;
-         radius_sphere    = f0 / ( 0.06 * kPi * VISC_20W );
-         double volume_dk = ( 4.0 / 3.0 ) * kPi * pow( radius_sphere, 3.0 );
+         radius_sphere    = f0 / ( 0.06 * M_PI * VISC_20W );
+         double volume_dk = ( 4.0 / 3.0 ) * M_PI * pow( radius_sphere, 3.0 );
          mw               = volume_dk * AVOGADRO / vbar;
          s                = mw * buoyancyb / ( AVOGADRO * fv );
       }
@@ -181,8 +173,8 @@ bool calc_coefficients( Component& component )
    {
       f0               = fv / f_f0;
       D                = kRT / ( AVOGADRO * fv );
-      radius_sphere    = f0 / ( 0.06 * kPi * VISC_20W );
-      double volume_fk = ( 4.0 / 3.0 ) * kPi * pow( radius_sphere, 3.0 );
+      radius_sphere    = f0 / ( 0.06 * M_PI * VISC_20W );
+      double volume_fk = ( 4.0 / 3.0 ) * M_PI * pow( radius_sphere, 3.0 );
       mw               = volume_fk * AVOGADRO / vbar;
       s                = mw * buoyancyb / ( AVOGADRO * fv );
    }
@@ -192,7 +184,7 @@ bool calc_coefficients( Component& component )
       ok = false;
    }
 
-   double df = absolute( f - fv ) / fv;
+   double df = qAbs( f - fv ) / fv;
 
    if ( df > 0.1 )
    { // Significant change in f:  replace and use old as concentration

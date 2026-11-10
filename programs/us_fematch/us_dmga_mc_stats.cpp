@@ -4,7 +4,6 @@
 #include "../../calc/us_calc_statistics.h"
 
 #include <limits>
-#include <vector>
 
 // Class of static functions for DMGA-MC statistics
 
@@ -195,10 +194,8 @@ bool US_DmgaMcStats::compute_statistics( const int nvals,
       QVector< double >& stats )
 {
    // The statistics come from us_calc; undefined ones are nan.
-   const std::vector<double>         values( vals.begin(), vals.begin() + nvals );
-   const std::vector<double>         weights( concs.begin(), concs.begin() + nvals );
-   const US_Calc::WeightedStatistics st =
-      US_Calc::weighted_statistics( values, weights, US_Calc::StatisticsConvention::MonteCarloIterations );
+   const US_Calc::WeightedStatistics st = US_Calc::weighted_statistics(
+      vals.mid( 0, nvals ), concs.mid( 0, nvals ), US_Calc::StatisticsConvention::MonteCarloIterations );
    const double nan      = std::numeric_limits<double>::quiet_NaN();
    const double mode_cen = st.mode_center.value_or( nan );
    const double conf95lo = st.confidence95_low.value_or( nan );

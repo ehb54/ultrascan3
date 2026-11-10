@@ -15,11 +15,6 @@ bool range_quantity_supported( Quantity quantity )
    return quantity == Quantity::Sedimentation || quantity == Quantity::Diffusion || quantity == Quantity::MolecularWeight ||
           quantity == Quantity::FrictionalRatio;
 }
-
-void append( std::vector<Diagnostic>& to, const std::vector<Diagnostic>& from )
-{
-   to.insert( to.end(), from.begin(), from.end() );
-}
 } // namespace
 
 RangeResult range_summary( const Model& model, const Range& range )
@@ -28,8 +23,7 @@ RangeResult range_summary( const Model& model, const Range& range )
    result.range           = range;
    result.component_count = model.components.size();
    result.algorithm       = *algorithm( "range_summary" );
-   append( result.diagnostics, validate_model( model ) );
-   append( result.diagnostics, validate_range( range ) );
+   result.diagnostics << validate_model( model ) << validate_range( range );
    if ( !range_quantity_supported( range.quantity ) )
    {
       result.diagnostics.push_back(
@@ -88,7 +82,7 @@ ModelMeans model_means( const Model& model )
    ModelMeans result;
    result.component_count = model.components.size();
    result.algorithm       = *algorithm( "range_summary" );
-   append( result.diagnostics, validate_model( model ) );
+   result.diagnostics << validate_model( model );
    if ( has_error( result.diagnostics ) )
    {
       return result;

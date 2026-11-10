@@ -6,7 +6,7 @@
 
 namespace US_Calc
 {
-bool has_error( const std::vector<Diagnostic>& diagnostics )
+bool has_error( const QVector<Diagnostic>& diagnostics )
 {
    for ( const Diagnostic& d : diagnostics )
    {
@@ -18,16 +18,16 @@ bool has_error( const std::vector<Diagnostic>& diagnostics )
    return false;
 }
 
-std::vector<Diagnostic> validate_model( const Model& model )
+QVector<Diagnostic> validate_model( const Model& model )
 {
-   std::vector<Diagnostic> out;
-   if ( model.components.empty() )
+   QVector<Diagnostic> out;
+   if ( model.components.isEmpty() )
    {
       out.push_back( { Issue::EmptyModel, Severity::Error, "the model has no components" } );
       return out;
    }
    bool reported_negative = false;
-   for ( std::size_t i = 0; i < model.components.size(); ++i )
+   for ( int i = 0; i < model.components.size(); ++i )
    {
       const Component& c      = model.components[i];
       const double     vals[] = { c.s, c.D, c.mw, c.f, c.f_f0, c.vbar20, c.signal_concentration };
@@ -35,25 +35,23 @@ std::vector<Diagnostic> validate_model( const Model& model )
       {
          if ( !std::isfinite( v ) )
          {
-            out.push_back(
-               { Issue::NonFiniteValue, Severity::Error, "component " + std::to_string( i ) + " has a non-finite value" } );
+            out.push_back( { Issue::NonFiniteValue, Severity::Error, QString( "component %1 has a non-finite value" ).arg( i ) } );
             break;
          }
       }
       if ( c.signal_concentration < 0.0 && !reported_negative )
       {
-         out.push_back( { Issue::NegativeConcentration,
-                          Severity::Warning,
-                          "component " + std::to_string( i ) + " has a negative concentration" } );
+         out.push_back(
+            { Issue::NegativeConcentration, Severity::Warning, QString( "component %1 has a negative concentration" ).arg( i ) } );
          reported_negative = true;
       }
    }
    return out;
 }
 
-std::vector<Diagnostic> validate_range( const Range& range )
+QVector<Diagnostic> validate_range( const Range& range )
 {
-   std::vector<Diagnostic> out;
+   QVector<Diagnostic> out;
    if ( !std::isfinite( range.low ) || !std::isfinite( range.high ) )
    {
       out.push_back( { Issue::InvalidRange, Severity::Error, "a range bound is not finite" } );

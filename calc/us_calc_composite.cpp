@@ -2,12 +2,10 @@
 #include "us_calc_composite.h"
 #include "us_calc_fp.h" // first:  floating-point policy
 
-#include "us_calc_matching.h"
 #include "us_calc_version.h"
 
-#include <algorithm>
-#include <cmath>
-#include <cstdio>
+#include <QStringList>
+#include <QtGlobal>
 
 namespace US_Calc
 {
@@ -15,95 +13,46 @@ namespace
 {
 // US_Model::constant_vbar and constant_ff0:  the range of a value over the
 // components is below a limit.
-bool constant( const std::vector<Component>& comps, double Component::*value, double limit )
+bool constant( const QVector<Component>& comps, double Component::*value, double limit )
 {
    double valmin = comps[0].*value;
    double valmax = comps[0].*value;
-   for ( std::size_t ii = 1; ii < comps.size(); ii++ )
+   for ( int ii = 1; ii < comps.size(); ii++ )
    {
-      // qMin( valmin, v ) and qMax( valmax, v ), including their NaN results
-      const double v = comps[ii].*value;
-      valmin         = ( valmin < v ) ? valmin : v;
-      valmax         = ( valmax < v ) ? v : valmax;
+      valmin = qMin( valmin, comps[ii].*value );
+      valmax = qMax( valmax, comps[ii].*value );
    }
    return ( valmax - valmin ) < limit;
 }
 } // namespace
 
-namespace
+QString mc_solute_key( double s, double second )
 {
-// printf "%<width>.<decimals>f" as QString::asprintf writes it:  exact
-// ties round away from zero, where the C library rounds them to even.  The
-// value's exact decimal expansion is rounded by hand.
-std::string fixed_like_qt( double value, int width, int decimals )
-{
-   char exact[1200];
-   std::snprintf( exact, sizeof exact, "%.1100f", std::fabs( value ) );
-   std::string                  digits( exact );
-   const std::string::size_type point  = digits.find( '.' );
-   std::string                  whole  = digits.substr( 0, point );
-   std::string                  frac   = digits.substr( point + 1, decimals );
-   const bool                   up     = digits.size() > point + 1 + decimals && digits[point + 1 + decimals] >= '5';
-   std::string                  number = whole + frac;
-   if ( up )
-   {
-      int i = static_cast<int>( number.size() ) - 1;
-      for ( ; i >= 0 && number[i] == '9'; --i )
-      {
-         number[i] = '0';
-      }
-      if ( i < 0 )
-      {
-         number.insert( number.begin(), '1' );
-      }
-      else
-      {
-         number[i]++;
-      }
-   }
-   std::string out = number.substr( 0, number.size() - decimals );
-   if ( decimals > 0 )
-   {
-      out += "." + number.substr( number.size() - decimals );
-   }
-   if ( std::signbit( value ) )
-   {
-      out.insert( out.begin(), '-' );
-   }
-   if ( static_cast<int>( out.size() ) < width )
-   {
-      out.insert( out.begin(), width - out.size(), ' ' );
-   }
-   return out;
-}
-} // namespace
-
-std::string mc_solute_key( double s, double second )
-{
-   return fixed_like_qt( s * 1.0e+13, 10, 4 ) + " " + fixed_like_qt( second, 8, 5 );
+   return QString::asprintf( "%10.4f %8.5f", s * 1.0e+13, second );
 }
 
-CompositeResult mc_composite( const std::vector<Model>& iterations )
+CompositeResult mc_composite( const QVector<Model>& iterations )
 {
    CompositeResult result;
    result.algorithm         = *algorithm( "mc_composite" );
    result.model.monte_carlo = true;
-   if ( iterations.empty() )
+   if ( iterations.isEmpty() )
    {
-      result.diagnostics.push_back( { Issue::EmptyModel, Severity::Error, "there are no Monte Carlo iterations" } );
+      result.diagnostics << Diagnostic{ Issue::EmptyModel, Severity::Error, "there are no Monte Carlo iterations" };
       return result;
    }
 
-   int                    ncnstv = 0;
-   int                    ncnstk = 0;
-   std::vector<Component> all;
-   for ( std::size_t ii = 0; ii < iterations.size(); ii++ )
+   int                ncnstv = 0;
+   int                ncnstk = 0;
+   QVector<Component> all;
+   for ( int ii = 0; ii < iterations.size(); ii++ )
    {
-      const std::vector<Component>& comps = iterations[ii].components;
-      if ( comps.empty() )
+      const QVector<Component>& comps = iterations[ii].components;
+      if ( comps.isEmpty() )
       {
-         result.diagnostics.push_back(
-            { Issue::EmptyModel, Severity::Error, "iteration " + std::to_string( ii + 1 ) + " has no components" } );
+         result.diagnostics << Diagnostic{ Issue::EmptyModel,
+                                           Severity::Error,
+                                           QString( "iteration %1 has no components" ).arg( ii + 1 ) };
          return result;
       }
       if ( constant( comps, &Component::vbar20, 1.0e-4 ) )
@@ -114,29 +63,31 @@ CompositeResult mc_composite( const std::vector<Model>& iterations )
       {
          ncnstk++;
       }
-      all.insert( all.end(), comps.begin(), comps.end() );
+      all << comps;
    }
 
-   const double             sclnrm  = 1.0 / (double) iterations.size();
-   const bool               cnst_vb = ( ncnstv >= ncnstk );
-   std::vector<std::string> sklist; // key of every component
-   std::vector<std::string> skvals; // unique keys
+   // As US_Model::load_multi_model:  a key per component, the unique keys
+   // sorted, and for each key the concentrations summed in order.
+   const double sclnrm  = 1.0 / (double) iterations.size();
+   const bool   cnst_vb = ( ncnstv >= ncnstk );
+   QStringList  sklist; // key of every component
+   QStringList  skvals; // unique keys
    for ( const Component& c : all )
    {
-      std::string key = mc_solute_key( c.s, cnst_vb ? c.f_f0 : c.vbar20 );
-      if ( std::find( skvals.begin(), skvals.end(), key ) == skvals.end() )
+      const QString key = mc_solute_key( c.s, cnst_vb ? c.f_f0 : c.vbar20 );
+      sklist << key;
+      if ( !skvals.contains( key ) )
       {
-         skvals.push_back( key );
+         skvals << key;
       }
-      sklist.push_back( std::move( key ) );
    }
-   std::sort( skvals.begin(), skvals.end() );
+   skvals.sort();
 
-   for ( const std::string& key : skvals )
+   for ( const QString& key : skvals )
    {
-      double      conc = 0.0;
-      std::size_t last = 0;
-      for ( std::size_t jj = 0; jj < sklist.size(); jj++ )
+      double conc = 0.0;
+      int    last = 0;
+      for ( int jj = 0; jj < sklist.size(); jj++ )
       {
          if ( sklist[jj] == key )
          {
@@ -146,16 +97,14 @@ CompositeResult mc_composite( const std::vector<Model>& iterations )
       }
       Component merged            = all[last];
       merged.signal_concentration = conc * sclnrm;
-      result.model.components.push_back( merged );
-      result.source_index.push_back( last );
+      result.model.components << merged;
+      result.source_index << last;
    }
 
-   const std::string& first = iterations.front().description;
-   char               miter[32];
-   std::snprintf( miter, sizeof miter, "_mcN%03d", static_cast<int>( iterations.size() ) );
-   result.model.description = text_section( first, '.', 0, -3 ) + "." +
-                              text_section( text_section( first, '.', -2, -2 ), '_', 0, -2 ) + miter + "." +
-                              text_section( first, '.', -1, -1 );
+   const QString& first     = iterations.front().description;
+   result.model.description = first.section( '.', 0, -3 ) + "." + first.section( '.', -2, -2 ).section( '_', 0, -2 ) +
+                              QString::asprintf( "_mcN%03i", static_cast<int>( iterations.size() ) ) + "." +
+                              first.section( '.', -1, -1 );
    return result;
 }
 } // namespace US_Calc

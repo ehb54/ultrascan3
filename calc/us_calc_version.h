@@ -5,9 +5,9 @@
 
 #include "us_calc_types.h"
 
+#include <QString>
+#include <QVector>
 #include <optional>
-#include <string>
-#include <vector>
 
 namespace US_Calc
 {
@@ -15,13 +15,13 @@ namespace US_Calc
 //!
 //! The major number changes when the interface changes incompatibly.  It
 //! is independent of the algorithm versions, which record the rules.
-std::string                     library_version();
+QString                         library_version();
 
 //! \brief Every algorithm of the library with its current version.
-std::vector<AlgorithmVersion>   algorithms();
+QVector<AlgorithmVersion>       algorithms();
 
 //! \brief The current version of the named algorithm, if it exists.
-std::optional<AlgorithmVersion> algorithm( const std::string& name );
+std::optional<AlgorithmVersion> algorithm( const QString& name );
 } // namespace US_Calc
 
 #endif

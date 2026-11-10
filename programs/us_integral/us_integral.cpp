@@ -818,19 +818,7 @@ DbgLv(1) << "LD:  edata: desc run cell chan"
 
    // The integral distribution is calculated by us_calc from the model's
    // components (US_Calc::integral_distribution completes the coefficients).
-   tsys.calc_model.description = model.description.toStdString();
-   for ( const US_Model::SimulationComponent& sc : model.components )
-   {
-      US_Calc::Component c;
-      c.s                    = sc.s;
-      c.D                    = sc.D;
-      c.mw                   = sc.mw;
-      c.f                    = sc.f;
-      c.f_f0                 = sc.f_f0;
-      c.vbar20               = sc.vbar20;
-      c.signal_concentration = sc.signal_concentration;
-      tsys.calc_model.components.push_back( c );
-   }
+   tsys.calc_model = model.calc_model();
 
    alldis.append( tsys );
 DbgLv(1) << "LD:   retn fr alldis.append";
@@ -1119,21 +1107,21 @@ void US_Integral::build_bf_vects()
       {
          if ( d.severity == US_Calc::Severity::Error )
          {
-            qDebug() << "US_Integral:" << alldis[ii].label << QString::fromStdString( d.detail );
+            qDebug() << "US_Integral:" << alldis[ii].label << d.detail;
          }
       }
 
       if ( ii == 0 )
       {
-         v_bfracs = QVector<double>( dist.boundary_fractions.begin(), dist.boundary_fractions.end() );
+         v_bfracs = dist.boundary_fractions;
       }
 
-      v_sedcs[ii] = QVector<double>( dist.s.begin(), dist.s.end() );
-      v_difcs[ii] = QVector<double>( dist.D.begin(), dist.D.end() );
-      v_mmass[ii] = QVector<double>( dist.mw.begin(), dist.mw.end() );
-      v_frats[ii] = QVector<double>( dist.f_f0.begin(), dist.f_f0.end() );
-      v_vbars[ii] = QVector<double>( dist.vbar20.begin(), dist.vbar20.end() );
-      v_rhs[ii]   = QVector<double>( dist.rh.begin(), dist.rh.end() );
+      v_sedcs[ii] = dist.s;
+      v_difcs[ii] = dist.D;
+      v_mmass[ii] = dist.mw;
+      v_frats[ii] = dist.f_f0;
+      v_vbars[ii] = dist.vbar20;
+      v_rhs[ii]   = dist.rh;
    }
 }
 

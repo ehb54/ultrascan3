@@ -12,31 +12,30 @@
 #include "us_calc_range.h"
 #include "us_calc_types.h"
 
-#include <cstddef>
+#include <QVector>
 #include <optional>
-#include <vector>
 
 namespace US_Calc
 {
 //! \brief Mean and population standard deviation of a replicate group.
 struct ReplicateResult
 {
-      std::size_t             member_count = 0; //!< Members given
-      std::size_t             used_count   = 0; //!< Members used
+      int                   member_count = 0; //!< Members given
+      int                   used_count   = 0; //!< Members used
       //! Means and standard deviations; empty when no member is used.
-      std::optional<double>   mean_range_concentration;
-      std::optional<double>   sd_range_concentration;
-      std::optional<double>   mean_fraction_percent;
-      std::optional<double>   sd_fraction_percent;
-      std::vector<Diagnostic> diagnostics;
-      AlgorithmVersion        algorithm;
+      std::optional<double> mean_range_concentration;
+      std::optional<double> sd_range_concentration;
+      std::optional<double> mean_fraction_percent;
+      std::optional<double> sd_fraction_percent;
+      QVector<Diagnostic>   diagnostics;
+      AlgorithmVersion      algorithm;
 };
 
 //! \brief Summarize the range results of a replicate group's members.
 //!
 //! A member is used when its in-range concentration is not negative and
 //! its fraction is defined.  Others are left out with a warning.
-ReplicateResult replicate_summary( const std::vector<RangeResult>& members );
+ReplicateResult replicate_summary( const QVector<RangeResult>& members );
 } // namespace US_Calc
 
 #endif

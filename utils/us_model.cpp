@@ -150,16 +150,8 @@ bool US_Model::update_coefficients()
 // Calculate any missing coefficient values in a model component
 bool US_Model::calc_coefficients( SimulationComponent& component )
 {
-   US_Calc::Component c;
-   c.s                    = component.s;
-   c.D                    = component.D;
-   c.mw                   = component.mw;
-   c.f                    = component.f;
-   c.f_f0                 = component.f_f0;
-   c.vbar20               = component.vbar20;
-   c.signal_concentration = component.signal_concentration;
-
-   const bool ok = US_Calc::calc_coefficients( c );
+   US_Calc::Component c  = calc_component( component );
+   const bool         ok = US_Calc::calc_coefficients( c );
 
    component.s                    = c.s;
    component.D                    = c.D;
@@ -169,6 +161,33 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
    component.vbar20               = c.vbar20;
    component.signal_concentration = c.signal_concentration;
    return ok;
+}
+
+// A component as the calculation library takes it
+US_Calc::Component US_Model::calc_component( const SimulationComponent& sc )
+{
+   US_Calc::Component c;
+   c.s                    = sc.s;
+   c.D                    = sc.D;
+   c.mw                   = sc.mw;
+   c.f                    = sc.f;
+   c.f_f0                 = sc.f_f0;
+   c.vbar20               = sc.vbar20;
+   c.signal_concentration = sc.signal_concentration;
+   return c;
+}
+
+// The model as the calculation library takes it
+US_Calc::Model US_Model::calc_model( void ) const
+{
+   US_Calc::Model cm;
+   cm.description = description;
+   cm.monte_carlo = monteCarlo;
+   for ( const SimulationComponent& sc : components )
+   {
+      cm.components << calc_component( sc );
+   }
+   return cm;
 }
 
 // Test the existence of the models directory path and create it if need be
@@ -692,7 +711,7 @@ int US_Model::load_multi_model( QTextStream& tsi )
    // Load every iteration, then build the composite in us_calc.
    QVector<SimulationComponent> mmcomps;
    QVector<Association>         mmassos;
-   std::vector<US_Calc::Model>  iterations;
+   QVector<US_Calc::Model>      iterations;
 
    for ( int ii = 0; ii < nmcixs; ii++ )
    {
@@ -703,21 +722,9 @@ int US_Model::load_multi_model( QTextStream& tsi )
       mmcomps << components;
       mmassos << associations;
 
-      US_Calc::Model iteration;
-      iteration.description = mdesc.toStdString();
-      for ( const SimulationComponent& sc : components )
-      {
-         US_Calc::Component c;
-         c.s                    = sc.s;
-         c.D                    = sc.D;
-         c.mw                   = sc.mw;
-         c.f                    = sc.f;
-         c.f_f0                 = sc.f_f0;
-         c.vbar20               = sc.vbar20;
-         c.signal_concentration = sc.signal_concentration;
-         iteration.components.push_back( c );
-      }
-      iterations.push_back( iteration );
+      US_Calc::Model iteration = calc_model();
+      iteration.description    = mdesc;
+      iterations << iteration;
    }
 
    const US_Calc::CompositeResult composite = US_Calc::mc_composite( iterations );
@@ -730,10 +737,10 @@ int US_Model::load_multi_model( QTextStream& tsi )
       return IUS_DB2::NO_MODEL;
    }
 
-   for ( size_t ii = 0; ii < composite.source_index.size(); ii++ )
+   for ( int ii = 0; ii < composite.source_index.size(); ii++ )
    { // The full record of the last matching component, with the averaged concentration
-      SimulationComponent scomp  = mmcomps[(int) composite.source_index[ii]];
-      scomp.name                 = QString::asprintf( "SC%04d", (int) ii + 1 );
+      SimulationComponent scomp  = mmcomps[composite.source_index[ii]];
+      scomp.name                 = QString::asprintf( "SC%04d", ii + 1 );
       scomp.signal_concentration = composite.model.components[ii].signal_concentration;
       components << scomp;
    }
@@ -741,7 +748,7 @@ int US_Model::load_multi_model( QTextStream& tsi )
    if ( mmassos.size() > 0 )
       associations << mmassos[ 0 ];
 
-   description = QString::fromStdString( composite.model.description );
+   description = composite.model.description;
 
    return result;
 }

@@ -8,6 +8,8 @@
 #include "us_calc_validation.h"
 #include "us_calc_version.h"
 
+#include <QtMath>
+
 #include <algorithm>
 #include <map>
 #include <tuple>
@@ -16,8 +18,6 @@ namespace US_Calc
 {
 namespace
 {
-constexpr double kPi = 3.14159265358979323846;
-
 // A solute in the units US_Integral uses (S_Solute):  s in S, d in 1e-7
 // cm^2/s, w molar mass, k f/f0, v vbar20, r hydrodynamic radius, c
 // concentration, f boundary fraction once accumulated.
@@ -62,8 +62,8 @@ IntegralDistribution integral_distribution( const Model& model, DistributionAxis
    }
 
    // Complete the coefficients and convert, as US_Integral::load_distro.
-   std::vector<Solute> in;
-   bool                complete = true;
+   QVector<Solute> in;
+   bool            complete = true;
    for ( Component c : model.components )
    {
       complete = calc_coefficients( c ) && complete;
@@ -75,7 +75,7 @@ IntegralDistribution integral_distribution( const Model& model, DistributionAxis
       x.v = c.vbar20;
       x.d = c.D * 1.0e7;
       x.f = c.f;
-      x.r = c.f / ( 6e-9 * kPi * VISC_20W );
+      x.r = c.f / ( 6e-9 * M_PI * VISC_20W );
       in.push_back( x );
    }
    if ( !complete )
@@ -87,8 +87,8 @@ IntegralDistribution integral_distribution( const Model& model, DistributionAxis
    // Merge solutes with equal s, D, mw and f/f0 wherever they appear:
    // concentrations add; vbar and radius are averaged.  First appearance
    // keeps its position for the stable sort below.
-   std::vector<Solute>                                          merged;
-   std::vector<int>                                             count;
+   QVector<Solute>                                              merged;
+   QVector<int>                                                 count;
    std::map<std::tuple<double, double, double, double>, size_t> index;
    for ( const Solute& x : in )
    {
@@ -176,12 +176,12 @@ IntegralDistribution integral_distribution( const Model& model, DistributionAxis
 
    if ( settings.smoothing > 1 )
    {
-      for ( std::vector<double>* series : { &out.s, &out.D, &out.mw, &out.f_f0, &out.vbar20, &out.rh } )
+      for ( QVector<double>* series : { &out.s, &out.D, &out.mw, &out.f_f0, &out.vbar20, &out.rh } )
       {
-         std::vector<Diagnostic> d = gaussian_smoothing( *series, settings.smoothing );
-         if ( !d.empty() )
+         QVector<Diagnostic> d = gaussian_smoothing( *series, settings.smoothing );
+         if ( !d.isEmpty() )
          {
-            out.diagnostics.insert( out.diagnostics.end(), d.begin(), d.end() );
+            out.diagnostics << d;
             break; // every series has the same length
          }
       }
