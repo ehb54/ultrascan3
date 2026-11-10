@@ -77,6 +77,38 @@ TEST( UsCalcCoefficients, InvalidInputs )
    EXPECT_EQ( typical.vbar20, TYPICAL_VBAR );
 }
 
+// vbar20 = 1 / DENS_20W makes the buoyancy zero:  the pairs that start from
+// s or mw would divide by it and are rejected, leaving the values unchanged;
+// D with f/f0 is still defined and gives s = 0.
+TEST( UsCalcCoefficients, ZeroBuoyancy )
+{
+   const double vb = 1.0 / DENS_20W;
+
+   Component    s_pair;
+   s_pair.vbar20 = vb;
+   s_pair.s      = 5e-13;
+   s_pair.f_f0   = 1.5;
+   EXPECT_FALSE( calc_coefficients( s_pair ) );
+   EXPECT_EQ( s_pair.D, 0.0 );
+   EXPECT_EQ( s_pair.mw, 0.0 );
+
+   Component mw_pair;
+   mw_pair.vbar20 = vb;
+   mw_pair.mw     = 50000.0;
+   mw_pair.f_f0   = 1.5;
+   EXPECT_FALSE( calc_coefficients( mw_pair ) );
+   EXPECT_EQ( mw_pair.s, 0.0 );
+   EXPECT_EQ( mw_pair.D, 0.0 );
+
+   Component d_pair;
+   d_pair.vbar20 = vb;
+   d_pair.D      = 5e-7;
+   d_pair.f_f0   = 1.5;
+   EXPECT_TRUE( calc_coefficients( d_pair ) );
+   EXPECT_EQ( d_pair.s, 0.0 );
+   EXPECT_GT( d_pair.mw, 0.0 );
+}
+
 TEST( UsCalcSmoothing, WidthOneOrLessChangesNothing )
 {
    QVector<double> v    = { 1, 5, 2, 8, 3 };

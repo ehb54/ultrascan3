@@ -24,6 +24,23 @@ namespace
 struct Solute
 {
       double s = 0, k = 0, c = 0, w = 0, v = 0, d = 0, f = 0, r = 0;
+
+      // The same solute:  equal s, D, mw and f/f0.  The order is that of
+      // these four values, so a solute can key a std::map.
+      bool   operator==( const Solute& o ) const
+      {
+         return identity() == o.identity();
+      }
+      bool operator<( const Solute& o ) const
+      {
+         return identity() < o.identity();
+      }
+
+   private:
+      std::tuple<double, double, double, double> identity() const
+      {
+         return std::make_tuple( s, d, w, k );
+      }
 };
 
 double axis_value( const Solute& x, DistributionAxis axis )
@@ -87,16 +104,15 @@ IntegralDistribution integral_distribution( const Model& model, DistributionAxis
    // Merge solutes with equal s, D, mw and f/f0 wherever they appear:
    // concentrations add; vbar and radius are averaged.  First appearance
    // keeps its position for the stable sort below.
-   QVector<Solute>                                           merged;
-   QVector<int>                                              count;
-   std::map<std::tuple<double, double, double, double>, int> index;
+   QVector<Solute>       merged;
+   QVector<int>          count;
+   std::map<Solute, int> index; // position in merged of each solute
    for ( const Solute& x : in )
    {
-      const auto key = std::make_tuple( x.s, x.d, x.w, x.k );
-      auto       it  = index.find( key );
+      auto it = index.find( x );
       if ( it == index.end() )
       {
-         index[key] = static_cast<int>( merged.size() );
+         index[x] = static_cast<int>( merged.size() );
          merged.push_back( x );
          count.push_back( 1 );
       }

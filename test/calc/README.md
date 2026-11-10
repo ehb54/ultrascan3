@@ -179,3 +179,11 @@ ehb54/ultrascan-tickets#1214.
    `pow(10,-7)` and `pow(10,3)` in one path and with literals in the other.
    They agree exactly on the reference platform (checked over 100 000
    bounds); the exact-bound edge fixtures guard this.
+12. **Zero buoyancy.**  `US_Model::calc_coefficients` rejected an s whose sign
+   did not match the buoyancy, but let a nonzero s through when the buoyancy
+   was zero (vbar20 = 1 / DENS_20W), and the pairs that start from s or mw
+   then divided by zero, giving infinite or NaN coefficients.  US_Calc
+   rejects those pairs at zero buoyancy and leaves the values unchanged, as
+   for a sign mismatch; D or f with f/f0 still give s = 0.  Every other
+   input gives the same doubles as before (checked over 2 000 000
+   components).  No fixture has zero buoyancy.

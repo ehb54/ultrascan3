@@ -8,57 +8,51 @@
 
 namespace US_Calc
 {
-namespace
-{
 // Ideal gas constant times 20 degrees C in Kelvin
-constexpr double kRT = R_GC * K20;
-} // namespace
+constexpr double kRT      = R_GC * K20;
+// Factors of the sphere volume and radius:  4/3 pi r^3 = volume, f0 = 6 pi eta r
+constexpr double vol_fac  = 0.75 / M_PI;
+constexpr double onethird = 1.0 / 3.0;
+constexpr double rsph_fac = 0.06 * M_PI * VISC_20W;
 
-bool calc_coefficients( Component& component )
+bool             calc_coefficients( Component& component )
 {
    bool   ok = true;
-   double vbar;          // component vbar
-   double volume;        // e.g., vbar * mw / AVOGADRO
-   double vol_fac;       // volume factor, e.g., 0.75 / pi
-   double radius_sphere; // e.g., pow( volume * vol_fac, 1/3 );
-   double rsph_fac;      // radius_sphere factor; e.g., 0.06 * pi * VISC
-   double onethird;      // one third ( 1.0 / 3.0 )
-   double c;             // concentration
-   double s;             // sedimentation coefficient
-   double D;             // diffusion coefficient
-   double mw;            // molecular weight
-   double f;             // frictional coefficient
-   double fv;            // frictional coefficient (working value)
-   double f_f0;          // frictional ratio
-   double f0;            // f-zero
-   double s20w;
-   double buoyancyb;
 
-   // Ensure that we have a vbar we can use
-   vbar = component.vbar20;
-
-   if ( vbar <= 0.0 )
+   // A vbar we can use:  a missing vbar20 becomes the typical vbar.
+   double vbar;
+   if ( component.vbar20 <= 0.0 )
    {
       vbar             = TYPICAL_VBAR;
-      component.vbar20 = vbar;
+      component.vbar20 = TYPICAL_VBAR;
+   }
+   else
+   {
+      vbar = component.vbar20;
    }
 
-   vol_fac  = 0.75 / M_PI; // various factors used in calcs below
-   onethird = 1.0 / 3.0;
-   rsph_fac = 0.06 * M_PI * VISC_20W;
+   double       s    = component.s; // component coefficient values
+   double       D    = component.D;
+   double       mw   = component.mw;
+   double       f    = component.f;
+   double       f_f0 = component.f_f0;
+   const double c    = component.signal_concentration;
+   double       fv   = f; // frictional coefficient (working value)
+   double       f0;       // f-zero
+   double       volume;
+   double       radius_sphere;
 
-   s    = component.s; // component coefficient values
-   D    = component.D;
-   mw   = component.mw;
-   f    = component.f;
-   f_f0 = component.f_f0;
-   c    = component.signal_concentration;
-   fv   = f;
-
-   // Negative s-values require negative buoyancy.
-   buoyancyb = 1.0 - ( vbar * DENS_20W );
+   // s must have the sign of the buoyancy.  The pairs that start from s or
+   // from mw divide by the buoyancy, so with a zero buoyancy (vbar20 equal
+   // to 1 / DENS_20W) they cannot be completed; D or f with f/f0 still give
+   // s = 0.  Sign tests rather than s * buoyancy > 0, which can underflow.
+   const double buoyancyb = 1.0 - ( vbar * DENS_20W );
 
    if ( ( s < 0.0 && buoyancyb > 0.0 ) || ( s > 0.0 && buoyancyb < 0.0 ) )
+   {
+      return false;
+   }
+   if ( buoyancyb == 0.0 && ( s != 0.0 || component.mw != 0.0 ) )
    {
       return false;
    }
@@ -66,7 +60,7 @@ bool calc_coefficients( Component& component )
    // Start with s if possible
    if ( s != 0.0 )
    {
-      s20w = s;
+      const double s20w = s;
 
       if ( f_f0 != 0.0 ) // s and f_f0
       {
