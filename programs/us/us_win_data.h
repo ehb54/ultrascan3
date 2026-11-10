@@ -92,7 +92,7 @@ struct Process
       QString name;            // executable name
       QString loadingMsg;      // status text (translatable)
       QString runningMsg;      // status text (translatable)
-    };
+};
 
     extern Process p[];           // sentinel-terminated (index == P_END)
 

@@ -2518,11 +2518,11 @@ QString US_eSignaturesGMP::get_assigned_oper_revs_sa( QString role, QJsonDocumen
   
   if ( role.contains("reviewer") )
     {
-      reviewers_info[ "reviewers" ] = smry;
-      if ( role_completed )
-      {
-         reviewers_info["completed"] = "YES";
-      }
+       reviewers_info["reviewers"] = smry;
+       if ( role_completed )
+       {
+          reviewers_info["completed"] = "YES";
+       }
     }
 
   if ( role.contains("approver") )
@@ -2745,9 +2745,12 @@ int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflow
                                  : tr( "Scanning completed GMP runs for outstanding e-Signatures..." ) )
            : tr( "Scanning current GMP runs..." );
      progress->setLabelText( tr( "<b>Please Wait</b><br>%1<br>"
-				       "%2 of %3 checked, %4 record(s) found" )
-				     .arg( scanText ).arg( irow + 1 ).arg( baseRows.size() ).arg( nrecs ) );
-	  qApp->processEvents();
+                                 "%2 of %3 checked, %4 record(s) found" )
+                                .arg( scanText )
+                                .arg( irow + 1 )
+                                .arg( baseRows.size() )
+                                .arg( nrecs ) );
+     qApp->processEvents();
 	}
     }
 
@@ -3464,9 +3467,9 @@ void US_eSignaturesGMP::assignOperRevs_sa( void )
                                    "Operator(s), Reviewer(s), and Approver(s) "
                                    "lists are the same.<br><br>"
                                    "Nothing will be changed..." ) );
-      
-	  return;
-    }
+
+     return;
+  }
 
   //End of Compare old/new o|r|a ///////////////////////////////////////////
 
@@ -3547,7 +3550,7 @@ void US_eSignaturesGMP::assignOperRevs_sa( void )
        pb_set_operRev->setEnabled( false );
        set_revOper_panel_gui_sa();
 
-       qApp->processEvents();  
+       qApp->processEvents();
     }
   else
     {
@@ -5562,9 +5565,9 @@ QString US_eSignaturesGMP::compose_updated_eSign_Json( int u_ID, QString u_fname
        {
           current_esignee_name = current_reviewer;
           continue;
-	}
+       }
 
-   to_sign_left << current_reviewer;
+       to_sign_left << current_reviewer;
     }
 
     if ( current_esignee_name.isEmpty() ) //should not happen: current user not in "to_sign"
@@ -5572,7 +5575,7 @@ QString US_eSignaturesGMP::compose_updated_eSign_Json( int u_ID, QString u_fname
        current_esignee_name = personLabel( u_ID, u_fname, u_lname );
     }
 
-  //update global e-Sign status:
+    //update global e-Sign status:
     eSignStatusAll_updated = to_sign_left.isEmpty() ? "YES" : "NO";
 
     // "signed" section: the existing ones, plus the current e-signee
