@@ -222,6 +222,9 @@ elseif(US3_PROFILE STREQUAL "TEST")
     set(BUILD_DOCUMENTATION OFF CACHE BOOL "" FORCE)
 
 elseif(US3_PROFILE STREQUAL "HPC")
+    if(NOT UNIX OR APPLE)
+        message(FATAL_ERROR "The HPC profile (us_mpi_analysis) is built only on Linux")
+    endif()
     set(US3_NO_DB ON CACHE BOOL "" FORCE)
     set(US3_BUILD_PROGRAMS ON CACHE BOOL "" FORCE)  # us_mpi_analysis is built
     set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
@@ -1983,81 +1986,6 @@ if(UNIX AND NOT APPLE AND US3_PROFILE STREQUAL "HPC")
     include(${CMAKE_SOURCE_DIR}/admin/cmake/packaging/linux/LinuxHpcPkg.cmake)
 
 endif() # UNIX AND NOT APPLE AND HPC
-
-# =============================================================================
-# macOS HPC DEPLOYMENT (headless tarball, no GUI launcher, no help docs)
-#
-# Active when APPLE AND US3_PROFILE=HPC.  Uses a separate stage directory
-# (_hpc_stage/) so it coexists with the APP build tree without conflict.
-#
-# Build pipeline:
-#   cmake --build . --target deploy_macos_hpc
-#   cmake --build . --target package_macos_hpc_tarball
-# Or via build.sh:
-#   ./scripts/build.sh HPC --pkg
-# =============================================================================
-if(APPLE AND US3_PROFILE STREQUAL "HPC")
-
-    # -------------------------------------------------------------------------
-    # Derive vcpkg lib dir for MacHpcDeploy.cmake
-    # Only VCPKG_LIB_DIR is needed — the new HPC deploy uses a flat lib/
-    # layout with DYLD_LIBRARY_PATH, not .app bundles or macdeployqt.
-    # -------------------------------------------------------------------------
-    set(_MAC_HPC_VCPKG_LIB_DIR "")
-    if(DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET)
-        set(_MAC_HPC_VCPKG_LIB_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib")
-        if(NOT EXISTS "${_MAC_HPC_VCPKG_LIB_DIR}")
-            string(REPLACE "-dynamic" "" _mac_hpc_static_triplet "${VCPKG_TARGET_TRIPLET}")
-            set(_MAC_HPC_VCPKG_LIB_DIR "${VCPKG_INSTALLED_DIR}/${_mac_hpc_static_triplet}/lib")
-        endif()
-    elseif(USE_QT6 AND Qt6_DIR)
-        get_filename_component(_MAC_HPC_VCPKG_LIB_DIR "${Qt6_DIR}/../../lib" ABSOLUTE)
-    elseif(Qt5_DIR)
-        get_filename_component(_MAC_HPC_VCPKG_LIB_DIR "${Qt5_DIR}/../../../lib" ABSOLUTE)
-    endif()
-    message(STATUS "[macOS HPC] vcpkg lib dir: ${_MAC_HPC_VCPKG_LIB_DIR}")
-
-    # -------------------------------------------------------------------------
-    # HPC stage directory (separate from APP _stage/)
-    # -------------------------------------------------------------------------
-    set(US3_MAC_HPC_STAGE_DIR "${CMAKE_BINARY_DIR}/_hpc_stage/UltraScan3-HPC" CACHE PATH
-        "Staging directory for macOS HPC deployment")
-
-    # -------------------------------------------------------------------------
-    # deploy_macos_hpc target
-    # Does NOT require 'us', 'documentation', or any GUI target.
-    # Depends on usutils so it runs after core libs are compiled.
-    # -------------------------------------------------------------------------
-    set(_deploy_mac_hpc_deps "")
-    if(TARGET usutils)
-        list(APPEND _deploy_mac_hpc_deps usutils)
-    endif()
-    if(TARGET us_mpi_analysis)
-        list(APPEND _deploy_mac_hpc_deps us_mpi_analysis)
-    endif()
-
-    add_custom_target(deploy_macos_hpc
-        COMMAND ${CMAKE_COMMAND} -E remove_directory "${US3_MAC_HPC_STAGE_DIR}"
-        COMMAND ${CMAKE_COMMAND}
-            -DHPC_STAGE_DIR=${US3_MAC_HPC_STAGE_DIR}
-            -DBIN_DIR=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-            -DLIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-            -DLICENSE_FILE=${CMAKE_SOURCE_DIR}/LICENSE.txt
-            -DVERSION_FILE=${CMAKE_SOURCE_DIR}/VERSION
-            -DVCPKG_LIB_DIR=${_MAC_HPC_VCPKG_LIB_DIR}
-            -DUS3_VERSION_STRING=${US3_VERSION_STRING}
-            -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/macos/MacHpcDeploy.cmake
-        DEPENDS ${_deploy_mac_hpc_deps}
-        COMMENT "Staging macOS HPC deployment into ${US3_MAC_HPC_STAGE_DIR}"
-        VERBATIM
-    )
-
-    # -------------------------------------------------------------------------
-    # MacHpcPkg.cmake: defines package_macos_hpc_tarball target
-    # -------------------------------------------------------------------------
-    include(${CMAKE_SOURCE_DIR}/admin/cmake/packaging/macos/MacHpcPkg.cmake)
-
-endif() # APPLE AND HPC
 
 # =============================================================================
 # PACKAGING

@@ -210,6 +210,9 @@ endif()
 # --------------------------------------------------------------------------
 # 4) Add all per-program subdirectories (APP path)
 # --------------------------------------------------------------------------
+if(ENABLE_MPI AND (NOT UNIX OR APPLE))
+    message(FATAL_ERROR "us_mpi_analysis (ENABLE_MPI) is built only on Linux")
+endif()
 if(NOT ENABLE_MPI)
     set(EXCLUDED_PROGRAMS us_mpi_analysis CMakeFiles generated)
 else()

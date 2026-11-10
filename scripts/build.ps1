@@ -33,7 +33,7 @@
     Target architecture: x64 (default, auto-detect) or arm64
 
 .PARAMETER profile
-    Build profile: APP (default), TEST, HPC
+    Build profile: APP (default), TEST. The HPC profile (us_mpi_analysis) is built only on Linux.
 
 .PARAMETER vcpkg-root
     Path to vcpkg installation. Priority: --vcpkg-root > US3_VCPKG_ROOT env > source-tree vcpkg > $HOME\vcpkg
@@ -98,7 +98,7 @@
 
 param(
     [Parameter(Position = 0)]
-    [ValidateSet("APP", "TEST", "HPC")]
+    [ValidateSet("APP", "TEST")]
     [string]$profile = "APP",
 
     [ValidateSet("Release", "Debug")]
@@ -151,7 +151,6 @@ if (${help}) {
     Write-Host "PROFILE:"
     Write-Host "  APP                      Desktop/user build (GUI + programs + DB) [default]"
     Write-Host "  TEST                     Dev/CI build (programs + tests, prefer static libs)"
-    Write-Host "  HPC                      Headless / no DB / no GUI"
     Write-Host ""
     Write-Host "VCPKG LOCATION (in order of priority):"
     Write-Host "  1. --vcpkg-root <path> argument"
@@ -190,8 +189,8 @@ if ($qt5.IsPresent) { $QtSuffix = "-qt5" }
 
 $profile = $profile.ToUpperInvariant()
 
-if (@("APP","TEST","HPC") -notcontains $profile) {
-    Write-Host "ERROR: --profile must be APP, TEST, or HPC" -ForegroundColor Red
+if (@("APP","TEST") -notcontains $profile) {
+    Write-Host "ERROR: --profile must be APP or TEST (the HPC profile is built only on Linux)" -ForegroundColor Red
     exit 1
 }
 
@@ -1113,8 +1112,7 @@ cmake --preset $Preset -DUS3_PROFILE="${profile}" -DVCPKG_INSTALL_OPTIONS="$Vcpk
 if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: CMake configuration failed." -ForegroundColor Red; exit $LASTEXITCODE }
 
 # Read back what the toolchain resolved rather than recomputing its rule.
-# Exported unconditionally, matching build.sh: scoping it to the windeployqt
-# check below left it unset for everything downstream on the HPC profile.
+# Exported for everything downstream, matching build.sh.
 $VcpkgInstalledDir = Join-Path $BuildDir "vcpkg_installed"
 $CacheMatch = Select-String -Path (Join-Path $BuildDir "CMakeCache.txt") `
     -Pattern '^VCPKG_INSTALLED_DIR:PATH=(.*)$' -ErrorAction SilentlyContinue |
@@ -1132,27 +1130,25 @@ Write-Host "vcpkg installed dir: $VcpkgInstalledDir"
 # cross-compile scenario.  Fail now rather than letting the build produce a
 # broken package.
 # =============================================================================
-if ($profile -ne "HPC") {
-    $TargetTriplet = Get-VcpkgTriplet
-    if ($QtSuffix -eq "-qt6") {
-        $ExpectedTool   = Join-Path $VcpkgInstalledDir "$TargetTriplet\tools\Qt6\bin\windeployqt.exe"
-        $QtToolsFeature = "qt6-app (qttools[assistant])"
-    } else {
-        $ExpectedTool   = Join-Path $VcpkgInstalledDir "$TargetTriplet\tools\qt5-tools\bin\windeployqt.exe"
-        $QtToolsFeature = "qt5-app (qt5-tools)"
-    }
+$TargetTriplet = Get-VcpkgTriplet
+if ($QtSuffix -eq "-qt6") {
+    $ExpectedTool   = Join-Path $VcpkgInstalledDir "$TargetTriplet\tools\Qt6\bin\windeployqt.exe"
+    $QtToolsFeature = "qt6-app (qttools[assistant])"
+} else {
+    $ExpectedTool   = Join-Path $VcpkgInstalledDir "$TargetTriplet\tools\qt5-tools\bin\windeployqt.exe"
+    $QtToolsFeature = "qt5-app (qt5-tools)"
+}
 
-    if (-not (Test-Path $ExpectedTool)) {
-        Write-Host ""
-        Write-Host "ERROR: windeployqt.exe not found for $TargetTriplet after cmake configure." -ForegroundColor Red
-        Write-Host "  Expected : $ExpectedTool" -ForegroundColor Red
-        Write-Host ""
-        Write-Host "The vcpkg manifest install ran but did not produce windeployqt.exe" -ForegroundColor Yellow
-        Write-Host "for the target triplet $TargetTriplet." -ForegroundColor Yellow
-        Write-Host "Verify vcpkg.json includes the Qt tools for feature: $QtToolsFeature" -ForegroundColor Yellow
-        Write-Host "Then rerun: scripts\build.bat --arch $Arch$(if (${pkg}) { ' --pkg' })" -ForegroundColor Yellow
-        exit 1
-    }
+if (-not (Test-Path $ExpectedTool)) {
+    Write-Host ""
+    Write-Host "ERROR: windeployqt.exe not found for $TargetTriplet after cmake configure." -ForegroundColor Red
+    Write-Host "  Expected : $ExpectedTool" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "The vcpkg manifest install ran but did not produce windeployqt.exe" -ForegroundColor Yellow
+    Write-Host "for the target triplet $TargetTriplet." -ForegroundColor Yellow
+    Write-Host "Verify vcpkg.json includes the Qt tools for feature: $QtToolsFeature" -ForegroundColor Yellow
+    Write-Host "Then rerun: scripts\build.bat --arch $Arch$(if (${pkg}) { ' --pkg' })" -ForegroundColor Yellow
+    exit 1
 }
 
 Write-Host ""
