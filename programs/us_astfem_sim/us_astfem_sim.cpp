@@ -1422,7 +1422,7 @@ QString US_Astfem_Sim::schedule_problem( void ) const
       const US_SimulationParameters::SpeedProfile& sp    = loaded_steps[jd];
       const double                                 delay = qRound( sp.delay_hours * 3600.0 + sp.delay_minutes * 60.0 );
       const double end  = schedule_firsts[jd] - delay + qRound( sp.duration_hours * 3600.0 + sp.duration_minutes * 60.0 );
-      const int last = US_SimSchedule::scanTime(
+      const int    last = US_SimSchedule::scanTime(
          simparams.schedule, schedule_firsts[jd], schedule_counts[jd] - 1, 0, simparams.schedule.slot_seconds.size() - 1 );
       if ( last > end )
       {
