@@ -24,6 +24,7 @@
 #include <QRegularExpression>
 #include <QTextStream>
 
+#include <algorithm>
 #include <cmath>
 #include <functional>
 
@@ -118,11 +119,103 @@ QJsonObject readJson( const QString& path )
    return QJsonDocument::fromJson( file.readAll() ).object();
 }
 
+bool holdsOnlyScalars( const QJsonValue& value )
+{
+   const auto scalar = []( const QJsonValue& item ) { return !item.isArray() && !item.isObject(); };
+   if ( value.isObject() )
+   {
+      const QJsonObject object = value.toObject();
+      return std::all_of( object.begin(), object.end(), scalar );
+   }
+   const QJsonArray array = value.toArray();
+   return std::all_of( array.begin(), array.end(), scalar );
+}
+
+// A value written on one line:  a scalar, a container of scalars, or an
+// object whose members are scalars or containers of scalars.
+bool writtenInline( const QJsonValue& value )
+{
+   if ( !value.isArray() && !value.isObject() )
+   {
+      return true;
+   }
+   if ( holdsOnlyScalars( value ) )
+   {
+      return true;
+   }
+   if ( !value.isObject() )
+   {
+      return false;
+   }
+   for ( const QJsonValue& member : value.toObject() )
+   {
+      if ( ( member.isArray() || member.isObject() ) && !holdsOnlyScalars( member ) )
+      {
+         return false;
+      }
+   }
+   return true;
+}
+
+QByteArray inlineJson( const QJsonValue& value )
+{
+   if ( value.isObject() )
+   {
+      const QJsonObject object = value.toObject();
+      QList<QByteArray> members;
+      for ( auto it = object.begin(); it != object.end(); ++it )
+      {
+         members << inlineJson( it.key() ) + ": " + inlineJson( it.value() );
+      }
+      return "{" + members.join( ", " ) + "}";
+   }
+   if ( value.isArray() )
+   {
+      QList<QByteArray> items;
+      for ( const QJsonValue& item : value.toArray() )
+      {
+         items << inlineJson( item );
+      }
+      return "[" + items.join( ", " ) + "]";
+   }
+   // A scalar, formatted as QJsonDocument formats it.
+   const QByteArray wrapped = QJsonDocument( QJsonArray{ value } ).toJson( QJsonDocument::Compact );
+   return wrapped.mid( 1, wrapped.size() - 2 );
+}
+
+// JSON with one line per record, as calc_oracle.py writes it:  containers
+// that hold only scalars, and objects whose members hold only scalars, stay
+// on one line; larger containers, and the top level, put one member per
+// line.
+QByteArray compactJson( const QJsonValue& value, int indent = 0 )
+{
+   if ( writtenInline( value ) && ( indent > 0 || ( !value.isArray() && !value.isObject() ) ) )
+   {
+      return inlineJson( value );
+   }
+   const QByteArray  pad( indent + 1, ' ' );
+   QList<QByteArray> lines;
+   if ( value.isObject() )
+   {
+      const QJsonObject object = value.toObject();
+      for ( auto it = object.begin(); it != object.end(); ++it )
+      {
+         lines << pad + inlineJson( it.key() ) + ": " + compactJson( it.value(), indent + 1 );
+      }
+      return "{\n" + lines.join( ",\n" ) + "\n" + QByteArray( indent, ' ' ) + "}";
+   }
+   for ( const QJsonValue& item : value.toArray() )
+   {
+      lines << pad + compactJson( item, indent + 1 );
+   }
+   return "[\n" + lines.join( ",\n" ) + "\n" + QByteArray( indent, ' ' ) + "]";
+}
+
 void writeJson( const QString& path, const QJsonObject& object )
 {
    QFile file( path );
    QVERIFY2( file.open( QIODevice::WriteOnly | QIODevice::Truncate ), qPrintable( path ) );
-   file.write( QJsonDocument( object ).toJson( QJsonDocument::Indented ) );
+   file.write( compactJson( object ) + "\n" );
 }
 
 // Element-wise comparison of two captured series.

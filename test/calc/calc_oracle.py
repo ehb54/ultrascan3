@@ -500,9 +500,40 @@ def selftest():
 
 # --------------------------------------------------------------------------
 
+def _scalars(value):
+    items = value.values() if isinstance(value, dict) else value
+    return all(not isinstance(v, (dict, list)) for v in items)
+
+
+def _inline(value):
+    """A value written on one line:  a scalar, a container of scalars, or an
+    object whose members are scalars or containers of scalars."""
+    if not isinstance(value, (dict, list)):
+        return True
+    if _scalars(value):
+        return True
+    return isinstance(value, dict) and all(
+        not isinstance(v, (dict, list)) or _scalars(v) for v in value.values())
+
+
+def compact_json(value, indent=0):
+    """JSON with one line per record:  containers that hold only scalars, and
+    objects whose members hold only scalars, stay on one line; larger
+    containers, and the top level, put one member per line.  Keys are sorted."""
+    if _inline(value) and (indent > 0 or not isinstance(value, (dict, list))):
+        return json.dumps(value, sort_keys=True)
+    pad = " " * (indent + 1)
+    if isinstance(value, dict):
+        lines = ["%s%s: %s" % (pad, json.dumps(k), compact_json(value[k], indent + 1))
+                 for k in sorted(value)]
+        return "{\n" + ",\n".join(lines) + "\n" + " " * indent + "}"
+    lines = [pad + compact_json(v, indent + 1) for v in value]
+    return "[\n" + ",\n".join(lines) + "\n" + " " * indent + "]"
+
+
 def dump(obj, path):
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(obj, indent=1, sort_keys=True) + "\n")
+    path.write_text(compact_json(obj) + "\n")
 
 
 def main():

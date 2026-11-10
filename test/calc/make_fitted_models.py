@@ -28,6 +28,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent / "mpi_analysis"))
 import us_mpi_regression as reg  # noqa: E402
+from calc_oracle import compact_json  # noqa: E402
 
 MODEL_DIR = HERE / "fixtures" / "models"
 
@@ -177,7 +178,7 @@ def main():
         "generated_utc": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "date_stamp_normalized_to": FIXED_STAMP,
     }
-    manifest_path.write_text(json.dumps(manifest, indent=1, sort_keys=True) + "\n")
+    manifest_path.write_text(compact_json(manifest) + "\n")
     print("wrote %s" % manifest_path)
 
 
