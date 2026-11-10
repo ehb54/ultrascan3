@@ -1184,8 +1184,8 @@ void US_Analysis_auto::gui_update( )
 	      connect( FitMen, &US_FitMeniscus::triple_analysis_processed,
 		       this, &US_Analysis_auto::triple_analysis_processed );
 
-	      // connect( FitMen, SIGNAL( bad_meniscus_values( QMap < QString, QString > & ) ),  //This will take care of BAD values
-	      // 	       this, SLOT( delete_jobs_at_fitmen( QMap < QString, QString > & ) ) );
+	      connect( FitMen, &US_FitMeniscus::bad_meniscus_values,   //NaN | user chose to stop an out-of-range triple
+		       this, &US_Analysis_auto::fitmen_failed );
 		      
 		       
 	      FitMen->show();
@@ -1211,6 +1211,8 @@ void US_Analysis_auto::gui_update( )
          {
             FitMen->close();
             fitmen_bad_vals = true;
+            triple_info_map[ "failed" ]      = FitMen->fail_reason;   // e.g. NaN meniscus position
+            triple_info_map[ "failed_type" ] = FitMen->fail_type;
 
             delete_jobs_at_fitmen( triple_info_map );
          }
@@ -5066,16 +5068,37 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
       msg_delete_bad_vals.setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint);
       msg_delete_bad_vals.setWindowTitle(tr("Job Cancelation!"));
       
-      QString msg_sys_text_bv = QString( tr("ATTENTION!\n\n The meniscus fit for tiple %1 resulted in a best-fit value that lies outside "
-					    "of the considered range for the meniscus. "
-					    "This should not happen, unless: \n\n"
-					    "1. The initial meniscus was not selected correctly; \n"
-					    "2. The experimental data are non-ideal and cannot be modeled with the standard finite element model;\n"
-					    "3. The radial calibration of the instrument is incorrect. \n\n"
-					    "The user should examine the data manually and determine the cause for this discrepancy."
-					    "The automatic GMP processing for this triple cannot continue.\n"
-					    "All scheduled jobs will be canceled for this triple."
-					    ) ).arg( triple_name );
+      QString failed_type   = triple_info[ "failed_type" ];
+      QString failed_reason = triple_info[ "failed" ];
+      QString msg_sys_text_bv;
+
+      if ( failed_type == "nan" )
+	{
+	  msg_sys_text_bv = QString( tr( "ATTENTION!\n\nThe meniscus fit for triple %1 failed: "
+					 "the fit produced an invalid (NaN) result.\n\n"
+					 "This usually means that the experimental data are non-ideal and the 2DSA-FM "
+					 "models could not be fitted reliably.\n\n"
+					 "The user should examine the data manually and determine the cause.\n"
+					 "The automatic GMP processing for this triple cannot continue.\n"
+					 "All scheduled jobs will be canceled for this triple."
+					 ) ).arg( triple_name );
+	}
+      else
+	{
+	  msg_sys_text_bv = QString( tr("ATTENTION!\n\n The meniscus fit for triple %1 resulted in a best-fit value that lies outside "
+					"of the considered range for the meniscus. "
+					"This should not happen, unless: \n\n"
+					"1. The initial meniscus was not selected correctly; \n"
+					"2. The experimental data are non-ideal and cannot be modeled with the standard finite element model;\n"
+					"3. The radial calibration of the instrument is incorrect. \n\n"
+					"The user should examine the data manually and determine the cause for this discrepancy. "
+					"The automatic GMP processing for this triple cannot continue.\n"
+					"All scheduled jobs will be canceled for this triple."
+					) ).arg( triple_name );
+
+	  if ( failed_type == "range" && !failed_reason.isEmpty() )
+	    msg_sys_text_bv += QString( "\n\n" ) + failed_reason;
+	}
 	      
       //if ( mwl_channel && ( stage_n == "2DSA" || stage_n == "2DSA-FM" ) )
       if ( mwl_channel ) 
@@ -5140,6 +5163,16 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
   timer_update->start(5000);
 
   qDebug() << "Timer restarted after Canceling jobs at FITMEN (processed by other means) for channel -- " << channel_n;
+}
+
+//Slot: FITMEN (manual) reported a failed triple (NaN, or user chose "Stop" for an out-of-range position)
+void US_Analysis_auto::fitmen_failed( QMap < QString, QString > & triple_info )
+{
+  qDebug() << "FITMEN failed for triple: " << triple_info[ "triple_name_key" ]
+           << ", type: " << triple_info[ "failed_type" ] << ", reason: " << triple_info[ "failed" ];
+
+  fitmen_bad_vals = true;
+  delete_jobs_at_fitmen( triple_info );
 }
 
 //Slot to delete Job
@@ -6862,6 +6895,7 @@ DbgLv(1) << "LD:  was3val have3val" << was3val << have3val
 //process 2d data
 void US_Analysis_auto::process_2d( void )
 {
+   fit_xvl = qQNaN();   // FITMEN_AUTO: stays NaN if the fit cannot be done => triple fails in edit_update_auto()
    int     count = v_meni.count();
    double* radius_values = v_meni.data();
    double* rmsd_values   = v_rmsd.data();
@@ -6909,9 +6943,7 @@ void US_Analysis_auto::process_2d( void )
 
    if ( ! US_Matrix::lsfit( c, radius_values, rmsd_values, count, order + 1 ) )
    {
-      QMessageBox::warning( this,
-            tr( "Data Problem" ),
-            tr( "The data is inadequate for this fit order" ) );
+      qDebug() << "FITMEN_AUTO: data is inadequate for this fit order => NaN";   // reported in edit_update_auto()
       
       // le_men_fit   ->clear();
       // le_bot_fit   ->clear();
@@ -7079,6 +7111,8 @@ void US_Analysis_auto::process_2d( void )
 //process 3d data
 void US_Analysis_auto::process_3d( void )
 {
+   f_meni = qQNaN();    // FITMEN_AUTO: see process_2d()
+   f_bott = qQNaN();
    bool auto_lim = false;
    double min_x  = 1.0e+99;
    double min_y  = 1.0e+99;
@@ -7321,6 +7355,71 @@ DbgLv(1) << " eupd:  fn" << fn;
      botnew = fit_xvl;
    }
 
+   // FITMEN_AUTO: NaN (or otherwise non-finite) fit result, for meniscus or bottom, SWL && MWL:
+   // fail the triple and cancel all subsequent sub-stages
+   if ( !qIsFinite( mennew )  ||  !qIsFinite( botnew ) )
+   {
+      fitmen_bad_vals = true;
+      triple_information[ "failed" ]      = QString( "NaN %1 position!" )
+                                            .arg( ( !have3val && bott_fit ) ? "bottom" : "meniscus" );
+      triple_information[ "failed_type" ] = "nan";
+      delete_jobs_at_fitmen( triple_information );
+      return;
+   }
+
+   // FITMEN_AUTO: extrapolation (left or right) outside of the original radial fitting range:
+   // fail the triple and cancel all subsequent sub-stages
+   {
+      const double eps = 1.0e-5;
+      double mmin = 1.0e+99, mmax = -1.0e+99;   // meniscus (or fitted-parameter) range
+      double bmin = 1.0e+99, bmax = -1.0e+99;   // bottom range (3-D fit only)
+
+      for ( int ii = 0; ii < v_meni.size(); ii++ )
+      {
+         mmin = qMin( mmin, v_meni[ ii ] );
+         mmax = qMax( mmax, v_meni[ ii ] );
+      }
+      if ( have3val )
+      {
+         for ( int ii = 0; ii < v_bott.size(); ii++ )
+         {
+            bmin = qMin( bmin, v_bott[ ii ] );
+            bmax = qMax( bmax, v_bott[ ii ] );
+         }
+      }
+
+      QString range_msg;
+      if ( have3val )
+      {
+         if ( mennew < mmin - eps  ||  mennew > mmax + eps )
+            range_msg = QString( "Calculated meniscus position %1 is outside of the original fitting range ( %2 - %3 ): extrapolation to the %4" )
+                        .arg( mennew, 0, 'f', 5 ).arg( mmin, 0, 'f', 5 ).arg( mmax, 0, 'f', 5 )
+                        .arg( mennew < mmin ? "left" : "right" );
+         else if ( botnew < bmin - eps  ||  botnew > bmax + eps )
+            range_msg = QString( "Calculated bottom position %1 is outside of the original fitting range ( %2 - %3 ): extrapolation to the %4" )
+                        .arg( botnew, 0, 'f', 5 ).arg( bmin, 0, 'f', 5 ).arg( bmax, 0, 'f', 5 )
+                        .arg( botnew < bmin ? "left" : "right" );
+      }
+      else
+      {
+         double fval = bott_fit ? botnew : mennew;
+         if ( fval < mmin - eps  ||  fval > mmax + eps )
+            range_msg = QString( "Calculated %1 position %2 is outside of the original fitting range ( %3 - %4 ): extrapolation to the %5" )
+                        .arg( bott_fit ? "bottom" : "meniscus" )
+                        .arg( fval, 0, 'f', 5 ).arg( mmin, 0, 'f', 5 ).arg( mmax, 0, 'f', 5 )
+                        .arg( fval < mmin ? "left" : "right" );
+      }
+
+      if ( !range_msg.isEmpty() )
+      {
+         fitmen_bad_vals = true;
+         triple_information[ "failed" ]      = range_msg;
+         triple_information[ "failed_type" ] = "range";
+         delete_jobs_at_fitmen( triple_information );
+         return;
+      }
+   }
+
    QString s_meni = QString::asprintf( "%.5f", mennew );
    QString s_bott = QString::asprintf( "%.5f", botnew );
 DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
@@ -7375,17 +7474,6 @@ DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
 
      return;
    }
-   
-   //Capture, when fit_men = NAN, for both SWL && MWL
-   if ( qIsNaN(mennew) )
-     {
-       fitmen_bad_vals = true;
-        QString reason_for_failure = "NaN meniscus position!";
-       triple_information[ "failed" ] = reason_for_failure;
-       delete_jobs_at_fitmen( triple_information );
-       return;
-     }
-   
    
    mmsg           = "";
 
