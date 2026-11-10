@@ -15,6 +15,7 @@
 #include <QMap>
 #include <QString>
 #include <QVector>
+#include <QtNumeric>
 
 #include <algorithm>
 #include <cmath>
@@ -102,10 +103,9 @@ Range toRange( const QJsonObject& item )
 {
    const QString type = item["type"].toString();
    Range         range;
-   auto          q = quantity_from_report_type( type );
-   range.quantity  = q ? *q : Quantity::PartialSpecificVolume; // "vbar":  not a range type
-   range.low       = item["low"].toDouble();
-   range.high      = item["high"].toDouble();
+   range.quantity = quantity_from_report_type( type ); // "vbar":  PartialSpecificVolume, not a range type
+   range.low      = item["low"].toDouble();
+   range.high     = item["high"].toDouble();
    return range;
 }
 
@@ -142,6 +142,13 @@ class UsCalcFixtures : public ::testing::Test
       QJsonObject          items;
       Tolerances           tol{};
       QMap<QString, Model> inputs;
+
+      // The input model of a fixture key; a missing key fails the test.
+      Model                input( const QString& key ) const
+      {
+         EXPECT_TRUE( inputs.contains( key ) ) << "no fixture model " << key;
+         return inputs.value( key );
+      }
 };
 } // namespace
 
@@ -154,7 +161,7 @@ TEST_F( UsCalcFixtures, RangeSummariesMatchTheOracle )
       const QString     key  = e["model"].toString();
       const QJsonObject item = itemFor( items, e );
       SCOPED_TRACE( key + " item " + QString::number( e["item"].toInt() ) + " (" + e["sample"].toString() + ")" );
-      const Model model = inputs.value( key );
+      const Model model = input( key );
 
       EXPECT_EQ( method_matches( item["method"].toString(), model.description ), e["matched"].toBool() );
 
@@ -162,7 +169,7 @@ TEST_F( UsCalcFixtures, RangeSummariesMatchTheOracle )
       if ( !e["supported"].toBool() )
       {
          EXPECT_TRUE( hasIssue( r.diagnostics, Issue::UnsupportedQuantity ) );
-         EXPECT_FALSE( r.fraction_percent.has_value() );
+         EXPECT_TRUE( qIsNaN( r.fraction_percent ) );
          ++checked;
          continue;
       }
@@ -173,32 +180,32 @@ TEST_F( UsCalcFixtures, RangeSummariesMatchTheOracle )
 
       if ( e["fraction"].isNull() )
       {
-         EXPECT_FALSE( r.fraction_percent.has_value() );
+         EXPECT_TRUE( qIsNaN( r.fraction_percent ) );
          EXPECT_TRUE( hasIssue( r.diagnostics, Issue::ZeroTotal ) || hasIssue( r.diagnostics, Issue::EmptyModel ) );
       }
       else
       {
-         ASSERT_TRUE( r.fraction_percent.has_value() );
-         EXPECT_LE( std::fabs( *r.fraction_percent - e["fraction"].toDouble() ), tol.fraction_abs );
+         ASSERT_FALSE( qIsNaN( r.fraction_percent ) );
+         EXPECT_LE( std::fabs( r.fraction_percent - e["fraction"].toDouble() ), tol.fraction_abs );
          // The legacy double arithmetic in the legacy order
-         EXPECT_EQ( *r.fraction_percent, e["fraction_double"].toDouble() );
+         EXPECT_EQ( r.fraction_percent, e["fraction_double"].toDouble() );
          if ( e.contains( "pass_pp" ) && !e["pass_pp"].isNull() )
          {
             const ToleranceCheck check{ ToleranceRule::AbsolutePercentagePoints,
                                         item["target"].toDouble(),
                                         item["tolerance"].toDouble() };
-            EXPECT_EQ( passes( *r.fraction_percent, check ), e["pass_pp"].toBool() );
+            EXPECT_EQ( passes( r.fraction_percent, check ), e["pass_pp"].toBool() );
          }
       }
 
       if ( e["within_mean"].isNull() )
       {
-         EXPECT_FALSE( r.within_range_mean.has_value() );
+         EXPECT_TRUE( qIsNaN( r.within_range_mean ) );
       }
       else
       {
-         ASSERT_TRUE( r.within_range_mean.has_value() );
-         EXPECT_TRUE( nearRel( *r.within_range_mean, e["within_mean"].toDouble(), tol.means_rel ) );
+         ASSERT_FALSE( qIsNaN( r.within_range_mean ) );
+         EXPECT_TRUE( nearRel( r.within_range_mean, e["within_mean"].toDouble(), tol.means_rel ) );
       }
       ++checked;
    }
@@ -212,22 +219,22 @@ TEST_F( UsCalcFixtures, WholeModelMeansMatchTheOracle )
    {
       SCOPED_TRACE( it.key() );
       const QJsonObject e = it.value().toObject();
-      const ModelMeans  m = model_means( inputs.value( it.key() ) );
+      const ModelMeans  m = model_means( input( it.key() ) );
       EXPECT_EQ( static_cast<int>( m.component_count ), e["ncomp"].toInt() );
       EXPECT_TRUE( nearRel( m.total_concentration, e["C"].toDouble(), tol.sums_rel ) );
-      const std::pair<const char*, std::optional<double>> means[] = {
+      const std::pair<const char*, double> means[] = {
          { "mean_s", m.s }, { "mean_D", m.D }, { "mean_mw", m.mw }, { "mean_f_f0", m.f_f0 }, { "mean_vbar20", m.vbar20 }
       };
       for ( const auto& mean : means )
       {
          if ( e[mean.first].isNull() )
          {
-            EXPECT_FALSE( mean.second.has_value() ) << mean.first;
+            EXPECT_TRUE( qIsNaN( mean.second ) ) << mean.first;
          }
          else
          {
-            ASSERT_TRUE( mean.second.has_value() ) << mean.first;
-            EXPECT_TRUE( nearRel( *mean.second, e[mean.first].toDouble(), tol.means_rel ) ) << mean.first;
+            ASSERT_FALSE( qIsNaN( mean.second ) ) << mean.first;
+            EXPECT_TRUE( nearRel( mean.second, e[mean.first].toDouble(), tol.means_rel ) ) << mean.first;
          }
       }
    }
@@ -239,7 +246,7 @@ TEST_F( UsCalcFixtures, TotalConcentrationChecksMatchTheOracle )
    {
       const QJsonObject e = v.toObject();
       SCOPED_TRACE( e["model"].toString() );
-      const double         c = model_means( inputs.value( e["model"].toString() ) ).total_concentration;
+      const double         c = model_means( input( e["model"].toString() ) ).total_concentration;
       const ToleranceCheck check{ ToleranceRule::RelativePercentOfTarget, e["target"].toDouble(), e["tolerance"].toDouble() };
       EXPECT_EQ( passes( c, check ), e["pass_relative"].toBool() );
    }
@@ -274,20 +281,20 @@ TEST_F( UsCalcFixtures, ReplicateGroupsMatchTheOracle )
       }
       const ReplicateResult r = replicate_summary( members );
       ASSERT_EQ( static_cast<int>( r.used_count ), e["n"].toInt() );
-      ASSERT_TRUE( r.mean_fraction_percent.has_value() );
-      EXPECT_TRUE( nearRel( *r.mean_range_concentration, e["R_mean"].toDouble(), tol.sums_rel ) );
-      EXPECT_LE( std::fabs( *r.mean_fraction_percent - e["fraction_mean"].toDouble() ), tol.fraction_abs );
-      EXPECT_LE( std::fabs( *r.sd_range_concentration - e["R_sd"].toDouble() ),
+      ASSERT_FALSE( qIsNaN( r.mean_fraction_percent ) );
+      EXPECT_TRUE( nearRel( r.mean_range_concentration, e["R_mean"].toDouble(), tol.sums_rel ) );
+      EXPECT_LE( std::fabs( r.mean_fraction_percent - e["fraction_mean"].toDouble() ), tol.fraction_abs );
+      EXPECT_LE( std::fabs( r.sd_range_concentration - e["R_sd"].toDouble() ),
                  tol.sd_abs_of_mean * std::fabs( e["R_mean"].toDouble() ) );
-      EXPECT_LE( std::fabs( *r.sd_fraction_percent - e["fraction_sd"].toDouble() ),
+      EXPECT_LE( std::fabs( r.sd_fraction_percent - e["fraction_sd"].toDouble() ),
                  tol.sd_abs_of_mean * std::fabs( e["fraction_mean"].toDouble() ) );
       const ToleranceCheck check{ ToleranceRule::RelativePercentOfTarget, item["target"].toDouble(), item["tolerance"].toDouble() };
-      EXPECT_EQ( passes( *r.mean_fraction_percent, check ), e["pass_relative"].toBool() );
+      EXPECT_EQ( passes( r.mean_fraction_percent, check ), e["pass_relative"].toBool() );
    }
 }
 
-// US_Calc reproduces the smoothing captured from US_Math2 before the
-// library replaced it (fixtures/expected/legacy_smoothing.json) within the legacy
+// US_Calc reproduces the smoothing captured from US_Math2 before
+// US_Calc replaced it (fixtures/expected/legacy_smoothing.json) within the legacy
 // series tolerance:  the capture was made by a build that fused multiply-adds,
 // which US_Calc does not (us_calc_fp.h).
 TEST( UsCalcLegacyCaptures, SmoothingMatchesTheCapture )
@@ -434,7 +441,7 @@ TEST_F( UsCalcFixtures, IntegralDistributionsMatchUsIntegral )
       QString key = file.startsWith( "edge/" ) ? file : file.mid( 7 ); // drop "models/"
       key += inputs.contains( key + "#composite" ) ? "#composite" : "#model";
       SCOPED_TRACE( key );
-      const Model model = inputs.value( key );
+      const Model model = input( key );
       for ( const auto& axis : kAxes )
       {
          const QJsonObject curve = it.value().toObject()[axis.first].toArray()[0].toObject();
@@ -460,14 +467,14 @@ TEST_F( UsCalcFixtures, IntegralDistributionsMatchUsIntegral )
 // and the solute at 6.0 S the remaining 40 %, whatever the order.
 TEST_F( UsCalcFixtures, IntegralDistributionMergesDuplicates )
 {
-   const Model model    = inputs.value( "edge/edge_duplicates_ties.model.xml#model" );
+   const Model model    = input( "edge/edge_duplicates_ties.model.xml#model" );
    Model       reversed = model;
    std::reverse( reversed.components.begin(), reversed.components.end() );
    for ( const Model* m : QVector<const Model*>{ &model, &reversed } )
    {
       const auto d = integral_distribution( *m, DistributionAxis::Sedimentation );
       ASSERT_FALSE( has_error( d.diagnostics ) );
-      for ( size_t i = 0; i < d.s.size(); ++i )
+      for ( int i = 0; i < d.s.size(); ++i )
       {
          // The level on the boundary itself (0.6) is decided by rounding.
          if ( std::fabs( d.boundary_fractions[i] - 0.6 ) < 1e-9 )
@@ -495,5 +502,5 @@ TEST( UsCalcIntegral, InvalidInputs )
    narrow.smoothing = 10; // 11 levels cannot take a width of 10
    const auto d     = integral_distribution( one, DistributionAxis::Sedimentation, narrow );
    EXPECT_TRUE( has_error( d.diagnostics ) );
-   EXPECT_EQ( d.s.size(), 11u ); // unsmoothed series are still returned
+   EXPECT_EQ( d.s.size(), 11 ); // unsmoothed series are still returned
 }

@@ -5,7 +5,7 @@
 //! (us_reporter_gmp.cpp:  distrib_info and velmwl_range_fraction) for the
 //! same model:  bounds are scaled and compared as there, and every sum runs
 //! in component order with the same double operations.  Where the reporter
-//! divides by zero, US_Calc leaves the value empty and adds a
+//! divides by zero, US_Calc sets the value to NaN and adds a
 //! diagnostic.
 #ifndef US_CALC_RANGE_H
 #define US_CALC_RANGE_H
@@ -13,40 +13,40 @@
 #include "us_calc_types.h"
 
 #include <QVector>
-#include <optional>
+#include <QtNumeric>
 
 namespace US_Calc
 {
 //! \brief Concentration of a model within a range.
 struct RangeResult
 {
-      Range                 range;
-      int                   component_count     = 0;   //!< Components in the model
-      int                   selected_count      = 0;   //!< Components within the range
-      double                total_concentration = 0.0; //!< C:  sum of all concentrations
-      double                range_concentration = 0.0; //!< R:  sum within the range
-      //! 100 * R / C, computed as (R / C) * 100; empty when C is zero.
-      std::optional<double> fraction_percent;
+      Range               range;
+      int                 component_count     = 0;   //!< Components in the model
+      int                 selected_count      = 0;   //!< Components within the range
+      double              total_concentration = 0.0; //!< C:  sum of all concentrations
+      double              range_concentration = 0.0; //!< R:  sum within the range
+      //! 100 * R / C, computed as (R / C) * 100; NaN when C is zero.
+      double              fraction_percent    = qQNaN();
       //! sum(x * c) / R over the range, x being the range quantity in model
-      //! units; empty when R is zero.
-      std::optional<double> within_range_mean;
-      QVector<Diagnostic>   diagnostics;
-      AlgorithmVersion      algorithm;
+      //! units; NaN when R is zero.
+      double              within_range_mean   = qQNaN();
+      QVector<Diagnostic> diagnostics;
+      AlgorithmVersion    algorithm;
 };
 
 //! \brief Concentration-weighted means of a whole model, in model units:
-//! sum(x * c) / C for each quantity; empty when C is zero.
+//! sum(x * c) / C for each quantity; NaN when C is zero.
 struct ModelMeans
 {
-      int                   component_count     = 0;
-      double                total_concentration = 0.0;
-      std::optional<double> s;
-      std::optional<double> D;
-      std::optional<double> mw;
-      std::optional<double> f_f0;
-      std::optional<double> vbar20;
-      QVector<Diagnostic>   diagnostics;
-      AlgorithmVersion      algorithm;
+      int                 component_count     = 0;
+      double              total_concentration = 0.0;
+      double              s                   = qQNaN();
+      double              D                   = qQNaN();
+      double              mw                  = qQNaN();
+      double              f_f0                = qQNaN();
+      double              vbar20              = qQNaN();
+      QVector<Diagnostic> diagnostics;
+      AlgorithmVersion    algorithm;
 };
 
 //! \brief The concentration of a model within a range.

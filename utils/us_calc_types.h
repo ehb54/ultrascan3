@@ -12,8 +12,6 @@
 #include <QString>
 #include <QVector>
 
-#include <optional>
-
 namespace US_Calc
 {
 //! \brief A physical quantity of a model component.
@@ -87,8 +85,8 @@ enum class Issue
 
 //! \brief A condition found while calculating.
 //!
-//! Results never contain NaN or infinite values.  A value that cannot be
-//! defined is left empty and explained by a diagnostic.
+//! A result value that cannot be defined (a division by zero, or a value
+//! that is not finite) is NaN and explained by a diagnostic.
 struct Diagnostic
 {
       Issue    issue    = Issue::EmptyModel;

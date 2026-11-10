@@ -1,6 +1,6 @@
 //! \file us_calc_integral.cpp
 #include "us_calc_integral.h"
-#include "us_calc_fp.h" // first:  floating-point policy
+#include "us_calc_fp.h" // floating-point policy
 
 #include "us_calc_coefficients.h"
 #include "us_calc_smoothing.h"
@@ -50,7 +50,7 @@ double axis_value( const Solute& x, DistributionAxis axis )
 IntegralDistribution integral_distribution( const Model& model, DistributionAxis axis, const IntegralSettings& settings )
 {
    IntegralDistribution out;
-   out.algorithm   = *algorithm( "integral_distribution" );
+   out.algorithm   = algorithm( "integral_distribution" );
    out.diagnostics = validate_model( model );
    if ( settings.divisions < 1 )
    {
@@ -87,16 +87,16 @@ IntegralDistribution integral_distribution( const Model& model, DistributionAxis
    // Merge solutes with equal s, D, mw and f/f0 wherever they appear:
    // concentrations add; vbar and radius are averaged.  First appearance
    // keeps its position for the stable sort below.
-   QVector<Solute>                                              merged;
-   QVector<int>                                                 count;
-   std::map<std::tuple<double, double, double, double>, size_t> index;
+   QVector<Solute>                                           merged;
+   QVector<int>                                              count;
+   std::map<std::tuple<double, double, double, double>, int> index;
    for ( const Solute& x : in )
    {
       const auto key = std::make_tuple( x.s, x.d, x.w, x.k );
       auto       it  = index.find( key );
       if ( it == index.end() )
       {
-         index[key] = merged.size();
+         index[key] = static_cast<int>( merged.size() );
          merged.push_back( x );
          count.push_back( 1 );
       }
@@ -109,7 +109,7 @@ IntegralDistribution integral_distribution( const Model& model, DistributionAxis
          ++count[it->second];
       }
    }
-   for ( size_t ii = 0; ii < merged.size(); ii++ )
+   for ( int ii = 0; ii < merged.size(); ii++ )
    {
       merged[ii].v /= count[ii];
       merged[ii].r /= count[ii];

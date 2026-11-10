@@ -31,8 +31,6 @@
 #include "us_solution_vals.h"
 #include "us_tar.h"
 #include "us_tmst_plot.h"
-#include <limits>
-#include <optional>
 
 #define MIN_NTC   25
 
@@ -4486,19 +4484,18 @@ QString US_ReporterGMP::html_header_velmwl( QString title, QString runName, QStr
 // that is not positive gives 0.
 static double velmwl_range_fraction( const US_Model& mdl, const QString& type, double low, double high, bool& supported )
 {
-   const std::optional<US_Calc::Quantity> quantity = US_Calc::quantity_from_report_type( type );
-   supported                                       = quantity.has_value();
+   const US_Calc::Quantity quantity = US_Calc::quantity_from_report_type( type, &supported );
    if ( !supported )
    {
       return 0.0;
    }
 
-   const US_Calc::RangeResult r = US_Calc::range_summary( mdl.calc_model(), { *quantity, low, high } );
-   if ( !( r.total_concentration > 0.0 ) )
+   const US_Calc::RangeResult r = US_Calc::range_summary( mdl.calc_model(), { quantity, low, high } );
+   if ( !( r.total_concentration > 0.0 ) || US_Calc::has_error( r.diagnostics ) )
    {
       return 0.0;
    }
-   return r.fraction_percent.value_or( 0.0 );
+   return r.fraction_percent;
 }
 
 // VELOCITY-MWL: timestamps, species (models) used, analysis settings,
@@ -10198,10 +10195,11 @@ QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP:
 
    // Mean and population SD from US_Calc; a group without members gives 0.
    const US_Calc::ReplicateResult group = US_Calc::replicate_summary( members );
-   results["int_av"]                    = group.mean_range_concentration.value_or( 0.0 );
-   results["tot_percent_av"]            = group.mean_fraction_percent.value_or( 0.0 );
-   results["int_st_dev"]                = group.sd_range_concentration.value_or( 0.0 );
-   results["tot_percent_st_dev"]        = group.sd_fraction_percent.value_or( 0.0 );
+   const bool                     empty = ( group.used_count == 0 );
+   results["int_av"]                    = empty ? 0.0 : group.mean_range_concentration;
+   results["tot_percent_av"]            = empty ? 0.0 : group.mean_fraction_percent;
+   results["int_st_dev"]                = empty ? 0.0 : group.sd_range_concentration;
+   results["tot_percent_st_dev"]        = empty ? 0.0 : group.sd_fraction_percent;
    return results;
 }
 
@@ -10287,16 +10285,15 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
    // Weight averages and total concentration from US_Calc; an undefined
    // average prints as nan, as the division by a zero total did.
    const US_Calc::ModelMeans means = US_Calc::model_means( model_used.calc_model() );
-   const double              nan_v = std::numeric_limits<double>::quiet_NaN();
    const double              sum_c = means.total_concentration;
 
-   mstr += table_row( tr( "Weight Average s20,W:" ), QString::asprintf( "%6.4e", means.s.value_or( nan_v ) ) );
-   mstr += table_row( tr( "Weight Average D20,W:" ), QString::asprintf( "%6.4e", means.D.value_or( nan_v ) ) );
-   mstr += table_row( tr( "W.A. Molecular Weight:" ), QString::asprintf( "%6.4e", means.mw.value_or( nan_v ) ) );
+   mstr += table_row( tr( "Weight Average s20,W:" ), QString::asprintf( "%6.4e", means.s ) );
+   mstr += table_row( tr( "Weight Average D20,W:" ), QString::asprintf( "%6.4e", means.D ) );
+   mstr += table_row( tr( "W.A. Molecular Weight:" ), QString::asprintf( "%6.4e", means.mw ) );
    if ( ! cnstff )
-      mstr += table_row( tr( "Weight Average f/f0:" ), QString::number( means.f_f0.value_or( nan_v ) ) );
+      mstr += table_row( tr( "Weight Average f/f0:" ), QString::number( means.f_f0 ) );
    if ( ! cnstvb )
-      mstr += table_row( tr( "Weight Average vbar20:" ), QString::number( means.vbar20.value_or( nan_v ) ) );
+      mstr += table_row( tr( "Weight Average vbar20:" ), QString::number( means.vbar20 ) );
    mstr += table_row( tr( "Total Concentration:" ),
                       QString::asprintf( "%6.4e", sum_c ) );
 
@@ -10830,25 +10827,24 @@ model_used.components[ ii ].vbar20 ),
 	   double  frac_tot_r     = curr_item.total_percent;
 	   double  frac_tot_tol_r = curr_item.tolerance ;
 	   double  low            = curr_item.range_low;
-      double                                 high           = curr_item.range_high;
+      double                     high           = curr_item.range_high;
 
-      QString                                range = "[" + QString::number( low ) + " - " + QString::number( high ) + "]";
+      QString                    range = "[" + QString::number( low ) + " - " + QString::number( high ) + "]";
 
       // Integrate over model_used with US_Calc:  inclusive range in report
       // units, sums in component order.  Values the arithmetic leaves
       // undefined print as nan, as the divisions by zero did; an item type
       // that is not a range type selects nothing (fraction 0).
-      const std::optional<US_Calc::Quantity> quantity = US_Calc::quantity_from_report_type( type );
-      const US_Calc::RangeResult             range_result =
-         US_Calc::range_summary( range_model, { quantity.value_or( US_Calc::Quantity::PartialSpecificVolume ), low, high } );
-      const double nan_r      = std::numeric_limits<double>::quiet_NaN();
-      double       int_val_m  = range_result.range_concentration;
-      double       frac_tot_m = quantity ? range_result.fraction_percent.value_or( nan_r ) : ( sum_c != 0.0 ? 0.0 : nan_r );
-      double       wav_variable_within_range = range_result.within_range_mean.value_or( nan_r );
+      bool                       range_type   = false;
+      const US_Calc::Quantity    quantity     = US_Calc::quantity_from_report_type( type, &range_type );
+      const US_Calc::RangeResult range_result = US_Calc::range_summary( range_model, { quantity, low, high } );
+      double                     int_val_m    = range_result.range_concentration;
+      double                     frac_tot_m   = range_type ? range_result.fraction_percent : ( sum_c != 0.0 ? 0.0 : qQNaN() );
+      double                     wav_variable_within_range = range_result.within_range_mean;
 
-      QString      tot_frac_passed =
+      QString                    tot_frac_passed =
          US_Calc::passes( frac_tot_m, { US_Calc::ToleranceRule::AbsolutePercentagePoints, frac_tot_r, frac_tot_tol_r } ) ? "YES"
-                                                                                                                              : "NO";
+                                                                                                                                            : "NO";
 
       const bool method_identity = US_Calc::method_matches( curr_item.method, model_used.description );
 

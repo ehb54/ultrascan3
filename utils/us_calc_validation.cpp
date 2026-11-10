@@ -1,6 +1,6 @@
 //! \file us_calc_validation.cpp
 #include "us_calc_validation.h"
-#include "us_calc_fp.h" // first:  floating-point policy
+#include "us_calc_fp.h" // floating-point policy
 
 #include <cmath>
 

@@ -8,7 +8,6 @@
 #include "us_math2.h"
 #include "us_settings.h"
 
-#include <limits>
 
 // bucket vertex LessThan routine
 bool buck_vx_lessthan( const bucket &buck1, const bucket &buck2 )
@@ -1145,27 +1144,26 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
    // The statistics come from US_Calc; undefined ones print as nan.
    const US_Calc::WeightedStatistics st =
       US_Calc::weighted_statistics( vals.toVector(), concs.toVector(), US_Calc::StatisticsConvention::ConcentrationDistribution );
-   const double nan         = std::numeric_limits<double>::quiet_NaN();
-   const qreal  vlo         = st.minimum;
-   const qreal  vhi         = st.maximum;
-   const qreal  vmean       = st.mean.value_or( nan );
-   const qreal  vmedi       = st.midrange.value_or( nan );
-   const qreal  skew        = st.skew.value_or( nan );
-   const qreal  kurto       = st.kurtosis.value_or( nan );
-   const qreal  mode_lo     = st.mode_low.value_or( nan );
-   const qreal  mode_hi     = st.mode_high.value_or( nan );
-   const qreal  mode_cen    = st.mode_center.value_or( nan );
-   const qreal  conf95lo    = st.confidence95_low.value_or( nan );
-   const qreal  conf95hi    = st.confidence95_high.value_or( nan );
-   const qreal  conf99lo    = st.confidence99_low.value_or( nan );
-   const qreal  conf99hi    = st.confidence99_high.value_or( nan );
-   const qreal  sdevi       = st.standard_deviation.value_or( nan );
-   const qreal  sderr       = st.standard_error.value_or( nan );
-   const qreal  vari        = st.variance.value_or( nan );
-   const qreal  corr        = st.correlation.value_or( nan );
-   const qreal  area        = st.area.value_or( nan );
-   const qreal  binsz       = st.bins;
-   const bool   is_constant = st.constant;
+   const qreal vlo         = st.minimum;
+   const qreal vhi         = st.maximum;
+   const qreal vmean       = st.mean;
+   const qreal vmedi       = st.midrange;
+   const qreal skew        = st.skew;
+   const qreal kurto       = st.kurtosis;
+   const qreal mode_lo     = st.mode_low;
+   const qreal mode_hi     = st.mode_high;
+   const qreal mode_cen    = st.mode_center;
+   const qreal conf95lo    = st.confidence95_low;
+   const qreal conf95hi    = st.confidence95_high;
+   const qreal conf99lo    = st.confidence99_low;
+   const qreal conf99hi    = st.confidence99_high;
+   const qreal sdevi       = st.standard_deviation;
+   const qreal sderr       = st.standard_error;
+   const qreal vari        = st.variance;
+   const qreal corr        = st.correlation;
+   const qreal area        = st.area;
+   const qreal binsz       = st.bins;
+   const bool  is_constant = st.constant;
 
    if ( details  &&  is_constant )
    {

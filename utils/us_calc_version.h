@@ -7,7 +7,6 @@
 
 #include <QString>
 #include <QVector>
-#include <optional>
 
 namespace US_Calc
 {
@@ -20,8 +19,9 @@ US_UTIL_EXTERN QString library_version();
 //! \brief Every US_Calc algorithm with its current version.
 US_UTIL_EXTERN QVector<AlgorithmVersion> algorithms();
 
-//! \brief The current version of the named algorithm, if it exists.
-US_UTIL_EXTERN std::optional<AlgorithmVersion> algorithm( const QString& name );
+//! \brief The current version of the named algorithm; an unknown name gives
+//! an empty name and version 0.
+US_UTIL_EXTERN AlgorithmVersion          algorithm( const QString& name );
 } // namespace US_Calc
 
 #endif

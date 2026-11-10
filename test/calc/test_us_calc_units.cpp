@@ -60,9 +60,15 @@ TEST( UsCalcUnits, ReportTypesMapToQuantities )
    EXPECT_EQ( quantity_from_report_type( "MW" ), Quantity::MolecularWeight );
    EXPECT_EQ( quantity_from_report_type( "f/f0" ), Quantity::FrictionalRatio );
    // distrib_info selects nothing for other types; they are not range types
-   EXPECT_FALSE( quantity_from_report_type( "vbar" ).has_value() );
-   EXPECT_FALSE( quantity_from_report_type( "S" ).has_value() );
-   EXPECT_FALSE( quantity_from_report_type( "" ).has_value() );
+   for ( const char* type : { "vbar", "S", "" } )
+   {
+      bool ok = true;
+      EXPECT_EQ( quantity_from_report_type( type, &ok ), Quantity::PartialSpecificVolume ) << type;
+      EXPECT_FALSE( ok ) << type;
+   }
+   bool ok = false;
+   quantity_from_report_type( "s", &ok );
+   EXPECT_TRUE( ok );
 }
 
 TEST( UsCalcUnits, QuantityNamesRoundTrip )

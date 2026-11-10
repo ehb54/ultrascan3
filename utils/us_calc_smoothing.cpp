@@ -1,6 +1,6 @@
 //! \file us_calc_smoothing.cpp
 #include "us_calc_smoothing.h"
-#include "us_calc_fp.h" // first:  floating-point policy
+#include "us_calc_fp.h" // floating-point policy
 
 #include <QtMath>
 

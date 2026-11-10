@@ -1,10 +1,11 @@
 //! \file us_calc_statistics.cpp
 #include "us_calc_statistics.h"
-#include "us_calc_fp.h" // first:  floating-point policy
+#include "us_calc_fp.h" // floating-point policy
 
 #include "us_calc_version.h"
 
 #include <QtGlobal>
+#include <QtNumeric>
 
 #include <algorithm>
 #include <cmath>
@@ -50,9 +51,10 @@ LineFit linefit( const double* x, const double* y, int arraysize )
 
 namespace
 {
-std::optional<double> finite( double v )
+// A result value, or NaN when the calculation gives no finite value.
+double finite( double v )
 {
-   return std::isfinite( v ) ? std::optional<double>( v ) : std::nullopt;
+   return qIsFinite( v ) ? v : qQNaN();
 }
 
 // 50 bins that partition [minimum, maximum]:  bin ii holds the values from
@@ -326,18 +328,19 @@ void distribution_statistics( WeightedStatistics&    st,
    // An index is undefined when the cumulative concentration never reaches
    // a limit (negative concentrations), or for a single value, whose upper
    // index is set to -1 and never corrected.
-   auto quantile        = [&]( int id ) { return id >= 0 && id < nvals ? finite( vals_sorted[id] ) : std::nullopt; };
+   auto quantile        = [&]( int id ) { return id >= 0 && id < nvals ? finite( vals_sorted[id] ) : qQNaN(); };
    st.confidence95_low  = quantile( lo95_id );
    st.confidence95_high = quantile( hi95_id );
    st.confidence99_low  = quantile( lo99_id );
    st.confidence99_high = quantile( hi99_id );
 
-   if ( !st.variance )
+   if ( qIsNaN( st.variance ) )
    {
       st.diagnostics.push_back(
          { Issue::ZeroTotal, Severity::Warning, "the weighted variance is undefined (a single nonzero concentration)" } );
    }
-   if ( !st.confidence95_low || !st.confidence95_high || !st.confidence99_low || !st.confidence99_high )
+   if ( qIsNaN( st.confidence95_low ) || qIsNaN( st.confidence95_high ) || qIsNaN( st.confidence99_low ) ||
+        qIsNaN( st.confidence99_high ) )
    {
       st.diagnostics.push_back( { Issue::EmptyRange, Severity::Warning, "a confidence limit is undefined" } );
    }
@@ -347,10 +350,10 @@ void distribution_statistics( WeightedStatistics&    st,
 WeightedStatistics weighted_statistics( const QVector<double>& vals, const QVector<double>& concs, StatisticsConvention convention )
 {
    WeightedStatistics st;
-   st.algorithm    = *algorithm( "weighted_statistics" );
+   st.algorithm    = algorithm( "weighted_statistics" );
    st.convention   = convention;
    const int nvals = static_cast<int>( vals.size() );
-   st.count        = vals.size();
+   st.count        = nvals;
    if ( vals.isEmpty() || concs.size() != vals.size() )
    {
       st.diagnostics.push_back( { Issue::EmptyModel,

@@ -3,7 +3,6 @@
 #include "us_dmga_mc_stats.h"
 #include "us_calc_statistics.h"
 
-#include <limits>
 
 // Class of static functions for DMGA-MC statistics
 
@@ -196,33 +195,32 @@ bool US_DmgaMcStats::compute_statistics( const int nvals,
    // The statistics come from US_Calc; undefined ones are nan.
    const US_Calc::WeightedStatistics st = US_Calc::weighted_statistics(
       vals.mid( 0, nvals ), concs.mid( 0, nvals ), US_Calc::StatisticsConvention::MonteCarloIterations );
-   const double nan      = std::numeric_limits<double>::quiet_NaN();
-   const double mode_cen = st.mode_center.value_or( nan );
-   const double conf95lo = st.confidence95_low.value_or( nan );
-   const double conf95hi = st.confidence95_high.value_or( nan );
-   const double conf99lo = st.confidence99_low.value_or( nan );
-   const double conf99hi = st.confidence99_high.value_or( nan );
+   const double mode_cen = st.mode_center;
+   const double conf95lo = st.confidence95_low;
+   const double conf95hi = st.confidence95_high;
+   const double conf99lo = st.confidence99_low;
+   const double conf99hi = st.confidence99_high;
 
    stats.resize( 23 );
-   stats[0]         = st.minimum;                            // Minimum
-   stats[1]         = st.maximum;                            // Maximum
-   stats[2]         = st.mean.value_or( nan );               // Mean
-   stats[3]         = st.median.value_or( nan );             // Median
-   stats[4]         = st.skew.value_or( nan );               // Skew
-   stats[5]         = st.kurtosis.value_or( nan );           // Kurtosis
-   stats[6]         = st.mode_low.value_or( nan );           // Lower Mode
-   stats[7]         = st.mode_high.value_or( nan );          // Upper Mode
-   stats[8]         = mode_cen;                              // Mode Center
-   stats[9]         = conf95lo;                              // 95% Confidence Interval Low
-   stats[10]        = conf95hi;                              // 95% Confidence Interval High
-   stats[11]        = conf99lo;                              // 99% Confidence Interval Low
-   stats[12]        = conf99hi;                              // 99% Confidence Interval High
-   stats[13]        = st.standard_deviation.value_or( nan ); // Standard Deviation
-   stats[14]        = st.standard_error.value_or( nan );     // Standard Error
-   stats[15]        = st.variance.value_or( nan );           // Variance
-   stats[16]        = st.correlation.value_or( nan );        // Correlation Coefficient
-   stats[17]        = st.bins;                               // Number of Bins
-   stats[18]        = st.area.value_or( nan );               // Distribution Area
+   stats[0]         = st.minimum;            // Minimum
+   stats[1]         = st.maximum;            // Maximum
+   stats[2]         = st.mean;               // Mean
+   stats[3]         = st.median;             // Median
+   stats[4]         = st.skew;               // Skew
+   stats[5]         = st.kurtosis;           // Kurtosis
+   stats[6]         = st.mode_low;           // Lower Mode
+   stats[7]         = st.mode_high;          // Upper Mode
+   stats[8]         = mode_cen;              // Mode Center
+   stats[9]         = conf95lo;              // 95% Confidence Interval Low
+   stats[10]        = conf95hi;              // 95% Confidence Interval High
+   stats[11]        = conf99lo;              // 99% Confidence Interval Low
+   stats[12]        = conf99hi;              // 99% Confidence Interval High
+   stats[13]        = st.standard_deviation; // Standard Deviation
+   stats[14]        = st.standard_error;     // Standard Error
+   stats[15]        = st.variance;           // Variance
+   stats[16]        = st.correlation;        // Correlation Coefficient
+   stats[17]        = st.bins;               // Number of Bins
+   stats[18]        = st.area;               // Distribution Area
    // Confidence limits relative to the mode center; equal to the mean
    // when the values are constant.
    const bool fixed = st.constant;

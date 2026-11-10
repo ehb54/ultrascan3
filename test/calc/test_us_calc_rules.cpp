@@ -10,6 +10,7 @@
 #include <random>
 
 #include <QVector>
+#include <QtNumeric>
 
 #include "us_calc_matching.h"
 #include "us_calc_replicate.h"
@@ -60,7 +61,7 @@ TEST( UsCalcTolerance, NanFailsEveryRule )
 
 namespace
 {
-RangeResult member( double r, std::optional<double> fraction )
+RangeResult member( double r, double fraction )
 {
    RangeResult m;
    m.range_concentration = r;
@@ -73,10 +74,10 @@ TEST( UsCalcReplicate, MeanAndPopulationSd )
 {
    const ReplicateResult r = replicate_summary( { member( 0.2, 20.0 ), member( 0.4, 40.0 ), member( 0.6, 60.0 ) } );
    EXPECT_EQ( r.used_count, 3 );
-   EXPECT_DOUBLE_EQ( *r.mean_range_concentration, 0.4 );
-   EXPECT_DOUBLE_EQ( *r.mean_fraction_percent, 40.0 );
-   EXPECT_NEAR( *r.sd_fraction_percent, std::sqrt( 800.0 / 3.0 ), 1e-12 ); // divisor N, not N-1
-   EXPECT_NEAR( *r.sd_range_concentration, std::sqrt( 0.08 / 3.0 ), 1e-15 );
+   EXPECT_DOUBLE_EQ( r.mean_range_concentration, 0.4 );
+   EXPECT_DOUBLE_EQ( r.mean_fraction_percent, 40.0 );
+   EXPECT_NEAR( r.sd_fraction_percent, std::sqrt( 800.0 / 3.0 ), 1e-12 ); // divisor N, not N-1
+   EXPECT_NEAR( r.sd_range_concentration, std::sqrt( 0.08 / 3.0 ), 1e-15 );
    EXPECT_TRUE( r.diagnostics.empty() );
 }
 
@@ -84,18 +85,31 @@ TEST( UsCalcReplicate, OneMemberHasZeroSd )
 {
    const ReplicateResult r = replicate_summary( { member( 0.3, 30.0 ) } );
    EXPECT_EQ( r.used_count, 1 );
-   EXPECT_EQ( *r.sd_fraction_percent, 0.0 );
-   EXPECT_EQ( *r.mean_fraction_percent, 30.0 );
+   EXPECT_EQ( r.sd_fraction_percent, 0.0 );
+   EXPECT_EQ( r.mean_fraction_percent, 30.0 );
 }
 
-TEST( UsCalcReplicate, NegativeAndUndefinedMembersAreLeftOut )
+TEST( UsCalcReplicate, NegativeMembersAreLeftOut )
 {
-   const ReplicateResult r =
-      replicate_summary( { member( -0.1, -10.0 ), member( 0.4, std::nullopt ), member( 0.2, 20.0 ), member( 0.4, 40.0 ) } );
-   EXPECT_EQ( r.member_count, 4 );
+   const ReplicateResult r = replicate_summary( { member( -0.1, -10.0 ), member( 0.2, 20.0 ), member( 0.4, 40.0 ) } );
+   EXPECT_EQ( r.member_count, 3 );
    EXPECT_EQ( r.used_count, 2 );
-   EXPECT_DOUBLE_EQ( *r.mean_fraction_percent, 30.0 );
-   EXPECT_EQ( r.diagnostics.size(), 2 );
+   EXPECT_DOUBLE_EQ( r.mean_fraction_percent, 30.0 );
+   EXPECT_DOUBLE_EQ( r.mean_range_concentration, 0.3 );
+   EXPECT_EQ( r.diagnostics.size(), 1 );
+   EXPECT_FALSE( has_error( r.diagnostics ) );
+}
+
+// A member without a defined fraction (a zero total) is used, as the reporter
+// uses it:  the fraction mean and SD are NaN, the concentration mean is not.
+TEST( UsCalcReplicate, UndefinedFractionMakesTheFractionMeanNaN )
+{
+   const ReplicateResult r = replicate_summary( { member( 0.0, qQNaN() ), member( 0.2, 20.0 ), member( 0.4, 40.0 ) } );
+   EXPECT_EQ( r.used_count, 3 );
+   EXPECT_TRUE( qIsNaN( r.mean_fraction_percent ) );
+   EXPECT_TRUE( qIsNaN( r.sd_fraction_percent ) );
+   EXPECT_DOUBLE_EQ( r.mean_range_concentration, 0.2 );
+   EXPECT_EQ( r.diagnostics.size(), 1 );
    EXPECT_FALSE( has_error( r.diagnostics ) );
 }
 
@@ -105,8 +119,8 @@ TEST( UsCalcReplicate, NoUsableMemberIsAnError )
    {
       const ReplicateResult r = replicate_summary( members );
       EXPECT_EQ( r.used_count, 0 );
-      EXPECT_FALSE( r.mean_fraction_percent.has_value() );
-      EXPECT_FALSE( r.sd_fraction_percent.has_value() );
+      EXPECT_TRUE( qIsNaN( r.mean_fraction_percent ) );
+      EXPECT_TRUE( qIsNaN( r.sd_fraction_percent ) );
       EXPECT_TRUE( has_error( r.diagnostics ) );
    }
 }
@@ -151,8 +165,8 @@ WeightedStatistics iterations( const QVector<double>& v, const QVector<double>& 
 TEST( UsCalcStatistics, AreaCountsEveryValueIncludingTheMaximum )
 {
    const WeightedStatistics st = distribution( { 1.0, 2.0, 3.0 }, { 1.0, 1.0, 1.0 } );
-   ASSERT_TRUE( st.area.has_value() );
-   EXPECT_NEAR( *st.area, 3.0 * ( 2.0 / 50.0 ), 1e-15 );
+   ASSERT_FALSE( qIsNaN( st.area ) );
+   EXPECT_NEAR( st.area, 3.0 * ( 2.0 / 50.0 ), 1e-15 );
 
    std::mt19937_64                        rng( 7 );
    std::uniform_real_distribution<double> u( 0.0, 1.0 );
@@ -168,16 +182,16 @@ TEST( UsCalcStatistics, AreaCountsEveryValueIncludingTheMaximum )
          total += c[i];
       }
       const WeightedStatistics s = distribution( v, c );
-      ASSERT_TRUE( s.area.has_value() );
-      EXPECT_NEAR( *s.area, total * ( s.maximum - s.minimum ) / 50.0, 1e-12 * total * ( s.maximum - s.minimum ) / 50.0 );
+      ASSERT_FALSE( qIsNaN( s.area ) );
+      EXPECT_NEAR( s.area, total * ( s.maximum - s.minimum ) / 50.0, 1e-12 * total * ( s.maximum - s.minimum ) / 50.0 );
    }
 }
 
-TEST( UsCalcStatistics, UndefinedValuesAreEmpty )
+TEST( UsCalcStatistics, UndefinedValuesAreNaN )
 {
    // One nonzero concentration:  the weighted variance divides by zero.
    const WeightedStatistics one = distribution( { 1.0, 2.0 }, { 1.0, 0.0 } );
-   EXPECT_FALSE( one.variance.has_value() );
+   EXPECT_TRUE( qIsNaN( one.variance ) );
    EXPECT_FALSE( has_error( one.diagnostics ) );
    EXPECT_FALSE( one.diagnostics.empty() );
    // No values
@@ -185,11 +199,11 @@ TEST( UsCalcStatistics, UndefinedValuesAreEmpty )
    // A dominant first value gives the first value as both upper limits
    // (the legacy index is set to -1 and then corrected to 0)
    const WeightedStatistics dom = distribution( { 1.0, 2.0, 3.0 }, { 1000.0, 1.0, 1.0 } );
-   ASSERT_TRUE( dom.confidence99_high.has_value() );
-   EXPECT_EQ( *dom.confidence99_high, 1.0 );
+   ASSERT_FALSE( qIsNaN( dom.confidence99_high ) );
+   EXPECT_EQ( dom.confidence99_high, 1.0 );
    // A single value has no upper index
    const WeightedStatistics single = distribution( { 2.0 }, { 1.0 } );
-   EXPECT_FALSE( single.confidence99_high.has_value() );
+   EXPECT_TRUE( qIsNaN( single.confidence99_high ) );
 }
 
 // Monte Carlo iterations:  weighted mean, unweighted moments about it,
@@ -203,8 +217,8 @@ TEST( UsCalcStatistics, ConfidenceIntervalsIgnoreComponentOrder )
    QVector<double>          v   = { 1.0, 2.0, 2.0, 3.0 };
    QVector<double>          c   = { 0.5, 0.48, 0.01, 0.01 };
    const WeightedStatistics ref = distribution( v, c );
-   ASSERT_TRUE( ref.confidence95_high.has_value() );
-   EXPECT_EQ( *ref.confidence95_high, 2.0 );
+   ASSERT_FALSE( qIsNaN( ref.confidence95_high ) );
+   EXPECT_EQ( ref.confidence95_high, 2.0 );
    QVector<int>    idx = { 0, 1, 2, 3 };
    std::mt19937_64 rng( 3 );
    for ( int t = 0; t < 200; ++t )
@@ -227,43 +241,43 @@ TEST( UsCalcStatistics, ConfidenceIntervalsIgnoreComponentOrder )
 TEST( UsCalcStatistics, MonteCarloIterations )
 {
    const WeightedStatistics st = iterations( { 4.0, 1.0, 3.0, 2.0 }, { 1.0, 1.0, 1.0, 1.0 } );
-   ASSERT_TRUE( st.mean && st.median && st.variance && st.standard_deviation );
-   EXPECT_EQ( *st.mean, 2.5 );
-   EXPECT_EQ( *st.median, 2.5 ); // even count:  mean of the middle two
-   EXPECT_EQ( *st.variance, 1.25 );
-   EXPECT_DOUBLE_EQ( *st.confidence95_low, 2.5 - 1.960 * std::sqrt( 1.25 ) );
-   EXPECT_DOUBLE_EQ( *st.confidence99_high, 2.5 + 2.576 * std::sqrt( 1.25 ) );
+   ASSERT_FALSE( qIsNaN( st.mean ) || qIsNaN( st.median ) || qIsNaN( st.variance ) || qIsNaN( st.standard_deviation ) );
+   EXPECT_EQ( st.mean, 2.5 );
+   EXPECT_EQ( st.median, 2.5 ); // even count:  mean of the middle two
+   EXPECT_EQ( st.variance, 1.25 );
+   EXPECT_DOUBLE_EQ( st.confidence95_low, 2.5 - 1.960 * std::sqrt( 1.25 ) );
+   EXPECT_DOUBLE_EQ( st.confidence99_high, 2.5 + 2.576 * std::sqrt( 1.25 ) );
    EXPECT_FALSE( st.constant );
 
    // Only the mean is weighted
    const WeightedStatistics w = iterations( { 1.0, 2.0, 3.0 }, { 2.0, 1.0, 1.0 } );
-   EXPECT_EQ( *w.mean, 7.0 / 4.0 );
-   EXPECT_EQ( *w.median, 2.0 ); // odd count:  the middle value
+   EXPECT_EQ( w.mean, 7.0 / 4.0 );
+   EXPECT_EQ( w.median, 2.0 ); // odd count:  the middle value
    const double d1 = 1.0 - 1.75, d2 = 2.0 - 1.75, d3 = 3.0 - 1.75;
-   EXPECT_EQ( *w.variance, ( d1 * d1 + d2 * d2 + d3 * d3 ) / 3.0 );
+   EXPECT_EQ( w.variance, ( d1 * d1 + d2 * d2 + d3 * d3 ) / 3.0 );
 
    // The area counts the maximum, as in the distribution convention
-   EXPECT_NEAR( *w.area, 4.0 * ( 2.0 / 50.0 ), 1e-15 );
+   EXPECT_NEAR( w.area, 4.0 * ( 2.0 / 50.0 ), 1e-15 );
 }
 
 TEST( UsCalcStatistics, MonteCarloConstantValues )
 {
    const WeightedStatistics st = iterations( { 2.0, 2.0, 2.0 }, { 1.0, 3.0, 1.0 } );
    EXPECT_TRUE( st.constant );
-   EXPECT_EQ( *st.mean, 2.0 );
-   EXPECT_EQ( *st.median, 2.0 );
-   EXPECT_EQ( *st.mode_center, 2.0 );
-   EXPECT_EQ( *st.mode_low, 0.0 );
-   EXPECT_EQ( *st.confidence99_low, 2.0 );
-   EXPECT_EQ( *st.standard_deviation, 0.0 );
-   EXPECT_EQ( *st.area, 0.0 );
+   EXPECT_EQ( st.mean, 2.0 );
+   EXPECT_EQ( st.median, 2.0 );
+   EXPECT_EQ( st.mode_center, 2.0 );
+   EXPECT_EQ( st.mode_low, 0.0 );
+   EXPECT_EQ( st.confidence99_low, 2.0 );
+   EXPECT_EQ( st.standard_deviation, 0.0 );
+   EXPECT_EQ( st.area, 0.0 );
    EXPECT_TRUE( st.diagnostics.empty() );
 
    // Nearly equal values are constant only in the distribution convention
    EXPECT_FALSE( iterations( { 1.0, 1.0 + 1e-6 }, { 1.0, 1.0 } ).constant );
    EXPECT_TRUE( distribution( { 1.0, 1.0 + 1e-6 }, { 1.0, 1.0 } ).constant );
    // The median is only defined for iterations
-   EXPECT_FALSE( distribution( { 1.0, 2.0 }, { 1.0, 1.0 } ).median.has_value() );
+   EXPECT_TRUE( qIsNaN( distribution( { 1.0, 2.0 }, { 1.0, 1.0 } ).median ) );
    // A zero total is an error in both
    EXPECT_TRUE( has_error( iterations( { 1.0, 2.0 }, { 0.0, 0.0 } ).diagnostics ) );
 }

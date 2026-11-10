@@ -1,6 +1,6 @@
 //! \file us_calc_range.cpp
 #include "us_calc_range.h"
-#include "us_calc_fp.h" // first:  floating-point policy
+#include "us_calc_fp.h" // floating-point policy
 
 #include "us_calc_units.h"
 #include "us_calc_validation.h"
@@ -21,8 +21,8 @@ RangeResult range_summary( const Model& model, const Range& range )
 {
    RangeResult result;
    result.range           = range;
-   result.component_count = model.components.size();
-   result.algorithm       = *algorithm( "range_summary" );
+   result.component_count = static_cast<int>( model.components.size() );
+   result.algorithm       = algorithm( "range_summary" );
    result.diagnostics << validate_model( model ) << validate_range( range );
    if ( !range_quantity_supported( range.quantity ) )
    {
@@ -80,8 +80,8 @@ RangeResult range_summary( const Model& model, const Range& range )
 ModelMeans model_means( const Model& model )
 {
    ModelMeans result;
-   result.component_count = model.components.size();
-   result.algorithm       = *algorithm( "range_summary" );
+   result.component_count = static_cast<int>( model.components.size() );
+   result.algorithm       = algorithm( "range_summary" );
    result.diagnostics << validate_model( model );
    if ( has_error( result.diagnostics ) )
    {

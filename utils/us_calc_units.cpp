@@ -1,6 +1,6 @@
 //! \file us_calc_units.cpp
 #include "us_calc_units.h"
-#include "us_calc_fp.h" // first:  floating-point policy
+#include "us_calc_fp.h" // floating-point policy
 
 namespace US_Calc
 {
@@ -48,8 +48,12 @@ double component_value( const Component& component, Quantity quantity )
    return 0.0;
 }
 
-std::optional<Quantity> quantity_from_report_type( const QString& type )
+Quantity quantity_from_report_type( const QString& type, bool* ok )
 {
+   if ( ok )
+   {
+      *ok = true;
+   }
    if ( type == "s" )
    {
       return Quantity::Sedimentation;
@@ -66,7 +70,11 @@ std::optional<Quantity> quantity_from_report_type( const QString& type )
    {
       return Quantity::FrictionalRatio;
    }
-   return std::nullopt;
+   if ( ok )
+   {
+      *ok = false;
+   }
+   return Quantity::PartialSpecificVolume;
 }
 
 QString quantity_name( Quantity quantity )

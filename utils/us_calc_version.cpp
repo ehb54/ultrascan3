@@ -1,5 +1,5 @@
 //! \file us_calc_version.cpp
-#include "us_calc_fp.h" // first:  floating-point policy
+#include "us_calc_fp.h" // floating-point policy
 //! The descriptions state the rule each algorithm follows.
 #include "us_calc_version.h"
 
@@ -50,7 +50,7 @@ QVector<AlgorithmVersion> algorithms()
    };
 }
 
-std::optional<AlgorithmVersion> algorithm( const QString& name )
+AlgorithmVersion algorithm( const QString& name )
 {
    for ( const AlgorithmVersion& a : algorithms() )
    {
@@ -59,6 +59,6 @@ std::optional<AlgorithmVersion> algorithm( const QString& name )
          return a;
       }
    }
-   return std::nullopt;
+   return AlgorithmVersion();
 }
 } // namespace US_Calc

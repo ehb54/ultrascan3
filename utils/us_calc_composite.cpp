@@ -1,6 +1,6 @@
 //! \file us_calc_composite.cpp
 #include "us_calc_composite.h"
-#include "us_calc_fp.h" // first:  floating-point policy
+#include "us_calc_fp.h" // floating-point policy
 
 #include "us_calc_version.h"
 
@@ -34,7 +34,7 @@ QString mc_solute_key( double s, double second )
 CompositeResult mc_composite( const QVector<Model>& iterations )
 {
    CompositeResult result;
-   result.algorithm         = *algorithm( "mc_composite" );
+   result.algorithm         = algorithm( "mc_composite" );
    result.model.monte_carlo = true;
    if ( iterations.isEmpty() )
    {

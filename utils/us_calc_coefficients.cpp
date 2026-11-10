@@ -1,6 +1,6 @@
 //! \file us_calc_coefficients.cpp
 #include "us_calc_coefficients.h"
-#include "us_calc_fp.h" // first:  floating-point policy
+#include "us_calc_fp.h" // floating-point policy
 
 #include "us_constants.h"
 

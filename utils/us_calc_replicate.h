@@ -13,28 +13,30 @@
 #include "us_calc_types.h"
 
 #include <QVector>
-#include <optional>
+#include <QtNumeric>
 
 namespace US_Calc
 {
 //! \brief Mean and population standard deviation of a replicate group.
 struct ReplicateResult
 {
-      int                   member_count = 0; //!< Members given
-      int                   used_count   = 0; //!< Members used
-      //! Means and standard deviations; empty when no member is used.
-      std::optional<double> mean_range_concentration;
-      std::optional<double> sd_range_concentration;
-      std::optional<double> mean_fraction_percent;
-      std::optional<double> sd_fraction_percent;
-      QVector<Diagnostic>   diagnostics;
-      AlgorithmVersion      algorithm;
+      int                 member_count             = 0; //!< Members given
+      int                 used_count               = 0; //!< Members used
+      //! Means and standard deviations; NaN when no member is used.
+      double              mean_range_concentration = qQNaN();
+      double              sd_range_concentration   = qQNaN();
+      double              mean_fraction_percent    = qQNaN();
+      double              sd_fraction_percent      = qQNaN();
+      QVector<Diagnostic> diagnostics;
+      AlgorithmVersion    algorithm;
 };
 
 //! \brief Summarize the range results of a replicate group's members.
 //!
-//! A member is used when its in-range concentration is not negative and
-//! its fraction is defined.  Others are left out with a warning.
+//! A member is used when its in-range concentration is not negative; others
+//! are left out with a warning.  A used member whose fraction is NaN (a zero
+//! total) makes the fraction mean and SD NaN, as in the reporter, and adds a
+//! warning.
 US_UTIL_EXTERN ReplicateResult replicate_summary( const QVector<RangeResult>& members );
 } // namespace US_Calc
 

@@ -43,8 +43,9 @@ TEST( UsCalcVersion, AlgorithmsAreNamedVersionedAndDescribed )
 
 TEST( UsCalcVersion, LookupByName )
 {
-   auto a = algorithm( "range_summary" );
-   ASSERT_TRUE( a.has_value() );
-   EXPECT_EQ( a->name, "range_summary" );
-   EXPECT_FALSE( algorithm( "no_such_algorithm" ).has_value() );
+   const AlgorithmVersion a = algorithm( "range_summary" );
+   EXPECT_EQ( a.name, "range_summary" );
+   EXPECT_GE( a.version, 1 );
+   EXPECT_TRUE( algorithm( "no_such_algorithm" ).name.isEmpty() );
+   EXPECT_EQ( algorithm( "no_such_algorithm" ).version, 0 );
 }

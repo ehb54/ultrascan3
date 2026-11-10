@@ -123,7 +123,7 @@ ehb54/ultrascan-tickets#1214.
    normalizes by the total; `outputStats` divides by the total weight;
    `US_Model::constant_vbar` and `constant_ff0` read the first component of
    an empty model.  US_Calc reports an empty model or a zero total as an
-   error and returns no value; the desktop output is unchanged.  Empty and
+   error and leaves the value NaN; the desktop output is unchanged.  Empty and
    zero-total models are excluded from the captured outputs.
 6. **Unsupported types.**  An item type outside s, D, MW and f/f0 selects
    nothing in `distrib_info` (fraction 0) but is reported unsupported by

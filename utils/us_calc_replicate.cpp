@@ -1,6 +1,6 @@
 //! \file us_calc_replicate.cpp
 #include "us_calc_replicate.h"
-#include "us_calc_fp.h" // first:  floating-point policy
+#include "us_calc_fp.h" // floating-point policy
 
 #include "us_calc_version.h"
 
@@ -11,8 +11,8 @@ namespace US_Calc
 ReplicateResult replicate_summary( const QVector<RangeResult>& members )
 {
    ReplicateResult result;
-   result.member_count = members.size();
-   result.algorithm    = *algorithm( "replicate_summary" );
+   result.member_count = static_cast<int>( members.size() );
+   result.algorithm    = algorithm( "replicate_summary" );
 
    QVector<double> rs;
    QVector<double> fs;
@@ -26,16 +26,17 @@ ReplicateResult replicate_summary( const QVector<RangeResult>& members )
                                          QString( "member %1 has a negative in-range concentration and is not used" ).arg( i ) } );
          continue;
       }
-      if ( !m.fraction_percent )
+      if ( qIsNaN( m.fraction_percent ) )
       {
-         result.diagnostics.push_back(
-            { Issue::ZeroTotal, Severity::Warning, QString( "member %1 has no fraction and is not used" ).arg( i ) } );
-         continue;
+         // Used as the reporter uses it:  the fraction means become NaN.
+         result.diagnostics.push_back( { Issue::ZeroTotal,
+                                         Severity::Warning,
+                                         QString( "member %1 has no defined fraction; the fraction mean is NaN" ).arg( i ) } );
       }
       rs.push_back( m.range_concentration );
-      fs.push_back( *m.fraction_percent );
+      fs.push_back( m.fraction_percent );
    }
-   result.used_count = rs.size();
+   result.used_count = static_cast<int>( rs.size() );
    if ( rs.isEmpty() )
    {
       result.diagnostics.push_back( { Issue::NoEligibleMembers, Severity::Error, "no member of the group can be used" } );
