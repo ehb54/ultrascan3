@@ -231,7 +231,7 @@ TEST_F(US_AnaProfileConstructorTest, DefaultConstructorInitializesSubObjects) {
 EXPECT_THAT(profile->ap2DSA.fitrng, DoubleEq(0.03));
 EXPECT_EQ(profile->ap2DSA.nchan, 1);
 EXPECT_EQ(profile->ap2DSA.grpoints, 11);
-EXPECT_TRUE(profile->ap2DSA.job1run);
+EXPECT_FALSE( profile->ap2DSA.job1run );
 EXPECT_TRUE(profile->ap2DSA.job2run);
 EXPECT_EQ(profile->ap2DSA.parms.size(), 1);
 
@@ -533,7 +533,7 @@ EXPECT_EQ(twoDSA->grpoints, 11);
 EXPECT_EQ(twoDSA->j2rfiters, 1);
 EXPECT_EQ(twoDSA->rfiters, 10);
 EXPECT_EQ(twoDSA->mciters, 100);
-EXPECT_TRUE(twoDSA->job1run);
+EXPECT_FALSE( twoDSA->job1run );
 EXPECT_TRUE(twoDSA->job2run);
 EXPECT_TRUE(twoDSA->job3run);
 EXPECT_TRUE(twoDSA->job4run);
@@ -576,7 +576,7 @@ EXPECT_FALSE(twoDSA1 == twoDSA2);
 twoDSA2.fitrng = 0.05;
 EXPECT_TRUE(twoDSA1 == twoDSA2);
 
-twoDSA1.job1run = false;
+twoDSA1.job1run = true;
 EXPECT_FALSE(twoDSA1 == twoDSA2);
 }
 
