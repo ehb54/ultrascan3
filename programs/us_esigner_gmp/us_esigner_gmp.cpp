@@ -766,14 +766,14 @@ US_eSignaturesGMP::US_eSignaturesGMP( QStringList reassign ) : US_Widgets()
   pb_set_operRev        = us_pushbutton( tr( "Reassign Operator(s), Reviewer(s) and Approver(s)" ) );
   pb_set_operRev -> setEnabled( false );
 
-  pb_add_oper      = us_pushbutton( tr( "Add" ) );
+  pb_add_oper      = us_pushbutton( tr( "Add Operator" ) );
   pb_add_oper       -> setEnabled( false );
-  pb_remove_oper   = us_pushbutton( tr( "Remove Last" ) );
+  pb_remove_oper   = us_pushbutton( tr( "Remove Last Operator" ) );
   pb_remove_oper   -> setEnabled( false );
-  pb_add_rev       = us_pushbutton( tr( "Add" ) );
-  pb_remove_rev    = us_pushbutton( tr( "Remove Last" ) );
-  pb_add_appr      = us_pushbutton( tr( "Add" ) );
-  pb_remove_appr   = us_pushbutton( tr( "Remove Last" ) );
+  pb_add_rev       = us_pushbutton( tr( "Add Reviewer" ) );
+  pb_remove_rev    = us_pushbutton( tr( "Remove Last Reviewer" ) );
+  pb_add_appr      = us_pushbutton( tr( "Add Approver" ) );
+  pb_remove_appr   = us_pushbutton( tr( "Remove Last Approver" ) );
   
   QLabel* lb_run_name       = us_label( "Run Name:" );
   QLabel* lb_optima_name    = us_label( "Optima:" );
@@ -2741,7 +2741,9 @@ int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflow
 	  progress->setValue( irow + 1 );
      QString scanText =
         ( type == "HISTORY" )
-           ? ( reassign_revs_sep ? tr( "Looking for completed GMP runs with an open e-Signature record (all users)..." )
+           ? ( reassign_revs_sep ? ( ( US_Settings::us_inv_level() >= 3 )
+                                       ? tr( "Looking for completed GMP runs with an open e-Signature record (all users)..." )
+                                       : tr( "Looking for your completed GMP runs with an open e-Signature record..." ) )
                                  : tr( "Scanning completed GMP runs for outstanding e-Signatures..." ) )
            : tr( "Scanning current GMP runs..." );
      progress->setLabelText( tr( "<b>Please Wait</b><br>%1<br>"
