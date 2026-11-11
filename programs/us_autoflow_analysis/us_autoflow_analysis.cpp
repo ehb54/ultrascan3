@@ -4958,6 +4958,28 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
   
   bool mwl_channel = false;
   QStringList triple_list_affected;
+
+  // Text recorded in autoflowStatus.analysisCancel, so that the cancellation and its reason appear in the GMP Report:
+  //   "FITMEN FAILURE [<TYPE>]: <reason>"  (parsed in US_ReporterGMP::user_interactions_analysis())
+  auto fitmen_cancel_comment = [&]( bool bad_vals ) -> QString
+  {
+    QString type, reason;
+    if ( !bad_vals )
+      {
+	type   = "NO_FM_MODELS";
+	reason = "No -FM models found for the triple (not generated, or data analyzed outside of the GMP framework)";
+      }
+    else
+      {
+	QString ft = triple_info[ "failed_type" ];
+	type   = ( ft == "nan" )        ? "NAN"          :
+	         ( ft == "range" )      ? "OUT_OF_RANGE" :
+	         ( ft == "data_range" ) ? "DATA_RANGE"   : "BAD_VALUES";
+	reason = triple_info[ "failed" ];
+      }
+    reason.replace( ";", "," ).replace( "\n", " " );   // ';' delimits fields of the stored record
+    return QString( "FITMEN FAILURE [%1]: %2" ).arg( type ).arg( reason.simplified() );
+  };
   
   if ( requestID_list.size() > 1 ) 
     {
@@ -5055,6 +5077,9 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
 	  update_autoflowAnalysis_uponDeletion( &db, requestID );
 	  //maybe if mwl_channel=true?
 	  update_autoflowAnalysis_uponDeletion_other_wvl( &db, requestID_list );
+
+	  //Record the cancellation and its reason in autoflowStatus.analysisCancel (shown in the GMP Report):
+	  record_or_update_analysis_cancel_status( &db, triple_name, triple_list_affected.join( "," ), fitmen_cancel_comment( false ) );
 	  
 	}
     }
@@ -5155,6 +5180,9 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
 	  update_autoflowAnalysis_uponDeletion( &db, requestID );
 	  //maybe if mwl_channel=true?
 	  update_autoflowAnalysis_uponDeletion_other_wvl( &db, requestID_list );
+
+	  //Record the cancellation and its reason in autoflowStatus.analysisCancel (shown in the GMP Report):
+	  record_or_update_analysis_cancel_status( &db, triple_name, triple_list_affected.join( "," ), fitmen_cancel_comment( true ) );
 	}
     }
       
@@ -7470,6 +7498,7 @@ DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
      fitmen_bad_vals = true;
      QString reason_for_failure = mhdr + ", " + mmsg.split("!")[0];
      triple_information[ "failed" ] = reason_for_failure;
+     triple_information[ "failed_type" ] = "bad_values";
      delete_jobs_at_fitmen( triple_information );
 
      return;
@@ -7519,6 +7548,7 @@ DbgLv(1) << " eupd:   ixmlin ixblin" << ixmlin << ixblin << "ncmlin ncblin" << n
 	  .arg( lefval );
 	
 	triple_information[ "failed" ] = reason_for_failure;
+	triple_information[ "failed_type" ] = "data_range";
 	delete_jobs_at_fitmen( triple_information );
 	
 	return;
@@ -7680,6 +7710,7 @@ DbgLv(1) << " eupd:       ixmlin ixblin ixllin" << ixmlin << ixblin << ixllin;
              .arg( lefval );
 
        triple_information["failed"] = reason_for_failure;
+       triple_information[ "failed_type" ] = "data_range";
 
        // progress dialog is not user-closable: hide it on this early exit
        if ( progress_msg_fmb != NULL )

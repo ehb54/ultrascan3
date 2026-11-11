@@ -2323,6 +2323,77 @@ void US_auditTrailGMP::user_interactions_analysis_velmwl( QString              n
 }
 
 //do user-interactions-analysis separately:
+// Split a stored analysisCancel value: "CANCELED, by <user>; COMMENT, <text>; <UTC time>"
+// (older/shorter records are tolerated; a ';' inside the comment is preserved)
+static void split_cancel_value( const QString& value, QString& by, QString& comment, QString& when )
+{
+  QString rest = value;
+  int     ix   = rest.indexOf( "CANCELED, by" );
+  if ( ix >= 0 )
+    rest = rest.mid( ix + QString( "CANCELED, by" ).length() );
+
+  QStringList parts = rest.split( ";" );
+  by      = parts[ 0 ].trimmed();
+  comment = "N/A";
+  when    = "N/A";
+
+  if ( parts.size() >= 3 )
+    {
+      when    = parts.last().trimmed();
+      comment = parts.mid( 1, parts.size() - 2 ).join( ";" ).trimmed();
+    }
+  else if ( parts.size() == 2 )
+    comment = parts[ 1 ].trimmed();
+
+  if ( comment.startsWith( "COMMENT," ) )
+    comment = comment.mid( QString( "COMMENT," ).length() ).trimmed();
+}
+
+// Is the cancel comment a recorded FITMEN failure ("FITMEN FAILURE [<TYPE>]: <reason>")?
+// If so, fill failure type description, details, and description of who/what canceled the jobs.
+static bool parse_fitmen_failure( const QString& comment, bool fitmen_auto, const QString& session_user,
+				  QString& type_descr, QString& details, QString& by_descr )
+{
+  const QString tag( "FITMEN FAILURE [" );
+  if ( !comment.startsWith( tag ) )
+    return false;
+
+  int     ib    = comment.indexOf( ']' );
+  QString ftype = ( ib > 0 ) ? comment.mid( tag.length(), ib - tag.length() ) : QString( "UNKNOWN" );
+  details       = ( ib > 0 && comment.mid( ib + 1 ).startsWith( ":" ) ) ? comment.mid( ib + 2 ).trimmed()
+                                                                         : QString( "N/A" );
+
+  if      ( ftype == "NAN" )          type_descr = "NaN meniscus/bottom position: bad fit";
+  else if ( ftype == "OUT_OF_RANGE" ) type_descr = fitmen_auto
+    ? "Extrapolated position outside of the original radial fitting range"
+    : "Best-fit position outside of the allowed range of the 2DSA-FM models";
+  else if ( ftype == "NO_FM_MODELS" ) type_descr = "No 2DSA-FM models found";
+  else if ( ftype == "DATA_RANGE" )   type_descr = "Meniscus position extends into the data range";
+  else if ( ftype == "BAD_VALUES" )   type_descr = "Unreasonable meniscus/bottom value";
+  else                                type_descr = ftype;
+
+  by_descr = QString( "triple FAILED at %1 stage; jobs canceled automatically (session of: %2)" )
+             .arg( fitmen_auto ? "FITMEN_AUTO" : "FITMEN (manual)" ).arg( session_user );
+  if ( ftype == "OUT_OF_RANGE" && !fitmen_auto )
+    by_descr = QString( "user, who chose to stop processing this triple (session of: %1)" ).arg( session_user );
+
+  return true;
+}
+
+// Any FITMEN failure among the cancel records?
+static bool has_fitmen_failure( const QMap< QString, QString >& cancel_map )
+{
+  QMap< QString, QString >::const_iterator it;
+  for ( it = cancel_map.constBegin(); it != cancel_map.constEnd(); ++it )
+    {
+      QString by, comment, when;
+      split_cancel_value( it.value(), by, comment, when );
+      if ( comment.startsWith( "FITMEN FAILURE [" ) )
+	return true;
+    }
+  return false;
+}
+
 void US_auditTrailGMP::user_interactions_analysis( QString name, QString analysisJson,
 						   QString analysisCancelJson, QVector< QGroupBox * >& groupBoxes )
 {
@@ -2331,6 +2402,7 @@ void US_auditTrailGMP::user_interactions_analysis( QString name, QString analysi
       
       QMap < QString, QString > analysis_status_map       = parse_autoflowStatus_analysis_json( analysisJson );
       QMap < QString, QString > analysisCancel_status_map = parse_autoflowStatus_analysis_json( analysisCancelJson );
+      bool fitmen_failed_found = has_fitmen_failure( analysisCancel_status_map );   // triples failed at FITMEN (NaN, out-of-range, ...)
 
       //GUI
       QHBoxLayout* genL   = new QHBoxLayout();
@@ -2398,11 +2470,17 @@ void US_auditTrailGMP::user_interactions_analysis( QString name, QString analysi
 					 US_GuiSettings::fontSize() - 1) );
 	  us_setReadOnly( te_fitmen, true );
 
-	  te_fitmen -> setText( "Meniscus positions have been determined automatically as best fit values for all channels." );
+	  QString auto_msg = "Meniscus positions have been determined automatically as best fit values for all channels";
+	  if ( fitmen_failed_found )
+	    auto_msg += ", except for the triples that FAILED at the FITMEN_AUTO stage (see the failure information below).";
+	  else
+	    auto_msg += ".";
+
+	  te_fitmen -> setText( auto_msg );
 
 	  genL1 -> addWidget( te_fitmen,     row++,    1,  1,  21  );
 
-	  html_assembled += tr( "Meniscus positions have been determined automatically as best fit values for all channels." );
+	  html_assembled += tr( "%1" ).arg( auto_msg );
 	}
 
       //Cancelled Jobs
@@ -2416,41 +2494,51 @@ void US_auditTrailGMP::user_interactions_analysis( QString name, QString analysi
 	  for ( cj = analysisCancel_status_map.begin(); cj != analysisCancel_status_map.end(); ++cj )
 	    {
 	      
-	      QString cj_value                 = cj.value();
-	      QString performed_by_reason_time = cj_value.split("CANCELED, by")[1];
-	      
 	      QString performed_by, reason, when;
-	      if ( performed_by_reason_time.contains(";") )
-		{
-		  performed_by      = performed_by_reason_time.split(";")[0];
-		  reason            = performed_by_reason_time.split(";")[1];
-		  when              = performed_by_reason_time.split(";")[2];  
-		}
-	      else
-		{
-		  performed_by = performed_by_reason_time;
-		  reason       = "N/A";
-		  when         = "N/A";
-		}
-	      
+	      split_cancel_value( cj.value(), performed_by, reason, when );
+
+	      QString f_type, f_details, f_by;
+	      bool    is_fitmen_failure = parse_fitmen_failure( reason, p_2dsa_auto_fitmen, performed_by,
+								f_type, f_details, f_by );
+
 	      QLabel* lb_canc1        = us_label( tr("Jobs Canceled for:") );
 	      QLineEdit* le_canc1     = us_lineedit( cj.key(), 0, true );
 	      QLabel* lb_canc2        = us_label( tr("Canceled by:") );
-	      QLineEdit* le_canc2     = us_lineedit( performed_by, 0, true );
+	      QLineEdit* le_canc2     = us_lineedit( is_fitmen_failure ? f_by : performed_by, 0, true );
 	      QLabel* lb_canc3        = us_label( tr("Reason:") );
-	      QLineEdit* le_canc3     = us_lineedit( reason, 0, true );
+	      QLineEdit* le_canc3     = us_lineedit( is_fitmen_failure ? f_details : reason, 0, true );
 	      QLabel* lb_canc4        = us_label( tr("TimeStamp:") );
 	      QLineEdit* le_canc4     = us_lineedit( when + " (UTC)", 0, true );
-	      
-	      
-	      genL1 -> addWidget( lb_canc1,     row,     1,  1,  2  );
-	      genL1 -> addWidget( le_canc1,     row,     3,  1,  3  );
-	      genL1 -> addWidget( lb_canc2,     row,     6,  1,  2  );
-	      genL1 -> addWidget( le_canc2,     row,     8,  1,  3  );
-	      genL1 -> addWidget( lb_canc3,     row,     11, 1,  2  );
-	      genL1 -> addWidget( le_canc3,     row,     13, 1,  3  );
-	      genL1 -> addWidget( lb_canc4,     row,     16, 1,  2  );
-	      genL1 -> addWidget( le_canc4,     row++,   18, 1,  3  );
+
+	      if ( is_fitmen_failure )
+		{
+		  // Failure caused at the FITMEN stage: failure type shown on its own row
+		  QLabel* lb_canc5    = us_label( tr("Failure Type:") );
+		  QLineEdit* le_canc5 = us_lineedit( f_type, 0, true );
+		  le_canc5->setStyleSheet( "color: red;" );
+
+		  genL1 -> addWidget( lb_canc1,     row,     1,  1,  2  );
+		  genL1 -> addWidget( le_canc1,     row,     3,  1,  3  );
+		  genL1 -> addWidget( lb_canc2,     row,     6,  1,  2  );
+		  genL1 -> addWidget( le_canc2,     row,     8,  1,  8  );
+		  genL1 -> addWidget( lb_canc4,     row,     16, 1,  2  );
+		  genL1 -> addWidget( le_canc4,     row++,   18, 1,  3  );
+		  genL1 -> addWidget( lb_canc5,     row,     1,  1,  2  );
+		  genL1 -> addWidget( le_canc5,     row,     3,  1,  5  );
+		  genL1 -> addWidget( lb_canc3,     row,     8,  1,  2  );
+		  genL1 -> addWidget( le_canc3,     row++,   10, 1,  11 );
+		}
+	      else
+		{
+		  genL1 -> addWidget( lb_canc1,     row,     1,  1,  2  );
+		  genL1 -> addWidget( le_canc1,     row,     3,  1,  3  );
+		  genL1 -> addWidget( lb_canc2,     row,     6,  1,  2  );
+		  genL1 -> addWidget( le_canc2,     row,     8,  1,  3  );
+		  genL1 -> addWidget( lb_canc3,     row,     11, 1,  2  );
+		  genL1 -> addWidget( le_canc3,     row,     13, 1,  3  );
+		  genL1 -> addWidget( lb_canc4,     row,     16, 1,  2  );
+		  genL1 -> addWidget( le_canc4,     row++,   18, 1,  3  );
+		}
 	    }
 	}
       else //no cancelled jobs
@@ -3616,41 +3704,58 @@ void US_auditTrailGMP::assemble_GMP_analysis_cancelled( QMap < QString, QString 
       for ( cj = analysisCancel_status_map.begin(); cj != analysisCancel_status_map.end(); ++cj )
 	{
 	  
-	  QString cj_value                 = cj.value();
-	  QString performed_by_reason_time = cj_value.split("CANCELED, by")[1];
-	  
 	  QString performed_by, reason, when;
-	  if ( performed_by_reason_time.contains(";") )
+	  split_cancel_value( cj.value(), performed_by, reason, when );
+
+	  QString f_type, f_details, f_by;
+	  if ( parse_fitmen_failure( reason, p_2dsa_auto_fitmen, performed_by, f_type, f_details, f_by ) )
 	    {
-	      performed_by      = performed_by_reason_time.split(";")[0];
-	      reason            = performed_by_reason_time.split(";")[1];
-	      when              = performed_by_reason_time.split(";")[2];  
+	      html_assembled += tr(
+				   "<tr>"
+				   "<td> Jobs Canceled for:  %1, </td>"
+				   "</tr>"
+				   "<tr>"
+				   "<td> Jobs Canceled by:   %2, </td>"
+				   "</tr>"
+				   "<tr>"
+				   "<td> Failure Type:       <span style=\"color:red;\">%3</span>, </td>"
+				   "</tr>"
+				   "<tr>"
+				   "<td> Reason:             %4, </td>"
+				   "</tr>"
+				   "<tr>"
+				   "<td> When:               %5  (UTC)</td>"
+				   "</tr>"
+				   )
+		.arg( cj.key() )      //1
+		.arg( f_by )          //2
+		.arg( f_type )        //3
+		.arg( f_details )     //4
+		.arg( when )          //5
+		;
 	    }
 	  else
 	    {
-	      performed_by = performed_by_reason_time;
-	      reason       = "N/A";
-	      when         = "N/A";
+	      html_assembled += tr(
+				   "<tr>"
+				   "<td> Jobs Canceled for:  %1, </td>"
+				   "</tr>"
+				   "<tr>"
+				   "<td> Jobs Canceled by:   %2, </td>"
+				   "</tr>"
+				   "<tr>"
+				   "<td> Reason:             %3, </td>"
+				   "</tr>"
+				   "<tr>"
+				   "<td> When:               %4  (UTC)</td>"
+				   "</tr>"
+				   )
+		.arg( cj.key()   )      //1
+		.arg( performed_by )    //2
+		.arg( reason )          //3
+		.arg( when )            //4
+		;
 	    }
-	  html_assembled += tr(			       
-			       "<tr>"
-			       "<td> Jobs Canceled for:  %1, </td>"
-			       "</tr>"
-			       "<tr>"
-			       "<td> Jobs Canceled by:   %2, </td>"
-			       "</tr>"
-			       "<tr>"
-			       "<td> Reason:             %3, </td>"
-			       "</tr>"
-			       "<tr>"
-			       "<td> When:               %4  (UTC)</td>"
-			       "</tr>"
-						       )
-	    .arg( cj.key()   )      //1
-	    .arg( performed_by )    //2
-	    .arg( reason )          //3
-	    .arg( when )            //4
-	    ;
 	}
     }
   else
