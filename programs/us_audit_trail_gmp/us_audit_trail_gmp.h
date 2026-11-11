@@ -100,8 +100,10 @@ class US_auditTrailGMP : public US_Widgets
 
         //! \brief Read the autoflow GMP report eSign record.
         //! \param id The ID of the eSign record.
+        //! \param db Optional open connection to reuse. Pass one when calling in a loop;
+        //!        if NULL a connection is opened for this call only and closed on return.
         //! \return A map containing the details of the eSign record.
-        QMap<QString, QString> read_autoflowGMPReportEsign_record(QString id);
+        QMap<QString, QString> read_autoflowGMPReportEsign_record(QString id, US_DB2* db = NULL);
 
         //! \brief Initialize the auto panel.
         //! \param details The details map for initialization.

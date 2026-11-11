@@ -5,6 +5,7 @@
 #include <QPdfWriter>
 #include <QPrinter>
 #include <QProgressDialog>
+#include <QScopedPointer>
 #include <algorithm>
 //#include <QThread>    
 
@@ -406,7 +407,7 @@ int US_auditTrailGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsD
       QStringList gmpreportentry;
 
       //check if report has assigned operator(s) & reviewer(s)
-      QMap< QString, QString > eSign = read_autoflowGMPReportEsign_record( row.autoflowHistoryID );
+      QMap< QString, QString > eSign = read_autoflowGMPReportEsign_record( row.autoflowHistoryID, db ); // reuse the scan's connection
       QString operatorListJson  = eSign[ "operatorListJson" ];
       QString reviewersListJson = eSign[ "reviewersListJson" ];
       QString approversListJson = eSign[ "approversListJson" ];
@@ -461,19 +462,29 @@ int US_auditTrailGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsD
 
 
 //read eSign GMP record for assigned oper(s) && rev(s) && status
-QMap< QString, QString> US_auditTrailGMP::read_autoflowGMPReportEsign_record( QString aID)
+//  db_in : optional, already-open connection to reuse.  Callers that read many records in a loop
+//          (list_all_gmp_reports_db()) MUST pass one, otherwise a connection is opened (and closed
+//          again on return) for every single record.
+QMap< QString, QString> US_auditTrailGMP::read_autoflowGMPReportEsign_record( QString aID, US_DB2* db_in )
 {
   QMap< QString, QString> eSign_record;
-  
-  US_Passwd pw( this );
-  US_DB2* db = new US_DB2( pw.getPasswd() );
-  
-  if ( db->lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
-			    tr( "Could not connect to database \n" ) + db->lastError() );
 
-      return eSign_record;
+  QScopedPointer<US_DB2> db_own;   // only used when no connection was passed in
+  US_DB2*                db = db_in;
+
+  if ( !db )
+    {
+      US_Passwd pw( this );
+      db_own.reset( new US_DB2( pw.getPasswd() ) );
+      db = db_own.data();
+
+      if ( db->lastErrno() != US_DB2::OK )
+	{
+	  QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
+				tr( "Could not connect to database \n" ) + db->lastError() );
+
+	  return eSign_record;
+	}
     }
 
   QStringList qry;
@@ -2587,7 +2598,8 @@ QMap< QString, QString>  US_auditTrailGMP::read_autoflow_record( int autoflowID 
    // Check DB connection
    US_Passwd pw( this );
    QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   QScopedPointer<US_DB2> db_holder( new US_DB2( masterpw ) );   // closed on every return path
+   US_DB2*                db = db_holder.data();
 
    QMap <QString, QString> protocol_details;
    
