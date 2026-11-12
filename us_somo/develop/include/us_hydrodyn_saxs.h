@@ -390,6 +390,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QStringList  qsl_plotted_pr_names;
       map    < QString, bool >                        dup_plotted_iq_name_check;
       map    < QString, unsigned int >                plotted_iq_names_to_pos;
+      map    < QString, QString >                     plotted_iq_names_to_file; // .dat/.txt/.sprr a curve was loaded from
       map    < QString, bool >                        dup_plotted_pr_name_check;
       vector < atom >                                 atom_list;
       vector < hybridization >                        hybrid_list;

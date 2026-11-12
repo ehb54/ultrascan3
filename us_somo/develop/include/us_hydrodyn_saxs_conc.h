@@ -61,6 +61,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Conc : public QDialog
 
       QPushButton   *pb_load;
       QPushButton   *pb_save;
+      QPushButton   *pb_save_into_files;
 
       QPushButton   *pb_copy;
       QPushButton   *pb_paste;
@@ -85,6 +86,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Conc : public QDialog
       void          *us_hydrodyn;
 
       void          reload_csv();
+      void          set_file_tooltips();
+      bool          write_values_into_file( const QString & file,
+                                            const QString & conc,
+                                            const QString & psv,
+                                            const QString & I0se,
+                                            QString       & error );
 
    private slots:
 
@@ -94,6 +101,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Conc : public QDialog
 
       void load();
       void save();
+      void save_into_files();
 
       void reset_to_defaults();
 
