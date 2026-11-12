@@ -39,8 +39,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
                                           bool *out_merge_ref,
                                           bool *out_show_regplots,
                                           int *out_fit_broaden,
-                                          bool *out_gcv,
                                           bool *out_se_repair,
+                                          double *out_se_repair_sigma,
                                           bool *out_use_sd_weights,
                                           int *out_model,
                                           bool *out_recompute_inputs,
@@ -67,8 +67,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       QComboBox    *cb_reference;
       QLabel       *lbl_merge_q;
       QLineEdit    *le_merge_q;
-      QCheckBox    *cb_gcv;
       QCheckBox    *cb_se_repair;
+      QLabel       *lbl_se_repair_sigma;
+      QLineEdit    *le_se_repair_sigma;
       QCheckBox    *cb_weight;
       QCheckBox    *cb_regplots;
       QLabel       *lbl_model;
@@ -101,8 +102,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       bool         *out_merge_ref;
       bool         *out_show_regplots;
       int          *out_fit_broaden;
-      bool         *out_gcv;
       bool         *out_se_repair;
+      double       *out_se_repair_sigma;
       bool         *out_use_sd_weights;
       int          *out_model;
       bool         *out_recompute_inputs;
@@ -129,6 +130,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       void refresh_reference_enabled();
       void refresh_model_enabled();
       void refresh_recompute_enabled();
+      void refresh_se_repair_enabled();
       void ok();
       void cancel();
       void help();

@@ -825,9 +825,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       int    extrap_c0_script_model          = 0;          // 0 additive (default), 1 reciprocal, 2 2nd-virial
       bool   extrap_c0_script_ref_scale      = false;      // output on reference (max-conc) absolute scale
       bool   extrap_c0_script_merge_ref      = false;      // splice reference curve above merge q
-      bool   extrap_c0_script_gcv            = true;       // automatic GCV slope regularization
       bool   extrap_c0_script_sd_weights     = true;       // 1/sigma^2 weighting of the regressions
-      int    extrap_c0_script_fit_broaden    = 0;          // Zimm fit-broadening q-window (0 = off)
+      int    extrap_c0_script_fit_broaden    = 0;          // additive fit-broadening q-window (0 = off)
       bool   extrap_c0_script_recompute_in   = false;      // transiently reassess input SDs before fit
       int    extrap_c0_script_recompute_mode = 0;          // 0 constant, 1 non-constant, 2 intensity
       int    extrap_c0_script_sd_mode        = 0;          // post-fit SD reassess: 0 off,1 C,2 N,3 I
@@ -838,8 +837,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       bool   extrap_c0_script_outlier_leverage = true;     // studentize nomination residual by sqrt(1-h)
       QString extrap_c0_script_reference;                  // explicit reference curve (name or conc); "" = max conc
       double  extrap_c0_script_merge_q       = 0e0;        // manual splice switchover q; 0 = automatic
-      double  extrap_c0_script_gcv_lambda    = 0e0;        // diagnostic: pin GCV lambda; 0 = automatic
-      bool    extrap_c0_script_se_repair     = true;       // low-q SE-correction QC on output errors
+      bool    extrap_c0_script_se_repair     = true;       // low-q SD correction of the output errors
+      double  extrap_c0_script_se_repair_sigma = 3e0;      // ...only for points > this many sd off the trend
 
       bool iq_plot_experimental_and_calculated_present();
       bool iq_plot_only_experimental_present();

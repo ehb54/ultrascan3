@@ -19,8 +19,8 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
                                                                           bool *out_merge_ref,
                                                                           bool *out_show_regplots,
                                                                           int *out_fit_broaden,
-                                                                          bool *out_gcv,
                                                                           bool *out_se_repair,
+                                                                          double *out_se_repair_sigma,
                                                                           bool *out_use_sd_weights,
                                                                           int *out_model,
                                                                           bool *out_recompute_inputs,
@@ -45,8 +45,8 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    this->out_merge_ref        = out_merge_ref;
    this->out_show_regplots  = out_show_regplots;
    this->out_fit_broaden    = out_fit_broaden;
-   this->out_gcv            = out_gcv;
    this->out_se_repair      = out_se_repair;
+   this->out_se_repair_sigma = out_se_repair_sigma;
    this->out_use_sd_weights = out_use_sd_weights;
    this->out_model          = out_model;
    this->out_recompute_inputs      = out_recompute_inputs;
@@ -219,33 +219,48 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
                                 "dilute limit and noisier -- the result can become that raw curve rather than the\n"
                                 "extrapolation. The merge point is reported in the log." ) );
 
-   cb_gcv = new QCheckBox( us_tr( "Automatic slope regularization (GCV) -- recommended" ), this );
-   cb_gcv->setChecked( true );
-   cb_gcv->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
-   cb_gcv->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_gcv );
-   cb_gcv->setMinimumHeight( minHeight1 );
-   cb_gcv->setToolTip(
-                      us_tr( "Applies to both modes. Fits all q jointly with a smoothness penalty on only the\n"
-                             "concentration slope (the interparticle term, smooth in q) while leaving the\n"
-                             "extrapolated intensity's form-factor detail intact; the smoothing strength is\n"
-                             "chosen automatically by Generalized Cross-Validation (no tuning). This denoises\n"
-                             "the low-q extrapolation and supersedes the manual q-window below.\n"
-                             "Uncheck for the classic independent per-q fits (plus any manual window)." ) );
-
-   cb_se_repair = new QCheckBox( us_tr( "Low-q SD correction (widen error bars at low-q artifacts) -- recommended" ), this );
+   cb_se_repair = new QCheckBox( us_tr( "Low-q SD correction (widen error bars of low-q outlier points) -- recommended" ), this );
    cb_se_repair->setChecked( true );
    cb_se_repair->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
    cb_se_repair->setPalette( PALET_NORMAL );
    AUTFBACK( cb_se_repair );
    cb_se_repair->setMinimumHeight( minHeight1 );
    cb_se_repair->setToolTip(
-                      us_tr( "A low-q point placed far off the smooth low-q trend is usually a correlated\n"
+                      us_tr( "Applied to the extrapolated (output) curve, after the outlier-curve check.\n"
+                             "A low-q point sitting far off the smooth low-q trend is usually a correlated\n"
                              "buffer-subtraction / detector artifact whose extrapolated error came out\n"
                              "falsely small (the input curves agreed on it), giving it large false weight in\n"
-                             "a downstream Guinier / GNOM / NNLS fit. This widens each such error bar to how\n"
-                             "far the point sits off the trend, without changing any intensity. It also flags\n"
-                             "when GCV has spread such artifacts into a coherent low-q wave (then turn GCV off)." ) );
+                             "a downstream Guinier / GNOM / NNLS fit. Each low-q point more than the threshold\n"
+                             "below (in standard deviations) off a robust low-q trend gets its error bar widened\n"
+                             "to how far it sits off the trend. Points within the threshold, and all\n"
+                             "intensities, are left unchanged." ) );
+
+   QHBoxLayout * hbl_se_repair = new QHBoxLayout; hbl_se_repair->setContentsMargins( 4, 0, 4, 0 ); hbl_se_repair->setSpacing( 6 );
+   lbl_se_repair_sigma = new QLabel( us_tr( "Low-q SD correction threshold (sigma):" ), this );
+   lbl_se_repair_sigma->setAlignment( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_se_repair_sigma->setMinimumHeight( minHeight1 );
+   lbl_se_repair_sigma->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_se_repair_sigma );
+   lbl_se_repair_sigma->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
+   lbl_se_repair_sigma->setToolTip(
+                      us_tr( "Only low-q points more than this many standard deviations off the robust low-q\n"
+                             "trend get their error bar widened (default 3). Ordinary noise rarely exceeds 3 sd,\n"
+                             "so it is left alone; lower values widen more points. Widened points end up exactly\n"
+                             "1 sd off the trend, so a very low threshold flattens a Guinier residual plot." ) );
+
+   le_se_repair_sigma = new QLineEdit( this );
+   le_se_repair_sigma->setText( "3.0" );
+   le_se_repair_sigma->setValidator( new QDoubleValidator( 0.1, 100.0, 2, le_se_repair_sigma ) );
+   le_se_repair_sigma->setAlignment( Qt::AlignCenter | Qt::AlignVCenter );
+   le_se_repair_sigma->setMinimumHeight( minHeight1 );
+   le_se_repair_sigma->setMaximumWidth( 70 );
+   le_se_repair_sigma->setPalette( PALET_NORMAL );
+   AUTFBACK( le_se_repair_sigma );
+   le_se_repair_sigma->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+
+   hbl_se_repair->addWidget( lbl_se_repair_sigma );
+   hbl_se_repair->addWidget( le_se_repair_sigma );
+   hbl_se_repair->addStretch( 1 );
 
    cb_weight = new QCheckBox( us_tr( "Weight regression by curve errors (1/sigma\302\262)" ), this );
    cb_weight->setChecked( true );
@@ -290,7 +305,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
 
    cb_model = new QComboBox( this );
    cb_model->addItem( us_tr( "Additive  I(q)/c  \342\200\224 cleanest low-q profile  (default)" ) );
-   cb_model->addItem( us_tr( "Reciprocal  c/I(q)  \342\200\224 unbiased MW / I(0)  (can wave at low q)" ) );
+   cb_model->addItem( us_tr( "Reciprocal  c/I(q)  \342\200\224 unbiased MW / I(0)" ) );
    cb_model->addItem( us_tr( "2nd-order virial  c/I(q)  \342\200\224 MW at strong interaction (needs \342\211\2654-5 conc)" ) );
    cb_model->setCurrentIndex( 0 );
    cb_model->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
@@ -302,9 +317,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
                                "Additive: fit I(q)/c vs c, intercept = dilute I(q)/c. Best profile; MW biased\n"
                                "low when interparticle repulsion/attraction is strong.\n"
                                "Reciprocal: fit c/I(q) vs c (the second-virial form, linear in c); I0 = 1/intercept.\n"
-                               "Unbiased forward scatter, so a more accurate molecular weight. On few-concentration\n"
-                               "series the GCV smoothing of the 1/I inversion can put a coherent wave into the low-q\n"
-                               "profile (a runs-test warning is issued if so) -- prefer Additive there.\n"
+                               "Unbiased forward scatter, so a more accurate molecular weight.\n"
                                "2nd-order virial: adds a c^2 term for strongly interacting series; needs 4-5\n"
                                "well-spread concentrations. Validated against a Percus-Yevick hard-sphere model." ) );
    // a power-user default may preselect the model via gparam saxs_extrap_c0_model
@@ -478,7 +491,8 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    AUTFBACK( lbl_broaden );
    lbl_broaden->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
    lbl_broaden->setToolTip(
-                           us_tr( "Zimm mode only. 0 = independent per-q fits. A value N > 1 averages the\n"
+                           us_tr( "Additive model only, and not with the reference scale or the high-q splice.\n"
+                                  "0 = independent per-q fits. A value N > 1 averages the\n"
                                   "concentration slope over an N-point q-window before taking the c=0\n"
                                   "intercept -- the interaction term varies smoothly with q, so this reduces\n"
                                   "extrapolation noise without smearing the form-factor detail in the intercept." ) );
@@ -492,13 +506,13 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    le_broaden->setPalette( PALET_NORMAL );
    AUTFBACK( le_broaden );
    le_broaden->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
-   // the manual broadening window applies to Zimm mode only and is superseded by GCV;
-   // disable it whenever absolute-scale or automatic GCV regularization is selected
+   // the manual broadening window applies to the additive model only, without the reference
+   // scale / high-q splice; disable it otherwise
    connect( cb_ref_scale, SIGNAL( toggled( bool ) ), SLOT( refresh_broaden_enabled() ) );
    connect( cb_merge,     SIGNAL( toggled( bool ) ), SLOT( refresh_broaden_enabled() ) );
    connect( cb_ref_scale, SIGNAL( toggled( bool ) ), SLOT( refresh_reference_enabled() ) );
    connect( cb_merge,     SIGNAL( toggled( bool ) ), SLOT( refresh_reference_enabled() ) );
-   connect( cb_gcv,    SIGNAL( toggled( bool ) ), SLOT( refresh_broaden_enabled() ) );
+   connect( cb_se_repair, SIGNAL( toggled( bool ) ), SLOT( refresh_se_repair_enabled() ) );
    connect( cb_model,  SIGNAL( currentIndexChanged( int ) ), SLOT( refresh_model_enabled() ) );
    connect( cb_recompute_inputs, SIGNAL( toggled( bool ) ), SLOT( refresh_recompute_enabled() ) );
 
@@ -553,46 +567,53 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
       hbl_reference->addWidget( cb_reference );
       background->addLayout( hbl_reference );
    }
-   background->addWidget( cb_gcv );
-   background->addWidget( cb_se_repair );
+   // rows below follow the processing order: input SDs -> outlier-curve QC -> fit -> output errors
+   // (low-q SD correction, then the optional output SD recompute)
    background->addWidget( cb_weight );
    background->addWidget( cb_regplots );
    background->addLayout( hbl_model );
    background->addWidget( cb_recompute_inputs );
    background->addLayout( hbl_ri );
-   background->addLayout( hbl_sd_mode );
    background->addWidget( cb_outlier );
    background->addLayout( hbl_outlier );
    background->addLayout( hbl_broaden );
+   background->addWidget( cb_se_repair );
+   background->addLayout( hbl_se_repair );
+   background->addLayout( hbl_sd_mode );
    background->addWidget( lbl_status );
    background->addLayout( hbl_bottom );
 
-   // reflect the default state (GCV on => manual window disabled)
+   // reflect the default state
    refresh_broaden_enabled();
    refresh_reference_enabled();
    refresh_model_enabled();
    refresh_recompute_enabled();
+   refresh_se_repair_enabled();
 }
 
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::refresh_broaden_enabled()
 {
-   // the manual fit-broadening window is meaningful only for the ADDITIVE model with automatic
-   // GCV off; the reciprocal/virial models do not use it (do_extrap_c0 gates it on !reciprocal),
-   // and absolute-scale / GCV each supersede it too
+   // the manual fit-broadening window is meaningful only for the ADDITIVE model; the
+   // reciprocal/virial models do not use it (do_extrap_c0 gates it on !reciprocal), and the
+   // reference scale / high-q splice supersede it
    bool enable = ( cb_model->currentIndex() == 0 )
-                 && !cb_ref_scale->isChecked() && !cb_merge->isChecked() && !cb_gcv->isChecked();
+                 && !cb_ref_scale->isChecked() && !cb_merge->isChecked();
    le_broaden->setEnabled( enable );
    lbl_broaden->setEnabled( enable );
 }
 
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::refresh_model_enabled()
 {
-   // the 2nd-order virial (index 2) fits a per-q quadratic and ignores automatic GCV entirely,
-   // so the GCV checkbox is not applicable there; gray it out to say so. (Broadening depends on
-   // the model too, so refresh it here.)
-   bool virial2 = ( cb_model->currentIndex() == 2 );
-   cb_gcv->setEnabled( !virial2 );
+   // broadening depends on the model (additive only), so refresh it here
    refresh_broaden_enabled();
+}
+
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::refresh_se_repair_enabled()
+{
+   // the threshold only applies when the low-q SD correction is on
+   bool on = cb_se_repair->isChecked();
+   le_se_repair_sigma->setEnabled( on );
+   lbl_se_repair_sigma->setEnabled( on );
 }
 
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::refresh_recompute_enabled()
@@ -731,8 +752,11 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::ok()
    *out_ref_scale       = cb_ref_scale->isChecked();
    *out_merge_ref       = cb_merge->isChecked();
    *out_show_regplots = cb_regplots->isChecked();
-   *out_gcv           = cb_gcv->isChecked();
    *out_se_repair     = cb_se_repair->isChecked();
+   {
+      bool ok_k = false; double k = le_se_repair_sigma->text().toDouble( &ok_k );
+      *out_se_repair_sigma = ( ok_k && k > 0e0 ) ? k : 3.0e0;
+   }
    *out_use_sd_weights = cb_weight->isChecked();
    *out_model         = cb_model->currentIndex();
    *out_recompute_inputs      = cb_recompute_inputs->isChecked();
@@ -748,8 +772,9 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::ok()
       *out_outlier_sigma      = ( ok_s && s >  0e0 ) ? s : 3.0e0;
       *out_outlier_chi2_ratio = ( ok_c && c >= 1e0 ) ? c : 1.0e0;
    }
-   // the manual q-window is used only for classic Zimm (no absolute-scale, no GCV)
-   *out_fit_broaden   = ( cb_ref_scale->isChecked() || cb_merge->isChecked() || cb_gcv->isChecked() ) ? 0 : le_broaden->text().toInt();
+   // the manual q-window is used only by the additive model without the reference scale / splice
+   *out_fit_broaden   = ( cb_model->currentIndex() != 0 || cb_ref_scale->isChecked() || cb_merge->isChecked() )
+      ? 0 : le_broaden->text().toInt();
    *out_ok = true;
    close();
 }

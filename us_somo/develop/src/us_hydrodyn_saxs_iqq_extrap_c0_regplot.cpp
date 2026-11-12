@@ -16,7 +16,6 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot(
                                                                                 QString                         y_axis_title,
                                                                                 double                          merge_q,
                                                                                 int                             fit_broaden,
-                                                                                double                          gcv_edof,
                                                                                 int                             model,
                                                                                 vector < double >               reg_q,
                                                                                 vector < vector < double > >    reg_x,
@@ -37,7 +36,6 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot(
    this->y_axis_title = y_axis_title;
    this->merge_q      = merge_q;
    this->fit_broaden  = fit_broaden;
-   this->gcv_edof     = gcv_edof;
    this->model        = model;
    this->reg_q        = reg_q;
    this->reg_x        = reg_x;
@@ -90,13 +88,6 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::setupGUI()
    {
       info_txt += QString( us_tr( "\nFit broadening on: the fit line's slope is smoothed over a %1-point q-window." ) )
          .arg( fit_broaden );
-   }
-   if ( gcv_edof > 0e0 )
-   {
-      info_txt += QString( us_tr( "\nAutomatic GCV slope regularization on (effective slope dof = %1): the line "
-                                  "reflects the globally-smoothed fit, while the points/error bars are the raw "
-                                  "per-q data -- so the line may not pass exactly through the per-q intercept." ) )
-         .arg( gcv_edof, 0, 'f', 1 );
    }
    if ( excl_conc > 0e0 && !excl_name.isEmpty() )
    {

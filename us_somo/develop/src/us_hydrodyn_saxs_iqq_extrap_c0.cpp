@@ -12,7 +12,6 @@
 #include <algorithm>
 #include <limits>
 #include <cmath>
-#include "../include/Eigen/Dense"
 
 #define TSO QTextStream(stdout)
 
@@ -45,8 +44,8 @@ static QString us_extrap_c0_common_prefix( const QStringList &names )
 static QString us_extrap_c0_curve_name( const QStringList &names, int model, bool ref_scale,
                                         bool merge_ref, double merge_q, int sd_mode,
                                         int n_outlier_dropped, bool unweighted, int ri_mode,
-                                        bool no_gcv, int fit_broaden, double ref_override_conc,
-                                        bool raw_residual )
+                                        int fit_broaden, double ref_override_conc,
+                                        bool raw_residual, bool se_repair, double se_repair_sigma )
 {
    // Method token encoding the choices that produced the curve, so distinct selections give
    // distinct (self-describing) names rather than colliding on a bare -1/-2 suffix.
@@ -66,10 +65,14 @@ static QString us_extrap_c0_curve_name( const QStringList &names, int model, boo
       }
       // merge_q == 0 => splice requested but no cutover located (whole curve extrapolated)
    }
-   // regularization: GCV is the default, so only its absence is marked. The manual fit-broadening
-   // window only does anything when GCV is off, and then it changes the result, so record it too.
-   if ( no_gcv ) { method += "_nogcv"; }
+   // the manual fit-broadening window (additive only) changes the result, so record it
    if ( fit_broaden > 1 ) { method += "_fb" + QString::number( fit_broaden ); }
+   // low-q SD correction: on at 3 sigma by default, so only "off" or a non-default threshold is marked
+   if ( !se_repair ) { method += "_nolqsd"; }
+   else if ( std::fabs( se_repair_sigma - 3e0 ) > 1e-9 )
+   {
+      method += "_lqsd" + QString::number( se_repair_sigma, 'f', 1 ).replace( '.', '_' );
+   }
    // a user-chosen reference curve changes the absolute scale and/or where the splice cuts over
    if ( ref_override_conc > 0e0 )
    {
@@ -101,184 +104,11 @@ static QString us_extrap_c0_curve_name( const QStringList &names, int model, boo
    return prefix + method;
 }
 
-// Penalized-slope extrapolation core with automatic GCV smoothing (shared by Zimm and
-// absolute-scale). At each q the model is  y_i = c_i*alpha(q) + Iex(q)  (inverse-variance
-// weighted); a global smoothness penalty is applied to ONLY the concentration slope
-// alpha(q) -- the interparticle/second-virial term, which is smooth in q and dies off at
-// high q -- while the intercept Iex(q) (which carries the form-factor detail) is left
-// unpenalized. Given the per-q weighted sufficient statistics
-//    M = sum w c^2 - (sum w c)^2/(sum w)   (slope Fisher info; per-q OLS slope = R/M)
-//    R = sum w c y - (sum w c)(sum w y)/(sum w)
-//    B = sum w c,  C = sum w,  Q = sum w y
-// the fit reduces to  (diag(M) + lambda * D2'D2) alpha = R ,  Iex = (Q - B*alpha)/C ,
-// where D2 is the second-difference operator. lambda is chosen automatically by
-// Generalized Cross-Validation: one symmetric eigendecomposition of the whitened penalty
-// K = M^-1/2 (D2'D2) M^-1/2 makes the whole GCV scan closed-form
-// (GCV(lambda) = (RSS/n)/(1-edof/n)^2, edof = sum 1/(1+lambda*g)). lambda=0 recovers the
-// independent per-q weighted fit. Validated to track the ground-truth-optimal lambda
-// across simulated dilution series (weak/strong, repulsive/attractive interactions) and
-// to give a cleaner low-q Guinier than either per-q OLS or ATSAS almerge on real data.
-// Returns false on a degenerate problem, in which case the caller keeps its per-q result.
-static bool us_extrap_c0_gcv_penalized(
-                                       const vector < double > & M,
-                                       const vector < double > & R,
-                                       const vector < double > & B,
-                                       const vector < double > & C,
-                                       const vector < double > & Q,
-                                       vector < double > & Iex_out,
-                                       vector < double > & alpha_out,
-                                       double & lambda_out,
-                                       double & edof_out,
-                                       double lambda_override = 0e0 )
-{
-   int n = (int) M.size();
-   if ( n < 5 )
-   {
-      return false;
-   }
-   // the dense symmetric eigendecomposition below is O(n^3); guard against pathologically
-   // large grids so we fall back to the per-q fit rather than hang (a banded eigensolver
-   // would lift this limit; typical SAXS grids are well under it)
-   if ( n > 5000 )
-   {
-      return false;
-   }
-
-   // floor for degenerate q (M<=0, e.g. all-NaN column) so the whitening stays bounded
-   vector < double > pos;
-   for ( int i = 0; i < n; i++ )
-   {
-      if ( M[ i ] > 0e0 )
-      {
-         pos.push_back( M[ i ] );
-      }
-   }
-   if ( (int) pos.size() < n / 2 )
-   {
-      return false;                            // too many degenerate q to regularize
-   }
-   std::sort( pos.begin(), pos.end() );
-   double medM   = pos[ pos.size() / 2 ];
-   double floorM = 1e-6 * medM;
-
-   Eigen::VectorXd Mh( n ), Mih( n ), a0( n );
-   for ( int i = 0; i < n; i++ )
-   {
-      double m = ( M[ i ] > floorM ) ? M[ i ] : floorM;
-      Mh[ i ]  = std::sqrt( m );
-      Mih[ i ] = 1e0 / Mh[ i ];
-      a0[ i ]  = ( M[ i ] > 0e0 ) ? R[ i ] / M[ i ] : 0e0;   // per-q OLS slope
-   }
-
-   // second-difference operator D2 ((n-2) x n) and its Gram L = D2'D2 (pentadiagonal),
-   // then the whitened, symmetric penalty K = M^-1/2 L M^-1/2
-   Eigen::MatrixXd D2 = Eigen::MatrixXd::Zero( n - 2, n );
-   for ( int i = 0; i < n - 2; i++ )
-   {
-      D2( i, i ) = 1e0; D2( i, i + 1 ) = -2e0; D2( i, i + 2 ) = 1e0;
-   }
-   Eigen::MatrixXd L = D2.transpose() * D2;
-   Eigen::MatrixXd K = Mih.asDiagonal() * L * Mih.asDiagonal();
-
-   Eigen::SelfAdjointEigenSolver < Eigen::MatrixXd > es( K );
-   if ( es.info() != Eigen::Success )
-   {
-      return false;
-   }
-   Eigen::VectorXd g = es.eigenvalues().cwiseMax( 0e0 );     // penalty eigenvalues
-   Eigen::MatrixXd U = es.eigenvectors();
-   Eigen::VectorXd z = U.transpose() * ( Mh.asDiagonal() * a0 );   // whitened OLS slope
-
-   double gmax = g.maxCoeff();
-   double gmin = 0e0;
-   for ( int i = 0; i < n; i++ )
-   {
-      if ( g[ i ] > 0e0 && ( gmin == 0e0 || g[ i ] < gmin ) )
-      {
-         gmin = g[ i ];
-      }
-   }
-   if ( gmax <= 0e0 || gmin <= 0e0 )
-   {
-      return false;
-   }
-
-   // GCV over a log-lambda grid spanning from ~no smoothing (lambda*gmax<<1) to alpha
-   // forced linear (lambda*gmin>>1); closed-form via the eigenbasis
-   double lam_lo    = 1e-3 / gmax;
-   double lam_hi    = 1e3  / gmin;
-   const int NL     = 120;
-   double best_gcv  = std::numeric_limits < double >::infinity();
-   double best_lam  = lam_lo;
-   double best_edof = (double) n;
-   // lambda_override > 0 pins lambda to a caller-supplied value and skips GCV selection.
-   // Diagnostic hook (control-file directive gcv_lambda) for the lambda-sweep characterization
-   // of the reciprocal wave; default 0 leaves automatic GCV exactly as before.
-   if ( lambda_override > 0e0 )
-   {
-      best_lam = lambda_override;
-   }
-   else
-   for ( int k = 0; k < NL; k++ )
-   {
-      double lam  = lam_lo * std::pow( lam_hi / lam_lo, (double) k / (double) ( NL - 1 ) );
-      double edof = 0e0, rss = 0e0;
-      for ( int i = 0; i < n; i++ )
-      {
-         double lg = lam * g[ i ];
-         double s  = lg / ( 1e0 + lg );        // shrinkage of whitened coordinate i
-         edof     += 1e0 - s;                  // 1/(1+lambda g)
-         double r  = z[ i ] * s;
-         rss      += r * r;
-      }
-      double denom = 1e0 - edof / (double) n;
-      if ( denom <= 0e0 )
-      {
-         continue;
-      }
-      double gcv = ( rss / (double) n ) / ( denom * denom );
-      if ( gcv < best_gcv )
-      {
-         best_gcv  = gcv;
-         best_lam  = lam;
-         best_edof = edof;
-      }
-   }
-   // recompute edof for the selected lambda (covers the override path)
-   {
-      double edof = 0e0;
-      for ( int i = 0; i < n; i++ )
-      {
-         edof += 1e0 / ( 1e0 + best_lam * g[ i ] );
-      }
-      best_edof = edof;
-   }
-
-   Eigen::VectorXd shrunk( n );
-   for ( int i = 0; i < n; i++ )
-   {
-      shrunk[ i ] = z[ i ] / ( 1e0 + best_lam * g[ i ] );
-   }
-   Eigen::VectorXd alpha = Mih.asDiagonal() * ( U * shrunk );
-
-   Iex_out.resize( n );
-   alpha_out.resize( n );
-   for ( int i = 0; i < n; i++ )
-   {
-      alpha_out[ i ] = alpha[ i ];
-      Iex_out[ i ]   = ( C[ i ] != 0e0 ) ? ( Q[ i ] - B[ i ] * alpha[ i ] ) / C[ i ] : 0e0;
-   }
-   lambda_out = best_lam;
-   edof_out   = best_edof;
-   return true;
-}
-
 // Guinier quality check of a produced curve: fit ln(I) vs q^2 over the low-q region
 // (refined once so q_max*Rg <= ~1.3, the valid Guinier range), returning Rg, I(0), the
 // fit R^2 and the number of points used. A high R^2 with a physically sensible Rg is a
-// ground-truth-free indicator that the low-q extrapolation is clean (it was the decisive
-// real-data test that showed the GCV fit outperforms per-q OLS and ATSAS almerge at low
-// q). Returns false if no Guinier region can be formed.
+// ground-truth-free indicator that the low-q extrapolation is clean. Returns false if no
+// Guinier region can be formed.
 static bool us_extrap_c0_guinier(
                                  const vector < double > & q,
                                  const vector < double > & I,
@@ -378,30 +208,27 @@ static bool us_extrap_c0_guinier(
    return ( Rg > 0e0 );
 }
 
-// Low-q SE-correction + wave flag -- a MODEL-INDEPENDENT QC on the extrapolated curve. Fits a
+// Low-q SD correction -- a MODEL-INDEPENDENT QC on the extrapolated curve's error bars. Fits a
 // ROBUST trend to ln I(q) vs q^2 over the Guinier-ish low-q window q <= kcut/Rg (iteratively
-// reweighted least squares, Tukey biweight, so a couple of outliers do NOT drag the trend), and
-// WITHOUT changing any output value it does two things:
-//  (a) SE-CORRECTION: widen each low-q error bar in place to max(sd, |I - trend|). A point the
-//      extrapolation placed far off the smooth low-q trend is a correlated buffer-subtraction /
-//      detector artifact whose per-q intercept SE came out falsely tiny (the input curves agreed
-//      on the artifact). Widening its error to how far it sits off the trend removes the ~10-100x
-//      false leverage it otherwise exerts on any 1/sigma^2 downstream fit (GNOM / NNLS / Guinier).
-//      Validated on Mattia Rocco's alpha-syn curves (2026-07-30): this fixes the low-q of the
-//      no-GCV extrapolation, non-cherry-picked (every low-q point, max rule, no threshold).
-//  (b) WAVE FLAG: returns the Wald-Wolfowitz runs-z of the trend residual signs. Automatic GCV
-//      slope-smoothing SPREADS such artifacts into a coherent low-q WAVE in the profile VALUES,
-//      which (a) cannot undo (it is in the values, not the errors); a strongly negative z tells the
-//      caller to warn and recommend turning GCV OFF (the unsmoothed fit keeps the artifact local,
-//      where (a) handles it). See project_somo_extrap_c0_cli memory + results/ for the derivation.
-// n_inflated / worst_factor / worst_q report the error correction. sd is modified in place. Returns
-// 0 (no signal) when there is no usable low-q window.
-static double us_extrap_c0_lowq_serepair( const vector < double > & q, const vector < double > & I,
-                                          vector < double > & sd, double rg, double kcut,
-                                          int & n_inflated, double & worst_factor, double & worst_q )
+// reweighted least squares, Tukey biweight, so a couple of outliers do NOT drag the trend), then,
+// WITHOUT changing any output value, widens the error bar of each low-q point that sits more than
+// ksig standard deviations off that trend to |I - trend|. Such a point is a correlated
+// buffer-subtraction / detector artifact whose extrapolated SE came out falsely tiny (the input
+// curves agreed on the artifact); widening its error removes the ~10-100x false leverage it would
+// otherwise exert on any 1/sigma^2 downstream fit (GNOM / NNLS / Guinier). Validated on Mattia
+// Rocco's alpha-syn curves (2026-07-30; the two artifacts sat ~17 and ~7.5 sigma off the trend).
+// The ksig threshold matters: with no threshold (the original max(sd, |I - trend|) rule) every
+// point that merely scatters by more than 1 sd -- about a third of them for honest errors -- was
+// reset to exactly |I - trend|, which capped every normalized residual about the trend at 1 and
+// made a Guinier fit look better than the data are (reported 2026-11-12).
+// n_inflated / worst_factor / worst_q report the correction. sd is modified in place; nothing
+// happens when there is no usable low-q window.
+static void us_extrap_c0_lowq_serepair( const vector < double > & q, const vector < double > & I,
+                                        vector < double > & sd, double rg, double kcut, double ksig,
+                                        int & n_inflated, double & worst_factor, double & worst_q )
 {
    n_inflated = 0; worst_factor = 1e0; worst_q = 0e0;
-   if ( rg <= 0e0 || q.size() != I.size() || q.size() != sd.size() ) { return 0e0; }
+   if ( rg <= 0e0 || ksig <= 0e0 || q.size() != I.size() || q.size() != sd.size() ) { return; }
    double qcut = kcut / rg;
    vector < int >    gi;                          // original indices of the low-q window
    vector < double > x, y;                        // x = q^2, y = ln I
@@ -414,7 +241,7 @@ static double us_extrap_c0_lowq_serepair( const vector < double > & q, const vec
    }
    int m = (int) x.size();
    const int d1 = 3;                              // quadratic in q^2
-   if ( m < 12 ) { return 0e0; }
+   if ( m < 12 ) { return; }
    vector < double > coef( d1, 0e0 ), w( m, 1e0 );
    for ( int iter = 0; iter < 6; iter++ )
    {
@@ -445,7 +272,7 @@ static double us_extrap_c0_lowq_serepair( const vector < double > & q, const vec
             b[ r ] -= f * b[ col ];
          }
       }
-      if ( !ok ) { if ( iter == 0 ) { return 0e0; } break; }
+      if ( !ok ) { if ( iter == 0 ) { return; } break; }
       for ( int r = d1 - 1; r >= 0; r-- )
       {
          double s = b[ r ];
@@ -469,30 +296,19 @@ static double us_extrap_c0_lowq_serepair( const vector < double > & q, const vec
          w[ i ] = ( std::fabs( u ) < 1e0 ) ? ( 1e0 - u * u ) * ( 1e0 - u * u ) : 0e0;
       }
    }
-   // (a) widen low-q error bars to |I - trend|, and (b) runs-z on the trend residual signs
-   int runs = 0, n1 = 0, n2 = 0, prev = 0;
+   // widen only the low-q error bars of points more than ksig sd off the trend, to |I - trend|
    for ( int i = 0; i < m; i++ )
    {
       double fit = 0e0, xp = 1e0;
       for ( int p = 0; p < d1; p++ ) { fit += coef[ p ] * xp; xp *= x[ i ]; }
       double I_trend = std::exp( fit );
       double dev = std::fabs( I[ gi[ i ] ] - I_trend );
-      if ( sd[ gi[ i ] ] > 0e0 && dev > sd[ gi[ i ] ] )
+      if ( sd[ gi[ i ] ] > 0e0 && dev > ksig * sd[ gi[ i ] ] )
       {
          if ( dev / sd[ gi[ i ] ] > worst_factor ) { worst_factor = dev / sd[ gi[ i ] ]; worst_q = q[ gi[ i ] ]; }
          sd[ gi[ i ] ] = dev; n_inflated++;
       }
-      int sgn = ( y[ i ] - fit > 0e0 ) ? 1 : ( y[ i ] - fit < 0e0 ? -1 : 0 );
-      if ( sgn == 0 ) { continue; }
-      if ( sgn > 0 ) { n1++; } else { n2++; }
-      if ( sgn != prev ) { runs++; prev = sgn; }
    }
-   int nn = n1 + n2;
-   if ( n1 == 0 || n2 == 0 || nn < 4 ) { return 0e0; }
-   double mu  = 1e0 + 2e0 * (double) n1 * (double) n2 / (double) nn;
-   double var = ( mu - 1e0 ) * ( mu - 2e0 ) / (double) ( nn - 1 );
-   if ( var <= 0e0 ) { return 0e0; }
-   return ( (double) runs - mu ) / std::sqrt( var );
 }
 
 // Robust one-outlier-curve detection for the dilution series. A bad concentration / scale /
@@ -832,13 +648,12 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    bool merge_ref     = false;  // splice the reference curve above the almerge switchover
    bool show_regplots = false;
    int  fit_broaden   = 0;
-   bool use_gcv       = true;   // automatic GCV slope regularization (recommended default)
    bool use_sd_weights = true;  // weight the concentration regressions by 1/sigma^2 (recommended default)
    int  extrap_model  = 0;      // concentration model: 0 additive (default), 1 reciprocal, 2 2nd-virial
    bool recompute_inputs      = false; // transiently reassess each input curve's SDs before fitting
    int  recompute_inputs_mode = 0;     // 0 constant, 1 non-constant, 2 intensity-dependent
-   double gcv_lambda_override = 0e0;   // diagnostic: pin GCV lambda (control-file gcv_lambda); 0 = auto
-   bool   se_repair   = true;   // low-q SE-correction QC on the output errors (recommended default)
+   bool   se_repair   = true;   // low-q SD correction on the output errors (recommended default)
+   double se_repair_sigma = 3e0; // ...applied only to points more than this many sd off the low-q trend
    int  sd_mode       = 0;      // post-fit SD reassessment: 0 off, 1 constant, 2 non-constant, 3 intensity
    bool   discard_outlier     = false; // auto-discard outlier concentration curve(s) (robust QC)
    // Maximum number of curves the QC may discard. 1 = the original single-discard behavior (and the
@@ -889,13 +704,12 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       merge_ref          = extrap_c0_script_merge_ref;
       show_regplots      = false;
       fit_broaden        = extrap_c0_script_fit_broaden;
-      use_gcv            = extrap_c0_script_gcv;
       use_sd_weights     = extrap_c0_script_sd_weights;
       extrap_model       = extrap_c0_script_model;
       recompute_inputs      = extrap_c0_script_recompute_in;
       recompute_inputs_mode = extrap_c0_script_recompute_mode;
-      gcv_lambda_override   = extrap_c0_script_gcv_lambda;
       se_repair             = extrap_c0_script_se_repair;
+      se_repair_sigma       = extrap_c0_script_se_repair_sigma;
       sd_mode            = extrap_c0_script_sd_mode;
       discard_outlier    = extrap_c0_script_discard;
       outlier_max        = extrap_c0_script_outlier_max;
@@ -907,7 +721,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    }
    else
    {
-      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &ref_scale, &merge_ref, &show_regplots, &fit_broaden, &use_gcv, &se_repair, &use_sd_weights, &extrap_model, &recompute_inputs, &recompute_inputs_mode, &sd_mode, &discard_outlier, &outlier_sigma, &outlier_chi2_ratio, &ref_override, &merge_q_override, us_hydrodyn, this );
+      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &ref_scale, &merge_ref, &show_regplots, &fit_broaden, &se_repair, &se_repair_sigma, &use_sd_weights, &extrap_model, &recompute_inputs, &recompute_inputs_mode, &sd_mode, &discard_outlier, &outlier_sigma, &outlier_chi2_ratio, &ref_override, &merge_q_override, us_hydrodyn, this );
       US_Hydrodyn::fixWinButtons( &dlg );
       dlg.exec();
    }
@@ -1398,10 +1212,6 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    double merge_q   = 0e0;                      // q at the merge point (0 => no merge / all reference)
    double pvalue_alpha = 1e-2;                  // CORMAP merge-point significance (cf. cormap_alpha)
 
-   // GCV effective slope dof actually used (0 => GCV not applied); surfaced to the
-   // regression viewer so it can annotate that automatic regularization was in effect
-   double gcv_edof_used = 0e0;
-
    if ( use_ref_path )
    {
       {
@@ -1564,7 +1374,6 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    unsigned int       n_skip_dupconc  = 0;      // exactly 2 points at the same concentration
    unsigned int       n_skip_virial2  = 0;      // 2nd-order virial needs >= 4 points
    unsigned int       n_skip_nonposu  = 0;      // reciprocal intercept <= 0 (cannot invert to I(0))
-   unsigned int       n_gcv_fallback  = 0;      // GCV intercept was non-positive; per-q fit used instead
 
    // per-q regression data captured for the optional scrollable regression-plot pop-up:
    // the (concentration, y, y-error) points, plus the fit intercept, slope and its SE
@@ -1586,8 +1395,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    // Intensity-vs-concentration model for the Zimm-family fit (absolute-scale mode is
    // unaffected). Selected via gparam saxs_extrap_c0_model:
    //   0 = additive    I(q)/c = Iex + alpha*c            (default; cleanest low-q profile)
-   //   1 = reciprocal  c/I(q) = u + v*c,       I0 = 1/u  (2nd-virial form, unbiased MW; can develop
-   //                                                      a low-q GCV "wave" -- see the runs-test warning below)
+   //   1 = reciprocal  c/I(q) = u + v*c,       I0 = 1/u  (2nd-virial form, unbiased MW)
    //   2 = virial2     c/I(q) = u + v*c + w*c^2, I0 = 1/u (robust MW at strong interaction)
    // The additive fit is biased low for a saturating (second-virial) structure factor because
    // I(q,c)/c is convex in c; the reciprocal c/I is linear in c and unbiased, and the 2nd-order
@@ -1603,105 +1411,16 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                   .arg( extrap_model == 2 ? us_tr( "2nd-order virial" ) : us_tr( "reciprocal (2nd-virial)" ) ) );
    }
 
-   // Zimm GCV-penalized fit: per-q weighted stats over the whole grid -> a globally
-   // slope-regularized intercept Iex(q) (and slope) at every q, lambda auto-tuned by GCV.
-   // Used in the main loop below when GCV is enabled (absolute-scale does its own GCV above).
-   // Only additive (0) and reciprocal (1) consume this; the 2nd-order virial (2) fits a per-q
-   // quadratic below and ignores the GCV linear fit, so skip the (O(n^3)) solve and its log line
-   // for virial2 rather than computing a result that is discarded.
-   vector < double > zimm_Iex, zimm_alpha;
-   bool   zimm_gcv_ok = false;
-   if ( use_gcv && extrap_model != 2 )
-   {
-      vector < double > vM( npts ), vR( npts ), vB( npts ), vC( npts ), vQ( npts );
-      for ( unsigned int qi = 0; qi < npts; qi++ )
-      {
-         // Collect this q's points first, so an unweighted run can derive a per-q scale below.
-         vector < double > qx, qy, qsig;
-         for ( int ci = 0; ci < ordered_names.size(); ci++ )
-         {
-            if ( concs[ ci ] <= 0e0 )
-            {
-               continue;
-            }
-            double Iv = name_to_I[ ordered_names[ ci ] ][ qi ];
-            if ( us_isnan( Iv ) )
-            {
-               continue;
-            }
-            double sd = ( name_to_err.count( ordered_names[ ci ] ) && qi < name_to_err[ ordered_names[ ci ] ].size() )
-               ? name_to_err[ ordered_names[ ci ] ][ qi ] : 0e0;
-            if ( us_isnan( sd ) ) { sd = 0e0; }
-            // Zimm axis: additive y = I/c (raw) or I as-is (I*(q)); reciprocal z = c/I
-            // (for I*(q), I = Iv*c so z = 1/Iv). weight 1/sig^2; c/I needs I>0.
-            double yv, sig;
-            if ( reciprocal )
-            {
-               if ( Iv <= 0e0 ) { continue; }
-               if ( is_istar[ ci ] ) { yv = 1e0 / Iv;            sig = sd / ( Iv * Iv ); }
-               else                  { yv = concs[ ci ] / Iv;    sig = sd * concs[ ci ] / ( Iv * Iv ); }
-            }
-            else if ( is_istar[ ci ] ) { yv = Iv;              sig = sd; }
-            else                       { yv = Iv / concs[ ci ]; sig = sd / concs[ ci ]; }
-            qx.push_back( concs[ ci ] ); qy.push_back( yv ); qsig.push_back( sig );
-         }
-
-         // Per-q scale for the UNWEIGHTED case (weighted runs are untouched).
-         // With unit weights every q contributes to the joint GCV fit in proportion to its own
-         // magnitude. On the reciprocal (c/I) axis |y| spans orders of magnitude across q, so the
-         // huge, noisy high-q points dominate lambda selection: GCV then over-smooths alpha(q)
-         // into a near-constant, and Iex = (Q - B*alpha)/C goes NEGATIVE from the lowest q upward
-         // -- every such q is dropped and the Guinier region is destroyed. Re-weighting each q by
-         // 1/scale^2 restores the balanced conditioning the 1/sigma^2 path gets for free. The
-         // factor is CONSTANT WITHIN a q, so it leaves every per-q fit (slope R/M and intercept
-         // Iex) algebraically unchanged -- it only rebalances q against each other in the joint
-         // penalized solve. It amounts to assuming constant RELATIVE error, the standard default
-         // when error bars are absent or deliberately not trusted.
-         double inv_scale2 = 1e0;
-         if ( !use_sd_weights && qy.size() )
-         {
-            double acc = 0e0;
-            for ( unsigned int k = 0; k < qy.size(); k++ ) { acc += qAbs( qy[ k ] ); }
-            double scale = acc / (double) qy.size();
-            if ( scale > 0e0 && !us_isnan( scale ) ) { inv_scale2 = 1e0 / ( scale * scale ); }
-         }
-
-         double S = 0e0, Sx = 0e0, Sy = 0e0, Sxx = 0e0, Sxy = 0e0;
-         for ( unsigned int k = 0; k < qy.size(); k++ )
-         {
-            double sig = qsig[ k ];
-            double w   = ( use_sd_weights && sig > 0e0 && !us_isnan( sig ) )
-               ? 1e0 / ( sig * sig )
-               : inv_scale2;                       // 1.0 for weighted-but-missing-sd (unchanged)
-            double xv = qx[ k ], yv = qy[ k ];
-            S += w; Sx += w * xv; Sy += w * yv; Sxx += w * xv * xv; Sxy += w * xv * yv;
-         }
-         vC[ qi ] = S; vB[ qi ] = Sx; vQ[ qi ] = Sy;
-         vM[ qi ] = ( S > 0e0 ) ? ( Sxx - Sx * Sx / S ) : 0e0;
-         vR[ qi ] = ( S > 0e0 ) ? ( Sxy - Sx * Sy / S ) : 0e0;
-      }
-      double gcv_lambda = 0e0, gcv_edof = 0e0;
-      zimm_gcv_ok = us_extrap_c0_gcv_penalized( vM, vR, vB, vC, vQ, zimm_Iex, zimm_alpha, gcv_lambda, gcv_edof, gcv_lambda_override );
-      if ( zimm_gcv_ok )
-      {
-         gcv_edof_used = gcv_edof;
-         editor_msg( "black",
-                    QString( us_tr( "Zimm GCV slope regularization applied: lambda = %1, effective slope dof = %2 of %3\n" ) )
-                    .arg( gcv_lambda ).arg( gcv_edof, 0, 'f', 1 ).arg( (int) npts ) );
-      }
-   }
-
-   // The manual fit-broadening window applies ONLY to the additive model, with automatic GCV off
-   // and no reference-scale/splice (see the gated application below). If it was requested where it
+   // The manual fit-broadening window applies ONLY to the additive model with no
+   // reference-scale/splice (see the gated application below). If it was requested where it
    // will not be used, say so rather than accepting it silently -- otherwise the run looks broadened
    // but is not. fit_broaden_effective is what actually took effect; it (not the requested value)
    // is what the output name should reflect, so a run cannot claim _fbN while having done nothing.
-   int fit_broaden_effective = ( !reciprocal && !zimm_gcv_ok && !use_ref_path ) ? fit_broaden : 0;
+   int fit_broaden_effective = ( !reciprocal && !use_ref_path ) ? fit_broaden : 0;
    if ( fit_broaden > 1 && fit_broaden_effective == 0 )
    {
       QStringList why;
       if ( reciprocal )   { why << us_tr( "the reciprocal/virial model does not use it (additive only)" ); }
-      if ( zimm_gcv_ok )  { why << us_tr( "automatic GCV regularization is on (turn it off to use the manual window)" ); }
       if ( use_ref_path ) { why << us_tr( "a reference-scale or high-q-splice option is on" ); }
       editor_msg( "dark red",
                   QString( us_tr( "Note: the fit-broadening window (%1) was IGNORED -- %2.\n" ) )
@@ -1817,11 +1536,6 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       bool weight_here = use_sd_weights && all_err;
 
       double a = 0e0, b = 0e0, siga = 0e0;
-      // Unregularized per-q intercept, kept as a safety net: if the GCV-smoothed intercept comes
-      // out non-positive on the reciprocal axis (so it cannot be inverted to I(0)), fall back to
-      // this rather than dropping the q point entirely.
-      double perq_a      = 0e0;
-      bool   have_perq_a = false;
 
       if ( reciprocal && extrap_model == 2 )
       {
@@ -1837,26 +1551,6 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          a    = virial2_u[ qi ];
          b    = 0e0;
          siga = virial2_use[ qi ];
-      }
-      else if ( zimm_gcv_ok )
-      {
-         // GCV-penalized Zimm: intercept/slope come from the globally slope-smoothed fit
-         // (defined at every q, so no q is skipped). The reported error is the per-q OLS
-         // intercept SE where computable -- a conservative bound, since the regularized
-         // estimate borrows information across q and is actually less uncertain.
-         a = zimm_Iex[ qi ];
-         b = zimm_alpha[ qi ];
-         if ( x.size() >= 3 )
-         {
-            double aa, bb, sigb, chi2;
-            if ( weight_here ) { usu.linear_fit( x, y, ye, aa, bb, siga, sigb, chi2 ); }
-            else               { usu.linear_fit( x, y,     aa, bb, siga, sigb, chi2 ); }
-            perq_a = aa; have_perq_a = true;   // safety-net intercept (see reciprocal inversion)
-         }
-         else
-         {
-            siga = 0e0;
-         }
       }
       else if ( x.size() < 2 )
       {
@@ -1901,15 +1595,6 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       // recover the intensity I0(q) = 1/u and propagate SE(1/u) = SE(u)/u^2.
       if ( reciprocal )
       {
-         // Safety net: a non-positive intercept cannot be inverted to I(0). If the value came from
-         // the GCV-smoothed fit, prefer the unregularized per-q intercept for this q instead of
-         // dropping the point -- dropping is what previously wiped out the low-q (Guinier) region
-         // whenever the regularization over-smoothed. Only skip if both are unusable.
-         if ( ( a <= 0e0 || us_isnan( a ) ) && have_perq_a && perq_a > 0e0 && !us_isnan( perq_a ) )
-         {
-            a = perq_a;
-            n_gcv_fallback++;
-         }
          if ( a <= 0e0 || us_isnan( a ) )
          {
             TSO << QString( "WARNING: do_extrap_c0: non-positive reciprocal intercept at q[%1]=%2, skipping\n" )
@@ -1962,20 +1647,6 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       reg_siga.push_back( reciprocal ? fit_siga : err_val );   // SE in the plotted axis
    }
 
-   // The GCV-smoothed intercept was unusable at some q and the unregularized per-q fit was used
-   // there instead. Report it: the points are in the output, but they are NOT regularized, and a
-   // large count means the slope regularization is fighting the data (see the reciprocal/unweighted
-   // note below) rather than helping.
-   if ( n_gcv_fallback )
-   {
-      extrap_msg(
-                            QString( us_tr( "Slope regularization (GCV) produced a non-positive intercept at %1 of %2 "
-                                            "q-points; the unregularized per-q fit was used at those q instead of "
-                                            "dropping them. Those points are therefore not regularized. If this count "
-                                            "is large, prefer turning GCV off for this dataset." ) )
-                            .arg( n_gcv_fallback ).arg( npts ) );
-   }
-
    if ( skipped_points )
    {
       // Report the ACTUAL cause(s). Previously every cause was reported as "fewer than 2 valid
@@ -2017,12 +1688,13 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    //     q (and dies off at high q), so smoothing the per-q concentration slope across
    //     a q-window and recomputing the intercept (a = ybar - b_smooth*xbar) removes
    //     extrapolation noise without smearing the form-factor detail carried by the
-   //     intercept. Off by default (window <= 1); absolute-scale mode is unaffected. Superseded
-   //     by GCV regularization when that is enabled (the two are mutually exclusive).
-   if ( !reciprocal && !zimm_gcv_ok && fit_broaden > 1 )
+   //     intercept. Off by default (window <= 1). Additive model only, and not with the reference
+   //     scale / high-q splice: gate on fit_broaden_effective (computed above), so a window the log
+   //     reports as IGNORED is really not applied (the scripted path could previously still apply it).
+   if ( fit_broaden_effective > 1 )
    {
       int n = (int) out_q.size();
-      int half = fit_broaden / 2;
+      int half = fit_broaden_effective / 2;
       vector < double > b_smooth( n );
       for ( int k = 0; k < n; k++ )
       {
@@ -2045,7 +1717,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       editor_msg( "black",
                  QString( us_tr( "Zimm fit broadening applied: concentration slope smoothed over a "
                                  "%1-point q-window before taking the c=0 intercept.\n" ) )
-                 .arg( fit_broaden ) );
+                 .arg( fit_broaden_effective ) );
    }
 
    // 6b2. Output conventions (post-pass over the full grid). The fit above is always the
@@ -2240,34 +1912,30 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                           ? QString( us_tr( " -- a clean, linear Guinier region." ) )
                           : QString( us_tr( " -- low R^2: check the low-q data/concentrations." ) ) ) );
 
-         // Model-independent low-q QC: SE-correction of the error bars + a wave flag. Replaces the
-         // earlier reciprocal-only differential warning -- the low-q artifacts and the GCV "wave" are
-         // model-independent (additive waves too; Mattia Rocco's alpha-syn curves, 2026-07-30), and
-         // the fix is the error correction (+ turning GCV off), not a reciprocal-vs-additive test.
-         // us_extrap_c0_lowq_serepair widens out_I0_err in place where the extrapolation sits off its
-         // own robust low-q trend, and returns the trend-residual runs-z (the wave signature).
+         // Model-independent low-q SD correction (Mattia Rocco's alpha-syn curves, 2026-07-30):
+         // us_extrap_c0_lowq_serepair widens out_I0_err in place where the extrapolation sits more
+         // than se_repair_sigma sd off its own robust low-q trend. Runs on the OUTPUT curve only,
+         // after the outlier-curve QC (5b) has already made its decision on the input curves.
          if ( se_repair && g_Rg > 0e0 )
          {
             int    n_infl  = 0;
             double worst   = 1e0, worst_q = 0e0;
-            double wz      = us_extrap_c0_lowq_serepair( out_q, out_I0, out_I0_err, g_Rg, 2e0,
-                                                         n_infl, worst, worst_q );
+            us_extrap_c0_lowq_serepair( out_q, out_I0, out_I0_err, g_Rg, 2e0, se_repair_sigma,
+                                        n_infl, worst, worst_q );
             if ( n_infl > 0 )
             {
                editor_msg( "dark red", QString( us_tr(
-                  "Low-q SE-correction: widened %1 low-q error bar(s) to |I - low-q trend| (largest "
-                  "x%2 at q = %3 A^-1) -- correlated low-q artifacts whose extrapolated error was too "
-                  "small; this removes their false leverage on a Guinier / GNOM / NNLS fit.\n" ) )
-                  .arg( n_infl ).arg( worst, 0, 'f', 1 ).arg( worst_q, 0, 'f', 4 ) );
+                  "Low-q SD correction: widened %1 low-q error bar(s) that sat more than %2 sd off the "
+                  "low-q trend to |I - low-q trend| (largest x%3 at q = %4 A^-1) -- correlated low-q "
+                  "artifacts whose extrapolated error was too small; this removes their false leverage "
+                  "on a Guinier / GNOM / NNLS fit.\n" ) )
+                  .arg( n_infl ).arg( se_repair_sigma, 0, 'f', 1 ).arg( worst, 0, 'f', 1 ).arg( worst_q, 0, 'f', 4 ) );
             }
-            if ( wz <= -4e0 )
+            else
             {
-               editor_msg( "dark red", QString( us_tr(
-                  "Low-q WAVE flag (runs-test z = %1): the automatic GCV slope-smoothing has spread "
-                  "the low-q artifact(s) into a coherent wave in the profile VALUES, which widening "
-                  "the errors cannot undo. Turn OFF \"Automatic slope regularization (GCV)\" -- the "
-                  "unsmoothed extrapolation keeps the artifact local, where the SE-correction "
-                  "handles it.\n" ) ).arg( wz, 0, 'f', 1 ) );
+               editor_msg( "black", QString( us_tr(
+                  "Low-q SD correction: no low-q point sits more than %1 sd off the low-q trend; "
+                  "error bars unchanged.\n" ) ).arg( se_repair_sigma, 0, 'f', 1 ) );
             }
          }
       }
@@ -2330,8 +1998,8 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
    QString base_name  = us_extrap_c0_curve_name( ordered_names, extrap_model, ref_scale, merge_ref, merge_q, sd_mode, n_outlier_dropped, !use_sd_weights,
                                                   recompute_inputs ? ( recompute_inputs_mode + 1 ) : 0,
-                                                  !use_gcv, fit_broaden_effective, ref_override_conc_used,
-                                                  !outlier_leverage );
+                                                  fit_broaden_effective, ref_override_conc_used,
+                                                  !outlier_leverage, se_repair, se_repair_sigma );
    QString final_name = base_name;
    {
       int suffix = 1;
@@ -2418,8 +2086,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                                                     us_hydrodyn,
                                                     y_axis_title,
                                                     merge_ref ? merge_q : 0e0,       // merge point q (0 => none)
-                                                    use_ref_path ? 0 : fit_broaden,  // Zimm fit-broadening q-window
-                                                    gcv_edof_used,                 // GCV effective slope dof (0 => off)
+                                                    fit_broaden_effective,         // additive fit-broadening q-window
                                                     extrap_model,                  // 0 additive, 1 reciprocal, 2 virial
                                                     reg_q, reg_x, reg_y, reg_e,
                                                     reg_a, reg_b, reg_c, reg_siga,

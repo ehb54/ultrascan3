@@ -38,7 +38,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot : public QFrame
                                               QString                         y_axis_title,
                                               double                          merge_q,
                                               int                             fit_broaden,
-                                              double                          gcv_edof,
                                               int                             model,
                                               vector < double >               reg_q,
                                               vector < vector < double > >    reg_x,
@@ -63,8 +62,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot : public QFrame
 
       QString                         y_axis_title;
       double                          merge_q;      // absolute-scale merging q (0 => pure extrapolation / Zimm)
-      int                             fit_broaden;  // Zimm slope-smoothing q-window (0 => off)
-      double                          gcv_edof;     // GCV effective slope dof (0 => GCV not used)
+      int                             fit_broaden;  // additive slope-smoothing q-window (0 => off)
       int                             model;        // 0 additive (I/c), 1 reciprocal (c/I), 2 2nd-virial
       vector < double >               reg_q;
       vector < vector < double > >    reg_x;

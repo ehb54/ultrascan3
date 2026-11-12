@@ -35,9 +35,12 @@
 //                                      auto-locating it. Requires merge_ref 1. 0 = automatic.
 //                                      Lets you test a specific cut, or override an automatic
 //                                      placement distorted by the regularization near that point.)
-//   gcv             0 | 1             (automatic GCV slope regularization; default 1)
+//   gcv             0 | 1             (OBSOLETE: automatic GCV slope regularization was removed
+//                                      2026-11-12; "gcv 0" is accepted silently, "gcv 1" is ignored
+//                                      with a note. gcv_lambda likewise is ignored with a note.)
 //   sd_weights      0 | 1             (1/sigma^2 weighting of the regressions; default 1)
-//   fit_broaden     <int>             (Zimm fit-broadening q-window; default 0 = off)
+//   fit_broaden     <int>             (fit-broadening q-window; additive model only, not with
+//                                      ref_scale/merge_ref; default 0 = off)
 //   recompute_inputs off | constant | nonconstant | intensity   (default off)
 //   sd_reassess      off | constant | nonconstant | intensity   (post-fit output SDs; default off)
 //   discard_outlier 0 | 1             (auto-discard outlier concentration curve(s); default 0)
@@ -52,6 +55,9 @@
 //                                      itself and hides its own residual.)
 //   outlier_sigma   <double>          (outlier magnitude threshold; default 3.0)
 //   outlier_chi2    <double>          (required pooled chi^2 gain to confirm a drop; default 1.5)
+//   se_repair       0 | 1             (low-q SD correction of the output error bars; default 1)
+//   se_repair_sigma <double>          (widen only low-q points more than this many sd off the
+//                                      robust low-q trend; default 3.0, must be > 0)
 //   reference <curve-name | conc>     (optional; choose the reference curve used for the absolute
 //                                      scale and/or the high-q splice, instead of the default
 //                                      highest-concentration pick. Accepts a curve name (or a
@@ -214,7 +220,6 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
    extrap_c0_script_model          = 0;
    extrap_c0_script_ref_scale      = false;
    extrap_c0_script_merge_ref      = false;
-   extrap_c0_script_gcv            = true;
    extrap_c0_script_sd_weights     = true;
    extrap_c0_script_fit_broaden    = 0;
    extrap_c0_script_recompute_in   = false;
@@ -227,8 +232,8 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
    extrap_c0_script_outlier_leverage = true;
    extrap_c0_script_reference.clear();
    extrap_c0_script_merge_q        = 0e0;
-   extrap_c0_script_gcv_lambda     = 0e0;
    extrap_c0_script_se_repair      = true;
+   extrap_c0_script_se_repair_sigma = 3e0;
    extrap_c0_script_conc.clear();
 
    QRegularExpression rx_key( "^\\s*(\\S+)\\s+(.*\\S)\\s*$" );
@@ -277,7 +282,19 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
       else if ( key == "dump_conc_csv" ) { dump_conc_csv_path = val; }
       else if ( key == "ref_scale"  ) { extrap_c0_script_ref_scale  = ( val.toInt() != 0 ); }
       else if ( key == "merge_ref"  ) { extrap_c0_script_merge_ref  = ( val.toInt() != 0 ); }
-      else if ( key == "gcv"        ) { extrap_c0_script_gcv        = ( val.toInt() != 0 ); }
+      else if ( key == "gcv" || key == "gcv_lambda" )
+      {
+         // automatic GCV slope regularization was removed (2026-11-12): every fit is the unsmoothed
+         // per-q fit, which is what "gcv 0" always gave. Accept old control files; say so when they
+         // ask for something that no longer exists.
+         if ( key == "gcv_lambda" || val.toInt() != 0 )
+         {
+            editor_msg( "dark red",
+                        QString( us_tr( "saxs_extrap_c0: line %1: '%2 %3' IGNORED -- automatic GCV slope "
+                                        "regularization was removed; the extrapolation is never smoothed.\n" ) )
+                        .arg( lineno ).arg( key ).arg( val ) );
+         }
+      }
       else if ( key == "sd_weights" ) { extrap_c0_script_sd_weights = ( val.toInt() != 0 ); }
       else if ( key == "fit_broaden") { extrap_c0_script_fit_broaden = val.toInt(); }
       else if ( key == "discard_outlier" ) { extrap_c0_script_discard = ( val.toInt() != 0 ); }
@@ -287,8 +304,14 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
       else if ( key == "outlier_leverage" ){ extrap_c0_script_outlier_leverage = ( val.toInt() != 0 ); }
       else if ( key == "reference" )       { extrap_c0_script_reference      = val; }
       else if ( key == "merge_q" )         { extrap_c0_script_merge_q       = val.toDouble(); }
-      else if ( key == "gcv_lambda" )      { extrap_c0_script_gcv_lambda    = val.toDouble(); }
       else if ( key == "se_repair" )       { extrap_c0_script_se_repair     = ( val.toInt() != 0 ); }
+      else if ( key == "se_repair_sigma" )
+      {
+         bool ok_d = false;
+         double d = val.toDouble( &ok_d );
+         if ( ok_d && d > 0e0 ) { extrap_c0_script_se_repair_sigma = d; }
+         else { TSO << QString( "saxs_extrap_c0: line %1: se_repair_sigma must be a number > 0, got '%2'\n" ).arg( lineno ).arg( val ); parse_ok = false; }
+      }
       else if ( key == "recompute_inputs" )
       {
          int code = us_extrap_c0_script_sd_word( val );
