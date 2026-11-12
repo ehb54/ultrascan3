@@ -2523,9 +2523,17 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
          } else {
             plot_one_iqq(q, I, QFileInfo(filename).fileName() + tag1);
          }
-         if ( has_conc )
          {
-            update_conc_csv( QFileInfo(filename).fileName() + tag1, this_conc, this_psv, this_I0se );
+            // the name as plotted, which gets a -N suffix when the name is already plotted
+            QString plot_name = qsl_plotted_iq_names.back();
+            if ( ext == "dat" || ext == "txt" || ext == "sprr" )
+            {
+               plotted_iq_names_to_file[ plot_name ] = QFileInfo( filename ).absoluteFilePath();
+            }
+            if ( has_conc )
+            {
+               update_conc_csv( plot_name, this_conc, this_psv, this_I0se );
+            }
          }
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear( );
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear( );
@@ -5029,9 +5037,17 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
          } else {
             plot_one_iqq(q, I, QFileInfo(filename).fileName() + tag1);
          }
-         if ( has_conc )
          {
-            update_conc_csv( QFileInfo(filename).fileName() + tag1, this_conc, this_psv, this_I0se );
+            // the name as plotted, which gets a -N suffix when the name is already plotted
+            QString plot_name = qsl_plotted_iq_names.back();
+            if ( ext == "dat" || ext == "txt" || ext == "sprr" )
+            {
+               plotted_iq_names_to_file[ plot_name ] = QFileInfo( filename ).absoluteFilePath();
+            }
+            if ( has_conc )
+            {
+               update_conc_csv( plot_name, this_conc, this_psv, this_I0se );
+            }
          }
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear( );
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear( );

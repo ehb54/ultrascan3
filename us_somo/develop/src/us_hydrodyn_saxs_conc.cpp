@@ -10,6 +10,8 @@
 #include <QFrame>
 #include <QLabel>
 #include <QVBoxLayout>
+#include <QSaveFile>
+#include <cmath>
 
 US_Hydrodyn_Saxs_Conc::US_Hydrodyn_Saxs_Conc(
                                              csv &csv1,
@@ -87,6 +89,7 @@ void US_Hydrodyn_Saxs_Conc::refresh( csv &ref_csv )
          t_csv->setItem(i, j, new QTableWidgetItem( csv1.data[i][j]) );
       }
    }
+   set_file_tooltips();
 
    unsigned int csv_height = t_csv->rowHeight(0) + 125;
    unsigned int csv_width = t_csv->columnWidth(0) + 60;
@@ -150,6 +153,7 @@ void US_Hydrodyn_Saxs_Conc::setupGUI()
    {
       t_csv->setHorizontalHeaderItem(i, new QTableWidgetItem( csv1.header[i]));
    }
+   set_file_tooltips();
 
    t_csv->setSortingEnabled(false);
     t_csv->verticalHeader()->setSectionsMovable(false);
@@ -178,17 +182,27 @@ void US_Hydrodyn_Saxs_Conc::setupGUI()
    connect( t_csv->verticalHeader(), SIGNAL( sectionClicked( int ) ), SLOT( row_header_released( int ) ) );
 #endif
    
-   pb_load = new QPushButton(us_tr("Load"), this);
+   pb_load = new QPushButton(us_tr("Load .sxc file"), this);
    pb_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_load->setMinimumHeight(minHeight1);
    pb_load->setPalette( PALET_PUSHB );
+   pb_load->setToolTip( us_tr( "Load values from a .sxc file written by \"Save to .sxc file\"" ) );
    connect(pb_load, SIGNAL(clicked()), SLOT(load()));
 
-   pb_save = new QPushButton(us_tr("Save to file"), this);
+   pb_save = new QPushButton(us_tr("Save to .sxc file"), this);
    pb_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_save->setMinimumHeight(minHeight1);
    pb_save->setPalette( PALET_PUSHB );
+   pb_save->setToolTip( us_tr( "Save the table as one .sxc file, which \"Load .sxc file\" reads back" ) );
    connect(pb_save, SIGNAL(clicked()), SLOT(save()));
+
+   pb_save_into_files = new QPushButton( us_tr( "Save into data files" ), this );
+   pb_save_into_files->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
+   pb_save_into_files->setMinimumHeight( minHeight1 );
+   pb_save_into_files->setPalette( PALET_PUSHB );
+   pb_save_into_files->setToolTip( us_tr( "Write each curve's values into the first line of the data file it was loaded from,\n"
+                                          "where they are read when the file is loaded again. The values are also applied." ) );
+   connect( pb_save_into_files, SIGNAL( clicked() ), SLOT( save_into_files() ) );
 
    pb_copy = new QPushButton(us_tr("Copy values"), this);
    pb_copy->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -250,6 +264,8 @@ void US_Hydrodyn_Saxs_Conc::setupGUI()
    hbl_load_save->addWidget ( pb_load );
    hbl_load_save->addSpacing( 4 );
    hbl_load_save->addWidget ( pb_save );
+   hbl_load_save->addSpacing( 4 );
+   hbl_load_save->addWidget ( pb_save_into_files );
    hbl_load_save->addSpacing( 4 );
 
    QHBoxLayout * hbl_bottom = new QHBoxLayout; hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
@@ -432,6 +448,7 @@ void US_Hydrodyn_Saxs_Conc::update_enables()
       pb_paste    ->setEnabled( selected && csv_copy.data.size() );
       pb_paste_all->setEnabled( csv_copy.data.size() );
       pb_save     ->setEnabled( csv1.data.size() );
+      pb_save_into_files->setEnabled( csv1.data.size() );
       pb_load     ->setEnabled( true );
       pb_reset_to_defaults->setEnabled( true );
       disable_updates = false;
@@ -458,7 +475,294 @@ void US_Hydrodyn_Saxs_Conc::reload_csv()
          t_csv->setItem( i, j, new QTableWidgetItem( csv1.data[i][j] ) );
       }
    }
+   set_file_tooltips();
    // t_csv->clearSelection();
+}
+
+// the file name column shows, as a tooltip, the data file "Save into data files" writes to
+void US_Hydrodyn_Saxs_Conc::set_file_tooltips()
+{
+   US_Hydrodyn_Saxs * saxs = (US_Hydrodyn_Saxs *)saxs_window;
+   for ( int i = 0; i < t_csv->rowCount(); ++i )
+   {
+      QTableWidgetItem * item = t_csv->item( i, 0 );
+      if ( !item )
+      {
+         continue;
+      }
+      if ( saxs->plotted_iq_names_to_file.count( item->text() ) )
+      {
+         item->setToolTip( us_tr( "Data file: " ) + saxs->plotted_iq_names_to_file[ item->text() ] );
+      } else {
+         item->setToolTip( us_tr( "No data file recorded for this curve" ) );
+      }
+   }
+}
+
+// at most 15 lines of a list, for a message box
+static QString conc_list_text( const QStringList & qsl )
+{
+   const int max_lines = 15;
+   QString text = QStringList( qsl.mid( 0, max_lines ) ).join( "\n" );
+   if ( qsl.size() > max_lines )
+   {
+      text += QString( us_tr( "\n... and %1 more" ) ).arg( qsl.size() - max_lines );
+   }
+   return text;
+}
+
+// a line of numbers only (data, not a header)
+static bool conc_is_data_line( const QString & line )
+{
+   QStringList tokens = line.trimmed().split( QRegularExpression( "[\\s,;]+" ), Qt::SkipEmptyParts );
+   if ( tokens.isEmpty() )
+   {
+      return false;
+   }
+   for ( const QString & token : tokens )
+   {
+      bool ok;
+      token.toDouble( &ok );
+      if ( !ok )
+      {
+         return false;
+      }
+   }
+   return true;
+}
+
+bool US_Hydrodyn_Saxs_Conc::write_values_into_file( const QString & file,
+                                                    const QString & conc,
+                                                    const QString & psv,
+                                                    const QString & I0se,
+                                                    QString       & error )
+{
+   QFile f( file );
+   if ( !f.open( QIODevice::ReadOnly ) )
+   {
+      error = us_tr( "can not be read" );
+      return false;
+   }
+   QByteArray contents = f.readAll();
+   f.close();
+
+   // only the first line changes; everything after it, line endings included, is written back as read
+   // (Latin-1 maps each byte to one character and back unchanged)
+   int        eol_pos = contents.indexOf( '\n' );
+   QByteArray first   = eol_pos < 0 ? contents : contents.left( eol_pos );
+   QByteArray rest    = eol_pos < 0 ? QByteArray() : contents.mid( eol_pos );
+   QByteArray eol     = "\n";
+   if ( first.endsWith( '\r' ) )
+   {
+      first.chop( 1 );
+      rest.prepend( '\r' );
+      eol = "\r\n";
+   }
+
+   QString line          = QString::fromLatin1( first );
+   bool    insert_header = conc_is_data_line( line );
+   if ( insert_header )
+   {
+      // the file starts with data: a header line is added in front of it
+      line = QString::fromLatin1( QByteArray( "US-SOMO: SAS: " ) + QFileInfo( file ).fileName().toUtf8() );
+   }
+
+   // the patterns US_Hydrodyn_Saxs::load_saxs() and load_sans() read the first line with,
+   // and the token each value is written as when it is not there yet
+   const QString rx_texts[ 3 ] = { " PSV:\\s*(\\S+)(\\s|$)", " I0se:\\s*(\\S+)(\\s|$)", "Conc:\\s*(\\S+)(\\s|$)" };
+   const QString tokens  [ 3 ] = { " PSV:",                  " I0se:",                  " Conc:" };
+   const QString values  [ 3 ] = { psv,                      I0se,                      conc };
+   const QString names   [ 3 ] = { "PSV",                    "I0se",                    "Conc" };
+
+   for ( int i = 0; i < 3; ++i )
+   {
+      QRegularExpressionMatch m = QRegularExpression( rx_texts[ i ] ).match( line );
+      if ( m.hasMatch() )
+      {
+         line.replace( m.capturedStart( 1 ), m.capturedLength( 1 ), values[ i ] );
+      } else {
+         line.remove( QRegularExpression( "\\s+$" ) );
+         line += tokens[ i ] + values[ i ];
+      }
+   }
+
+   // the loader must read back exactly these values
+   for ( int i = 0; i < 3; ++i )
+   {
+      QRegularExpressionMatch m = QRegularExpression( rx_texts[ i ] ).match( line );
+      if ( !m.hasMatch() || m.captured( 1 ) != values[ i ] )
+      {
+         error = QString( us_tr( "%1: could not be set in the first line" ) ).arg( names[ i ] );
+         return false;
+      }
+   }
+
+   QByteArray new_contents =
+      insert_header ?
+      line.toLatin1() + eol + contents :
+      line.toLatin1() + rest;
+
+   QSaveFile out( file );
+   out.setDirectWriteFallback( true );
+   if ( !out.open( QIODevice::WriteOnly ) )
+   {
+      error = us_tr( "can not be written: " ) + out.errorString();
+      return false;
+   }
+   out.write( new_contents );
+   if ( !out.commit() )
+   {
+      error = us_tr( "can not be written: " ) + out.errorString();
+      return false;
+   }
+   return true;
+}
+
+void US_Hydrodyn_Saxs_Conc::save_into_files()
+{
+   US_Hydrodyn_Saxs * saxs    = (US_Hydrodyn_Saxs *)saxs_window;
+   csv                tmp_csv = current_csv();
+
+   // every value must be a number before anything is written
+   for ( unsigned int i = 0; i < tmp_csv.data.size(); i++ )
+   {
+      for ( unsigned int j = 1; j < tmp_csv.data[ i ].size() && j < 4; j++ )
+      {
+         bool   ok;
+         double value = tmp_csv.data[ i ][ j ].trimmed().toDouble( &ok );
+         if ( !ok || !std::isfinite( value ) )
+         {
+            QMessageBox::warning( this,
+                                  windowTitle(),
+                                  QString( us_tr( "%1:\n%2 \"%3\" is not a number.\n\nNothing was written." ) )
+                                  .arg( tmp_csv.data[ i ][ 0 ] )
+                                  .arg( j < tmp_csv.header.size() ? tmp_csv.header[ j ] : QString( "" ) )
+                                  .arg( tmp_csv.data[ i ][ j ] ) );
+            return;
+         }
+      }
+   }
+
+   // which file each curve's values go to
+   QStringList                         files;
+   QStringList                         skipped;
+   map < QString, unsigned int >       file_row;
+   map < QString, QStringList >        file_curves;
+   map < QString, bool >               file_conflict;
+
+   for ( unsigned int i = 0; i < tmp_csv.data.size(); i++ )
+   {
+      QString name = tmp_csv.data[ i ][ 0 ];
+      if ( name.contains( "_Istarq_" ) )
+      {
+         skipped << name + us_tr( ": I*(q) data, its values are the ones used for the conversion" );
+         continue;
+      }
+      if ( !saxs->plotted_iq_names_to_file.count( name ) )
+      {
+         skipped << name + us_tr( ": no data file recorded for this curve" );
+         continue;
+      }
+      QString file = saxs->plotted_iq_names_to_file[ name ];
+      file_curves[ file ] << name;
+      if ( !file_row.count( file ) )
+      {
+         file_row[ file ] = i;
+         files << file;
+         continue;
+      }
+      // the same file loaded more than once: it can only hold one set of values
+      for ( unsigned int j = 1; j < 4; j++ )
+      {
+         if ( tmp_csv.num_data[ i ][ j ] != tmp_csv.num_data[ file_row[ file ] ][ j ] )
+         {
+            file_conflict[ file ] = true;
+         }
+      }
+   }
+
+   for ( auto it = file_conflict.begin(); it != file_conflict.end(); ++it )
+   {
+      files.removeAll( it->first );
+      skipped << file_curves[ it->first ].join( ", " ) + us_tr( ": the same file with different values: " ) + it->first;
+   }
+
+   if ( !files.size() )
+   {
+      QMessageBox::information( this,
+                                windowTitle(),
+                                us_tr( "No data file can be written:\n\n" ) + conc_list_text( skipped ) );
+      return;
+   }
+
+   {
+      QString msg =
+         QString( us_tr( "The values will be written into the first line of %1 data file%2:\n\n%3\n\n"
+                         "No other line is changed.\n" ) )
+         .arg( files.size() )
+         .arg( files.size() > 1 ? "s" : "" )
+         .arg( conc_list_text( files ) );
+      if ( skipped.size() )
+      {
+         msg += us_tr( "\nNot written:\n" ) + conc_list_text( skipped ) + "\n";
+      }
+      msg += us_tr( "\nContinue?" );
+      if ( QMessageBox::question( this,
+                                  windowTitle(),
+                                  msg,
+                                  QMessageBox::Yes | QMessageBox::No,
+                                  QMessageBox::No ) != QMessageBox::Yes )
+      {
+         return;
+      }
+   }
+
+   QStringList written;
+   QStringList failed;
+   for ( const QString & file : files )
+   {
+      unsigned int i = file_row[ file ];
+      QString      error;
+      if ( write_values_into_file( file,
+                                   tmp_csv.data[ i ][ 1 ].trimmed(),
+                                   tmp_csv.data[ i ][ 2 ].trimmed(),
+                                   tmp_csv.data[ i ][ 3 ].trimmed(),
+                                   error ) )
+      {
+         written << file;
+         saxs->editor_msg( "black",
+                           QString( us_tr( "Concentration %1, PSV %2, I0 standard %3 written into %4\n" ) )
+                           .arg( tmp_csv.data[ i ][ 1 ].trimmed() )
+                           .arg( tmp_csv.data[ i ][ 2 ].trimmed() )
+                           .arg( tmp_csv.data[ i ][ 3 ].trimmed() )
+                           .arg( file ) );
+      } else {
+         failed << file + ": " + error;
+         saxs->editor_msg( "red", QString( us_tr( "Not written: %1: %2\n" ) ).arg( file ).arg( error ) );
+      }
+   }
+
+   // the values are also applied, as with "Save values"
+   csv1     = tmp_csv;
+   *org_csv = tmp_csv;
+
+   QString msg = QString( us_tr( "Values written into %1 data file%2.\n" ) )
+      .arg( written.size() )
+      .arg( written.size() == 1 ? "" : "s" );
+   if ( failed.size() )
+   {
+      msg += us_tr( "\nFailed:\n" ) + conc_list_text( failed ) + "\n";
+   }
+   if ( skipped.size() )
+   {
+      msg += us_tr( "\nNot written:\n" ) + conc_list_text( skipped ) + "\n";
+   }
+   if ( failed.size() )
+   {
+      QMessageBox::warning( this, windowTitle(), msg );
+   } else {
+      QMessageBox::information( this, windowTitle(), msg );
+   }
 }
 
 void US_Hydrodyn_Saxs_Conc::load()
