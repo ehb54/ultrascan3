@@ -22,14 +22,21 @@
 <center>
 <h2>
 SOMO SAXS Concentration, PSV and I(0) std. expt. Set/Modify Module:</h2></center>
-<h3><center>Last updated: April 2024 </center></h3><p>
+<h3><center>Last updated: November 2026 </center></h3><p>
 
 <p><center>
 <img SRC="somo-SAS_Guinier_options_setconc.png" ALT="SOMO SAS Guinier options set conc psv I0 std">
 </center>
 <p>
-In this module the files names of the SAXS data currently uploaded in the SAS module will be listed in separate lines. In the three successive columns the concentration (mg/ml), partial specific volume (PSV, ml/g), and the standard experimental <i>I</i>(0) (I0 standard expt., a.u.) are reported or can be entered if absent. A number of utilities is present for copying selected values (<i><b>Copy values</b></i>), pasting to either selected (<i><b>Paste value to selected</i></b>) or to all (<i><b>Paste value to all</i></b>), or to <b><i>Reset to default values</b></i>. Current values can be saved to the SAXS data file(s) (<i><b>Save to file</i></b>). <b><i>Load</i></b> will allow to retrieve previously saved data. <b><i>Cancel</i></b> will interrupt the current operation and close the module, while <b><i>Save values</b></i> will accept the changes and close the module.<p>
-<span style="color:#CC0000">Note: when <i>I</i>*(<i>q</i>) files are either directly loaded in the <b><i>SAS</i></b> module or transferred from the <b><i>HPLC/KIN</i></b> module ("<b><i>to SOMO/SAS</b></i>" button), the <i>c</i>, PSV and <i>I</i>(0) values previously used to convert <i>I</i>(<i>q</i>) to <i>I</i>*(<i>q</i>) are reported but not used or editable. The same holds for <i>I</i>#(<i>q</i>) data, but since they were not normalized by the concentration, proper <i>c</i> values can be entered here.</span>
+In this module the files names of the SAXS data currently uploaded in the SAS module will be listed in separate lines. In the three successive columns the concentration (mg/ml), partial specific volume (PSV, ml/g), and the standard experimental <i>I</i>(0) (I0 standard expt., a.u.) are reported or can be entered if absent. Values found in the first line of a data file when it was loaded (see <b><i>Save into data files</i></b> below) are reported. A number of utilities is present for copying selected values (<i><b>Copy values</b></i>), pasting to either selected (<i><b>Paste values to selected</b></i>) or to all (<i><b>Paste values to all</b></i>), or to <b><i>Reset to default values</i></b>.<p>
+The current values can be saved in two ways:
+<ul>
+<li><b><i>Save into data files</i></b> writes the values of each curve into the first line of the data file (<i>.dat</i>, <i>.txt</i> or <i>.sprr</i>) the curve was loaded from, as <tt>Conc:</tt>, <tt>PSV:</tt> and <tt>I0se:</tt> entries. These are read back when the file is loaded again in the SAS module; the <b><i>HPLC/KIN</i></b> module and the <b><i>SAS Data Utility</i></b> read the same entries. Entries already present are given the new values, missing ones are added at the end of the line, and if the file starts directly with data, a header line is added in front of it; no other line of the file is changed. The list of the files to be written is shown first, and nothing is written unless it is confirmed; a summary of what was written follows. The values are also accepted, as with <b><i>Save values</i></b>, but the module stays open.<br>
+Moving the mouse over a file name shows the data file the curve was loaded from. Curves without one are not written: curves computed in SOMO, curves transferred from the <b><i>HPLC/KIN</i></b> module or the <b><i>SAS Data Utility</i></b> (save them from that module instead), curves loaded from other formats, and the model curve of a file holding both experimental and model data. <i>I</i>*(<i>q</i>) curves are not written either (see the note below), nor is a file loaded more than once with different values entered for its curves.</li>
+<li><b><i>Save to .sxc file</i></b> saves the whole table as a single <i>.sxc</i> file, which <b><i>Load .sxc file</i></b> reads back, setting the values of the curves listed with the same names.</li>
+</ul>
+<b><i>Cancel</i></b> will interrupt the current operation and close the module, while <b><i>Save values</i></b> will accept the changes and close the module.<p>
+<span style="color:#CC0000">Note: when <i>I</i>*(<i>q</i>) files are either directly loaded in the <b><i>SAS</i></b> module or transferred from the <b><i>HPLC/KIN</i></b> module ("<b><i>to SOMO/SAS</i></b>" button), the <i>c</i>, PSV and <i>I</i>(0) values previously used to convert <i>I</i>(<i>q</i>) to <i>I</i>*(<i>q</i>) are reported but not used or editable. The same holds for <i>I</i>#(<i>q</i>) data, but since they were not normalized by the concentration, proper <i>c</i> values can be entered here. As the <i>I</i>*(<i>q</i>) values record that conversion, <b><i>Save into data files</i></b> never writes into <i>I</i>*(<i>q</i>) files; <i>I</i>#(<i>q</i>) files are written.</span>
 <p>
 
 <p>
@@ -51,7 +58,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on March 31, 2024.
+Last modified on November 12, 2026.
 </font>
 </body>
 </html>

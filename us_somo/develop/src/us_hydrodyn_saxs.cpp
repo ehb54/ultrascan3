@@ -5415,6 +5415,7 @@ void US_Hydrodyn_Saxs::clear_plot_saxs_data()
    qsl_plotted_iq_names.clear( );
    dup_plotted_iq_name_check.clear( );
    plotted_iq_names_to_pos.clear( );
+   plotted_iq_names_to_file.clear( );
    plotted_Iq.clear( );
    plotted_q.clear( );
    plotted_q2.clear( );

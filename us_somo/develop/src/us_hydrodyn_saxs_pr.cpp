@@ -994,6 +994,9 @@ void US_Hydrodyn_Saxs::sync_conc_csv() // removes deleted curves, adds non-extan
       }
    }
 
+   // rebuilt for every row: add_conc_csv() above already pushed rows for the curves it added,
+   // which would leave the numbers out of step with the names
+   conc_csv.num_data.clear( );
    for ( unsigned int i = 0; i < conc_csv.data.size(); i++ )
    {
       vector < double > tmp_num_data;
