@@ -278,9 +278,12 @@ TEST_F( TestUSAstfemRsaThreads, NoUsableTempDirFailsCleanly )
 
    const QString saved_tmpdir = US_Settings::tmpDir();
    US_Settings::set_tmpDir( unusable );
+   // The fallback uses QDir::tempPath(). Point it at the existing file itself:
+   //  a missing TMPDIR gives an empty temp path, which falls back to "/" and
+   //  is writable when the tests run as root.
    for ( const char* name : tmp_env_names )
    {
-      qputenv( name, QFile::encodeName( unusable ) );
+      qputenv( name, QFile::encodeName( blocker ) );
    }
 
    US_SimulationParameters sp;

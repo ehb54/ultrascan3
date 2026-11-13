@@ -753,9 +753,12 @@ TEST_F( TestUSSolveSimCalcResiduals, FailedSolveGivesNaNVariances )
 
    const char* const              env_names[] = { "TMPDIR", "TMP", "TEMP" };
    Us3EnvironmentGuard            environment;
+   // The fallback uses QDir::tempPath(). Point it at the existing file itself:
+   //  a missing TMPDIR gives an empty temp path, which falls back to "/" and
+   //  is writable when the tests run as root.
    for ( const char* name : env_names )
    {
-      ASSERT_TRUE( environment.set( name, QFile::encodeName( unusable ) ) );
+      ASSERT_TRUE( environment.set( name, QFile::encodeName( blocker ) ) );
    }
    const QString saved_tmpdir = US_Settings::tmpDir();
    US_Settings::set_tmpDir( unusable );
