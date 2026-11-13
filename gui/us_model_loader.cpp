@@ -1592,7 +1592,20 @@ void US_ModelLoader::accepted_multiple_auto( QStringList m_t_r_id )
 
       qDebug() << "mdesc, mdx, modelID, triple_from_mtext -- " << mdesc << mdx << modelID << triple_from_mtext;
 
-      if ( model_text.contains( model_passed ) && triple_from_mtext.contains( triple_passed ) &&
+      // List-form text is "TYPE.TRIP.ETIME_ATIME_HPCID_ITER.RUN"; TYPE is section 0.
+      QString type_from_mtext = model_text.section( ".", 0, 0 );
+
+      bool type_ok;
+      if ( model_passed == "2DSA-IT" )
+      {  // IT models are named 2DSA-IT, or 2DSA-CG-IT when a custom grid was used
+         type_ok = ( type_from_mtext == "2DSA-IT" || type_from_mtext == "2DSA-CG-IT" );
+      }
+      else
+      {  // any other stage keeps the previous behavior
+         type_ok = model_text.contains( model_passed );
+      }
+
+      if ( type_ok && triple_from_mtext.contains( triple_passed ) &&
            model_text.contains( runid_passed ) )
       {
          selmods << item;
