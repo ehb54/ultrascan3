@@ -92,6 +92,7 @@ TEST_P( ProjectDbWrite, LookupErrorStopsBeforeCursorAndWrites )
    for ( int error : { IUS_DB2::DBERROR, IUS_DB2::NOT_CONNECTED } )
    {
       SCOPED_TRACE( error );
+      project.projectID = 73;
       const QStringList lookup{ "get_projectID_from_GUID", project.projectGUID };
       EXPECT_CALL( db, query( Matcher<const QStringList&>( Eq( lookup ) ) ) );
       EXPECT_CALL( db, lastErrno() ).WillOnce( Return( error ) );
@@ -101,6 +102,7 @@ TEST_P( ProjectDbWrite, LookupErrorStopsBeforeCursorAndWrites )
       EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).Times( 0 );
       EXPECT_CALL( db, lastInsertID() ).Times( 0 );
       EXPECT_EQ( error, save() );
+      EXPECT_EQ( 73, project.projectID );
       EXPECT_EQ( US_Project::HD_ONLY, project.saveStatus );
       EXPECT_EQ( QString( "description" ), project.projectDesc );
       ASSERT_TRUE( ::testing::Mock::VerifyAndClearExpectations( &db ) );
@@ -109,6 +111,7 @@ TEST_P( ProjectDbWrite, LookupErrorStopsBeforeCursorAndWrites )
 
 TEST_P( ProjectDbWrite, MissingInsertedIdDoesNotClaimDatabaseSave )
 {
+   project.projectID = 73;
    const QStringList lookup{ "get_projectID_from_GUID", project.projectGUID };
    QStringList       insert{ "new_project2" };
    insert << fields() << QString::number( GetParam() ? 29 : 17 );
@@ -120,6 +123,107 @@ TEST_P( ProjectDbWrite, MissingInsertedIdDoesNotClaimDatabaseSave )
       EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 0 ) );
    }
    EXPECT_EQ( IUS_DB2::NO_PROJECT, save() );
+   EXPECT_EQ( 73, project.projectID );
    EXPECT_EQ( US_Project::HD_ONLY, project.saveStatus );
+}
+
+TEST_P( ProjectDbWrite, FailedCursorStopsBeforeValueAndWrites )
+{
+   for ( int error : { IUS_DB2::OK, IUS_DB2::NOROWS, IUS_DB2::DBERROR, IUS_DB2::NOT_CONNECTED } )
+   {
+      SCOPED_TRACE( error );
+      project.projectID  = 73;
+      project.saveStatus = US_Project::DB_ONLY;
+      const QStringList lookup{ "get_projectID_from_GUID", project.projectGUID };
+      {
+         InSequence sequence;
+         EXPECT_CALL( db, query( Matcher<const QStringList&>( Eq( lookup ) ) ) );
+         EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );
+         EXPECT_CALL( db, next() ).WillOnce( Return( false ) );
+         EXPECT_CALL( db, lastErrno() ).WillOnce( Return( error ) );
+      }
+      EXPECT_CALL( db, value( _ ) ).Times( 0 );
+      EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).Times( 0 );
+      EXPECT_CALL( db, lastInsertID() ).Times( 0 );
+      EXPECT_EQ( error == IUS_DB2::OK || error == IUS_DB2::NOROWS ? IUS_DB2::NO_PROJECT : error, save() );
+      EXPECT_EQ( 73, project.projectID );
+      EXPECT_EQ( US_Project::HD_ONLY, project.saveStatus );
+      ASSERT_TRUE( ::testing::Mock::VerifyAndClearExpectations( &db ) );
+   }
+}
+
+TEST_P( ProjectDbWrite, InvalidLookupIdStopsBeforeUpdate )
+{
+   for ( const QVariant& id : { QVariant(), QVariant( "invalid" ), QVariant( 0 ), QVariant( -1 ) } )
+   {
+      SCOPED_TRACE( id.toString().toStdString() );
+      project.projectID = 73;
+      const QStringList lookup{ "get_projectID_from_GUID", project.projectGUID };
+      {
+         InSequence sequence;
+         EXPECT_CALL( db, query( Matcher<const QStringList&>( Eq( lookup ) ) ) );
+         EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );
+         EXPECT_CALL( db, next() ).WillOnce( Return( true ) );
+         EXPECT_CALL( db, value( 0 ) ).WillOnce( Return( id ) );
+      }
+      EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).Times( 0 );
+      EXPECT_CALL( db, lastInsertID() ).Times( 0 );
+      EXPECT_EQ( IUS_DB2::NO_PROJECT, save() );
+      EXPECT_EQ( 73, project.projectID );
+      EXPECT_EQ( US_Project::HD_ONLY, project.saveStatus );
+      ASSERT_TRUE( ::testing::Mock::VerifyAndClearExpectations( &db ) );
+   }
+}
+
+TEST_P( ProjectDbWrite, FailedUpdatePreservesIdAndDoesNotClaimDatabaseSave )
+{
+   for ( int error : { IUS_DB2::DBERROR, IUS_DB2::NOT_CONNECTED, IUS_DB2::NOROWS } )
+   {
+      SCOPED_TRACE( error );
+      project.projectID  = 73;
+      project.saveStatus = US_Project::DB_ONLY;
+      const QStringList lookup{ "get_projectID_from_GUID", project.projectGUID };
+      QStringList       update{ "update_project2", "87" };
+      update << fields();
+      {
+         InSequence sequence;
+         EXPECT_CALL( db, query( Matcher<const QStringList&>( Eq( lookup ) ) ) );
+         EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );
+         EXPECT_CALL( db, next() ).WillOnce( Return( true ) );
+         EXPECT_CALL( db, value( 0 ) ).WillOnce( Return( QVariant( 87 ) ) );
+         EXPECT_CALL( db, statusQuery( update ) ).WillOnce( Return( error ) );
+      }
+      EXPECT_CALL( db, lastInsertID() ).Times( 0 );
+      EXPECT_EQ( error, save() );
+      EXPECT_EQ( 73, project.projectID );
+      EXPECT_EQ( US_Project::HD_ONLY, project.saveStatus );
+      ASSERT_TRUE( ::testing::Mock::VerifyAndClearExpectations( &db ) );
+   }
+}
+
+TEST_P( ProjectDbWrite, FailedInsertNeverUsesStaleInsertId )
+{
+   for ( int error : { IUS_DB2::DBERROR, IUS_DB2::NOT_CONNECTED, IUS_DB2::NOROWS } )
+   {
+      SCOPED_TRACE( error );
+      project.projectID  = 73;
+      project.saveStatus = US_Project::BOTH;
+      const QStringList lookup{ "get_projectID_from_GUID", project.projectGUID };
+      QStringList       insert{ "new_project2" };
+      insert << fields() << QString::number( GetParam() ? 29 : 17 );
+      {
+         InSequence sequence;
+         EXPECT_CALL( db, query( Matcher<const QStringList&>( Eq( lookup ) ) ) );
+         EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOROWS ) );
+         EXPECT_CALL( db, statusQuery( insert ) ).WillOnce( Return( error ) );
+      }
+      EXPECT_CALL( db, next() ).Times( 0 );
+      EXPECT_CALL( db, value( _ ) ).Times( 0 );
+      EXPECT_CALL( db, lastInsertID() ).Times( 0 );
+      EXPECT_EQ( error, save() );
+      EXPECT_EQ( 73, project.projectID );
+      EXPECT_EQ( US_Project::HD_ONLY, project.saveStatus );
+      ASSERT_TRUE( ::testing::Mock::VerifyAndClearExpectations( &db ) );
+   }
 }
 }
