@@ -13,12 +13,12 @@ using namespace qt_matchers;
 class TestUSDataFilesUnit : public QtTestBase {
 protected:
     void SetUp() override {
-        QtTestBase::SetUp();
+       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
 
-        // Create temporary directory for each test
-        tempDir = std::make_unique<QTemporaryDir>();
-        ASSERT_TRUE(tempDir->isValid()) << "Failed to create temporary directory";
-        testPath = tempDir->path();
+       // Create temporary directory for each test
+       tempDir = std::make_unique<QTemporaryDir>();
+       ASSERT_TRUE( tempDir->isValid() ) << "Failed to create temporary directory";
+       testPath = tempDir->path();
     }
 
     void TearDown() override {

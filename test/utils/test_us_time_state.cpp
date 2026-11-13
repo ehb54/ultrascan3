@@ -20,10 +20,10 @@ using ::testing::StrictMock;
 class US_TimeStateTest : public QtTestBase {
 protected:
     void SetUp() override {
-        QtTestBase::SetUp();
-        timeState = std::make_unique<US_TimeState>();
-        tempDir = std::make_unique<QTemporaryDir>();
-        ASSERT_TRUE(tempDir->isValid());
+       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+       timeState = std::make_unique<US_TimeState>();
+       tempDir   = std::make_unique<QTemporaryDir>();
+       ASSERT_TRUE( tempDir->isValid() );
     }
 
     void TearDown() override {
@@ -331,8 +331,8 @@ TEST_F(US_TimeStateTest, ErrorMessageUnknown) {
 class US_TimeStateDbTest : public QtTestBase {
 protected:
     void SetUp() override {
-        QtTestBase::SetUp();
-        mockDb = std::make_unique<StrictMock<US_DB2_Mock>>();
+       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+       mockDb = std::make_unique<StrictMock<US_DB2_Mock>>();
     }
 
     void TearDown() override {

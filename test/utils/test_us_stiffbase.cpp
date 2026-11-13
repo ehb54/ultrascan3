@@ -6,8 +6,8 @@
 class US_StiffBaseTest : public QtTestBase {
 protected:
     void SetUp() override {
-        QtTestBase::SetUp();
-        stiffBase = std::make_unique<US_StiffBase>();
+       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+       stiffBase = std::make_unique<US_StiffBase>();
     }
 
     void TearDown() override {

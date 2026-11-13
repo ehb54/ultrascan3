@@ -1,13 +1,13 @@
-#include "us3_file_test_base.h"
-#include "us_project.h"
 #include "mock_us_db2.h"
-#include <QTemporaryDir>
+#include "us3_file_test_base.h"
+#include "us3_test_io.h"
+#include "us_project.h"
+#include <QDateTime>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
-#include <QXmlStreamWriter>
-#include <QDateTime>
 #include <QRegularExpression>
+#include <QXmlStreamWriter>
 
 using ::testing::_;
 using ::testing::Return;
@@ -20,25 +20,19 @@ using ::testing::InSequence;
 class US_ProjectTest : public Us3FileTestBase {
 protected:
     void SetUp() override {
-        Us3FileTestBase::SetUp();
-        project = std::make_unique<US_Project>();
-        mockDb = std::make_unique<NiceMock<US_DB2_Mock>>();
-
-        // Create temporary directory for testing
-        tempDir = std::make_unique<QTemporaryDir>();
-        ASSERT_TRUE(tempDir->isValid());
+       ASSERT_NO_FATAL_FAILURE( Us3FileTestBase::SetUp() );
+       project = std::make_unique<US_Project>();
+       mockDb  = std::make_unique<NiceMock<US_DB2_Mock>>();
     }
 
     void TearDown() override {
         project.reset();
         mockDb.reset();
-        tempDir.reset();
         Us3FileTestBase::TearDown();
     }
 
     std::unique_ptr<US_Project> project;
     std::unique_ptr<NiceMock<US_DB2_Mock>> mockDb;
-    std::unique_ptr<QTemporaryDir> tempDir;
 
     // Helper to create a valid project XML file
     QString createTestProjectXml(const QString& guid = "test-guid-123", int id = 42) {
@@ -62,34 +56,16 @@ protected:
         ).arg(id).arg(guid);
     }
 
-    // Helper to write XML to temporary file
-    QString writeTestFile(const QString& content, const QString& filename = "P0000001.xml") {
-        QString fullPath = tempDir->path() + "/projects/" + filename;
-        QDir().mkpath(tempDir->path() + "/projects");
-
-        QFile file(fullPath);
-        if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            file.write(content.toUtf8());
-            file.close();
-        }
-        return fullPath;
-    }
-
-    QString projectsDir() {
-        QString path;
-        EXPECT_TRUE(US_Project().diskPath(path));
-        return path;
-    }
-
-    // Writes content where readFromDisk() will find it.
-    QString writeIntoProjectsDir(const QString& content,
-                                 const QString& filename = "P0000001.xml") {
-        const QString fullPath = projectsDir() + "/" + filename;
-        QFile file(fullPath);
-        EXPECT_TRUE(file.open(QIODevice::WriteOnly | QIODevice::Text));
-        file.write(content.toUtf8());
-        file.close();
-        return fullPath;
+    void writeIntoProjectsDir( const QString& content, const QString& filename = "P0000001.xml", QString* written = nullptr )
+    {
+       QString path;
+       ASSERT_TRUE( US_Project().diskPath( path ) );
+       const QString fullPath = path + "/" + filename;
+       ASSERT_TRUE( us3WriteTestFile( fullPath, content.toUtf8() ) );
+       if ( written )
+       {
+          *written = fullPath;
+       }
     }
 
     // Helper to populate project with test data
@@ -173,8 +149,8 @@ EXPECT_TRUE(dir.exists());
 // DiskFilename Tests
 TEST_F(US_ProjectTest, DiskFilename_ExistingFile_FindsCorrectly) {
 QString testGuid = "test-guid-456";
-const QString written = writeIntoProjectsDir(createTestProjectXml(testGuid),
-                                             "P0000042.xml");
+QString written;
+ASSERT_NO_FATAL_FAILURE( writeIntoProjectsDir( createTestProjectXml( testGuid ), "P0000042.xml", &written ) );
 
 QString filename;
 EXPECT_TRUE(project->diskFilename(testGuid, filename));
@@ -194,7 +170,7 @@ EXPECT_TRUE(filename.isEmpty());
 // ReadFromDisk Tests
 TEST_F(US_ProjectTest, ReadFromDisk_ValidFile_LoadsCorrectly) {
 QString testGuid = "test-guid-789";
-writeIntoProjectsDir(createTestProjectXml(testGuid, 99));
+ASSERT_NO_FATAL_FAILURE( writeIntoProjectsDir( createTestProjectXml( testGuid, 99 ) ) );
 
 ASSERT_EQ(project->readFromDisk(testGuid), IUS_DB2::OK);
 
@@ -221,14 +197,14 @@ EXPECT_EQ(result, IUS_DB2::NO_PROJECT);
 }
 
 TEST_F(US_ProjectTest, ReadFromDisk_InvalidXml_ReturnsError) {
-writeIntoProjectsDir("This is not valid XML content", "P0000900.xml");
+   ASSERT_NO_FATAL_FAILURE( writeIntoProjectsDir( "This is not valid XML content", "P0000900.xml" ) );
 
-QString guid = "guid-only-in-the-unparseable-file";
+   QString guid = "guid-only-in-the-unparseable-file";
 
-// A file that is not XML exposes no guid attribute, so the guid search that
-// precedes any parsing never matches it and the read reports NO_PROJECT.
-EXPECT_EQ(project->readFromDisk(guid), IUS_DB2::NO_PROJECT);
-EXPECT_EQ(project->projectID, 0);
+   // A file that is not XML exposes no guid attribute, so the guid search that
+   // precedes any parsing never matches it and the read reports NO_PROJECT.
+   EXPECT_EQ( project->readFromDisk( guid ), IUS_DB2::NO_PROJECT );
+   EXPECT_EQ( project->projectID, 0 );
 }
 
 // XML Parsing Edge Cases - Test via public methods
@@ -239,7 +215,7 @@ project->notes = "stale notes that must not survive";
 QString testGuid = "test-guid-xml-parse";
 QString xml = createTestProjectXml(testGuid, 99);
 xml.remove("<notes>Handle with care</notes>\n");
-writeIntoProjectsDir(xml);
+ASSERT_NO_FATAL_FAILURE( writeIntoProjectsDir( xml ) );
 
 ASSERT_EQ(project->readFromDisk(testGuid), IUS_DB2::OK);
 
@@ -303,13 +279,12 @@ EXPECT_EQ(project->saveStatus, US_Project::BOTH);
 // Edge Cases and Error Conditions
 TEST_F(US_ProjectTest, ReadFromDisk_CorruptedXML_HandlesGracefully) {
 QString guid = "test-guid";
-writeIntoProjectsDir(
-        "<?xml version=\"1.0\"?>\n"
-        "<ProjectData>\n"
-        "<project id=\"1\" guid=\"test-guid\">\n"
-        "<goals>Test goals\n"   // never closed
-        "</project>\n"
-        "</ProjectData>\n");
+ASSERT_NO_FATAL_FAILURE( writeIntoProjectsDir( "<?xml version=\"1.0\"?>\n"
+                                               "<ProjectData>\n"
+                                               "<project id=\"1\" guid=\"test-guid\">\n"
+                                               "<goals>Test goals\n" // never closed
+                                               "</project>\n"
+                                               "</ProjectData>\n" ) );
 
 project->projectID   = 77;
 project->projectGUID = "the guid held before the failed read";
@@ -323,32 +298,63 @@ EXPECT_EQ(project->goals, "the goals held before the failed read");
 }
 
 TEST_F(US_ProjectTest, SaveToDisk_NewProjectGetsASequentialGeneratedFilename) {
-const QString dir = projectsDir();
-ASSERT_TRUE(QDir(dir).entryList(QStringList("P???????.xml"), QDir::Files).isEmpty());
+   QString dir;
+   ASSERT_TRUE( US_Project().diskPath( dir ) );
+   ASSERT_TRUE( QDir( dir ).entryList( QStringList( "P???????.xml" ), QDir::Files ).isEmpty() );
 
-populateTestProject();
-project->projectGUID = "12345678-1234-1234-1234-123456789012";
-project->saveToDisk();
+   populateTestProject();
+   project->projectGUID = "12345678-1234-1234-1234-123456789012";
+   project->saveToDisk();
 
-EXPECT_EQ(QDir(dir).entryList(QStringList("P???????.xml"), QDir::Files, QDir::Name),
-          QStringList("P0000001.xml"));
+   EXPECT_EQ( QDir( dir ).entryList( QStringList( "P???????.xml" ), QDir::Files, QDir::Name ), QStringList( "P0000001.xml" ) );
 }
 
 TEST_F(US_ProjectTest, SaveToDisk_ExistingProjectReusesItsFileRatherThanAddingOne) {
-const QString dir = projectsDir();
-populateTestProject();
-project->projectGUID = "12345678-1234-1234-1234-123456789012";
+   QString dir;
+   ASSERT_TRUE( US_Project().diskPath( dir ) );
+   populateTestProject();
+   project->projectGUID = "12345678-1234-1234-1234-123456789012";
 
-project->saveToDisk();
-project->goals = "revised goals";
-project->saveToDisk();
+   project->saveToDisk();
+   project->goals = "revised goals";
+   project->saveToDisk();
 
-// The second save reuses the same file rather than allocating P0000002.xml.
-EXPECT_EQ(QDir(dir).entryList(QStringList("P???????.xml"), QDir::Files, QDir::Name),
-          QStringList("P0000001.xml"));
+   // The second save reuses the same file rather than allocating P0000002.xml.
+   EXPECT_EQ( QDir( dir ).entryList( QStringList( "P???????.xml" ), QDir::Files, QDir::Name ), QStringList( "P0000001.xml" ) );
 
-US_Project reloaded;
-QString    guid = project->projectGUID;
-ASSERT_EQ(reloaded.readFromDisk(guid), IUS_DB2::OK);
-EXPECT_EQ(reloaded.goals, "revised goals");
+   US_Project reloaded;
+   QString    guid = project->projectGUID;
+   ASSERT_EQ( reloaded.readFromDisk( guid ), IUS_DB2::OK );
+   EXPECT_EQ( reloaded.goals, "revised goals" );
+}
+
+TEST_F( US_ProjectTest, UnusableFilesNeverReplaceLoadedProject )
+{
+   const QStringList inputs{ "", "not XML", "<ProjectData><project guid=\"wanted\"><goals>unfinished" };
+   for ( int i = 0; i < inputs.size(); ++i )
+   {
+      SCOPED_TRACE( i );
+      ASSERT_NO_FATAL_FAILURE( writeIntoProjectsDir( inputs[i] ) );
+      project->projectID   = 73;
+      project->projectGUID = "previous";
+      project->goals       = "previous goals";
+      QString guid         = "wanted";
+      EXPECT_EQ( project->readFromDisk( guid ), i == 2 ? IUS_DB2::DBERROR : IUS_DB2::NO_PROJECT );
+      EXPECT_EQ( project->projectID, 73 );
+      EXPECT_EQ( project->projectGUID, QString( "previous" ) );
+      EXPECT_EQ( project->goals, QString( "previous goals" ) );
+   }
+}
+
+TEST_F( US_ProjectTest, FileBlockingDataDirectoryReportsFailureWithoutReplacingIt )
+{
+   const QString blocker = US_Settings::dataDir();
+   ASSERT_TRUE( us3WriteTestFile( blocker, "sentinel" ) );
+   QString path;
+   EXPECT_FALSE( project->diskPath( path ) );
+   QString guid = "missing";
+   EXPECT_EQ( project->readFromDisk( guid ), IUS_DB2::NO_PROJECT );
+   QFile file( blocker );
+   ASSERT_TRUE( file.open( QIODevice::ReadOnly ) );
+   EXPECT_EQ( file.readAll(), QByteArray( "sentinel" ) );
 }

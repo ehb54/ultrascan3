@@ -24,8 +24,8 @@ namespace {
     class US_AnaProfileTest : public QtTestBase {
     protected:
         void SetUp() override {
-            QtTestBase::SetUp();
-            profile = std::make_unique<US_AnaProfile>();
+           ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+           profile = std::make_unique<US_AnaProfile>();
         }
 
         void TearDown() override {
@@ -86,9 +86,9 @@ namespace {
     class US_AnaProfileEqualityTest : public US_AnaProfileTest {
     protected:
         void SetUp() override {
-            US_AnaProfileTest::SetUp();
-            profile1 = std::make_unique<US_AnaProfile>();
-            profile2 = std::make_unique<US_AnaProfile>();
+           ASSERT_NO_FATAL_FAILURE( US_AnaProfileTest::SetUp() );
+           profile1 = std::make_unique<US_AnaProfile>();
+           profile2 = std::make_unique<US_AnaProfile>();
         }
 
         std::unique_ptr<US_AnaProfile> profile1, profile2;
@@ -102,8 +102,8 @@ namespace {
     class US_AnaProfile2DSATest : public US_AnaProfileTest {
     protected:
         void SetUp() override {
-            US_AnaProfileTest::SetUp();
-            twoDSA = std::make_unique<US_AnaProfile::AnaProf2DSA>();
+           ASSERT_NO_FATAL_FAILURE( US_AnaProfileTest::SetUp() );
+           twoDSA = std::make_unique<US_AnaProfile::AnaProf2DSA>();
         }
 
         std::unique_ptr<US_AnaProfile::AnaProf2DSA> twoDSA;
@@ -113,8 +113,8 @@ namespace {
     class US_AnaProfilePCSATest : public US_AnaProfileTest {
     protected:
         void SetUp() override {
-            US_AnaProfileTest::SetUp();
-            pcsa = std::make_unique<US_AnaProfile::AnaProfPCSA>();
+           ASSERT_NO_FATAL_FAILURE( US_AnaProfileTest::SetUp() );
+           pcsa = std::make_unique<US_AnaProfile::AnaProfPCSA>();
         }
 
         std::unique_ptr<US_AnaProfile::AnaProfPCSA> pcsa;

@@ -1,12 +1,13 @@
-#include "qt_test_base.h"
-#include <gmock/gmock-matchers.h>
-#include "us_simparms.h"
 #include "mock_us_db2.h"
-#include <QTemporaryDir>
-#include <QXmlStreamWriter>
-#include <QXmlStreamReader>
-#include <QFile>
+#include "qt_test_base.h"
+#include "us3_test_io.h"
+#include "us_simparms.h"
 #include <QDir>
+#include <QFile>
+#include <QTemporaryDir>
+#include <QXmlStreamReader>
+#include <QXmlStreamWriter>
+#include <gmock/gmock-matchers.h>
 
 using ::testing::_;
 using ::testing::An;
@@ -19,11 +20,11 @@ using ::testing::StrictMock;
 class US_SimulationParametersTest : public QtTestBase {
 protected:
     void SetUp() override {
-        QtTestBase::SetUp();
-        simparms = std::make_unique<US_SimulationParameters>();
-        mockDb = std::make_unique<NiceMock<US_DB2_Mock>>();
-        tempDir = std::make_unique<QTemporaryDir>();
-        ASSERT_TRUE(tempDir->isValid());
+       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+       simparms = std::make_unique<US_SimulationParameters>();
+       mockDb   = std::make_unique<NiceMock<US_DB2_Mock>>();
+       tempDir  = std::make_unique<QTemporaryDir>();
+       ASSERT_TRUE( tempDir->isValid() );
     }
 
     void TearDown() override {
@@ -101,17 +102,6 @@ protected:
                 "</params>\n"
                 "</SimParams>\n"
         );
-    }
-
-    // Helper to write test file
-    QString writeTestFile(const QString& content, const QString& filename = "test_simparms.xml") {
-        QString fullPath = tempDir->path() + "/" + filename;
-        QFile file(fullPath);
-        if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            file.write(content.toUtf8());
-            file.close();
-        }
-        return fullPath;
     }
 };
 
@@ -231,7 +221,8 @@ TEST_F( US_SimulationParametersTest, SetHardware_RejectsOutOfRangeIndexes )
 // Load SimParms Tests
 TEST_F(US_SimulationParametersTest, LoadSimparms_ValidFile_LoadsCorrectly) {
     QString xmlContent = createTestSimParmsXml();
-    QString filename = writeTestFile(xmlContent);
+    const QString filename   = tempDir->filePath( "test_simparms.xml" );
+    ASSERT_TRUE( us3WriteTestFile( filename, xmlContent.toUtf8() ) );
 
     int result = simparms->load_simparms(filename);
 

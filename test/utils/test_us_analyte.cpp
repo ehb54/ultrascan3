@@ -9,10 +9,12 @@
 #include <QTemporaryDir>
 #include <QTemporaryFile>
 
-#include "us_analyte.h"
 #include "mock_us_db2.h"
 #include "qt_test_base.h"
+#include "us3_test_io.h"
+#include "us_analyte.h"
 #include "us_constants.h"
+#include "us_settings.h"
 
 using ::testing::_;
 using ::testing::Return;
@@ -33,8 +35,8 @@ namespace {
     class US_AnalyteTest : public QtTestBase {
     protected:
         void SetUp() override {
-            QtTestBase::SetUp();
-            analyte = std::make_unique<US_Analyte>();
+           ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+           analyte = std::make_unique<US_Analyte>();
         }
 
         void TearDown() override {
@@ -53,9 +55,9 @@ namespace {
     class US_AnalyteEqualityTest : public US_AnalyteTest {
     protected:
         void SetUp() override {
-            US_AnalyteTest::SetUp();
-            analyte1 = std::make_unique<US_Analyte>();
-            analyte2 = std::make_unique<US_Analyte>();
+           ASSERT_NO_FATAL_FAILURE( US_AnalyteTest::SetUp() );
+           analyte1 = std::make_unique<US_Analyte>();
+           analyte2 = std::make_unique<US_Analyte>();
         }
 
         std::unique_ptr<US_Analyte> analyte1, analyte2;
@@ -65,8 +67,8 @@ namespace {
     class US_AnalyteLoadTest : public US_AnalyteTest {
     protected:
         void SetUp() override {
-            US_AnalyteTest::SetUp();
-            mockDb = std::make_unique<StrictMock<US_DB2_Mock>>();
+           ASSERT_NO_FATAL_FAILURE( US_AnalyteTest::SetUp() );
+           mockDb = std::make_unique<StrictMock<US_DB2_Mock>>();
         }
 
         std::unique_ptr<StrictMock<US_DB2_Mock>> mockDb;
@@ -76,10 +78,10 @@ namespace {
     class US_AnalyteWriteTest : public US_AnalyteTest {
     protected:
         void SetUp() override {
-            US_AnalyteTest::SetUp();
-            mockDb = std::make_unique<StrictMock<US_DB2_Mock>>();
-            tempDir = std::make_unique<QTemporaryDir>();
-            ASSERT_TRUE(tempDir->isValid());
+           ASSERT_NO_FATAL_FAILURE( US_AnalyteTest::SetUp() );
+           mockDb  = std::make_unique<StrictMock<US_DB2_Mock>>();
+           tempDir = std::make_unique<QTemporaryDir>();
+           ASSERT_TRUE( tempDir->isValid() );
         }
 
         std::unique_ptr<StrictMock<US_DB2_Mock>> mockDb;
@@ -269,20 +271,20 @@ EXPECT_EQ(result, IUS_DB2::NOROWS);
 EXPECT_FALSE(analyte->message.isEmpty()); // Should have some error message
 }
 
-TEST_F(US_AnalyteLoadTest, LoadDbHandlesGetAnalyteInfoError) {
-QString testGuid = "12345678-1234-1234-1234-123456789012";
-
-// Use NiceMock for simpler testing
-auto niceMockDb = std::make_unique<NiceMock<US_DB2_Mock>>();
-
-// Set up a scenario where first call succeeds, subsequent calls fail
-// Use ON_CALL instead of EXPECT_CALL to avoid unsatisfied expectations
-ON_CALL(*niceMockDb, lastErrno())
-.WillByDefault(Return(IUS_DB2::NOROWS)); // Make all calls fail
-
-int result = analyte->load(true, testGuid, niceMockDb.get());
-EXPECT_EQ(result, IUS_DB2::NOROWS);
-EXPECT_FALSE(analyte->message.isEmpty());
+TEST_F( US_AnalyteLoadTest, LoadDbHandlesGetAnalyteInfoError )
+{
+   const QString guid = "synthetic-guid";
+   EXPECT_CALL( *mockDb, lastError() ).Times( ::testing::AnyNumber() ).WillRepeatedly( Return( QString() ) );
+   ::testing::InSequence sequence;
+   EXPECT_CALL( *mockDb, query( ::testing::Matcher<const QStringList&>( ::testing::Eq( QStringList{ "get_analyteID", guid } ) ) ) );
+   EXPECT_CALL( *mockDb, lastErrno() ).Times( ::testing::AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::OK ) );
+   EXPECT_CALL( *mockDb, next() ).WillOnce( Return( true ) );
+   EXPECT_CALL( *mockDb, value( 0 ) ).WillOnce( Return( QVariant( "17" ) ) );
+   EXPECT_CALL( *mockDb,
+                query( ::testing::Matcher<const QStringList&>( ::testing::Eq( QStringList{ "get_analyte_info", "17" } ) ) ) );
+   EXPECT_CALL( *mockDb, lastErrno() ).Times( ::testing::AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::DBERROR ) );
+   EXPECT_EQ( analyte->load( true, guid, mockDb.get() ), IUS_DB2::DBERROR );
+   EXPECT_FALSE( analyte->message.isEmpty() );
 }
 
 // =============================================================================
@@ -350,13 +352,14 @@ EXPECT_THAT(path, QStringContains("analytes"));
 }
 
 TEST_F(US_AnalyteStaticTest, GetFilenameReturnsValidFilename) {
-QString path = "/tmp/analytes";
-QString guid = "12345678-1234-1234-1234-123456789012";
+   QString path = US_Settings::workBaseDir() + "/analytes";
+   ASSERT_TRUE( QDir().mkpath( path ) );
+   QString guid = "12345678-1234-1234-1234-123456789012";
 
-QString filename = US_Analyte::get_filename(path, guid);
+   QString filename = US_Analyte::get_filename( path, guid );
 
-EXPECT_FALSE(filename.isEmpty());
-EXPECT_THAT(filename, QStringContains(path));
+   EXPECT_FALSE( filename.isEmpty() );
+   EXPECT_THAT( filename, QStringContains( path ) );
 }
 
 TEST_F(US_AnalyteStaticTest, GetFilenameHandlesEmptyPath) {
@@ -370,13 +373,14 @@ EXPECT_FALSE(filename.isEmpty());
 }
 
 TEST_F(US_AnalyteStaticTest, GetFilenameHandlesEmptyGuid) {
-QString path = "/tmp/analytes";
-QString emptyGuid;
+   QString path = US_Settings::workBaseDir() + "/analytes";
+   ASSERT_TRUE( QDir().mkpath( path ) );
+   QString emptyGuid;
 
-QString filename = US_Analyte::get_filename(path, emptyGuid);
+   QString filename = US_Analyte::get_filename( path, emptyGuid );
 
-// Should still return a filename structure
-EXPECT_FALSE(filename.isEmpty());
+   // Should still return a filename structure
+   EXPECT_FALSE( filename.isEmpty() );
 }
 
 // =============================================================================
@@ -503,3 +507,39 @@ EXPECT_EQ(analyte->fluorescence.size(), 61);
 }
 
 } // anonymous namespace
+
+TEST_F( US_AnalyteWriteTest, OutputDirectoryAndFileParentFailuresPreserveExistingData )
+{
+   const QString blocker = tempDir->path() + "/blocker";
+   ASSERT_TRUE( us3WriteTestFile( blocker, "sentinel" ) );
+   analyte->description = "synthetic analyte";
+   for ( const QString& destination : { tempDir->path(), blocker + "/child.xml" } )
+   {
+      SCOPED_TRACE( destination.toStdString() );
+      EXPECT_EQ( analyte->write( false, destination, nullptr ), IUS_DB2::DBERROR );
+      EXPECT_FALSE( analyte->message.isEmpty() );
+      EXPECT_EQ( analyte->description, QString( "synthetic analyte" ) );
+   }
+   QFile file( blocker );
+   ASSERT_TRUE( file.open( QIODevice::ReadOnly ) );
+   EXPECT_EQ( file.readAll(), QByteArray( "sentinel" ) );
+   EXPECT_EQ( QDir( tempDir->path() ).entryList( QDir::Files ), QStringList{ "blocker" } );
+}
+
+TEST_F( US_AnalyteLoadTest, MissingAndUnrecognizableFilesDoNotReplaceLoadedAnalyte )
+{
+   QString path;
+   ASSERT_TRUE( US_Analyte::analyte_path( path ) );
+   analyte->analyteGUID = "previous";
+   analyte->description = "previous description";
+   EXPECT_EQ( analyte->load( false, "missing" ), IUS_DB2::NO_ANALYTE );
+   for ( const QByteArray& bytes : { QByteArray(), QByteArray( "not XML" ), QByteArray( "<AnalyteData><analyte" ) } )
+   {
+      SCOPED_TRACE( bytes.constData() );
+      ASSERT_TRUE( us3WriteTestFile( path + "/A0000001.xml", bytes ) );
+      EXPECT_EQ( analyte->load( false, "missing" ), IUS_DB2::NO_ANALYTE );
+      EXPECT_EQ( analyte->analyteGUID, QString( "previous" ) );
+      EXPECT_EQ( analyte->description, QString( "previous description" ) );
+      EXPECT_FALSE( analyte->message.isEmpty() );
+   }
+}

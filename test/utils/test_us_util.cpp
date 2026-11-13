@@ -1,15 +1,16 @@
 // test_us_util.cpp
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
 #include "qt_test_base.h"
+#include "us3_test_io.h"
+#include "us_settings.h"
 #include "us_util.h"
-#include <QTemporaryFile>
+#include <QCoreApplication>
+#include <QDateTime>
 #include <QDir>
 #include <QFileInfo>
 #include <QStandardPaths>
-#include <QCoreApplication>
-#include <QDateTime>
 #include <QUuid>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 using ::testing::_;
 using ::testing::Return;
@@ -19,66 +20,8 @@ using ::qt_matchers::QStringContains;
 using ::qt_matchers::QStringEq;
 using ::qt_matchers::QStringIsEmpty;
 
-class US_UtilTest : public QtTestBase {
-protected:
-    void SetUp() override {
-        QtTestBase::SetUp();
-        // Additional setup if needed
-    }
-
-    void TearDown() override {
-        // Clean up any temporary files
-        for (QTemporaryFile* file : tempFiles) {
-            if (file) {
-                file->deleteLater();
-            }
-        }
-        tempFiles.clear();
-        cleanupTempDirs();
-        QtTestBase::TearDown();
-    }
-
-    // Helper method to create temporary files with content
-    QString createTempFileWithContent(const QString& content) {
-        QTemporaryFile* tempFile = new QTemporaryFile();
-        tempFiles.append(tempFile);
-
-        if (!tempFile->open()) {
-            return QString();
-        }
-
-        tempFile->write(content.toUtf8());
-        tempFile->flush();
-
-        QString fileName = tempFile->fileName();
-        tempFile->close();
-
-        return fileName;
-    }
-
-    // Helper method to create temporary directory
-    QString createTempDir() {
-        QString tempPath = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
-        QString dirName = QString("us_util_test_%1").arg(QCoreApplication::applicationPid());
-        QString fullPath = tempPath + "/" + dirName;
-
-        QDir().mkpath(fullPath);
-        tempDirs.append(fullPath);
-
-        return fullPath;
-    }
-
-    // Helper method to clean up temp directories
-    void cleanupTempDirs() {
-        for (const QString& dir : tempDirs) {
-            QDir(dir).removeRecursively();
-        }
-        tempDirs.clear();
-    }
-
-private:
-    QList<QTemporaryFile*> tempFiles;
-    QStringList tempDirs;
+class US_UtilTest : public QtTestBase
+{
 };
 
 // Test getToken method
@@ -167,8 +110,8 @@ TEST_F(US_UtilTest, NewGuidGeneratesUniqueValues) {
 // Test md5sum_file method
 TEST_F(US_UtilTest, Md5sumFileValidFile) {
     QString content = "Test file content for MD5 calculation";
-    QString fileName = createTempFileWithContent(content);
-    ASSERT_FALSE(fileName.isEmpty());
+    const QString fileName = US_Settings::workBaseDir() + "/input.txt";
+    ASSERT_TRUE( us3WriteTestFile( fileName, content.toUtf8() ) );
 
     QString result = US_Util::md5sum_file(fileName);
 
@@ -193,25 +136,25 @@ TEST_F(US_UtilTest, Md5sumFileNonExistentFile) {
 }
 
 TEST_F(US_UtilTest, Md5sumFileEmptyFile) {
-    QString fileName = createTempFileWithContent("");
-    ASSERT_FALSE(fileName.isEmpty());
+   const QString fileName = US_Settings::workBaseDir() + "/input.txt";
+   ASSERT_TRUE( us3WriteTestFile( fileName, QByteArray() ) );
 
-    QString result = US_Util::md5sum_file(fileName);
+   QString     result = US_Util::md5sum_file( fileName );
 
-    QStringList parts = result.split(" ");
-    EXPECT_EQ(parts.size(), 2);
+   QStringList parts = result.split( " " );
+   EXPECT_EQ( parts.size(), 2 );
 
-    // Hash should still be 32 characters
-    EXPECT_EQ(parts[0].length(), 32);
+   // Hash should still be 32 characters
+   EXPECT_EQ( parts[0].length(), 32 );
 
-    // Size should be 0
-    EXPECT_EQ(parts[1].toInt(), 0);
+   // Size should be 0
+   EXPECT_EQ( parts[1].toInt(), 0 );
 }
 
 TEST_F(US_UtilTest, Md5sumFileConsistency) {
     QString content = "Consistent content for hash testing";
-    QString fileName = createTempFileWithContent(content);
-    ASSERT_FALSE(fileName.isEmpty());
+    const QString fileName = US_Settings::workBaseDir() + "/input.txt";
+    ASSERT_TRUE( us3WriteTestFile( fileName, content.toUtf8() ) );
 
     QString result1 = US_Util::md5sum_file(fileName);
     QString result2 = US_Util::md5sum_file(fileName);
@@ -437,7 +380,7 @@ TEST_F(US_UtilTest, ListlistParseInvalidString) {
 class US_UtilEdgeCaseTest : public QtTestBase {
 protected:
     void SetUp() override {
-        QtTestBase::SetUp();
+       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
     }
 
     void TearDown() override {

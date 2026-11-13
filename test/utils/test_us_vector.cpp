@@ -9,7 +9,7 @@ using namespace qt_matchers;
 class US_VectorTest : public QtTestBase {
 protected:
     void SetUp() override {
-        QtTestBase::SetUp();
+       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
     }
 
     // Helper function to compare floating point vectors with tolerance

@@ -15,8 +15,8 @@ using namespace qt_matchers;
 class TestUSMath2Unit : public QtTestBase {
 protected:
     void SetUp() override {
-        QtTestBase::SetUp();
-        setupTestData();
+       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+       setupTestData();
     }
 
     void TearDown() override {

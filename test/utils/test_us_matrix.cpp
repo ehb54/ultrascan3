@@ -9,19 +9,21 @@ using ::testing::DoubleNear;
 class TestUSMatrixUnit : public QtTestBase {
 protected:
     void SetUp() override {
-        QtTestBase::SetUp();
+       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
 
-        // Set up test matrix (3x3 identity matrix)
-        vecMatrix.clear();
-        dataMatrix.clear();
-        testMatrix = US_Matrix::construct(vecMatrix, dataMatrix, 3, 3);
+       // Set up test matrix (3x3 identity matrix)
+       vecMatrix.clear();
+       dataMatrix.clear();
+       testMatrix = US_Matrix::construct( vecMatrix, dataMatrix, 3, 3 );
 
-        // Initialize as identity matrix
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                testMatrix[i][j] = (i == j) ? 1.0 : 0.0;
-            }
-        }
+       // Initialize as identity matrix
+       for ( int i = 0; i < 3; i++ )
+       {
+          for ( int j = 0; j < 3; j++ )
+          {
+             testMatrix[i][j] = ( i == j ) ? 1.0 : 0.0;
+          }
+       }
 
         // Set up test vectors
         testVec1 = {1.0, 2.0, 3.0};

@@ -80,6 +80,11 @@ int US_Analyte::load(
 
 int US_Analyte::load_db( const QString& load_guid, IUS_DB2* db )
 {
+   if ( db == nullptr )
+   {
+      message = QObject::tr( "Database is not connected" );
+      return IUS_DB2::NOT_CONNECTED;
+   }
    int error = IUS_DB2::OK;
 
    // Get analyteID
@@ -96,7 +101,13 @@ DEBUG_QUERY;
       return error;
    }
 
-   db->next();
+   if ( !db->next() )
+   {
+      message = QObject::tr( "Could not get analyteID" );
+      error   = db->lastErrno();
+      return error == IUS_DB2::OK ? IUS_DB2::NOROWS : error;
+   }
+
    analyteID = db->value( 0 ).toString();
 
    // Get analyte info;
@@ -113,9 +124,15 @@ DEBUG_QUERY;
       return error;
    }
 
-   db->next();
+   if ( !db->next() )
+   {
+      message = QObject::tr( "Could not get analyte info" );
+      error   = db->lastErrno();
+      return error == IUS_DB2::OK ? IUS_DB2::NOROWS : error;
+   }
 
-   analyteGUID = load_guid;;
+
+   analyteGUID    = load_guid;
    QString a_type = db->value( 1 ).toString();
    if ( a_type == "Protein" )    type = PROTEIN;
    else if ( a_type == "DNA" )   type = DNA;
@@ -131,24 +148,38 @@ DEBUG_QUERY;
    grad_form   = ( type == CARBOHYDRATE ) ?
                  US_Util::bool_flag( db->value( 7 ).toString() ) : false;
 
-   q.clear();
-   q << "get_nucleotide_info" << analyteID;
-   db->query( q );
-DEBUG_QUERY;
-   db->next();
-   
-   doubleStranded = US_Util::bool_flag( db->value( 0 ).toString() );
-   complement     = US_Util::bool_flag( db->value( 1 ).toString() );
-   _3prime        = US_Util::bool_flag( db->value( 2 ).toString() );
-   _5prime        = US_Util::bool_flag( db->value( 3 ).toString() );
-   sodium         = db->value( 4 ).toString().toDouble();
-   potassium      = db->value( 5 ).toString().toDouble();
-   lithium        = db->value( 6 ).toString().toDouble();
-   magnesium      = db->value( 7 ).toString().toDouble();
-   calcium        = db->value( 8 ).toString().toDouble();
+   // Nucleotide rows are required only for nucleic-acid analytes.
+   if ( type == DNA || type == RNA )
+   {
+      q.clear();
+      q << "get_nucleotide_info" << analyteID;
+      db->query( q );
+      DEBUG_QUERY;
+      error = db->lastErrno();
+      if ( error != IUS_DB2::OK )
+      {
+         message = QObject::tr( "Could not get nucleotide info" );
+         return error;
+      }
+      if ( !db->next() )
+      {
+         message = QObject::tr( "Could not get nucleotide info" );
+         error   = db->lastErrno();
+         return error == IUS_DB2::OK ? IUS_DB2::NOROWS : error;
+      }
 
-   if ( type == DNA  ||  type == RNA )
+      doubleStranded = US_Util::bool_flag( db->value( 0 ).toString() );
+      complement     = US_Util::bool_flag( db->value( 1 ).toString() );
+      _3prime        = US_Util::bool_flag( db->value( 2 ).toString() );
+      _5prime        = US_Util::bool_flag( db->value( 3 ).toString() );
+      sodium         = db->value( 4 ).toString().toDouble();
+      potassium      = db->value( 5 ).toString().toDouble();
+      lithium        = db->value( 6 ).toString().toDouble();
+      magnesium      = db->value( 7 ).toString().toDouble();
+      calcium        = db->value( 8 ).toString().toDouble();
+
       nucleotide();
+   }
 
    q.clear();
    /*

@@ -1,0 +1,32 @@
+// Generated from the explicit CMake unit-resource list and repository hashes.
+#ifndef UNIT_RESOURCES_H
+#define UNIT_RESOURCES_H
+#include <gtest/gtest.h>
+#include <QCryptographicHash>
+#include <QFile>
+#include <QFileInfo>
+#include "us_settings.h"
+
+inline ::testing::AssertionResult us3UnitResourcesIntact()
+{
+   const struct { const char* path; const char* sha256; } resources[] = {
+@resource_manifest@   };
+   for ( const auto& resource : resources )
+   {
+      const QString path = US_Settings::appBaseDir() + "/etc/" + resource.path;
+      QFile file( path );
+      if ( QFileInfo( path ).isSymLink() )
+         return ::testing::AssertionFailure() << path.toStdString() << ": expected a private copy, found a symlink";
+      if ( !file.open( QIODevice::ReadOnly ) )
+         return ::testing::AssertionFailure() << path.toStdString() << ": " << file.errorString().toStdString();
+      QCryptographicHash hash( QCryptographicHash::Sha256 );
+      if ( !hash.addData( &file ) )
+         return ::testing::AssertionFailure() << path.toStdString() << ": cannot read resource";
+      if ( hash.result().toHex() != resource.sha256 )
+         return ::testing::AssertionFailure() << path.toStdString() << ": SHA256 expected " << resource.sha256
+                                             << ", got " << hash.result().toHex().constData();
+   }
+   return ::testing::AssertionSuccess();
+}
+
+#endif // UNIT_RESOURCES_H

@@ -201,10 +201,9 @@ jobs:
             echo '' | tee test-log-$TIMESTAMP.txt
             echo '=== TEST SUITE STATISTICS ===' | tee test-log-$TIMESTAMP.txt
             echo "Total CTest cases: $(ctest -N 2>/dev/null | grep -c 'Test #' || echo 'Unknown')" | tee test-log-$TIMESTAMP.txt
-            if [ -f ./test/utils/test_us_utils ]; then
-              GTEST_COUNT=$(./test/utils/test_us_utils --gtest_list_tests 2>/dev/null | grep -c '\.' || echo 'Unknown')
-              echo "Total GTest cases: $GTEST_COUNT" | tee test-log-$TIMESTAMP.txt
-            fi
+            ctest -L gtest-unit-utils --show-only=json-v1 > unit-utils-tests.json
+            GTEST_COUNT=$(python3 -c 'import json; n = len(json.load(open("unit-utils-tests.json"))["tests"]); assert n > 0, "No utility unit tests discovered"; print(n)')
+            echo "Utility unit cases: $GTEST_COUNT" | tee test-log-$TIMESTAMP.txt
             echo "Build directory size: $(du -sh . | cut -f1)" | tee test-log-$TIMESTAMP.txt
             echo "Parallel jobs: $PARALLEL_JOBS" | tee test-log-$TIMESTAMP.txt
             echo '=============================' | tee test-log-$TIMESTAMP.txt

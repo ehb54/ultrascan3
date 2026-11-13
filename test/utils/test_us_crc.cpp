@@ -9,7 +9,7 @@ using namespace qt_matchers;
 class TestUSCrcUnit : public QtTestBase {
 protected:
     void SetUp() override {
-        QtTestBase::SetUp();
+       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
     }
 
     void TearDown() override {

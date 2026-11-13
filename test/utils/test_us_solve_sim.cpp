@@ -1,6 +1,7 @@
 //! \file test_us_solve_sim.cpp
 // test_us_solve_sim.cpp - Unit tests for US_SolveSim noise removal and NNLS
 #include "qt_test_base.h"
+#include "us3_test_io.h"
 #include "us_astfem_math.h"
 #include "us_constants.h"
 #include "us_math2.h"
@@ -77,7 +78,7 @@ class TestUSSolveSimNnlsNoise : public QtTestBase
 
       void SetUp() override
       {
-         QtTestBase::SetUp();
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
 
          // A columns:  6 s values x 3 D values, scan-major rows
          for ( int is = 0; is < 6; is++ )
@@ -472,7 +473,7 @@ class TestUSSolveSimCalcResiduals : public QtTestBase
 
       void SetUp() override
       {
-         QtTestBase::SetUp();
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
          ASSERT_TRUE( tmpdir.isValid() );
          buildDataSet();
          dsets << &dset;
@@ -751,11 +752,10 @@ TEST_F( TestUSSolveSimCalcResiduals, FailedSolveGivesNaNVariances )
    const QString                  unusable = blocker + "/tmp";
 
    const char* const              env_names[] = { "TMPDIR", "TMP", "TEMP" };
-   QList<QPair<bool, QByteArray>> saved_env;
+   Us3EnvironmentGuard            environment;
    for ( const char* name : env_names )
    {
-      saved_env << qMakePair( qEnvironmentVariableIsSet( name ), qgetenv( name ) );
-      qputenv( name, QFile::encodeName( unusable ) );
+      ASSERT_TRUE( environment.set( name, QFile::encodeName( unusable ) ) );
    }
    const QString saved_tmpdir = US_Settings::tmpDir();
    US_Settings::set_tmpDir( unusable );
@@ -773,17 +773,7 @@ TEST_F( TestUSSolveSimCalcResiduals, FailedSolveGivesNaNVariances )
    solvesim.calc_residuals( 0, 1, sim );
 
    US_Settings::set_tmpDir( saved_tmpdir );
-   for ( int ii = 0; ii < saved_env.size(); ii++ )
-   {
-      if ( saved_env[ii].first )
-      {
-         qputenv( env_names[ii], saved_env[ii].second );
-      }
-      else
-      {
-         qunsetenv( env_names[ii] );
-      }
-   }
+   EXPECT_TRUE( environment.restore() );
 
    EXPECT_TRUE( solvesim.solve_failed() );
    EXPECT_TRUE( qIsNaN( sim.variance ) );
@@ -1136,7 +1126,7 @@ class TestUSSolveSimCache : public TestUSSolveSimCalcResiduals
       //  of 8 s by 5 f/f0 values in interleaved subgrids, as us_2dsa makes
       void SetUp() override
       {
-         TestUSSolveSimCalcResiduals::SetUp();
+         ASSERT_NO_FATAL_FAILURE( TestUSSolveSimCalcResiduals::SetUp() );
 
          US_SolveSim::Simulation truth;
          truth.solutes << US_Solute( 2.5e-13, 1.25 ) << US_Solute( 4.5e-13, 1.6 ) << US_Solute( 6.5e-13, 2.1 );
@@ -1414,7 +1404,7 @@ class TestUSSolveSimNormal : public TestUSSolveSimCalcResiduals
    protected:
       void SetUp() override
       {
-         TestUSSolveSimCalcResiduals::SetUp();
+         ASSERT_NO_FATAL_FAILURE( TestUSSolveSimCalcResiduals::SetUp() );
 
          US_SolveSim::Simulation truth;
          truth.solutes << US_Solute( 2.5e-13, 1.25 ) << US_Solute( 4.5e-13, 1.6 ) << US_Solute( 6.5e-13, 2.1 );

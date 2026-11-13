@@ -13,8 +13,8 @@ using namespace qt_matchers;
 class TestUSDataIOUnit : public QtTestBase {
 protected:
     void SetUp() override {
-        QtTestBase::SetUp();
-        setupTestData();
+       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+       setupTestData();
     }
 
     void TearDown() override {
@@ -497,7 +497,7 @@ class TestUSDataIOEdits : public QtTestBase
    protected:
       void SetUp() override
       {
-         QtTestBase::SetUp();
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
          ASSERT_TRUE( tmp.isValid() ) << "Could not create a temporary directory";
       }
 

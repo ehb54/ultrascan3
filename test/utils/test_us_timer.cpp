@@ -19,8 +19,8 @@ using ::qt_matchers::QStringIsEmpty;
 class US_TimerTest : public QtTestBase {
 protected:
     void SetUp() override {
-        QtTestBase::SetUp();
-        timer = std::make_unique<US_Timer>();
+       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+       timer = std::make_unique<US_Timer>();
     }
 
     void TearDown() override {
@@ -427,8 +427,8 @@ TEST_F(US_TimerTest, ListTimesWithMixedTimers) {
 class US_TimerEdgeCaseTest : public QtTestBase {
 protected:
     void SetUp() override {
-        QtTestBase::SetUp();
-        timer = std::make_unique<US_Timer>();
+       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+       timer = std::make_unique<US_Timer>();
     }
 
     void TearDown() override {
@@ -520,8 +520,8 @@ TEST_F(US_TimerEdgeCaseTest, CaseSensitiveTimerNames) {
 class US_TimerErrorTest : public QtTestBase {
 protected:
     void SetUp() override {
-        QtTestBase::SetUp();
-        timer = std::make_unique<US_Timer>();
+       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+       timer = std::make_unique<US_Timer>();
     }
 
     void TearDown() override {
@@ -581,8 +581,8 @@ TEST_F(US_TimerErrorTest, StartAfterMultipleEnds) {
 class US_TimerSequenceTest : public QtTestBase {
 protected:
     void SetUp() override {
-        QtTestBase::SetUp();
-        timer = std::make_unique<US_Timer>();
+       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+       timer = std::make_unique<US_Timer>();
     }
 
     void TearDown() override {
@@ -640,7 +640,7 @@ TEST_F(US_TimerSequenceTest, OverlappingTimers) {
 class US_TimerResourceTest : public QtTestBase {
 protected:
     void SetUp() override {
-        QtTestBase::SetUp();
+       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
     }
 
     void TearDown() override {
@@ -684,8 +684,8 @@ TEST_F(US_TimerResourceTest, ConstructorDestructorStress) {
 class US_TimerOutputTest : public QtTestBase {
 protected:
     void SetUp() override {
-        QtTestBase::SetUp();
-        timer = std::make_unique<US_Timer>();
+       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+       timer = std::make_unique<US_Timer>();
     }
 
     void TearDown() override {

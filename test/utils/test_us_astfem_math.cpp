@@ -12,7 +12,7 @@ using ::testing::Eq;
 class US_AstfemMathTest : public QtTestBase {
 protected:
     void SetUp() override {
-        QtTestBase::SetUp();
+       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
     }
 
     void TearDown() override {
