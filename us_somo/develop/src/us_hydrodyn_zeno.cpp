@@ -15359,7 +15359,7 @@ bool US_Hydrodyn::calc_zeno()
                   } else {
                      zeno_model_list += QString( ",%1" ).arg( current_model + 1 );
                   }
-                  zeno_results.method = QString( "Zeno, extrapolated from SES meshes (spacings %1 A)" ).arg( spacings.join( ", " ) );
+                  zeno_results.method = QString( "ZENO, extrapolated from SES meshes (spacings %1 A)" ).arg( spacings.join( ", " ) );
                   zeno_results.num_models++;
 
                   zeno_results.mass          += last.mass;
