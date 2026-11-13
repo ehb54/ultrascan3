@@ -1782,7 +1782,11 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          }
          else if ( have_ref_err )
          {
-            merge_idx = (int) npts - win;
+            // No window passing means no merge point: do NOT splice. (This used to fall back silently
+            // to the last 50 points and report that as the merge point; on real dilution series the
+            // test rarely passes, so most "automatic" merges were that fallback.)
+            merge_idx = (int) npts;
+            double best_chi2 = 1e300; int best_j = -1;
             for ( int j = 0; j + win <= (int) npts; j++ )
             {
                double num = 0e0; int m = 0;
@@ -1794,31 +1798,52 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                      num += r * r; m++;
                   }
                }
-               if ( m > 0 && num / (double) m <= merge_chi2 ) { merge_idx = j; break; }
+               if ( m > 0 )
+               {
+                  double c2 = num / (double) m;
+                  if ( c2 < best_chi2 ) { best_chi2 = c2; best_j = j; }
+                  if ( c2 <= merge_chi2 ) { merge_idx = j; break; }
+               }
             }
-            merge_q = q[ merge_idx ];
-            editor_msg( "black",
-                       QString( us_tr( "Reference merge point: q = %1 (index %2 of %3); extrapolating below, "
-                                       "taking the reference curve above (reduced chi^2 <= %4)\n" ) )
-                       .arg( merge_q ).arg( merge_idx ).arg( (int) npts ).arg( merge_chi2 ) );
-            // A merge point at (or near) the start means the output is essentially the raw reference
-            // curve rather than the extrapolation -- the de-noising and the c=0 correction are both
-            // thrown away. That is almost never intended, so say so rather than returning it quietly.
-            if ( merge_idx * 10 < (int) npts )
+            if ( merge_idx >= (int) npts )
             {
+               merge_q = 0e0;
                extrap_msg(
-                          QString( us_tr( "Reference splice: the merge point is at index %1 of %2, so almost the whole "
-                                          "output is the reference curve taken verbatim, not the extrapolation. This "
-                                          "usually means the reference agrees with the extrapolation everywhere -- "
-                                          "typically because it is not the highest concentration, or its error bars are "
-                                          "large. Consider turning the splice off, or using the highest-concentration "
-                                          "curve as the reference." ) )
-                          .arg( merge_idx ).arg( (int) npts ) );
+                          QString( us_tr( "Reference splice: no merge point found -- the extrapolation never agrees with "
+                                          "the reference curve within the reference's errors (best %1-point window: "
+                                          "reduced chi^2 %2 at q = %3; threshold %4). The splice was skipped: the whole "
+                                          "curve is extrapolated. To splice anyway, set the switchover q; the log then "
+                                          "reports how well the two curves match there." ) )
+                          .arg( win ).arg( best_chi2, 0, 'g', 3 )
+                          .arg( best_j >= 0 ? q[ best_j ] : 0e0, 0, 'f', 4 ).arg( merge_chi2 ) );
+            }
+            else
+            {
+               merge_q = q[ merge_idx ];
+               editor_msg( "black",
+                          QString( us_tr( "Reference merge point: q = %1 (index %2 of %3); extrapolating below, "
+                                          "taking the reference curve above (reduced chi^2 <= %4)\n" ) )
+                          .arg( merge_q ).arg( merge_idx ).arg( (int) npts ).arg( merge_chi2 ) );
+               // A merge point at (or near) the start means the output is essentially the raw reference
+               // curve rather than the extrapolation -- the de-noising and the c=0 correction are both
+               // thrown away. That is almost never intended, so say so rather than returning it quietly.
+               if ( merge_idx * 10 < (int) npts )
+               {
+                  extrap_msg(
+                             QString( us_tr( "Reference splice: the merge point is at index %1 of %2, so almost the whole "
+                                             "output is the reference curve taken verbatim, not the extrapolation. This "
+                                             "usually means the reference agrees with the extrapolation everywhere -- "
+                                             "typically because it is not the highest concentration, or its error bars are "
+                                             "large. Consider turning the splice off, or using the highest-concentration "
+                                             "curve as the reference." ) )
+                             .arg( merge_idx ).arg( (int) npts ) );
+               }
             }
          }
          else
          {
-            merge_idx = (int) npts - win;
+            // as above: no passing window means no merge point and no splice (no silent fallback)
+            merge_idx = (int) npts;
             for ( int j = 0; j + win <= (int) npts; j++ )
             {
                vector < double > wex, wrf;
@@ -1836,11 +1861,24 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                   merge_idx = j; break;
                }
             }
-            merge_q = q[ merge_idx ];
-            editor_msg( "black",
-                       QString( us_tr( "Reference merge point: q = %1 (index %2 of %3); no reference errors, "
-                                       "CORMAP alpha = %4\n" ) )
-                       .arg( merge_q ).arg( merge_idx ).arg( (int) npts ).arg( pvalue_alpha ) );
+            if ( merge_idx >= (int) npts )
+            {
+               merge_q = 0e0;
+               extrap_msg(
+                          QString( us_tr( "Reference splice: no merge point found -- the reference curve has no error "
+                                          "column, and the CORMAP test (alpha = %1) never accepts the extrapolation and "
+                                          "the reference as the same curve. The splice was skipped: the whole curve is "
+                                          "extrapolated. To splice anyway, set the switchover q." ) )
+                          .arg( pvalue_alpha ) );
+            }
+            else
+            {
+               merge_q = q[ merge_idx ];
+               editor_msg( "black",
+                          QString( us_tr( "Reference merge point: q = %1 (index %2 of %3); no reference errors, "
+                                          "CORMAP alpha = %4\n" ) )
+                          .arg( merge_q ).arg( merge_idx ).arg( (int) npts ).arg( pvalue_alpha ) );
+            }
          }
       }
 
@@ -1872,6 +1910,48 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
             editor_msg( "black",
                        QString( us_tr( "Reference splice continuity factor: %1 (reference scaled to join the "
                                        "extrapolation smoothly at the merge point).\n" ) ).arg( ref_cont, 0, 'f', 4 ) );
+         }
+
+         // Diagnostic: how well do the two curves actually match just below the switchover? An
+         // inverse-variance mean of the extrapolation / reference ratio with its standard error over
+         // the same window. On real dilution series the two often differ systematically even where
+         // interparticle effects should be small (per-curve scale or background differences, which the
+         // extrapolation to c = 0 magnifies), and the continuity factor then silently absorbs that.
+         double sw = 0e0, swr = 0e0; int nr = 0;
+         for ( int i = w0; i < merge_idx; i++ )
+         {
+            if ( grid_to_out[ i ] < 0 || i >= (int) Iref_full.size() || i >= (int) ref_sd.size() ) { continue; }
+            int    k  = grid_to_out[ i ];
+            double rn = Iref_full[ i ] / ( c_ref > 0e0 ? c_ref : 1e0 );
+            double sn = ref_sd[ i ]    / ( c_ref > 0e0 ? c_ref : 1e0 );
+            if ( rn == 0e0 || out_I0[ k ] == 0e0 || !( sn > 0e0 ) || !( out_I0_err[ k ] > 0e0 ) ) { continue; }
+            double ratio = out_I0[ k ] / rn;
+            double sr    = qAbs( ratio ) * std::sqrt( std::pow( out_I0_err[ k ] / out_I0[ k ], 2 ) + std::pow( sn / rn, 2 ) );
+            if ( !( sr > 0e0 ) || us_isnan( sr ) ) { continue; }
+            sw += 1e0 / ( sr * sr ); swr += ratio / ( sr * sr ); nr++;
+         }
+         if ( nr >= 3 && sw > 0e0 )
+         {
+            double rmean = swr / sw, rse = 1e0 / std::sqrt( sw );
+            editor_msg( "black",
+                       QString( us_tr( "Reference splice check: just below the switchover (q %1 to %2, %3 points) the "
+                                       "extrapolation is %4 +/- %5 times the reference (inverse-variance mean).\n" ) )
+                       .arg( q[ w0 ], 0, 'f', 4 ).arg( q[ merge_idx - 1 ], 0, 'f', 4 ).arg( nr )
+                       .arg( rmean, 0, 'f', 3 ).arg( rse, 0, 'f', 3 ) );
+            double dev = qAbs( rmean - 1e0 );
+            if ( dev > 3e0 * rse && dev > 5e-2 )
+            {
+               editor_msg( "dark red",
+                          QString( us_tr( "Reference splice: the extrapolation and the reference disagree by %1% just "
+                                          "below the switchover (ratio %2 +/- %3), and the spliced high-q tail is rescaled "
+                                          "by %4 to join smoothly, so its level follows the extrapolation there. A "
+                                          "difference this large means either the switchover q is still inside the "
+                                          "concentration-dependent region, or the input curves differ in scale or "
+                                          "background (concentrations, buffer subtraction), which the extrapolation to "
+                                          "c = 0 magnifies. Check before relying on the high-q part.\n" ) )
+                          .arg( 100e0 * ( rmean - 1e0 ), 0, 'f', 0 ).arg( rmean, 0, 'f', 3 ).arg( rse, 0, 'f', 3 )
+                          .arg( ref_cont, 0, 'f', 3 ) );
+            }
          }
       }
 
@@ -2061,7 +2141,9 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       ? QString( us_tr( "output on the reference absolute scale (conc %1)" ) ).arg( ref_conc )
       : QString( us_tr( "normalized (tagged Conc:1)" ) );
    QString merge_note = merge_ref
-      ? QString( us_tr( "; reference curve spliced above q = %1" ) ).arg( merge_q )
+      ? ( merge_q > 0e0
+          ? QString( us_tr( "; reference curve spliced above q = %1" ) ).arg( merge_q )
+          : QString( us_tr( "; reference splice requested but skipped (no merge point found)" ) ) )
       : QString( us_tr( "; no high-q reference splice" ) );
    editor_msg( "black",
               QString( us_tr( "Added zero-concentration curve \"%1\" (%2 q-points, %3 skipped). "

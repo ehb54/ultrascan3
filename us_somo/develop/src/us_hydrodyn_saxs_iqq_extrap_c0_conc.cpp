@@ -156,11 +156,13 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    cb_merge->setMinimumHeight( minHeight1 );
    cb_merge->setToolTip(
                          us_tr( "Unchecked: the extrapolated curve is used at every q.\n\n"
-                                "Checked: above an automatically-located merge point (the first q where the\n"
-                                "extrapolation agrees with the highest-concentration reference within its errors),\n"
-                                "the reference curve is copied verbatim, carrying its error bars -- replacing the\n"
-                                "noisy high-q extrapolated tail with the cleaner reference data (the ATSAS almerge\n"
-                                "idea). Independent of the scale option above." ) );
+                                "Checked: above a merge point the reference curve is used instead, with its error\n"
+                                "bars -- replacing the noisy high-q extrapolated tail with the cleaner reference data\n"
+                                "(the ATSAS almerge idea). The reference is scaled to join the extrapolation at the\n"
+                                "merge point; the log reports how well the two match there. The merge point is the\n"
+                                "first q where the extrapolation agrees with the reference within the reference's\n"
+                                "errors, or the switchover q below. If no such q exists, nothing is spliced and the\n"
+                                "log says so. Independent of the scale option above." ) );
 
    // Manual splice switchover: pin the merge q instead of auto-locating it. Blank = automatic.
    lbl_merge_q = new QLabel( us_tr( "   switchover q (blank = auto):" ), this );
@@ -177,10 +179,11 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    le_merge_q->setMinimumHeight( minHeight1 );
    le_merge_q->setToolTip(
                          us_tr( "Leave blank to locate the switchover automatically (the first q where\n"
-                                "the extrapolation agrees with the reference within its errors).\n\n"
-                                "Enter a q value to pin it there instead -- useful for testing a specific\n"
-                                "cut, or when the automatic point sits where the regularization has\n"
-                                "distorted the curve. Only used when the high-q splice is enabled." ) );
+                                "the extrapolation agrees with the reference within its errors; if there is\n"
+                                "none, nothing is spliced).\n\n"
+                                "Enter a q value to pin it there instead -- needed on many real dilution series,\n"
+                                "where the automatic test finds no agreement. Only used when the high-q splice\n"
+                                "is enabled." ) );
 
    // Reference-curve selection. Default = automatic (highest concentration), which is the right
    // default because intensity scales with concentration, so the top curve normally has the best

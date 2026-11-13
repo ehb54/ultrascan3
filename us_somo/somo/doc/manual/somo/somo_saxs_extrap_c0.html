@@ -176,20 +176,34 @@ exactly the infinite-dilution intensity on the reference scale, this is a pure r
 <li><b>Splice reference curve at high q</b> (the ATSAS <i>almerge</i> idea; Petoukhov
 <i>et al.</i>, 2012; Franke <i>et al.</i>, 2017). Apply the extrapolation only in the
 low-<i>q</i> region where the curves show a real concentration dependence, and above a
-<b>merging point</b> take the highest-concentration reference curve verbatim &mdash; replacing
-the noisy high-<i>q</i> extrapolated tail (a per-point fit there only tracks noise and can go
-negative) with the reference's stable, positive data, and carrying its error bars there. The
-merging point is found automatically as the first <i>q</i> from which the extrapolation agrees
+<b>merging point</b> use the reference curve instead &mdash; replacing the noisy high-<i>q</i>
+extrapolated tail (a per-point fit there only tracks noise and can go negative) with the reference's
+stable data, and carrying its error bars there. The reference is scaled to join the extrapolation
+smoothly: it is multiplied by a <b>continuity factor</b>, the median ratio of extrapolation to
+reference over the 25 points just below the merge.
+The merging point is found automatically as the first <i>q</i> from which the extrapolation agrees
 with the reference to within the reference's own errors &mdash; a reduced
 <i>&chi;</i><sup>2</sup> of (<i>I</i><sub>ex</sub>&nbsp;&minus;&nbsp;<i>I</i><sub>ref</sub>)/<i>&sigma;</i><sub>ref</sub>
-below a threshold (default 4, ~2&sigma; agreement; <code>saxs_extrap_c0_merge_chi2</code>).
-This error-band test is preferred to a sign-run (CORMAP) test; CORMAP
-(<code>saxs_extrap_c0_pvalue_alpha</code>, default 0.01) is the fallback when the reference has no
-error column. Below the merge the error bars are the propagated intercept
-standard error; at and above it (where the output <i>is</i> the reference) they are the
-reference's own. The <b>switchover q</b> field (blank = automatic) pins the merge to a chosen
-<i>q</i> instead of locating it automatically &mdash; useful for testing a specific cut, or for
-overriding an automatic placement that looks wrong.</li>
+over a 50-point window below a threshold (default 4, ~2&sigma; agreement;
+<code>saxs_extrap_c0_merge_chi2</code>); CORMAP (<code>saxs_extrap_c0_pvalue_alpha</code>, default
+0.01) is used instead when the reference has no error column. <b>If no such point exists, nothing is
+spliced</b>: a message says so, the whole curve is extrapolated, and the output name carries
+<code>_merge</code> without a <code>_q</code> value. On many real dilution series the automatic test
+finds no agreement, because the extrapolation to <i>c</i>&nbsp;=&nbsp;0 magnifies small scale or
+background (buffer-subtraction) differences between the input curves, so the two curves differ
+systematically even at high <i>q</i>. The <b>switchover q</b> field (blank = automatic) then lets you
+pin the merge to a chosen <i>q</i>. Below the merge the error bars are the propagated intercept
+standard error; at and above it they are the reference's own, scaled by the continuity factor.
+Because the extrapolation is usually much less certain than a single measured curve, the error bars
+step down at the merge; that step reflects a real difference in information.
+
+<p>Whenever a splice is made, the log reports the <b>splice check</b>: the inverse-variance mean
+ratio of extrapolation to reference, with its standard error, over the points just below the
+merge. If the two differ by more than 5% and more than three standard errors, a warning says so,
+because the continuity factor then rescales the whole high-<i>q</i> tail by that amount. A
+difference that large means either the switchover <i>q</i> is still inside the
+concentration-dependent region, or the input curves differ in scale or background; check them
+before relying on the high-<i>q</i> part.</li>
 </ul>
 
 <p>The two combine to give four behaviors: neither box = the classic normalized <code>Conc:1</code>
@@ -584,7 +598,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on November 12, 2026.
+Last modified on November 13, 2026.
 </font>
 </body>
 </html>
