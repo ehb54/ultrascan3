@@ -103,6 +103,8 @@ TEST( UsDb2Query, ARefusedProcedureNameFailsTheQueryWithItsOwnError )
    EXPECT_FALSE( db.next() );
 }
 
+// NO_DB compiles blob transfers as no-op stubs; this validates the DB adapter.
+#ifndef NO_DB
 TEST( UsDb2Query, TheBlobTransfersRefuseAnInvalidProcedureName )
 {
    // A readable, non-empty file, so only the procedure name can be refused.
@@ -120,6 +122,8 @@ TEST( UsDb2Query, TheBlobTransfersRefuseAnInvalidProcedureName )
    EXPECT_EQ( db.readBlobFromDB( file.fileName(), "od'd", 1 ), IUS_DB2::DBERROR );
    EXPECT_EQ( db.lastError(), QObject::tr( US_DB2::invalidProcedureMessage ).arg( "od'd" ) );
 }
+
+#endif
 
 TEST( UsDb2Query, AnEmptyArgumentIsStillPassedAsAnEmptyLiteral )
 {

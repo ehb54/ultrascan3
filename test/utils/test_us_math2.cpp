@@ -12,34 +12,39 @@
 
 using namespace qt_matchers;
 
-class TestUSMath2Unit : public QtTestBase {
-protected:
-    void SetUp() override {
-        QtTestBase::SetUp();
-        setupTestData();
-    }
+class TestUSMath2Unit : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+         setupTestData();
+      }
 
-    void TearDown() override {
-        QtTestBase::TearDown();
-    }
+      void TearDown() override
+      {
+         QtTestBase::TearDown();
+      }
 
-    void setupTestData() {
-        // Set up test data arrays
-        for (int i = 0; i < 10; i++) {
-            testX.append(i * 1.0);
-            testY.append(i * 2.0 + 1.0); // y = 2x + 1
-        }
+      void setupTestData()
+      {
+         // Set up test data arrays
+         for ( int i = 0; i < 10; i++ )
+         {
+            testX.append( i * 1.0 );
+            testY.append( i * 2.0 + 1.0 ); // y = 2x + 1
+         }
 
-        testXPtr = testX.data();
-        testYPtr = testY.data();
-    }
+         testXPtr = testX.data();
+         testYPtr = testY.data();
+      }
 
-    QVector<double> testX;
-    QVector<double> testY;
-    double* testXPtr;
-    double* testYPtr;
+      QVector<double>         testX;
+      QVector<double>         testY;
+      double*                 testXPtr;
+      double*                 testYPtr;
 
-    static constexpr double TOLERANCE = 1e-6;
+      static constexpr double TOLERANCE = 1e-6;
 };
 
 // ============================================================================

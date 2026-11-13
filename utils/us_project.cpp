@@ -146,10 +146,20 @@ void US_Project::readProjectInfo( QXmlStreamReader& xml )
 // Function to load a project from the db
 int US_Project::readFromDB  ( int projectID, IUS_DB2* db )
 {
+   if ( db == nullptr )
+   {
+      return IUS_DB2::NOT_CONNECTED;
+   }
+
    // Try to get project info
    QStringList q( "get_project_info" );
    q  << QString::number( projectID );
    db->query( q );
+   const int queryStatus = db->lastErrno();
+   if ( queryStatus != IUS_DB2::OK )
+   {
+      return queryStatus == IUS_DB2::NOROWS ? IUS_DB2::NO_PROJECT : queryStatus;
+   }
 
    if ( db->next() )
    {
@@ -172,7 +182,10 @@ int US_Project::readFromDB  ( int projectID, IUS_DB2* db )
    }
 
    else
-      return IUS_DB2::NO_PROJECT;
+   {
+      const int rowStatus = db->lastErrno();
+      return rowStatus == IUS_DB2::OK || rowStatus == IUS_DB2::NOROWS ? IUS_DB2::NO_PROJECT : rowStatus;
+   }
 
    saveStatus = DB_ONLY;
 
