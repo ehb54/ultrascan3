@@ -17,66 +17,71 @@ using ::testing::StrictMock;
 // CORE FUNCTIONALITY TESTS
 // =============================================================================
 
-class US_TimeStateTest : public QtTestBase {
-protected:
-    void SetUp() override {
-       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
-       timeState = std::make_unique<US_TimeState>();
-       tempDir   = std::make_unique<QTemporaryDir>();
-       ASSERT_TRUE( tempDir->isValid() );
-    }
+class US_TimeStateTest : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+         timeState = std::make_unique<US_TimeState>();
+         tempDir   = std::make_unique<QTemporaryDir>();
+         ASSERT_TRUE( tempDir->isValid() );
+      }
 
-    void TearDown() override {
-        timeState.reset();
-        tempDir.reset();
-        QtTestBase::TearDown();
-    }
+      void TearDown() override
+      {
+         timeState.reset();
+         tempDir.reset();
+         QtTestBase::TearDown();
+      }
 
-    QString getTempFilePath() {
-        return tempDir->path() + "/test_file.tmst";
-    }
+      QString getTempFilePath()
+      {
+         return tempDir->path() + "/test_file.tmst";
+      }
 
-    void createValidFiles(const QString& tmstPath) {
-        QString xmlPath = QString(tmstPath).replace(".tmst", ".xml");
+      void createValidFiles( const QString& tmstPath )
+      {
+         QString xmlPath = QString( tmstPath ).replace( ".tmst", ".xml" );
 
-        // Create TMST file
-        QFile tmstFile(tmstPath);
-        ASSERT_TRUE(tmstFile.open(QIODevice::WriteOnly));
-        QDataStream stream(&tmstFile);
-        stream.writeRawData("USTS", 4);
-        stream.writeRawData("2.1", 3);
-        int record = 42;
-        stream.writeRawData(reinterpret_cast<const char*>(&record), 4);
-        tmstFile.close();
+         // Create TMST file
+         QFile   tmstFile( tmstPath );
+         ASSERT_TRUE( tmstFile.open( QIODevice::WriteOnly ) );
+         QDataStream stream( &tmstFile );
+         stream.writeRawData( "USTS", 4 );
+         stream.writeRawData( "2.1", 3 );
+         int record = 42;
+         stream.writeRawData( reinterpret_cast<const char*>( &record ), 4 );
+         tmstFile.close();
 
-        // Create XML file
-        QFile xmlFile(xmlPath);
-        ASSERT_TRUE(xmlFile.open(QIODevice::WriteOnly | QIODevice::Text));
-        QXmlStreamWriter xml(&xmlFile);
-        xml.setAutoFormatting(true);
-        xml.writeStartDocument();
-        xml.writeDTD("<!DOCTYPE US_TimeState>");
-        xml.writeStartElement("TimeState");
-        xml.writeAttribute("version", "2.1");
-        xml.writeAttribute("import_type", "XLA");
-        xml.writeStartElement("file");
-        xml.writeAttribute("time_count", "1");
-        xml.writeAttribute("constant_incr", "1");
-        xml.writeAttribute("time_increment", "1.0");
-        xml.writeAttribute("first_time", "0.0");
-        xml.writeAttribute("ss_reso", "100");
-        xml.writeStartElement("value");
-        xml.writeAttribute("key", "testkey");
-        xml.writeAttribute("format", "I4");
-        xml.writeEndElement();
-        xml.writeEndElement();
-        xml.writeEndElement();
-        xml.writeEndDocument();
-        xmlFile.close();
-    }
+         // Create XML file
+         QFile xmlFile( xmlPath );
+         ASSERT_TRUE( xmlFile.open( QIODevice::WriteOnly | QIODevice::Text ) );
+         QXmlStreamWriter xml( &xmlFile );
+         xml.setAutoFormatting( true );
+         xml.writeStartDocument();
+         xml.writeDTD( "<!DOCTYPE US_TimeState>" );
+         xml.writeStartElement( "TimeState" );
+         xml.writeAttribute( "version", "2.1" );
+         xml.writeAttribute( "import_type", "XLA" );
+         xml.writeStartElement( "file" );
+         xml.writeAttribute( "time_count", "1" );
+         xml.writeAttribute( "constant_incr", "1" );
+         xml.writeAttribute( "time_increment", "1.0" );
+         xml.writeAttribute( "first_time", "0.0" );
+         xml.writeAttribute( "ss_reso", "100" );
+         xml.writeStartElement( "value" );
+         xml.writeAttribute( "key", "testkey" );
+         xml.writeAttribute( "format", "I4" );
+         xml.writeEndElement();
+         xml.writeEndElement();
+         xml.writeEndElement();
+         xml.writeEndDocument();
+         xmlFile.close();
+      }
 
-    std::unique_ptr<US_TimeState> timeState;
-    std::unique_ptr<QTemporaryDir> tempDir;
+      std::unique_ptr<US_TimeState>  timeState;
+      std::unique_ptr<QTemporaryDir> tempDir;
 };
 
 // Constructor
@@ -328,19 +333,22 @@ TEST_F(US_TimeStateTest, ErrorMessageUnknown) {
 // DATABASE TESTS
 // =============================================================================
 
-class US_TimeStateDbTest : public QtTestBase {
-protected:
-    void SetUp() override {
-       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
-       mockDb = std::make_unique<StrictMock<US_DB2_Mock>>();
-    }
+class US_TimeStateDbTest : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+         mockDb = std::make_unique<StrictMock<US_DB2_Mock>>();
+      }
 
-    void TearDown() override {
-        mockDb.reset();
-        QtTestBase::TearDown();
-    }
+      void TearDown() override
+      {
+         mockDb.reset();
+         QtTestBase::TearDown();
+      }
 
-    std::unique_ptr<StrictMock<US_DB2_Mock>> mockDb;
+      std::unique_ptr<StrictMock<US_DB2_Mock>> mockDb;
 };
 
 TEST_F(US_TimeStateDbTest, DbCreateNullDatabase) {

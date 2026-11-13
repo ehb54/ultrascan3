@@ -16,19 +16,22 @@ using ::qt_matchers::QStringContains;
 using ::qt_matchers::QStringEq;
 using ::qt_matchers::QStringIsEmpty;
 
-class US_TimerTest : public QtTestBase {
-protected:
-    void SetUp() override {
-       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
-       timer = std::make_unique<US_Timer>();
-    }
+class US_TimerTest : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+         timer = std::make_unique<US_Timer>();
+      }
 
-    void TearDown() override {
-        timer.reset();
-        QtTestBase::TearDown();
-    }
+      void TearDown() override
+      {
+         timer.reset();
+         QtTestBase::TearDown();
+      }
 
-    std::unique_ptr<US_Timer> timer;
+      std::unique_ptr<US_Timer> timer;
 };
 
 // Constructor Tests
@@ -424,19 +427,22 @@ TEST_F(US_TimerTest, ListTimesWithMixedTimers) {
 }
 
 // Edge Case Tests
-class US_TimerEdgeCaseTest : public QtTestBase {
-protected:
-    void SetUp() override {
-       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
-       timer = std::make_unique<US_Timer>();
-    }
+class US_TimerEdgeCaseTest : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+         timer = std::make_unique<US_Timer>();
+      }
 
-    void TearDown() override {
-        timer.reset();
-        QtTestBase::TearDown();
-    }
+      void TearDown() override
+      {
+         timer.reset();
+         QtTestBase::TearDown();
+      }
 
-    std::unique_ptr<US_Timer> timer;
+      std::unique_ptr<US_Timer> timer;
 };
 
 TEST_F(US_TimerEdgeCaseTest, VeryShortTimeMeasurement) {
@@ -517,19 +523,22 @@ TEST_F(US_TimerEdgeCaseTest, CaseSensitiveTimerNames) {
 }
 
 // Error Condition Tests
-class US_TimerErrorTest : public QtTestBase {
-protected:
-    void SetUp() override {
-       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
-       timer = std::make_unique<US_Timer>();
-    }
+class US_TimerErrorTest : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+         timer = std::make_unique<US_Timer>();
+      }
 
-    void TearDown() override {
-        timer.reset();
-        QtTestBase::TearDown();
-    }
+      void TearDown() override
+      {
+         timer.reset();
+         QtTestBase::TearDown();
+      }
 
-    std::unique_ptr<US_Timer> timer;
+      std::unique_ptr<US_Timer> timer;
 };
 
 TEST_F(US_TimerErrorTest, StartNonExistentTimer) {
@@ -578,19 +587,22 @@ TEST_F(US_TimerErrorTest, StartAfterMultipleEnds) {
 }
 
 // Method Sequence Tests
-class US_TimerSequenceTest : public QtTestBase {
-protected:
-    void SetUp() override {
-       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
-       timer = std::make_unique<US_Timer>();
-    }
+class US_TimerSequenceTest : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+         timer = std::make_unique<US_Timer>();
+      }
 
-    void TearDown() override {
-        timer.reset();
-        QtTestBase::TearDown();
-    }
+      void TearDown() override
+      {
+         timer.reset();
+         QtTestBase::TearDown();
+      }
 
-    std::unique_ptr<US_Timer> timer;
+      std::unique_ptr<US_Timer> timer;
 };
 
 TEST_F(US_TimerSequenceTest, CorrectSequenceInitStartEnd) {
@@ -637,15 +649,18 @@ TEST_F(US_TimerSequenceTest, OverlappingTimers) {
 }
 
 // Memory and Resource Tests
-class US_TimerResourceTest : public QtTestBase {
-protected:
-    void SetUp() override {
-       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
-    }
+class US_TimerResourceTest : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+      }
 
-    void TearDown() override {
-        QtTestBase::TearDown();
-    }
+      void TearDown() override
+      {
+         QtTestBase::TearDown();
+      }
 };
 
 TEST_F(US_TimerResourceTest, MultipleTimerInstances) {
@@ -681,19 +696,22 @@ TEST_F(US_TimerResourceTest, ConstructorDestructorStress) {
 }
 
 // Format and Output Tests
-class US_TimerOutputTest : public QtTestBase {
-protected:
-    void SetUp() override {
-       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
-       timer = std::make_unique<US_Timer>();
-    }
+class US_TimerOutputTest : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+         timer = std::make_unique<US_Timer>();
+      }
 
-    void TearDown() override {
-        timer.reset();
-        QtTestBase::TearDown();
-    }
+      void TearDown() override
+      {
+         timer.reset();
+         QtTestBase::TearDown();
+      }
 
-    std::unique_ptr<US_Timer> timer;
+      std::unique_ptr<US_Timer> timer;
 };
 
 TEST_F(US_TimerOutputTest, OutputFormatConsistency) {

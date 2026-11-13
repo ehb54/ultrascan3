@@ -3,51 +3,63 @@
 #include <algorithm>
 #include <cmath>
 
-class US_StiffBaseTest : public QtTestBase {
-protected:
-    void SetUp() override {
-       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
-       stiffBase = std::make_unique<US_StiffBase>();
-    }
+class US_StiffBaseTest : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+         stiffBase = std::make_unique<US_StiffBase>();
+      }
 
-    void TearDown() override {
-        stiffBase.reset();
-        QtTestBase::TearDown();
-    }
+      void TearDown() override
+      {
+         stiffBase.reset();
+         QtTestBase::TearDown();
+      }
 
-    std::unique_ptr<US_StiffBase> stiffBase;
+      std::unique_ptr<US_StiffBase> stiffBase;
 
-    // Helper function to create a simple test matrix
-    double** createMatrix(int size) {
-        double** matrix = new double*[size];
-        for (int i = 0; i < size; i++) {
+      // Helper function to create a simple test matrix
+      double**                      createMatrix( int size )
+      {
+         double** matrix = new double*[size];
+         for ( int i = 0; i < size; i++ )
+         {
             matrix[i] = new double[size];
-            for (int j = 0; j < size; j++) {
-                matrix[i][j] = 0.0;
+            for ( int j = 0; j < size; j++ )
+            {
+               matrix[i][j] = 0.0;
             }
-        }
-        return matrix;
-    }
+         }
+         return matrix;
+      }
 
-    // Helper function to clean up matrix
-    void deleteMatrix(double** matrix, int size) {
-        for (int i = 0; i < size; i++) {
+      // Helper function to clean up matrix
+      void deleteMatrix( double** matrix, int size )
+      {
+         for ( int i = 0; i < size; i++ )
+         {
             delete[] matrix[i];
-        }
-        delete[] matrix;
-    }
+         }
+         delete[] matrix;
+      }
 
-    // Helper to check if matrix is symmetric within tolerance
-    bool isMatrixSymmetric(double** matrix, int size, double tolerance = 1e-10) {
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                if (std::abs(matrix[i][j] - matrix[j][i]) > tolerance) {
-                    return false;
-                }
+      // Helper to check if matrix is symmetric within tolerance
+      bool isMatrixSymmetric( double** matrix, int size, double tolerance = 1e-10 )
+      {
+         for ( int i = 0; i < size; i++ )
+         {
+            for ( int j = 0; j < size; j++ )
+            {
+               if ( std::abs( matrix[i][j] - matrix[j][i] ) > tolerance )
+               {
+                  return false;
+               }
             }
-        }
-        return true;
-    }
+         }
+         return true;
+      }
 };
 
 TEST_F(US_StiffBaseTest, ConstructorInitializesCorrectly) {

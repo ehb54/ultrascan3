@@ -17,73 +17,78 @@ using ::testing::NiceMock;
 using ::testing::StrictMock;
 using ::testing::InSequence;
 
-class US_ProjectTest : public Us3FileTestBase {
-protected:
-    void SetUp() override {
-       ASSERT_NO_FATAL_FAILURE( Us3FileTestBase::SetUp() );
-       project = std::make_unique<US_Project>();
-       mockDb  = std::make_unique<NiceMock<US_DB2_Mock>>();
-    }
+class US_ProjectTest : public Us3FileTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( Us3FileTestBase::SetUp() );
+         project = std::make_unique<US_Project>();
+         mockDb  = std::make_unique<NiceMock<US_DB2_Mock>>();
+      }
 
-    void TearDown() override {
-        project.reset();
-        mockDb.reset();
-        Us3FileTestBase::TearDown();
-    }
+      void TearDown() override
+      {
+         project.reset();
+         mockDb.reset();
+         Us3FileTestBase::TearDown();
+      }
 
-    std::unique_ptr<US_Project> project;
-    std::unique_ptr<NiceMock<US_DB2_Mock>> mockDb;
+      std::unique_ptr<US_Project>            project;
+      std::unique_ptr<NiceMock<US_DB2_Mock>> mockDb;
 
-    // Helper to create a valid project XML file
-    QString createTestProjectXml(const QString& guid = "test-guid-123", int id = 42) {
-        return QString(
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                "<!DOCTYPE US_Project>\n"
-                "<ProjectData version=\"1.0\">\n"
-                "<project id=\"%1\" guid=\"%2\">\n"
-                "<goals>Test research goals</goals>\n"
-                "<molecules>Test proteins and DNA</molecules>\n"
-                "<purity>95%</purity>\n"
-                "<expense>Moderate expense</expense>\n"
-                "<bufferComponents>Tris, NaCl, EDTA</bufferComponents>\n"
-                "<saltInformation>150mM NaCl acceptable</saltInformation>\n"
-                "<AUC_questions>What is the binding affinity?</AUC_questions>\n"
-                "<expDesign>Sedimentation velocity experiments</expDesign>\n"
-                "<notes>Handle with care</notes>\n"
-                "<description>Test project description</description>\n"
-                "</project>\n"
-                "</ProjectData>\n"
-        ).arg(id).arg(guid);
-    }
+      // Helper to create a valid project XML file
+      QString                                createTestProjectXml( const QString& guid = "test-guid-123", int id = 42 )
+      {
+         return QString( "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                         "<!DOCTYPE US_Project>\n"
+                         "<ProjectData version=\"1.0\">\n"
+                         "<project id=\"%1\" guid=\"%2\">\n"
+                         "<goals>Test research goals</goals>\n"
+                         "<molecules>Test proteins and DNA</molecules>\n"
+                         "<purity>95%</purity>\n"
+                         "<expense>Moderate expense</expense>\n"
+                         "<bufferComponents>Tris, NaCl, EDTA</bufferComponents>\n"
+                         "<saltInformation>150mM NaCl acceptable</saltInformation>\n"
+                         "<AUC_questions>What is the binding affinity?</AUC_questions>\n"
+                         "<expDesign>Sedimentation velocity experiments</expDesign>\n"
+                         "<notes>Handle with care</notes>\n"
+                         "<description>Test project description</description>\n"
+                         "</project>\n"
+                         "</ProjectData>\n" )
+            .arg( id )
+            .arg( guid );
+      }
 
-    void writeIntoProjectsDir( const QString& content, const QString& filename = "P0000001.xml", QString* written = nullptr )
-    {
-       QString path;
-       ASSERT_TRUE( US_Project().diskPath( path ) );
-       const QString fullPath = path + "/" + filename;
-       ASSERT_TRUE( us3WriteTestFile( fullPath, content.toUtf8() ) );
-       if ( written )
-       {
-          *written = fullPath;
-       }
-    }
+      void writeIntoProjectsDir( const QString& content, const QString& filename = "P0000001.xml", QString* written = nullptr )
+      {
+         QString path;
+         ASSERT_TRUE( US_Project().diskPath( path ) );
+         const QString fullPath = path + "/" + filename;
+         ASSERT_TRUE( us3WriteTestFile( fullPath, content.toUtf8() ) );
+         if ( written )
+         {
+            *written = fullPath;
+         }
+      }
 
-    // Helper to populate project with test data
-    void populateTestProject() {
-        project->projectID = 42;
-        project->projectGUID = "test-guid-123";
-        project->goals = "Test research goals";
-        project->molecules = "Test proteins";
-        project->purity = "95%";
-        project->expense = "Moderate";
-        project->bufferComponents = "Tris, NaCl";
-        project->saltInformation = "150mM NaCl";
-        project->AUC_questions = "Binding affinity?";
-        project->expDesign = "SV experiments";
-        project->notes = "Test notes";
-        project->projectDesc = "Test description";
-        project->status = "submitted";
-    }
+      // Helper to populate project with test data
+      void populateTestProject()
+      {
+         project->projectID        = 42;
+         project->projectGUID      = "test-guid-123";
+         project->goals            = "Test research goals";
+         project->molecules        = "Test proteins";
+         project->purity           = "95%";
+         project->expense          = "Moderate";
+         project->bufferComponents = "Tris, NaCl";
+         project->saltInformation  = "150mM NaCl";
+         project->AUC_questions    = "Binding affinity?";
+         project->expDesign        = "SV experiments";
+         project->notes            = "Test notes";
+         project->projectDesc      = "Test description";
+         project->status           = "submitted";
+      }
 };
 
 // Constructor Tests

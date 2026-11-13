@@ -6,24 +6,29 @@
 using namespace ::testing;
 using namespace qt_matchers;
 
-class US_VectorTest : public QtTestBase {
-protected:
-    void SetUp() override {
-       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
-    }
+class US_VectorTest : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+      }
 
-    // Helper function to compare floating point vectors with tolerance
-    void expectVectorEqual(const US_Vector& actual, const US_Vector& expected, double tolerance = 1e-9) {
-        EXPECT_EQ(actual.size(), expected.size());
-        for (int i = 0; i < actual.size(); i++) {
-            EXPECT_NEAR(actual[i], expected[i], tolerance) << "at index " << i;
-        }
-    }
+      // Helper function to compare floating point vectors with tolerance
+      void expectVectorEqual( const US_Vector& actual, const US_Vector& expected, double tolerance = 1e-9 )
+      {
+         EXPECT_EQ( actual.size(), expected.size() );
+         for ( int i = 0; i < actual.size(); i++ )
+         {
+            EXPECT_NEAR( actual[i], expected[i], tolerance ) << "at index " << i;
+         }
+      }
 
-    // Helper function to compare floating point values with tolerance
-    void expectDoubleEqual(double actual, double expected, double tolerance = 1e-9) {
-        EXPECT_NEAR(actual, expected, tolerance);
-    }
+      // Helper function to compare floating point values with tolerance
+      void expectDoubleEqual( double actual, double expected, double tolerance = 1e-9 )
+      {
+         EXPECT_NEAR( actual, expected, tolerance );
+      }
 };
 
 // Tests for US_Vector constructor

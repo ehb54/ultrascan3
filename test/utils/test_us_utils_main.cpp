@@ -21,95 +21,98 @@
 #include <cstdlib>
 
 // Qt Test Environment for Google Test
-class QtTestEnvironment : public ::testing::Environment {
-public:
-   explicit QtTestEnvironment( bool deathTestChild = false ) : deathTestChild_( deathTestChild )
-   {
-   }
-
-   void SetUp() override
-   {
-      originalCwd_   = QDir::currentPath();
-      QString parent = QDir::tempPath();
-      if ( deathTestChild_ )
+class QtTestEnvironment : public ::testing::Environment
+{
+   public:
+      explicit QtTestEnvironment( bool deathTestChild = false ) : deathTestChild_( deathTestChild )
       {
-         // Re-exec death-test children exit through _exit: their destructors and
-         // test listeners do not run. Give their files to the surviving parent.
-         const QString inheritedSandbox = qEnvironmentVariable( "US3_TEST_SANDBOX" );
-         parent                         = qEnvironmentVariable( "US3_TEST_WORK_ROOT" );
-         ASSERT_FALSE( inheritedSandbox.isEmpty() );
-         ASSERT_TRUE( QDir( parent ).exists() && QDir::cleanPath( parent ).startsWith( QDir::cleanPath( inheritedSandbox ) + "/" ) )
-            << "Death-test child requires an inherited sandbox work root";
       }
-      sandbox_ = std::make_unique<QTemporaryDir>( parent + "/ultrascan3-utils-tests-XXXXXX" );
-      ASSERT_TRUE( sandbox_->isValid() ) << "Could not create the process-local test sandbox";
 
-      const QString root          = sandbox_->path();
-      const QString settingsRoot  = root + "/settings";
-      const QString workRoot      = root + "/work";
-      const QString importRoot    = workRoot + "/imports";
-      const QString temporaryRoot = workRoot + "/tmp";
-
-      ASSERT_TRUE( QDir().mkpath( settingsRoot ) );
-      ASSERT_TRUE( QDir().mkpath( importRoot ) );
-      ASSERT_TRUE( QDir().mkpath( temporaryRoot ) );
-
-      if ( deathTestChild_ )
+      void SetUp() override
       {
-         // QTemporaryDir/QTemporaryFile created while the child replays the test
-         // must also be parent-owned, including setup before the death statement.
-         for ( const char* name : { "TMPDIR", "TMP", "TEMP" } )
+         originalCwd_   = QDir::currentPath();
+         QString parent = QDir::tempPath();
+         if ( deathTestChild_ )
          {
-            ASSERT_TRUE( qputenv( name, QFile::encodeName( temporaryRoot ) ) );
+            // Re-exec death-test children exit through _exit: their destructors and
+            // test listeners do not run. Give their files to the surviving parent.
+            const QString inheritedSandbox = qEnvironmentVariable( "US3_TEST_SANDBOX" );
+            parent                         = qEnvironmentVariable( "US3_TEST_WORK_ROOT" );
+            ASSERT_FALSE( inheritedSandbox.isEmpty() );
+            ASSERT_TRUE( QDir( parent ).exists() &&
+                         QDir::cleanPath( parent ).startsWith( QDir::cleanPath( inheritedSandbox ) + "/" ) )
+               << "Death-test child requires an inherited sandbox work root";
          }
-         ASSERT_TRUE( QDir::setCurrent( workRoot ) );
+         sandbox_ = std::make_unique<QTemporaryDir>( parent + "/ultrascan3-utils-tests-XXXXXX" );
+         ASSERT_TRUE( sandbox_->isValid() ) << "Could not create the process-local test sandbox";
+
+         const QString root          = sandbox_->path();
+         const QString settingsRoot  = root + "/settings";
+         const QString workRoot      = root + "/work";
+         const QString importRoot    = workRoot + "/imports";
+         const QString temporaryRoot = workRoot + "/tmp";
+
+         ASSERT_TRUE( QDir().mkpath( settingsRoot ) );
+         ASSERT_TRUE( QDir().mkpath( importRoot ) );
+         ASSERT_TRUE( QDir().mkpath( temporaryRoot ) );
+
+         if ( deathTestChild_ )
+         {
+            // QTemporaryDir/QTemporaryFile created while the child replays the test
+            // must also be parent-owned, including setup before the death statement.
+            for ( const char* name : { "TMPDIR", "TMP", "TEMP" } )
+            {
+               ASSERT_TRUE( qputenv( name, QFile::encodeName( temporaryRoot ) ) );
+            }
+            ASSERT_TRUE( QDir::setCurrent( workRoot ) );
+         }
+
+         qputenv( "US3_TEST_SANDBOX", QFile::encodeName( root ) );
+         qputenv( "US3_TEST_SETTINGS_ROOT", QFile::encodeName( settingsRoot ) );
+         qputenv( "US3_TEST_WORK_ROOT", QFile::encodeName( workRoot ) );
+         // Set before first use: US_SettingsStore caches this override.
+         // Unlike setPath alone, it also isolates native macOS/Windows settings.
+         qputenv( "US3_SETTINGS_ROOT", QFile::encodeName( settingsRoot ) );
+
+         QSettings::setPath( QSettings::IniFormat, QSettings::UserScope, settingsRoot );
+         QSettings::setPath( QSettings::IniFormat, QSettings::SystemScope, settingsRoot );
+         QStandardPaths::setTestModeEnabled( true );
+
+         if ( !QCoreApplication::instance() )
+         {
+            static int   argc   = 1;
+            static char* argv[] = { const_cast<char*>( "test" ) };
+            app_                = new QCoreApplication( argc, argv );
+         }
+         qputenv( "QT_QPA_PLATFORM", "offscreen" );
+
+         // Optional: Suppress Qt debug output during tests
+         qputenv( "QT_LOGGING_RULES", "*.debug=false" );
+
+         // Initialize writable paths in this process's sandbox before tests run.
+         US_Settings::set_workBaseDir( workRoot );
+         US_Settings::set_importDir( importRoot );
+         US_Settings::set_tmpDir( temporaryRoot );
+         US_Settings::set_debug_text( QStringList() );
       }
 
-      qputenv( "US3_TEST_SANDBOX", QFile::encodeName( root ) );
-      qputenv( "US3_TEST_SETTINGS_ROOT", QFile::encodeName( settingsRoot ) );
-      qputenv( "US3_TEST_WORK_ROOT", QFile::encodeName( workRoot ) );
-      // Set before first use: US_SettingsStore caches this override.
-      // Unlike setPath alone, it also isolates native macOS/Windows settings.
-      qputenv( "US3_SETTINGS_ROOT", QFile::encodeName( settingsRoot ) );
-
-      QSettings::setPath( QSettings::IniFormat, QSettings::UserScope, settingsRoot );
-      QSettings::setPath( QSettings::IniFormat, QSettings::SystemScope, settingsRoot );
-      QStandardPaths::setTestModeEnabled( true );
-
-      if ( !QCoreApplication::instance() )
+      void TearDown() override
       {
-         static int   argc   = 1;
-         static char* argv[] = { const_cast<char*>( "test" ) };
-         app_                = new QCoreApplication( argc, argv );
+         // Normal cleanup is owned by QTemporaryDir.
       }
-      qputenv( "QT_QPA_PLATFORM", "offscreen" );
 
-      // Optional: Suppress Qt debug output during tests
-      qputenv( "QT_LOGGING_RULES", "*.debug=false" );
+      bool removeSandbox()
+      {
+         const bool cwdRestored = QDir::setCurrent( originalCwd_ );
+         const bool removed     = !sandbox_ || sandbox_->remove();
+         return cwdRestored && removed;
+      }
 
-      // Initialize writable paths in this process's sandbox before tests run.
-      US_Settings::set_workBaseDir( workRoot );
-      US_Settings::set_importDir( importRoot );
-      US_Settings::set_tmpDir( temporaryRoot );
-      US_Settings::set_debug_text( QStringList() );
-   }
-
-    void TearDown() override {
-       // Normal cleanup is owned by QTemporaryDir.
-    }
-
-    bool removeSandbox()
-    {
-       const bool cwdRestored = QDir::setCurrent( originalCwd_ );
-       const bool removed     = !sandbox_ || sandbox_->remove();
-       return cwdRestored && removed;
-    }
-
-private:
-   bool                           deathTestChild_;
-   QString                        originalCwd_;
-   QCoreApplication*              app_ = nullptr;
-   std::unique_ptr<QTemporaryDir> sandbox_;
+   private:
+      bool                           deathTestChild_;
+      QString                        originalCwd_;
+      QCoreApplication*              app_ = nullptr;
+      std::unique_ptr<QTemporaryDir> sandbox_;
 };
 
 class UtilityCaseIsolation : public ::testing::EmptyTestEventListener
@@ -210,7 +213,8 @@ static int isolationProbe()
    return scope.restore() ? 0 : 6;
 }
 
-int main(int argc, char **argv) {
+int main( int argc, char** argv )
+{
    // GoogleTest uses this flag for threadsafe death-test re-execution. Inspect
    // it before InitGoogleTest removes it; keep this dependency regression-tested.
    bool deathTestChild = false;
@@ -218,25 +222,25 @@ int main(int argc, char **argv) {
    {
       deathTestChild = deathTestChild || QByteArray( argv[i] ).startsWith( "--gtest_internal_run_death_test=" );
    }
-    ::testing::InitGoogleTest(&argc, argv);
+   ::testing::InitGoogleTest( &argc, argv );
 
-    if ( argc == 2 && QByteArray( argv[1] ) == "--us3-isolation-probe" )
-    {
-       QtTestEnvironment environment;
-       environment.SetUp();
-       if ( !::testing::UnitTest::GetInstance()->Passed() )
-       {
-          return 2;
-       }
-       return isolationProbe();
-    }
+   if ( argc == 2 && QByteArray( argv[1] ) == "--us3-isolation-probe" )
+   {
+      QtTestEnvironment environment;
+      environment.SetUp();
+      if ( !::testing::UnitTest::GetInstance()->Passed() )
+      {
+         return 2;
+      }
+      return isolationProbe();
+   }
 
-    // Add Qt environment
-    auto* environment = new QtTestEnvironment( deathTestChild );
-    ::testing::AddGlobalTestEnvironment( environment );
+   // Add Qt environment
+   auto* environment = new QtTestEnvironment( deathTestChild );
+   ::testing::AddGlobalTestEnvironment( environment );
 
-    ::testing::UnitTest::GetInstance()->listeners().Append( new UtilityCaseIsolation( *environment ) );
+   ::testing::UnitTest::GetInstance()->listeners().Append( new UtilityCaseIsolation( *environment ) );
 
-    // Run all tests - Google Test automatically discovers them!
-    return RUN_ALL_TESTS();
+   // Run all tests - Google Test automatically discovers them!
+   return RUN_ALL_TESTS();
 }

@@ -19,72 +19,80 @@ using ::testing::InSequence;
 using ::testing::SetArgReferee;
 using ::testing::DoAll;
 
-class US_BufferComponentTest : public QtTestBase {
-protected:
-    void SetUp() override {
-       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
-       setupValidComponent();
-    }
+class US_BufferComponentTest : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+         setupValidComponent();
+      }
 
-    void setupValidComponent() {
-        component.componentID = "1";
-        component.name = "NaCl";
-        component.unit = "M";
-        component.range = "0.0 - 1.0";
-        component.grad_form = false;
+      void setupValidComponent()
+      {
+         component.componentID = "1";
+         component.name        = "NaCl";
+         component.unit        = "M";
+         component.range       = "0.0 - 1.0";
+         component.grad_form   = false;
 
-        // Initialize coefficients
-        for (int i = 0; i < 6; i++) {
+         // Initialize coefficients
+         for ( int i = 0; i < 6; i++ )
+         {
             component.dens_coeff[i] = 1.0 + i * 0.1;
             component.visc_coeff[i] = 2.0 + i * 0.1;
-        }
-    }
+         }
+      }
 
-    US_BufferComponent component;
+      US_BufferComponent component;
 };
 
-class US_BufferTest : public QtTestBase {
-protected:
-    void SetUp() override {
-       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
-       setupValidBuffer();
-    }
+class US_BufferTest : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+         setupValidBuffer();
+      }
 
-    void setupValidBuffer() {
-        buffer.person = "Test User";
-        buffer.bufferID = "1";
-        buffer.GUID = "test-guid-123";
-        buffer.description = "Test Buffer";
-        buffer.compressibility = 4.6e-10;
-        buffer.pH = 7.4;
-        buffer.density = DENS_20W;
-        buffer.viscosity = VISC_20W;
-        buffer.manual = false;
-        buffer.replace_spectrum = false;
-        buffer.new_or_changed_spectrum = false;
+      void setupValidBuffer()
+      {
+         buffer.person                  = "Test User";
+         buffer.bufferID                = "1";
+         buffer.GUID                    = "test-guid-123";
+         buffer.description             = "Test Buffer";
+         buffer.compressibility         = 4.6e-10;
+         buffer.pH                      = 7.4;
+         buffer.density                 = DENS_20W;
+         buffer.viscosity               = VISC_20W;
+         buffer.manual                  = false;
+         buffer.replace_spectrum        = false;
+         buffer.new_or_changed_spectrum = false;
 
-        // Add a test component
-        US_BufferComponent comp;
-        comp.componentID = "1";
-        comp.name = "NaCl";
-        comp.unit = "M";
-        for (int i = 0; i < 6; i++) {
+         // Add a test component
+         US_BufferComponent comp;
+         comp.componentID = "1";
+         comp.name        = "NaCl";
+         comp.unit        = "M";
+         for ( int i = 0; i < 6; i++ )
+         {
             comp.dens_coeff[i] = 1.0 + i * 0.1;
             comp.visc_coeff[i] = 2.0 + i * 0.1;
-        }
+         }
 
-        buffer.component.append(comp);
-        buffer.componentIDs.append("1");
-        buffer.concentration.append(0.15);
+         buffer.component.append( comp );
+         buffer.componentIDs.append( "1" );
+         buffer.concentration.append( 0.15 );
 
-        // Add test spectrum data
-        buffer.extinction[280.0] = 1.5;
-        buffer.extinction[250.0] = 2.0;
-        buffer.refraction[280.0] = 0.1;
-        buffer.fluorescence[350.0] = 0.5;
-    }
+         // Add test spectrum data
+         buffer.extinction[280.0]   = 1.5;
+         buffer.extinction[250.0]   = 2.0;
+         buffer.refraction[280.0]   = 0.1;
+         buffer.fluorescence[350.0] = 0.5;
+      }
 
-    US_Buffer buffer;
+      US_Buffer buffer;
 };
 
 // US_BufferComponent Tests

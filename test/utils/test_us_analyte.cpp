@@ -32,60 +32,69 @@ using ::qt_matchers::QStringEq;
 namespace {
 
 // Test fixture for US_Analyte functionality
-    class US_AnalyteTest : public QtTestBase {
-    protected:
-        void SetUp() override {
-           ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
-           analyte = std::make_unique<US_Analyte>();
-        }
+class US_AnalyteTest : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+         analyte = std::make_unique<US_Analyte>();
+      }
 
-        void TearDown() override {
-            analyte.reset();
-            QtTestBase::TearDown();
-        }
+      void TearDown() override
+      {
+         analyte.reset();
+         QtTestBase::TearDown();
+      }
 
-        std::unique_ptr<US_Analyte> analyte;
-    };
+      std::unique_ptr<US_Analyte> analyte;
+};
 
 // Test fixture for constructor testing
     class US_AnalyteConstructorTest : public US_AnalyteTest {
     };
 
-// Test fixture for equality operator testing
-    class US_AnalyteEqualityTest : public US_AnalyteTest {
-    protected:
-        void SetUp() override {
-           ASSERT_NO_FATAL_FAILURE( US_AnalyteTest::SetUp() );
-           analyte1 = std::make_unique<US_Analyte>();
-           analyte2 = std::make_unique<US_Analyte>();
-        }
+    // Test fixture for equality operator testing
+    class US_AnalyteEqualityTest : public US_AnalyteTest
+    {
+       protected:
+          void SetUp() override
+          {
+             ASSERT_NO_FATAL_FAILURE( US_AnalyteTest::SetUp() );
+             analyte1 = std::make_unique<US_Analyte>();
+             analyte2 = std::make_unique<US_Analyte>();
+          }
 
-        std::unique_ptr<US_Analyte> analyte1, analyte2;
+          std::unique_ptr<US_Analyte> analyte1, analyte2;
     };
 
-// Test fixture for load method testing
-    class US_AnalyteLoadTest : public US_AnalyteTest {
-    protected:
-        void SetUp() override {
-           ASSERT_NO_FATAL_FAILURE( US_AnalyteTest::SetUp() );
-           mockDb = std::make_unique<StrictMock<US_DB2_Mock>>();
-        }
+    // Test fixture for load method testing
+    class US_AnalyteLoadTest : public US_AnalyteTest
+    {
+       protected:
+          void SetUp() override
+          {
+             ASSERT_NO_FATAL_FAILURE( US_AnalyteTest::SetUp() );
+             mockDb = std::make_unique<StrictMock<US_DB2_Mock>>();
+          }
 
-        std::unique_ptr<StrictMock<US_DB2_Mock>> mockDb;
+          std::unique_ptr<StrictMock<US_DB2_Mock>> mockDb;
     };
 
-// Test fixture for write method testing
-    class US_AnalyteWriteTest : public US_AnalyteTest {
-    protected:
-        void SetUp() override {
-           ASSERT_NO_FATAL_FAILURE( US_AnalyteTest::SetUp() );
-           mockDb  = std::make_unique<StrictMock<US_DB2_Mock>>();
-           tempDir = std::make_unique<QTemporaryDir>();
-           ASSERT_TRUE( tempDir->isValid() );
-        }
+    // Test fixture for write method testing
+    class US_AnalyteWriteTest : public US_AnalyteTest
+    {
+       protected:
+          void SetUp() override
+          {
+             ASSERT_NO_FATAL_FAILURE( US_AnalyteTest::SetUp() );
+             mockDb  = std::make_unique<StrictMock<US_DB2_Mock>>();
+             tempDir = std::make_unique<QTemporaryDir>();
+             ASSERT_TRUE( tempDir->isValid() );
+          }
 
-        std::unique_ptr<StrictMock<US_DB2_Mock>> mockDb;
-        std::unique_ptr<QTemporaryDir> tempDir;
+          std::unique_ptr<StrictMock<US_DB2_Mock>> mockDb;
+          std::unique_ptr<QTemporaryDir>           tempDir;
     };
 
 // Test fixture for static methods testing

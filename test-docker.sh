@@ -557,11 +557,11 @@ fi
 if [ "$SHOW_STATS" = "true" ]; then
     echo ''
     echo '=== TEST SUITE STATISTICS ==='
-    echo "Total CTest cases: $(ctest -N 2>/dev/null | grep -c 'Test #' || echo 'Unknown')"
-    if [ -f "$UNIT_TEST_BIN" ]; then
-        GTEST_COUNT=$("$UNIT_TEST_BIN" --gtest_list_tests 2>/dev/null | grep -c '\.' || echo 'Unknown')
-        echo "Total GTest cases: $GTEST_COUNT"
-    fi
+    # Count from ctest's JSON: 'grep Test #' misses the padded 'Test  #10:' lines.
+    ctest --show-only=json-v1 > all-tests.json 2>/dev/null
+    ctest -L gtest-unit-utils --show-only=json-v1 > unit-utils-tests.json 2>/dev/null
+    echo "Total CTest cases: $(python3 -c 'import json, sys; print(len(json.load(open(sys.argv[1]))["tests"]))' all-tests.json 2>/dev/null || echo 'Unknown')"
+    echo "Utility unit cases: $(python3 -c 'import json, sys; print(len(json.load(open(sys.argv[1]))["tests"]))' unit-utils-tests.json 2>/dev/null || echo 'Unknown')"
     echo "Build directory size: $(du -sh . | cut -f1)"
     echo "Parallel jobs: $PARALLEL_JOBS"
     echo '============================='

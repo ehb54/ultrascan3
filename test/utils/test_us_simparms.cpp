@@ -17,92 +17,96 @@ using ::testing::DoAll;
 using ::testing::NiceMock;
 using ::testing::StrictMock;
 
-class US_SimulationParametersTest : public QtTestBase {
-protected:
-    void SetUp() override {
-       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
-       simparms = std::make_unique<US_SimulationParameters>();
-       mockDb   = std::make_unique<NiceMock<US_DB2_Mock>>();
-       tempDir  = std::make_unique<QTemporaryDir>();
-       ASSERT_TRUE( tempDir->isValid() );
-    }
+class US_SimulationParametersTest : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+         simparms = std::make_unique<US_SimulationParameters>();
+         mockDb   = std::make_unique<NiceMock<US_DB2_Mock>>();
+         tempDir  = std::make_unique<QTemporaryDir>();
+         ASSERT_TRUE( tempDir->isValid() );
+      }
 
-    void TearDown() override {
-        simparms.reset();
-        mockDb.reset();
-        tempDir.reset();
-        QtTestBase::TearDown();
-    }
+      void TearDown() override
+      {
+         simparms.reset();
+         mockDb.reset();
+         tempDir.reset();
+         QtTestBase::TearDown();
+      }
 
-    std::unique_ptr<US_SimulationParameters> simparms;
-    std::unique_ptr<NiceMock<US_DB2_Mock>> mockDb;
-    std::unique_ptr<QTemporaryDir> tempDir;
+      std::unique_ptr<US_SimulationParameters> simparms;
+      std::unique_ptr<NiceMock<US_DB2_Mock>>   mockDb;
+      std::unique_ptr<QTemporaryDir>           tempDir;
 
-    // Helper to create test RawData
-    US_DataIO::RawData createTestRawData() {
-        US_DataIO::RawData rawData;
-        rawData.type[0] = '\0';  // Clear the type array by setting first char to null terminator
-        rawData.channel = 'A';
-        rawData.cell = 1;
-        rawData.description = "Test data";
+      // Helper to create test RawData
+      US_DataIO::RawData                       createTestRawData()
+      {
+         US_DataIO::RawData rawData;
+         rawData.type[0]     = '\0'; // Clear the type array by setting first char to null terminator
+         rawData.channel     = 'A';
+         rawData.cell        = 1;
+         rawData.description = "Test data";
 
-        // Add some test scans
-        US_DataIO::Scan scan;
-        scan.seconds = 0.0;
-        scan.omega2t = 0.0;
-        scan.rpm = 3000.0;
-        scan.temperature = 20.0;
-        rawData.scanData << scan;
+         // Add some test scans
+         US_DataIO::Scan scan;
+         scan.seconds     = 0.0;
+         scan.omega2t     = 0.0;
+         scan.rpm         = 3000.0;
+         scan.temperature = 20.0;
+         rawData.scanData << scan;
 
-        scan.seconds = 3600.0;
-        scan.omega2t = 3600.0 * 3000.0 * 3000.0 * 4.0 * M_PI * M_PI / (60.0 * 60.0);
-        rawData.scanData << scan;
+         scan.seconds = 3600.0;
+         scan.omega2t = 3600.0 * 3000.0 * 3000.0 * 4.0 * M_PI * M_PI / ( 60.0 * 60.0 );
+         rawData.scanData << scan;
 
-        return rawData;
-    }
+         return rawData;
+      }
 
-    // Helper to create test EditedData
-    US_DataIO::EditedData createTestEditedData() {
-        US_DataIO::EditedData editData;
-        editData.runID = "test_run";
-        editData.dataType = "RA";
-        editData.channel = "A";
-        editData.cell = "1";
-        editData.meniscus = 5.8;
-        editData.bottom = 7.2;
+      // Helper to create test EditedData
+      US_DataIO::EditedData createTestEditedData()
+      {
+         US_DataIO::EditedData editData;
+         editData.runID    = "test_run";
+         editData.dataType = "RA";
+         editData.channel  = "A";
+         editData.cell     = "1";
+         editData.meniscus = 5.8;
+         editData.bottom   = 7.2;
 
-        // Add test scans
-        US_DataIO::Scan scan;
-        scan.seconds = 0.0;
-        scan.omega2t = 0.0;
-        scan.rpm = 3000.0;
-        editData.scanData << scan;
+         // Add test scans
+         US_DataIO::Scan scan;
+         scan.seconds = 0.0;
+         scan.omega2t = 0.0;
+         scan.rpm     = 3000.0;
+         editData.scanData << scan;
 
-        scan.seconds = 3600.0;
-        scan.omega2t = 3600.0 * 3000.0 * 3000.0 * 4.0 * M_PI * M_PI / (60.0 * 60.0);
-        editData.scanData << scan;
+         scan.seconds = 3600.0;
+         scan.omega2t = 3600.0 * 3000.0 * 3000.0 * 4.0 * M_PI * M_PI / ( 60.0 * 60.0 );
+         editData.scanData << scan;
 
-        return editData;
-    }
+         return editData;
+      }
 
-    // Helper to create test XML content
-    QString createTestSimParmsXml() {
-        return QString(
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                "<!DOCTYPE US_SimParams>\n"
-                "<SimParams version=\"1.0\">\n"
-                "<params meshType=\"ASTFEM\" gridType=\"Moving\" simpoints=\"200\" "
-                "radialres=\"0.001\" meniscus=\"5.8\" bottom=\"7.2\" "
-                "rnoise=\"0.0\" lrnoise=\"0.0\" tinoise=\"0.0\" rinoise=\"0.0\" "
-                "temperature=\"20.0\" bandform=\"0\" "
-                "sector=\"0\" pathlength=\"1.2\" angle=\"2.5\" width=\"0.0\">\n"
-                "<speedstep rotorspeed=\"3000\" scans=\"50\" timefirst=\"0\" timelast=\"3600\" "
-                "w2tfirst=\"0.0\" w2tlast=\"3600000.0\" duration_hrs=\"1\" duration_mins=\"0\" "
-                "delay_hrs=\"0\" delay_mins=\"0\" acceleration=\"400\" accelerflag=\"1\" />\n"
-                "</params>\n"
-                "</SimParams>\n"
-        );
-    }
+      // Helper to create test XML content
+      QString createTestSimParmsXml()
+      {
+         return QString( "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                         "<!DOCTYPE US_SimParams>\n"
+                         "<SimParams version=\"1.0\">\n"
+                         "<params meshType=\"ASTFEM\" gridType=\"Moving\" simpoints=\"200\" "
+                         "radialres=\"0.001\" meniscus=\"5.8\" bottom=\"7.2\" "
+                         "rnoise=\"0.0\" lrnoise=\"0.0\" tinoise=\"0.0\" rinoise=\"0.0\" "
+                         "temperature=\"20.0\" bandform=\"0\" "
+                         "sector=\"0\" pathlength=\"1.2\" angle=\"2.5\" width=\"0.0\">\n"
+                         "<speedstep rotorspeed=\"3000\" scans=\"50\" timefirst=\"0\" timelast=\"3600\" "
+                         "w2tfirst=\"0.0\" w2tlast=\"3600000.0\" duration_hrs=\"1\" duration_mins=\"0\" "
+                         "delay_hrs=\"0\" delay_mins=\"0\" acceleration=\"400\" accelerflag=\"1\" />\n"
+                         "</params>\n"
+                         "</SimParams>\n" );
+      }
 };
 
 // Constructor Tests

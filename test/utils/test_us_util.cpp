@@ -377,15 +377,18 @@ TEST_F(US_UtilTest, ListlistParseInvalidString) {
 }
 
 // Edge case and error handling tests
-class US_UtilEdgeCaseTest : public QtTestBase {
-protected:
-    void SetUp() override {
-       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
-    }
+class US_UtilEdgeCaseTest : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+      }
 
-    void TearDown() override {
-        QtTestBase::TearDown();
-    }
+      void TearDown() override
+      {
+         QtTestBase::TearDown();
+      }
 };
 
 TEST_F(US_UtilEdgeCaseTest, CompressedTripleEdgeCases) {
