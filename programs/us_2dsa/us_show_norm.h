@@ -20,12 +20,6 @@
 #include "qwt_scale_draw.h"
 #include "qwt_color_map.h"
 
-// ALEXEY: distro_lessthan() moved to static (internal) linkage in
-// us_show_norm.cpp -- see that file for why -- and dropped from here:
-// it's only ever used within us_show_norm.cpp itself (nothing outside
-// this file includes this header for that declaration), so no
-// declaration is needed here.
-
 //! \brief A class to provide a window with 2DSA analysis controls
 class US_show_norm : public US_WidgetsDialog
 {
@@ -144,29 +138,27 @@ class US_show_norm : public US_WidgetsDialog
 
       QStringList   pfilts;
 
-   private slots: 
-      void select_x_axis   ( int  );
-      void select_y_axis   ( int  );
-      void sort_distro( QList< S_Solute >&, bool );
-      void load_color      ( void );
-      void update_resolu   ( double );
-      void update_xreso    ( double );
-      void update_yreso    ( double );
-      void update_zfloor   ( double );
-      void update_plot_smin( double );
-      void update_plot_smax( double );
-      void update_plot_kmin( double );
-      void update_plot_kmax( double );
-      void set_limits      ( void );
-      void reset           ( void );
-      void plot_data       ( int  );
-      void plot_data       ( void );
-      void select_autosxy  ( void );
-      void select_autoscz  ( void ) ;
-      void build_xy_distro ( void );
-      QString anno_title   ( int  );
+   private slots:
+      void               select_x_axis( int );
+      void               select_y_axis( int );
+      void               load_color( void );
+      void               update_resolu( double );
+      void               update_xreso( double );
+      void               update_yreso( double );
+      void               update_zfloor( double );
+      void               update_plot_smin( double );
+      void               update_plot_smax( double );
+      void               update_plot_kmin( double );
+      void               update_plot_kmax( double );
+      void               set_limits( void );
+      void               reset( void );
+      void               plot_data( int );
+      void               plot_data( void );
+      void               select_autosxy( void );
+      void               select_autoscz( void );
+      void               build_xy_distro( void );
+      QString            anno_title( int );
       QwtLinearColorMap* ColorMapCopy( QwtLinearColorMap* );
-
 };
 #endif
 

@@ -17,8 +17,6 @@ assets as `${CMAKE_SOURCE_DIR}/pkg/<platform>/...`.
 |------|---------|
 | `MacDeploy.cmake` | Stages `_stage/UltraScan3/` with `.app` bundles, Qt frameworks, plugins, `etc/`, `somo/`, and the `UltraScan3.app` Dock launcher. Runs `macdeployqt` and fixes rpaths. |
 | `MacOsPkg.cmake` | Builds the final `.pkg` installer via `pkgbuild` + `productbuild` from the staged tree. |
-| `MacHpcDeploy.cmake` | HPC variant of `MacDeploy.cmake` — headless, no GUI, no Qt frameworks. |
-| `MacHpcPkg.cmake` | HPC variant of `MacOsPkg.cmake` — produces a tarball instead of a PKG. |
 | `MacOsDeployQtAssistant.cmake` | Deploys Qt Assistant.app into the staging tree with correct rpaths and bundle ID patching. |
 | `StageAssistantDev.cmake` | Builds a local `Assistant.app` from the dynamic triplet for development use without a full deploy. |
 

@@ -1,9 +1,11 @@
 //! \file us_model.cpp
 #include "us_model.h"
+#include "us_calc_coefficients.h"
+#include "us_calc_composite.h"
 #include "us_constants.h"
+#include "us_math2.h"
 #include "us_settings.h"
 #include "us_util.h"
-#include "us_math2.h"
 
 US_Model::SimulationComponent::SimulationComponent()
 {
@@ -148,201 +150,44 @@ bool US_Model::update_coefficients()
 // Calculate any missing coefficient values in a model component
 bool US_Model::calc_coefficients( SimulationComponent& component )
 {
-   // For documentation for the derivation of the coefficient calculations 
-   // please see: ../doc/calc_model_coefficient_documentation.pdf
+   US_Calc::Component c  = calc_component( component );
+   const bool         ok = US_Calc::calc_coefficients( c );
 
-   bool   ok = true;
-   double vbar;             // component vbar
-   double volume;           // e.g., vbar * mw / AVOGADRO
-   double vol_fac;          // volume factor, e.g., 0.75 / M_PI
-   double radius_sphere;    // e.g., pow( volume * vol_fac, 1/3 );
-   double rsph_fac;         // radius_sphere factor; e.g., 0.06 * PI * VISC
-   double onethird;         // one third ( 1.0 / 3.0 )
-   double c;                // concentration
-   double s;                // sedimentation coefficient
-   double D;                // diffusion coefficient
-   double mw;               // molecular weight
-   double f;                // frictional coefficient
-   double fv;               // frictional coefficient (working value)
-   double f_f0;             // frictional ratio
-   double f0;               // f-zero
-   double s20w;
-   double buoyancyb;
-// Ideal gas constant times 20 degrees C in Kelvin
-#define RT (R_GC*K20)
-
-   // Ensure that we have a vbar we can use
-   vbar           = component.vbar20;
-
-   if ( vbar <= 0.0 )
-   {
-      vbar           = TYPICAL_VBAR;
-      component.vbar20 = vbar;
-   }
-
-   vol_fac        = 0.75 / M_PI;        // various factors used in calcs below
-   onethird       = 1.0 / 3.0;
-   rsph_fac       = 0.06 * M_PI * VISC_20W;
-
-   s              = component.s;        // component coefficient values
-   D              = component.D;
-   mw             = component.mw;
-   f              = component.f;
-   f_f0           = component.f_f0;
-   c              = component.signal_concentration;
-   fv             = f;
-
-   // Adjust buoyancy to be consistent with s-value. Negative s-values require negative buoyancy.
-   // Unless custom grid is used, we set the vbar to the reciprocal of the positive s-value vbar.
-
-   buoyancyb      = 1.0 - ( vbar * DENS_20W );
-
-   if ( ( s < 0.0  &&  buoyancyb > 0.0 )  ||
-       ( s > 0.0  &&  buoyancyb < 0.0 ) )
-   {
-      return false;
-   }
-
-   // Start with already calculated s if possible
-   if ( s != 0.0 )
-   {
-      s20w           = s;
-
-      // First check s and k (f_f0)
-                                                 ///////////////
-      if ( f_f0 != 0.0 )                         // s and f_f0
-      {                                          ///////////////
-         // Please see ../doc/calc_model_coefficient_documentation.pdf,
-         // equation 14, with adjustments for units in poise.
-         double numer   = 0.02 * vbar * s * VISC_20W * f_f0;
-         f0             = 0.09 * VISC_20W * M_PI * sqrt( numer / buoyancyb );
-         fv             = f_f0 * f0;
-         D              = RT / ( AVOGADRO * fv );
-         mw             = s * RT / ( D * buoyancyb );
-      }
-
-      // Next check s and D
-                                                 ///////////////
-      else if ( D != 0.0 )                       // s and D
-      {                                          ///////////////
-         mw             = s * RT / ( D * buoyancyb );
-         volume         = vbar * mw / AVOGADRO;
-         radius_sphere  = pow( volume * vol_fac, onethird );
-         f0             = radius_sphere * rsph_fac;
-         fv             = mw * buoyancyb / ( s20w * AVOGADRO );
-         double ff0sv   = f_f0;
-         f_f0           = fv / f0;
-         double ffdif   = qAbs( ff0sv - f_f0 );
-         f_f0           = ( ffdif < 1.e-5 ) ? ff0sv : f_f0;
-      }
-
-      // Then check any other s + combinations
-                                                 ///////////////
-      else if ( mw != 0.0 )                      // s and mw
-      {                                          ///////////////
-         D              = s * RT / ( buoyancyb * mw );
-         fv             = mw * buoyancyb / ( s20w * AVOGADRO );
-         volume         = vbar * mw / AVOGADRO;
-         radius_sphere  = pow( volume * vol_fac, onethird );
-         f0             = radius_sphere * rsph_fac;
-         f_f0           = fv / f0;
-      }
-                                                 ///////////////
-      else if ( f != 0.0 )                       // s and f
-      {                                          ///////////////
-         D              = RT / ( AVOGADRO * fv );
-         mw             = s * RT / ( D * buoyancyb );
-         volume         = vbar * mw / AVOGADRO;
-         radius_sphere  = pow( volume * vol_fac, onethird );
-         f0             = radius_sphere * rsph_fac;
-         f_f0           = fv / f0;
-      }
-                                                 //****************************
-      else                                       // do not have 2 valid coeffs
-         ok             = false;                 //****************************
-   }
-
-   else if ( component.mw   != 0.0 )
-   {
-      volume         = vbar * mw / AVOGADRO;
-      radius_sphere  = pow( volume * vol_fac, onethird );
-      f0             = radius_sphere * rsph_fac;
-                                                 ///////////////
-      if ( D != 0.0 )                            // mw and D
-      {                                          ///////////////
-         s              = D * buoyancyb * mw / RT;
-         fv             = mw * buoyancyb / ( s * AVOGADRO );
-         f_f0           = fv / f0;
-      }
-                                                 ///////////////
-      else if ( f_f0 != 0.0 )                    // mw and f_f0
-      {                                          ///////////////
-         fv             = f_f0 * f0;
-         s              = mw * buoyancyb / ( AVOGADRO * fv );
-         D              = s * RT / ( buoyancyb * mw );
-      }
-                                                 ///////////////
-      else if ( f != 0.0 )                       // mw and f
-      {                                          ///////////////
-         f_f0           = fv / f0;
-         s              = mw * buoyancyb / ( AVOGADRO * fv );
-         D              = s * RT / ( buoyancyb * mw );
-      }
-                                                 //****************************
-      else                                       // do not have 2 valid coeffs
-         ok             = false;                 //****************************
-   }
-
-   else if ( component.D    != 0.0 )
-   {                                             ///////////////
-      if ( f_f0 >= 1.0 )                         // D and f_f0
-      {                                          ///////////////
-         fv             = RT / ( AVOGADRO * D );
-         f0             = fv / f_f0;
-         radius_sphere  = f0 / ( 0.06 * M_PI * VISC_20W );
-         double volume  = ( 4.0 / 3.0 ) * M_PI * pow( radius_sphere, 3.0 );
-         mw             = volume * AVOGADRO / vbar;
-         s              = mw * buoyancyb / ( AVOGADRO * fv );
-      }
-                                                 //****************************
-                                                 // D and f - not a valid combo
-                                                 //****************************
-      else                                       // do not have 2 valid coeffs
-         ok             = false;                 //****************************
-   }
-                                                 ///////////////
-   else if ( fv > 0.0  &&  f_f0 >= 1.0 )         // f and f_f0
-   {                                             ///////////////
-      f0             = fv / f_f0;
-      D              = RT / ( AVOGADRO * fv );
-      radius_sphere  = f0 / ( 0.06 * M_PI * VISC_20W );
-      double volume  = ( 4.0 / 3.0 ) * M_PI * pow( radius_sphere, 3.0 );
-      mw             = volume * AVOGADRO / vbar;
-      s              = mw * buoyancyb / ( AVOGADRO * fv );
-   }
-                                                 //****************************
-   else                                          // do not have 2 valid coeffs
-      ok             = false;                    //****************************
-
-   double df      = qAbs( f - fv ) / fv;
-
-   if ( df > 0.1 )
-   {  // Significant change in f:  replace and use old as concentration
-
-      if ( c == 0.0 )
-         component.signal_concentration = f;
-
-      f              = fv;
-   }
-
-   component.s    = s;     // set component properties (some re-calculated)
-   component.D    = D;
-   component.mw   = mw;
-   component.f_f0 = f_f0;
-   component.f    = f;
-   component.vbar20 = vbar;
-
+   component.s                    = c.s;
+   component.D                    = c.D;
+   component.mw                   = c.mw;
+   component.f                    = c.f;
+   component.f_f0                 = c.f_f0;
+   component.vbar20               = c.vbar20;
+   component.signal_concentration = c.signal_concentration;
    return ok;
+}
+
+// A component as the US_Calc calculations take it
+US_Calc::Component US_Model::calc_component( const SimulationComponent& sc )
+{
+   US_Calc::Component c;
+   c.s                    = sc.s;
+   c.D                    = sc.D;
+   c.mw                   = sc.mw;
+   c.f                    = sc.f;
+   c.f_f0                 = sc.f_f0;
+   c.vbar20               = sc.vbar20;
+   c.signal_concentration = sc.signal_concentration;
+   return c;
+}
+
+// The model as the US_Calc calculations take it
+US_Calc::Model US_Model::calc_model( void ) const
+{
+   US_Calc::Model cm;
+   cm.description = description;
+   cm.monte_carlo = monteCarlo;
+   for ( const SimulationComponent& sc : components )
+   {
+      cm.components << calc_component( sc );
+   }
+   return cm;
 }
 
 // Test the existence of the models directory path and create it if need be
@@ -863,78 +708,47 @@ int US_Model::load_multi_model( QTextStream& tsi )
       }
    }
 
-   QVector< SimulationComponent >  mmcomps;
-   QVector< Association >          mmassos;
-   int ncnstv    = 0;
-   int ncnstk    = 0;
+   // Load every iteration, then build the composite in US_Calc.
+   QVector<SimulationComponent> mmcomps;
+   QVector<Association>         mmassos;
+   QVector<US_Calc::Model>      iterations;
 
-   // Build composite components and associations
    for ( int ii = 0; ii < nmcixs; ii++ )
    {
-      mcont            = mcixmls[ ii ];
+      mcont = mcixmls[ii];
       QXmlStreamReader xml( mcont );
       load_stream( xml );
 
       mmcomps << components;
       mmassos << associations;
 
-      if ( constant_vbar() )  ncnstv++;
-      if ( constant_ff0()  )  ncnstk++;
+      US_Calc::Model iteration = calc_model();
+      iteration.description    = mdesc;
+      iterations << iteration;
    }
 
-   // Compress and scale components to only unique solute points
+   const US_Calc::CompositeResult composite = US_Calc::mc_composite( iterations );
 
    components  .clear();
    associations.clear();
-   double sclnrm = 1.0 / (double)nmcixs;    // Scale for concentrations
-   bool cnst_vb  = ( ncnstv >= ncnstk );    // Flag for constant vbar
-   QStringList sklist;                      // List of all solute points
-   QStringList skvals;                      // List of unique solute points
 
-   for ( int ii = 0; ii < mmcomps.size(); ii++ )
-   {  // Build list of solute point strings and list of unique ones
-      double sval   = mmcomps[ ii ].s * 1.0e+13;
-      double kval   = cnst_vb ? mmcomps[ ii ].f_f0 : mmcomps[ ii ].vbar20;
-      QString skval = QString::asprintf( "%10.4f %8.5f", sval, kval );
-      sklist << skval; 
-      if ( ! skvals.contains( skval ) )
-         skvals << skval;
+   if ( US_Calc::has_error( composite.diagnostics ) )
+   {
+      return IUS_DB2::NO_MODEL;
    }
 
-   int nskl      = sklist.size();
-   int nskv      = skvals.size();
-   skvals.sort();                     // Sort solute points
-   SimulationComponent scomp;
-
-   for ( int ii = 0; ii < nskv; ii ++ )
-   {  // Average concentration at each unique solute point
-      QString skval = skvals[ ii ];   // Identifying solute point string
-      double conc   = 0.0;
-
-      for ( int jj = 0; jj < nskl; jj++ )
-      {  // Search all solute points
-         if ( skval == sklist[ jj ] )
-         {  // If a match, sum the concentration
-            scomp      = mmcomps[ jj ];
-            conc      += scomp.signal_concentration;
-         }
-      }
-
+   for ( int ii = 0; ii < composite.source_index.size(); ii++ )
+   { // The full record of the last matching component, with the averaged concentration
+      SimulationComponent scomp  = mmcomps[composite.source_index[ii]];
       scomp.name                 = QString::asprintf( "SC%04d", ii + 1 );
-      scomp.signal_concentration = conc * sclnrm;
+      scomp.signal_concentration = composite.model.components[ii].signal_concentration;
       components << scomp;
    }
 
    if ( mmassos.size() > 0 )
       associations << mmassos[ 0 ];
 
-   QString mdsc1 = QString( mdesc ).section( ".",  0, -3 );
-   QString mdsc2 = QString( mdesc ).section( ".", -2, -2 )
-                                   .section( "_",  0, -2 );
-   QString mdsc3 = QString( mdesc ).section( ".", -1, -1 );
-   QString miter = QString::asprintf( "_mcN%03i", nmcixs );
-   description   = mdsc1 + "." + mdsc2 + miter + "." + mdsc3;
-qDebug() << "MDL:LMM: miter" << miter << "desc" << description << mdesc;
+   description = composite.model.description;
 
    return result;
 }

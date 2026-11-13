@@ -22,7 +22,7 @@ rem   scripts\build.bat APP -qt6 -clean -pkg
 rem   scripts\build.bat --qt6 --clean --pkg
 rem
 rem Notes:
-rem   - If a build profile is provided positionally, it should be APP, TEST, or HPC
+rem   - If a build profile is provided positionally, it should be APP or TEST
 rem   - build.ps1 remains responsible for validation and actual build behavior
 rem =============================================================================
 setlocal EnableExtensions EnableDelayedExpansion

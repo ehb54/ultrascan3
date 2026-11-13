@@ -6,6 +6,7 @@ local.pri
 # someone noticed and force-added it. Re-include the directory explicitly.
 !/.github/
 !/.clang-format
+!/.gitattributes
 !/.clang-tidy
 !/.pre-commit-config.yaml
 !/.githooks/

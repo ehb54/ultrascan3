@@ -143,6 +143,10 @@ SOURCES      = us_ana_profile.cpp   \
                us_xpn_data.cpp      \
                us_zsolute.cpp
 
+# The calculations shared by the programs (namespace US_Calc, QtCore only)
+HEADERS      += $$files(us_calc_*.h)
+SOURCES      += $$files(us_calc_*.cpp)
+
 # Only include us_crypto when not on a supercomputer
 
 !contains( DEFINES, NO_DB ) {

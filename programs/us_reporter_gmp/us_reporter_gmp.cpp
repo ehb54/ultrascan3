@@ -11,6 +11,11 @@
 
 #include "../us/us_revision.h"
 #include "../us_fematch/us_thread_worker.h"
+#include "us_calc_matching.h"
+#include "us_calc_range.h"
+#include "us_calc_replicate.h"
+#include "us_calc_tolerance.h"
+#include "us_calc_units.h"
 #include "us_constants.h"
 #include "us_convertio.h"
 #include "us_defines.h"
@@ -21,6 +26,7 @@
 #include "us_math2.h"
 #include "us_protocol_util.h"
 #include "us_reporter_gmp.h"
+
 #include "us_settings.h"
 #include "us_solution_vals.h"
 #include "us_tar.h"
@@ -4473,59 +4479,23 @@ QString US_ReporterGMP::html_header_velmwl( QString title, QString runName, QStr
    return s;
 }
 
-// Fraction (%) of a model's total signal concentration whose component values
-// of given type lie within [low,high] -- the same integration (and range units)
-// as used for the VELOCITY report; supported = false for unknown types
+// Percent of the model's concentration within a report item's range, from
+// US_Calc.  An item type that is not a range type is unsupported; a total
+// that is not positive gives 0.
 static double velmwl_range_fraction( const US_Model& mdl, const QString& type, double low, double high, bool& supported )
 {
-   supported    = true;
-   double sum_c = 0.0;
-   double int_c = 0.0;
-
-   for ( int ii = 0; ii < mdl.components.size(); ++ii )
+   const US_Calc::Quantity quantity = US_Calc::quantity_from_report_type( type, &supported );
+   if ( !supported )
    {
-      const US_Model::SimulationComponent& sc   = mdl.components[ii];
-      double                               conc = sc.signal_concentration;
-      sum_c += conc;
-
-      double v, lo, hi;
-      if ( type == "s" )
-      {
-         v  = sc.s;
-         lo = low * 1.0e-13;
-         hi = high * 1.0e-13;
-      }
-      else if ( type == "D" )
-      {
-         v  = sc.D;
-         lo = low * 1.0e-7;
-         hi = high * 1.0e-7;
-      }
-      else if ( type == "f/f0" )
-      {
-         v  = sc.f_f0;
-         lo = low;
-         hi = high;
-      }
-      else if ( type == "MW" )
-      {
-         v  = sc.mw;
-         lo = low * 1.0e3;
-         hi = high * 1.0e3;
-      } // kDa -> Da
-      else
-      {
-         supported = false;
-         return 0.0;
-      }
-
-      if ( v >= lo && v <= hi )
-      {
-         int_c += conc;
-      }
+      return 0.0;
    }
 
-   return ( sum_c > 0.0 ) ? ( int_c / sum_c ) * 100.0 : 0.0;
+   const US_Calc::RangeResult r = US_Calc::range_summary( mdl.calc_model(), { quantity, low, high } );
+   if ( !( r.total_concentration > 0.0 ) || US_Calc::has_error( r.diagnostics ) )
+   {
+      return 0.0;
+   }
+   return r.fraction_percent;
 }
 
 // VELOCITY-MWL: timestamps, species (models) used, analysis settings,
@@ -4664,7 +4634,9 @@ QString US_ReporterGMP::distrib_info_velmwl( const QString&         chan_tag,
                continue;
             }
 
-            QString passed = ( qAbs( frac_tot_m - frac_tot_r ) <= tol_r ) ? "YES" : "NO";
+            QString passed = US_Calc::passes( frac_tot_m, { US_Calc::ToleranceRule::AbsolutePercentagePoints, frac_tot_r, tol_r } )
+                                ? "YES"
+                                : "NO";
 
             mstr_sp += table_row( type,
                                   range,
@@ -7660,73 +7632,73 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 	      mins_r      = (int)qRound( ( val_measured_sec - hours_r * 3600.0 ) / 60.0 );
 	      QString val_measured_hh_mm   = QString::asprintf( "%d %s %02d m", hours_r, hh_r.toLatin1( ).data(), mins_r );
 
-	      val_passed  = ( val_measured_sec >= ( val_target * (1 - val_tol/100.0)  ) && val_measured_sec <= ( val_target * (1 + val_tol/100.0) ) ) ? "YES" : "NO";
-	      
-	      html_assembled += table_row( tr( "Duration" ),
-					   val_target_hh_mm,
-					   QString::number( val_tol ) + "%",
-					   val_measured_hh_mm,
-					   "",
-					   val_passed ) ;
-	    }
+         val_passed = US_Calc::passes( val_measured_sec, { US_Calc::ToleranceRule::RelativePercentOfTarget, val_target, val_tol } )
+                         ? "YES"
+                         : "NO";
 
-	  //Temperature
-	  if ( dkeys[ i ] .contains("Temperature") )
-	    {
-	      val_tol    = 0.5;   //plus-minus 0.5 C
-	      val_target = currProto.temperature; 
-	      val_measured = davgs_stdd_first_scan [ dkeys[ i ] ][ "Avg" ];
-	      val_passed  = ( val_measured  >= ( val_target - val_tol ) && val_measured  <= ( val_target + val_tol ) ) ? "YES" : "NO";
+         html_assembled +=
+            table_row( tr( "Duration" ), val_target_hh_mm, QString::number( val_tol ) + "%", val_measured_hh_mm, "", val_passed );
+       }
 
-	      val_measured_stdd = davgs_stdd_first_scan [ dkeys[ i ] ][ "Stdd" ];
-	  
-	      html_assembled += table_row( dkeys[ i ] + " (&#8451;)",
-					   QString::number( val_target ),
-					   "&#177;" + QString::number( val_tol ),
-					   QString::number( val_measured ),
-					   QString::number( val_measured_stdd ),
-					   val_passed );
+       //Temperature
+       if ( dkeys[i].contains( "Temperature" ) )
+       {
+          val_tol      = 0.5; //plus-minus 0.5 C
+          val_target   = currProto.temperature;
+          val_measured = davgs_stdd_first_scan[dkeys[i]]["Avg"];
+          val_passed =
+             US_Calc::passes( val_measured, { US_Calc::ToleranceRule::AbsoluteUnits, val_target, val_tol } ) ? "YES" : "NO";
 
-	      //Plot Temp. plot
-	      QString img01File = dirName + "/" + "RunDetails_Temperature" + svgext;
-	      write_plot( img01File, tsdiag->rp_data_plot1( "Temperature" ) );
-	      img01File.replace( svgext, pngext ); 
-	      RunDetailsPlotsFileNames << img01File;
-	    }
+          val_measured_stdd = davgs_stdd_first_scan[dkeys[i]]["Stdd"];
 
-	  //RawSpeed
-	  if ( dkeys[ i ] .contains("RawSpeed") )
-	    {
-	      val_tol    = 4; //plus-minus 4 RPM
-	      val_target = currProto. rpSpeed. ssteps[0].speed; 
-	      val_measured = davgs_stdd_first_scan [ dkeys[ i ] ][ "Avg" ];
-	      val_passed  = ( val_measured  >= ( val_target - val_tol ) && val_measured  <= ( val_target + val_tol ) ) ? "YES" : "NO"; 
-	  	  
-	      html_assembled += table_row( "Speed (RPM)",
-					   QString::number( val_target ),
-					   "&#177;" + QString::number( val_tol ),
-					   QString::number( val_measured ),
-					   "",
-					   val_passed );
+          html_assembled += table_row( dkeys[i] + " (&#8451;)",
+                                       QString::number( val_target ),
+                                       "&#177;" + QString::number( val_tol ),
+                                       QString::number( val_measured ),
+                                       QString::number( val_measured_stdd ),
+                                       val_passed );
 
-	      //Plot Raw Speed plot
-	      QString img01File = dirName + "/" + "RunDetails_Speed" + svgext;
-	      write_plot( img01File, tsdiag->rp_data_plot1( "RawSpeed" ) );
-	      img01File.replace( svgext, pngext ); 
-	      RunDetailsPlotsFileNames << img01File;
-	    }
-	   
-	  
-	  // html_assembled += tr(
-	  // 		       "<tr><td>%1: </td> <td>%2 to %3</td> <td>Avg.: %4</td></tr>"
-	  // 		       )
-	  //   .arg( dkeys[ i ] )                 //1
-	  //   .arg( dmins[ dkeys[ i ] ] )        //2
-	  //   .arg( dmaxs[ dkeys[ i ] ] )        //3
-	  //   .arg( davgs [ dkeys[ i ] ] )       //4
-	  //   ;
-	}
-      
+          //Plot Temp. plot
+          QString img01File = dirName + "/" + "RunDetails_Temperature" + svgext;
+          write_plot( img01File, tsdiag->rp_data_plot1( "Temperature" ) );
+          img01File.replace( svgext, pngext );
+          RunDetailsPlotsFileNames << img01File;
+       }
+
+       //RawSpeed
+       if ( dkeys[i].contains( "RawSpeed" ) )
+       {
+          val_tol      = 4; //plus-minus 4 RPM
+          val_target   = currProto.rpSpeed.ssteps[0].speed;
+          val_measured = davgs_stdd_first_scan[dkeys[i]]["Avg"];
+          val_passed =
+             US_Calc::passes( val_measured, { US_Calc::ToleranceRule::AbsoluteUnits, val_target, val_tol } ) ? "YES" : "NO";
+
+          html_assembled += table_row( "Speed (RPM)",
+                                       QString::number( val_target ),
+                                       "&#177;" + QString::number( val_tol ),
+                                       QString::number( val_measured ),
+                                       "",
+                                       val_passed );
+
+          //Plot Raw Speed plot
+          QString img01File = dirName + "/" + "RunDetails_Speed" + svgext;
+          write_plot( img01File, tsdiag->rp_data_plot1( "RawSpeed" ) );
+          img01File.replace( svgext, pngext );
+          RunDetailsPlotsFileNames << img01File;
+       }
+
+
+       // html_assembled += tr(
+       // 		       "<tr><td>%1: </td> <td>%2 to %3</td> <td>Avg.: %4</td></tr>"
+       // 		       )
+       //   .arg( dkeys[ i ] )                 //1
+       //   .arg( dmins[ dkeys[ i ] ] )        //2
+       //   .arg( dmaxs[ dkeys[ i ] ] )        //3
+       //   .arg( davgs [ dkeys[ i ] ] )       //4
+       //   ;
+   }
+
       html_assembled += tr(
 			   "</table>"
 			   );
@@ -10042,42 +10014,42 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 	      */
 
 	      double frac_tot_m_av = replicate_g_results["tot_percent_av"];
-	      QString tot_av_frac_passed = ( frac_tot_m_av >= ( frac_tot_r * (1 - frac_tot_tol_r/100.0)  )
-					     && frac_tot_m_av <= ( frac_tot_r * (1 + frac_tot_tol_r/100.0)  ) ) ? "YES" : "NO";
+         QString               tot_av_frac_passed =
+            US_Calc::passes( frac_tot_m_av, { US_Calc::ToleranceRule::RelativePercentOfTarget, frac_tot_r, frac_tot_tol_r } )
+                             ? "YES"
+                             : "NO";
 
-	      //descide if we show std deviations
-	      int num_triples_in_subgroup = replicate_subgroup_triples.split(",").size();
-	      qDebug() << "triples_list, num_triples_in_subgroup, replicate_g_results[\"int_st_dev\"], "
-	      	       << "replicate_g_results[\"tot_percent_st_dev\"] -- "
-	      	       << replicate_subgroup_triples << num_triples_in_subgroup << replicate_g_results["int_st_dev"]
-	      	       << replicate_g_results["tot_percent_st_dev"];
-	      
-	      QString int_std_dev     = "N/A";
-	      QString percent_std_dev = "N/A";
-	      if ( num_triples_in_subgroup > 1 )
-		{
-		  int_std_dev     = QString("%1").arg(replicate_g_results["int_st_dev"], 10, 'e', 2);
-		  percent_std_dev = QString("%1%").arg(replicate_g_results["tot_percent_st_dev"], 0, 'f', 2);
-		}
-	      qDebug() << "int_std_dev, percent_std_dev -- " << int_std_dev << percent_std_dev;
-	      
-	      html_str_replicate_av += table_row( type,
-						  method,
-						  range,
-						  QString::asprintf( "%10.4e",  replicate_g_results["int_av"] ) + " (" + int_val_r + ")",
-						  //QString::asprintf( "%10.2e",  int_std_dev ),
-						  int_std_dev,
-						  QString::asprintf( "%5.2f%%", replicate_g_results["tot_percent_av"] ) +
-						                                   " (" + QString::asprintf( "%5.2f%%", frac_tot_r ) + ")",
-						  //QString::asprintf( "%5.2f%%",  percent_std_dev ),
-						  percent_std_dev,
-						  QString::number( frac_tot_tol_r ),
-						  tot_av_frac_passed
-						  );
-	    }
-	  
-	  html_str_replicate_av += indent( 3 ) + "</table>\n";
-	}
+         //descide if we show std deviations
+         int num_triples_in_subgroup = replicate_subgroup_triples.split( "," ).size();
+         qDebug() << "triples_list, num_triples_in_subgroup, replicate_g_results[\"int_st_dev\"], "
+                  << "replicate_g_results[\"tot_percent_st_dev\"] -- " << replicate_subgroup_triples << num_triples_in_subgroup
+                  << replicate_g_results["int_st_dev"] << replicate_g_results["tot_percent_st_dev"];
+
+         QString int_std_dev     = "N/A";
+         QString percent_std_dev = "N/A";
+         if ( num_triples_in_subgroup > 1 )
+         {
+            int_std_dev     = QString( "%1" ).arg( replicate_g_results["int_st_dev"], 10, 'e', 2 );
+            percent_std_dev = QString( "%1%" ).arg( replicate_g_results["tot_percent_st_dev"], 0, 'f', 2 );
+         }
+         qDebug() << "int_std_dev, percent_std_dev -- " << int_std_dev << percent_std_dev;
+
+         html_str_replicate_av += table_row( type,
+                                             method,
+                                             range,
+                                             QString::asprintf( "%10.4e", replicate_g_results["int_av"] ) + " (" + int_val_r + ")",
+                                             //QString::asprintf( "%10.2e",  int_std_dev ),
+                                             int_std_dev,
+                                             QString::asprintf( "%5.2f%%", replicate_g_results["tot_percent_av"] ) + " (" +
+                                                QString::asprintf( "%5.2f%%", frac_tot_r ) + ")",
+                                             //QString::asprintf( "%5.2f%%",  percent_std_dev ),
+                                             percent_std_dev,
+                                             QString::number( frac_tot_tol_r ),
+                                             tot_av_frac_passed );
+       }
+
+       html_str_replicate_av += indent( 3 ) + "</table>\n";
+   }
     }
   
   return html_str_replicate_av;
@@ -10139,25 +10111,14 @@ QString US_ReporterGMP::get_replicate_group_number( QString ch_alt_desc )
 //Get Integration Results from same Replicate subGroup | same-wvl | same-report-items: 
 QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP::ReportItem ref_report_item, QString u_wvl, QStringList channs_for_wvl )
 {
-  double int_res_sim = 0;
-  double int_res_sim_av = 0;
-  double tot_percent_sim = 0;
-  double tot_percent_sim_av = 0;
-  
-  int    same_item_counter = 0;
-  double st_dev_int_1 = 0;
-  double st_dev_int_final = 0;
-  double st_dev_tot_percent_1 = 0;
-  double st_dev_tot_percent_final = 0;
-  QVector< double > int_res_sim_vector;
-  QVector< double > tot_percent_sim_vector;
+   // Members of the group, as US_Calc range results
+   QVector<US_Calc::RangeResult> members;
+   QMap<QString, double>         results;
 
-  QMap< QString, double > results;
-  
-  //iterate over UR_ReportsGMPs && pick ones correspondning to 'chan_desc_alt.contains("ch_wvls[i]")' && wavelength == u_wvl;
-  int nchna   = currAProf.pchans.count();
-  for ( int i = 0; i < channs_for_wvl.size(); ++i )   //over channels for a given wvl in Replicate group:
-    {
+   //iterate over UR_ReportsGMPs && pick ones correspondning to 'chan_desc_alt.contains("ch_wvls[i]")' && wavelength == u_wvl;
+   int                           nchna = currAProf.pchans.count();
+   for ( int i = 0; i < channs_for_wvl.size(); ++i ) //over channels for a given wvl in Replicate group:
+   {
       US_ReportGMP reportGMP;
       for ( int j = 0; j < nchna; j++ )       //over all channels
 	{
@@ -10223,39 +10184,23 @@ QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP:
 
 	       if ( curr_item. integration_val_sim >= 0 )
 		 {
-		   int_res_sim            += curr_item. integration_val_sim;
-		   tot_percent_sim        += curr_item. total_percent_sim;
-		   int_res_sim_vector     .push_back( curr_item. integration_val_sim );
-		   tot_percent_sim_vector .push_back( curr_item. total_percent_sim );
+          US_Calc::RangeResult member;
+          member.range_concentration = curr_item.integration_val_sim;
+          member.fraction_percent    = curr_item.total_percent_sim;
+          members.push_back( member );
+       }
+        }
+   }
+   }
 
-		   ++same_item_counter;
-		 }
-	     }
-	}
-    }
-
-  if ( same_item_counter )
-    {
-      int_res_sim_av     = double( int_res_sim / same_item_counter );
-      tot_percent_sim_av = double( tot_percent_sim / same_item_counter ); 
-
-      for( int i=0; i<int_res_sim_vector.size(); ++i )
-	{
-	  st_dev_int_1         += ( int_res_sim_av - int_res_sim_vector[i] ) * ( int_res_sim_av - int_res_sim_vector[i] );
-	  st_dev_tot_percent_1 += ( tot_percent_sim_av - tot_percent_sim_vector[i] ) * ( tot_percent_sim_av - tot_percent_sim_vector[i] );
-	}
-      
-      st_dev_int_final         = sqrt( st_dev_int_1 ) / (sqrt( int_res_sim_vector.size() ));  
-      st_dev_tot_percent_final = sqrt( st_dev_tot_percent_1 ) / (sqrt( tot_percent_sim_vector.size() ));  
-    }
-
-  results[ "int_av" ]             = int_res_sim_av;
-  results[ "tot_percent_av" ]     = tot_percent_sim_av;
-  results[ "int_st_dev" ]         = st_dev_int_final;
-  results[ "tot_percent_st_dev" ] = st_dev_tot_percent_final;
-
-    
-  return results;
+   // Mean and population SD from US_Calc; a group without members gives 0.
+   const US_Calc::ReplicateResult group = US_Calc::replicate_summary( members );
+   const bool                     empty = ( group.used_count == 0 );
+   results["int_av"]                    = empty ? 0.0 : group.mean_range_concentration;
+   results["tot_percent_av"]            = empty ? 0.0 : group.mean_fraction_percent;
+   results["int_st_dev"]                = empty ? 0.0 : group.sd_range_concentration;
+   results["tot_percent_st_dev"]        = empty ? 0.0 : group.sd_fraction_percent;
+   return results;
 }
 
 // Distribution information HTML string
@@ -10321,13 +10266,7 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 		      rmsd_global  );
    mstr += table_row( tr( "Model-reported RMSD:"    ),
 		      ( rmsd_m > 0.0 ) ? QString::number( rmsd_m ) : "(none)" );
-   
-   double sum_mw  = 0.0;
-   double sum_s   = 0.0;
-   double sum_D   = 0.0;
-   double sum_c   = 0.0;
-   double sum_v   = 0.0;
-   double sum_k   = 0.0;
+
    double mink    = 1e+99;
    double maxk    = -1e+99;
    double minv    = 1e+99;
@@ -10335,33 +10274,26 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 
    for ( int ii = 0; ii < ncomp; ii++ )
    {
-      double conc = model_used.components[ ii ].signal_concentration;
       double kval = model_used.components[ ii ].f_f0;
-      double vval = model_used.components[ ii ].vbar20;
-      sum_c      += conc;
-      sum_mw     += ( model_used.components[ ii ].mw * conc );
-      sum_s      += ( model_used.components[ ii ].s  * conc );
-      sum_D      += ( model_used.components[ ii ].D  * conc );
-      sum_v      += ( vval * conc );
-      sum_k      += ( kval * conc );
+      double vval = model_used.components[ii].vbar20;
       mink        = qMin( kval, mink );
       maxk        = qMax( kval, maxk );
       minv        = qMin( vval, minv );
       maxv        = qMax( vval, maxv );
    }
 
-   mstr += table_row( tr( "Weight Average s20,W:" ),
-                      QString::asprintf( "%6.4e", ( sum_s  / sum_c ) ) );
-   mstr += table_row( tr( "Weight Average D20,W:" ),
-                      QString::asprintf( "%6.4e", ( sum_D  / sum_c ) ) );
-   mstr += table_row( tr( "W.A. Molecular Weight:" ),
-                      QString::asprintf( "%6.4e", ( sum_mw / sum_c ) ) );
+   // Weight averages and total concentration from US_Calc; an undefined
+   // average prints as nan, as the division by a zero total did.
+   const US_Calc::ModelMeans means = US_Calc::model_means( model_used.calc_model() );
+   const double              sum_c = means.total_concentration;
+
+   mstr += table_row( tr( "Weight Average s20,W:" ), QString::asprintf( "%6.4e", means.s ) );
+   mstr += table_row( tr( "Weight Average D20,W:" ), QString::asprintf( "%6.4e", means.D ) );
+   mstr += table_row( tr( "W.A. Molecular Weight:" ), QString::asprintf( "%6.4e", means.mw ) );
    if ( ! cnstff )
-      mstr += table_row( tr( "Weight Average f/f0:" ),
-                         QString::number( ( sum_k / sum_c ) ) );
+      mstr += table_row( tr( "Weight Average f/f0:" ), QString::number( means.f_f0 ) );
    if ( ! cnstvb )
-      mstr += table_row( tr( "Weight Average vbar20:" ),
-                         QString::number( ( sum_v / sum_c ) ) );
+      mstr += table_row( tr( "Weight Average vbar20:" ), QString::number( means.vbar20 ) );
    mstr += table_row( tr( "Total Concentration:" ),
                       QString::asprintf( "%6.4e", sum_c ) );
 
@@ -10725,12 +10657,16 @@ model_used.components[ ii ].vbar20 ),
 
    //passes
    tot_conc_r *= tot_conc_r_factor;
-   QString tot_conc_passed = ( sum_c  >= ( tot_conc_r * (1 - tot_conc_tol_r/100.0)  ) && sum_c  <= ( tot_conc_r * (1 + tot_conc_tol_r/100.0) ) ) ? "YES" : "NO";
-   QString exp_dur_passed  = ( last_f >= ( exp_dur_r * (1 - exp_dur_tol_r/100.0)  )   && last_f <= ( exp_dur_r * (1 + exp_dur_tol_r/100.0) ) ) ? "YES" : "NO";
-   QString rmsd_passed = ( rmsd_global.toDouble() <= rmsd_r ) ? "YES" : "NO";
-   QString av_int_passed = ( av_int_exp > av_int_r ) ? "YES" : "NO";
-   QString loading_volume_passed  = ( loading_volume_measured >= ( loading_volume_r * (1 - loading_volume_tol_r/100.0)  )
-				      && loading_volume_measured <= ( loading_volume_r * (1 + loading_volume_tol_r/100.0) ) ) ? "YES" : "NO";
+   using US_Calc::ToleranceRule;
+   auto    yes_no = []( bool pass ) { return pass ? QString( "YES" ) : QString( "NO" ); };
+   QString tot_conc_passed =
+      yes_no( US_Calc::passes( sum_c, { ToleranceRule::RelativePercentOfTarget, tot_conc_r, tot_conc_tol_r } ) );
+   QString exp_dur_passed =
+      yes_no( US_Calc::passes( last_f, { ToleranceRule::RelativePercentOfTarget, exp_dur_r, exp_dur_tol_r } ) );
+   QString rmsd_passed           = yes_no( US_Calc::passes( rmsd_global.toDouble(), { ToleranceRule::UpperLimit, rmsd_r, 0.0 } ) );
+   QString av_int_passed         = yes_no( US_Calc::passes( av_int_exp, { ToleranceRule::ExclusiveMinimum, av_int_r, 0.0 } ) );
+   QString loading_volume_passed = yes_no( US_Calc::passes(
+      loading_volume_measured, { ToleranceRule::RelativePercentOfTarget, loading_volume_r, loading_volume_tol_r } ) );
    //end passes
 
    //check what to show on the report
@@ -10878,6 +10814,7 @@ model_used.components[ ii ].vbar20 ),
 			  tr( "Fraction % from Model (target):" ),
 			  tr( "Tolerance, %:"),
 			  tr( "PASSED ?" ));
+       const US_Calc::Model range_model = model_used.calc_model();
        for ( int kk = 0; kk < report_items_number; ++kk )
 	 {
 	   US_ReportGMP::ReportItem curr_item = reportGMP-> reportItems[ kk ];
@@ -10890,103 +10827,51 @@ model_used.components[ ii ].vbar20 ),
 	   double  frac_tot_r     = curr_item.total_percent;
 	   double  frac_tot_tol_r = curr_item.tolerance ;
 	   double  low            = curr_item.range_low;
-	   double  high           = curr_item.range_high;
-	   
-	   QString range = "[" + QString::number(low) + " - " + QString::number(high) + "]";
-	   
-	   //integrate over model_used
-	   double int_val_m = 0;
-	   double variable_val_within_range = 0;
-	   for ( int ii = 0; ii < ncomp; ii++ )
-	     {
-	       double conc = model_used.components[ ii ].signal_concentration;
-	       double s_20 = model_used.components[ ii ].s;
-	       double D_20 = model_used.components[ ii ].D;
-	       double f_f0 = model_used.components[ ii ].f_f0;
-	       double mw   = model_used.components[ ii ].mw;
-	       
-	       if ( type == "s" )
-		 {
-		   if ( s_20 >= low*pow(10,-13) && s_20 <= high*pow(10,-13) )
-		     {
-		       int_val_m += conc;
-		       variable_val_within_range += s_20*conc;
-		     }
-		 }
-	       else if ( type == "D" )
-		 {
-		   if ( D_20 >= low*pow(10,-7) && D_20 <= high*pow(10,-7) )
-		     {
-		       int_val_m += conc;
-		       variable_val_within_range += D_20*conc;
-		     }
-		 }
-	       else if ( type == "f/f0")
-		 {
-		   if ( f_f0 >= low && f_f0 <= high )
-		     {
-		       int_val_m += conc;
-		       variable_val_within_range += f_f0*conc;
-		     }
-		 }
-	       else if ( type == "MW")
-		 {
-		   if ( mw >= low*pow(10,3) && mw <= high*pow(10,3) )
-		     {
-		       int_val_m += conc;
-		       variable_val_within_range += mw*conc;
-		     }
-		 }
-	     }
-	   
-	   double frac_tot_m = double( int_val_m / sum_c ) * 100.0;
-	   // QString tot_frac_passed = ( frac_tot_m >= ( frac_tot_r * (1 - frac_tot_tol_r/100.0)  )
-	   // 			       && frac_tot_m <= ( frac_tot_r * (1 + frac_tot_tol_r/100.0)  ) ) ? "YES" : "NO";
+      double                     high           = curr_item.range_high;
 
-	   QString tot_frac_passed = ( qAbs( frac_tot_m - frac_tot_r ) <= frac_tot_tol_r ) ? "YES" : "NO";
+      QString                    range = "[" + QString::number( low ) + " - " + QString::number( high ) + "]";
 
-	   double wav_variable_within_range = double( variable_val_within_range / int_val_m );
+      // Integrate over model_used with US_Calc:  inclusive range in report
+      // units, sums in component order.  Values the arithmetic leaves
+      // undefined print as nan, as the divisions by zero did; an item type
+      // that is not a range type selects nothing (fraction 0).
+      bool                       range_type   = false;
+      const US_Calc::Quantity    quantity     = US_Calc::quantity_from_report_type( type, &range_type );
+      const US_Calc::RangeResult range_result = US_Calc::range_summary( range_model, { quantity, low, high } );
+      double                     int_val_m    = range_result.range_concentration;
+      double                     frac_tot_m   = range_type ? range_result.fraction_percent : ( sum_c != 0.0 ? 0.0 : qQNaN() );
+      double                     wav_variable_within_range = range_result.within_range_mean;
 
-	   /* */
-	   QStringList a_method_types = method.split("-");
-	   bool method_identity = true;
-	   for (const QString& sub : a_method_types )
-	     {
-	       if (!mdla.contains(sub) )
-		 method_identity = false; 
-	     }
-	   /* */
-	   
-	   //if ( mdla.contains ( method ) )
-	   if ( method_identity )
-	     {
-	       // curr_item. integration_val_sim = int_val_m;
-	       // curr_item. total_percent_sim   = frac_tot_m;
-	       // curr_item. passed              = tot_frac_passed;
+      QString                    tot_frac_passed =
+         US_Calc::passes( frac_tot_m, { US_Calc::ToleranceRule::AbsolutePercentagePoints, frac_tot_r, frac_tot_tol_r } ) ? "YES"
+                                                                                                                                            : "NO";
 
-	       reportGMP-> reportItems[ kk ]. integration_val_sim = int_val_m;
-	       reportGMP-> reportItems[ kk ]. total_percent_sim   = frac_tot_m;
-	       reportGMP-> reportItems[ kk ]. passed              = tot_frac_passed;
+      const bool method_identity = US_Calc::method_matches( curr_item.method, model_used.description );
 
-	       qDebug() << "In distrib_info(), fill simulated integration vals: for chann/wvl/type/method/low/high, "
-			<< "Inter. val. Sim -- "
-			<< wvl
-			<< curr_item.type
-			<< curr_item.method
-			<< curr_item.range_low
-			<< curr_item.range_high
-			<< int_val_m;
-	       
-	       mstr += table_row( type,
-				  range,
-				  QString::asprintf( "%10.4e", wav_variable_within_range ),
-				  QString::asprintf( "%10.4e", int_val_m ) + " (" + int_val_r + ")",
-				  QString::asprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
-				  QString::number( frac_tot_tol_r ),
-				  tot_frac_passed );
-	     }
+      //if ( mdla.contains ( method ) )
+      if ( method_identity )
+      {
+         // curr_item. integration_val_sim = int_val_m;
+         // curr_item. total_percent_sim   = frac_tot_m;
+         // curr_item. passed              = tot_frac_passed;
 
-	 }
+         reportGMP->reportItems[kk].integration_val_sim = int_val_m;
+         reportGMP->reportItems[kk].total_percent_sim   = frac_tot_m;
+         reportGMP->reportItems[kk].passed              = tot_frac_passed;
+
+         qDebug() << "In distrib_info(), fill simulated integration vals: for chann/wvl/type/method/low/high, "
+                  << "Inter. val. Sim -- " << wvl << curr_item.type << curr_item.method << curr_item.range_low
+                  << curr_item.range_high << int_val_m;
+
+         mstr += table_row( type,
+                            range,
+                            QString::asprintf( "%10.4e", wav_variable_within_range ),
+                            QString::asprintf( "%10.4e", int_val_m ) + " (" + int_val_r + ")",
+                            QString::asprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
+                            QString::number( frac_tot_tol_r ),
+                            tot_frac_passed );
+      }
+    }
        mstr += indent( 2 ) + "</table>\n";
      }
    //End of integration results

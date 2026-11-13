@@ -22,6 +22,14 @@ if(US3_NO_DB)
     )
 endif()
 
+# The calculations (us_calc_*.cpp) are compiled without floating-point
+# contraction (FMA), so they give the same doubles on every platform (see
+# us_calc_fp.h, whose pragmas also cover MSVC).
+if(NOT MSVC)
+    file(GLOB CALC_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/us_calc_*.cpp")
+    set_source_files_properties(${CALC_SOURCES} PROPERTIES COMPILE_OPTIONS "-ffp-contract=off")
+endif()
+
 # Create the utils library
 add_library(us_utils ${UTILS_SOURCES} ${UTILS_HEADERS})
 

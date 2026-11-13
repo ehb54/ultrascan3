@@ -1,0 +1,170 @@
+{
+ "cases": {
+  "A_2dsa_it": {
+   "datasets": [
+    ["fixA", 1, 11, 1.0]
+   ],
+   "files": {"fixA.2DSA-IT.1A260.i01.model.xml": "7daaecba1a22a6a438a1ecbd3758851b4611a0e8047e80751606a66b7a3e2e90"},
+   "method": "2DSA",
+   "np": 2,
+   "params": {"debug_level": "0", "ff0_grid_points": "12", "ff0_max": "3.0", "ff0_min": "1.0", "fit_mb_select": "0", "max_iterations": "3", "mc_iterations": "1", "meniscus_points": "1", "meniscus_range": "0.0", "rinoise_option": "0", "s_grid_points": "36", "s_max": "10.0", "s_min": "1.0", "seed": "4711", "tinoise_option": "0", "uniform_grid": "3"},
+   "sample": "A",
+   "species_s_ff0_c": [
+    [2.5, 1.25, 0.25],
+    [4.5, 1.6, 0.4],
+    [7.0, 2.1, 0.3]
+   ]
+  },
+  "A_2dsa_mc": {
+   "datasets": [
+    ["fixA", 1, 11, 1.0]
+   ],
+   "files": {"fixA.2DSA-MC.1A260.mcN003.model.xml": "2f7a5aadbfdf5080be6632ab18a987241e04981c3a839ebdb2b030aea7579098"},
+   "method": "2DSA",
+   "np": 2,
+   "params": {"debug_level": "0", "ff0_grid_points": "12", "ff0_max": "3.0", "ff0_min": "1.0", "fit_mb_select": "0", "max_iterations": "1", "mc_iterations": "3", "meniscus_points": "1", "meniscus_range": "0.0", "rinoise_option": "0", "s_grid_points": "36", "s_max": "10.0", "s_min": "1.0", "seed": "4711", "tinoise_option": "0", "uniform_grid": "3"},
+   "sample": "A",
+   "species_s_ff0_c": [
+    [2.5, 1.25, 0.25],
+    [4.5, 1.6, 0.4],
+    [7.0, 2.1, 0.3]
+   ]
+  },
+  "A_dmga": {
+   "datasets": [
+    ["fixA", 1, 11, 1.0]
+   ],
+   "files": {"fixA.DMGA.1A260.i01.model.xml": "9bcb9a90ebdecc121b7d238123d89abecb05942ccdfdb5fb73a637dcfce4fa56"},
+   "method": "DMGA",
+   "np": 2,
+   "params": {"DC_model": "regression.dmga.model.xml", "conc_threshold": "0.000001", "crossover": "50", "debug_level": "0", "elitism": "2", "generations": "15", "k_grid": "100", "mc_iterations": "1", "migration": "3", "minimize_opt": "0", "mutate_sigma": "2", "mutation": "50", "p_mutate_k": "20", "p_mutate_s": "20", "p_mutate_sk": "20", "plague": "4", "population": "30", "regularization": "5", "rinoise_option": "0", "s_grid": "100", "seed": "4711", "tinoise_option": "0"},
+   "sample": "A",
+   "species_s_ff0_c": [
+    [2.5, 1.25, 0.25],
+    [4.5, 1.6, 0.4],
+    [7.0, 2.1, 0.3]
+   ]
+  },
+  "A_ga": {
+   "datasets": [
+    ["fixA", 1, 11, 1.0]
+   ],
+   "files": {"fixA.GA.1A260.i01.model.xml": "410baa756872937f9d29f1a7b49e12020fe4189d9ee10bff1a8421de88684a73"},
+   "method": "GA",
+   "np": 4,
+   "params": {"conc_threshold": "0.000001", "crossover": "50", "debug_level": "0", "elitism": "2", "generations": "15", "k_grid": "100", "mc_iterations": "1", "migration": "3", "minimize_opt": "0", "mutate_sigma": "2", "mutation": "50", "p_mutate_k": "20", "p_mutate_s": "20", "p_mutate_sk": "20", "plague": "4", "population": "30", "regularization": "5", "rinoise_option": "0", "s_grid": "100", "seed": "4711", "tinoise_option": "0"},
+   "sample": "A",
+   "species_s_ff0_c": [
+    [2.5, 1.25, 0.25],
+    [4.5, 1.6, 0.4],
+    [7.0, 2.1, 0.3]
+   ]
+  },
+  "A_pcsa_sl": {
+   "datasets": [
+    ["fixA", 1, 11, 1.0]
+   ],
+   "files": {"fixA.PCSA-SL.1A260.i01.model.xml": "f178794b63377ce444ae693d31d9fdb03ee5ce5bc5a3e1e6d4e359e05adc61d5"},
+   "method": "PCSA",
+   "np": 2,
+   "params": {"curve_type": "SL", "curves_points": "10", "debug_level": "0", "gfit_iterations": "1", "max_iterations": "1", "mc_iterations": "1", "rinoise_option": "0", "seed": "4711", "solute_type": "013.skv", "thr_deltr_ratio": "0.0001", "tikreg_alpha": "0.0", "tikreg_option": "0", "tinoise_option": "0", "vars_count": "6", "x_max": "10.0", "x_min": "1.0", "y_max": "3.0", "y_min": "1.0", "z_value": "0.0"},
+   "sample": "A",
+   "species_s_ff0_c": [
+    [2.5, 1.25, 0.25],
+    [4.5, 1.6, 0.4],
+    [7.0, 2.1, 0.3]
+   ]
+  },
+  "A_rep2_2dsa_it": {
+   "datasets": [
+    ["fixA", 2, 23, 1.0]
+   ],
+   "files": {"fixA.2DSA-IT.2A260.i01.model.xml": "64ab9680a5388f9586b12f9a252b3d800df7949804774f74e5ad8df56916db77"},
+   "method": "2DSA",
+   "np": 2,
+   "params": {"debug_level": "0", "ff0_grid_points": "12", "ff0_max": "3.0", "ff0_min": "1.0", "fit_mb_select": "0", "max_iterations": "3", "mc_iterations": "1", "meniscus_points": "1", "meniscus_range": "0.0", "rinoise_option": "0", "s_grid_points": "36", "s_max": "10.0", "s_min": "1.0", "seed": "4711", "tinoise_option": "0", "uniform_grid": "3"},
+   "sample": "A",
+   "species_s_ff0_c": [
+    [2.5, 1.25, 0.25],
+    [4.5, 1.6, 0.4],
+    [7.0, 2.1, 0.3]
+   ]
+  },
+  "A_rep3_2dsa_it": {
+   "datasets": [
+    ["fixA", 3, 37, 1.0]
+   ],
+   "files": {"fixA.2DSA-IT.3A260.i01.model.xml": "c71d4de968a27aa5026d47cbf923bdcc3c67d4c73dce62c6854894450fcfeae1"},
+   "method": "2DSA",
+   "np": 2,
+   "params": {"debug_level": "0", "ff0_grid_points": "12", "ff0_max": "3.0", "ff0_min": "1.0", "fit_mb_select": "0", "max_iterations": "3", "mc_iterations": "1", "meniscus_points": "1", "meniscus_range": "0.0", "rinoise_option": "0", "s_grid_points": "36", "s_max": "10.0", "s_min": "1.0", "seed": "4711", "tinoise_option": "0", "uniform_grid": "3"},
+   "sample": "A",
+   "species_s_ff0_c": [
+    [2.5, 1.25, 0.25],
+    [4.5, 1.6, 0.4],
+    [7.0, 2.1, 0.3]
+   ]
+  },
+  "B_2dsa_it": {
+   "datasets": [
+    ["fixB", 1, 11, 1.0]
+   ],
+   "files": {"fixB.2DSA-IT.1A260.i01.model.xml": "1585565296b72fed591a79a79fa2558fd4ea89ec872759d48be524aa83381f2f"},
+   "method": "2DSA",
+   "np": 2,
+   "params": {"debug_level": "0", "ff0_grid_points": "12", "ff0_max": "3.0", "ff0_min": "1.0", "fit_mb_select": "0", "max_iterations": "3", "mc_iterations": "1", "meniscus_points": "1", "meniscus_range": "0.0", "rinoise_option": "0", "s_grid_points": "36", "s_max": "10.0", "s_min": "1.0", "seed": "4711", "tinoise_option": "0", "uniform_grid": "3"},
+   "sample": "B",
+   "species_s_ff0_c": [
+    [4.3, 1.25, 0.8],
+    [6.2, 1.35, 0.15],
+    [9.0, 1.5, 0.05]
+   ]
+  },
+  "B_2dsa_mc": {
+   "datasets": [
+    ["fixB", 1, 11, 1.0]
+   ],
+   "files": {"fixB.2DSA-MC.1A260.mcN003.model.xml": "1c60554ac6089fb2a6f8fe3310262a3ffbaf5f4b72d7456bae79a22dfa833c21"},
+   "method": "2DSA",
+   "np": 2,
+   "params": {"debug_level": "0", "ff0_grid_points": "12", "ff0_max": "3.0", "ff0_min": "1.0", "fit_mb_select": "0", "max_iterations": "1", "mc_iterations": "3", "meniscus_points": "1", "meniscus_range": "0.0", "rinoise_option": "0", "s_grid_points": "36", "s_max": "10.0", "s_min": "1.0", "seed": "4711", "tinoise_option": "0", "uniform_grid": "3"},
+   "sample": "B",
+   "species_s_ff0_c": [
+    [4.3, 1.25, 0.8],
+    [6.2, 1.35, 0.15],
+    [9.0, 1.5, 0.05]
+   ]
+  },
+  "C_2dsa_it": {
+   "datasets": [
+    ["fixC", 1, 11, 1.0]
+   ],
+   "files": {"fixC.2DSA-IT.1A260.i01.model.xml": "d978d5e17f9337028cdfeaa89994dcdb45e2179472d54c253597630da0f499fb"},
+   "method": "2DSA",
+   "np": 2,
+   "params": {"debug_level": "0", "ff0_grid_points": "12", "ff0_max": "3.0", "ff0_min": "1.0", "fit_mb_select": "0", "max_iterations": "3", "mc_iterations": "1", "meniscus_points": "1", "meniscus_range": "0.0", "rinoise_option": "0", "s_grid_points": "36", "s_max": "10.0", "s_min": "1.0", "seed": "4711", "tinoise_option": "0", "uniform_grid": "3"},
+   "sample": "C",
+   "species_s_ff0_c": [
+    [5.0, 1.4, 0.35],
+    [5.3, 1.45, 0.35],
+    [8.0, 1.8, 0.3]
+   ]
+  },
+  "C_2dsa_mc": {
+   "datasets": [
+    ["fixC", 1, 11, 1.0]
+   ],
+   "files": {"fixC.2DSA-MC.1A260.mcN003.model.xml": "5e7a2836c8ffa090e16739b5c5db1d684859d9280c9ad85f760a1c1b93dd8b3b"},
+   "method": "2DSA",
+   "np": 2,
+   "params": {"debug_level": "0", "ff0_grid_points": "12", "ff0_max": "3.0", "ff0_min": "1.0", "fit_mb_select": "0", "max_iterations": "1", "mc_iterations": "3", "meniscus_points": "1", "meniscus_range": "0.0", "rinoise_option": "0", "s_grid_points": "36", "s_max": "10.0", "s_min": "1.0", "seed": "4711", "tinoise_option": "0", "uniform_grid": "3"},
+   "sample": "C",
+   "species_s_ff0_c": [
+    [5.0, 1.4, 0.35],
+    [5.3, 1.45, 0.35],
+    [8.0, 1.8, 0.3]
+   ]
+  }
+ },
+ "generator": {"date_stamp_normalized_to": "_a2611090000_", "generated_utc": "2026-11-09T19:04:29Z", "mpirun": "mpirun (Open MPI) 4.1.7", "script": "test/calc/make_fitted_models.py", "ultrascan3_commit": "89ce33342f8840ad75281996221cc8b9a9a5adad", "us_mpi_analysis": "us_mpi_analysis", "worktree_modified": false}
+}

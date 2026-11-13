@@ -1,0 +1,106 @@
+{
+ "edge": [
+  {"high": 5.0, "low": 4.0, "method": "2DSA", "target": 50.0, "tolerance": 10.0, "type": "s"},
+  {"high": 4.5, "low": 4.5, "method": "2DSA", "target": 0.0, "tolerance": 1.0, "type": "s"},
+  {"high": 6.0, "low": 4.0, "method": "2DSA", "target": 50.0, "tolerance": 10.0, "type": "D"},
+  {"high": 100.0, "low": 50.0, "method": "2DSA", "target": 50.0, "tolerance": 10.0, "type": "MW"},
+  {"high": 2.0, "low": 1.5, "method": "2DSA", "target": 50.0, "tolerance": 10.0, "type": "f/f0"},
+  {"high": 0.75, "low": 0.7, "method": "2DSA", "target": 50.0, "tolerance": 10.0, "type": "vbar"}
+ ],
+ "replicate_groups": [
+  {"cases": ["A_2dsa_it", "A_rep2_2dsa_it", "A_rep3_2dsa_it"], "item": {"high": 3.001, "integration": 0.25, "low": 2.001, "method": "2DSA-IT", "target": 26, "tolerance": 10.0, "type": "s"}},
+  {"cases": ["A_2dsa_it", "A_rep2_2dsa_it", "A_rep3_2dsa_it"], "item": {"high": 5.001, "integration": 0.4, "low": 4.001, "method": "2DSA-IT", "target": 42, "tolerance": 10.0, "type": "s"}},
+  {"cases": ["A_2dsa_it", "A_rep2_2dsa_it", "A_rep3_2dsa_it"], "item": {"high": 7.5, "integration": 0.3, "low": 6.5, "method": "2DSA-IT", "target": 32, "tolerance": 10.0, "type": "s"}},
+  {"cases": ["A_2dsa_it", "A_rep2_2dsa_it", "A_rep3_2dsa_it"], "item": {"high": 10.001, "integration": 0.95, "low": 1.001, "method": "2DSA-IT", "target": 100, "tolerance": 10.0, "type": "s"}}
+ ],
+ "samples": {
+  "A": {
+   "cases": ["A_2dsa_it", "A_2dsa_mc", "A_dmga", "A_ga", "A_pcsa_sl", "A_rep2_2dsa_it", "A_rep3_2dsa_it"],
+   "items": [
+    {"high": 3.001, "integration": 0.25, "low": 2.001, "method": "2DSA-IT", "target": 26, "tolerance": 10.0, "type": "s"},
+    {"high": 3.001, "integration": 0.25, "low": 2.001, "method": "2DSA-MC", "target": 26, "tolerance": 10.0, "type": "s"},
+    {"high": 3.001, "integration": 0.25, "low": 2.001, "method": "DMGA", "target": 26, "tolerance": 10.0, "type": "s"},
+    {"high": 3.001, "integration": 0.25, "low": 2.001, "method": "GA", "target": 26, "tolerance": 10.0, "type": "s"},
+    {"high": 3.001, "integration": 0.25, "low": 2.001, "method": "PCSA-SL", "target": 26, "tolerance": 10.0, "type": "s"},
+    {"high": 5.001, "integration": 0.4, "low": 4.001, "method": "2DSA-IT", "target": 42, "tolerance": 10.0, "type": "s"},
+    {"high": 5.001, "integration": 0.4, "low": 4.001, "method": "2DSA-MC", "target": 42, "tolerance": 10.0, "type": "s"},
+    {"high": 5.001, "integration": 0.4, "low": 4.001, "method": "DMGA", "target": 42, "tolerance": 10.0, "type": "s"},
+    {"high": 5.001, "integration": 0.4, "low": 4.001, "method": "GA", "target": 42, "tolerance": 10.0, "type": "s"},
+    {"high": 5.001, "integration": 0.4, "low": 4.001, "method": "PCSA-SL", "target": 42, "tolerance": 10.0, "type": "s"},
+    {"high": 7.5, "integration": 0.3, "low": 6.5, "method": "2DSA-IT", "target": 32, "tolerance": 10.0, "type": "s"},
+    {"high": 7.5, "integration": 0.3, "low": 6.5, "method": "2DSA-MC", "target": 32, "tolerance": 10.0, "type": "s"},
+    {"high": 7.5, "integration": 0.3, "low": 6.5, "method": "DMGA", "target": 32, "tolerance": 10.0, "type": "s"},
+    {"high": 7.5, "integration": 0.3, "low": 6.5, "method": "GA", "target": 32, "tolerance": 10.0, "type": "s"},
+    {"high": 7.5, "integration": 0.3, "low": 6.5, "method": "PCSA-SL", "target": 32, "tolerance": 10.0, "type": "s"},
+    {"high": 10.001, "integration": 0.95, "low": 1.001, "method": "2DSA-IT", "target": 100, "tolerance": 10.0, "type": "s"},
+    {"high": 10.001, "integration": 0.95, "low": 1.001, "method": "2DSA-MC", "target": 100, "tolerance": 10.0, "type": "s"},
+    {"high": 10.001, "integration": 0.95, "low": 1.001, "method": "DMGA", "target": 100, "tolerance": 10.0, "type": "s"},
+    {"high": 10.001, "integration": 0.95, "low": 1.001, "method": "GA", "target": 100, "tolerance": 10.0, "type": "s"},
+    {"high": 10.001, "integration": 0.95, "low": 1.001, "method": "PCSA-SL", "target": 100, "tolerance": 10.0, "type": "s"},
+    {"high": 3.305, "integration": 0.0, "low": 1.154, "method": "2DSA-IT", "target": 32, "tolerance": 5.0, "type": "D"},
+    {"high": 11.13, "integration": 0.0, "low": 3.305, "method": "2DSA-IT", "target": 68, "tolerance": 5.0, "type": "D"},
+    {"high": 13.14, "integration": 0.0, "low": 11.13, "method": "2DSA-IT", "target": 0, "tolerance": 5.0, "type": "D"},
+    {"high": 172.2, "integration": 0.0, "low": 16.72, "method": "2DSA-IT", "target": 68, "tolerance": 5.0, "type": "MW"},
+    {"high": 499.5, "integration": 0.0, "low": 172.2, "method": "2DSA-IT", "target": 32, "tolerance": 5.0, "type": "MW"},
+    {"high": 749.1, "integration": 0.0, "low": 499.5, "method": "2DSA-IT", "target": 0, "tolerance": 5.0, "type": "MW"},
+    {"high": 1.909, "integration": 0.0, "low": 0.95, "method": "2DSA-IT", "target": 68, "tolerance": 5.0, "type": "f/f0"},
+    {"high": 2.636, "integration": 0.0, "low": 1.909, "method": "2DSA-IT", "target": 32, "tolerance": 5.0, "type": "f/f0"},
+    {"high": 3.15, "integration": 0.0, "low": 2.636, "method": "2DSA-IT", "target": 0, "tolerance": 5.0, "type": "f/f0"},
+    {"high": 3.001, "integration": 0.25, "low": 2.001, "method": "2DSA-IT", "note": "expected to fail", "target": 56, "tolerance": 10.0, "type": "s"},
+    {"high": 3.001, "integration": 0.25, "low": 2.001, "method": "DMGA-MC", "note": "no matching model for 2DSA models", "target": 26, "tolerance": 10.0, "type": "s"},
+    {"high": 7.5, "integration": 0.535, "low": 6.0, "method": "2DSA-IT", "note": "LIMS seed 27-validation-oq-protocol.sql item", "target": 76.0, "tolerance": 10.0, "type": "s"}
+   ],
+   "total_concentration": {"target": 0.95, "tolerance": 10.0}
+  },
+  "B": {
+   "cases": ["B_2dsa_it", "B_2dsa_mc"],
+   "items": [
+    {"high": 4.8, "integration": 0.8, "low": 3.8, "method": "2DSA-IT", "target": 80, "tolerance": 10.0, "type": "s"},
+    {"high": 4.8, "integration": 0.8, "low": 3.8, "method": "2DSA-MC", "target": 80, "tolerance": 10.0, "type": "s"},
+    {"high": 6.7, "integration": 0.15, "low": 5.7, "method": "2DSA-IT", "target": 15, "tolerance": 10.0, "type": "s"},
+    {"high": 6.7, "integration": 0.15, "low": 5.7, "method": "2DSA-MC", "target": 15, "tolerance": 10.0, "type": "s"},
+    {"high": 9.5, "integration": 0.05, "low": 8.5, "method": "2DSA-IT", "target": 5, "tolerance": 10.0, "type": "s"},
+    {"high": 9.5, "integration": 0.05, "low": 8.5, "method": "2DSA-MC", "target": 5, "tolerance": 10.0, "type": "s"},
+    {"high": 10.001, "integration": 1.0, "low": 1.001, "method": "2DSA-IT", "target": 100, "tolerance": 10.0, "type": "s"},
+    {"high": 10.001, "integration": 1.0, "low": 1.001, "method": "2DSA-MC", "target": 100, "tolerance": 10.0, "type": "s"},
+    {"high": 2.397, "integration": 0.0, "low": 1.154, "method": "2DSA-IT", "target": 1, "tolerance": 5.0, "type": "D"},
+    {"high": 6.883, "integration": 0.0, "low": 2.397, "method": "2DSA-IT", "target": 48, "tolerance": 5.0, "type": "D"},
+    {"high": 8.07, "integration": 0.0, "low": 6.883, "method": "2DSA-IT", "target": 51, "tolerance": 5.0, "type": "D"},
+    {"high": 403.0, "integration": 0.0, "low": 43.76, "method": "2DSA-IT", "target": 100, "tolerance": 5.0, "type": "MW"},
+    {"high": 589.6, "integration": 0.0, "low": 403.0, "method": "2DSA-IT", "target": 0, "tolerance": 5.0, "type": "MW"},
+    {"high": 749.1, "integration": 0.0, "low": 589.6, "method": "2DSA-IT", "target": 0, "tolerance": 5.0, "type": "MW"},
+    {"high": 1.091, "integration": 0.0, "low": 0.95, "method": "2DSA-IT", "target": 0, "tolerance": 5.0, "type": "f/f0"},
+    {"high": 2.273, "integration": 0.0, "low": 1.091, "method": "2DSA-IT", "target": 98, "tolerance": 5.0, "type": "f/f0"},
+    {"high": 3.15, "integration": 0.0, "low": 2.273, "method": "2DSA-IT", "target": 1, "tolerance": 5.0, "type": "f/f0"},
+    {"high": 4.8, "integration": 0.8, "low": 3.8, "method": "2DSA-IT", "note": "expected to fail", "target": 100, "tolerance": 10.0, "type": "s"},
+    {"high": 4.8, "integration": 0.8, "low": 3.8, "method": "PCSA-SL", "note": "no matching model for 2DSA models", "target": 80, "tolerance": 10.0, "type": "s"}
+   ],
+   "total_concentration": {"target": 1.0, "tolerance": 10.0}
+  },
+  "C": {
+   "cases": ["C_2dsa_it", "C_2dsa_mc"],
+   "items": [
+    {"high": 5.15, "integration": 0.35, "low": 4.7, "method": "2DSA-IT", "target": 35, "tolerance": 10.0, "type": "s"},
+    {"high": 5.15, "integration": 0.35, "low": 4.7, "method": "2DSA-MC", "target": 35, "tolerance": 10.0, "type": "s"},
+    {"high": 5.6, "integration": 0.35, "low": 5.15, "method": "2DSA-IT", "target": 35, "tolerance": 10.0, "type": "s"},
+    {"high": 5.6, "integration": 0.35, "low": 5.15, "method": "2DSA-MC", "target": 35, "tolerance": 10.0, "type": "s"},
+    {"high": 8.5, "integration": 0.3, "low": 7.5, "method": "2DSA-IT", "target": 30, "tolerance": 10.0, "type": "s"},
+    {"high": 8.5, "integration": 0.3, "low": 7.5, "method": "2DSA-MC", "target": 30, "tolerance": 10.0, "type": "s"},
+    {"high": 10.001, "integration": 1.0, "low": 1.001, "method": "2DSA-IT", "target": 100, "tolerance": 10.0, "type": "s"},
+    {"high": 10.001, "integration": 1.0, "low": 1.001, "method": "2DSA-MC", "target": 100, "tolerance": 10.0, "type": "s"},
+    {"high": 5.068, "integration": 0.0, "low": 1.154, "method": "2DSA-IT", "target": 54, "tolerance": 5.0, "type": "D"},
+    {"high": 12.75, "integration": 0.0, "low": 5.068, "method": "2DSA-IT", "target": 46, "tolerance": 5.0, "type": "D"},
+    {"high": 20.96, "integration": 0.0, "low": 12.75, "method": "2DSA-IT", "target": 0, "tolerance": 5.0, "type": "D"},
+    {"high": 451.7, "integration": 0.0, "low": 4.124, "method": "2DSA-IT", "target": 100, "tolerance": 5.0, "type": "MW"},
+    {"high": 594.4, "integration": 0.0, "low": 451.7, "method": "2DSA-IT", "target": 0, "tolerance": 5.0, "type": "MW"},
+    {"high": 749.1, "integration": 0.0, "low": 594.4, "method": "2DSA-IT", "target": 0, "tolerance": 5.0, "type": "MW"},
+    {"high": 1.182, "integration": 0.0, "low": 0.95, "method": "2DSA-IT", "target": 0, "tolerance": 5.0, "type": "f/f0"},
+    {"high": 2.091, "integration": 0.0, "low": 1.182, "method": "2DSA-IT", "target": 93, "tolerance": 5.0, "type": "f/f0"},
+    {"high": 3.15, "integration": 0.0, "low": 2.091, "method": "2DSA-IT", "target": 7, "tolerance": 5.0, "type": "f/f0"},
+    {"high": 5.15, "integration": 0.35, "low": 4.7, "method": "2DSA-IT", "note": "expected to fail", "target": 65, "tolerance": 10.0, "type": "s"},
+    {"high": 5.15, "integration": 0.35, "low": 4.7, "method": "PCSA-SL", "note": "no matching model for 2DSA models", "target": 35, "tolerance": 10.0, "type": "s"}
+   ],
+   "total_concentration": {"target": 1.0, "tolerance": 10.0}
+  }
+ }
+}

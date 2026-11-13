@@ -2,8 +2,8 @@
 #
 # us_mpi_analysis is an MPI-only headless program. It unconditionally includes
 # <mpi.h> and uses MPI_* calls throughout, so MPI is a hard requirement.
-# This target is only built in HPC profile (US3_NO_DB=ON) or when ENABLE_MPI
-# is explicitly set.
+# This target is only built on Linux, in the HPC profile (US3_NO_DB=ON) or when
+# ENABLE_MPI is explicitly set.
 
 find_package(MPI REQUIRED CXX)
 find_package(Threads REQUIRED)
