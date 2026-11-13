@@ -150,19 +150,19 @@ Inside container, you can:
   # List and filter tests
   ctest -N                                       # All CTest tests
   ctest -N | grep -i xml                         # Filter CTest tests
-  ./bin/test_us_utils --gtest_list_tests  # All GTest cases
-  ./bin/test_us_utils --gtest_list_tests | grep Profile  # Filter GTest
+  ./test/utils/unit-layout/bin/test_us_utils --gtest_list_tests  # All GTest cases
+  ./test/utils/unit-layout/bin/test_us_utils --gtest_list_tests | grep Profile  # Filter GTest
 
   # Run tests with various options
   ctest -R "pattern" -V                          # CTest with pattern
-  ./bin/test_us_utils --gtest_filter="Test.*" --gtest_print_time=1
+  ./test/utils/unit-layout/bin/test_us_utils --gtest_filter="Test.*" --gtest_print_time=1
 
   # Debug crashed tests
-  gdb --args ./bin/test_us_utils --gtest_filter="CrashedTest"
-  valgrind --tool=memcheck ./bin/test_us_utils --gtest_filter="MemoryTest"
+  gdb --args ./test/utils/unit-layout/bin/test_us_utils --gtest_filter="CrashedTest"
+  valgrind --tool=memcheck ./test/utils/unit-layout/bin/test_us_utils --gtest_filter="MemoryTest"
 
   # Analyze test output
-  ./bin/test_us_utils --gtest_filter="*" 2>&1 | tee test_output.log
+  ./test/utils/unit-layout/bin/test_us_utils --gtest_filter="*" 2>&1 | tee test_output.log
 
 EOF
 }
@@ -416,21 +416,21 @@ if [ "$INTERACTIVE" = true ]; then
     echo "DISCOVER TESTS:"
     echo "  ctest -N                                    # List CTest tests"
     echo "  ctest -N | grep -i 'pattern'                # Filter CTest tests"
-    echo "  ./bin/test_us_utils --gtest_list_tests              # List GTest cases"
-    echo "  ./bin/test_us_utils --gtest_list_tests | grep Pattern # Filter GTest"
+    echo "  ./test/utils/unit-layout/bin/test_us_utils --gtest_list_tests              # List GTest cases"
+    echo "  ./test/utils/unit-layout/bin/test_us_utils --gtest_list_tests | grep Pattern # Filter GTest"
     echo ""
     echo "RUN TESTS:"
     echo "  ctest -R 'pattern' -V                       # Run CTest with pattern, verbose"
     echo "  ctest -L utils --output-on-failure          # Run by label"
-    echo "  ./bin/test_us_utils --gtest_filter='Test.*' -v    # Run GTest with filter"
-    echo "  ./bin/test_us_utils --gtest_filter='Test.*' --gtest_print_time=1"
+    echo "  ./test/utils/unit-layout/bin/test_us_utils --gtest_filter='Test.*' -v    # Run GTest with filter"
+    echo "  ./test/utils/unit-layout/bin/test_us_utils --gtest_filter='Test.*' --gtest_print_time=1"
     echo ""
     echo "DEBUG:"
-    echo "  gdb --args ./bin/test_us_utils --gtest_filter='CrashedTest'"
-    echo "  valgrind --tool=memcheck ./bin/test_us_utils --gtest_filter='MemoryTest'"
+    echo "  gdb --args ./test/utils/unit-layout/bin/test_us_utils --gtest_filter='CrashedTest'"
+    echo "  valgrind --tool=memcheck ./test/utils/unit-layout/bin/test_us_utils --gtest_filter='MemoryTest'"
     echo ""
     echo "ANALYZE:"
-    echo "  ./bin/test_us_utils 2>&1 | tee full_test_log.txt"
+    echo "  ./test/utils/unit-layout/bin/test_us_utils 2>&1 | tee full_test_log.txt"
     echo "  grep -A5 -B5 'FAILED' full_test_log.txt    # Find failure context"
     echo ""
 
@@ -480,6 +480,10 @@ if [ "$DEBUG_MODE" = "true" ] && [ "$QUICK_MODE" = "false" ]; then
 fi
 
 cd "/ultrascan3/${BUILD_SUBDIR}"
+
+# The unit runner lives in its own layout so appBaseDir()/etc is a private,
+# read-only resource copy rather than the source etc/ symlink.
+UNIT_TEST_BIN=./test/utils/unit-layout/bin/test_us_utils
 
 if [ "$QUICK_MODE" = "false" ]; then
     echo 'Configuring with CMake...'
@@ -554,8 +558,8 @@ if [ "$SHOW_STATS" = "true" ]; then
     echo ''
     echo '=== TEST SUITE STATISTICS ==='
     echo "Total CTest cases: $(ctest -N 2>/dev/null | grep -c 'Test #' || echo 'Unknown')"
-    if [ -f ./bin/test_us_utils ]; then
-        GTEST_COUNT=$(./bin/test_us_utils --gtest_list_tests 2>/dev/null | grep -c '\.' || echo 'Unknown')
+    if [ -f "$UNIT_TEST_BIN" ]; then
+        GTEST_COUNT=$("$UNIT_TEST_BIN" --gtest_list_tests 2>/dev/null | grep -c '\.' || echo 'Unknown')
         echo "Total GTest cases: $GTEST_COUNT"
     fi
     echo "Build directory size: $(du -sh . | cut -f1)"
@@ -576,9 +580,9 @@ if [ "$LIST_TESTS" = "true" ]; then
     fi
     echo ''
     echo 'GTest Cases (first 20):'
-    if [ -f ./bin/test_us_utils ]; then
-        ./bin/test_us_utils --gtest_list_tests 2>/dev/null | head -20
-        TOTAL_GTESTS=$(./bin/test_us_utils --gtest_list_tests 2>/dev/null | wc -l)
+    if [ -f "$UNIT_TEST_BIN" ]; then
+        "$UNIT_TEST_BIN" --gtest_list_tests 2>/dev/null | head -20
+        TOTAL_GTESTS=$("$UNIT_TEST_BIN" --gtest_list_tests 2>/dev/null | wc -l)
         if [ $TOTAL_GTESTS -gt 20 ]; then
             echo "... and $(($TOTAL_GTESTS - 20)) more GTest cases"
         fi
@@ -596,8 +600,8 @@ if [ -n "$SEARCH_TESTS" ]; then
     ctest -N | grep -i "$SEARCH_TESTS" || echo 'No matching CTest cases'
     echo ''
     echo 'Matching GTest cases:'
-    if [ -f ./bin/test_us_utils ]; then
-        ./bin/test_us_utils --gtest_list_tests 2>/dev/null | grep -i "$SEARCH_TESTS" || echo 'No matching GTest cases'
+    if [ -f "$UNIT_TEST_BIN" ]; then
+        "$UNIT_TEST_BIN" --gtest_list_tests 2>/dev/null | grep -i "$SEARCH_TESTS" || echo 'No matching GTest cases'
     fi
     echo '===================='
     exit 0
@@ -620,7 +624,7 @@ if [ "$GDB" = "true" ]; then
     echo '  print variable_name    # Print variable value'
     echo '  quit                   # Exit GDB'
     echo ''
-    gdb --args ./bin/test_us_utils --gtest_filter="$SPECIFIC_TEST"
+    gdb --args "$UNIT_TEST_BIN" --gtest_filter="$SPECIFIC_TEST"
     exit 0
 fi
 
@@ -633,7 +637,7 @@ if [ "$VALGRIND" = "true" ]; then
         exit 1
     fi
     echo 'Running memory analysis with Valgrind...'
-    valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes ./bin/test_us_utils --gtest_filter="$SPECIFIC_TEST"
+    valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes "$UNIT_TEST_BIN" --gtest_filter="$SPECIFIC_TEST"
     exit 0
 fi
 
@@ -644,14 +648,14 @@ if [ -n "$SPECIFIC_TEST" ]; then
         echo "Repeating $REPEAT times to check for flaky behavior..."
         for i in $(seq 1 $REPEAT); do
             echo "=== Run $i/$REPEAT ==="
-            ./bin/test_us_utils --gtest_filter="$SPECIFIC_TEST" ${VERBOSE:+--gtest_print_time=1} || {
+            "$UNIT_TEST_BIN" --gtest_filter="$SPECIFIC_TEST" ${VERBOSE:+--gtest_print_time=1} || {
                 echo "Test failed on run $i"
                 exit 1
             }
         done
         echo "All $REPEAT runs passed successfully!"
     else
-        ./bin/test_us_utils --gtest_filter="$SPECIFIC_TEST" ${VERBOSE:+--gtest_print_time=1}
+        "$UNIT_TEST_BIN" --gtest_filter="$SPECIFIC_TEST" ${VERBOSE:+--gtest_print_time=1}
     fi
     exit $?
 fi
