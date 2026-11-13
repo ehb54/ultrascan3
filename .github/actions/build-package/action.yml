@@ -111,14 +111,20 @@ runs:
           FOUND=$(printf '%s\n' "$FOUND" | grep -v -- '-HPC-' || true)
         fi
 
-        PKG=$(printf '%s\n' "$FOUND" | head -n 1)
-
-        if [ -z "$PKG" ]; then
+        if [ -z "$FOUND" ]; then
           echo "::error::no package produced for profile ${PROFILE}"
           find build -maxdepth 2 -type f -name 'UltraScan3-*' || echo "(nothing matching UltraScan3-*)"
           exit 1
         fi
 
+        COUNT=$(printf '%s\n' "$FOUND" | wc -l | tr -d '[:space:]')
+        if [ "$COUNT" -ne 1 ]; then
+          echo "::error::expected exactly one package for profile ${PROFILE}, found ${COUNT}"
+          printf '%s\n' "$FOUND"
+          exit 1
+        fi
+
+        PKG=$FOUND
         cp "$PKG" artifact-upload/
         echo "staged: $PKG"
         ls -lh artifact-upload/

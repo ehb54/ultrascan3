@@ -24,35 +24,9 @@ if(NOT UNIX OR APPLE)
     return()
 endif()
 
-# ---------------------------------------------------------------------------
-# Version
-# ---------------------------------------------------------------------------
-if(NOT DEFINED US3_VERSION_STRING OR US3_VERSION_STRING STREQUAL "")
-    set(US3_VERSION_STRING "${PROJECT_VERSION}")
-endif()
+include("${CMAKE_CURRENT_LIST_DIR}/LinuxPackageName.cmake")
 
-# ---------------------------------------------------------------------------
-# Architecture label (x64 or arm64) for the filename
-# ---------------------------------------------------------------------------
-if(NOT DEFINED US3_ARCH_LABEL)
-    execute_process(
-        COMMAND uname -m
-        OUTPUT_VARIABLE _uname_m
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    if(_uname_m MATCHES "aarch64|arm64")
-        set(US3_ARCH_LABEL "arm64")
-    else()
-        set(US3_ARCH_LABEL "x64")
-    endif()
-endif()
-
-# ---------------------------------------------------------------------------
-# Paths
-# ---------------------------------------------------------------------------
-set(_STAGE_DIR  "${CMAKE_BINARY_DIR}/_stage/UltraScan3")
-set(_PKG_NAME   "UltraScan3-${US3_VERSION_STRING}-Linux-${US3_ARCH_LABEL}")
-set(_FINAL_PKG  "${CMAKE_BINARY_DIR}/${_PKG_NAME}.tar.xz")
+set(_FINAL_PKG "${CMAKE_BINARY_DIR}/${US3_LINUX_ARCHIVE_NAME}")
 
 message(STATUS "[LinuxPkg] Tarball target output: ${_FINAL_PKG}")
 
@@ -67,7 +41,7 @@ message(STATUS "[LinuxPkg] Tarball target output: ${_FINAL_PKG}")
 #   cmake --build . --target package_linux_tarball
 # ---------------------------------------------------------------------------
 add_custom_target(package_linux_tarball
-    COMMENT "Building Linux tarball: ${_PKG_NAME}.tar.xz"
+    COMMENT "Building Linux tarball: ${US3_LINUX_ARCHIVE_NAME}"
 
     # Remove any previous archive
     COMMAND ${CMAKE_COMMAND} -E remove -f "${_FINAL_PKG}"

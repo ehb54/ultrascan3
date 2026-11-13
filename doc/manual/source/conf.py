@@ -250,9 +250,10 @@ qthelp_css_files = [
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'UltraScanIIIdoc'
 
-# Namespace used by
+# Stable URL namespace used by US_HelpDaemon (qthelp://ultrascaniii/manual/...).
+# Keep version/build identity in the documentation metadata, not in help URLs.
 qthelp_basename = 'manual'
-qthelp_namespace = f'com.aucsolutions.{qthelp_basename}.{version}-{meta["BUILD_NUMBER"]}-{meta["GIT_REVISION"]}{meta["GIT_DIRTY_FLAG"]}'
+qthelp_namespace = 'ultrascaniii'
 # -- Options for LaTeX output ------------------------------------------------
 # Use XeLaTeX for proper Unicode support
 latex_engine = "xelatex"

@@ -18,6 +18,7 @@
 #
 # Required variables (passed via -D on cmake -P invocation):
 #   STAGE_DIR           - Root of the staged directory tree
+#   APP_PROGRAM_MANIFEST - Generated manifest of required APP target outputs
 #   BIN_DIR             - Build-tree bin/ containing us and us_* executables
 #   LIB_DIR             - Build-tree lib/ containing libusutils*.so / libusgui*.so
 #   ETC_SOURCE_DIR      - Source etc/ directory
@@ -25,6 +26,7 @@
 #   LICENSE_FILE        - Path to LICENSE.txt
 #
 # Optional variables:
+#   US3_LINUX_ARCHIVE_NAME - Archive filename supplied by the package target
 #   QCH_DIR             - Directory containing manual.qch / manual.qhc
 #   VCPKG_LIB_DIR       - vcpkg installed lib/ (Qt/Qwt/OpenSSL .so files)
 #   VCPKG_PLUGIN_DIR    - vcpkg installed plugins/ dir (Qt5 / legacy layout)
@@ -66,21 +68,19 @@ set(S_PLUG "${STAGE_DIR}/plugins")
 set(S_ETC  "${STAGE_DIR}/etc")
 set(S_SOMO "${STAGE_DIR}/somo")
 
+# Always start with a clean stage, including standalone script invocations.
+if(EXISTS "${STAGE_DIR}")
+    file(REMOVE_RECURSE "${STAGE_DIR}")
+endif()
+
 file(MAKE_DIRECTORY "${S_BIN}")
 file(MAKE_DIRECTORY "${S_LIB}")
 file(MAKE_DIRECTORY "${S_PLUG}")
 
 # =========================================================================
-# 1) Copy us executable into bin/
+# 1) Copy declared core APP executables into bin/
 # =========================================================================
-if(EXISTS "${BIN_DIR}/us")
-    message(STATUS "[LinuxDeploy] Copying us -> ${S_BIN}/")
-    file(COPY "${BIN_DIR}/us" DESTINATION "${S_BIN}"
-         FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
-                          GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-else()
-    message(FATAL_ERROR "[LinuxDeploy] 'us' not found in ${BIN_DIR}")
-endif()
+include("${CMAKE_CURRENT_LIST_DIR}/../StageAppPrograms.cmake")
 
 # =========================================================================
 # 1b) Generate us.sh launcher script
@@ -109,6 +109,11 @@ message(STATUS "[LinuxDeploy] Generated us.sh launcher")
 if(NOT DEFINED US3_VERSION_STRING OR US3_VERSION_STRING STREQUAL "")
     set(US3_VERSION_STRING "(unknown version)")
 endif()
+# Normal builds pass the exact package filename. Keep standalone deployment
+# invocations consistent with the same naming rules as LinuxPkg.cmake.
+if(NOT US3_LINUX_ARCHIVE_NAME)
+    include("${CMAKE_CURRENT_LIST_DIR}/LinuxPackageName.cmake")
+endif()
 file(WRITE "${STAGE_DIR}/README.txt"
 "UltraScan III ${US3_VERSION_STRING} - Linux
 ================================================================================
@@ -120,7 +125,7 @@ INSTALLATION
   Extract this archive to a location of your choice, for example:
 
     cd /usr/local
-    tar Jxf UltraScan3-${US3_VERSION_STRING}-Linux-<arch>.tar.xz
+    tar Jxf ${US3_LINUX_ARCHIVE_NAME}
 
   No further installation steps are required.  The package is self-contained.
 
@@ -151,20 +156,6 @@ LICENSE
   NIH funding: GM120600
 ")
 message(STATUS "[LinuxDeploy] Generated README.txt")
-
-# =========================================================================
-# 2) Copy companion us_* executables into bin/
-# =========================================================================
-file(GLOB _extra_bins "${BIN_DIR}/us_*")
-foreach(_bin ${_extra_bins})
-    if(NOT IS_DIRECTORY "${_bin}")
-        get_filename_component(_n "${_bin}" NAME)
-        message(STATUS "  Copying program: ${_n}")
-        file(COPY "${_bin}" DESTINATION "${S_BIN}"
-             FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
-                              GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-    endif()
-endforeach()
 
 # =========================================================================
 # 3) Copy UltraScan shared libraries into lib/
@@ -758,3 +749,5 @@ message(STATUS "  somo/    - SOMO data")
 message(STATUS "  bin/us.sh    - Shell launcher (documented entry point)")
 message(STATUS "  README.txt   - Installation and quick-start instructions")
 message(STATUS "  bin64 -> bin, lib64 -> lib (legacy symlinks)")
+
+include("${CMAKE_CURRENT_LIST_DIR}/../ValidateAppHelp.cmake")
