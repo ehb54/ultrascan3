@@ -93,6 +93,15 @@ class US_EXTERN US_Hydrodyn_Hydro_Zeno : public QFrame
       QLabel    *lbl_zeno_grpy_correction_from_bead_count_eta_c;
       QLineEdit *le_zeno_grpy_correction_from_bead_count_eta_c;
 
+      // ZENO on the solvent-excluded surface of the beads, meshed by sesmesh (gparams zeno_mesh*)
+      QCheckBox *cb_zeno_mesh;
+      QLabel    *lbl_zeno_mesh_probe;
+      QLineEdit *le_zeno_mesh_probe;
+      QLabel    *lbl_zeno_mesh_h;
+      QLineEdit *le_zeno_mesh_h;
+      QCheckBox *cb_zeno_mesh_clean;
+      QCheckBox *cb_zeno_mesh_fill_cavities;
+
       QLabel    *lbl_zeno_repeats;
       QLineEdit *le_zeno_repeats;
       
@@ -133,6 +142,12 @@ class US_EXTERN US_Hydrodyn_Hydro_Zeno : public QFrame
       void update_zeno_grpy_correction_from_bead_count_eta_a ( const QString &str );
       void update_zeno_grpy_correction_from_bead_count_eta_b ( const QString &str );
       void update_zeno_grpy_correction_from_bead_count_eta_c ( const QString &str );
+
+      void set_zeno_mesh();
+      void update_zeno_mesh_probe ( const QString &str );
+      void update_zeno_mesh_h ( const QString &str );
+      void set_zeno_mesh_clean();
+      void set_zeno_mesh_fill_cavities();
 
       void set_zeno_cxx();
 

@@ -2,6 +2,8 @@
 #include "../include/us_hydrodyn_hydro_zeno.h"
 #include "../include/us_hydrodyn.h"
 #include "../include/us_math.h"
+#include "../include/us_hydrodyn_zeno_mesh.h"
+#include <QRegularExpressionValidator>
 //Added by qt3to4:
 #include <QHBoxLayout>
 #include <QCloseEvent>
@@ -306,6 +308,96 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    le_zeno_grpy_correction_from_bead_count_eta_c->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_zeno_grpy_correction_from_bead_count_eta_c, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_grpy_correction_from_bead_count_eta_c(const QString &)));
 
+   {
+      map < QString, QString > & gparams = ((US_Hydrodyn *)us_hydrodyn)->gparams;
+
+      cb_zeno_mesh = new QCheckBox( this );
+      cb_zeno_mesh->setText( us_tr( "Compute on the solvent-excluded surface of the bead model:" ) );
+      cb_zeno_mesh->setEnabled( true );
+      cb_zeno_mesh->setChecked( gparams.count( "zeno_mesh" ) && gparams[ "zeno_mesh" ] == "true" );
+      cb_zeno_mesh->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+      cb_zeno_mesh->setPalette( PALET_NORMAL );
+      AUTFBACK( cb_zeno_mesh );
+      cb_zeno_mesh->setToolTip(
+                               us_tr(
+                                     "<p>Mesh the solvent-excluded (molecular) surface of the beads, the surface traced by a"
+                                     " probe sphere rolling over them, and run ZENO on that triangle mesh instead of on the beads.</p>"
+                                     "<p>The mesher is sesmesh. The bead-count correction does not apply to meshes.</p>"
+                                     ) );
+      connect( cb_zeno_mesh, SIGNAL( clicked() ), this, SLOT( set_zeno_mesh() ) );
+
+      lbl_zeno_mesh_probe = new QLabel( us_tr( " Probe radius [" ) + UNICODE_ANGSTROM_QS + "]:", this );
+      lbl_zeno_mesh_probe->setAlignment( Qt::AlignLeft|Qt::AlignVCenter );
+      lbl_zeno_mesh_probe->setPalette( PALET_LABEL );
+      AUTFBACK( lbl_zeno_mesh_probe );
+      lbl_zeno_mesh_probe->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+
+      le_zeno_mesh_probe = new QLineEdit( this );    le_zeno_mesh_probe->setObjectName( "Zeno_Mesh_Probe Line Edit" );
+      le_zeno_mesh_probe->setText( gparams[ "zeno_mesh_probe" ] );
+      le_zeno_mesh_probe->setAlignment( Qt::AlignVCenter );
+      le_zeno_mesh_probe->setPalette( PALET_NORMAL );
+      AUTFBACK( le_zeno_mesh_probe );
+      le_zeno_mesh_probe->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+      {
+         QDoubleValidator *qdv = new QDoubleValidator( 0, 10, 3, le_zeno_mesh_probe );
+         qdv->setLocale( QLocale::C );
+         le_zeno_mesh_probe->setValidator( qdv );
+      }
+      le_zeno_mesh_probe->setToolTip( us_tr( "<p>The radius of the probe sphere (default 1.5 " ) + UNICODE_ANGSTROM_QS + us_tr( ", a water molecule). 0 gives the surface of the union of the beads.</p>" ) );
+      connect( le_zeno_mesh_probe, SIGNAL( textChanged( const QString & ) ), SLOT( update_zeno_mesh_probe( const QString & ) ) );
+
+      lbl_zeno_mesh_h = new QLabel( us_tr( " Mesh grid spacing(s) [" ) + UNICODE_ANGSTROM_QS + "]:", this );
+      lbl_zeno_mesh_h->setAlignment( Qt::AlignLeft|Qt::AlignVCenter );
+      lbl_zeno_mesh_h->setPalette( PALET_LABEL );
+      AUTFBACK( lbl_zeno_mesh_h );
+      lbl_zeno_mesh_h->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+
+      le_zeno_mesh_h = new QLineEdit( this );    le_zeno_mesh_h->setObjectName( "Zeno_Mesh_H Line Edit" );
+      le_zeno_mesh_h->setText( gparams[ "zeno_mesh_h" ] );
+      le_zeno_mesh_h->setAlignment( Qt::AlignVCenter );
+      le_zeno_mesh_h->setPalette( PALET_NORMAL );
+      AUTFBACK( le_zeno_mesh_h );
+      le_zeno_mesh_h->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+      // one spacing, or several separated by commas
+      le_zeno_mesh_h->setValidator(
+                                   new QRegularExpressionValidator(
+                                                                   QRegularExpression( "^\\s*[0-9]*\\.?[0-9]*(\\s*,\\s*[0-9]*\\.?[0-9]*)*\\s*$" ),
+                                                                   le_zeno_mesh_h ) );
+      le_zeno_mesh_h->setToolTip(
+                                 us_tr(
+                                       "<p>The spacing of the grid the surface is sampled on: smaller is finer."
+                                       " The number of triangles grows as 1/spacing" ) + UNICODE_SUPER_2_QS + us_tr( ".</p>"
+                                       "<p>The default, 0.5 " ) + UNICODE_ANGSTROM_QS + us_tr( ", gives about 130,000 triangles for lysozyme;"
+                                       " ZENO's results on it agree with finer meshes within their statistical error.</p>"
+                                       "<p>Several spacings separated by commas, e.g. 0.6,0.5,0.4,0.3, run ZENO on each mesh and"
+                                       " extrapolate the results linearly in 1/N (N, the number of triangles) to an infinitely fine mesh."
+                                       " The results go to a CSV file that the BEST Analysis module can also load.</p>"
+                                       ) );
+      connect( le_zeno_mesh_h, SIGNAL( textChanged( const QString & ) ), SLOT( update_zeno_mesh_h( const QString & ) ) );
+
+      cb_zeno_mesh_clean = new QCheckBox( this );
+      cb_zeno_mesh_clean->setText( us_tr( " Mesh clean-up (remove slender triangles)" ) );
+      cb_zeno_mesh_clean->setEnabled( true );
+      cb_zeno_mesh_clean->setChecked( gparams[ "zeno_mesh_clean" ] != "false" );
+      cb_zeno_mesh_clean->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+      cb_zeno_mesh_clean->setPalette( PALET_NORMAL );
+      AUTFBACK( cb_zeno_mesh_clean );
+      cb_zeno_mesh_clean->setToolTip( us_tr( "<p>Collapse short edges, flip and smooth, keeping every vertex on the surface."
+                                             " Removes about a third of the triangles and nearly all angles under 20 degrees.</p>" ) );
+      connect( cb_zeno_mesh_clean, SIGNAL( clicked() ), this, SLOT( set_zeno_mesh_clean() ) );
+
+      cb_zeno_mesh_fill_cavities = new QCheckBox( this );
+      cb_zeno_mesh_fill_cavities->setText( us_tr( " Fill internal cavities" ) );
+      cb_zeno_mesh_fill_cavities->setEnabled( true );
+      cb_zeno_mesh_fill_cavities->setChecked( gparams[ "zeno_mesh_fill_cavities" ] != "false" );
+      cb_zeno_mesh_fill_cavities->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+      cb_zeno_mesh_fill_cavities->setPalette( PALET_NORMAL );
+      AUTFBACK( cb_zeno_mesh_fill_cavities );
+      cb_zeno_mesh_fill_cavities->setToolTip( us_tr( "<p>Mesh only the outer surface: cavities inside the molecule that the probe"
+                                                     " cannot reach from outside become part of the solid.</p>" ) );
+      connect( cb_zeno_mesh_fill_cavities, SIGNAL( clicked() ), this, SLOT( set_zeno_mesh_fill_cavities() ) );
+   }
+
    cb_zeno_cxx = new QCheckBox( this );
    cb_zeno_cxx->setText( us_tr( "Test experimental new Zeno version") );
    cb_zeno_cxx->setEnabled( true );
@@ -411,6 +503,21 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
 
    background->addWidget( lbl_zeno_grpy_correction_from_bead_count_eta_c, j, 1 );
    background->addWidget( le_zeno_grpy_correction_from_bead_count_eta_c , j, 2 );
+   j++;
+
+   background->addWidget( cb_zeno_mesh       , j, 0 );
+   background->addWidget( lbl_zeno_mesh_probe, j, 1 );
+   background->addWidget( le_zeno_mesh_probe , j, 2 );
+   j++;
+
+   background->addWidget( lbl_zeno_mesh_h, j, 1 );
+   background->addWidget( le_zeno_mesh_h , j, 2 );
+   j++;
+
+   background->addWidget( cb_zeno_mesh_clean, j, 1, 1, 2 );
+   j++;
+
+   background->addWidget( cb_zeno_mesh_fill_cavities, j, 1, 1, 2 );
    j++;
 
    background->addWidget( cb_zeno_cxx , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 2  ) - ( 0 ) );
@@ -607,6 +714,43 @@ void US_Hydrodyn_Hydro_Zeno::update_zeno_repeats(const QString &str)
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
+void US_Hydrodyn_Hydro_Zeno::set_zeno_mesh()
+{
+   ((US_Hydrodyn *)us_hydrodyn)->gparams[ "zeno_mesh" ] = cb_zeno_mesh->isChecked() ? "true" : "false";
+   update_enables();
+}
+
+void US_Hydrodyn_Hydro_Zeno::update_zeno_mesh_probe( const QString &str )
+{
+   // an empty field while editing is not a probe radius of 0
+   if ( !str.trimmed().isEmpty() ) {
+      ((US_Hydrodyn *)us_hydrodyn)->gparams[ "zeno_mesh_probe" ] = QString( "%1" ).arg( str.toDouble() );
+   }
+}
+
+void US_Hydrodyn_Hydro_Zeno::update_zeno_mesh_h( const QString &str )
+{
+   // one spacing or several; keep the last valid entry while the field is being edited
+   vector < double > spacings = us_hydrodyn_zeno_mesh_spacings( str );
+   if ( !spacings.empty() ) {
+      QStringList qsl;
+      for ( double h : spacings ) {
+         qsl << QString( "%1" ).arg( h );
+      }
+      ((US_Hydrodyn *)us_hydrodyn)->gparams[ "zeno_mesh_h" ] = qsl.join( "," );
+   }
+}
+
+void US_Hydrodyn_Hydro_Zeno::set_zeno_mesh_clean()
+{
+   ((US_Hydrodyn *)us_hydrodyn)->gparams[ "zeno_mesh_clean" ] = cb_zeno_mesh_clean->isChecked() ? "true" : "false";
+}
+
+void US_Hydrodyn_Hydro_Zeno::set_zeno_mesh_fill_cavities()
+{
+   ((US_Hydrodyn *)us_hydrodyn)->gparams[ "zeno_mesh_fill_cavities" ] = cb_zeno_mesh_fill_cavities->isChecked() ? "true" : "false";
+}
+
 void US_Hydrodyn_Hydro_Zeno::set_zeno_cxx()
 {
    ((US_Hydrodyn *)us_hydrodyn)->gparams[ "zeno_cxx" ] = cb_zeno_cxx->isChecked() ? "true" : "false";
@@ -650,10 +794,20 @@ void US_Hydrodyn_Hydro_Zeno:: update_enables()
    le_zeno_surface_thickness_from_rg_b->setEnabled( cb_zeno_surface_thickness_from_rg->isChecked() );
    le_zeno_surface_thickness_from_rg_c->setEnabled( cb_zeno_surface_thickness_from_rg->isChecked() );
 
-   le_zeno_grpy_correction_from_bead_count_Dt_a ->setEnabled( cb_zeno_grpy_correction_from_bead_count->isChecked() );
-   le_zeno_grpy_correction_from_bead_count_Dt_b ->setEnabled( cb_zeno_grpy_correction_from_bead_count->isChecked() );
-   le_zeno_grpy_correction_from_bead_count_Dt_c ->setEnabled( cb_zeno_grpy_correction_from_bead_count->isChecked() );
-   le_zeno_grpy_correction_from_bead_count_eta_a->setEnabled( cb_zeno_grpy_correction_from_bead_count->isChecked() );
-   le_zeno_grpy_correction_from_bead_count_eta_b->setEnabled( cb_zeno_grpy_correction_from_bead_count->isChecked() );
-   le_zeno_grpy_correction_from_bead_count_eta_c->setEnabled( cb_zeno_grpy_correction_from_bead_count->isChecked() );
+   // the bead-count correction is not applied to a mesh
+   bool mesh       = cb_zeno_mesh->isChecked();
+   bool correction = cb_zeno_grpy_correction_from_bead_count->isChecked() && !mesh;
+
+   cb_zeno_grpy_correction_from_bead_count      ->setEnabled( !mesh );
+   le_zeno_grpy_correction_from_bead_count_Dt_a ->setEnabled( correction );
+   le_zeno_grpy_correction_from_bead_count_Dt_b ->setEnabled( correction );
+   le_zeno_grpy_correction_from_bead_count_Dt_c ->setEnabled( correction );
+   le_zeno_grpy_correction_from_bead_count_eta_a->setEnabled( correction );
+   le_zeno_grpy_correction_from_bead_count_eta_b->setEnabled( correction );
+   le_zeno_grpy_correction_from_bead_count_eta_c->setEnabled( correction );
+
+   le_zeno_mesh_probe        ->setEnabled( mesh );
+   le_zeno_mesh_h            ->setEnabled( mesh );
+   cb_zeno_mesh_clean        ->setEnabled( mesh );
+   cb_zeno_mesh_fill_cavities->setEnabled( mesh );
 }

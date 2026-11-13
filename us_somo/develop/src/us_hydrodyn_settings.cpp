@@ -3,6 +3,7 @@
 // (this) us_hydrodyn_settings.cpp contains code for reading/writing settings
 
 #include "../include/us_hydrodyn.h"
+#include "../include/us_hydrodyn_zeno_mesh.h"
 #define SLASH "/"
 
 int US_Hydrodyn::read_config(QFile& f)
@@ -2393,6 +2394,31 @@ bool US_Hydrodyn::load_config_json ( QString &json )
       gparams[ "guinier_electron_nucleon_ratio" ]     = "1.87e0";
    }
 
+   // ZENO on the solvent-excluded surface of the beads (sesmesh), for configurations
+   // saved before these options existed; probe radius and grid spacing in Angstrom
+   if ( !gparams.count( "zeno_mesh" ) )
+   {
+      gparams[ "zeno_mesh" ]                          = "false";
+   }
+   if ( !gparams.count( "zeno_mesh_probe" ) ||
+        gparams[ "zeno_mesh_probe" ].isEmpty() )
+   {
+      gparams[ "zeno_mesh_probe" ]                    = "1.5";
+   }
+   if ( !gparams.count( "zeno_mesh_h" ) ||
+        us_hydrodyn_zeno_mesh_spacings( gparams[ "zeno_mesh_h" ] ).empty() )
+   {
+      gparams[ "zeno_mesh_h" ]                        = "0.5";
+   }
+   if ( !gparams.count( "zeno_mesh_clean" ) )
+   {
+      gparams[ "zeno_mesh_clean" ]                    = "true";
+   }
+   if ( !gparams.count( "zeno_mesh_fill_cavities" ) )
+   {
+      gparams[ "zeno_mesh_fill_cavities" ]            = "true";
+   }
+
    save_params_force_results_name( save_params );
 
    return true;
@@ -3369,6 +3395,11 @@ void US_Hydrodyn::hard_coded_defaults()
    gparams[ "zeno_repeats"               ]                  = "1";
    gparams[ "zeno_max_cap"               ]                  = "false";
    gparams[ "zeno_max_cap_pct"           ]                  = "0.5";
+   gparams[ "zeno_mesh"                  ]                  = "false";
+   gparams[ "zeno_mesh_probe"            ]                  = "1.5";
+   gparams[ "zeno_mesh_h"                ]                  = "0.5";
+   gparams[ "zeno_mesh_clean"            ]                  = "true";
+   gparams[ "zeno_mesh_fill_cavities"    ]                  = "true";
 
    gparams[ "covolume"                   ]                  = "12.4";
    gparams[ "use_pH"                     ]                  = "true";

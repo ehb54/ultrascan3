@@ -14,6 +14,7 @@ zeno_main(
 #include <qprogressbar.h>
 
 #include "../include/us_hydrodyn.h"
+#include "../include/us_hydrodyn_zeno_mesh.h"
 #if !defined(USE_OLD_ZENO) && __cplusplus >= 201103L
 int zeno_cxx_main(int argc, char **argv, const char * fname, bool cmdline_temp, US_Udp_Msg * zeno_us_udp_msg );
 #endif
@@ -46,6 +47,16 @@ class US_Hydrodyn_Zeno
                );
    QString error_msg;
    void        update_progress         ( int pos, int total );
+
+   // The grid spacing (Angstrom) of the mesh for the next run when the caller runs a
+   // sequence of spacings; 0: the first spacing of the "zeno_mesh_h" setting.
+   double                        mesh_h;
+
+   // Set by run(): whether ZENO ran on the solvent-excluded surface of the beads (the
+   // "zeno_mesh" option), the options used (in the model's length unit) and the mesh.
+   bool                          mesh_used;
+   US_Hydrodyn_Zeno_Mesh_Options mesh_options;
+   US_Hydrodyn_Zeno_Mesh_Info    mesh_info;
 
  private:
    QString                 filename;

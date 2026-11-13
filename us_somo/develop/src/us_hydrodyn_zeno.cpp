@@ -4,6 +4,8 @@
 //Added by qt3to4:
 #include <QTextStream>
 #include "../include/us_unicode.h"
+#include <algorithm>
+#include <functional>
 
 US_Hydrodyn  * zeno_us_hydrodyn;
 static mQProgressBar * zeno_progress;
@@ -13436,6 +13438,8 @@ US_Hydrodyn_Zeno::US_Hydrodyn_Zeno(
    zeno_us_hydrodyn  = us_hydrodyn;
    zeno_progress     = use_progress;
    zeno_stop_flag    = & us_hydrodyn->stopFlag;
+   mesh_h            = 0e0;
+   mesh_used         = false;
 }
 
 bool US_Hydrodyn_Zeno::test()
@@ -13523,17 +13527,95 @@ bool US_Hydrodyn_Zeno::run(
 
    sum_volume = 0e0;
 
+   // with the zeno_mesh option, ZENO runs on the solvent-excluded surface (SES) of the
+   // beads, meshed by sesmesh, instead of on the beads themselves
+
+   mesh_used    = us_hydrodyn->gparams.count( "zeno_mesh" ) && us_hydrodyn->gparams[ "zeno_mesh" ] == "true";
+   mesh_options = US_Hydrodyn_Zeno_Mesh_Options();
+   mesh_info    = US_Hydrodyn_Zeno_Mesh_Info();
+
+   vector < double > spheres;
+
+   if ( mesh_used ) {
+      spheres.reserve( 4 * bead_model->size() );
+   }
+
    for ( unsigned int i = 0; i < bead_model->size(); i++ )
    {
-      tso << 
-         QString( "S %1 %2 %3 %4\n" )
-         .arg( (*bead_model)[ i ].bead_coordinate.axis[ 0 ] )
-         .arg( (*bead_model)[ i ].bead_coordinate.axis[ 1 ] )
-         .arg( (*bead_model)[ i ].bead_coordinate.axis[ 2 ] )
-         .arg( (*bead_model)[ i ].bead_computed_radius )
-         ;
+      if ( mesh_used ) {
+         spheres.push_back( (*bead_model)[ i ].bead_coordinate.axis[ 0 ] );
+         spheres.push_back( (*bead_model)[ i ].bead_coordinate.axis[ 1 ] );
+         spheres.push_back( (*bead_model)[ i ].bead_coordinate.axis[ 2 ] );
+         spheres.push_back( (*bead_model)[ i ].bead_computed_radius );
+      } else {
+         tso <<
+            QString( "S %1 %2 %3 %4\n" )
+            .arg( (*bead_model)[ i ].bead_coordinate.axis[ 0 ] )
+            .arg( (*bead_model)[ i ].bead_coordinate.axis[ 1 ] )
+            .arg( (*bead_model)[ i ].bead_coordinate.axis[ 2 ] )
+            .arg( (*bead_model)[ i ].bead_computed_radius )
+            ;
+      }
       sum_mass   += (*bead_model)[ i ].bead_ref_mw + (*bead_model)[ i ].bead_ref_ionized_mw_delta;
       sum_volume += (4e0 / 3e0 ) * M_PI * pow( (*bead_model)[ i ].bead_computed_radius, 3 );
+   }
+
+   if ( mesh_used ) {
+      // the probe radius and grid spacing are set in Angstrom
+      double to_model_units = options->unit == -9 ? 0.1 : 1.0;
+      QString unit_name     = options->unit == -9 ? "nm" : "A";
+
+      double h_angstrom = mesh_h;
+      if ( !( h_angstrom > 0 ) ) {
+         vector < double > spacings = us_hydrodyn_zeno_mesh_spacings( us_hydrodyn->gparams[ "zeno_mesh_h" ] );
+         h_angstrom = spacings.empty() ? 0e0 : spacings.front();
+      }
+
+      mesh_options.probe         = us_hydrodyn->gparams[ "zeno_mesh_probe" ].toDouble() * to_model_units;
+      mesh_options.h             = h_angstrom * to_model_units;
+      mesh_options.clean         = us_hydrodyn->gparams[ "zeno_mesh_clean" ] != "false";
+      mesh_options.fill_cavities = us_hydrodyn->gparams[ "zeno_mesh_fill_cavities" ] != "false";
+      mesh_options.threads       = threads;
+
+      us_hydrodyn->editor_msg( "black",
+                               QString( "Meshing the solvent-excluded surface of %1 beads: probe radius %2 %3, grid spacing %4 %5\n" )
+                               .arg( bead_model->size() )
+                               .arg( mesh_options.probe )
+                               .arg( unit_name )
+                               .arg( mesh_options.h )
+                               .arg( unit_name ) );
+      qApp->processEvents();
+
+      QString mesh_error;
+      if ( !us_hydrodyn_zeno_mesh( spheres, mesh_options, tso, mesh_info, mesh_error ) ) {
+         fout.close();
+         error_msg = QString( "Error: could not mesh the solvent-excluded surface of the bead model: %1" ).arg( mesh_error );
+         return false;
+      }
+
+      // the body ZENO sees is the meshed solid
+      sum_volume = mesh_info.volume;
+
+      us_hydrodyn->editor_msg( "black",
+                               QString( "Mesh: %1 triangles, area %2 %3^2, volume %4 %5^3, %6 s\n" )
+                               .arg( mesh_info.triangles )
+                               .arg( mesh_info.area, 0, 'f', 2 )
+                               .arg( unit_name )
+                               .arg( mesh_info.volume, 0, 'f', 2 )
+                               .arg( unit_name )
+                               .arg( mesh_info.seconds, 0, 'f', 1 ) );
+      if ( mesh_info.skipped ) {
+         us_hydrodyn->editor_msg( "dark red", QString( "Mesh: %1 beads of radius 0 left out\n" ).arg( mesh_info.skipped ) );
+      }
+      if ( !mesh_info.closed_manifold ) {
+         us_hydrodyn->editor_msg( "red", "Warning: the mesh is not a closed manifold\n" );
+      }
+      if ( mesh_info.components > 1 ) {
+         us_hydrodyn->editor_msg( "dark red",
+                                  QString( "Mesh: %1 separate surfaces%2\n" )
+                                  .arg( mesh_info.components )
+                                  .arg( mesh_options.fill_cavities ? "" : " (internal cavities are kept)" ) );
+      }
    }
 
    // additional info
@@ -13731,6 +13813,149 @@ bool US_Hydrodyn_Zeno::run(
    return true;
 }
 
+// ZENO's results on one mesh of a sequence of meshes (several grid spacings) of one model.
+struct US_Zeno_Mesh_Series_Point {
+   double    h;           // grid spacing, Angstrom
+   long      triangles;
+   double    area;        // of the mesh, in the model's length unit
+   double    volume;
+   QString   zno;         // ZENO's output for this mesh
+   bool      zno_kept;    // false when that output was temporary (batch averaging, several models)
+   QString   bod;         // ZENO's input, the mesh
+   save_data data;
+};
+
+// The results on a sequence of meshes and their linear extrapolation in 1/N (N, the number of
+// triangles) to an infinitely fine mesh, in the CSV format of SOMO's BEST pipeline
+// (US_Saxs_Util, us_saxs_util_best.cpp), so the BEST Analysis module can load the file to plot
+// the series and to try its other fits.  The meshes are sorted by decreasing N, BEST's order.
+// summary gets the main extrapolated values, for the log.
+static QString zeno_mesh_series_csv(
+                                    vector < US_Zeno_Mesh_Series_Point >   series,
+                                    const QString                        & unit,
+                                    QString                              & summary
+                                    )
+{
+   std::stable_sort( series.begin(), series.end(),
+                     []( const US_Zeno_Mesh_Series_Point & a, const US_Zeno_Mesh_Series_Point & b ) {
+                        return a.triangles > b.triangles;
+                     } );
+
+   int n = (int) series.size();
+   vector < double > x;
+   for ( const auto & p : series ) {
+      x.push_back( p.triangles > 0 ? 1e0 / p.triangles : 0e0 );
+   }
+
+   QString csv;
+   QTextStream ts( &csv );
+
+   ts << ",";
+   for ( int i = 0; i < n; ++i ) {
+      ts << ",";
+   }
+   ts << "\"Extrapolation to zero triangles (a)\",\"Sigma a\",\"Sigma a %\",\"Slope (b)\",\"Sigma b\",\"Sigma b %\",\"chi^2\"\n";
+
+   ts << "\"Triangles used\",";
+   for ( const auto & p : series ) {
+      ts << QString( "=%1," ).arg( p.triangles );
+   }
+   ts << "\n";
+   ts << "\"1/Triangles used\",";
+   for ( double v : x ) {
+      ts << QString( "=%1," ).arg( v, 0, 'g', 10 );
+   }
+   ts << "\n";
+
+   // rows without a fit
+   ts << "\"Mesh grid spacing (A)\",";
+   for ( const auto & p : series ) {
+      ts << QString( "=%1," ).arg( p.h );
+   }
+   ts << "\n";
+   ts << "\"ZENO output file\",";
+   for ( const auto & p : series ) {
+      ts << "\"" << p.zno << ( p.zno_kept ? "" : " (not kept)" ) << "\",";
+   }
+   ts << "\n";
+   ts << "\"Mesh file (ZENO input)\",";
+   for ( const auto & p : series ) {
+      ts << "\"" << p.bod << "\",";
+   }
+   ts << "\n";
+
+   // rows with a linear fit in 1/N; the intercept is the value for an infinitely fine mesh
+   map < QString, double > a_of;
+   map < QString, double > siga_of;
+   auto row = [ & ]( const QString & label, const vector < double > & y ) {
+      bool any = false;
+      for ( double v : y ) {
+         any = any || v != 0e0;
+      }
+      if ( !any ) {
+         return;
+      }
+      ts << "\"" << label << "\",";
+      for ( double v : y ) {
+         ts << QString( "=%1," ).arg( v, 0, 'g', 8 );
+      }
+      double a, b, siga, sigb, chi2;
+      US_Saxs_Util::linear_fit( x, y, a, b, siga, sigb, chi2 );
+      if ( n < 3 ) {
+         // two meshes fix the line exactly: no estimate of its errors
+         siga = 0e0;
+         sigb = 0e0;
+      }
+      ts << QString( "=%1,=%2,=%3,=%4,=%5,=%6,=%7" )
+         .arg( a,    0, 'g', 8 )
+         .arg( siga, 0, 'g', 8 )
+         .arg( a != 0 ? fabs( 100.0 * siga / a ) : (double) 0, 0, 'g', 8 )
+         .arg( b,    0, 'g', 8 )
+         .arg( sigb, 0, 'g', 8 )
+         .arg( b != 0 ? fabs( 100.0 * sigb / b ) : (double) 0, 0, 'g', 8 )
+         .arg( chi2, 0, 'g', 8 )
+         << "\n";
+      a_of   [ label ] = a;
+      siga_of[ label ] = siga;
+   };
+
+   auto values = [ & ]( std::function < double( const US_Zeno_Mesh_Series_Point & ) > get ) {
+      vector < double > y;
+      for ( const auto & p : series ) {
+         y.push_back( get( p ) );
+      }
+      return y;
+   };
+
+   const QString l_rs  = "Stokes radius Rs (nm)";
+   const QString l_dt  = "Translational diffusion coefficient Dt (cm^2/s)";
+   const QString l_eta = "Intrinsic viscosity [eta] (cm^3/g)";
+
+   row( QString( "Mesh area (%1^2)" ).arg( unit ),   values( []( const US_Zeno_Mesh_Series_Point & p ) { return p.area; } ) );
+   row( QString( "Mesh volume (%1^3)" ).arg( unit ), values( []( const US_Zeno_Mesh_Series_Point & p ) { return p.volume; } ) );
+   row( l_rs,                                        values( []( const US_Zeno_Mesh_Series_Point & p ) { return p.data.results.rs; } ) );
+   row( l_dt,                                        values( []( const US_Zeno_Mesh_Series_Point & p ) { return p.data.results.D20w; } ) );
+   row( "Sedimentation coefficient s (S)",           values( []( const US_Zeno_Mesh_Series_Point & p ) { return p.data.results.s20w; } ) );
+   row( "Translational friction coefficient f (g/s)",values( []( const US_Zeno_Mesh_Series_Point & p ) { return p.data.tra_fric_coef; } ) );
+   row( "Frictional ratio f/f0",                     values( []( const US_Zeno_Mesh_Series_Point & p ) { return p.data.results.ff0; } ) );
+   row( l_eta,                                       values( []( const US_Zeno_Mesh_Series_Point & p ) { return p.data.results.viscosity; } ) );
+   row( "Dimensionless intrinsic viscosity",         values( []( const US_Zeno_Mesh_Series_Point & p ) { return p.data.dimless_eta; } ) );
+   ts.flush();
+
+   summary =
+      QString( us_tr( "Extrapolated to an infinitely fine mesh (linear in 1/N, %1 meshes, %2 to %3 triangles)%4:\n" ) )
+      .arg( n )
+      .arg( series.back().triangles )
+      .arg( series.front().triangles )
+      .arg( n < 3 ? us_tr( ", no error estimate from 2 meshes" ) : QString( "" ) );
+   summary += QString( " Rs %1 +/- %2 nm, Dt %3 +/- %4 cm^2/s, [eta] %5 +/- %6 cm^3/g\n" )
+      .arg( a_of[ l_rs  ], 0, 'g', 6 ).arg( siga_of[ l_rs  ], 0, 'g', 2 )
+      .arg( a_of[ l_dt  ], 0, 'g', 6 ).arg( siga_of[ l_dt  ], 0, 'g', 2 )
+      .arg( a_of[ l_eta ], 0, 'g', 6 ).arg( siga_of[ l_eta ], 0, 'g', 2 );
+
+   return csv;
+}
+
 bool US_Hydrodyn::calc_zeno()
 {
    // cout << "calc zeno\n";
@@ -13911,8 +14136,78 @@ bool US_Hydrodyn::calc_zeno()
       editor_msg( "blue", QString( "ZENO will repeat %1 times\n" ).arg( repeats ) );
    }
 
-   bool has_overlap = overlap_check( true, true, true,
-                                     hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance, 1, true ) > 0;
+   // ZENO on the solvent-excluded surface (SES) of the beads, meshed by sesmesh in
+   // US_Hydrodyn_Zeno::run; the bead overlap check and the bead-count correction
+   // are for bead models, so neither applies to a mesh
+
+   bool zeno_mesh       = gparams.count( "zeno_mesh" ) && gparams[ "zeno_mesh" ] == "true";
+   bool zeno_correction = hydro.zeno_grpy_correction_from_bead_count && !zeno_mesh;
+
+   // several grid spacings make a sequence of meshes: ZENO runs on each, and the results
+   // are extrapolated to an infinitely fine mesh (zeno_mesh_series_csv())
+
+   vector < double > mesh_hs( 1, 0e0 );
+   bool              mesh_series = false;
+   QString           mesh_tag;
+   QString           mesh_tag_options;
+   double            mesh_probe  = 0e0;
+
+   if ( zeno_mesh ) {
+      bool mesh_clean         = gparams[ "zeno_mesh_clean" ] != "false";
+      bool mesh_fill_cavities = gparams[ "zeno_mesh_fill_cavities" ] != "false";
+      mesh_probe              = gparams[ "zeno_mesh_probe" ].toDouble();
+      mesh_hs                 = us_hydrodyn_zeno_mesh_spacings( gparams[ "zeno_mesh_h" ] );
+      if ( mesh_hs.empty() ) {
+         editor_msg( "red", QString( us_tr( "Error: the mesh grid spacing '%1' is not one or more positive numbers separated by commas\n" ) )
+                     .arg( gparams[ "zeno_mesh_h" ] ) );
+         pb_calc_hydro->setEnabled( was_hydro_enabled );
+         pb_calc_zeno->setEnabled(true);
+         pb_calc_grpy->setEnabled(true);
+         pb_calc_hullrad->setEnabled(true);
+         pb_bead_saxs->setEnabled(true);
+         pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
+         pb_show_hydro_results->setEnabled(false);
+         progress->reset();
+         mprogress->hide();
+         return false;
+      }
+      mesh_series      = mesh_hs.size() > 1;
+      mesh_tag_options = QString( mesh_clean ? "" : "_raw" ) + ( mesh_fill_cavities ? "" : "_cav" );
+
+      QStringList spacings;
+      for ( double h : mesh_hs ) {
+         spacings << QString( "%1" ).arg( h );
+      }
+      editor_msg( "darkblue",
+                  QString( us_tr( "ZENO will run on the solvent-excluded surface of each bead model: probe radius %1 %2, grid spacing%3 %4 %5%6%7\n" ) )
+                  .arg( mesh_probe )
+                  .arg( UNICODE_ANGSTROM )
+                  .arg( mesh_series ? "s" : "" )
+                  .arg( spacings.join( ", " ) )
+                  .arg( UNICODE_ANGSTROM )
+                  .arg( mesh_clean         ? "" : us_tr( ", no mesh clean-up" ) )
+                  .arg( mesh_fill_cavities ? "" : us_tr( ", internal cavities kept" ) ) );
+      if ( mesh_series ) {
+         editor_msg( "darkblue",
+                     QString( us_tr( "The results on the %1 meshes of each model will be extrapolated to an infinitely fine mesh\n" ) )
+                     .arg( mesh_hs.size() ) );
+      }
+   }
+
+   // file-name tag for one mesh, and for the extrapolation of a sequence
+   auto mesh_tag_for = [ & ]( double h ) {
+      return QString( "-SES_p%1_h%2" ).arg( mesh_probe ).arg( h ).replace( ".", "_" ) + mesh_tag_options;
+   };
+   QString mesh_series_tag =
+      QString( "-SES_p%1_extrap%2" ).arg( mesh_probe ).arg( mesh_hs.size() ).replace( ".", "_" ) + mesh_tag_options;
+
+   if ( zeno_mesh ) {
+      mesh_tag = mesh_series ? mesh_series_tag : mesh_tag_for( mesh_hs[ 0 ] );
+   }
+
+   bool has_overlap = !zeno_mesh &&
+      overlap_check( true, true, true,
+                     hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance, 1, true ) > 0;
 
    if ( has_overlap ) {
       editor_msg( "dark red", QString( us_tr( "Bead models have overlap, dimensionless intrinsic viscosity not computed.\n" ) ) );
@@ -13931,11 +14226,12 @@ bool US_Hydrodyn::calc_zeno()
    zeno_mm_name   = 
       get_somo_dir() 
       + QDir::separator() 
-      + project 
+      + project
       + mc
+      + mesh_tag
       + QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "" )
       ;
-   
+
    if ( zeno_mm ) {
       progress->setValue( 0 );
       progress->setMaximum( models_to_proc );
@@ -13946,8 +14242,10 @@ bool US_Hydrodyn::calc_zeno()
 
    int models_procd = 0;
 
-   if ( hydro.zeno_grpy_correction_from_bead_count ) {
+   if ( zeno_correction ) {
       editor_msg( "darkblue", us_tr( "ZENO correction is enabled\n" ) );
+   } else if ( zeno_mesh && hydro.zeno_grpy_correction_from_bead_count ) {
+      editor_msg( "darkred", us_tr( "ZENO correction is not applied to surface meshes\n" ) );
    } else {
       editor_msg( "darkred", us_tr( "ZENO correction is disabled\n" ) );
    }
@@ -13961,7 +14259,14 @@ bool US_Hydrodyn::calc_zeno()
             if ( zeno_mm ) {
                progress->setValue( models_procd++ );
             }
-            for ( int this_repeat = 0; this_repeat < repeats; ++this_repeat ) {
+            // each mesh grid spacing (just one, and 0, without a mesh) gets its runs and repeats
+            vector < US_Zeno_Mesh_Series_Point > series;
+            for ( int this_run = 0; this_run < repeats * (int) mesh_hs.size(); ++this_run ) {
+               int this_repeat = this_run % repeats;
+               if ( zeno_mesh ) {
+                  uhz.mesh_h = mesh_hs[ this_run / repeats ];
+                  mesh_tag   = mesh_tag_for( uhz.mesh_h );
+               }
                if (!first_model_no) {
                   first_model_no = current_model + 1;
                }
@@ -13975,7 +14280,7 @@ bool US_Hydrodyn::calc_zeno()
                //    QString( "_MC%1" ).arg( hydro.zeno_zeno_steps );
                // ;
 
-               if ( bead_model.size() < ZENO_GRPY_CORRECTION_BEAD_COUNT_THRESHOLD ) {
+               if ( !zeno_mesh && bead_model.size() < ZENO_GRPY_CORRECTION_BEAD_COUNT_THRESHOLD ) {
                   editor_msg(
                              "darkred",
                              QString( us_tr( "For less than %1 beads, we recommend using GRPY\n" ) )
@@ -14021,7 +14326,8 @@ bool US_Hydrodyn::calc_zeno()
                            + QString( "_%1" ).arg( current_model + 1 )
                            + mc
                            + ( repeats > 1 ? QString( "_r%1" ).arg( this_repeat ) : QString( "" ) )
-                           + ( hydro.zeno_grpy_correction_from_bead_count ? "-HC" : "" )
+                           + ( zeno_correction ? "-HC" : "" )
+                           + mesh_tag
                            + QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "" )
                            + ".zno" )
                   ;
@@ -14462,7 +14768,7 @@ bool US_Hydrodyn::calc_zeno()
                   QString add_to_zeno_correction_notes   = "";
                   QString add_to_zeno_correction_results = "";
 
-                  if ( hydro.zeno_grpy_correction_from_bead_count ) {
+                  if ( zeno_correction ) {
                      size_t bead_count = bead_model.size();
 
                      double dt_corr =
@@ -14734,6 +15040,39 @@ bool US_Hydrodyn::calc_zeno()
 
                      add_to_zeno += QString( "\nZENO computed on %1 Model %2%3\n" ).arg( project ).arg( current_model + 1 ).arg( bead_model_suffix.length() ? (" Bead model suffix: " + bead_model_suffix) : "" );
                      add_to_zeno += QString( "Number of beads used: %1\n" ).arg( bead_model.size() );
+                     if ( uhz.mesh_used ) {
+                        QString unit_name = hydro.unit == -9 ? "nm" : "A";
+                        add_to_zeno +=
+                           QString(
+                                   "ZENO ran on the solvent-excluded surface of the beads, meshed by sesmesh:\n"
+                                   " Probe radius: %1 %2, grid spacing: %3 %4, mesh clean-up: %5, internal cavities: %6\n"
+                                   " Spheres meshed: %7, triangles: %8, vertices: %9\n"
+                                   )
+                           .arg( uhz.mesh_options.probe )
+                           .arg( unit_name )
+                           .arg( uhz.mesh_options.h )
+                           .arg( unit_name )
+                           .arg( uhz.mesh_options.clean ? "yes" : "no" )
+                           .arg( uhz.mesh_options.fill_cavities ? "filled" : "kept" )
+                           .arg( uhz.mesh_info.spheres )
+                           .arg( uhz.mesh_info.triangles )
+                           .arg( uhz.mesh_info.vertices )
+                           ;
+                        add_to_zeno +=
+                           QString(
+                                   " Mesh area: %1 %2^2, mesh volume: %3 %4^3\n"
+                                   " Closed manifold: %5, surfaces: %6, Euler characteristic: %7, smallest angle: %8 deg\n"
+                                   )
+                           .arg( uhz.mesh_info.area, 0, 'f', 3 )
+                           .arg( unit_name )
+                           .arg( uhz.mesh_info.volume, 0, 'f', 3 )
+                           .arg( unit_name )
+                           .arg( uhz.mesh_info.closed_manifold ? "yes" : "NO" )
+                           .arg( uhz.mesh_info.components )
+                           .arg( uhz.mesh_info.euler )
+                           .arg( uhz.mesh_info.min_angle, 0, 'f', 1 )
+                           ;
+                     }
                      add_to_zeno += QString( "MW: %1 [Da]\n" ).arg( sum_mass );
                      add_to_zeno += pH_msg();
                      add_to_zeno += vbar_msg( model_vector[ current_model ].vbar, true );
@@ -14850,6 +15189,19 @@ bool US_Hydrodyn::calc_zeno()
                      zeno_mm_save_params.data_vector.push_back( this_data );
                   }
 
+                  if ( mesh_series ) {
+                     US_Zeno_Mesh_Series_Point point;
+                     point.h         = uhz.mesh_h;
+                     point.triangles = uhz.mesh_info.triangles;
+                     point.area      = uhz.mesh_info.area;
+                     point.volume    = uhz.mesh_info.volume;
+                     point.zno       = QFileInfo( fname + ".zno" ).fileName();
+                     point.zno_kept  = !batch_avg_hydro_active() && !zeno_mm;
+                     point.bod       = QFileInfo( fname + ".bod" ).fileName();
+                     point.data      = this_data;
+                     series.push_back( point );
+                  }
+
                   if ( batch_widget &&
                        batch_window->save_batch_active )
                   {
@@ -14921,6 +15273,33 @@ bool US_Hydrodyn::calc_zeno()
                   // save_util->dataString(&this_data);
                }
             } // repeats
+
+            if ( mesh_series && series.size() > 1 ) {
+               QString series_name =
+                  get_somo_dir()
+                  + QDir::separator()
+                  + project
+                  + QString( "_%1" ).arg( current_model + 1 )
+                  + mc
+                  + mesh_series_tag
+                  + QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "" )
+                  + ".csv"
+                  ;
+               if ( !overwrite_hydro ) {
+                  series_name = fileNameCheck( series_name, 0, this );
+               }
+               QString summary;
+               QFile f( series_name );
+               if ( !f.open( QIODevice::WriteOnly ) ) {
+                  editor_msg( "red", QString( us_tr( "Error: could not open %1 for writing" ) ).arg( series_name ) );
+               } else {
+                  QTextStream ts( &f );
+                  ts << zeno_mesh_series_csv( series, hydro.unit == -9 ? "nm" : "A", summary );
+                  f.close();
+                  editor_msg( "dark blue", summary );
+                  editor_msg( "dark blue", QString( us_tr( "Wrote %1\n" ) ).arg( series_name ) );
+               }
+            }
          }
       }
    }
@@ -15023,7 +15402,7 @@ bool US_Hydrodyn::calc_zeno()
 
    pb_stop_calc->setEnabled(false);
    editor_msg( "black", "Calculate RB hydrodynamics ZENO completed\n");
-   if ( hydro.zeno_grpy_correction_from_bead_count ) {
+   if ( zeno_correction ) {
       editor_msg( "dark blue", info_cite( "zeno-correction" ) );
    } else {
       editor_msg( "dark blue", info_cite( "zeno" ) );
