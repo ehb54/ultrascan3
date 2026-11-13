@@ -61,6 +61,7 @@ runs:
         fi
 
     - name: Build and package (Linux / macOS)
+      id: package_unix
       if: runner.os != 'Windows'
       shell: bash
       env:
@@ -78,6 +79,7 @@ runs:
         bash scripts/build.sh "${args[@]}"
 
     - name: Build and package (Windows)
+      id: package_windows
       if: runner.os == 'Windows'
       shell: cmd
       env:
@@ -87,46 +89,28 @@ runs:
           ${{ inputs.clean_tier == 'rebuild' && '--rebuild' || '' }} ^
           ${{ inputs.clean_tier == 'clean' && '--clean' || '' }}
 
-    # Require exactly one package before uploading the artifact.
+    # Stage only the output reported by the successful build step.
     - name: Stage package
       shell: bash
       env:
-        PROFILE: ${{ inputs.profile }}
+        PACKAGE_PATH: ${{ steps.package_unix.outputs.package_path || steps.package_windows.outputs.package_path }}
       run: |
         set -euo pipefail
         rm -rf artifact-upload && mkdir -p artifact-upload
-
-        # macOS bash 3.2 lacks `mapfile` and `readarray`.
-        FOUND=$(
-          find build -maxdepth 2 -type f \
-            \( -name 'UltraScan3-*.tar.xz' \
-            -o -name 'UltraScan3-*.pkg' \
-            -o -name 'UltraScan3-*.exe' \
-            -o -name 'UltraScan3-*.tar.gz' \) | sort
-        )
-
-        if [ "$PROFILE" = "HPC" ]; then
-          FOUND=$(printf '%s\n' "$FOUND" | grep -- '-HPC-' || true)
-        else
-          FOUND=$(printf '%s\n' "$FOUND" | grep -v -- '-HPC-' || true)
-        fi
-
-        if [ -z "$FOUND" ]; then
-          echo "::error::no package produced for profile ${PROFILE}"
-          find build -maxdepth 2 -type f -name 'UltraScan3-*' || echo "(nothing matching UltraScan3-*)"
+        if [ -z "$PACKAGE_PATH" ]; then
+          echo "::error::build did not report a package path"
           exit 1
         fi
-
-        COUNT=$(printf '%s\n' "$FOUND" | wc -l | tr -d '[:space:]')
-        if [ "$COUNT" -ne 1 ]; then
-          echo "::error::expected exactly one package for profile ${PROFILE}, found ${COUNT}"
-          printf '%s\n' "$FOUND"
+        PKG=$PACKAGE_PATH
+        if [ "${RUNNER_OS:-}" = "Windows" ]; then
+          PKG=$(cygpath -u "$PKG")
+        fi
+        if [ ! -f "$PKG" ] || [ ! -s "$PKG" ]; then
+          echo "::error::declared package is missing or empty: $PACKAGE_PATH"
           exit 1
         fi
-
-        PKG=$FOUND
         cp "$PKG" artifact-upload/
-        echo "staged: $PKG"
+        echo "staged: $PACKAGE_PATH"
         ls -lh artifact-upload/
 
     # overwrite:true because artifact names are immutable and scoped to the run,

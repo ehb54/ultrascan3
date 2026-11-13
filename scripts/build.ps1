@@ -1174,12 +1174,11 @@ Write-Host "Build complete!"                           -ForegroundColor Green
 Write-Host "==========================================" -ForegroundColor Green
 Write-Host ""
 if (${pkg}) {
-    $InstallerPattern = "build/$Preset/UltraScan3-*-Windows.exe"
-    $InstallerFile = Get-ChildItem -Path $InstallerPattern -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($InstallerFile) {
-        Write-Host "Installer: $($InstallerFile.FullName)" -ForegroundColor Green
-    } else {
-        Write-Host "Installer: build/$Preset/UltraScan3-*-Windows.exe" -ForegroundColor Yellow
+    try {
+        & "$PSScriptRoot/report-package.ps1" -ReceiptPath (Join-Path $BuildDir "package-path.txt")
+    } catch {
+        Write-Host "ERROR: Package output reporting failed: $_" -ForegroundColor Red
+        exit 1
     }
     Write-Host ""
 }

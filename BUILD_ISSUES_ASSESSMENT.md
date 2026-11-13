@@ -6,12 +6,12 @@ The review covers #546, #646, #679, #768, #869, and #1024; it does not assume al
 
 # Ticket revalidation — November 13, 2026
 
-At the initial revalidation, GitHub reported all six tickets as **OPEN**. The user subsequently confirmed that **#768 is closed with a comment**; it has no remaining work in this initiative. Issue bodies, comments, current source, published assets, and build logs were checked. Open status alone does not establish outstanding implementation work.
+At the initial revalidation, GitHub reported all six tickets as **OPEN**. The user subsequently confirmed that **#768 is closed with a comment**; it has no remaining work in this initiative. **#646 was closed on November 13, 2026** after full-build verification ([closing comment](https://github.com/ehb54/ultrascan-tickets/issues/646#issuecomment-6867734906)). Issue bodies, comments, current source, published assets, and build logs were checked. Open status alone does not establish outstanding implementation work.
 
 | Ticket | Verified finding | Recommended disposition |
 |---|---|---|
 | [#546](https://github.com/ehb54/ultrascan-tickets/issues/546) | Qt deployment and macOS PKG packaging exist. Published build logs show successful arm64 and x86_64 PKG creation and help-file staging. The original checklist asks for DMG. | Largely implemented; reconcile PKG versus DMG and confirm clean-machine install/help behavior, then close or retain only specific failures. |
-| [#646](https://github.com/ehb54/ultrascan-tickets/issues/646) | The reported time-dependent revision generation was changed to commit time in December 2025. Current qmake generator preserves an unchanged header. An isolated two-invocation check confirmed identical content and unchanged modification time. | Likely addressed; the user is testing #646 in another session. Await that session's two-successive-qmake-build evidence before closure. The generator check here is not a full incremental-build test. |
+| ~~[#646](https://github.com/ehb54/ultrascan-tickets/issues/646)~~ **Closed** | **Verified fixed.** Revision generation uses commit time and preserves an unchanged header. Three successive full `make_all.pro` builds of the baseline commit: the first built all 70 programs; the second and third ran zero compiles and zero links. | **Closed** with the verification evidence below ([closing comment](https://github.com/ehb54/ultrascan-tickets/issues/646#issuecomment-6867734906)). |
 | [#679](https://github.com/ehb54/ultrascan-tickets/issues/679) | Modern packages build and stage Qt help. June 2026 makeall.sh changes improved Python/Sphinx detection; its manual target generates both help files. However, make_all.pro still lacks a documentation target, and makeall.sh only prints the detected Assistant invocation rather than providing the originally requested setup. | Partially addressed. Retain a narrow legacy-entrypoint requirement if that workflow remains supported; explicitly retire it otherwise. SOMO remains outside this analysis and must be separated before closing the original mixed ticket. |
 | ~~[#768](https://github.com/ehb54/ultrascan-tickets/issues/768)~~ **Closed** | The original question asks where the application version is stored. A March 4 comment answers utils/us_defines.h; current CMake also checks its agreement with VERSION. | **Closed with a comment**, as confirmed by the user. Broader metadata consistency ideas are separate work, not an expansion of this question. |
 | [#869](https://github.com/ehb54/ultrascan-tickets/issues/869) | **Fixed locally.** README and archive naming share the calculated filename; x64/arm64 archive fixtures passed. | Implementation complete; delivery and ticket closure remain. |
@@ -19,9 +19,9 @@ At the initial revalidation, GitHub reported all six tickets as **OPEN**. The us
 
 Build evidence: [November 11 published nightly run 43027179129](https://github.com/ehb54/ultrascan3/actions/runs/43027179129), source `0eee7f31f9aa28056ec6241b4fe70b0eca506420`, and [nightly release assets](https://github.com/ehb54/ultrascan3/releases/tag/nightly). This is the latest published package set inspected, not a package build of current main. Successful November 12/13 workflow status alone is not evidence of a newer published package. The on-demand workflow API returned zero retained runs, so its naming and nesting fixes are source-verified, not verified from a recent on-demand artifact. No downloaded installer was executed during this review.
 
-The #646 fixture used a temporary Git repository containing the current revision.sh. After first generation, the header timestamp was set to a known old value; a second invocation preserved both that timestamp and all bytes. This checks the specific generator behavior without changing the working checkout or claiming that all qmake dependency rules are correct.
+#646 verification: a clean clone of the baseline commit was built with `qmake make_all.pro` and `make -k -j9` three times in succession in the `ehb1/us3comp` image (Ubuntu 22.04, Qt 5.15.3, GNU make 4.3, amd64 under emulation, `-O0`). Build 1 exited 0 after 27 minutes with 70 programs. Builds 2 and 3 each exited 0 in 2–3 seconds, entered all 73 directories, ran the forced revision target (`us_revision.h unchanged (build 9951, rev 1f838727ff)`), and performed zero compiles and zero links; `us.cpp` and `us_reporter_gmp.cpp`, the files named in the ticket log, were not rebuilt. The image lacks `libarchive-dev`, which `qwtplot3d` needs to link; it was installed in the throwaway container only.
 
-No tickets were changed by this review. The #869 fix is now implemented locally and awaits delivery; #679 still needs a decision on supported legacy entry points. #768 has since been closed with a comment; #546, #646 and #1024 primarily need bounded acceptance checks. The APP-only static-library optimization documented later is a separate improvement and does not itself close any of these tickets.
+#646 was closed with a comment after the verification above; no other tickets were changed by this review. The #869 fix is now implemented locally and awaits delivery; #679 still needs a decision on supported legacy entry points. #768 has since been closed with a comment; #646 is verified and closed; #546 and #1024 primarily need bounded acceptance checks. The APP-only static-library optimization documented later is a separate improvement and does not itself close any of these tickets.
 
 # #869 local implementation
 
@@ -100,7 +100,7 @@ The architecture and reuse analysis below excludes all SOMO code, targets, depen
 | Ticket | Owner and labels | Assessment |
 |---|---|---|
 | [#546 macOS CMake packaging](https://github.com/ehb54/ultrascan-tickets/issues/546) | ehb54; enhancement, triage | General UltraScan packaging. Existing implementation needs reconciliation against the older checklist. |
-| [#646 repeated qmake compilation](https://github.com/ehb54/ultrascan-tickets/issues/646) | Unassigned; bug | General incremental-build behavior. Reproduce on current code before changing dependencies. |
+| [#646 repeated qmake compilation](https://github.com/ehb54/ultrascan-tickets/issues/646) | Unassigned; bug | Closed. Verified fixed on the baseline commit; no-change qmake rebuilds compile nothing. |
 | [#679 incomplete standard build](https://github.com/ehb54/ultrascan-tickets/issues/679) | ehb54; bug, triage | Mixed scope. Include documentation and help; track SOMO completion separately. |
 | [#768 revision header contents](https://github.com/ehb54/ultrascan-tickets/issues/768) | ehb54; enhancement, triage | Closed with a comment. The original question is answered; broader metadata consistency is separate work. |
 | [#869 Linux README architecture](https://github.com/ehb54/ultrascan-tickets/issues/869) | ehb54; general, triage | Fixed locally and fixture-tested; awaiting delivery and closure. |
@@ -119,9 +119,7 @@ The manual-copy section copies help files only when present, whereas the Linux a
 
 ## Incremental builds
 
-Coordination update: the user is testing #646 in another session. This session will not duplicate that work or infer closure from package-build results.
-
-The discussion on [#646](https://github.com/ehb54/ultrascan-tickets/issues/646) attributes recompilation to time-dependent version metadata. Current qmake revision generation already uses the commit date and preserves the header when its values are unchanged. Its forced revision target therefore does not, by itself, establish unnecessary recompilation. Reproduce two successive builds and inspect which files and timestamps cause any second-build work. [qmake revision generator](https://github.com/ehb54/ultrascan3/blob/1f838727ffaa9549db62884e0504acf2f94b3eac/programs/us/revision.sh), [qmake target](https://github.com/ehb54/ultrascan3/blob/1f838727ffaa9549db62884e0504acf2f94b3eac/programs/us/us.pro).
+The discussion on [#646](https://github.com/ehb54/ultrascan-tickets/issues/646) attributes recompilation to time-dependent version metadata. Current qmake revision generation already uses the commit date and preserves the header when its values are unchanged. Its forced revision target runs on every build, but because the header keeps its timestamp, make does not rebuild dependents. Three successive full builds confirmed this: the second and third compiled and linked nothing (evidence above). [qmake revision generator](https://github.com/ehb54/ultrascan3/blob/1f838727ffaa9549db62884e0504acf2f94b3eac/programs/us/revision.sh), [qmake target](https://github.com/ehb54/ultrascan3/blob/1f838727ffaa9549db62884e0504acf2f94b3eac/programs/us/us.pro).
 
 There is a related CMake concern: GenerateVersion.cmake writes the build-directory header unconditionally, although it avoids rewriting the source-directory copy when content is unchanged. This is a candidate cause of unnecessary CMake recompilation, not proof of the original qmake defect. Both generators also write into the source tree, which merits checking when qmake and CMake use the same checkout. [CMake revision generator](https://github.com/ehb54/ultrascan3/blob/1f838727ffaa9549db62884e0504acf2f94b3eac/admin/cmake/GenerateVersion.cmake).
 
@@ -174,7 +172,7 @@ Acceptance: download and inspect fresh Windows and RHEL 8 artifacts, verify the 
 | 1 | Reconcile existing implementations and ownership | All six in scope | Remaining criteria documented; coordinate #1024 with aaron-auc. Leave #937 with samo38. |
 | 2 | Verify package completeness and fix remaining omissions | #1024, #679 documentation, #546 | Installed help works; required-file omissions fail packaging; artifact selection is unambiguous. |
 | 3 | Deliver the completed Linux README naming fix | #869 | Local x64/arm64 archive fixtures passed; delivery and closure remain. |
-| 4 | Align identity and preserve incremental builds | #646, #1024 identity; separate metadata follow-up | Stable no-change rebuilds; accurate identity on every packaged platform. |
+| 4 | Align identity and preserve incremental builds | #1024 identity; separate metadata follow-up | Stable no-change rebuilds (qmake verified under #646); accurate identity on every packaged platform. |
 
 Use one tracking initiative with separate pull requests for these outcomes. Package completeness is the main user-facing priority. Identity work ties the incremental-build and artifact-naming issues together; dependency organization remains separate work owned by samo38.
 
@@ -214,7 +212,7 @@ Release-process context supplied by the user: formal builds use tags while contr
 |---|---|---|
 | Required package components are not fully represented in package dependencies | #546, #679, #1024 | Success depends on entry point and previously available outputs. |
 | Identity and filenames are constructed in multiple places | #869, #1024; separate metadata follow-up | Labels, compiled version, README instructions, and actual outputs can disagree. |
-| Generated metadata has inconsistent ownership and write behavior | #646; separate metadata follow-up | Header churn can trigger recompilation; qmake and CMake can affect the same source-tree header. |
+| Generated metadata has inconsistent ownership and write behavior | Separate metadata follow-up (qmake path verified under #646) | Header churn can trigger recompilation; qmake and CMake can affect the same source-tree header. |
 | Publication discovers outputs through broad searches | #1024 | Existing files can influence which artifact is selected. |
 | Executable directories act as reusable implementation modules | Broader than the six tickets | A small shared change may compile repeatedly and pull in unrelated program code. |
 
@@ -364,6 +362,23 @@ This verifies target selection and generated build rules. It is not an elapsed-t
 | #869 README architecture | No direct fix from the GUI optimization. The separate local implementation documented above replaces the placeholder with the calculated archive filename and passed fixture validation; delivery remains pending. |
 | #1024 on-demand packaging | Reduces the generated APP compilation workload used by the workflow; does not resolve artifact selection, metadata, or help validation. |
 
-The other architectural findings give these tickets shared priorities: package dependency completeness informs #546/#679/#1024; consistent identity and output naming inform #869/#1024 and a separate metadata follow-up; generated-header stability informs #646. Closed ticket #768 is not part of that follow-up. Application-library extraction is a separate, larger follow-on and is not a prerequisite for finishing those tickets.
+The other architectural findings give these tickets shared priorities: package dependency completeness informs #546/#679/#1024; consistent identity and output naming inform #869/#1024 and a separate metadata follow-up; generated-header stability informs the CMake metadata follow-up (#646's qmake path is verified). Closed ticket #768 is not part of that follow-up. Application-library extraction is a separate, larger follow-on and is not a prerequisite for finishing those tickets.
 
 
+
+# #1024 exact package output handoff — November 13, 2026
+
+APP and HPC package targets now report the exact absolute output through a
+validated `package-path.txt` receipt. Bash and PowerShell wrappers pass that path
+to the upload action, which stages only that file at the artifact ZIP root. This
+replaces broad build-directory discovery: stale packages cannot cause ambiguity
+or be selected as fallback. Missing, empty, multiline, or invalid receipts and
+missing or empty declared outputs fail explicitly.
+
+All 18 packaging tests pass, including actual archive-target receipts, both Bash
+and PowerShell reporters, paths with spaces, absent outputs, one declared output,
+and multiple files where only the declared output is uploaded. Shell syntax and
+`git diff --check` also pass. The earlier zero/one/multiple glob-selection checks
+are superseded by this explicit producer-to-upload contract. Fresh Windows and
+Oracle Linux 8 on-demand artifacts and installed-help acceptance remain pending;
+#1024 is not yet established as ready for closure.

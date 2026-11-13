@@ -37,7 +37,7 @@ pointing to the generated manifest for its build configuration.
 
 Optional SOMO outputs remain separately staged without new build dependencies.
 Their legacy input-directory scans are restricted to SOMO executable names, so
-that directory cannot reintroduce stale core programs. HPC packaging is unchanged.
+that directory cannot reintroduce stale core programs. HPC executable staging is unchanged.
 
 Run the packaging fixtures with:
 
@@ -79,3 +79,13 @@ requires a macOS host; the multi-configuration test requires Ninja.
 | `WindowsDeployQtAssistant.cmake` | Deploys Qt Assistant into the Windows staging tree. |
 
 
+
+## Exact package output
+
+Every APP and HPC package target clears `package-path.txt` before packaging and
+writes the final absolute filename after verifying a nonempty output. The build
+wrappers read that receipt using `scripts/report-package.sh` or
+`scripts/report-package.ps1` and publish `package_path` through `GITHUB_OUTPUT`.
+The upload action stages only that file at the artifact ZIP root. Missing or
+invalid receipts and missing or empty packages fail explicitly; unrelated old
+packages never participate in selection.

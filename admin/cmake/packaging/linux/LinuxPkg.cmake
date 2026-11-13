@@ -62,3 +62,6 @@ add_custom_target(package_linux_tarball
     DEPENDS deploy_linux
     VERBATIM
 )
+
+include("${CMAKE_CURRENT_LIST_DIR}/../PackageOutput.cmake")
+us3_record_package_output(package_linux_tarball "${_FINAL_PKG}")

@@ -240,3 +240,6 @@ add_custom_target(package_macos_pkg
     DEPENDS deploy_macos
     VERBATIM
 )
+
+include("${CMAKE_CURRENT_LIST_DIR}/../PackageOutput.cmake")
+us3_record_package_output(package_macos_pkg "${_FINAL_PKG}")
