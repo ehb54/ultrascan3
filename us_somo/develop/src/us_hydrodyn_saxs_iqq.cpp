@@ -189,6 +189,14 @@ bool US_Hydrodyn_Saxs::compute_scale_excl_vol()
             }
 
             QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+            // derive an entry for an unseen atom name rather than dropping the atom
+            {
+               QString how;
+               if ( US_Hydrodyn::ensure_atom_entry( atom_map, this_atom_name, hybrid_name, &how )
+                    && !how.isEmpty() ) {
+                  editor_msg( "dark blue", QString( us_tr( "Note: %1\n" ) ).arg( how ) );
+               }
+            }
             if ( !atom_map.count(this_atom_name + "~" + hybrid_name) )
             {
                cout << "error: (saxs_iqq 1) atom_map missing for hybrid_name "
@@ -402,6 +410,14 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
             }
 
             QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+            // derive an entry for an unseen atom name rather than dropping the atom
+            {
+               QString how;
+               if ( US_Hydrodyn::ensure_atom_entry( atom_map, this_atom_name, hybrid_name, &how )
+                    && !how.isEmpty() ) {
+                  editor_msg( "dark blue", QString( us_tr( "Note: %1\n" ) ).arg( how ) );
+               }
+            }
             if ( !atom_map.count(this_atom_name + "~" + hybrid_name) )
             {
                cout << "error: (saxs_iqq 2) atom_map missing for hybrid_name "
@@ -1589,6 +1605,14 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
             }
 
             QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+            // derive an entry for an unseen atom name rather than dropping the atom
+            {
+               QString how;
+               if ( US_Hydrodyn::ensure_atom_entry( atom_map, this_atom_name, hybrid_name, &how )
+                    && !how.isEmpty() ) {
+                  editor_msg( "dark blue", QString( us_tr( "Note: %1\n" ) ).arg( how ) );
+               }
+            }
             if ( !atom_map.count(this_atom_name + "~" + hybrid_name) )
             {
                cout << "error: (saxs_iqq 3) atom_map missing for hybrid_name "
@@ -2638,6 +2662,14 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
             }
 
             QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+            // derive an entry for an unseen atom name rather than dropping the atom
+            {
+               QString how;
+               if ( US_Hydrodyn::ensure_atom_entry( atom_map, this_atom_name, hybrid_name, &how )
+                    && !how.isEmpty() ) {
+                  editor_msg( "dark blue", QString( us_tr( "Note: %1\n" ) ).arg( how ) );
+               }
+            }
             if ( !atom_map.count(this_atom_name + "~" + hybrid_name) )
             {
                cout << "error: (saxs_iqq 4) atom_map missing for hybrid_name "

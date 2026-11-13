@@ -1,0 +1,35 @@
+REMARK   1 ATP: model coordinates from the wwPDB Chemical Component Dictionary
+REMARK   1 (https://files.rcsb.org/ligands/view/ATP.cif), taken from PDB entry 1B0U,
+REMARK   1 heavy atoms only.
+HETATM    1  PG  ATP A   1      46.107  45.182  56.950  1.00  0.00           P
+HETATM    2  O1G ATP A   1      45.779  46.330  56.052  1.00  0.00           O
+HETATM    3  O2G ATP A   1      47.382  44.497  56.626  1.00  0.00           O
+HETATM    4  O3G ATP A   1      45.972  45.530  58.375  1.00  0.00           O
+HETATM    5  PB  ATP A   1      43.911  43.740  55.655  1.00  0.00           P
+HETATM    6  O1B ATP A   1      42.975  42.722  55.986  1.00  0.00           O
+HETATM    7  O2B ATP A   1      43.603  44.767  54.678  1.00  0.00           O
+HETATM    8  O3B ATP A   1      45.041  44.015  56.738  1.00  0.00           O
+HETATM    9  PA  ATP A   1      45.228  42.669  53.257  1.00  0.00           P
+HETATM   10  O1A ATP A   1      46.380  43.396  52.788  1.00  0.00           O
+HETATM   11  O2A ATP A   1      44.183  42.190  52.351  1.00  0.00           O
+HETATM   12  O3A ATP A   1      44.917  42.716  54.789  1.00  0.00           O
+HETATM   13  O5' ATP A   1      46.172  41.568  53.302  1.00  0.00           O
+HETATM   14  C5' ATP A   1      46.609  40.422  53.542  1.00  0.00           C
+HETATM   15  C4' ATP A   1      46.520  38.989  53.364  1.00  0.00           C
+HETATM   16  O4' ATP A   1      46.785  38.908  51.948  1.00  0.00           O
+HETATM   17  C3' ATP A   1      47.808  38.874  54.112  1.00  0.00           C
+HETATM   18  O3' ATP A   1      47.713  38.357  55.423  1.00  0.00           O
+HETATM   19  C2' ATP A   1      48.719  38.116  53.139  1.00  0.00           C
+HETATM   20  O2' ATP A   1      48.632  36.737  53.425  1.00  0.00           O
+HETATM   21  C1' ATP A   1      48.133  38.409  51.721  1.00  0.00           C
+HETATM   22  N9  ATP A   1      48.846  39.464  50.986  1.00  0.00           N
+HETATM   23  C8  ATP A   1      48.616  40.842  50.945  1.00  0.00           C
+HETATM   24  N7  ATP A   1      49.425  41.489  50.165  1.00  0.00           N
+HETATM   25  C5  ATP A   1      50.232  40.470  49.664  1.00  0.00           C
+HETATM   26  C6  ATP A   1      51.308  40.466  48.731  1.00  0.00           C
+HETATM   27  N6  ATP A   1      51.721  41.568  48.129  1.00  0.00           N
+HETATM   28  N1  ATP A   1      51.912  39.274  48.447  1.00  0.00           N
+HETATM   29  C2  ATP A   1      51.493  38.151  49.029  1.00  0.00           C
+HETATM   30  N3  ATP A   1      50.491  38.016  49.900  1.00  0.00           N
+HETATM   31  C4  ATP A   1      49.892  39.253  50.171  1.00  0.00           C
+END

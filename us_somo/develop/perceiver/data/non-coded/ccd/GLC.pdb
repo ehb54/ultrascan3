@@ -1,0 +1,16 @@
+REMARK   1 GLC: model coordinates from the wwPDB Chemical Component Dictionary
+REMARK   1 (https://files.rcsb.org/ligands/view/GLC.cif), taken from PDB entry 1ANF,
+REMARK   1 heavy atoms only.
+HETATM    1  C1  GLC A   1       8.537  13.141  37.436  1.00  0.00           C
+HETATM    2  C2  GLC A   1       8.657  12.625  38.866  1.00  0.00           C
+HETATM    3  C3  GLC A   1       8.946  13.753  39.819  1.00  0.00           C
+HETATM    4  C4  GLC A   1      10.145  14.523  39.360  1.00  0.00           C
+HETATM    5  C5  GLC A   1       9.847  15.161  37.965  1.00  0.00           C
+HETATM    6  C6  GLC A   1      11.109  15.823  37.373  1.00  0.00           C
+HETATM    7  O1  GLC A   1       7.343  13.747  37.260  1.00  0.00           O
+HETATM    8  O2  GLC A   1       7.430  12.031  39.245  1.00  0.00           O
+HETATM    9  O3  GLC A   1       9.253  13.149  41.094  1.00  0.00           O
+HETATM   10  O4  GLC A   1      10.317  15.675  40.245  1.00  0.00           O
+HETATM   11  O5  GLC A   1       9.352  14.183  37.085  1.00  0.00           O
+HETATM   12  O6  GLC A   1      10.583  16.542  36.238  1.00  0.00           O
+END
