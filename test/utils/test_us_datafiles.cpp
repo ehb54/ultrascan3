@@ -10,70 +10,81 @@
 
 using namespace qt_matchers;
 
-class TestUSDataFilesUnit : public QtTestBase {
-protected:
-    void SetUp() override {
-        QtTestBase::SetUp();
+class TestUSDataFilesUnit : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
 
-        // Create temporary directory for each test
-        tempDir = std::make_unique<QTemporaryDir>();
-        ASSERT_TRUE(tempDir->isValid()) << "Failed to create temporary directory";
-        testPath = tempDir->path();
-    }
+         // Create temporary directory for each test
+         tempDir = std::make_unique<QTemporaryDir>();
+         ASSERT_TRUE( tempDir->isValid() ) << "Failed to create temporary directory";
+         testPath = tempDir->path();
+      }
 
-    void TearDown() override {
-        // Cleanup happens automatically with QTemporaryDir destructor
-        tempDir.reset();
-        QtTestBase::TearDown();
-    }
+      void TearDown() override
+      {
+         // Cleanup happens automatically with QTemporaryDir destructor
+         tempDir.reset();
+         QtTestBase::TearDown();
+      }
 
-    // Helper method to create a test XML file with specific content
-    void createXmlFile(const QString& filename, const QString& tag,
-                       const QString& attribute, const QString& guid) {
-        QFile file(testPath + "/" + filename);
-        ASSERT_TRUE(file.open(QIODevice::WriteOnly | QIODevice::Text));
+      // Helper method to create a test XML file with specific content
+      void createXmlFile( const QString& filename, const QString& tag, const QString& attribute, const QString& guid )
+      {
+         QFile file( testPath + "/" + filename );
+         ASSERT_TRUE( file.open( QIODevice::WriteOnly | QIODevice::Text ) );
 
-        QXmlStreamWriter xml(&file);
-        xml.setAutoFormatting(true);
-        xml.writeStartDocument();
-        xml.writeStartElement("root");
-        xml.writeStartElement(tag);
-        xml.writeAttribute(attribute, guid);
-        xml.writeEndElement(); // tag
-        xml.writeEndElement(); // root
-        xml.writeEndDocument();
+         QXmlStreamWriter xml( &file );
+         xml.setAutoFormatting( true );
+         xml.writeStartDocument();
+         xml.writeStartElement( "root" );
+         xml.writeStartElement( tag );
+         xml.writeAttribute( attribute, guid );
+         xml.writeEndElement(); // tag
+         xml.writeEndElement(); // root
+         xml.writeEndDocument();
 
-        file.close();
-    }
+         file.close();
+      }
 
-    // Helper method to create a simple XML file without specific content
-    void createEmptyXmlFile(const QString& filename) {
-        QFile file(testPath + "/" + filename);
-        ASSERT_TRUE(file.open(QIODevice::WriteOnly | QIODevice::Text));
+      // Helper method to create a simple XML file without specific content
+      void createEmptyXmlFile( const QString& filename )
+      {
+         QFile file( testPath + "/" + filename );
+         ASSERT_TRUE( file.open( QIODevice::WriteOnly | QIODevice::Text ) );
 
-        QXmlStreamWriter xml(&file);
-        xml.writeStartDocument();
-        xml.writeStartElement("root");
-        xml.writeEndElement();
-        xml.writeEndDocument();
+         QXmlStreamWriter xml( &file );
+         xml.writeStartDocument();
+         xml.writeStartElement( "root" );
+         xml.writeEndElement();
+         xml.writeEndDocument();
 
-        file.close();
-    }
+         file.close();
+      }
 
-    // Helper method to verify file name format
-    bool isValidFileName(const QString& fileName, const QString& lfchar) {
-        QString baseName = QFileInfo(fileName).baseName();
-        if (baseName.length() != 8) return false;
-        if (!baseName.startsWith(lfchar)) return false;
+      // Helper method to verify file name format
+      bool isValidFileName( const QString& fileName, const QString& lfchar )
+      {
+         QString baseName = QFileInfo( fileName ).baseName();
+         if ( baseName.length() != 8 )
+         {
+            return false;
+         }
+         if ( !baseName.startsWith( lfchar ) )
+         {
+            return false;
+         }
 
-        QString numPart = baseName.mid(1);
-        bool ok;
-        numPart.toInt(&ok);
-        return ok;
-    }
+         QString numPart = baseName.mid( 1 );
+         bool    ok;
+         numPart.toInt( &ok );
+         return ok;
+      }
 
-    std::unique_ptr<QTemporaryDir> tempDir;
-    QString testPath;
+      std::unique_ptr<QTemporaryDir> tempDir;
+      QString                        testPath;
 };
 
 // ============================================================================

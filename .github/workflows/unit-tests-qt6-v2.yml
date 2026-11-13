@@ -122,10 +122,11 @@ jobs:
           cd build-qt6
 
           echo '=== TEST SUITE STATISTICS ==='
-          echo "Total CTest cases: $(ctest -N 2>/dev/null | grep -c 'Test #' || echo 'Unknown')"
-          if [ -f ./test/utils/test_us_utils ]; then
-            echo "Total GTest cases: $(./test/utils/test_us_utils --gtest_list_tests 2>/dev/null | grep -c '\.' || echo 'Unknown')"
-          fi
+          ctest --show-only=json-v1 > all-tests.json
+          echo "Total CTest cases: $(python3 -c 'import json, sys; print(len(json.load(open(sys.argv[1]))["tests"]))' all-tests.json)"
+          ctest -L gtest-unit-utils --show-only=json-v1 > unit-utils-tests.json
+          GTEST_COUNT=$(python3 -c 'import json; n = len(json.load(open("unit-utils-tests.json"))["tests"]); assert n > 0, "No utility unit tests discovered"; print(n)')
+          echo "Utility unit cases: $GTEST_COUNT"
           echo '============================='
 
           CTEST_ARGS="--output-on-failure --parallel $(nproc)"
