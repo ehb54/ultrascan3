@@ -1578,22 +1578,17 @@ void US_ModelLoader::accepted_multiple_auto( QStringList m_t_r_id )
    qDebug() << "In accepted_auto() 1: passed vals -- " << model_passed << triple_passed << runid_passed << modelid_passed;
 
    // check for precise name overlapp: must contain model, tripe, run:
+   // NOTE: the list may hold every model of the investigator (no description
+   //       filter), so reject non-matching items BEFORE any alt_description()/
+   //       modelIndex() work, and never index allmods with a failed lookup.
    for ( int i = 0; i < lw_models->count(); ++i )
    {
       QListWidgetItem* item       = lw_models->item( i );
       QString          model_text = item->text();
 
-      QString          triple_from_mtext = item->text().split( "." )[1];
-
-      // get original description of the model
-      QString          mdesc   = alt_description( model_text, false );
-      int              mdx     = modelIndex( mdesc, allmods );
-      QString          modelID = allmods.at( mdx ).DB_id;
-
-      qDebug() << "mdesc, mdx, modelID, triple_from_mtext -- " << mdesc << mdx << modelID << triple_from_mtext;
-
-      // List-form text is "TYPE.TRIP.ETIME_ATIME_HPCID_ITER.RUN"; TYPE is section 0.
-      QString type_from_mtext = model_text.section( ".", 0, 0 );
+      // List-form text is "TYPE.TRIP.ETIME_ATIME_HPCID_ITER.RUN"
+      QString          type_from_mtext   = model_text.section( ".", 0, 0 );
+      QString          triple_from_mtext = model_text.section( ".", 1, 1 );
 
       bool type_ok;
       if ( model_passed == "2DSA-IT" )
@@ -1605,14 +1600,26 @@ void US_ModelLoader::accepted_multiple_auto( QStringList m_t_r_id )
          type_ok = model_text.contains( model_passed );
       }
 
-      if ( type_ok && triple_from_mtext.contains( triple_passed ) &&
-           model_text.contains( runid_passed ) )
+      if ( !( type_ok && triple_from_mtext.contains( triple_passed ) &&
+              model_text.contains( runid_passed ) ) )
+         continue;
+
+      // get original description of the model; skip if it cannot be found
+      QString          mdesc   = alt_description( model_text, false );
+      int              mdx     = modelIndex( mdesc, allmods );
+
+      if ( mdx < 0 )
       {
-         selmods << item;
-         qDebug() << "In accepted_auto(): model_passed, triple_passed, "
-                     "runid_passed, model_text, modelID -- "
-                  << model_passed << triple_passed << runid_passed << model_text << modelID;
+         qDebug() << "In accepted_auto(): no matching model record for" << model_text << mdesc;
+         continue;
       }
+
+      QString          modelID = allmods.at( mdx ).DB_id;
+
+      selmods << item;
+      qDebug() << "In accepted_auto(): model_passed, triple_passed, "
+                  "runid_passed, model_text, modelID -- "
+               << model_passed << triple_passed << runid_passed << model_text << modelID;
    }
 
    modelsCount = selmods.size();
@@ -1629,7 +1636,8 @@ void US_ModelLoader::accepted_multiple_auto( QStringList m_t_r_id )
          int     mdx    = modelIndex( mdesc, allmods );
 
          // repopulate descriptions with only selected row(s)
-         model_descriptions.append( allmods.at( mdx ) );
+         if ( mdx >= 0 )
+            model_descriptions.append( allmods.at( mdx ) );
       }
    }
 
