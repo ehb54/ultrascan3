@@ -182,11 +182,14 @@ They agree within 0.03% in D and 0.06% in [η]. ZENO on the cleaned 0.5–0.2 Å
 these limits. msroll's error is larger because it wrote no lysozyme mesh finer than 43k
 triangles.
 
-### Four structures, four meshers
+### Five structures, four meshers
 
-The structures are crambin (1CRN), lysozyme (1AKI), pepsin (4PEP, with a deep cleft) and the
-hemoglobin tetramer (1A3N, with internal cavities).
-- **Inputs:** protein atoms only, with msroll's `best.radii` spheres and a 1.5 Å probe.
+The structures are crambin (1CRN), lysozyme (1AKI), pepsin (4PEP, with a deep cleft), the
+hemoglobin tetramer (1A3N, with internal cavities) and the B-DNA dodecamer 1BNA (with its
+major and minor grooves).
+- **Inputs:** protein or DNA atoms only (no water), with msroll's `best.radii` spheres and a
+  1.5 Å probe. The DNA atoms get msroll's nucleotide radii once renamed to the older PDB names
+  its atom table uses (residues A, C, G, T; `C1*`, `O1P`, `C5M` and so on).
 - **Cavities:** filled. For msroll and NanoShaper, the outer surface is the largest component.
 - **Area and volume:** sesmesh's h² extrapolation is compared with msroll's analytic SES:
 
@@ -196,10 +199,11 @@ hemoglobin tetramer (1A3N, with internal cavities).
 | 1AKI | 1001 | 5633.206 | −0.0005% | 23368.748 | +0.0001% |
 | 4PEP | 2423 | 11209.040 | −0.0006% | 56016.768 | −0.0001% |
 | 1A3N | 4370 | 19509.094 | −0.004% | 102582.214 | −0.0000% |
+| 1BNA | 486 | 4047.108 | −0.005% | 11326.144 | +0.0000% |
 
-ZENO 5.3.1 was run on 84 full meshes, with no coarsening:
+ZENO 5.3.1 was run on 107 full meshes, with no coarsening:
 - msroll at finenesses 0.60 to 0.36, as far as it ran without crashing;
-- NanoShaper at grid scales 1.5–6, plus 8 for crambin;
+- NanoShaper at grid scales 1.5–6, plus 8 for crambin and DNA;
 - sesmesh at h = 1.0 to 0.25;
 - EDTSurf (VCMC) at scales 2–5.
 
@@ -212,11 +216,15 @@ and NanoShaper limits:
 | 1AKI | +0.00%, −0.00% | −0.00%, +0.00% | +0.01%, −0.07% | +1.44%, −4.17% |
 | 4PEP | +0.01%, −0.05% | −0.01%, +0.05% | −0.02%, −0.03% | +1.16%, −3.35% |
 | 1A3N | +0.01%, −0.03% | −0.01%, +0.03% | −0.05%, +0.06% | +1.00%, −2.91% |
+| 1BNA | −0.01%, +0.03% | +0.01%, −0.03% | −0.11%, +0.23% | +1.76%, −4.97% |
 
 - **sesmesh and NanoShaper** agree within ZENO's statistical error, and so do their finest
   single meshes (within 0.02% in D and 0.06% in [η]).
-- **msroll** extrapolates to the same values. Its finest meshes (at most 120k triangles) are
-  off by +0.1–0.2% in D and −0.3–0.6% in [η].
+- **msroll** extrapolates to the same values for the proteins. Its finest meshes (at most 120k
+  triangles) are off by +0.1–0.2% in D and −0.3–0.6% in [η].
+- **msroll on DNA** extrapolates less well: its meshes stop at 28k triangles, and its limit
+  moves by about 0.1% with the meshes chosen for the fit. Its analytic area and volume agree
+  with sesmesh's within 0.005%, so the surfaces are the same.
 - **EDTSurf** is biased and does not converge: about +1–2% in D and −3–5% in [η].
 
 ## Speed
@@ -232,6 +240,7 @@ NanoShaper (grid scale 2 and 4), and scale 2 and 4 for EDTSurf; msroll used fine
 | 1AKI | 0.66 / 1.97 | 0.24 / 0.71 | 0.96 / 1.43 | 0.97 / 2.02 | 0.20 / 1.56 |
 | 4PEP | 1.25 / 3.28 | 0.45 / 1.27 | 1.23 / 2.74 | 3.84 / 9.81 | 0.50 / 3.57 |
 | 1A3N | 1.60 / 5.26 | 0.70 / 1.92 | 1.62 / 3.48 | 13.4 / 46.7 | 0.80 / 6.66 |
+| 1BNA | 0.52 / 1.22 | 0.24 / 0.57 | 0.82 / 1.35 | 0.39 / 0.86 | 0.12 / 0.91 |
 
 Mesh sizes at the finer setting for 1A3N:
 

@@ -2,8 +2,8 @@ sesmesh in US-SOMO
 ==================
 
 This directory holds sesmesh, a mesher for the solvent-excluded surface (SES) of a
-set of spheres, from https://github.com/ehb54/sesmesh at commit a01ff94 (2026-11-13,
-"Merge pull request #2 from ehb54/phase4").  The files are unchanged.
+set of spheres, from https://github.com/ehb54/sesmesh at commit e5f329b (2026-11-13,
+"Merge pull request #3 from ehb54/dna-1bna").  The files are unchanged.
 
   src/          the sesmesh sources: ses, mesh, clean, io, parallel, vec3, and
                 sesmesh.cpp, the command-line program

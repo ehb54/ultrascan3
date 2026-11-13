@@ -13439,6 +13439,7 @@ US_Hydrodyn_Zeno::US_Hydrodyn_Zeno(
    zeno_progress     = use_progress;
    zeno_stop_flag    = & us_hydrodyn->stopFlag;
    mesh_h            = 0e0;
+   mesh_view_model   = -1;
    mesh_used         = false;
 }
 
@@ -13648,6 +13649,12 @@ bool US_Hydrodyn_Zeno::run(
    us_hydrodyn->editor_msg( "black", QString( "Created %1\n" ).arg( outname ) );
    us_hydrodyn->editor_msg( "black", QString( "Beads used %1\n" ).arg( bead_model->size() ) );
 
+   // the mesh is made: show it with its beads now, while ZENO computes
+   if ( mesh_used && mesh_view_model >= 0 ) {
+      us_hydrodyn->visualize_mesh_with_bead_model( mesh_view_model, outname );
+      qApp->processEvents();
+   }
+
    if ( zeno_cxx ) {
       int argc = 0;
       char *argv[ 8 ];
@@ -13821,17 +13828,29 @@ struct US_Zeno_Mesh_Series_Point {
    save_data data;
 };
 
+// The extrapolation of one quantity: the intercept a at 1/N = 0 and its standard error.
+// valid is false when the quantity is 0 on every mesh (not computed), and it has no row.
+struct US_Zeno_Mesh_Series_Fit {
+   QString label;
+   double  a;
+   double  siga;
+   bool    valid;
+};
+
 // The results on a sequence of meshes and their linear extrapolation in 1/N (N, the number of
 // triangles) to an infinitely fine mesh, in the CSV format of SOMO's BEST pipeline
-// (US_Saxs_Util, us_saxs_util_best.cpp), so the BEST Analysis module can load the file to plot
+// (US_Saxs_Util, us_saxs_util_best.cpp), so the BEST/ZENO series tool can load the file to plot
 // the series and to try its other fits.  The meshes are sorted by decreasing N, BEST's order.
-// summary gets the main extrapolated values, for the log.
+// summary gets the main extrapolated values, for the log; fits gets every quantity's, always in
+// the same order.
 static QString zeno_mesh_series_csv(
                                     vector < US_Zeno_Mesh_Series_Point >   series,
                                     const QString                        & unit,
-                                    QString                              & summary
+                                    QString                              & summary,
+                                    vector < US_Zeno_Mesh_Series_Fit >   & fits
                                     )
 {
+   fits.clear();
    std::stable_sort( series.begin(), series.end(),
                      []( const US_Zeno_Mesh_Series_Point & a, const US_Zeno_Mesh_Series_Point & b ) {
                         return a.triangles > b.triangles;
@@ -13889,6 +13908,7 @@ static QString zeno_mesh_series_csv(
          any = any || v != 0e0;
       }
       if ( !any ) {
+         fits.push_back( { label, 0e0, 0e0, false } );
          return;
       }
       ts << "\"" << label << "\",";
@@ -13913,6 +13933,7 @@ static QString zeno_mesh_series_csv(
          << "\n";
       a_of   [ label ] = a;
       siga_of[ label ] = siga;
+      fits.push_back( { label, a, siga, true } );
    };
 
    auto values = [ & ]( std::function < double( const US_Zeno_Mesh_Series_Point & ) > get ) {
@@ -14263,6 +14284,15 @@ bool US_Hydrodyn::calc_zeno()
                   uhz.mesh_h = mesh_hs[ this_run / repeats ];
                   mesh_tag   = mesh_tag_for( uhz.mesh_h );
                }
+               // with "Show the mesh with the bead model" on, the model's first mesh is shown with
+               // its beads as soon as it is made, before ZENO computes (from the main window only)
+               uhz.mesh_view_model =
+                  zeno_mesh &&
+                  this_run == 0 &&
+                  gparams[ "zeno_mesh_view" ] != "false" &&
+                  guiFlag &&
+                  !batch_active()
+                  ? (int) current_model : -1;
                if (!first_model_no) {
                   first_model_no = current_model + 1;
                }
@@ -15186,7 +15216,9 @@ bool US_Hydrodyn::calc_zeno()
                   }
 
                   if ( uhz.mesh_used ) {
-                     last_zeno_mesh = fname + ".bod";
+                     last_zeno_mesh       = fname + ".bod";
+                     last_zeno_mesh_model = current_model;
+                     last_zeno_mesh_beads = bead_models[ current_model ].size();
                   }
 
                   if ( mesh_series ) {
@@ -15289,15 +15321,53 @@ bool US_Hydrodyn::calc_zeno()
                   series_name = fileNameCheck( series_name, 0, this );
                }
                QString summary;
+               vector < US_Zeno_Mesh_Series_Fit > fits;
                QFile f( series_name );
                if ( !f.open( QIODevice::WriteOnly ) ) {
                   editor_msg( "red", QString( us_tr( "Error: could not open %1 for writing" ) ).arg( series_name ) );
                } else {
                   QTextStream ts( &f );
-                  ts << zeno_mesh_series_csv( series, hydro.unit == -9 ? "nm" : "A", summary );
+                  ts << zeno_mesh_series_csv( series, hydro.unit == -9 ? "nm" : "A", summary, fits );
                   f.close();
                   editor_msg( "dark blue", summary );
                   editor_msg( "dark blue", QString( us_tr( "Wrote %1\n" ) ).arg( series_name ) );
+                  last_zeno_series = series_name;
+
+                  // in batch mode, also a row of the table of all models' extrapolations
+                  // (US_Hydrodyn_Batch::start writes it at the end)
+                  if ( batch_active() ) {
+                     long n_min = series[ 0 ].triangles;
+                     long n_max = series[ 0 ].triangles;
+                     for ( const auto & p : series ) {
+                        n_min = p.triangles < n_min ? p.triangles : n_min;
+                        n_max = p.triangles > n_max ? p.triangles : n_max;
+                     }
+                     if ( zeno_mesh_series_summary_header.isEmpty() ) {
+                        QStringList header;
+                        header << "\"Model\"" << "\"Series file\"" << "\"ZENO runs\"" << "\"Fewest triangles\"" << "\"Most triangles\"";
+                        for ( const auto & fit : fits ) {
+                           header << "\"" + fit.label + "\"" << "\"" + fit.label + " sigma\"";
+                        }
+                        zeno_mesh_series_summary_header = header.join( "," );
+                        zeno_mesh_series_summary_tag    = mesh_series_tag.mid( 1 );
+                     }
+                     QStringList row;
+                     row
+                        << "\"" + project + QString( "_%1" ).arg( current_model + 1 )
+                           + QString( bead_model_suffix.length() ? ( "-" + bead_model_suffix ) : "" ) + "\""
+                        << "\"" + QFileInfo( series_name ).fileName() + "\""
+                        << QString( "%1" ).arg( series.size() )
+                        << QString( "%1" ).arg( n_min )
+                        << QString( "%1" ).arg( n_max );
+                     for ( const auto & fit : fits ) {
+                        if ( fit.valid ) {
+                           row << QString( "%1" ).arg( fit.a, 0, 'g', 8 ) << QString( "%1" ).arg( fit.siga, 0, 'g', 8 );
+                        } else {
+                           row << "" << "";
+                        }
+                     }
+                     zeno_mesh_series_summary << row.join( "," );
+                  }
                }
             }
          }
@@ -15416,15 +15486,6 @@ bool US_Hydrodyn::calc_zeno()
    progress->reset();
    mprogress->hide();
    qApp->processEvents();
-
-   // with "Show the mesh with the bead model" on, show the models just computed with their
-   // meshes, as Visualize Bead Model does; not in batch mode or from scripts
-   if ( zeno_mesh &&
-        gparams[ "zeno_mesh_view" ] != "false" &&
-        guiFlag &&
-        !batch_active() ) {
-      visualize();
-   }
    return true;
 }
 

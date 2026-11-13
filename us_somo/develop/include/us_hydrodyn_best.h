@@ -36,6 +36,9 @@ class US_EXTERN US_Hydrodyn_Best : public QFrame
 
       US_Config *                             USglobal;
 
+      // the citation labels: BEST's, or ZENO's for a ZENO mesh series
+      void                                    set_credits( bool zeno_series );
+
       // ------ input section 
 
       QLabel *                                lbl_credits_1;

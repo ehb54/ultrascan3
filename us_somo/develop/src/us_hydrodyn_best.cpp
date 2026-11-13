@@ -1,6 +1,11 @@
 #include "../include/us3_defines.h"
 #include <QRegularExpression>
 #include "../include/us_hydrodyn_best.h"
+#include <QMessageBox>
+
+// the citations shown for BEST results; a ZENO mesh series gets ZENO's (set_credits())
+#define US_HYDRODYN_BEST_CITE_1 "Cite: Aragon, S.R. \"A precise boundary element method for macromolecular transport properties\", J. Comp. Chem, (2004) 25, 1191-1205"
+#define US_HYDRODYN_BEST_CITE_2 "Cite: Connolly, M.L. \"The molecular surface package\", J. Mol. Graph. (1993) 11: 139-141"
 // #include "../include/us_vector.h"
 #include "../include/us_lm.h"
 
@@ -45,7 +50,7 @@ US_Hydrodyn_Best::US_Hydrodyn_Best(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: BEST results analysis tool" ) );
+   setWindowTitle( us_tr( "US-SOMO: BEST and ZENO mesh series analysis tool" ) );
 
    cg_red = USglobal->global_colors.cg_label;
    cg_red.setBrush( QPalette::WindowText, QBrush( QColor( "red" ),  Qt::SolidPattern ) );
@@ -131,14 +136,14 @@ void US_Hydrodyn_Best::setupGUI()
    int minHeight3 = 25;
 #endif
 
-   lbl_credits_1 =  new QLabel      ( "Cite: Aragon, S.R. \"A precise boundary element method for macromolecular transport properties\", J. Comp. Chem, (2004) 25, 1191-1205", this );
+   lbl_credits_1 =  new QLabel      ( US_HYDRODYN_BEST_CITE_1, this );
    lbl_credits_1 -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_credits_1 -> setMinimumHeight( minHeight1 );
    lbl_credits_1 -> setPalette      ( PALET_LABEL );
    AUTFBACK( lbl_credits_1 );
    lbl_credits_1 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
-   lbl_credits_2 =  new QLabel      ( "Cite: Connolly, M.L. \"The molecular surface package\", J. Mol. Graph. (1993) 11: 139-141", this );
+   lbl_credits_2 =  new QLabel      ( US_HYDRODYN_BEST_CITE_2, this );
    lbl_credits_2 -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_credits_2 -> setMinimumHeight( minHeight1 );
    lbl_credits_2 -> setPalette      ( PALET_LABEL );
@@ -660,7 +665,11 @@ void US_Hydrodyn_Best::save()
 
 void US_Hydrodyn_Best::clear( )
 {
+   // clearing the list changes its selection; data_selected() must not run on the old data,
+   // which crashed when a second CSV was loaded
+   lb_data  ->blockSignals( true );
    lb_data  ->clear( );
+   lb_data  ->blockSignals( false );
    plot_data->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_data->detachItems( QwtPlotItem::Rtti_PlotMarker );;
    if ( plot_data_zoomer )
    {
@@ -709,17 +718,45 @@ void US_Hydrodyn_Best::load()
    save_last_file = "";
    le_last_file->setText( save_last_file );
    pb_load->setEnabled( false );
-   QString use_dir = 
-      USglobal->config_list.root_dir + 
-      QDir::separator() + "somo" + 
+   QString use_dir =
+      USglobal->config_list.root_dir +
+      QDir::separator() + "somo" +
       QDir::separator() + "cluster" +
       QDir::separator() + "results"
       ;
 
-   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   QString filename;
 
-   QString filename = QFileDialog::getOpenFileName( this , windowTitle() + us_tr( " Load CSV from BEST results" ) , use_dir , "*.csv *.CSV" );
+   // the last ZENO mesh series, as View Bead Model File offers the last bead model
+   QString last_series = ((US_Hydrodyn *)us_hydrodyn)->last_zeno_series;
+   if ( !last_series.isEmpty() && QFileInfo( last_series ).exists() )
+   {
+      switch ( QMessageBox::question( this,
+                                      windowTitle(),
+                                      QString( us_tr( "View last produced series %1 ?\n"
+                                                      "(No: choose another CSV file)" ) )
+                                      .arg( QFileInfo( last_series ).fileName() ),
+                                      QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
+                                      QMessageBox::Yes ) )
+      {
+      case QMessageBox::Yes :
+         filename = last_series;
+         break;
+      case QMessageBox::No :
+         use_dir = QFileInfo( last_series ).absolutePath();
+         break;
+      default :
+         pb_load->setEnabled( true );
+         return;
+      }
+   }
 
+   if ( filename.isEmpty() )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+
+      filename = QFileDialog::getOpenFileName( this , windowTitle() + us_tr( ": load a CSV of BEST results or of a ZENO mesh series" ) , use_dir , "*.csv *.CSV" );
+   }
 
    if ( filename.isEmpty() )
    {
@@ -915,6 +952,31 @@ void US_Hydrodyn_Best::load()
    pb_save_results->setEnabled( true );
    pb_apply_qtest->setEnabled( true );
    pb_reset_qtest->setEnabled( true );
+
+   // cite what the file holds: a ZENO mesh series lists its ZENO output files
+   bool zeno_series = false;
+   for ( const QString & line : loaded_csv_trimmed )
+   {
+      if ( line.startsWith( "\"ZENO output file\"" ) )
+      {
+         zeno_series = true;
+         break;
+      }
+   }
+   set_credits( zeno_series );
+}
+
+void US_Hydrodyn_Best::set_credits( bool zeno_series )
+{
+   if ( zeno_series )
+   {
+      lbl_credits_1->setText( "Cite: Juba et al., J. Res. Natl. Inst. Stand. Technol. (2017) 122: 1-2;"
+                              " Kang et al., Phys. Rev. E (2004) 69: 031918" );
+      lbl_credits_2->setText( "Cite: Rocco and Byron, Eur. Biophys. J. (2015) 44: 417-431" );
+   } else {
+      lbl_credits_1->setText( US_HYDRODYN_BEST_CITE_1 );
+      lbl_credits_2->setText( US_HYDRODYN_BEST_CITE_2 );
+   }
 }
 
 void US_Hydrodyn_Best::cb_changed( bool do_data )

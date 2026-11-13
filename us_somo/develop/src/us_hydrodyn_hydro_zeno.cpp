@@ -398,16 +398,17 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
       connect( cb_zeno_mesh_fill_cavities, SIGNAL( clicked() ), this, SLOT( set_zeno_mesh_fill_cavities() ) );
 
       cb_zeno_mesh_view = new QCheckBox( this );
-      cb_zeno_mesh_view->setText( us_tr( " Show the mesh with the bead model in RasMol (after ZENO, and in Visualize Bead Model)" ) );
+      cb_zeno_mesh_view->setText( us_tr( " Show the mesh with the bead model in RasMol (ZENO, Visualize Bead Model)" ) );
       cb_zeno_mesh_view->setEnabled( true );
       cb_zeno_mesh_view->setChecked( gparams[ "zeno_mesh_view" ] != "false" );
       cb_zeno_mesh_view->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
       cb_zeno_mesh_view->setPalette( PALET_NORMAL );
       AUTFBACK( cb_zeno_mesh_view );
-      cb_zeno_mesh_view->setToolTip( us_tr( "<p>After ZENO runs on the surface (from the main window, not in batch mode or from"
-                                            " scripts), RasMol shows each bead model with its mesh around it as a wire mesh, and"
-                                            " Visualize Bead Model does the same. The mesh is made with these settings (with several"
-                                            " spacings, the coarsest).</p>"
+      cb_zeno_mesh_view->setToolTip( us_tr( "<p>When ZENO runs on the surface from the main window (not in batch mode or from"
+                                            " scripts), RasMol shows each bead model with the mesh ZENO will use, as a wire mesh,"
+                                            " as soon as the mesh is made and while ZENO computes (with several spacings, the first)."
+                                            " Visualize Bead Model also shows the beads with their mesh, made with these settings"
+                                            " (with several spacings, the coarsest).</p>"
                                             "<p>In RasMol: <i>select all</i> then <i>spacefill off</i> hides the beads,"
                                             " <i>map surface</i> draws the mesh solid, <i>map mesh</i> as wire again;"
                                             " see Help for more.</p>" ) );

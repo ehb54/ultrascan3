@@ -52,6 +52,10 @@ class US_Hydrodyn_Zeno
    // sequence of spacings; 0: the first spacing of the "zeno_mesh_h" setting.
    double                        mesh_h;
 
+   // The bead model (index) to show with its mesh in RasMol as soon as the mesh is made, before
+   // ZENO computes; -1: none.  Set by the caller.
+   int                           mesh_view_model;
+
    // Set by run(): whether ZENO ran on the solvent-excluded surface of the beads (the
    // "zeno_mesh" option), the options used (in the model's length unit) and the mesh.
    bool                          mesh_used;

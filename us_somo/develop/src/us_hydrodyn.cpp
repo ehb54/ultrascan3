@@ -739,6 +739,9 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    last_read_bead_model = "";
    last_hydro_res = "";
    last_zeno_mesh = "";
+   last_zeno_mesh_model = -1;
+   last_zeno_mesh_beads = 0;
+   last_zeno_series = "";
    QDir::setCurrent(somo_tmp_dir);
    if ( advanced_config.debug_5 )
    {
@@ -1678,7 +1681,9 @@ void US_Hydrodyn::setupGUI()
    pb_comparative->setPalette( PALET_PUSHB );
    connect(pb_comparative, SIGNAL(clicked()), SLOT(select_comparative()));
 
-   pb_best = new QPushButton(us_tr("BEST"), this);
+   pb_best = new QPushButton(us_tr("BEST/ZENO Series"), this);
+   pb_best->setToolTip( us_tr( "<p>Analyze the results of BEST, or of ZENO on a sequence of surface meshes,"
+                               " against the number of triangles, and extrapolate them to an infinitely fine mesh.</p>" ) );
    pb_best->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_best->setEnabled(true);
    pb_best->setPalette( PALET_PUSHB );
@@ -3937,6 +3942,31 @@ void US_Hydrodyn::visualize_mesh()
    path_visualize_mesh = QFileInfo( mesh ).absolutePath();
    add_to_directory_history( path_visualize_mesh );
 
+   // the last mesh ZENO made, from a bead model that is still loaded: show it with those beads,
+   // which is what ZENO ran on
+   if ( mesh == last_zeno_mesh &&
+        last_zeno_mesh_model >= 0 &&
+        last_zeno_mesh_model < (int) bead_models.size() &&
+        last_zeno_mesh_model < (int) somo_processed.size() &&
+        somo_processed[ last_zeno_mesh_model ] &&
+        bead_models[ last_zeno_mesh_model ].size() == last_zeno_mesh_beads ) {
+      switch ( QMessageBox::question( this,
+                                      us_tr( "Visualize Mesh" ),
+                                      QString( us_tr( "Show the mesh with the bead model it was made from (model %1)?\n"
+                                                      "(No: show it with a PDB structure)" ) )
+                                      .arg( last_zeno_mesh_model + 1 ),
+                                      QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
+                                      QMessageBox::Yes ) ) {
+      case QMessageBox::Yes :
+         visualize_mesh_with_bead_model( last_zeno_mesh_model, mesh );
+         return;
+      case QMessageBox::No :
+         break;
+      default :
+         return;
+      }
+   }
+
    QString structure;
    if ( !pdb_file.isEmpty() && QFileInfo( pdb_file ).exists() ) {
       switch ( QMessageBox::question( this,
@@ -3988,6 +4018,77 @@ void US_Hydrodyn::visualize_mesh()
                .arg( QFileInfo( mesh ).fileName() )
                .arg( QFileInfo( structure ).fileName() ) );
    model_viewer( spt, "-script" );
+}
+
+// Shows the mesh file a ZENO run made from a model's beads (TRIANGLE lines of a .bod, in the
+// model's length unit) with those beads.  write_bead_spt() draws the beads at 1/5 of their size,
+// so the triangles are divided by 5 into a copy of the mesh next to the bead model's RasMol files.
+void US_Hydrodyn::visualize_mesh_with_bead_model( int model, const QString & mesh )
+{
+   QString base = somo_dir + SLASH + QFileInfo( mesh ).completeBaseName().left( 25 ) + "_view";
+   const double scaling = 5.0;   // as write_bead_spt() with scale 1
+
+   QFile in( mesh );
+   if ( !in.open( QIODevice::ReadOnly | QIODevice::Text ) ) {
+      editor_msg( "red", QString( us_tr( "Visualize Mesh: can not read %1\n" ) ).arg( mesh ) );
+      return;
+   }
+   QString copy = base + "-SES.bod";
+   QFile out( copy );
+   if ( !out.open( QIODevice::WriteOnly | QIODevice::Text ) ) {
+      editor_msg( "red", QString( us_tr( "Visualize Mesh: can not write %1\n" ) ).arg( copy ) );
+      return;
+   }
+   long triangles = 0;
+   {
+      QTextStream ts_in( &in );
+      QTextStream ts_out( &out );
+      static const QRegularExpression rx_space( "\\s+" );
+      while ( !ts_in.atEnd() ) {
+         QStringList qsl = ts_in.readLine().trimmed().split( rx_space, Qt::SkipEmptyParts );
+         if ( qsl.size() != 10 ) {
+            continue;
+         }
+         QString key = qsl[ 0 ].toUpper();
+         if ( key != "TRIANGLE" && key != "T" ) {
+            continue;
+         }
+         ts_out << "TRIANGLE";
+         for ( int i = 1; i < 10; ++i ) {
+            ts_out << " " << QString::number( qsl[ i ].toDouble() / scaling, 'f', 6 );
+         }
+         ts_out << "\n";
+         ++triangles;
+      }
+   }
+   in.close();
+   out.close();
+   if ( !triangles ) {
+      out.remove();
+      editor_msg( "red", QString( us_tr( "Visualize Mesh: %1 has no TRIANGLE lines\n" ) ).arg( mesh ) );
+      return;
+   }
+
+   write_bead_spt( base, &bead_models[ model ], false, 1.0, false );
+
+   QFile spt( base + ".spt" );
+   if ( !spt.open( QIODevice::WriteOnly | QIODevice::Append ) ) {
+      editor_msg( "red", QString( us_tr( "Visualize Mesh: can not add the mesh to %1\n" ) ).arg( spt.fileName() ) );
+      return;
+   }
+   {
+      QTextStream ts( &spt );
+      ts << "load mesh " << QFileInfo( copy ).fileName() << "\n"
+         << "map mesh\n"
+         << "map colour [150,150,150]\n";
+   }
+   spt.close();
+
+   editor_msg( "black", QString( us_tr( "Visualizing mesh %1 (%2 triangles) with the beads of model %3\n" ) )
+               .arg( QFileInfo( mesh ).fileName() )
+               .arg( triangles )
+               .arg( model + 1 ) );
+   model_viewer( base + ".spt", "-script" );
 }
 
 void US_Hydrodyn::visualize( bool movie_frame,
