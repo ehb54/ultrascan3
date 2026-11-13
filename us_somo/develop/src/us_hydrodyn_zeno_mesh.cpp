@@ -29,6 +29,27 @@ std::vector < double > us_hydrodyn_zeno_mesh_spacings( const QString & list )
    return spacings;
 }
 
+US_Hydrodyn_Zeno_Mesh_Options us_hydrodyn_zeno_mesh_options(
+                                                            const std::map < QString, QString > & gparams,
+                                                            double                                h,
+                                                            double                                to_units,
+                                                            int                                   threads
+                                                            )
+{
+   auto setting = [ & ]( const char * key ) {
+      auto it = gparams.find( key );
+      return it == gparams.end() ? QString() : it->second;
+   };
+
+   US_Hydrodyn_Zeno_Mesh_Options options;
+   options.probe         = setting( "zeno_mesh_probe" ).toDouble() * to_units;
+   options.h             = h * to_units;
+   options.clean         = setting( "zeno_mesh_clean" ) != "false";
+   options.fill_cavities = setting( "zeno_mesh_fill_cavities" ) != "false";
+   options.threads       = threads;
+   return options;
+}
+
 bool us_hydrodyn_zeno_mesh(
                            const std::vector < double >         & spheres,
                            const US_Hydrodyn_Zeno_Mesh_Options  & options,

@@ -2418,6 +2418,10 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    {
       gparams[ "zeno_mesh_fill_cavities" ]            = "true";
    }
+   if ( !gparams.count( "zeno_mesh_view" ) )
+   {
+      gparams[ "zeno_mesh_view" ]                     = "true";
+   }
 
    save_params_force_results_name( save_params );
 
@@ -3400,6 +3404,7 @@ void US_Hydrodyn::hard_coded_defaults()
    gparams[ "zeno_mesh_h"                ]                  = "0.5";
    gparams[ "zeno_mesh_clean"            ]                  = "true";
    gparams[ "zeno_mesh_fill_cavities"    ]                  = "true";
+   gparams[ "zeno_mesh_view"             ]                  = "true";
 
    gparams[ "covolume"                   ]                  = "12.4";
    gparams[ "use_pH"                     ]                  = "true";

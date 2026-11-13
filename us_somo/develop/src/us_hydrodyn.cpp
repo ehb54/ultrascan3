@@ -39,6 +39,9 @@
 #include "../include/us_hydrodyn_best.h"
 #include "../include/us_ffd.h"
 #include "../include/us_hydrodyn_vdw_overlap.h"
+#include "../include/us_hydrodyn_zeno_mesh.h"
+#include "../include/us_unicode.h"
+#include <algorithm>
 // #include "../include/us_hydrodyn_saxs_hplc_options.h"
 #include <qfont.h>
 //Added by qt3to4:
@@ -3887,6 +3890,81 @@ void US_Hydrodyn::visualize( bool movie_frame,
 {
    QString use_dir = ( dir == "" ? somo_dir : dir );
 
+   // With ZENO's surface option and its zeno_mesh_view setting on, the view also shows the
+   // solvent-excluded surface of the beads shown: they are meshed as for ZENO (with the coarsest
+   // spacing of a sequence), scaled like the beads in write_bead_spt(), and the mesh, written to
+   // <base>-SES.bod, is loaded by <base>.spt as a wire mesh.
+   auto add_mesh = [ & ]( const QString & base, vector < PDB_atom > * model ) {
+      if ( movie_frame ||
+           gparams[ "zeno_mesh" ] != "true" ||
+           gparams[ "zeno_mesh_view" ] == "false" ) {
+         return;
+      }
+      vector < double > spacings = us_hydrodyn_zeno_mesh_spacings( gparams[ "zeno_mesh_h" ] );
+      if ( spacings.empty() ) {
+         editor_msg( "red", QString( us_tr( "The mesh grid spacing '%1' is not valid, the mesh is not shown\n" ) )
+                     .arg( gparams[ "zeno_mesh_h" ] ) );
+         return;
+      }
+      double h_view = *std::max_element( spacings.begin(), spacings.end() );
+
+      // write_bead_spt() divides the coordinates and radii by 5 / scale
+      double scaling  = 5.0 / scale;
+      double to_units = ( hydro.unit == -9 ? 0.1 : 1.0 ) / scaling;
+
+      vector < double > spheres;
+      for ( const auto & bead : *model ) {
+         if ( bead.active ) {
+            spheres.push_back( bead.bead_coordinate.axis[ 0 ] / scaling );
+            spheres.push_back( bead.bead_coordinate.axis[ 1 ] / scaling );
+            spheres.push_back( bead.bead_coordinate.axis[ 2 ] / scaling );
+            spheres.push_back( bead.bead_computed_radius / scaling );
+         }
+      }
+
+      US_Hydrodyn_Zeno_Mesh_Options options =
+         us_hydrodyn_zeno_mesh_options( gparams, h_view, to_units, USglobal->config_list.numThreads );
+      US_Hydrodyn_Zeno_Mesh_Info info;
+      QString error;
+
+      QString mesh_name = base + "-SES.bod";
+      QFile f( mesh_name );
+      if ( !f.open( QIODevice::WriteOnly ) ) {
+         editor_msg( "red", QString( us_tr( "Error: could not create %1, the mesh is not shown\n" ) ).arg( mesh_name ) );
+         return;
+      }
+      bool ok;
+      {
+         QTextStream ts( &f );
+         ok = us_hydrodyn_zeno_mesh( spheres, options, ts, info, error );
+      }
+      f.close();
+      if ( !ok ) {
+         f.remove();
+         editor_msg( "red", QString( us_tr( "Could not mesh the bead model, the mesh is not shown: %1\n" ) ).arg( error ) );
+         return;
+      }
+
+      QFile spt( base + ".spt" );
+      if ( !spt.open( QIODevice::WriteOnly | QIODevice::Append ) ) {
+         editor_msg( "red", QString( us_tr( "Error: could not add the mesh to %1\n" ) ).arg( spt.fileName() ) );
+         return;
+      }
+      QTextStream ts( &spt );
+      ts << "load mesh " << QFileInfo( mesh_name ).fileName() << "\n"
+         << "map mesh\n"
+         << "map colour [150,150,150]\n";
+      spt.close();
+
+      editor_msg( "dark blue",
+                  QString( us_tr( "Showing the solvent-excluded surface of the beads: probe radius %1 %2, grid spacing %3 %4, %5 triangles\n" ) )
+                  .arg( gparams[ "zeno_mesh_probe" ].toDouble() )
+                  .arg( UNICODE_ANGSTROM )
+                  .arg( h_view )
+                  .arg( UNICODE_ANGSTROM )
+                  .arg( info.triangles ) );
+   };
+
    for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++) {
       if (lb_model->item(current_model)->isSelected()) {
          if (somo_processed[current_model]) {
@@ -3908,24 +3986,27 @@ void US_Hydrodyn::visualize( bool movie_frame,
                tmp_model.molecule.push_back( tmp_chain );
                if ( US_Saxs_Util::pat_model( tmp_model, true ) ) {
                   write_bead_spt( use_dir + SLASH + spt_name,
-                                  &tmp_model.molecule[ 0 ].atom, 
-                                  movie_frame, 
-                                  scale, 
+                                  &tmp_model.molecule[ 0 ].atom,
+                                  movie_frame,
+                                  scale,
                                   black_background );
+                  add_mesh( use_dir + SLASH + spt_name, &tmp_model.molecule[ 0 ].atom );
                } else {
                   editor_msg( "red", QString( us_tr( "PAT failed for model %1" ) ).arg( current_model ) );
                   write_bead_spt( use_dir + SLASH + spt_name,
-                                  &bead_model, 
-                                  movie_frame, 
-                                  scale, 
+                                  &bead_model,
+                                  movie_frame,
+                                  scale,
                                   black_background );
+                  add_mesh( use_dir + SLASH + spt_name, &bead_model );
                }
             } else {
                write_bead_spt( use_dir + SLASH + spt_name,
-                               &bead_model, 
-                               movie_frame, 
-                               scale, 
+                               &bead_model,
+                               movie_frame,
+                               scale,
                                black_background );
+               add_mesh( use_dir + SLASH + spt_name, &bead_model );
             }
             
             editor->append(QString("Visualizing model %1\n").arg(current_model + 1));

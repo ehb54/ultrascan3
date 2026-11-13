@@ -10,6 +10,7 @@
 
 #include <QString>
 #include <QTextStream>
+#include <map>
 #include <vector>
 
 struct US_Hydrodyn_Zeno_Mesh_Options {
@@ -38,6 +39,16 @@ struct US_Hydrodyn_Zeno_Mesh_Info {
 // for a sequence of meshes extrapolated to an infinitely fine mesh.  Empty if any entry is not
 // a positive number.
 std::vector < double > us_hydrodyn_zeno_mesh_spacings( const QString & list );
+
+// The options of the zeno_mesh_probe, zeno_mesh_clean and zeno_mesh_fill_cavities settings, with
+// grid spacing h.  The probe radius and h are in Angstrom and are multiplied by to_units (0.1 for
+// a model in nm).
+US_Hydrodyn_Zeno_Mesh_Options us_hydrodyn_zeno_mesh_options(
+                                                            const std::map < QString, QString > & gparams,
+                                                            double                                h,
+                                                            double                                to_units,
+                                                            int                                   threads
+                                                            );
 
 // spheres holds x, y, z, r for each sphere.  Writes one line
 // "TRIANGLE x1 y1 z1 x2 y2 z2 x3 y3 z3" per triangle to ts, counter-clockwise seen from outside.

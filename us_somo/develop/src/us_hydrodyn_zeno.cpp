@@ -13571,11 +13571,7 @@ bool US_Hydrodyn_Zeno::run(
          h_angstrom = spacings.empty() ? 0e0 : spacings.front();
       }
 
-      mesh_options.probe         = us_hydrodyn->gparams[ "zeno_mesh_probe" ].toDouble() * to_model_units;
-      mesh_options.h             = h_angstrom * to_model_units;
-      mesh_options.clean         = us_hydrodyn->gparams[ "zeno_mesh_clean" ] != "false";
-      mesh_options.fill_cavities = us_hydrodyn->gparams[ "zeno_mesh_fill_cavities" ] != "false";
-      mesh_options.threads       = threads;
+      mesh_options = us_hydrodyn_zeno_mesh_options( us_hydrodyn->gparams, h_angstrom, to_model_units, threads );
 
       us_hydrodyn->editor_msg( "black",
                                QString( "Meshing the solvent-excluded surface of %1 beads: probe radius %2 %3, grid spacing %4 %5\n" )

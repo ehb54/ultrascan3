@@ -396,6 +396,17 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
       cb_zeno_mesh_fill_cavities->setToolTip( us_tr( "<p>Mesh only the outer surface: cavities inside the molecule that the probe"
                                                      " cannot reach from outside become part of the solid.</p>" ) );
       connect( cb_zeno_mesh_fill_cavities, SIGNAL( clicked() ), this, SLOT( set_zeno_mesh_fill_cavities() ) );
+
+      cb_zeno_mesh_view = new QCheckBox( this );
+      cb_zeno_mesh_view->setText( us_tr( " Show the mesh with the bead model in RasMol (Visualize)" ) );
+      cb_zeno_mesh_view->setEnabled( true );
+      cb_zeno_mesh_view->setChecked( gparams[ "zeno_mesh_view" ] != "false" );
+      cb_zeno_mesh_view->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+      cb_zeno_mesh_view->setPalette( PALET_NORMAL );
+      AUTFBACK( cb_zeno_mesh_view );
+      cb_zeno_mesh_view->setToolTip( us_tr( "<p>Visualize then also shows the solvent-excluded surface of the beads as a wire mesh,"
+                                            " meshed with these settings (with several spacings, the coarsest).</p>" ) );
+      connect( cb_zeno_mesh_view, SIGNAL( clicked() ), this, SLOT( set_zeno_mesh_view() ) );
    }
 
    cb_zeno_cxx = new QCheckBox( this );
@@ -518,6 +529,9 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    j++;
 
    background->addWidget( cb_zeno_mesh_fill_cavities, j, 1, 1, 2 );
+   j++;
+
+   background->addWidget( cb_zeno_mesh_view, j, 1, 1, 2 );
    j++;
 
    background->addWidget( cb_zeno_cxx , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 2  ) - ( 0 ) );
@@ -751,6 +765,11 @@ void US_Hydrodyn_Hydro_Zeno::set_zeno_mesh_fill_cavities()
    ((US_Hydrodyn *)us_hydrodyn)->gparams[ "zeno_mesh_fill_cavities" ] = cb_zeno_mesh_fill_cavities->isChecked() ? "true" : "false";
 }
 
+void US_Hydrodyn_Hydro_Zeno::set_zeno_mesh_view()
+{
+   ((US_Hydrodyn *)us_hydrodyn)->gparams[ "zeno_mesh_view" ] = cb_zeno_mesh_view->isChecked() ? "true" : "false";
+}
+
 void US_Hydrodyn_Hydro_Zeno::set_zeno_cxx()
 {
    ((US_Hydrodyn *)us_hydrodyn)->gparams[ "zeno_cxx" ] = cb_zeno_cxx->isChecked() ? "true" : "false";
@@ -810,4 +829,5 @@ void US_Hydrodyn_Hydro_Zeno:: update_enables()
    le_zeno_mesh_h            ->setEnabled( mesh );
    cb_zeno_mesh_clean        ->setEnabled( mesh );
    cb_zeno_mesh_fill_cavities->setEnabled( mesh );
+   cb_zeno_mesh_view         ->setEnabled( mesh );
 }
