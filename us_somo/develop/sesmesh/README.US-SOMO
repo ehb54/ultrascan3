@@ -1,0 +1,37 @@
+sesmesh in US-SOMO
+==================
+
+This directory holds sesmesh, a mesher for the solvent-excluded surface (SES) of a
+set of spheres, from https://github.com/ehb54/sesmesh at commit a01ff94 (2026-11-13,
+"Merge pull request #2 from ehb54/phase4").  The files are unchanged.
+
+  src/          the sesmesh sources: ses, mesh, clean, io, parallel, vec3, and
+                sesmesh.cpp, the command-line program
+  README.md     sesmesh's README: method, options and validation
+  LICENSE       sesmesh's MIT license
+
+sesmesh is MIT-licensed (see LICENSE), so it can be built into US-SOMO.
+
+
+How SOMO builds and uses it
+---------------------------
+
+libus_somo.pro compiles src/{ses,mesh,clean,io,parallel}.cpp into the library.
+src/sesmesh.cpp (the program's main) is kept only to mirror sesmesh's tree.  SOMO
+includes the headers by path ("../sesmesh/src/ses.h"); src/ is not on the include
+path, because src/io.h would hide the system <io.h> on Windows.  sesmesh needs C++14
+or later, so libus_somo.pro sets CONFIG += c++17.
+
+When "Compute on the solvent-excluded surface of the bead model" is checked in the
+ZENO options, US_Hydrodyn_Zeno::run (src/us_hydrodyn_zeno.cpp) takes the bead
+centres and radii as the spheres, meshes their SES with the probe radius and grid
+spacing set there (cleaned up, cavities filled, unless unchecked), and writes the
+triangles to the .bod file as TRIANGLE lines instead of one SPHERE line per bead.
+sesmesh runs on as many threads as ZENO (SOMO's thread setting).
+
+
+Updating
+--------
+
+Copy src/*.{h,cpp}, README.md and LICENSE from a newer sesmesh commit, update the
+commit above, and check that the file list in libus_somo.pro still matches src/.

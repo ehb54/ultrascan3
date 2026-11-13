@@ -1033,3 +1033,26 @@ INCLUDEPATH += $$PWD/include $$PWD/grpy
 # NIST ZENO 5.3.1 vendored with a few US-SOMO changes; see zeno/README.US-SOMO.
 # src/us_zeno_lib.cpp compiles the library, src/us_zeno_cxx.cpp is SOMO's driver.
 INCLUDEPATH += $$PWD/zeno/libzeno/include $$PWD/zeno/zeno-cli/src
+
+# --- sesmesh (sesmesh/) ------------------------------------------------------
+# The solvent-excluded surface mesher ehb54/sesmesh (MIT), vendored unmodified; see
+# sesmesh/README.US-SOMO.  ZENO meshes the bead model with it when that option is on;
+# src/us_hydrodyn_zeno_mesh.cpp is the only SOMO file that calls it.  Its headers are
+# included by path, not added to INCLUDEPATH: its io.h would hide the system <io.h> on
+# Windows.  It needs C++14 or later, and the Qt 5 macOS mkspec defaults to gnu++11.
+CONFIG += c++17
+SOURCES += \
+        src/us_hydrodyn_zeno_mesh.cpp \
+        sesmesh/src/ses.cpp \
+        sesmesh/src/mesh.cpp \
+        sesmesh/src/clean.cpp \
+        sesmesh/src/io.cpp \
+        sesmesh/src/parallel.cpp
+HEADERS += \
+        include/us_hydrodyn_zeno_mesh.h \
+        sesmesh/src/vec3.h \
+        sesmesh/src/ses.h \
+        sesmesh/src/mesh.h \
+        sesmesh/src/clean.h \
+        sesmesh/src/io.h \
+        sesmesh/src/parallel.h

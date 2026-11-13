@@ -22,7 +22,7 @@
 <center>
 <h2> Zeno - Hydrodynamic Calculations Options Module</h2>
 <p>
-<h3><center>Last updated: August 2025 </center></h3><p>
+<h3><center>Last updated: November 2026 </center></h3><p>
 </center>
 <p>
 
@@ -59,10 +59,28 @@ Hydrodynamic volume, V<sub>h</sub>
 </ul>
 Enter the number of steps in the <i>Zeno Steps (thousands):</i> field (<b>Default:</b> 1000). <p>
 
+<i>Early termination:</i> checkbox. Instead of a fixed number of steps, the random walks continue until the relative standard deviation of the Stokes radius (that is, of the capacitance) falls below the percentage entered in the <i>Stokes Radius S.D./Mean in percent:</i> field, and the <i>Zeno Steps</i> field is not used. (<b>Default:</b> off, 0.5%)<p>
+
 The <i>Skin Thickness (current units):</i> The skin thickness is utilized in the Zeno calculation.  It is a multiplier of the launch radius.  The launch radius is the radius of a sphere centered at zero which contains the model. 
 Leaving the value at 0 uses the internal default value of 1E-6. The authors of Zeno recommend that the value should be on the order of 1E-5 to 1E-6. (<b>Default:</b> 0.000)<p>
 
 More recently, we have discovered a discrepancy between the translational diffusion coefficient as calculated by <b><i>ZENO</i></b> and <b><i>GRPY</i></b>.  We found that the <b><i>ZENO</i></b> calculation of <i>D<sub>t</i><sub>(20,w)</sub> constantly produced relatively larger (&#126;+1-2%) values than those computed by <b><i>GRPY</i></b> for our test set of 25 protein structures. A symmetrical behavior was found when comparing the intrincic viscosity [&eta;] calculated values, with <b><i>ZENO</i></b> underestimating the values by roughly the same percentages. We also used more elongated structures (derived from the fibrinogen main body crystal structure 3GHG.pdb), confirming these trends. As described in our recent publication (Brookes, Zuk and Rocco, Bead model hydrodynamics: an in-depth comparison between GRPY and ZENO. Eur Biophys J (2025). https://doi.org/10.1007/s00249-025-01758-8), we found  heuristic dependencies as a function of the number of beads in the model, described by power laws in the form <i>y = a + b * x<sup>c</sup></i>), whose coefficients are listed in this panel. Applying these corrections reduced the discrepancy between <b><i>ZENO</i></b> and <b><i>GRPY</i></b> calculated <i>D<sub>t</i><sub>(20,w)</sub> values to an average of -0.11&plusmn;0.22% (range -0.56 +0.27%) for globular proteins, and to +0.25&plusmn;0.16% (range +0.06 +0.52%) for elongated structures. The second power-law fit corrects <b><i>ZENO</b></i>-calculated [&eta;] values reducing the average percent difference for globular proteins to -0.03&plusmn;0.44% (range -0.79 +0.92%), and to +0.48&plusmn;0.42% (range +0.21 +0.85%) for elongated structures.  These heuristic <b><i>ZENO</i></b> corrections are now offered as a <b><i>default</i></b> option from the <span style="color:#CC0000">August 2025</span> release of <b><i>US-SOMO</i></b>.
+<p>
+
+<b><i>Compute on the solvent-excluded surface of the bead model</i></b> checkbox. Instead of running <b><i>ZENO</i></b> on the beads themselves, US-SOMO first computes the solvent-excluded (molecular) surface of the bead model, the surface traced by a spherical probe rolling over the beads, as a closed triangle mesh, and <b><i>ZENO</i></b> then runs on that mesh. The mesher is <b><i>sesmesh</i></b> (<a href="https://github.com/ehb54/sesmesh">https://github.com/ehb54/sesmesh</a>, MIT license), which is built into US-SOMO. The beads' centres and radii are the spheres, so any bead model can be meshed; for a van der Waals bead model the mesh is the molecular surface of the structure. Beads of radius 0 are left out. (<b>Default:</b> off)
+<ul>
+<li><i>Probe radius [&Aring;]:</i> the radius of the rolling probe. 1.5 &Aring; (a water molecule) is the usual choice; 0 gives the surface of the union of the beads. (<b>Default:</b> 1.5)
+<li><i>Mesh grid spacing(s) [&Aring;]:</i> the surface is sampled on a grid of this spacing, and the number of triangles grows as 1/spacing<sup>2</sup>. 0.5 &Aring; gives about 130,000 triangles for lysozyme, and for lysozyme <b><i>ZENO</i></b>'s results on such a mesh agree with those on much finer meshes within <b><i>ZENO</i></b>'s statistical error. Several spacings separated by commas, for example <i>0.6,0.5,0.4,0.3</i>, make a sequence of meshes for an extrapolation, described below. (<b>Default:</b> 0.5)
+<li><i>Mesh clean-up (remove slender triangles):</i> removes the slender triangles that the meshing leaves, by edge collapses, edge flips and smoothing that keep every vertex on the exact surface. (<b>Default:</b> on)
+<li><i>Fill internal cavities:</i> meshes only the outer surface: cavities inside the molecule that the probe cannot reach from the outside become part of the solid. (<b>Default:</b> on)
+</ul>
+The bead-count correction above is fitted to bead models, so it is not applied to a mesh, and its checkbox is disabled while this option is on. The bead-overlap check is skipped, and the dimensionless intrinsic viscosity uses the volume enclosed by the mesh. The results report the mesh: the spheres meshed, the numbers of triangles and vertices, its area and volume, and whether it is a closed manifold. The output file names carry the mesh settings: for example <i>_MC1000-SES_p1_5_h0_5</i> for a probe radius of 1.5 &Aring; and a grid spacing of 0.5 &Aring;, with <i>_raw</i> added without clean-up and <i>_cav</i> when cavities are kept. The <i>.bod</i> file with the same name holds the mesh, as one <i>TRIANGLE</i> line per triangle. The probe radius and grid spacing are given in &Aring; also when the model is in nm.
+<p>
+
+<b>Extrapolation to an infinitely fine mesh.</b> With several grid spacings, <b><i>ZENO</i></b> runs on the mesh of each spacing in turn (with the repetitions set below on each), every run with its own output files as above. The results of each model are then fitted linearly in 1/N, N being the number of triangles, and the intercept at 1/N = 0 is the value for an infinitely fine mesh. A mesh's errors in area and volume fall as the square of the spacing, that is as 1/N. The results go to a CSV file per model, named with the number of meshes, for example <i>1AKI_1_MC1000-SES_p1_5_extrap4-&lt;bead model suffix&gt;.csv</i> for four spacings. The file lists the number of triangles, the spacing and the <i>.zno</i> and <i>.bod</i> files of each mesh. For each mesh it then gives the mesh area and volume, R<sub>s</sub>, D<sub>t</sub>, s, f, f/f<sub>0</sub>, [&eta;] and the dimensionless [&eta;], each with the extrapolated value, its standard error, the slope and &chi;<sup>2</sup>. The extrapolated R<sub>s</sub>, D<sub>t</sub> and [&eta;] are also shown in the main window. The file is in the format of the <b><i>BEST</i></b> results, so the <a href="somo_BEST_Analysis.html">BEST Analysis</a> module can load it to plot the series, reject points, and fit it in other forms. Use at least three spacings: a line through two points has no error estimate. The summary of results in the main window averages over all the meshes.
+<p>
+
+<b>Scripts and batch mode.</b> These settings are the program's global parameters <i>zeno_mesh</i> (<i>true</i> or <i>false</i>), <i>zeno_mesh_probe</i>, <i>zeno_mesh_h</i> (one spacing, or several separated by commas without spaces), <i>zeno_mesh_clean</i> and <i>zeno_mesh_fill_cavities</i> (<i>true</i> or <i>false</i>). In a <i>-g</i> script they are set with the <i>global</i> command, for example <i>global zeno_mesh true</i> and <i>global zeno_mesh_h 0.6,0.5,0.4,0.3</i>, before <i>batch zeno</i> and <i>batch start</i>. The batch mode runs <b><i>ZENO</i></b> with the same settings, so it also meshes each model, and extrapolates when several spacings are set.
 <p>
 The last entry in this option panel is the <i>Zeno repetitions</i>. <b><i>ZENO</i></b> could be relaunched sequentially on the same model, providing additional statistics on the calculated parameters. <b>Default: 1</b> (meaning <b><i>ZENO</i></b> will run just once for each model).
 
@@ -83,7 +101,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on June 13, 2024
+Last modified on November 13, 2026
 </font>
 </body>
 </html>
