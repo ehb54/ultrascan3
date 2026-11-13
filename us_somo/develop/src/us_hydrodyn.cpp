@@ -1337,6 +1337,12 @@ void US_Hydrodyn::setupGUI()
    pb_view_bead_model->setPalette( PALET_PUSHB );
    connect(pb_view_bead_model, SIGNAL(clicked()), SLOT(view_bead_model()));
 
+   pb_visualize_mesh = new QPushButton( us_tr( "Visualize Mesh" ), this );
+   pb_visualize_mesh->setMinimumHeight( minHeight1 );
+   pb_visualize_mesh->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   pb_visualize_mesh->setPalette( PALET_PUSHB );
+   connect( pb_visualize_mesh, SIGNAL( clicked() ), SLOT( visualize_mesh() ) );
+
    lbl_temperature = new QLabel( us_tr( QString( " Temp. (%1C): " ).arg( DEGREE_SYMBOL ) ), this);
    Q_CHECK_PTR(lbl_temperature);
    lbl_temperature->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -1998,7 +2004,12 @@ void US_Hydrodyn::setupGUI()
    j++;
 
    background->addWidget(pb_batch2, j, 0);
-   background->addWidget(pb_view_bead_model, j, 1);
+   {
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( pb_view_bead_model );
+      hbl->addWidget( pb_visualize_mesh );
+      background->addLayout( hbl, j, 1 );
+   }
    j++;
 
    background->addWidget(pb_load_bead_model, j, 0);
@@ -3879,7 +3890,79 @@ void US_Hydrodyn::view_bead_model()
    }
 }
 
-void US_Hydrodyn::visualize( bool movie_frame, 
+// Shows a triangulated surface mesh with its structure in RasMol, which reads (with "load mesh")
+// BEST meshes (rcoal's <name>_<N>, sesmesh's .best), msroll .c3p, MSMS .vert/.face and ZENO .bod.
+// RasMol draws a mesh only with a molecule, so a PDB file is needed as well; the mesh must be in
+// its frame, in Angstroms (a .bod file may state other units).
+void US_Hydrodyn::visualize_mesh()
+{
+   QString use_dir = path_visualize_mesh.isEmpty() ? somo_dir : path_visualize_mesh;
+   select_from_directory_history( use_dir, this );
+
+   QString mesh = QFileDialog::getOpenFileName( this,
+                                                us_tr( "Visualize Mesh: select the mesh file" ),
+                                                use_dir,
+                                                us_tr( "Meshes (*.c3p *.vert *.face *.bod *.best"
+                                                       " *_[0-9][0-9][0-9][0-9][0-9]);;All files (*)" ) );
+   if ( mesh.isEmpty() ) {
+      return;
+   }
+   path_visualize_mesh = QFileInfo( mesh ).absolutePath();
+   add_to_directory_history( path_visualize_mesh );
+
+   QString structure;
+   if ( !pdb_file.isEmpty() && QFileInfo( pdb_file ).exists() ) {
+      switch ( QMessageBox::question( this,
+                                      us_tr( "Visualize Mesh" ),
+                                      QString( us_tr( "Show the mesh with the loaded structure %1?\n"
+                                                      "(No: choose another PDB file)" ) )
+                                      .arg( QFileInfo( pdb_file ).fileName() ),
+                                      QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
+                                      QMessageBox::Yes ) ) {
+      case QMessageBox::Yes :
+         structure = pdb_file;
+         break;
+      case QMessageBox::No :
+         break;
+      default :
+         return;
+      }
+   }
+   if ( structure.isEmpty() ) {
+      structure = QFileDialog::getOpenFileName( this,
+                                                us_tr( "Visualize Mesh: select the structure to show with it" ),
+                                                path_visualize_mesh,
+                                                us_tr( "PDB files (*.pdb *.PDB)" ) );
+      if ( structure.isEmpty() ) {
+         return;
+      }
+   }
+
+   // The script goes in SOMO's tmp directory, where RasMol is started.
+   QString name = QFileInfo( mesh ).fileName();
+   name.replace( QRegularExpression( "[^A-Za-z0-9_.-]" ), "_" );
+   QString spt = somo_tmp_dir + SLASH + name.left( 40 ) + "-mesh.spt";
+
+   QFile f( spt );
+   if ( !f.open( QIODevice::WriteOnly | QIODevice::Text ) ) {
+      editor_msg( "red", QString( us_tr( "Visualize Mesh: can not write %1\n" ) ).arg( spt ) );
+      return;
+   }
+   QTextStream ts( &f );
+   ts << "load pdb \"" << QFileInfo( structure ).absoluteFilePath() << "\"\n"
+      << "wireframe off\n"
+      << "spacefill\n"
+      << "colour cpk\n"
+      << "load mesh \"" << QFileInfo( mesh ).absoluteFilePath() << "\"\n";
+   f.close();
+
+   editor_msg( "black", QString( us_tr( "Visualizing mesh %1 with %2\n" ) )
+               .arg( QFileInfo( mesh ).fileName() )
+               .arg( QFileInfo( structure ).fileName() ) );
+   model_viewer( spt, "-script" );
+}
+
+void US_Hydrodyn::visualize( bool movie_frame,
                              QString dir, 
                              float scale, 
                              bool black_background,
