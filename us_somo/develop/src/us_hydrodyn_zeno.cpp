@@ -13840,7 +13840,9 @@ struct US_Zeno_Mesh_Series_Fit {
 // The results on a sequence of meshes and their linear extrapolation in 1/N (N, the number of
 // triangles) to an infinitely fine mesh, in the CSV format of SOMO's BEST pipeline
 // (US_Saxs_Util, us_saxs_util_best.cpp), so the BEST/ZENO series tool can load the file to plot
-// the series and to try its other fits.  The meshes are sorted by decreasing N, BEST's order.
+// the series and to try its other fits.  The meshes are sorted by increasing N, as that tool
+// expects: it takes the first column's 1/N as the largest (the x-axis range) and the last column
+// as point 1, the most triangles.
 // summary gets the main extrapolated values, for the log; fits gets every quantity's, always in
 // the same order.
 static QString zeno_mesh_series_csv(
@@ -13853,7 +13855,7 @@ static QString zeno_mesh_series_csv(
    fits.clear();
    std::stable_sort( series.begin(), series.end(),
                      []( const US_Zeno_Mesh_Series_Point & a, const US_Zeno_Mesh_Series_Point & b ) {
-                        return a.triangles > b.triangles;
+                        return a.triangles < b.triangles;
                      } );
 
    int n = (int) series.size();
@@ -13962,8 +13964,8 @@ static QString zeno_mesh_series_csv(
    summary =
       QString( us_tr( "Extrapolated to an infinitely fine mesh (linear in 1/N, %1 meshes, %2 to %3 triangles)%4:\n" ) )
       .arg( n )
-      .arg( series.back().triangles )
       .arg( series.front().triangles )
+      .arg( series.back().triangles )
       .arg( n < 3 ? us_tr( ", no error estimate from 2 meshes" ) : QString( "" ) );
    summary += QString( " Rs %1 +/- %2 nm, Dt %3 +/- %4 cm^2/s, [eta] %5 +/- %6 cm^3/g\n" )
       .arg( a_of[ l_rs  ], 0, 'g', 6 ).arg( siga_of[ l_rs  ], 0, 'g', 2 )
@@ -15242,46 +15244,50 @@ bool US_Hydrodyn::calc_zeno()
                   }
 
                   // this needs to be averaged for multiple runs
+                  // (with a sequence of meshes, each model counts once, by its extrapolated
+                  // values, after its last mesh: see below)
 
-                  if ( !zeno_results.num_models ) {
-                     zeno_results.method  = "Zeno";
-                     zeno_model_list = QString( "%1" ).arg( current_model + 1 );
-                  } else {
-                     zeno_model_list += QString( ",%1" ).arg( current_model + 1 );
-                  }                   
+                  if ( !mesh_series ) {
+                     if ( !zeno_results.num_models ) {
+                        zeno_results.method  = "Zeno";
+                        zeno_model_list = QString( "%1" ).arg( current_model + 1 );
+                     } else {
+                        zeno_model_list += QString( ",%1" ).arg( current_model + 1 );
+                     }
 
-                  zeno_results.num_models++;
+                     zeno_results.num_models++;
 
-                  zeno_results.mass                  += this_data.results.mass;
-                  zeno_results.s20w                  += this_data.results.s20w;
-                  zeno_results.D20w                  += this_data.results.D20w;
-                  zeno_results.viscosity             += this_data.results.viscosity;
-                  zeno_results.rs                    += this_data.results.rs;
-                  zeno_results.rg                    += this_data.results.rg;
-                  zeno_results.vbar                  += this_data.results.vbar;
-                  zeno_results.ff0                   += this_data.results.ff0;
-                  zeno_results.used_beads            += this_data.results.used_beads;
-                  zeno_results.total_beads           += this_data.results.total_beads;
-                  if ( this_data.results.rs_sd ) {
-                     zeno_results.rs_sd              = this_data.results.rs_sd;
+                     zeno_results.mass                  += this_data.results.mass;
+                     zeno_results.s20w                  += this_data.results.s20w;
+                     zeno_results.D20w                  += this_data.results.D20w;
+                     zeno_results.viscosity             += this_data.results.viscosity;
+                     zeno_results.rs                    += this_data.results.rs;
+                     zeno_results.rg                    += this_data.results.rg;
+                     zeno_results.vbar                  += this_data.results.vbar;
+                     zeno_results.ff0                   += this_data.results.ff0;
+                     zeno_results.used_beads            += this_data.results.used_beads;
+                     zeno_results.total_beads           += this_data.results.total_beads;
+                     if ( this_data.results.rs_sd ) {
+                        zeno_results.rs_sd              = this_data.results.rs_sd;
+                     }
+                     if ( this_data.results.viscosity_sd ) {
+                        zeno_results.viscosity_sd       = this_data.results.viscosity_sd;
+                     }
+                     if ( this_data.results.D20w_sd ) {
+                        zeno_results.D20w_sd            = this_data.results.D20w_sd;
+                     }
+
+                     // no sd: zeno_results2.mass                 += this_data.results.mass        * this_data.results.mass;
+                     zeno_results2.s20w                 += this_data.results.s20w        * this_data.results.s20w;
+                     zeno_results2.D20w                 += this_data.results.D20w        * this_data.results.D20w;
+                     zeno_results2.viscosity            += this_data.results.viscosity   * this_data.results.viscosity;
+                     zeno_results2.rs                   += this_data.results.rs          * this_data.results.rs;
+                     zeno_results2.rg                   += this_data.results.rg          * this_data.results.rg;
+                     // no sd: zeno_results2.vbar                 += this_data.results.vbar        * this_data.results.vbar;
+                     zeno_results2.ff0                  += this_data.results.ff0         * this_data.results.ff0;
+                     zeno_results2.used_beads           += this_data.results.used_beads  * this_data.results.used_beads;
+                     zeno_results2.total_beads          += this_data.results.total_beads * this_data.results.total_beads;
                   }
-                  if ( this_data.results.viscosity_sd ) {
-                     zeno_results.viscosity_sd       = this_data.results.viscosity_sd;
-                  }
-                  if ( this_data.results.D20w_sd ) {
-                     zeno_results.D20w_sd            = this_data.results.D20w_sd;
-                  }
-
-                  // no sd: zeno_results2.mass                 += this_data.results.mass        * this_data.results.mass;
-                  zeno_results2.s20w                 += this_data.results.s20w        * this_data.results.s20w;
-                  zeno_results2.D20w                 += this_data.results.D20w        * this_data.results.D20w;
-                  zeno_results2.viscosity            += this_data.results.viscosity   * this_data.results.viscosity;
-                  zeno_results2.rs                   += this_data.results.rs          * this_data.results.rs;
-                  zeno_results2.rg                   += this_data.results.rg          * this_data.results.rg;
-                  // no sd: zeno_results2.vbar                 += this_data.results.vbar        * this_data.results.vbar;
-                  zeno_results2.ff0                  += this_data.results.ff0         * this_data.results.ff0;
-                  zeno_results2.used_beads           += this_data.results.used_beads  * this_data.results.used_beads;
-                  zeno_results2.total_beads          += this_data.results.total_beads * this_data.results.total_beads;
 
                   bool create_hydro_res = !(batch_widget &&
                                             batch_window->save_batch_active);
@@ -15322,12 +15328,72 @@ bool US_Hydrodyn::calc_zeno()
                }
                QString summary;
                vector < US_Zeno_Mesh_Series_Fit > fits;
+               QString csv = zeno_mesh_series_csv( series, hydro.unit == -9 ? "nm" : "A", summary, fits );
+
+               // the results shown in the main window (Show Hydrodynamic Calculations): this
+               // model's extrapolated values, with their standard errors
+               {
+                  map < QString, US_Zeno_Mesh_Series_Fit > fit_of;
+                  for ( const auto & fit : fits ) {
+                     fit_of[ fit.label ] = fit;
+                  }
+                  auto value = [ & ]( const QString & label ) {
+                     return fit_of.count( label ) && fit_of[ label ].valid ? fit_of[ label ].a : 0e0;
+                  };
+                  auto sigma = [ & ]( const QString & label ) {
+                     return fit_of.count( label ) && fit_of[ label ].valid ? fit_of[ label ].siga : 0e0;
+                  };
+                  const QString l_rs  = "Stokes radius Rs (nm)";
+                  const QString l_dt  = "Translational diffusion coefficient Dt (cm^2/s)";
+                  const QString l_s   = "Sedimentation coefficient s (S)";
+                  const QString l_ff0 = "Frictional ratio f/f0";
+                  const QString l_eta = "Intrinsic viscosity [eta] (cm^3/g)";
+                  const hydro_results & last = series.back().data.results;
+
+                  QStringList spacings;
+                  for ( double h : mesh_hs ) {
+                     spacings << QString( "%1" ).arg( h );
+                  }
+                  if ( !zeno_results.num_models ) {
+                     zeno_model_list = QString( "%1" ).arg( current_model + 1 );
+                  } else {
+                     zeno_model_list += QString( ",%1" ).arg( current_model + 1 );
+                  }
+                  zeno_results.method = QString( "Zeno, extrapolated from SES meshes (spacings %1 A)" ).arg( spacings.join( ", " ) );
+                  zeno_results.num_models++;
+
+                  zeno_results.mass          += last.mass;
+                  zeno_results.s20w          += value( l_s );
+                  zeno_results.D20w          += value( l_dt );
+                  zeno_results.viscosity     += value( l_eta );
+                  zeno_results.rs            += value( l_rs );
+                  zeno_results.rg            += last.rg;
+                  zeno_results.vbar          += last.vbar;
+                  zeno_results.ff0           += value( l_ff0 );
+                  zeno_results.used_beads    += last.used_beads;
+                  zeno_results.total_beads   += last.total_beads;
+                  zeno_results.s20w_sd        = sigma( l_s );
+                  zeno_results.D20w_sd        = sigma( l_dt );
+                  zeno_results.viscosity_sd   = sigma( l_eta );
+                  zeno_results.rs_sd          = sigma( l_rs );
+                  zeno_results.ff0_sd         = sigma( l_ff0 );
+
+                  zeno_results2.s20w         += value( l_s )   * value( l_s );
+                  zeno_results2.D20w         += value( l_dt )  * value( l_dt );
+                  zeno_results2.viscosity    += value( l_eta ) * value( l_eta );
+                  zeno_results2.rs           += value( l_rs )  * value( l_rs );
+                  zeno_results2.rg           += last.rg        * last.rg;
+                  zeno_results2.ff0          += value( l_ff0 ) * value( l_ff0 );
+                  zeno_results2.used_beads   += last.used_beads  * last.used_beads;
+                  zeno_results2.total_beads  += last.total_beads * last.total_beads;
+               }
+
                QFile f( series_name );
                if ( !f.open( QIODevice::WriteOnly ) ) {
                   editor_msg( "red", QString( us_tr( "Error: could not open %1 for writing" ) ).arg( series_name ) );
                } else {
                   QTextStream ts( &f );
-                  ts << zeno_mesh_series_csv( series, hydro.unit == -9 ? "nm" : "A", summary, fits );
+                  ts << csv;
                   f.close();
                   editor_msg( "dark blue", summary );
                   editor_msg( "dark blue", QString( us_tr( "Wrote %1\n" ) ).arg( series_name ) );

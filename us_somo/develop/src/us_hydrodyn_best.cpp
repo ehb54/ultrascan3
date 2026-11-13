@@ -982,6 +982,12 @@ void US_Hydrodyn_Best::set_credits( bool zeno_series )
 void US_Hydrodyn_Best::cb_changed( bool do_data )
 {
    // us_qdebug( "cb_changed" );
+   // nothing to do without a selected field (e.g. after a ctrl-click deselects it): first()
+   // of an empty selection crashed
+   if ( lb_data->selectedItems().isEmpty() )
+   {
+      return;
+   }
    QString text = lb_data->selectedItems().first()->text();
    cb_checked[ text ].clear( );
    for ( int i = 0; i < (int) cb_points.size(); ++i )
@@ -1000,6 +1006,12 @@ void US_Hydrodyn_Best::cb_changed( bool do_data )
 void US_Hydrodyn_Best::cb_changed_ln( bool do_data )
 {
    // us_qdebug( "cb_changed_ln" );
+   // nothing to do without a selected field (e.g. after a ctrl-click deselects it): first()
+   // of an empty selection crashed
+   if ( lb_data->selectedItems().isEmpty() )
+   {
+      return;
+   }
    QString text = lb_data->selectedItems().first()->text();
    cb_checked_ln[ text ].clear( );
    for ( int i = 0; i < (int) cb_points_ln.size(); ++i )
@@ -1018,6 +1030,12 @@ void US_Hydrodyn_Best::cb_changed_ln( bool do_data )
 void US_Hydrodyn_Best::cb_changed_exp( bool do_data )
 {
    // us_qdebug( "cb_changed_exp" );
+   // nothing to do without a selected field (e.g. after a ctrl-click deselects it): first()
+   // of an empty selection crashed
+   if ( lb_data->selectedItems().isEmpty() )
+   {
+      return;
+   }
    QString text = lb_data->selectedItems().first()->text();
    cb_checked_exp[ text ].clear( );
    for ( int i = 0; i < (int) cb_points_exp.size(); ++i )
@@ -1037,6 +1055,12 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
 {
    // us_qdebug( "data_selected" );
    if ( !lb_data->count() )
+   {
+      return;
+   }
+   // nothing to do without a selected field (e.g. after a ctrl-click deselects it): first()
+   // of an empty selection crashed
+   if ( lb_data->selectedItems().isEmpty() )
    {
       return;
    }
@@ -2417,6 +2441,12 @@ void US_Hydrodyn_Best::apply_qtest()
    reset_qtest();
 
    if ( !lb_data->count() )
+   {
+      return;
+   }
+   // nothing to do without a selected field (e.g. after a ctrl-click deselects it): first()
+   // of an empty selection crashed
+   if ( lb_data->selectedItems().isEmpty() )
    {
       return;
    }
