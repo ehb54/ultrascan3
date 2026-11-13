@@ -6,6 +6,45 @@
 #include "us_constants.h"
 #include "us_math2.h"
 
+namespace
+{
+// Read an optional attribute of a simparams element; absent leaves field as it is.
+void readNumber( const QXmlStreamAttributes& a, const char* name, double& field )
+{
+   const QString value = a.value( name ).toString();
+   if ( !value.isEmpty() )
+   {
+      field = value.toDouble();
+   }
+}
+
+void readNumber( const QXmlStreamAttributes& a, const char* name, int& field )
+{
+   const QString value = a.value( name ).toString();
+   if ( !value.isEmpty() )
+   {
+      field = value.toInt();
+   }
+}
+
+void readNumber( const QXmlStreamAttributes& a, const char* name, quint32& field )
+{
+   const QString value = a.value( name ).toString();
+   if ( !value.isEmpty() )
+   {
+      field = value.toUInt();
+   }
+}
+
+// A value written so that reading it back gives the same number: 15
+// significant digits keep any decimal a user writes without exposing binary
+// noise.
+QString exact( double value )
+{
+   return QString::number( value, 'g', 15 );
+}
+}
+
 //!< level-conditioned debug print
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
@@ -882,6 +921,13 @@ int US_SimulationParameters::load_simparms( QString fname )
       QString astr;
       int     kk;
       speed_step.clear();
+      // Off unless this file gives them.
+      intensity       = IntensitySettings();
+      window          = WindowSettings();
+      schedule        = ScheduleSettings();
+      telemetry       = TelemetrySettings();
+      interference    = InterferenceSettings();
+      wavelength_scan = WavelengthScanSettings();
 
       while ( ! xml.atEnd() )
       {
@@ -970,6 +1016,89 @@ int US_SimulationParameters::load_simparms( QString fname )
             speedstepFromXml( xml, sp );
 
             speed_step.append( sp );
+         }
+
+         else if ( xml.isStartElement() && xml.name() == "intensity" )
+         {
+            a               = xml.attributes();
+            intensity       = IntensitySettings();
+            intensity.given = true;
+            readNumber( a, "source_counts", intensity.source_counts );
+            readNumber( a, "read_noise", intensity.read_noise );
+            readNumber( a, "shot_noise", intensity.shot_noise );
+            readNumber( a, "dark", intensity.dark );
+            intensity.curved = a.value( "profile" ).toString() != "flat";
+         }
+
+         else if ( xml.isStartElement() && xml.name() == "window" )
+         {
+            a            = xml.attributes();
+            window       = WindowSettings();
+            window.given = true;
+            readNumber( a, "start", window.start );
+            readNumber( a, "end", window.end );
+            readNumber( a, "resolution", window.resolution );
+            readNumber( a, "meniscus_artifact", window.meniscus_artifact );
+         }
+
+         else if ( xml.isStartElement() && xml.name() == "interference" )
+         {
+            a                  = xml.attributes();
+            interference       = InterferenceSettings();
+            interference.given = true;
+            readNumber( a, "start", interference.start );
+            readNumber( a, "points", interference.points );
+            readNumber( a, "resolution", interference.resolution );
+            readNumber( a, "scale", interference.scale );
+            readNumber( a, "random", interference.random );
+            readNumber( a, "offset", interference.offset );
+            readNumber( a, "structure", interference.structure );
+            readNumber( a, "jump_rate", interference.jump_rate );
+            readNumber( a, "step_fraction", interference.step_fraction );
+            readNumber( a, "meniscus_artifact", interference.meniscus_artifact );
+         }
+
+         else if ( xml.isStartElement() && xml.name() == "wavelength_scan" )
+         {
+            a                     = xml.attributes();
+            wavelength_scan       = WavelengthScanSettings();
+            wavelength_scan.given = true;
+            readNumber( a, "position", wavelength_scan.position );
+            readNumber( a, "start", wavelength_scan.start );
+            readNumber( a, "end", wavelength_scan.end );
+            readNumber( a, "step", wavelength_scan.step );
+         }
+
+         else if ( xml.isStartElement() && xml.name() == "point" && wavelength_scan.given )
+         { // A spectrum point of the wavelength scan above
+            a = xml.attributes();
+            wavelength_scan.spectrum.insert( a.value( "wavelength" ).toString().toDouble(),
+                                             a.value( "extinction" ).toString().toDouble() );
+         }
+
+         else if ( xml.isStartElement() && xml.name() == "schedule" )
+         {
+            a              = xml.attributes();
+            schedule       = ScheduleSettings();
+            schedule.given = true;
+            for ( const QString& value : a.value( "slots" ).toString().split( ",", Qt::SkipEmptyParts ) )
+            {
+               schedule.slot_seconds << value.trimmed().toDouble();
+            }
+            readNumber( a, "slot", schedule.slot );
+            readNumber( a, "wavelength_seconds", schedule.wavelength_seconds );
+            readNumber( a, "interval", schedule.interval );
+         }
+
+         else if ( xml.isStartElement() && xml.name() == "telemetry" )
+         {
+            a               = xml.attributes();
+            telemetry       = TelemetrySettings();
+            telemetry.given = true;
+            readNumber( a, "seed", telemetry.seed );
+            readNumber( a, "rpm_jitter", telemetry.rpm_jitter );
+            readNumber( a, "temperature_sd", telemetry.temperature_sd );
+            readNumber( a, "temperature_drift", telemetry.temperature_drift );
          }
 
          else if ( xml.isStartElement()  &&  xml.name() == "usermesh" )
@@ -1069,6 +1198,86 @@ int US_SimulationParameters::save_simparms( QString fname )
          spi = &speed_step[ ii ];
 
          speedstepToXml( xml, spi );
+      }
+
+      // Written only when given, so files without them round-trip unchanged.
+      if ( intensity.given )
+      {
+         xml.writeStartElement( "intensity" );
+         xml.writeAttribute( "source_counts", exact( intensity.source_counts ) );
+         xml.writeAttribute( "profile", intensity.curved ? "curved" : "flat" );
+         xml.writeAttribute( "read_noise", exact( intensity.read_noise ) );
+         xml.writeAttribute( "shot_noise", exact( intensity.shot_noise ) );
+         xml.writeAttribute( "dark", exact( intensity.dark ) );
+         xml.writeEndElement();
+      }
+
+      if ( interference.given )
+      {
+         xml.writeStartElement( "interference" );
+         xml.writeAttribute( "start", exact( interference.start ) );
+         xml.writeAttribute( "points", exact( interference.points ) );
+         xml.writeAttribute( "resolution", exact( interference.resolution ) );
+         xml.writeAttribute( "scale", exact( interference.scale ) );
+         xml.writeAttribute( "random", exact( interference.random ) );
+         xml.writeAttribute( "offset", exact( interference.offset ) );
+         xml.writeAttribute( "structure", exact( interference.structure ) );
+         xml.writeAttribute( "jump_rate", exact( interference.jump_rate ) );
+         xml.writeAttribute( "step_fraction", exact( interference.step_fraction ) );
+         xml.writeAttribute( "meniscus_artifact", exact( interference.meniscus_artifact ) );
+         xml.writeEndElement();
+      }
+
+      if ( wavelength_scan.given )
+      {
+         xml.writeStartElement( "wavelength_scan" );
+         xml.writeAttribute( "position", exact( wavelength_scan.position ) );
+         xml.writeAttribute( "start", exact( wavelength_scan.start ) );
+         xml.writeAttribute( "end", exact( wavelength_scan.end ) );
+         xml.writeAttribute( "step", exact( wavelength_scan.step ) );
+         for ( auto it = wavelength_scan.spectrum.constBegin(); it != wavelength_scan.spectrum.constEnd(); ++it )
+         {
+            xml.writeStartElement( "point" );
+            xml.writeAttribute( "wavelength", exact( it.key() ) );
+            xml.writeAttribute( "extinction", exact( it.value() ) );
+            xml.writeEndElement();
+         }
+         xml.writeEndElement();
+      }
+
+      if ( schedule.given )
+      {
+         QStringList slot_list;
+         for ( double seconds : schedule.slot_seconds )
+         {
+            slot_list << exact( seconds );
+         }
+         xml.writeStartElement( "schedule" );
+         xml.writeAttribute( "slots", slot_list.join( "," ) );
+         xml.writeAttribute( "slot", exact( schedule.slot ) );
+         xml.writeAttribute( "wavelength_seconds", exact( schedule.wavelength_seconds ) );
+         xml.writeAttribute( "interval", exact( schedule.interval ) );
+         xml.writeEndElement();
+      }
+
+      if ( telemetry.given )
+      {
+         xml.writeStartElement( "telemetry" );
+         xml.writeAttribute( "seed", exact( telemetry.seed ) );
+         xml.writeAttribute( "rpm_jitter", exact( telemetry.rpm_jitter ) );
+         xml.writeAttribute( "temperature_sd", exact( telemetry.temperature_sd ) );
+         xml.writeAttribute( "temperature_drift", exact( telemetry.temperature_drift ) );
+         xml.writeEndElement();
+      }
+
+      if ( window.given )
+      {
+         xml.writeStartElement( "window" );
+         xml.writeAttribute( "start", exact( window.start ) );
+         xml.writeAttribute( "end", exact( window.end ) );
+         xml.writeAttribute( "resolution", exact( window.resolution ) );
+         xml.writeAttribute( "meniscus_artifact", exact( window.meniscus_artifact ) );
+         xml.writeEndElement();
       }
 
       xml.writeEndElement  ();   // params

@@ -24,8 +24,10 @@
 #include "us_rotor_gui.h"
 #include "us_settings.h"
 #include "us_sim_inputs.h"
+#include "us_sim_optics.h"
 #include "us_sim_params_gui.h"
 #include "us_sim_record.h"
+#include "us_sim_schedule.h"
 #include "us_time_state.h"
 #include "us_util.h"
 
@@ -420,6 +422,56 @@ int US_Astfem_Sim::init_from_args( const US_SimCliArgs& args )
    {
       noise_seed = args.noise_seed;
    }
+
+   if ( args.od_limit > 0.0 )
+   {
+      od_limit = args.od_limit;
+   }
+
+   {
+      const QString problem = schedule_problem();
+      if ( !problem.isEmpty() )
+      {
+         reportHeadlessLoadFailure( "simparams", problem, errors_to_cl, gui_needed, error_occured );
+      }
+   }
+
+   if ( interference_mode() )
+   {
+      const QString problem = US_SimOptics::interferenceProblem( simparams.interference );
+      if ( !problem.isEmpty() )
+      {
+         reportHeadlessLoadFailure( "simparams", problem, errors_to_cl, gui_needed, error_occured );
+      }
+   }
+
+   if ( intensity_mode() || wavelength_scan_mode() )
+   {
+      QString problem = US_SimOptics::intensityProblem( simparams.intensity );
+      if ( wavelength_scan_mode() )
+      {
+         if ( !simparams.wavelength_scan.given )
+         {
+            problem = US_SimCli::wavelengthScanMessage;
+         }
+         else if ( problem.isEmpty() )
+         { // The position is checked against the cell when the run is saved.
+            problem = US_SimOptics::wavelengthScanProblem( simparams.wavelength_scan, 0.0, 0.0 );
+         }
+      }
+      if ( US_SimOptics::referenceChannel( sim_channel ) == 0 )
+      {
+         problem = QString( US_SimCli::intensityChannelMessage ).arg( QChar( sim_channel ) );
+      }
+      else if ( od_limit > 0.0 )
+      {
+         problem = US_SimCli::intensityOdLimitMessage;
+      }
+      if ( !problem.isEmpty() )
+      {
+         reportHeadlessLoadFailure( "runtype", problem, errors_to_cl, gui_needed, error_occured );
+      }
+   }
    // set movie flag if needed
    if ( args.movie )
    {
@@ -740,12 +792,28 @@ DbgLv(1) << "SimPar:MAIN:simp: nspeed" << simparams.speed_step.count()
 
 void US_Astfem_Sim::set_parameters( void )
 {
+   // Below, the speed steps are rebuilt from this call's time state. A run's
+   // record is written from the steps as they were given instead, by the
+   // simparams file or the parameters dialog: any change from the last
+   // rebuilt steps is a newly given set.
+   if ( !US_SimSchedule::sameSpeedSteps( simparams.speed_step, rebuilt_steps ) )
+   {
+      loaded_steps = simparams.speed_step;
+   }
+   if ( simparams.schedule.given )
+   { // Rebuilding a hardware-dependent grid must keep the configured step windows.
+      simparams.speed_step = loaded_steps;
+   }
+
    meniscus_ar   = simparams.meniscus; // Meniscus at rest
    simparams.sim = true;
    pb_start  ->setEnabled( true );
 DbgLv(1) << "SimPar:MAIN:SetP:  nspeed" << simparams.speed_step.count()
  << "speed0" << simparams.speed_step[0].rotorspeed << "meniscus_ar" << meniscus_ar;
-simparams.debug();
+if ( dbg_level > 0 )
+{
+   simparams.debug();
+}
 DbgLv(1) << "==SimPar:MAIN:SetP";
 
    // Initialize all-speed raw data
@@ -787,6 +855,8 @@ DbgLv(1) << "==SimPar:MAIN:SetP";
    double previous_speed = 0.0;
    double previous_time  = 0.0;
    double previous_w2t   = 0.0;
+   schedule_firsts.clear();
+   schedule_counts.clear();
    for ( int jj = 0; jj < nstep; jj++ )
    {
       US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[jj];
@@ -808,9 +878,17 @@ DbgLv(1) << "==SimPar:MAIN:SetP";
       scandata.plateau     = 0.0;
       scandata.delta_r     = simparams.radial_resolution;
       scandata.rvalues.fill( 0.0, points );
+      if ( simparams.schedule.given )
+      {
+         schedule_firsts << previous_time + delay;
+         schedule_counts << sp->scans;
+      }
       for ( int s = 0; s < sp->scans; s++ )
       {
-         scandata.seconds = static_cast<double>( qRound( previous_time + delay + time_between_scans * s ) );
+         // A schedule staggers this channel's slot within the run's cycles.
+         scandata.seconds = simparams.schedule.given
+                               ? static_cast<double>( US_SimSchedule::scanTime( simparams.schedule, previous_time + delay, s ) )
+                               : static_cast<double>( qRound( previous_time + delay + time_between_scans * s ) );
          scandata.omega2t = US_AstfemMath::calc_omega2t(
             previous_w2t, previous_speed, previous_time, target_speed, sp->acceleration, scandata.seconds );
          if ( s == 0 )
@@ -831,9 +909,20 @@ DbgLv(1) << "==SimPar:MAIN:SetP";
          DbgLv( 1 ) << "SimPar:MAIN:SetP: js time omega2t " << s << scandata.seconds << scandata.omega2t;
          sim_data_all.scanData << scandata;
       }
+      if ( simparams.schedule.given && sp->scans > 0 )
+      { // Chain from the configured step end, as writetimestate() does.
+         // The final scan cycle can be much earlier, but does not end the step.
+         const double step_end = previous_time + duration;
+         previous_w2t =
+            US_AstfemMath::calc_omega2t( previous_w2t, previous_speed, previous_time, target_speed, sp->acceleration, step_end );
+         previous_time = step_end;
+      }
+      else
+      {
+         previous_time = sp->time_last;
+         previous_w2t  = sp->w2t_last;
+      }
       previous_speed = target_speed;
-      previous_time  = sp->time_last;
-      previous_w2t   = sp->w2t_last;
    }
 
    // Create a timestate for this speed profile set
@@ -852,18 +941,32 @@ DbgLv(1) << "==SimPar:MAIN:SetP";
                             .toString( "yyMMddhhmmss" )
                           + ".time_state.tmst";
 
-   if ( US_AstfemMath::writetimestate( tmst_tfpath, simparams, sim_data_all ) < 0 )
+   // A scheduled run's time state marks every slot's scans, not just this
+   // channel's: the speed steps are read back from its first and last marked
+   // scans, and they must come out the same for every channel of the run.
+   US_DataIO::RawData marked = sim_data_all;
+   if ( simparams.schedule.given && !sim_data_all.scanData.isEmpty() )
+   {
+      marked = US_SimSchedule::markedData( sim_data_all,
+                                           US_SimSchedule::runMarkers( simparams.schedule, schedule_firsts, schedule_counts ) );
+   }
+
+   if ( US_AstfemMath::writetimestate( tmst_tfpath, simparams, marked ) < 0 )
    {
       qDebug() << "Error: could not write time state" << tmst_tfpath;
    }
 
    simparams.simSpeedsFromTimeState( tmst_tfpath );
-//*DEBUG*
-DbgLv(1) << "ASIM: === speed steps from SSprof ===";
-simparams.speedstepsFromSSprof();
-simparams.debug();
-DbgLv(1) << "ASIM: === speed steps from SSprof ===";
-//*DEBUG*
+
+   // Rebuild the speed steps (delay, first and last scan times and their
+   // omega2t) from the time state, as the analysis programs do when they load
+   // a run, so the steps this run records match what they will derive.
+   simparams.speedstepsFromSSprof();
+   rebuilt_steps = simparams.speed_step;
+   if ( dbg_level > 0 )
+   {
+      simparams.debug();
+   }
 
    // Report simulation parameters
    change_status();
@@ -902,6 +1005,7 @@ void US_Astfem_Sim::start_simulation( void )
 {
    //DbgLv(1) << "start_simulation is called";
    sim_failed = false;
+   interference_structure.clear(); // a new run draws its own fixed structure
 
    int           size_cv = system.components.size(); // Number of components in the system
    QVector<bool> reactVec( size_cv );                // Boolean array showing reaction case between system
@@ -1209,6 +1313,11 @@ void US_Astfem_Sim::ri_noise( void )
 {
    csv_data_ri.clear();
    if ( simparams.rinoise == 0.0 ) return;
+   // Interference records its own offsets, in fringes, when it is saved.
+   if ( interference_mode() )
+   {
+      return;
+   }
 
 
    QStringList header;
@@ -1245,6 +1354,10 @@ void US_Astfem_Sim::ri_noise( void )
 void US_Astfem_Sim::baseline( void )
 {
    if ( simparams.baseline == 0.0 ) return;
+   if ( interference_mode() )
+   {
+      return;
+   }
 
    // Add a constant baseline offset
    int scan_offset = 0;
@@ -1262,9 +1375,130 @@ void US_Astfem_Sim::baseline( void )
    }
 }
 
+bool US_Astfem_Sim::intensity_mode( void ) const
+{
+   return run_type == "RI";
+}
+
+bool US_Astfem_Sim::wavelength_scan_mode( void ) const
+{
+   return run_type == "WI";
+}
+
+bool US_Astfem_Sim::interference_mode( void ) const
+{
+   return run_type == "IP" && simparams.interference.given;
+}
+
+bool US_Astfem_Sim::intensity_noise( void ) const
+{
+   return ( intensity_mode() || wavelength_scan_mode() ) &&
+          ( simparams.intensity.read_noise > 0.0 || simparams.intensity.shot_noise > 0.0 );
+}
+
+QString US_Astfem_Sim::schedule_problem( void ) const
+{
+   if ( simparams.telemetry.given )
+   {
+      const QString problem = US_SimSchedule::telemetryProblem( simparams.telemetry );
+      if ( !problem.isEmpty() )
+      {
+         return problem;
+      }
+   }
+   if ( !simparams.schedule.given )
+   {
+      return QString();
+   }
+   const QString problem = US_SimSchedule::scheduleProblem( simparams.schedule );
+   if ( !problem.isEmpty() )
+   {
+      return problem;
+   }
+   // Validate against the configured window, not the timing rebuilt from scan
+   // markers by speedstepsFromSSprof(). Every slot must fit in its own step.
+   for ( int jd = 0; jd < loaded_steps.size() && jd < schedule_firsts.size(); jd++ )
+   {
+      const US_SimulationParameters::SpeedProfile& sp    = loaded_steps[jd];
+      const double                                 delay = qRound( sp.delay_hours * 3600.0 + sp.delay_minutes * 60.0 );
+      const double end  = schedule_firsts[jd] - delay + qRound( sp.duration_hours * 3600.0 + sp.duration_minutes * 60.0 );
+      const int    last = US_SimSchedule::scanTime(
+         simparams.schedule, schedule_firsts[jd], schedule_counts[jd] - 1, 0, simparams.schedule.slot_seconds.size() - 1 );
+      if ( last > end )
+      {
+         return QString( "speed step %1's last scheduled scan, at %2 s, is after the step ends at %3 s; "
+                         "give it fewer scans or a longer duration" )
+            .arg( jd + 1 )
+            .arg( last )
+            .arg( end );
+      }
+   }
+   return QString();
+}
+
+QString US_Astfem_Sim::record_run_telemetry( void )
+{
+   if ( !simparams.schedule.given && !simparams.telemetry.given )
+   {
+      return QString();
+   }
+   if ( !QFile( tmst_tfpath ).exists() )
+   {
+      return "no time state to record the run's schedule and telemetry in";
+   }
+
+   // The physics already read its speed profile, so the file can now become
+   // the run's record: every slot's scan markers and the recorded telemetry.
+   const QMap<int, int>    markers       = simparams.schedule.given
+                                              ? US_SimSchedule::runMarkers( simparams.schedule, schedule_firsts, schedule_counts )
+                                              : QMap<int, int>();
+   // Written afresh from the speed steps as given on every save, so every
+   // channel and simulator of a run records the same rows however often its
+   // parameters were set up, and a second save does not record twice.
+   US_SimulationParameters record_params = simparams;
+   record_params.speed_step              = loaded_steps;
+   record_params.sim                     = true;
+   US_DataIO::RawData marked = simparams.schedule.given ? US_SimSchedule::markedData( sim_data_all, markers ) : sim_data_all;
+   if ( US_AstfemMath::writetimestate( tmst_tfpath, record_params, marked ) < 0 )
+   {
+      return "could not write the time state " + tmst_tfpath;
+   }
+   QVector<US_SimSchedule::Row> rows;
+   const QString                error =
+      US_SimSchedule::recordRun( tmst_tfpath, simparams.schedule.given ? &markers : nullptr, simparams.telemetry, rows );
+   if ( !error.isEmpty() )
+   {
+      return error;
+   }
+
+   if ( simparams.telemetry.given )
+   { // The scan headers record what the time state records.
+      for ( US_DataIO::RawData& data : sim_datas )
+      {
+         if ( !US_SimSchedule::recordScans( data, rows ) )
+         {
+            return "a scan time is outside the time state";
+         }
+      }
+   }
+
+   return QString();
+}
+
+double US_Astfem_Sim::buffer_absorbance( const US_DataIO::RawData& data ) const
+{
+   const double wavelength = data.scanData.isEmpty() ? 0.0 : data.scanData[0].wavelength;
+   return US_SimOptics::bufferOD( buffer, wavelength, simparams.cp_pathlen );
+}
+
 void US_Astfem_Sim::random_noise( void )
 {
    if ( simparams.rnoise == 0.0 && simparams.lrnoise == 0.0) return;
+   // Intensity mode records counts noise instead; adding both would double it.
+   if ( intensity_noise() || interference_mode() )
+   {
+      return;
+   }
    // Add random noise
    if ( simparams.rnoise != 0.0 && simparams.lrnoise != 0.0)
    {
@@ -1323,6 +1557,11 @@ void US_Astfem_Sim::ti_noise( void )
 {
    csv_data_ti.clear();
    if ( simparams.tinoise == 0.0 ) return;
+   // Interference records its own radial structure, in fringes, when saved.
+   if ( interference_mode() )
+   {
+      return;
+   }
 
    QVector< double > tinoise;
    // all speed steps are assumed to have the same number of the radial points of a single scan
@@ -1436,6 +1675,13 @@ DbgLv(1) << "ASIM:svscn: IN";
 
 bool US_Astfem_Sim::save_simulation( QString odir, bool supress_dialog, bool write_records )
 {
+   const QString record_error = record_run_telemetry();
+   if ( !record_error.isEmpty() )
+   {
+      qDebug() << "Error:" << record_error;
+      return false;
+   }
+
    QString run_id      = odir.section( "/", -1, -1 );
    int nstep           = simparams.speed_step.size();
    QString xdef_tfpath = QString( tmst_tfpath ).replace( ".tmst", ".xml" );
@@ -1651,7 +1897,8 @@ DbgLv(1) << "ASIM:svscn: 1-speed file paths"  << odir << tmst_fpath;
       QString                cell       = QString::number( sim_data.cell );
       QString                channel    = QString( sim_data.channel );
       double                 wavelength = sim_data.scanData.first().wavelength;
-      QString                wl         = ( wavelength < 99 ) ? QString( "123" ) : QString::number( wavelength );
+      // A wavelength scan's field holds its radius, which takes the sentinel.
+      QString                wl = ( wavelength < 99 || wavelength_scan_mode() ) ? QString( "123" ) : QString::number( wavelength );
 
       // saveToDisk() parses tripleDesc using the " / " separator.
       US_Experiment          experiment = US_SimRecord::experiment( rotor, simparams, edit_runid, runType, guid_seed );
@@ -1667,6 +1914,18 @@ DbgLv(1) << "ASIM:svscn: 1-speed file paths"  << odir << tmst_fpath;
 
       QList<US_Convert::TripleInfo> triples;
       triples << triple;
+
+      // Intensity mode also wrote a reference dataset on the partner channel.
+      const bool    has_ref     = ( intensity_mode() || wavelength_scan_mode() ) && jd < ref_raw_guids.size();
+      const QString ref_channel = has_ref ? QString( QChar( US_SimOptics::referenceChannel( sim_data.channel ) ) ) : QString();
+      if ( has_ref )
+      {
+         US_Convert::TripleInfo ref_triple = triple;
+         ref_triple.tripleID               = 2;
+         ref_triple.tripleDesc             = cell + " / " + ref_channel + " / " + wl;
+         US_Util::uuid_parse( ref_raw_guids[jd], reinterpret_cast<uchar*>( ref_triple.tripleGUID ) );
+         triples << ref_triple;
+      }
 
       if ( experiment.saveToDisk( triples, runType, edit_runid, edir, speed_steps ) != US_Convert::OK )
       {
@@ -1689,12 +1948,62 @@ DbgLv(1) << "ASIM:svscn: 1-speed file paths"  << odir << tmst_fpath;
 
       US_SimulationParameters::editRadiiFromCell(
          ev, af_params.current_meniscus, af_params.current_bottom, simparams.radial_resolution );
-      ev.ODlimit = US_SimRecord::maxOD( sim_data );
+      // A clipped run's edit excludes the clipped readings (the solver drops
+      // readings at or above ODlimit); otherwise nothing written is excluded.
+      if ( has_ref )
+      {
+         ev.ODlimit = sample_max[jd];
+      }
+      else if ( od_limit > 0.0 )
+      {
+         // The .auc stores the clip as a float, which can read back just below
+         // od_limit. Sitting 1e-5 of the limit below it still catches every
+         // clipped reading, and is under one 16-bit step (1/65535 of the range),
+         // so no reading stored below the clip reaches it.
+         ev.ODlimit = od_limit * ( 1.0 - 1.0e-5 );
+      }
+      else
+      {
+         ev.ODlimit = ( interference_mode() && jd < written_max.size() ) ? written_max[jd] : US_SimRecord::maxOD( sim_data );
+      }
+      if ( interference_mode() )
+      { // The interference detector need not reach the bottom; edit only what it saw.
+         const QVector<double> radii = US_SimOptics::interferenceRadii( simparams.interference );
+         ev.rangeLeft                = qMax( ev.rangeLeft, radii.first() );
+         ev.rangeRight               = qMin( ev.rangeRight, radii.last() );
+      }
 
-      if ( US_DataIO::writeEdits( edir + fname, ev ) != US_DataIO::OK )
+      // A wavelength scan has no radial boundary: its edit is the scanned range.
+      const auto write_edit = [this]( const QString& path, US_DataIO::EditValues& values )
+      {
+         if ( !wavelength_scan_mode() )
+         {
+            return US_DataIO::writeEdits( path, values ) == US_DataIO::OK;
+         }
+         values.rangeLeft  = simparams.wavelength_scan.start;
+         values.rangeRight = US_SimOptics::scanWavelengths( simparams.wavelength_scan ).last();
+         return US_SimRecord::writeRangeEdit( path, values );
+      };
+
+      if ( !write_edit( edir + fname, ev ) )
       { // Report headless save failures without a modal dialog.
          qDebug() << "Error: could not write edit file" << edir + fname;
          return false;
+      }
+
+      if ( has_ref )
+      {
+         const QString ref_fname = edit_runid + "." + now + "." + runType + "." + cell + "." + ref_channel + "." + wl + ".xml";
+         ev.channel              = ref_channel;
+         ev.editGUID             = US_SimRecord::guid( guid_seed, "edit.ref." + edit_runid );
+         ev.dataGUID             = ref_raw_guids[jd];
+         ev.ODlimit              = ref_max[jd];
+
+         if ( !write_edit( edir + ref_fname, ev ) )
+         {
+            qDebug() << "Error: could not write edit file" << edir + ref_fname;
+            return false;
+         }
       }
    }
 
@@ -1819,9 +2128,12 @@ DbgLv(1) << "Sim:SV: reset s1plat" << s1plat;
          dthresh        = maxc;
       }
    } else
-   { // Headless: match the GUI's cancel-dialog default of no clipping.
+   { // Headless: clip at --od-limit if given, else leave readings unclipped.
       maxrad  = brad;
-      dthresh = maxc;
+      // Interference clips in fringes, after its scale, in toInterference().
+      dthresh = ( od_limit > 0.0 && !interference_mode() ) ? od_limit : maxc;
+      // Keep the meniscus spike, twice s1plat, within the threshold too.
+      s1plat  = qMin( s1plat, ( dthresh * 0.5 ) );
    }
 
 
@@ -1869,57 +2181,113 @@ DbgLv(1) << "Sim:SV: reset s1plat" << s1plat;
    }
 
 
-   points             = (int)( ( maxrad - mrad ) / grid_res ) + 31;
+   if ( interference_mode() )
+   { // The interference detector's own grid, in fringes, with its noise model.
+      const QString problem = US_SimOptics::interferenceGeometryProblem( simparams.interference, mrad, brad );
+      if ( !problem.isEmpty() )
+      {
+         qDebug() << "Error:" << problem;
+         return false;
+      }
+      // One fixed structure for the whole run, shared by its speed steps.
+      QVector<double>& structure = interference_structure;
+      QVector<double>  offsets;
+      US_SimOptics::toInterference( sim_data, simparams.interference, mrad, brad, total_conc, od_limit, structure, offsets );
+      written_max.resize( qMax( (int) written_max.size(), i1 + 1 ) );
+      written_max[i1] = US_SimRecord::maxOD( sim_data );
 
-   progress->setRange( 1, total_scans );
-   progress->reset();
-
-   QVector< double > tconc_v( points );
-   double* temp_conc  = tconc_v.data();
-   double  rad        = mrad - 30.0 * grid_res;
-   sim_data.xvalues.resize( points );
-   lb_progress->setText( "Writing..." );
-
-   for ( int jp = 0; jp < points; jp++ )
-   {
-      sim_data.xvalues[ jp ] = rad;
-      rad  += grid_res;
+      // The ground truth an analysis fits, in the files the absorbance noise uses.
+      QVector<double> times;
+      for ( const US_DataIO::Scan& scan : sim_data.scanData )
+      {
+         times << scan.seconds;
+      }
+      csv_data_ti.setData( { "Radial Points (cm)", "TI noise (fringes)" }, { sim_data.xvalues, structure } );
+      csv_data_ri.resize( qMax( (int) csv_data_ri.size(), i1 + 1 ) );
+      csv_data_ri[i1].setData( { "Time (s)", "RI noise (fringes)" }, { times, offsets } );
+      progress->setValue( total_scans );
    }
-
-   for ( int js = 0; js < total_scans; js++ )
+   else if ( wavelength_scan_mode() )
+   { // Read at one radius when written below; the radial solution stays.
+      const QString problem = US_SimOptics::wavelengthScanProblem( simparams.wavelength_scan, mrad, brad );
+      if ( !problem.isEmpty() )
+      {
+         qDebug() << "Error:" << problem;
+         return false;
+      }
+      progress->setValue( total_scans );
+   }
+   else if ( simparams.window.given )
+   { // The instrument's fixed window: air, the cell, and past the bottom.
+      const QString problem = US_SimOptics::windowProblem( simparams.window, mrad, brad );
+      if ( !problem.isEmpty() )
+      {
+         qDebug() << "Error:" << problem;
+         return false;
+      }
+      // In intensity mode the buffer and the region past the bottom are
+      // applied as light, by toIntensity() below.
+      const double air_sigma = intensity_noise() ? 0.0 : total_conc * simparams.rnoise / 100.0;
+      const double buffer_od = intensity_mode() ? 0.0 : buffer_absorbance( sim_data );
+      // In absorbance mode the clip threshold also caps the meniscus spike.
+      const double cap       = intensity_mode() ? 0.0 : dthresh;
+      US_SimOptics::toWindow( sim_data, simparams.window, mrad, brad, total_conc, air_sigma, buffer_od, cap, cap );
+      progress->setValue( total_scans );
+   }
+   else
    {
-      US_DataIO::Scan* scan = &sim_data.scanData[ js ];
+      points = (int) ( ( maxrad - mrad ) / grid_res ) + 31;
 
-      for ( int jp = 30; jp < points; jp++ )
-      {  // Position the computed concentration values after the first 30
-         temp_conc[ jp ] = scan->rvalues[ jp - 30 ];
-      }
+      progress->setRange( 1, total_scans );
+      progress->reset();
 
-      for ( int jp = 0; jp < 30; jp++ )
-      {  // Zero the first 30 points
-         temp_conc[ jp ] = 0.0;
-      }
-
-      temp_conc[ 30 ] = s1plat * 2.0;   // Put a spike at the meniscus
-
-      scan->rvalues.resize( points );
-
-      // Resize and clear the interpolation bitmap for the output readings.
-      scan->interpolated.fill( '\0', ( points + 7 ) / 8 );
+      QVector<double> tconc_v( points );
+      double*         temp_conc = tconc_v.data();
+      double          rad       = mrad - 30.0 * grid_res;
+      sim_data.xvalues.resize( points );
+      lb_progress->setText( "Writing..." );
 
       for ( int jp = 0; jp < points; jp++ )
-      {  // Store the values: first 30 then computed values
-         scan->rvalues[ jp ] = temp_conc[ jp ];
+      {
+         sim_data.xvalues[jp] = rad;
+         rad += grid_res;
       }
 
-      progress->setValue( ( js + 1 ) );
-//DbgLv(2) << "WD:sc secs" << scan->seconds;
-//if ( ii == 0 || (ii+1) == total_scans ) {
-//DbgLv(2) << "WD:S0:c00" << scan->rvalues[0];
-//DbgLv(2) << "WD:S0:c01" << scan->rvalues[1];
-//DbgLv(2) << "WD:S0:c30" << scan->rvalues[30];
-//DbgLv(2) << "WD:S0:cn1" << scan->rvalues[points-2];
-//DbgLv(2) << "WD:S0:cnn" << scan->rvalues[points-1]; }
+      for ( int js = 0; js < total_scans; js++ )
+      {
+         US_DataIO::Scan* scan = &sim_data.scanData[js];
+
+         for ( int jp = 30; jp < points; jp++ )
+         { // Position the computed concentration values after the first 30
+            temp_conc[jp] = scan->rvalues[jp - 30];
+         }
+
+         for ( int jp = 0; jp < 30; jp++ )
+         { // Zero the first 30 points
+            temp_conc[jp] = 0.0;
+         }
+
+         temp_conc[30] = s1plat * 2.0; // Put a spike at the meniscus
+
+         scan->rvalues.resize( points );
+
+         // Resize and clear the interpolation bitmap for the output readings.
+         scan->interpolated.fill( '\0', ( points + 7 ) / 8 );
+
+         for ( int jp = 0; jp < points; jp++ )
+         { // Store the values: first 30 then computed values
+            scan->rvalues[jp] = temp_conc[jp];
+         }
+
+         progress->setValue( ( js + 1 ) );
+         //DbgLv(2) << "WD:sc secs" << scan->seconds;
+         //if ( ii == 0 || (ii+1) == total_scans ) {
+         //DbgLv(2) << "WD:S0:c00" << scan->rvalues[0];
+         //DbgLv(2) << "WD:S0:c01" << scan->rvalues[1];
+         //DbgLv(2) << "WD:S0:c30" << scan->rvalues[30];
+         //DbgLv(2) << "WD:S0:cn1" << scan->rvalues[points-2];
+         //DbgLv(2) << "WD:S0:cnn" << scan->rvalues[points-1]; }
+      }
    }
 
    QString run_id    = dirname.section( "/", -1, -1 );
@@ -1930,12 +2298,60 @@ DbgLv(1) << "Sim:SV:  run_id_from_save_xla" << run_id;
    QString schann    = QString( QChar( sim_data.channel ) );
    int     cell      = sim_data.cell;
    int     wvlen     = qRound( sim_data.scanData[ 0 ].wavelength );
-           wvlen     = ( wvlen < 99 ) ? 123 : wvlen;
+   wvlen             = ( wvlen < 99 || wavelength_scan_mode() ) ? 123 : wvlen;
    QString ofname    = QString( "%1/%2.%3.%4.%5.%6.auc" )
       .arg( dirname ).arg( run_id ).arg( stype ).arg( cell )
       .arg( schann  ).arg( wvlen  );
 
-   int wstat        = US_DataIO::writeRawData( ofname, sim_data );
+   int wstat = US_DataIO::OK;
+
+   if ( intensity_mode() || wavelength_scan_mode() )
+   { // The sample sector on this channel, the reference on its partner.
+      US_DataIO::RawData sample;
+      US_DataIO::RawData reference;
+      if ( wavelength_scan_mode() )
+      {
+         QVector<double> buffer_od;
+         for ( double wavelength : US_SimOptics::scanWavelengths( simparams.wavelength_scan ) )
+         {
+            buffer_od << US_SimOptics::bufferOD( buffer, wavelength, simparams.cp_pathlen );
+         }
+         US_SimOptics::toWavelengthScan( sim_data, simparams.intensity, simparams.wavelength_scan, buffer_od, sample, reference );
+      }
+      else
+      {
+         US_SimOptics::toIntensity( sim_data, simparams.intensity, mrad, brad, buffer_absorbance( sim_data ), sample, reference );
+      }
+
+      const QString guid = US_SimRecord::guid( guid_seed, QString( "raw.ref.%1" ).arg( i1 ) );
+      US_Util::uuid_parse( guid, (uchar*) reference.rawGUID );
+
+      const int nstep = simparams.speed_step.size();
+      ref_raw_guids.resize( nstep );
+      sample_max.resize( nstep );
+      ref_max.resize( nstep );
+      ref_raw_guids[i1] = guid;
+      sample_max[i1]    = US_SimRecord::maxOD( sample );
+      ref_max[i1]       = US_SimRecord::maxOD( reference );
+
+      const QString refname = QString( "%1/%2.%3.%4.%5.%6.auc" )
+                                 .arg( dirname )
+                                 .arg( run_id )
+                                 .arg( stype )
+                                 .arg( cell )
+                                 .arg( QChar( reference.channel ) )
+                                 .arg( wvlen );
+      wstat = US_DataIO::writeRawData( ofname, sample );
+      if ( wstat == US_DataIO::OK )
+      {
+         ofname = refname;
+         wstat  = US_DataIO::writeRawData( ofname, reference );
+      }
+   }
+   else
+   {
+      wstat = US_DataIO::writeRawData( ofname, sim_data );
+   }
 DbgLv(1) << "Sim:SV: after_write_rawdata" << ofname;
 
    if ( wstat != US_DataIO::OK )

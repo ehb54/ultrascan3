@@ -65,6 +65,16 @@ class US_Astfem_Sim : public US_Widgets
       int            sim_centerpiece_id = 1;   //!< Centerpiece ID for the experiment record; 1 is the simulation centerpiece
       char           sim_channel        = 'S'; //!< Output channel
       uint noise_seed = 0; //!< Noise generator seed from --noise-seed or chosen for a started run; 0 leaves the generator as it is
+      double od_limit   = 0.0; //!< Headless clip threshold from --od-limit; 0 leaves readings unclipped
+      QVector<double>                                schedule_firsts;        //!< Schedule: each speed step's first cycle start
+      QVector<int>                                   schedule_counts;        //!< Schedule: each speed step's scan count
+      QVector<US_SimulationParameters::SpeedProfile> loaded_steps;           //!< Speed steps as given, for the run's record
+      QVector<US_SimulationParameters::SpeedProfile> rebuilt_steps;          //!< Speed steps as set_parameters last rebuilt them
+      QVector<double>                                interference_structure; //!< Interference: the run's fixed radial structure
+      QVector<double>                                written_max; //!< Interference: largest fringe value written per speed step
+      QVector<QString>           ref_raw_guids; //!< RI: reference dataset raw GUID per speed step, set by save_xla
+      QVector<double>            sample_max;    //!< RI: largest sample intensity per speed step, for its edit file
+      QVector<double>            ref_max;       //!< RI: largest reference intensity per speed step, for its edit file
       bool noise_to_composite = true;     //!< Apply ASTFEM noise to the composite before splitting by speed
       QString                 guid_seed;  //!< Seed for reproducible GUIDs, from --guid-seed; empty mints random ones
       QString                 edit_stamp; //!< Fixed yyMMddhhmm for the edit filename, from --edit-timestamp; empty uses the clock
@@ -123,6 +133,13 @@ class US_Astfem_Sim : public US_Widgets
       void   ri_noise       ( void );
       void   baseline       ( void );
       void   random_noise   ( void );
+      bool                             intensity_mode( void ) const;       // Writing RI intensities
+      bool                             wavelength_scan_mode( void ) const; // Writing a WI wavelength scan
+      bool                             interference_mode( void ) const;    // Writing IP fringes with the interference model
+      bool                             intensity_noise( void ) const;      // Counts noise replaces absorbance random noise
+      double                           buffer_absorbance( const US_DataIO::RawData& ) const; // Buffer OD at the data's wavelength
+      QString                          schedule_problem( void ) const; // Unusable schedule or telemetry settings
+      QString                          record_run_telemetry( void );   // Turn the time state into the run's record
       void   ti_noise       ( void );
       void                             derive_speed_data( void );
       US_DataIO::Scan&                 noise_scan( int, int, int );

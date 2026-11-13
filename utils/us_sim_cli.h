@@ -8,8 +8,8 @@
 #include "us_extern.h"
 
 //! \brief A simulator's parsed and validated command-line options.
-//! An empty string, a -1 index, or a zero cell, channel or seed means the
-//! option was not given.
+//! An empty string, a -1 index, or a zero cell, channel, seed or OD limit
+//! means the option was not given.
 class US_UTIL_EXTERN US_SimCliArgs
 {
    public:
@@ -32,6 +32,7 @@ class US_UTIL_EXTERN US_SimCliArgs
       QString     run_type;             //!< Two-character optical data type
       QString     description;          //!< Description stored with the data
       quint32     noise_seed = 0;       //!< Noise generator seed
+      double      od_limit   = 0.0;     //!< Clip readings above this before saving; 0 means no clipping (us_astfem_sim)
       QString     save;                 //!< Output directory, with forward slashes
       QString     guid_seed;            //!< Seed for reproducible GUIDs
       QString     edit_stamp;           //!< yyMMddhhmm for edit filenames
@@ -51,7 +52,7 @@ class US_UTIL_EXTERN US_SimCli
       };
 
       //! \brief Supported optical data types.
-      //! RI and WI would need conversion to intensity; WA and WI are wavelength scans.
+      //! RI writes sample and reference intensities; WA and WI are wavelength scans.
       static QStringList           runTypes();
 
       //! \brief The error parse() reports for an invalid option value.
@@ -67,6 +68,15 @@ class US_UTIL_EXTERN US_SimCli
       //! %1 channel letter, %2 its row, %3 the selected row.
       static constexpr const char* channelRowMismatchMessage = "--channel %1 is centerpiece row %2, but "
                                                                "--centerpiece-channel selects row %3";
+      //! --runtype RI with a channel that has no reference partner: %1 channel.
+      static constexpr const char* intensityChannelMessage   = "--runtype RI and WI write a sample channel and its reference; "
+                                                               "give --channel A, C, E or G, not %1";
+      //! --runtype RI together with --od-limit.
+      static constexpr const char* intensityOdLimitMessage   = "--od-limit does not apply to --runtype RI or WI, whose "
+                                                               "readings fall to dark counts instead of being clipped";
+      //! --runtype WI without the simparams element that describes the scan.
+      static constexpr const char* wavelengthScanMessage     = "--runtype WI needs a <wavelength_scan> element in the "
+                                                               "simparams: the radius, the wavelengths and the spectrum";
       //! Simulation parameters with other than one speed step: %1 file, %2 step count.
       static constexpr const char* speedStepCountMessage     = "%1 has %2 speed steps; only one can be simulated";
 
