@@ -261,6 +261,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString path_load_bead_model;
       QString path_view_asa_res;
       QString path_view_bead_model;
+      QString path_visualize_mesh;
       QString path_open_hydro_res;
 
       QString pdb_file;
@@ -578,6 +579,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_grid;
       QPushButton *pb_view_asa;
       QPushButton *pb_view_bead_model;
+      QPushButton *pb_visualize_mesh;
 
       QLabel      *lbl_temperature;
       QLineEdit   *le_temperature;
@@ -1287,6 +1289,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void pdb_visualization(); // pdb visualization options
       void view_asa(); // show asa file in editor
       void view_bead_model(); // show bead model file in editor
+      void visualize_mesh(); // show a surface mesh file with its structure in RasMol
       void view_file(const QString &, QString title = "SOMO editor"); // call editor to view a file
       void bead_check( bool use_threshold = false, bool message_type = false, bool vdw = false, bool only_asa = false ); // recheck beads
       void load_config();

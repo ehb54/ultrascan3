@@ -173,7 +173,7 @@ Pressing the <i><b>RUN DMD</b></i> button will first open the <a href="somo_clus
 <tr>
 <center>
 <table id="somomainwindow" BORDER CELLSPACING=0 CELLPADDING=5 bgcolor="#FFFFFF">
-<td><center><img SRC="Somo_BeadModel_functions_June2024.png" ALT="SOMO Bead Model functions Screen"></td>
+<td><center><img SRC="Somo_BeadModel_functions_November2026.png" ALT="SOMO Bead Model functions Screen"></td>
 </tr> 
 </table>
 </center>
@@ -203,7 +203,8 @@ The bead model generation progress of the loaded 1HEL.PDB file using the <i><b>B
 
 A fifth button, <i><b>Grid Existing Bead Model</b></i>, will operate the AtoB grid routine on a <i>previously generated</i> bead model. This button is not available until a PDB file has been processed with any of the bead modeling primary options (see above),  or until a previously-generated bead model file has been loaded (see below). If this operation is launched, the "-a2bg" suffix is automatically added to the filename of the new bead model.<br>
 Since model building can take some time, depending on the settings and especially for large structures, selecting the <b>Automatic Calculate Hydrodynamics</b> checkbox will allow the direct computation of the hydrodynamic parameters as soon as the model(s) generation has been completed (the default method is <i><b>ZENO</b></i>, but it is user-selectable in the <a href=somo_misc.html> <b><i>Miscellaneous Options</b></i></a> module.). If this checkbox is not selected (<b>default</b> option), at the end of the model building phase the progress bar will be at 100% and the bead model(s) can be visualized with <i>RasMol</i> by clicking on <i><b>Visualize Bead Model</b></i> (recommended, comparing the original structure with the bead model could reveal previously unforeseen problems; <span style="color:#CC0000">Warning: if multiple models have been generated, such as from an NMR-style file, pressing <i><b>Visualize Bead Model</b></i> will open multiple RasMol windows, one for each model!</span>).<br>
-The results of the accessible surface area (ASA) computations (see below) can also be visualized in a pop-up window by clicking on the <i><b>View ASA Results</b></i> button; this file also includes the computation of the radius of gyration (<i>R<sub>g</sub></i>) directly from the atomic coordinates of the structure. A just-generated or previously-generated bead model file can also be opened inside a text editor by pressing the <b><i>View Bead Model File</b></i> button.<p>
+The results of the accessible surface area (ASA) computations (see below) can also be visualized in a pop-up window by clicking on the <i><b>View ASA Results</b></i> button; this file also includes the computation of the radius of gyration (<i>R<sub>g</sub></i>) directly from the atomic coordinates of the structure. A just-generated or previously-generated bead model file can also be opened inside a text editor by pressing the <b><i>View Bead Model File</b></i> button.<br>
+The <b><i>Visualize Mesh</b></i> button shows a triangulated surface mesh in <i>RasMol</i> together with its structure. It reads the meshes used for the hydrodynamic computations: the <i>msroll</i> surface (<i>.c3p</i>) and the coarsened meshes (named <i>name_NNNNN</i>, with <i>NNNNN</i> the number of triangles) of a <i>BEST</i> calculation, <i>BEST</i> (<i>.best</i>) and <i>ZENO</i> (<i>.bod</i>) meshes, and <i>MSMS</i> surfaces (<i>.vert</i> and <i>.face</i>). After the mesh file is chosen, the currently loaded PDB structure is offered; otherwise, or by answering <i>No</i>, another PDB file is chosen. The <i>BEST</i> results include the structure their meshes were computed from, without water, as <i>name_s.pdb</i>. The mesh coordinates must be in &Aring; and in the frame of that structure. In <i>RasMol</i> the mesh is a map: the command <i>map mesh</i> shows its triangles, <i>map surface</i> shows the surface again, <i>map colour atom</i> colours it by the nearest atom, <i>slab 50</i> cuts it open to show the atoms inside, and <i>map show</i> reports its number of triangles, whether it is closed, its area and the volume it encloses (see <i>help load</i> in <i>RasMol</i>). Very fine meshes (a million triangles or more) take a few seconds to load and rotate more slowly.<p>
 
 Alternatively, you can load one or multiple previously-generated bead model by clicking
 on either the <i><b>Batch Mode/Cluster Operation</b></i> (see <a href="somo_batch.html">here</a>)
@@ -581,7 +582,7 @@ The latest version of this document can always be found at:
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on August 12, 2025.
+Last modified on November 13, 2026.
 </font>
 </body>
 </html>
