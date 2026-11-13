@@ -975,6 +975,11 @@ elseif(BUILD_TESTING AND NOT US3_NO_DB)
     add_subdirectory(programs/us_sim_inputs_gen)
 endif()
 
+if(US3_BUILD_PROGRAMS AND NOT US3_NO_DB)
+    include(${CMAKE_SOURCE_DIR}/admin/cmake/packaging/AppPackage.cmake)
+    us3_configure_app_package()
+endif()
+
 if(BUILD_TESTING)
     add_compile_definitions(US3_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
     add_subdirectory(test)
@@ -1290,14 +1295,6 @@ if(APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
 
     # Create deploy_macos target — builds the folder tree in _stage/UltraScan3/
     if(MACDEPLOYQT_EXECUTABLE AND TARGET us)
-        # Core deps only — optional targets (us3_somo, us3_config, us_admin, us_saxs_cmds_t)
-        # are NOT listed here; they are staged opportunistically by MacDeploy.cmake
-        # if their output dirs exist, but we don't hard-depend on them.
-        set(_deploy_macos_deps us)
-        if(TARGET documentation)
-            list(APPEND _deploy_macos_deps documentation)
-        endif()
-
         add_custom_target(deploy_macos
             COMMAND ${CMAKE_COMMAND} -E remove_directory "${US3_STAGE_DIR}"
             COMMAND ${CMAKE_COMMAND}
@@ -1305,6 +1302,7 @@ if(APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
                 -DMACDEPLOYQT=${MACDEPLOYQT_EXECUTABLE}
                 -DASSISTANT_APP=${ASSISTANT_APP_PATH}
                 -DQCH_DIR=${CMAKE_BINARY_DIR}/bin
+                -DAPP_PROGRAM_MANIFEST=${US3_APP_MANIFEST}
                 -DBIN_DIR=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
                 -DLIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
                 -DETC_SOURCE_DIR=${CMAKE_SOURCE_DIR}/etc
@@ -1318,7 +1316,7 @@ if(APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
                 -DVCPKG_PLUGIN_DIR_STA=${_VCPKG_PLUGIN_DIR_STA}
                 -DVCPKG_QT6_PLUGIN_DIR=${_VCPKG_QT6_PLUGIN_DIR}
                 -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/macos/MacDeploy.cmake
-            DEPENDS ${_deploy_macos_deps}
+            DEPENDS us3_app_package_inputs
             COMMENT "Staging macOS folder-based deployment into ${US3_STAGE_DIR}"
             VERBATIM
         )
@@ -1491,16 +1489,19 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
     endif()
 
     # -------------------------------------------------------------------------
-    # Derive vcpkg plugin dir for WinDeploy safety-net searches
+    # Derive vcpkg runtime and plugin dirs for Windows deployment.
     # -------------------------------------------------------------------------
     set(_WIN_VCPKG_PLUGIN_DIR "")
+    set(_WIN_VCPKG_BIN_DIR "")
     if(DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET)
+        set(_WIN_VCPKG_BIN_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin")
         set(_WIN_VCPKG_PLUGIN_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/plugins")
         if(NOT EXISTS "${_WIN_VCPKG_PLUGIN_DIR}" AND DEFINED _WIN_STATIC_TRIPLET)
             set(_WIN_VCPKG_PLUGIN_DIR "${VCPKG_INSTALLED_DIR}/${_WIN_STATIC_TRIPLET}/plugins")
         endif()
     endif()
     message(STATUS "vcpkg plugin dir (Windows): ${_WIN_VCPKG_PLUGIN_DIR}")
+    message(STATUS "vcpkg runtime dir (Windows): ${_WIN_VCPKG_BIN_DIR}")
 
     # -------------------------------------------------------------------------
     # Copy MariaDB auth plugins into the dev-build plugins/ dir (Windows)
@@ -1553,14 +1554,6 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
     # so all DLLs land in the same tree that CPack will package.
     # -------------------------------------------------------------------------
     if(WINDEPLOYQT_EXECUTABLE AND TARGET us)
-        # Only depend on 'documentation' if Sphinx was found and the target
-        # actually exists. doc/manual/CMakeLists.txt does an early return()
-        # when sphinx-build is not installed, leaving no documentation target.
-        set(_deploy_windows_deps us)
-        if(TARGET documentation)
-            list(APPEND _deploy_windows_deps documentation)
-        endif()
-
         add_custom_target(deploy_windows
             COMMAND ${CMAKE_COMMAND} -E remove_directory "${US3_WIN_STAGE_DIR}"
             COMMAND ${CMAKE_COMMAND}
@@ -1568,6 +1561,7 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
                 -DWINDEPLOYQT=${WINDEPLOYQT_EXECUTABLE}
                 -DASSISTANT_EXE=${ASSISTANT_EXECUTABLE}
                 -DQCH_DIR=${CMAKE_BINARY_DIR}/bin
+                -DAPP_PROGRAM_MANIFEST=${US3_APP_MANIFEST}
                 -DBIN_DIR=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
                 -DLIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
                 -DETC_SOURCE_DIR=${CMAKE_SOURCE_DIR}/etc
@@ -1577,8 +1571,9 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
                 -DLICENSE_FILE=${CMAKE_SOURCE_DIR}/LICENSE.txt
                 -DVERSION_FILE=${CMAKE_SOURCE_DIR}/VERSION
                 -DVCPKG_PLUGIN_DIR=${_WIN_VCPKG_PLUGIN_DIR}
+                -DVCPKG_BIN_DIR=${_WIN_VCPKG_BIN_DIR}
                 -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/windows/WinDeploy.cmake
-            DEPENDS ${_deploy_windows_deps}
+            DEPENDS us3_app_package_inputs
             COMMENT "Staging Windows deployment into ${US3_WIN_STAGE_DIR}"
             VERBATIM
         )
@@ -1829,16 +1824,14 @@ if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
     # -------------------------------------------------------------------------
     # deploy_linux target
     # -------------------------------------------------------------------------
-    if(TARGET us)
-        set(_deploy_linux_deps us)
-        if(TARGET documentation)
-            list(APPEND _deploy_linux_deps documentation)
-        endif()
+    include(${CMAKE_SOURCE_DIR}/admin/cmake/packaging/linux/LinuxPackageName.cmake)
 
+    if(TARGET us)
         add_custom_target(deploy_linux
             COMMAND ${CMAKE_COMMAND} -E remove_directory "${US3_LNX_STAGE_DIR}"
             COMMAND ${CMAKE_COMMAND}
                 -DSTAGE_DIR=${US3_LNX_STAGE_DIR}
+                -DAPP_PROGRAM_MANIFEST=${US3_APP_MANIFEST}
                 -DBIN_DIR=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
                 -DLIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
                 -DETC_SOURCE_DIR=${CMAKE_SOURCE_DIR}/etc
@@ -1853,8 +1846,9 @@ if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
                 -DVCPKG_PLUGIN_DIR=${_LNX_VCPKG_PLUGIN_DIR}
                 -DVCPKG_QT6_PLUGIN_DIR=${_LNX_VCPKG_QT6_PLUGIN_DIR}
                 -DUS3_VERSION_STRING=${US3_VERSION_STRING}
+                -DUS3_LINUX_ARCHIVE_NAME=${US3_LINUX_ARCHIVE_NAME}
                 -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/linux/LinuxDeploy.cmake
-            DEPENDS ${_deploy_linux_deps}
+            DEPENDS us3_app_package_inputs
             COMMENT "Staging Linux deployment into ${US3_LNX_STAGE_DIR}"
             VERBATIM
         )

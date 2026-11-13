@@ -74,3 +74,6 @@ add_custom_target(package_macos_hpc_tarball
     DEPENDS deploy_macos_hpc
     VERBATIM
 )
+
+include("${CMAKE_CURRENT_LIST_DIR}/../PackageOutput.cmake")
+us3_record_package_output(package_macos_hpc_tarball "${_MAC_HPC_FINAL_PKG}")

@@ -18,6 +18,7 @@
 #   MACDEPLOYQT         - Path to macdeployqt executable
 #   ASSISTANT_APP       - Path to Qt Assistant.app (optional)
 #   QCH_DIR             - Directory containing manual.qch / manual.qhc
+#   APP_PROGRAM_MANIFEST - Generated manifest of required APP target outputs
 #   BIN_DIR             - Build-tree bin/ containing us.app, us_* binaries
 #   LIB_DIR             - Build-tree lib/ containing libusutils / libusGui dylibs
 #   ETC_SOURCE_DIR      - Source etc/ directory
@@ -50,40 +51,20 @@ set(S_LIB  "${STAGE_DIR}/lib")
 set(S_ETC  "${STAGE_DIR}/etc")
 set(S_SOMO "${STAGE_DIR}/somo")
 
+# Always start with a clean stage, including standalone script invocations.
+if(EXISTS "${STAGE_DIR}")
+    file(REMOVE_RECURSE "${STAGE_DIR}")
+endif()
+
 file(MAKE_DIRECTORY "${S_BIN}")
 file(MAKE_DIRECTORY "${S_FW}")
 file(MAKE_DIRECTORY "${S_PLUG}")
 file(MAKE_DIRECTORY "${S_LIB}")
 
 # =========================================================================
-# 1) Copy us.app bundle into bin/
+# 1) Copy declared core APP executables and bundles into bin/
 # =========================================================================
-if(EXISTS "${BIN_DIR}/us.app")
-    message(STATUS "Copying us.app → ${S_BIN}/")
-    file(COPY "${BIN_DIR}/us.app" DESTINATION "${S_BIN}")
-else()
-    message(FATAL_ERROR "us.app not found in ${BIN_DIR}")
-endif()
-
-# =========================================================================
-# 2) Copy companion us_* programs as .app bundles into bin/
-#    On macOS with MACOSX_BUNDLE, each is built as us_foo.app.
-#    Non-bundle executables are copied as bare binaries.
-# =========================================================================
-file(GLOB extra_items "${BIN_DIR}/us_*")
-foreach(item ${extra_items})
-    get_filename_component(item_name "${item}" NAME)
-    if(IS_DIRECTORY "${item}" AND item_name MATCHES "\\.app$")
-        message(STATUS "  Copying bundle: ${item_name}")
-        file(COPY "${item}" DESTINATION "${S_BIN}")
-    elseif(NOT IS_DIRECTORY "${item}")
-        message(STATUS "  Copying program: ${item_name}")
-        file(COPY "${item}" DESTINATION "${S_BIN}"
-             FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
-                              GROUP_READ GROUP_EXECUTE
-                              WORLD_READ WORLD_EXECUTE)
-    endif()
-endforeach()
+include("${CMAKE_CURRENT_LIST_DIR}/../StageAppPrograms.cmake")
 
 # =========================================================================
 # 2.5) packaging: wrap all bare us_* executables into .app bundles
@@ -732,17 +713,20 @@ endif()
 #      SoMo apps are self-contained bundles and rely on the somo_appnames fixup
 #      (already applied by makesomo.sh).  No additional rpath patching needed here.
 # =========================================================================
+# Do not reimport stale core APP outputs from the legacy source bin directory.
 if(SOMO_BIN_DIR AND EXISTS "${SOMO_BIN_DIR}")
     message(STATUS "Staging SoMo binaries from ${SOMO_BIN_DIR} → bin/")
     # Copy .app bundles
-    file(GLOB _somo_apps "${SOMO_BIN_DIR}/*.app")
+    file(GLOB _somo_apps "${SOMO_BIN_DIR}/us3_*.app" "${SOMO_BIN_DIR}/us_somo*.app"
+        "${SOMO_BIN_DIR}/us_admin.app" "${SOMO_BIN_DIR}/us_saxs_cmds_t.app")
     foreach(_app ${_somo_apps})
         get_filename_component(_app_name "${_app}" NAME)
         message(STATUS "  SoMo bundle: ${_app_name}")
         file(COPY "${_app}" DESTINATION "${S_BIN}")
     endforeach()
     # Copy bare executables (non-directories)
-    file(GLOB _somo_bins "${SOMO_BIN_DIR}/*")
+    file(GLOB _somo_bins "${SOMO_BIN_DIR}/us3_*" "${SOMO_BIN_DIR}/us_somo*"
+        "${SOMO_BIN_DIR}/us_admin" "${SOMO_BIN_DIR}/us_saxs_cmds_t")
     foreach(_bin ${_somo_bins})
         if(NOT IS_DIRECTORY "${_bin}")
             get_filename_component(_bin_name "${_bin}" NAME)
@@ -988,3 +972,5 @@ message(STATUS "  frameworks/ - Qt frameworks and UltraScan libraries")
 message(STATUS "  plugins/    - Qt plugins")
 message(STATUS "  etc/        - Configuration data")
 message(STATUS "  somo/       - SOMO data")
+
+include("${CMAKE_CURRENT_LIST_DIR}/../ValidateAppHelp.cmake")

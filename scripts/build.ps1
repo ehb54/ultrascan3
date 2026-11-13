@@ -1157,11 +1157,8 @@ if ($profile -ne "HPC") {
 
 Write-Host ""
 Write-Host "Building..." -ForegroundColor Cyan
-# Always run a full build first. This mirrors build.sh, which performs a full
-# cmake --build before the package target so all us_*.exe companion programs
-# are compiled and present in bin/ when the staging script's glob runs.
-# package_windows_nsis depends only on deploy_windows -> us, so without this
-# step the other 68 program executables would never be built before staging.
+# Keep the wrapper full build for its other enabled targets. The APP package
+# target also builds its own complete program and documentation dependencies.
 cmake --build $BuildDir --config $BuildType --parallel $BuildJobs
 if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: Build failed." -ForegroundColor Red; exit $LASTEXITCODE }
 
@@ -1177,12 +1174,11 @@ Write-Host "Build complete!"                           -ForegroundColor Green
 Write-Host "==========================================" -ForegroundColor Green
 Write-Host ""
 if (${pkg}) {
-    $InstallerPattern = "build/$Preset/UltraScan3-*-Windows.exe"
-    $InstallerFile = Get-ChildItem -Path $InstallerPattern -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($InstallerFile) {
-        Write-Host "Installer: $($InstallerFile.FullName)" -ForegroundColor Green
-    } else {
-        Write-Host "Installer: build/$Preset/UltraScan3-*-Windows.exe" -ForegroundColor Yellow
+    try {
+        & "$PSScriptRoot/report-package.ps1" -ReceiptPath (Join-Path $BuildDir "package-path.txt")
+    } catch {
+        Write-Host "ERROR: Package output reporting failed: $_" -ForegroundColor Red
+        exit 1
     }
     Write-Host ""
 }

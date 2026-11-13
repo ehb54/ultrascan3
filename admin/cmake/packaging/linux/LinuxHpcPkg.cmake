@@ -75,3 +75,6 @@ add_custom_target(package_linux_hpc_tarball
     DEPENDS deploy_linux_hpc
     VERBATIM
 )
+
+include("${CMAKE_CURRENT_LIST_DIR}/../PackageOutput.cmake")
+us3_record_package_output(package_linux_hpc_tarball "${_HPC_FINAL_PKG}")

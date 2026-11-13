@@ -1019,13 +1019,11 @@ if [ "$BUILD_PKG" = true ] && [ "$PLATFORM" = "Linux" ]; then
   if [ "$PROFILE" = "HPC" ]; then
     _PKG_TARGET="package_linux_hpc_tarball"
     _PKG_LABEL="Linux HPC tarball"
-    _PKG_GLOB="${BUILD_DIR}/UltraScan3-HPC-*-Linux-*.tar.xz"
     _PKG_STAGE="_hpc_stage/UltraScan3-HPC"
     _DEPLOY_TARGET="deploy_linux_hpc"
   else
     _PKG_TARGET="package_linux_tarball"
     _PKG_LABEL="Linux tarball"
-    _PKG_GLOB="${BUILD_DIR}/UltraScan3-*-Linux-*.tar.xz"
     _PKG_STAGE="_stage/UltraScan3"
     _DEPLOY_TARGET="deploy_linux"
   fi
@@ -1058,13 +1056,7 @@ if [ "$BUILD_PKG" = true ] && [ "$PLATFORM" = "Linux" ]; then
   echo "=========================================="
   echo ""
 
-  for pkg in ${_PKG_GLOB}; do
-    if [ -f "$pkg" ]; then
-      PKG_SIZE=$(du -sh "$pkg" 2>/dev/null | cut -f1 || echo "unknown")
-      echo "  Created : $pkg"
-      echo "  Size    : ${PKG_SIZE}"
-    fi
-  done
+  bash scripts/report-package.sh "$BUILD_DIR/package-path.txt"
   echo ""
 fi
 
@@ -1091,7 +1083,6 @@ if [ "$BUILD_PKG" = true ] && [ "$PLATFORM" = "macOS" ]; then
     # ------------------------------------------------------------------
     _MAC_PKG_TARGET="package_macos_hpc_tarball"
     _MAC_PKG_LABEL="macOS HPC tarball"
-    _MAC_PKG_GLOB="${BUILD_DIR}/UltraScan3-HPC-*-macOS-*.tar.gz"
     _MAC_DEPLOY_TARGET="deploy_macos_hpc"
 
     echo ""
@@ -1122,13 +1113,7 @@ if [ "$BUILD_PKG" = true ] && [ "$PLATFORM" = "macOS" ]; then
     echo "=========================================="
     echo ""
 
-    for pkg in ${_MAC_PKG_GLOB}; do
-      if [ -f "$pkg" ]; then
-        PKG_SIZE=$(du -sh "$pkg" 2>/dev/null | cut -f1 || echo "unknown")
-        echo "  Created : $pkg"
-        echo "  Size    : ${PKG_SIZE}"
-      fi
-    done
+    bash scripts/report-package.sh "$BUILD_DIR/package-path.txt"
     echo ""
 
   else
@@ -1164,13 +1149,7 @@ if [ "$BUILD_PKG" = true ] && [ "$PLATFORM" = "macOS" ]; then
     echo "=========================================="
     echo ""
 
-    for pkg in "$BUILD_DIR"/UltraScan3-*-macOS.pkg; do
-      if [ -f "$pkg" ]; then
-        PKG_SIZE=$(du -sh "$pkg" 2>/dev/null | cut -f1 || echo "unknown")
-        echo "  Created : $pkg"
-        echo "  Size    : ${PKG_SIZE}"
-      fi
-    done
+    bash scripts/report-package.sh "$BUILD_DIR/package-path.txt"
     echo ""
     echo "To install (requires admin password):"
     echo "  sudo installer -pkg <path>.pkg -target /"
