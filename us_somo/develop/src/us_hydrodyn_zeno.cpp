@@ -15185,6 +15185,10 @@ bool US_Hydrodyn::calc_zeno()
                      zeno_mm_save_params.data_vector.push_back( this_data );
                   }
 
+                  if ( uhz.mesh_used ) {
+                     last_zeno_mesh = fname + ".bod";
+                  }
+
                   if ( mesh_series ) {
                      US_Zeno_Mesh_Series_Point point;
                      point.h         = uhz.mesh_h;
@@ -15404,7 +15408,7 @@ bool US_Hydrodyn::calc_zeno()
       editor_msg( "dark blue", info_cite( "zeno" ) );
    }
 
-   if ( advanced_config.auto_show_hydro ) 
+   if ( advanced_config.auto_show_hydro )
    {
       show_zeno();
    }
@@ -15412,6 +15416,15 @@ bool US_Hydrodyn::calc_zeno()
    progress->reset();
    mprogress->hide();
    qApp->processEvents();
+
+   // with "Show the mesh with the bead model" on, show the models just computed with their
+   // meshes, as Visualize Bead Model does; not in batch mode or from scripts
+   if ( zeno_mesh &&
+        gparams[ "zeno_mesh_view" ] != "false" &&
+        guiFlag &&
+        !batch_active() ) {
+      visualize();
+   }
    return true;
 }
 

@@ -262,6 +262,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString path_view_asa_res;
       QString path_view_bead_model;
       QString path_visualize_mesh;
+      QString last_zeno_mesh;          // the .bod of the last ZENO run on a surface mesh, offered by Visualize Mesh
       QString path_open_hydro_res;
 
       QString pdb_file;

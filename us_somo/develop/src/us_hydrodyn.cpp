@@ -738,6 +738,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
 
    last_read_bead_model = "";
    last_hydro_res = "";
+   last_zeno_mesh = "";
    QDir::setCurrent(somo_tmp_dir);
    if ( advanced_config.debug_5 )
    {
@@ -3899,16 +3900,39 @@ void US_Hydrodyn::view_bead_model()
 // its frame, in Angstroms (a .bod file may state other units).
 void US_Hydrodyn::visualize_mesh()
 {
-   QString use_dir = path_visualize_mesh.isEmpty() ? somo_dir : path_visualize_mesh;
-   select_from_directory_history( use_dir, this );
+   QString mesh;
 
-   QString mesh = QFileDialog::getOpenFileName( this,
-                                                us_tr( "Visualize Mesh: select the mesh file" ),
-                                                use_dir,
-                                                us_tr( "Meshes (*.c3p *.vert *.face *.bod *.best"
-                                                       " *_[0-9][0-9][0-9][0-9][0-9]);;All files (*)" ) );
+   // the last mesh ZENO ran on, as View Bead Model File offers the last bead model
+   if ( !last_zeno_mesh.isEmpty() && QFileInfo( last_zeno_mesh ).exists() ) {
+      switch ( QMessageBox::question( this,
+                                      us_tr( "Visualize Mesh" ),
+                                      QString( us_tr( "View last produced mesh %1 ?\n"
+                                                      "(No: choose another mesh file)" ) )
+                                      .arg( QFileInfo( last_zeno_mesh ).fileName() ),
+                                      QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
+                                      QMessageBox::Yes ) ) {
+      case QMessageBox::Yes :
+         mesh = last_zeno_mesh;
+         break;
+      case QMessageBox::No :
+         break;
+      default :
+         return;
+      }
+   }
+
    if ( mesh.isEmpty() ) {
-      return;
+      QString use_dir = path_visualize_mesh.isEmpty() ? somo_dir : path_visualize_mesh;
+      select_from_directory_history( use_dir, this );
+
+      mesh = QFileDialog::getOpenFileName( this,
+                                           us_tr( "Visualize Mesh: select the mesh file" ),
+                                           use_dir,
+                                           us_tr( "Meshes (*.c3p *.vert *.face *.bod *.best"
+                                                  " *_[0-9][0-9][0-9][0-9][0-9]);;All files (*)" ) );
+      if ( mesh.isEmpty() ) {
+         return;
+      }
    }
    path_visualize_mesh = QFileInfo( mesh ).absolutePath();
    add_to_directory_history( path_visualize_mesh );
@@ -3956,7 +3980,8 @@ void US_Hydrodyn::visualize_mesh()
       << "wireframe off\n"
       << "spacefill\n"
       << "colour cpk\n"
-      << "load mesh \"" << QFileInfo( mesh ).absoluteFilePath() << "\"\n";
+      << "load mesh \"" << QFileInfo( mesh ).absoluteFilePath() << "\"\n"
+      << "map mesh\n";
    f.close();
 
    editor_msg( "black", QString( us_tr( "Visualizing mesh %1 with %2\n" ) )
