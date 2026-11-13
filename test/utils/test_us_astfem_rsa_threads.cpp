@@ -299,6 +299,43 @@ TEST_F( TestUSAstfemRsaThreads, NoUsableTempDirFailsCleanly )
    US_Settings::set_tmpDir( saved_tmpdir ); // TearDown restores the environment
 }
 
+TEST_F( TestUSAstfemRsaThreads, MissingSystemTempPathNeverFallsBackToFilesystemRoot )
+{
+   const QString missing = US_Settings::workBaseDir() + "/missing/system-temp";
+   ASSERT_FALSE( QFileInfo::exists( missing ) );
+   US_Settings::set_tmpDir( missing + "/configured" );
+   // A regular file prevents the configured path from being created.
+   const QString blocker = US_Settings::workBaseDir() + "/temp-blocker";
+   ASSERT_TRUE( us3WriteTestFile( blocker, "blocker" ) );
+   US_Settings::set_tmpDir( blocker + "/configured" );
+   for ( const char* name : tmp_env_names )
+   {
+      ASSERT_TRUE( qputenv( name, QFile::encodeName( missing ) ) );
+   }
+   US_SimulationParameters sp;
+   US_DataIO::RawData      rdata;
+   setup( experiments[0], sp, rdata );
+   EXPECT_EQ( US_AstfemMath::timestate_from_speedsteps( sp, rdata ), -1 );
+   EXPECT_TRUE( sp.sim_speed_prof.isEmpty() );
+   EXPECT_FALSE( QFileInfo::exists( missing ) );
+}
+
+TEST_F( TestUSAstfemRsaThreads, InvalidConfiguredTempUsesValidSystemDirectory )
+{
+   const QString systemTemp = QDir::tempPath();
+   ASSERT_TRUE( QDir( systemTemp ).exists() );
+   const QStringList before  = QDir( systemTemp ).entryList( { "us3-tmst-*" }, QDir::Dirs );
+   const QString     blocker = US_Settings::workBaseDir() + "/configured-temp-blocker";
+   ASSERT_TRUE( us3WriteTestFile( blocker, "blocker" ) );
+   US_Settings::set_tmpDir( blocker + "/tmp" );
+   US_SimulationParameters sp;
+   US_DataIO::RawData      rdata;
+   setup( experiments[0], sp, rdata );
+   EXPECT_GT( US_AstfemMath::timestate_from_speedsteps( sp, rdata ), 0 );
+   EXPECT_FALSE( sp.sim_speed_prof.isEmpty() );
+   EXPECT_EQ( QDir( systemTemp ).entryList( { "us3-tmst-*" }, QDir::Dirs ), before );
+}
+
 // A timestate whose definitions file is missing loads no speed profile:
 //  the load reports failure rather than a count of zero steps
 TEST_F( TestUSAstfemRsaThreads, TimestateWithoutDefinitionsFailsToLoad )

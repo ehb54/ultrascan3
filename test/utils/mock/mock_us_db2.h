@@ -121,20 +121,6 @@ public:
     }
 };
 
-// Compatibility entry point; defaults have a single implementation above.
-class US_DB2_MockHelper
-{
-   public:
-      static std::unique_ptr<US_DB2_Mock> createMockWithDefaults()
-      {
-         return MockBuilder::createConnectedMock<>();
-      }
-};
-
-// Convenient typedefs for different mock types
-using US_DB2_MockNice = ::testing::NiceMock<US_DB2_Mock>;
-using US_DB2_MockStrict = ::testing::StrictMock<US_DB2_Mock>;
-
 // Additional aliases used by test files
 using MockDB = US_DB2_Mock;
 using NiceMockDB = ::testing::NiceMock<US_DB2_Mock>;

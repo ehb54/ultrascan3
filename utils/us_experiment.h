@@ -96,7 +96,9 @@ class US_UTIL_EXTERN US_Experiment
       int saveToDB( bool, IUS_DB2*, QVector<SP_SPEEDPROFILE>& );
       int saveToDB_auto( bool, IUS_DB2*, QVector<SP_SPEEDPROFILE>&, int );
 
-      /*! \brief    Reads experiment information from the db
+      /*! \brief    Reads experiment information from the db.
+          A missing optional RI intensity profile leaves RIProfile empty and
+          does not prevent speed-step loading or turn success into DBERROR.
 
           \param runID  The run ID of the experiment.
           \param    db For database access, an open database connection

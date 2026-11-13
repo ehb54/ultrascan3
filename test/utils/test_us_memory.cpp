@@ -8,19 +8,7 @@
 
 using namespace qt_matchers;
 
-class TestUSMemoryUnit : public QtTestBase
-{
-   protected:
-      void SetUp() override
-      {
-         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
-      }
-
-      void TearDown() override
-      {
-         QtTestBase::TearDown();
-      }
-};
+using TestUSMemoryUnit = QtTestBase;
 
 // ============================================================================
 // RSS_NOW METHOD TESTS

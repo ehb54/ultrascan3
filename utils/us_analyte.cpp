@@ -74,8 +74,25 @@ int US_Analyte::load(
       const QString& guid,
       IUS_DB2*        db )
 {
-   if ( db_access ) return load_db  ( guid, db );
-   else             return load_disk( guid );
+   if ( !db_access )
+   {
+      return load_disk( guid );
+   }
+
+   // Publish a database load only after all required lookups succeed. Keep the
+   // old data on failure, but expose the new diagnostic to the caller.
+   US_Analyte loaded( *this );
+   loaded.message.clear();
+   const int status = loaded.load_db( guid, db );
+   if ( status == IUS_DB2::OK )
+   {
+      *this = loaded;
+   }
+   else
+   {
+      message = loaded.message;
+   }
+   return status;
 }
 
 int US_Analyte::load_db( const QString& load_guid, IUS_DB2* db )

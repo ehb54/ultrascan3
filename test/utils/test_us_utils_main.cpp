@@ -7,7 +7,6 @@
 #endif
 #include "us_defines.h"
 #include "us_settings.h"
-#include <QApplication>
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
@@ -82,7 +81,7 @@ class QtTestEnvironment : public ::testing::Environment
          {
             static int   argc   = 1;
             static char* argv[] = { const_cast<char*>( "test" ) };
-            app_                = new QCoreApplication( argc, argv );
+            new QCoreApplication( argc, argv );
          }
          qputenv( "QT_QPA_PLATFORM", "offscreen" );
 
@@ -96,11 +95,6 @@ class QtTestEnvironment : public ::testing::Environment
          US_Settings::set_debug_text( QStringList() );
       }
 
-      void TearDown() override
-      {
-         // Normal cleanup is owned by QTemporaryDir.
-      }
-
       bool removeSandbox()
       {
          const bool cwdRestored = QDir::setCurrent( originalCwd_ );
@@ -111,7 +105,6 @@ class QtTestEnvironment : public ::testing::Environment
    private:
       bool                           deathTestChild_;
       QString                        originalCwd_;
-      QCoreApplication*              app_ = nullptr;
       std::unique_ptr<QTemporaryDir> sandbox_;
 };
 

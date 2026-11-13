@@ -2,14 +2,7 @@
 #include "qt_test_base.h"
 #include "us_hardware.h"
 
-class US_AbstractCenterpieceTest : public QtTestBase
-{
-   protected:
-      void SetUp() override
-      {
-         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
-      }
-};
+using US_AbstractCenterpieceTest = QtTestBase;
 
 TEST_F( US_AbstractCenterpieceTest, ParseChannelAcceptsLetters )
 {

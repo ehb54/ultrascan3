@@ -54,7 +54,8 @@ class US_UTIL_EXTERN US_Analyte
       QString message;
       QString analyteID; //!< Current analyte DB ID
 
-      //! Read an analyte from the disk or database
+      //! Read an analyte from the disk or database.
+      //! Failed database loads preserve existing data and update only message.
       //! \param db_access - A flag to indicate if the DB (true) or disk (false)
       //!                    should be searched for the analyte
       //! \param guid      - The guid of the analyte to be loaded

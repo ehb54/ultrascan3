@@ -19,10 +19,6 @@ class TestUSDataIOUnit : public QtTestBase
          setupTestData();
       }
 
-      void TearDown() override
-      {
-         QtTestBase::TearDown();
-      }
 
       void setupTestData()
       {
