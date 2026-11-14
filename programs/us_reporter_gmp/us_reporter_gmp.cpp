@@ -3935,6 +3935,8 @@ void US_ReporterGMP::generate_report( void )
   remove_files_by_mask( dirName, f_exts );
   ///////////////////////////////////////////////////
 
+  report_aborted = false;
+
   int msg_range = currProto.rpSolut.nschan + 5;
 
   qDebug() << "Generate report: msg_range -- " << msg_range;
@@ -4028,6 +4030,10 @@ void US_ReporterGMP::generate_report( void )
                 // Without its data, this triple's plots would show the last one's.
                 if ( !simulate_triple( currentTripleName, models_to_do[j] ) )
                 {
+                   if ( report_aborted )
+                   {
+                      return;
+                   }
                    continue;
                 }
 
@@ -4140,6 +4146,10 @@ void US_ReporterGMP::generate_report( void )
                    // Without its data, this triple's plots would show the last one's.
                    if ( !simulate_triple( currentTripleName, models_to_do[j] ) )
                    {
+                      if ( report_aborted )
+                      {
+                         return;
+                      }
                       continue;
                    }
 
@@ -5415,7 +5425,11 @@ bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   qApp->processEvents();
 
   //Simulate Model
-  simulateModel( triple_info_map );
+  if ( !simulateModel( triple_info_map ) )
+  {
+     report_aborted = true;
+     return false;
+  }
 
   // Dialog stays up (next triple/model, combined plots, PDF...)
   qApp->processEvents();
@@ -6158,7 +6172,7 @@ DbgLv(2) << "LaNoi:idlDB: ii jj moGUID" << ii << jj << moGUID;
 }
 
 //Simulate Model
-void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
+bool US_ReporterGMP::simulateModel( QMap<QString, QString>& tripleInfo )
 {
   progress_msg->setLabelText( QString("Simulating model %1 for triple %2...")
 			      .arg( tripleInfo[ "stage_name" ])
@@ -6332,7 +6346,7 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
       if ( msgBox.clickedButton() == bAbort ) {
           QApplication::restoreOverrideCursor();
           qApp->processEvents();
-          return;
+          return false;
       }
   }
 
@@ -6480,6 +6494,8 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
       wthread->start();
    }
     }
+
+    return true;
 }
 
 // Update progress bar as each component is completed

@@ -571,6 +571,7 @@ class US_ReporterGMP : public US_Widgets
         bool cnstff; //!< Constant f/f0 flag
         bool exp_steps; //!< Experimental steps flag
         bool dat_steps; //!< Data steps flag
+        bool                      report_aborted = false; //!< User aborted a simulation; stop the report
         bool is_dmga_mc; //!< DMGA Monte Carlo flag
 
         QMap<QString, QString> adv_vals; //!< Advanced values map
@@ -584,7 +585,7 @@ class US_ReporterGMP : public US_Widgets
 
         QString rmsd_global; //!< Global RMSD
 
-        bool        simulate_triple( const QString, QString ); //!< Simulate triple; false if its data could not be loaded
+        bool                      simulate_triple( const QString, QString ); //!< Simulate triple; false on load failure or abort
         bool loadData(QMap<QString, QString>&); //!< Load data
         bool loadModel(QMap<QString, QString>&); //!< Load model
         bool loadNoises(QMap<QString, QString>&); //!< Load noises
@@ -594,7 +595,7 @@ class US_ReporterGMP : public US_Widgets
         int id_list_db_auto(QString); //!< Get ID list from DB automatically
         int models_in_edit_auto(QString, QStringList&); //!< Get models in edit automatically
         int noises_in_model_auto(QString, QStringList&); //!< Get noises in model automatically
-        void simulateModel(QMap<QString, QString>&); //!< Simulate model
+        bool        simulateModel( QMap<QString, QString>& );    //!< Simulate model; false if the user aborts
         void adjustModel(void); //!< Adjust model
 
         QStringList scan_dbase_models(QStringList); //!< Scan database models
