@@ -1,6 +1,6 @@
 //! \file us_resplot_fem.h
-#ifndef US_RESID_PLOT_H
-#define US_RESID_PLOT_H
+#ifndef US_RESPLOT_FEM_H
+#define US_RESPLOT_FEM_H
 
 #include <QtGui>
 
