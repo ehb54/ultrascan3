@@ -29,8 +29,7 @@ dialog. Mode strings in the test data map to the enum through `toMode()`.
   of the data: caller changes after construction are not seen until `set_inputs`.
 - 100 open/close cycles per mode: every closed dialog is destroyed.
 
-Known legacy results intentionally asserted: all scans excluded displays NaN;
-REPORT bitmap-checkbox changes wait for another refresh.
+Known legacy result intentionally asserted: all scans excluded displays NaN.
 These assertions preserve evidence, not endorsement. Defect repair must introduce
 an intended-behavior regression test that fails before changing production code,
 with a linked defect ID and explicit change to the characterization expectation.
@@ -166,3 +165,14 @@ showing noise that has gone switches to residuals.
 now expects caller edits to appear only after `set_inputs`. `setInputsReplots` is
 new with the method, so before the change it failed to compile rather than at
 run time.
+
+### One bitmap checkbox (T05)
+
+"Show Residuals Bitmap" now behaves the same in every mode: checking shows or
+refreshes the bitmap, unchecking closes it, and closing the bitmap unchecks the
+box without reopening it. A bitmap passed in by the caller is watched from
+construction, so closing it also unchecks the box. `bitmapCheckbox` failed
+before the change in FEMatch mode (unchecking left the bitmap open) and Report
+mode (checking showed nothing until another refresh). `closeDestroysDialog` now
+expects the box unchecked after the bitmap closes in every mode. Previously
+Report mode left it checked.

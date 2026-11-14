@@ -179,6 +179,11 @@ US_ResidPlotFem::US_ResidPlotFem( const US_ResidPlotInputs& inputs, Mode mode,
    have_ti         = ( ti_noise != 0  &&  ti_noise->count > 0 );
    have_ri         = ( ri_noise != 0  &&  ri_noise->count > 0 );
    have_bm         = ( resbmap != 0 );
+
+   if ( have_bm )
+      connect( resbmap, &QObject::destroyed,
+               this,    &US_ResidPlotFem::resids_closed );
+
    DbgLv(1) << "RP:edata  " << have_ed;
    DbgLv(1) << "RP:sdata  " << have_sd;
    DbgLv(1) << "RP:ti_noise count" << (have_ti ? ti_noise->count : 0);
@@ -482,50 +487,19 @@ void US_ResidPlotFem::pranCheck( bool chkd )
    plot_data();
 }
 
-// show-residual-bitmap box [un]checked
+// show-residual-bitmap box [un]checked:  show or refresh the bitmap, or close it
 void US_ResidPlotFem::srbmCheck( bool chkd )
 {
+   if ( chkd )
+   {
+      plot_data();
 
-  if ( mode == Standalone )
-    {
-      if ( chkd )
-	{  // bitmap checked:  replot to possibly build new map
-	  have_bm         = ( resbmap != 0 );
-	  	  
-	  if ( have_bm )
-	    {  // if bitmap exists already, detect when closed
-	      connect( resbmap, &QObject::destroyed,
-		       this,    &US_ResidPlotFem::resids_closed );
-	    }
-	  
-	  plot_data();
-	}
-    }
-  else
-    {
-      if ( mode == Analysis )
-	{
-	  qDebug() << "ResBMap checkbox clicked in ANALYSIS mode!!! ";
+      if ( resbmap )
+         resbmap->activateWindow();
+   }
 
-	  if ( chkd )
-	    {
-	      have_ed = true;
-	      have_sd = true;;
-
-	      qDebug() << "ck_shorbm->isChecked(), have_ed, have_sd -- "
-		       << ck_shorbm->isChecked() << have_ed << have_sd;
-
-	      plot_data();
-	      resbmap->activateWindow();
-	      //resbmap->setParent(this, Qt::Widget);
-	    }
-	  else
-	    {
-	      resbmap->close();
-	    }
-	}
-    }
-   
+   else if ( resbmap )
+      resbmap->close();
 }
 
 // close button clicked
@@ -1058,25 +1032,15 @@ void US_ResidPlotFem::plot_rdata()
    data_plot2->replot();
 }
 
-// react to residual bitmap having been closed
+// react to residual bitmap having been closed:  uncheck without reopening it
 void US_ResidPlotFem::resids_closed()
 {
 DbgLv(1) << "Resids BitMap Closed!!!";
    resbmap = 0;
    have_bm = false;
 
-   if ( mode == Standalone )
-     ck_shorbm->setChecked( false );
-   else
-     {
-       if ( mode == Analysis )
-	 {
-	   ck_shorbm->disconnect();
-	   ck_shorbm->setChecked( false );
-	   connect( ck_shorbm, &QAbstractButton::toggled,
-		    this,      &US_ResidPlotFem::srbmCheck );
-	 }
-     }
+   const QSignalBlocker blocker( ck_shorbm );
+   ck_shorbm->setChecked( false );
 }
 
 // Connect/Disconnect plot type boxes

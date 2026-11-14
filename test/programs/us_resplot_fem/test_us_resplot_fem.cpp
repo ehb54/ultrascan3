@@ -118,14 +118,17 @@ void deferredDeletes()
     QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
 }
 
-QPointer<US_ResidsBitmap> bitmap(US_ResidPlotFem& plot)
+QPointer<US_ResidsBitmap> shownBitmap()
 {
-    box(plot, "Show Residuals Bitmap")->setChecked(true);
-    // REPORT's checkbox slot does nothing; a subsequent refresh creates it.
-    QMetaObject::invokeMethod(&plot, "plot_data", Qt::DirectConnection);
     for (auto* w : QApplication::topLevelWidgets())
         if (auto* b = qobject_cast<US_ResidsBitmap*>(w)) return b;
     return nullptr;
+}
+
+QPointer<US_ResidsBitmap> bitmap(US_ResidPlotFem& plot)
+{
+    box(plot, "Show Residuals Bitmap")->setChecked(true);
+    return shownBitmap();
 }
 
 void modeRows()
@@ -417,7 +420,7 @@ private slots:
         QVERIFY(!in.bitmap); // Newly created bitmap is not published back to caller.
         bm->close(); deferredDeletes();
         QVERIFY(!bm);
-        QCOMPARE(box(*plot, "Show Residuals Bitmap")->isChecked(), mode == "REPORT");
+        QVERIFY(!box(*plot, "Show Residuals Bitmap")->isChecked());
         bm = bitmap(*plot); QVERIFY(bm);
         plot->show(); plot->close(); deferredDeletes();
         QCOMPARE(closed.count(), 1); QCOMPARE(destroyed.count(), 1);
@@ -450,6 +453,29 @@ private slots:
         QPointer<US_ResidPlotFem> plot(new US_ResidPlotFem(inputs(in), toMode(mode), caller.get()));
         caller.reset();
         QVERIFY(!plot);
+    }
+
+    void bitmapCheckbox_data() { modeRows(); }
+    void bitmapCheckbox()
+    {
+        QFETCH(QString, mode);
+        ResidualInputs in; populate(in);
+        auto caller = owner(in, mode);
+        US_ResidPlotFem plot(inputs(in), toMode(mode), caller.get());
+        auto* check = box(plot, "Show Residuals Bitmap");
+        // One behavior in every mode: check shows, uncheck closes, closing unchecks.
+        check->setChecked(true);
+        QPointer<US_ResidsBitmap> bm = shownBitmap();
+        QVERIFY(bm);
+        check->setChecked(false); deferredDeletes();
+        QVERIFY(!bm);
+        check->setChecked(true);
+        bm = shownBitmap();
+        QVERIFY(bm);
+        bm->close(); deferredDeletes();
+        QVERIFY(!bm);
+        QVERIFY(!check->isChecked());
+        QVERIFY(!shownBitmap());
     }
 
     void inputsAreCopied_data() { modeRows(); }
