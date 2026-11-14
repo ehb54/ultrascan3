@@ -7,7 +7,6 @@
 #     bin/           us.app, us_helpdaemon.app, Assistant.app, manual.qhc, ...
 #     etc/           editable config data
 #     frameworks/    Qt frameworks + UltraScan dylibs
-#     lib/           (reserved)
 #     plugins/       Qt plugins (platforms, sqldrivers, …)
 #     somo/
 #     license.txt
@@ -47,7 +46,6 @@ endif()
 set(S_BIN  "${STAGE_DIR}/bin")
 set(S_FW   "${STAGE_DIR}/frameworks")
 set(S_PLUG "${STAGE_DIR}/plugins")
-set(S_LIB  "${STAGE_DIR}/lib")
 set(S_ETC  "${STAGE_DIR}/etc")
 set(S_SOMO "${STAGE_DIR}/somo")
 
@@ -59,7 +57,6 @@ endif()
 file(MAKE_DIRECTORY "${S_BIN}")
 file(MAKE_DIRECTORY "${S_FW}")
 file(MAKE_DIRECTORY "${S_PLUG}")
-file(MAKE_DIRECTORY "${S_LIB}")
 
 # =========================================================================
 # 1) Copy declared core APP executables and bundles into bin/
