@@ -1,5 +1,4 @@
 #include "us3_gui_test_main.h"
-#include "owner_doubles.h"
 #include "us_resplot_fem.h"
 #include <qwt_plot_curve.h>
 #include <QSignalSpy>
@@ -29,6 +28,17 @@ const double differences[3][4] = {
 const double tiValues[4] = { .125, -.25, .375, -.5 };
 const double riValues[3] = { .0625, -.125, .1875 };
 
+// Storage the dialog borrows through US_ResidPlotInputs.
+struct ResidualInputs
+{
+    US_DataIO::EditedData edited;
+    US_DataIO::RawData simulated;
+    QList<int> excluded;
+    US_Noise ti, ri;
+    QPointer<US_ResidsBitmap> bitmap;
+    QString triple = "1 / A / 280";
+};
+
 void populate(ResidualInputs& in, int noise = 3, int exclusions = 0)
 {
     in.edited.xvalues = { 5.8, 5.9, 6.0, 6.1 };
@@ -53,11 +63,31 @@ void populate(ResidualInputs& in, int noise = 3, int exclusions = 0)
     if (exclusions == 4) in.excluded = { 0, 1, 2 };
 }
 
-std::unique_ptr<QWidget> owner(ResidualInputs& in, const QString& mode)
+// The calling widget each program passes as the dialog's parent argument.
+std::unique_ptr<QWidget> owner(ResidualInputs&, const QString&)
 {
-    if (mode == "ANALYSIS") return std::unique_ptr<QWidget>(new US_Analysis_auto(in));
-    if (mode == "REPORT") return std::unique_ptr<QWidget>(new US_ReporterGMP(in));
-    return std::unique_ptr<QWidget>(new US_FeMatch(in));
+    return std::unique_ptr<QWidget>(new QWidget);
+}
+
+// The inputs each program builds from its own members.
+US_ResidPlotInputs inputs(ResidualInputs& in)
+{
+    US_ResidPlotInputs result;
+    result.edited = &in.edited;
+    result.simulated = &in.simulated;
+    result.excluded = &in.excluded;
+    result.ti_noise = &in.ti;
+    result.ri_noise = &in.ri;
+    result.bitmap = in.bitmap;
+    result.triple_info = in.triple;
+    return result;
+}
+
+US_ResidPlotFem::Mode toMode(const QString& mode)
+{
+    if (mode == "ANALYSIS") return US_ResidPlotFem::Analysis;
+    if (mode == "REPORT") return US_ResidPlotFem::Report;
+    return US_ResidPlotFem::Standalone;
 }
 
 QCheckBox* box(US_ResidPlotFem& plot, const QString& text)
@@ -116,7 +146,9 @@ private slots:
         QTest::addColumn<QString>("mode");
         QTest::addColumn<QString>("scenario");
         for (const QString& mode : { QString(), QString("ANALYSIS"), QString("REPORT") })
-            for (const QString& scenario : { QString("null-parent"), QString("unknown-mode"),
+            // The inputs no longer depend on the parent or on a mode string, so an
+            // unknown mode cannot be expressed and a null parent is an ordinary case.
+            for (const QString& scenario : { QString("null-parent"),
                   QString("empty-edited"), QString("empty-simulated"), QString("short-ti"),
                   QString("short-ri"), QString("short-scan"), QString("short-radius"),
                   QString("nonfinite"), QString("bad-exclusion") })
@@ -127,7 +159,8 @@ private slots:
     void invalidInputs()
     {
         QFETCH(QString, mode); QFETCH(QString, scenario);
-        const bool unsafe = scenario != "nonfinite" && scenario != "bad-exclusion";
+        const bool unsafe = scenario != "nonfinite" && scenario != "bad-exclusion" &&
+                            scenario != "null-parent";
         if (unsafe && !sanitized)
             QSKIP("Unsafe legacy input requires the ASan/UBSan build; never execute UB in the parent.");
         QProcess process;
@@ -189,8 +222,8 @@ private slots:
         if (scenario == "nonfinite") in.edited.scanData[0].rvalues[0] = std::numeric_limits<double>::quiet_NaN();
         if (scenario == "bad-exclusion") in.excluded = { -1, 99 };
         fprintf(stderr, "RESIDUAL_PROBE_STARTED\n"); fflush(stderr);
-        US_ResidPlotFem plot(scenario == "null-parent" ? nullptr : caller.get(),
-                             scenario == "unknown-mode" ? "UNKNOWN" : mode);
+        US_ResidPlotFem plot(inputs(in), toMode(mode),
+                             scenario == "null-parent" ? nullptr : caller.get());
         auto cs = curves(plot.rp_data_plot2());
         if (scenario == "nonfinite")
         {
@@ -232,7 +265,7 @@ private slots:
         QFETCH(QString, mode); QFETCH(int, noise); QFETCH(int, exclusions);
         ResidualInputs in; populate(in, noise, exclusions);
         auto caller = owner(in, mode);
-        US_ResidPlotFem plot(caller.get(), mode);
+        US_ResidPlotFem plot(inputs(in), toMode(mode), caller.get());
         auto upper = curves(plot.rp_data_plot1());
         auto lower = curves(plot.rp_data_plot2());
         const int included = 3 - in.excluded.size();
@@ -297,7 +330,7 @@ private slots:
         QFETCH(QString, mode);
         ResidualInputs in; populate(in);
         auto caller = owner(in, mode);
-        US_ResidPlotFem plot(caller.get(), mode);
+        US_ResidPlotFem plot(inputs(in), toMode(mode), caller.get());
         for (int cycle = 0; cycle < 2; ++cycle)
             for (int mask = 0; mask < 16; ++mask)
             {
@@ -334,7 +367,7 @@ private slots:
         QFETCH(QString, mode);
         ResidualInputs in; populate(in);
         auto caller = owner(in, mode);
-        US_ResidPlotFem plot(caller.get(), mode);
+        US_ResidPlotFem plot(inputs(in), toMode(mode), caller.get());
         plot.set_plot(1);
         auto cs = curves(plot.rp_data_plot2());
         QCOMPARE(cs.size(), 2); QCOMPARE(cs[1]->title().text(), QString("ti_noise"));
@@ -371,7 +404,7 @@ private slots:
         QFETCH(QString, mode);
         ResidualInputs in; populate(in);
         auto caller = owner(in, mode);
-        std::unique_ptr<US_ResidPlotFem> plot(new US_ResidPlotFem(caller.get(), mode));
+        std::unique_ptr<US_ResidPlotFem> plot(new US_ResidPlotFem(inputs(in), toMode(mode), caller.get()));
         QPointer<US_ResidPlotFem> observed(plot.get());
         QSignalSpy closed(plot.get(), &US_ResidPlotFem::on_close);
         QSignalSpy destroyed(plot.get(), &QObject::destroyed);
@@ -407,7 +440,7 @@ private slots:
         in.bitmap = new US_ResidsBitmap(values);
         QPointer<US_ResidsBitmap> original(in.bitmap);
         auto caller = owner(in, "");
-        US_ResidPlotFem plot(caller.get());
+        US_ResidPlotFem plot(inputs(in), US_ResidPlotFem::Standalone, caller.get());
         QCOMPARE(bitmap(plot), original);
         in.edited.scanData[0].rvalues[0] += .5;
         in.excluded << 1;
@@ -434,7 +467,7 @@ private slots:
         // Explicit cleanup keeps the test itself from leaking the 100 dialogs.
         for (int i = 0; i < 100; ++i)
         {
-            dialogs.emplace_back(new US_ResidPlotFem(caller.get(), mode));
+            dialogs.emplace_back(new US_ResidPlotFem(inputs(in), toMode(mode), caller.get()));
             observed << dialogs.back().get();
             connect(dialogs.back().get(), &QObject::destroyed, this, [&destroyed]() { ++destroyed; });
             dialogs.back()->close();

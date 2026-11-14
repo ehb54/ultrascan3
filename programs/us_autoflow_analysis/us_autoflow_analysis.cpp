@@ -4496,7 +4496,15 @@ void US_Analysis_auto::plotres( )
    //    resplotd->close();
    // }
 
-   resplotd = new US_ResidPlotFem( this, QString("ANALYSIS") );
+   US_ResidPlotInputs inputs;
+   inputs.edited      = edata;
+   inputs.simulated   = sdata;
+   inputs.excluded    = &excludedScans;
+   inputs.ti_noise    = &ti_noise;
+   inputs.ri_noise    = &ri_noise;
+   inputs.bitmap      = rbmapd;
+   inputs.triple_info = tripleInfo;
+   resplotd = new US_ResidPlotFem( inputs, US_ResidPlotFem::Analysis, this );
 
    //resplotd->move( rpd_pos );
    //resplotd->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);

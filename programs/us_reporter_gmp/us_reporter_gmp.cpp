@@ -11360,7 +11360,15 @@ void US_ReporterGMP::plotres( QMap < QString, QString> & tripleInfo )
   QString img10File = basename + "3dplot"      + pngext;
 
   // Plots for Exp-Sim ovelray (with noises rmoved && residual plot)
-  resplotd = new US_ResidPlotFem( this, "REPORT" );
+  US_ResidPlotInputs inputs;
+  inputs.edited      = edata;
+  inputs.simulated   = sdata;
+  inputs.excluded    = &excludedScans;
+  inputs.ti_noise    = &ti_noise;
+  inputs.ri_noise    = &ri_noise;
+  inputs.bitmap      = rbmapd;
+  inputs.triple_info = this->tripleInfo;  // the member, not the QMap parameter of the same name
+  resplotd = new US_ResidPlotFem( inputs, US_ResidPlotFem::Report, this );
 
   if ( show_vel )
     {

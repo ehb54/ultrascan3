@@ -1,21 +1,22 @@
 //! \file us_resplot_fem.cpp
 
 #include "us_resplot_fem.h"
-#include "us_fematch.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
 #include "us_math2.h"
 #include "us_constants.h"
-#include "../us_autoflow_analysis/us_autoflow_analysis.h"
-#include "../us_reporter_gmp/us_reporter_gmp.h"
 #include <qwt_legend.h>
 
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug()
+#endif
+
 // constructor:  residuals plot widget
-US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const QString auto_mode )
-   : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
+US_ResidPlotFem::US_ResidPlotFem( const US_ResidPlotInputs& inputs, Mode mode,
+                                  QWidget* /*parent*/ )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), mode( mode )
 {
-   this->a_mode = auto_mode;
   
    // lay out the GUI
    setWindowTitle( tr( "Finite Element Data/Residuals Viewer" ) );
@@ -113,12 +114,7 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const QString auto_mode )
    data_plot2->setMinimumSize( p2size );
    data_plot2->setAccessibleName( tr( "Residuals Plot" ) );
 
-   // if ( a_mode )
-   //   {
-   //     data_plot1->setMinimumSize( p11size );
-   //     data_plot2->setMinimumSize( p21size );
-   //   }
-   if ( !a_mode.isEmpty() && a_mode == "ANALYSIS" )
+   if ( mode == Analysis )
      {
        data_plot1->setMinimumSize( p11size );
        data_plot2->setMinimumSize( p21size );
@@ -169,109 +165,23 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const QString auto_mode )
    have_bm   = false;
    skip_plot = true;
 
-   if ( parent )
-   {
-     //if ( !a_mode )
-     if ( a_mode.isEmpty() )
-       {
-	 // Get data pointers from parent of parent
-	 qDebug() << "THIS will be pointer to us_fematch---";
-
-	 US_FeMatch* fem = (US_FeMatch*)parent;
-	 edata           = fem->fem_editdata();
-	 sdata           = fem->fem_simdata();
-	 excllist        = fem->fem_excllist();
-	 ti_noise        = fem->fem_ti_noise();
-	 ri_noise        = fem->fem_ri_noise();
-	 resbmap         = fem->fem_resbmap();
-	 have_ed         = ( edata != 0 );
-	 have_sd         = ( sdata != 0 );
-	 have_ti         = ( ti_noise != 0  &&  ti_noise->count > 0 );
-	 have_ri         = ( ri_noise != 0  &&  ri_noise->count > 0 );
-	 have_bm         = ( resbmap != 0 );
-	 DbgLv(1) << "RP:edata  " << have_ed;
-	 DbgLv(1) << "RP:sdata  " << have_sd;
-	 DbgLv(1) << "RP:ti_noise count" << (have_ti ? ti_noise->count : 0);
-	 DbgLv(1) << "RP:ri_noise count" << (have_ri ? ri_noise->count : 0);
-	 DbgLv(1) << "RP:resbmap" << have_bm;
-       }
-     else
-       {
-	 if ( a_mode == "ANALYSIS" ) 
-	   {
-	     qDebug() << "THIS will be pointer to autoflow_analsyis---";
-	     //Autoflow_analysis
-	     US_Analysis_auto* aa = (US_Analysis_auto*)parent;
-	     edata           = aa->aa_editdata();
-	     sdata           = aa->aa_simdata();
-	     excllist        = aa->aa_excllist();
-	     ti_noise        = aa->aa_ti_noise();
-	     ri_noise        = aa->aa_ri_noise();
-	     resbmap         = aa->aa_resbmap();
-	     have_ed         = ( edata != 0 );
-	     have_sd         = ( sdata != 0 );
-	     have_ti         = ( ti_noise != 0  &&  ti_noise->count > 0 );
-	     have_ri         = ( ri_noise != 0  &&  ri_noise->count > 0 );
-	     have_bm         = ( resbmap != 0 );
-	     qDebug() << "RP:edata  " << have_ed;
-	     qDebug() << "RP:sdata  " << have_sd;
-	     
-	     qDebug() << "RP:have_ti " << have_ti;
-	     qDebug() << "RP:have_ri " << have_ri;
-	     
-	     
-	     qDebug() << "RP:ti_noise count1" << ti_noise->count;
-	     qDebug() << "RP:ri_noise count1" << ri_noise->count;
-	     
-	     qDebug() << "RP:ti_noise count" << (have_ti ? ti_noise->count : 0);
-	     qDebug() << "RP:ri_noise count" << (have_ri ? ri_noise->count : 0);
-	     qDebug() << "RP:resbmap" << have_bm;
-	     
-	     tripleInfo = aa->aa_tripleInfo();
-	     
-	   }
-	 
-	 if ( a_mode == "REPORT" ) 
-	   {
-	     qDebug() << "THIS will be pointer to autoflow_report (US_ReporterGMP for now !!!) ---";
-	     //Autoflow_report -- US_ReporterGMP for now!!!
-	     US_ReporterGMP* rg = (US_ReporterGMP*)parent;
-	     edata           = rg->rg_editdata();
-	     sdata           = rg->rg_simdata();
-	     excllist        = rg->rg_excllist();
-	     ti_noise        = rg->rg_ti_noise();
-	     ri_noise        = rg->rg_ri_noise();
-	     resbmap         = rg->rg_resbmap();
-	     have_ed         = ( edata != 0 );
-	     have_sd         = ( sdata != 0 );
-	     have_ti         = ( ti_noise != 0  &&  ti_noise->count > 0 );
-	     have_ri         = ( ri_noise != 0  &&  ri_noise->count > 0 );
-	     have_bm         = ( resbmap != 0 );
-	     qDebug() << "RP:edata  " << have_ed;
-	     qDebug() << "RP:sdata  " << have_sd;
-	     
-	     qDebug() << "RP:have_ti " << have_ti;
-	     qDebug() << "RP:have_ri " << have_ri;
-
-	     qDebug() << "ti_noise_guid " << ti_noise->noiseGUID;
-	     qDebug() << "ri_noise_guid " << ri_noise->noiseGUID;
-	     
-	     qDebug() << "RP:ti_noise count1" << ti_noise->count;
-	     qDebug() << "RP:ri_noise count1" << ri_noise->count;
-	     
-	     qDebug() << "RP:ti_noise count" << (have_ti ? ti_noise->count : 0);
-	     qDebug() << "RP:ri_noise count" << (have_ri ? ri_noise->count : 0);
-	     qDebug() << "RP:resbmap" << have_bm;
-	     
-	     tripleInfo = rg->rg_tripleInfo();
-	   }
-       }
-   }
-   
-   else
-   {
-      qDebug() << "*ERROR* unable to get RP parent";
-   }
+   edata           = inputs.edited;
+   sdata           = inputs.simulated;
+   excllist        = inputs.excluded;
+   ti_noise        = inputs.ti_noise;
+   ri_noise        = inputs.ri_noise;
+   resbmap         = inputs.bitmap;
+   tripleInfo      = inputs.triple_info;
+   have_ed         = ( edata != 0 );
+   have_sd         = ( sdata != 0 );
+   have_ti         = ( ti_noise != 0  &&  ti_noise->count > 0 );
+   have_ri         = ( ri_noise != 0  &&  ri_noise->count > 0 );
+   have_bm         = ( resbmap != 0 );
+   DbgLv(1) << "RP:edata  " << have_ed;
+   DbgLv(1) << "RP:sdata  " << have_sd;
+   DbgLv(1) << "RP:ti_noise count" << (have_ti ? ti_noise->count : 0);
+   DbgLv(1) << "RP:ri_noise count" << (have_ri ? ri_noise->count : 0);
+   DbgLv(1) << "RP:resbmap" << have_bm;
 
    ck_subtin->setEnabled( have_ti );
    ck_subrin->setEnabled( have_ri );
@@ -292,7 +202,7 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const QString auto_mode )
    plot_data();
 
 
-   if ( !a_mode.isEmpty() && a_mode == "REPORT" )
+   if ( mode == Report )
      setVisible( false );
    else
      setVisible( true );
@@ -515,7 +425,7 @@ void US_ResidPlotFem::pranCheck( bool chkd )
 void US_ResidPlotFem::srbmCheck( bool chkd )
 {
 
-  if ( a_mode.isEmpty()  )  //Default case for stand-alone us_fematch
+  if ( mode == Standalone )
     {
       if ( chkd )
 	{  // bitmap checked:  replot to possibly build new map
@@ -532,7 +442,7 @@ void US_ResidPlotFem::srbmCheck( bool chkd )
     }
   else
     {
-      if ( a_mode == "ANALYSIS" )
+      if ( mode == Analysis )
 	{
 	  qDebug() << "ResBMap checkbox clicked in ANALYSIS mode!!! ";
 
@@ -616,8 +526,7 @@ void US_ResidPlotFem::plot_edata()
    }
 
 
-   //if ( !a_mode )
-   if ( a_mode.isEmpty() )  
+   if ( mode == Standalone )
      {
        if      ( do_plteda  &&  !do_pltsda )
 	 data_plot1->setTitle( tr( "Experimental Data" ) );
@@ -630,7 +539,7 @@ void US_ResidPlotFem::plot_edata()
      }
    else
      {
-       if ( a_mode == "ANALYSIS" )
+       if ( mode == Analysis )
 	 {
 	   // For autoflow Analysis
 	   if      ( do_plteda  &&  !do_pltsda )
@@ -649,7 +558,7 @@ void US_ResidPlotFem::plot_edata()
 	       data_plot1->setTitle( sim_data );
 	     }
 	 }
-       if ( a_mode == "REPORT" )
+       if ( mode == Report )
 	 {
 	   // For autoflow REPORT
 	   if      ( do_plteda  &&  !do_pltsda )
@@ -1074,7 +983,7 @@ void US_ResidPlotFem::plot_rdata()
                   this,    &US_ResidPlotFem::resids_closed );
          resbmap->move( this->pos() + QPoint( 100, 100 ) );
 
-	 if ( !a_mode.isEmpty() && a_mode == "ANALYSIS" )
+	 if ( mode == Analysis )
 	   {
 	     //resbmap->setWindowFlags( Qt::Dialog );
 	     //resbmap->setWindowModality(Qt::ApplicationModal);
@@ -1104,11 +1013,11 @@ DbgLv(1) << "Resids BitMap Closed!!!";
    resbmap = 0;
    have_bm = false;
 
-   if ( a_mode.isEmpty() )
+   if ( mode == Standalone )
      ck_shorbm->setChecked( false );
    else
      {
-       if ( a_mode == "ANALYSIS" )
+       if ( mode == Analysis )
 	 {
 	   ck_shorbm->disconnect();
 	   ck_shorbm->setChecked( false );

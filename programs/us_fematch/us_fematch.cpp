@@ -1191,7 +1191,14 @@ DbgLv(1) << "cnstvb" << cnstvb << "img06File" << img06File;
    // Save the upper experiment-simulation overlay plot
    if ( resplotd == 0 )
    {
-      resplotd = new US_ResidPlotFem( this );
+      US_ResidPlotInputs inputs;
+      inputs.edited    = edata;
+      inputs.simulated = sdata;
+      inputs.excluded  = &excludedScans;
+      inputs.ti_noise  = &ti_noise;
+      inputs.ri_noise  = &ri_noise;
+      inputs.bitmap    = rbmapd;
+      resplotd = new US_ResidPlotFem( inputs, US_ResidPlotFem::Standalone, this );
       resplotd->move( rpd_pos );
       resplotd->show();
       connect( resplotd, &QObject::destroyed, this, &US_FeMatch::resplot_done );
@@ -1758,7 +1765,14 @@ void US_FeMatch::plotres( )
       resplotd->close();
    }
 
-   resplotd = new US_ResidPlotFem( this );
+   US_ResidPlotInputs inputs;
+   inputs.edited    = edata;
+   inputs.simulated = sdata;
+   inputs.excluded  = &excludedScans;
+   inputs.ti_noise  = &ti_noise;
+   inputs.ri_noise  = &ri_noise;
+   inputs.bitmap    = rbmapd;
+   resplotd = new US_ResidPlotFem( inputs, US_ResidPlotFem::Standalone, this );
    resplotd->move( rpd_pos );
    resplotd->show();
    connect( resplotd, &QObject::destroyed, this, &US_FeMatch::resplot_done );

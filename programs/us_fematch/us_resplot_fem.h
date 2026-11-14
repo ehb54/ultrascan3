@@ -13,6 +13,23 @@
 #include "us_plot.h"
 #include "us_help.h"
 
+//! \brief The data a residuals plot dialog reads.
+//!
+//! The dialog keeps these pointers and reads through them whenever a plot
+//! option is toggled, so the caller must keep the objects alive and unchanged
+//! while the dialog is open. A null edited or simulated pointer means that data
+//! is absent.
+struct US_ResidPlotInputs
+{
+   US_DataIO::EditedData*      edited    = nullptr; //!< Experimental data
+   US_DataIO::RawData*         simulated = nullptr; //!< Simulated data
+   QList< int >*               excluded  = nullptr; //!< Excluded scan indexes
+   US_Noise*                   ti_noise  = nullptr; //!< Time-invariant noise
+   US_Noise*                   ri_noise  = nullptr; //!< Radially-invariant noise
+   QPointer< US_ResidsBitmap > bitmap;               //!< Existing residuals bitmap, if any
+   QString                     triple_info;          //!< Title suffix in Analysis mode
+};
+
 //! \brief A class to provide a window with experimental/residuals plots
 
 class US_ResidPlotFem : public US_WidgetsDialog
@@ -20,9 +37,20 @@ class US_ResidPlotFem : public US_WidgetsDialog
    Q_OBJECT
 
    public:
-      //! \param parent A pointer to the parent widget of this one
-      US_ResidPlotFem( QWidget* = NULL, QString = QString("") );
-   
+      //! \brief Which program the dialog is shown from; selects titles, sizes,
+      //! visibility and residuals-bitmap behavior.
+      enum Mode
+      {
+         Standalone, //!< US_FeMatch
+         Analysis,   //!< Autoflow analysis
+         Report      //!< GMP report generation (dialog stays hidden)
+      };
+
+      //! \param inputs The data to plot
+      //! \param mode   The calling program's mode
+      //! \param parent The calling widget; not used as the Qt parent
+      US_ResidPlotFem( const US_ResidPlotInputs& inputs, Mode mode, QWidget* parent = nullptr );
+
       //! \brief Force a specific plot in the lower plot
       //! \param plotf Flag plot to force: 1,2 == ti_noise,ri_noise
       void set_plot( int );
@@ -33,12 +61,9 @@ class US_ResidPlotFem : public US_WidgetsDialog
       //! \brief Return a QwtPlot pointer for the lower plot
       QwtPlot* rp_data_plot2();
 
-      //bool a_mode;
-      QString a_mode;
-
-      
-
    private:
+      Mode          mode;
+
       QHBoxLayout*  mainLayout;
       QVBoxLayout*  leftLayout;
       QVBoxLayout*  rightLayout;

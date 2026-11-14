@@ -1,17 +1,15 @@
 # Residual dialog characterization before extraction
 
-This harness runs the unchanged `US_ResidPlotFem` implementation and real
-Qt/Qwt/bitmap code. It makes no production edits. The temporary compilation seam
-in `legacy_dialog.cpp` bypasses the three application header guards and supplies
-concrete QWidget owner doubles with the legacy accessors. It does not copy or
-replace plotting code. `owner_contract.cpp` compiles the real application headers
-and checks accessor signatures in the compile-only `test_residual_owner_contract`
-target. Its object is never linked into the executable containing owner doubles.
-Never link application implementations into the characterization executable.
+This harness compiles `programs/us_fematch/us_resplot_fem.cpp` directly and
+constructs the dialog from `US_ResidPlotInputs` and a `US_ResidPlotFem::Mode`,
+exactly as FEMatch, autoflow and the reporter do. It runs the real Qt/Qwt/bitmap
+code and links no application implementation: the dialog no longer includes or
+casts to `US_FeMatch`, `US_Analysis_auto` or `US_ReporterGMP`. The "caller" in
+these tests is a plain `QWidget` passed as the parent argument.
 
-This seam is deliberately temporary: after the explicit-input refactor, replace
-the doubles/wrapper with direct dialog construction using the input contract.
-Keep the behavioral fixtures/assertions. Do not move the seam into production.
+The assertions are those recorded against the owner-discovery baseline
+(`36f4464d5`, before T04); they pass unchanged against the explicit-input
+dialog. Mode strings in the test data map to the enum through `toMode()`.
 
 ## Coverage
 
@@ -25,7 +23,7 @@ Keep the behavioral fixtures/assertions. Do not move the seam into production.
   mutual exclusion. D03 now verifies RI export preserves the scan-number label.
 - Three-mode bitmap close/reopen, bitmap parenting, window close versus Close
   button slot, `on_close`/`destroyed` signals, caller destruction and explicit
-  dialog deletion. A caller double borrows fixture storage, so this does NOT
+  dialog deletion. The inputs borrow fixture storage, so this does NOT
   exercise callbacks into destroyed application-owned data.
 - Existing FEMatch bitmap reuse and invalidation; borrowed data/exclusions mutate
   in place and the next refresh uses the new values.
@@ -46,8 +44,9 @@ No real workflow widgets, database, simulation, report-file export or native
 window manager are exercised. Invalid-pointer/empty/mismatched buffer cases
 run in isolated processes under sanitizers; expected legacy failures are not
 safe-input handling guarantees. CMake's test label is
-`residual-characterization`; this is not the isolated presentation boundary gate
-(M12) because owner doubles are still necessary. M02 is covered at the dialog
+`residual-characterization`. The executable links the dialog without any
+application implementation, which is the isolated-presentation part of M12; the
+automated boundary check with a negative test is still to be added. M02 is covered at the dialog
 boundary, with portions of M03/M07; full T02 acceptance remains open.
 
 ## Run
@@ -113,3 +112,22 @@ individual `probes/*.log`, configure/build/rebuild logs,
 and source/binary hash manifest is in [baseline/linux-2026-11-13](baseline/linux-2026-11-13).
 Native UI/export captures and the Linux seven-consumer build matrix
 remain outstanding; this is the automated dialog baseline, not full T02 signoff.
+
+### Explicit-input construction (T04)
+
+The dialog now takes `US_ResidPlotInputs` and a `Mode` enum instead of casting
+its parent to the calling program, so two probe scenarios lost their meaning:
+
+- `unknown-mode` rows are removed. A mode outside `Standalone`, `Analysis` and
+  `Report` can no longer be expressed, so the uninitialized-input case they
+  reproduced (C05) cannot occur.
+- `null-parent` rows now expect normal completion. The inputs no longer come
+  from the parent, so a null parent plots the same data as any other.
+
+The malformed-buffer probes (empty, short and mismatched data) are unchanged and
+still characterize the legacy unsafe behavior; repairing them is separate from
+this extraction. Every other row keeps its recorded assertion.
+
+Compared with the Linux baseline at `27129cc57`: all behavior rows pass with the
+same results; the three `unknown-mode` rows are absent; the 18 malformed-buffer
+probes are skipped on non-sanitizer builds and must be re-run under ASan/UBSan.
