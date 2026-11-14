@@ -1,13 +1,14 @@
-#include <QXmlStreamWriter>
-#include <QXmlStreamReader>
 #include <QBuffer>
 #include <QDebug>
-#include <QStringList>
-#include <QMap>
 #include <QDir>
 #include <QFile>
+#include <QLoggingCategory>
+#include <QMap>
+#include <QStringList>
 #include <QTemporaryDir>
 #include <QTemporaryFile>
+#include <QXmlStreamReader>
+#include <QXmlStreamWriter>
 
 #include "mock_us_db2.h"
 #include "qt_test_base.h"
@@ -338,50 +339,78 @@ TEST_F(US_AnalyteStaticTest, GetFilenameHandlesEmptyGuid) {
 // Dump Method Tests
 // =============================================================================
 
-TEST_F(US_AnalyteDumpTest, DumpExecutesWithoutCrash) {
-analyte->description = "Test for dump";
-analyte->vbar20 = 0.73;
-analyte->mw = 45000.0;
-analyte->type = US_Analyte::PROTEIN;
+QStringList*                     capturedLines = nullptr;
 
-// This should not crash
-EXPECT_NO_THROW(analyte->dump());
+QLoggingCategory::CategoryFilter previousFilter = nullptr;
+
+void                             captureLine( QtMsgType, const QMessageLogContext&, const QString& line )
+{
+   capturedLines->append( line );
 }
 
-TEST_F(US_AnalyteDumpTest, DumpHandlesAllAnalyteTypes) {
-std::vector<US_Analyte::analyte_t> types = {
-        US_Analyte::PROTEIN,
-        US_Analyte::DNA,
-        US_Analyte::RNA,
-        US_Analyte::CARBOHYDRATE
-};
-
-for (auto type : types) {
-analyte->type = type;
-EXPECT_NO_THROW(analyte->dump());
-}
+// The test runner disables debug output; enable it for the default category only.
+void enableDefaultDebug( QLoggingCategory* category )
+{
+   previousFilter( category );
+   if ( qstrcmp( category->categoryName(), "default" ) == 0 )
+   {
+      category->setEnabled( QtDebugMsg, true );
+   }
 }
 
-TEST_F(US_AnalyteDumpTest, DumpHandlesEmptyFields) {
-// Clear all fields
-analyte->description.clear();
-analyte->analyteGUID.clear();
-analyte->sequence.clear();
-analyte->extinction.clear();
-analyte->refraction.clear();
-analyte->fluorescence.clear();
-
-EXPECT_NO_THROW(analyte->dump());
+// The lines dump() writes through qDebug().
+QStringList dumpLines( US_Analyte& analyte )
+{
+   QStringList lines;
+   capturedLines                   = &lines;
+   previousFilter                  = QLoggingCategory::installFilter( enableDefaultDebug );
+   const QtMessageHandler previous = qInstallMessageHandler( captureLine );
+   analyte.dump();
+   qInstallMessageHandler( previous );
+   QLoggingCategory::installFilter( previousFilter );
+   capturedLines = nullptr;
+   return lines;
 }
 
-TEST_F(US_AnalyteDumpTest, DumpHandlesSpectrumData) {
-// Add spectrum data
-analyte->extinction[280.0] = 43824.0;
-analyte->extinction[260.0] = 35000.0;
-analyte->refraction[280.0] = 1.5;
-analyte->fluorescence[350.0] = 1000.0;
+TEST_F( US_AnalyteDumpTest, DumpNamesEachAnalyteType )
+{
+   const QList<QPair<US_Analyte::analyte_t, QString>> types{ { US_Analyte::PROTEIN, "Type: PROTEIN" },
+                                                             { US_Analyte::DNA, "Type: DNA" },
+                                                             { US_Analyte::RNA, "Type: RNA" },
+                                                             { US_Analyte::CARBOHYDRATE, "Type: OTHER" } };
+   for ( const auto& type : types )
+   {
+      analyte->type           = type.first;
+      const QStringList lines = dumpLines( *analyte );
+      ASSERT_FALSE( lines.isEmpty() );
+      EXPECT_EQ( type.second, lines.first() );
+   }
+}
 
-EXPECT_NO_THROW(analyte->dump());
+TEST_F( US_AnalyteDumpTest, DumpListsScalarFields )
+{
+   analyte->description    = "Test for dump";
+   analyte->analyteGUID    = "12345678-1234-1234-1234-123456789012";
+   analyte->vbar20         = 0.73;
+   analyte->mw             = 45000.0;
+   const QStringList lines = dumpLines( *analyte );
+   EXPECT_TRUE( lines.contains( "vbar20: 0.73" ) ) << lines.join( "\n" ).toStdString();
+   EXPECT_TRUE( lines.contains( "mw    : 45000" ) ) << lines.join( "\n" ).toStdString();
+   EXPECT_TRUE( lines.contains( "descr : \"Test for dump\"" ) ) << lines.join( "\n" ).toStdString();
+   EXPECT_TRUE( lines.contains( "guid  : \"12345678-1234-1234-1234-123456789012\"" ) ) << lines.join( "\n" ).toStdString();
+}
+
+TEST_F( US_AnalyteDumpTest, DumpListsEachSpectrumInWavelengthOrder )
+{
+   analyte->extinction[280.0]   = 43824.0;
+   analyte->extinction[260.0]   = 35000.0;
+   analyte->refraction[280.0]   = 1.5;
+   analyte->fluorescence[350.0] = 1000.0;
+   const QStringList lines      = dumpLines( *analyte );
+   const int         start      = lines.indexOf( "extinction" );
+   ASSERT_GE( start, 0 ) << lines.join( "\n" ).toStdString();
+   EXPECT_EQ( ( QStringList{ "extinction", "260 35000", "280 43824", "refraction", "280 1.5", "fluorescence", "350 1000" } ),
+              lines.mid( start ) );
 }
 
 } // anonymous namespace

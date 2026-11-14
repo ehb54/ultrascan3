@@ -174,15 +174,16 @@ EXPECT_NEAR(intercept, 0.0, TOLERANCE) << "Two points should give correct interc
 EXPECT_DOUBLE_EQ(average, 4.0) << "Average should be (2+6)/2 = 4";
 }
 
-TEST_F(TestUSMath2Unit, LinefitZeroArray) {
-// Test linefit with zero array size (edge case)
-double slope, intercept, sigma, correlation;
-
-// This might cause undefined behavior, but we test the boundary
-EXPECT_NO_THROW({
-US_Math2::linefit(&testXPtr, &testYPtr, &slope, &intercept,
-        &sigma, &correlation, 0);
-}) << "Zero array size should not crash";
+TEST_F( TestUSMath2Unit, LinefitWithNoPointsReturnsNaN )
+{
+   // Every statistic divides by the point count; no element is read.
+   double slope = 0.0, intercept = 0.0, sigma = 0.0, correlation = 0.0;
+   double average = US_Math2::linefit( &testXPtr, &testYPtr, &slope, &intercept, &sigma, &correlation, 0 );
+   EXPECT_TRUE( std::isnan( average ) );
+   EXPECT_TRUE( std::isnan( slope ) );
+   EXPECT_TRUE( std::isnan( intercept ) );
+   EXPECT_TRUE( std::isnan( sigma ) );
+   EXPECT_TRUE( std::isnan( correlation ) );
 }
 
 TEST_F(TestUSMath2Unit, LinefitHorizontalLine) {
@@ -397,11 +398,11 @@ double right = US_Math2::normal_distribution(sigma, mean, mean + 1.0);
 EXPECT_NEAR(left, right, TOLERANCE) << "Normal distribution should be symmetric around mean";
 }
 
-TEST_F(TestUSMath2Unit, NormalDistributionZeroSigma) {
-// Test normal distribution with zero sigma (should handle gracefully)
-EXPECT_NO_THROW({
-US_Math2::normal_distribution(0.0, 0.0, 0.0);
-}) << "Zero sigma should not crash";
+TEST_F( TestUSMath2Unit, NormalDistributionWithZeroSigmaIsNaN )
+{
+   // The density divides by sigma, so a zero sigma gives NaN at and away from the mean.
+   EXPECT_TRUE( std::isnan( US_Math2::normal_distribution( 0.0, 0.0, 0.0 ) ) );
+   EXPECT_TRUE( std::isnan( US_Math2::normal_distribution( 0.0, 1.0, 2.0 ) ) );
 }
 
 TEST_F(TestUSMath2Unit, NormalDistributionLargeSigma) {
