@@ -14,14 +14,14 @@ At the initial revalidation, GitHub reported all six tickets as **OPEN**. The us
 | ~~[#646](https://github.com/ehb54/ultrascan-tickets/issues/646)~~ **Closed** | **Verified fixed.** Revision generation uses commit time and preserves an unchanged header. Three successive full `make_all.pro` builds of the baseline commit: the first built all 70 programs; the second and third ran zero compiles and zero links. | **Closed** with the verification evidence below ([closing comment](https://github.com/ehb54/ultrascan-tickets/issues/646#issuecomment-6867734906)). |
 | [#679](https://github.com/ehb54/ultrascan-tickets/issues/679) | Modern packages build and stage Qt help. June 2026 makeall.sh changes improved Python/Sphinx detection; its manual target generates both help files. However, make_all.pro still lacks a documentation target, and makeall.sh only prints the detected Assistant invocation rather than providing the originally requested setup. | Partially addressed. Retain a narrow legacy-entrypoint requirement if that workflow remains supported; explicitly retire it otherwise. SOMO remains outside this analysis and must be separated before closing the original mixed ticket. |
 | ~~[#768](https://github.com/ehb54/ultrascan-tickets/issues/768)~~ **Closed** | The original question asks where the application version is stored. A March 4 comment answers utils/us_defines.h; current CMake also checks its agreement with VERSION. | **Closed with a comment**, as confirmed by the user. Broader metadata consistency ideas are separate work, not an expansion of this question. |
-| [#869](https://github.com/ehb54/ultrascan-tickets/issues/869) | **Fixed locally.** README and archive naming share the calculated filename; x64/arm64 archive fixtures passed. | Implementation complete; delivery and ticket closure remain. |
+| [#869](https://github.com/ehb54/ultrascan-tickets/issues/869) | **Fixed in [PR #627](https://github.com/ehb54/ultrascan3/pull/627) (open).** README and archive naming share the calculated filename; x64/arm64 archive fixtures and a full Linux package-target build passed. | Implementation complete; closes on merge of [PR #627](https://github.com/ehb54/ultrascan3/pull/627). |
 | [#1024](https://github.com/ehb54/ultrascan-tickets/issues/1024) | On-demand source now constructs version/run/hash/platform names and uploads staged files without the preset-directory nesting. The shared Windows packaging path explicitly validates Assistant, manual.qch, manual.qhc and qsqlite.dll; the published nightly log confirms that check passed. Linux APP logs also show both manuals staged and real Git metadata generated. | Original fixes appear implemented. Verify one on-demand artifact and installed help before closure; do not add unrelated architecture work to this ticket. |
 
 Build evidence: [November 11 published nightly run 43027179129](https://github.com/ehb54/ultrascan3/actions/runs/43027179129), source `0eee7f31f9aa28056ec6241b4fe70b0eca506420`, and [nightly release assets](https://github.com/ehb54/ultrascan3/releases/tag/nightly). This is the latest published package set inspected, not a package build of current main. Successful November 12/13 workflow status alone is not evidence of a newer published package. The on-demand workflow API returned zero retained runs, so its naming and nesting fixes are source-verified, not verified from a recent on-demand artifact. No downloaded installer was executed during this review.
 
 #646 verification: a clean clone of the baseline commit was built with `qmake make_all.pro` and `make -k -j9` three times in succession in the `ehb1/us3comp` image (Ubuntu 22.04, Qt 5.15.3, GNU make 4.3, amd64 under emulation, `-O0`). Build 1 exited 0 after 27 minutes with 70 programs. Builds 2 and 3 each exited 0 in 2–3 seconds, entered all 73 directories, ran the forced revision target (`us_revision.h unchanged (build 9951, rev 1f838727ff)`), and performed zero compiles and zero links; `us.cpp` and `us_reporter_gmp.cpp`, the files named in the ticket log, were not rebuilt. The image lacks `libarchive-dev`, which `qwtplot3d` needs to link; it was installed in the throwaway container only.
 
-#646 was closed with a comment after the verification above; no other tickets were changed by this review. The #869 fix is now implemented locally and awaits delivery; #679 still needs a decision on supported legacy entry points. #768 has since been closed with a comment; #646 is verified and closed; #546 and #1024 primarily need bounded acceptance checks. The APP-only static-library optimization documented later is a separate improvement and does not itself close any of these tickets.
+#646 was closed with a comment after the verification above; no other tickets were changed by this review. The #869 fix is in open [PR #627](https://github.com/ehb54/ultrascan3/pull/627) and closes on merge; #679 still needs a decision on supported legacy entry points. #768 has since been closed with a comment; #646 is verified and closed; #546 and #1024 primarily need bounded acceptance checks. The APP-only static-library optimization documented later is a separate improvement and does not itself close any of these tickets.
 
 # #869 local implementation
 
@@ -99,15 +99,15 @@ The architecture and reuse analysis below excludes all SOMO code, targets, depen
 
 | Ticket | Owner and labels | Assessment |
 |---|---|---|
-| [#546 macOS CMake packaging](https://github.com/ehb54/ultrascan-tickets/issues/546) | ehb54; enhancement, triage | General UltraScan packaging. Existing implementation needs reconciliation against the older checklist. |
-| [#646 repeated qmake compilation](https://github.com/ehb54/ultrascan-tickets/issues/646) | Unassigned; bug | Closed. Verified fixed on the baseline commit; no-change qmake rebuilds compile nothing. |
-| [#679 incomplete standard build](https://github.com/ehb54/ultrascan-tickets/issues/679) | ehb54; bug, triage | Mixed scope. Include documentation and help; track SOMO completion separately. |
-| [#768 revision header contents](https://github.com/ehb54/ultrascan-tickets/issues/768) | ehb54; enhancement, triage | Closed with a comment. The original question is answered; broader metadata consistency is separate work. |
-| [#869 Linux README architecture](https://github.com/ehb54/ultrascan-tickets/issues/869) | ehb54; general, triage | Fixed locally and fixture-tested; awaiting delivery and closure. |
+| [#546 macOS CMake packaging](https://github.com/ehb54/ultrascan-tickets/issues/546) | aaron-auc; enhancement | General UltraScan packaging. Existing implementation needs reconciliation against the older checklist. |
+| [#646 repeated qmake compilation](https://github.com/ehb54/ultrascan-tickets/issues/646) | aaron-auc; bug | Closed. Verified fixed on the baseline commit; no-change qmake rebuilds compile nothing. |
+| [#679 incomplete standard build](https://github.com/ehb54/ultrascan-tickets/issues/679) | aaron-auc; bug | Mixed scope. Include documentation and help; track SOMO completion separately. |
+| [#768 revision header contents](https://github.com/ehb54/ultrascan-tickets/issues/768) | ehb54; enhancement | Closed with a comment. The original question is answered; broader metadata consistency is separate work. |
+| [#869 Linux README architecture](https://github.com/ehb54/ultrascan-tickets/issues/869) | aaron-auc; general | Fixed in open [PR #627](https://github.com/ehb54/ultrascan3/pull/627); closes on merge. |
 | [#937 vcpkg organization](https://github.com/ehb54/ultrascan-tickets/issues/937) | samo38; general | Outside our implementation scope; left with samo38 and existing PR #465. |
-| [#1024 on-demand packaging](https://github.com/ehb54/ultrascan-tickets/issues/1024) | aaron-auc; bug | Several requested fixes exist in source. Verify produced artifacts, including the RHEL 8 follow-up report. |
+| [#1024 on-demand packaging](https://github.com/ehb54/ultrascan-tickets/issues/1024) | aaron-auc; bug | Original fixes exist in source; help, SQLite-runtime and exact-package-output fixes are in open [PR #627](https://github.com/ehb54/ultrascan3/pull/627) (referenced, not closing). Verify fresh Windows and RHEL 8 artifacts, including the RHEL 8 identity report. |
 
-All four tickets assigned to ehb54 carry the triage label; none carries the somo label. This supports treating them as items needing evaluation, but does not prove why they were assigned or that implementation is active. The only directly matching open implementation PR found for this set is [#465, new vcpkg layout](https://github.com/ehb54/ultrascan3/pull/465), authored by samo38. Its latest visible update and commit are from July 9, 2026. Leave that implementation with samo38; do not duplicate it in this initiative. No directly matching open PR was found for the other six; unpublished work cannot be ruled out.
+As of November 13, 2026, aaron-auc is the sole assignee of #546, #646, #679, #869 and #1024. No in-scope ticket carries the triage or somo label; triage was removed from #546 and #679 on November 13, 2026. The only directly matching open implementation PR found for this set is [#465, new vcpkg layout](https://github.com/ehb54/ultrascan3/pull/465), authored by samo38. Its latest visible update and commit are from July 9, 2026. Leave that implementation with samo38; do not duplicate it in this initiative. The other tickets' implementation PR is [PR #627](https://github.com/ehb54/ultrascan3/pull/627), authored by aaron-auc, which closes #869 on merge and references #1024; #646 was closed after verification without a code change.
 
 # What remains for each ticket
 
@@ -123,7 +123,7 @@ The discussion on [#646](https://github.com/ehb54/ultrascan-tickets/issues/646) 
 
 There is a related CMake concern: GenerateVersion.cmake writes the build-directory header unconditionally, although it avoids rewriting the source-directory copy when content is unchanged. This is a candidate cause of unnecessary CMake recompilation, not proof of the original qmake defect. Both generators also write into the source tree, which merits checking when qmake and CMake use the same checkout. [CMake revision generator](https://github.com/ehb54/ultrascan3/blob/1f838727ffaa9549db62884e0504acf2f94b3eac/admin/cmake/GenerateVersion.cmake).
 
-Acceptance: an unchanged second build performs no C++ compilation or relinking; a relevant source or commit change updates identity correctly; switching build systems does not cause repeated header churn. A metadata-check command may still run without invalidating compiled targets.
+Acceptance: an unchanged second build performs no C++ compilation or relinking; a relevant source or commit change updates identity correctly; switching build systems does not cause repeated header churn. A metadata-check command may still run without invalidating compiled targets. The qmake part of this is met and #646 is closed; the CMake no-change rebuild and the shared-checkout check belong to the separate metadata follow-up.
 
 ## Documentation and help
 
@@ -145,7 +145,7 @@ Acceptance: package name, README, application display, and CI record identify th
 
 ## Linux README
 
-[#869](https://github.com/ehb54/ultrascan-tickets/issues/869) is fixed locally. At the reviewed baseline, LinuxDeploy.cmake wrote a literal <arch> into its README extraction command while LinuxPkg.cmake derived the actual archive name separately. The implemented fix now generates both from the same package-name value. [README generation](https://github.com/ehb54/ultrascan3/blob/1f838727ffaa9549db62884e0504acf2f94b3eac/admin/cmake/packaging/linux/LinuxDeploy.cmake), [archive naming](https://github.com/ehb54/ultrascan3/blob/1f838727ffaa9549db62884e0504acf2f94b3eac/admin/cmake/packaging/linux/LinuxPkg.cmake).
+[#869](https://github.com/ehb54/ultrascan-tickets/issues/869) is fixed in open [PR #627](https://github.com/ehb54/ultrascan3/pull/627). At the reviewed baseline, LinuxDeploy.cmake wrote a literal <arch> into its README extraction command while LinuxPkg.cmake derived the actual archive name separately. The implemented fix now generates both from the same package-name value. [README generation](https://github.com/ehb54/ultrascan3/blob/1f838727ffaa9549db62884e0504acf2f94b3eac/admin/cmake/packaging/linux/LinuxDeploy.cmake), [archive naming](https://github.com/ehb54/ultrascan3/blob/1f838727ffaa9549db62884e0504acf2f94b3eac/admin/cmake/packaging/linux/LinuxPkg.cmake).
 
 Retain the README if it supplies useful installation guidance. Acceptance: the extraction command names the actual archive, no unresolved placeholders remain, and the documented extracted directory and launcher paths match the package. This can ship independently of the larger refactors.
 
@@ -161,7 +161,7 @@ Suggested acceptance for the separate #937 work: APP and HPC builds coexist with
 
 [#1024](https://github.com/ehb54/ultrascan-tickets/issues/1024) already has substantial source-level coverage. The on-demand workflow names artifacts with version, run number, short commit, and platform. The packaging action copies the selected installer/archive into artifact-upload before upload, which is intended to remove preset-directory nesting. Windows deployment rejects missing or empty Assistant, manual.qch, manual.qhc, and qsqlite.dll. Linux deployment rejects missing or empty manual files. [Workflow](https://github.com/ehb54/ultrascan3/blob/1f838727ffaa9549db62884e0504acf2f94b3eac/.github/workflows/on-demand-build.yml), [upload action](https://github.com/ehb54/ultrascan3/blob/1f838727ffaa9549db62884e0504acf2f94b3eac/.github/actions/build-package/action.yml), [Windows checks](https://github.com/ehb54/ultrascan3/blob/1f838727ffaa9549db62884e0504acf2f94b3eac/admin/cmake/packaging/windows/WinDeploy.cmake), [Linux checks](https://github.com/ehb54/ultrascan3/blob/1f838727ffaa9549db62884e0504acf2f94b3eac/admin/cmake/packaging/linux/LinuxDeploy.cmake).
 
-One remaining inspection finding: the upload action says it requires exactly one package, but selects the first matching file and only rejects an empty result. Multiple stale candidates could therefore cause the wrong package to be chosen. Select the expected output explicitly or reject ambiguous results.
+Baseline inspection found that the upload action selected the first matching file and only rejected an empty result. This is superseded: package targets now hand the exact output path to the upload action (see “#1024 exact package output handoff” below).
 
 Acceptance: download and inspect fresh Windows and RHEL 8 artifacts, verify the ZIP root and names, install or extract them, check identity, and launch help from the application. Verify package contents after final packaging, not only in the staging directory. Record the tested commit and workflow run before closing the ticket.
 
@@ -169,18 +169,18 @@ Acceptance: download and inspect fresh Windows and RHEL 8 artifacts, verify the 
 
 | Order | Work | Tickets | Completion evidence |
 |---|---|---|---|
-| 1 | Reconcile existing implementations and ownership | All six in scope | Remaining criteria documented; coordinate #1024 with aaron-auc. Leave #937 with samo38. |
+| 1 | Reconcile existing implementations and ownership | Open tickets in scope (#546, #679, #869, #1024) | Done: remaining criteria documented; #646 and #768 closed. Leave #937 with samo38. |
 | 2 | Verify package completeness and fix remaining omissions | #1024, #679 documentation, #546 | Installed help works; required-file omissions fail packaging; artifact selection is unambiguous. |
-| 3 | Deliver the completed Linux README naming fix | #869 | Local x64/arm64 archive fixtures passed; delivery and closure remain. |
+| 3 | Deliver the completed Linux README naming fix | #869 | Fixture and full Linux package validation passed; merge [PR #627](https://github.com/ehb54/ultrascan3/pull/627) to close. |
 | 4 | Align identity and preserve incremental builds | #1024 identity; separate metadata follow-up | Stable no-change rebuilds (qmake verified under #646); accurate identity on every packaged platform. |
 
 Use one tracking initiative with separate pull requests for these outcomes. Package completeness is the main user-facing priority. Identity work ties the incremental-build and artifact-naming issues together; dependency organization remains separate work owned by samo38.
 
-The shared completion gate should cover Windows, Linux Ubuntu, Linux RHEL/Oracle 8, and macOS arm64/x86_64 APP packages. Check HPC only for applicable build identity, archive naming, and dependency isolation; GUI help requirements should not be imposed on HPC packages. For every closure, retain the source commit, build command or workflow run, artifact name, and the relevant verification result. This prevents open tickets from being treated as entirely unimplemented while also avoiding closure based solely on code inspection.
+The shared completion gate should cover Windows, Linux Ubuntu, Linux RHEL/Oracle 8, and macOS arm64/x86_64 APP packages. Check HPC only for applicable build identity, archive naming, and dependency isolation; GUI help requirements should not be imposed on HPC packages. For every closure, retain the source commit, build command or workflow run, artifact name, and the relevant verification result. #646's closure followed this rule. This prevents open tickets from being treated as entirely unimplemented while also avoiding closure based solely on code inspection.
 
 ## Proposed split of ticket 679
 
-Keep #679 focused on documentation generation and Qt help setup, and move its SOMO requirement to a separate linked issue outside this analysis and project scope. Preserve the original report and cross-link the two scopes. The documentation ticket can then close when its own acceptance criteria pass without implying that SOMO integration is complete. This is a proposed ticket change; no GitHub tickets have been edited or created.
+Keep #679 focused on documentation generation and Qt help setup, and move its SOMO requirement to a separate linked issue outside this analysis and project scope. Preserve the original report and cross-link the two scopes. The documentation ticket can then close when its own acceptance criteria pass without implying that SOMO integration is complete. This is a proposed ticket change; #679 has not been edited and no SOMO issue has been created.
 
 # Architecture assessment and project scale
 
@@ -355,7 +355,7 @@ This verifies target selection and generated build rules. It is not an elapsed-t
 
 | Ticket | Effect of this change |
 |---|---|
-| #646 incremental recompilation | Supporting efficiency improvement only. Avoids an unnecessary library compilation in APP builds, but does not fix or establish the reported qmake no-change rebuild problem. |
+| #646 incremental recompilation | Supporting efficiency improvement only. Avoids an unnecessary library compilation in APP builds; unrelated to the qmake no-change rebuild, which was verified fixed and #646 closed. |
 | #546 macOS packaging | No package-content change is intended; shared GUI installation rules are unchanged. Clean-machine package verification remains required. |
 | #679 documentation and help | No direct fix. Documentation production and help deployment are unchanged. |
 | #768 version-location question | Closed with a comment; no implementation required. Broader identity work is separate. |
@@ -363,8 +363,6 @@ This verifies target selection and generated build rules. It is not an elapsed-t
 | #1024 on-demand packaging | Reduces the generated APP compilation workload used by the workflow; does not resolve artifact selection, metadata, or help validation. |
 
 The other architectural findings give these tickets shared priorities: package dependency completeness informs #546/#679/#1024; consistent identity and output naming inform #869/#1024 and a separate metadata follow-up; generated-header stability informs the CMake metadata follow-up (#646's qmake path is verified). Closed ticket #768 is not part of that follow-up. Application-library extraction is a separate, larger follow-on and is not a prerequisite for finishing those tickets.
-
-
 
 # #1024 exact package output handoff — November 13, 2026
 
@@ -382,3 +380,178 @@ and multiple files where only the declared output is uploaded. Shell syntax and
 are superseded by this explicit producer-to-upload contract. Fresh Windows and
 Oracle Linux 8 on-demand artifacts and installed-help acceptance remain pending;
 #1024 is not yet established as ready for closure.
+
+## Fresh Oracle Linux 8 artifact acceptance — November 14, 2026
+
+[On-demand run 43529840373](https://github.com/ehb54/ultrascan3/actions/runs/43529840373)
+passed for APP and HPC at `ca0c50157ed48c1cf3d2c00d1951b98e80013902`.
+The APP artifact `UltraScan3-4.3.0-dev-build-2-ca0c5015-RHEL-8-x86_64`
+contains exactly one archive at ZIP root. Direct archive inspection verifies all
+70 declared executables, required help components, README/archive naming agreement,
+and valid manual databases registered under `ultrascaniii`. The build log confirms
+build 9954 and revision ca0c501. Three QHelp URL probes resolve the homepage.
+
+In a disposable x86_64 Oracle Linux 8 runtime without system Qt, after installing
+standard display/OpenGL libraries, packaged Assistant and the help daemon stayed
+running until their 15-second test timeouts without missing-library or SQLite-driver
+errors. Assistant emitted a Qt help-collection connection warning and expected
+offscreen-platform warnings. This is startup validation, not visual application-menu
+acceptance. HPC naming, ZIP-root layout, identity and exact-path upload also passed.
+All 18 local packaging tests passed again. Evidence is in
+`/private/tmp/us3-1024-fresh`. Windows run 43529836988 and installed application-menu
+help acceptance remain pending; #1024 is not ready for closure.
+
+## Maintainable help-launch design — November 14, 2026
+
+A partial implementation exists in the working tree; it is not committed or fully validated.
+
+### Evidence from demeler9
+
+Current main `1f838727ffaa9549db62884e0504acf2f94b3eac` was built as aaron in
+`~/ultrascan3`, using `ultrascan/home-gui-build` and the README sequence
+`./makeall.sh && ./makesomo.sh`. The initial configuration omitted the
+`QWTPATH/src` include setting present in both the previous personal configuration
+and the installed server configuration. That setup error was introduced during
+this investigation and is not evidence of a product regression. After restoring
+that setting with the current Qt/Qwt paths, the sequence finished with exit 0
+and no compiler/linker errors in the scanned logs. Evidence:
+`/home/aaron/build-679-retry-OEuyQJLh` on demeler9.
+
+Both manual databases pass SQLite integrity checks. A Qt5 QHelpEngineCore probe
+resolves the application's `qthelp://ultrascaniii/manual/index.html` URL to 12,589
+bytes even though main's generated namespace is versioned. The namespace
+mismatch is therefore not demonstrated to block this Qt5 server. PR #627's
+stable namespace remains a separate cross-version consistency improvement.
+
+A bounded help-daemon launch traced an attempted exec of
+`/home/aaron/ultrascan3/bin/assistant` returning ENOENT. Assistant actually exists
+at `/opt/qt-5.15.19/bin/assistant` and the module puts it on PATH. Neither
+makeall.sh nor the manual Makefile creates the expected local link. The latter
+also searches only capitalized `Assistant`, whereas Linux provides `assistant`.
+This reproduces the help-launch part of #679 after a successful documented build.
+No manual link or application-code workaround was applied.
+
+### Supported configurations and PR checks
+
+Officially supported builds are qmake with Qt 5 and CMake with Qt 6. Qt below
+5 is not built, so the `QtSingleApplication` branch in us_helpdaemon's `main()`
+is dead code. Developers building with Qt 6 should use CMake; some still use
+qmake with Qt 6.
+
+Pull-request CI is wider than the official pair, so code must still build in
+the unofficial combinations:
+
+| PR check | Build | Qt | Covers |
+|---|---|---|---|
+| CodeQL gui / mpi / somo | qmake | 5.15.10, 6.8.3, 6.10.0 (usbuildtest images) | Compiles utils, gui and all programs, including us_helpdaemon |
+| Documentation build | `make qch` in doc/manual | same three images | Manual Makefile and qhelpgenerator discovery |
+| Unit Tests (Qt5) | CMake, TEST profile | Ubuntu distribution Qt 5 | utils and gui libraries and tests; programs are not built |
+| Unit Tests (Qt6) | CMake, TEST profile | 6.10.0 image | Same as above |
+| Static Analysis | CMake configure | Qt 5 | clang-tidy and cppcheck on changed files |
+
+The unit-test workflows run only when utils, test, admin/cmake, the root
+CMakeLists.txt or JSON files change. APP packages (CMake, Qt 6, vcpkg) are not
+built by any PR check; only the nightly, on-demand and release workflows build
+them. No PR check launches Assistant or opens a help page.
+
+Consequences for help:
+
+- Runtime help must work in qmake + Qt 5 and CMake + Qt 6. qmake + Qt 6 and
+  CMake + Qt 5 must compile, and utils/gui tests must pass under CMake + Qt 5.
+- qmake never stages Assistant, so for qmake + Qt 5 the QLibraryInfo fallback
+  is the normal launch path, not an edge case. On demeler9 it resolves to
+  `/opt/qt-5.15.19/bin/assistant`.
+- Released packages are CMake + Qt 6. app-build.yml still offers `qt5` as a
+  manual option, so CMake's Qt 5 Assistant discovery stays until removing that
+  option is decided separately.
+- The `register_init()` launch is conditional on Qt version, not build system:
+  any Qt 5 build runs it, including CMake + Qt 5. Qt 6 builds have never used it, and the Windows Qt 6
+  package above displayed the manual from manual.qhc alone.
+- The Makefile's qhelpgenerator lookup must succeed in the Qt 6 images, where
+  Qt 6 keeps qhelpgenerator in libexec.
+
+### Ownership and design recommendation
+
+- Preserve US_Help as the application-facing API and us_helpdaemon as the
+  external viewer's process owner. Put Assistant resolution, page normalization
+  and collection validation in one component in utils, called only by the
+  daemon. The unit-test workflows build utils under CMake with both Qt 5 and
+  Qt 6; they never build us_helpdaemon, so logic kept in the daemon program has
+  no automated coverage. `US_Settings::assistantPath()` in us_settings.cpp
+  already sits there; a new source file would also need utils.pro and
+  utils/CMakeLists.txt entries. Process ownership and user dialogs stay in the
+  daemon. The resolver takes its candidate directories as arguments so tests
+  do not depend on the host's Qt or a staged Assistant.
+  US_Help should launch the daemon, detect daemon-start failure and release its
+  QProcess correctly; it should not separately launch Assistant to register help.
+- Use the generated manual.qhc as the registration authority on Qt5 and Qt6.
+  Both existing builders already generate a collection with manual.qch registered.
+  Remove the redundant Qt5 pre-registration after a fresh-cache test on
+  demeler9's qmake + Qt 5, the primary configuration that runs it. Preserve compatibility for
+  register_init if an external consumer is found before deleting that public
+  method.
+- Resolve a bundled viewer first, including the existing macOS bundle layout.
+  If none is bundled, use the Qt installation reported by QLibraryInfo, with
+  bounded platform-specific executable locations. Qt5 uses location(), Qt6
+  uses path(); both forms are compiled and tested by PR CI. Include vcpkg's
+  `tools/Qt6/bin` under the Qt prefix, the layout CMakeLists.txt uses for
+  Qt 6 tools. Do not search PATH or `$QTDIR`, offer a `US3_ASSISTANT`
+  override without a demonstrated need, or hardcode server/Homebrew roots in
+  application code. An existing but broken bundled viewer must produce an
+  error rather than silently switching to another Qt installation.
+- Keep existing CMake staging for now, especially macOS/vcpkg arrangements that
+  need their own framework/plugin setup. QLibraryInfo is affected by qt.conf;
+  it is not a universal replacement for toolchain discovery or packaging.
+  Extract existing CMake discovery into one module for development staging and
+  packaging consumers, retaining source-matched deploy tools and plugins.
+- Packaging must still require bundled Assistant, manuals and runtime plugins;
+  keep final-payload checks independent of runtime developer fallback. Do not
+  require a new mode/configuration format merely to fix the development case.
+- Connect QProcess errors before startup, check startup result and early exits,
+  show actionable diagnostics and exit failed daemon instances nonzero. Validate
+  command-line arguments before accessing argv[1]. Preserve the launch environment
+  for the matching Qt installation; do not mix a system viewer with unrelated
+  bundled Qt plugins or globally clear module variables.
+- Correct manual Makefile executable-name detection and instructions. Keep the
+  documented makeall + makesomo sequence. Fixing qmake aggregate documentation
+  inclusion is a separate support-contract question, not needed to reproduce or
+  repair this documented server workflow.
+
+The comments promise a single daemon, but current Qt5/Qt6 code uses QApplication;
+only the unbuilt Qt4 branch implements the single-instance mechanism, so every
+help request starts a new daemon and Assistant, and `US_HelpDaemon::show()` and
+`-enableRemoteControl` are unused. Delete the Qt4 branch, correct the comments
+and test repeated requests. Adding cross-process IPC or replacing the
+viewer with an embedded help browser is separate work, not a prerequisite here.
+
+### Alternatives and acceptance
+
+A manual symlink repairs one checkout but leaves initialization and silent
+failure unresolved. Making every development build deploy a full viewer duplicates
+platform packaging and is especially costly on Windows/macOS. A single runtime
+owner, bundled-first resolution and a matching-Qt development fallback use the
+existing design with a bounded refactor.
+
+Acceptance:
+
+- PR CI: qmake builds on Qt 5.15.10, 6.8.3 and 6.10.0; `make qch` in the same
+  three images; resolver unit tests under CMake with Ubuntu Qt 5 and Qt 6.10.0.
+  Resolver tests must not depend on Assistant being installed on the runner.
+- Manual, qmake + Qt 5: demeler9 without a manual Assistant link, fresh user
+  help cache, launched from the application's Help menu.
+- Manual, CMake + Qt 6: a development build on Linux and macOS, including the
+  vcpkg layout.
+- On-demand packages, CMake + Qt 6: native Windows/macOS/Linux packages on
+  machines without developer Qt, and negative package completeness even on a
+  machine with Qt installed.
+
+Exercise missing viewer/manuals, invalid arguments, failed startup, plugin
+failure, paths with spaces, repeated page requests, fresh user caches, manual
+upgrades and read-only installation directories. Separately verify that the
+recorded build errors cannot be hidden by makeall.sh's success exit.
+
+Qt references: [Assistant integration example](https://doc.qt.io/qt-6/qtassistant-simpletextviewer-example.html),
+[collection registration and user caches](https://doc.qt.io/qt-6/assistant-custom-help-viewer.html),
+[QLibraryInfo](https://doc.qt.io/qt-6/qlibraryinfo.html),
+[qt.conf](https://doc.qt.io/qt-6/qt-conf.html),
+[QProcess environment and errors](https://doc.qt.io/qt-6/qprocess.html).

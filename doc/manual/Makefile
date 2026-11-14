@@ -108,6 +108,16 @@ SPHINXPROJ    = manual
 INSTALL_DIR   = ../../bin
 QHELPGEN ?= $(shell command -v qhelpgenerator 2>/dev/null)
 
+# Not on PATH: ask the active qmake. Qt 6 installs qhelpgenerator in libexec.
+QMAKE ?= qmake
+ifeq ($(QHELPGEN),)
+QHELPGEN := $(firstword $(wildcard \
+    $(shell $(QMAKE) -query QT_HOST_LIBEXECS 2>/dev/null)/qhelpgenerator \
+    $(shell $(QMAKE) -query QT_INSTALL_LIBEXECS 2>/dev/null)/qhelpgenerator \
+    $(shell $(QMAKE) -query QT_HOST_BINS 2>/dev/null)/qhelpgenerator \
+    $(shell $(QMAKE) -query QT_INSTALL_BINS 2>/dev/null)/qhelpgenerator))
+endif
+
 # Locate Qt Assistant if available
 ASSISTANT := $(shell command -v Assistant 2>/dev/null)
 

@@ -2,11 +2,10 @@
 #include "us_helpdaemon.h"
 #include "us_settings.h"
 
-#if QT_VERSION > 0x050000
+#include <cstdlib>
+
 #include <QtWidgets/QApplication>
-#else
-#include <QtSingleApplication>
-#endif
+#include <QtWidgets/QMessageBox>
 
 US_HelpDaemon::US_HelpDaemon( const QString& page, QObject* o ) : QObject( o )
 {
@@ -35,30 +34,53 @@ debug("location="+location);
        << url;
 
   debug( args.join( " " ) );
-#ifdef Q_OS_MAC
-  QString assisloc  = US_Settings::appBaseDir()
-                      + "/bin/Assistant.app/Contents/MacOS/Assistant";
-  if ( !QFile::exists( assisloc ) )
-    assisloc = US_Settings::appBaseDir() + "/bin/assistant";
-#elif defined(Q_OS_WIN)
-  QString assisloc  = US_Settings::appBaseDir() + "/bin/assistant.exe";
-  if ( !QFile::exists( assisloc ) )
-    assisloc = US_Settings::appBaseDir() + "/bin/Assistant.exe";
-#else
-  QString assisloc  = US_Settings::appBaseDir() + "/bin/assistant";
-#endif
+
+  if ( !QFileInfo( location ).isFile() )
+  {
+     debug( "help collection not found: " + location );
+     fail( tr( "The UltraScan help collection was not found:\n\n%1\n\n"
+               "Build the manual (doc/manual) or reinstall UltraScan." )
+              .arg( location ) );
+  }
+
+  QString       error;
+  QStringList   searched;
+  const QString assisloc = US_Settings::assistantPath( &error, &searched );
 
   debug( "assisloc=" + assisloc );
-  daemon.start( assisloc, args );
-  daemon.waitForStarted();
 
+  if ( assisloc.isEmpty() )
+  {
+     debug( error + "\nsearched:\n  " + searched.join( "\n  " ) );
+     fail( tr( "%1\n\nSearched:\n%2" ).arg( error, searched.join( "\n" ) ) );
+  }
+
+  connect( &daemon,
+           &QProcess::errorOccurred,
+           this,
+           [this]( QProcess::ProcessError ) { debug( "assistant process error: " + daemon.errorString() ); } );
   connect( &daemon, qOverload< int, QProcess::ExitStatus >( &QProcess::finished ),
                     this, &US_HelpDaemon::close );
+
+  daemon.start( assisloc, args );
+
+  if ( !daemon.waitForStarted() )
+  {
+     debug( "assistant failed to start: " + daemon.errorString() );
+     fail( tr( "Qt Assistant could not be started.\n\n%1\n\n%2" ).arg( assisloc, daemon.errorString() ) );
+  }
 //show(page);
 }
 
-void US_HelpDaemon::close( int /*exitCode*/, QProcess::ExitStatus /*status*/ ) 
+void US_HelpDaemon::close( int exitCode, QProcess::ExitStatus status )
 {
+   if ( status != QProcess::NormalExit || exitCode != 0 )
+   {
+      const QString errors = QString::fromLocal8Bit( daemon.readAllStandardError() ).trimmed();
+      debug( QString( "assistant exited with code %1: %2" ).arg( exitCode ).arg( errors ) );
+      fail( tr( "Qt Assistant exited with an error (code %1).\n\n%2\n\n%3" ).arg( exitCode ).arg( daemon.program(), errors ) );
+   }
+
   exit( 0 );
 }
 
@@ -94,6 +116,12 @@ debug("IN show()\n");
   daemon.write( ba );
 }
 
+void US_HelpDaemon::fail( const QString& message )
+{
+   QMessageBox::warning( nullptr, tr( "UltraScan Help" ), message );
+   exit( 1 );
+}
+
 void US_HelpDaemon::debug( const QString& message )
 {
 #ifdef Q_OS_WIN
@@ -109,28 +137,18 @@ void US_HelpDaemon::debug( const QString& message )
 
 /*! \brief Main program to start up Qt's Assistant
 
-    This program uses QtSingleApplication to ensure that there is only
-    one active process.  When a second instance is launched, it just sends
-    a message (the page to show) to the first instance and exits.
+    Starts Qt Assistant on the requested page and exits when Assistant
+    exits.  Each invocation starts its own Assistant.
 */
 int main( int argc, char* argv[] )
 {
-   QString message = QString( argv[ 1 ] );
-  //  Need to add uid to identifier ????
-  //note: for doc files to show properly after an update, it may be necessary 
-  //      to remove  ~/.local/share/data/Trolltech/Assistant/manual.qch
-#if QT_VERSION > 0x050000
+   QString      message = QString( argv[1] );
+   //note: for doc files to show properly after an update, it may be necessary
+   //      to remove  ~/.local/share/data/Trolltech/Assistant/manual.qch
    QApplication application( argc, argv );
    application.setApplicationDisplayName( "UltraScan Help Daemon" );
-#else
-   QtSingleApplication application( "UltraScan Help Daemon", argc, argv );
-  
-   if ( application.sendMessage( message ) ) return 0;
+   US_HelpDaemon* daemon = new US_HelpDaemon( message );
 
-   application.initialize();
-#endif
-  US_HelpDaemon* daemon = new US_HelpDaemon( message );
-
-  return application.exec();
+   return application.exec();
 }
 

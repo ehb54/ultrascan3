@@ -1,4 +1,7 @@
-//! \file us_helpdaemon.cpp
+//! \file us_helpdaemon.h
+#ifndef US_HELPDAEMON_H
+#define US_HELPDAEMON_H
+
 #include <QtCore>
 
 //! \brief Launch help programs
@@ -27,12 +30,15 @@ class US_HelpDaemon : public QObject
     //! \param helpPage A QString of the page to show.
     void show ( const QString& );
 
-    //! \brief A slot to catch the message that the user closed Assistant.
-    //!        It merely terminates the process.
-    //!        The parameters sent are ignored.
+    //! \brief A slot to catch Assistant exiting.  A normal exit ends the
+    //!        daemon; an error exit is reported to the user first.
     void close( int, QProcess::ExitStatus );
 
   private:
-    static void debug( const QString& );
-    QProcess    daemon;
+     //! \brief Report a fatal help problem to the user and exit.
+     [[noreturn]] static void fail( const QString& );
+     static void              debug( const QString& );
+     QProcess                 daemon;
 };
+
+#endif

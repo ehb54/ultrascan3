@@ -2,16 +2,9 @@
 #ifndef US_HELP_H
 #define US_HELP_H
 
-#include <QtCore>
-#if QT_VERSION > 0x050000
-#include <QtWidgets>
-#else
-#include <QtGui>
-#define setSingleStep(a) setStep(a)
-#define setMinorPen(a) setMinPen(a)
-#define setMajorPen(a) setMajPen(a)
-#endif
 #include "us_extern.h"
+#include <QtCore>
+#include <QtWidgets>
 
 //! \brief Launch help programs
 

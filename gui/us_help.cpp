@@ -51,8 +51,7 @@ void US_Help::show_help( const QString& helpFile )
   QStringList args;
   args << helpFile;
 
-  // This us_helpdaemon will check if an instance is already running and
-  // exit immediately if it is.
+  // Each request starts its own us_helpdaemon and Assistant.
 
 #ifndef Q_OS_MAC
   QString helpbin = US_Settings::appBaseDir() + "/bin/us_helpdaemon";
@@ -131,15 +130,15 @@ void US_Help::openBrowser( const QString& location )
 // Register the QCH file path for Assistant
 void US_Help::register_init( )
 {
-  QString program = US_Settings::appBaseDir() + "/";
-#ifndef Q_OS_MAC
-  program += "bin/assistant";
-#else
-  // Must invoke the inner binary to pass -register argument
-  program += "bin/Assistant.app/Contents/MacOS/Assistant";
-  if ( !QFile::exists( program ) )
-    program = US_Settings::appBaseDir() + "/bin/assistant";
-#endif
+   // On macOS this is the bundle's inner binary, which accepts -register.
+   const QString program = US_Settings::assistantPath();
+
+   // us_helpdaemon reports a missing Assistant to the user.
+   if ( program.isEmpty() )
+   {
+      return;
+   }
+
   QStringList args;
   args << "-register" << US_Settings::appBaseDir() + "/bin/manual.qch";
 
