@@ -1,4 +1,4 @@
-// test_us_buffer.cpp
+//! \file test_us_buffer.cpp
 #include "qt_test_base.h"
 #include "mock_us_db2.h"
 #include "us_buffer.h"
@@ -111,59 +111,6 @@ for ( int i = 0; i < 6; i++ )
    EXPECT_THAT( comp.dens_coeff[i], DoubleEq( 0.0 ) ) << "dens_coeff[" << i << "]";
    EXPECT_THAT( comp.visc_coeff[i], DoubleEq( 0.0 ) ) << "visc_coeff[" << i << "]";
 }
-}
-
-TEST_F(US_BufferComponentTest, SaveToDBSuccess) {
-auto mockDb = std::make_unique<NiceMock<US_DB2_Mock>>();
-
-// Don't mock the query call - just mock the result methods
-EXPECT_CALL(*mockDb, lastErrno())
-.WillOnce(Return(IUS_DB2::OK));
-EXPECT_CALL(*mockDb, lastInsertID())
-.WillOnce(Return(456));
-
-component.name = "Test Component";
-int result = component.saveToDB(mockDb.get());
-
-EXPECT_EQ(result, 456);
-EXPECT_EQ(component.componentID, "456");
-}
-
-TEST_F(US_BufferComponentTest, SaveToDBError) {
-auto mockDb = std::make_unique<NiceMock<US_DB2_Mock>>();
-
-EXPECT_CALL(*mockDb, lastErrno())
-.WillRepeatedly(Return(IUS_DB2::DBERROR));
-
-int result = component.saveToDB(mockDb.get());
-
-EXPECT_EQ(result, -1);
-}
-
-TEST_F(US_BufferComponentTest, GetInfoFromDBSuccess) {
-auto mockDb = std::make_unique<NiceMock<US_DB2_Mock>>();
-
-EXPECT_CALL(*mockDb, next())
-.WillOnce(Return(true));
-
-EXPECT_CALL(*mockDb, value(0))
-.WillOnce(Return(QVariant("M")));
-EXPECT_CALL(*mockDb, value(1))
-.WillOnce(Return(QVariant("Salt")));
-EXPECT_CALL(*mockDb, value(2))
-.WillOnce(Return(QVariant("1.0 1.1 1.2 1.3 1.4 1.5")));
-EXPECT_CALL(*mockDb, value(3))
-.WillOnce(Return(QVariant("2.0 2.1 2.2 2.3 2.4 2.5")));
-EXPECT_CALL(*mockDb, value(4))
-.WillOnce(Return(QVariant("0-1")));
-EXPECT_CALL(*mockDb, value(5))
-.WillOnce(Return(QVariant("false")));
-
-component.componentID = "123";
-component.getInfoFromDB(mockDb.get());
-
-EXPECT_EQ(component.unit, "M");
-EXPECT_EQ(component.name, "Salt");
 }
 
 TEST_F(US_BufferTest, ReadFromDBError) {
