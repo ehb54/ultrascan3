@@ -5,9 +5,9 @@ echo "Make All for Qt Version ${QTVERS} ..."
 QTMAJV=`echo ${QTVERS}|cut -d. -f1`
 if [ `echo "56"|grep -ci "${QTMAJV}"` -eq 0 ]; then
   echo "Wrong qmake, check environment"
-  echo " QT Major version must be 4 or 5; is ${QTMAJV}"
+  echo " QT Major version must be 5 or 6; is ${QTMAJV}"
   qmake --version
-  exit
+  exit 1
 fi
 
 MKARGS="$@"
@@ -197,4 +197,9 @@ fi
 if [ $NBERR -gt 0 ]; then
   echo "*** $NBERR Build Error(s) ***"
   echo "*** $NBERR Build Error(s) ***" >> $DIR/build.log
+  # Callers such as release images and us_branch.php keep only this output,
+  # so show the first errors from the log here.
+  echo "First errors from $DIR/build.log:"
+  grep -n -E ': (fatal )?error|\*\*\* \[|Error [0-9]+' $DIR/build.log | head -40
+  exit 1
 fi

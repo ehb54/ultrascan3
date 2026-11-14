@@ -118,13 +118,18 @@ QHELPGEN := $(firstword $(wildcard \
     $(shell $(QMAKE) -query QT_INSTALL_BINS 2>/dev/null)/qhelpgenerator))
 endif
 
-# Locate Qt Assistant if available
-ASSISTANT := $(shell command -v Assistant 2>/dev/null)
+# Locate Qt Assistant if available: PATH, then the active qmake's Qt.
+ASSISTANT := $(shell command -v assistant 2>/dev/null || command -v Assistant 2>/dev/null)
+ifeq ($(ASSISTANT),)
+ASSISTANT := $(firstword $(wildcard \
+    $(shell $(QMAKE) -query QT_INSTALL_BINS 2>/dev/null)/assistant \
+    $(shell $(QMAKE) -query QT_INSTALL_BINS 2>/dev/null)/Assistant.app/Contents/MacOS/Assistant))
+endif
 
 # Locate Latex
 LATEXMK ?= $(shell command -v latexmk 2>/dev/null)
 
-.PHONY: help html qthelp qch all clean Makefile
+.PHONY: help html qthelp qch qch-tools all clean Makefile
 
 all: html qch
 
@@ -139,6 +144,16 @@ qthelp:
 	@$(SPHINXBUILD) -b qthelp $(SOURCEDIR) $(BUILDDIR)/qthelp $(SPHINXOPTS) | \
     sed '/You can now run "qcollectiongenerator"/,/assistant -collectionFile/d'
 	@echo "Qt help project files written to $(BUILDDIR)/qthelp"
+
+# Succeeds only when Sphinx and qhelpgenerator are both available, so an
+# optional caller (make_all.pro) can skip the manual with a warning.
+qch-tools:
+	@$(SPHINXBUILD) --version >/dev/null 2>&1 || \
+		{ echo "Sphinx is not available to $(SPHINXBUILD)."; exit 1; }
+	@if [ -z "$(QHELPGEN)" ]; then \
+		echo "qhelpgenerator was not found on PATH or in $(QMAKE)'s Qt."; \
+		exit 1; \
+	fi
 
 qch: qthelp
 	@if [ -z "$(QHELPGEN)" ]; then \
@@ -161,8 +176,8 @@ qch: qthelp
         echo "  $(ASSISTANT) -collectionFile $(INSTALL_DIR)/$(SPHINXPROJ).qhc"; \
     else \
         echo "To view the help file run Qt Assistant:"; \
-        echo "  Assistant -collectionFile $(INSTALL_DIR)/$(SPHINXPROJ).qhc"; \
-        echo "(Make sure Qt's Assistant is in your PATH)"; \
+        echo "  assistant -collectionFile $(INSTALL_DIR)/$(SPHINXPROJ).qhc"; \
+        echo "(Qt Assistant ships with Qt's tools; it was not found on PATH or in qmake's Qt)"; \
     fi
 
 latexpdf:

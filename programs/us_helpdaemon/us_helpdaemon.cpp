@@ -9,111 +9,86 @@
 
 US_HelpDaemon::US_HelpDaemon( const QString& page, QObject* o ) : QObject( o )
 {
+   const QString location = US_Settings::appBaseDir() + "/bin/manual.qhc";
 
-  // special Q_OS_WIN code apparently does not work anymore 
-  // #ifdef Q_OS_WIN
-  // QString location = US_Settings::appBaseDir() + "/bin/manual.qch";
-  // #else
-  QString location = US_Settings::appBaseDir() + "/bin/manual.qhc";
-  // #endif
+   QString       url = "qthelp://ultrascaniii/";
+   if ( !page.contains( "manual/" ) )
+   {
+      url.append( "manual/" );
+   }
+   url.append( page );
 
-  QString url      = "qthelp://ultrascaniii/";
-  if ( !page.contains( "manual/" ) )
-     url.append( "manual/" );
-  url.append( page );
-debug("page="+page);
-debug("url="+url);
-debug("location="+location);
+   debug( "page=" + page );
+   debug( "url=" + url );
+   debug( "location=" + location );
 
-  QStringList args;
+   if ( page.isEmpty() )
+   {
+      fail( tr( "No help page was requested." ) );
+   }
 
-  args << QLatin1String( "-collectionFile" )
-       << location
-       << QLatin1String( "-enableRemoteControl" )
-       << QLatin1String( "-showURL" )
-       << url;
+   const QStringList args = { "-collectionFile", location, "-showURL", url };
 
-  debug( args.join( " " ) );
+   debug( args.join( " " ) );
 
-  if ( !QFileInfo( location ).isFile() )
-  {
-     debug( "help collection not found: " + location );
-     fail( tr( "The UltraScan help collection was not found:\n\n%1\n\n"
-               "Build the manual (doc/manual) or reinstall UltraScan." )
-              .arg( location ) );
-  }
+   if ( !QFileInfo( location ).isFile() )
+   {
+      debug( "help collection not found: " + location );
+      fail( tr( "The UltraScan help collection was not found:\n\n%1\n\n"
+                "Build the manual (doc/manual) or reinstall UltraScan." )
+               .arg( location ) );
+   }
 
-  QString       error;
-  QStringList   searched;
-  const QString assisloc = US_Settings::assistantPath( &error, &searched );
+   QString       error;
+   QStringList   searched;
+   const QString assisloc = US_Settings::assistantPath( &error, &searched );
 
-  debug( "assisloc=" + assisloc );
+   debug( "assisloc=" + assisloc );
 
-  if ( assisloc.isEmpty() )
-  {
-     debug( error + "\nsearched:\n  " + searched.join( "\n  " ) );
-     fail( tr( "%1\n\nSearched:\n%2" ).arg( error, searched.join( "\n" ) ) );
-  }
+   if ( assisloc.isEmpty() )
+   {
+      debug( error + "\nsearched:\n  " + searched.join( "\n  " ) );
+      fail( tr( "%1\n\nSearched:\n%2" ).arg( error, searched.join( "\n" ) ) );
+   }
 
-  connect( &daemon,
-           &QProcess::errorOccurred,
-           this,
-           [this]( QProcess::ProcessError ) { debug( "assistant process error: " + daemon.errorString() ); } );
-  connect( &daemon, qOverload< int, QProcess::ExitStatus >( &QProcess::finished ),
-                    this, &US_HelpDaemon::close );
+   // Discard stdout and keep only the tail of stderr, so a talkative
+   // Assistant can never block on a full pipe.
+   daemon.setStandardOutputFile( QProcess::nullDevice() );
 
-  daemon.start( assisloc, args );
+   connect( &daemon,
+            &QProcess::readyReadStandardError,
+            this,
+            [this]()
+            {
+               errors.append( daemon.readAllStandardError() );
+               errors = errors.right( 8192 );
+            } );
+   connect( &daemon,
+            &QProcess::errorOccurred,
+            this,
+            [this]( QProcess::ProcessError ) { debug( "assistant process error: " + daemon.errorString() ); } );
+   connect( &daemon, qOverload<int, QProcess::ExitStatus>( &QProcess::finished ), this, &US_HelpDaemon::close );
 
-  if ( !daemon.waitForStarted() )
-  {
-     debug( "assistant failed to start: " + daemon.errorString() );
-     fail( tr( "Qt Assistant could not be started.\n\n%1\n\n%2" ).arg( assisloc, daemon.errorString() ) );
-  }
-//show(page);
+   daemon.start( assisloc, args );
+
+   if ( !daemon.waitForStarted() )
+   {
+      debug( "assistant failed to start: " + daemon.errorString() );
+      fail( tr( "Qt Assistant could not be started.\n\n%1\n\n%2" ).arg( assisloc, daemon.errorString() ) );
+   }
 }
 
 void US_HelpDaemon::close( int exitCode, QProcess::ExitStatus status )
 {
    if ( status != QProcess::NormalExit || exitCode != 0 )
    {
-      const QString errors = QString::fromLocal8Bit( daemon.readAllStandardError() ).trimmed();
-      debug( QString( "assistant exited with code %1: %2" ).arg( exitCode ).arg( errors ) );
-      fail( tr( "Qt Assistant exited with an error (code %1).\n\n%2\n\n%3" ).arg( exitCode ).arg( daemon.program(), errors ) );
+      errors.append( daemon.readAllStandardError() );
+      const QString text = QString::fromLocal8Bit( errors ).trimmed();
+      debug( QString( "assistant exited with code %1: %2" ).arg( exitCode ).arg( text ) );
+      fail( tr( "Qt Assistant exited with an error (code %1).\n\n%2\n\n%3" ).arg( exitCode ).arg( daemon.program(), text ) );
    }
 
-  exit( 0 );
-}
-
-void US_HelpDaemon::show( const QString& helpPage )
-{
-debug("IN show()\n");
-  if ( helpPage == "Quit" )
-  {
-    daemon.close();
-    exit( 0 );
-  }
-
-  if ( daemon.state() == QProcess::NotRunning ) 
-  {
-    debug( "assistant not running" );
-  }
-
-  QString page = helpPage;
-  if ( ! helpPage.contains( "manual/" ) ) page.prepend( "manual/" );
-
-  debug( "setSource qthelp://ultrascaniii/" + page );
-
-  QByteArray ba;
-  ba.append( "setSource qthelp://ultrascaniii/" );
-#ifdef Q_OS_WIN
-  ba.append( page.toLocal8Bit() );
-  ba.append( '\n' );
-#else
-  ba.append( page.toLatin1() );
-  ba.append( '\0' );
-#endif
-
-  daemon.write( ba );
+   exit( 0 );
 }
 
 void US_HelpDaemon::fail( const QString& message )
@@ -129,10 +104,12 @@ void US_HelpDaemon::debug( const QString& message )
 #else
    QFile d( "/tmp/helpdaemon.log" );
 #endif
-   d.open( QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append );
-   QTextStream out ( &d );
+   if ( !d.open( QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append ) )
+   {
+      return;
+   }
+   QTextStream out( &d );
    out << message << Qt::endl;
-   d.close();
 }
 
 /*! \brief Main program to start up Qt's Assistant
@@ -142,13 +119,11 @@ void US_HelpDaemon::debug( const QString& message )
 */
 int main( int argc, char* argv[] )
 {
-   QString      message = QString( argv[1] );
-   //note: for doc files to show properly after an update, it may be necessary
-   //      to remove  ~/.local/share/data/Trolltech/Assistant/manual.qch
    QApplication application( argc, argv );
    application.setApplicationDisplayName( "UltraScan Help Daemon" );
-   US_HelpDaemon* daemon = new US_HelpDaemon( message );
+
+   const QStringList arguments = application.arguments();
+   US_HelpDaemon     daemon( arguments.value( 1 ) );
 
    return application.exec();
 }
-

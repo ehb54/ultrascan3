@@ -10,9 +10,11 @@ At the initial revalidation, GitHub reported all six tickets as **OPEN**. The us
 
 | Ticket | Verified finding | Recommended disposition |
 |---|---|---|
+| [#460](https://github.com/ehb54/ultrascan-tickets/issues/460) | Help gives no clue when Assistant is missing. The help-launch change on `build-issues` resolves Assistant through one resolver and has us_helpdaemon show the error and every location searched. | Fixed by the help-launch commits in [PR #627](https://github.com/ehb54/ultrascan3/pull/627); closes on merge. |
 | [#546](https://github.com/ehb54/ultrascan-tickets/issues/546) | Qt deployment and macOS PKG packaging exist. Published build logs show successful arm64 and x86_64 PKG creation and help-file staging. The original checklist asks for DMG. | Largely implemented; reconcile PKG versus DMG and confirm clean-machine install/help behavior, then close or retain only specific failures. |
 | ~~[#646](https://github.com/ehb54/ultrascan-tickets/issues/646)~~ **Closed** | **Verified fixed.** Revision generation uses commit time and preserves an unchanged header. Three successive full `make_all.pro` builds of the baseline commit: the first built all 70 programs; the second and third ran zero compiles and zero links. | **Closed** with the verification evidence below ([closing comment](https://github.com/ehb54/ultrascan-tickets/issues/646#issuecomment-6867734906)). |
-| [#679](https://github.com/ehb54/ultrascan-tickets/issues/679) | Modern packages build and stage Qt help. June 2026 makeall.sh changes improved Python/Sphinx detection; its manual target generates both help files. However, make_all.pro still lacks a documentation target, and makeall.sh only prints the detected Assistant invocation rather than providing the originally requested setup. | Partially addressed. Retain a narrow legacy-entrypoint requirement if that workflow remains supported; explicitly retire it otherwise. SOMO remains outside this analysis and must be separated before closing the original mixed ticket. |
+| [#679](https://github.com/ehb54/ultrascan-tickets/issues/679) | Modern packages build and stage Qt help. June 2026 makeall.sh changes improved Python/Sphinx detection; its manual target generates both help files. On `build-issues`, make_all.pro now has a documentation subproject, makeall.sh exits nonzero on build errors, and help no longer needs a local Assistant setup because us_helpdaemon finds the linked Qt's Assistant. | Implemented on `build-issues`; validate with qmake + Qt 5 on demeler9. SOMO remains outside this analysis and must be separated before closing the original mixed ticket. |
+| [#797](https://github.com/ehb54/ultrascan-tickets/issues/797) | make_all.pro is missing content of makeall.sh, documentation for example. Same gap as #679's qmake entry point. make_all.pro now builds the manual through a `doc` subproject (doc/manual/manual.pro), skipped with a warning when Sphinx or qhelpgenerator is missing, as makeall.sh does. The two entry points still skip different programs: makeall.sh omits config2, us_1dsa and us_mwla_viewer; make_all.pro omits only us_mpi_analysis. | Documentation gap implemented on `build-issues`; the program lists were left unchanged. |
 | ~~[#768](https://github.com/ehb54/ultrascan-tickets/issues/768)~~ **Closed** | The original question asks where the application version is stored. A March 4 comment answers utils/us_defines.h; current CMake also checks its agreement with VERSION. | **Closed with a comment**, as confirmed by the user. Broader metadata consistency ideas are separate work, not an expansion of this question. |
 | [#869](https://github.com/ehb54/ultrascan-tickets/issues/869) | **Fixed in [PR #627](https://github.com/ehb54/ultrascan3/pull/627) (open).** README and archive naming share the calculated filename; x64/arm64 archive fixtures and a full Linux package-target build passed. | Implementation complete; closes on merge of [PR #627](https://github.com/ehb54/ultrascan3/pull/627). |
 | [#1024](https://github.com/ehb54/ultrascan-tickets/issues/1024) | On-demand source now constructs version/run/hash/platform names and uploads staged files without the preset-directory nesting. The shared Windows packaging path explicitly validates Assistant, manual.qch, manual.qhc and qsqlite.dll; the published nightly log confirms that check passed. Linux APP logs also show both manuals staged and real Git metadata generated. | Original fixes appear implemented. Verify one on-demand artifact and installed help before closure; do not add unrelated architecture work to this ticket. |
@@ -99,15 +101,17 @@ The architecture and reuse analysis below excludes all SOMO code, targets, depen
 
 | Ticket | Owner and labels | Assessment |
 |---|---|---|
+| [#460 missing-Assistant message](https://github.com/ehb54/ultrascan-tickets/issues/460) | aaron-auc; enhancement | Fixed by the help-launch change in [PR #627](https://github.com/ehb54/ultrascan3/pull/627). |
 | [#546 macOS CMake packaging](https://github.com/ehb54/ultrascan-tickets/issues/546) | aaron-auc; enhancement | General UltraScan packaging. Existing implementation needs reconciliation against the older checklist. |
 | [#646 repeated qmake compilation](https://github.com/ehb54/ultrascan-tickets/issues/646) | aaron-auc; bug | Closed. Verified fixed on the baseline commit; no-change qmake rebuilds compile nothing. |
 | [#679 incomplete standard build](https://github.com/ehb54/ultrascan-tickets/issues/679) | aaron-auc; bug | Mixed scope. Include documentation and help; track SOMO completion separately. |
+| [#797 make_all.pro missing makeall.sh content](https://github.com/ehb54/ultrascan-tickets/issues/797) | aaron-auc; bug | Same make_all.pro documentation gap as #679; documentation subproject implemented on `build-issues`. |
 | [#768 revision header contents](https://github.com/ehb54/ultrascan-tickets/issues/768) | ehb54; enhancement | Closed with a comment. The original question is answered; broader metadata consistency is separate work. |
 | [#869 Linux README architecture](https://github.com/ehb54/ultrascan-tickets/issues/869) | aaron-auc; general | Fixed in open [PR #627](https://github.com/ehb54/ultrascan3/pull/627); closes on merge. |
 | [#937 vcpkg organization](https://github.com/ehb54/ultrascan-tickets/issues/937) | samo38; general | Outside our implementation scope; left with samo38 and existing PR #465. |
 | [#1024 on-demand packaging](https://github.com/ehb54/ultrascan-tickets/issues/1024) | aaron-auc; bug | Original fixes exist in source; help, SQLite-runtime and exact-package-output fixes are in open [PR #627](https://github.com/ehb54/ultrascan3/pull/627) (referenced, not closing). Verify fresh Windows and RHEL 8 artifacts, including the RHEL 8 identity report. |
 
-As of November 13, 2026, aaron-auc is the sole assignee of #546, #646, #679, #869 and #1024. No in-scope ticket carries the triage or somo label; triage was removed from #546 and #679 on November 13, 2026. The only directly matching open implementation PR found for this set is [#465, new vcpkg layout](https://github.com/ehb54/ultrascan3/pull/465), authored by samo38. Its latest visible update and commit are from July 9, 2026. Leave that implementation with samo38; do not duplicate it in this initiative. The other tickets' implementation PR is [PR #627](https://github.com/ehb54/ultrascan3/pull/627), authored by aaron-auc, which closes #869 on merge and references #1024; #646 was closed after verification without a code change.
+As of November 13, 2026, aaron-auc is the sole assignee of #546, #646, #679, #869 and #1024; #460 and #797, added November 14, 2026, are also assigned to aaron-auc. No in-scope ticket carries the triage or somo label; triage was removed from #546 and #679 on November 13, 2026. The only directly matching open implementation PR found for this set is [#465, new vcpkg layout](https://github.com/ehb54/ultrascan3/pull/465), authored by samo38. Its latest visible update and commit are from July 9, 2026. Leave that implementation with samo38; do not duplicate it in this initiative. The other tickets' implementation PR is [PR #627](https://github.com/ehb54/ultrascan3/pull/627), authored by aaron-auc, which closes #869 on merge and references #1024; #646 was closed after verification without a code change.
 
 # What remains for each ticket
 
@@ -115,7 +119,7 @@ As of November 13, 2026, aaron-auc is the sole assignee of #546, #646, #679, #86
 
 [#546](https://github.com/ehb54/ultrascan-tickets/issues/546) reads like an initial implementation checklist, but main already has substantial deployment code: Qt deployment, library-path rewriting, Assistant staging, and a PKG target using pkgbuild and productbuild. The root build explicitly describes PKG packaging rather than CPack DMG packaging. Treat the old DMG and directory-layout requests as decisions to reconcile with the established installer, not automatic requirements for a second packaging system. [Mac deployment](https://github.com/ehb54/ultrascan3/blob/1f838727ffaa9549db62884e0504acf2f94b3eac/admin/cmake/packaging/macos/MacDeploy.cmake), [PKG implementation](https://github.com/ehb54/ultrascan3/blob/1f838727ffaa9549db62884e0504acf2f94b3eac/admin/cmake/packaging/macos/MacOsPkg.cmake).
 
-The manual-copy section copies help files only when present, whereas the Linux and Windows deployment scripts contain explicit checks for required help files. Add or verify a consistent final package check on macOS. Acceptance should cover arm64 and x86_64 installation on a machine without the development toolchain, application startup, resources, help navigation, and runtime library resolution. Close the ticket only after its checklist reflects the chosen package format and that evidence exists.
+The manual-copy section copies help files only when present, but the final payload check is shared: MacDeploy.cmake, like the Linux and Windows deployment scripts, ends with ValidateAppHelp.cmake, which fails packaging when manual.qch, manual.qhc, the Assistant.app binary or the SQLite driver is missing or empty. Acceptance should cover arm64 and x86_64 installation on a machine without the development toolchain, application startup, resources, help navigation, and runtime library resolution. Close the ticket only after its checklist reflects the chosen package format and that evidence exists.
 
 ## Incremental builds
 
@@ -127,7 +131,7 @@ Acceptance: an unchanged second build performs no C++ compilation or relinking; 
 
 ## Documentation and help
 
-[#679](https://github.com/ehb54/ultrascan-tickets/issues/679) names two entry points, makeall.sh and qmake make_all.pro. They do not currently promise the same result. makeall.sh attempts the manual build but disables it with a warning when a usable Python/Sphinx environment cannot be found. make_all.pro lists application and library subprojects without an explicit documentation subproject. [makeall.sh](https://github.com/ehb54/ultrascan3/blob/1f838727ffaa9549db62884e0504acf2f94b3eac/makeall.sh), [make_all.pro](https://github.com/ehb54/ultrascan3/blob/1f838727ffaa9549db62884e0504acf2f94b3eac/make_all.pro).
+[#679](https://github.com/ehb54/ultrascan-tickets/issues/679) names two entry points, makeall.sh and qmake make_all.pro. They do not currently promise the same result. makeall.sh attempts the manual build but disables it with a warning when a usable Python/Sphinx environment cannot be found. make_all.pro listed application and library subprojects without a documentation subproject; [#797](https://github.com/ehb54/ultrascan-tickets/issues/797) reports the same gap. make_all.pro now builds the manual through doc/manual/manual.pro, whose generated Makefile is written as Makefile.qmake beside the hand-written doc/manual/Makefile. Like makeall.sh, it skips the manual with a warning when Sphinx or qhelpgenerator is unavailable. makeall.sh now exits nonzero when any directory fails to build and prints the first errors from build.log, since the release images (admin/release/{centos7,redhat,ubuntu}) and admin/us_branch/us_branch.php keep only its output; both already treat a nonzero exit as fatal. [makeall.sh](https://github.com/ehb54/ultrascan3/blob/1f838727ffaa9549db62884e0504acf2f94b3eac/makeall.sh), [make_all.pro](https://github.com/ehb54/ultrascan3/blob/1f838727ffaa9549db62884e0504acf2f94b3eac/make_all.pro).
 
 Define a clear distinction between a developer application build, where documentation may be optional, and an APP distribution package, where working help is required. Document which command produces each. For the supported complete-build path, validate manual.qch, manual.qhc, Assistant, its required plugins, and the application's actual help launch. Packaging must fail if a required component is missing. This overlaps directly with #1024 and the macOS verification in #546.
 
@@ -403,7 +407,30 @@ help acceptance remain pending; #1024 is not ready for closure.
 
 ## Maintainable help-launch design — November 14, 2026
 
-A partial implementation exists in the working tree; it is not committed or fully validated.
+Implemented on `build-issues`; not yet validated by launching help on demeler9 or
+by package acceptance. The implementation:
+
+- `US_Settings::assistantPath()` resolves Assistant bundled in `bin/`, else the
+  linked Qt's binaries, libexec and vcpkg `tools/Qt6/bin` directories. A
+  bundled viewer that exists but cannot run is an error. No PATH, `$QTDIR` or
+  environment override. `resolveAssistant()` takes explicit directories and is
+  covered by utils tests.
+- `US_Help::show_help()` starts us_helpdaemon detached and warns if it cannot
+  start. `register_init()` and the separate Qt5 `-register` launch are removed;
+  manual.qhc registers the manual on Qt5 and Qt6.
+- us_helpdaemon checks the requested page, the collection and the resolved
+  viewer, connects process handlers before starting Assistant, discards stdout,
+  keeps the tail of stderr, and reports start failures and error exits. The Qt4
+  QtSingleApplication branch, `show()` and `-enableRemoteControl` are removed.
+- The manual Makefile finds `qhelpgenerator` and `assistant` through the
+  active qmake when they are not on PATH.
+
+The removal of `register_init()` precedes the demeler9 fresh-cache test; that
+test is now the acceptance check for collection-only registration on Qt5.
+
+This change fixes [#460](https://github.com/ehb54/ultrascan-tickets/issues/460),
+which asked for an informative message when Assistant is missing; PR #627
+closes it on merge.
 
 ### Evidence from demeler9
 
@@ -517,11 +544,9 @@ Consequences for help:
   inclusion is a separate support-contract question, not needed to reproduce or
   repair this documented server workflow.
 
-The comments promise a single daemon, but current Qt5/Qt6 code uses QApplication;
-only the unbuilt Qt4 branch implements the single-instance mechanism, so every
-help request starts a new daemon and Assistant, and `US_HelpDaemon::show()` and
-`-enableRemoteControl` are unused. Delete the Qt4 branch, correct the comments
-and test repeated requests. Adding cross-process IPC or replacing the
+Qt5/Qt6 builds have no single-instance mechanism; only the removed Qt4
+branch had one. Every help request starts its own daemon and Assistant.
+Test repeated requests. Adding cross-process IPC or replacing the
 viewer with an embedded help browser is separate work, not a prerequisite here.
 
 ### Alternatives and acceptance
@@ -547,8 +572,8 @@ Acceptance:
 
 Exercise missing viewer/manuals, invalid arguments, failed startup, plugin
 failure, paths with spaces, repeated page requests, fresh user caches, manual
-upgrades and read-only installation directories. Separately verify that the
-recorded build errors cannot be hidden by makeall.sh's success exit.
+upgrades and read-only installation directories. Verify that a failing directory
+makes makeall.sh exit nonzero and that make_all.pro builds or skips the manual.
 
 Qt references: [Assistant integration example](https://doc.qt.io/qt-6/qtassistant-simpletextviewer-example.html),
 [collection registration and user caches](https://doc.qt.io/qt-6/assistant-custom-help-viewer.html),
