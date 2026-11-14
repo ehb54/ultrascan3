@@ -28,7 +28,7 @@ Options
 --help                : print this information and exit
 
 --branch branchname   : checkout branch
---pullrequest id      : checkout from pull request
+--pullrequest|pr id   : checkout from pull request
 --build               : build 
 --run                 : run
 
@@ -81,6 +81,7 @@ while( count( $u_argv ) && substr( $u_argv[ 0 ], 0, 1 ) == "-" ) {
             $branch = array_shift( $u_argv );
             break;
         }
+        case "--pr":
         case "--pullrequest": {
             array_shift( $u_argv );
             if ( !count( $u_argv ) ) {
@@ -205,6 +206,10 @@ if ( strlen( $pullrequest ) ) {
 }
     
 if ( $build ) {
+    echo "Preparing build environment\n";
+    $cmd = "module swap $modulename && cd $uspath && rm -rf .venv && python3 -m venv .venv && source .venv/bin/activate && python -m pip install -r doc/manual/source/requirements.txt";
+    print run_cmd( $cmd );
+    
     echo "building ultrascan, this can take awhile\n";
     $cmd = "module swap $modulename && cd $uspath && qmake && make -j $nprocs && ./makeall.sh -j $nprocs";
     print run_cmd( $cmd );
@@ -220,6 +225,10 @@ if ( $run ) {
     echo "running ultrascan3 from $uspath/bin\n";
     $cmd = "module swap $modulename && $uspath/bin/us";
     print run_cmd( $cmd );
+} 
+if ( $build && !$run ) {
+    echo "\n\nIn order to run the UltraScan build execute the following command:\nmodule swap $modulename\n";
+    echo "The binaries can be found in $uspath/bin\n";
 }
 
     
