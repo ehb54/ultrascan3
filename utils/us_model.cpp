@@ -78,6 +78,8 @@ bool US_Model::Association::operator== ( const Association& a ) const
 // Model constructor
 US_Model::US_Model()
 {
+   customGridData.xLogarithmic = false;
+   customGridData.midpointBins = false;
    monteCarlo      = false;
    wavelength      = 0.0;
    variance        = 0.0;
