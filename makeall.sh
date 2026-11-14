@@ -1,14 +1,17 @@
 #!/bin/bash
 
-QTVERS=`qmake --version|sed -n 2,2p|awk '{print $4}'`
+QTVERS=`qmake --version 2>/dev/null|sed -n 2,2p|awk '{print $4}'`
 echo "Make All for Qt Version ${QTVERS} ..."
 QTMAJV=`echo ${QTVERS}|cut -d. -f1`
-if [ `echo "56"|grep -ci "${QTMAJV}"` -eq 0 ]; then
-  echo "Wrong qmake, check environment"
-  echo " QT Major version must be 5 or 6; is ${QTMAJV}"
-  qmake --version
-  exit 1
-fi
+case "${QTMAJV}" in
+  5|6) ;;
+  *)
+    echo "Wrong qmake, check environment"
+    echo " QT Major version must be 5 or 6; is '${QTMAJV}'"
+    qmake --version
+    exit 1
+    ;;
+esac
 
 MKARGS="$@"
 if [ $# -eq 0 ]; then
@@ -135,15 +138,19 @@ do
   if [ $d == "programs/us_mwla_viewer"  ]; then continue; fi
   pushd $d
   sdir=`pwd`
-  if [ $ISMAC -eq 0 ]; then
-    qmake *.pro
-  else
-    qmake *.pro
-    if [ "$d" = "gui" ]; then
-      ${FIXMAC}
-    fi
-  fi
   echo "Making in $d"   >> $DIR/build.log
+  # A failed qmake can leave an older Makefile that still builds, so its
+  # failure is counted on its own.
+  if ! qmake *.pro; then
+     echo "  ***ERROR*** qmake failed in $d"
+     echo "*** [qmake] Error in $d" >> $DIR/build.log
+     NBERR=`expr ${NBERR} + 1`
+     popd
+     continue
+  fi
+  if [ $ISMAC -ne 0 ] && [ "$d" = "gui" ]; then
+    ${FIXMAC}
+  fi
   (cd $sdir;${MAKE} 2>&1)  >> $DIR/build.log
   stat=$?
   if [ $stat -gt 0 ]; then
