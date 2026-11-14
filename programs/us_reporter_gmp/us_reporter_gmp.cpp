@@ -3238,7 +3238,7 @@ void US_ReporterGMP::build_perChanTree ( void )
               if ( tripleMaskItemName.contains( "Plots" ) )
               {
                  tripleReportMasksPlotList.clear();
-                 tripleReportMasksPlotList << "Experiment-Simulation Velocity Data (noise corrected) "
+                 tripleReportMasksPlotList << "Experiment-Simulation Velocity Data (noise corrected)"
                                            << "Experiment-Simulation Residuals";
 
                  // << "Sedimentation Coefficient Distribution"
