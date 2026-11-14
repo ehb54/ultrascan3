@@ -3,6 +3,7 @@
 #include "us_dataIO.h"
 #include "us_math2.h"
 #include "us_solution.h"
+#include <QRandomGenerator>
 #include <QString>
 #include <QTime>
 #include <QVector>
@@ -222,15 +223,13 @@ double* xvPtr = xv.data();
 double* yvPtr = yv.data();
 double slope, intercept, sigma, correlation;
 
-// This should handle division by zero gracefully or produce inf/nan
-EXPECT_NO_THROW({
-US_Math2::linefit(&xvPtr, &yvPtr, &slope, &intercept,
-        &sigma, &correlation, 4);
-}) << "Vertical data should not crash";
-
-// Results may be inf or nan, but should not crash
-EXPECT_TRUE(std::isfinite(slope) || std::isinf(slope) || std::isnan(slope))
-<< "Slope should be finite, inf, or nan";
+// A vertical line has no least-squares slope: the fit divides 0 by 0.
+const double    average = US_Math2::linefit( &xvPtr, &yvPtr, &slope, &intercept, &sigma, &correlation, 4 );
+EXPECT_DOUBLE_EQ( average, 2.5 );
+EXPECT_TRUE( std::isnan( slope ) );
+EXPECT_TRUE( std::isnan( intercept ) );
+EXPECT_TRUE( std::isnan( correlation ) );
+EXPECT_DOUBLE_EQ( sigma, std::sqrt( 5.0 ) / 4.0 );
 }
 
 // ============================================================================
@@ -335,8 +334,10 @@ int index = US_Math2::nearest_curve_point(xs.data(), ys.data(), 5, false,
                                           xgiven, ygiven, &xnear, &ynear,
                                           nullptr, nullptr);
 
-EXPECT_TRUE(index == 1 || index == 2) << "Should find nearest point";
-EXPECT_TRUE(xnear == 2.0 || xnear == 3.0) << "Should return actual curve point";
+// Normalized by the curve's x and y ranges (4 and 24), (2,4) is nearer than (3,9).
+EXPECT_EQ( index, 1 );
+EXPECT_DOUBLE_EQ( xnear, 2.0 );
+EXPECT_DOUBLE_EQ( ynear, 4.0 );
 }
 
 TEST_F(TestUSMath2Unit, NearestCurvePointInterpolated) {
@@ -428,10 +429,19 @@ EXPECT_NEAR(result, expected, TOLERANCE) << "Large sigma should give small peak 
 // RANDOMIZATION TESTS
 // ============================================================================
 
+// The clock-derived seed itself is unpredictable (and may be any value, including 0), but
+// it must be the seed actually used: a generator seeded with it yields the same values.
+void expectSeedReproducesSequence( uint seed )
+{
+   QRandomGenerator reference( seed );
+   const double     first  = reference.generateDouble();
+   const double     second = reference.generateDouble();
+   EXPECT_EQ( first, US_Math2::ranf() );
+   EXPECT_EQ( second, US_Math2::ranf() );
+}
+
 TEST_F(TestUSMath2Unit, RandomizeReturnsSeed) {
-// Test randomize returns a seed value
-uint seed = US_Math2::randomize();
-EXPECT_GT(seed, 0u) << "randomize() should return a positive seed";
+   expectSeedReproducesSequence( US_Math2::randomize() );
 }
 
 TEST_F(TestUSMath2Unit, RandomizeWithSeed) {
@@ -442,9 +452,8 @@ EXPECT_EQ(returnedSeed, inputSeed) << "randomize(seed) should return the input s
 }
 
 TEST_F(TestUSMath2Unit, RandomizeWithZeroSeed) {
-// Test randomize with zero seed (should generate random seed)
-uint returnedSeed = US_Math2::randomize(0);
-EXPECT_GT(returnedSeed, 0u) << "randomize(0) should generate and return positive seed";
+   // A zero seed asks for a clock-derived seed.
+   expectSeedReproducesSequence( US_Math2::randomize( 0 ) );
 }
 
 TEST_F(TestUSMath2Unit, RandomizeConsistentSequence) {

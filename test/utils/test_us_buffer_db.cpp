@@ -320,7 +320,7 @@ TEST_F( BufferDb, SaveCreatesANewBufferWithComponentsProfileAndDiskCopy )
       expectStatus( { "add_buffer_component", "88", "5", "0.15000" } );
       expectStatus( { "add_buffer_component", "88", "6", "0.02500" } );
       EXPECT_CALL( db, query( args( { "get_eprofile", "88", "Buffer" } ) ) );
-      EXPECT_CALL( db, numRows() ).WillOnce( Return( 0 ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOROWS ) );
       EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) )
          .WillOnce( Invoke(
             [&sentProfile]( const QStringList& query )

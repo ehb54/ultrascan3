@@ -218,7 +218,12 @@ bool US_AbstractCenterpiece::read_centerpieces( IUS_DB2* db,
          query.clear();
          query << "get_abstractCenterpiece_info" << cpid;
          db->query( query );
-         db->next();
+
+         if ( db->lastErrno() != IUS_DB2::OK || !db->next() )
+         {
+            qDebug() << "*WARNING* Unable to get info for centerpiece ID" << cpid;
+            continue;
+         }
 
          cp.guid          = db->value( 0 ).toString();
          cp.name          = db->value( 1 ).toString();

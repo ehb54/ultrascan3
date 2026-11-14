@@ -131,9 +131,10 @@ EXPECT_FALSE(US_Settings::get_DA_status("COM"));
 
 // Test Settings Status
 TEST_F(US_SettingsTest, SettingsStatusCheck) {
-QString status = US_Settings::status();
-// Should be empty if no errors
-EXPECT_TRUE(status.isEmpty() || !status.contains("error", Qt::CaseInsensitive));
+   // The isolated settings file is writable, so the probe write succeeds and is removed.
+   EXPECT_EQ( US_Settings::status(), QString() );
+   US_SettingsStore settings;
+   EXPECT_FALSE( settings.contains( "status_test" ) );
 }
 
 // Test set-speed resolution
