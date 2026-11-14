@@ -738,6 +738,60 @@ void US_AnalysisControl2D::apply_auto_fit_params( const QMap<QString, QString>& 
       ct_nstepsk->setValue( params.value( "k_grpts" ).toDouble() );
    }
 
+   // Custom grid (per-channel Analysis Profile setting): fit on the grid of the
+   // custom-grid model instead of the uniform s/k grid above -- the headless
+   // equivalent of checking "Custom Grid" and loading that model (load_model()).
+   if ( params.contains( "custom_grid_id" ) )
+   {
+      const int minsgsz = 10;
+      const int maxsgsz = 800;
+      QString   cgid    = params.value( "custom_grid_id" );
+      int       rc      = -1;
+      US_Passwd pw;
+      US_DB2    cgdb( pw.getPasswd() );
+
+      if ( cgdb.lastErrno() == US_DB2::OK )
+         rc = cusmodel.load( cgid, &cgdb );
+
+      if ( rc != US_DB2::OK || cusmodel.components.isEmpty() )
+      {  // headless: cannot ask the user -- say so loudly and keep the uniform grid
+         qCritical() << "AC:apply_auto_fit_params: custom grid model id" << cgid << params.value( "custom_grid_name" )
+                     << "NOT loaded (rc" << rc << "); falling back to the uniform grid";
+      }
+      else
+      {
+         ck_custgr->setChecked( true );   // checkCusGrid(): un-checks uniform grid
+
+         int nsol   = cusmodel.components.size();
+         int nsubg  = qMax( 1, cusmodel.subGrids );
+         int sgsize = nsol / nsubg;
+
+         if ( sgsize < minsgsz  ||  sgsize > maxsgsz )
+         {  // same subgrid adjustment as load_model()
+            sgsize           = qMax( minsgsz, qMin( maxsgsz, sgsize ) );
+            nsubg            = ( nsol / sgsize + 1 ) | 1;
+            cusmodel.subGrids = nsubg;
+         }
+
+         if ( parentw )
+         {
+            model          = ( (US_2dsa*)parentw )->mw_model();
+            *model         = cusmodel;
+         }
+
+         dsets[ 0 ]->model = cusmodel;
+         grtype            = -1;
+         bool cnst_ff0     = ! cusmodel.constant_vbar();
+         ck_varvbar ->setChecked( cnst_ff0 );
+
+         if ( cnst_ff0 )
+            ct_constff0->setValue( cusmodel.components[ 0 ].f_f0 );
+
+         qDebug() << "AC:apply_auto_fit_params: custom grid loaded:" << params.value( "custom_grid_name" ) << nsol << "solutes" << nsubg
+                  << "subgrids";
+      }
+   }
+
    // Per requirement: always run the iterative-refinement method with a
    // fixed 10 iterations, regardless of what the Analysis Profile (or
    // this dialog's own default) specifies for either. checkIterate(true)
