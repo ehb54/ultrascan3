@@ -1,0 +1,2 @@
+Authenticated isolated uslims3_test profile at host.docker.internal:3307
+Verified edit 1015/model 1037/noises 167,168: 10 components, 1255 radii, 30 scans. No simulation or UI claimed.

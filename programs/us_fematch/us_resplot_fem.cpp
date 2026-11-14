@@ -1,24 +1,23 @@
 //! \file us_resplot_fem.cpp
 
 #include "us_resplot_fem.h"
-#include "us_fematch.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
 #include "us_math2.h"
 #include "us_constants.h"
-#include "../us_autoflow_analysis/us_autoflow_analysis.h"
-#include "../us_reporter_gmp/us_reporter_gmp.h"
 #include <qwt_legend.h>
 
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug()
+#endif
+
 // constructor:  residuals plot widget
-// US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const bool auto_mode )
-//    : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
-US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const QString auto_mode )
-   : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
+US_ResidPlotFem::US_ResidPlotFem( const US_ResidPlotInputs& inputs, Mode mode,
+                                  QWidget* parent )
+   : US_WidgetsDialog( parent, Qt::WindowFlags() ), mode( mode )
 {
-   // this->a_mode = auto_mode;
-   this->a_mode = auto_mode;
+   setAttribute( Qt::WA_DeleteOnClose );
   
    // lay out the GUI
    setWindowTitle( tr( "Finite Element Data/Residuals Viewer" ) );
@@ -116,12 +115,7 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const QString auto_mode )
    data_plot2->setMinimumSize( p2size );
    data_plot2->setAccessibleName( tr( "Residuals Plot" ) );
 
-   // if ( a_mode )
-   //   {
-   //     data_plot1->setMinimumSize( p11size );
-   //     data_plot2->setMinimumSize( p21size );
-   //   }
-   if ( !a_mode.isEmpty() && a_mode == "ANALYSIS" )
+   if ( mode == Analysis )
      {
        data_plot1->setMinimumSize( p11size );
        data_plot2->setMinimumSize( p21size );
@@ -172,109 +166,29 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const QString auto_mode )
    have_bm   = false;
    skip_plot = true;
 
-   if ( parent )
-   {
-     //if ( !a_mode )
-     if ( a_mode.isEmpty() )
-       {
-	 // Get data pointers from parent of parent
-	 qDebug() << "THIS will be pointer to us_fematch---";
+   data_in         = inputs;
+   edata           = &data_in.edited;
+   sdata           = &data_in.simulated;
+   excllist        = &data_in.excluded;
+   ti_noise        = &data_in.ti_noise;
+   ri_noise        = &data_in.ri_noise;
+   resbmap         = inputs.bitmap;
+   tripleInfo      = inputs.triple_info;
+   have_ed         = true;
+   have_sd         = true;
+   have_ti         = ( ti_noise != 0  &&  ti_noise->count > 0 );
+   have_ri         = ( ri_noise != 0  &&  ri_noise->count > 0 );
+   have_bm         = ( resbmap != 0 );
 
-	 US_FeMatch* fem = (US_FeMatch*)parent;
-	 edata           = fem->fem_editdata();
-	 sdata           = fem->fem_simdata();
-	 excllist        = fem->fem_excllist();
-	 ti_noise        = fem->fem_ti_noise();
-	 ri_noise        = fem->fem_ri_noise();
-	 resbmap         = fem->fem_resbmap();
-	 have_ed         = ( edata != 0 );
-	 have_sd         = ( sdata != 0 );
-	 have_ti         = ( ti_noise != 0  &&  ti_noise->count > 0 );
-	 have_ri         = ( ri_noise != 0  &&  ri_noise->count > 0 );
-	 have_bm         = ( resbmap != 0 );
-	 DbgLv(1) << "RP:edata  " << have_ed;
-	 DbgLv(1) << "RP:sdata  " << have_sd;
-	 DbgLv(1) << "RP:ti_noise count" << (have_ti ? ti_noise->count : 0);
-	 DbgLv(1) << "RP:ri_noise count" << (have_ri ? ri_noise->count : 0);
-	 DbgLv(1) << "RP:resbmap" << have_bm;
-       }
-     else
-       {
-	 if ( a_mode == "ANALYSIS" ) 
-	   {
-	     qDebug() << "THIS will be pointer to autoflow_analsyis---";
-	     //Autoflow_analysis
-	     US_Analysis_auto* aa = (US_Analysis_auto*)parent;
-	     edata           = aa->aa_editdata();
-	     sdata           = aa->aa_simdata();
-	     excllist        = aa->aa_excllist();
-	     ti_noise        = aa->aa_ti_noise();
-	     ri_noise        = aa->aa_ri_noise();
-	     resbmap         = aa->aa_resbmap();
-	     have_ed         = ( edata != 0 );
-	     have_sd         = ( sdata != 0 );
-	     have_ti         = ( ti_noise != 0  &&  ti_noise->count > 0 );
-	     have_ri         = ( ri_noise != 0  &&  ri_noise->count > 0 );
-	     have_bm         = ( resbmap != 0 );
-	     qDebug() << "RP:edata  " << have_ed;
-	     qDebug() << "RP:sdata  " << have_sd;
-	     
-	     qDebug() << "RP:have_ti " << have_ti;
-	     qDebug() << "RP:have_ri " << have_ri;
-	     
-	     
-	     qDebug() << "RP:ti_noise count1" << ti_noise->count;
-	     qDebug() << "RP:ri_noise count1" << ri_noise->count;
-	     
-	     qDebug() << "RP:ti_noise count" << (have_ti ? ti_noise->count : 0);
-	     qDebug() << "RP:ri_noise count" << (have_ri ? ri_noise->count : 0);
-	     qDebug() << "RP:resbmap" << have_bm;
-	     
-	     tripleInfo = aa->aa_tripleInfo();
-	     
-	   }
-	 
-	 if ( a_mode == "REPORT" ) 
-	   {
-	     qDebug() << "THIS will be pointer to autoflow_report (US_ReporterGMP for now !!!) ---";
-	     //Autoflow_report -- US_ReporterGMP for now!!!
-	     US_ReporterGMP* rg = (US_ReporterGMP*)parent;
-	     edata           = rg->rg_editdata();
-	     sdata           = rg->rg_simdata();
-	     excllist        = rg->rg_excllist();
-	     ti_noise        = rg->rg_ti_noise();
-	     ri_noise        = rg->rg_ri_noise();
-	     resbmap         = rg->rg_resbmap();
-	     have_ed         = ( edata != 0 );
-	     have_sd         = ( sdata != 0 );
-	     have_ti         = ( ti_noise != 0  &&  ti_noise->count > 0 );
-	     have_ri         = ( ri_noise != 0  &&  ri_noise->count > 0 );
-	     have_bm         = ( resbmap != 0 );
-	     qDebug() << "RP:edata  " << have_ed;
-	     qDebug() << "RP:sdata  " << have_sd;
-	     
-	     qDebug() << "RP:have_ti " << have_ti;
-	     qDebug() << "RP:have_ri " << have_ri;
+   if ( have_bm )
+      connect( resbmap, &QObject::destroyed,
+               this,    &US_ResidPlotFem::resids_closed );
 
-	     qDebug() << "ti_noise_guid " << ti_noise->noiseGUID;
-	     qDebug() << "ri_noise_guid " << ri_noise->noiseGUID;
-	     
-	     qDebug() << "RP:ti_noise count1" << ti_noise->count;
-	     qDebug() << "RP:ri_noise count1" << ri_noise->count;
-	     
-	     qDebug() << "RP:ti_noise count" << (have_ti ? ti_noise->count : 0);
-	     qDebug() << "RP:ri_noise count" << (have_ri ? ri_noise->count : 0);
-	     qDebug() << "RP:resbmap" << have_bm;
-	     
-	     tripleInfo = rg->rg_tripleInfo();
-	   }
-       }
-   }
-   
-   else
-   {
-      qDebug() << "*ERROR* unable to get RP parent";
-   }
+   DbgLv(1) << "RP:edata  " << have_ed;
+   DbgLv(1) << "RP:sdata  " << have_sd;
+   DbgLv(1) << "RP:ti_noise count" << (have_ti ? ti_noise->count : 0);
+   DbgLv(1) << "RP:ri_noise count" << (have_ri ? ri_noise->count : 0);
+   DbgLv(1) << "RP:resbmap" << have_bm;
 
    ck_subtin->setEnabled( have_ti );
    ck_subrin->setEnabled( have_ri );
@@ -291,13 +205,11 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const QString auto_mode )
    data_plot1->resize( p1size );
    data_plot2->resize( p2size );
 
-   //qDebug() << "RESPLOT_FEM: before plot--";
 
    plot_data();
 
-   //qDebug() << "RESPLOT_FEM: after plot--";
 
-   if ( !a_mode.isEmpty() && a_mode == "REPORT" )
+   if ( mode == Report )
      setVisible( false );
    else
      setVisible( true );
@@ -305,6 +217,65 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const QString auto_mode )
    resize( p2size );
 
    
+}
+
+// A child bitmap is deleted after this destructor; its destroyed signal must not
+// reach resids_closed on a partly destroyed dialog.
+US_ResidPlotFem::~US_ResidPlotFem()
+{
+   if ( resbmap )
+      disconnect( resbmap, nullptr, this, nullptr );
+}
+
+// Replace the plotted data. Noise controls follow the new noise as they would in
+// a new dialog; other options are kept.
+void US_ResidPlotFem::set_inputs( const US_ResidPlotInputs& inputs )
+{
+   const bool had_ti = have_ti;
+   const bool had_ri = have_ri;
+
+   data_in    = inputs;
+   tripleInfo = inputs.triple_info;
+   have_ti    = ( ti_noise->count > 0 );
+   have_ri    = ( ri_noise->count > 0 );
+
+   QList< QCheckBox* > boxes = { ck_subtin, ck_subrin, ck_addtin, ck_addrin,
+                                 ck_pltres, ck_plttin, ck_pltrin, ck_pltran };
+   for ( QCheckBox* box : boxes )
+      box->blockSignals( true );
+
+   ck_subtin->setEnabled( have_ti  &&  ck_plteda->isChecked() );
+   ck_subrin->setEnabled( have_ri  &&  ck_plteda->isChecked() );
+   ck_addtin->setEnabled( have_ti  &&  ck_pltsda->isChecked() );
+   ck_addrin->setEnabled( have_ri  &&  ck_pltsda->isChecked() );
+   ck_plttin->setEnabled( have_ti );
+   ck_pltrin->setEnabled( have_ri );
+
+   if ( have_ti != had_ti )
+   {
+      ck_subtin->setChecked( have_ti );
+      ck_addtin->setChecked( false );
+   }
+
+   if ( have_ri != had_ri )
+   {
+      ck_subrin->setChecked( have_ri );
+      ck_addrin->setChecked( false );
+   }
+
+   if ( ( ck_plttin->isChecked()  &&  !have_ti )  ||
+        ( ck_pltrin->isChecked()  &&  !have_ri ) )
+   {  // the noise being viewed is gone:  view residuals
+      ck_plttin->setChecked( false );
+      ck_pltrin->setChecked( false );
+      ck_pltran->setChecked( false );
+      ck_pltres->setChecked( true );
+   }
+
+   for ( QCheckBox* box : boxes )
+      box->blockSignals( false );
+
+   plot_data();
 }
 
 // externally force a specific plot for lower plot
@@ -363,7 +334,7 @@ QwtPlot* US_ResidPlotFem::rp_data_plot2()
   p_title.setFont( font_c );
   data_plot2->setTitle( p_title );
 
-  QwtText xTitle = data_plot1->axisTitle(QwtPlot::xBottom);
+  QwtText xTitle = data_plot2->axisTitle(QwtPlot::xBottom);
   xTitle.setFont( font_c );
   data_plot2->setAxisTitle( QwtPlot::xBottom, xTitle );
 
@@ -516,50 +487,19 @@ void US_ResidPlotFem::pranCheck( bool chkd )
    plot_data();
 }
 
-// show-residual-bitmap box [un]checked
+// show-residual-bitmap box [un]checked:  show or refresh the bitmap, or close it
 void US_ResidPlotFem::srbmCheck( bool chkd )
 {
+   if ( chkd )
+   {
+      plot_data();
 
-  if ( a_mode.isEmpty()  )  //Default case for stand-alone us_fematch
-    {
-      if ( chkd )
-	{  // bitmap checked:  replot to possibly build new map
-	  have_bm         = ( resbmap != 0 );
-	  	  
-	  if ( have_bm )
-	    {  // if bitmap exists already, detect when closed
-	      connect( resbmap, &QObject::destroyed,
-		       this,    &US_ResidPlotFem::resids_closed );
-	    }
-	  
-	  plot_data();
-	}
-    }
-  else
-    {
-      if ( a_mode == "ANALYSIS" )
-	{
-	  qDebug() << "ResBMap checkbox clicked in ANALYSIS mode!!! ";
+      if ( resbmap )
+         resbmap->activateWindow();
+   }
 
-	  if ( chkd )
-	    {
-	      have_ed = true;
-	      have_sd = true;;
-
-	      qDebug() << "ck_shorbm->isChecked(), have_ed, have_sd -- "
-		       << ck_shorbm->isChecked() << have_ed << have_sd;
-
-	      plot_data();
-	      resbmap->activateWindow();
-	      //resbmap->setParent(this, Qt::Widget);
-	    }
-	  else
-	    {
-	      resbmap->close();
-	    }
-	}
-    }
-   
+   else if ( resbmap )
+      resbmap->close();
 }
 
 // close button clicked
@@ -591,7 +531,6 @@ void US_ResidPlotFem::plot_edata()
    // Clear the upper plot for re-do
    dataPlotClear( data_plot1 );
 
-   //qDebug() << "PLOT edata 1 ";
 
    bool   do_plteda = have_ed  &&  ck_plteda->isChecked();
    bool   do_pltsda = have_sd  &&  ck_pltsda->isChecked();
@@ -608,7 +547,6 @@ void US_ResidPlotFem::plot_edata()
    double vh        = 9999.0;
    double sval;
 
-   // qDebug() << "PLOT edata 2 ";
    
    if ( have_ed )
    {
@@ -622,10 +560,8 @@ void US_ResidPlotFem::plot_edata()
       return;
    }
 
-   //   qDebug() << "PLOT edata 3 ";
 
-   //if ( !a_mode )
-   if ( a_mode.isEmpty() )  
+   if ( mode == Standalone )
      {
        if      ( do_plteda  &&  !do_pltsda )
 	 data_plot1->setTitle( tr( "Experimental Data" ) );
@@ -638,7 +574,7 @@ void US_ResidPlotFem::plot_edata()
      }
    else
      {
-       if ( a_mode == "ANALYSIS" )
+       if ( mode == Analysis )
 	 {
 	   // For autoflow Analysis
 	   if      ( do_plteda  &&  !do_pltsda )
@@ -657,7 +593,7 @@ void US_ResidPlotFem::plot_edata()
 	       data_plot1->setTitle( sim_data );
 	     }
 	 }
-       if ( a_mode == "REPORT" )
+       if ( mode == Report )
 	 {
 	   // For autoflow REPORT
 	   if      ( do_plteda  &&  !do_pltsda )
@@ -688,7 +624,6 @@ void US_ResidPlotFem::plot_edata()
       points   = edata->pointCount();
    }
 
-   //qDebug() << "PLOT edata 4 ";
    
    if ( do_pltsda )
    {  // set title and values count for simulation data
@@ -703,7 +638,6 @@ void US_ResidPlotFem::plot_edata()
 
    count    = ( points > count ) ? points : count;  // maximum array count
 
-   //qDebug() << "PLOT edata 5 ";
    
    QVector< double > rvec( count, 0.0 );
    QVector< double > vvec( count, 0.0 );
@@ -715,7 +649,6 @@ void US_ResidPlotFem::plot_edata()
    QPen          pen_red(  Qt::red );
    QPen          pen_plot( US_GuiSettings::plotCurve() );
 
-   //qDebug() << "PLOT edata 6 ";
 
    if ( do_plteda )
    {  // plot experimental curves
@@ -761,7 +694,6 @@ void US_ResidPlotFem::plot_edata()
       }
    }
 
-   //qDebug() << "PLOT edata 7 ";
 
 
    if ( do_pltsda )
@@ -808,11 +740,9 @@ void US_ResidPlotFem::plot_edata()
       }
    }
 
-   //qDebug() << "PLOT edata 8 ";
    
    data_plot1->replot();
 
-   //qDebug() << "PLOT edata 9";
 }
 
 // plot the residual data
@@ -924,23 +854,14 @@ void US_ResidPlotFem::plot_rdata()
       rmsd    = sqrt( rmsd );
       le_rmsd->setText( QString::number( rmsd ) );
 //*Debug
-//DbgLv(1) << "BEFORE data00" << edata->value(0,0);
 //ti_noise->apply_to_data(*edata);
-//DbgLv(1) << " TIrmv  data00" << edata->value(0,0);
 //ti_noise->apply_to_data(*edata,false);
-//DbgLv(1) << "  TIadd  data00" << edata->value(0,0);
 //ri_noise->apply_to_data(*edata);
-//DbgLv(1) << " RIrmv  data00" << edata->value(0,0);
 //ri_noise->apply_to_data(*edata,false);
-//DbgLv(1) << "  RIadd  data00" << edata->value(0,0);
 //US_Noise::apply_noise(*edata,ti_noise);
-//DbgLv(1) << " TIrmv  data00" << edata->value(0,0);
 //US_Noise::apply_noise(*edata,ti_noise,false);
-//DbgLv(1) << "  TIadd  data00" << edata->value(0,0);
 //US_Noise::apply_noise(*edata,ri_noise);
-//DbgLv(1) << " RIrmv  data00" << edata->value(0,0);
 //US_Noise::apply_noise(*edata,ri_noise,false);
-//DbgLv(1) << "  RIadd  data00" << edata->value(0,0);
    }
 
    else if ( do_plttin )
@@ -1095,18 +1016,9 @@ void US_ResidPlotFem::plot_rdata()
          resbmap = new US_ResidsBitmap( resids );
          connect( resbmap, &QObject::destroyed,
                   this,    &US_ResidPlotFem::resids_closed );
+         // A bitmap this dialog creates is its own window but is destroyed with it.
+         resbmap->setParent( this, Qt::Dialog );
          resbmap->move( this->pos() + QPoint( 100, 100 ) );
-
-	 if ( !a_mode.isEmpty() && a_mode == "ANALYSIS" )
-	   {
-	     //resbmap->setWindowFlags( Qt::Dialog );
-	     //resbmap->setWindowModality(Qt::ApplicationModal);
-	     //resbmap->setParent(this, Qt::Window);
-	     //resbmap->disconnect();
-	     resbmap->setParent(this, Qt::Dialog);
-	     //resbmap->setWindowFlags ( Qt::WindowTitleHint );
-	   }
-	 
          resbmap->show();
          resbmap->raise();
       }
@@ -1120,25 +1032,15 @@ void US_ResidPlotFem::plot_rdata()
    data_plot2->replot();
 }
 
-// react to residual bitmap having been closed
+// react to residual bitmap having been closed:  uncheck without reopening it
 void US_ResidPlotFem::resids_closed()
 {
 DbgLv(1) << "Resids BitMap Closed!!!";
    resbmap = 0;
    have_bm = false;
 
-   if ( a_mode.isEmpty() )
-     ck_shorbm->setChecked( false );
-   else
-     {
-       if ( a_mode == "ANALYSIS" )
-	 {
-	   ck_shorbm->disconnect();
-	   ck_shorbm->setChecked( false );
-	   connect( ck_shorbm, &QAbstractButton::toggled,
-		    this,      &US_ResidPlotFem::srbmCheck );
-	 }
-     }
+   const QSignalBlocker blocker( ck_shorbm );
+   ck_shorbm->setChecked( false );
 }
 
 // Connect/Disconnect plot type boxes

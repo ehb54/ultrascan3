@@ -1,0 +1,13 @@
+{
+  "baseline_revision": "27129cc57",
+  "platform": "Oracle Linux 8.10 aarch64, GCC 8.5, Qt 5.15.3, Qwt 6.1.5",
+  "source_archive_sha256": "4a690038489260d09647bb96b1dff7e0b062ca923d2b2abfed5ac0e5479db22c",
+  "fematch_binary_sha256": "6bd68ea1278b54dc388e5d19dba28ba87922506e22b05e8c3f290d22756334b0",
+  "fematch_path": "/tmp/us3-residual-baseline/build/bin/us_fematch",
+  "settings_root": "/tmp/us3-residual-baseline/settings",
+  "database_endpoint": "10.211.55.2:3307",
+  "database": "uslims3_test",
+  "verification": "Native US_DB2 authentication and model/noise/edited/raw loading passed; 10 components, 1255 radii, 30 scans",
+  "ui_status": "Not captured: desktop-control native pipe unavailable",
+  "gmp_fixture_status": "Incomplete: missing matching protocol/report/workflow records; no DB mutations made"
+}

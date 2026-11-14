@@ -13,6 +13,21 @@
 #include "us_plot.h"
 #include "us_help.h"
 
+//! \brief The data a residuals plot dialog shows.
+//!
+//! The dialog keeps its own copy, so the caller may change or discard its data
+//! while the dialog is open; set_inputs() shows new data.
+struct US_ResidPlotInputs
+{
+   US_DataIO::EditedData       edited;      //!< Experimental data
+   US_DataIO::RawData          simulated;   //!< Simulated data
+   QList< int >                excluded;    //!< Excluded scan indexes
+   US_Noise                    ti_noise;    //!< Time-invariant noise
+   US_Noise                    ri_noise;    //!< Radially-invariant noise
+   QPointer< US_ResidsBitmap > bitmap;      //!< Caller's residuals bitmap to reuse, if any
+   QString                     triple_info; //!< Title suffix in Analysis mode
+};
+
 //! \brief A class to provide a window with experimental/residuals plots
 
 class US_ResidPlotFem : public US_WidgetsDialog
@@ -20,11 +35,28 @@ class US_ResidPlotFem : public US_WidgetsDialog
    Q_OBJECT
 
    public:
-      //! \param parent A pointer to the parent widget of this one
-      //! \param auto_mode Auto mode flag
-      //US_ResidPlotFem( QWidget* = NULL, bool auto_mode = false );
-      US_ResidPlotFem( QWidget* = NULL, QString = QString("") );
-   
+      //! \brief Which program the dialog is shown from; selects titles, sizes,
+      //! visibility and residuals-bitmap behavior.
+      enum Mode
+      {
+         Standalone, //!< US_FeMatch
+         Analysis,   //!< Autoflow analysis
+         Report      //!< GMP report generation (dialog stays hidden)
+      };
+
+      //! \param inputs The data to plot
+      //! \param mode   The calling program's mode
+      //! \param parent The calling widget, which owns the dialog. The dialog
+      //!               deletes itself when closed.
+      US_ResidPlotFem( const US_ResidPlotInputs& inputs, Mode mode, QWidget* parent = nullptr );
+
+      //! \brief Stop reacting to the bitmap before child widgets are deleted
+      ~US_ResidPlotFem() override;
+
+      //! \brief Show new data, keeping the plot options that still apply
+      //! \param inputs The data to plot; its bitmap is ignored
+      void set_inputs( const US_ResidPlotInputs& inputs );
+
       //! \brief Force a specific plot in the lower plot
       //! \param plotf Flag plot to force: 1,2 == ti_noise,ri_noise
       void set_plot( int );
@@ -35,12 +67,9 @@ class US_ResidPlotFem : public US_WidgetsDialog
       //! \brief Return a QwtPlot pointer for the lower plot
       QwtPlot* rp_data_plot2();
 
-      //bool a_mode;
-      QString a_mode;
-
-      
-
    private:
+      Mode          mode;
+
       QHBoxLayout*  mainLayout;
       QVBoxLayout*  leftLayout;
       QVBoxLayout*  rightLayout;
@@ -64,6 +93,7 @@ class US_ResidPlotFem : public US_WidgetsDialog
       int           dbg_level;
 
    protected:
+      US_ResidPlotInputs          data_in;
       US_DataIO::EditedData*      edata;
       US_DataIO::Scan*            escan;
       QList< int >*               excllist;

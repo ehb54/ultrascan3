@@ -1,0 +1,37 @@
+{
+  "revision": "ca46728e9650f27307ffaf7d6406f6bf28a91e6d",
+  "checked_tracked_files": 5035,
+  "mismatches": [],
+  "source": "git archive, isolated from concurrent T05 working-tree edits",
+  "platform": "Linux aarch64 / Ubuntu 22.04 / GCC 11.4 / Qt 5.15.3 / Qwt 6.1.4",
+  "configuration": "CMake APP, Release, shared support libraries, SOMO off; Unix Makefiles -j6",
+  "result": "All four consumers compiled and linked successfully",
+  "binaries": {
+    "us_reporter_gmp": {
+      "sha256": "b58c9ce4d9d984cd28c21bc7e0f6af210ccefafd276fdd64e9e5115e2473e4a5",
+      "bytes": 2068600
+    },
+    "us_comproject": {
+      "sha256": "8986d86e69c15a896628b190831989c2091546c435f744c51cb9cc8f16371450",
+      "bytes": 6204736
+    },
+    "us_comproject_academic": {
+      "sha256": "a646193abfcbfbac45ee48bea0db7544c58aadf7d96a5b6e579c8d31204ec6b3",
+      "bytes": 4633864
+    },
+    "us_protocoldev": {
+      "sha256": "37c4dbd4471587f693ccf27ba0f6cb9489fdb68f5e033818e2e2fb583e045709",
+      "bytes": 5894320
+    }
+  },
+  "limits": [
+    "No native UI or report-export verification",
+    "This is T04/T04a ca46728e9, not subsequent T05 changes"
+  ],
+  "logs": {
+    "frozen-configure.log": "d374974b753b7646f6cc1955b8a9a513acaff95443dd5fc33ddd4035a6c40bde",
+    "frozen-build.log": "57f5673bce6a494af253e730d7f8ce1bb78d208a9575f3592d5ca10d9b46847c",
+    "frozen-remaining-build.log": "2de6976b89caac405663cfc029797f5d32361b49509b7dd7b429d85dbe4bf310"
+  },
+  "runtime_dependencies": "ldd: no missing libraries for all four consumers"
+}

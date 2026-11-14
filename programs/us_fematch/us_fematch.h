@@ -44,34 +44,6 @@ class US_FeMatch : public US_Widgets
         //! \brief Constructor for the US_FeMatch class.
         US_FeMatch();
 
-        //! \brief Get the edited data.
-        //! \return Pointer to the edited data.
-        US_DataIO::EditedData* fem_editdata();
-
-        //! \brief Get the simulated data.
-        //! \return Pointer to the simulated data.
-        US_DataIO::RawData* fem_simdata();
-
-        //! \brief Get the exclusion list.
-        //! \return Pointer to the list of excluded scans.
-        QList<int>* fem_excllist();
-
-        //! \brief Get the model.
-        //! \return Pointer to the model.
-        US_Model* fem_model();
-
-        //! \brief Get the time-invariant noise.
-        //! \return Pointer to the time-invariant noise.
-        US_Noise* fem_ti_noise();
-
-        //! \brief Get the radial-invariant noise.
-        //! \return Pointer to the radial-invariant noise.
-        US_Noise* fem_ri_noise();
-
-        //! \brief Get the residuals bitmap.
-        //! \return QPointer to the residuals bitmap.
-        QPointer<US_ResidsBitmap> fem_resbmap();
-
         //! \brief Auto load and simulate data.
         //! \param rawData The raw data.
         //! \param editedData The edited data.
@@ -98,10 +70,10 @@ class US_FeMatch : public US_Widgets
         //! \brief Slot to start simulation.
         void simulate();
 
-        //! \brief Slot for residual plot completion.
-        void resplot_done();
-
     private:
+        //! \brief The data the residual plot shows.
+        US_ResidPlotInputs resplot_inputs();
+
         QLabel* lb_tolerance; //!< Label for tolerance.
         QLabel* lb_division; //!< Label for division.
         QLabel* lb_rmsd; //!< Label for RMSD.

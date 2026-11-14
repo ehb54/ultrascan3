@@ -3,7 +3,8 @@
 #define US_ANALYSIS_AUTO_H
 
 #include "../us_analysis_profile/us_analysis_profile.h"
-#include "../us_fematch/us_fematch.h"
+#include "../us_fematch/us_resplot_fem.h"
+#include "../us_fematch/us_thread_worker.h"
 #include "../us_fit_meniscus/us_fit_meniscus.h"
 #include "../us_mwl_species_fit/us_load_run_noise.h"
 #include "../us_mwl_species_fit/us_mwl_sf_plot3d.h"
@@ -99,54 +100,6 @@ class US_Analysis_auto : public US_Widgets
 
         US_FitMeniscus* FitMen;                                  /**< Pointer to the FitMeniscus class. */
         QPointer< US_ResidPlotFem > resplotd;                    /**< Pointer to the Residual Plot for FEM data. */
-
-        /**
-         * @brief Retrieves the edited data.
-         * @return Pointer to the edited data.
-         */
-        US_DataIO::EditedData* aa_editdata();
-
-        /**
-         * @brief Retrieves the simulated data.
-         * @return Pointer to the simulated data.
-         */
-        US_DataIO::RawData* aa_simdata();
-
-        /**
-         * @brief Retrieves the exclusion list.
-         * @return Pointer to the list of excluded data.
-         */
-        QList< int >* aa_excllist();
-
-        /**
-         * @brief Retrieves the model data.
-         * @return Pointer to the model data.
-         */
-        US_Model* aa_model();
-
-        /**
-         * @brief Retrieves the TI noise data.
-         * @return Pointer to the TI noise data.
-         */
-        US_Noise* aa_ti_noise();
-
-        /**
-         * @brief Retrieves the RI noise data.
-         * @return Pointer to the RI noise data.
-         */
-        US_Noise* aa_ri_noise();
-
-        /**
-         * @brief Retrieves the residual bitmap.
-         * @return Pointer to the residual bitmap.
-         */
-        QPointer< US_ResidsBitmap > aa_resbmap();
-
-        /**
-         * @brief Retrieves the triple information.
-         * @return Triple information as a string.
-         */
-        QString aa_tripleInfo();
 
         QMessageBox * msg_sim;                                   /**< Message box for simulation messages. */
         US_GmpProgress*                  progress_msg = nullptr; /**< Progress dialog for showing progress messages. */

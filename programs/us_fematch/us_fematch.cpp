@@ -404,27 +404,6 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    data_plot2->replot();
 }
 
-// public function to get pointer to edit data
-US_DataIO::EditedData*      US_FeMatch::fem_editdata() { return edata;     }
-
-// public function to get pointer to list of excluded scans
-QList< int >*               US_FeMatch::fem_excllist() { return &excludedScans;}
-
-// public function to get pointer to sim data
-US_DataIO::RawData*         US_FeMatch::fem_simdata()  { return sdata;     }
-
-// public function to get pointer to load model
-US_Model*                   US_FeMatch::fem_model()    { return &model;    }
-
-// public function to get pointer to TI noise
-US_Noise*                   US_FeMatch::fem_ti_noise() { return &ti_noise; }
-
-// public function to get pointer to RI noise
-US_Noise*                   US_FeMatch::fem_ri_noise() { return &ri_noise; }
-
-// public function to get pointer to resid bitmap diag
-QPointer< US_ResidsBitmap > US_FeMatch::fem_resbmap()  { return rbmapd;    }
-
 // Load data
 void US_FeMatch::load( void )
 {
@@ -1191,10 +1170,9 @@ DbgLv(1) << "cnstvb" << cnstvb << "img06File" << img06File;
    // Save the upper experiment-simulation overlay plot
    if ( resplotd == 0 )
    {
-      resplotd = new US_ResidPlotFem( this );
+      resplotd = new US_ResidPlotFem( resplot_inputs(), US_ResidPlotFem::Standalone, this );
       resplotd->move( rpd_pos );
       resplotd->show();
-      connect( resplotd, &QObject::destroyed, this, &US_FeMatch::resplot_done );
    }
 
    write_plot( img14File, resplotd->rp_data_plot1() );
@@ -1328,6 +1306,9 @@ void US_FeMatch::exclude( void )
    allExcls[ drow ]     = excludedScans;
 
    data_plot();
+
+   if ( resplotd )
+      resplotd->set_inputs( resplot_inputs() );
 
    pb_reset_exclude->setEnabled( true );
 }
@@ -1758,10 +1739,22 @@ void US_FeMatch::plotres( )
       resplotd->close();
    }
 
-   resplotd = new US_ResidPlotFem( this );
+   resplotd = new US_ResidPlotFem( resplot_inputs(), US_ResidPlotFem::Standalone, this );
    resplotd->move( rpd_pos );
    resplotd->show();
-   connect( resplotd, &QObject::destroyed, this, &US_FeMatch::resplot_done );
+}
+
+// The data the residual plot shows: the current data, its simulation and noise
+US_ResidPlotInputs US_FeMatch::resplot_inputs()
+{
+   US_ResidPlotInputs inputs;
+   inputs.edited    = *edata;
+   inputs.simulated = *sdata;
+   inputs.excluded  = excludedScans;
+   inputs.ti_noise  = ti_noise;
+   inputs.ri_noise  = ri_noise;
+   inputs.bitmap    = rbmapd;
+   return inputs;
 }
 
 // Load the model data and detect if it is RA
@@ -3674,6 +3667,9 @@ void US_FeMatch::reset_excludes( void )
 
    pb_reset_exclude->setEnabled( false );
    allExcls[ index ] = excludedScans;
+
+   if ( resplotd )
+      resplotd->set_inputs( resplot_inputs() );
 }
 
 // Reset data set
@@ -3987,12 +3983,6 @@ void US_FeMatch::update_mc_model()
 void US_FeMatch::simulate()
 {
    simulate_model();
-}
-
-// Public slot to mark residuals plot dialog closed
-void US_FeMatch::resplot_done()
-{
-   resplotd   = 0;
 }
 
 // Determine if a run has an intensity profile
