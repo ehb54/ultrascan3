@@ -30,6 +30,8 @@ US_RunProtocol::US_RunProtocol()
    temeq_delay     = 10.0;
    exp_label       = "";
    runname         = "";
+   projectID       = -1;
+   protoID         = -1;
 
    scanCount       = 0;
    scanCount_int   = 0;
@@ -273,6 +275,12 @@ US_RunProtocol::RunProtoRotor::RunProtoRotor()
    rotID                = -1;
    calID                = -1;
    absID                = -1;
+   operID                   = -1;
+   instID                   = -1;
+   vel_mwl_prot             = false;
+   importData               = false;
+   importData_absorbance_t  = false;
+   importData_absorbance_pa = false;
 }
 //3-------------------------------------------------------------------------->80
 
@@ -395,6 +403,8 @@ bool US_RunProtocol::RunProtoRotor::toXml( QXmlStreamWriter& xmlo )
 US_RunProtocol::RunProtoSpeed::RunProtoSpeed()
 {
    nstep                = 1;
+   spin_down            = false;
+   radial_calib         = false;
    ssteps << SpeedStep();
 }
 
