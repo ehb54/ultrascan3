@@ -43,8 +43,9 @@ with a linked defect ID and explicit change to the characterization expectation.
 ## Limits
 
 No real workflow widgets, database, simulation, report-file export or native
-window manager are exercised. No invalid-pointer/empty/mismatched buffer cases
-are run yet; those need isolated-process tests. CMake's test label is
+window manager are exercised. Invalid-pointer/empty/mismatched buffer cases
+run in isolated processes under sanitizers; expected legacy failures are not
+safe-input handling guarantees. CMake's test label is
 `residual-characterization`; this is not the isolated presentation boundary gate
 (M12) because owner doubles are still necessary. M02 is covered at the dialog
 boundary, with portions of M03/M07; full T02 acceptance remains open.
@@ -94,3 +95,21 @@ than copying the upper plot's title. The full 75-check suite passes after this
 one-line correction. Local evidence: `d03-red-*` and `d03-green-*` logs. This
 intentionally corrects the first baseline's mislabeled RI-noise export axis;
 curve coordinates and numerical calculations are unchanged.
+
+### Linux sanitizer baseline (2026-11-13)
+
+Revision `dc7fb11a6c977341e127d8214ab61643f929d29e` plus the M04 tests
+committed alongside this record: Linux aarch64, GCC 11.4, Qt 5.15.3, Qwt 6.1.4,
+Debug with ASan/UBSan in Docker (`us3-tsan-review:latest`), Qt offscreen.
+Result: **105 passed, 0 failed, 1 skipped**. The skip is the child-process
+entry point when invoked without probe parameters. All 30 input probes ran,
+including 24 expected unsafe legacy failures, plus 100 lifetime cycles per mode.
+Leak detection was disabled; this does not establish leak-free owner behavior.
+
+Local evidence in `build/linux-sanitize-make/evidence/`: `residual-run.log`,
+individual `probes/*.log`, configure/build/rebuild logs,
+`baseline-manifest.json` (revision and source/binary hashes), and
+`baseline-working-tree.patch`. A committed copy of the run, all child-probe logs
+and source/binary hash manifest is in [baseline/linux-2026-11-13](baseline/linux-2026-11-13).
+Native UI/export captures and the Linux seven-consumer build matrix
+remain outstanding; this is the automated dialog baseline, not full T02 signoff.

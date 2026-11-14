@@ -3,12 +3,25 @@
 #include "us_resplot_fem.h"
 #include <qwt_plot_curve.h>
 #include <QSignalSpy>
+#include <QProcess>
+#include <limits>
 #include <cmath>
 #include <memory>
 #include <vector>
 
 namespace
 {
+#if defined(__SANITIZE_ADDRESS__)
+constexpr bool sanitized = true;
+#elif defined(__has_feature)
+#if __has_feature(address_sanitizer)
+constexpr bool sanitized = true;
+#else
+constexpr bool sanitized = false;
+#endif
+#else
+constexpr bool sanitized = false;
+#endif
 // Binary-exact inputs make arithmetic comparisons independent of decimal parsing.
 const double differences[3][4] = {
     { .25, -.5, .75, -1. }, { .5, -.25, 1., -.75 }, { .75, -1., .25, -.5 }
@@ -98,6 +111,101 @@ class ResidualDialogTest : public QObject
 {
     Q_OBJECT
 private slots:
+    void invalidInputs_data()
+    {
+        QTest::addColumn<QString>("mode");
+        QTest::addColumn<QString>("scenario");
+        for (const QString& mode : { QString(), QString("ANALYSIS"), QString("REPORT") })
+            for (const QString& scenario : { QString("null-parent"), QString("unknown-mode"),
+                  QString("empty-edited"), QString("empty-simulated"), QString("short-ti"),
+                  QString("short-ri"), QString("short-scan"), QString("short-radius"),
+                  QString("nonfinite"), QString("bad-exclusion") })
+                QTest::newRow(qPrintable((mode.isEmpty() ? "FEMATCH" : mode) + "-" + scenario))
+                    << mode << scenario;
+    }
+
+    void invalidInputs()
+    {
+        QFETCH(QString, mode); QFETCH(QString, scenario);
+        const bool unsafe = scenario != "nonfinite" && scenario != "bad-exclusion";
+        if (unsafe && !sanitized)
+            QSKIP("Unsafe legacy input requires the ASan/UBSan build; never execute UB in the parent.");
+        QProcess process;
+        auto environment = QProcessEnvironment::systemEnvironment();
+        environment.insert("US_RESIDUAL_INVALID_CASE", scenario);
+        environment.insert("US_RESIDUAL_INVALID_MODE", mode);
+        environment.insert("QT_LOGGING_RULES", "*.debug=false");
+        environment.insert("ASAN_OPTIONS", "detect_leaks=0:halt_on_error=1");
+        environment.insert("UBSAN_OPTIONS", "halt_on_error=1:print_stacktrace=1");
+        process.setProcessEnvironment(environment);
+        process.setProcessChannelMode(QProcess::MergedChannels);
+        process.start(QCoreApplication::applicationFilePath(), { "invalidInputProbe" });
+        QVERIFY(process.waitForStarted(5000));
+        if (!process.waitForFinished(20000))
+        {
+            process.kill(); process.waitForFinished();
+            QFAIL("Invalid-input child timed out; a hang is not an accepted baseline result.");
+        }
+        const QByteArray output = process.readAll();
+        const QString logDir = qEnvironmentVariable("US_RESIDUAL_PROBE_LOG_DIR");
+        if (!logDir.isEmpty())
+        {
+            QVERIFY(QDir().mkpath(logDir));
+            QFile log(QDir(logDir).filePath(QString::fromLatin1(QTest::currentDataTag()) + ".log"));
+            QVERIFY(log.open(QIODevice::WriteOnly));
+            log.write(output);
+        }
+        // Prove we reached the probe, rather than accepting a loader/ASan startup failure.
+        QVERIFY2(output.contains("RESIDUAL_PROBE_STARTED"), output.constData());
+        if (unsafe)
+        {
+            // D04: characterize existing unsafe rejection by crash/sanitizer. This
+            // is NOT a passing safety contract; replace with safe-rejection tests before repair.
+            QVERIFY2(process.exitStatus() == QProcess::CrashExit || process.exitCode() != 0, output.constData());
+            QVERIFY2(output.contains("AddressSanitizer") || output.contains("runtime error:") ||
+                     output.contains("ASSERT"), output.constData());
+        }
+        else
+        {
+            QCOMPARE(process.exitStatus(), QProcess::NormalExit);
+            QVERIFY2(process.exitCode() == 0, output.constData());
+            QVERIFY(output.contains("RESIDUAL_PROBE_COMPLETED"));
+        }
+    }
+
+    void invalidInputProbe()
+    {
+        const QString scenario = qEnvironmentVariable("US_RESIDUAL_INVALID_CASE");
+        if (scenario.isEmpty()) QSKIP("Child-process entry point, exercised by invalidInputs rows.");
+        const QString mode = qEnvironmentVariable("US_RESIDUAL_INVALID_MODE");
+        ResidualInputs in; populate(in);
+        auto caller = owner(in, mode);
+        if (scenario == "empty-edited") { in.edited.xvalues.clear(); in.edited.scanData.clear(); }
+        if (scenario == "empty-simulated") { in.simulated.xvalues.clear(); in.simulated.scanData.clear(); }
+        if (scenario == "short-ti") in.ti.values = QVector<double>{ .125 };
+        if (scenario == "short-ri") in.ri.values = QVector<double>{ .0625 };
+        if (scenario == "short-scan") in.simulated.scanData = QVector<US_DataIO::Scan>{ in.simulated.scanData[0] };
+        if (scenario == "short-radius") in.simulated.xvalues = QVector<double>{ 5.8, 5.9 };
+        if (scenario == "nonfinite") in.edited.scanData[0].rvalues[0] = std::numeric_limits<double>::quiet_NaN();
+        if (scenario == "bad-exclusion") in.excluded = { -1, 99 };
+        fprintf(stderr, "RESIDUAL_PROBE_STARTED\n"); fflush(stderr);
+        US_ResidPlotFem plot(scenario == "null-parent" ? nullptr : caller.get(),
+                             scenario == "unknown-mode" ? "UNKNOWN" : mode);
+        auto cs = curves(plot.rp_data_plot2());
+        if (scenario == "nonfinite")
+        {
+            QCOMPARE(cs.size(), 4);
+            QVERIFY(std::isnan(cs[1]->sample(0).y()));
+            QVERIFY(field(plot, "RMSD")->text().toLower().contains("nan"));
+        }
+        if (scenario == "bad-exclusion")
+        {
+            QCOMPARE(cs.size(), 4); // Out-of-range exclusions are silently ignored.
+            QCOMPARE(cs[1]->sample(0).y(), .25 - .125 - .0625);
+        }
+        fprintf(stderr, "RESIDUAL_PROBE_COMPLETED\n"); fflush(stderr);
+    }
+
     void cleanup()
     {
         // Also isolate later rows if an assertion exits a bitmap test early.
