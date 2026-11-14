@@ -354,17 +354,6 @@ int index = US_DataIO::index(xvals, 2.3);
 EXPECT_EQ(index, 1) << "Should return index of closest value";
 }
 
-TEST_F(TestUSDataIOUnit, StaticIndexEmptyVector) {
-// Test static index method with empty vector
-QVector<double> xvals;
-// This would likely cause undefined behavior, but test defensively
-// Note: This is an edge case that might crash, so we document the behavior
-
-// Since the method doesn't check for empty vectors, this is a boundary case
-// that highlights a potential improvement needed in the implementation
-SUCCEED() << "Empty vector test - implementation should handle this case";
-}
-
 TEST_F(TestUSDataIOUnit, StaticIndexSingleElement) {
 // Test static index method with single element
 QVector<double> xvals = {2.5};
