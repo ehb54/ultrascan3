@@ -626,3 +626,27 @@ if(VCPKG_TARGET_IS_WINDOWS)
   endforeach()
   file(COPY ${qtbase_owned_dlls} DESTINATION "${CURRENT_PACKAGES_DIR}/tools/Qt6/bin")
 endif()
+
+# cmake_automoc_parser statically links QtCore, but can still dynamically link
+# PCRE. vcpkg_copy_tool_dependencies only handles Windows. Keep the parser
+# runnable both in packages/ during downstream builds and after relocation.
+if(VCPKG_TARGET_IS_OSX)
+    set(_parser "${CURRENT_PACKAGES_DIR}/tools/Qt6/bin/cmake_automoc_parser")
+    if(EXISTS "${_parser}")
+        execute_process(COMMAND otool -L "${_parser}"
+            OUTPUT_VARIABLE _parser_deps COMMAND_ERROR_IS_FATAL ANY)
+        string(REGEX MATCHALL "[^\n\t ]*libpcre2-16[^\n\t ]*\\.dylib" _pcre_deps "${_parser_deps}")
+        foreach(_dep IN LISTS _pcre_deps)
+            get_filename_component(_name "${_dep}" NAME)
+            set(_runtime "${CURRENT_INSTALLED_DIR}/lib/${_name}")
+            if(NOT EXISTS "${_runtime}")
+                message(FATAL_ERROR "Qt automoc parser runtime missing: ${_runtime}")
+            endif()
+            file(COPY_FILE "${_runtime}" "${CURRENT_PACKAGES_DIR}/tools/Qt6/bin/${_name}")
+            execute_process(COMMAND install_name_tool -change "${_dep}"
+                "@loader_path/${_name}" "${_parser}" COMMAND_ERROR_IS_FATAL ANY)
+        endforeach()
+        execute_process(COMMAND codesign --force --sign - "${_parser}"
+            COMMAND_ERROR_IS_FATAL ANY)
+    endif()
+endif()

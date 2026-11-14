@@ -15,3 +15,12 @@ validating application packages; existing pinned archives do not gain this fix.
 
 Validation so far: patch applies cleanly to the local Qt 6.10.1 source;
 git diff --check passes. Rebuilt-package runtime validation is still pending.
+
+The overlay also fixes cmake_automoc_parser's dynamic PCRE dependency on macOS.
+The Windows-only vcpkg_copy_tool_dependencies helper does not supply it on Mac.
+The port copies the exact linked PCRE library alongside the parser and changes
+its reference to @loader_path, then refreshes the executable's ad-hoc signature.
+This supports downstream builds from packages/ and relocated toolchains without
+an absolute build-machine path. A local Mach-O fixture reproduced failure with
+only the original relative lib rpath, then passed with this CMake fixup both in
+place and after relocation. Full production-toolchain validation remains pending.
