@@ -9,6 +9,7 @@
 #include <cmath>
 #include <limits>
 #include <random>
+#include <set>
 
 using namespace qt_matchers;
 
@@ -47,53 +48,63 @@ class TestUSMath2Unit : public QtTestBase
 // RANDOM NUMBER GENERATION TESTS
 // ============================================================================
 
-TEST_F(TestUSMath2Unit, RanfInRange) {
-// Test ranf method returns values in [0, 1)
-for (int i = 0; i < 100; i++) {
-double result = US_Math2::ranf();
-EXPECT_GE(result, 0.0) << "ranf should return values >= 0.0";
-EXPECT_LT(result, 1.0) << "ranf should return values < 1.0";
-}
-}
+// The generator and the cached Box-Muller deviate are process-wide, so every test that draws
+// numbers seeds first; otherwise its samples would depend on which tests ran before it.
 
-TEST_F(TestUSMath2Unit, RanfDistribution) {
-// Test ranf produces different values (basic distribution test)
-std::set<double> values;
-for (int i = 0; i < 50; i++) {
-values.insert(US_Math2::ranf());
-}
-EXPECT_GT(values.size(), 30u) << "ranf should produce diverse values";
+TEST_F( TestUSMath2Unit, RanfInRange )
+{
+   US_Math2::randomize( 20261114u );
+   for ( int i = 0; i < 10000; i++ )
+   {
+      const double result = US_Math2::ranf();
+      ASSERT_GE( result, 0.0 ) << "draw " << i;
+      ASSERT_LT( result, 1.0 ) << "draw " << i;
+   }
 }
 
-TEST_F(TestUSMath2Unit, BoxMullerMeanZero) {
-// Test box_muller with mean=0, std=1
-double sum = 0.0;
-int count = 1000;
+TEST_F( TestUSMath2Unit, RanfRepeatsItsSequenceForTheSameSeed )
+{
+   US_Math2::randomize( 20261114u );
+   QVector<double> first;
+   for ( int i = 0; i < 50; i++ )
+   {
+      first << US_Math2::ranf();
+   }
+   EXPECT_EQ( 50u, std::set<double>( first.begin(), first.end() ).size() );
 
-for (int i = 0; i < count; i++) {
-sum += US_Math2::box_muller(0.0, 1.0);
+   US_Math2::randomize( 20261114u );
+   for ( int i = 0; i < 50; i++ )
+   {
+      EXPECT_DOUBLE_EQ( first[i], US_Math2::ranf() ) << "draw " << i;
+   }
 }
 
-double average = sum / count;
-EXPECT_NEAR(average, 0.0, 0.2) << "Box-Muller should approximate mean=0";
-}
-
-TEST_F(TestUSMath2Unit, BoxMullerNonZeroMean) {
-// Test box_muller with non-zero mean
-double mean = 5.0;
-double sum = 0.0;
-int count = 1000;
-
-for (int i = 0; i < count; i++) {
-sum += US_Math2::box_muller(mean, 1.0);
-}
-
-double average = sum / count;
-EXPECT_NEAR(average, mean, 0.5) << "Box-Muller should approximate specified mean";
+TEST_F( TestUSMath2Unit, BoxMullerMatchesTheRequestedMeanAndDeviation )
+{
+   for ( const auto& requested : { qMakePair( 0.0, 1.0 ), qMakePair( 5.0, 2.0 ) } )
+   {
+      SCOPED_TRACE( requested.first );
+      US_Math2::randomize( 20261114u );
+      const int count = 20000;
+      double    sum   = 0.0;
+      double    sumsq = 0.0;
+      for ( int i = 0; i < count; i++ )
+      {
+         const double value = US_Math2::box_muller( requested.first, requested.second );
+         sum += value;
+         sumsq += value * value;
+      }
+      const double mean = sum / count;
+      const double sd   = sqrt( sumsq / count - mean * mean );
+      // About five standard errors for this sample size.
+      EXPECT_NEAR( mean, requested.first, 5.0 * requested.second / sqrt( double( count ) ) );
+      EXPECT_NEAR( sd, requested.second, 5.0 * requested.second / sqrt( 2.0 * count ) );
+   }
 }
 
 TEST_F(TestUSMath2Unit, BoxMullerZeroStdDev) {
 // Test box_muller with zero standard deviation
+US_Math2::randomize( 20261114u );
 double mean = 3.0;
 double result = US_Math2::box_muller(mean, 0.0);
 EXPECT_DOUBLE_EQ(result, mean) << "Box-Muller with std=0 should return mean";

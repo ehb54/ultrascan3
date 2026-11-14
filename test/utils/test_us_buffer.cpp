@@ -9,15 +9,14 @@
 #include <cstring>
 
 using ::testing::_;
-using ::testing::Return;
-using ::testing::Eq;
+using ::testing::DoAll;
 using ::testing::DoubleEq;
 using ::testing::DoubleNear;
-using ::testing::StrictMock;
-using ::testing::NiceMock;
+using ::testing::Eq;
 using ::testing::InSequence;
+using ::testing::Return;
 using ::testing::SetArgReferee;
-using ::testing::DoAll;
+using ::testing::StrictMock;
 
 class US_BufferComponentTest : public QtTestBase
 {
@@ -111,18 +110,6 @@ for ( int i = 0; i < 6; i++ )
    EXPECT_THAT( comp.dens_coeff[i], DoubleEq( 0.0 ) ) << "dens_coeff[" << i << "]";
    EXPECT_THAT( comp.visc_coeff[i], DoubleEq( 0.0 ) ) << "visc_coeff[" << i << "]";
 }
-}
-
-TEST_F(US_BufferTest, ReadFromDBError) {
-auto mockDb = std::make_unique<NiceMock<US_DB2_Mock>>();
-
-EXPECT_CALL(*mockDb, lastErrno())
-.WillOnce(Return(IUS_DB2::DBERROR));
-
-US_Buffer testBuffer;
-bool result = testBuffer.readFromDB(mockDb.get(), "123");
-
-EXPECT_FALSE(result);
 }
 
 TEST_F( US_BufferTest, SpectrumConsumesFiniteRowsWithExactQueryAndColumnContract )

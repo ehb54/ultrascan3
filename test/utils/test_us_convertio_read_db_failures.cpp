@@ -11,15 +11,17 @@
 
 using ::testing::_;
 using ::testing::An;
+using ::testing::AnyNumber;
 using ::testing::Invoke;
-using ::testing::NiceMock;
 using ::testing::Return;
+using ::testing::StrictMock;
 
 namespace
 {
 // Finite query results for the real experiment/download coordinator. This is
 // an interaction script, not a database emulator or an AUC parser fixture.
-class RunReadDb : public NiceMock<US_DB2_Mock>
+// Only the scripted read calls are allowed; any write or other call fails the test.
+class RunReadDb : public StrictMock<US_DB2_Mock>
 {
    public:
       RunReadDb()
@@ -102,6 +104,11 @@ class RunReadDb : public NiceMock<US_DB2_Mock>
                   EXPECT_LT( col, static_cast<unsigned>( current.size() ) ) << procedure.toStdString();
                   return current.value( static_cast<int>( col ) );
                } ) );
+         EXPECT_CALL( *this, query( An<const QStringList&>() ) ).Times( AnyNumber() );
+         EXPECT_CALL( *this, lastErrno() ).Times( AnyNumber() );
+         EXPECT_CALL( *this, lastError() ).Times( AnyNumber() );
+         EXPECT_CALL( *this, next() ).Times( AnyNumber() );
+         EXPECT_CALL( *this, value( _ ) ).Times( AnyNumber() );
       }
       void addRawRecord()
       {
