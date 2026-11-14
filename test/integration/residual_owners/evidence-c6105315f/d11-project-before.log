@@ -1,0 +1,205 @@
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 19
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 20
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 21
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 22
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 23
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 24
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 25
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 26
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 27
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 28
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 29
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 30
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 31
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 32
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 33
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 34
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 35
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 36
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 37
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 38
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 39
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 40
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 41
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 42
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 43
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 44
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 45
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 46
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 47
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 48
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 49
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 50
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 51
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 52
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 53
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 54
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 55
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 56
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 57
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 58
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 59
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 60
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 61
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 62
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 63
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 64
+shmat succeeded
+/tmp/us3-residual-2ddf75d6e/source/programs/us_com_project/us_com_project_gui.cpp:1182:41: runtime error: signed integer overflow: -1094795586 * 3 cannot be represented in type 'int'
+    #0 0x69cdff in US_InitDialogueGui::resizeEvent(QResizeEvent*) /tmp/us3-residual-2ddf75d6e/source/programs/us_com_project/us_com_project_gui.cpp:1182
+    #1 0xffff927d4aab in QWidget::event(QEvent*) (/lib64/libQt5Widgets.so.5+0x1d1aab)
+    #2 0xffff9279382b in QApplicationPrivate::notify_helper(QObject*, QEvent*) (/lib64/libQt5Widgets.so.5+0x19082b)
+    #3 0xffff9279a91b in QApplication::notify(QObject*, QEvent*) (/lib64/libQt5Widgets.so.5+0x19791b)
+    #4 0xffff91bed39b in QCoreApplication::notifyInternal2(QObject*, QEvent*) (/lib64/libQt5Core.so.5+0x28d39b)
+    #5 0xffff927cd043 in QWidgetPrivate::sendPendingMoveAndResizeEvents(bool, bool) (/lib64/libQt5Widgets.so.5+0x1ca043)
+    #6 0xffff927d137b in QWidgetPrivate::show_helper() (/lib64/libQt5Widgets.so.5+0x1ce37b)
+    #7 0xffff927d1307 in QWidgetPrivate::showChildren(bool) (/lib64/libQt5Widgets.so.5+0x1ce307)
+    #8 0xffff927d1397 in QWidgetPrivate::show_helper() (/lib64/libQt5Widgets.so.5+0x1ce397)
+    #9 0xffff927d422f in QWidgetPrivate::setVisible(bool) (/lib64/libQt5Widgets.so.5+0x1d122f)
+    #10 0xffff927d12f7 in QWidgetPrivate::showChildren(bool) (/lib64/libQt5Widgets.so.5+0x1ce2f7)
+    #11 0xffff927d1397 in QWidgetPrivate::show_helper() (/lib64/libQt5Widgets.so.5+0x1ce397)
+    #12 0xffff927d422f in QWidgetPrivate::setVisible(bool) (/lib64/libQt5Widgets.so.5+0x1d122f)
+    #13 0xffff927d12f7 in QWidgetPrivate::showChildren(bool) (/lib64/libQt5Widgets.so.5+0x1ce2f7)
+    #14 0xffff927d1397 in QWidgetPrivate::show_helper() (/lib64/libQt5Widgets.so.5+0x1ce397)
+    #15 0xffff927d422f in QWidgetPrivate::setVisible(bool) (/lib64/libQt5Widgets.so.5+0x1d122f)
+    #16 0x64af9b in main /tmp/us3-residual-2ddf75d6e/source/programs/us_com_project/us_com_project_main.cpp:16
+    #17 0xffff8cb2b46b in __libc_start_main (/lib64/libc.so.6+0x2546b)
+    #18 0x49c38b  (/tmp/us3-residual-2ddf75d6e/build/bin/us_comproject+0x49c38b)
+

@@ -1,4 +1,4 @@
-//! \file analysis-profile-probe.cpp
+//! \file constructor_probe.cpp
 #include "us_analysis_profile.h"
 #include <QApplication>
 #include <cstdio>
