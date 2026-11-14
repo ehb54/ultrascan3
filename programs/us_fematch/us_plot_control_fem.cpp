@@ -1,6 +1,5 @@
 //! \file us_plot_control_fem.cpp
 
-#include "us_fematch.h"
 #include "us_plot_control_fem.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
