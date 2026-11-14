@@ -56,6 +56,10 @@ class US_Hydrodyn_Zeno
    // ZENO computes; -1: none.  Set by the caller.
    int                           mesh_view_model;
 
+   // The caller's overall progress bar over several runs (meshes, models), or null: run() steps it
+   // by one when the mesh is made, before ZENO computes.  Set by the caller.
+   mQProgressBar               * overall_progress;
+
    // Set by run(): whether ZENO ran on the solvent-excluded surface of the beads (the
    // "zeno_mesh" option), the options used (in the model's length unit) and the mesh.
    bool                          mesh_used;

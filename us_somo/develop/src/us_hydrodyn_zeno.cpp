@@ -13440,6 +13440,7 @@ US_Hydrodyn_Zeno::US_Hydrodyn_Zeno(
    zeno_stop_flag    = & us_hydrodyn->stopFlag;
    mesh_h            = 0e0;
    mesh_view_model   = -1;
+   overall_progress  = nullptr;
    mesh_used         = false;
 }
 
@@ -13671,6 +13672,9 @@ bool US_Hydrodyn_Zeno::run(
    if ( mesh_used && mesh_view_model >= 0 ) {
       us_hydrodyn->visualize_mesh_with_bead_model( mesh_view_model, outname );
       qApp->processEvents();
+   }
+   if ( mesh_used && overall_progress ) {
+      overall_progress->setValue( overall_progress->value() + 1 );
    }
 
    if ( zeno_cxx ) {
@@ -14281,11 +14285,25 @@ bool US_Hydrodyn::calc_zeno()
       + QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "" )
       ;
 
-   if ( zeno_mm ) {
+   // With several models or several meshes, the left bar follows the whole calculation, a step for
+   // each mesh and each ZENO run, and the right one the current step (meshing, then ZENO).  Both
+   // bars get their own labels back however this ends.
+   const bool overall_bar     = zeno_mm || mesh_series;
+   mm_mode                    = overall_bar;   // ZENO's own progress (update_progress()) then goes right
+   const int  phases          = zeno_mesh ? 2 : 1;
+   const int  steps_per_model = repeats * (int) mesh_hs.size() * phases;
+   struct Restore_Formats {
+      mQProgressBar * a;
+      mQProgressBar * b;
+      QString         fa;
+      QString         fb;
+      ~Restore_Formats() { a->setFormat( fa ); b->setFormat( fb ); }
+   } restore_formats { progress, mprogress, progress->format(), mprogress->format() };
+   if ( overall_bar ) {
       progress->setValue( 0 );
-      progress->setMaximum( models_to_proc );
+      progress->setMaximum( models_to_proc * steps_per_model );
       mprogress->setValue( 0 );
-      mprogress->setFormat( "Model %p%" );
+      mprogress->setFormat( "ZENO %p%" );
       mprogress->show();
    }
 
@@ -14305,9 +14323,8 @@ bool US_Hydrodyn::calc_zeno()
       if (lb_model->item(current_model)->isSelected()) {
          if (somo_processed[current_model]) {
             double used_skin_thickness = 0e0;
-            if ( zeno_mm ) {
-               progress->setValue( models_procd++ );
-            }
+            const int model_steps_done = models_procd * steps_per_model;
+            ++models_procd;
             // each mesh grid spacing (just one, and 0, without a mesh) gets its runs and repeats
             vector < US_Zeno_Mesh_Series_Point > series;
             for ( int this_run = 0; this_run < repeats * (int) mesh_hs.size(); ++this_run ) {
@@ -14325,6 +14342,23 @@ bool US_Hydrodyn::calc_zeno()
                   guiFlag &&
                   !batch_active()
                   ? (int) current_model : -1;
+               if ( overall_bar ) {
+                  QStringList where;
+                  if ( zeno_mm ) {
+                     where << QString( "model %1 of %2" ).arg( models_procd ).arg( models_to_proc );
+                  }
+                  if ( mesh_series ) {
+                     where << QString( "mesh %1 of %2" ).arg( this_run / repeats + 1 ).arg( mesh_hs.size() );
+                  }
+                  if ( repeats > 1 ) {
+                     where << QString( "run %1 of %2" ).arg( this_repeat + 1 ).arg( repeats );
+                  }
+                  QString label = where.join( ", " );
+                  label[ 0 ] = label[ 0 ].toUpper();
+                  progress->setFormat( label + ": %p%" );
+                  progress->setValue( model_steps_done + this_run * phases );
+               }
+               uhz.overall_progress = overall_bar && zeno_mesh ? progress : nullptr;
                if (!first_model_no) {
                   first_model_no = current_model + 1;
                }
@@ -14435,7 +14469,7 @@ bool US_Hydrodyn::calc_zeno()
                           sum_mass,
                           sum_volume,
                           model_vector[ current_model ].asa_rg_pos,
-                          zeno_mm ? mprogress : progress,
+                          overall_bar ? mprogress : progress,
                           true,
                           zeno_cxx,
                           USglobal->config_list.numThreads

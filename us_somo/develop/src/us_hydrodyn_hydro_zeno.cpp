@@ -368,10 +368,10 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
                                        "<p>The spacing of the grid the surface is sampled on: smaller is finer."
                                        " The number of triangles grows as 1/spacing" ) + UNICODE_SUPER_2_QS + us_tr( ".</p>"
                                        "<p>The default, 0.5 " ) + UNICODE_ANGSTROM_QS + us_tr( ", gives about 130,000 triangles for lysozyme;"
-                                       " ZENO's results on it agree with finer meshes within their statistical error.</p>"
-                                       "<p>Several spacings separated by commas, e.g. 0.6,0.5,0.4,0.3, run ZENO on each mesh and"
+                                       " ZENO's results on it are within about 0.1% of an infinitely fine mesh's.</p>"
+                                       "<p>Several spacings separated by commas, e.g. 1,0.7,0.5,0.4 (recommended), run ZENO on each mesh and"
                                        " extrapolate the results linearly in 1/N (N, the number of triangles) to an infinitely fine mesh."
-                                       " The results go to a CSV file that the BEST Analysis module can also load.</p>"
+                                       " The results go to a CSV file that the BEST/ZENO Series tool can load.</p>"
                                        ) );
       connect( le_zeno_mesh_h, SIGNAL( textChanged( const QString & ) ), SLOT( update_zeno_mesh_h( const QString & ) ) );
 
