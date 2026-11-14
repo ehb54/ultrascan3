@@ -8699,6 +8699,32 @@ void US_ReporterGMP::user_interactions_analysis_velmwl( QString analysisVelMwlJs
    html_assembled += tr( "<hr>" );
 }
 
+// Split a stored analysisCancel value: "CANCELED, by <user>; COMMENT, <text>; <UTC time>"
+// (older/shorter records are tolerated; a ';' inside the comment is preserved)
+static void split_cancel_value( const QString& value, QString& by, QString& comment, QString& when )
+{
+  QString rest = value;
+  int     ix   = rest.indexOf( "CANCELED, by" );
+  if ( ix >= 0 )
+    rest = rest.mid( ix + QString( "CANCELED, by" ).length() );
+
+  QStringList parts = rest.split( ";" );
+  by      = parts[ 0 ].trimmed();
+  comment = "N/A";
+  when    = "N/A";
+
+  if ( parts.size() >= 3 )
+    {
+      when    = parts.last().trimmed();
+      comment = parts.mid( 1, parts.size() - 2 ).join( ";" ).trimmed();
+    }
+  else if ( parts.size() == 2 )
+    comment = parts[ 1 ].trimmed();
+
+  if ( comment.startsWith( "COMMENT," ) )
+    comment = comment.mid( QString( "COMMENT," ).length() ).trimmed();
+}
+
 //do user-interactions-analysis separately:
 void US_ReporterGMP::user_interactions_analysis( QString analysisJson, QString analysisCancelJson )
 {
@@ -8706,6 +8732,19 @@ void US_ReporterGMP::user_interactions_analysis( QString analysisJson, QString a
 
   QMap < QString, QString > analysis_status_map       = parse_autoflowStatus_analysis_json( analysisJson );
   QMap < QString, QString > analysisCancel_status_map = parse_autoflowStatus_analysis_json( analysisCancelJson );
+
+  // Were any triples cancelled because of a FITMEN failure (NaN, out-of-range, ...)?
+  bool fitmen_failed_found = false;
+  {
+    QMap < QString, QString >::iterator fj;
+    for ( fj = analysisCancel_status_map.begin(); fj != analysisCancel_status_map.end(); ++fj )
+      {
+	QString f_by, f_comment, f_when;
+	split_cancel_value( fj.value(), f_by, f_comment, f_when );
+	if ( f_comment.startsWith( "FITMEN FAILURE [" ) )
+	  fitmen_failed_found = true;
+      }
+  }
 
   if ( !cAP2.job3auto ) // interactive FITMEN (manual)
     {
@@ -8754,10 +8793,18 @@ void US_ReporterGMP::user_interactions_analysis( QString analysisJson, QString a
 	}
       
       html_assembled += tr( "</table>" );
+
+      if ( fitmen_failed_found )
+	html_assembled += tr( "<p style=\"margin-left:25px\">Triples for which no position is listed FAILED at the FITMEN stage "
+			      "(see the failure information below).</p>" );
     }
   else  // FITMEN_AUTO (automatic)
     {
-      html_assembled += tr( "Meniscus positions have been determined automatically as best fit values for all channels." );
+      html_assembled += tr( "Meniscus positions have been determined automatically as best fit values for all channels" );
+      if ( fitmen_failed_found )
+	html_assembled += tr( ", except for the triples that FAILED at the FITMEN_AUTO stage (see the failure information below)." );
+      else
+	html_assembled += tr( "." );
     }
 
   
@@ -8779,41 +8826,80 @@ void US_ReporterGMP::user_interactions_analysis( QString analysisJson, QString a
       for ( cj = analysisCancel_status_map.begin(); cj != analysisCancel_status_map.end(); ++cj )
 	{
 	  
-	  QString cj_value                 = cj.value();
-	  QString performed_by_reason_time = cj_value.split("CANCELED, by")[1];
-	  
 	  QString performed_by, reason, when;
-	  if ( performed_by_reason_time.contains(";") )
+	  split_cancel_value( cj.value(), performed_by, reason, when );
+
+	  if ( reason.startsWith( "FITMEN FAILURE [" ) )
 	    {
-	      performed_by      = performed_by_reason_time.split(";")[0];
-	      reason            = performed_by_reason_time.split(";")[1];
-	      when              = performed_by_reason_time.split(";")[2];  
+	      // Job cancellation caused by a failure at the FITMEN stage: report failure type and details
+	      int     ib      = reason.indexOf( ']' );
+	      QString ftype   = reason.mid( QString( "FITMEN FAILURE [" ).length(),
+					    ib - QString( "FITMEN FAILURE [" ).length() );
+	      QString details = ( ib >= 0 && reason.mid( ib + 1 ).startsWith( ":" ) )
+		                ? reason.mid( ib + 2 ).trimmed() : QString( "N/A" );
+
+	      QString type_descr;
+	      if      ( ftype == "NAN" )          type_descr = "NaN meniscus/bottom position: bad fit";
+	      else if ( ftype == "OUT_OF_RANGE" ) type_descr = cAP2.job3auto
+		? "Extrapolated position outside of the original radial fitting range"
+		: "Best-fit position outside of the allowed range of the 2DSA-FM models";
+	      else if ( ftype == "NO_FM_MODELS" ) type_descr = "No 2DSA-FM models found";
+	      else if ( ftype == "DATA_RANGE" )   type_descr = "Meniscus position extends into the data range";
+	      else if ( ftype == "BAD_VALUES" )   type_descr = "Unreasonable meniscus/bottom value";
+	      else                                type_descr = ftype;
+
+	      QString stage_descr = cAP2.job3auto ? "FITMEN_AUTO" : "FITMEN (manual)";
+	      QString by_descr    = QString( "triple FAILED at %1 stage; jobs canceled automatically (session of: %2)" )
+		                    .arg( stage_descr ).arg( performed_by );
+	      if ( ftype == "OUT_OF_RANGE" && !cAP2.job3auto )
+		by_descr = QString( "user, who chose to stop processing this triple (session of: %1)" ).arg( performed_by );
+
+	      html_assembled += tr(
+				   "<tr>"
+				   "<td> Jobs Canceled for:  %1, </td>"
+				   "</tr>"
+				   "<tr>"
+				   "<td> Jobs Canceled by:   %2, </td>"
+				   "</tr>"
+				   "<tr>"
+				   "<td> Failure Type:       <span style=\"color:red;\">%3</span>, </td>"
+				   "</tr>"
+				   "<tr>"
+				   "<td> Reason:             %4, </td>"
+				   "</tr>"
+				   "<tr>"
+				   "<td> When:               %5 (UTC) </td>"
+				   "</tr>"
+				   )
+		.arg( cj.key() )      //1
+		.arg( by_descr )      //2
+		.arg( type_descr )    //3
+		.arg( details )       //4
+		.arg( when )          //5
+		;
 	    }
 	  else
 	    {
-	      performed_by = performed_by_reason_time;
-	      reason       = "N/A";
-	      when         = "N/A";
+	      html_assembled += tr(
+				   "<tr>"
+				   "<td> Jobs Canceled for:  %1, </td>"
+				   "</tr>"
+				   "<tr>"
+				   "<td> Jobs Canceled by:   %2, </td>"
+				   "</tr>"
+				   "<tr>"
+				   "<td> Reason:             %3, </td>"
+				   "</tr>"
+				   "<tr>"
+				   "<td> When:               %4 (UTC) </td>"
+				   "</tr>"
+				   )
+		.arg( cj.key()   )      //1
+		.arg( performed_by )    //2
+		.arg( reason )          //3
+		.arg( when )            //4
+		;
 	    }
-	  html_assembled += tr(			       
-			       "<tr>"
-			       "<td> Jobs Canceled for:  %1, </td>"
-			       "</tr>"
-			       "<tr>"
-			       "<td> Jobs Canceled by:   %2, </td>"
-			       "</tr>"
-			       "<tr>"
-			       "<td> Reason:             %3, </td>"
-			       "</tr>"
-			       "<tr>"
-			       "<td> When:               %4 (UTC) </td>"
-			       "</tr>"
-						       )
-	    .arg( cj.key()   )      //1
-	    .arg( performed_by )    //2
-	    .arg( reason )          //3
-	    .arg( when )            //4
-	    ;
 	}
     }
   else
