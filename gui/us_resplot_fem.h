@@ -30,7 +30,7 @@ struct US_ResidPlotInputs
 
 //! \brief A class to provide a window with experimental/residuals plots
 
-class US_ResidPlotFem : public US_WidgetsDialog
+class US_GUI_EXTERN US_ResidPlotFem : public US_WidgetsDialog
 {
    Q_OBJECT
 

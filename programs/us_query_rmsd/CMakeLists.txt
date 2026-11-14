@@ -15,9 +15,6 @@ set(CROSS_DIR_SOURCES
         ../us_fematch/us_advanced_fem.cpp
         ../us_fematch/us_dmga_mc_stats.cpp
         ../us_fematch/us_fematch.cpp
-        ../us_fematch/us_plot_control_fem.cpp
-        ../us_fematch/us_resplot_fem.cpp
-        ../us_fematch/us_thread_worker.cpp
         )
 
 # Cross-directory headers from .pro file
@@ -26,9 +23,6 @@ set(CROSS_DIR_HEADERS
         ../us_fematch/us_advanced_fem.h
         ../us_fematch/us_dmga_mc_stats.h
         ../us_fematch/us_fematch.h
-        ../us_fematch/us_plot_control_fem.h
-        ../us_fematch/us_resplot_fem.h
-        ../us_fematch/us_thread_worker.h
         )
 
 # Find UI and resource files

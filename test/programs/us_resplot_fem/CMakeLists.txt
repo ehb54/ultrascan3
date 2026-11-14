@@ -1,10 +1,7 @@
 us3_add_gui_test(test_us_resplot_fem
     SOURCES
         test_us_resplot_fem.cpp
-        ${CMAKE_SOURCE_DIR}/programs/us_fematch/us_resplot_fem.cpp
-        ${CMAKE_SOURCE_DIR}/programs/us_fematch/us_resplot_fem.h
     LIBRARIES UltraScan3::Gui_Static Qt::DataVisualization
-    INCLUDE_DIRECTORIES ${CMAKE_SOURCE_DIR}/programs/us_fematch
     LABELS programs;residual-characterization
 )
 set_tests_properties(test_us_resplot_fem PROPERTIES TIMEOUT 120)

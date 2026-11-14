@@ -10,7 +10,7 @@
 #include <QPrinter>
 
 #include "../us/us_revision.h"
-#include "../us_fematch/us_thread_worker.h"
+#include "us_thread_worker.h"
 #include "us_calc_matching.h"
 #include "us_calc_range.h"
 #include "us_calc_replicate.h"
@@ -6437,8 +6437,8 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
       tsimdats.clear();
       tmodels .clear();
       kcomps  .clear();
-      QList< ThreadWorker* >         tworkers;
-      QList< QThreadEx* >            wthreads;
+      QList< US_ThreadWorker* >         tworkers;
+      QList< US_ThreadEx* >            wthreads;
       
       // Build models for each thread
       for ( int ii = 0; ii < ncomp; ii++ )
@@ -6463,9 +6463,9 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
       // Build worker threads and begin running
       for ( int ii = 0; ii < nthread; ii++ )
 	{
-	  ThreadWorker* tworker = new ThreadWorker( tmodels[ ii ], simparams,
+	  US_ThreadWorker* tworker = new US_ThreadWorker( tmodels[ ii ], simparams,
 						    tsimdats[ ii ], solution_rec.buffer, ii );
-	  QThreadEx*    wthread = new QThreadEx();
+	  US_ThreadEx*    wthread = new US_ThreadEx();
 	  
 	  tworker->moveToThread( wthread );
 	  
@@ -6473,11 +6473,11 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
 	  wthreads << wthread;
 	  
 	  connect( wthread, &QThread::started,
-		   tworker, &ThreadWorker::calc_simulation );
+		   tworker, &US_ThreadWorker::calc_simulation );
 	  
-	  connect( tworker, &ThreadWorker::work_progress,
+	  connect( tworker, &US_ThreadWorker::work_progress,
 	   	   this,    &US_ReporterGMP::thread_progress );
-	  connect( tworker, &ThreadWorker::work_complete,
+	  connect( tworker, &US_ThreadWorker::work_complete,
 		   this,    &US_ReporterGMP::thread_complete );
 	  
 	  wthread->start();

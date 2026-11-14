@@ -2314,8 +2314,8 @@ DbgLv(1) << "SimMdl: (fematch:)Finite Volume Solver is called";
       tsimdats.clear();
       tmodels .clear();
       kcomps  .clear();
-      QList< ThreadWorker* >         tworkers;
-      QList< QThreadEx* >            wthreads;
+      QList< US_ThreadWorker* >         tworkers;
+      QList< US_ThreadEx* >            wthreads;
 
       // Build models for each thread
       for ( int ii = 0; ii < ncomp; ii++ )
@@ -2340,9 +2340,9 @@ DbgLv(1) << "SimMdl: (fematch:)Finite Volume Solver is called";
       // Build worker threads and begin running
       for ( int ii = 0; ii < nthread; ii++ )
       {
-         ThreadWorker* tworker = new ThreadWorker( tmodels[ ii ], simparams,
+         US_ThreadWorker* tworker = new US_ThreadWorker( tmodels[ ii ], simparams,
                tsimdats[ ii ], solution_rec.buffer, ii );
-         QThreadEx*    wthread = new QThreadEx();
+         US_ThreadEx*    wthread = new US_ThreadEx();
 
          tworker->moveToThread( wthread );
 
@@ -2350,11 +2350,11 @@ DbgLv(1) << "SimMdl: (fematch:)Finite Volume Solver is called";
          wthreads << wthread;
 
          connect( wthread, &QThread::started,
-                  tworker, &ThreadWorker::calc_simulation );
+                  tworker, &US_ThreadWorker::calc_simulation );
 
-         connect( tworker, &ThreadWorker::work_progress,
+         connect( tworker, &US_ThreadWorker::work_progress,
                   this,    &US_FeMatch::thread_progress );
-         connect( tworker, &ThreadWorker::work_complete,
+         connect( tworker, &US_ThreadWorker::work_complete,
                   this,    &US_FeMatch::thread_complete );
 
          wthread->start();

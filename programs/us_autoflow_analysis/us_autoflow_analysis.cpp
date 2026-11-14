@@ -13,7 +13,7 @@
 #include <QXmlStreamReader>
 #include <QtNumeric>
 
-#include "../us_fematch/us_thread_worker.h"
+#include "us_thread_worker.h"
 #include "us_autoflow_analysis.h"
 #include "us_constants.h"
 #include "us_convertio.h"
@@ -4256,8 +4256,8 @@ void US_Analysis_auto::simulateModel( )
       tsimdats.clear();
       tmodels .clear();
       kcomps  .clear();
-      QList< ThreadWorker* >         tworkers;
-      QList< QThreadEx* >            wthreads;
+      QList< US_ThreadWorker* >         tworkers;
+      QList< US_ThreadEx* >            wthreads;
       
       // Build models for each thread
       for ( int ii = 0; ii < ncomp; ii++ )
@@ -4282,9 +4282,9 @@ void US_Analysis_auto::simulateModel( )
       // Build worker threads and begin running
       for ( int ii = 0; ii < nthread; ii++ )
 	{
-	  ThreadWorker* tworker = new ThreadWorker( tmodels[ ii ], simparams,
+	  US_ThreadWorker* tworker = new US_ThreadWorker( tmodels[ ii ], simparams,
 						    tsimdats[ ii ], solution_rec.buffer, ii );
-	  QThreadEx*    wthread = new QThreadEx();
+	  US_ThreadEx*    wthread = new US_ThreadEx();
 	  
 	  tworker->moveToThread( wthread );
 	  
@@ -4292,11 +4292,11 @@ void US_Analysis_auto::simulateModel( )
 	  wthreads << wthread;
 	  
 	  connect( wthread, &QThread::started,
-		   tworker, &ThreadWorker::calc_simulation );
+		   tworker, &US_ThreadWorker::calc_simulation );
 	  
-	  connect( tworker, &ThreadWorker::work_progress,
+	  connect( tworker, &US_ThreadWorker::work_progress,
 	   	   this,    &US_Analysis_auto::thread_progress );
-	  connect( tworker, &ThreadWorker::work_complete,
+	  connect( tworker, &US_ThreadWorker::work_complete,
 		   this,    &US_Analysis_auto::thread_complete );
 	  
 	  wthread->start();

@@ -13,7 +13,7 @@
 
 
 // Construct worker thread
-ThreadWorker::ThreadWorker( US_Model& a_model, US_SimulationParameters& params,
+US_ThreadWorker::US_ThreadWorker( US_Model& a_model, US_SimulationParameters& params,
     US_DataIO::RawData& simda, US_Buffer& a_buff, int thr )
    : QObject(), model( a_model ), simparams( params ),
    simdat( simda ), buffer( a_buff )
@@ -25,7 +25,7 @@ DbgLv(1) << "THRWRK: Thread created" << thrn;
 
 
 // Do the real work of a thread:  simulation solution from model
-void ThreadWorker::calc_simulation()
+void US_ThreadWorker::calc_simulation()
 {
 DbgLv(1) << "THRWRK:CLCRES threadid" << QThread::currentThreadId();
 DbgLv(1) << " THRWRK:" << thrn << "simdat scans radii"
@@ -44,7 +44,7 @@ DbgLv(1) << " THRWRK:" << thrn << "model-0 s k" << model.components[0].s*1.e13
       US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
    
       connect( astfem_rsa, &US_Astfem_RSA::current_component,
-               this,       &ThreadWorker::forward_progress );
+               this,       &US_ThreadWorker::forward_progress );
 
 qint64 stim=QDateTime::currentDateTime().toMSecsSinceEpoch();
 DbgLv(1) << " THRWRK:" << thrn << "calc START" << stim;
@@ -58,7 +58,7 @@ DbgLv(1) << " THRWRK:" << thrn << "calc    END" << etim;
       US_LammAstfvm *astfvm     = new US_LammAstfvm( model, simparams );
 
       connect( astfvm,     &US_LammAstfvm::comp_progress,
-               this,       &ThreadWorker::forward_progress );
+               this,       &US_ThreadWorker::forward_progress );
 
       astfvm->set_buffer( buffer );
       astfvm->calculate( simdat );
@@ -70,7 +70,7 @@ DbgLv(1) << " THRWRK:" << thrn << "calc    END" << etim;
 }
 
 // Slot to forward a progress signal
-void ThreadWorker::forward_progress( int steps )
+void US_ThreadWorker::forward_progress( int steps )
 {
    emit work_progress( thrn, steps );
    qApp->processEvents();

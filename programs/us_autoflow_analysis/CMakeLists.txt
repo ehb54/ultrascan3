@@ -31,8 +31,6 @@ set(CROSS_DIR_SOURCES
         ../us_edit/us_get_edit.cpp
         ../us_edit/us_ri_noise.cpp
         ../us_edit/us_select_lambdas.cpp
-        ../us_fematch/us_resplot_fem.cpp
-        ../us_fematch/us_thread_worker.cpp
         ../us_fit_meniscus/us_fit_meniscus.cpp
         ../us_mwl_species_fit/us_load_run_noise.cpp
         ../us_mwl_species_fit/us_mwl_sf_plot3d.cpp
@@ -60,8 +58,6 @@ set(CROSS_DIR_HEADERS
         ../us_edit/us_get_edit.h
         ../us_edit/us_ri_noise.h
         ../us_edit/us_select_lambdas.h
-        ../us_fematch/us_resplot_fem.h
-        ../us_fematch/us_thread_worker.h
         ../us_fit_meniscus/us_fit_meniscus.h
         ../us_mwl_species_fit/us_load_run_noise.h
         ../us_mwl_species_fit/us_mwl_sf_plot3d.h

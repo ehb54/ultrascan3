@@ -12,7 +12,7 @@
 
 //! \brief A class to provide a window with enhanced plot controls
 
-class US_PlotControlFem : public US_WidgetsDialog
+class US_GUI_EXTERN US_PlotControlFem : public US_WidgetsDialog
 {
    Q_OBJECT
 

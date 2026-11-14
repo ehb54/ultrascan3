@@ -41,9 +41,6 @@ set(CROSS_DIR_SOURCES
         ../us_fit_meniscus/us_fit_meniscus.cpp
 
         # us_fematch
-        ../us_fematch/us_plot_control_fem.cpp
-        ../us_fematch/us_resplot_fem.cpp
-        ../us_fematch/us_thread_worker.cpp
 
         # shared edited-data loaders
         ../us_edited_data_loaders.cpp
@@ -104,9 +101,6 @@ set(CROSS_DIR_HEADERS
         ../us_edit/us_select_lambdas.h
         ../us_autoflow_analysis/us_autoflow_analysis.h
         ../us_fit_meniscus/us_fit_meniscus.h
-        ../us_fematch/us_plot_control_fem.h
-        ../us_fematch/us_resplot_fem.h
-        ../us_fematch/us_thread_worker.h
         ../us_reporter_gmp/us_reporter_gmp.h
         ../us_edited_data_loaders.h
         ../us_ddist_combine/us_ddist_combine.h

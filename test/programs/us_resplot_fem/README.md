@@ -1,7 +1,7 @@
 # Residual dialog characterization before extraction
 
-This harness compiles `programs/us_fematch/us_resplot_fem.cpp` directly and
-constructs the dialog from `US_ResidPlotInputs` and a `US_ResidPlotFem::Mode`,
+This harness links the dialog from the GUI library (`gui/us_resplot_fem.cpp`) and
+constructs it from `US_ResidPlotInputs` and a `US_ResidPlotFem::Mode`,
 exactly as FEMatch, autoflow and the reporter do. It runs the real Qt/Qwt/bitmap
 code and links no application implementation: the dialog no longer includes or
 casts to `US_FeMatch`, `US_Analysis_auto` or `US_ReporterGMP`. The "caller" in
@@ -227,3 +227,11 @@ commented-out code, so both always passed a null bitmap. They are removed, and
 those callers now leave `US_ResidPlotInputs::bitmap` at its null default. No test
 was removed or changed: the Analysis and Report rows already construct with a
 null bitmap, and `borrowedBitmapAndRefresh` still covers FEMatch's live bitmap.
+
+### Residual plot moved to the GUI library (T10)
+
+`US_ResidPlotFem` and `US_PlotControlFem` now live in `gui/`, and the
+simulation worker, renamed `US_ThreadWorker` and `US_ThreadEx`, lives in
+`utils/`, since several programs use them. The harness links
+`UltraScan3::Gui_Static` instead of compiling the dialog source itself, so it
+tests the library's copy. All assertions are unchanged.

@@ -13,18 +13,19 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
-//! \brief Worker thread to do Lamm equation calculations for us_fematch
+//! \brief Worker thread that simulates one part of a partitioned model
 
-/*! \class ThreadWorker
-    This class is for each of the individual worker threads that do the
-    actual work of FeMatch analysis using a partitioned model.
+/*! \class US_ThreadWorker
+    Each worker solves the Lamm equations for its share of a model's
+    components. FEMatch, autoflow analysis and the GMP reporter run several
+    and add their simulations together.
 */
-class ThreadWorker : public QObject
+class US_UTIL_EXTERN US_ThreadWorker : public QObject
 {
    Q_OBJECT
 
    public:
-      ThreadWorker( US_Model&, US_SimulationParameters&,
+      US_ThreadWorker( US_Model&, US_SimulationParameters&,
                     US_DataIO::RawData&, US_Buffer&, int );
 
    public slots:
@@ -45,10 +46,10 @@ class ThreadWorker : public QObject
       int  dbg_level;           // debug flag
 };
 
-/*! \class QThreadEx
-    A special QThread that calls exec() to start an event loop
+/*! \class US_ThreadEx
+    A QThread that runs an event loop, for a US_ThreadWorker moved to it
 */
-class QThreadEx : public QThread
+class US_UTIL_EXTERN US_ThreadEx : public QThread
 {
    protected:
       void run() { exec(); }
