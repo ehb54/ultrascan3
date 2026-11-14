@@ -132,6 +132,7 @@ class BufferDb : public QtTestBase
       void expectComponentRow( const QString& id, const QString& name )
       {
          EXPECT_CALL( db, query( args( { "get_buffer_component_info", id } ) ) );
+         EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );
          EXPECT_CALL( db, next() ).WillOnce( Return( true ) );
          EXPECT_CALL( db, value( 0 ) ).WillOnce( Return( QVariant( "mM" ) ) );
          EXPECT_CALL( db, value( 1 ) ).WillOnce( Return( QVariant( name ) ) );
@@ -276,6 +277,29 @@ TEST_F( BufferDb, LoadStopsAtAFailedComponentQuery )
       EXPECT_CALL( db, query( args( { "get_buffer_components", "41" } ) ) );
       EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::DBERROR ) );
    }
+
+   EXPECT_FALSE( buffer.readFromDB( &db, "41" ) );
+}
+
+TEST_F( BufferDb, LoadFailsWhenAComponentCannotBeRead )
+{
+   {
+      InSequence sequence;
+      expectInfoRow( "Phosphate & salt" );
+      EXPECT_CALL( db, value( 6 ) ).WillOnce( Return( QVariant( "0" ) ) );
+      EXPECT_CALL( db, query( args( { "get_buffer_components", "41" } ) ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, next() ).WillOnce( Return( true ) );
+      EXPECT_CALL( db, value( 0 ) ).WillOnce( Return( QVariant( "5" ) ) );
+      EXPECT_CALL( db, value( 4 ) ).WillOnce( Return( QVariant( "0.15" ) ) );
+      EXPECT_CALL( db, next() ).WillOnce( Return( true ) );
+      EXPECT_CALL( db, value( 0 ) ).WillOnce( Return( QVariant( "6" ) ) );
+      EXPECT_CALL( db, value( 4 ) ).WillOnce( Return( QVariant( "0.025" ) ) );
+      EXPECT_CALL( db, next() ).WillOnce( Return( false ) );
+      EXPECT_CALL( db, query( args( { "get_buffer_component_info", "5" } ) ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOROWS ) );
+   }
+   // Neither the second component nor the profile is read.
 
    EXPECT_FALSE( buffer.readFromDB( &db, "41" ) );
 }

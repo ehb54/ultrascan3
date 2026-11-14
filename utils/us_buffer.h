@@ -33,8 +33,10 @@ class US_UTIL_EXTERN US_BufferComponent
 
       //! Get the info for an individual component from the DB.
       //! \param db A \ref IUS_DB2 structure to an opened connection to the DB.
-      void getInfoFromDB( IUS_DB2* = 0 );
-   
+      //! \return False, leaving the component unchanged, when the query fails,
+      //!         finds no row or the row lacks six numeric coefficients per field.
+      bool        getInfoFromDB( IUS_DB2* = 0 );
+
       //! \brief Write a new buffer to the DB.
       //! \param db An open database connection
       //! \return The buffercomponentID of the new buffer component
