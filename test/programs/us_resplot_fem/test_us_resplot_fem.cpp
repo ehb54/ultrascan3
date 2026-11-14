@@ -371,15 +371,21 @@ private slots:
                     QCOMPARE(lower[s + 1]->sample(p).y(), differences[s][p] - sub - add);
                 }
             }
+        // Upper-plot title per visible data, with each mode's suffix.
+        const QString suffix = mode == "ANALYSIS" ? " " + in.triple : mode == "REPORT" ? " " : "";
         box(plot, "Plot Experimental Data")->setChecked(false);
         QCOMPARE(curves(plot.rp_data_plot1()).size(), 3);
+        QCOMPARE(plot.rp_data_plot1()->title().text(), "Simulated Data" + suffix);
         QVERIFY(!box(plot, "Subtract Time Invariant Noise")->isEnabled());
         box(plot, "Plot Simulated/Modeled Data")->setChecked(false);
         QCOMPARE(curves(plot.rp_data_plot1()).size(), 0);
+        QCOMPARE(plot.rp_data_plot1()->title().text(), "Simulated Data" + suffix); // unchanged
         QVERIFY(!box(plot, "Add Radially Invariant Noise")->isEnabled());
         box(plot, "Plot Experimental Data")->setChecked(true);
+        QCOMPARE(plot.rp_data_plot1()->title().text(), "Experimental Data" + suffix);
         box(plot, "Plot Simulated/Modeled Data")->setChecked(true);
         QCOMPARE(curves(plot.rp_data_plot1()).size(), 6);
+        QCOMPARE(plot.rp_data_plot1()->title().text(), "Experimental and Simulated Data" + suffix);
     }
 
     void lowerPlotSelection_data() { modeRows(); }

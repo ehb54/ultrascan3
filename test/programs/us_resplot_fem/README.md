@@ -210,3 +210,12 @@ Review follow-ups:
 - The fixture's `EditedData` and `RawData` are value-initialized. These classes
   have no constructor, and copying their uninitialized `bool` failed UBSan once
   the dialog copied its inputs.
+
+### Mode as display options (T05)
+
+The three per-mode copies of the upper-plot title code are now one block that
+appends a mode suffix (none; `" " + triple` for Analysis; a trailing space for
+Report). `noiseAndVisibilityControls` now checks the "Experimental Data",
+"Simulated Data" and combined titles in every mode. These assertions passed
+against the old branches before the change and pass unchanged after it. `Mode`
+now selects only this suffix, Analysis's larger plots and Report's hidden window.

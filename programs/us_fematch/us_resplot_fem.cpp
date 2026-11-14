@@ -615,58 +615,18 @@ void US_ResidPlotFem::plot_edata()
    }
 
 
-   if ( mode == Standalone )
-     {
-       if      ( do_plteda  &&  !do_pltsda )
-	 data_plot1->setTitle( tr( "Experimental Data" ) );
-       
-       else if ( do_plteda  &&  do_pltsda  )
-	 data_plot1->setTitle( tr( "Experimental and Simulated Data" ) );
-       
-       else if ( do_pltsda )
-	 data_plot1->setTitle( tr( "Simulated Data" ) );
-     }
-   else
-     {
-       if ( mode == Analysis )
-	 {
-	   // For autoflow Analysis
-	   if      ( do_plteda  &&  !do_pltsda )
-	     {
-	       QString exp_data = QString( tr( "Experimental Data " ) ) + tripleInfo;
-	       data_plot1->setTitle( exp_data  );
-	     }
-	   else if ( do_plteda  &&  do_pltsda  )
-	     {
-	       QString expsim_data = QString( tr( "Experimental and Simulated Data " ) ) + tripleInfo;
-	       data_plot1->setTitle( expsim_data ); 
-	     }
-	   else if ( do_pltsda )
-	     {
-	       QString sim_data = QString( tr( "Simulated Data " ) ) + tripleInfo;
-	       data_plot1->setTitle( sim_data );
-	     }
-	 }
-       if ( mode == Report )
-	 {
-	   // For autoflow REPORT
-	   if      ( do_plteda  &&  !do_pltsda )
-	     {
-	       QString exp_data = QString( tr( "Experimental Data " ) );
-	       data_plot1->setTitle( exp_data  );
-	     }
-	   else if ( do_plteda  &&  do_pltsda  )
-	     {
-	       QString expsim_data = QString( tr( "Experimental and Simulated Data " ) );
-	       data_plot1->setTitle( expsim_data ); 
-	     }
-	   else if ( do_pltsda )
-	     {
-	       QString sim_data = QString( tr( "Simulated Data " ) );
-	       data_plot1->setTitle( sim_data );
-	     }
-	 }
-     }
+   // Analysis titles name the triple; Report titles keep a trailing space
+   const QString suffix = mode == Analysis ? " " + tripleInfo
+                        : mode == Report   ? QString( " " ) : QString();
+
+   if      ( do_plteda  &&  !do_pltsda )
+      data_plot1->setTitle( tr( "Experimental Data" ) + suffix );
+
+   else if ( do_plteda  &&  do_pltsda  )
+      data_plot1->setTitle( tr( "Experimental and Simulated Data" ) + suffix );
+
+   else if ( do_pltsda )
+      data_plot1->setTitle( tr( "Simulated Data" ) + suffix );
    
 
    us_grid( data_plot1 );
