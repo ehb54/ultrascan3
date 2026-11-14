@@ -19,9 +19,11 @@
 #include <vector>
 
 #include "clean.h"
+#include "coalesce.h"
 #include "io.h"
 #include "mesh.h"
 #include "parallel.h"
+#include "rcoal_io.h"
 #include "ses.h"
 
 using namespace sesmesh;
@@ -51,12 +53,16 @@ const char* USAGE =
    "  -M mass      mass in Da for base.bod (no MASS line without it)\n"
    "  -T temp      temperature in C for base.bod (default 20)\n"
    "  -V visc      solvent viscosity in cP for base.bod (default 1.002)\n"
+   "  -C n1,n2,K   also coarsen the mesh for BEST with rcoal's Coalesce: K meshes of n1 to n2\n"
+   "               triangles (or -C N for one), each written to base_NNNNN with base_NNNNN.his,\n"
+   "               as rcoal -search would write them from base.c3p\n"
    "  -k           keep internal cavities (default: fill them, keeping the outer surface)\n"
    "  -t n         threads (default: all)\n"
    "  -v           report the time each stage takes\n"
    "\n"
-   "base.c3v and the first line of base.best get the extrapolated area and volume when -x\n"
-   "is given (from the meshes before clean-up), else the written mesh's own.\n";
+   "base.c3v, the first line of base.best and the first lines of the -C meshes get the\n"
+   "extrapolated area and volume when -x is given (from the meshes before clean-up), else the\n"
+   "written mesh's own.\n";
 
 double now() {
    return std::chrono::duration<double>( std::chrono::steady_clock::now().time_since_epoch() ).count();
@@ -163,6 +169,53 @@ void print_check( const char* label, double h, const MeshCheck& c, const BuildIn
    }
 }
 
+// -C: K meshes for BEST, coarsened from the written mesh by rcoal's Coalesce with e found by
+// bisection for each target, and written as rcoal writes them.  The targets are rcoal's: n1, then
+// steps of (n2 - n1) / (K - 1).  The surface is the one rcoal would read from base.c3p, so the
+// files are those of rcoal -search run on it (but for the input name in the .his files).
+void coarsen( const Mesh& mesh, double area, double volume, const std::string& input, const std::string& base, long n1,
+              long n2, long k ) {
+   if ( n1 > n2 ) {
+      std::swap( n1, n2 );
+   }
+   if ( n1 == n2 ) {
+      k = 1;
+   }
+   if ( long( mesh.tri.size() ) <= n2 ) {
+      fail( "-C: the mesh has " + std::to_string( mesh.tri.size() ) + " triangles, not more than " + std::to_string( n2 ) +
+            "; mesh it finer (-g or -n)" );
+   }
+   rcoal::Surface s = c3p_surface( mesh, area, volume );
+   s.input_name = input;
+   std::vector<long> target( k );
+   for ( long j = 0; j < k; ++j ) {
+      target[j] = n1 + j * ( k > 1 ? ( n2 - n1 ) / ( k - 1 ) : 0 );
+   }
+   std::vector<double> e( k );
+   parallel_for( k, [&]( long j, int ) { e[j] = rcoal::find_edgfrac( s, int( target[j] ) ); } );
+   std::vector<std::string> written;
+   std::ostringstream messages;   // rcoal's own messages; reported below instead
+   for ( long j = 0; j < k; ++j ) {
+      rcoal::Result r = rcoal::coalesce( s, e[j] );
+      int nsmall = 0;
+      size_t before = written.size();
+      int nzero = rcoal::write_result( base, s, r, e[j], false, messages, written, &nsmall );
+      if ( nzero > 0 ) {
+         for ( const std::string& f : written ) {
+            std::remove( f.c_str() );
+         }
+         fail( "-C: at e " + std::to_string( e[j] ) + " a mesh of " + std::to_string( r.st.npoly ) + " triangles has " +
+               std::to_string( nzero ) +
+               " with two vertices at the same position as written, which BEST cannot use; no coarse meshes written" );
+      }
+      std::printf( "coarsened for target %ld: e %.6f, %d triangles", target[j], e[j], r.st.npoly );
+      if ( nsmall > 0 ) {
+         std::printf( ", %d under 20%% of the mean area", nsmall );
+      }
+      std::printf( "; wrote %s, %s\n", written[before].c_str(), written[before + 1].c_str() );
+   }
+}
+
 // Least-squares fit y = a + b x; returns a (and b).
 double fit_line( const std::vector<double>& x, const std::vector<double>& y, double& b ) {
    const size_t n = x.size();
@@ -182,7 +235,7 @@ double fit_line( const std::vector<double>& x, const std::vector<double>& y, dou
 
 int main( int argc, char** argv ) {
    double probe = 1.5, h = 0.2, mass = 0, temp = 20, visc = 1.002, collapse = -1;
-   long target = 0;
+   long target = 0, cn1 = 0, cn2 = 0, ck = 0;
    std::vector<double> extra;
    std::string input, base;
    bool want_msms = true, want_c3p = true, want_best = false, want_bod = false;
@@ -241,6 +294,17 @@ int main( int argc, char** argv ) {
          temp = to_double( value(), "temperature" );
       } else if ( o == "-V" ) {
          visc = to_double( value(), "viscosity" );
+      } else if ( o == "-C" ) {
+         std::vector<std::string> v = split( value(), ',' );
+         if ( v.size() != 1 && v.size() != 3 ) {
+            fail( "-C takes n1,n2,K or N" );
+         }
+         cn1 = long( to_double( v[0], "triangle count" ) );
+         cn2 = v.size() == 3 ? long( to_double( v[1], "triangle count" ) ) : cn1;
+         ck = v.size() == 3 ? long( to_double( v[2], "number of meshes" ) ) : 1;
+         if ( cn1 < 4 || cn2 < 4 || ck < 1 ) {
+            fail( "-C: the triangle counts must be at least 4, and K at least 1" );
+         }
       } else if ( o == "-k" ) {
          fill = false;
       } else if ( o == "-t" ) {
@@ -426,9 +490,13 @@ int main( int argc, char** argv ) {
          write_bod( base, mesh, mass, temp, visc );
          std::printf( "wrote %s.bod\n", base.c_str() );
       }
+      const double t_coarsen0 = now();
+      if ( ck > 0 ) {
+         coarsen( mesh, area, volume, input, base, cn1, cn2, ck );
+      }
       if ( verbose ) {
-         std::printf( "seconds: reading and setup %.2f, mesh checks %.2f, writing %.2f, total %.2f\n", t_model - t_start,
-                      t_check, now() - t_write0, now() - t_start );
+         std::printf( "seconds: reading and setup %.2f, mesh checks %.2f, writing %.2f, coarsening %.2f, total %.2f\n",
+                      t_model - t_start, t_check, t_coarsen0 - t_write0, now() - t_coarsen0, now() - t_start );
       }
       if ( !chk.closed_manifold() ) {
          return 2;

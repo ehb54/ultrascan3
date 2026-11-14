@@ -28,6 +28,7 @@ struct CleanOptions {
    double target_angle = 30;   // flips and smoothing work only around triangles with an angle under this (degrees)
    int smooth = 4;             // passes with tangential smoothing
    int passes = 8;
+   ProgressFn progress;        // progress reports and stop requests (parallel.h); none if empty
 };
 
 struct CleanInfo {
@@ -38,6 +39,7 @@ struct CleanInfo {
    double seconds = 0, seconds_collapse = 0, seconds_flip = 0, seconds_smooth = 0;
 };
 
+// Throws Cancelled when opt.progress asks it to stop; the mesh is then unusable.
 void clean_mesh( const SesModel& model, double h, const CleanOptions& opt, Mesh& mesh, CleanInfo& info );
 
 }  // namespace sesmesh

@@ -39,6 +39,9 @@
 #include "../include/us_hydrodyn_best.h"
 #include "../include/us_ffd.h"
 #include "../include/us_hydrodyn_vdw_overlap.h"
+#include "../include/us_hydrodyn_zeno_mesh.h"
+#include "../include/us_unicode.h"
+#include <algorithm>
 // #include "../include/us_hydrodyn_saxs_hplc_options.h"
 #include <qfont.h>
 //Added by qt3to4:
@@ -735,6 +738,10 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
 
    last_read_bead_model = "";
    last_hydro_res = "";
+   last_zeno_mesh = "";
+   last_zeno_mesh_model = -1;
+   last_zeno_mesh_beads = 0;
+   last_zeno_series = "";
    QDir::setCurrent(somo_tmp_dir);
    if ( advanced_config.debug_5 )
    {
@@ -1337,6 +1344,12 @@ void US_Hydrodyn::setupGUI()
    pb_view_bead_model->setPalette( PALET_PUSHB );
    connect(pb_view_bead_model, SIGNAL(clicked()), SLOT(view_bead_model()));
 
+   pb_visualize_mesh = new QPushButton( us_tr( "Visualize Mesh" ), this );
+   pb_visualize_mesh->setMinimumHeight( minHeight1 );
+   pb_visualize_mesh->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   pb_visualize_mesh->setPalette( PALET_PUSHB );
+   connect( pb_visualize_mesh, SIGNAL( clicked() ), SLOT( visualize_mesh() ) );
+
    lbl_temperature = new QLabel( us_tr( QString( " Temp. (%1C): " ).arg( DEGREE_SYMBOL ) ), this);
    Q_CHECK_PTR(lbl_temperature);
    lbl_temperature->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -1668,7 +1681,9 @@ void US_Hydrodyn::setupGUI()
    pb_comparative->setPalette( PALET_PUSHB );
    connect(pb_comparative, SIGNAL(clicked()), SLOT(select_comparative()));
 
-   pb_best = new QPushButton(us_tr("BEST"), this);
+   pb_best = new QPushButton(us_tr("BEST/ZENO Series"), this);
+   pb_best->setToolTip( us_tr( "<p>Analyze the results of BEST, or of ZENO on a sequence of surface meshes,"
+                               " against the number of triangles, and extrapolate them to an infinitely fine mesh.</p>" ) );
    pb_best->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_best->setEnabled(true);
    pb_best->setPalette( PALET_PUSHB );
@@ -1998,7 +2013,12 @@ void US_Hydrodyn::setupGUI()
    j++;
 
    background->addWidget(pb_batch2, j, 0);
-   background->addWidget(pb_view_bead_model, j, 1);
+   {
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( pb_view_bead_model );
+      hbl->addWidget( pb_visualize_mesh );
+      background->addLayout( hbl, j, 1 );
+   }
    j++;
 
    background->addWidget(pb_load_bead_model, j, 0);
@@ -3879,13 +3899,310 @@ void US_Hydrodyn::view_bead_model()
    }
 }
 
-void US_Hydrodyn::visualize( bool movie_frame, 
+// Shows a triangulated surface mesh with its structure in RasMol, which reads (with "load mesh")
+// BEST meshes (rcoal's <name>_<N>, sesmesh's .best), msroll .c3p, MSMS .vert/.face and ZENO .bod.
+// RasMol draws a mesh only with a molecule, so a PDB file is needed as well; the mesh must be in
+// its frame, in Angstroms (a .bod file may state other units).
+void US_Hydrodyn::visualize_mesh()
+{
+   QString mesh;
+
+   // the last mesh ZENO ran on, as View Bead Model File offers the last bead model
+   if ( !last_zeno_mesh.isEmpty() && QFileInfo( last_zeno_mesh ).exists() ) {
+      switch ( QMessageBox::question( this,
+                                      us_tr( "Visualize Mesh" ),
+                                      QString( us_tr( "View last produced mesh %1 ?\n"
+                                                      "(No: choose another mesh file)" ) )
+                                      .arg( QFileInfo( last_zeno_mesh ).fileName() ),
+                                      QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
+                                      QMessageBox::Yes ) ) {
+      case QMessageBox::Yes :
+         mesh = last_zeno_mesh;
+         break;
+      case QMessageBox::No :
+         break;
+      default :
+         return;
+      }
+   }
+
+   if ( mesh.isEmpty() ) {
+      QString use_dir = path_visualize_mesh.isEmpty() ? somo_dir : path_visualize_mesh;
+      select_from_directory_history( use_dir, this );
+
+      mesh = QFileDialog::getOpenFileName( this,
+                                           us_tr( "Visualize Mesh: select the mesh file" ),
+                                           use_dir,
+                                           us_tr( "Meshes (*.c3p *.vert *.face *.bod *.best"
+                                                  " *_[0-9][0-9][0-9][0-9][0-9]);;All files (*)" ) );
+      if ( mesh.isEmpty() ) {
+         return;
+      }
+   }
+   path_visualize_mesh = QFileInfo( mesh ).absolutePath();
+   add_to_directory_history( path_visualize_mesh );
+
+   // the last mesh ZENO made, from a bead model that is still loaded: show it with those beads,
+   // which is what ZENO ran on
+   if ( mesh == last_zeno_mesh &&
+        last_zeno_mesh_model >= 0 &&
+        last_zeno_mesh_model < (int) bead_models.size() &&
+        last_zeno_mesh_model < (int) somo_processed.size() &&
+        somo_processed[ last_zeno_mesh_model ] &&
+        bead_models[ last_zeno_mesh_model ].size() == last_zeno_mesh_beads ) {
+      switch ( QMessageBox::question( this,
+                                      us_tr( "Visualize Mesh" ),
+                                      QString( us_tr( "Show the mesh with the bead model it was made from (model %1)?\n"
+                                                      "(No: show it with a PDB structure)" ) )
+                                      .arg( last_zeno_mesh_model + 1 ),
+                                      QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
+                                      QMessageBox::Yes ) ) {
+      case QMessageBox::Yes :
+         visualize_mesh_with_bead_model( last_zeno_mesh_model, mesh );
+         return;
+      case QMessageBox::No :
+         break;
+      default :
+         return;
+      }
+   }
+
+   QString structure;
+   if ( !pdb_file.isEmpty() && QFileInfo( pdb_file ).exists() ) {
+      switch ( QMessageBox::question( this,
+                                      us_tr( "Visualize Mesh" ),
+                                      QString( us_tr( "Show the mesh with the loaded structure %1?\n"
+                                                      "(No: choose another PDB file)" ) )
+                                      .arg( QFileInfo( pdb_file ).fileName() ),
+                                      QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
+                                      QMessageBox::Yes ) ) {
+      case QMessageBox::Yes :
+         structure = pdb_file;
+         break;
+      case QMessageBox::No :
+         break;
+      default :
+         return;
+      }
+   }
+   if ( structure.isEmpty() ) {
+      structure = QFileDialog::getOpenFileName( this,
+                                                us_tr( "Visualize Mesh: select the structure to show with it" ),
+                                                path_visualize_mesh,
+                                                us_tr( "PDB files (*.pdb *.PDB)" ) );
+      if ( structure.isEmpty() ) {
+         return;
+      }
+   }
+
+   // The script goes in SOMO's tmp directory, where RasMol is started.
+   QString name = QFileInfo( mesh ).fileName();
+   name.replace( QRegularExpression( "[^A-Za-z0-9_.-]" ), "_" );
+   QString spt = somo_tmp_dir + SLASH + name.left( 40 ) + "-mesh.spt";
+
+   QFile f( spt );
+   if ( !f.open( QIODevice::WriteOnly | QIODevice::Text ) ) {
+      editor_msg( "red", QString( us_tr( "Visualize Mesh: can not write %1\n" ) ).arg( spt ) );
+      return;
+   }
+   QTextStream ts( &f );
+   ts << "load pdb \"" << QFileInfo( structure ).absoluteFilePath() << "\"\n"
+      << "wireframe off\n"
+      << "spacefill\n"
+      << "colour cpk\n"
+      << "load mesh \"" << QFileInfo( mesh ).absoluteFilePath() << "\"\n"
+      << "map mesh\n";
+   f.close();
+
+   editor_msg( "black", QString( us_tr( "Visualizing mesh %1 with %2\n" ) )
+               .arg( QFileInfo( mesh ).fileName() )
+               .arg( QFileInfo( structure ).fileName() ) );
+   model_viewer( spt, "-script" );
+}
+
+// Shows the mesh file a ZENO run made from a model's beads (TRIANGLE lines of a .bod, in the
+// model's length unit) with those beads.  write_bead_spt() draws the beads at 1/5 of their size,
+// so the triangles are divided by 5 into a copy of the mesh next to the bead model's RasMol files.
+void US_Hydrodyn::visualize_mesh_with_bead_model( int model, const QString & mesh )
+{
+   QString base = somo_dir + SLASH + QFileInfo( mesh ).completeBaseName().left( 25 ) + "_view";
+   const double scaling = 5.0;   // as write_bead_spt() with scale 1
+
+   QFile in( mesh );
+   if ( !in.open( QIODevice::ReadOnly | QIODevice::Text ) ) {
+      editor_msg( "red", QString( us_tr( "Visualize Mesh: can not read %1\n" ) ).arg( mesh ) );
+      return;
+   }
+   QString copy = base + "-SES.bod";
+   QFile out( copy );
+   if ( !out.open( QIODevice::WriteOnly | QIODevice::Text ) ) {
+      editor_msg( "red", QString( us_tr( "Visualize Mesh: can not write %1\n" ) ).arg( copy ) );
+      return;
+   }
+   long triangles = 0;
+   {
+      QTextStream ts_in( &in );
+      QTextStream ts_out( &out );
+      static const QRegularExpression rx_space( "\\s+" );
+      while ( !ts_in.atEnd() ) {
+         QStringList qsl = ts_in.readLine().trimmed().split( rx_space, Qt::SkipEmptyParts );
+         if ( qsl.size() != 10 ) {
+            continue;
+         }
+         QString key = qsl[ 0 ].toUpper();
+         if ( key != "TRIANGLE" && key != "T" ) {
+            continue;
+         }
+         ts_out << "TRIANGLE";
+         for ( int i = 1; i < 10; ++i ) {
+            ts_out << " " << QString::number( qsl[ i ].toDouble() / scaling, 'f', 6 );
+         }
+         ts_out << "\n";
+         ++triangles;
+      }
+   }
+   in.close();
+   out.close();
+   if ( !triangles ) {
+      out.remove();
+      editor_msg( "red", QString( us_tr( "Visualize Mesh: %1 has no TRIANGLE lines\n" ) ).arg( mesh ) );
+      return;
+   }
+
+   write_bead_spt( base, &bead_models[ model ], false, 1.0, false );
+
+   QFile spt( base + ".spt" );
+   if ( !spt.open( QIODevice::WriteOnly | QIODevice::Append ) ) {
+      editor_msg( "red", QString( us_tr( "Visualize Mesh: can not add the mesh to %1\n" ) ).arg( spt.fileName() ) );
+      return;
+   }
+   {
+      QTextStream ts( &spt );
+      ts << "load mesh " << QFileInfo( copy ).fileName() << "\n"
+         << "map mesh\n"
+         << "map colour [150,150,150]\n";
+   }
+   spt.close();
+
+   editor_msg( "black", QString( us_tr( "Visualizing mesh %1 (%2 triangles) with the beads of model %3\n" ) )
+               .arg( QFileInfo( mesh ).fileName() )
+               .arg( triangles )
+               .arg( model + 1 ) );
+   model_viewer( base + ".spt", "-script" );
+}
+
+void US_Hydrodyn::visualize( bool movie_frame,
                              QString dir, 
                              float scale, 
                              bool black_background,
                              bool do_pat )
 {
    QString use_dir = ( dir == "" ? somo_dir : dir );
+
+   // With ZENO's surface option and its zeno_mesh_view setting on, the view also shows the
+   // solvent-excluded surface of the beads shown: they are meshed as for ZENO (with the coarsest
+   // spacing of a sequence), scaled like the beads in write_bead_spt(), and the mesh, written to
+   // <base>-SES.bod, is loaded by <base>.spt as a wire mesh.
+   // Stop during one model's mesh skips the meshes of the others.
+   bool mesh_stopped = false;
+   auto add_mesh = [ & ]( const QString & base, vector < PDB_atom > * model ) {
+      if ( movie_frame ||
+           mesh_stopped ||
+           gparams[ "zeno_mesh" ] != "true" ||
+           gparams[ "zeno_mesh_view" ] == "false" ) {
+         return;
+      }
+      vector < double > spacings = us_hydrodyn_zeno_mesh_spacings( gparams[ "zeno_mesh_h" ] );
+      if ( spacings.empty() ) {
+         editor_msg( "red", QString( us_tr( "The mesh grid spacing '%1' is not valid, the mesh is not shown\n" ) )
+                     .arg( gparams[ "zeno_mesh_h" ] ) );
+         return;
+      }
+      double h_view = *std::max_element( spacings.begin(), spacings.end() );
+
+      // write_bead_spt() divides the coordinates and radii by 5 / scale
+      double scaling  = 5.0 / scale;
+      double to_units = ( hydro.unit == -9 ? 0.1 : 1.0 ) / scaling;
+
+      vector < double > spheres;
+      for ( const auto & bead : *model ) {
+         if ( bead.active ) {
+            spheres.push_back( bead.bead_coordinate.axis[ 0 ] / scaling );
+            spheres.push_back( bead.bead_coordinate.axis[ 1 ] / scaling );
+            spheres.push_back( bead.bead_coordinate.axis[ 2 ] / scaling );
+            spheres.push_back( bead.bead_computed_radius / scaling );
+         }
+      }
+
+      US_Hydrodyn_Zeno_Mesh_Options options =
+         us_hydrodyn_zeno_mesh_options( gparams, h_view, to_units, USglobal->config_list.numThreads );
+      US_Hydrodyn_Zeno_Mesh_Info info;
+      QString error;
+
+      QString mesh_name = base + "-SES.bod";
+      QFile f( mesh_name );
+      if ( !f.open( QIODevice::WriteOnly ) ) {
+         editor_msg( "red", QString( us_tr( "Error: could not create %1, the mesh is not shown\n" ) ).arg( mesh_name ) );
+         return;
+      }
+      // Unless a calculation is running (and owns the progress bar and Stop), the progress bar
+      // follows the meshing and Stop ends it.
+      const bool calculating = pb_stop_calc->isEnabled();
+      US_Hydrodyn_Zeno_Mesh_Progress mesh_progress;
+      QString progress_format = progress->format();
+      if ( !calculating ) {
+         stopFlag = false;
+         pb_stop_calc->setEnabled( true );
+         progress->setValue( 0 );
+         progress->setMaximum( 1000 );
+         mesh_progress = [ & ]( double fraction, const QString & stage ) {
+            progress->setFormat( QString( "Meshing (%1) %p%" ).arg( stage ) );
+            progress->setValue( (int) ( 1000 * fraction ) );
+            qApp->processEvents();
+            return !stopFlag;
+         };
+      }
+      bool ok;
+      {
+         QTextStream ts( &f );
+         ok = us_hydrodyn_zeno_mesh( spheres, options, ts, info, error, mesh_progress );
+      }
+      f.close();
+      if ( !calculating ) {
+         progress->setFormat( progress_format );
+         progress->reset();
+         pb_stop_calc->setEnabled( false );
+      }
+      if ( !ok ) {
+         f.remove();
+         if ( info.stopped ) {
+            mesh_stopped = true;
+            editor_msg( "dark red", us_tr( "Stopped: the mesh is not shown\n" ) );
+         } else {
+            editor_msg( "red", QString( us_tr( "Could not mesh the bead model, the mesh is not shown: %1\n" ) ).arg( error ) );
+         }
+         return;
+      }
+
+      QFile spt( base + ".spt" );
+      if ( !spt.open( QIODevice::WriteOnly | QIODevice::Append ) ) {
+         editor_msg( "red", QString( us_tr( "Error: could not add the mesh to %1\n" ) ).arg( spt.fileName() ) );
+         return;
+      }
+      QTextStream ts( &spt );
+      ts << "load mesh " << QFileInfo( mesh_name ).fileName() << "\n"
+         << "map mesh\n"
+         << "map colour [150,150,150]\n";
+      spt.close();
+
+      editor_msg( "dark blue",
+                  QString( us_tr( "Showing the solvent-excluded surface of the beads: probe radius %1 %2, grid spacing %3 %4, %5 triangles\n" ) )
+                  .arg( gparams[ "zeno_mesh_probe" ].toDouble() )
+                  .arg( UNICODE_ANGSTROM )
+                  .arg( h_view )
+                  .arg( UNICODE_ANGSTROM )
+                  .arg( info.triangles ) );
+   };
 
    for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++) {
       if (lb_model->item(current_model)->isSelected()) {
@@ -3908,24 +4225,27 @@ void US_Hydrodyn::visualize( bool movie_frame,
                tmp_model.molecule.push_back( tmp_chain );
                if ( US_Saxs_Util::pat_model( tmp_model, true ) ) {
                   write_bead_spt( use_dir + SLASH + spt_name,
-                                  &tmp_model.molecule[ 0 ].atom, 
-                                  movie_frame, 
-                                  scale, 
+                                  &tmp_model.molecule[ 0 ].atom,
+                                  movie_frame,
+                                  scale,
                                   black_background );
+                  add_mesh( use_dir + SLASH + spt_name, &tmp_model.molecule[ 0 ].atom );
                } else {
                   editor_msg( "red", QString( us_tr( "PAT failed for model %1" ) ).arg( current_model ) );
                   write_bead_spt( use_dir + SLASH + spt_name,
-                                  &bead_model, 
-                                  movie_frame, 
-                                  scale, 
+                                  &bead_model,
+                                  movie_frame,
+                                  scale,
                                   black_background );
+                  add_mesh( use_dir + SLASH + spt_name, &bead_model );
                }
             } else {
                write_bead_spt( use_dir + SLASH + spt_name,
-                               &bead_model, 
-                               movie_frame, 
-                               scale, 
+                               &bead_model,
+                               movie_frame,
+                               scale,
                                black_background );
+               add_mesh( use_dir + SLASH + spt_name, &bead_model );
             }
             
             editor->append(QString("Visualizing model %1\n").arg(current_model + 1));

@@ -30,7 +30,10 @@ US-SOMO - BEST Interface Results Analysis Module</h2>
 <p>
 This module was conceived to allow for an in depth evaluation of the hydrodynamic parameters computed by <b><i>BEST</i></b>, and to provide some useful tools for their further treatment. At the end of the computational phase in the supercompute cluster, the calculated hydrodynamic parameters for every triangulated model and their zero plates values as extrapolated by <b><i>BEST</i></b> are saved in a CSV file which is retrieved together with a series of other produced files as described in the <a href="somo_BEST_setup.html#results">BEST cluster setup help results section</a>.
 
-Furthermore, we have added the calculation of the 5 individual rotational correlation times [Tau(1), etc.], and of their normal and harmonic means [Tau(m) and Tau(h)] from the Eigenvalues of the rotational diffusion tensor (See Spotorno et al., Eur. Biophys. J. 25:373-384, 1997).<br>
+Furthermore, we have added the calculation of the 5 individual rotational correlation times [Tau(1), etc.], and of their normal and harmonic means [Tau(m) and Tau(h)] from the Eigenvalues of the rotational diffusion tensor (See Spotorno et al., Eur. Biophys. J. 25:373-384, 1997).<p>
+
+<b>ZENO mesh series.</b> The module, opened by the <b><i>BEST/ZENO Series</i></b> button of the main panel, also analyzes the results of <b><i>ZENO</i></b> run on a sequence of surface meshes of a bead model, made with several grid spacings (see the <a href="somo_hydro_zeno.html">ZENO options</a>). Such a run writes one CSV file per model, named for example <i>1AKI_1_MC1000-SES_p1_5_extrap4-&lt;bead model suffix&gt;.csv</i> for four spacings, in the same format as the <b><i>BEST</i></b> results. It lists, for each mesh, the number of triangles, the grid spacing and the <b><i>ZENO</i></b> input and output files, then the mesh area and volume, R<sub>s</sub>, D<sub>t</sub>, s, f, f/f<sub>0</sub>, [&eta;] and the dimensionless [&eta;], each with its linear extrapolation to an infinitely fine mesh (1/triangles = 0). When <b><i>ZENO</i></b> has produced such a series in this session, <b><i>Load CSV</i></b> first offers it (<i>View last produced series ... ?</i>); answer <i>No</i> to choose another file. The same plots, fits, Q-test and point rejection then apply as for <b><i>BEST</i></b>, and the citations shown above the plot are those of <b><i>ZENO</i></b>. The rotational correlation times are not computed, as <b><i>ZENO</i></b> does not give the rotational diffusion tensor. In batch mode, a table of the extrapolated values of all the models processed is also written; see the <a href="somo_hydro_zeno.html">ZENO options</a>.<p>
+
 After launching the <b><i>BEST</i></b> data analysis module from the <b>US-SOMO</b> main panel, the first operation is then to upload one <b><i>BEST</i></b> results CSV file by pressing <b><i>Load CSV</i></b> and navigating through the files directory. When a CSV file is loaded, the <i>Data fields</i> space is populated by the complete list of all the available parameters, and by clicking on one of them the relative plot of that parameter's values vs. 1/triangles is shown in the right-side graphics window together with a linear regression line. The results of the regression are shown in the <i>Messages</i> section at the bottom left-side of this module, and are continuosly updated when changes are made to the number of points included in the regression (see below).<p>
 
 The two dotted lines above and below the solid regression line in the plot are plotted by selecting the <i>Display error lines (+/- 1 sigma of linear fit)</i> checkbox.<p>
@@ -96,7 +99,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on May 11, 2014
+Last modified on November 13, 2026
 </font>
 </body>
 </html>
