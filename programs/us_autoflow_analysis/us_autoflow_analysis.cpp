@@ -2598,6 +2598,23 @@ void US_Analysis_auto::start_next_2dsa_channel( void )
       // protocol_details_at_analysis_2dsa[ "k_max" ]   = QString::number( 1.5 );
       // protocol_details_at_analysis_2dsa[ "k_grpts" ] = QString::number( 28 );
 
+      // Custom grid is a per-channel Analysis Profile setting: when chosen, the
+      // grid to fit is the custom-grid MODEL (DB id / GUID), not s/k limits above.
+      if ( ap.have_custg )
+      {
+         protocol_details_at_analysis_2dsa["custom_grid_id"]   = QString::number( ap.cust_id );
+         protocol_details_at_analysis_2dsa["custom_grid_guid"] = ap.cust_grid;
+         protocol_details_at_analysis_2dsa["custom_grid_name"] = ap.cgrid_name;
+      }
+      else
+      {  // map is reused across channels: drop a previous channel's custom grid
+         protocol_details_at_analysis_2dsa.remove( "custom_grid_id" );
+         protocol_details_at_analysis_2dsa.remove( "custom_grid_guid" );
+         protocol_details_at_analysis_2dsa.remove( "custom_grid_name" );
+      }
+
+      qDebug() << "[US_Autoflow_analysis] 2DSA-IT: channel" << chan_norm << "have_custg" << ap.have_custg << "cust_id" << ap.cust_id
+               << "cgrid_name" << ap.cgrid_name;
       qDebug() << "[US_Autoflow_analysis] 2DSA-IT: channel" << chan_norm << "Analysis Profile grid: s[" << ap.s_min << ","
                << ap.s_max << "] x" << ap.s_grpts << "  f/f0[" << ap.k_min << "," << ap.k_max << "] x" << ap.k_grpts;
    }
@@ -2615,6 +2632,9 @@ void US_Analysis_auto::start_next_2dsa_channel( void )
       protocol_details_at_analysis_2dsa.remove( "k_min" );
       protocol_details_at_analysis_2dsa.remove( "k_max" );
       protocol_details_at_analysis_2dsa.remove( "k_grpts" );
+      protocol_details_at_analysis_2dsa.remove( "custom_grid_id" );
+      protocol_details_at_analysis_2dsa.remove( "custom_grid_guid" );
+      protocol_details_at_analysis_2dsa.remove( "custom_grid_name" );
 
       qDebug() << "[US_Autoflow_analysis] 2DSA-IT: channel" << chan_norm
                << "not found in 2DSA Analysis Profile -- falling back to "
