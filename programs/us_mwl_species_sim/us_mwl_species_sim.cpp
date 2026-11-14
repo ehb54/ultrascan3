@@ -361,7 +361,10 @@ void US_MwlSpeciesSim::select_models_auto( QString invID_passed, QStringList m_t
    DbgLv( 1 ) << "  smdls: call ML dbload" << dbload << "mfilt" << mfilt << "pfilts" << pfilts;
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    // US_ModelLoader dialog( dbload, mfilt, models, mdescs, pfilts );
-   US_ModelLoader dialog( true, mfilt, models, mdescs, pfilts, invID_passed );
+   // No description filter here: the stage type (2DSA-IT / 2DSA-CG-IT) is
+   // matched precisely in US_ModelLoader::accepted_multiple_auto().
+   QString auto_filt;
+   US_ModelLoader dialog( true, auto_filt, models, mdescs, pfilts, invID_passed );
    dialog.accepted_multiple_auto( m_t_r_id );
 
    QApplication::restoreOverrideCursor();
