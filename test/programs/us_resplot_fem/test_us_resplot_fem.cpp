@@ -243,8 +243,11 @@ private slots:
             // D04: nothing is plotted and the dialog says why.
             QCOMPARE(curves(plot.rp_data_plot1()).size(), 0);
             QCOMPARE(cs.size(), 0);
+            // Both plots carry the reason, since a report may include either alone.
             QVERIFY2(plot.rp_data_plot1()->title().text().startsWith("Cannot plot:"),
                      qPrintable(plot.rp_data_plot1()->title().text()));
+            QVERIFY2(plot.rp_data_plot2()->title().text().startsWith("Cannot plot:"),
+                     qPrintable(plot.rp_data_plot2()->title().text()));
             for (int mask = 1; mask < 16; mask <<= 1)
             {   // Toggling views must not read the malformed buffers either.
                 box(plot, "Plot Time Invariant Noise")->setChecked(mask & 1);
@@ -540,6 +543,24 @@ private slots:
         QVERIFY(box(plot, "Subtract Radially Invariant Noise")->isEnabled());
         QVERIFY(box(plot, "Subtract Radially Invariant Noise")->isChecked());
         QCOMPARE(curves(plot.rp_data_plot2())[1]->sample(0).y(), .25 - .125 - .0625);
+    }
+
+    void invalidReplacementClosesBitmap_data() { modeRows(); }
+    void invalidReplacementClosesBitmap()
+    {
+        QFETCH(QString, mode);
+        ResidualInputs in; populate(in);
+        auto caller = owner(in, mode);
+        US_ResidPlotFem plot(inputs(in), toMode(mode), caller.get());
+        auto bm = bitmap(plot); QVERIFY(bm);
+        ResidualInputs bad; populate(bad);
+        bad.ti.values = QVector<double>{ .125 };
+        plot.set_inputs(inputs(bad));
+        deferredDeletes();
+        // D04: no bitmap may keep showing residuals of data that is no longer plotted.
+        QVERIFY(!bm);
+        QVERIFY(!box(plot, "Show Residuals Bitmap")->isChecked());
+        QVERIFY(plot.rp_data_plot2()->title().text().startsWith("Cannot plot:"));
     }
 
     void borrowedBitmapAndRefresh()

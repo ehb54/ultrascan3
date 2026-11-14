@@ -520,10 +520,17 @@ void US_ResidPlotFem::plot_data()
    const QString problem = input_problem();
 
    if ( ! problem.isEmpty() )
-   {  // never read buffers that do not match:  say why instead
+   {  // never read buffers that do not match:  say why instead, on both
+      // plots since either may be exported alone, and close any bitmap of
+      // residuals that are no longer shown
       dataPlotClear( data_plot1 );
       dataPlotClear( data_plot2 );
       data_plot1->setTitle( tr( "Cannot plot: %1" ).arg( problem ) );
+      data_plot2->setTitle( tr( "Cannot plot: %1" ).arg( problem ) );
+
+      if ( resbmap )
+         resbmap->close();
+
       le_vari->setText( "" );
       le_rmsd->setText( "" );
       data_plot1->replot();

@@ -182,13 +182,31 @@ Report mode left it checked.
 Before plotting, the dialog checks that the experimental and simulated data have
 at least one scan and point, the same scan and point counts, and full scans, and
 that any TI noise covers every point and any RI noise every scan. If not, it
-plots nothing, clears variance and RMSD, and titles the upper plot
-"Cannot plot: <reason>". There is no message box, so the hidden Report dialog
-cannot block. This also applies after `set_inputs`. Out-of-range exclusions are
-still ignored, and non-finite values are still plotted.
+plots nothing, clears variance and RMSD, titles both plots
+"Cannot plot: <reason>" (a report may export either plot alone), and closes any
+open bitmap, which would otherwise keep showing residuals of data that is no
+longer plotted. There is no message box, so the hidden Report dialog cannot
+block. This also applies after `set_inputs`. Out-of-range exclusions are still
+ignored, and non-finite values are still plotted.
 
 The 18 malformed-buffer probes (`empty-*`, `short-*`, all modes) no longer
 require a sanitizer build or expect a crash. Each must complete, plot no curves
 in either plot (including after toggling every lower-plot view and the bitmap),
 and show the reason. Before the fix, all 18 failed on macOS without a sanitizer:
 nine children crashed, and nine plotted curves from out-of-range reads.
+
+Review follow-ups:
+
+- Both plots must carry the reason. The 18 rows failed on the lower-plot title
+  before the change.
+- `invalidReplacementClosesBitmap` (all modes): a bitmap open when `set_inputs`
+  receives invalid data must close and uncheck its box. It failed in all three
+  modes before the change.
+- The `single-point` probe (one scan of one point, the smallest valid input) must
+  plot normally. The zero line wrote two samples into a one-element buffer. That
+  overflow is silent without a sanitizer: it was found by Linux ASan
+  (`us_resplot_fem.cpp:845`), and the macOS ASan runtime does not start for this
+  executable, so there is no local red run.
+- The fixture's `EditedData` and `RawData` are value-initialized. These classes
+  have no constructor, and copying their uninitialized `bool` failed UBSan once
+  the dialog copied its inputs.
