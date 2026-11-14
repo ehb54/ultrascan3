@@ -1,0 +1,25 @@
+Note: Google Test filter = EditedDataReadTest.*
+[==========] Running 8 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 8 tests from EditedDataReadTest
+[ RUN      ] EditedDataReadTest.OneFilenameRuleServesNormalAndMwlEdits
+[       OK ] EditedDataReadTest.OneFilenameRuleServesNormalAndMwlEdits (13 ms)
+[ RUN      ] EditedDataReadTest.DownloadsThroughTheCanonicalProceduresAndDecodes
+[       OK ] EditedDataReadTest.DownloadsThroughTheCanonicalProceduresAndDecodes (11 ms)
+[ RUN      ] EditedDataReadTest.AnEditDownloadFailureStopsBeforeRawAndClearsOutput
+[       OK ] EditedDataReadTest.AnEditDownloadFailureStopsBeforeRawAndClearsOutput (2 ms)
+[ RUN      ] EditedDataReadTest.ARawDownloadFailureDoesNotPublishTheLoadedEdit
+[       OK ] EditedDataReadTest.ARawDownloadFailureDoesNotPublishTheLoadedEdit (2 ms)
+[ RUN      ] EditedDataReadTest.ExistingFilesCanBeUsedWithoutADatabase
+[       OK ] EditedDataReadTest.ExistingFilesCanBeUsedWithoutADatabase (3 ms)
+[ RUN      ] EditedDataReadTest.LogicalMwlNameCanDifferFromStoredEditName
+[       OK ] EditedDataReadTest.LogicalMwlNameCanDifferFromStoredEditName (4 ms)
+[ RUN      ] EditedDataReadTest.DecodeFailureDoesNotPublishPartialRawData
+[       OK ] EditedDataReadTest.DecodeFailureDoesNotPublishPartialRawData (10 ms)
+[ RUN      ] EditedDataReadTest.InvalidNamesAreRejectedBeforeAnyDownload
+[       OK ] EditedDataReadTest.InvalidNamesAreRejectedBeforeAnyDownload (7 ms)
+[----------] 8 tests from EditedDataReadTest (57 ms total)
+
+[----------] Global test environment tear-down
+[==========] 8 tests from 1 test suite ran. (69 ms total)
+[  PASSED  ] 8 tests.
