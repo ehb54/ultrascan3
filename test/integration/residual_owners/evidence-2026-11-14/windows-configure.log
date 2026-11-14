@@ -159,7 +159,7 @@
 --   Install directory:  %PROGRAMFILES64%\UltraScan3
 --   Installer output:   C:/src/us3-residual-t10/build/UltraScan3-4.3.0-dev-Windows.exe
 --   Stage source:       C:/src/us3-residual-t10/build/_stage/UltraScan3
--- 
+--
 -- UltraScan3 Configuration Summary:
 --   Version:        4.3.0-dev
 --   Build type:     Release
@@ -167,7 +167,7 @@
 --   Qt version:     6.10.1
 --   Qwt version:    6.3.0
 --   OpenSSL:        3.6.1
--- 
+--
 -- Configuring done (33.7s)
 -- Generating done (10.1s)
 -- Build files have been written to: C:/src/us3-residual-t10/build

@@ -46,6 +46,9 @@
     }
   ],
   "scope": "Build/link only; no Windows UI verification",
-  "build_log_sha256": "fe7362c5162c66e0df9f0c26ff943f335939e6543e87dd7c64773be968785b55",
-  "configure_log_sha256": "e629bf4c544f41035c8eb897bc9333967026c5afce376ae3b96904789b048993"
+  "build_captured_raw_sha256": "fe7362c5162c66e0df9f0c26ff943f335939e6543e87dd7c64773be968785b55",
+  "build_stored_log_sha256": "a22f864ca1e15b2b92021a491dbe0ef7ad3930e572cbfdc2f46cf632b6124441",
+  "configure_captured_raw_sha256": "e629bf4c544f41035c8eb897bc9333967026c5afce376ae3b96904789b048993",
+  "configure_stored_log_sha256": "323efee46d25a64aca5d49def2124ba4b5774e6afff7d20e8c9dea0536633009",
+  "log_normalization": "Stored logs use LF and omit trailing whitespace; captured raw hashes retain the original VM bytes."
 }
