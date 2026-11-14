@@ -21,10 +21,6 @@ class TestUSMath2Unit : public QtTestBase
          setupTestData();
       }
 
-      void TearDown() override
-      {
-         QtTestBase::TearDown();
-      }
 
       void setupTestData()
       {

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE US_Analyte>
+<AnalyteData version="1.0">
+    <analyte type="PROTEIN" vbar20="0.7134" mw="49535" description="Netrin1 (protein, globular)" analyteGUID="a23098bf-78be-4f42-af2c-1b31049bf584">
+        <sequence>
+
+</sequence>
+        <extinction frequency="0.0" value="0"/>
+    </analyte>
+</AnalyteData>

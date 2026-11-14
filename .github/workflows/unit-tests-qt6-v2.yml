@@ -48,9 +48,11 @@ jobs:
               - utils/CMakeLists.txt
               - programs/us_sim_inputs_gen/**
               - test/**
+              - scripts/check-gtest-filter.sh
               - '**/*.json'
               - admin/cmake/**
               - admin/test/**
+              - test-docker.sh
               - CMakeLists.txt
 
   unit-testing:
@@ -79,11 +81,15 @@ jobs:
           export DEBIAN_FRONTEND=noninteractive
           apt-get update -qq
           apt-get install -y -qq \
+              python3 \
               libmysqlclient-dev \
               libgtest-dev \
               libgmock-dev \
               libgl2ps-dev \
               pkg-config
+
+      - name: Test GoogleTest filter guard
+        run: python3 test/scripts/test_check_gtest_filter.py
 
       - name: Add GoogleTest Problem Matcher
         run: echo "::add-matcher::.github/gtest-us.json"

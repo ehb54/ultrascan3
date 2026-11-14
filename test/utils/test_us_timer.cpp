@@ -649,19 +649,7 @@ TEST_F(US_TimerSequenceTest, OverlappingTimers) {
 }
 
 // Memory and Resource Tests
-class US_TimerResourceTest : public QtTestBase
-{
-   protected:
-      void SetUp() override
-      {
-         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
-      }
-
-      void TearDown() override
-      {
-         QtTestBase::TearDown();
-      }
-};
+using US_TimerResourceTest = QtTestBase;
 
 TEST_F(US_TimerResourceTest, MultipleTimerInstances) {
     // Test creating multiple timer instances

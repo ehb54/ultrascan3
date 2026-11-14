@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE US_Analyte>
+<AnalyteData version="1.0">
+    <analyte type="DNA" stranded="1" complement_only="0" ThreePrimeHydroxyl="0" FivePrimeHydroxyl="0" sodium="0" potassium="0" lithium="0" magnesium="0" calcium="0" vbar20="0.55" mw="128396" description="DNA fragment, Monomer (208 bp)" analyteGUID="f96065f9-2c61-404e-8edd-20ca21de6634">
+        <sequence>
+
+</sequence>
+        <extinction frequency="0.0" value="0"/>
+    </analyte>
+</AnalyteData>

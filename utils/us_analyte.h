@@ -5,6 +5,8 @@
 #include "us_extern.h"
 #include "ius_db2.h"
 
+class QIODevice;
+
 //! A base  class to hold analytes
 class US_UTIL_EXTERN US_Analyte
 {
@@ -54,7 +56,8 @@ class US_UTIL_EXTERN US_Analyte
       QString message;
       QString analyteID; //!< Current analyte DB ID
 
-      //! Read an analyte from the disk or database
+      //! Read an analyte from the disk or database.
+      //! Failed database loads preserve existing data and update only message.
       //! \param db_access - A flag to indicate if the DB (true) or disk (false)
       //!                    should be searched for the analyte
       //! \param guid      - The guid of the analyte to be loaded
@@ -70,7 +73,17 @@ class US_UTIL_EXTERN US_Analyte
       //! \param db        - For DB access, an open database connection
       //! \returns         - The \ref IUS_DB2 retrun code for the operation
       int  write( bool, const QString&, IUS_DB2* = 0 );
-      
+
+      //! Read/write XML through a caller-owned, already-open device.
+      //! Consume from the current position; never open, close or flush the device.
+      //! Read the requested GUID, or the first analyte when guid is empty.
+      //! Unknown fields/wrappers remain accepted. Invalid XML/I/O returns DBERROR;
+      //! no matching analyte returns NO_ANALYTE. Failed reads preserve data and
+      //! update message. Failed writes may leave partial output; the filename
+      //! wrapper checks flush, but neither API guarantees atomic/durable writes.
+      int                    read_xml( QIODevice&, const QString& guid = QString() );
+      int                    write_xml( QIODevice& );
+
       //! \param path - A reference where the path to ayalutes on the disk 
       //!               drive is written
       //! \returns    - Success if the path is found or created and failure
@@ -89,7 +102,8 @@ class US_UTIL_EXTERN US_Analyte
    private:
       int    load_db     ( const QString&, IUS_DB2* );
       int    load_disk   ( const QString& );
-      int    read_analyte( const QString& );
+      int    read_analyte( const QString&, const QString& );
+      int    parse_xml( QIODevice&, const QString& );
       void   nucleotide  ( void );
       
       int    write_disk      ( const QString& );

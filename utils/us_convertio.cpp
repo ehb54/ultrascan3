@@ -821,28 +821,34 @@ else
    if ( readStatus == US_DB2::NO_EXPERIMENT )
       return( "The current run ID is not found in the database." );
 
-   else if ( readStatus == US_DB2::DBERROR )
-      ; // Didn't find any RI Profile data
-
    else if ( readStatus != US_DB2::OK )
-      return( db->lastError() );
+   {
+      const QString error = db->lastError();
+      return error.isEmpty() ? QObject::tr( "Could not read experiment from database." ) : error;
+   }
 
-   // Erase auc files in the local directory,
-   //  in case the user has messed with it locally
-qDebug() << "rDBE: remove local auc files";
-   QDir d( dir );
-   QStringList nameFilters = QStringList( "*.auc" );
-   QStringList files = d.entryList( nameFilters,
-                                    QDir::NoDotAndDotDot | QDir::Files );
-   foreach ( QString file, files )
-      if ( ! d.remove( file ) )
-         qDebug() << "Unable to remove file " << file;
-   
    // Now read the auc data
 qDebug() << "rDBE: call readRawDataFromDB";
    QString status = readRawDataFromDB( ExpData, triples, dir, db );
    if ( status != QString( "" ) )
       return status;
+
+   // Only discard stale AUC files after selection and the raw-data read succeed.
+   // Retain the downloaded files; a failed DB read must not erase local data.
+   QStringList downloaded;
+   for ( const auto& triple : triples )
+   {
+      downloaded << triple.tripleFilename;
+   }
+   QDir              local( dir );
+   const QStringList files = local.entryList( { "*.auc" }, QDir::Files );
+   for ( const QString& file : files )
+   {
+      if ( !downloaded.contains( file ) && !local.remove( file ) )
+      {
+         qDebug() << "Unable to remove stale file " << file;
+      }
+   }
 
    // Verify that the solution and project files are on disk too
 qDebug() << "rDBE: call ExpData.project.saveToDisk";
@@ -951,6 +957,16 @@ qDebug() << " rRDD: build raw list";
    QStringList q( "get_rawDataIDs" );
    q  << QString::number( ExpData.expID );
    db->query( q );
+   const int queryStatus = db->lastErrno();
+   if ( queryStatus != IUS_DB2::OK && queryStatus != IUS_DB2::NOROWS )
+   {
+      const QString error = db->lastError();
+      return error.isEmpty() ? QObject::tr( "Could not read raw data list from database." ) : error;
+   }
+   if ( queryStatus == IUS_DB2::NOROWS )
+   {
+      return QObject::tr( "There were no auc files found in the database." );
+   }
 
    QStringList rawDataIDs;
    QStringList filenames;
@@ -959,6 +975,13 @@ qDebug() << " rRDD: build raw list";
    {
       rawDataIDs << db->value( 0 ).toString();
       filenames  << db->value( 2 ).toString();
+   }
+
+   const int rowStatus = db->lastErrno();
+   if ( rowStatus != IUS_DB2::OK && rowStatus != IUS_DB2::NOROWS )
+   {
+      const QString error = db->lastError();
+      return error.isEmpty() ? QObject::tr( "Could not read raw data list from database." ) : error;
    }
 
    if ( rawDataIDs.size() < 1 )
@@ -1060,6 +1083,11 @@ qDebug() << " rRDD: build TripleInfo";
 
          }
 
+         if ( !found && cells.isEmpty() )
+         {
+            return QObject::tr( "No centerpiece information found for raw data." );
+         }
+
          if ( ! found )
          {
             // if we're here, then it's old data and needs to find the centerpiece
@@ -1097,7 +1125,16 @@ qDebug() << " rRDD: build TripleInfo";
          error += "Error processing file: " + filenames[ i ] + "\n" +
                   db->lastError() + "\n";
    }
-      
+
+   if ( !error.isEmpty() )
+   {
+      return error;
+   }
+   if ( triples.isEmpty() )
+   {
+      return QObject::tr( "No raw data records could be read from the database." );
+   }
+
    // Get runType
    QStringList part = triples[ 0 ].tripleFilename.split( "." );
    ExpData.opticalSystem = part[ 1 ].toUtf8();

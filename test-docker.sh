@@ -607,6 +607,12 @@ if [ -n "$SEARCH_TESTS" ]; then
     exit 0
 fi
 
+# Explicit execution filters must select an enabled test in the offline unit suite.
+SELECTED_GTEST_FILTER=${SPECIFIC_TEST:-*}
+if [ -n "$SPECIFIC_TEST" ] || [ "$GDB" = "true" ] || [ "$VALGRIND" = "true" ]; then
+    bash /ultrascan3/scripts/check-gtest-filter.sh "$UNIT_TEST_BIN" "$SELECTED_GTEST_FILTER" || exit $?
+fi
+
 # GDB debugging
 if [ "$GDB" = "true" ]; then
     if ! command -v gdb &> /dev/null; then
@@ -624,7 +630,7 @@ if [ "$GDB" = "true" ]; then
     echo '  print variable_name    # Print variable value'
     echo '  quit                   # Exit GDB'
     echo ''
-    gdb --args "$UNIT_TEST_BIN" --gtest_filter="$SPECIFIC_TEST"
+    gdb --args "$UNIT_TEST_BIN" --gtest_filter="$SELECTED_GTEST_FILTER"
     exit 0
 fi
 
@@ -637,7 +643,7 @@ if [ "$VALGRIND" = "true" ]; then
         exit 1
     fi
     echo 'Running memory analysis with Valgrind...'
-    valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes "$UNIT_TEST_BIN" --gtest_filter="$SPECIFIC_TEST"
+    valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes "$UNIT_TEST_BIN" --gtest_filter="$SELECTED_GTEST_FILTER"
     exit 0
 fi
 
@@ -648,14 +654,14 @@ if [ -n "$SPECIFIC_TEST" ]; then
         echo "Repeating $REPEAT times to check for flaky behavior..."
         for i in $(seq 1 $REPEAT); do
             echo "=== Run $i/$REPEAT ==="
-            "$UNIT_TEST_BIN" --gtest_filter="$SPECIFIC_TEST" ${VERBOSE:+--gtest_print_time=1} || {
+            "$UNIT_TEST_BIN" --gtest_filter="$SELECTED_GTEST_FILTER" ${VERBOSE:+--gtest_print_time=1} || {
                 echo "Test failed on run $i"
                 exit 1
             }
         done
         echo "All $REPEAT runs passed successfully!"
     else
-        "$UNIT_TEST_BIN" --gtest_filter="$SPECIFIC_TEST" ${VERBOSE:+--gtest_print_time=1}
+        "$UNIT_TEST_BIN" --gtest_filter="$SELECTED_GTEST_FILTER" ${VERBOSE:+--gtest_print_time=1}
     fi
     exit $?
 fi

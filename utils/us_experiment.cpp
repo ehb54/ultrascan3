@@ -443,10 +443,9 @@ qDebug() << "Exp:rdDB: importRIxml status" << status;
 
       if ( status != US_Convert::OK )
       {
-         // This isn't exactly an error; data is read but we don't have an
-         // intensity profile
+         // The profile is optional. An empty RIProfile records its absence;
+         // reserve DBERROR for database failures and still load speed steps.
          RIProfile.clear();
-         return IUS_DB2::DBERROR;
       }
 
    }

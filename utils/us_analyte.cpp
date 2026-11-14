@@ -1,11 +1,46 @@
 //! \file us_analyte.cpp
 #include "us_analyte.h"
 #include "us_constants.h"
-#include "us_settings.h"
-#include "us_math2.h"
 #include "us_datafiles.h"
-#include "us_util.h"
 #include "us_eprofile.h"
+#include "us_math2.h"
+#include "us_settings.h"
+#include "us_util.h"
+#include <limits>
+
+namespace
+{
+// QXmlStreamReader treats a device read error like end-of-input, which can
+// otherwise look successful immediately after a complete XML document.
+class AnalyteXmlInput : public QIODevice
+{
+   public:
+      explicit AnalyteXmlInput( QIODevice& source ) : source_( source )
+      {
+         open( QIODevice::ReadOnly | QIODevice::Unbuffered );
+      }
+      bool isSequential() const override
+      {
+         return true;
+      }
+      bool failed = false;
+
+   protected:
+      qint64 readData( char* data, qint64 size ) override
+      {
+         const qint64 result = source_.read( data, size );
+         failed              = failed || result < 0;
+         return result;
+      }
+      qint64 writeData( const char*, qint64 ) override
+      {
+         return -1;
+      }
+
+   private:
+      QIODevice& source_;
+};
+}
 
 #define DEBUG_QUERY qDebug() << "Q" << q << "Err" << db->lastErrno() << db->lastError(); //!< Debug print showing DB query string and error returns
 
@@ -74,8 +109,25 @@ int US_Analyte::load(
       const QString& guid,
       IUS_DB2*        db )
 {
-   if ( db_access ) return load_db  ( guid, db );
-   else             return load_disk( guid );
+   if ( !db_access )
+   {
+      return load_disk( guid );
+   }
+
+   // Publish a database load only after all required lookups succeed. Keep the
+   // old data on failure, but expose the new diagnostic to the caller.
+   US_Analyte loaded( *this );
+   loaded.message.clear();
+   const int status = loaded.load_db( guid, db );
+   if ( status == IUS_DB2::OK )
+   {
+      *this = loaded;
+   }
+   else
+   {
+      message = loaded.message;
+   }
+   return status;
 }
 
 int US_Analyte::load_db( const QString& load_guid, IUS_DB2* db )
@@ -260,22 +312,29 @@ int US_Analyte::load_disk( const QString& guid )
             {
                QXmlStreamAttributes a = xml.attributes();
 
-               if ( a.value( "analyteGUID" ).toString() == guid ) found = true; 
-               break;
+               if ( a.value( "analyteGUID" ).toString() == guid )
+               {
+                  found = true;
+                  break;
+               }
+               xml.skipCurrentElement();
             }
          }
       }
 
       file.close();
 
-      if ( found ) return read_analyte( filename );
+      if ( found )
+      {
+         return read_analyte( filename, guid );
+      }
    }
 
    message =  QObject::tr ( "Could not find analyte guid" );
    return error;
 }
 
-int US_Analyte::read_analyte( const QString& filename )
+int US_Analyte::read_analyte( const QString& filename, const QString& guid )
 {
    QFile file( filename );
 
@@ -287,20 +346,63 @@ int US_Analyte::read_analyte( const QString& filename )
       return IUS_DB2::DBERROR;
    }
 
+   return read_xml( file, guid );
+}
+
+int US_Analyte::read_xml( QIODevice& device, const QString& guid )
+{
+   if ( !device.isOpen() || !device.isReadable() )
+   {
+      message = QObject::tr( "Could not open analyte file for reading" );
+      return IUS_DB2::DBERROR;
+   }
+
+   // Publish only a complete selected analyte; retain legacy missing-field
+   // behavior by starting with a copy rather than a default-constructed object.
+   US_Analyte candidate( *this );
+   candidate.message.clear();
+   const int result = candidate.parse_xml( device, guid );
+   if ( result == IUS_DB2::OK )
+   {
+      *this = candidate;
+   }
+   else
+   {
+      message = candidate.message;
+   }
+   return result;
+}
+
+int US_Analyte::parse_xml( QIODevice& device, const QString& guid )
+{
+   bool                 selected = false;
+   bool                 finished = false;
    double               freq;
    double               value;
    QString              type_string;
-   QXmlStreamReader     xml( &file );
+   AnalyteXmlInput      input( device );
+   QXmlStreamReader     xml( &input );
    QXmlStreamAttributes a;
 
    while ( ! xml.atEnd() )
    {
       xml.readNext();
 
+      if ( xml.isEndElement() && xml.name() == "analyte" && selected )
+      {
+         finished = true;
+      }
+
       if ( xml.isStartElement() )
       {
          if ( xml.name() == "analyte" )
          {
+            if ( selected || ( !guid.isEmpty() && xml.attributes().value( "analyteGUID" ).toString() != guid ) )
+            {
+               xml.skipCurrentElement();
+               continue;
+            }
+            selected = true;
             a = xml.attributes();
 
             type_string = a.value( "type" ).toString();
@@ -331,6 +433,10 @@ int US_Analyte::read_analyte( const QString& filename )
                           a.value( "gradient_forming" ).toString() );
          }
 
+         else if ( !selected || finished )
+         {
+            continue;
+         }
          else if ( xml.name() == "sequence" )
          {
             sequence = xml.readElementText();
@@ -366,7 +472,12 @@ int US_Analyte::read_analyte( const QString& filename )
                magnesium      = a.value( "magnesium" ).toString().toDouble();
                calcium        = a.value( "calcium"   ).toString().toDouble();
 
-               nucleotide();
+               // Generated and legacy files can supply mass without a sequence.
+               // Do not replace that mass with the mass of terminal groups alone.
+               if ( !sequence.trimmed().isEmpty() )
+               {
+                  nucleotide();
+               }
             }
 
          }
@@ -396,6 +507,16 @@ int US_Analyte::read_analyte( const QString& filename )
       }
    }
 
+   if ( input.failed || xml.hasError() )
+   {
+      message = QObject::tr( "Could not read analyte XML: %1" ).arg( input.failed ? device.errorString() : xml.errorString() );
+      return IUS_DB2::DBERROR;
+   }
+   if ( !selected )
+   {
+      message = QObject::tr( "Could not find analyte guid" );
+      return IUS_DB2::NO_ANALYTE;
+   }
    return IUS_DB2::OK;
 }
 
@@ -541,7 +662,25 @@ int US_Analyte::write_disk( const QString& filename )
       return IUS_DB2::DBERROR;
    }
 
-   QXmlStreamWriter xml( &file );
+   int result = write_xml( file );
+   if ( !file.flush() || file.error() != QFileDevice::NoError )
+   {
+      message = QObject::tr( "Could not finish writing analyte file: %1" ).arg( file.errorString() );
+      result  = IUS_DB2::DBERROR;
+   }
+   file.close();
+   return result;
+}
+
+int US_Analyte::write_xml( QIODevice& device )
+{
+   if ( !device.isOpen() || !device.isWritable() )
+   {
+      message = QObject::tr( "Cannot open file for writing" );
+      return IUS_DB2::DBERROR;
+   }
+
+   QXmlStreamWriter xml( &device );
    xml.setAutoFormatting( true );
 
    xml.writeStartDocument();
@@ -630,7 +769,7 @@ int US_Analyte::write_disk( const QString& filename )
       value = extinction[ keys[ i ] ];
 
       xml.writeStartElement( "extinction" );
-      xml.writeAttribute( "frequency",  QString::number( freq , 'f', 1 ) );
+      xml.writeAttribute( "frequency", QString::number( freq, 'g', std::numeric_limits<double>::max_digits10 ) );
       xml.writeAttribute( "value",      QString::number( value ) );
       xml.writeEndElement(); // extinction
    }
@@ -644,7 +783,7 @@ int US_Analyte::write_disk( const QString& filename )
       value = refraction[ keys[ i ] ];
 
       xml.writeStartElement( "refraction" );
-      xml.writeAttribute( "frequency",  QString::number( freq , 'f', 1 ) );
+      xml.writeAttribute( "frequency", QString::number( freq, 'g', std::numeric_limits<double>::max_digits10 ) );
       xml.writeAttribute( "value",      QString::number( value ) );
       xml.writeEndElement(); // refraction
    }
@@ -658,17 +797,19 @@ int US_Analyte::write_disk( const QString& filename )
       value = fluorescence[ keys[ i ] ];
 
       xml.writeStartElement( "fluorescence" );
-      xml.writeAttribute( "frequency",  QString::number( freq , 'f', 1 ) );
+      xml.writeAttribute( "frequency", QString::number( freq, 'g', std::numeric_limits<double>::max_digits10 ) );
       xml.writeAttribute( "value",      QString::number( value ) );
       xml.writeEndElement(); // fluorescence
    }
 
    xml.writeEndElement(); // analyte
    xml.writeEndDocument();
-   file.close();
-
-   file.close();
-
+   if ( xml.hasError() )
+   {
+      message = QObject::tr( "Could not write analyte XML: %1" ).arg( device.errorString() );
+      return IUS_DB2::DBERROR;
+   }
+   message.clear();
    return IUS_DB2::OK;
 }
 
