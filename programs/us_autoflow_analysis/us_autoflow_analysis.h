@@ -3,8 +3,6 @@
 #define US_ANALYSIS_AUTO_H
 
 #include "../us_analysis_profile/us_analysis_profile.h"
-#include "us_resplot_fem.h"
-#include "us_thread_worker.h"
 #include "../us_fit_meniscus/us_fit_meniscus.h"
 #include "../us_mwl_species_fit/us_load_run_noise.h"
 #include "../us_mwl_species_fit/us_mwl_sf_plot3d.h"
@@ -19,7 +17,9 @@
 #include "us_gmp_progress.h"
 #include "us_intensity.h"
 #include "us_passwd.h"
+#include "us_resplot_fem.h"
 #include "us_selectbox.h"
+#include "us_thread_worker.h"
 #include "us_widgets.h"
 //#include "../us_convert/us_select_triples.h"
 #include "../us_abde/us_norm_profile.h"
@@ -129,7 +129,7 @@ class US_Analysis_auto : public US_Widgets
         US_DataIO::EditedData* edata;                            /**< Pointer to the edited data. */
         US_DataIO::RawData* rdata;                               /**< Pointer to the raw data. */
         US_DataIO::RawData* sdata;                               /**< Pointer to the simulated data. */
-        US_DataIO::RawData wsdata;                               /**< Raw data for the workspace. */
+        US_DataIO::RawData               wsdata;                              /**< Raw data for the workspace. */
 
         /**
          * @class ModelDesc

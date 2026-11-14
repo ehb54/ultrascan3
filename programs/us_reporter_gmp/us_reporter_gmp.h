@@ -7,9 +7,6 @@
 #include "../us_abde/us_norm_profile.h"
 #include "../us_analysis_profile/us_analysis_profile.h"
 #include "../us_ddist_combine/us_ddist_combine.h"
-#include "us_plot_control_fem.h"
-#include "us_resplot_fem.h"
-#include "us_thread_worker.h"
 #include "../us_integral/us_integral.h"
 #include "../us_pseudo3d_combine/us_pseudo3d_combine.h"
 #include "us_db2.h"
@@ -17,11 +14,14 @@
 #include "us_gmp_progress.h"
 #include "us_help.h"
 #include "us_passwd.h"
+#include "us_plot_control_fem.h"
 #include "us_protocol_util.h"
+#include "us_resplot_fem.h"
 #include "us_run_protocol.h"
 #include "us_select_item.h"
 #include "us_simparms.h"
 #include "us_solution.h"
+#include "us_thread_worker.h"
 #include "us_widgets.h"
 
 /**
@@ -111,7 +111,7 @@ class US_ReporterGMP : public US_Widgets
         QMap<QString, QStringList> channdesc_to_overlapping_wvls; //!< Channel descriptions to overlapping wavelengths map
 
         QPointer<US_ResidPlotFem> resplotd;    //!< Residual plot dialog
-        QPointer<US_PlotControlFem> eplotcd;   //!< Plot control dialog
+        QPointer<US_PlotControlFem> eplotcd;     //!< Plot control dialog
 
         struct GenReportMaskStructure
         {

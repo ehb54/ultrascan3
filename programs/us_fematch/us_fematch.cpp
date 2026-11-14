@@ -1308,7 +1308,9 @@ void US_FeMatch::exclude( void )
    data_plot();
 
    if ( resplotd )
+   {
       resplotd->set_inputs( resplot_inputs() );
+   }
 
    pb_reset_exclude->setEnabled( true );
 }
@@ -2314,8 +2316,8 @@ DbgLv(1) << "SimMdl: (fematch:)Finite Volume Solver is called";
       tsimdats.clear();
       tmodels .clear();
       kcomps  .clear();
-      QList< US_ThreadWorker* >         tworkers;
-      QList< US_ThreadEx* >            wthreads;
+      QList<US_ThreadWorker*> tworkers;
+      QList<US_ThreadEx*>     wthreads;
 
       // Build models for each thread
       for ( int ii = 0; ii < ncomp; ii++ )
@@ -2340,22 +2342,18 @@ DbgLv(1) << "SimMdl: (fematch:)Finite Volume Solver is called";
       // Build worker threads and begin running
       for ( int ii = 0; ii < nthread; ii++ )
       {
-         US_ThreadWorker* tworker = new US_ThreadWorker( tmodels[ ii ], simparams,
-               tsimdats[ ii ], solution_rec.buffer, ii );
-         US_ThreadEx*    wthread = new US_ThreadEx();
+         US_ThreadWorker* tworker = new US_ThreadWorker( tmodels[ii], simparams, tsimdats[ii], solution_rec.buffer, ii );
+         US_ThreadEx*     wthread = new US_ThreadEx();
 
          tworker->moveToThread( wthread );
 
          tworkers << tworker;
          wthreads << wthread;
 
-         connect( wthread, &QThread::started,
-                  tworker, &US_ThreadWorker::calc_simulation );
+         connect( wthread, &QThread::started, tworker, &US_ThreadWorker::calc_simulation );
 
-         connect( tworker, &US_ThreadWorker::work_progress,
-                  this,    &US_FeMatch::thread_progress );
-         connect( tworker, &US_ThreadWorker::work_complete,
-                  this,    &US_FeMatch::thread_complete );
+         connect( tworker, &US_ThreadWorker::work_progress, this, &US_FeMatch::thread_progress );
+         connect( tworker, &US_ThreadWorker::work_complete, this, &US_FeMatch::thread_complete );
 
          wthread->start();
       }
@@ -3669,7 +3667,9 @@ void US_FeMatch::reset_excludes( void )
    allExcls[ index ] = excludedScans;
 
    if ( resplotd )
+   {
       resplotd->set_inputs( resplot_inputs() );
+   }
 }
 
 // Reset data set

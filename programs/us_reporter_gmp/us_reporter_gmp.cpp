@@ -10,7 +10,6 @@
 #include <QPrinter>
 
 #include "../us/us_revision.h"
-#include "us_thread_worker.h"
 #include "us_calc_matching.h"
 #include "us_calc_range.h"
 #include "us_calc_replicate.h"
@@ -26,6 +25,7 @@
 #include "us_math2.h"
 #include "us_protocol_util.h"
 #include "us_reporter_gmp.h"
+#include "us_thread_worker.h"
 
 #include "us_settings.h"
 #include "us_solution_vals.h"
@@ -1032,7 +1032,7 @@ QMap< QString, QString>  US_ReporterGMP::read_autoflowAnalysis_record( US_DB2* d
 	}
     }
 
-  
+
   return analysis_details;
 }
 
@@ -1074,7 +1074,7 @@ QMap< QString, QString>  US_ReporterGMP::read_autoflowAnalysisHistory_record( US
 	}
     }
 
-  
+
   return analysis_details;
 }
 
@@ -1441,28 +1441,28 @@ QMap< QString, QString > US_ReporterGMP::parse_models_desc_json( QString modelDe
 //load GMP Rpeort from DB (.PDF)
 void US_ReporterGMP::load_gmp_report_db ( void )
 {
-  // //TESTING *************
-  // QFile fin( "/home/alexey/ultrascan/reports/SBird-DNA-EcoRI-101322-PD9-run1843_GMP_DB_bySysTar.tar.gz" );
-  // if ( ! fin.open( QIODevice::ReadOnly ) )
-  //  {
-  //    return;
-  //  }
-  // QByteArray blobData = fin.readAll();
-  // fin.close();
+   // //TESTING *************
+   // QFile fin( "/home/alexey/ultrascan/reports/SBird-DNA-EcoRI-101322-PD9-run1843_GMP_DB_bySysTar.tar.gz" );
+   // if ( ! fin.open( QIODevice::ReadOnly ) )
+   //  {
+   //    return;
+   //  }
+   // QByteArray blobData = fin.readAll();
+   // fin.close();
 
-  // return;
-  // //END TESTING *********
-  
-  US_Passwd pw;
-  US_DB2 db( pw.getPasswd() );
-  
-  if ( db.lastErrno() != US_DB2::OK )
-    {
+   // return;
+   // //END TESTING *********
+
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
       QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
 			    tr( "Could not connect to database \n" ) + db.lastError() );
       return;
-    }
-  
+   }
+
   list_all_gmp_reports_db( gmpReportsDBdata, &db );
 
   QString pdtitle( tr( "Select GMP Report" ) );
@@ -2436,7 +2436,7 @@ void US_ReporterGMP::build_miscTree ( void )
   //     miscTree->setMinimumHeight( (miscTree->height())*0.6 );
   //     first_time_misc_tree_build = false;
   //   }
-  
+
   connect( miscTree, &QTreeWidget::itemChanged,
   	   this,    &US_ReporterGMP::changedItem );
 
@@ -4878,8 +4878,7 @@ void US_ReporterGMP::get_abde_percents( QMap< QString, QMap < QString, QMap < QS
 
 void US_ReporterGMP::get_abde_data_per_channel(QMap< QString, QMap < QString, QVector<QVector<double>> > >& data_per_chan)
 {
-  abde_data_per_channel = data_per_chan;
-
+   abde_data_per_channel = data_per_chan;
 }
 
 void US_ReporterGMP::get_abde_selected_signals( QMap< QString, QStringList >& selected_signals_p )
@@ -5392,7 +5391,7 @@ bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
 
   //Load Model (latest ) && noise(s)
   loadModel( triple_info_map  );
-  
+
   // triple_info_map[ "stage_name" ] = QString("2DSA-IT");
   // if ( !loadModel( triple_info_map  ) && !model_exists )
   //   {
@@ -5422,7 +5421,6 @@ bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   qApp->processEvents();
 
   return true;
-
 }
 
 
@@ -5501,8 +5499,8 @@ bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
   // QStringList query;
   // query << "get_modelDescsIDs" << triple_information[ "eID" ];
   // db->query( query );
-  
-  
+
+
   // int latest_update_time = 1e100;
   // int mID=0;
 
@@ -5532,7 +5530,7 @@ bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
   // 		      latest_update_time = time_to_now;
   // 		      //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
 
-		  		      
+
   // 		      mID       = modelID;
   // 		    }
   // 		}
@@ -5544,8 +5542,8 @@ bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
   // 		{
   // 		  latest_update_time = time_to_now;
   // 		  //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
-		  
-		  
+
+
   // 		  mID       = modelID;
   // 		}
   // 	    }
@@ -6437,9 +6435,9 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
       tsimdats.clear();
       tmodels .clear();
       kcomps  .clear();
-      QList< US_ThreadWorker* >         tworkers;
-      QList< US_ThreadEx* >            wthreads;
-      
+      QList<US_ThreadWorker*> tworkers;
+      QList<US_ThreadEx*>     wthreads;
+
       // Build models for each thread
       for ( int ii = 0; ii < ncomp; ii++ )
 	{
@@ -6463,25 +6461,21 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
       // Build worker threads and begin running
       for ( int ii = 0; ii < nthread; ii++ )
 	{
-	  US_ThreadWorker* tworker = new US_ThreadWorker( tmodels[ ii ], simparams,
-						    tsimdats[ ii ], solution_rec.buffer, ii );
-	  US_ThreadEx*    wthread = new US_ThreadEx();
-	  
-	  tworker->moveToThread( wthread );
-	  
-	  tworkers << tworker;
-	  wthreads << wthread;
-	  
-	  connect( wthread, &QThread::started,
-		   tworker, &US_ThreadWorker::calc_simulation );
-	  
-	  connect( tworker, &US_ThreadWorker::work_progress,
-	   	   this,    &US_ReporterGMP::thread_progress );
-	  connect( tworker, &US_ThreadWorker::work_complete,
-		   this,    &US_ReporterGMP::thread_complete );
-	  
-	  wthread->start();
-	}
+      US_ThreadWorker* tworker = new US_ThreadWorker( tmodels[ii], simparams, tsimdats[ii], solution_rec.buffer, ii );
+      US_ThreadEx*     wthread = new US_ThreadEx();
+
+      tworker->moveToThread( wthread );
+
+      tworkers << tworker;
+      wthreads << wthread;
+
+      connect( wthread, &QThread::started, tworker, &US_ThreadWorker::calc_simulation );
+
+      connect( tworker, &US_ThreadWorker::work_progress, this, &US_ReporterGMP::thread_progress );
+      connect( tworker, &US_ThreadWorker::work_complete, this, &US_ReporterGMP::thread_complete );
+
+      wthread->start();
+   }
     }
 }
 
@@ -6646,7 +6640,7 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
       // bool b_2 =  modelDescModified[ ii ].contains( re_sm );
       // modelGuidExistsForStage_ind( triplesname, stage_model, modelDescModifiedGuid[ ii ] );
       // //DEBUG
-      
+
       //fiter by type|model
       if ( modelDescModified[ ii ].contains( triplesname_mod ) &&
 	   //modelDescModified[ ii ].contains( stage_model ) &&
@@ -6735,107 +6729,107 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 			       << sim_ranges["s_ranges"];
 		    }
 		  //add c_parms["CG_model"] = QString("YES"); //OR "NO"
-		  c_parms["CG_model"] = isCGM; 
-		  
-		  
-		  //ALEXEY: here it plots s20 combPlot (xtype == 0)	  
-		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 0, c_parms );
-		 		  
-		  write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );                //<-- rp_data_plot1() gives combined plot
-		  imgComb02File.replace( svgext, pngext ); 
-		  CombPlotsFileNames << imgComb02File;
-		  
-		  CombPlotsParmsMap       [ imgComb02File ] = plotted_ids_colors_map_s_type. firstKey();
-		  CombPlotsParmsMap_Colors[ imgComb02File ] = plotted_ids_colors_map_s_type[ plotted_ids_colors_map_s_type. firstKey() ];
-		}
-	      //type: 1:MW
-	      else if ( type == "MW" )
-		{
-		  imgComb02File += ".MW" + svgext;
-		  
-		  t_m = "MW," + stage_model;
-		  c_parms = comboPlotsMap[ t_m ];
-		  qDebug() << "[MW-INDCOMB] c_parms [BEFORE]-- " << c_parms;
-		  convert_ranges_global( c_parms, pow(10,3) );
-		  qDebug() << "[MW-INDCOMB] c_parms [AFTER]-- " << c_parms;
-		  //put ranges into c_parms:
-		  QString c_ranges = convert_ranges( ranges, pow(10,3) );
-		  qDebug() << "MW ranges [before, after] -- "
-			   << ranges.join(",") << ", " << c_ranges;
-		  c_parms[ "Ranges" ] = c_ranges;
-		  //c_parms[ "Ranges" ] = ranges.join(",");
+          c_parms["CG_model"] = isCGM;
 
-		  //add c_parms["CG_model"] = QString("YES"); //OR "NO"
-		  c_parms["CG_model"] = isCGM; 
-		  
-		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 1, c_parms );
-		  
-		  write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );              //<-- rp_data_plot1() gives combined plot
-		  imgComb02File.replace( svgext, pngext );
-		  CombPlotsFileNames << imgComb02File;
-		  
-		  CombPlotsParmsMap       [ imgComb02File ] = plotted_ids_colors_map_s_type. firstKey();
-		  CombPlotsParmsMap_Colors[ imgComb02File ] = plotted_ids_colors_map_s_type[ plotted_ids_colors_map_s_type. firstKey() ];
-		}
-	      //type 2:D
-	      else if ( type == "D" )
-		{
-		  imgComb02File += ".D20" + svgext;
-		  
-		  t_m = "D," + stage_model;
-		  c_parms = comboPlotsMap[ t_m ];
-		  qDebug() << "[D-INDCOMB] c_parms [BEFORE]-- " << c_parms;
-		  convert_ranges_global( c_parms, pow(10,-7) );
-		  qDebug() << "[D-INDCOMB] c_parms [AFTER]-- " << c_parms;
-		  //put ranges into c_parms:
-		  QString c_ranges = convert_ranges( ranges, pow(10,-7) );
-		  qDebug() << "D ranges [before, after] -- "
-			   << ranges.join(",") << ", " << c_ranges;
-		  c_parms[ "Ranges" ] = c_ranges;
-		  //c_parms[ "Ranges" ] = ranges.join(",");
 
-		  //add c_parms["CG_model"] = QString("YES"); //OR "NO"
-		  c_parms["CG_model"] = isCGM; 
-		  
-		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 2, c_parms );
-		  
-		  write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );              //<-- rp_data_plot1() gives combined plot
-		  imgComb02File.replace( svgext, pngext );
-		  CombPlotsFileNames << imgComb02File;
-		  
-		  CombPlotsParmsMap       [ imgComb02File ] = plotted_ids_colors_map_s_type. firstKey();
-		  CombPlotsParmsMap_Colors[ imgComb02File ] = plotted_ids_colors_map_s_type[ plotted_ids_colors_map_s_type. firstKey() ];
-		}
-	      //type 3:f/f0
-	      else if ( type == "f/f0" )
-		{
-		  imgComb02File += ".f_f0" + svgext;
-		  
-		  t_m = "f/f0," + stage_model;
-		  c_parms = comboPlotsMap[ t_m ];
-		  //put ranges into c_parms:
-		  c_parms[ "Ranges" ] = ranges.join(",");
+          //ALEXEY: here it plots s20 combPlot (xtype == 0)
+          plotted_ids_colors_map_s_type = sdiag_combplot->changedPlotX_auto( 0, c_parms );
 
-		  if ( sim_ranges. contains("k_ranges") )
-		    c_parms[ "k_ranges" ] = sim_ranges["k_ranges"].join(",");
+          write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() ); //<-- rp_data_plot1() gives combined plot
+          imgComb02File.replace( svgext, pngext );
+          CombPlotsFileNames << imgComb02File;
 
-		  //add c_parms["CG_model"] = QString("YES"); //OR "NO"
-		  c_parms["CG_model"] = isCGM; 
-		  
-		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 3, c_parms );
-		  
-		  write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );              //<-- rp_data_plot1() gives combined plot
-		  imgComb02File.replace( svgext, pngext );
-		  CombPlotsFileNames << imgComb02File;
-		  
-		  CombPlotsParmsMap       [ imgComb02File ] = plotted_ids_colors_map_s_type. firstKey();
-		  CombPlotsParmsMap_Colors[ imgComb02File ] = plotted_ids_colors_map_s_type[ plotted_ids_colors_map_s_type. firstKey() ];
-		}
-	      
-	      // reset plot after processign certain type {s,D,MW...}
-	      //sdiag_combplot->reset_data_plot1();
-	    }
-	}
+          CombPlotsParmsMap[imgComb02File]        = plotted_ids_colors_map_s_type.firstKey();
+          CombPlotsParmsMap_Colors[imgComb02File] = plotted_ids_colors_map_s_type[plotted_ids_colors_map_s_type.firstKey()];
+      }
+      //type: 1:MW
+      else if ( type == "MW" )
+      {
+         imgComb02File += ".MW" + svgext;
+
+         t_m     = "MW," + stage_model;
+         c_parms = comboPlotsMap[t_m];
+         qDebug() << "[MW-INDCOMB] c_parms [BEFORE]-- " << c_parms;
+         convert_ranges_global( c_parms, pow( 10, 3 ) );
+         qDebug() << "[MW-INDCOMB] c_parms [AFTER]-- " << c_parms;
+         //put ranges into c_parms:
+         QString c_ranges = convert_ranges( ranges, pow( 10, 3 ) );
+         qDebug() << "MW ranges [before, after] -- " << ranges.join( "," ) << ", " << c_ranges;
+         c_parms["Ranges"] = c_ranges;
+         //c_parms[ "Ranges" ] = ranges.join(",");
+
+         //add c_parms["CG_model"] = QString("YES"); //OR "NO"
+         c_parms["CG_model"] = isCGM;
+
+         plotted_ids_colors_map_s_type = sdiag_combplot->changedPlotX_auto( 1, c_parms );
+
+         write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() ); //<-- rp_data_plot1() gives combined plot
+         imgComb02File.replace( svgext, pngext );
+         CombPlotsFileNames << imgComb02File;
+
+         CombPlotsParmsMap[imgComb02File]        = plotted_ids_colors_map_s_type.firstKey();
+         CombPlotsParmsMap_Colors[imgComb02File] = plotted_ids_colors_map_s_type[plotted_ids_colors_map_s_type.firstKey()];
+      }
+      //type 2:D
+      else if ( type == "D" )
+      {
+         imgComb02File += ".D20" + svgext;
+
+         t_m     = "D," + stage_model;
+         c_parms = comboPlotsMap[t_m];
+         qDebug() << "[D-INDCOMB] c_parms [BEFORE]-- " << c_parms;
+         convert_ranges_global( c_parms, pow( 10, -7 ) );
+         qDebug() << "[D-INDCOMB] c_parms [AFTER]-- " << c_parms;
+         //put ranges into c_parms:
+         QString c_ranges = convert_ranges( ranges, pow( 10, -7 ) );
+         qDebug() << "D ranges [before, after] -- " << ranges.join( "," ) << ", " << c_ranges;
+         c_parms["Ranges"] = c_ranges;
+         //c_parms[ "Ranges" ] = ranges.join(",");
+
+         //add c_parms["CG_model"] = QString("YES"); //OR "NO"
+         c_parms["CG_model"] = isCGM;
+
+         plotted_ids_colors_map_s_type = sdiag_combplot->changedPlotX_auto( 2, c_parms );
+
+         write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() ); //<-- rp_data_plot1() gives combined plot
+         imgComb02File.replace( svgext, pngext );
+         CombPlotsFileNames << imgComb02File;
+
+         CombPlotsParmsMap[imgComb02File]        = plotted_ids_colors_map_s_type.firstKey();
+         CombPlotsParmsMap_Colors[imgComb02File] = plotted_ids_colors_map_s_type[plotted_ids_colors_map_s_type.firstKey()];
+      }
+      //type 3:f/f0
+      else if ( type == "f/f0" )
+      {
+         imgComb02File += ".f_f0" + svgext;
+
+         t_m               = "f/f0," + stage_model;
+         c_parms           = comboPlotsMap[t_m];
+         //put ranges into c_parms:
+         c_parms["Ranges"] = ranges.join( "," );
+
+         if ( sim_ranges.contains( "k_ranges" ) )
+         {
+            c_parms["k_ranges"] = sim_ranges["k_ranges"].join( "," );
+         }
+
+         //add c_parms["CG_model"] = QString("YES"); //OR "NO"
+         c_parms["CG_model"] = isCGM;
+
+         plotted_ids_colors_map_s_type = sdiag_combplot->changedPlotX_auto( 3, c_parms );
+
+         write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() ); //<-- rp_data_plot1() gives combined plot
+         imgComb02File.replace( svgext, pngext );
+         CombPlotsFileNames << imgComb02File;
+
+         CombPlotsParmsMap[imgComb02File]        = plotted_ids_colors_map_s_type.firstKey();
+         CombPlotsParmsMap_Colors[imgComb02File] = plotted_ids_colors_map_s_type[plotted_ids_colors_map_s_type.firstKey()];
+      }
+
+      // reset plot after processign certain type {s,D,MW...}
+      //sdiag_combplot->reset_data_plot1();
+       }
+   }
     }
   
   //assemble IND combined plots into html
@@ -7006,25 +7000,24 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 	  QRegularExpression re_sm(reg_exp_sm);
 	  /**/
 
-	  // //DEBUG
-	  // bool b_1 = modelDescModified[ ii ].contains( re_sm );
-	  // modelGuidExistsForStage( modelNames[ m ], modelDescModifiedGuid[ ii ] );
-	  // //
-	  
-	  if ( //modelDescModified[ ii ].contains( modelNames[ m ] )
-	       modelDescModified[ ii ].contains( re_sm ) &&
-	       modelGuidExistsForStage( modelNames[ m ], modelDescModifiedGuid[ ii ] ) )
-	    {
-	      isModel = true;
+     // //DEBUG
+     // bool b_1 = modelDescModified[ ii ].contains( re_sm );
+     // modelGuidExistsForStage( modelNames[ m ], modelDescModifiedGuid[ ii ] );
+     // //
 
-	      //retrieve s,Model combPlot params:
-	      QString t_m = "s," + modelNames[ m ];
-	      QMap < QString, QString > c_params = comboPlotsMap[ t_m ];
-	      plotted_ids_colors_map_s_type = sdiag_combplot-> model_select_auto ( modelDescModified[ ii ], c_params ); //ALEXEY: here it plots s20 combPlot (xtype == 0)
+     if ( //modelDescModified[ ii ].contains( modelNames[ m ] )
+        modelDescModified[ii].contains( re_sm ) && modelGuidExistsForStage( modelNames[m], modelDescModifiedGuid[ii] ) )
+     {
+        isModel = true;
 
-	    }
-	}
-      
+        //retrieve s,Model combPlot params:
+        QString                t_m      = "s," + modelNames[m];
+        QMap<QString, QString> c_params = comboPlotsMap[t_m];
+        plotted_ids_colors_map_s_type =
+           sdiag_combplot->model_select_auto( modelDescModified[ii], c_params ); //ALEXEY: here it plots s20 combPlot (xtype == 0)
+     }
+   }
+
       ++pr_cp_val;
       progress_msg->setValue( pr_cp_val );
       
@@ -9273,8 +9266,8 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
 	     QString::asprintf( "%10.4e", x_val ) + ", " + 
 	     QString::asprintf( "%10.4e", y_dna_val ) + ", " +
 	     QString::asprintf( "%10.4e", yp_int_dna_val );
-	 }
-       
+    }
+
        html_abde_s += abde_dist_info + "<br>";
      }
   
@@ -11337,8 +11330,8 @@ void US_ReporterGMP::plotres( QMap < QString, QString> & tripleInfo )
   inputs.excluded    = excludedScans;
   inputs.ti_noise    = ti_noise;
   inputs.ri_noise    = ri_noise;
-  inputs.triple_info = this->tripleInfo;  // the member, not the QMap parameter of the same name
-  resplotd = new US_ResidPlotFem( inputs, US_ResidPlotFem::Report, this );
+  inputs.triple_info = this->tripleInfo; // the member, not the QMap parameter of the same name
+  resplotd           = new US_ResidPlotFem( inputs, US_ResidPlotFem::Report, this );
 
   if ( show_vel )
     {
@@ -11352,26 +11345,20 @@ void US_ReporterGMP::plotres( QMap < QString, QString> & tripleInfo )
       PlotsFileNames << img02File;
     }
 
-  // The dialog only renders the two images and is never shown, so it is not closed.
-  delete resplotd;
-      
-  //Stick Plots for S-, MW-, D- distributions
-  plotLayout1 = new US_Plot( data_plot1,
-			     tr( "Residuals" ),
-			     tr( "Radius (cm)" ),
-			     tr( "OD Difference" ),
-			     true, "^resids [0-9].*", "rainbow" );
-  
-  plotLayout2 = new US_Plot( data_plot2,
-			     tr( "Velocity Data" ),
-			     tr( "Radius (cm)" ),
-			     tr( "Absorbance" ),
-			     true, ".*in range", "rainbow" );
-  
-  data_plot1->setMinimumSize( 560, 240 );
-  data_plot2->setMinimumSize( 560, 240 );
+    // The dialog only renders the two images and is never shown, so it is not closed.
+    delete resplotd;
 
-  if ( show_sd )
+    //Stick Plots for S-, MW-, D- distributions
+    plotLayout1 =
+       new US_Plot( data_plot1, tr( "Residuals" ), tr( "Radius (cm)" ), tr( "OD Difference" ), true, "^resids [0-9].*", "rainbow" );
+
+    plotLayout2 =
+       new US_Plot( data_plot2, tr( "Velocity Data" ), tr( "Radius (cm)" ), tr( "Absorbance" ), true, ".*in range", "rainbow" );
+
+    data_plot1->setMinimumSize( 560, 240 );
+    data_plot2->setMinimumSize( 560, 240 );
+
+    if ( show_sd )
     {
       distrib_plot_stick( 0 );               // s-distr.
       write_plot( img03File, data_plot1 );
@@ -11677,7 +11664,7 @@ void US_ReporterGMP::write_plot( const QString& filename, const QwtPlot* plot )
          QMessageBox::warning( this, tr( "File Write Error" ),
             tr( "Unable to write file" ) + filename );
    }
-   
+
 
     else if ( filename.endsWith( "3dplot.png" ) )
     {  // Special case of 3dplot PNG
@@ -13354,85 +13341,85 @@ void US_ReporterGMP::write_pdf_report( void )
    //        return;
    //      }
 
-   //    //Write HTML strign to file & later save to DB withing general archive
-   //    QString html_filePath = dirName + "/" + "html_string.html";
-   //    QFile file_html_str( html_filePath );
-   //    if(!file_html_str.open(QIODevice::WriteOnly))
-   //      file_html_str.close();
-   //    else
-   //      {
-   //        file_html_str.write( html_assembled.toUtf8() );
-   //        //QTextStream out(&file_html_str); out << html_assembled;
-   //        file_html_str.close();
-   //      }
+  //    //Write HTML strign to file & later save to DB withing general archive
+  //    QString html_filePath = dirName + "/" + "html_string.html";
+  //    QFile file_html_str( html_filePath );
+  //    if(!file_html_str.open(QIODevice::WriteOnly))
+  //      file_html_str.close();
+  //    else
+  //      {
+  //        file_html_str.write( html_assembled.toUtf8() );
+  //        //QTextStream out(&file_html_str); out << html_assembled;
+  //        file_html_str.close();
+  //      }
 
-   //    int writeStatus_html = db.writeBlobToDB(html_filePath,
-   //    					  QString( "upload_gmpReportData_html" ),
-   //    					  r_ID );
+  //    int writeStatus_html = db.writeBlobToDB(html_filePath,
+  //    					  QString( "upload_gmpReportData_html" ),
+  //    					  r_ID );
 
-   //    qApp->processEvents();
-   //    if ( writeStatus_html == US_DB2::DBERROR )
-   //      {
-   //        QMessageBox::warning(this, "Error", "Error processing html file:\n"
-   //    			   + html_filePath + "\n" + db.lastError() +
-   //    			   "\n" + "Could not open file or no data \n");
-   //      }
-  
-   //    else if ( writeStatus_html != US_DB2::OK )
-   //      {
-   //        QMessageBox::warning(this, "Error", "returned processing html file:\n" +
-   //    			   html_filePath + "\n" + db.lastError() + "\n");
-  
-   //      }
+  //    qApp->processEvents();
+  //    if ( writeStatus_html == US_DB2::DBERROR )
+  //      {
+  //        QMessageBox::warning(this, "Error", "Error processing html file:\n"
+  //    			   + html_filePath + "\n" + db.lastError() +
+  //    			   "\n" + "Could not open file or no data \n");
+  //      }
 
-   //    //
-  
-   //    QStringList file_exts;
-   //    //file_exts << "*.png" << "*.svgz";
-   //    file_exts << "*.svgz" << "*.html";                // retain *pngs (BUT remove *html) for further assembly at e-Signing
-   //    remove_files_by_mask( dirName, file_exts );
+  //    else if ( writeStatus_html != US_DB2::OK )
+  //      {
+  //        QMessageBox::warning(this, "Error", "returned processing html file:\n" +
+  //    			   html_filePath + "\n" + db.lastError() + "\n");
 
-   //    QString tarFilename_t = subDirName + "_GMP_DB.tar";
-   //    //QString tarFilename_t = subDirName + "_GMP_DB.rar";
-  
-   //    QProcess *process = new QProcess(this);
-   //    process->setWorkingDirectory( US_Settings::reportDir() );
-   //    process->start("tar", QStringList() << "-cvf" << tarFilename_t << subDirName );
-   //    //process->start("rar", QStringList() << "a" << tarFilename_t << subDirName );
-   //    //sleep( 5 );                     //Maybe implement something like a timer to check on completion!!!
-   //    process -> waitForFinished();
-   //    process -> close();
-  
+  //      }
 
-   //    QString r_filepath = US_Settings::reportDir() + "/" + tarFilename_t;
+  //    //
 
-  
-   //    qApp->processEvents();
-  
-   //    //Like process -> returned signal??
-  
-   //    int writeStatus= db.writeBlobToDB(r_filepath,
-   //    				    QString( "upload_gmpReportData" ),
-   //    				    r_ID );
-   //    qApp->processEvents();
-  
-   //    if ( writeStatus == US_DB2::DBERROR )
-   //      {
-   //        QMessageBox::warning(this, "Error", "Error processing file:\n"
-   //    			   + r_filepath + "\n" + db.lastError() +
-   //    			   "\n" + "Could not open file or no data \n");
-   //      }
-  
-   //    else if ( writeStatus != US_DB2::OK )
-   //      {
-   //        QMessageBox::warning(this, "Error", "returned processing file:\n" +
-   //    			   r_filepath + "\n" + db.lastError() + "\n");
-  
-   //      }
+  //    QStringList file_exts;
+  //    //file_exts << "*.png" << "*.svgz";
+  //    file_exts << "*.svgz" << "*.html";                // retain *pngs (BUT remove *html) for further assembly at e-Signing
+  //    remove_files_by_mask( dirName, file_exts );
 
-   //  /****** END TEST *************************************************************/
+  //    QString tarFilename_t = subDirName + "_GMP_DB.tar";
+  //    //QString tarFilename_t = subDirName + "_GMP_DB.rar";
 
-  
+  //    QProcess *process = new QProcess(this);
+  //    process->setWorkingDirectory( US_Settings::reportDir() );
+  //    process->start("tar", QStringList() << "-cvf" << tarFilename_t << subDirName );
+  //    //process->start("rar", QStringList() << "a" << tarFilename_t << subDirName );
+  //    //sleep( 5 );                     //Maybe implement something like a timer to check on completion!!!
+  //    process -> waitForFinished();
+  //    process -> close();
+
+
+  //    QString r_filepath = US_Settings::reportDir() + "/" + tarFilename_t;
+
+
+  //    qApp->processEvents();
+
+  //    //Like process -> returned signal??
+
+  //    int writeStatus= db.writeBlobToDB(r_filepath,
+  //    				    QString( "upload_gmpReportData" ),
+  //    				    r_ID );
+  //    qApp->processEvents();
+
+  //    if ( writeStatus == US_DB2::DBERROR )
+  //      {
+  //        QMessageBox::warning(this, "Error", "Error processing file:\n"
+  //    			   + r_filepath + "\n" + db.lastError() +
+  //    			   "\n" + "Could not open file or no data \n");
+  //      }
+
+  //    else if ( writeStatus != US_DB2::OK )
+  //      {
+  //        QMessageBox::warning(this, "Error", "returned processing file:\n" +
+  //    			   r_filepath + "\n" + db.lastError() + "\n");
+
+  //      }
+
+  //  /****** END TEST *************************************************************/
+
+
   //Now delete all .png && .svgz && tar entire directory
   if ( auto_mode )
     {

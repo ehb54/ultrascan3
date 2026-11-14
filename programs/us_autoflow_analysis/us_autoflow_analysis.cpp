@@ -13,7 +13,6 @@
 #include <QXmlStreamReader>
 #include <QtNumeric>
 
-#include "us_thread_worker.h"
 #include "us_autoflow_analysis.h"
 #include "us_constants.h"
 #include "us_convertio.h"
@@ -24,6 +23,7 @@
 #include "us_run_protocol.h"
 #include "us_settings.h"
 #include "us_solution_vals.h"
+#include "us_thread_worker.h"
 
 #define MIN_NTC   25
 
@@ -674,14 +674,15 @@ QString US_Analysis_auto::get_filename( QString triple_name )
 //Gui update: timer's slot
 void US_Analysis_auto::gui_update( )
 {
-    
-  if ( in_gui_update )            // If already doing a reload,
-    return;                            //  skip starting a new one
-  
-  in_gui_update  = true;          // Flag in the midst of a reload
+   if ( in_gui_update ) // If already doing a reload,
+   {
+      return; //  skip starting a new one
+   }
 
-  /**** JSON structure ****************************************************************/
-  /*
+   in_gui_update = true; // Flag in the midst of a reload
+
+   /**** JSON structure ****************************************************************/
+   /*
   
     {
      "to_process":["2DSA_MC",".."],
@@ -695,19 +696,18 @@ void US_Analysis_auto::gui_update( )
   
   */
 
-  US_Passwd pw;
-  US_DB2    db( pw.getPasswd() );
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
 
-  // Get the buffer data from the database
-  if ( db.lastErrno() != US_DB2::OK )
-    {
+   // Get the buffer data from the database
+   if ( db.lastErrno() != US_DB2::OK )
+   {
       QMessageBox::warning( this, tr( "Connection Problem" ),
 			    tr( "Could not connect to database \n" ) +  db.lastError() );
       return;
-    }
-  
+   }
 
-      
+
   /*************** GUI UPDATE *************************************************************/ 
   QMap<QString, QMap <QString, QString> >::iterator jj;
   for ( jj = Array_of_analysis.begin(); jj != Array_of_analysis.end(); ++jj )
@@ -749,8 +749,8 @@ void US_Analysis_auto::gui_update( )
       QString nextWaitStatusMsg = current_analysis_details[ "nextWaitStatusMsg" ] ;
             
       /********************* deal with JSON *****************************************/
-      
-      
+
+
       QJsonDocument jsonDoc = QJsonDocument::fromJson( status_json.toUtf8() );
       if (!jsonDoc.isObject())
 	{
@@ -3384,27 +3384,27 @@ bool US_Analysis_auto::loadModel( QMap < QString, QString > & triple_information
 		  int time_to_now = date.secsTo(now);
 		  if ( time_to_now < latest_update_time )
 		    {
-		      latest_update_time = time_to_now;
+             latest_update_time = time_to_now;
 
-		      qDebug() << "Model 2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
-		  		      
-		      mID       = modelID;
-		    }
-		}
-	    }
-	  else
-	    {
-	      int time_to_now = date.secsTo(now);
-	      if ( time_to_now < latest_update_time )
-		{
-		  latest_update_time = time_to_now;
-		  
-		  qDebug() << "Model NON-2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
-		  
-		  mID       = modelID;
-		}
-	    }
-	}
+             qDebug() << "Model 2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
+
+             mID = modelID;
+          }
+      }
+       }
+       else
+       {
+          int time_to_now = date.secsTo( now );
+          if ( time_to_now < latest_update_time )
+          {
+             latest_update_time = time_to_now;
+
+             qDebug() << "Model NON-2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
+
+             mID = modelID;
+          }
+       }
+   }
     }
   
   int  rc      = 0;
@@ -4256,9 +4256,9 @@ void US_Analysis_auto::simulateModel( )
       tsimdats.clear();
       tmodels .clear();
       kcomps  .clear();
-      QList< US_ThreadWorker* >         tworkers;
-      QList< US_ThreadEx* >            wthreads;
-      
+      QList<US_ThreadWorker*> tworkers;
+      QList<US_ThreadEx*>     wthreads;
+
       // Build models for each thread
       for ( int ii = 0; ii < ncomp; ii++ )
 	{
@@ -4282,25 +4282,21 @@ void US_Analysis_auto::simulateModel( )
       // Build worker threads and begin running
       for ( int ii = 0; ii < nthread; ii++ )
 	{
-	  US_ThreadWorker* tworker = new US_ThreadWorker( tmodels[ ii ], simparams,
-						    tsimdats[ ii ], solution_rec.buffer, ii );
-	  US_ThreadEx*    wthread = new US_ThreadEx();
-	  
-	  tworker->moveToThread( wthread );
-	  
-	  tworkers << tworker;
-	  wthreads << wthread;
-	  
-	  connect( wthread, &QThread::started,
-		   tworker, &US_ThreadWorker::calc_simulation );
-	  
-	  connect( tworker, &US_ThreadWorker::work_progress,
-	   	   this,    &US_Analysis_auto::thread_progress );
-	  connect( tworker, &US_ThreadWorker::work_complete,
-		   this,    &US_Analysis_auto::thread_complete );
-	  
-	  wthread->start();
-	}
+      US_ThreadWorker* tworker = new US_ThreadWorker( tmodels[ii], simparams, tsimdats[ii], solution_rec.buffer, ii );
+      US_ThreadEx*     wthread = new US_ThreadEx();
+
+      tworker->moveToThread( wthread );
+
+      tworkers << tworker;
+      wthreads << wthread;
+
+      connect( wthread, &QThread::started, tworker, &US_ThreadWorker::calc_simulation );
+
+      connect( tworker, &US_ThreadWorker::work_progress, this, &US_Analysis_auto::thread_progress );
+      connect( tworker, &US_ThreadWorker::work_complete, this, &US_Analysis_auto::thread_complete );
+
+      wthread->start();
+   }
     }
  
 }
@@ -4337,7 +4333,6 @@ void US_Analysis_auto::show_results( )
    // plot3d();
 
 
-   
    plotres();
    QApplication::restoreOverrideCursor();
 }
@@ -4466,7 +4461,7 @@ void US_Analysis_auto::plotres( )
    inputs.ti_noise    = ti_noise;
    inputs.ri_noise    = ri_noise;
    inputs.triple_info = tripleInfo;
-   resplotd = new US_ResidPlotFem( inputs, US_ResidPlotFem::Analysis, this );
+   resplotd           = new US_ResidPlotFem( inputs, US_ResidPlotFem::Analysis, this );
 
    //resplotd->move( rpd_pos );
    //resplotd->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
@@ -4883,7 +4878,6 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
   //msg_sim->accept();
   progress_msg->finish();
   qApp->processEvents();
-  
 }
 
 
@@ -5002,14 +4996,13 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
 	  /** DEBUG **/
 	  // QMap <QString, QString > current_analysis;
 	  // current_analysis = read_autoflowAnalysis_record( &db, requestID );
-	  
-	  /* **********/
-	  
-	  update_autoflowAnalysis_uponDeletion( &db, requestID );
-	  //maybe if mwl_channel=true?
-	  update_autoflowAnalysis_uponDeletion_other_wvl( &db, requestID_list );
-	  
-	}
+
+       /* **********/
+
+       update_autoflowAnalysis_uponDeletion( &db, requestID );
+       //maybe if mwl_channel=true?
+       update_autoflowAnalysis_uponDeletion_other_wvl( &db, requestID_list );
+   }
     }
   else
     {
@@ -5197,7 +5190,7 @@ void US_Analysis_auto::delete_job( const QString& triple_stage )
       /** DEBUG **/
       // QMap <QString, QString > current_analysis;
       // current_analysis = read_autoflowAnalysis_record( &db, requestID );
-      
+
       /* **********/
 
       update_autoflowAnalysis_uponDeletion( &db, requestID );
@@ -5866,7 +5859,7 @@ QMap< QString, QString> US_Analysis_auto::read_autoflowAnalysis_record( US_DB2* 
 	}
     }
 
-  
+
   return analysis_details;
 }
 
@@ -5913,7 +5906,7 @@ QMap< QString, QString> US_Analysis_auto::read_autoflowAnalysisHistory_record( U
 	}
     }
 
-  
+
   return analysis_details;
 }
 
@@ -6244,7 +6237,7 @@ DbgLv(1) << "DbSc: tmodels size" << tmodels.size() << "ted sizes"
       QDateTime lmtime   = db.value( 6 ).toDateTime();
       lmtime.setTimeZone( QTimeZone::utc() );
       QString ansysID    = descript.section( '.', -2, -2 );
-      QString iterID     = ansysID .section( '_', -1, -1 );
+      QString iterID     = ansysID.section( '_', -1, -1 );
 
       if ( ansysID.contains( "2DSA-F" )  ||  iterID.contains( fmIter ) )
       {  // Model from meniscus fit, so save information
@@ -7158,11 +7151,11 @@ void US_Analysis_auto::revert_autoflow_analysis_stages_record( const QString& re
 			     tr( "FitMen revert: Could not connect to database \n" ) + db->lastError() );
        return;
      }
-   
+
    QStringList qry;
    qry << "fitmen_autoflow_analysis_status_revert"
        << requestID;
-   
+
    db->query( qry );
 }
 
@@ -7769,10 +7762,11 @@ DbgLv(1) << "RmvMod:  *LOAD ERR*" << modfname;
       QString anRunID    = descript.section( '.', -2, -2 );
       QString editLabl   = anRunID .section( '_',  0, -5 );
       QString iterID     = anRunID .section( '_', -1, -1 );
-      QString itNum      = iterID  .section( '-',  0,  0 );
-if(ii<3 || (ii+4)>modfiles.size() || ii==(modfiles.size()/2))
- DbgLv(1) << "RmvMod:  scn1 ii runID editLabl tripID"
-  << ii << runID << editLabl << tripID;
+      QString itNum      = iterID.section( '-', 0, 0 );
+      if ( ii < 3 || ( ii + 4 ) > modfiles.size() || ii == ( modfiles.size() / 2 ) )
+      {
+         DbgLv( 1 ) << "RmvMod:  scn1 ii runID editLabl tripID" << ii << runID << editLabl << tripID;
+      }
 
       if ( runID != srchRun  ||  editLabl != srchEdit  ||  tripID != srchTrip )
          continue;    // Can't use if from a different runID or edit or triple
@@ -7920,13 +7914,13 @@ DbgLv(1) << "RmvMod:  descript" << descript << "msetBase" << msetBase << "ii" <<
          QString runID      = descript.section( '.',  0, -4 );
          QString tripID     = descript.section( '.', -3, -3 );
          QString anRunID    = descript.section( '.', -2, -2 );
-         QString editLabl   = anRunID .section( '_',  0, -5 );
+         QString editLabl   = anRunID.section( '_', 0, -5 );
 
          if ( runID != srchRun  ||  editLabl != srchEdit  ||
               tripID != srchTrip )
          continue;    // Can't use if from a different runID or edit or triple
 
-         QString iterID     = anRunID .section( '_', -1, -1 );
+         QString iterID = anRunID.section( '_', -1, -1 );
 
          if ( !iterID.contains( "-m" )  &&  !iterID.contains( "-b" ) )
          {
