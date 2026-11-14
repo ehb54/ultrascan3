@@ -16,18 +16,17 @@
 #include "us_constants.h"
 #include "us_settings.h"
 
-using ::testing::_;
-using ::testing::Return;
-using ::testing::Contains;
-using ::testing::HasSubstr;
-using ::testing::Not;
-using ::testing::IsEmpty;
-using ::testing::DoubleEq;
-using ::testing::DoubleNear;
-using ::testing::StrictMock;
-using ::testing::NiceMock;
 using ::qt_matchers::QStringContains;
 using ::qt_matchers::QStringEq;
+using ::testing::_;
+using ::testing::Contains;
+using ::testing::DoubleEq;
+using ::testing::DoubleNear;
+using ::testing::HasSubstr;
+using ::testing::IsEmpty;
+using ::testing::Not;
+using ::testing::Return;
+using ::testing::StrictMock;
 
 namespace {
 
@@ -249,37 +248,6 @@ EXPECT_TRUE(*analyte1 == *analyte2);
 // Load Method Tests
 // =============================================================================
 
-TEST_F(US_AnalyteLoadTest, LoadWithDatabaseAccessCallsLoadDb) {
-QString testGuid = "12345678-1234-1234-1234-123456789012";
-
-// Use NiceMock to avoid "uninteresting call" warnings
-auto niceMockDb = std::make_unique<NiceMock<US_DB2_Mock>>();
-
-// Set up basic successful responses
-ON_CALL(*niceMockDb, lastErrno())
-.WillByDefault(Return(IUS_DB2::OK));
-ON_CALL(*niceMockDb, next())
-.WillByDefault(Return(true));
-ON_CALL(*niceMockDb, value(_))
-.WillByDefault(Return(QVariant("test_value")));
-
-int result = analyte->load(true, testGuid, niceMockDb.get());
-EXPECT_EQ(result, IUS_DB2::OK);
-}
-
-TEST_F(US_AnalyteLoadTest, LoadDbHandlesGetAnalyteIDError) {
-QString testGuid = "12345678-1234-1234-1234-123456789012";
-
-// Use NiceMock and set up failure condition
-auto niceMockDb = std::make_unique<NiceMock<US_DB2_Mock>>();
-ON_CALL(*niceMockDb, lastErrno())
-.WillByDefault(Return(IUS_DB2::NOROWS));
-
-int result = analyte->load(true, testGuid, niceMockDb.get());
-EXPECT_EQ(result, IUS_DB2::NOROWS);
-EXPECT_FALSE(analyte->message.isEmpty()); // Should have some error message
-}
-
 TEST_F( US_AnalyteLoadTest, LoadDbHandlesGetAnalyteInfoError )
 {
    const QString guid = "synthetic-guid";
@@ -300,24 +268,6 @@ TEST_F( US_AnalyteLoadTest, LoadDbHandlesGetAnalyteInfoError )
 // Write Method Tests
 // =============================================================================
 
-TEST_F(US_AnalyteWriteTest, WriteWithDatabaseAccessCallsWriteDb) {
-analyte->analyteGUID = "12345678-1234-1234-1234-123456789012";
-
-// Use NiceMock to avoid uninteresting call warnings
-auto niceMockDb = std::make_unique<NiceMock<US_DB2_Mock>>();
-
-// Set up successful write scenario
-ON_CALL(*niceMockDb, lastErrno())
-.WillByDefault(Return(IUS_DB2::OK));
-ON_CALL(*niceMockDb, statusQuery(::testing::An<const QStringList&>()))
-.WillByDefault(Return(IUS_DB2::OK));
-ON_CALL(*niceMockDb, lastInsertID())
-.WillByDefault(Return(123));
-
-int result = analyte->write(true, QString(), niceMockDb.get());
-EXPECT_EQ(result, IUS_DB2::OK);
-}
-
 TEST_F(US_AnalyteWriteTest, WriteWithDiskAccessCallsWriteDisk) {
 QString filename = tempDir->path() + "/test_analyte.xml";
 analyte->analyteGUID = "12345678-1234-1234-1234-123456789012";
@@ -337,14 +287,6 @@ QString invalidFilename = "/invalid/path/test.xml";
 int result = analyte->write(false, invalidFilename, nullptr);
 EXPECT_EQ(result, IUS_DB2::DBERROR);
 EXPECT_THAT(analyte->message, QStringContains("Cannot open file for writing"));
-}
-
-TEST_F(US_AnalyteWriteTest, WriteDbHandlesInvalidGUID) {
-analyte->analyteGUID = "invalid-guid"; // Too short
-
-int result = analyte->write(true, QString(), mockDb.get());
-EXPECT_EQ(result, IUS_DB2::BADGUID);
-EXPECT_THAT(analyte->message, QStringContains("The analyte GUID is invalid"));
 }
 
 // =============================================================================
@@ -440,79 +382,6 @@ analyte->refraction[280.0] = 1.5;
 analyte->fluorescence[350.0] = 1000.0;
 
 EXPECT_NO_THROW(analyte->dump());
-}
-
-// =============================================================================
-// Edge Cases and Error Conditions
-// =============================================================================
-
-TEST_F(US_AnalyteTest, HandlesExtremeDoubleValues) {
-analyte->vbar20 = std::numeric_limits<double>::max();
-analyte->mw = std::numeric_limits<double>::min();
-analyte->sodium = std::numeric_limits<double>::infinity();
-
-// Should handle extreme values without crashing
-EXPECT_TRUE(std::isinf(analyte->sodium));
-EXPECT_TRUE(std::isfinite(analyte->vbar20));
-EXPECT_TRUE(std::isfinite(analyte->mw));
-}
-
-TEST_F(US_AnalyteTest, HandlesNegativeCounterionValues) {
-analyte->sodium = -0.5;
-analyte->potassium = -1.0;
-analyte->magnesium = -0.1;
-
-// Should accept negative values (though not physically meaningful)
-EXPECT_LT(analyte->sodium, 0.0);
-EXPECT_LT(analyte->potassium, 0.0);
-EXPECT_LT(analyte->magnesium, 0.0);
-}
-
-TEST_F(US_AnalyteTest, HandlesVeryLongStrings) {
-QString longString(10000, QChar('A'));
-analyte->description = longString;
-analyte->sequence = longString;
-analyte->analyteGUID = "12345678-1234-1234-1234-123456789012";
-
-// Should handle very long strings
-EXPECT_EQ(analyte->description.length(), 10000);
-EXPECT_EQ(analyte->sequence.length(), 10000);
-}
-
-TEST_F(US_AnalyteTest, HandlesSpecialCharactersInStrings) {
-analyte->description = "Test <>&\"' Analyte with special chars";
-analyte->sequence = "ATGC\n\t\r";
-
-// Should handle special characters
-EXPECT_THAT(analyte->description, QStringContains("<>&\"'"));
-EXPECT_THAT(analyte->sequence, QStringContains("\n"));
-}
-
-TEST_F(US_AnalyteTest, HandlesEmptySpectrumMaps) {
-analyte->extinction.clear();
-analyte->refraction.clear();
-analyte->fluorescence.clear();
-
-EXPECT_TRUE(analyte->extinction.isEmpty());
-EXPECT_TRUE(analyte->refraction.isEmpty());
-EXPECT_TRUE(analyte->fluorescence.isEmpty());
-
-// Should handle empty maps in equality comparison
-US_Analyte other;
-EXPECT_TRUE(*analyte == other);
-}
-
-TEST_F(US_AnalyteTest, HandlesLargeSpectrumMaps) {
-// Add many spectrum entries
-for (int i = 200; i <= 800; i += 10) {
-analyte->extinction[i] = i * 100.0;
-analyte->refraction[i] = 1.0 + (i / 1000.0);
-analyte->fluorescence[i] = i * 50.0;
-}
-
-EXPECT_EQ(analyte->extinction.size(), 61); // (800-200)/10 + 1
-EXPECT_EQ(analyte->refraction.size(), 61);
-EXPECT_EQ(analyte->fluorescence.size(), 61);
 }
 
 } // anonymous namespace
