@@ -106,6 +106,48 @@ TEST_F( CsvData, AutoDetectsTabDelimitedInput )
    EXPECT_EQ( ( QVector<double>{ 0.25, 0.5 } ), csv.columnAt( 1 ) );
 }
 
+TEST_F( CsvData, AutoDetectsCommaSemicolonAndSpaceDelimitedInput )
+{
+   const QList<QByteArray> inputs{ "x,y\n1,2\n3,4\n", "x;y\n1;2\n3;4\n", "x y\n1 2\n3 4\n" };
+   for ( const QByteArray& bytes : inputs )
+   {
+      SCOPED_TRACE( bytes.toStdString() );
+      const QString path = caseWorkRoot() + "/auto.txt";
+      ASSERT_TRUE( us3WriteTestFile( path, bytes ) );
+      US_CSV_Data csv;
+      ASSERT_TRUE( csv.readFile( path, QString() ) ) << csv.error().toStdString();
+      EXPECT_EQ( ( QStringList{ "x", "y" } ), csv.header() );
+      EXPECT_EQ( ( QVector<double>{ 1, 3 } ), csv.columnAt( 0 ) );
+      EXPECT_EQ( ( QVector<double>{ 2, 4 } ), csv.columnAt( 1 ) );
+      EXPECT_TRUE( csv.error().isEmpty() );
+   }
+}
+
+TEST_F( CsvData, AutoDetectionPrefersEarlierValidDelimiter )
+{
+   // Both tab and space give a numeric table; tab is tried first.
+   const QString path = caseWorkRoot() + "/tab-space.txt";
+   ASSERT_TRUE( us3WriteTestFile( path, "a b\tc\n1\t2\n3\t4\n" ) );
+   US_CSV_Data csv;
+   ASSERT_TRUE( csv.readFile( path, QString() ) );
+   EXPECT_EQ( ( QStringList{ "a b", "c" } ), csv.header() );
+   EXPECT_EQ( ( QVector<double>{ 1, 3 } ), csv.columnAt( 0 ) );
+}
+
+TEST_F( CsvData, FailedReadsReportConversionAndSplitErrors )
+{
+   const QString path = caseWorkRoot() + "/nonnumeric.txt";
+   ASSERT_TRUE( us3WriteTestFile( path, "x,y\n1,nope\n" ) );
+   US_CSV_Data csv;
+   EXPECT_FALSE( csv.readFile( path, QString() ) );
+   EXPECT_EQ( QString( "Cannot convert the line to the floating numbers. Error at the line: 2" ), csv.error() );
+   EXPECT_EQ( 0, csv.columnCount() );
+
+   ASSERT_TRUE( us3WriteTestFile( path, "x\ty\n1\t2\t3\n" ) );
+   EXPECT_FALSE( csv.readFile( path, "\t" ) );
+   EXPECT_EQ( QString( "Cannot split the lines with the given separator. Error at the line: 2" ), csv.error() );
+}
+
 TEST_F( CsvData, RejectsEmptySingleLineRaggedAndNonnumericFiles )
 {
    const QList<QByteArray> inputs{ "", " \n\r\n", "x,y\n", "1,2\n", "x,y\n1,2\n3\n", "x,y\n1,nope\n", "x,y\n1,,\n" };
