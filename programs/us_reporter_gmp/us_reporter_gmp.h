@@ -448,7 +448,6 @@ class US_ReporterGMP : public US_Widgets
         US_DataIO::RawData* sdata; //!< Simulation data
         US_DataIO::RawData wsdata; //!< Workspace data
 
-        QPointer<US_ResidsBitmap> rbmapd; //!< Residuals bitmap dialog
 
         /**
          * @class ModelDesc

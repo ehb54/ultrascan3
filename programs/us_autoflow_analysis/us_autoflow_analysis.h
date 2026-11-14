@@ -130,7 +130,6 @@ class US_Analysis_auto : public US_Widgets
         US_DataIO::RawData* rdata;                               /**< Pointer to the raw data. */
         US_DataIO::RawData* sdata;                               /**< Pointer to the simulated data. */
         US_DataIO::RawData wsdata;                               /**< Raw data for the workspace. */
-        QPointer< US_ResidsBitmap > rbmapd;                      /**< Pointer to the residual bitmap for the dataset. */
 
         /**
          * @class ModelDesc

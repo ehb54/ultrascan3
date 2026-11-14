@@ -6507,12 +6507,6 @@ void US_ReporterGMP::show_results( QMap <QString, QString> & tripleInfo )
 
    // data_plot();                  // re-plot data+simulation
 
-   // if ( rbmapd != 0 )
-   // {
-   //    bmd_pos  = rbmapd->pos();
-   //    rbmapd->close();
-   // }
-
    assemble_distrib_html( tripleInfo );
 
    //assemble_integration_results_html( );
@@ -11343,7 +11337,6 @@ void US_ReporterGMP::plotres( QMap < QString, QString> & tripleInfo )
   inputs.excluded    = excludedScans;
   inputs.ti_noise    = ti_noise;
   inputs.ri_noise    = ri_noise;
-  inputs.bitmap      = rbmapd;
   inputs.triple_info = this->tripleInfo;  // the member, not the QMap parameter of the same name
   resplotd = new US_ResidPlotFem( inputs, US_ResidPlotFem::Report, this );
 
@@ -11685,34 +11678,6 @@ void US_ReporterGMP::write_plot( const QString& filename, const QwtPlot* plot )
             tr( "Unable to write file" ) + filename );
    }
    
-//    else if ( filename.endsWith( "rbitmap.png" ) )
-//    {  // Special case of rbitmap PNG
-//       if ( rbmapd == 0 )
-//       {  // if it is not currently displayed, display it
-//          rbmapd = new US_ResidsBitmap( resids );
-//          rbmapd->move( bmd_pos );
-//          rbmapd->show();
-//          rbmapd->raise();
-//       }
-
-//       else
-//       {  // if already displayed,  replot and re-activate
-//          rbmapd->replot( resids );
-//          rbmapd->raise();
-//          rbmapd->activateWindow();
-//       }
-
-// #if QT_VERSION > 0x050000
-//       QPixmap pixmap = ((QWidget*)rbmapd)->grab();
-// #else
-//       QPixmap pixmap = QPixmap::grabWidget( rbmapd, 0, 0,
-//                                             rbmapd->width(), rbmapd->height() );
-// #endif
-
-//       if ( ! pixmap.save( filename ) )
-//          QMessageBox::warning( this, tr( "File Write Error" ),
-//             tr( "Unable to write file" ) + filename );
-//    }
 
     else if ( filename.endsWith( "3dplot.png" ) )
     {  // Special case of 3dplot PNG

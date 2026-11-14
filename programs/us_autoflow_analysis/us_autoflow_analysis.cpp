@@ -4337,20 +4337,6 @@ void US_Analysis_auto::show_results( )
    // plot3d();
 
 
-   // //ResBitMap
-   // if ( rbmapd != 0 )
-   //   {
-   //     // bmd_pos  = rbmapd->pos();
-   //     rbmapd->close();
-   //   }
-   
-   // rbmapd = new US_ResidsBitmap( resids );
-   // //rbmapd->move( bmd_pos );
-   // rbmapd->show();
-   // rbmapd->raise();
-   // //rbmapd->activateWindow();
-   // //////////////////////////////////////////
-
    
    plotres();
    QApplication::restoreOverrideCursor();
@@ -4479,7 +4465,6 @@ void US_Analysis_auto::plotres( )
    inputs.excluded    = excludedScans;
    inputs.ti_noise    = ti_noise;
    inputs.ri_noise    = ri_noise;
-   inputs.bitmap      = rbmapd;
    inputs.triple_info = tripleInfo;
    resplotd = new US_ResidPlotFem( inputs, US_ResidPlotFem::Analysis, this );
 
