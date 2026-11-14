@@ -36,3 +36,8 @@ find_library(VERIFIED_QWT NAMES qwt qwt-qt5 PATHS /usr/lib64 /usr/lib64/qt5 REQU
 add_executable(test_us_resplot_fem ${root}/source/test/programs/us_resplot_fem/test_us_resplot_fem.cpp)
 target_include_directories(test_us_resplot_fem PRIVATE ${root}/source/test/common ${root}/source/gui ${root}/source/qwtplot3d/include /usr/include/qt5/qwt)
 target_link_libraries(test_us_resplot_fem PRIVATE ${root}/build/lib/libus_gui4.so verified_utils Qt5::Widgets Qt5::Test Qt5::OpenGL Qt5::PrintSupport Qt5::Svg Qt5::DataVisualization ${VERIFIED_QWT} verified_mysql)
+
+# Production hardware readers resolve resources beside this test executable.
+if(NOT EXISTS "${CMAKE_BINARY_DIR}/utils/etc")
+ file(CREATE_LINK "${root}/source/etc" "${CMAKE_BINARY_DIR}/utils/etc" SYMBOLIC)
+endif()

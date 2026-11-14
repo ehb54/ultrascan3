@@ -39,49 +39,49 @@ protected:
 
     // Helper to create test RawData
     US_DataIO::RawData createTestRawData() {
-        US_DataIO::RawData rawData;
-        rawData.type[0] = '\0';  // Clear the type array by setting first char to null terminator
-        rawData.channel = 'A';
-        rawData.cell = 1;
-        rawData.description = "Test data";
+       US_DataIO::RawData rawData{};
+       rawData.type[0]     = '\0'; // Clear the type array by setting first char to null terminator
+       rawData.channel     = 'A';
+       rawData.cell        = 1;
+       rawData.description = "Test data";
 
-        // Add some test scans
-        US_DataIO::Scan scan;
-        scan.seconds = 0.0;
-        scan.omega2t = 0.0;
-        scan.rpm = 3000.0;
-        scan.temperature = 20.0;
-        rawData.scanData << scan;
+       // Add some test scans
+       US_DataIO::Scan scan{};
+       scan.seconds     = 0.0;
+       scan.omega2t     = 0.0;
+       scan.rpm         = 3000.0;
+       scan.temperature = 20.0;
+       rawData.scanData << scan;
 
-        scan.seconds = 3600.0;
-        scan.omega2t = 3600.0 * 3000.0 * 3000.0 * 4.0 * M_PI * M_PI / (60.0 * 60.0);
-        rawData.scanData << scan;
+       scan.seconds = 3600.0;
+       scan.omega2t = 3600.0 * 3000.0 * 3000.0 * 4.0 * M_PI * M_PI / ( 60.0 * 60.0 );
+       rawData.scanData << scan;
 
-        return rawData;
+       return rawData;
     }
 
     // Helper to create test EditedData
     US_DataIO::EditedData createTestEditedData() {
-        US_DataIO::EditedData editData;
-        editData.runID = "test_run";
-        editData.dataType = "RA";
-        editData.channel = "A";
-        editData.cell = "1";
-        editData.meniscus = 5.8;
-        editData.bottom = 7.2;
+       US_DataIO::EditedData editData{};
+       editData.runID    = "test_run";
+       editData.dataType = "RA";
+       editData.channel  = "A";
+       editData.cell     = "1";
+       editData.meniscus = 5.8;
+       editData.bottom   = 7.2;
 
-        // Add test scans
-        US_DataIO::Scan scan;
-        scan.seconds = 0.0;
-        scan.omega2t = 0.0;
-        scan.rpm = 3000.0;
-        editData.scanData << scan;
+       // Add test scans
+       US_DataIO::Scan scan{};
+       scan.seconds = 0.0;
+       scan.omega2t = 0.0;
+       scan.rpm     = 3000.0;
+       editData.scanData << scan;
 
-        scan.seconds = 3600.0;
-        scan.omega2t = 3600.0 * 3000.0 * 3000.0 * 4.0 * M_PI * M_PI / (60.0 * 60.0);
-        editData.scanData << scan;
+       scan.seconds = 3600.0;
+       scan.omega2t = 3600.0 * 3000.0 * 3000.0 * 4.0 * M_PI * M_PI / ( 60.0 * 60.0 );
+       editData.scanData << scan;
 
-        return editData;
+       return editData;
     }
 
     // Helper to create test XML content
@@ -290,11 +290,11 @@ TEST_F(US_SimulationParametersTest, ComputeSpeedSteps_SingleSpeedScans_CreatesOn
 
     // Create scans with constant speed
     for (int i = 0; i < 10; ++i) {
-        US_DataIO::Scan scan;
-        scan.seconds = i * 360.0; // 6-minute intervals
-        scan.rpm = 3000.0;
-        scan.omega2t = scan.seconds * scan.rpm * scan.rpm * 4.0 * M_PI * M_PI / (60.0 * 60.0);
-        scans << scan;
+       US_DataIO::Scan scan{};
+       scan.seconds = i * 360.0; // 6-minute intervals
+       scan.rpm     = 3000.0;
+       scan.omega2t = scan.seconds * scan.rpm * scan.rpm * 4.0 * M_PI * M_PI / ( 60.0 * 60.0 );
+       scans << scan;
     }
 
     QVector<US_SimulationParameters::SpeedProfile> speedSteps;
