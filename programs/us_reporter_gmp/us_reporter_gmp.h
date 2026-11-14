@@ -7,7 +7,9 @@
 #include "../us_abde/us_norm_profile.h"
 #include "../us_analysis_profile/us_analysis_profile.h"
 #include "../us_ddist_combine/us_ddist_combine.h"
-#include "../us_fematch/us_fematch.h"
+#include "../us_fematch/us_plot_control_fem.h"
+#include "../us_fematch/us_resplot_fem.h"
+#include "../us_fematch/us_thread_worker.h"
 #include "../us_integral/us_integral.h"
 #include "../us_pseudo3d_combine/us_pseudo3d_combine.h"
 #include "us_db2.h"
@@ -18,6 +20,7 @@
 #include "us_protocol_util.h"
 #include "us_run_protocol.h"
 #include "us_select_item.h"
+#include "us_simparms.h"
 #include "us_solution.h"
 #include "us_widgets.h"
 
@@ -446,7 +449,7 @@ class US_ReporterGMP : public US_Widgets
         QVector<US_DataIO::RawData> rawData; //!< Raw data vector
         QVector<US_DataIO::EditedData> editedData; //!< Edited data vector
 
-        QVector<SP_SPEEDPROFILE> speed_steps; //!< Speed steps
+        QVector<US_SimulationParameters::SpeedProfile> speed_steps; //!< Speed steps
 
         US_DataIO::EditedData* edata; //!< Edited data
         US_DataIO::RawData* rdata; //!< Raw data

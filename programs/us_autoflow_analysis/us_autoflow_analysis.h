@@ -3,7 +3,8 @@
 #define US_ANALYSIS_AUTO_H
 
 #include "../us_analysis_profile/us_analysis_profile.h"
-#include "../us_fematch/us_fematch.h"
+#include "../us_fematch/us_resplot_fem.h"
+#include "../us_fematch/us_thread_worker.h"
 #include "../us_fit_meniscus/us_fit_meniscus.h"
 #include "../us_mwl_species_fit/us_load_run_noise.h"
 #include "../us_mwl_species_fit/us_mwl_sf_plot3d.h"
