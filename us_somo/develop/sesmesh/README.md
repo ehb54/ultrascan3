@@ -39,6 +39,7 @@ sesmesh [options] input.xyzr
   -M mass      mass in Da for the .bod file
   -T temp      temperature in C for the .bod file (default 20)
   -V visc      solvent viscosity in cP for the .bod file (default 1.002)
+  -C n1,n2,K   also coarsen the mesh for BEST: K meshes of n1 to n2 triangles (-C N: one)
   -k           keep internal cavities (default: fill them)
   -t n         threads
   -v           time each stage
@@ -52,6 +53,9 @@ Examples:
   `protein.vert`/`.face` with about 25,000 triangles, for rcoal. The area and volume in
   `protein.c3v` are extrapolated from four spacings.
 - `sesmesh -p 1.5 -g 0.2 -f bod -M 14305 protein.xyzr` writes a fine mesh for ZENO.
+- `sesmesh -p 1.5 -n 60000 -x 0.3,0.25 -f none -C 2152,3588,6 protein.xyzr` writes SOMO's six
+  BEST meshes for lysozyme, `protein_02152` to `protein_03588`, without the `.c3p` and rcoal
+  steps.
 
 With `-n`, sesmesh also meshes at a finer spacing and warns if the topology differs: a coarse
 grid can open a narrow channel or close a thin neck.
@@ -71,6 +75,8 @@ grid can open a narrow channel or close a thin neck.
   area and volume (as for `.c3v`), then one line with the nine coordinates of each triangle.
 - `base.bod`: ZENO's format: `UNITS A`, `TEMP`, `VISCOSITY`, `MASS` (with `-M`), then one
   `TRIANGLE` line per triangle.
+- `base_NNNNN`, `base_NNNNN.his` (with `-C`): the coarse meshes for BEST, named by their number
+  of triangles, with rcoal's histogram files (see rcoal below).
 
 Triangles run counter-clockwise seen from outside. Coordinates are written with 8 decimals.
 
@@ -129,7 +135,22 @@ it misses:
 a few triangles. Its meshes are therefore not the Fortran's, and `make test` checks only that
 they reach their targets.
 
-The library is `src/coalesce.h`, and it does not depend on the rest of sesmesh.
+**`sesmesh -C n1,n2,K`** coarsens the mesh it has just made in the same way, with no `.c3p`
+round trip.
+- **Targets.** They are rcoal's: n1, then steps of (n2 − n1)/(K − 1) up to n2.
+- **e.** It is found by bisection for each target, as with `-search`, and the targets run in
+  parallel.
+- **Area and volume.** The first line of each mesh holds the area and volume that `base.c3v`
+  would get, extrapolated in h² when `-x` is given.
+- **Same as the file route.** sesmesh starts from the surface rcoal would read from
+  `base.c3p`: the vertices as written, the same edges, the area and volume as written. So its
+  meshes are byte for byte those of `rcoal -search` on `base.c3p`. The `.his` files differ
+  only in the input file's name. `make test` checks this.
+- **Speed.** For lysozyme meshed at 60,000 triangles, the six meshes take 2.9 s, against
+  10.3 s for `rcoal -search` on the `.c3p`.
+
+The library is `src/coalesce.h`, which does not depend on the rest of sesmesh, and
+`src/rcoal_io.h` for rcoal's files.
 
 ## Method
 
@@ -342,7 +363,7 @@ are the same. US-SOMO uses this for its progress bar and Stop button.
     | 25,000 | 2,674–3,566 |
     | 40,000 | 3,448–4,404 |
 
-    `rcoal -search` (see rcoal above) hits the targets instead.
+    `rcoal -search` and `sesmesh -C` (see rcoal above) hit the targets instead.
 
   - BEST through rcoal, extrapolated linearly in 1/N:
     - At a 30,000-triangle input, sesmesh agrees with msroll at the same input size within
@@ -361,5 +382,6 @@ are the same. US-SOMO uses this for its progress bar and Stop button.
 
 ## Licence
 
-MIT; see `LICENSE`. The rcoal port (`src/coalesce.*`, `src/rcoal.cpp`) is derived from Sergio
-Aragon's rcoal in best-hydro, which is also MIT-licensed, and carries his copyright as well.
+MIT; see `LICENSE`. The rcoal port (`src/coalesce.*`, `src/rcoal_io.*`, `src/rcoal.cpp`) is
+derived from Sergio Aragon's rcoal in best-hydro, which is also MIT-licensed, and carries his
+copyright as well.

@@ -2,13 +2,13 @@ sesmesh in US-SOMO
 ==================
 
 This directory holds sesmesh, a mesher for the solvent-excluded surface (SES) of a
-set of spheres, from https://github.com/ehb54/sesmesh at commit 20a1d27 (2026-11-14,
-"Progress reports and stop requests for build_mesh, clean_mesh and check_mesh").
-The files are unchanged; rcoal's C++ port (src/coalesce.*, src/fortio.h, src/rcoal.cpp),
-which SOMO does not use, is left out.
+set of spheres, from https://github.com/ehb54/sesmesh at commit 108de64 (2026-11-14,
+"Merge pull request #5 from ehb54/progress-cancel").  The files are unchanged.
 
-  src/          the sesmesh sources: ses, mesh, clean, io, parallel, vec3, and
-                sesmesh.cpp, the command-line program
+  src/          the sesmesh sources: ses, mesh, clean, parallel, vec3 (the mesher),
+                io (its file writers), sesmesh.cpp (the command-line program), and
+                coalesce, rcoal_io, fortio.h and rcoal.cpp (its C++ port of BEST's
+                mesh coarsener rcoal)
   README.md     sesmesh's README: method, options and validation
   LICENSE       sesmesh's MIT license (it also names rcoal's author)
 
@@ -18,11 +18,13 @@ sesmesh is MIT-licensed (see LICENSE), so it can be built into US-SOMO.
 How SOMO builds and uses it
 ---------------------------
 
-libus_somo.pro compiles src/{ses,mesh,clean,io,parallel}.cpp into the library.
-src/sesmesh.cpp (the program's main) is kept only to mirror sesmesh's tree.  SOMO
-includes the headers by path ("../sesmesh/src/ses.h"); src/ is not on the include
-path, because src/io.h would hide the system <io.h> on Windows.  sesmesh needs C++14
-or later, so libus_somo.pro sets CONFIG += c++17.
+libus_somo.pro compiles only the mesher, src/{ses,mesh,clean,parallel}.cpp, into the
+library.  SOMO writes the .bod file itself, so io, which also needs the rcoal port, is
+not built; the other files are kept only to mirror sesmesh's tree (sesmesh.cpp and
+rcoal.cpp hold programs' main()s).  SOMO includes the headers by path
+("../sesmesh/src/ses.h"); src/ is not on the include path, because src/io.h would
+hide the system <io.h> on Windows.  sesmesh needs C++14 or later, so libus_somo.pro
+sets CONFIG += c++17.
 
 When "Compute on the solvent-excluded surface of the bead model" is checked in the
 ZENO options, US_Hydrodyn_Zeno::run (src/us_hydrodyn_zeno.cpp) takes the bead
@@ -38,4 +40,5 @@ Updating
 --------
 
 Copy src/*.{h,cpp}, README.md and LICENSE from a newer sesmesh commit, update the
-commit above, and check that the file list in libus_somo.pro still matches src/.
+commit above, and check that the mesher's files in libus_somo.pro (and what they
+include) still match src/.
