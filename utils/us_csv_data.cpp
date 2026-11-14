@@ -81,15 +81,18 @@ QString US_CSV_Data::error() const {
 namespace
 {
 // Splits the lines with one delimiter and converts every data cell to a number.
-// split_ok is true when every line has the same number of fields.
+// split_ok is true when every line has the same number of fields; n_fields is the
+// number of fields in the first line.
 bool parseLines( const QStringList&        file_lines,
                  const QString&            delimiter,
                  QStringList&              header,
                  QVector<QVector<double>>& columns,
                  QString&                  error,
-                 bool&                     split_ok )
+                 bool&                     split_ok,
+                 int&                      n_fields )
 {
    split_ok                       = false;
+   n_fields                       = 0;
    const int            n_rows    = file_lines.size();
    int                  n_columns = 0;
    bool                 h_is_d    = true;
@@ -104,6 +107,7 @@ bool parseLines( const QStringList&        file_lines,
       if ( ii == 0 )
       {
          n_columns = lsp.size();
+         n_fields  = n_columns;
          bool ok;
          foreach ( QString val, lsp )
          {
@@ -185,12 +189,10 @@ bool US_CSV_Data::readFile( const QString& filePath, const QString& delimiter )
    QStringList file_lines;
    if ( file.open( QIODevice::ReadOnly ) )
    {
-      file_lines.clear();
       QTextStream ts( &file );
       while ( !ts.atEnd() )
       {
-         QString    line     = ts.readLine().trimmed();
-         QByteArray byte_arr = line.toUtf8();
+         QString line = ts.readLine().trimmed();
          if ( !line.isEmpty() )
          {
             file_lines.append( line );
@@ -226,30 +228,26 @@ bool US_CSV_Data::readFile( const QString& filePath, const QString& delimiter )
    }
 
    // Auto-detection accepts the first candidate that gives a rectangular, numeric table.
-   // On failure, report the conversion error of the first candidate that split evenly,
-   // otherwise the split error of the last candidate.
-   QString conversion_error;
-   QString split_error;
+   // On failure, report the error of the candidate that splits the first line into the
+   // most fields (the earliest on a tie): that is the delimiter the file most likely uses.
+   int most_fields = -1;
    for ( const QString& candidate : delimiters )
    {
       QStringList              header;
       QVector<QVector<double>> columns;
       QString                  error;
       bool                     split_ok = false;
-      if ( parseLines( file_lines, candidate, header, columns, error, split_ok ) )
+      int                      n_fields = 0;
+      if ( parseLines( file_lines, candidate, header, columns, error, split_ok, n_fields ) )
       {
          return setData( filePath, header, columns );
       }
-      if ( !split_ok )
+      if ( n_fields > most_fields )
       {
-         split_error = error;
-      }
-      else if ( conversion_error.isEmpty() )
-      {
-         conversion_error = error;
+         most_fields = n_fields;
+         m_error     = error;
       }
    }
-   m_error = conversion_error.isEmpty() ? split_error : conversion_error;
    return false;
 }
 

@@ -1365,7 +1365,11 @@ void US_BufferGuiNew::create_new_buffer_component() {
    US_BufferComponentRequerster* bcomp_dialog = new US_BufferComponentRequerster(&bc,component_list);
    bcomp_dialog -> exec();
    qApp->processEvents();
-   if (!bc.name.isEmpty())return;
+   // Cancel clears the name; save only an accepted component.
+   if ( bc.name.isEmpty() )
+   {
+      return;
+   }
    bc.saveToDB(&db);
 
    // update component list

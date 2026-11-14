@@ -10984,6 +10984,11 @@ DbgLv(1) << "wTSdb:  examine status" << status << "cksum-db" << cksum;
 DbgLv(1) << "wTSdb:   upload status" << status;
       }
    }
+   else
+   { // No record: invalid arguments, missing local files or a failed DB write
+      qDebug() << "writeTimeStateDB: dbCreate failed with" << timestateID;
+      status = timestateID;
+   }
 DbgLv(1) << "wTSdb:  Timestate from DB is used";
    return status;
 }

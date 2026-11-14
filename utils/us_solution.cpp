@@ -479,25 +479,19 @@ qDebug() << "SolSvDB: soAna stat" << status << db->lastError();
    //if ( !extinction.isEmpty() )
    if ( !extinction.isEmpty() && new_or_changed_spectrum )
    {
-      if ( !replace_spectrum )
+      // Create the profile, or replace a stored one (whose old values are discarded).
+      QMap<double, double> stored;
+      int profileID = replace_spectrum ? US_ExtProfile::fetch_eprofile( db, solutionID, compType, valType, stored ) : -1;
+
+      if ( profileID == -1 )
       {
-         qDebug() << "Creating Spectrum!!!";
-         US_ExtProfile::create_eprofile( db, solutionID, compType, valType, extinction);
+         US_ExtProfile::create_eprofile( db, solutionID, compType, valType, extinction );
       }
       else
-      {
-         qDebug() << "Updating Spectrum!!!";
+         US_ExtProfile::update_eprofile( db, profileID, solutionID, compType, valType, extinction );
 
-         QMap<double, double> new_extinction = extinction;
-         int profileID = US_ExtProfile::fetch_eprofile(  db, solutionID, compType, valType, extinction);
-         
-         qDebug() << "Old Extinction keys: " << extinction.keys().count() << ", ProfileID: " << profileID;
-         US_ExtProfile::update_eprofile( db, profileID, solutionID, compType, valType, new_extinction);
-         qDebug() << "New Extinction keys: " << new_extinction.keys().count() << ", ProfileID: " << profileID;
-         
-         replace_spectrum = false;
-      }
-      new_or_changed_spectrum = false; 
+      replace_spectrum        = false;
+      new_or_changed_spectrum = false;
    }
    ////////////////////////////////////////    
 
