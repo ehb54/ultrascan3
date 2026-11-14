@@ -14,6 +14,14 @@
 #include <cstdio>
 #include <exception>
 
+namespace {
+
+// One mesh at a time: a progress function that processes events could otherwise start another,
+// which would wait forever for sesmesh's thread pool.
+bool us_hydrodyn_zeno_mesh_running = false;
+
+}
+
 std::vector < double > us_hydrodyn_zeno_mesh_spacings( const QString & list )
 {
    std::vector < double > spacings;
@@ -51,15 +59,21 @@ US_Hydrodyn_Zeno_Mesh_Options us_hydrodyn_zeno_mesh_options(
 }
 
 bool us_hydrodyn_zeno_mesh(
-                           const std::vector < double >         & spheres,
-                           const US_Hydrodyn_Zeno_Mesh_Options  & options,
-                           QTextStream                          & ts,
-                           US_Hydrodyn_Zeno_Mesh_Info           & info,
-                           QString                              & error
+                           const std::vector < double >           & spheres,
+                           const US_Hydrodyn_Zeno_Mesh_Options    & options,
+                           QTextStream                            & ts,
+                           US_Hydrodyn_Zeno_Mesh_Info             & info,
+                           QString                                & error,
+                           const US_Hydrodyn_Zeno_Mesh_Progress   & progress
                            )
 {
    info  = US_Hydrodyn_Zeno_Mesh_Info();
    error = "";
+
+   if ( us_hydrodyn_zeno_mesh_running ) {
+      error = "another mesh is being made; wait for it or stop it";
+      return false;
+   }
 
    if ( !( options.probe >= 0 ) ) {
       error = QString( "the probe radius must be zero or positive (it is %1)" ).arg( options.probe );
@@ -85,8 +99,32 @@ bool us_hydrodyn_zeno_mesh(
       return false;
    }
 
+   struct Running {
+      Running()  { us_hydrodyn_zeno_mesh_running = true; }
+      ~Running() { us_hydrodyn_zeno_mesh_running = false; }
+   } running;
+
+   // The progress of each sesmesh call, as a part [from, to] of the whole: on 1AO6 (16 threads) the
+   // mesh takes about 35% of the time, the clean-up 37%, the check 5% and writing the lines, which
+   // runs on one thread, the rest (without the clean-up, half).
+   auto part = [ & ]( double from, double to, const QString & what ) -> sesmesh::ProgressFn {
+      if ( !progress ) {
+         return sesmesh::ProgressFn();
+      }
+      return [ &progress, from, to, what ]( double fraction, const char * stage ) {
+         return progress( from + ( to - from ) * fraction, what.isEmpty() ? QString( stage ) : what + ", " + stage );
+      };
+   };
+   const double mesh_to  = options.clean ? 0.35 : 0.50;
+   const double clean_to = options.clean ? 0.72 : 0.50;
+   const double check_to = options.clean ? 0.77 : 0.56;
+
    try {
       auto start = std::chrono::steady_clock::now();
+
+      if ( progress && !progress( 0, "setup" ) ) {
+         throw sesmesh::Cancelled();
+      }
 
       sesmesh::set_threads( options.threads < 1 ? 1 : options.threads );
 
@@ -95,6 +133,7 @@ bool us_hydrodyn_zeno_mesh(
       sesmesh::MeshOptions mesh_options;
       mesh_options.h             = options.h;
       mesh_options.fill_cavities = options.fill_cavities;
+      mesh_options.progress      = part( 0, mesh_to, "mesh" );
 
       sesmesh::Mesh      mesh;
       sesmesh::BuildInfo build_info;
@@ -103,10 +142,11 @@ bool us_hydrodyn_zeno_mesh(
       if ( options.clean ) {
          sesmesh::CleanOptions clean_options;
          sesmesh::CleanInfo    clean_info;
+         clean_options.progress = part( mesh_to, clean_to, "clean-up" );
          sesmesh::clean_mesh( model, options.h, clean_options, mesh, clean_info );
       }
 
-      sesmesh::MeshCheck check = sesmesh::check_mesh( mesh );
+      sesmesh::MeshCheck check = sesmesh::check_mesh( mesh, part( clean_to, check_to, "" ) );
 
       info.vertices        = check.vertices - check.unused_vertices;
       info.triangles       = check.triangles;
@@ -122,17 +162,28 @@ bool us_hydrodyn_zeno_mesh(
          return false;
       }
 
+      sesmesh::Progress write_progress( part( check_to, 1, "" ) );
+      write_progress.stage( "writing", 0, 1 );
+      const size_t triangles = mesh.tri.size();
       char buf[ 320 ];
-      for ( const auto & t : mesh.tri ) {
+      for ( size_t k = 0; k < triangles; ++k ) {
+         const auto & t = mesh.tri[ k ];
          const sesmesh::Vec3 & a = mesh.x[ t[ 0 ] ];
          const sesmesh::Vec3 & b = mesh.x[ t[ 1 ] ];
          const sesmesh::Vec3 & c = mesh.x[ t[ 2 ] ];
          std::snprintf( buf, sizeof( buf ), "TRIANGLE %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f\n",
                         a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z );
          ts << buf;
+         if ( ( ( k + 1 ) & 16383 ) == 0 ) {
+            write_progress.at( double( k + 1 ) / double( triangles ) );
+         }
       }
 
       info.seconds = std::chrono::duration < double >( std::chrono::steady_clock::now() - start ).count();
+   } catch ( const sesmesh::Cancelled & ) {
+      info.stopped = true;
+      error = "stopped";
+      return false;
    } catch ( const std::exception & e ) {
       error = QString( "sesmesh: %1" ).arg( e.what() );
       return false;

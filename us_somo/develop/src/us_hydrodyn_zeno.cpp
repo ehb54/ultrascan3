@@ -13583,9 +13583,27 @@ bool US_Hydrodyn_Zeno::run(
                                .arg( unit_name ) );
       qApp->processEvents();
 
+      // the progress bar follows the meshing, and Stop ends it
       QString mesh_error;
-      if ( !us_hydrodyn_zeno_mesh( spheres, mesh_options, tso, mesh_info, mesh_error ) ) {
+      QString progress_format = zeno_progress->format();
+      zeno_progress->setValue( 0 );
+      zeno_progress->setMaximum( 1000 );
+      auto mesh_progress = [ & ]( double fraction, const QString & stage ) {
+         zeno_progress->setFormat( QString( "Meshing (%1) %p%" ).arg( stage ) );
+         zeno_progress->setValue( (int) ( 1000 * fraction ) );
+         qApp->processEvents();
+         return !us_hydrodyn->stopFlag;
+      };
+      bool meshed = us_hydrodyn_zeno_mesh( spheres, mesh_options, tso, mesh_info, mesh_error, mesh_progress );
+      zeno_progress->setFormat( progress_format );
+      zeno_progress->reset();
+      if ( !meshed ) {
          fout.close();
+         if ( mesh_info.stopped ) {
+            fout.remove();
+            error_msg = "Stopped by user";
+            return false;
+         }
          error_msg = QString( "Error: could not mesh the solvent-excluded surface of the bead model: %1" ).arg( mesh_error );
          return false;
       }

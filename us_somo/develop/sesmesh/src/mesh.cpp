@@ -297,6 +297,7 @@ void build_mesh( const SesModel& model, const MeshOptions& opt, Mesh& mesh, Buil
    }
    info = BuildInfo();
    mesh = Mesh();
+   Progress prog( opt.progress );
    const double p = model.probe();
    const double s3 = std::sqrt( 3.0 );
    const double rb = h * ( BS - 1 ) * s3 / 2;   // brick centre to its corner nodes
@@ -337,6 +338,7 @@ void build_mesh( const SesModel& model, const MeshOptions& opt, Mesh& mesh, Buil
 
    // 1. Classify bricks by f at their centres.
    double t0 = now();
+   prog.stage( "grid", 0, 0.01 );
    std::vector<std::vector<int>> cands( threads() );
    parallel_for( nbricks, [&]( long b, int thread ) {
       std::vector<int>& cand = cands[thread];
@@ -349,7 +351,7 @@ void build_mesh( const SesModel& model, const MeshOptions& opt, Mesh& mesh, Buil
       }
       double fc = model.eval( xc, cand, dmax_brick );
       g.slot[b] = fc > tau ? OUT : ( fc < -tau ? IN : BAND );
-   }, 256 );
+   }, 256, &prog );
    for ( long b = 0; b < nbricks; ++b ) {
       if ( g.slot[b] == BAND ) {
          g.slot[b] = int32_t( g.band.size() );
@@ -368,6 +370,7 @@ void build_mesh( const SesModel& model, const MeshOptions& opt, Mesh& mesh, Buil
    info.seconds_classify = t1 - t0;
 
    // 2. f at every node of the band bricks.
+   prog.stage( "surface nodes", 0.01, 0.21 );
    parallel_for( nslots, [&]( long s, int thread ) {
       std::vector<int>& cand = cands[thread];
       int bi, bj, bk;
@@ -378,7 +381,7 @@ void build_mesh( const SesModel& model, const MeshOptions& opt, Mesh& mesh, Buil
          Vec3 x = g.pos( bi * BS + ( l & 7 ), bj * BS + ( ( l >> 3 ) & 7 ), bk * BS + ( l >> 6 ) );
          fs[l] = float( model.eval( x, cand, dmax_node ) );
       }
-   }, 16 );
+   }, 16, &prog );
    info.node_evals = nslots * BS3;
    double t2 = now();
    info.seconds_nodes = t2 - t1;
@@ -386,6 +389,7 @@ void build_mesh( const SesModel& model, const MeshOptions& opt, Mesh& mesh, Buil
    // 3. Flood fill from the edge of the grid through outside nodes, along the 14 directions
    //    that tetrahedron edges take, a whole brick at a time for OUT bricks.
    {
+      prog.stage( "outside", 0.21, 0.26 );
       std::vector<long> bstack;
       std::vector<std::array<int, 3>> nstack;
       for ( int bk = 0; bk < g.nb[2]; ++bk ) {
@@ -421,7 +425,13 @@ void build_mesh( const SesModel& model, const MeshOptions& opt, Mesh& mesh, Buil
             }
          }
       };
+      // Progress: a brick popped counts as 64 nodes; about half the band nodes are outside.
+      const double fill_work = 64.0 * double( info.out_bricks ) + 0.5 * double( nslots ) * BS3;
+      long steps = 0, popped = 0;
       while ( !bstack.empty() || !nstack.empty() ) {
+         if ( ( ++steps & 4095 ) == 0 ) {
+            prog.at( ( 64.0 * double( popped ) + double( steps - popped ) ) / std::max( 1.0, fill_work ) );
+         }
          if ( !nstack.empty() ) {
             std::array<int, 3> n = nstack.back();
             nstack.pop_back();
@@ -435,6 +445,7 @@ void build_mesh( const SesModel& model, const MeshOptions& opt, Mesh& mesh, Buil
          }
          long b = bstack.back();
          bstack.pop_back();
+         ++popped;
          int bi, bj, bk;
          g.brick_coords( b, bi, bj, bk );
          for ( int dz = -1; dz <= 1; ++dz ) {
@@ -522,6 +533,7 @@ void build_mesh( const SesModel& model, const MeshOptions& opt, Mesh& mesh, Buil
    std::atomic<bool> failed( false );
    std::vector<long> evals_t( threads(), 0 );
    {
+      prog.stage( "vertices", 0.26, 0.95 );
       parallel_for( nslots, [&]( long s, int thread ) {
          std::vector<int>& cand = cands[thread];
          long& root_evals = evals_t[thread];
@@ -569,7 +581,7 @@ void build_mesh( const SesModel& model, const MeshOptions& opt, Mesh& mesh, Buil
                vrec[s].push_back( { x, nrm, inf.atom, inf.feature } );
             }
          }
-      }, 16 );
+      }, 16, &prog );
    }
    if ( failed ) {
       throw std::logic_error( "a cut edge leaves the band" );
@@ -618,6 +630,7 @@ void build_mesh( const SesModel& model, const MeshOptions& opt, Mesh& mesh, Buil
       }
       return base[s] + long( it - ks.begin() );
    };
+   prog.stage( "triangles", 0.95, 1 );
    std::vector<std::vector<std::array<int, 3>>> tris( nslots );
    parallel_for( nslots, [&]( long s, int ) {
       int bi, bj, bk;
@@ -667,7 +680,7 @@ void build_mesh( const SesModel& model, const MeshOptions& opt, Mesh& mesh, Buil
             }
          }
       }
-   }, 16 );
+   }, 16, &prog );
    if ( failed ) {
       throw std::logic_error( "a triangle has a vertex on an uncut edge" );
    }
@@ -683,8 +696,9 @@ void build_mesh( const SesModel& model, const MeshOptions& opt, Mesh& mesh, Buil
    info.seconds_triangles = now() - t4;
 }
 
-MeshCheck check_mesh( const Mesh& m ) {
+MeshCheck check_mesh( const Mesh& m, const ProgressFn& progress ) {
    MeshCheck c;
+   Progress prog( progress );
    const long nv = long( m.x.size() ), nt = long( m.tri.size() );
    c.vertices = nv;
    c.triangles = nt;
@@ -704,6 +718,7 @@ MeshCheck check_mesh( const Mesh& m ) {
       const long block = 4096, nb = blocks( nt, block );
       std::vector<double> pa( nb, 0 ), pv( nb, 0 );
       std::vector<long> pd( nb, 0 );
+      prog.stage( "check", 0, 0.45 );
       parallel_for( nb, [&]( long kb, int ) {
          for ( long t = kb * block; t < std::min( nt, ( kb + 1 ) * block ); ++t ) {
             const Vec3 &A = m.x[m.tri[t][0]], &B = m.x[m.tri[t][1]], &C = m.x[m.tri[t][2]];
@@ -721,7 +736,7 @@ MeshCheck check_mesh( const Mesh& m ) {
             double angC = 3.14159265358979323846 - angA - angB;
             minang[t] = deg * std::min( angA, std::min( angB, angC ) );
          }
-      } );
+      }, 1, &prog );
       for ( long kb = 0; kb < nb; ++kb ) {
          area += pa[kb];
          vol += pv[kb];
@@ -747,6 +762,7 @@ MeshCheck check_mesh( const Mesh& m ) {
 
    // Edges: each must be in exactly two triangles, once each way.
    {
+      prog.stage( "check", 0.45, 0.6 );
       std::vector<uint64_t> e( 3 * nt );
       parallel_for( nt, [&]( long t, int ) {
          for ( int k = 0; k < 3; ++k ) {
@@ -754,9 +770,14 @@ MeshCheck check_mesh( const Mesh& m ) {
             uint64_t lo = std::min( a, b ), hi = std::max( a, b );
             e[3 * t + k] = ( lo << 33 ) | ( hi << 1 ) | ( a > b ? 1 : 0 );
          }
-      }, 4096 );
+      }, 4096, &prog );
       parallel_sort( e );
+      prog.stage( "check", 0.6, 0.8 );
+      long steps = 0;
       for ( size_t i = 0; i < e.size(); ) {
+         if ( ( ++steps & 65535 ) == 0 ) {
+            prog.at( double( i ) / double( e.size() ) );
+         }
          size_t j = i;
          int fwd = 0;
          while ( j < e.size() && ( e[j] >> 1 ) == ( e[i] >> 1 ) ) {
@@ -795,6 +816,7 @@ MeshCheck check_mesh( const Mesh& m ) {
          }
       }
    }
+   prog.stage( "check", 0.8, 0.9 );
    std::vector<long> unused_t( threads(), 0 ), nmv_t( threads(), 0 );
    parallel_for( nv, [&]( long v, int thread ) {
       long b = start[v], n = start[v + 1] - start[v];
@@ -823,7 +845,7 @@ MeshCheck check_mesh( const Mesh& m ) {
       if ( !ok || steps != n ) {
          ++nmv_t[thread];
       }
-   }, 1024 );
+   }, 1024, &prog );
    long unused = 0, nmv = 0;
    for ( size_t k = 0; k < unused_t.size(); ++k ) {
       unused += unused_t[k];
@@ -833,6 +855,7 @@ MeshCheck check_mesh( const Mesh& m ) {
    c.nonmanifold_vertices = nmv;
    c.euler = ( nv - unused ) - c.edges + nt;
 
+   prog.stage( "check", 0.9, 1 );
    // Connected components.
    std::vector<int> parent( nv );
    for ( long v = 0; v < nv; ++v ) {
@@ -845,7 +868,11 @@ MeshCheck check_mesh( const Mesh& m ) {
       }
       return x;
    };
+   long steps = 0;
    for ( const auto& t : m.tri ) {
+      if ( ( ++steps & 65535 ) == 0 ) {
+         prog.at( double( steps ) / double( nt ) );
+      }
       int a = find( t[0] ), b = find( t[1] ), d = find( t[2] );
       parent[b] = a;
       parent[find( d )] = find( a );

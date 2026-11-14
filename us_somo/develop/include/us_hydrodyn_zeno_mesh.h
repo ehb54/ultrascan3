@@ -10,6 +10,7 @@
 
 #include <QString>
 #include <QTextStream>
+#include <functional>
 #include <map>
 #include <vector>
 
@@ -33,6 +34,7 @@ struct US_Hydrodyn_Zeno_Mesh_Info {
    bool   closed_manifold = false;
    double min_angle       = 0;      // smallest triangle angle, degrees
    double seconds         = 0;
+   bool   stopped         = false;  // the progress function asked to stop
 };
 
 // The grid spacings of the "zeno_mesh_h" setting: one value, or several separated by commas,
@@ -50,15 +52,23 @@ US_Hydrodyn_Zeno_Mesh_Options us_hydrodyn_zeno_mesh_options(
                                                             int                                   threads
                                                             );
 
+// progress( fraction, stage ): the fraction of the meshing done (0 to 1, an estimate) and the
+// name of its stage, about every 0.1 s while it runs, on the calling thread.  Returning false
+// stops the meshing.  The function may process events, but must not start another mesh: a call
+// made while one runs fails.
+typedef std::function < bool ( double fraction, const QString & stage ) > US_Hydrodyn_Zeno_Mesh_Progress;
+
 // spheres holds x, y, z, r for each sphere.  Writes one line
 // "TRIANGLE x1 y1 z1 x2 y2 z2 x3 y3 z3" per triangle to ts, counter-clockwise seen from outside.
 // Returns false, with error set, if the spheres cannot be meshed.
+// With a progress function that asks to stop, returns false with info.stopped set.
 bool us_hydrodyn_zeno_mesh(
-                           const std::vector < double >         & spheres,
-                           const US_Hydrodyn_Zeno_Mesh_Options  & options,
-                           QTextStream                          & ts,
-                           US_Hydrodyn_Zeno_Mesh_Info           & info,
-                           QString                              & error
+                           const std::vector < double >           & spheres,
+                           const US_Hydrodyn_Zeno_Mesh_Options    & options,
+                           QTextStream                            & ts,
+                           US_Hydrodyn_Zeno_Mesh_Info             & info,
+                           QString                                & error,
+                           const US_Hydrodyn_Zeno_Mesh_Progress   & progress = US_Hydrodyn_Zeno_Mesh_Progress()
                            );
 
 #endif

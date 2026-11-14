@@ -4103,8 +4103,11 @@ void US_Hydrodyn::visualize( bool movie_frame,
    // solvent-excluded surface of the beads shown: they are meshed as for ZENO (with the coarsest
    // spacing of a sequence), scaled like the beads in write_bead_spt(), and the mesh, written to
    // <base>-SES.bod, is loaded by <base>.spt as a wire mesh.
+   // Stop during one model's mesh skips the meshes of the others.
+   bool mesh_stopped = false;
    auto add_mesh = [ & ]( const QString & base, vector < PDB_atom > * model ) {
       if ( movie_frame ||
+           mesh_stopped ||
            gparams[ "zeno_mesh" ] != "true" ||
            gparams[ "zeno_mesh_view" ] == "false" ) {
          return;
@@ -4142,15 +4145,42 @@ void US_Hydrodyn::visualize( bool movie_frame,
          editor_msg( "red", QString( us_tr( "Error: could not create %1, the mesh is not shown\n" ) ).arg( mesh_name ) );
          return;
       }
+      // Unless a calculation is running (and owns the progress bar and Stop), the progress bar
+      // follows the meshing and Stop ends it.
+      const bool calculating = pb_stop_calc->isEnabled();
+      US_Hydrodyn_Zeno_Mesh_Progress mesh_progress;
+      QString progress_format = progress->format();
+      if ( !calculating ) {
+         stopFlag = false;
+         pb_stop_calc->setEnabled( true );
+         progress->setValue( 0 );
+         progress->setMaximum( 1000 );
+         mesh_progress = [ & ]( double fraction, const QString & stage ) {
+            progress->setFormat( QString( "Meshing (%1) %p%" ).arg( stage ) );
+            progress->setValue( (int) ( 1000 * fraction ) );
+            qApp->processEvents();
+            return !stopFlag;
+         };
+      }
       bool ok;
       {
          QTextStream ts( &f );
-         ok = us_hydrodyn_zeno_mesh( spheres, options, ts, info, error );
+         ok = us_hydrodyn_zeno_mesh( spheres, options, ts, info, error, mesh_progress );
       }
       f.close();
+      if ( !calculating ) {
+         progress->setFormat( progress_format );
+         progress->reset();
+         pb_stop_calc->setEnabled( false );
+      }
       if ( !ok ) {
          f.remove();
-         editor_msg( "red", QString( us_tr( "Could not mesh the bead model, the mesh is not shown: %1\n" ) ).arg( error ) );
+         if ( info.stopped ) {
+            mesh_stopped = true;
+            editor_msg( "dark red", us_tr( "Stopped: the mesh is not shown\n" ) );
+         } else {
+            editor_msg( "red", QString( us_tr( "Could not mesh the bead model, the mesh is not shown: %1\n" ) ).arg( error ) );
+         }
          return;
       }
 
