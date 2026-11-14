@@ -990,18 +990,9 @@ void US_ResidPlotFem::plot_rdata()
          resbmap = new US_ResidsBitmap( resids );
          connect( resbmap, &QObject::destroyed,
                   this,    &US_ResidPlotFem::resids_closed );
+         // A bitmap this dialog creates is its own window but is destroyed with it.
+         resbmap->setParent( this, Qt::Dialog );
          resbmap->move( this->pos() + QPoint( 100, 100 ) );
-
-	 if ( mode == Analysis )
-	   {
-	     //resbmap->setWindowFlags( Qt::Dialog );
-	     //resbmap->setWindowModality(Qt::ApplicationModal);
-	     //resbmap->setParent(this, Qt::Window);
-	     //resbmap->disconnect();
-	     resbmap->setParent(this, Qt::Dialog);
-	     //resbmap->setWindowFlags ( Qt::WindowTitleHint );
-	   }
-	 
          resbmap->show();
          resbmap->raise();
       }

@@ -412,7 +412,7 @@ private slots:
         QVERIFY(plot->testAttribute(Qt::WA_DeleteOnClose));
         auto bm = bitmap(*plot);
         QVERIFY(bm);
-        QCOMPARE(bm->parentWidget(), mode == "ANALYSIS" ? plot.data() : nullptr);
+        QCOMPARE(bm->parentWidget(), plot.data()); // D02: in every mode.
         QVERIFY(bm->testAttribute(Qt::WA_DeleteOnClose));
         QVERIFY(!in.bitmap); // Newly created bitmap is not published back to caller.
         bm->close(); deferredDeletes();
@@ -422,8 +422,8 @@ private slots:
         plot->show(); plot->close(); deferredDeletes();
         QCOMPARE(closed.count(), 1); QCOMPARE(destroyed.count(), 1);
         QVERIFY(!plot);
-        // Window close does not run close_all; only a child bitmap goes with the dialog.
-        QCOMPARE(bool(bm), mode != "ANALYSIS");
+        // D02: window close does not run close_all, but the child bitmap goes with the dialog.
+        QVERIFY(!bm);
     }
 
     void closeButtonDestroysDialogAndBitmap_data() { modeRows(); }

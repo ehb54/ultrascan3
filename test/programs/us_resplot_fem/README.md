@@ -30,8 +30,7 @@ dialog. Mode strings in the test data map to the enum through `toMode()`.
 - 100 open/close cycles per mode: every closed dialog is destroyed.
 
 Known legacy results intentionally asserted: all scans excluded displays NaN;
-window close does not destroy an unparented bitmap; REPORT bitmap-checkbox
-changes wait for another refresh.
+REPORT bitmap-checkbox changes wait for another refresh.
 These assertions preserve evidence, not endorsement. Defect repair must introduce
 an intended-behavior regression test that fails before changing production code,
 with a linked defect ID and explicit change to the characterization expectation.
@@ -145,3 +144,11 @@ The fix also exposed a crash: a child bitmap (Analysis mode) emitted `destroyed`
 into `resids_closed` while the dialog was being destroyed.
 `closeDestroysDialog(analysis)` crashed until the destructor disconnected the
 bitmap.
+
+### D02: a created bitmap closes with its dialog (T05)
+
+A bitmap the dialog creates is now its child (`Qt::Dialog` window) in every
+mode, not only Analysis, so a window close destroys it along with the dialog.
+`closeDestroysDialog` now expects that in all three modes; FEMatch and Report
+failed before the fix. A bitmap passed in by the caller (FEMatch's) is still
+the caller's: `borrowedBitmapAndRefresh` is unchanged.
