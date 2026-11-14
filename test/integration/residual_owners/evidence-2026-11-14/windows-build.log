@@ -1,0 +1,389 @@
+[0/2] Re-checking globbed directories...
+[1/350] Validating XML QRC references
+-- QRC validation passed: 16 files verified in C:/src/us3-residual-t10/build/us3_xml_auto.qrc
+[2/350] Automatic UIC for target us3_resources
+[3/350] Automatic RCC for us3_xml_auto.qrc
+[4/350] Building CXX object CMakeFiles\us3_resources.dir\us3_resources_autogen\EJRQKI7XPS\qrc_us3_xml_auto.cpp.obj
+[5/350] Linking CXX static library lib\us3_resources.lib
+[6/350] Automatic MOC and UIC for target us_utils
+[7/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_analyte.cpp.obj
+[8/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_ana_profile.cpp.obj
+[9/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_utils_autogen\mocs_compilation.cpp.obj
+[10/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_archive.cpp.obj
+[11/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_astfem_math.cpp.obj
+[12/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_calc_coefficients.cpp.obj
+[13/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_astfem_rsa.cpp.obj
+[14/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_buffer.cpp.obj
+[15/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_calc_composite.cpp.obj
+[16/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_calc_matching.cpp.obj
+[17/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_calc_integral.cpp.obj
+[18/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_calc_range.cpp.obj
+[19/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_calc_replicate.cpp.obj
+[20/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_calc_smoothing.cpp.obj
+[21/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_calc_units.cpp.obj
+[22/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_calc_tolerance.cpp.obj
+[23/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_calc_statistics.cpp.obj
+[24/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_calc_version.cpp.obj
+[25/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_calc_validation.cpp.obj
+[26/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_constants.cpp.obj
+[27/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_cfa_data.cpp.obj
+[28/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_convert.cpp.obj
+[29/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_crc.cpp.obj
+[30/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_convertio.cpp.obj
+[31/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_crypto.cpp.obj
+[32/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_csv_data.cpp.obj
+[33/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_datafiles.cpp.obj
+[34/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_dataIO.cpp.obj
+[35/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_db2.cpp.obj
+C:\src\us3-residual-t10\source\utils\us_db2.cpp(1241): warning C4834: discarding return value of function with [[nodiscard]] attribute
+[36/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_dmga_constr.cpp.obj
+[37/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_eprofile.cpp.obj
+[38/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_geturl.cpp.obj
+[39/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_experiment.cpp.obj
+[40/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_global.cpp.obj
+[41/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_gzip.cpp.obj
+[42/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_http_post.cpp.obj
+[43/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_hardware.cpp.obj
+[44/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_license_t.cpp.obj
+[45/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_hydrosim.cpp.obj
+[46/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_lamm_astfvm.cpp.obj
+[47/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_link_ssl.cpp.obj
+[48/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_lm.cpp.obj
+[49/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_local_server.cpp.obj
+[50/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_math2.cpp.obj
+[51/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_matrix.cpp.obj
+[52/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_memory.cpp.obj
+[53/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_noise.cpp.obj
+[54/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_model.cpp.obj
+[55/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_pcsa_modelrec.cpp.obj
+[56/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_project.cpp.obj
+[57/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_protocol_util.cpp.obj
+[58/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_report.cpp.obj
+[59/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_report_gmp.cpp.obj
+[60/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_rotor.cpp.obj
+[61/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_run_protocol.cpp.obj
+[62/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_settings.cpp.obj
+[63/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_sim_cache.cpp.obj
+[64/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_sim_cli.cpp.obj
+[65/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_sim_inputs.cpp.obj
+[66/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_sim_record.cpp.obj
+[67/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_sim_species.cpp.obj
+[68/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_simparms.cpp.obj
+[69/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_solute.cpp.obj
+[70/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_solution.cpp.obj
+[71/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_solution_vals.cpp.obj
+[72/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_stiffbase.cpp.obj
+[73/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_tar.cpp.obj
+[74/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_solve_sim.cpp.obj
+[75/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_thread_worker.cpp.obj
+[76/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_timer.cpp.obj
+[77/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_time_state.cpp.obj
+[78/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_util.cpp.obj
+[79/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_vector.cpp.obj
+[80/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_zsolute.cpp.obj
+[81/350] Building CXX object utils\CMakeFiles\us_utils.dir\us_xpn_data.cpp.obj
+[82/350] Linking CXX shared library bin\us_utils4.dll
+[83/350] Generating qrc_us3_gui_images.cpp
+[84/350] Automatic MOC and UIC for target us_gui
+[85/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_abstractrotor_gui.cpp.obj
+[86/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_analysis_base2.cpp.obj
+[87/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_associations_gui.cpp.obj
+[88/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_analyte_gui.cpp.obj
+[89/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_buffer_gui.cpp.obj
+[90/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_choice.cpp.obj
+[91/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_colorgradIO.cpp.obj
+[92/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_gui_autogen\mocs_compilation.cpp.obj
+[93/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_combined_plots_parms_gui.cpp.obj
+[94/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_csv_loader.cpp.obj
+[95/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_data_loader.cpp.obj
+[96/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_convert_gui.cpp.obj
+[97/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_edit_spectrum.cpp.obj
+[98/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_editor.cpp.obj
+[99/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_editor_gui.cpp.obj
+[100/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_experiment_gui.cpp.obj
+[101/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_extinctfitter_gui.cpp.obj
+[102/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_failed_gmp_run_gui.cpp.obj
+[103/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_extinction_gui.cpp.obj
+C:\src\us3-residual-t10\source\gui\us_extinction_gui.cpp(1343): warning C4834: discarding return value of function with [[nodiscard]] attribute
+[104/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_get_run.cpp.obj
+[105/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_gui_settings.cpp.obj
+[106/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_gui_util.cpp.obj
+[107/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_help.cpp.obj
+[108/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_images.cpp.obj
+[109/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_intensity.cpp.obj
+[110/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_investigator.cpp.obj
+[111/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_license.cpp.obj
+[112/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_load_auc.cpp.obj
+[113/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_loadable_noise.cpp.obj
+[114/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_minimize.cpp.obj
+[115/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_model_gui.cpp.obj
+[116/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_model_loader.cpp.obj
+[117/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_mwl_data.cpp.obj
+[118/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_new_spectrum.cpp.obj
+[119/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_noise_loader.cpp.obj
+[120/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_passwd.cpp.obj
+[121/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_plot.cpp.obj
+C:\src\us3-residual-t10\source\gui\us_plot.cpp(1968): warning C4834: discarding return value of function with [[nodiscard]] attribute
+[122/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_plot_control_fem.cpp.obj
+[123/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_plot3d.cpp.obj
+[124/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_predict1.cpp.obj
+[125/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_project_gui.cpp.obj
+[126/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_properties.cpp.obj
+[127/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_report_general_gui.cpp.obj
+[128/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_resids_bitmap.cpp.obj
+[129/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_report_gui.cpp.obj
+[130/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_resplot_fem.cpp.obj
+[131/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_rotor_gui.cpp.obj
+[132/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_run_details2.cpp.obj
+[133/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_sassoc.cpp.obj
+[134/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_scan_excl_gui.cpp.obj
+[135/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_select_edits.cpp.obj
+[136/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_select_item.cpp.obj
+[137/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_select_runs.cpp.obj
+[138/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_select_triples.cpp.obj
+[139/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_selectbox.cpp.obj
+[140/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_sim_params_gui.cpp.obj
+[141/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_spectrodata.cpp.obj
+[142/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_solution_gui.cpp.obj
+[143/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_style.cpp.obj
+[144/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_table.cpp.obj
+[145/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_theme.cpp.obj
+[146/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_tmst_plot.cpp.obj
+[147/350] Building CXX object gui\CMakeFiles\us_gui.dir\qrc_us3_gui_images.cpp.obj
+[148/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_widgets_dialog.cpp.obj
+[149/350] Building CXX object gui\CMakeFiles\us_gui.dir\us_widgets.cpp.obj
+C:\src\us3-residual-t10\source\gui\us_widgets.cpp(1041): warning C4129: '+': unrecognized character escape sequence
+[150/350] Linking CXX shared library bin\us_gui4.dll
+[151/350] Automatic MOC and UIC for target us_autoflow_analysis
+[152/350] Automatic MOC and UIC for target us_fematch
+[153/350] Automatic MOC and UIC for target us_com_project
+[154/350] Automatic MOC and UIC for target us_comproject_academic
+[155/350] Automatic MOC and UIC for target us_query_rmsd
+[156/350] Automatic MOC and UIC for target us_reporter_gmp
+[157/350] Automatic MOC and UIC for target us_protocoldev
+[158/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\us_autoflow_analysis_main.cpp.obj
+C:\src\us3-residual-t10\source\programs\main1.inc(35): warning C4834: discarding return value of function with [[nodiscard]] attribute
+C:\src\us3-residual-t10\source\programs\main1.inc(39): warning C4834: discarding return value of function with [[nodiscard]] attribute
+C:\src\us3-residual-t10\source\programs\main1.inc(43): warning C4834: discarding return value of function with [[nodiscard]] attribute
+C:\src\us3-residual-t10\source\programs\main1.inc(47): warning C4834: discarding return value of function with [[nodiscard]] attribute
+[159/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\__\us_edited_data_loaders.cpp.obj
+[160/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\us_autoflow_analysis_autogen\mocs_compilation.cpp.obj
+[161/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\us_autoflow_analysis.cpp.obj
+[162/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\__\us_2dsa\us_2dsa.cpp.obj
+[163/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\__\us_2dsa\us_2dsa_process.cpp.obj
+[164/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\__\us_2dsa\us_adv_analysis_2d.cpp.obj
+[165/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\__\us_2dsa\us_plot_control_2d.cpp.obj
+[166/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\__\us_2dsa\us_analysis_control_2d.cpp.obj
+[167/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\__\us_2dsa\us_worker_2d.cpp.obj
+[168/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\__\us_2dsa\us_resplot_2d.cpp.obj
+[169/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\__\us_2dsa\us_show_norm.cpp.obj
+[170/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\__\us_2dsa\us_worker_calcnorm.cpp.obj
+[171/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\__\us_abde\us_norm_profile.cpp.obj
+[172/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\__\us_analysis_profile\us_analysis_profile.cpp.obj
+[173/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\__\us_edit\us_edit_scan.cpp.obj
+[174/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\__\us_edit\us_exclude_profile.cpp.obj
+[175/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\__\us_edit\us_edit.cpp.obj
+[176/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\__\us_edit\us_get_edit.cpp.obj
+[177/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\__\us_edit\us_ri_noise.cpp.obj
+[178/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\__\us_edit\us_select_lambdas.cpp.obj
+[179/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\__\us_mwl_species_fit\us_load_run_noise.cpp.obj
+[180/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\__\us_fit_meniscus\us_fit_meniscus.cpp.obj
+[181/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\__\us_mwl_species_fit\us_mwl_sf_plot3d.cpp.obj
+[182/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\__\us_mwl_species_sim\us_mwl_species_sim.cpp.obj
+[183/350] Building C object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\C_\src\us3-calc\build\windows-release-qt6\vcpkg_installed\x64-windows\include\openssl\applink.c.obj
+[184/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\__\us_mwl_species_fit\us_mwl_species_fit.cpp.obj
+[185/350] Building CXX object programs\us_autoflow_analysis\CMakeFiles\us_autoflow_analysis.dir\__\us_analysis_profile\us_anapro_utils.cpp.obj
+[186/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\us_com_project_main.cpp.obj
+C:\src\us3-residual-t10\source\programs\main1.inc(35): warning C4834: discarding return value of function with [[nodiscard]] attribute
+C:\src\us3-residual-t10\source\programs\main1.inc(39): warning C4834: discarding return value of function with [[nodiscard]] attribute
+C:\src\us3-residual-t10\source\programs\main1.inc(43): warning C4834: discarding return value of function with [[nodiscard]] attribute
+C:\src\us3-residual-t10\source\programs\main1.inc(47): warning C4834: discarding return value of function with [[nodiscard]] attribute
+[187/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\us_com_project_gui.cpp.obj
+[188/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\us_com_project_autogen\mocs_compilation.cpp.obj
+[189/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_experiment\us_proto_ranges.cpp.obj
+[190/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_experiment\us_experiment_gui_optima.cpp.obj
+[191/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_experiment\us_exp_utils.cpp.obj
+[192/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_analysis_profile\us_anapro_utils.cpp.obj
+[193/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_analysis_profile\us_analysis_profile.cpp.obj
+[194/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_xpn_viewer\us_xpn_viewer_gui.cpp.obj
+C:\src\us3-residual-t10\source\programs\us_xpn_viewer\us_xpn_viewer_gui.cpp(6049): warning C4834: discarding return value of function with [[nodiscard]] attribute
+C:\src\us3-residual-t10\source\programs\us_xpn_viewer\us_xpn_viewer_gui.cpp(6131): warning C4834: discarding return value of function with [[nodiscard]] attribute
+[195/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_xpn_viewer\us_xpn_run_raw.cpp.obj
+[196/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_xpn_viewer\us_xpn_run_auc.cpp.obj
+[197/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_edit\us_edit_scan.cpp.obj
+[198/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_edit\us_exclude_profile.cpp.obj
+[199/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_edit\us_get_edit.cpp.obj
+[200/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_edit\us_ri_noise.cpp.obj
+[201/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_edit\us_edit.cpp.obj
+[202/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_edit\us_select_lambdas.cpp.obj
+[203/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_edited_data_loaders.cpp.obj
+[204/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_fit_meniscus\us_fit_meniscus.cpp.obj
+[205/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_autoflow_analysis\us_autoflow_analysis.cpp.obj
+[206/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_ddist_combine\us_ddist_combine.cpp.obj
+[207/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_ddist_combine\us_select_rundd.cpp.obj
+[208/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_pseudo3d_combine\us_pseudo3d_combine.cpp.obj
+[209/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_pseudo3d_combine\us_remove_distros.cpp.obj
+[210/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_reporter_gmp\us_reporter_gmp.cpp.obj
+[211/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_esigner_gmp\us_esigner_gmp.cpp.obj
+[212/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_mwl_species_fit\us_mwl_sf_plot3d.cpp.obj
+[213/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_mwl_species_fit\us_mwl_species_fit.cpp.obj
+[214/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_mwl_species_fit\us_load_run_noise.cpp.obj
+[215/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_mwl_species_sim\us_mwl_species_sim.cpp.obj
+[216/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_abde\us_norm_profile.cpp.obj
+[217/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_2dsa\us_worker_calcnorm.cpp.obj
+[218/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_2dsa\us_worker_2d.cpp.obj
+[219/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_2dsa\us_2dsa.cpp.obj
+[220/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_2dsa\us_show_norm.cpp.obj
+[221/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_2dsa\us_resplot_2d.cpp.obj
+[222/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_2dsa\us_plot_control_2d.cpp.obj
+[223/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_2dsa\us_adv_analysis_2d.cpp.obj
+[224/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_2dsa\us_analysis_control_2d.cpp.obj
+[225/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_2dsa\us_2dsa_process.cpp.obj
+[226/350] Building C object programs\us_com_project\CMakeFiles\us_com_project.dir\C_\src\us3-calc\build\windows-release-qt6\vcpkg_installed\x64-windows\include\openssl\applink.c.obj
+[227/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_integral\us_integral.cpp.obj
+[228/350] Building CXX object programs\us_com_project\CMakeFiles\us_com_project.dir\__\us_integral\us_delete_models.cpp.obj
+[229/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\us_com_project_academic_main.cpp.obj
+C:\src\us3-residual-t10\source\programs\main1.inc(35): warning C4834: discarding return value of function with [[nodiscard]] attribute
+C:\src\us3-residual-t10\source\programs\main1.inc(39): warning C4834: discarding return value of function with [[nodiscard]] attribute
+C:\src\us3-residual-t10\source\programs\main1.inc(43): warning C4834: discarding return value of function with [[nodiscard]] attribute
+C:\src\us3-residual-t10\source\programs\main1.inc(47): warning C4834: discarding return value of function with [[nodiscard]] attribute
+[230/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_com_project\us_com_project_gui.cpp.obj
+[231/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\us_comproject_academic_autogen\mocs_compilation.cpp.obj
+[232/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_experiment\us_proto_ranges.cpp.obj
+[233/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_experiment\us_exp_utils.cpp.obj
+[234/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_experiment\us_experiment_gui_optima.cpp.obj
+[235/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_analysis_profile\us_analysis_profile.cpp.obj
+[236/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_analysis_profile\us_anapro_utils.cpp.obj
+[237/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_xpn_viewer\us_xpn_viewer_gui.cpp.obj
+C:\src\us3-residual-t10\source\programs\us_xpn_viewer\us_xpn_viewer_gui.cpp(6049): warning C4834: discarding return value of function with [[nodiscard]] attribute
+C:\src\us3-residual-t10\source\programs\us_xpn_viewer\us_xpn_viewer_gui.cpp(6131): warning C4834: discarding return value of function with [[nodiscard]] attribute
+[238/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_xpn_viewer\us_xpn_run_raw.cpp.obj
+[239/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_xpn_viewer\us_xpn_run_auc.cpp.obj
+[240/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_edit\us_edit_scan.cpp.obj
+[241/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_edit\us_exclude_profile.cpp.obj
+[242/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_edit\us_get_edit.cpp.obj
+[243/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_edit\us_edit.cpp.obj
+[244/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_edit\us_ri_noise.cpp.obj
+[245/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_edit\us_select_lambdas.cpp.obj
+[246/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_edited_data_loaders.cpp.obj
+[247/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_fit_meniscus\us_fit_meniscus.cpp.obj
+[248/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_autoflow_analysis\us_autoflow_analysis.cpp.obj
+[249/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_ddist_combine\us_ddist_combine.cpp.obj
+[250/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_ddist_combine\us_select_rundd.cpp.obj
+[251/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_pseudo3d_combine\us_pseudo3d_combine.cpp.obj
+[252/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_pseudo3d_combine\us_remove_distros.cpp.obj
+[253/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_reporter_gmp\us_reporter_gmp.cpp.obj
+[254/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_esigner_gmp\us_esigner_gmp.cpp.obj
+[255/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_mwl_species_fit\us_mwl_species_fit.cpp.obj
+[256/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_mwl_species_fit\us_mwl_sf_plot3d.cpp.obj
+[257/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_mwl_species_fit\us_load_run_noise.cpp.obj
+[258/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_mwl_species_sim\us_mwl_species_sim.cpp.obj
+[259/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_abde\us_norm_profile.cpp.obj
+[260/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_2dsa\us_worker_calcnorm.cpp.obj
+[261/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_2dsa\us_2dsa.cpp.obj
+[262/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_2dsa\us_worker_2d.cpp.obj
+[263/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_2dsa\us_show_norm.cpp.obj
+[264/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_2dsa\us_resplot_2d.cpp.obj
+[265/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_2dsa\us_plot_control_2d.cpp.obj
+[266/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_2dsa\us_adv_analysis_2d.cpp.obj
+[267/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_2dsa\us_analysis_control_2d.cpp.obj
+[268/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_2dsa\us_2dsa_process.cpp.obj
+[269/350] Building C object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\C_\src\us3-calc\build\windows-release-qt6\vcpkg_installed\x64-windows\include\openssl\applink.c.obj
+[270/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_integral\us_integral.cpp.obj
+[271/350] Building CXX object programs\us_com_project_academic\CMakeFiles\us_comproject_academic.dir\__\us_integral\us_delete_models.cpp.obj
+[272/350] Building CXX object programs\us_fematch\CMakeFiles\us_fematch.dir\us_fematch_autogen\mocs_compilation.cpp.obj
+[273/350] Building CXX object programs\us_fematch\CMakeFiles\us_fematch.dir\us_fematch_main.cpp.obj
+C:\src\us3-residual-t10\source\programs\main1.inc(35): warning C4834: discarding return value of function with [[nodiscard]] attribute
+C:\src\us3-residual-t10\source\programs\main1.inc(39): warning C4834: discarding return value of function with [[nodiscard]] attribute
+C:\src\us3-residual-t10\source\programs\main1.inc(43): warning C4834: discarding return value of function with [[nodiscard]] attribute
+C:\src\us3-residual-t10\source\programs\main1.inc(47): warning C4834: discarding return value of function with [[nodiscard]] attribute
+[274/350] Building CXX object programs\us_fematch\CMakeFiles\us_fematch.dir\us_advanced_fem.cpp.obj
+[275/350] Building CXX object programs\us_fematch\CMakeFiles\us_fematch.dir\us_fematch.cpp.obj
+[276/350] Building C object programs\us_fematch\CMakeFiles\us_fematch.dir\C_\src\us3-calc\build\windows-release-qt6\vcpkg_installed\x64-windows\include\openssl\applink.c.obj
+[277/350] Building CXX object programs\us_fematch\CMakeFiles\us_fematch.dir\us_dmga_mc_stats.cpp.obj
+[278/350] Building CXX object programs\us_fematch\CMakeFiles\us_fematch.dir\us_adv_dmgamc.cpp.obj
+[279/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\us_protocol_dev_main.cpp.obj
+C:\src\us3-residual-t10\source\programs\main1.inc(35): warning C4834: discarding return value of function with [[nodiscard]] attribute
+C:\src\us3-residual-t10\source\programs\main1.inc(39): warning C4834: discarding return value of function with [[nodiscard]] attribute
+C:\src\us3-residual-t10\source\programs\main1.inc(43): warning C4834: discarding return value of function with [[nodiscard]] attribute
+C:\src\us3-residual-t10\source\programs\main1.inc(47): warning C4834: discarding return value of function with [[nodiscard]] attribute
+[280/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\us_protocol_dev_gui.cpp.obj
+[281/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\us_protocoldev_autogen\mocs_compilation.cpp.obj
+[282/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_experiment\us_exp_utils.cpp.obj
+[283/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_experiment\us_proto_ranges.cpp.obj
+[284/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_experiment\us_experiment_gui_optima.cpp.obj
+[285/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_analysis_profile\us_analysis_profile.cpp.obj
+[286/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_analysis_profile\us_anapro_utils.cpp.obj
+[287/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_xpn_viewer\us_xpn_viewer_gui.cpp.obj
+C:\src\us3-residual-t10\source\programs\us_xpn_viewer\us_xpn_viewer_gui.cpp(6049): warning C4834: discarding return value of function with [[nodiscard]] attribute
+C:\src\us3-residual-t10\source\programs\us_xpn_viewer\us_xpn_viewer_gui.cpp(6131): warning C4834: discarding return value of function with [[nodiscard]] attribute
+[288/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_xpn_viewer\us_xpn_run_auc.cpp.obj
+[289/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_xpn_viewer\us_xpn_run_raw.cpp.obj
+[290/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_edit\us_exclude_profile.cpp.obj
+[291/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_edit\us_edit_scan.cpp.obj
+[292/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_edit\us_get_edit.cpp.obj
+[293/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_edit\us_ri_noise.cpp.obj
+[294/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_edit\us_edit.cpp.obj
+[295/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_edit\us_select_lambdas.cpp.obj
+[296/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_edited_data_loaders.cpp.obj
+[297/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_fit_meniscus\us_fit_meniscus.cpp.obj
+[298/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_autoflow_analysis\us_autoflow_analysis.cpp.obj
+[299/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_ddist_combine\us_ddist_combine.cpp.obj
+[300/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_ddist_combine\us_select_rundd.cpp.obj
+[301/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_pseudo3d_combine\us_pseudo3d_combine.cpp.obj
+[302/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_pseudo3d_combine\us_remove_distros.cpp.obj
+[303/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_reporter_gmp\us_reporter_gmp.cpp.obj
+[304/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_esigner_gmp\us_esigner_gmp.cpp.obj
+[305/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_mwl_species_fit\us_mwl_species_fit.cpp.obj
+[306/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_mwl_species_fit\us_mwl_sf_plot3d.cpp.obj
+[307/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_mwl_species_fit\us_load_run_noise.cpp.obj
+[308/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_mwl_species_sim\us_mwl_species_sim.cpp.obj
+[309/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_abde\us_norm_profile.cpp.obj
+[310/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_2dsa\us_2dsa.cpp.obj
+[311/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_2dsa\us_worker_calcnorm.cpp.obj
+[312/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_2dsa\us_worker_2d.cpp.obj
+[313/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_2dsa\us_resplot_2d.cpp.obj
+[314/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_2dsa\us_show_norm.cpp.obj
+[315/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_2dsa\us_plot_control_2d.cpp.obj
+[316/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_2dsa\us_adv_analysis_2d.cpp.obj
+[317/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_2dsa\us_analysis_control_2d.cpp.obj
+[318/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_2dsa\us_2dsa_process.cpp.obj
+[319/350] Building C object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\C_\src\us3-calc\build\windows-release-qt6\vcpkg_installed\x64-windows\include\openssl\applink.c.obj
+[320/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_integral\us_integral.cpp.obj
+[321/350] Building CXX object programs\us_protocol_dev\CMakeFiles\us_protocoldev.dir\__\us_integral\us_delete_models.cpp.obj
+[322/350] Building CXX object programs\us_query_rmsd\CMakeFiles\us_query_rmsd.dir\us_query_rmsd_autogen\mocs_compilation.cpp.obj
+[323/350] Building CXX object programs\us_query_rmsd\CMakeFiles\us_query_rmsd.dir\us_query_rmsd.cpp.obj
+C:\src\us3-residual-t10\source\programs\main1.inc(35): warning C4834: discarding return value of function with [[nodiscard]] attribute
+C:\src\us3-residual-t10\source\programs\main1.inc(39): warning C4834: discarding return value of function with [[nodiscard]] attribute
+C:\src\us3-residual-t10\source\programs\main1.inc(43): warning C4834: discarding return value of function with [[nodiscard]] attribute
+C:\src\us3-residual-t10\source\programs\main1.inc(47): warning C4834: discarding return value of function with [[nodiscard]] attribute
+[324/350] Building CXX object programs\us_query_rmsd\CMakeFiles\us_query_rmsd.dir\__\us_fematch\us_adv_dmgamc.cpp.obj
+[325/350] Building CXX object programs\us_query_rmsd\CMakeFiles\us_query_rmsd.dir\__\us_fematch\us_advanced_fem.cpp.obj
+[326/350] Building C object programs\us_query_rmsd\CMakeFiles\us_query_rmsd.dir\C_\src\us3-calc\build\windows-release-qt6\vcpkg_installed\x64-windows\include\openssl\applink.c.obj
+[327/350] Building CXX object programs\us_query_rmsd\CMakeFiles\us_query_rmsd.dir\__\us_fematch\us_dmga_mc_stats.cpp.obj
+[328/350] Building CXX object programs\us_reporter_gmp\CMakeFiles\us_reporter_gmp.dir\us_reporter_gmp_main.cpp.obj
+C:\src\us3-residual-t10\source\programs\main1.inc(35): warning C4834: discarding return value of function with [[nodiscard]] attribute
+C:\src\us3-residual-t10\source\programs\main1.inc(39): warning C4834: discarding return value of function with [[nodiscard]] attribute
+C:\src\us3-residual-t10\source\programs\main1.inc(43): warning C4834: discarding return value of function with [[nodiscard]] attribute
+C:\src\us3-residual-t10\source\programs\main1.inc(47): warning C4834: discarding return value of function with [[nodiscard]] attribute
+[329/350] Building CXX object programs\us_reporter_gmp\CMakeFiles\us_reporter_gmp.dir\us_reporter_gmp_autogen\mocs_compilation.cpp.obj
+[330/350] Building CXX object programs\us_query_rmsd\CMakeFiles\us_query_rmsd.dir\__\us_fematch\us_fematch.cpp.obj
+[331/350] Building CXX object programs\us_reporter_gmp\CMakeFiles\us_reporter_gmp.dir\__\us_edited_data_loaders.cpp.obj
+[332/350] Building CXX object programs\us_reporter_gmp\CMakeFiles\us_reporter_gmp.dir\__\us_abde\us_norm_profile.cpp.obj
+[333/350] Building CXX object programs\us_reporter_gmp\CMakeFiles\us_reporter_gmp.dir\__\us_analysis_profile\us_analysis_profile.cpp.obj
+[334/350] Building CXX object programs\us_reporter_gmp\CMakeFiles\us_reporter_gmp.dir\__\us_analysis_profile\us_anapro_utils.cpp.obj
+[335/350] Building CXX object programs\us_reporter_gmp\CMakeFiles\us_reporter_gmp.dir\us_reporter_gmp.cpp.obj
+[336/350] Building CXX object programs\us_reporter_gmp\CMakeFiles\us_reporter_gmp.dir\__\us_ddist_combine\us_ddist_combine.cpp.obj
+[337/350] Building CXX object programs\us_reporter_gmp\CMakeFiles\us_reporter_gmp.dir\__\us_integral\us_delete_models.cpp.obj
+[338/350] Building CXX object programs\us_reporter_gmp\CMakeFiles\us_reporter_gmp.dir\__\us_ddist_combine\us_select_rundd.cpp.obj
+[339/350] Building CXX object programs\us_reporter_gmp\CMakeFiles\us_reporter_gmp.dir\__\us_integral\us_integral.cpp.obj
+[340/350] Building C object programs\us_reporter_gmp\CMakeFiles\us_reporter_gmp.dir\C_\src\us3-calc\build\windows-release-qt6\vcpkg_installed\x64-windows\include\openssl\applink.c.obj
+[341/350] Building CXX object programs\us_reporter_gmp\CMakeFiles\us_reporter_gmp.dir\__\us_pseudo3d_combine\us_remove_distros.cpp.obj
+[342/350] Building CXX object programs\us_reporter_gmp\CMakeFiles\us_reporter_gmp.dir\__\us_pseudo3d_combine\us_pseudo3d_combine.cpp.obj
+[343/350] Linking CXX executable bin\us_autoflow_analysis.exe
+[344/350] Linking CXX executable bin\us_comproject.exe
+[345/350] Linking CXX executable bin\us_comproject_academic.exe
+[346/350] Linking CXX executable bin\us_fematch.exe
+[347/350] Linking CXX executable bin\us_query_rmsd.exe
+[348/350] Linking CXX executable bin\us_protocoldev.exe
+[349/350] Linking CXX executable bin\us_reporter_gmp.exe

@@ -10,5 +10,5 @@
     "build.log": "57d51c991b1dbace6fc8ba01f1dc6069d16a94e6a08c93610e29c54860c72f23"
   },
   "logs_local": "build/real-owner-verification/t10-build-logs",
-  "windows": "RUNNING; not signed off"
+  "windows": "PASS: both DLLs and all seven consumers built and linked; see windows-build-record.json"
 }

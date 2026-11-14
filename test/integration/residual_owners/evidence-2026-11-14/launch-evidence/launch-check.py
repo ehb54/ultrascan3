@@ -6,7 +6,7 @@ for name in ['us_fematch','us_autoflow_analysis','us_query_rmsd','us_reporter_gm
  exe=root/'build/bin'/name
  with open(out/(name+'.log'),'w') as log:
   p=subprocess.Popen([str(exe)],env=env,stdout=log,stderr=log)
-  time.sleep(6)
+  time.sleep(45 if name in ('us_comproject', 'us_comproject_academic') else 6)
   w=subprocess.run(['xdotool','search','--onlyvisible','--pid',str(p.pid)],env=env,stdout=subprocess.PIPE,stderr=subprocess.PIPE,universal_newlines=True)
   titles=[]
   for wid in w.stdout.split():

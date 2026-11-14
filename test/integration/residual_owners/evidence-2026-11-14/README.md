@@ -93,5 +93,9 @@ This is a launch check, not instrument-operation coverage. See launch-evidence/
 results.json plus project-results.json (which supersedes the two initial
 6-second observations), with executable hashes, ldd output and screenshots.
 
-Windows build is still running; no Windows pass is claimed. Reporter/autoflow verification remains incomplete for the
+Windows build passes at the same frozen production revision: MSVC 19.44,
+Qt 6.10.1 and Qwt 6.3.0, targeting x64 from the Windows 11 ARM VM. Both DLLs
+and all seven consumers link, build command exits 0. This verifies the new
+library exports through real consumer links; it does not claim Windows UI
+coverage. See windows-build-record.json, windows-build.cmd and Windows logs. Reporter/autoflow verification remains incomplete for the
 reasons above; D01-D04 are not closed by the FEMatch-only comparison.
