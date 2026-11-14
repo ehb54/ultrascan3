@@ -33,38 +33,72 @@ void US_BufferComponent::getAllFromDB( const QString& masterPW,
    {
       US_BufferComponent c;
       c.componentID = cids.at( ii );
-      c.getInfoFromDB( &db );
-      componentList[ c.componentID ] = c;
+      if ( c.getInfoFromDB( &db ) )
+      {
+         componentList[c.componentID] = c;
+      }
    }
 }
 
-void US_BufferComponent::getInfoFromDB( IUS_DB2* db )
+namespace
+{
+// Parse the first six whitespace-separated tokens as coefficients.
+bool parseCoefficients( const QStringList& tokens, double* coeff )
+{
+   if ( tokens.size() < 6 )
+   {
+      return false;
+   }
+
+   for ( int i = 0; i < 6; i++ )
+   {
+      bool ok  = false;
+      coeff[i] = tokens[i].toDouble( &ok );
+      if ( !ok )
+      {
+         return false;
+      }
+   }
+   return true;
+}
+}
+
+bool US_BufferComponent::getInfoFromDB( IUS_DB2* db )
 {
    QStringList q( "get_buffer_component_info" );
    q << componentID;
 
    db->query( q );
-   db->next();
+   if ( db->lastErrno() != IUS_DB2::OK || !db->next() )
+   {
+      return false;
+   }
 
-   unit              = db->value( 0 ).toString();
-   name              = db->value( 1 ).toString();
-   QString viscosity = db->value( 2 ).toString();
-   QString density   = db->value( 3 ).toString();
-   range             = db->value( 4 ).toString();
-   grad_form         = US_Util::bool_flag( db->value( 5 ).toString() );
+   const QString     rowUnit   = db->value( 0 ).toString();
+   const QString     rowName   = db->value( 1 ).toString();
+   const QStringList viscosity = db->value( 2 ).toString().split( ' ', Qt::SkipEmptyParts );
+   const QStringList density   = db->value( 3 ).toString().split( ' ', Qt::SkipEmptyParts );
+   const QString     rowRange  = db->value( 4 ).toString();
+   const bool        rowGrad   = US_Util::bool_flag( db->value( 5 ).toString() );
 
-   QStringList sl    = viscosity.split( " " );
+   // Viscosity holds exactly six coefficients; density may carry a legacy range after its six.
+   double            rowVisc[6];
+   double            rowDens[6];
+   if ( viscosity.size() != 6 || !parseCoefficients( viscosity, rowVisc ) || !parseCoefficients( density, rowDens ) )
+   {
+      return false;
+   }
 
-   for ( int i = 0; i < 6 ; i++ )
-      visc_coeff[ i ]   = sl[ i ].toDouble();
-
-   sl = density.split( " " );
-
-   for ( int i = 0; i < 6 ; i++ )
-      dens_coeff[ i ]   = sl[ i ].toDouble();
-
-   sl                = sl.mid( 6 );  // Remove coefficients
-   range             = range.isEmpty() ? sl.join( " " ) : range;
+   unit      = rowUnit;
+   name      = rowName;
+   range     = rowRange.isEmpty() ? density.mid( 6 ).join( " " ) : rowRange;
+   grad_form = rowGrad;
+   for ( int i = 0; i < 6; i++ )
+   {
+      visc_coeff[i] = rowVisc[i];
+      dens_coeff[i] = rowDens[i];
+   }
+   return true;
 }
 
 void US_BufferComponent::getAllFromHD( 
@@ -213,18 +247,18 @@ void US_BufferComponent::putAllToHD(
 int US_BufferComponent::saveToDB(IUS_DB2 * db) {
    QStringList q;
    // construct density and viscosity
-   QString density;
-   for (int i = 0; i < 6; i++) {
-      density += QString(i > 0 ? "" : " ") + QString::number(dens_coeff[i], 'f', 5);
-   }
-   QString viscosity;
-   for (int i = 0; i < 6; i++) {
-      viscosity += QString(i > 0 ? "" : " ") + QString::number(visc_coeff[i], 'f', 5);
+   // Six space-separated coefficients per field, as getInfoFromDB reads them.
+   QStringList density;
+   QStringList viscosity;
+   for ( int i = 0; i < 6; i++ )
+   {
+      density << QString::number( dens_coeff[i], 'f', 5 );
+      viscosity << QString::number( visc_coeff[i], 'f', 5 );
    }
 
    q.clear();
-   q << "create_buffer_component" << name << unit << range
-     << US_Util::bool_string(grad_form) << density << viscosity;
+   q << "create_buffer_component" << name << unit << range << US_Util::bool_string( grad_form ) << density.join( " " )
+     << viscosity.join( " " );
 
    db->statusQuery(q);
 
@@ -471,8 +505,12 @@ bool US_Buffer::readFromDB( IUS_DB2* db, const QString& bufID )
    {
       US_BufferComponent bc;
       bc.componentID = componentIDs[ i ];
-      bc.getInfoFromDB( db );
-       component << bc;
+      if ( !bc.getInfoFromDB( db ) )
+      {
+         qDebug() << "get_buffer_component_info failed for component" << bc.componentID;
+         return false;
+      }
+      component << bc;
    }
 
    QString compType("Buffer");
