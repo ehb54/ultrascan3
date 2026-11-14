@@ -4,6 +4,7 @@
 #include "us_buffer.h"
 
 using ::testing::_;
+using ::testing::AtLeast;
 using ::testing::Eq;
 using ::testing::InSequence;
 using ::testing::Invoke;
@@ -129,8 +130,8 @@ TEST_F( BufferComponentDb, FailedSavePreservesIdAndNeverFetchesInsertId )
    {
       InSequence sequence;
       EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::DBERROR ) );
-      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::DBERROR ) );
-      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::DBERROR ) ); // diagnostic
+      // Further reads (e.g. for logging) are allowed; only the insert-ID lookup is forbidden.
+      EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::DBERROR ) );
    }
    EXPECT_EQ( -1, component.saveToDB( &db ) );
    EXPECT_EQ( QString( "73" ), component.componentID );
