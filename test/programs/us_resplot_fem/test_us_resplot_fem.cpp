@@ -10,17 +10,6 @@
 
 namespace
 {
-#if defined(__SANITIZE_ADDRESS__)
-constexpr bool sanitized = true;
-#elif defined(__has_feature)
-#if __has_feature(address_sanitizer)
-constexpr bool sanitized = true;
-#else
-constexpr bool sanitized = false;
-#endif
-#else
-constexpr bool sanitized = false;
-#endif
 // Binary-exact inputs make arithmetic comparisons independent of decimal parsing.
 const double differences[3][4] = {
     { .25, -.5, .75, -1. }, { .5, -.25, 1., -.75 }, { .75, -1., .25, -.5 }
@@ -162,10 +151,8 @@ private slots:
     void invalidInputs()
     {
         QFETCH(QString, mode); QFETCH(QString, scenario);
-        const bool unsafe = scenario != "nonfinite" && scenario != "bad-exclusion" &&
-                            scenario != "null-parent";
-        if (unsafe && !sanitized)
-            QSKIP("Unsafe legacy input requires the ASan/UBSan build; never execute UB in the parent.");
+        // D04: every scenario must complete. The child process keeps a regression
+        // that reads out of bounds from taking down the whole suite.
         QProcess process;
         auto environment = QProcessEnvironment::systemEnvironment();
         environment.insert("US_RESIDUAL_INVALID_CASE", scenario);
@@ -193,20 +180,9 @@ private slots:
         }
         // Prove we reached the probe, rather than accepting a loader/ASan startup failure.
         QVERIFY2(output.contains("RESIDUAL_PROBE_STARTED"), output.constData());
-        if (unsafe)
-        {
-            // D04: characterize existing unsafe rejection by crash/sanitizer. This
-            // is NOT a passing safety contract; replace with safe-rejection tests before repair.
-            QVERIFY2(process.exitStatus() == QProcess::CrashExit || process.exitCode() != 0, output.constData());
-            QVERIFY2(output.contains("AddressSanitizer") || output.contains("runtime error:") ||
-                     output.contains("ASSERT"), output.constData());
-        }
-        else
-        {
-            QCOMPARE(process.exitStatus(), QProcess::NormalExit);
-            QVERIFY2(process.exitCode() == 0, output.constData());
-            QVERIFY(output.contains("RESIDUAL_PROBE_COMPLETED"));
-        }
+        QCOMPARE(process.exitStatus(), QProcess::NormalExit);
+        QVERIFY2(process.exitCode() == 0, output.constData());
+        QVERIFY(output.contains("RESIDUAL_PROBE_COMPLETED"));
     }
 
     void invalidInputProbe()
@@ -238,6 +214,23 @@ private slots:
         {
             QCOMPARE(cs.size(), 4); // Out-of-range exclusions are silently ignored.
             QCOMPARE(cs[1]->sample(0).y(), .25 - .125 - .0625);
+        }
+        const bool malformed = scenario.startsWith("empty-") || scenario.startsWith("short-");
+        if (malformed)
+        {
+            // D04: nothing is plotted and the dialog says why.
+            QCOMPARE(curves(plot.rp_data_plot1()).size(), 0);
+            QCOMPARE(cs.size(), 0);
+            QVERIFY2(plot.rp_data_plot1()->title().text().startsWith("Cannot plot:"),
+                     qPrintable(plot.rp_data_plot1()->title().text()));
+            for (int mask = 1; mask < 16; mask <<= 1)
+            {   // Toggling views must not read the malformed buffers either.
+                box(plot, "Plot Time Invariant Noise")->setChecked(mask & 1);
+                box(plot, "Plot Radially Invariant Noise")->setChecked(mask & 2);
+                box(plot, "Plot Random Noise")->setChecked(mask & 4);
+                box(plot, "Show Residuals Bitmap")->setChecked(mask & 8);
+            }
+            QCOMPARE(curves(plot.rp_data_plot2()).size(), 0);
         }
         fprintf(stderr, "RESIDUAL_PROBE_COMPLETED\n"); fflush(stderr);
     }

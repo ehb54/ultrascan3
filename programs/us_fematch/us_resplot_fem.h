@@ -133,6 +133,7 @@ class US_ResidPlotFem : public US_WidgetsDialog
       void srbmCheck( bool );
       void close_all  ( void );
       void plot_data(   void );
+      QString input_problem( void ) const;
       void plot_edata(  void );
       void plot_rdata(  void );
       void resids_closed(  void );

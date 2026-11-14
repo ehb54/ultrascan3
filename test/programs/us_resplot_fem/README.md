@@ -37,9 +37,9 @@ with a linked defect ID and explicit change to the characterization expectation.
 ## Limits
 
 No real workflow widgets, database, simulation, report-file export or native
-window manager are exercised. Invalid-pointer/empty/mismatched buffer cases
-run in isolated processes under sanitizers; expected legacy failures are not
-safe-input handling guarantees. CMake's test label is
+window manager are exercised. Empty and mismatched buffer cases run in isolated
+child processes, so a regression that reads out of bounds fails one row instead
+of the suite. CMake's test label is
 `residual-characterization`. The executable links the dialog without any
 application implementation, which is the isolated-presentation part of M12; the
 automated boundary check with a negative test is still to be added. M02 is covered at the dialog
@@ -176,3 +176,19 @@ before the change in FEMatch mode (unchecking left the bitmap open) and Report
 mode (checking showed nothing until another refresh). `closeDestroysDialog` now
 expects the box unchecked after the bitmap closes in every mode. Previously
 Report mode left it checked.
+
+### D04: malformed inputs are refused (T05)
+
+Before plotting, the dialog checks that the experimental and simulated data have
+at least one scan and point, the same scan and point counts, and full scans, and
+that any TI noise covers every point and any RI noise every scan. If not, it
+plots nothing, clears variance and RMSD, and titles the upper plot
+"Cannot plot: <reason>". There is no message box, so the hidden Report dialog
+cannot block. This also applies after `set_inputs`. Out-of-range exclusions are
+still ignored, and non-finite values are still plotted.
+
+The 18 malformed-buffer probes (`empty-*`, `short-*`, all modes) no longer
+require a sanitizer build or expect a crash. Each must complete, plot no curves
+in either plot (including after toggling every lower-plot view and the bitmap),
+and show the reason. Before the fix, all 18 failed on macOS without a sanitizer:
+nine children crashed, and nine plotted curves from out-of-range reads.

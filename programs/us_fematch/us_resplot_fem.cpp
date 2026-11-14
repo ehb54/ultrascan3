@@ -517,9 +517,56 @@ void US_ResidPlotFem::plot_data()
   if ( skip_plot )  // avoid redundant successive calls
       return;
 
+   const QString problem = input_problem();
+
+   if ( ! problem.isEmpty() )
+   {  // never read buffers that do not match:  say why instead
+      dataPlotClear( data_plot1 );
+      dataPlotClear( data_plot2 );
+      data_plot1->setTitle( tr( "Cannot plot: %1" ).arg( problem ) );
+      le_vari->setText( "" );
+      le_rmsd->setText( "" );
+      data_plot1->replot();
+      data_plot2->replot();
+      return;
+   }
+
    plot_edata();     // plot experimental
 
    plot_rdata();     // plot residuals
+}
+
+// Why the inputs cannot be plotted, or an empty string when they can. The plots
+// read every scan at every point of both data sets, and each noise value.
+QString US_ResidPlotFem::input_problem() const
+{
+   const int scans  = edata->scanCount();
+   const int points = edata->pointCount();
+
+   if ( scans < 1  ||  points < 1 )
+      return tr( "there is no experimental data" );
+
+   if ( sdata->scanCount() != scans  ||  sdata->pointCount() != points )
+      return tr( "the simulation has %1 scans of %2 points, the data %3 of %4" )
+             .arg( sdata->scanCount() ).arg( sdata->pointCount() )
+             .arg( scans ).arg( points );
+
+   for ( int ii = 0; ii < scans; ii++ )
+   {
+      if ( edata->scanData[ ii ].rvalues.size() != points  ||
+           sdata->scanData[ ii ].rvalues.size() != points )
+         return tr( "scan %1 does not have %2 points" ).arg( ii + 1 ).arg( points );
+   }
+
+   if ( have_ti  &&  ti_noise->values.size() < points )
+      return tr( "time-invariant noise has %1 values for %2 points" )
+             .arg( ti_noise->values.size() ).arg( points );
+
+   if ( have_ri  &&  ri_noise->values.size() < scans )
+      return tr( "radially-invariant noise has %1 values for %2 scans" )
+             .arg( ri_noise->values.size() ).arg( scans );
+
+   return QString();
 }
 
 // plot the experimental data
