@@ -11,6 +11,9 @@ using ::testing::Matcher;
 using ::testing::Return;
 using ::testing::StrictMock;
 
+// saveToDisk() returns void, so these tests cannot detect a failed disk save; the
+// saveStatus checks assume the disk save succeeded.
+
 namespace
 {
 class ProjectDbWrite : public QtTestBase, public ::testing::WithParamInterface<bool>
