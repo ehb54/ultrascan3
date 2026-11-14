@@ -1,0 +1,3 @@
+exit=-6
+build/c11-audit/probe.cpp:62:25: runtime error: load of value 170, which is not a valid value for type 'bool'
+SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior build/c11-audit/probe.cpp:62:25 
