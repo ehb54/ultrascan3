@@ -3901,8 +3901,9 @@ void US_Hydrodyn::view_bead_model()
 
 // Shows a triangulated surface mesh with its structure in RasMol, which reads (with "load mesh")
 // BEST meshes (rcoal's <name>_<N>, sesmesh's .best), msroll .c3p, MSMS .vert/.face and ZENO .bod.
-// RasMol draws a mesh only with a molecule, so a PDB file is needed as well; the mesh must be in
-// its frame, in Angstroms (a .bod file may state other units).
+// RasMol draws a mesh only with a molecule: a ZENO .bod mesh is offered with a loaded bead model
+// (visualize_mesh_with_bead_model()), as ZENO computed on it; otherwise a PDB file is needed, and
+// the mesh must be in its frame, in Angstroms (a .bod file may state other units).
 void US_Hydrodyn::visualize_mesh()
 {
    QString mesh;
@@ -3942,25 +3943,67 @@ void US_Hydrodyn::visualize_mesh()
    path_visualize_mesh = QFileInfo( mesh ).absolutePath();
    add_to_directory_history( path_visualize_mesh );
 
-   // the last mesh ZENO made, from a bead model that is still loaded: show it with those beads,
-   // which is what ZENO ran on
-   if ( mesh == last_zeno_mesh &&
-        last_zeno_mesh_model >= 0 &&
-        last_zeno_mesh_model < (int) bead_models.size() &&
-        last_zeno_mesh_model < (int) somo_processed.size() &&
-        somo_processed[ last_zeno_mesh_model ] &&
-        bead_models[ last_zeno_mesh_model ].size() == last_zeno_mesh_beads ) {
+   // A ZENO mesh (.bod) is made from a bead model, in its frame: show it with a loaded bead model,
+   // the one it was made from if this is the last mesh ZENO made and that model is still loaded,
+   // else the selected (or first) model
+   const bool zeno_bod = QFileInfo( mesh ).suffix().toLower() == "bod";
+   auto bead_model_loaded = [ & ]( int model ) {
+      return
+         model >= 0 &&
+         model < (int) bead_models.size() &&
+         model < (int) somo_processed.size() &&
+         somo_processed[ model ] &&
+         !bead_models[ model ].empty();
+   };
+   int  mesh_model     = -1;
+   bool made_from_this = false;
+   if ( zeno_bod ) {
+      if ( mesh == last_zeno_mesh &&
+           bead_model_loaded( last_zeno_mesh_model ) &&
+           bead_models[ last_zeno_mesh_model ].size() == last_zeno_mesh_beads ) {
+         mesh_model     = last_zeno_mesh_model;
+         made_from_this = true;
+      }
+      for ( int i = 0; mesh_model < 0 && i < lb_model->count(); ++i ) {
+         if ( lb_model->item( i )->isSelected() && bead_model_loaded( i ) ) {
+            mesh_model = i;
+         }
+      }
+      for ( int i = 0; mesh_model < 0 && i < (int) bead_models.size(); ++i ) {
+         if ( bead_model_loaded( i ) ) {
+            mesh_model = i;
+         }
+      }
+   }
+   if ( mesh_model >= 0 ) {
       switch ( QMessageBox::question( this,
                                       us_tr( "Visualize Mesh" ),
-                                      QString( us_tr( "Show the mesh with the bead model it was made from (model %1)?\n"
-                                                      "(No: show it with a PDB structure)" ) )
-                                      .arg( last_zeno_mesh_model + 1 ),
+                                      QString( made_from_this
+                                               ? us_tr( "Show the mesh with the bead model it was made from (model %1)?\n"
+                                                        "(No: show it with a PDB structure)" )
+                                               : us_tr( "Show the mesh with the loaded bead model (model %1)?\n"
+                                                        "(No: show it with a PDB structure)" ) )
+                                      .arg( mesh_model + 1 ),
                                       QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
                                       QMessageBox::Yes ) ) {
       case QMessageBox::Yes :
-         visualize_mesh_with_bead_model( last_zeno_mesh_model, mesh );
+         visualize_mesh_with_bead_model( mesh_model, mesh );
          return;
       case QMessageBox::No :
+         break;
+      default :
+         return;
+      }
+   } else if ( zeno_bod ) {
+      switch ( QMessageBox::question( this,
+                                      us_tr( "Visualize Mesh" ),
+                                      QString( us_tr( "%1 is a ZENO mesh, made from a bead model, and no bead model is loaded.\n"
+                                                      "To show the mesh with its beads, load or build the bead model, then Visualize Mesh again.\n\n"
+                                                      "Show it with a PDB structure instead?" ) )
+                                      .arg( QFileInfo( mesh ).fileName() ),
+                                      QMessageBox::Yes | QMessageBox::No,
+                                      QMessageBox::No ) ) {
+      case QMessageBox::Yes :
          break;
       default :
          return;
