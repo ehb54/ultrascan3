@@ -150,6 +150,23 @@ TEST_F( CsvData, FailedReadsReportConversionAndSplitErrors )
    EXPECT_EQ( QString( "Cannot split the lines with the given separator. Error at the line: 2" ), csv.error() );
 }
 
+TEST_F( CsvData, AutoDetectionReportsTheErrorOfTheLikeliestDelimiter )
+{
+   // Every candidate fails. Comma splits the header into the most fields, so its error is
+   // reported: the extra field on line 4, not tab's conversion error on line 2.
+   const QString path = caseWorkRoot() + "/ragged.csv";
+   ASSERT_TRUE( us3WriteTestFile( path, "x,y\n1,2\n3,4\n5,6,7\n" ) );
+   US_CSV_Data csv;
+   EXPECT_FALSE( csv.readFile( path, QString() ) );
+   EXPECT_EQ( QString( "Cannot split the lines with the given separator. Error at the line: 4" ), csv.error() );
+
+   // Semicolon and space both split this header into two fields. Semicolon, tried first, fails on
+   // conversion and space on splitting; the earlier candidate's error is reported.
+   ASSERT_TRUE( us3WriteTestFile( path, "x;y z\n1;nope\n" ) );
+   EXPECT_FALSE( csv.readFile( path, QString() ) );
+   EXPECT_EQ( QString( "Cannot convert the line to the floating numbers. Error at the line: 2" ), csv.error() );
+}
+
 TEST_F( CsvData, RejectsEmptySingleLineRaggedAndNonnumericFiles )
 {
    const QList<QByteArray> inputs{ "", " \n\r\n", "x,y\n", "1,2\n", "x,y\n1,2\n3\n", "x,y\n1,nope\n", "x,y\n1,,\n" };

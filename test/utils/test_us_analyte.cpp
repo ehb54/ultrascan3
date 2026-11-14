@@ -393,7 +393,7 @@ QStringList dumpLines( US_Analyte& analyte )
 
 TEST_F( US_AnalyteDumpTest, ExistingLoggingCategoryAndRepeatedCaptureRestoreLoggingState )
 {
-   // installFilter used to call a null previousFilter when this category already existed.
+   // Capturing must work when the default category already exists and must restore its state.
    QLoggingCategory*      category       = QLoggingCategory::defaultCategory();
    const bool             initialDebug   = category->isDebugEnabled();
    const QtMessageHandler initialHandler = qInstallMessageHandler( nullptr );

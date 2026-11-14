@@ -459,33 +459,36 @@ bool US_Buffer::readFromDB( IUS_DB2* db, const QString& bufID )
    qDebug() << "Reading from DB, BufferID: " << q;
 
    db->query( q );
-   if ( db->lastErrno() != 0 ) return false;
+   if ( db->lastErrno() != IUS_DB2::OK || !db->next() )
+   {
+      return false;
+   }
 
-   db->next();
-
-   bufferID        = bufID;
-   GUID            = db->value( 0 ).toString();
-   description     = db->value( 1 ).toString();
-   compressibility = db->value( 2 ).toString().toDouble();
-   pH              = db->value( 3 ).toString().toDouble();
-   viscosity       = db->value( 4 ).toString().toDouble();
-   density         = db->value( 5 ).toString().toDouble();
-   person          = db->value( 7 ).toString();
-   int manx        = description.indexOf( "  [M]" );
+   // Load into a copy; this buffer changes only when every query succeeds.
+   US_Buffer loaded       = *this;
+   loaded.bufferID        = bufID;
+   loaded.GUID            = db->value( 0 ).toString();
+   loaded.description     = db->value( 1 ).toString();
+   loaded.compressibility = db->value( 2 ).toString().toDouble();
+   loaded.pH              = db->value( 3 ).toString().toDouble();
+   loaded.viscosity       = db->value( 4 ).toString().toDouble();
+   loaded.density         = db->value( 5 ).toString().toDouble();
+   loaded.person          = db->value( 7 ).toString();
+   int manx               = loaded.description.indexOf( "  [M]" );
    if ( manx > 0 )
    {
-      manual          = true;
-      description     = description.left( manx ).simplified();
+      loaded.manual      = true;
+      loaded.description = loaded.description.left( manx ).simplified();
    }
    else
-      manual          = US_Util::bool_flag( db->value( 6 ).toString() );
+      loaded.manual = US_Util::bool_flag( db->value( 6 ).toString() );
 
-   component    .clear();
-   componentIDs .clear();
-   concentration.clear();
+   loaded.component.clear();
+   loaded.componentIDs.clear();
+   loaded.concentration.clear();
    q                   .clear();
 
-   q << "get_buffer_components" <<  bufferID;
+   q << "get_buffer_components" << bufID;
 
    db->query( q );
    int status = db->lastErrno();
@@ -497,30 +500,29 @@ bool US_Buffer::readFromDB( IUS_DB2* db, const QString& bufID )
 
    while ( db->next() )
    {
-      componentIDs  << db->value( 0 ).toString();
-      concentration << db->value( 4 ).toString().toDouble();
+      loaded.componentIDs << db->value( 0 ).toString();
+      loaded.concentration << db->value( 4 ).toString().toDouble();
    }
 
-   for ( int i = 0; i < componentIDs.size(); i++ )
+   for ( int i = 0; i < loaded.componentIDs.size(); i++ )
    {
       US_BufferComponent bc;
-      bc.componentID = componentIDs[ i ];
+      bc.componentID = loaded.componentIDs[i];
       if ( !bc.getInfoFromDB( db ) )
       {
          qDebug() << "get_buffer_component_info failed for component" << bc.componentID;
          return false;
       }
-      component << bc;
+      loaded.component << bc;
    }
 
+   // A buffer without a stored profile has no extinction values.
    QString compType("Buffer");
    QString valType("molarExtinction");
-   US_ExtProfile::fetch_eprofile( db, bufferID.toInt(), compType, valType, extinction );
+   loaded.extinction.clear();
+   US_ExtProfile::fetch_eprofile( db, bufID.toInt(), compType, valType, loaded.extinction );
 
-   // // Get spectrum data
-   // getSpectrum( db, "Refraction" );
-   // getSpectrum( db, "Extinction" );
-   // getSpectrum( db, "Fluorescence" );
+   *this = loaded;
    return true;
 }
 
@@ -637,25 +639,19 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
    
    if ( !extinction.isEmpty() && new_or_changed_spectrum )
    {
-     if ( !replace_spectrum )
+      // Create the profile, or replace a stored one (whose old values are discarded).
+      QMap<double, double> stored;
+      int profileID = replace_spectrum ? US_ExtProfile::fetch_eprofile( db, bufferID.toInt(), compType, valType, stored ) : -1;
+
+      if ( profileID == -1 )
       {
-	     qDebug() << "Creating Spectrum!!!";
-         US_ExtProfile::create_eprofile( db, bufferID.toInt(), compType, valType, extinction);
+         US_ExtProfile::create_eprofile( db, bufferID.toInt(), compType, valType, extinction );
       }
       else
-      {
-         qDebug() << "Updating Spectrum!!!";
+         US_ExtProfile::update_eprofile( db, profileID, bufferID.toInt(), compType, valType, extinction );
 
-         QMap<double, double> new_extinction = extinction;
-         int profileID = US_ExtProfile::fetch_eprofile(  db, bufferID.toInt(), compType, valType, extinction);
-         
-         qDebug() << "Old Extinction keys: " << extinction.keys().count() << ", ProfileID: " << profileID;
-         US_ExtProfile::update_eprofile( db, profileID, bufferID.toInt(), compType, valType, new_extinction);
-         qDebug() << "New Extinction keys: " << new_extinction.keys().count() << ", ProfileID: " << profileID;
-         
-         replace_spectrum = false;
-      }
-      new_or_changed_spectrum = false; 
+      replace_spectrum        = false;
+      new_or_changed_spectrum = false;
    }
    //putSpectrum( db, "Extinction" );
    //putSpectrum( db, "Refraction" );

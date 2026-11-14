@@ -113,7 +113,10 @@ class US_UTIL_EXTERN US_Buffer
       //! \brief Read a buffer from the DB
       //! \param db  An open database connection
       //! \param bufID  ID number in string format of the buffer to be read.
-      //! \return A boolean success or failure
+      //! \return A boolean success or failure. On failure (a failed query, a
+      //!         missing buffer row or an unreadable component) the buffer is
+      //!         unchanged. A buffer with no stored profile loads with empty
+      //!         extinction values.
       bool readFromDB( IUS_DB2*, const QString& );
 
       //! \brief Get spectrum data from the DB for a type

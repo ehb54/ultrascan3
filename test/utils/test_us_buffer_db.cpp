@@ -17,11 +17,6 @@ using ::testing::Return;
 using ::testing::StrictMock;
 
 // Known defects in US_Buffer (ehb54/ultrascan-tickets#1228) that these tests deliberately do not assert:
-// - readFromDB returns true and blanks every field when the info query finds no row.
-// - readFromDB keeps the extinction values already in the object when no profile is stored.
-// - readFromDB returns false after a failed component query, but has already replaced the
-//   buffer fields and cleared the components.
-// - saveToDB with replace_spectrum sends the new profile but then holds the previously stored one.
 // - saveToDB ignores profile-write failures and returns the buffer ID when the disk copy
 //   cannot be written.
 // - writeToDisk writes refraction and fluorescence values at the extinction wavelengths.
@@ -113,6 +108,28 @@ class BufferDb : public QtTestBase
             buffer.componentIDs << entry.first;
             buffer.concentration << entry.second;
          }
+      }
+
+      // A loaded buffer that a failed readFromDB must leave as it was.
+      void prepareLoadedBuffer()
+      {
+         prepareBuffer();
+         buffer.bufferID   = "7";
+         buffer.person     = "Previous, Owner";
+         buffer.extinction = { { 300.0, 9.0 } };
+      }
+
+      void expectLoadedBufferUnchanged()
+      {
+         EXPECT_EQ( QString( "7" ), buffer.bufferID );
+         EXPECT_EQ( kGuid, buffer.GUID );
+         EXPECT_EQ( QString( "Phosphate & salt" ), buffer.description );
+         EXPECT_DOUBLE_EQ( 7.4, buffer.pH );
+         EXPECT_EQ( QString( "Previous, Owner" ), buffer.person );
+         EXPECT_EQ( ( QStringList{ "5", "6" } ), buffer.componentIDs );
+         EXPECT_EQ( ( QList<double>{ 0.15, 0.025 } ), buffer.concentration );
+         EXPECT_EQ( 2, buffer.component.size() );
+         EXPECT_EQ( ( QMap<double, double>{ { 300.0, 9.0 } } ), buffer.extinction );
       }
 
       void expectInfoRow( const QString& description )
@@ -268,8 +285,45 @@ TEST_F( BufferDb, LoadStopsAtAFailedInfoQueryAndKeepsTheBuffer )
    EXPECT_EQ( ( QStringList{ "5", "6" } ), buffer.componentIDs );
 }
 
+TEST_F( BufferDb, LoadWithoutABufferRowFailsAndKeepsTheBuffer )
+{
+   prepareLoadedBuffer();
+   {
+      InSequence sequence;
+      EXPECT_CALL( db, query( args( { "get_buffer_info", "41" } ) ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, next() ).WillOnce( Return( false ) );
+   }
+
+   EXPECT_FALSE( buffer.readFromDB( &db, "41" ) );
+
+   expectLoadedBufferUnchanged();
+}
+
+TEST_F( BufferDb, LoadWithoutAStoredProfileHasNoExtinction )
+{
+   prepareLoadedBuffer();
+   {
+      InSequence sequence;
+      expectInfoRow( "Phosphate & salt" );
+      EXPECT_CALL( db, value( 6 ) ).WillOnce( Return( QVariant( "0" ) ) );
+      EXPECT_CALL( db, query( args( { "get_buffer_components", "41" } ) ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOROWS ) );
+      EXPECT_CALL( db, next() ).WillOnce( Return( false ) );
+      EXPECT_CALL( db, query( args( { "get_eprofile", "41", "Buffer" } ) ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOROWS ) );
+   }
+
+   ASSERT_TRUE( buffer.readFromDB( &db, "41" ) );
+
+   EXPECT_EQ( QString( "41" ), buffer.bufferID );
+   EXPECT_TRUE( buffer.componentIDs.isEmpty() );
+   EXPECT_TRUE( buffer.extinction.isEmpty() );
+}
+
 TEST_F( BufferDb, LoadStopsAtAFailedComponentQuery )
 {
+   prepareLoadedBuffer();
    {
       InSequence sequence;
       expectInfoRow( "Phosphate & salt" );
@@ -279,10 +333,13 @@ TEST_F( BufferDb, LoadStopsAtAFailedComponentQuery )
    }
 
    EXPECT_FALSE( buffer.readFromDB( &db, "41" ) );
+
+   expectLoadedBufferUnchanged();
 }
 
 TEST_F( BufferDb, LoadFailsWhenAComponentCannotBeRead )
 {
+   prepareLoadedBuffer();
    {
       InSequence sequence;
       expectInfoRow( "Phosphate & salt" );
@@ -302,6 +359,8 @@ TEST_F( BufferDb, LoadFailsWhenAComponentCannotBeRead )
    // Neither the second component nor the profile is read.
 
    EXPECT_FALSE( buffer.readFromDB( &db, "41" ) );
+
+   expectLoadedBufferUnchanged();
 }
 
 // Save
@@ -428,8 +487,76 @@ TEST_F( BufferDb, SaveReplacesTheStoredProfileWithTheNewValues )
    EXPECT_EQ( 41, buffer.saveToDB( &db, "1" ) );
 
    EXPECT_EQ( replacement, profileValues( sentProfile ) );
+   EXPECT_EQ( replacement, buffer.extinction );
    EXPECT_FALSE( buffer.replace_spectrum );
    EXPECT_FALSE( buffer.new_or_changed_spectrum );
+}
+
+TEST_F( BufferDb, SaveReplacingAMissingOrUnreadableProfileCreatesIt )
+{
+   const QMap<double, double> replacement{ { 250.0, 0.75 }, { 280.0, 2.5 } };
+   // No stored row, or a row whose XML holds no profile: either way the profile is created.
+   for ( const bool unreadable : { false, true } )
+   {
+      SCOPED_TRACE( unreadable );
+      prepareBuffer();
+      buffer.component.clear();
+      buffer.componentIDs.clear();
+      buffer.concentration.clear();
+      buffer.extinction              = replacement;
+      buffer.new_or_changed_spectrum = true;
+      buffer.replace_spectrum        = true;
+      QString sentProfile;
+      {
+         InSequence sequence;
+         expectLookup( true );
+         EXPECT_CALL( db, next() ).WillOnce( Return( true ) );
+         EXPECT_CALL( db, value( 0 ) ).WillOnce( Return( QVariant( "41" ) ) );
+         expectStatus( updateArgs() );
+         expectStatus( { "delete_buffer_components", "41" } );
+         EXPECT_CALL( db, query( args( { "get_eprofile", "41", "Buffer" } ) ) );
+         if ( unreadable )
+         {
+            EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );
+            EXPECT_CALL( db, next() ).WillOnce( Return( true ) );
+            EXPECT_CALL( db, value( 0 ) ).WillOnce( Return( QVariant( "9" ) ) );
+            EXPECT_CALL( db, value( 1 ) ).WillOnce( Return( QVariant( "molarExtinction" ) ) );
+            EXPECT_CALL( db, value( 2 ) ).WillOnce( Return( QVariant( "corrupt" ) ) );
+            // The create path finds the stored row and updates it in place.
+            EXPECT_CALL( db, query( args( { "get_eprofile", "41", "Buffer" } ) ) );
+            EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );
+            EXPECT_CALL( db, next() ).WillOnce( Return( true ) );
+            EXPECT_CALL( db, value( 0 ) ).WillOnce( Return( QVariant( "9" ) ) );
+         }
+         else
+         {
+            EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOROWS ) );
+            EXPECT_CALL( db, query( args( { "get_eprofile", "41", "Buffer" } ) ) );
+            EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOROWS ) );
+         }
+         EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) )
+            .WillOnce( Invoke(
+               [&sentProfile, unreadable]( const QStringList& query )
+               {
+                  const QStringList head = unreadable ? QStringList{ "update_eprofile", "9", "41", "Buffer", "molarExtinction" }
+                                                      : QStringList{ "new_eprofile", "41", "Buffer", "molarExtinction" };
+                  EXPECT_EQ( head, query.mid( 0, head.size() ) );
+                  sentProfile = query.value( head.size() );
+                  return IUS_DB2::OK;
+               } ) );
+         if ( !unreadable )
+         {
+            EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 9 ) );
+         }
+      }
+
+      EXPECT_EQ( 41, buffer.saveToDB( &db, "1" ) );
+
+      EXPECT_EQ( replacement, profileValues( sentProfile ) );
+      EXPECT_EQ( replacement, buffer.extinction );
+      EXPECT_FALSE( buffer.replace_spectrum );
+      ::testing::Mock::VerifyAndClearExpectations( &db );
+   }
 }
 
 TEST_F( BufferDb, FailedLookupStopsBeforeAnyWrite )

@@ -57,8 +57,8 @@ class US_UTIL_EXTERN US_AbstractCenterpiece
       //!  Read centerpieces from database (or local disk if db==NULL)
       //!  \param db           Pointer to database connection (NULL for local)
       //!  \param centerpieces A list of centerpiece data
-      //!  A centerpiece whose info query fails or finds no row is skipped.
-      //!  If the name query fails, the local file is read instead.
+      //!  If the name query or any centerpiece's info query fails or finds
+      //!  no row, the local file is read instead.
       //!  \return A boolean indicating success
       static bool read_centerpieces( IUS_DB2*, QList< US_AbstractCenterpiece >& );
 

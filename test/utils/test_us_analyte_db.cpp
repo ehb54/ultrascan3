@@ -22,8 +22,6 @@ using ::testing::StrictMock;
 //
 // Known defects these tests deliberately do not assert:
 // - A load that finds no extinction profile keeps the extinction values already in the object.
-// - write() with replace_spectrum sends the new profile to the DB but then holds, and saves to
-//   disk, the profile that was previously stored.
 // - write() returns OK when set_nucleotide_info fails or the disk copy cannot be written.
 // - When the GUID lookup succeeds without a row, write() updates analyte "" instead of inserting.
 
@@ -350,6 +348,49 @@ TEST_F( AnalyteDb, WriteCreatesExtinctionProfileForANewSpectrum )
    EXPECT_EQ( IUS_DB2::OK, analyte.write( true, QString(), &db ) );
    EXPECT_EQ( ( QMap<double, double>{ { 280, 43824 } } ), profileValues( profileXml ) );
    EXPECT_FALSE( analyte.new_or_changed_spectrum );
+}
+
+TEST_F( AnalyteDb, WriteReplacesTheStoredProfileAndKeepsTheNewValues )
+{
+   prepareProtein();
+   const QMap<double, double> replacement{ { 260.0, 30000.0 }, { 280.0, 43824.0 } };
+   analyte.extinction              = replacement;
+   analyte.new_or_changed_spectrum = true;
+   analyte.replace_spectrum        = true;
+   QString profileXml;
+   {
+      InSequence sequence;
+      expectLookup( true );
+      EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, query( args( { "get_eprofile", "17", "Analyte" } ) ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, next() ).WillOnce( Return( true ) );
+      EXPECT_CALL( db, value( 0 ) ).WillOnce( Return( QVariant( "5" ) ) );
+      EXPECT_CALL( db, value( 1 ) ).WillOnce( Return( QVariant( "molarExtinction" ) ) );
+      EXPECT_CALL( db, value( 2 ) )
+         .WillOnce( Return( QVariant( "<EProfileData><extinctionProfile componentID='17' componentType='Analyte' "
+                                      "valueType='molarExtinction'><extinction wavelength='300' value='1'/>"
+                                      "</extinctionProfile></EProfileData>" ) ) );
+      EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) )
+         .WillOnce( Invoke(
+            [&profileXml]( const QStringList& q )
+            {
+               EXPECT_EQ( ( QStringList{ "update_eprofile", "5", "17", "Analyte", "molarExtinction" } ), q.mid( 0, 5 ) );
+               profileXml = q.value( 5 );
+               return IUS_DB2::OK;
+            } ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );
+   }
+
+   EXPECT_EQ( IUS_DB2::OK, analyte.write( true, QString(), &db ) );
+   EXPECT_EQ( replacement, profileValues( profileXml ) );
+   EXPECT_EQ( replacement, analyte.extinction );
+   EXPECT_FALSE( analyte.replace_spectrum );
+
+   US_Analyte disk;
+   ASSERT_EQ( IUS_DB2::OK, disk.load( false, kGuid ) );
+   EXPECT_EQ( replacement, disk.extinction );
 }
 
 TEST_F( AnalyteDb, WriteSkipsProfileWhenTheSpectrumIsUnchanged )

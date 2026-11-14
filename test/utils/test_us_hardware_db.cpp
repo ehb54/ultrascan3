@@ -196,23 +196,36 @@ TEST_F( HardwareDb, CenterpiecesMapInfoColumnsInIdOrder )
    EXPECT_EQ( ( QList<double>{ 0.3 } ), band.path_length );
 }
 
-TEST_F( HardwareDb, CenterpiecesSkipEntriesWhoseInfoIsMissing )
+TEST_F( HardwareDb, CenterpiecesFallBackToLocalFileWhenAnInfoQueryFails )
 {
+   QList<US_AbstractCenterpiece> local;
+   ASSERT_TRUE( US_AbstractCenterpiece::read_centerpieces( local ) );
+   ASSERT_FALSE( local.isEmpty() );
+   // The first centerpiece reads; the second fails or has no row. Nothing from the DB is kept.
+   for ( const bool missingRow : { false, true } )
    {
-      InSequence sequence;
-      EXPECT_CALL( db, isConnected() ).WillOnce( Return( true ) );
-      expectIds( { "get_abstractCenterpiece_names" }, { "3", "7", "9" } );
-      expectFailure( { "get_abstractCenterpiece_info", "3" } );
-      EXPECT_CALL( db, query( args( { "get_abstractCenterpiece_info", "7" } ) ) );
-      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );
-      EXPECT_CALL( db, next() ).WillOnce( Return( false ) );
-      expectCenterpiece( "9", { "guid-9", "Aluminum 6-channel", "6", "7.2:7.1:7.0", "standard", "50000", "1.2", "2.5", "0" } );
+      SCOPED_TRACE( missingRow );
+      {
+         InSequence sequence;
+         EXPECT_CALL( db, isConnected() ).WillOnce( Return( true ) );
+         expectIds( { "get_abstractCenterpiece_names" }, { "3", "9", "11" } );
+         expectCenterpiece( "3", { "guid-3", "Epon 2-channel", "2", "7.2:7.1", "", "60000", "1.2", "2.5", "0" } );
+         if ( missingRow )
+         {
+            EXPECT_CALL( db, query( args( { "get_abstractCenterpiece_info", "9" } ) ) );
+            EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );
+            EXPECT_CALL( db, next() ).WillOnce( Return( false ) );
+         }
+         else
+         {
+            expectFailure( { "get_abstractCenterpiece_info", "9" } );
+         }
+      }
+      QList<US_AbstractCenterpiece> centerpieces;
+      ASSERT_TRUE( US_AbstractCenterpiece::read_centerpieces( &db, centerpieces ) );
+      EXPECT_EQ( identities( local ), identities( centerpieces ) );
+      ::testing::Mock::VerifyAndClearExpectations( &db );
    }
-   QList<US_AbstractCenterpiece> centerpieces;
-   ASSERT_TRUE( US_AbstractCenterpiece::read_centerpieces( &db, centerpieces ) );
-   EXPECT_EQ( QStringList{ "9 Aluminum 6-channel" }, identities( centerpieces ) );
-   ASSERT_EQ( 1, centerpieces.size() );
-   EXPECT_EQ( ( QList<double>{ 7.2, 7.1, 7.0, 0.0, 0.0, 0.0 } ), centerpieces[0].bottom_position );
 }
 
 TEST_F( HardwareDb, CenterpiecesFallBackToLocalFileWhenTheNameQueryFails )
