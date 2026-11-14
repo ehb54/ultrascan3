@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <cstdio>
 #include <exception>
 #include <stdexcept>
@@ -218,4 +219,105 @@ bool us_hydrodyn_zeno_mesh(
    }
 
    return true;
+}
+
+QString us_hydrodyn_zeno_mesh_series_check(
+                                           std::vector < US_Hydrodyn_Zeno_Mesh_Series_Mesh > meshes,
+                                           const QString                                    & unit,
+                                           US_Hydrodyn_Zeno_Mesh_Series_Trend               * area_trend,
+                                           US_Hydrodyn_Zeno_Mesh_Series_Trend               * volume_trend
+                                           )
+{
+   // one mesh per spacing (repetitions run on the same mesh), by increasing number of triangles
+   std::stable_sort( meshes.begin(), meshes.end(),
+                     []( const US_Hydrodyn_Zeno_Mesh_Series_Mesh & a, const US_Hydrodyn_Zeno_Mesh_Series_Mesh & b ) {
+                        return a.triangles < b.triangles;
+                     } );
+   std::vector < US_Hydrodyn_Zeno_Mesh_Series_Mesh > m;
+   for ( const auto & mesh : meshes ) {
+      if ( mesh.triangles > 0 && ( m.empty() || mesh.h != m.back().h ) ) {
+         m.push_back( mesh );
+      }
+   }
+
+   // the largest distance from the least-squares line in 1/N, relative to the value
+   auto trend_of = [ & ]( double US_Hydrodyn_Zeno_Mesh_Series_Mesh::* q ) {
+      US_Hydrodyn_Zeno_Mesh_Series_Trend t;
+      const size_t n = m.size();
+      if ( n < 3 ) {
+         return t;
+      }
+      double mx = 0, my = 0;
+      for ( const auto & mesh : m ) {
+         mx += 1e0 / mesh.triangles;
+         my += mesh.*q;
+      }
+      mx /= n;
+      my /= n;
+      double sxx = 0, sxy = 0;
+      for ( const auto & mesh : m ) {
+         const double dx = 1e0 / mesh.triangles - mx;
+         sxx += dx * dx;
+         sxy += dx * ( mesh.*q - my );
+      }
+      if ( !( sxx > 0 ) ) {
+         return t;
+      }
+      const double b = sxy / sxx;
+      t.checked = true;
+      for ( const auto & mesh : m ) {
+         const double value = mesh.*q;
+         if ( value == 0 ) {
+            continue;
+         }
+         const double d = std::fabs( value - ( my + b * ( 1e0 / mesh.triangles - mx ) ) ) / std::fabs( value );
+         t.deviation = std::max( t.deviation, d );
+      }
+      return t;
+   };
+
+   const US_Hydrodyn_Zeno_Mesh_Series_Trend area   = trend_of( &US_Hydrodyn_Zeno_Mesh_Series_Mesh::area );
+   const US_Hydrodyn_Zeno_Mesh_Series_Trend volume = trend_of( &US_Hydrodyn_Zeno_Mesh_Series_Mesh::volume );
+   if ( area_trend ) {
+      *area_trend = area;
+   }
+   if ( volume_trend ) {
+      *volume_trend = volume;
+   }
+
+   QStringList what;
+   auto describe = [ & ]( const char * name, const US_Hydrodyn_Zeno_Mesh_Series_Trend & t,
+                          double US_Hydrodyn_Zeno_Mesh_Series_Mesh::* q, const QString & q_unit ) {
+      if ( !t.checked || !( t.deviation > 2e-3 ) ) {
+         return;
+      }
+      QStringList values;
+      for ( const auto & mesh : m ) {
+         values << QString( "%1" ).arg( mesh.*q, 0, 'f', 1 );
+      }
+      // (not which mesh: one that jumps also pulls the line, so with few meshes another can end up
+      // furthest from it; the values show which)
+      what << QString( "the mesh %1 is up to %2% off a straight line in 1/N (%3 %4)" )
+         .arg( name )
+         .arg( 100 * t.deviation, 0, 'f', 2 )
+         .arg( values.join( ", " ) )
+         .arg( q_unit );
+   };
+   describe( "area",   area,   &US_Hydrodyn_Zeno_Mesh_Series_Mesh::area,   unit + "^2" );
+   describe( "volume", volume, &US_Hydrodyn_Zeno_Mesh_Series_Mesh::volume, unit + "^3" );
+   if ( what.isEmpty() ) {
+      return "";
+   }
+
+   QStringList spacings;
+   for ( const auto & mesh : m ) {
+      spacings << QString( "%1" ).arg( mesh.h );
+   }
+   return
+      QString( "Warning: over the spacings %1 A, %2.  A narrow channel or a cavity of the surface may open or close "
+               "between these spacings, which changes the body itself, not only how finely it is meshed, or the "
+               "coarsest spacing may be too coarse for the linear trend in 1/N: the extrapolation may be off.  "
+               "Check the meshes, or leave out the spacings that stand out.\n" )
+      .arg( spacings.join( ", " ) )
+      .arg( what.join( "; " ) );
 }

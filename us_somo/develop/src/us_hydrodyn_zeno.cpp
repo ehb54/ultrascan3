@@ -13843,6 +13843,8 @@ struct US_Zeno_Mesh_Series_Point {
    QString   zno;         // ZENO's output for this mesh
    bool      zno_kept;    // false when that output was temporary (batch averaging, several models)
    QString   bod;         // ZENO's input, the mesh
+   int       components;  // separate closed surfaces
+   long      euler;       // Euler characteristic
    save_data data;
 };
 
@@ -13906,6 +13908,16 @@ static QString zeno_mesh_series_csv(
    ts << "\"Mesh grid spacing (A)\",";
    for ( const auto & p : series ) {
       ts << QString( "=%1," ).arg( p.h );
+   }
+   ts << "\n";
+   ts << "\"Mesh surfaces\",";
+   for ( const auto & p : series ) {
+      ts << QString( "=%1," ).arg( p.components );
+   }
+   ts << "\n";
+   ts << "\"Mesh Euler characteristic\",";
+   for ( const auto & p : series ) {
+      ts << QString( "=%1," ).arg( p.euler );
    }
    ts << "\n";
    ts << "\"ZENO output file\",";
@@ -15243,14 +15255,16 @@ bool US_Hydrodyn::calc_zeno()
 
                   if ( mesh_series ) {
                      US_Zeno_Mesh_Series_Point point;
-                     point.h         = uhz.mesh_h;
-                     point.triangles = uhz.mesh_info.triangles;
-                     point.area      = uhz.mesh_info.area;
-                     point.volume    = uhz.mesh_info.volume;
-                     point.zno       = QFileInfo( fname + ".zno" ).fileName();
-                     point.zno_kept  = !batch_avg_hydro_active() && !zeno_mm;
-                     point.bod       = QFileInfo( fname + ".bod" ).fileName();
-                     point.data      = this_data;
+                     point.h          = uhz.mesh_h;
+                     point.triangles  = uhz.mesh_info.triangles;
+                     point.area       = uhz.mesh_info.area;
+                     point.volume     = uhz.mesh_info.volume;
+                     point.zno        = QFileInfo( fname + ".zno" ).fileName();
+                     point.zno_kept   = !batch_avg_hydro_active() && !zeno_mm;
+                     point.bod        = QFileInfo( fname + ".bod" ).fileName();
+                     point.components = uhz.mesh_info.components;
+                     point.euler      = uhz.mesh_info.euler;
+                     point.data       = this_data;
                      series.push_back( point );
                   }
 
@@ -15347,6 +15361,16 @@ bool US_Hydrodyn::calc_zeno()
                QString summary;
                vector < US_Zeno_Mesh_Series_Fit > fits;
                QString csv = zeno_mesh_series_csv( series, hydro.unit == -9 ? "nm" : "A", summary, fits );
+               // the mesh area and volume should change smoothly over the series
+               US_Hydrodyn_Zeno_Mesh_Series_Trend area_trend, volume_trend;
+               QString trend_warning;
+               {
+                  vector < US_Hydrodyn_Zeno_Mesh_Series_Mesh > meshes;
+                  for ( const auto & p : series ) {
+                     meshes.push_back( { p.h, p.triangles, p.area, p.volume } );
+                  }
+                  trend_warning = us_hydrodyn_zeno_mesh_series_check( meshes, hydro.unit == -9 ? "nm" : "A", &area_trend, &volume_trend );
+               }
 
                // the results shown in the main window (Show Hydrodynamic Calculations): this
                // model's extrapolated values, with their standard errors
@@ -15414,6 +15438,9 @@ bool US_Hydrodyn::calc_zeno()
                   ts << csv;
                   f.close();
                   editor_msg( "dark blue", summary );
+                  if ( !trend_warning.isEmpty() ) {
+                     editor_msg( "red", trend_warning );
+                  }
                   editor_msg( "dark blue", QString( us_tr( "Wrote %1\n" ) ).arg( series_name ) );
                   last_zeno_series = series_name;
 
@@ -15428,7 +15455,8 @@ bool US_Hydrodyn::calc_zeno()
                      }
                      if ( zeno_mesh_series_summary_header.isEmpty() ) {
                         QStringList header;
-                        header << "\"Model\"" << "\"Series file\"" << "\"ZENO runs\"" << "\"Fewest triangles\"" << "\"Most triangles\"";
+                        header << "\"Model\"" << "\"Series file\"" << "\"ZENO runs\"" << "\"Fewest triangles\"" << "\"Most triangles\""
+                               << "\"Mesh trend\"";
                         for ( const auto & fit : fits ) {
                            header << "\"" + fit.label + "\"" << "\"" + fit.label + " sigma\"";
                         }
@@ -15442,7 +15470,9 @@ bool US_Hydrodyn::calc_zeno()
                         << "\"" + QFileInfo( series_name ).fileName() + "\""
                         << QString( "%1" ).arg( series.size() )
                         << QString( "%1" ).arg( n_min )
-                        << QString( "%1" ).arg( n_max );
+                        << QString( "%1" ).arg( n_max )
+                        << ( !trend_warning.isEmpty() ? "\"jumps\""
+                             : area_trend.checked || volume_trend.checked ? "\"smooth\"" : "\"not checked\"" );
                      for ( const auto & fit : fits ) {
                         if ( fit.valid ) {
                            row << QString( "%1" ).arg( fit.a, 0, 'g', 8 ) << QString( "%1" ).arg( fit.siga, 0, 'g', 8 );

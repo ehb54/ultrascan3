@@ -71,4 +71,33 @@ bool us_hydrodyn_zeno_mesh(
                            const US_Hydrodyn_Zeno_Mesh_Progress   & progress = US_Hydrodyn_Zeno_Mesh_Progress()
                            );
 
+// One mesh of a series of meshes of one model (several grid spacings), for
+// us_hydrodyn_zeno_mesh_series_check().
+struct US_Hydrodyn_Zeno_Mesh_Series_Mesh {
+   double h;           // grid spacing
+   long   triangles;
+   double area;
+   double volume;
+};
+
+// How well a quantity (area or volume) of a series follows a straight line in 1/N (N, the number
+// of triangles): the largest distance of a mesh's value from the least-squares line, relative to
+// the value.
+struct US_Hydrodyn_Zeno_Mesh_Series_Trend {
+   bool   checked   = false;   // three or more spacings
+   double deviation = 0;       // largest relative distance from the line (0.002: 0.2%)
+};
+
+// The mesh area and volume should change smoothly with the mesh, about linearly in 1/N, which is
+// what the extrapolation assumes.  If between two spacings a narrow channel or a cavity opens or
+// closes, the body itself changes and the series leaves the line.  Returns an empty string if the
+// area and the volume stay within 0.2% of their lines, or with fewer than three spacings; else a
+// warning.  unit: the model's length unit, for the warning.
+QString us_hydrodyn_zeno_mesh_series_check(
+                                           std::vector < US_Hydrodyn_Zeno_Mesh_Series_Mesh > meshes,
+                                           const QString                                    & unit,
+                                           US_Hydrodyn_Zeno_Mesh_Series_Trend               * area_trend   = nullptr,
+                                           US_Hydrodyn_Zeno_Mesh_Series_Trend               * volume_trend = nullptr
+                                           );
+
 #endif
