@@ -12,7 +12,9 @@
 #include "us_dataIO.h"
 #include "us_util.h"
 
+#include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QTemporaryDir>
 
 using ::testing::_;
@@ -237,4 +239,37 @@ TEST_F( EditedDataReadTest, InvalidNamesAreRejectedBeforeAnyDownload )
          << name.toStdString();
       EXPECT_FALSE( error.isEmpty() ) << name.toStdString();
    }
+}
+
+TEST_F( EditedDataReadTest, DisconnectedDatabaseStopsBeforeAnyDownloadAndClearsOutput )
+{
+   edited << US_DataIO::EditedData();
+   loadedRaw << US_DataIO::RawData();
+   error = "stale error";
+   EXPECT_CALL( db, isConnected() ).WillOnce( Return( false ) );
+   EXPECT_CALL( db, readBlobFromDB( _, _, _ ) ).Times( 0 );
+
+   EXPECT_EQ( US_ConvertIO::readEditedDataFromDB( &db, request(), edited, loadedRaw, error ), (int) IUS_DB2::NOT_CONNECTED );
+   EXPECT_TRUE( edited.isEmpty() );
+   EXPECT_TRUE( loadedRaw.isEmpty() );
+   EXPECT_EQ( error, QString( IUS_DB2::notConnectedMessage ).arg( "edited data download" ) );
+   EXPECT_TRUE( QDir( destination.path() ).entryList( QDir::Files ).isEmpty() );
+}
+
+TEST_F( EditedDataReadTest, MissingCachedEditStopsBeforeRawDownloadAndClearsOutput )
+{
+   edited << US_DataIO::EditedData();
+   loadedRaw << US_DataIO::RawData();
+   error                                          = "stale error";
+   US_ConvertIO::EditedDataReadRequest cachedEdit = request();
+   cachedEdit.downloadEdit                        = false;
+   EXPECT_CALL( db, isConnected() ).Times( 0 );
+   EXPECT_CALL( db, readBlobFromDB( _, _, _ ) ).Times( 0 );
+
+   EXPECT_EQ( US_ConvertIO::readEditedDataFromDB( &db, cachedEdit, edited, loadedRaw, error ),
+              (int) US_ConvertIO::EDITED_DATA_FILE_MISSING );
+   EXPECT_TRUE( edited.isEmpty() );
+   EXPECT_TRUE( loadedRaw.isEmpty() );
+   EXPECT_EQ( error, QString( "Cached edit file does not exist: %1" ).arg( destination.filePath( kEditName ) ) );
+   EXPECT_FALSE( QFileInfo::exists( destination.filePath( kRawName ) ) );
 }

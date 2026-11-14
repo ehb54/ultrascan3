@@ -6,41 +6,46 @@ using ::testing::_;
 using ::testing::Return;
 using ::testing::DoubleNear;
 
-class TestUSMatrixUnit : public QtTestBase {
-protected:
-    void SetUp() override {
-        QtTestBase::SetUp();
+class TestUSMatrixUnit : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
 
-        // Set up test matrix (3x3 identity matrix)
-        vecMatrix.clear();
-        dataMatrix.clear();
-        testMatrix = US_Matrix::construct(vecMatrix, dataMatrix, 3, 3);
+         // Set up test matrix (3x3 identity matrix)
+         vecMatrix.clear();
+         dataMatrix.clear();
+         testMatrix = US_Matrix::construct( vecMatrix, dataMatrix, 3, 3 );
 
-        // Initialize as identity matrix
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                testMatrix[i][j] = (i == j) ? 1.0 : 0.0;
+         // Initialize as identity matrix
+         for ( int i = 0; i < 3; i++ )
+         {
+            for ( int j = 0; j < 3; j++ )
+            {
+               testMatrix[i][j] = ( i == j ) ? 1.0 : 0.0;
             }
-        }
+         }
 
-        // Set up test vectors
-        testVec1 = {1.0, 2.0, 3.0};
-        testVec2 = {4.0, 5.0, 6.0};
-    }
+         // Set up test vectors
+         testVec1 = { 1.0, 2.0, 3.0 };
+         testVec2 = { 4.0, 5.0, 6.0 };
+      }
 
-    void TearDown() override {
-        QtTestBase::TearDown();
-        // Cleanup is automatic with QVector
-    }
+      void TearDown() override
+      {
+         QtTestBase::TearDown();
+         // Cleanup is automatic with QVector
+      }
 
-    // Test data members
-    QVector<double*> vecMatrix;
-    QVector<double> dataMatrix;
-    double** testMatrix;
-    QVector<double> testVec1;
-    QVector<double> testVec2;
+      // Test data members
+      QVector<double*>        vecMatrix;
+      QVector<double>         dataMatrix;
+      double**                testMatrix;
+      QVector<double>         testVec1;
+      QVector<double>         testVec2;
 
-    static constexpr double TOLERANCE = 1e-6;
+      static constexpr double TOLERANCE = 1e-6;
 };
 
 TEST_F(TestUSMatrixUnit, LUSolveSystemBasic) {

@@ -21,21 +21,25 @@ using ::qt_matchers::QStringEq;
 namespace {
 
 // Test fixture for US_AnaProfile functionality
-    class US_AnaProfileTest : public QtTestBase {
-    protected:
-        void SetUp() override {
-            QtTestBase::SetUp();
-            profile = std::make_unique<US_AnaProfile>();
-        }
+class US_AnaProfileTest : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+         profile = std::make_unique<US_AnaProfile>();
+      }
 
-        void TearDown() override {
-            profile.reset();
-            QtTestBase::TearDown();
-        }
+      void TearDown() override
+      {
+         profile.reset();
+         QtTestBase::TearDown();
+      }
 
-        // Helper to create valid XML content for testing
-        QString createValidXmlContent() {
-            return R"DELIM(
+      // Helper to create valid XML content for testing
+      QString createValidXmlContent()
+      {
+         return R"DELIM(
 <AnalysisProfileData version="1.0">
     <analysis_profile name="TestProfile" guid="12345678-1234-1234-1234-123456789012">
         <channel_parms channel="1A" chandesc="1A:UV/vis.:(unspecified)"
@@ -49,75 +53,83 @@ namespace {
     </analysis_profile>
 </AnalysisProfileData>
         )DELIM";
-        }
+      }
 
-        // Helper to write profile to XML string
-        QString profileToXmlString(const US_AnaProfile& prof) {
-            QBuffer buffer;
-            buffer.open(QIODevice::WriteOnly);
-            QXmlStreamWriter writer(&buffer);
+      // Helper to write profile to XML string
+      QString profileToXmlString( const US_AnaProfile& prof )
+      {
+         QBuffer buffer;
+         buffer.open( QIODevice::WriteOnly );
+         QXmlStreamWriter writer( &buffer );
 
-            bool success = const_cast<US_AnaProfile&>(prof).toXml(writer);
-            buffer.close();
+         bool             success = const_cast<US_AnaProfile&>( prof ).toXml( writer );
+         buffer.close();
 
-            return success ? QString::fromUtf8(buffer.data()) : QString();
-        }
+         return success ? QString::fromUtf8( buffer.data() ) : QString();
+      }
 
-        // Helper to read profile from XML string
-        bool profileFromXmlString(US_AnaProfile& prof, const QString& xmlString) {
-            QBuffer buffer;
-            buffer.setData(xmlString.toUtf8());
-            buffer.open(QIODevice::ReadOnly);
-            QXmlStreamReader reader(&buffer);
+      // Helper to read profile from XML string
+      bool profileFromXmlString( US_AnaProfile& prof, const QString& xmlString )
+      {
+         QBuffer buffer;
+         buffer.setData( xmlString.toUtf8() );
+         buffer.open( QIODevice::ReadOnly );
+         QXmlStreamReader reader( &buffer );
 
-            bool success = prof.fromXml(reader);
-            buffer.close();
-            return success;
-        }
+         bool             success = prof.fromXml( reader );
+         buffer.close();
+         return success;
+      }
 
-        std::unique_ptr<US_AnaProfile> profile;
-    };
+      std::unique_ptr<US_AnaProfile> profile;
+};
 
 // Test fixture for constructor testing
     class US_AnaProfileConstructorTest : public US_AnaProfileTest {
     };
 
-// Test fixture for equality operator testing
-    class US_AnaProfileEqualityTest : public US_AnaProfileTest {
-    protected:
-        void SetUp() override {
-            US_AnaProfileTest::SetUp();
-            profile1 = std::make_unique<US_AnaProfile>();
-            profile2 = std::make_unique<US_AnaProfile>();
-        }
+    // Test fixture for equality operator testing
+    class US_AnaProfileEqualityTest : public US_AnaProfileTest
+    {
+       protected:
+          void SetUp() override
+          {
+             ASSERT_NO_FATAL_FAILURE( US_AnaProfileTest::SetUp() );
+             profile1 = std::make_unique<US_AnaProfile>();
+             profile2 = std::make_unique<US_AnaProfile>();
+          }
 
-        std::unique_ptr<US_AnaProfile> profile1, profile2;
+          std::unique_ptr<US_AnaProfile> profile1, profile2;
     };
 
 // Test fixture for XML serialization testing
     class US_AnaProfileXmlTest : public US_AnaProfileTest {
     };
 
-// Test fixture for 2DSA controls testing
-    class US_AnaProfile2DSATest : public US_AnaProfileTest {
-    protected:
-        void SetUp() override {
-            US_AnaProfileTest::SetUp();
-            twoDSA = std::make_unique<US_AnaProfile::AnaProf2DSA>();
-        }
+    // Test fixture for 2DSA controls testing
+    class US_AnaProfile2DSATest : public US_AnaProfileTest
+    {
+       protected:
+          void SetUp() override
+          {
+             ASSERT_NO_FATAL_FAILURE( US_AnaProfileTest::SetUp() );
+             twoDSA = std::make_unique<US_AnaProfile::AnaProf2DSA>();
+          }
 
-        std::unique_ptr<US_AnaProfile::AnaProf2DSA> twoDSA;
+          std::unique_ptr<US_AnaProfile::AnaProf2DSA> twoDSA;
     };
 
-// Test fixture for PCSA controls testing
-    class US_AnaProfilePCSATest : public US_AnaProfileTest {
-    protected:
-        void SetUp() override {
-            US_AnaProfileTest::SetUp();
-            pcsa = std::make_unique<US_AnaProfile::AnaProfPCSA>();
-        }
+    // Test fixture for PCSA controls testing
+    class US_AnaProfilePCSATest : public US_AnaProfileTest
+    {
+       protected:
+          void SetUp() override
+          {
+             ASSERT_NO_FATAL_FAILURE( US_AnaProfileTest::SetUp() );
+             pcsa = std::make_unique<US_AnaProfile::AnaProfPCSA>();
+          }
 
-        std::unique_ptr<US_AnaProfile::AnaProfPCSA> pcsa;
+          std::unique_ptr<US_AnaProfile::AnaProfPCSA> pcsa;
     };
 
 // =============================================================================

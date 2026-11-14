@@ -9,15 +9,18 @@ using ::testing::DoubleEq;
 using ::testing::DoubleNear;
 using ::testing::Eq;
 
-class US_AstfemMathTest : public QtTestBase {
-protected:
-    void SetUp() override {
-        QtTestBase::SetUp();
-    }
+class US_AstfemMathTest : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+      }
 
-    void TearDown() override {
-        QtTestBase::TearDown();
-    }
+      void TearDown() override
+      {
+         QtTestBase::TearDown();
+      }
 };
 
 // Test basic utility functions

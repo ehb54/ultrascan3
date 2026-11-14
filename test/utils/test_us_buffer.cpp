@@ -19,83 +19,80 @@ using ::testing::InSequence;
 using ::testing::SetArgReferee;
 using ::testing::DoAll;
 
-class US_BufferComponentTest : public QtTestBase {
-protected:
-    void SetUp() override {
-        QtTestBase::SetUp();
-        setupValidComponent();
-    }
+class US_BufferComponentTest : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+         setupValidComponent();
+      }
 
-    void setupValidComponent() {
-        component.componentID = "1";
-        component.name = "NaCl";
-        component.unit = "M";
-        component.range = "0.0 - 1.0";
-        component.grad_form = false;
+      void setupValidComponent()
+      {
+         component.componentID = "1";
+         component.name        = "NaCl";
+         component.unit        = "M";
+         component.range       = "0.0 - 1.0";
+         component.grad_form   = false;
 
-        // Initialize coefficients
-        for (int i = 0; i < 6; i++) {
+         // Initialize coefficients
+         for ( int i = 0; i < 6; i++ )
+         {
             component.dens_coeff[i] = 1.0 + i * 0.1;
             component.visc_coeff[i] = 2.0 + i * 0.1;
-        }
-    }
+         }
+      }
 
-    US_BufferComponent component;
+      US_BufferComponent component;
 };
 
-class US_BufferTest : public QtTestBase {
-protected:
-    void SetUp() override {
-        QtTestBase::SetUp();
-        setupValidBuffer();
-    }
+class US_BufferTest : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+         setupValidBuffer();
+      }
 
-    void setupValidBuffer() {
-        buffer.person = "Test User";
-        buffer.bufferID = "1";
-        buffer.GUID = "test-guid-123";
-        buffer.description = "Test Buffer";
-        buffer.compressibility = 4.6e-10;
-        buffer.pH = 7.4;
-        buffer.density = DENS_20W;
-        buffer.viscosity = VISC_20W;
-        buffer.manual = false;
-        buffer.replace_spectrum = false;
-        buffer.new_or_changed_spectrum = false;
+      void setupValidBuffer()
+      {
+         buffer.person                  = "Test User";
+         buffer.bufferID                = "1";
+         buffer.GUID                    = "test-guid-123";
+         buffer.description             = "Test Buffer";
+         buffer.compressibility         = 4.6e-10;
+         buffer.pH                      = 7.4;
+         buffer.density                 = DENS_20W;
+         buffer.viscosity               = VISC_20W;
+         buffer.manual                  = false;
+         buffer.replace_spectrum        = false;
+         buffer.new_or_changed_spectrum = false;
 
-        // Add a test component
-        US_BufferComponent comp;
-        comp.componentID = "1";
-        comp.name = "NaCl";
-        comp.unit = "M";
-        for (int i = 0; i < 6; i++) {
+         // Add a test component
+         US_BufferComponent comp;
+         comp.componentID = "1";
+         comp.name        = "NaCl";
+         comp.unit        = "M";
+         for ( int i = 0; i < 6; i++ )
+         {
             comp.dens_coeff[i] = 1.0 + i * 0.1;
             comp.visc_coeff[i] = 2.0 + i * 0.1;
-        }
+         }
 
-        buffer.component.append(comp);
-        buffer.componentIDs.append("1");
-        buffer.concentration.append(0.15);
+         buffer.component.append( comp );
+         buffer.componentIDs.append( "1" );
+         buffer.concentration.append( 0.15 );
 
-        // Add test spectrum data
-        buffer.extinction[280.0] = 1.5;
-        buffer.extinction[250.0] = 2.0;
-        buffer.refraction[280.0] = 0.1;
-        buffer.fluorescence[350.0] = 0.5;
-    }
+         // Add test spectrum data
+         buffer.extinction[280.0]   = 1.5;
+         buffer.extinction[250.0]   = 2.0;
+         buffer.refraction[280.0]   = 0.1;
+         buffer.fluorescence[350.0] = 0.5;
+      }
 
-    QString createTempXmlFile(const QString& content) {
-        QTemporaryFile* tempFile = new QTemporaryFile();
-        tempFile->setAutoRemove(false);
-        if (tempFile->open()) {
-            tempFile->write(content.toUtf8());
-            tempFile->close();
-            return tempFile->fileName();
-        }
-        return QString();
-    }
-
-    US_Buffer buffer;
+      US_Buffer buffer;
 };
 
 // US_BufferComponent Tests
@@ -179,4 +176,39 @@ US_Buffer testBuffer;
 bool result = testBuffer.readFromDB(mockDb.get(), "123");
 
 EXPECT_FALSE(result);
+}
+
+TEST_F( US_BufferTest, SpectrumConsumesFiniteRowsWithExactQueryAndColumnContract )
+{
+   StrictMock<US_DB2_Mock> db;
+   const QStringList       query{ "get_spectrum", "1", "Buffer", "Extinction" };
+   {
+      InSequence sequence;
+      EXPECT_CALL( db, query( ::testing::Matcher<const QStringList&>( Eq( query ) ) ) );
+      EXPECT_CALL( db, next() ).WillOnce( Return( true ) );
+      EXPECT_CALL( db, value( 1 ) ).WillOnce( Return( QVariant( 260.0 ) ) );
+      EXPECT_CALL( db, value( 2 ) ).WillOnce( Return( QVariant( 0.25 ) ) );
+      EXPECT_CALL( db, next() ).WillOnce( Return( true ) );
+      EXPECT_CALL( db, value( 1 ) ).WillOnce( Return( QVariant( 280.0 ) ) );
+      EXPECT_CALL( db, value( 2 ) ).WillOnce( Return( QVariant( 0.75 ) ) );
+      EXPECT_CALL( db, next() ).WillOnce( Return( false ) );
+   }
+   buffer.extinction.clear();
+   buffer.getSpectrum( &db, "Extinction" );
+   ASSERT_EQ( buffer.extinction.size(), 2 );
+   EXPECT_DOUBLE_EQ( buffer.extinction.value( 260.0 ), 0.25 );
+   EXPECT_DOUBLE_EQ( buffer.extinction.value( 280.0 ), 0.75 );
+}
+
+TEST_F( US_BufferTest, EmptySpectrumDoesNotReadNonexistentColumns )
+{
+   StrictMock<US_DB2_Mock> db;
+   const QStringList       query{ "get_spectrum", "1", "Buffer", "Extinction" };
+   InSequence              sequence;
+   EXPECT_CALL( db, query( ::testing::Matcher<const QStringList&>( Eq( query ) ) ) );
+   EXPECT_CALL( db, next() ).WillOnce( Return( false ) );
+   EXPECT_CALL( db, value( _ ) ).Times( 0 );
+   buffer.extinction.clear();
+   buffer.getSpectrum( &db, "Extinction" );
+   EXPECT_TRUE( buffer.extinction.isEmpty() );
 }

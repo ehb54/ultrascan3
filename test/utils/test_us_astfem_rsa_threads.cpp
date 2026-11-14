@@ -3,6 +3,7 @@
 //  solves in threads must not share scratch storage, and a solve without a
 //  loaded timestate must use the speed profile of its own experiment.
 #include "qt_test_base.h"
+#include "us3_test_io.h"
 #include "us_astfem_math.h"
 #include "us_astfem_rsa.h"
 #include "us_constants.h"
@@ -199,46 +200,27 @@ class TestUSAstfemRsaThreads : public QtTestBase
    protected:
       void SetUp() override
       {
-         QtTestBase::SetUp();
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
          tmpdir_ = std::make_unique<QTemporaryDir>( QDir::tempPath() + "/us3-astfem-test-XXXXXX" );
          ASSERT_TRUE( tmpdir_->isValid() );
 
          for ( const char* name : tmp_env_names )
          {
-            saved_.push_back( { name, qEnvironmentVariableIsSet( name ), qgetenv( name ) } );
-            qputenv( name, QFile::encodeName( tmpdir_->path() ) );
+            ASSERT_TRUE( environment_.set( name, QFile::encodeName( tmpdir_->path() ) ) );
          }
          ASSERT_EQ( QDir( QDir::tempPath() ).canonicalPath(), QDir( tmpdir_->path() ).canonicalPath() );
       }
 
       void TearDown() override
       {
-         for ( const SavedEnv& env : saved_ )
-         {
-            if ( env.was_set )
-            {
-               qputenv( env.name, env.value );
-            }
-            else
-            {
-               qunsetenv( env.name );
-            }
-         }
-         saved_.clear();
+         EXPECT_TRUE( environment_.restore() );
          tmpdir_.reset();
          QtTestBase::TearDown();
       }
 
    private:
-      struct SavedEnv
-      {
-            const char* name;
-            bool        was_set;
-            QByteArray  value;
-      };
-
       std::unique_ptr<QTemporaryDir> tmpdir_;
-      std::vector<SavedEnv>          saved_;
+      Us3EnvironmentGuard            environment_;
 };
 
 // A solve without a loaded timestate gets the speed profile of its own
@@ -296,9 +278,12 @@ TEST_F( TestUSAstfemRsaThreads, NoUsableTempDirFailsCleanly )
 
    const QString saved_tmpdir = US_Settings::tmpDir();
    US_Settings::set_tmpDir( unusable );
+   // The fallback uses QDir::tempPath(). Point it at the existing file itself:
+   //  a missing TMPDIR gives an empty temp path, which falls back to "/" and
+   //  is writable when the tests run as root.
    for ( const char* name : tmp_env_names )
    {
-      qputenv( name, QFile::encodeName( unusable ) );
+      qputenv( name, QFile::encodeName( blocker ) );
    }
 
    US_SimulationParameters sp;
