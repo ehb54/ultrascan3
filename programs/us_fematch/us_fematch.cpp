@@ -404,27 +404,6 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    data_plot2->replot();
 }
 
-// public function to get pointer to edit data
-US_DataIO::EditedData*      US_FeMatch::fem_editdata() { return edata;     }
-
-// public function to get pointer to list of excluded scans
-QList< int >*               US_FeMatch::fem_excllist() { return &excludedScans;}
-
-// public function to get pointer to sim data
-US_DataIO::RawData*         US_FeMatch::fem_simdata()  { return sdata;     }
-
-// public function to get pointer to load model
-US_Model*                   US_FeMatch::fem_model()    { return &model;    }
-
-// public function to get pointer to TI noise
-US_Noise*                   US_FeMatch::fem_ti_noise() { return &ti_noise; }
-
-// public function to get pointer to RI noise
-US_Noise*                   US_FeMatch::fem_ri_noise() { return &ri_noise; }
-
-// public function to get pointer to resid bitmap diag
-QPointer< US_ResidsBitmap > US_FeMatch::fem_resbmap()  { return rbmapd;    }
-
 // Load data
 void US_FeMatch::load( void )
 {

@@ -112,14 +112,6 @@ class US_ReporterGMP : public US_Widgets
 
         QPointer<US_ResidPlotFem> resplotd;    //!< Residual plot dialog
         QPointer<US_PlotControlFem> eplotcd;   //!< Plot control dialog
-        US_DataIO::EditedData* rg_editdata();  //!< Edited data
-        US_DataIO::RawData* rg_simdata();      //!< Simulated data
-        QList<int>* rg_excllist();             //!< Exclusion list
-        US_Model* rg_model();                  //!< Model
-        US_Noise* rg_ti_noise();               //!< TI noise
-        US_Noise* rg_ri_noise();               //!< RI noise
-        QPointer<US_ResidsBitmap> rg_resbmap(); //!< Residuals bitmap
-        QString rg_tripleInfo();               //!< Triple information
 
         struct GenReportMaskStructure
         {

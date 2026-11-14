@@ -5425,29 +5425,6 @@ bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
 
 }
 
-// public function to get pointer to edit data
-US_DataIO::EditedData*      US_ReporterGMP::rg_editdata() { return edata;     }
-
-// public function to get pointer to list of excluded scans
-QList< int >*               US_ReporterGMP::rg_excllist() { return &excludedScans;}
-
-// public function to get pointer to sim data
-US_DataIO::RawData*         US_ReporterGMP::rg_simdata()  { return sdata;     }
-
-// public function to get pointer to load model
-US_Model*                   US_ReporterGMP::rg_model()    { return &model;    }
-
-// public function to get pointer to TI noise
-US_Noise*                   US_ReporterGMP::rg_ti_noise() { return &ti_noise; }
-
-// public function to get pointer to RI noise
-US_Noise*                   US_ReporterGMP::rg_ri_noise() { return &ri_noise; }
-
-// public function to get pointer to resid bitmap diag
-QPointer< US_ResidsBitmap > US_ReporterGMP::rg_resbmap()  { return rbmapd;    }
-
-QString  US_ReporterGMP::rg_tripleInfo()  { return tripleInfo;    }
-
 
 //Load rawData/editedData
 bool US_ReporterGMP::loadData( QMap < QString, QString > & triple_information )

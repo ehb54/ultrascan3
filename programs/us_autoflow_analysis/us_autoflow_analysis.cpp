@@ -3290,29 +3290,6 @@ void US_Analysis_auto::update_autoflow_record_atAnalysis( void )
 
 }
 
-// public function to get pointer to edit data
-US_DataIO::EditedData*      US_Analysis_auto::aa_editdata() { return edata;     }
-
-// public function to get pointer to list of excluded scans
-QList< int >*               US_Analysis_auto::aa_excllist() { return &excludedScans;}
-
-// public function to get pointer to sim data
-US_DataIO::RawData*         US_Analysis_auto::aa_simdata()  { return sdata;     }
-
-// public function to get pointer to load model
-US_Model*                   US_Analysis_auto::aa_model()    { return &model;    }
-
-// public function to get pointer to TI noise
-US_Noise*                   US_Analysis_auto::aa_ti_noise() { return &ti_noise; }
-
-// public function to get pointer to RI noise
-US_Noise*                   US_Analysis_auto::aa_ri_noise() { return &ri_noise; }
-
-// public function to get pointer to resid bitmap diag
-QPointer< US_ResidsBitmap > US_Analysis_auto::aa_resbmap()  { return rbmapd;    }
-
-QString  US_Analysis_auto::aa_tripleInfo()  { return tripleInfo;    }
-
 //Load rawData/editedData
 bool US_Analysis_auto::loadData( QMap < QString, QString > & triple_information )
 {
