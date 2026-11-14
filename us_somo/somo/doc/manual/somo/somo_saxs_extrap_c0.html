@@ -197,6 +197,20 @@ standard error; at and above it they are the reference's own, scaled by the cont
 Because the extrapolation is usually much less certain than a single measured curve, the error bars
 step down at the merge; that step reflects a real difference in information.
 
+<p><b>Scale the reference's error bars to join the extrapolation's</b> (off by default). That
+step also hands the spliced high-<i>q</i> part most of the 1/<i>&sigma;</i><sup>2</sup> weight in any
+later fit (Guinier, GNOM, NNLS), so the high-<i>q</i> data can dominate a fit whose information is
+mostly at low <i>q</i>. With this box checked, the spliced reference's error bars are multiplied by
+one factor: the median ratio of the extrapolation's error bars to the reference's (after the
+continuity factor) over the same 25 points just below the merge. The error bars then join at the
+merge with no step, while the high-<i>q</i> part keeps the reference's own <i>q</i>-dependence and
+needs no extrapolated error bars above the merge (where the fit may have skipped points). The
+factor is applied only when it is above 1, so the spliced part is never given smaller error bars than
+the measured reference curve has; it is reported in the log, and the output name gains
+<code>_sdj</code>. On a five-curve lysozyme series spliced at <i>q</i>&nbsp;=&nbsp;0.1 the factor was
+about 6 (nearly the same whether 25, 50 or 100 points were used), lowering the share of the total fit
+weight above the merge from 99.6% to 89%.
+
 <p>Whenever a splice is made, the log reports the <b>splice check</b>: the inverse-variance mean
 ratio of extrapolation to reference, with its standard error, over the points just below the
 merge. If the two differ by more than 5% and more than three standard errors, a warning says so,
@@ -418,7 +432,8 @@ that produced it &mdash; the concentration model
 (<code>_add</code>&nbsp;/&nbsp;<code>_recip</code>&nbsp;/&nbsp;<code>_virial2</code>), then
 <code>_abs</code> if on the reference scale and <code>_merge</code> if the reference was
 spliced &mdash; and, when spliced, the merge point <i>q</i> (with the decimal written as an
-underscore, e.g. <code>_merge_q0_0898</code> for a cutover at <i>q</i>&nbsp;=&nbsp;0.0898),
+underscore, e.g. <code>_merge_q0_0898</code> for a cutover at <i>q</i>&nbsp;=&nbsp;0.0898)
+followed by <code>_sdj</code> if the reference's error bars were scaled to join the extrapolation's,
 <code>_fb</code><i>N</i> for a manual fit-broadening window, <code>_nolqsd</code> if the low-<i>q</i>
 SD correction was off or <code>_lqsd</code><i>x</i> for a non-default threshold, <code>_refc</code><i>c</i> if a
 reference curve was chosen explicitly (with its concentration, decimal written as an underscore),
@@ -506,6 +521,8 @@ affected curves are named in the log. Set 0 to reproduce the raw, unrepaired beh
 (default <code>additive</code>).<br>
 <code>merge_q&nbsp;<i>q</i></code> &mdash; pin the splice switchover to this <i>q</i> instead of
 locating it automatically (requires <code>merge_ref&nbsp;1</code>; blank or 0 = automatic).<br>
+<code>merge_sd_join&nbsp;0|1</code> (default&nbsp;0) &mdash; scale the spliced reference's error bars
+to join the extrapolation's at the merge (requires <code>merge_ref&nbsp;1</code>).<br>
 <code>ref_scale&nbsp;0|1</code>, <code>merge_ref&nbsp;0|1</code> &mdash; output on the reference
 absolute scale, and splice the reference above the merge point.<br>
 <code>sd_weights&nbsp;0|1</code> (default&nbsp;1), <code>fit_broaden&nbsp;<i>N</i></code>

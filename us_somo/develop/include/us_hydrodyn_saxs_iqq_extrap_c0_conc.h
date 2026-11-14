@@ -51,6 +51,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
                                           double *out_outlier_chi2_ratio,
                                           QString *out_reference,
                                           double *out_merge_q,
+                                          bool *out_merge_sd_join,
                                           void *us_hydrodyn,
                                           QWidget *p = 0,
                                           const char *name = 0
@@ -67,6 +68,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       QComboBox    *cb_reference;
       QLabel       *lbl_merge_q;
       QLineEdit    *le_merge_q;
+      QCheckBox    *cb_merge_sd_join;
       QCheckBox    *cb_se_repair;
       QLabel       *lbl_se_repair_sigma;
       QLineEdit    *le_se_repair_sigma;
@@ -114,6 +116,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       double       *out_outlier_chi2_ratio;
       QString      *out_reference;
       double       *out_merge_q;
+      bool         *out_merge_sd_join;
       void         *us_hydrodyn;
 
       bool          disable_updates;

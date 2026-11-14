@@ -45,7 +45,8 @@ static QString us_extrap_c0_curve_name( const QStringList &names, int model, boo
                                         bool merge_ref, double merge_q, int sd_mode,
                                         int n_outlier_dropped, bool unweighted, int ri_mode,
                                         int fit_broaden, double ref_override_conc,
-                                        bool raw_residual, bool se_repair, double se_repair_sigma )
+                                        bool raw_residual, bool se_repair, double se_repair_sigma,
+                                        bool sd_join )
 {
    // Method token encoding the choices that produced the curve, so distinct selections give
    // distinct (self-describing) names rather than colliding on a bare -1/-2 suffix.
@@ -62,6 +63,8 @@ static QString us_extrap_c0_curve_name( const QStringList &names, int model, boo
       if ( merge_q > 0e0 )
       {
          method += "_q" + QString::number( merge_q, 'f', 4 ).replace( '.', '_' );
+         // the spliced reference's error bars were scaled to join the extrapolation's
+         if ( sd_join ) { method += "_sdj"; }
       }
       // merge_q == 0 => splice requested but no cutover located (whole curve extrapolated)
    }
@@ -670,6 +673,9 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    // Manual splice switchover: if > 0 and merge_ref is on, force the merge point to the nearest
    // grid q instead of auto-locating it. 0 = automatic (default).
    double  merge_q_override = 0e0;
+   // Scale the spliced reference's error bars by one factor so they join the extrapolation's at the
+   // switchover (see 6b2). Off by default: the reference keeps its own error bars.
+   bool    merge_sd_join    = false;
    double outlier_sigma       = 3e0;   // detection threshold: median standardized residual across q
    double outlier_chi2_ratio  = 1.5e0; // required pooled reduced-chi^2 improvement to confirm a drop
    if ( extrap_c0_script )
@@ -716,12 +722,13 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       outlier_leverage   = extrap_c0_script_outlier_leverage;
       ref_override       = extrap_c0_script_reference;
       merge_q_override   = extrap_c0_script_merge_q;
+      merge_sd_join      = extrap_c0_script_merge_sd_join;
       outlier_sigma      = extrap_c0_script_outlier_sigma;
       outlier_chi2_ratio = extrap_c0_script_outlier_chi2;
    }
    else
    {
-      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &ref_scale, &merge_ref, &show_regplots, &fit_broaden, &se_repair, &se_repair_sigma, &use_sd_weights, &extrap_model, &recompute_inputs, &recompute_inputs_mode, &sd_mode, &discard_outlier, &outlier_sigma, &outlier_chi2_ratio, &ref_override, &merge_q_override, us_hydrodyn, this );
+      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &ref_scale, &merge_ref, &show_regplots, &fit_broaden, &se_repair, &se_repair_sigma, &use_sd_weights, &extrap_model, &recompute_inputs, &recompute_inputs_mode, &sd_mode, &discard_outlier, &outlier_sigma, &outlier_chi2_ratio, &ref_override, &merge_q_override, &merge_sd_join, us_hydrodyn, this );
       US_Hydrodyn::fixWinButtons( &dlg );
       dlg.exec();
    }
@@ -1210,6 +1217,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    vector < double > Iref_full;                 // reference (highest-conc) raw I(q), full grid
    int    merge_idx = 0;                        // grid index: output = reference from here up
    double merge_q   = 0e0;                      // q at the merge point (0 => no merge / all reference)
+   double ref_sd_join = 1e0;                    // factor on the spliced reference's error bars (1 => none)
    double pvalue_alpha = 1e-2;                  // CORMAP merge-point significance (cf. cormap_alpha)
 
    if ( use_ref_path )
@@ -1953,6 +1961,56 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                           .arg( ref_cont, 0, 'f', 3 ) );
             }
          }
+
+         // Optional error-bar join. The extrapolation is usually much less certain than one measured
+         // curve, so the spliced reference's own error bars drop by a large step at the switchover and
+         // hand the high-q tail most of the 1/sigma^2 weight in any later fit (Guinier, GNOM, NNLS).
+         // Scale them by one factor -- the median ratio of the extrapolation's error bar to the
+         // (continuity-scaled) reference's over the same window -- so the two join at the switchover
+         // while the tail keeps the reference's own q-dependence, and no extrapolated error bars are
+         // needed above the switchover (where the fit may have skipped q). Applied only when it widens
+         // them: the tail is one measured curve, so it never claims less noise than that curve has.
+         if ( merge_sd_join )
+         {
+            vector < double > sdr;
+            for ( int i = w0; i < merge_idx; i++ )
+            {
+               if ( grid_to_out[ i ] < 0 || i >= (int) ref_sd.size() ) { continue; }
+               double sn = ref_sd[ i ] / ( c_ref > 0e0 ? c_ref : 1e0 ) * qAbs( ref_cont );
+               double se = out_I0_err[ grid_to_out[ i ] ];
+               if ( sn > 0e0 && se > 0e0 && !us_isnan( se ) ) { sdr.push_back( se / sn ); }
+            }
+            if ( sdr.size() < 3 )
+            {
+               editor_msg( "dark red",
+                          QString( us_tr( "Reference splice error-bar join skipped: only %1 point(s) just below the "
+                                          "switchover have error bars on both the extrapolation and the reference; "
+                                          "the reference's own error bars are kept.\n" ) ).arg( (int) sdr.size() ) );
+            }
+            else
+            {
+               std::sort( sdr.begin(), sdr.end() );
+               double k = sdr[ sdr.size() / 2 ];                             // median
+               if ( k > 1e0 )
+               {
+                  ref_sd_join = k;
+                  editor_msg( "black",
+                             QString( us_tr( "Reference splice error-bar join: the spliced reference's error bars are "
+                                             "scaled by %1, the median ratio of the extrapolation's error bars to the "
+                                             "reference's over the %2 points below the switchover, so they join there "
+                                             "with no step; the reference's own q-dependence is kept.\n" ) )
+                             .arg( k, 0, 'f', 3 ).arg( (int) sdr.size() ) );
+               }
+               else
+               {
+                  editor_msg( "black",
+                             QString( us_tr( "Reference splice error-bar join: not applied -- just below the switchover "
+                                             "the extrapolation's error bars are no larger than the reference's (median "
+                                             "ratio %1 over %2 points); the reference's own error bars are kept.\n" ) )
+                             .arg( k, 0, 'f', 3 ).arg( (int) sdr.size() ) );
+               }
+            }
+         }
       }
 
       vector < double > nq, nI, nE;
@@ -1962,7 +2020,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          {
             nq.push_back( q[ qi ] );
             nI.push_back( ( qi < Iref_full.size() ? Iref_full[ qi ] : 0e0 ) * refdiv * ref_cont );
-            nE.push_back( ( qi < ref_sd.size() ? ref_sd[ qi ] : 0e0 ) * refdiv * ref_cont );
+            nE.push_back( ( qi < ref_sd.size() ? ref_sd[ qi ] : 0e0 ) * refdiv * ref_cont * ref_sd_join );
          }
          else if ( grid_to_out[ qi ] >= 0 )
          {
@@ -2079,7 +2137,8 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    QString base_name  = us_extrap_c0_curve_name( ordered_names, extrap_model, ref_scale, merge_ref, merge_q, sd_mode, n_outlier_dropped, !use_sd_weights,
                                                   recompute_inputs ? ( recompute_inputs_mode + 1 ) : 0,
                                                   fit_broaden_effective, ref_override_conc_used,
-                                                  !outlier_leverage, se_repair, se_repair_sigma );
+                                                  !outlier_leverage, se_repair, se_repair_sigma,
+                                                  ref_sd_join != 1e0 );
    QString final_name = base_name;
    {
       int suffix = 1;
@@ -2142,7 +2201,10 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       : QString( us_tr( "normalized (tagged Conc:1)" ) );
    QString merge_note = merge_ref
       ? ( merge_q > 0e0
-          ? QString( us_tr( "; reference curve spliced above q = %1" ) ).arg( merge_q )
+          ? QString( us_tr( "; reference curve spliced above q = %1%2" ) ).arg( merge_q )
+            .arg( ref_sd_join != 1e0
+                  ? QString( us_tr( ", its error bars x%1 to join the extrapolation's" ) ).arg( ref_sd_join, 0, 'f', 3 )
+                  : QString( "" ) )
           : QString( us_tr( "; reference splice requested but skipped (no merge point found)" ) ) )
       : QString( us_tr( "; no high-q reference splice" ) );
    editor_msg( "black",

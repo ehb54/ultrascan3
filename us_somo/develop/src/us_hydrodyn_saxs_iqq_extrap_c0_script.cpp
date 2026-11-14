@@ -35,6 +35,11 @@
 //                                      auto-locating it. Requires merge_ref 1. 0 = automatic.
 //                                      Lets you test a specific cut, or override an automatic
 //                                      placement distorted by the regularization near that point.)
+//   merge_sd_join   0 | 1             (scale the spliced reference's error bars by one factor so they
+//                                      join the extrapolation's at the switchover: the median ratio
+//                                      of the extrapolation's SD to the (continuity-scaled) reference
+//                                      SD over the 25 points below it; applied only when > 1. Keeps
+//                                      the reference's own q-dependence. Default 0.)
 //   gcv             0 | 1             (OBSOLETE: automatic GCV slope regularization was removed
 //                                      2026-11-12; "gcv 0" is accepted silently, "gcv 1" is ignored
 //                                      with a note. gcv_lambda likewise is ignored with a note.)
@@ -232,6 +237,7 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
    extrap_c0_script_outlier_leverage = true;
    extrap_c0_script_reference.clear();
    extrap_c0_script_merge_q        = 0e0;
+   extrap_c0_script_merge_sd_join  = false;
    extrap_c0_script_se_repair      = true;
    extrap_c0_script_se_repair_sigma = 3e0;
    extrap_c0_script_conc.clear();
@@ -304,6 +310,7 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
       else if ( key == "outlier_leverage" ){ extrap_c0_script_outlier_leverage = ( val.toInt() != 0 ); }
       else if ( key == "reference" )       { extrap_c0_script_reference      = val; }
       else if ( key == "merge_q" )         { extrap_c0_script_merge_q       = val.toDouble(); }
+      else if ( key == "merge_sd_join" )   { extrap_c0_script_merge_sd_join = ( val.toInt() != 0 ); }
       else if ( key == "se_repair" )       { extrap_c0_script_se_repair     = ( val.toInt() != 0 ); }
       else if ( key == "se_repair_sigma" )
       {

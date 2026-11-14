@@ -838,6 +838,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       bool   extrap_c0_script_outlier_leverage = true;     // studentize nomination residual by sqrt(1-h)
       QString extrap_c0_script_reference;                  // explicit reference curve (name or conc); "" = max conc
       double  extrap_c0_script_merge_q       = 0e0;        // manual splice switchover q; 0 = automatic
+      bool    extrap_c0_script_merge_sd_join = false;      // scale spliced reference SDs to join the extrapolation's
       bool    extrap_c0_script_se_repair     = true;       // low-q SD correction of the output errors
       double  extrap_c0_script_se_repair_sigma = 3e0;      // ...only for points > this many sd off the trend
 

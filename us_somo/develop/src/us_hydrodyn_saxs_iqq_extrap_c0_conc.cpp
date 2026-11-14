@@ -31,6 +31,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
                                                                           double *out_outlier_chi2_ratio,
                                                                           QString *out_reference,
                                                                           double *out_merge_q,
+                                                                          bool *out_merge_sd_join,
                                                                           void *us_hydrodyn,
                                                                           QWidget *p,
                                                                           const char *
@@ -57,6 +58,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    this->out_outlier_chi2_ratio = out_outlier_chi2_ratio;
    this->out_reference          = out_reference;
    this->out_merge_q            = out_merge_q;
+   this->out_merge_sd_join      = out_merge_sd_join;
    this->us_hydrodyn        = us_hydrodyn;
 
    *out_ok = false;
@@ -184,6 +186,24 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
                                 "Enter a q value to pin it there instead -- needed on many real dilution series,\n"
                                 "where the automatic test finds no agreement. Only used when the high-q splice\n"
                                 "is enabled." ) );
+
+   // Optional error-bar join at the splice: one factor on the reference's error bars.
+   cb_merge_sd_join = new QCheckBox( us_tr( "Scale the reference's error bars to join the extrapolation's" ), this );
+   cb_merge_sd_join->setChecked( false );
+   cb_merge_sd_join->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_merge_sd_join->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_merge_sd_join );
+   cb_merge_sd_join->setMinimumHeight( minHeight1 );
+   cb_merge_sd_join->setToolTip(
+                         us_tr( "Unchecked: the spliced reference keeps its own error bars. These are usually much\n"
+                                "smaller than the extrapolation's, so the error bars drop by a step at the switchover\n"
+                                "and the high-q part carries most of the weight in a later fit (Guinier, GNOM, NNLS).\n\n"
+                                "Checked: multiply the spliced reference's error bars by one factor -- the median\n"
+                                "ratio of the extrapolation's error bars to the reference's over the 25 points below\n"
+                                "the switchover -- so they join there with no step. The high-q part keeps the\n"
+                                "reference's own q-dependence, and is never given smaller error bars than the\n"
+                                "reference's own (the factor is applied only when it is above 1). The factor is\n"
+                                "reported in the log. Only used when the high-q splice is enabled." ) );
 
    // Reference-curve selection. Default = automatic (highest concentration), which is the right
    // default because intensity scales with concentration, so the top curve normally has the best
@@ -565,6 +585,12 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
       background->addLayout( hbl_merge_q );
    }
    {
+      QHBoxLayout *hbl_merge_sd_join = new QHBoxLayout(); hbl_merge_sd_join->setContentsMargins( 0, 0, 0, 0 ); hbl_merge_sd_join->setSpacing( 0 );
+      hbl_merge_sd_join->addSpacing( 12 );
+      hbl_merge_sd_join->addWidget( cb_merge_sd_join );
+      background->addLayout( hbl_merge_sd_join );
+   }
+   {
       QHBoxLayout *hbl_reference = new QHBoxLayout(); hbl_reference->setContentsMargins( 0, 0, 0, 0 ); hbl_reference->setSpacing( 2 );
       hbl_reference->addWidget( lbl_reference );
       hbl_reference->addWidget( cb_reference );
@@ -635,6 +661,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::refresh_reference_enabled()
    lbl_reference->setEnabled( enable );
    le_merge_q->setEnabled( cb_merge->isChecked() );
    lbl_merge_q->setEnabled( cb_merge->isChecked() );
+   cb_merge_sd_join->setEnabled( cb_merge->isChecked() );
 }
 
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::populate_table()
@@ -754,6 +781,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::ok()
    }
    *out_ref_scale       = cb_ref_scale->isChecked();
    *out_merge_ref       = cb_merge->isChecked();
+   *out_merge_sd_join   = cb_merge->isChecked() && cb_merge_sd_join->isChecked();
    *out_show_regplots = cb_regplots->isChecked();
    *out_se_repair     = cb_se_repair->isChecked();
    {
