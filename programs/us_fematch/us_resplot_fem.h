@@ -13,21 +13,19 @@
 #include "us_plot.h"
 #include "us_help.h"
 
-//! \brief The data a residuals plot dialog reads.
+//! \brief The data a residuals plot dialog shows.
 //!
-//! The dialog keeps these pointers and reads through them whenever a plot
-//! option is toggled, so the caller must keep the objects alive and unchanged
-//! while the dialog is open. A null edited or simulated pointer means that data
-//! is absent.
+//! The dialog keeps its own copy, so the caller may change or discard its data
+//! while the dialog is open; set_inputs() shows new data.
 struct US_ResidPlotInputs
 {
-   US_DataIO::EditedData*      edited    = nullptr; //!< Experimental data
-   US_DataIO::RawData*         simulated = nullptr; //!< Simulated data
-   QList< int >*               excluded  = nullptr; //!< Excluded scan indexes
-   US_Noise*                   ti_noise  = nullptr; //!< Time-invariant noise
-   US_Noise*                   ri_noise  = nullptr; //!< Radially-invariant noise
-   QPointer< US_ResidsBitmap > bitmap;               //!< Existing residuals bitmap, if any
-   QString                     triple_info;          //!< Title suffix in Analysis mode
+   US_DataIO::EditedData       edited;      //!< Experimental data
+   US_DataIO::RawData          simulated;   //!< Simulated data
+   QList< int >                excluded;    //!< Excluded scan indexes
+   US_Noise                    ti_noise;    //!< Time-invariant noise
+   US_Noise                    ri_noise;    //!< Radially-invariant noise
+   QPointer< US_ResidsBitmap > bitmap;      //!< Caller's residuals bitmap to reuse, if any
+   QString                     triple_info; //!< Title suffix in Analysis mode
 };
 
 //! \brief A class to provide a window with experimental/residuals plots
@@ -54,6 +52,10 @@ class US_ResidPlotFem : public US_WidgetsDialog
 
       //! \brief Stop reacting to the bitmap before child widgets are deleted
       ~US_ResidPlotFem() override;
+
+      //! \brief Show new data, keeping the plot options that still apply
+      //! \param inputs The data to plot; its bitmap is ignored
+      void set_inputs( const US_ResidPlotInputs& inputs );
 
       //! \brief Force a specific plot in the lower plot
       //! \param plotf Flag plot to force: 1,2 == ti_noise,ri_noise
@@ -91,6 +93,7 @@ class US_ResidPlotFem : public US_WidgetsDialog
       int           dbg_level;
 
    protected:
+      US_ResidPlotInputs          data_in;
       US_DataIO::EditedData*      edata;
       US_DataIO::Scan*            escan;
       QList< int >*               excllist;

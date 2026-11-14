@@ -4474,11 +4474,11 @@ void US_Analysis_auto::plotres( )
    // }
 
    US_ResidPlotInputs inputs;
-   inputs.edited      = edata;
-   inputs.simulated   = sdata;
-   inputs.excluded    = &excludedScans;
-   inputs.ti_noise    = &ti_noise;
-   inputs.ri_noise    = &ri_noise;
+   inputs.edited      = *edata;
+   inputs.simulated   = *sdata;
+   inputs.excluded    = excludedScans;
+   inputs.ti_noise    = ti_noise;
+   inputs.ri_noise    = ri_noise;
    inputs.bitmap      = rbmapd;
    inputs.triple_info = tripleInfo;
    resplotd = new US_ResidPlotFem( inputs, US_ResidPlotFem::Analysis, this );

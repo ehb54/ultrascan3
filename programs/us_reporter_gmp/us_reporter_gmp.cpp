@@ -11338,11 +11338,11 @@ void US_ReporterGMP::plotres( QMap < QString, QString> & tripleInfo )
 
   // Plots for Exp-Sim ovelray (with noises rmoved && residual plot)
   US_ResidPlotInputs inputs;
-  inputs.edited      = edata;
-  inputs.simulated   = sdata;
-  inputs.excluded    = &excludedScans;
-  inputs.ti_noise    = &ti_noise;
-  inputs.ri_noise    = &ri_noise;
+  inputs.edited      = *edata;
+  inputs.simulated   = *sdata;
+  inputs.excluded    = excludedScans;
+  inputs.ti_noise    = ti_noise;
+  inputs.ri_noise    = ri_noise;
   inputs.bitmap      = rbmapd;
   inputs.triple_info = this->tripleInfo;  // the member, not the QMap parameter of the same name
   resplotd = new US_ResidPlotFem( inputs, US_ResidPlotFem::Report, this );

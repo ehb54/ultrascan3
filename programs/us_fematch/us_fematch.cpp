@@ -1170,14 +1170,7 @@ DbgLv(1) << "cnstvb" << cnstvb << "img06File" << img06File;
    // Save the upper experiment-simulation overlay plot
    if ( resplotd == 0 )
    {
-      US_ResidPlotInputs inputs;
-      inputs.edited    = edata;
-      inputs.simulated = sdata;
-      inputs.excluded  = &excludedScans;
-      inputs.ti_noise  = &ti_noise;
-      inputs.ri_noise  = &ri_noise;
-      inputs.bitmap    = rbmapd;
-      resplotd = new US_ResidPlotFem( inputs, US_ResidPlotFem::Standalone, this );
+      resplotd = new US_ResidPlotFem( resplot_inputs(), US_ResidPlotFem::Standalone, this );
       resplotd->move( rpd_pos );
       resplotd->show();
    }
@@ -1313,6 +1306,9 @@ void US_FeMatch::exclude( void )
    allExcls[ drow ]     = excludedScans;
 
    data_plot();
+
+   if ( resplotd )
+      resplotd->set_inputs( resplot_inputs() );
 
    pb_reset_exclude->setEnabled( true );
 }
@@ -1743,16 +1739,22 @@ void US_FeMatch::plotres( )
       resplotd->close();
    }
 
-   US_ResidPlotInputs inputs;
-   inputs.edited    = edata;
-   inputs.simulated = sdata;
-   inputs.excluded  = &excludedScans;
-   inputs.ti_noise  = &ti_noise;
-   inputs.ri_noise  = &ri_noise;
-   inputs.bitmap    = rbmapd;
-   resplotd = new US_ResidPlotFem( inputs, US_ResidPlotFem::Standalone, this );
+   resplotd = new US_ResidPlotFem( resplot_inputs(), US_ResidPlotFem::Standalone, this );
    resplotd->move( rpd_pos );
    resplotd->show();
+}
+
+// The data the residual plot shows: the current data, its simulation and noise
+US_ResidPlotInputs US_FeMatch::resplot_inputs()
+{
+   US_ResidPlotInputs inputs;
+   inputs.edited    = *edata;
+   inputs.simulated = *sdata;
+   inputs.excluded  = excludedScans;
+   inputs.ti_noise  = ti_noise;
+   inputs.ri_noise  = ri_noise;
+   inputs.bitmap    = rbmapd;
+   return inputs;
 }
 
 // Load the model data and detect if it is RA
@@ -3665,6 +3667,9 @@ void US_FeMatch::reset_excludes( void )
 
    pb_reset_exclude->setEnabled( false );
    allExcls[ index ] = excludedScans;
+
+   if ( resplotd )
+      resplotd->set_inputs( resplot_inputs() );
 }
 
 // Reset data set

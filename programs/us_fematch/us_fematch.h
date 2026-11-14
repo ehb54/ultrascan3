@@ -71,6 +71,9 @@ class US_FeMatch : public US_Widgets
         void simulate();
 
     private:
+        //! \brief The data the residual plot shows.
+        US_ResidPlotInputs resplot_inputs();
+
         QLabel* lb_tolerance; //!< Label for tolerance.
         QLabel* lb_division; //!< Label for division.
         QLabel* lb_rmsd; //!< Label for RMSD.

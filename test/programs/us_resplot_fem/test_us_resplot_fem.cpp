@@ -28,7 +28,7 @@ const double differences[3][4] = {
 const double tiValues[4] = { .125, -.25, .375, -.5 };
 const double riValues[3] = { .0625, -.125, .1875 };
 
-// Storage the dialog borrows through US_ResidPlotInputs.
+// The caller's data, which the dialog copies through US_ResidPlotInputs.
 struct ResidualInputs
 {
     US_DataIO::EditedData edited;
@@ -73,11 +73,11 @@ std::unique_ptr<QWidget> owner(ResidualInputs&, const QString&)
 US_ResidPlotInputs inputs(ResidualInputs& in)
 {
     US_ResidPlotInputs result;
-    result.edited = &in.edited;
-    result.simulated = &in.simulated;
-    result.excluded = &in.excluded;
-    result.ti_noise = &in.ti;
-    result.ri_noise = &in.ri;
+    result.edited = in.edited;
+    result.simulated = in.simulated;
+    result.excluded = in.excluded;
+    result.ti_noise = in.ti;
+    result.ri_noise = in.ri;
     result.bitmap = in.bitmap;
     result.triple_info = in.triple;
     return result;
@@ -452,6 +452,55 @@ private slots:
         QVERIFY(!plot);
     }
 
+    void inputsAreCopied_data() { modeRows(); }
+    void inputsAreCopied()
+    {
+        QFETCH(QString, mode);
+        ResidualInputs in; populate(in);
+        auto caller = owner(in, mode);
+        US_ResidPlotFem plot(inputs(in), toMode(mode), caller.get());
+        // C09/C10: later changes by the caller must not reach the open dialog.
+        in.edited.scanData[0].rvalues[0] += .5;
+        in.simulated.scanData[0].rvalues[0] += .25;
+        in.excluded << 1;
+        in.ti.values[0] = 9.;
+        box(plot, "Add Time Invariant Noise")->setChecked(true);
+        box(plot, "Add Time Invariant Noise")->setChecked(false);
+        auto upper = curves(plot.rp_data_plot1());
+        auto lower = curves(plot.rp_data_plot2());
+        QCOMPARE(upper.size(), 6); QCOMPARE(lower.size(), 4);
+        QCOMPARE(upper[0]->sample(0).y(), 1 + .25 - .125 - .0625);
+        QCOMPARE(upper[3]->sample(0).y(), 1.);
+        QCOMPARE(lower[1]->sample(0).y(), .25 - .125 - .0625);
+    }
+
+    void setInputsReplots_data() { modeRows(); }
+    void setInputsReplots()
+    {
+        QFETCH(QString, mode);
+        ResidualInputs in; populate(in);
+        auto caller = owner(in, mode);
+        US_ResidPlotFem plot(inputs(in), toMode(mode), caller.get());
+        plot.set_plot(2); // viewing RI noise, which the new data lacks
+        ResidualInputs next; populate(next, 1, 2);
+        next.edited.scanData[0].rvalues[0] += .5;
+        plot.set_inputs(inputs(next));
+        QVERIFY(!box(plot, "Subtract Radially Invariant Noise")->isEnabled());
+        QVERIFY(!box(plot, "Subtract Radially Invariant Noise")->isChecked());
+        QVERIFY(!box(plot, "Plot Radially Invariant Noise")->isEnabled());
+        QVERIFY(box(plot, "Subtract Time Invariant Noise")->isChecked());
+        QVERIFY(box(plot, "Plot Residuals")->isChecked());
+        auto upper = curves(plot.rp_data_plot1());
+        auto lower = curves(plot.rp_data_plot2());
+        QCOMPARE(upper.size(), 4); QCOMPARE(lower.size(), 3);
+        QCOMPARE(lower[1]->sample(0).y(), .25 + .5 - .125);
+        QCOMPARE(lower[2]->title().text(), QString("resids 2"));
+        plot.set_inputs(inputs(in)); // RI noise returns, subtracted as in a new dialog
+        QVERIFY(box(plot, "Subtract Radially Invariant Noise")->isEnabled());
+        QVERIFY(box(plot, "Subtract Radially Invariant Noise")->isChecked());
+        QCOMPARE(curves(plot.rp_data_plot2())[1]->sample(0).y(), .25 - .125 - .0625);
+    }
+
     void borrowedBitmapAndRefresh()
     {
         ResidualInputs in; populate(in);
@@ -465,6 +514,10 @@ private slots:
         in.excluded << 1;
         QVERIFY(QMetaObject::invokeMethod(&plot, "plot_data", Qt::DirectConnection));
         auto cs = curves(plot.rp_data_plot2());
+        QCOMPARE(cs.size(), 4); // The dialog plots its own copy.
+        QCOMPARE(cs[1]->sample(0).y(), .25 - .125 - .0625);
+        plot.set_inputs(inputs(in));
+        cs = curves(plot.rp_data_plot2());
         QCOMPARE(cs.size(), 3);
         QCOMPARE(cs[1]->sample(0).y(), .25 + .5 - .125 - .0625);
         QCOMPARE(cs[2]->title().text(), QString("resids 2"));

@@ -166,15 +166,16 @@ US_ResidPlotFem::US_ResidPlotFem( const US_ResidPlotInputs& inputs, Mode mode,
    have_bm   = false;
    skip_plot = true;
 
-   edata           = inputs.edited;
-   sdata           = inputs.simulated;
-   excllist        = inputs.excluded;
-   ti_noise        = inputs.ti_noise;
-   ri_noise        = inputs.ri_noise;
+   data_in         = inputs;
+   edata           = &data_in.edited;
+   sdata           = &data_in.simulated;
+   excllist        = &data_in.excluded;
+   ti_noise        = &data_in.ti_noise;
+   ri_noise        = &data_in.ri_noise;
    resbmap         = inputs.bitmap;
    tripleInfo      = inputs.triple_info;
-   have_ed         = ( edata != 0 );
-   have_sd         = ( sdata != 0 );
+   have_ed         = true;
+   have_sd         = true;
    have_ti         = ( ti_noise != 0  &&  ti_noise->count > 0 );
    have_ri         = ( ri_noise != 0  &&  ri_noise->count > 0 );
    have_bm         = ( resbmap != 0 );
@@ -219,6 +220,57 @@ US_ResidPlotFem::~US_ResidPlotFem()
 {
    if ( resbmap )
       disconnect( resbmap, nullptr, this, nullptr );
+}
+
+// Replace the plotted data. Noise controls follow the new noise as they would in
+// a new dialog; other options are kept.
+void US_ResidPlotFem::set_inputs( const US_ResidPlotInputs& inputs )
+{
+   const bool had_ti = have_ti;
+   const bool had_ri = have_ri;
+
+   data_in    = inputs;
+   tripleInfo = inputs.triple_info;
+   have_ti    = ( ti_noise->count > 0 );
+   have_ri    = ( ri_noise->count > 0 );
+
+   QList< QCheckBox* > boxes = { ck_subtin, ck_subrin, ck_addtin, ck_addrin,
+                                 ck_pltres, ck_plttin, ck_pltrin, ck_pltran };
+   for ( QCheckBox* box : boxes )
+      box->blockSignals( true );
+
+   ck_subtin->setEnabled( have_ti  &&  ck_plteda->isChecked() );
+   ck_subrin->setEnabled( have_ri  &&  ck_plteda->isChecked() );
+   ck_addtin->setEnabled( have_ti  &&  ck_pltsda->isChecked() );
+   ck_addrin->setEnabled( have_ri  &&  ck_pltsda->isChecked() );
+   ck_plttin->setEnabled( have_ti );
+   ck_pltrin->setEnabled( have_ri );
+
+   if ( have_ti != had_ti )
+   {
+      ck_subtin->setChecked( have_ti );
+      ck_addtin->setChecked( false );
+   }
+
+   if ( have_ri != had_ri )
+   {
+      ck_subrin->setChecked( have_ri );
+      ck_addrin->setChecked( false );
+   }
+
+   if ( ( ck_plttin->isChecked()  &&  !have_ti )  ||
+        ( ck_pltrin->isChecked()  &&  !have_ri ) )
+   {  // the noise being viewed is gone:  view residuals
+      ck_plttin->setChecked( false );
+      ck_pltrin->setChecked( false );
+      ck_pltran->setChecked( false );
+      ck_pltres->setChecked( true );
+   }
+
+   for ( QCheckBox* box : boxes )
+      box->blockSignals( false );
+
+   plot_data();
 }
 
 // externally force a specific plot for lower plot

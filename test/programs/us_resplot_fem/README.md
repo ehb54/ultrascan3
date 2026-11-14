@@ -25,8 +25,8 @@ dialog. Mode strings in the test data map to the enum through `toMode()`.
   button slot, `on_close`/`destroyed` signals and caller destruction. The inputs
   borrow fixture storage, so this does NOT exercise callbacks into destroyed
   application-owned data.
-- Existing FEMatch bitmap reuse and invalidation; borrowed data/exclusions mutate
-  in place and the next refresh uses the new values.
+- Existing FEMatch bitmap reuse and invalidation. The dialog plots its own copy
+  of the data: caller changes after construction are not seen until `set_inputs`.
 - 100 open/close cycles per mode: every closed dialog is destroyed.
 
 Known legacy results intentionally asserted: all scans excluded displays NaN;
@@ -152,3 +152,17 @@ mode, not only Analysis, so a window close destroys it along with the dialog.
 `closeDestroysDialog` now expects that in all three modes; FEMatch and Report
 failed before the fix. A bitmap passed in by the caller (FEMatch's) is still
 the caller's: `borrowedBitmapAndRefresh` is unchanged.
+
+### Copied inputs and `set_inputs` (T05, C09/C10)
+
+`US_ResidPlotInputs` now holds values and the dialog keeps its own copy, so a
+caller clearing its noise (C09) or rewriting its simulation (C10) while the
+dialog is open no longer changes what the dialog reads. `set_inputs` shows new
+data: noise controls follow the new noise as in a new dialog, and a lower plot
+showing noise that has gone switches to residuals.
+
+`inputsAreCopied` (all modes) and the first refresh check in
+`borrowedBitmapAndRefresh` failed before the change. `borrowedBitmapAndRefresh`
+now expects caller edits to appear only after `set_inputs`. `setInputsReplots` is
+new with the method, so before the change it failed to compile rather than at
+run time.
