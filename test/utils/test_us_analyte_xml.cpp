@@ -8,6 +8,12 @@
 #include <cstring>
 #include <limits>
 
+// The fixtures are hand-written XML plus two generated files (see fixtures/analyte/README.md).
+// There are no historical lab A*.xml files and no RNA, carbohydrate or populated-sequence
+// examples from real data, so these tests do not show compatibility with older saved analytes.
+// A failed device write may leave partial output and file saves are not atomic; the write
+// tests check only the returned status.
+
 namespace
 {
 class AnalyteXml : public QtTestBase, public ::testing::WithParamInterface<bool>
