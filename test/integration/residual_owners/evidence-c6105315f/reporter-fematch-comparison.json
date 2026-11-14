@@ -1,0 +1,23 @@
+[
+  {
+    "file": "2DSA.1A123.residuals.png",
+    "identical_bytes": false,
+    "fematch_sha256": "649878d76bda9e71a72331fa4a2ad216a46c225e34873c62cf1c056df9fdbf56",
+    "reporter_sha256": "707acab5bfda640bf1e72bfc2062034e241c3003e459a61b334383c7cc82b994",
+    "identical_svg": null
+  },
+  {
+    "file": "2DSA.1A123.velocity_nc.png",
+    "identical_bytes": false,
+    "fematch_sha256": "8daad3d085dfa111cd3df903ed9a99d6059b9002d38a3fb2cb28046a32c24a81",
+    "reporter_sha256": "34d93c121eaba09c1dc869f0d197254693ffecd34d67e5edf5022e26c1a6611d",
+    "identical_svg": null
+  },
+  {
+    "file": "2DSA.1A123.velocity_nc.svgz",
+    "identical_bytes": false,
+    "fematch_sha256": "2ac9a9c4c3b964f7b0a98de64287b7339dc2763b20740d622595c6681ad2c5dc",
+    "reporter_sha256": "78806adf94244c979f0b55a52f12192b03c18b4416cc14a51c0c79169928d93d",
+    "identical_svg": false
+  }
+]

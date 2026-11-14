@@ -1,6 +1,7 @@
 # Real-owner residual baseline verification
 
-Latest native results: [2026-11-14 evidence](evidence-2026-11-14/README.md).
+Latest native results: [post-c6105315f verification](evidence-c6105315f/README.md).
+Earlier baseline/T10 results: [2026-11-14 evidence](evidence-2026-11-14/README.md).
 The setup notes below describe the earlier investigation; the evidence record
 supersedes its registration, database-gap and not-yet-executed status statements.
 
