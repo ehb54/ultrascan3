@@ -642,6 +642,27 @@ DbgLv(1) << "SP:rSS:   step" << nsteps << "rotorspeed" << sp.rotorspeed
 }
 
 // Compute the speed steps vector from data scans
+bool US_SimulationParameters::speedStepsCoverData( const QVector<SpeedProfile>& speedsteps, const US_DataIO::EditedData& editdata )
+{
+   if ( speedsteps.isEmpty() || editdata.scanData.isEmpty() )
+   {
+      return false;
+   }
+
+   const double first = editdata.scanData.first().seconds;
+   const double last  = editdata.scanData.last().seconds;
+
+   for ( const SpeedProfile& step : speedsteps )
+   {
+      if ( first < step.time_first || last > step.time_last )
+      {
+         return false;
+      }
+   }
+
+   return true;
+}
+
 void US_SimulationParameters::computeSpeedSteps(
       QVector< US_DataIO::Scan >* scans,
       QVector< SpeedProfile >& speedsteps )

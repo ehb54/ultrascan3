@@ -6190,7 +6190,10 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
   // Initialize simulation parameters using edited data information
   US_Passwd pw;
   US_DB2* dbP = new US_DB2( pw.getPasswd() );
-  
+
+  // Use the experiment speed steps if they cover the data; otherwise derive steps from the scans
+  exp_steps = US_SimulationParameters::speedStepsCoverData( speed_steps, *edata );
+  dat_steps = !exp_steps;
   simparams.initFromData( dbP, *edata, dat_steps );
   simparams.simpoints         = adv_vals[ "simpoints" ].toInt();
   simparams.meshType          = US_SimulationParameters::ASTFEM;

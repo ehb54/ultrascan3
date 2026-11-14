@@ -384,3 +384,50 @@ TEST_F( US_SimulationParametersTest, EditRadiiScaleThePlateauInsetOnAShortColumn
    EXPECT_GT( frac, 0.5 );
    EXPECT_LT( frac, 1.0 );
 }
+
+namespace
+{
+US_DataIO::EditedData editedWithScanTimes( double first, double last )
+{
+   US_DataIO::EditedData edata{};
+   US_DataIO::Scan       scan{};
+   scan.seconds = first;
+   edata.scanData << scan;
+   scan.seconds = last;
+   edata.scanData << scan;
+   return edata;
+}
+
+US_SimulationParameters::SpeedProfile stepWithTimes( int first, int last )
+{
+   US_SimulationParameters::SpeedProfile step;
+   step.time_first = first;
+   step.time_last  = last;
+   step.rotorspeed = 45000;
+   return step;
+}
+} // namespace
+
+TEST_F( US_SimulationParametersTest, SpeedStepsCoverData_StepSpanningScans )
+{
+   const QVector<US_SimulationParameters::SpeedProfile> steps{ stepWithTimes( 100, 5000 ) };
+
+   EXPECT_TRUE( US_SimulationParameters::speedStepsCoverData( steps, editedWithScanTimes( 100, 5000 ) ) );
+   EXPECT_TRUE( US_SimulationParameters::speedStepsCoverData( steps, editedWithScanTimes( 200, 4000 ) ) );
+}
+
+TEST_F( US_SimulationParametersTest, SpeedStepsCoverData_ScansOutsideStep )
+{
+   const QVector<US_SimulationParameters::SpeedProfile> steps{ stepWithTimes( 100, 5000 ) };
+
+   EXPECT_FALSE( US_SimulationParameters::speedStepsCoverData( steps, editedWithScanTimes( 99, 4000 ) ) );
+   EXPECT_FALSE( US_SimulationParameters::speedStepsCoverData( steps, editedWithScanTimes( 200, 5001 ) ) );
+}
+
+TEST_F( US_SimulationParametersTest, SpeedStepsCoverData_NoStepsOrNoScans )
+{
+   const QVector<US_SimulationParameters::SpeedProfile> steps{ stepWithTimes( 100, 5000 ) };
+
+   EXPECT_FALSE( US_SimulationParameters::speedStepsCoverData( {}, editedWithScanTimes( 200, 4000 ) ) );
+   EXPECT_FALSE( US_SimulationParameters::speedStepsCoverData( steps, US_DataIO::EditedData{} ) );
+}
