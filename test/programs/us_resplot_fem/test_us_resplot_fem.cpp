@@ -145,7 +145,7 @@ private slots:
             for (const QString& scenario : { QString("null-parent"),
                   QString("empty-edited"), QString("empty-simulated"), QString("short-ti"),
                   QString("short-ri"), QString("short-scan"), QString("short-radius"),
-                  QString("nonfinite"), QString("bad-exclusion") })
+                  QString("nonfinite"), QString("bad-exclusion"), QString("single-point") })
                 QTest::newRow(qPrintable((mode.isEmpty() ? "FEMATCH" : mode) + "-" + scenario))
                     << mode << scenario;
     }
@@ -202,6 +202,17 @@ private slots:
         if (scenario == "short-radius") in.simulated.xvalues = QVector<double>{ 5.8, 5.9 };
         if (scenario == "nonfinite") in.edited.scanData[0].rvalues[0] = std::numeric_limits<double>::quiet_NaN();
         if (scenario == "bad-exclusion") in.excluded = { -1, 99 };
+        if (scenario == "single-point")
+        {   // The smallest valid input: one scan of one point.
+            in.edited.xvalues = { 5.8 };
+            in.simulated.xvalues = { 5.8 };
+            in.edited.scanData = { in.edited.scanData[0] };
+            in.simulated.scanData = { in.simulated.scanData[0] };
+            in.edited.scanData[0].rvalues = { 1.25 };
+            in.simulated.scanData[0].rvalues = { 1. };
+            in.ti.values = { .125 };
+            in.ri.values = { .0625 };
+        }
         fprintf(stderr, "RESIDUAL_PROBE_STARTED\n"); fflush(stderr);
         US_ResidPlotFem plot(inputs(in), toMode(mode),
                              scenario == "null-parent" ? nullptr : caller.get());
@@ -211,6 +222,15 @@ private slots:
             QCOMPARE(cs.size(), 4);
             QVERIFY(std::isnan(cs[1]->sample(0).y()));
             QVERIFY(field(plot, "RMSD")->text().toLower().contains("nan"));
+        }
+        if (scenario == "single-point")
+        {
+            QCOMPARE(cs.size(), 2);
+            QCOMPARE(cs[0]->dataSize(), size_t(2)); // zero line
+            QCOMPARE(cs[1]->sample(0), QPointF(5.8, .25 - .125 - .0625));
+            for (int view = 0; view < 4; ++view) plot.set_plot(view % 3);
+            box(plot, "Plot Random Noise")->setChecked(true);
+            box(plot, "Show Residuals Bitmap")->setChecked(true);
         }
         if (scenario == "bad-exclusion")
         {

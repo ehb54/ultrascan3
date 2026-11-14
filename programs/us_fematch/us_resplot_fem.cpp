@@ -827,7 +827,8 @@ void US_ResidPlotFem::plot_rdata()
    us_grid( data_plot2 );
    data_plot2->setAxisTitle( QwtPlot::xBottom, tr( "Radius (cm)" ) );
 
-   int    vsize = qMax( sdata->pointCount(), qMax( points, count ) );
+   // At least two elements: the zero line has two ends even for one point.
+   int    vsize = qMax( 2, qMax( sdata->pointCount(), qMax( points, count ) ) );
 
    QVector< double > rvec( vsize, 0.0 );
    QVector< double > vvec( vsize, 0.0 );
