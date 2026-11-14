@@ -11,6 +11,14 @@ using ::testing::Matcher;
 using ::testing::Return;
 using ::testing::StrictMock;
 
+// Known defects in US_BufferComponent (ehb54/ultrascan-tickets#1241) that these tests
+// deliberately do not assert:
+// - getInfoFromDB ignores query() and next() failures and indexes six coefficient tokens
+//   without checking how many there are, so failed, empty and short rows are not tested.
+// - saveToDB puts a space before the first coefficient and none between the others, so
+//   the save tests check only the metadata arguments.
+// getAllFromDB opens its own DB connection and is not unit tested.
+
 namespace
 {
 class BufferComponentDb : public QtTestBase
@@ -100,7 +108,7 @@ TEST_F( BufferComponentDb, SaveRoutesMetadataAndPublishesSuccessfulInsertId )
                   EXPECT_EQ( 7, args.size() );
                   EXPECT_EQ( ( QStringList{ "create_buffer_component", "Salt & sugar", "mM", "0 to 9", gradient ? "1" : "0" } ),
                              args.mid( 0, 5 ) );
-                  // Coefficient serialization has a separately tracked delimiter defect.
+                  // Arguments 5 and 6 (density, viscosity) are left unchecked until #1241 is fixed.
                   return IUS_DB2::OK;
                } ) );
          EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );

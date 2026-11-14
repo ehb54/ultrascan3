@@ -3,6 +3,14 @@
 #include "us_eprofile.h"
 #include <QXmlStreamReader>
 
+// Known defects in US_ExtProfile (ehb54/ultrascan-tickets#1239) that these tests
+// deliberately do not assert, so a fix will not break them:
+// - parse_eprofile ignores the XML error state, so a truncated document containing a
+//   profile element returns true with partial data.
+// - xml_eprofile writes values with default QString::number precision (wavelengths
+//   280.00001 and 280.00002 both become 280), so fixtures use values with few significant digits.
+// - xml_eprofile appends to a nonempty output string, so every writer test starts empty.
+
 namespace
 {
 using ExtProfileXml = QtTestBase;

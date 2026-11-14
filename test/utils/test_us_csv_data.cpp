@@ -3,6 +3,8 @@
 #include "us3_test_io.h"
 #include "us_csv_data.h"
 
+// Not covered: quoted fields, NaN/infinity values and write failures part-way through a file.
+
 namespace
 {
 using CsvData = Us3FileTestBase;
