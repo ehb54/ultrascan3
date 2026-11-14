@@ -232,8 +232,7 @@ private slots:
         QCOMPARE(cs.size(), 2); QCOMPARE(cs[1]->title().text(), QString("ti_noise"));
         for (int p = 0; p < 4; ++p) QCOMPARE(cs[1]->sample(p), QPointF(in.edited.xvalues[p], tiValues[p]));
         plot.set_plot(2);
-        // Inspect the actual lower plot before rp_data_plot2's export accessor
-        // copies the upper plot's x-axis title (a separate legacy behavior).
+        // D03: exporting the lower plot must preserve its scan-number axis.
         QwtPlot* lower = nullptr;
         for (auto* candidate : plot.findChildren<QwtPlot*>())
             if (candidate->accessibleName() == "Residuals Plot") lower = candidate;
@@ -242,7 +241,7 @@ private slots:
         cs = curves(plot.rp_data_plot2());
         QCOMPARE(cs.size(), 2); QCOMPARE(cs[1]->title().text(), QString("ri_noise"));
         for (int s = 0; s < 3; ++s) QCOMPARE(cs[1]->sample(s), QPointF(s + 1, riValues[s]));
-        QCOMPARE(plot.rp_data_plot2()->axisTitle(QwtPlot::xBottom).text(), QString("Radius (cm)"));
+        QCOMPARE(plot.rp_data_plot2()->axisTitle(QwtPlot::xBottom).text(), QString("Scan Number"));
         box(plot, "Plot Random Noise")->setChecked(true);
         cs = curves(plot.rp_data_plot2());
         QCOMPARE(cs.size(), 4);

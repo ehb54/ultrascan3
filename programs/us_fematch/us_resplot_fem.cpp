@@ -358,7 +358,7 @@ QwtPlot* US_ResidPlotFem::rp_data_plot2()
   p_title.setFont( font_c );
   data_plot2->setTitle( p_title );
 
-  QwtText xTitle = data_plot1->axisTitle(QwtPlot::xBottom);
+  QwtText xTitle = data_plot2->axisTitle(QwtPlot::xBottom);
   xTitle.setFont( font_c );
   data_plot2->setAxisTitle( QwtPlot::xBottom, xTitle );
 

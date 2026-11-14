@@ -22,7 +22,7 @@ Keep the behavioral fixtures/assertions. Do not move the seam into production.
   data/model visibility and enabled controls. Binary-exact sample differences and
   noise allow exact curve comparison. Displayed statistics use existing formatting.
 - TI, RI, random-noise and residual view selection; exact noise coordinates and
-  mutual exclusion. Includes current RI export-axis relabeling behavior.
+  mutual exclusion. D03 now verifies RI export preserves the scan-number label.
 - Three-mode bitmap close/reopen, bitmap parenting, window close versus Close
   button slot, `on_close`/`destroyed` signals, caller destruction and explicit
   dialog deletion. A caller double borrows fixture storage, so this does NOT
@@ -35,8 +35,7 @@ Keep the behavioral fixtures/assertions. Do not move the seam into production.
 
 Known legacy results intentionally asserted: all scans excluded displays NaN;
 close hides rather than destroys dialogs; window close does not destroy the
-bitmap; REPORT bitmap-checkbox changes wait for another refresh; the lower-plot
-export accessor changes the RI axis label from Scan Number to Radius (cm).
+bitmap; REPORT bitmap-checkbox changes wait for another refresh.
 These assertions preserve evidence, not endorsement. Defect repair must introduce
 an intended-behavior regression test that fails before changing production code,
 with a linked defect ID and explicit change to the characterization expectation.
@@ -86,3 +85,12 @@ Confirmed defects are tracked as D01–D03 in
 [ultrascan-tickets#1240](https://github.com/ehb54/ultrascan-tickets/issues/1240).
 The CI change filters now include the three application directories and the
 bitmap/dialog base files so source-only changes trigger both Qt test workflows.
+
+### D03 red/green correction
+
+The intended `Scan Number` label assertion failed in all three modes before
+the fix. `rp_data_plot2()` now reads the lower plot's own x-axis title rather
+than copying the upper plot's title. The full 75-check suite passes after this
+one-line correction. Local evidence: `d03-red-*` and `d03-green-*` logs. This
+intentionally corrects the first baseline's mislabeled RI-noise export axis;
+curve coordinates and numerical calculations are unchanged.
