@@ -261,6 +261,17 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString path_load_bead_model;
       QString path_view_asa_res;
       QString path_view_bead_model;
+      QString path_visualize_mesh;
+      QString last_zeno_mesh;          // the .bod of the last ZENO run on a surface mesh, offered by Visualize Mesh
+      int     last_zeno_mesh_model;    // the model it was made from (index), and its number of beads, so
+      size_t  last_zeno_mesh_beads;    // Visualize Mesh can show the mesh with those beads
+      // shows a mesh file made by ZENO from a model's beads with those beads in RasMol
+      void    visualize_mesh_with_bead_model( int model, const QString & mesh );
+      QString last_zeno_series;        // the CSV of the last ZENO mesh series, offered by the BEST/ZENO series tool
+      // batch: the extrapolated values of each model's ZENO mesh series, written as one table at the end
+      QStringList zeno_mesh_series_summary;
+      QString     zeno_mesh_series_summary_header;
+      QString     zeno_mesh_series_summary_tag;
       QString path_open_hydro_res;
 
       QString pdb_file;
@@ -578,6 +589,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_grid;
       QPushButton *pb_view_asa;
       QPushButton *pb_view_bead_model;
+      QPushButton *pb_visualize_mesh;
 
       QLabel      *lbl_temperature;
       QLineEdit   *le_temperature;
@@ -1287,6 +1299,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void pdb_visualization(); // pdb visualization options
       void view_asa(); // show asa file in editor
       void view_bead_model(); // show bead model file in editor
+      void visualize_mesh(); // show a surface mesh file with its structure in RasMol
       void view_file(const QString &, QString title = "SOMO editor"); // call editor to view a file
       void bead_check( bool use_threshold = false, bool message_type = false, bool vdw = false, bool only_asa = false ); // recheck beads
       void load_config();

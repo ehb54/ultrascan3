@@ -1,6 +1,7 @@
 // sesmesh: the thread pool behind parallel.h.
 #include "parallel.h"
 
+#include <chrono>
 #include <condition_variable>
 #include <exception>
 #include <mutex>
@@ -139,5 +140,47 @@ void set_threads( int n ) { pool().resize( n < 1 ? hardware_threads() : n ); }
 bool in_parallel() { return t_in_parallel; }
 
 void run_on_threads( const std::function<void( int )>& job ) { pool().run( job ); }
+
+namespace {
+
+double seconds_now() {
+   return std::chrono::duration<double>( std::chrono::steady_clock::now().time_since_epoch() ).count();
+}
+
+std::atomic<double> g_progress_interval( 0.1 );
+
+}  // namespace
+
+void set_progress_interval( double seconds ) { g_progress_interval = std::max( 0.0, seconds ); }
+
+double progress_interval() { return g_progress_interval; }
+
+Progress::Progress( const ProgressFn& fn )
+    : fn_( fn ), owner_( std::this_thread::get_id() ), interval_( progress_interval() ), last_( -1e300 ), stop_( false ) {}
+
+void Progress::stage( const char* name, double from, double to ) {
+   stage_ = name;
+   from_ = from;
+   to_ = to;
+   at( 0 );
+}
+
+void Progress::at( double f ) {
+   if ( !fn_ || std::this_thread::get_id() != owner_ ) {
+      return;
+   }
+   if ( stopped() ) {
+      throw Cancelled();
+   }
+   const double t = seconds_now();
+   if ( t - last_ < interval_ ) {
+      return;
+   }
+   last_ = t;
+   if ( !fn_( from_ + ( to_ - from_ ) * std::min( 1.0, std::max( 0.0, f ) ), stage_ ) ) {
+      stop_ = true;
+      throw Cancelled();
+   }
+}
 
 }  // namespace sesmesh

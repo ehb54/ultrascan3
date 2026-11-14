@@ -2481,6 +2481,11 @@ void US_Hydrodyn_Batch::start( bool quiet )
 
    ((US_Hydrodyn *)us_hydrodyn)->citation_clear();
 
+   // the table of ZENO mesh-series extrapolations starts empty for each batch run
+   ((US_Hydrodyn *)us_hydrodyn)->zeno_mesh_series_summary.clear();
+   ((US_Hydrodyn *)us_hydrodyn)->zeno_mesh_series_summary_header.clear();
+   ((US_Hydrodyn *)us_hydrodyn)->zeno_mesh_series_summary_tag.clear();
+
    disable_after_start();
    disable_updates = true;
    editor->append(us_tr("\nProcess files:\n"));
@@ -3373,6 +3378,34 @@ void US_Hydrodyn_Batch::start( bool quiet )
       ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
    }
    cout << job_timer.list_times();
+
+   // ZENO on sequences of surface meshes: one table of every model's extrapolated values,
+   // named with the series settings and the number of models
+   {
+      US_Hydrodyn * h = (US_Hydrodyn *)us_hydrodyn;
+      if ( h->zeno_mesh_series_summary.size() ) {
+         QString name =
+            h->get_somo_dir()
+            + QDir::separator()
+            + QString( "%1_summary_%2-models_%3.csv" )
+            .arg( h->zeno_mesh_series_summary_tag )
+            .arg( h->zeno_mesh_series_summary.size() )
+            .arg( QDateTime::currentDateTime().toString( "yyMMdd-hhmmss" ) );
+         QFile f( name );
+         if ( f.open( QIODevice::WriteOnly ) ) {
+            QTextStream ts( &f );
+            ts << h->zeno_mesh_series_summary_header << "\n"
+               << h->zeno_mesh_series_summary.join( "\n" ) << "\n";
+            f.close();
+            editor_msg( "dark blue",
+                        QString( us_tr( "Extrapolations of the ZENO mesh series of %1 models: %2" ) )
+                        .arg( h->zeno_mesh_series_summary.size() )
+                        .arg( name ) );
+         } else {
+            editor_msg( "red", QString( us_tr( "Error: could not write %1" ) ).arg( name ) );
+         }
+      }
+   }
 
    editor_msg( "black", us_tr( "Processing Complete" ) );
    {

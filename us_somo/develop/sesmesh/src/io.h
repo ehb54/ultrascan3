@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "coalesce.h"
 #include "mesh.h"
 
 namespace sesmesh {
@@ -14,6 +15,11 @@ void write_msms( const std::string& base, const std::string& name, const Mesh& m
 // base.c3v (areas and volume; rcoal reads the area and volume of component 1 from its line 13).
 void write_c3p( const std::string& base, const std::string& name, const Mesh& m, int natoms, double probe,
                 double area, double volume );
+
+// The surface rcoal would read from the base.c3p and base.c3v that write_c3p writes, without
+// writing them: the vertices as written, the same edges in the same order, and the area and
+// volume as written to line 13 of the .c3v.  input_name is left empty.
+rcoal::Surface c3p_surface( const Mesh& m, double area, double volume );
 
 // BEST: base.best, N, area and volume, then the nine coordinates of each triangle.
 void write_best( const std::string& base, const Mesh& m, double area, double volume );

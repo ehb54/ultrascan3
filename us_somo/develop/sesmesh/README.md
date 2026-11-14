@@ -8,15 +8,17 @@ coarsener rcoal) and for ZENO.
 - It writes msroll's `.c3p`/`.c3v` format, which rcoal reads, and MSMS's `.vert`/`.face`.
 - It is a free replacement for msroll, which is commercial, and MSMS, whose binary is free only
   for academic use.
+- It includes `rcoal`, a C++ port of BEST's mesh coarsener. Its outputs are identical to the
+  Fortran's, and on lysozyme meshes it runs 50–290 times faster.
 - It is written from the published methods in C++17, needs no libraries beyond the C++
   standard library, runs in parallel on `std::thread`s, and is MIT-licensed.
 
 ## Building
 
 ```bash
-make                   # bin/sesmesh
+make                   # bin/sesmesh, and bin/rcoal and bin/rcoal3 (see rcoal below)
 make CXX=clang++       # another compiler
-make test              # unit tests
+make test              # unit tests, and rcoal against the Fortran's outputs
 ```
 
 sesmesh needs only a C++17 compiler and its standard library. It runs in parallel on
@@ -37,6 +39,7 @@ sesmesh [options] input.xyzr
   -M mass      mass in Da for the .bod file
   -T temp      temperature in C for the .bod file (default 20)
   -V visc      solvent viscosity in cP for the .bod file (default 1.002)
+  -C n1,n2,K   also coarsen the mesh for BEST: K meshes of n1 to n2 triangles (-C N: one)
   -k           keep internal cavities (default: fill them)
   -t n         threads
   -v           time each stage
@@ -50,6 +53,9 @@ Examples:
   `protein.vert`/`.face` with about 25,000 triangles, for rcoal. The area and volume in
   `protein.c3v` are extrapolated from four spacings.
 - `sesmesh -p 1.5 -g 0.2 -f bod -M 14305 protein.xyzr` writes a fine mesh for ZENO.
+- `sesmesh -p 1.5 -n 60000 -x 0.3,0.25 -f none -C 2152,3588,6 protein.xyzr` writes SOMO's six
+  BEST meshes for lysozyme, `protein_02152` to `protein_03588`, without the `.c3p` and rcoal
+  steps.
 
 With `-n`, sesmesh also meshes at a finer spacing and warns if the topology differs: a coarse
 grid can open a narrow channel or close a thin neck.
@@ -69,8 +75,82 @@ grid can open a narrow channel or close a thin neck.
   area and volume (as for `.c3v`), then one line with the nine coordinates of each triangle.
 - `base.bod`: ZENO's format: `UNITS A`, `TEMP`, `VISCOSITY`, `MASS` (with `-M`), then one
   `TRIANGLE` line per triangle.
+- `base_NNNNN`, `base_NNNNN.his` (with `-C`): the coarse meshes for BEST, named by their number
+  of triangles, with rcoal's histogram files (see rcoal below).
 
 Triangles run counter-clockwise seen from outside. Coordinates are written with 8 decimals.
+
+## rcoal
+
+`bin/rcoal` and `bin/rcoal3` are a C++ port of rcoal 2.0 and 3.0, the mesh coarsener that comes
+with [BEST](https://github.com/ehb54/best-hydro), with the fixes of ehb54/best-hydro#1 and
+ehb54/best-hydro#2. They are drop-in replacements for the Fortran programs:
+
+```
+rcoal  -f name.c3p -nmax N -nmin N -n K      K meshes of nmin to nmax triangles
+rcoal  -f name.c3p -e edgfrac                one mesh
+rcoal3 -f name.face -nmax N -nmin N -n K -s  MSMS input; name.vert and name.msms.log are read too
+  -search   find e for each target by bisection, instead of rcoal's two-run fit (new)
+  -v3       rcoal 3.0's messages: the default when run as rcoal3, and with -s
+```
+
+- **Output.** They write the same files, `name_NNNNN` for BEST and `name_NNNNN.his`, byte for
+  byte, and the same stdout, including the "Output files written:" lines that SOMO reads.
+- **Refusal.** If two vertices of a triangle are at the same position as written, they print
+  the same message, write no files, and exit with 1, as the Fortran does.
+- **Tested against the Fortran.** On best-hydro's test inputs, all 178 output files are
+  identical, and so are stdout, stderr and the exit codes. The inputs are eight msroll lysozyme
+  meshes through both programs, two NanoShaper meshes, the `-e` path and best-hydro's two
+  examples. This holds:
+  - with g++ 13 on Linux at `-O0`, `-O2` and `-O3 -march=native`;
+  - with Apple clang 13.
+
+  `make test` repeats the comparison on small inputs in `test/rcoal`.
+- **Floating point.** The port keeps the Fortran's arithmetic in the same order. It must be
+  built with `-ffp-contract=off`, as the Makefile does, so that multiplies and adds are not
+  fused.
+
+Speed, for SOMO's six meshes of 2,152–3,588 triangles:
+
+| input | triangles | Fortran rcoal | rcoal here | `-search` |
+|---|---:|---:|---:|---:|
+| msroll, lysozyme, fineness 0.6  | 17,102 | 11.3 s | 0.21 s | 2.9 s |
+| msroll, lysozyme, fineness 0.38 | 43,286 | 69.5 s | 0.54 s | 12.4 s |
+| NanoShaper, lysozyme            | 67,464 | 186 s  | 0.65 s | 12.8 s |
+
+The Fortran's time grows as the square of the input size: it searches every triangle for each
+collapse. The port keeps a list of triangles for each vertex, in ascending order, so that its
+loops still visit triangles in the Fortran's order.
+
+**`-search`.** rcoal picks e for each target from N(e) = N0 / (1 + a e^p), fitted to runs at
+e = 0.7 and 1.0. That fits msroll's meshes, but on marching-cubes and marching-tetrahedra input
+it misses:
+
+| input | rcoal's outputs for targets 2,152–3,588 |
+|---|---|
+| NanoShaper | 2,686–3,172 |
+| sesmesh    | 2,616–3,538 |
+
+`-search` uses the same Coalesce and only chooses e differently. It hits each target to within
+a few triangles. Its meshes are therefore not the Fortran's, and `make test` checks only that
+they reach their targets.
+
+**`sesmesh -C n1,n2,K`** coarsens the mesh it has just made in the same way, with no `.c3p`
+round trip.
+- **Targets.** They are rcoal's: n1, then steps of (n2 − n1)/(K − 1) up to n2.
+- **e.** It is found by bisection for each target, as with `-search`, and the targets run in
+  parallel.
+- **Area and volume.** The first line of each mesh holds the area and volume that `base.c3v`
+  would get, extrapolated in h² when `-x` is given.
+- **Same as the file route.** sesmesh starts from the surface rcoal would read from
+  `base.c3p`: the vertices as written, the same edges, the area and volume as written. So its
+  meshes are byte for byte those of `rcoal -search` on `base.c3p`. The `.his` files differ
+  only in the input file's name. `make test` checks this.
+- **Speed.** For lysozyme meshed at 60,000 triangles, the six meshes take 2.9 s, against
+  10.3 s for `rcoal -search` on the `.c3p`.
+
+The library is `src/coalesce.h`, which does not depend on the rest of sesmesh, and
+`src/rcoal_io.h` for rcoal's files.
 
 ## Method
 
@@ -182,11 +262,14 @@ They agree within 0.03% in D and 0.06% in [η]. ZENO on the cleaned 0.5–0.2 Å
 these limits. msroll's error is larger because it wrote no lysozyme mesh finer than 43k
 triangles.
 
-### Four structures, four meshers
+### Five structures, four meshers
 
-The structures are crambin (1CRN), lysozyme (1AKI), pepsin (4PEP, with a deep cleft) and the
-hemoglobin tetramer (1A3N, with internal cavities).
-- **Inputs:** protein atoms only, with msroll's `best.radii` spheres and a 1.5 Å probe.
+The structures are crambin (1CRN), lysozyme (1AKI), pepsin (4PEP, with a deep cleft), the
+hemoglobin tetramer (1A3N, with internal cavities) and the B-DNA dodecamer 1BNA (with its
+major and minor grooves).
+- **Inputs:** protein or DNA atoms only (no water), with msroll's `best.radii` spheres and a
+  1.5 Å probe. The DNA atoms get msroll's nucleotide radii once renamed to the older PDB names
+  its atom table uses (residues A, C, G, T; `C1*`, `O1P`, `C5M` and so on).
 - **Cavities:** filled. For msroll and NanoShaper, the outer surface is the largest component.
 - **Area and volume:** sesmesh's h² extrapolation is compared with msroll's analytic SES:
 
@@ -196,10 +279,11 @@ hemoglobin tetramer (1A3N, with internal cavities).
 | 1AKI | 1001 | 5633.206 | −0.0005% | 23368.748 | +0.0001% |
 | 4PEP | 2423 | 11209.040 | −0.0006% | 56016.768 | −0.0001% |
 | 1A3N | 4370 | 19509.094 | −0.004% | 102582.214 | −0.0000% |
+| 1BNA | 486 | 4047.108 | −0.005% | 11326.144 | +0.0000% |
 
-ZENO 5.3.1 was run on 84 full meshes, with no coarsening:
+ZENO 5.3.1 was run on 107 full meshes, with no coarsening:
 - msroll at finenesses 0.60 to 0.36, as far as it ran without crashing;
-- NanoShaper at grid scales 1.5–6, plus 8 for crambin;
+- NanoShaper at grid scales 1.5–6, plus 8 for crambin and DNA;
 - sesmesh at h = 1.0 to 0.25;
 - EDTSurf (VCMC) at scales 2–5.
 
@@ -212,11 +296,15 @@ and NanoShaper limits:
 | 1AKI | +0.00%, −0.00% | −0.00%, +0.00% | +0.01%, −0.07% | +1.44%, −4.17% |
 | 4PEP | +0.01%, −0.05% | −0.01%, +0.05% | −0.02%, −0.03% | +1.16%, −3.35% |
 | 1A3N | +0.01%, −0.03% | −0.01%, +0.03% | −0.05%, +0.06% | +1.00%, −2.91% |
+| 1BNA | −0.01%, +0.03% | +0.01%, −0.03% | −0.11%, +0.23% | +1.76%, −4.97% |
 
 - **sesmesh and NanoShaper** agree within ZENO's statistical error, and so do their finest
   single meshes (within 0.02% in D and 0.06% in [η]).
-- **msroll** extrapolates to the same values. Its finest meshes (at most 120k triangles) are
-  off by +0.1–0.2% in D and −0.3–0.6% in [η].
+- **msroll** extrapolates to the same values for the proteins. Its finest meshes (at most 120k
+  triangles) are off by +0.1–0.2% in D and −0.3–0.6% in [η].
+- **msroll on DNA** extrapolates less well: its meshes stop at 28k triangles, and its limit
+  moves by about 0.1% with the meshes chosen for the fit. Its analytic area and volume agree
+  with sesmesh's within 0.005%, so the surfaces are the same.
 - **EDTSurf** is biased and does not converge: about +1–2% in D and −3–5% in [η].
 
 ## Speed
@@ -232,6 +320,7 @@ NanoShaper (grid scale 2 and 4), and scale 2 and 4 for EDTSurf; msroll used fine
 | 1AKI | 0.66 / 1.97 | 0.24 / 0.71 | 0.96 / 1.43 | 0.97 / 2.02 | 0.20 / 1.56 |
 | 4PEP | 1.25 / 3.28 | 0.45 / 1.27 | 1.23 / 2.74 | 3.84 / 9.81 | 0.50 / 3.57 |
 | 1A3N | 1.60 / 5.26 | 0.70 / 1.92 | 1.62 / 3.48 | 13.4 / 46.7 | 0.80 / 6.66 |
+| 1BNA | 0.52 / 1.22 | 0.24 / 0.57 | 0.82 / 1.35 | 0.39 / 0.86 | 0.12 / 0.91 |
 
 Mesh sizes at the finer setting for 1A3N:
 
@@ -242,6 +331,16 @@ Mesh sizes at the finer setting for 1A3N:
 On one thread sesmesh is slower: 1A3N at 0.25 Å takes 19 s raw and 40 s cleaned, against 5.2 s
 for NanoShaper. Its time goes into evaluating the exact surface function, about 12 million
 times.
+
+## In a program
+
+`build_mesh`, `clean_mesh` and `check_mesh` (`src/mesh.h`, `src/clean.h`) can report their
+progress to a function `bool( double fraction, const char* stage )`, given as
+`MeshOptions::progress`, `CleanOptions::progress` or `check_mesh`'s second argument. It is
+called on the calling thread, about every 0.1 s (`set_progress_interval` changes that), with an
+estimate of the fraction done. Returning false stops the call: its loops end at their next chunk
+and it throws `sesmesh::Cancelled`. Without a function nothing changes, and with one the meshes
+are the same. US-SOMO uses this for its progress bar and Stop button.
 
 ## Limitations
 
@@ -264,6 +363,8 @@ times.
     | 25,000 | 2,674–3,566 |
     | 40,000 | 3,448–4,404 |
 
+    `rcoal -search` and `sesmesh -C` (see rcoal above) hit the targets instead.
+
   - BEST through rcoal, extrapolated linearly in 1/N:
     - At a 30,000-triangle input, sesmesh agrees with msroll at the same input size within
       0.03% in D and [η].
@@ -281,4 +382,6 @@ times.
 
 ## Licence
 
-MIT; see `LICENSE`.
+MIT; see `LICENSE`. The rcoal port (`src/coalesce.*`, `src/rcoal_io.*`, `src/rcoal.cpp`) is
+derived from Sergio Aragon's rcoal in best-hydro, which is also MIT-licensed, and carries his
+copyright as well.
