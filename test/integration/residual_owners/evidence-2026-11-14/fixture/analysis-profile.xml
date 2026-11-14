@@ -1,0 +1,16 @@
+<AnalysisProfileData version="1.0">
+    <analysis_profile name="Residual owner verification TEST ONLY" guid="cc48212a-6274-53da-ab79-008670962462">
+        <channel_parms channel="1A" chandesc="1A:UV/vis.:Netrin1 (protein, globular) | 50 mM Tris pH 7.5 200 mM NaCl" load_concen_ratio="1" lcr_tolerance="5" load_volume="460" lv_tolerance="10" data_end="7" load_dens="1.42" grad_vbar="0.2661" grad_mw="168.36" run="1" run_report="1" abde_reference="0" abde_use_reference="0" wvl_edit="123" wvl_not_run="" chandesc_alt="1A:UV/vis.:Netrin1 (protein, globular) | 50 mM Tris pH 7.5 200 mM NaCl" report_id="1240001" report_guid="93cf5ddb-5b9b-531b-b1e8-30e74775e21a" scan_excl_begin="0" scan_excl_end="0" scan_excl_nth="1" replicate_group="0" />
+        <p_2dsa>
+            <channel_parms channel="1A:UV/vis.:Netrin1 (protein, globular) | 50 mM Tris pH 7.5 200 mM NaCl" s_min="1" s_max="10" s_gridpoints="16" k_min="1" k_max="4" k_gridpoints="16" vary_vbar="0" constant_ff0="1" custom_grid_guid="" CG_modelID="" custom_grid_name="" />
+            <job_2dsa run="0" noise="(TI Noise)" />
+            <job_2dsa_fm run="0" noise="(TI+RI Noise)" fit_mb_select="1" meniscus_range="0.03" meniscus_points="11" max_iterations="1" />
+            <job_fitmen run="0" interactive="1" />
+            <job_2dsa_it run="1" noise="(TI+RI Noise)" max_iterations="10" />
+            <job_2dsa_mc run="0" mc_iterations="5" />
+        </p_2dsa>
+        <p_pcsa job_run="0">
+            <channel_parms channel="1A:UV/vis.:Netrin1 (protein, globular) | 50 mM Tris pH 7.5 200 mM NaCl" curve_type="All" x_type="s" y_type="f/f0" z_type="vbar" x_min="1" x_max="10" y_min="1" y_max="4" z_value="0" variations_count="10" gridfit_iterations="3" curve_reso_points="200" noise="none" regularization="none" reg_alpha="0" mc_iterations="100" />
+            </p_pcsa>
+    </analysis_profile>
+</AnalysisProfileData>

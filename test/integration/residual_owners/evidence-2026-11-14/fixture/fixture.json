@@ -1,0 +1,8 @@
+{
+  "id": 1240001,
+  "protocol_guid": "26992bff-a793-5eb2-811a-6e10e78bf715",
+  "analysis_guid": "cc48212a-6274-53da-ab79-008670962462",
+  "report_guid": "93cf5ddb-5b9b-531b-b1e8-30e74775e21a",
+  "synthetic": true,
+  "status": "DEPLOYED; authenticated model/history reads and real reporter load pass; simulation blocked by zero-speed warning"
+}

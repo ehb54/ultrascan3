@@ -1,5 +1,9 @@
 # Real-owner residual baseline verification
 
+Latest native results: [2026-11-14 evidence](evidence-2026-11-14/README.md).
+The setup notes below describe the earlier investigation; the evidence record
+supersedes its registration, database-gap and not-yet-executed status statements.
+
 ## Revision isolation
 
 Use `27129cc57` for the pre-T04 baseline and `ca46728e9` for T04/T04a.
