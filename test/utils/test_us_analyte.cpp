@@ -1,3 +1,4 @@
+//! \file test_us_analyte.cpp
 #include <QBuffer>
 #include <QDebug>
 #include <QDir>
@@ -339,37 +340,77 @@ TEST_F(US_AnalyteStaticTest, GetFilenameHandlesEmptyGuid) {
 // Dump Method Tests
 // =============================================================================
 
-QStringList*                     capturedLines = nullptr;
+// Only capture messages emitted on the calling test thread.
+thread_local QStringList* capturedLines = nullptr;
 
-QLoggingCategory::CategoryFilter previousFilter = nullptr;
-
-void                             captureLine( QtMsgType, const QMessageLogContext&, const QString& line )
+void                      captureLine( QtMsgType, const QMessageLogContext&, const QString& line )
 {
-   capturedLines->append( line );
-}
-
-// The test runner disables debug output; enable it for the default category only.
-void enableDefaultDebug( QLoggingCategory* category )
-{
-   previousFilter( category );
-   if ( qstrcmp( category->categoryName(), "default" ) == 0 )
+   if ( capturedLines != nullptr )
    {
-      category->setEnabled( QtDebugMsg, true );
+      capturedLines->append( line );
    }
 }
 
-// The lines dump() writes through qDebug().
+class ScopedDumpCapture
+{
+   public:
+      explicit ScopedDumpCapture( QStringList& lines ) :
+          category( QLoggingCategory::defaultCategory() ),
+          debugEnabled( category->isDebugEnabled() ),
+          previousLines( capturedLines )
+      {
+         capturedLines   = &lines;
+         previousHandler = qInstallMessageHandler( captureLine );
+         // Changing this category directly avoids installFilter's synchronous callbacks.
+         category->setEnabled( QtDebugMsg, true );
+      }
+      ~ScopedDumpCapture()
+      {
+         category->setEnabled( QtDebugMsg, debugEnabled );
+         qInstallMessageHandler( previousHandler );
+         capturedLines = previousLines;
+      }
+      ScopedDumpCapture( const ScopedDumpCapture& )            = delete;
+      ScopedDumpCapture& operator=( const ScopedDumpCapture& ) = delete;
+
+   private:
+      QLoggingCategory* category;
+      bool              debugEnabled;
+      QStringList*      previousLines;
+      QtMessageHandler  previousHandler;
+};
+
+// The lines dump() writes through qDebug(). No process-wide category filter is replaced.
 QStringList dumpLines( US_Analyte& analyte )
 {
    QStringList lines;
-   capturedLines                   = &lines;
-   previousFilter                  = QLoggingCategory::installFilter( enableDefaultDebug );
-   const QtMessageHandler previous = qInstallMessageHandler( captureLine );
-   analyte.dump();
-   qInstallMessageHandler( previous );
-   QLoggingCategory::installFilter( previousFilter );
-   capturedLines = nullptr;
+   {
+      ScopedDumpCapture capture( lines );
+      analyte.dump();
+   }
    return lines;
+}
+
+TEST_F( US_AnalyteDumpTest, ExistingLoggingCategoryAndRepeatedCaptureRestoreLoggingState )
+{
+   // installFilter used to call a null previousFilter when this category already existed.
+   QLoggingCategory*      category       = QLoggingCategory::defaultCategory();
+   const bool             initialDebug   = category->isDebugEnabled();
+   const QtMessageHandler initialHandler = qInstallMessageHandler( nullptr );
+   qInstallMessageHandler( initialHandler );
+   for ( bool enabled : { false, true } )
+   {
+      category->setEnabled( QtDebugMsg, enabled );
+      for ( int repetition = 0; repetition < 2; ++repetition )
+      {
+         EXPECT_FALSE( dumpLines( *analyte ).isEmpty() );
+         EXPECT_EQ( enabled, category->isDebugEnabled() );
+         const QtMessageHandler restored = qInstallMessageHandler( initialHandler );
+         EXPECT_EQ( initialHandler, restored );
+         EXPECT_EQ( nullptr, capturedLines );
+      }
+   }
+   category->setEnabled( QtDebugMsg, initialDebug );
 }
 
 TEST_F( US_AnalyteDumpTest, DumpNamesEachAnalyteType )
