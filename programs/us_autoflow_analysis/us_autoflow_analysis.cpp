@@ -674,7 +674,6 @@ QString US_Analysis_auto::get_filename( QString triple_name )
 //Gui update: timer's slot
 void US_Analysis_auto::gui_update( )
 {
-  //qDebug() << "in_gui_update: " << in_gui_update;
     
   if ( in_gui_update )            // If already doing a reload,
     return;                            //  skip starting a new one
@@ -751,7 +750,6 @@ void US_Analysis_auto::gui_update( )
             
       /********************* deal with JSON *****************************************/
       
-      //qDebug() << "JSON: " << status_json;
       
       QJsonDocument jsonDoc = QJsonDocument::fromJson( status_json.toUtf8() );
       if (!jsonDoc.isObject())
@@ -3410,7 +3408,6 @@ bool US_Analysis_auto::loadModel( QMap < QString, QString > & triple_information
 		  if ( time_to_now < latest_update_time )
 		    {
 		      latest_update_time = time_to_now;
-		      //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
 
 		      qDebug() << "Model 2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
 		  		      
@@ -3424,7 +3421,6 @@ bool US_Analysis_auto::loadModel( QMap < QString, QString > & triple_information
 	      if ( time_to_now < latest_update_time )
 		{
 		  latest_update_time = time_to_now;
-		  //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
 		  
 		  qDebug() << "Model NON-2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
 		  
@@ -4500,7 +4496,6 @@ void US_Analysis_auto::plotres( )
    //    resplotd->close();
    // }
 
-   //resplotd = new US_ResidPlotFem( this, true );
    resplotd = new US_ResidPlotFem( this, QString("ANALYSIS") );
 
    //resplotd->move( rpd_pos );
@@ -4677,7 +4672,6 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
     // simulating... \nPlease wait...") ) );
     // msg_sim->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
 
-    // qDebug() << "Msg POSITION: -- " << sim_msg_pos_x << sim_msg_pos_y;
 
     // msg_sim->move( sim_msg_pos_x, sim_msg_pos_y );
 
@@ -4920,13 +4914,6 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
   progress_msg->finish();
   qApp->processEvents();
   
-  /*
-  // Show plot
-  resplotd = new US_ResidPlotFem( this, true );
-  //resplotd->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
-  resplotd->setWindowModality(Qt::ApplicationModal);
-  resplotd->show();
-  */
 }
 
 
@@ -5046,8 +5033,6 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
 	  // QMap <QString, QString > current_analysis;
 	  // current_analysis = read_autoflowAnalysis_record( &db, requestID );
 	  
-	  // qDebug() << "GUID to DETETE! -- " << current_analysis[ "CurrentGfacID" ];
-	  // qDebug() << "Status && statusMsg to DETETE! -- " << current_analysis[ "status" ] << current_analysis[ "status_msg" ];
 	  /* **********/
 	  
 	  update_autoflowAnalysis_uponDeletion( &db, requestID );
@@ -5150,8 +5135,6 @@ void US_Analysis_auto::delete_job( const QString& triple_stage )
     
   QStringList triple_stage_parts = tr_st.split("(");
 
-  // qDebug() << "In DELETE: triple_stage: " << triple_stage;
-  // qDebug() << "Parts: " << triple_stage_parts;
 
   QString stage_n = triple_stage_parts[0];
   QString triple_n  = triple_stage_parts[1];
@@ -5245,8 +5228,6 @@ void US_Analysis_auto::delete_job( const QString& triple_stage )
       // QMap <QString, QString > current_analysis;
       // current_analysis = read_autoflowAnalysis_record( &db, requestID );
       
-      // qDebug() << "GUID to DETETE! -- " << current_analysis[ "CurrentGfacID" ];
-      // qDebug() << "Status && statusMsg to DETETE! -- " << current_analysis[ "status" ] << current_analysis[ "status_msg" ];
       /* **********/
 
       update_autoflowAnalysis_uponDeletion( &db, requestID );
@@ -5915,7 +5896,6 @@ QMap< QString, QString> US_Analysis_auto::read_autoflowAnalysis_record( US_DB2* 
 	}
     }
 
-  //qDebug() << "In reading autoflwoAnalysis record: json: " << analysis_details[ "status_json" ] ;
   
   return analysis_details;
 }
@@ -5963,7 +5943,6 @@ QMap< QString, QString> US_Analysis_auto::read_autoflowAnalysisHistory_record( U
 	}
     }
 
-  //qDebug() << "In reading autoflwoAnalysis record: json: " << analysis_details[ "status_json" ] ;
   
   return analysis_details;
 }
@@ -6283,12 +6262,9 @@ DbgLv(1) << "DbSc: tmodels size" << tmodels.size() << "ted sizes"
       QString descript1  = db.value( 1 ).toString();
       QString contents   = db.value( 2 ).toString();
       int     jdx        = contents.indexOf( "description=" );
-//DbgLv(1) << "DbSc:    ii jdtx" << ii << jdtx << "modelID" << modelID
-//   << "  dsc1" << descript1 << " cont" << contents.left( 20 );
 
       if ( jdx < 1 )  continue;
 
-//DbgLv(1) << "DbSc:      jdx lend" << jdx << lend;
       QString descript   = contents.mid( jdx ).section( '"', 1, 1 );
       double  variance   = db.value( 3 ).toString().toDouble();
       double  meniscus   = db.value( 4 ).toString().toDouble();
@@ -6299,7 +6275,6 @@ DbgLv(1) << "DbSc: tmodels size" << tmodels.size() << "ted sizes"
       lmtime.setTimeZone( QTimeZone::utc() );
       QString ansysID    = descript.section( '.', -2, -2 );
       QString iterID     = ansysID .section( '_', -1, -1 );
-//DbgLv(1) << "DbSc:   dscr1" << descript1 << "dcs" << descript;
 
       if ( ansysID.contains( "2DSA-F" )  ||  iterID.contains( fmIter ) )
       {  // Model from meniscus fit, so save information
@@ -7189,13 +7164,11 @@ int US_Analysis_auto::read_autoflowAnalysisStages( const QString& requestID )
     }
 
 
-  //qDebug() << "BEFORE query ";
   QStringList qry;
   qry << "fitmen_autoflow_analysis_status"
       << requestID;
 
   status = db->statusQuery( qry );
-  //qDebug() << "AFTER query ";
 
   return status;
 }
@@ -7216,13 +7189,11 @@ void US_Analysis_auto::revert_autoflow_analysis_stages_record( const QString& re
        return;
      }
    
-   //qDebug() << "BEFORE query ";
    QStringList qry;
    qry << "fitmen_autoflow_analysis_status_revert"
        << requestID;
    
    db->query( qry );
-   //qDebug() << "AFTER query ";
 }
 
 
@@ -7829,7 +7800,6 @@ DbgLv(1) << "RmvMod:  *LOAD ERR*" << modfname;
       QString editLabl   = anRunID .section( '_',  0, -5 );
       QString iterID     = anRunID .section( '_', -1, -1 );
       QString itNum      = iterID  .section( '-',  0,  0 );
-//DbgLv(1) << "RmvMod:    iterID" << iterID;
 if(ii<3 || (ii+4)>modfiles.size() || ii==(modfiles.size()/2))
  DbgLv(1) << "RmvMod:  scn1 ii runID editLabl tripID"
   << ii << runID << editLabl << tripID;
@@ -7981,15 +7951,12 @@ DbgLv(1) << "RmvMod:  descript" << descript << "msetBase" << msetBase << "ii" <<
          QString tripID     = descript.section( '.', -3, -3 );
          QString anRunID    = descript.section( '.', -2, -2 );
          QString editLabl   = anRunID .section( '_',  0, -5 );
-//DbgLv(1) << "RmvMod:  scn1 ii runID editLabl tripID"
-// << ii << runID << editLabl << tripID;
 
          if ( runID != srchRun  ||  editLabl != srchEdit  ||
               tripID != srchTrip )
          continue;    // Can't use if from a different runID or edit or triple
 
          QString iterID     = anRunID .section( '_', -1, -1 );
-//DbgLv(1) << "RmvMod:    iterID" << iterID;
 
          if ( !iterID.contains( "-m" )  &&  !iterID.contains( "-b" ) )
          {
@@ -8179,7 +8146,6 @@ DbgLv(1) << "  ntmods ikModx" << ntmods << ikModx;
             rmodIDs   << mID;
             rmodFnams << fname;
             rmodDescs << mDesc;
-//DbgLv(1) << "RmvMod: jj" << jj << "mID" << mID << "mDesc" << mDesc;
 
             if ( modDesc.isEmpty() )
             {

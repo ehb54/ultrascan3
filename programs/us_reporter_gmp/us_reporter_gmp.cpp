@@ -1032,7 +1032,6 @@ QMap< QString, QString>  US_ReporterGMP::read_autoflowAnalysis_record( US_DB2* d
 	}
     }
 
-  //qDebug() << "In reading autoflwoAnalysis record: json: " << analysis_details[ "status_json" ] ;
   
   return analysis_details;
 }
@@ -1075,7 +1074,6 @@ QMap< QString, QString>  US_ReporterGMP::read_autoflowAnalysisHistory_record( US
 	}
     }
 
-  //qDebug() << "In reading autoflwoAnalysis record: json: " << analysis_details[ "status_json" ] ;
   
   return analysis_details;
 }
@@ -1447,13 +1445,11 @@ void US_ReporterGMP::load_gmp_report_db ( void )
   // QFile fin( "/home/alexey/ultrascan/reports/SBird-DNA-EcoRI-101322-PD9-run1843_GMP_DB_bySysTar.tar.gz" );
   // if ( ! fin.open( QIODevice::ReadOnly ) )
   //  {
-  //    qDebug() << "cannot open file ";;
   //    return;
   //  }
   // QByteArray blobData = fin.readAll();
   // fin.close();
 
-  // qDebug() << "BlobData size -- " << blobData.size();
   // return;
   // //END TESTING *********
   
@@ -2435,10 +2431,8 @@ void US_ReporterGMP::build_miscTree ( void )
   miscTree->resizeColumnToContents( 0 );
   miscTree->resizeColumnToContents( 1 );
 
-  // qDebug() << "misc Tree first time build ? " << first_time_misc_tree_build;
   // if ( first_time_misc_tree_build )
   //   {
-  //     qDebug() << "Resizing misc Tree: ";
   //     miscTree->setMinimumHeight( (miscTree->height())*0.6 );
   //     first_time_misc_tree_build = false;
   //   }
@@ -2662,7 +2656,6 @@ void US_ReporterGMP::build_genTree ( void )
   genTree->resizeColumnToContents( 0 );
   genTree->resizeColumnToContents( 1 );
 
-  //qDebug() << "Build gen Tree: height -- " << genTree->height();
   qDebug() << "gen Tree first time build ? " << first_time_gen_tree_build;
   if ( first_time_gen_tree_build )
     {
@@ -3016,7 +3009,6 @@ void US_ReporterGMP::build_perChanTree_abde ( void )
   perChanTree->resizeColumnToContents( 0 );
   perChanTree->resizeColumnToContents( 1 );
 
-  //qDebug() << "Build perChan Tree: height -- " << perChanTree->height();
   qDebug() << "perChan Tree first time build ? " << first_time_perChan_tree_build;
   if ( first_time_perChan_tree_build )
     {
@@ -3478,7 +3470,6 @@ void US_ReporterGMP::build_perChanTree ( void )
   perChanTree->resizeColumnToContents( 0 );
   perChanTree->resizeColumnToContents( 1 );
 
-  //qDebug() << "Build perChan Tree: height -- " << perChanTree->height();
   qDebug() << "perChan Tree first time build ? " << first_time_perChan_tree_build;
   if ( first_time_perChan_tree_build )
     {
@@ -4889,9 +4880,6 @@ void US_ReporterGMP::get_abde_data_per_channel(QMap< QString, QMap < QString, QV
 {
   abde_data_per_channel = data_per_chan;
 
-  // qDebug() << "Passed data_for_chan 2A: xvalues -- "   << abde_data_per_channel["2A"]["xvalues"];
-  // qDebug() << "Passed data_for_chan 2A: yvaluesN -- "  << abde_data_per_channel["2A"]["yvaluesN"];
-  // qDebug() << "Passed data_for_chan 2A: integralN -- " << abde_data_per_channel["2A"]["integralN"];
 }
 
 void US_ReporterGMP::get_abde_selected_signals( QMap< QString, QStringList >& selected_signals_p )
@@ -5414,7 +5402,6 @@ bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   // 	  triple_info_map[ "stage_name" ] = QString("2DSA");
   // 	  if ( !loadModel( triple_info_map  ) && !model_exists )
   // 	    {
-  // 	      qDebug() << "In loadModel(): No models (2DSA-IT, 2DSA-FM, 2DSA) found for triple -- " << triple_info_map[ "triple_name" ];
 
   // 	      QMessageBox::critical( this, tr( "No Model Found" ),
   // 				     QString( tr( "In loadModel(): No models (2DSA-IT, 2DSA-FM, 2DSA) found for triple %1" ))
@@ -5436,13 +5423,6 @@ bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
 
   return true;
 
-  /*
-  // Show plot
-  resplotd = new US_ResidPlotFem( this, true );
-  //resplotd->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
-  resplotd->setWindowModality(Qt::ApplicationModal);
-  resplotd->show();
-  */
 }
 
 // public function to get pointer to edit data
@@ -5545,7 +5525,6 @@ bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
   // query << "get_modelDescsIDs" << triple_information[ "eID" ];
   // db->query( query );
   
-  // qDebug() << "In loadModel() Query: " << query;
   
   // int latest_update_time = 1e100;
   // int mID=0;
@@ -5576,7 +5555,6 @@ bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
   // 		      latest_update_time = time_to_now;
   // 		      //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
 
-  // 		      qDebug() << "Model 2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
 		  		      
   // 		      mID       = modelID;
   // 		    }
@@ -5590,7 +5568,6 @@ bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
   // 		  latest_update_time = time_to_now;
   // 		  //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
 		  
-  // 		  qDebug() << "Model NON-2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
 		  
   // 		  mID       = modelID;
   // 		}
@@ -6696,7 +6673,6 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
       // //DEBUG
       // bool b_1 = modelDescModified[ ii ].contains( triplesname_mod );
       // bool b_2 =  modelDescModified[ ii ].contains( re_sm );
-      // qDebug() << "b_1, b_2 -- " << b_1 << b_2;
       // modelGuidExistsForStage_ind( triplesname, stage_model, modelDescModifiedGuid[ ii ] );
       // //DEBUG
       
@@ -6790,7 +6766,6 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 		  //add c_parms["CG_model"] = QString("YES"); //OR "NO"
 		  c_parms["CG_model"] = isCGM; 
 		  
-		  //qDebug() << "over models: c_params -- " << c_params;
 		  
 		  //ALEXEY: here it plots s20 combPlot (xtype == 0)	  
 		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 0, c_parms );
@@ -7062,7 +7037,6 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 
 	  // //DEBUG
 	  // bool b_1 = modelDescModified[ ii ].contains( re_sm );
-	  // qDebug() << "b_1, modelDescModified[ ii ], reg_exp_sm  -- " << b_1 << modelDescModified[ ii ] << reg_exp_sm;
 	  // modelGuidExistsForStage( modelNames[ m ], modelDescModifiedGuid[ ii ] );
 	  // //
 	  
@@ -7075,7 +7049,6 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 	      //retrieve s,Model combPlot params:
 	      QString t_m = "s," + modelNames[ m ];
 	      QMap < QString, QString > c_params = comboPlotsMap[ t_m ];
-	      //qDebug() << "over models: c_params -- " << c_params;
 	      plotted_ids_colors_map_s_type = sdiag_combplot-> model_select_auto ( modelDescModified[ ii ], c_params ); //ALEXEY: here it plots s20 combPlot (xtype == 0)
 
 	    }
@@ -9330,7 +9303,6 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
 	     QString::asprintf( "%10.4e", y_dna_val ) + ", " +
 	     QString::asprintf( "%10.4e", yp_int_dna_val );
 	 }
-       //qDebug() << abde_dist_info; 
        
        html_abde_s += abde_dist_info + "<br>";
      }
@@ -13432,7 +13404,6 @@ void US_ReporterGMP::write_pdf_report( void )
    //    //Write HTML strign to file & later save to DB withing general archive
    //    QString html_filePath = dirName + "/" + "html_string.html";
    //    QFile file_html_str( html_filePath );
-   //    qDebug() << "HTML to be written: filepath -- " << html_filePath;
    //    if(!file_html_str.open(QIODevice::WriteOnly))
    //      file_html_str.close();
    //    else
@@ -13442,7 +13413,6 @@ void US_ReporterGMP::write_pdf_report( void )
    //        file_html_str.close();
    //      }
 
-   //    qDebug() << "html_filePath: " << html_filePath;
    //    int writeStatus_html = db.writeBlobToDB(html_filePath,
    //    					  QString( "upload_gmpReportData_html" ),
    //    					  r_ID );
@@ -13480,10 +13450,8 @@ void US_ReporterGMP::write_pdf_report( void )
    //    process -> waitForFinished();
    //    process -> close();
   
-   //    qDebug() << "tar command: " << "tar " << "-cvf " << tarFilename_t << ", " << subDirName;
 
    //    QString r_filepath = US_Settings::reportDir() + "/" + tarFilename_t;
-   //    qDebug() << "r_filepath: " << r_filepath;
 
   
    //    qApp->processEvents();
@@ -13724,10 +13692,6 @@ void US_ReporterGMP::paintPage(QPrinter& printer, int pageNumber, int pageCount,
   // Translate so that 0,0 is the text rect corner
   painter->translate(textRect.left(), textRect.top());
 
-  // qDebug() << "Painter's settings: font, metrics -- "
-  // 	   << painter->fontMetrics()
-  // 	   << painter->fontInfo()
-  // 	   << painter->font();
 
   qDebug() << "Painter's settings: font, metrics -- "
 	   << painter->fontInfo().family()

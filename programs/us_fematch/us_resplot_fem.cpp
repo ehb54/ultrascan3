@@ -12,12 +12,9 @@
 #include <qwt_legend.h>
 
 // constructor:  residuals plot widget
-// US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const bool auto_mode )
-//    : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
 US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const QString auto_mode )
    : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
 {
-   // this->a_mode = auto_mode;
    this->a_mode = auto_mode;
   
    // lay out the GUI
@@ -291,11 +288,9 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const QString auto_mode )
    data_plot1->resize( p1size );
    data_plot2->resize( p2size );
 
-   //qDebug() << "RESPLOT_FEM: before plot--";
 
    plot_data();
 
-   //qDebug() << "RESPLOT_FEM: after plot--";
 
    if ( !a_mode.isEmpty() && a_mode == "REPORT" )
      setVisible( false );
@@ -591,7 +586,6 @@ void US_ResidPlotFem::plot_edata()
    // Clear the upper plot for re-do
    dataPlotClear( data_plot1 );
 
-   //qDebug() << "PLOT edata 1 ";
 
    bool   do_plteda = have_ed  &&  ck_plteda->isChecked();
    bool   do_pltsda = have_sd  &&  ck_pltsda->isChecked();
@@ -608,7 +602,6 @@ void US_ResidPlotFem::plot_edata()
    double vh        = 9999.0;
    double sval;
 
-   // qDebug() << "PLOT edata 2 ";
    
    if ( have_ed )
    {
@@ -622,7 +615,6 @@ void US_ResidPlotFem::plot_edata()
       return;
    }
 
-   //   qDebug() << "PLOT edata 3 ";
 
    //if ( !a_mode )
    if ( a_mode.isEmpty() )  
@@ -688,7 +680,6 @@ void US_ResidPlotFem::plot_edata()
       points   = edata->pointCount();
    }
 
-   //qDebug() << "PLOT edata 4 ";
    
    if ( do_pltsda )
    {  // set title and values count for simulation data
@@ -703,7 +694,6 @@ void US_ResidPlotFem::plot_edata()
 
    count    = ( points > count ) ? points : count;  // maximum array count
 
-   //qDebug() << "PLOT edata 5 ";
    
    QVector< double > rvec( count, 0.0 );
    QVector< double > vvec( count, 0.0 );
@@ -715,7 +705,6 @@ void US_ResidPlotFem::plot_edata()
    QPen          pen_red(  Qt::red );
    QPen          pen_plot( US_GuiSettings::plotCurve() );
 
-   //qDebug() << "PLOT edata 6 ";
 
    if ( do_plteda )
    {  // plot experimental curves
@@ -761,7 +750,6 @@ void US_ResidPlotFem::plot_edata()
       }
    }
 
-   //qDebug() << "PLOT edata 7 ";
 
 
    if ( do_pltsda )
@@ -808,11 +796,9 @@ void US_ResidPlotFem::plot_edata()
       }
    }
 
-   //qDebug() << "PLOT edata 8 ";
    
    data_plot1->replot();
 
-   //qDebug() << "PLOT edata 9";
 }
 
 // plot the residual data
@@ -924,23 +910,14 @@ void US_ResidPlotFem::plot_rdata()
       rmsd    = sqrt( rmsd );
       le_rmsd->setText( QString::number( rmsd ) );
 //*Debug
-//DbgLv(1) << "BEFORE data00" << edata->value(0,0);
 //ti_noise->apply_to_data(*edata);
-//DbgLv(1) << " TIrmv  data00" << edata->value(0,0);
 //ti_noise->apply_to_data(*edata,false);
-//DbgLv(1) << "  TIadd  data00" << edata->value(0,0);
 //ri_noise->apply_to_data(*edata);
-//DbgLv(1) << " RIrmv  data00" << edata->value(0,0);
 //ri_noise->apply_to_data(*edata,false);
-//DbgLv(1) << "  RIadd  data00" << edata->value(0,0);
 //US_Noise::apply_noise(*edata,ti_noise);
-//DbgLv(1) << " TIrmv  data00" << edata->value(0,0);
 //US_Noise::apply_noise(*edata,ti_noise,false);
-//DbgLv(1) << "  TIadd  data00" << edata->value(0,0);
 //US_Noise::apply_noise(*edata,ri_noise);
-//DbgLv(1) << " RIrmv  data00" << edata->value(0,0);
 //US_Noise::apply_noise(*edata,ri_noise,false);
-//DbgLv(1) << "  RIadd  data00" << edata->value(0,0);
    }
 
    else if ( do_plttin )
