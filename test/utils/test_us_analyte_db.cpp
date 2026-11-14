@@ -335,7 +335,7 @@ TEST_F( AnalyteDb, WriteCreatesExtinctionProfileForANewSpectrum )
       EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::OK ) );
       EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::OK ) );
       EXPECT_CALL( db, query( args( { "get_eprofile", "17", "Analyte" } ) ) );
-      EXPECT_CALL( db, numRows() ).WillOnce( Return( 0 ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOROWS ) );
       EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) )
          .WillOnce( Invoke(
             [&profileXml]( const QStringList& q )

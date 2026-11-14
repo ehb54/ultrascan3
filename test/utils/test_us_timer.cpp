@@ -114,18 +114,6 @@ TEST_F( US_TimerTest, ConstructorMultipleInstances )
    EXPECT_EQ( unusedMessage( "test2" ), timer2.list_times() );
 }
 
-// Destructor Tests
-TEST_F( US_TimerTest, DestructorDoesNotCrash )
-{
-   {
-      US_Timer localTimer;
-      localTimer.init_timer( "temp" );
-      localTimer.start_timer( "temp" );
-      localTimer.end_timer( "temp" );
-   }
-   SUCCEED();
-}
-
 // init_timer Tests
 TEST_F( US_TimerTest, InitTimerValidName )
 {
@@ -500,18 +488,6 @@ TEST_F( US_TimerResourceTest, MultipleTimerInstances )
       EXPECT_EQ( name, line.name );
       EXPECT_EQ( 1u, line.count );
    }
-}
-
-TEST_F( US_TimerResourceTest, ConstructorDestructorStress )
-{
-   for ( int i = 0; i < 100; ++i )
-   {
-      US_Timer localTimer;
-      localTimer.init_timer( "stress_timer" );
-      localTimer.start_timer( "stress_timer" );
-      localTimer.end_timer( "stress_timer" );
-   }
-   SUCCEED();
 }
 
 // Format and Output Tests

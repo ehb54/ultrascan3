@@ -114,10 +114,13 @@ TEST_F( TestUSMatrixUnit, LUBackSubstituteSolvesTheFactoredSystem )
 TEST_F(TestUSMatrixUnit, ZeroDimensionOperations) {
 // Test operations with zero dimensions
 QVector<double> emptyVec;
+double          a[] = { 1.0, 2.0 };
+double          b[] = { 3.0, 4.0 };
+double          c[] = { -7.0, -8.0 };
 
-EXPECT_NO_THROW({
-US_Matrix::vsum(emptyVec.data(), emptyVec.data(), emptyVec.data(), 0);
-}) << "Zero-size vector operations should not crash";
+US_Matrix::vsum( a, b, c, 0 );
+EXPECT_DOUBLE_EQ( c[0], -7.0 ) << "A zero-size sum writes no output";
+EXPECT_DOUBLE_EQ( c[1], -8.0 );
 
 double result = US_Matrix::dotproduct(emptyVec.data(), emptyVec.data(), 0);
 EXPECT_DOUBLE_EQ(result, 0.0) << "Empty vector dot product should be 0";
