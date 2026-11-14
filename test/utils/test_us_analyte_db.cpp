@@ -4,6 +4,8 @@
 #include "us_analyte.h"
 #include "us_eprofile.h"
 #include "us_settings.h"
+#include <QDir>
+#include <QFile>
 
 using ::testing::_;
 using ::testing::AnyNumber;
@@ -99,6 +101,21 @@ class AnalyteDb : public QtTestBase
          analyte.description = "Salt & <buffer>";
          analyte.mw          = 45000.5;
          analyte.grad_form   = false;
+      }
+
+      // File name -> contents for every file in the analytes directory.
+      QMap<QString, QByteArray> analyteFiles()
+      {
+         QString path;
+         EXPECT_TRUE( US_Analyte::analyte_path( path ) );
+         QMap<QString, QByteArray> files;
+         for ( const QString& name : QDir( path ).entryList( QDir::Files ) )
+         {
+            QFile file( path + "/" + name );
+            EXPECT_TRUE( file.open( QIODevice::ReadOnly ) ) << name.toStdString();
+            files[name] = file.readAll();
+         }
+         return files;
       }
 
       QString diskDescription()
@@ -272,31 +289,38 @@ TEST_F( AnalyteDb, WriteSpectrumFieldUsesTheFirstNonEmptyMapAndOmitsAZeroValue )
 
 TEST_F( AnalyteDb, WriteSendsNucleotideInfoForNucleicAcids )
 {
-   prepareProtein();
-   analyte.type           = US_Analyte::RNA;
-   analyte.doubleStranded = false;
-   analyte.complement     = true;
-   analyte._3prime        = true;
-   analyte._5prime        = false;
-   analyte.sodium         = 0.1;
-   analyte.potassium      = 0.2;
-   analyte.lithium        = 0.3;
-   analyte.magnesium      = 0.4;
-   analyte.calcium        = 0.5;
+   const QList<QPair<US_Analyte::analyte_t, QString>> types{ { US_Analyte::DNA, "DNA" }, { US_Analyte::RNA, "RNA" } };
+   for ( const auto& type : types )
    {
-      InSequence sequence;
-      expectLookup( true );
-      EXPECT_CALL(
-         db, statusQuery( args( { "update_analyte", "17", "RNA", "MKV", "0.7125", "Salt & <buffer>", "", "45000.5", "0" } ) ) )
-         .WillOnce( Return( IUS_DB2::OK ) );
-      EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::OK ) );
-      EXPECT_CALL( db,
-                   statusQuery( args( { "set_nucleotide_info", "17", "0", "1", "1", "0", "0.1", "0.2", "0.3", "0.4", "0.5" } ) ) )
-         .WillOnce( Return( IUS_DB2::OK ) );
-      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );
+      SCOPED_TRACE( type.second.toStdString() );
+      prepareProtein();
+      analyte.type           = type.first;
+      analyte.doubleStranded = false;
+      analyte.complement     = true;
+      analyte._3prime        = true;
+      analyte._5prime        = false;
+      analyte.sodium         = 0.1;
+      analyte.potassium      = 0.2;
+      analyte.lithium        = 0.3;
+      analyte.magnesium      = 0.4;
+      analyte.calcium        = 0.5;
+      {
+         InSequence sequence;
+         expectLookup( true );
+         EXPECT_CALL(
+            db,
+            statusQuery( args( { "update_analyte", "17", type.second, "MKV", "0.7125", "Salt & <buffer>", "", "45000.5", "0" } ) ) )
+            .WillOnce( Return( IUS_DB2::OK ) );
+         EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::OK ) );
+         EXPECT_CALL(
+            db, statusQuery( args( { "set_nucleotide_info", "17", "0", "1", "1", "0", "0.1", "0.2", "0.3", "0.4", "0.5" } ) ) )
+            .WillOnce( Return( IUS_DB2::OK ) );
+         EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );
+      }
+      EXPECT_EQ( IUS_DB2::OK, analyte.write( true, QString(), &db ) );
+      ASSERT_TRUE( ::testing::Mock::VerifyAndClearExpectations( &db ) );
+      EXPECT_CALL( db, lastError() ).Times( AnyNumber() ).WillRepeatedly( Return( QString() ) );
    }
-
-   EXPECT_EQ( IUS_DB2::OK, analyte.write( true, QString(), &db ) );
 }
 
 TEST_F( AnalyteDb, WriteCreatesExtinctionProfileForANewSpectrum )
@@ -348,6 +372,17 @@ TEST_F( AnalyteDb, FailedWriteStopsBeforeInsertIdNucleotidesProfileAndDisk )
    analyte.analyteID               = "previous";
    analyte.extinction[280.0]       = 43824.0;
    analyte.new_or_changed_spectrum = true;
+
+   // A successful write would overwrite this file, which has the same GUID.
+   QString path;
+   ASSERT_TRUE( US_Analyte::analyte_path( path ) );
+   US_Analyte stored;
+   stored.analyteGUID = kGuid;
+   stored.description = "stored on disk";
+   ASSERT_EQ( IUS_DB2::OK, stored.write( false, path + "/A0000001.xml" ) );
+   const QMap<QString, QByteArray> before = analyteFiles();
+   ASSERT_EQ( QStringList{ "A0000001.xml" }, before.keys() );
+
    EXPECT_CALL( db, lastInsertID() ).Times( 0 );
    {
       InSequence sequence;
@@ -360,7 +395,7 @@ TEST_F( AnalyteDb, FailedWriteStopsBeforeInsertIdNucleotidesProfileAndDisk )
    EXPECT_EQ( QString( "Could not update the DB" ), analyte.message );
    EXPECT_EQ( QString( "previous" ), analyte.analyteID );
    EXPECT_TRUE( analyte.new_or_changed_spectrum );
-   EXPECT_TRUE( diskDescription().isEmpty() );
+   EXPECT_EQ( before, analyteFiles() );
 }
 
 TEST_F( AnalyteDb, InvalidGuidIsRejectedWithoutDatabaseAccess )
