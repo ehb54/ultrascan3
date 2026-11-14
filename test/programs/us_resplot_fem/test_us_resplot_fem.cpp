@@ -20,8 +20,10 @@ const double riValues[3] = { .0625, -.125, .1875 };
 // The caller's data, which the dialog copies through US_ResidPlotInputs.
 struct ResidualInputs
 {
-    US_DataIO::EditedData edited;
-    US_DataIO::RawData simulated;
+    // Value-initialized: these classes leave their scalar members uninitialized,
+    // and the dialog copies every member.
+    US_DataIO::EditedData edited{};
+    US_DataIO::RawData simulated{};
     QList<int> excluded;
     US_Noise ti, ri;
     QPointer<US_ResidsBitmap> bitmap;
