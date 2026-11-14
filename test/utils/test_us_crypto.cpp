@@ -39,6 +39,11 @@ void          assertEnvelope( const QStringList& envelope, const QString& plaint
 }
 } // namespace
 
+// Not asserted, pending a strict-input policy (ehb54/ultrascan-tickets#1228): hex decoding skips
+// characters that are not hex digits, including whitespace, so an envelope with such characters
+// inserted still decrypts. Decrypting an empty plaintext and a failed decryption both return an
+// empty string.
+
 class TestUSCryptoUnit : public QtTestBase
 {
 };
@@ -184,6 +189,22 @@ TEST_F( TestUSCryptoUnit, LegacyRejectsIncompleteCipherBlocksWithAValidIv )
    const QString truncated = legacyCiphertext.left( legacyCiphertext.size() - 2 );
    EXPECT_TRUE( US_Crypto::decryptLegacy( truncated, "legacy-pass", legacyIv ).isEmpty() );
    EXPECT_TRUE( US_Crypto::decrypt( truncated, "legacy-pass", legacyIv ).isEmpty() );
+}
+
+TEST_F( TestUSCryptoUnit, AcceptsUppercaseHexAndRejectsOddLengthHex )
+{
+   EXPECT_EQ( US_Crypto::decrypt( gcmCiphertext.toUpper(), gcmPassword, gcmMetadata.toUpper() ), gcmPlaintext );
+   const QString legacy = QString::fromLatin1( "Legacy caf\xe9" );
+   EXPECT_EQ( US_Crypto::decrypt( legacyCiphertext.toUpper(), "legacy-pass", legacyIv.toUpper() ), legacy );
+
+   // An odd digit count cannot be the hex of whole bytes.
+   for ( const QString& ciphertext : { gcmCiphertext + "0", gcmCiphertext.left( gcmCiphertext.size() - 1 ) } )
+   {
+      EXPECT_TRUE( US_Crypto::decrypt( ciphertext, gcmPassword, gcmMetadata ).isEmpty() ) << ciphertext.size();
+   }
+   EXPECT_TRUE( US_Crypto::decrypt( gcmCiphertext, gcmPassword, gcmMetadata + "0" ).isEmpty() );
+   EXPECT_TRUE( US_Crypto::decrypt( legacyCiphertext + "0", "legacy-pass", legacyIv ).isEmpty() );
+   EXPECT_TRUE( US_Crypto::decrypt( legacyCiphertext, "legacy-pass", legacyIv.left( legacyIv.size() - 1 ) ).isEmpty() );
 }
 
 // This is a regression against accidental salt/nonce reuse, not a statistical
