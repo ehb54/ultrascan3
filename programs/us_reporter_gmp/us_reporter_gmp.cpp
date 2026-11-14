@@ -11358,6 +11358,9 @@ void US_ReporterGMP::plotres( QMap < QString, QString> & tripleInfo )
       write_plot( img02File, resplotd->rp_data_plot2() );  //<-- rp_data_plot2() gives residuals plot
       PlotsFileNames << img02File;
     }
+
+  // The dialog only renders the two images and is never shown, so it is not closed.
+  delete resplotd;
       
   //Stick Plots for S-, MW-, D- distributions
   plotLayout1 = new US_Plot( data_plot1,

@@ -1180,7 +1180,6 @@ DbgLv(1) << "cnstvb" << cnstvb << "img06File" << img06File;
       resplotd = new US_ResidPlotFem( inputs, US_ResidPlotFem::Standalone, this );
       resplotd->move( rpd_pos );
       resplotd->show();
-      connect( resplotd, &QObject::destroyed, this, &US_FeMatch::resplot_done );
    }
 
    write_plot( img14File, resplotd->rp_data_plot1() );
@@ -1754,7 +1753,6 @@ void US_FeMatch::plotres( )
    resplotd = new US_ResidPlotFem( inputs, US_ResidPlotFem::Standalone, this );
    resplotd->move( rpd_pos );
    resplotd->show();
-   connect( resplotd, &QObject::destroyed, this, &US_FeMatch::resplot_done );
 }
 
 // Load the model data and detect if it is RA
@@ -3980,12 +3978,6 @@ void US_FeMatch::update_mc_model()
 void US_FeMatch::simulate()
 {
    simulate_model();
-}
-
-// Public slot to mark residuals plot dialog closed
-void US_FeMatch::resplot_done()
-{
-   resplotd   = 0;
 }
 
 // Determine if a run has an intensity profile

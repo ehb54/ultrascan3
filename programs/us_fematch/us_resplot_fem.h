@@ -48,8 +48,12 @@ class US_ResidPlotFem : public US_WidgetsDialog
 
       //! \param inputs The data to plot
       //! \param mode   The calling program's mode
-      //! \param parent The calling widget; not used as the Qt parent
+      //! \param parent The calling widget, which owns the dialog. The dialog
+      //!               deletes itself when closed.
       US_ResidPlotFem( const US_ResidPlotInputs& inputs, Mode mode, QWidget* parent = nullptr );
+
+      //! \brief Stop reacting to the bitmap before child widgets are deleted
+      ~US_ResidPlotFem() override;
 
       //! \brief Force a specific plot in the lower plot
       //! \param plotf Flag plot to force: 1,2 == ti_noise,ri_noise

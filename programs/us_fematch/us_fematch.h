@@ -70,9 +70,6 @@ class US_FeMatch : public US_Widgets
         //! \brief Slot to start simulation.
         void simulate();
 
-        //! \brief Slot for residual plot completion.
-        void resplot_done();
-
     private:
         QLabel* lb_tolerance; //!< Label for tolerance.
         QLabel* lb_division; //!< Label for division.

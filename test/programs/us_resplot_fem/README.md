@@ -22,18 +22,16 @@ dialog. Mode strings in the test data map to the enum through `toMode()`.
 - TI, RI, random-noise and residual view selection; exact noise coordinates and
   mutual exclusion. D03 now verifies RI export preserves the scan-number label.
 - Three-mode bitmap close/reopen, bitmap parenting, window close versus Close
-  button slot, `on_close`/`destroyed` signals, caller destruction and explicit
-  dialog deletion. The inputs borrow fixture storage, so this does NOT
-  exercise callbacks into destroyed application-owned data.
+  button slot, `on_close`/`destroyed` signals and caller destruction. The inputs
+  borrow fixture storage, so this does NOT exercise callbacks into destroyed
+  application-owned data.
 - Existing FEMatch bitmap reuse and invalidation; borrowed data/exclusions mutate
   in place and the next refresh uses the new values.
-- 100 close/recreate cycles per mode: current dialogs remain alive after close;
-  test cleanup explicitly deletes them. This characterizes retention, not leak-free
-  application behavior or sanitizer coverage.
+- 100 open/close cycles per mode: every closed dialog is destroyed.
 
 Known legacy results intentionally asserted: all scans excluded displays NaN;
-close hides rather than destroys dialogs; window close does not destroy the
-bitmap; REPORT bitmap-checkbox changes wait for another refresh.
+window close does not destroy an unparented bitmap; REPORT bitmap-checkbox
+changes wait for another refresh.
 These assertions preserve evidence, not endorsement. Defect repair must introduce
 an intended-behavior regression test that fails before changing production code,
 with a linked defect ID and explicit change to the characterization expectation.
@@ -131,3 +129,19 @@ this extraction. Every other row keeps its recorded assertion.
 Compared with the Linux baseline at `27129cc57`: all behavior rows pass with the
 same results; the three `unknown-mode` rows are absent; the 18 malformed-buffer
 probes are skipped on non-sanitizer builds and must be re-run under ASan/UBSan.
+
+### D01: the caller owns the dialog (T05)
+
+The caller is now the dialog's Qt parent and the dialog deletes itself when
+closed. Four tests state the intended behavior and failed in every mode before
+the fix (72 failures, no arithmetic or plot rows among them):
+`closeDestroysDialog`, `closeButtonDestroysDialogAndBitmap`,
+`callerDestructionDestroysDialog` and `repeatedCloseLeavesNoDialogs`. They
+replace the retention assertions of `closeAndReopen` and
+`repeatedCloseRetainsDialogsUntilExplicitDeletion`, and `curvesAndStatistics`
+now expects the caller as parent.
+
+The fix also exposed a crash: a child bitmap (Analysis mode) emitted `destroyed`
+into `resids_closed` while the dialog was being destroyed.
+`closeDestroysDialog(analysis)` crashed until the destructor disconnected the
+bitmap.

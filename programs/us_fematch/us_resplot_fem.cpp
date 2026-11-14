@@ -14,9 +14,10 @@
 
 // constructor:  residuals plot widget
 US_ResidPlotFem::US_ResidPlotFem( const US_ResidPlotInputs& inputs, Mode mode,
-                                  QWidget* /*parent*/ )
-   : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), mode( mode )
+                                  QWidget* parent )
+   : US_WidgetsDialog( parent, Qt::WindowFlags() ), mode( mode )
 {
+   setAttribute( Qt::WA_DeleteOnClose );
   
    // lay out the GUI
    setWindowTitle( tr( "Finite Element Data/Residuals Viewer" ) );
@@ -210,6 +211,14 @@ US_ResidPlotFem::US_ResidPlotFem( const US_ResidPlotInputs& inputs, Mode mode,
    resize( p2size );
 
    
+}
+
+// A child bitmap is deleted after this destructor; its destroyed signal must not
+// reach resids_closed on a partly destroyed dialog.
+US_ResidPlotFem::~US_ResidPlotFem()
+{
+   if ( resbmap )
+      disconnect( resbmap, nullptr, this, nullptr );
 }
 
 // externally force a specific plot for lower plot

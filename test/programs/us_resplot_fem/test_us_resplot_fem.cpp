@@ -317,7 +317,7 @@ private slots:
         QCOMPARE(box(plot, "Subtract Time Invariant Noise")->isChecked(), bool(noise & 1));
         QCOMPARE(box(plot, "Subtract Radially Invariant Noise")->isChecked(), bool(noise & 2));
         QCOMPARE(plot.isVisible(), mode != "REPORT");
-        QCOMPARE(plot.parentWidget(), static_cast<QWidget*>(nullptr));
+        QCOMPARE(plot.parentWidget(), caller.get()); // D01: the caller owns the dialog.
         const QString suffix = mode == "ANALYSIS" ? " " + in.triple : mode == "REPORT" ? " " : "";
         QCOMPARE(plot.rp_data_plot1()->title().text(), "Experimental and Simulated Data" + suffix);
         QCOMPARE(plot.rp_data_plot1()->axisTitle(QwtPlot::yLeft).text(), QString("Absorbance at 280 nm"));
@@ -398,39 +398,58 @@ private slots:
         QCOMPARE(curves(plot.rp_data_plot2())[1]->title().text(), QString("resids 0"));
     }
 
-    void closeAndReopen_data() { modeRows(); }
-    void closeAndReopen()
+    void closeDestroysDialog_data() { modeRows(); }
+    void closeDestroysDialog()
     {
         QFETCH(QString, mode);
         ResidualInputs in; populate(in);
         auto caller = owner(in, mode);
-        std::unique_ptr<US_ResidPlotFem> plot(new US_ResidPlotFem(inputs(in), toMode(mode), caller.get()));
-        QPointer<US_ResidPlotFem> observed(plot.get());
-        QSignalSpy closed(plot.get(), &US_ResidPlotFem::on_close);
-        QSignalSpy destroyed(plot.get(), &QObject::destroyed);
+        QPointer<US_ResidPlotFem> plot(new US_ResidPlotFem(inputs(in), toMode(mode), caller.get()));
+        QSignalSpy closed(plot.data(), &US_ResidPlotFem::on_close);
+        QSignalSpy destroyed(plot.data(), &QObject::destroyed);
+        // D01: the caller is the Qt parent and closing the dialog destroys it.
+        QCOMPARE(plot->parentWidget(), caller.get());
+        QVERIFY(plot->testAttribute(Qt::WA_DeleteOnClose));
         auto bm = bitmap(*plot);
         QVERIFY(bm);
-        QCOMPARE(bm->parentWidget(), mode == "ANALYSIS" ? plot.get() : nullptr);
+        QCOMPARE(bm->parentWidget(), mode == "ANALYSIS" ? plot.data() : nullptr);
         QVERIFY(bm->testAttribute(Qt::WA_DeleteOnClose));
-        QVERIFY(!plot->testAttribute(Qt::WA_DeleteOnClose));
         QVERIFY(!in.bitmap); // Newly created bitmap is not published back to caller.
         bm->close(); deferredDeletes();
         QVERIFY(!bm);
         QCOMPARE(box(*plot, "Show Residuals Bitmap")->isChecked(), mode == "REPORT");
         bm = bitmap(*plot); QVERIFY(bm);
         plot->show(); plot->close(); deferredDeletes();
-        QCOMPARE(closed.count(), 1); QCOMPARE(destroyed.count(), 0);
-        QVERIFY(observed); QVERIFY(!plot->isVisible());
-        QVERIFY(bm); // Window-manager-style close does not run close_all.
+        QCOMPARE(closed.count(), 1); QCOMPARE(destroyed.count(), 1);
+        QVERIFY(!plot);
+        // Window close does not run close_all; only a child bitmap goes with the dialog.
+        QCOMPARE(bool(bm), mode != "ANALYSIS");
+    }
+
+    void closeButtonDestroysDialogAndBitmap_data() { modeRows(); }
+    void closeButtonDestroysDialogAndBitmap()
+    {
+        QFETCH(QString, mode);
+        ResidualInputs in; populate(in);
+        auto caller = owner(in, mode);
+        QPointer<US_ResidPlotFem> plot(new US_ResidPlotFem(inputs(in), toMode(mode), caller.get()));
+        QSignalSpy closed(plot.data(), &US_ResidPlotFem::on_close);
+        auto bm = bitmap(*plot); QVERIFY(bm);
         plot->show();
-        QVERIFY(plot->isVisible());
-        QVERIFY(QMetaObject::invokeMethod(plot.get(), "close_all", Qt::DirectConnection));
+        QVERIFY(QMetaObject::invokeMethod(plot.data(), "close_all", Qt::DirectConnection));
         deferredDeletes();
-        QVERIFY(!bm); QCOMPARE(closed.count(), 2); QCOMPARE(destroyed.count(), 0);
-        caller.reset(); // No Qt parent relationship; do not access caller data afterwards.
-        QVERIFY(observed);
-        plot.reset();
-        QVERIFY(!observed); QCOMPARE(destroyed.count(), 1);
+        QVERIFY(!bm); QVERIFY(!plot); QCOMPARE(closed.count(), 1);
+    }
+
+    void callerDestructionDestroysDialog_data() { modeRows(); }
+    void callerDestructionDestroysDialog()
+    {
+        QFETCH(QString, mode);
+        ResidualInputs in; populate(in);
+        auto caller = owner(in, mode);
+        QPointer<US_ResidPlotFem> plot(new US_ResidPlotFem(inputs(in), toMode(mode), caller.get()));
+        caller.reset();
+        QVERIFY(!plot);
     }
 
     void borrowedBitmapAndRefresh()
@@ -454,28 +473,24 @@ private slots:
         QVERIFY(!box(plot, "Show Residuals Bitmap")->isChecked());
     }
 
-    void repeatedCloseRetainsDialogsUntilExplicitDeletion_data() { modeRows(); }
-    void repeatedCloseRetainsDialogsUntilExplicitDeletion()
+    void repeatedCloseLeavesNoDialogs_data() { modeRows(); }
+    void repeatedCloseLeavesNoDialogs()
     {
         QFETCH(QString, mode);
         ResidualInputs in; populate(in);
         auto caller = owner(in, mode);
         int destroyed = 0;
-        std::vector<std::unique_ptr<US_ResidPlotFem>> dialogs;
         QList<QPointer<US_ResidPlotFem>> observed;
-        // Characterize the retention defect, not a desired ownership policy.
-        // Explicit cleanup keeps the test itself from leaking the 100 dialogs.
+        // D01: each closed dialog is destroyed, so replacing it does not accumulate.
         for (int i = 0; i < 100; ++i)
         {
-            dialogs.emplace_back(new US_ResidPlotFem(inputs(in), toMode(mode), caller.get()));
-            observed << dialogs.back().get();
-            connect(dialogs.back().get(), &QObject::destroyed, this, [&destroyed]() { ++destroyed; });
-            dialogs.back()->close();
+            auto* dialog = new US_ResidPlotFem(inputs(in), toMode(mode), caller.get());
+            observed << dialog;
+            connect(dialog, &QObject::destroyed, this, [&destroyed]() { ++destroyed; });
+            dialog->show();
+            dialog->close();
         }
         deferredDeletes();
-        QCOMPARE(destroyed, 0);
-        for (const auto& dialog : observed) QVERIFY(dialog && !dialog->isVisible());
-        dialogs.clear();
         QCOMPARE(destroyed, 100);
         for (const auto& dialog : observed) QVERIFY(!dialog);
     }
