@@ -21,7 +21,7 @@ class AppPackageTest(unittest.TestCase):
         self.assertEqual(result.returncode == 0, success, result.stdout + result.stderr)
         return result.stdout + result.stderr
 
-    def fixture(self, directory, platform, docs=True, multi=False):
+    def fixture(self, directory, platform, docs=True, multi=False, system_qt=False):
         src = Path(directory) / "source"
         build = Path(directory) / "build"
         src.mkdir()
@@ -31,7 +31,8 @@ class AppPackageTest(unittest.TestCase):
         plugin = {"linux": "libqsqlite.so", "windows": "qsqlite.dll",
                   "macos": "libqsqlite.dylib"}[platform]
         for name in (f"plugins/sqldrivers/{plugin}", "plugins/platforms/qwindows.dll",
-                     "plugins/platforms/libqcocoa.dylib", "runtime/sqlite3.dll"):
+                     "plugins/platforms/libqcocoa.dylib", "runtime/sqlite3.dll",
+                     f"system-qt/plugins/sqldrivers/{plugin}"):
             p = src / name
             p.parent.mkdir(parents=True, exist_ok=True)
             p.write_text("fixture")
@@ -42,6 +43,9 @@ class AppPackageTest(unittest.TestCase):
             help_files.append("Assistant.app/Contents/MacOS/Assistant")
         (src / "help.cmake").write_text("\n".join(
             f'file(WRITE "${{OUTPUT}}/{name}" "fixture help")' for name in help_files))
+        # A Qt not from vcpkg has no vcpkg plugin dirs, only its own driver.
+        plugin_args = (f"-DQT_SQLITE_PLUGIN=${{CMAKE_SOURCE_DIR}}/system-qt/plugins/sqldrivers/{plugin}"
+                       if system_qt else "-DVCPKG_PLUGIN_DIR=${CMAKE_SOURCE_DIR}/plugins")
         script = {"linux": "LinuxDeploy.cmake", "windows": "WinDeploy.cmake",
                   "macos": "MacDeploy.cmake"}[platform]
         (src / "deploy.cmake").write_text(f'''
@@ -100,7 +104,7 @@ add_custom_target(deploy_{platform}
    -DWINDEPLOYQT=${{CMAKE_SOURCE_DIR}}/deployer
    -DMACDEPLOYQT=${{CMAKE_SOURCE_DIR}}/deployer
    -DVCPKG_BIN_DIR=${{CMAKE_SOURCE_DIR}}/runtime
-   -DVCPKG_PLUGIN_DIR=${{CMAKE_SOURCE_DIR}}/plugins
+   {plugin_args}
    -DSOMO_BIN_DIR=${{CMAKE_BINARY_DIR}}/legacy-bin
    -DUS3_VERSION_STRING=fixture -DUS3_ARCH_LABEL=fixture
    -P ${{CMAKE_SOURCE_DIR}}/deploy.cmake
@@ -178,6 +182,16 @@ add_custom_target(package_fixture
                 self.assertEqual("us_comproject_academic" in inventory, not apple)
                 self.assertEqual("us_protocoldev" in inventory, not apple)
                 self.assertEqual(len(inventory), 62 if apple else 71 if mpi else 70)
+
+    def test_linux_qt_without_vcpkg_stages_sqlite_driver(self):
+        with tempfile.TemporaryDirectory(prefix="us3 package ") as d:
+            _, build, target = self.fixture(d, "linux", system_qt=True)
+            self.run_command("cmake", "--build", str(build), "--target", target)
+            archives = list(build.glob("*.tar.xz"))
+            self.assertEqual(len(archives), 1)
+            with tarfile.open(archives[0]) as archive:
+                names = archive.getnames()
+            self.assertTrue(any(n.endswith("/plugins/sqldrivers/libqsqlite.so") for n in names), names)
 
     def test_missing_assistant_fails(self):
         with tempfile.TemporaryDirectory() as d:

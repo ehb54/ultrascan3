@@ -32,6 +32,8 @@
 #   VCPKG_PLUGIN_DIR    - vcpkg installed plugins/ dir (Qt5 / legacy layout)
 #   VCPKG_QT6_PLUGIN_DIR - vcpkg Qt6/plugins/ dir (<triplet>/Qt6/plugins);
 #                          preferred over VCPKG_PLUGIN_DIR for Qt6 builds
+#   QT_SQLITE_PLUGIN    - The linked Qt's SQLite driver; staged when the vcpkg
+#                          plugin dirs have none
 #   ASSISTANT_EXE       - Path to assistant binary
 #   SOMO_BIN_DIR        - SoMo bin/ directory
 #   SOMO_LIB_DIR        - SoMo lib/ directory
@@ -306,8 +308,15 @@ if(NOT EXISTS "${S_PLUG}/sqldrivers/libqsqlite.so")
             break()
         endif()
     endforeach()
+    # A Qt that does not come from vcpkg: use the driver of the Qt the
+    # build links.
+    if(NOT _QSQLITE_FOUND AND QT_SQLITE_PLUGIN AND EXISTS "${QT_SQLITE_PLUGIN}")
+        message(STATUS "[LinuxDeploy] Copying the linked Qt's SQLite driver: ${QT_SQLITE_PLUGIN}")
+        file(COPY_FILE "${QT_SQLITE_PLUGIN}" "${S_PLUG}/sqldrivers/libqsqlite.so")
+        set(_QSQLITE_FOUND TRUE)
+    endif()
     if(NOT _QSQLITE_FOUND)
-        message(WARNING "[LinuxDeploy] sqldrivers/libqsqlite.so not found -- Qt Assistant search may not work")
+        message(WARNING "[LinuxDeploy] sqldrivers/libqsqlite.so not found -- install Qt's SQLite driver; Assistant needs it to open manual.qhc")
     endif()
 endif()
 
