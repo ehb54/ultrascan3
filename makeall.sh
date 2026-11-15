@@ -164,25 +164,33 @@ if [ $DOMAN -ne 0 ]; then
   d=doc/manual
   pushd $d
   sdir=`pwd`
-  echo "Making in $d"   >> $DIR/build.log
-  ## n.b. the make failes with parallel builds, require -j1
+  # doc/manual/Makefile invokes the interpreter as plain "python3"; if the
+  # interpreter we found is named e.g. python3.11, shim a "python3" on
+  # PATH for this build only, so we don't affect anything else.
+  DOC_PATH="$PATH"
+  DOC_PYTHON_BINDIR=
   if [ -n "$DOC_PYTHON" ]; then
-    # doc/manual/Makefile invokes the interpreter as plain "python3"; if the
-    # interpreter we found is named e.g. python3.11, shim a "python3" on
-    # PATH for this build only, so we don't affect anything else.
     DOC_PYTHON_BINDIR=`mktemp -d`
     ln -s "$DOC_PYTHON" "$DOC_PYTHON_BINDIR/python3"
-    PATH="$DOC_PYTHON_BINDIR:$PATH" make -j1 2>&1  >> $DIR/build.log
-  else
-    make -j1 2>&1  >> $DIR/build.log
+    DOC_PATH="$DOC_PYTHON_BINDIR:$PATH"
   fi
-  stat=$?
+  # The same check as doc/manual/manual.pro: without Sphinx or
+  # qhelpgenerator the manual is skipped with a warning.
+  if PATH="$DOC_PATH" make -s qch-tools; then
+    echo "Making in $d"   >> $DIR/build.log
+    ## n.b. the make failes with parallel builds, require -j1
+    PATH="$DOC_PATH" make -j1 2>&1  >> $DIR/build.log
+    stat=$?
+    if [ $stat -gt 0 ]; then
+       echo "  ***ERROR*** building $d"
+       NBERR=`expr ${NBERR} + 1`
+    fi
+  else
+    echo "WARNING: documentation tools not found - the help manual will not be built."
+    echo "  Install them: python3 -m pip install -r doc/manual/source/requirements.txt"
+  fi
   if [ -n "$DOC_PYTHON_BINDIR" ]; then
     rm -rf "$DOC_PYTHON_BINDIR"
-  fi
-  if [ $stat -gt 0 ]; then
-     echo "  ***ERROR*** building $d"
-     NBERR=`expr ${NBERR} + 1`
   fi
   popd
 fi

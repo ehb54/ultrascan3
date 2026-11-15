@@ -181,6 +181,39 @@ exit {project_status}
         self.assertIn("qmake failed in utils", result.stdout)
         self.assertIn("*** [qmake] Error in utils", (self.tree / "build.log").read_text())
 
+    def manual_make(self, tools_status):
+        # doc/manual's qch-tools target exits with tools_status; building the
+        # manual itself fails, so an attempt without the tools is an error.
+        self.make_log = self.root / "make.log"
+        write_script(self.bin / "make", f"""echo "$(basename "$PWD") $*" >> "{self.make_log}"
+case "$PWD" in
+  */doc/manual)
+    case " $* " in
+      *" qch-tools "*) exit {tools_status} ;;
+      *) exit 2 ;;
+    esac ;;
+esac
+exit 0
+""")
+
+    def test_manual_skipped_when_help_tools_missing(self):
+        self.qmake("QMake version 3.1\\nUsing Qt version 6.9.3 in /qt/lib\\n")
+        self.manual_make(tools_status=2)
+        result = self.run_makeall()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("the help manual will not be built", result.stdout)
+        manual_calls = [line for line in self.make_log.read_text().splitlines()
+                        if line.startswith("manual ")]
+        self.assertEqual(manual_calls, ["manual -s qch-tools"])
+
+    def test_manual_built_when_help_tools_present(self):
+        self.qmake("QMake version 3.1\\nUsing Qt version 6.9.3 in /qt/lib\\n")
+        self.manual_make(tools_status=0)
+        result = self.run_makeall()
+        self.assertNotEqual(result.returncode, 0, result.stdout)
+        self.assertIn("***ERROR*** building doc/manual", result.stdout)
+        self.assertIn("manual -j1", self.make_log.read_text())
+
 
 if __name__ == "__main__":
     unittest.main()
