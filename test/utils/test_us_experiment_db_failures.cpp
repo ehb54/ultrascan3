@@ -260,3 +260,50 @@ TEST( AnalyteDbFailure, SuccessfulLoadsRequireNucleotideRowsOnlyForDnaAndRna )
       EXPECT_EQ( analyte.sequence, QString( type == "DNA" || type == "RNA" ? "acgt" : "ACGT" ) );
    }
 }
+
+TEST( AnalyteDbFailure, NucleicAcidWithoutSequenceKeepsStoredMass )
+{
+   for ( const QString& type : { QString( "DNA" ), QString( "RNA" ) } )
+   {
+      for ( const QString& storedSequence : { QString(), QString( "  " ), QString( "ACGT" ) } )
+      {
+         SCOPED_TRACE( ( type + ":" + storedSequence ).toStdString() );
+         StrictMock<US_DB2_Mock> db;
+         EXPECT_CALL( db, lastError() ).Times( ::testing::AnyNumber() ).WillRepeatedly( Return( QString() ) );
+         US_Analyte analyte;
+         InSequence sequence;
+         EXPECT_CALL( db, query( Matcher<const QStringList&>( Eq( QStringList{ "get_analyteID", "synthetic-guid" } ) ) ) );
+         EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::OK ) );
+         EXPECT_CALL( db, next() ).WillOnce( Return( true ) );
+         EXPECT_CALL( db, value( 0 ) ).WillOnce( Return( QVariant( "17" ) ) );
+         EXPECT_CALL( db, query( Matcher<const QStringList&>( Eq( QStringList{ "get_analyte_info", "17" } ) ) ) );
+         EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::OK ) );
+         EXPECT_CALL( db, next() ).WillOnce( Return( true ) );
+         EXPECT_CALL( db, value( 1 ) ).WillOnce( Return( QVariant( type ) ) );
+         EXPECT_CALL( db, value( 2 ) ).WillOnce( Return( QVariant( storedSequence ) ) );
+         EXPECT_CALL( db, value( 3 ) ).WillOnce( Return( QVariant( "0.55" ) ) );
+         EXPECT_CALL( db, value( 4 ) ).WillOnce( Return( QVariant( "synthetic description" ) ) );
+         EXPECT_CALL( db, value( 6 ) ).WillOnce( Return( QVariant( "128396" ) ) );
+         EXPECT_CALL( db, query( Matcher<const QStringList&>( Eq( QStringList{ "get_nucleotide_info", "17" } ) ) ) );
+         EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::OK ) );
+         EXPECT_CALL( db, next() ).WillOnce( Return( true ) );
+         for ( unsigned col = 0; col < 9; ++col )
+         {
+            EXPECT_CALL( db, value( col ) ).WillOnce( Return( QVariant( "0" ) ) );
+         }
+         EXPECT_CALL( db, query( Matcher<const QStringList&>( Eq( QStringList{ "get_eprofile", "17", "Analyte" } ) ) ) );
+         EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOROWS ) );
+         ASSERT_EQ( analyte.load( true, "synthetic-guid", &db ), IUS_DB2::OK );
+         if ( storedSequence.trimmed().isEmpty() )
+         {
+            EXPECT_DOUBLE_EQ( analyte.mw, 128396.0 );
+         }
+         else
+         {
+            // A sequence is present, so the mass comes from the sequence.
+            EXPECT_GT( analyte.mw, 0.0 );
+            EXPECT_LT( analyte.mw, 2000.0 );
+         }
+      }
+   }
+}

@@ -230,7 +230,12 @@ DEBUG_QUERY;
       magnesium      = db->value( 7 ).toString().toDouble();
       calcium        = db->value( 8 ).toString().toDouble();
 
-      nucleotide();
+      // A stored analyte can supply mass without a sequence.
+      // Do not replace that mass with the mass of terminal groups alone.
+      if ( !sequence.trimmed().isEmpty() )
+      {
+         nucleotide();
+      }
    }
 
    q.clear();
