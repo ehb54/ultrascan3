@@ -508,14 +508,15 @@ void US_ResidPlotFem::plot_data()
 
    if ( !problem.isEmpty() )
    { // never read buffers that do not match:  say why instead, on both
-      // plots since either may be exported alone, and close any bitmap of
-      // residuals that are no longer shown
+      // plots since either may be exported alone, and close a bitmap this
+      // dialog created, whose residuals are no longer shown (a bitmap passed
+      // in by the caller stays the caller's)
       dataPlotClear( data_plot1 );
       dataPlotClear( data_plot2 );
       data_plot1->setTitle( tr( "Cannot plot: %1" ).arg( problem ) );
       data_plot2->setTitle( tr( "Cannot plot: %1" ).arg( problem ) );
 
-      if ( resbmap )
+      if ( resbmap && resbmap->parent() == this )
       {
          resbmap->close();
       }

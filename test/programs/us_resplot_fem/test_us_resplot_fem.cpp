@@ -743,6 +743,27 @@ class ResidualDialogTest : public QObject
          QVERIFY( plot.rp_data_plot2()->title().text().startsWith( "Cannot plot:" ) );
       }
 
+      void invalidInputsKeepBorrowedBitmap()
+      {
+         ResidualInputs in;
+         populate( in );
+         QVector<QVector<double>> values = { { .1, .2 }, { -.1, -.2 } };
+         in.bitmap                       = new US_ResidsBitmap( values );
+         QPointer<US_ResidsBitmap> original( in.bitmap );
+         auto                      caller = owner( in, "" );
+         US_ResidPlotFem           plot( inputs( in ), US_ResidPlotFem::Standalone, caller.get() );
+         ResidualInputs            bad;
+         populate( bad );
+         bad.ti.values = QVector<double>{ .125 };
+         bad.bitmap    = original;
+         plot.set_inputs( inputs( bad ) );
+         deferredDeletes();
+         // A bitmap passed in by the caller stays the caller's to close.
+         QVERIFY( original );
+         QVERIFY( plot.rp_data_plot2()->title().text().startsWith( "Cannot plot:" ) );
+         delete original.data();
+      }
+
       void borrowedBitmapAndRefresh()
       {
          ResidualInputs in;
