@@ -13,19 +13,19 @@
   "targets": {
     "macos-arm64": {
       "kind": "archive",
-      "asset": "us3-toolchain-macos-arm64-qt6-38681512299.1.tar.zst",
-      "sha256": "01da7c65b2d3548c6621aea50a5caa4d4d81a37775db3dffd60dd550c8c9fb94",
+      "asset": "us3-toolchain-macos-arm64-qt6-43657897917.1.tar.zst",
+      "sha256": "b1daa54600b9d3c7a00e2eb651389296cd87b4e271c1e5aa2fc22e473e12440a",
       "repository": "ehb54/ultrascan3",
       "release_tag": "toolchain",
-      "inputs_digest": "9edd7eb1de5abbebaeb3cc1151bdb85b327aa32847a5136aa499f4b72bc55e02"
+      "inputs_digest": "b7e600586b150ef61088ab82607d3d8e95a4e84bb237479cacfd0425f52842ed"
     },
     "macos-x64": {
       "kind": "archive",
-      "asset": "us3-toolchain-macos-x64-qt6-38681512299.1.tar.zst",
-      "sha256": "4a4db2f77e473867872435ca2862e5eba5684c2a596461411f176f51a94b46b1",
+      "asset": "us3-toolchain-macos-x64-qt6-43657897917.1.tar.zst",
+      "sha256": "2c24d548d3d4cced5ed26afc50322121054e6a02d8d57ce8dc576590b6eb0b93",
       "repository": "ehb54/ultrascan3",
       "release_tag": "toolchain",
-      "inputs_digest": "ec9843bc844bb12e107a66a84fbfd2823720f10fb7345fa68bcd78a8526f0f8c"
+      "inputs_digest": "d2882f145c5cbe62874e4e2267afac56d8d7f4cdc652ecafd95af5abfa9d77db"
     },
     "windows-x64": {
       "kind": "archive",
