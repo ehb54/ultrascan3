@@ -289,6 +289,20 @@ if(UNIX AND NOT APPLE)
     list(APPEND CMAKE_PREFIX_PATH "/usr/lib/x86_64-linux-gnu/cmake")
 endif()
 
+# Find OpenGL before Qt. Qt's WrapOpenGL reuses the cached result, so this
+# search decides which OpenGL every target links. On macOS, prefer frameworks
+# to get Apple's OpenGL.framework (which includes GLU); with frameworks last,
+# a Mac with XQuartz resolves /usr/X11R6/lib/libGL and the package then
+# depends on XQuartz.
+if(APPLE)
+    set(_save_find_framework ${CMAKE_FIND_FRAMEWORK})
+    set(CMAKE_FIND_FRAMEWORK FIRST)
+endif()
+find_package(OpenGL REQUIRED)
+if(APPLE)
+    set(CMAKE_FIND_FRAMEWORK ${_save_find_framework})
+endif()
+
 # Find Qt
 if(USE_QT6)
     if(US3_PROFILE STREQUAL "HPC")
@@ -640,18 +654,6 @@ if(BUILD_TESTING)
             add_library(Qt::Test ALIAS Qt5::Test)
         endif()
     endif()
-endif()
-
-# Find OpenGL
-# On macOS, temporarily prefer frameworks so we get Apple's native
-# OpenGL.framework (which includes GLU)
-if(APPLE)
-    set(_save_find_framework ${CMAKE_FIND_FRAMEWORK})
-    set(CMAKE_FIND_FRAMEWORK FIRST)
-endif()
-find_package(OpenGL REQUIRED)
-if(APPLE)
-    set(CMAKE_FIND_FRAMEWORK ${_save_find_framework})
 endif()
 
 # Find OpenSSL
