@@ -429,6 +429,24 @@ TEST_F( BufferDb, SaveReportsAFailedProfileWriteAndKeepsTheSpectrumPending )
    EXPECT_TRUE( diskCopy().isEmpty() );
 }
 
+TEST_F( BufferDb, SaveCreatesAMissingBuffersDirectory )
+{
+   prepareBuffer();
+   buffer.component.clear();
+   buffer.componentIDs.clear();
+   buffer.concentration.clear();
+   ASSERT_TRUE( QDir( bufferPath() ).removeRecursively() );
+   {
+      InSequence sequence;
+      expectLookup( false );
+      expectStatus( newBufferArgs() );
+      EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 88 ) );
+   }
+
+   EXPECT_EQ( 88, buffer.saveToDB( &db, "1" ) );
+   EXPECT_FALSE( diskCopy().isEmpty() );
+}
+
 TEST_F( BufferDb, SaveReportsAFailedDiskCopy )
 {
    prepareBuffer();

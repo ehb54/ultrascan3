@@ -81,7 +81,8 @@ class US_UTIL_EXTERN US_Solution
           \param    db For database access, an open database connection
           \return   One of the IUS_DB2 error codes: NO_SOLUTION, NO_BUFFER or
                     NO_ANALYTE when a required row is missing or unreadable, or a
-                    failed query's status. On failure the solution is unchanged.
+                    failed query's status. On failure the solution is cleared, never
+                    partly loaded.
       */
       int readFromDB  ( int, IUS_DB2* = 0 );
 

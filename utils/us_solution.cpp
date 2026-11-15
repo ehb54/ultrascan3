@@ -154,106 +154,121 @@ void US_Solution::readSolutionInfo( QXmlStreamReader& xml )
 // Function to load a solution from the db
 int US_Solution::readFromDB  ( int solutionID, IUS_DB2* db )
 {
-   // Load into a copy; this solution changes only when every query succeeds.
+   // Load into a copy and publish it only when every query succeeds. A failed read
+   // leaves the solution cleared, never partly loaded: callers that ignore the status
+   // must not keep using the previously loaded solution.
    US_Solution loaded = *this;
    loaded.clear();
 
-   // Get solution info
-   QStringList q( "get_solution" );
-   q  << QString::number( solutionID );
-   db->query( q );
-
-   int status = db->lastErrno();
-   if ( status == IUS_DB2::NOROWS )
+   const auto load = [&]() -> int
    {
-      return IUS_DB2::NO_SOLUTION;
-   }
-   if ( status != IUS_DB2::OK )
-   {
-      return status;
-   }
-   if ( !db->next() )
-   {
-      return IUS_DB2::NO_SOLUTION;
-   }
+      // Get solution info
+      QStringList q( "get_solution" );
+      q << QString::number( solutionID );
+      db->query( q );
 
-   loaded.solutionID   = solutionID;
-   loaded.solutionGUID = db->value( 0 ).toString();
-   loaded.solutionDesc = db->value( 1 ).toString();
-   loaded.commonVbar20 = db->value( 2 ).toDouble();
-   loaded.storageTemp  = db->value( 3 ).toDouble();
-   loaded.notes        = db->value( 4 ).toString();
-
-   q.clear();
-   q << "get_solutionBuffer" << QString::number( solutionID );
-   db->query( q );
-
-   status = db->lastErrno();
-   if ( status == IUS_DB2::NOROWS )
-   {
-      return IUS_DB2::NO_BUFFER;
-   }
-   if ( status != IUS_DB2::OK )
-   {
-      return status;
-   }
-   if ( !db->next() )
-   {
-      return IUS_DB2::NO_BUFFER;
-   }
-
-   loaded.buffer.bufferID    = db->value( 0 ).toString();
-   loaded.buffer.GUID        = db->value( 1 ).toString();
-   loaded.buffer.description = db->value( 2 ).toString();
-
-   if ( !loaded.buffer.readFromDB( db, loaded.buffer.bufferID ) )
-   {
-      return IUS_DB2::NO_BUFFER;
-   }
-
-   // We need to get a list of analyteGUID's and amounts first
-   q.clear();
-   q << "get_solutionAnalyte" << QString::number( solutionID );
-   db->query( q );
-
-   status = db->lastErrno();
-   if ( status != IUS_DB2::OK && status != IUS_DB2::NOROWS )
-   {
-      return status;
-   }
-
-   QList<QString> GUIDs;
-   QList<double>  amounts;
-   while ( db->next() )
-   {
-      GUIDs << db->value( 1 ).toString();
-      amounts << db->value( 3 ).toDouble();
-   }
-
-   // Now get the rest of the analyte info
-   for ( int i = 0; i < GUIDs.size(); i++ )
-   {
-      AnalyteInfo newInfo;
-
-      int         astatus = newInfo.analyte.load( true, GUIDs[i], db );
-      if ( astatus != IUS_DB2::OK )
+      int status = db->lastErrno();
+      if ( status == IUS_DB2::NOROWS )
       {
-         return IUS_DB2::NO_ANALYTE;
+         return IUS_DB2::NO_SOLUTION;
+      }
+      if ( status != IUS_DB2::OK )
+      {
+         return status;
+      }
+      if ( !db->next() )
+      {
+         return IUS_DB2::NO_SOLUTION;
       }
 
-      newInfo.amount = amounts[i];
-      loaded.analyteInfo << newInfo;
+      loaded.solutionID   = solutionID;
+      loaded.solutionGUID = db->value( 0 ).toString();
+      loaded.solutionDesc = db->value( 1 ).toString();
+      loaded.commonVbar20 = db->value( 2 ).toDouble();
+      loaded.storageTemp  = db->value( 3 ).toDouble();
+      loaded.notes        = db->value( 4 ).toString();
+
+      q.clear();
+      q << "get_solutionBuffer" << QString::number( solutionID );
+      db->query( q );
+
+      status = db->lastErrno();
+      if ( status == IUS_DB2::NOROWS )
+      {
+         return IUS_DB2::NO_BUFFER;
+      }
+      if ( status != IUS_DB2::OK )
+      {
+         return status;
+      }
+      if ( !db->next() )
+      {
+         return IUS_DB2::NO_BUFFER;
+      }
+
+      loaded.buffer.bufferID    = db->value( 0 ).toString();
+      loaded.buffer.GUID        = db->value( 1 ).toString();
+      loaded.buffer.description = db->value( 2 ).toString();
+
+      if ( !loaded.buffer.readFromDB( db, loaded.buffer.bufferID ) )
+      {
+         return IUS_DB2::NO_BUFFER;
+      }
+
+      // We need to get a list of analyteGUID's and amounts first
+      q.clear();
+      q << "get_solutionAnalyte" << QString::number( solutionID );
+      db->query( q );
+
+      status = db->lastErrno();
+      if ( status != IUS_DB2::OK && status != IUS_DB2::NOROWS )
+      {
+         return status;
+      }
+
+      QList<QString> GUIDs;
+      QList<double>  amounts;
+      while ( db->next() )
+      {
+         GUIDs << db->value( 1 ).toString();
+         amounts << db->value( 3 ).toDouble();
+      }
+
+      // Now get the rest of the analyte info
+      for ( int i = 0; i < GUIDs.size(); i++ )
+      {
+         AnalyteInfo newInfo;
+
+         int         astatus = newInfo.analyte.load( true, GUIDs[i], db );
+         if ( astatus != IUS_DB2::OK )
+         {
+            return IUS_DB2::NO_ANALYTE;
+         }
+
+         newInfo.amount = amounts[i];
+         loaded.analyteInfo << newInfo;
+      }
+
+      // A solution without a stored profile has no extinction values (clear() emptied them).
+      QString compType( "Sample" );
+      QString valType( "molarExtinction" );
+      US_ExtProfile::fetch_eprofile( db, solutionID, compType, valType, loaded.extinction );
+
+      loaded.saveStatus = DB_ONLY;
+      return IUS_DB2::OK;
+   };
+
+   const int status = load();
+   if ( status == IUS_DB2::OK )
+   {
+      *this = loaded;
+   }
+   else
+   {
+      clear();
    }
 
-   // A solution without a stored profile has no extinction values (clear() emptied them).
-   QString compType("Sample");
-   QString valType("molarExtinction");
-   US_ExtProfile::fetch_eprofile( db, solutionID, compType, valType, loaded.extinction );
-
-   loaded.saveStatus = DB_ONLY;
-   *this             = loaded;
-
-   return IUS_DB2::OK;
+   return status;
 }
 
 // Function to save solution information to disk
