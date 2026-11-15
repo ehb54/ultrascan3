@@ -475,6 +475,7 @@ void US_ResidPlotFem::srbmCheck( bool chkd )
 
       if ( resbmap )
       {
+         resbmap->raise();
          resbmap->activateWindow();
       }
    }
@@ -1059,10 +1060,9 @@ void US_ResidPlotFem::plot_rdata()
       le_rmsd->setText( QString::number( rmsd ) );
 
       if ( resbmap )
-      { // already have resbmap:  just replot residuals bitmap
+      { // already have resbmap:  just replot residuals bitmap, leaving the
+         // window order alone so new data does not take focus from the caller
          resbmap->replot( resids );
-         resbmap->raise();
-         resbmap->activateWindow();
 
          qDebug() << "ResBitMap: have window already";
       }

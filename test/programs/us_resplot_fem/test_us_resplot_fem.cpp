@@ -172,6 +172,23 @@ void modeRows()
 }
 }
 
+// Counts the times a widget is raised.
+class RaiseCounter : public QObject
+{
+   public:
+      int raised = 0;
+
+   protected:
+      bool eventFilter( QObject* watched, QEvent* event ) override
+      {
+         if ( event->type() == QEvent::ZOrderChange )
+         {
+            ++raised;
+         }
+         return QObject::eventFilter( watched, event );
+      }
+};
+
 class ResidualDialogTest : public QObject
 {
       Q_OBJECT
@@ -741,6 +758,33 @@ class ResidualDialogTest : public QObject
          QVERIFY( !bm );
          QVERIFY( !box( plot, "Show Residuals Bitmap" )->isChecked() );
          QVERIFY( plot.rp_data_plot2()->title().text().startsWith( "Cannot plot:" ) );
+      }
+
+      void newInputsDoNotRaiseBitmap_data()
+      {
+         modeRows();
+      }
+      void newInputsDoNotRaiseBitmap()
+      {
+         QFETCH( QString, mode );
+         ResidualInputs in;
+         populate( in );
+         auto            caller = owner( in, mode );
+         US_ResidPlotFem plot( inputs( in ), toMode( mode ), caller.get() );
+         auto            bm = bitmap( plot );
+         QVERIFY( bm );
+         RaiseCounter counter;
+         bm->installEventFilter( &counter );
+         in.excluded << 1;
+         plot.set_inputs( inputs( in ) );
+         QCoreApplication::processEvents();
+         // New data refreshes an open bitmap without pulling it in front of the caller.
+         QVERIFY( bm );
+         QCOMPARE( counter.raised, 0 );
+         box( plot, "Show Residuals Bitmap" )->setChecked( false );
+         deferredDeletes();
+         box( plot, "Show Residuals Bitmap" )->setChecked( true );
+         QVERIFY( shownBitmap() ); // checking the box still shows it
       }
 
       void invalidInputsKeepBorrowedBitmap()
