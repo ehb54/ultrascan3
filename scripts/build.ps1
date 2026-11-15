@@ -1109,7 +1109,12 @@ Test-PathLengthRisk `
 # all dependencies declared in vcpkg.json for the active feature and triplet.
 # =============================================================================
 Write-Host "Configuring..." -ForegroundColor Cyan
-cmake --preset $Preset -DUS3_PROFILE="${profile}" -DVCPKG_INSTALL_OPTIONS="$VcpkgInstallOptions"
+# TEST builds use the app presets; vcpkg.json's test feature adds GoogleTest.
+$FeatureArgs = @()
+if ($profile -eq "TEST") {
+    $FeatureArgs = @("-DVCPKG_MANIFEST_FEATURES=$($QtSuffix.TrimStart('-'))-app;test")
+}
+cmake --preset $Preset -DUS3_PROFILE="${profile}" -DVCPKG_INSTALL_OPTIONS="$VcpkgInstallOptions" @FeatureArgs
 if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: CMake configuration failed." -ForegroundColor Red; exit $LASTEXITCODE }
 
 # Read back what the toolchain resolved rather than recomputing its rule.

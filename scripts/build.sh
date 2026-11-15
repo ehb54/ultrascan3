@@ -905,10 +905,16 @@ _fix_qt6_x11r6_paths
 # CONFIGURE AND BUILD
 # =============================================================================
 echo "Configuring..."
+# TEST builds use the app presets; vcpkg.json's test feature adds GoogleTest.
+FEATURE_ARGS=()
+if [ "$PROFILE" = "TEST" ]; then
+  FEATURE_ARGS=(-DVCPKG_MANIFEST_FEATURES="${QT_VARIANT}-app;test")
+fi
 cmake --preset "$CONFIGURE_PRESET" \
   -DUS3_PROFILE="${PROFILE}" \
   -DVCPKG_ROOT="$US3_VCPKG_ROOT" \
-  -DVCPKG_INSTALL_OPTIONS="$VCPKG_INSTALL_OPTIONS"
+  -DVCPKG_INSTALL_OPTIONS="$VCPKG_INSTALL_OPTIONS" \
+  ${FEATURE_ARGS[@]+"${FEATURE_ARGS[@]}"}
 
 # Read back what the toolchain resolved rather than recomputing its rule.
 VCPKG_INSTALLED_DIR="$(sed -n 's|^VCPKG_INSTALLED_DIR:PATH=||p' \
