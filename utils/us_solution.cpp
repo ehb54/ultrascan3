@@ -559,11 +559,9 @@ qDebug() << "SolSvDB: soAna stat" << status << db->lastError();
       QMap<double, double> stored;
       int profileID = replace_spectrum ? US_ExtProfile::fetch_eprofile( db, solutionID, compType, valType, stored ) : -1;
 
-      const bool           profile_ok = ( profileID == -1 )
-                                           ? US_ExtProfile::create_eprofile( db, solutionID, compType, valType, extinction ) > 0
-                                           : US_ExtProfile::update_eprofile( db, profileID, solutionID, compType, valType, extinction );
-
-      if ( !profile_ok )
+      // A failed create returns -1; update reports success directly.
+      if ( profileID == -1 ? US_ExtProfile::create_eprofile( db, solutionID, compType, valType, extinction ) < 1
+                           : !US_ExtProfile::update_eprofile( db, profileID, solutionID, compType, valType, extinction ) )
       { // The spectrum is still new or changed; a later save retries it
          qDebug() << "extinction profile write failed for solution" << solutionID;
          return IUS_DB2::DBERROR;
