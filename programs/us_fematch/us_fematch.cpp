@@ -511,51 +511,21 @@ DbgLv(0) << "LD: newfile" << newfile << "idExp" << idExp
    {  // Get speed_steps from an existing timestate file
       simparams.simSpeedsFromTimeState( tmst_fpath );
       simparams.speedstepsFromSSprof();
-//*DEBUG*
-int essknt=speed_steps.count();
-int tssknt=simparams.speed_step.count();
-DbgLv(1) << "LD: (e)ss knt" << essknt << "(t)ss knt" << tssknt;
-for ( int jj = 0; jj < qMin( essknt, tssknt ); jj++ )
-{
-  DbgLv(1) << "LD:  jj" << jj << "(e) tf tl wf wl scns"
-	   << speed_steps[jj].time_first
-	   << speed_steps[jj].time_last
-	   << speed_steps[jj].w2t_first
-	   << speed_steps[jj].w2t_last
-	   << speed_steps[jj].scans;
-  DbgLv(1) << "LD:    (t) tf tl wf wl scns"
-	   << simparams.speed_step[jj].time_first
-	   << simparams.speed_step[jj].time_last
-	   << simparams.speed_step[jj].w2t_first
-	   << simparams.speed_step[jj].w2t_last
-	   << simparams.speed_step[jj].scans;
- }
-//*DEBUG*
-      int kstep      = speed_steps.count();
-      int kscan      = speed_steps[ 0 ].scans;
-
-      //ALEXEY: #speed steps from TimeStamp can be bigger than what's read from DB?? 
-      for ( int jj = 0; jj < simparams.speed_step.count(); jj++ ) 
+      //*DEBUG*
+      int essknt = speed_steps.count();
+      int tssknt = simparams.speed_step.count();
+      DbgLv( 1 ) << "LD: (e)ss knt" << essknt << "(t)ss knt" << tssknt;
+      for ( int jj = 0; jj < qMin( essknt, tssknt ); jj++ )
       {
-         if ( jj < kstep )
-         {
-            kscan          = speed_steps[ jj ].scans;
-            speed_steps[ jj ] = simparams.speed_step[ jj ];
-         }
-         else
-            speed_steps << simparams.speed_step[ jj ];
-         
-         speed_steps[ jj ].scans = kscan;
-         simparams.speed_step[ jj ].scans = kscan;
-	 DbgLv(1) << "LD:    (s) tf tl wf wl scns"
-		  << speed_steps[jj].time_first
-		  << speed_steps[jj].time_last
-		  << speed_steps[jj].w2t_first
-		  << speed_steps[jj].w2t_last
-		  << speed_steps[jj].scans;
+         DbgLv( 1 ) << "LD:  jj" << jj << "(e) tf tl wf wl scns" << speed_steps[jj].time_first << speed_steps[jj].time_last
+                    << speed_steps[jj].w2t_first << speed_steps[jj].w2t_last << speed_steps[jj].scans;
+         DbgLv( 1 ) << "LD:    (t) tf tl wf wl scns" << simparams.speed_step[jj].time_first << simparams.speed_step[jj].time_last
+                    << simparams.speed_step[jj].w2t_first << simparams.speed_step[jj].w2t_last << simparams.speed_step[jj].scans;
       }
+      //*DEBUG*
+      US_SimulationParameters::mergeTimeStateSteps( speed_steps, simparams.speed_step );
    }
-   
+
    int nssp       = speed_steps.count();
    int ntriples   = triples.size();
    DbgLv(1) << "LD: Load: no of speed steps" << nssp;
@@ -4091,29 +4061,7 @@ void US_FeMatch::auto_load_simulate( US_DataIO::RawData i_rdata,
                   << simparams.speed_step[jj].scans;
       }
       //*DEBUG*
-      int kstep      = speed_steps.count();
-      int kscan      = speed_steps[ 0 ].scans;
-
-      //ALEXEY: #speed steps from TimeStamp can be bigger than what's read from DB??
-      for ( int jj = 0; jj < simparams.speed_step.count(); jj++ )
-      {
-         if ( jj < kstep )
-         {
-            kscan          = speed_steps[ jj ].scans;
-            speed_steps[ jj ] = simparams.speed_step[ jj ];
-         }
-         else
-            speed_steps << simparams.speed_step[ jj ];
-
-         speed_steps[ jj ].scans = kscan;
-         simparams.speed_step[ jj ].scans = kscan;
-         DbgLv(1) << "LD:    (s) tf tl wf wl scns"
-                  << speed_steps[jj].time_first
-                  << speed_steps[jj].time_last
-                  << speed_steps[jj].w2t_first
-                  << speed_steps[jj].w2t_last
-                  << speed_steps[jj].scans;
-      }
+      US_SimulationParameters::mergeTimeStateSteps( speed_steps, simparams.speed_step );
    }
 
    int nssp       = speed_steps.count();

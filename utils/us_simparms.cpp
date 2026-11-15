@@ -641,6 +641,36 @@ DbgLv(1) << "SP:rSS:   step" << nsteps << "rotorspeed" << sp.rotorspeed
    return nsteps;
 }
 
+// Replace experiment speed steps with TimeState ones, keeping the experiment scan counts
+void US_SimulationParameters::mergeTimeStateSteps( QVector<SpeedProfile>& speedsteps, QVector<SpeedProfile>& tssteps )
+{
+   const int kstep = speedsteps.count();
+
+   if ( kstep == 0 )
+   {
+      speedsteps = tssteps;
+      return;
+   }
+
+   int kscan = speedsteps[0].scans;
+
+   for ( int jj = 0; jj < tssteps.count(); jj++ )
+   {
+      if ( jj < kstep )
+      {
+         kscan          = speedsteps[jj].scans;
+         speedsteps[jj] = tssteps[jj];
+      }
+      else
+      {
+         speedsteps << tssteps[jj];
+      }
+
+      speedsteps[jj].scans = kscan;
+      tssteps[jj].scans    = kscan;
+   }
+}
+
 // Whether experiment speed steps cover the first and last scan times of a data set
 bool US_SimulationParameters::speedStepsCoverData( const QVector<SpeedProfile>& speedsteps, const US_DataIO::EditedData& editdata )
 {

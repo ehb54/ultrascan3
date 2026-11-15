@@ -5328,27 +5328,7 @@ bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
 	}
       //*DEBUG*
 
-      int kstep      = speed_steps.count();
-      int kscan      = speed_steps[ 0 ].scans;
-      for ( int jj = 0; jj < simparams.speed_step.count(); jj++ )
-	{
-	  if ( jj < kstep )
-	    {
-	      kscan          = speed_steps[ jj ].scans;
-	      speed_steps[ jj ] = simparams.speed_step[ jj ];
-	    }
-	  else
-            speed_steps << simparams.speed_step[ jj ];
-	  
-	  speed_steps[ jj ].scans = kscan;
-	  simparams.speed_step[ jj ].scans = kscan;
-	  qDebug() << "LD:    (s) tf tl wf wl scns"
-		   << speed_steps[jj].time_first
-		   << speed_steps[jj].time_last
-		   << speed_steps[jj].w2t_first
-		   << speed_steps[jj].w2t_last
-		   << speed_steps[jj].scans;
-	}
+   US_SimulationParameters::mergeTimeStateSteps( speed_steps, simparams.speed_step );
     }
   progress_msg->setValue( 2 );
   qApp->processEvents();

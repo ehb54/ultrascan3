@@ -431,3 +431,59 @@ TEST_F( US_SimulationParametersTest, SpeedStepsCoverData_NoStepsOrNoScans )
    EXPECT_FALSE( US_SimulationParameters::speedStepsCoverData( {}, editedWithScanTimes( 200, 4000 ) ) );
    EXPECT_FALSE( US_SimulationParameters::speedStepsCoverData( steps, US_DataIO::EditedData{} ) );
 }
+
+namespace
+{
+US_SimulationParameters::SpeedProfile stepWithScans( int rotorspeed, int scans )
+{
+   US_SimulationParameters::SpeedProfile step;
+   step.rotorspeed = rotorspeed;
+   step.scans      = scans;
+   return step;
+}
+} // namespace
+
+TEST_F( US_SimulationParametersTest, MergeTimeStateSteps_KeepsExperimentScanCounts )
+{
+   QVector<US_SimulationParameters::SpeedProfile> steps{ stepWithScans( 40000, 30 ), stepWithScans( 50000, 20 ) };
+   QVector<US_SimulationParameters::SpeedProfile> tssteps{ stepWithScans( 40100, 7 ),
+                                                           stepWithScans( 50100, 8 ),
+                                                           stepWithScans( 60100, 9 ) };
+
+   US_SimulationParameters::mergeTimeStateSteps( steps, tssteps );
+
+   ASSERT_EQ( steps.size(), 3 );
+   EXPECT_EQ( steps[0].rotorspeed, 40100 );
+   EXPECT_EQ( steps[1].rotorspeed, 50100 );
+   EXPECT_EQ( steps[2].rotorspeed, 60100 );
+   EXPECT_EQ( steps[0].scans, 30 );
+   EXPECT_EQ( steps[1].scans, 20 );
+   EXPECT_EQ( steps[2].scans, 20 ); // an extra step takes the last experiment step's count
+   EXPECT_EQ( tssteps[0].scans, 30 );
+   EXPECT_EQ( tssteps[2].scans, 20 );
+}
+
+TEST_F( US_SimulationParametersTest, MergeTimeStateSteps_NoExperimentStepsUsesTimeState )
+{
+   QVector<US_SimulationParameters::SpeedProfile> steps;
+   QVector<US_SimulationParameters::SpeedProfile> tssteps{ stepWithScans( 45000, 12 ) };
+
+   US_SimulationParameters::mergeTimeStateSteps( steps, tssteps );
+
+   ASSERT_EQ( steps.size(), 1 );
+   EXPECT_EQ( steps[0].rotorspeed, 45000 );
+   EXPECT_EQ( steps[0].scans, 12 );
+   EXPECT_EQ( tssteps[0].scans, 12 );
+}
+
+TEST_F( US_SimulationParametersTest, MergeTimeStateSteps_NoTimeStateStepsKeepsExperimentSteps )
+{
+   QVector<US_SimulationParameters::SpeedProfile> steps{ stepWithScans( 40000, 30 ) };
+   QVector<US_SimulationParameters::SpeedProfile> tssteps;
+
+   US_SimulationParameters::mergeTimeStateSteps( steps, tssteps );
+
+   ASSERT_EQ( steps.size(), 1 );
+   EXPECT_EQ( steps[0].rotorspeed, 40000 );
+   EXPECT_EQ( steps[0].scans, 30 );
+}
