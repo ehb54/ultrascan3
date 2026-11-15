@@ -425,6 +425,25 @@ TEST_F( ModelDb, MonteCarloStreamLoadsAsAnAveragedCompositeModel )
    EXPECT_DOUBLE_EQ( 0.2, model.components[1].signal_concentration );
 }
 
+TEST_F( ModelDbLoadFailure, TruncatedMonteCarloStreamFailsAndKeepsTheModel )
+{
+   const QString iteration = "<model description=\"run.2DSA-MC_01.model\" modelGUID=\"%1\" monteCarlo=\"1\" "
+                             "variance=\"0.1\" meniscus=\"5.9\" analysisType=\"1\">\n"
+                             "<analyte name=\"solute\" vbar20=\"0.72\" mw=\"50000\" s=\"%2\" D=\"6e-07\" "
+                             "f_f0=\"1.3\" signal=\"0.5\"/>\n"
+                             "</model>\n";
+   // A complete first model followed by a second one cut off inside its analyte.
+   const QString complete  = QString( "<?xml version=\"1.0\"?>\n<!DOCTYPE US_Model>\n<ModelData version=\"1.0\">\n" ) +
+                            iteration.arg( kGuid, "4e-13" ) + iteration.arg( kGuid, "5e-13" );
+   const QString truncated = complete.left( complete.lastIndexOf( "s=\"5e-13\"" ) );
+   {
+      InSequence sequence;
+      expectInfo( "42", truncated );
+   }
+   EXPECT_EQ( IUS_DB2::DBERROR, model.load( QString( "42" ), &db ) );
+   expectModelUnchanged();
+}
+
 TEST_F( ModelDb, NonAsciiTextLoadsIntact )
 {
    const QString description = QString( QChar( 0x03bb ) ) + " 280 nm " + QChar( 0x2013 ) + " " + QChar( 0x00c5 );

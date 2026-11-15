@@ -154,69 +154,104 @@ void US_Solution::readSolutionInfo( QXmlStreamReader& xml )
 // Function to load a solution from the db
 int US_Solution::readFromDB  ( int solutionID, IUS_DB2* db )
 {
-   // Try to get solution info
+   // Load into a copy; this solution changes only when every query succeeds.
+   US_Solution loaded = *this;
+   loaded.clear();
+
+   // Get solution info
    QStringList q( "get_solution" );
    q  << QString::number( solutionID );
    db->query( q );
 
-   clear();
-
-   if ( db->next() )
+   int status = db->lastErrno();
+   if ( status == IUS_DB2::NOROWS )
    {
-      this->solutionID = solutionID;
-      solutionGUID     = db->value( 0 ).toString();
-      solutionDesc     = db->value( 1 ).toString();
-      commonVbar20     = db->value( 2 ).toDouble();
-      storageTemp      = db->value( 3 ).toDouble();
-      notes            = db->value( 4 ).toString();
-
-      q.clear();
-      q  << "get_solutionBuffer"
-         << QString::number( solutionID );
-      db->query( q );
-      if ( db->next() )
-      {
-         buffer.bufferID    = db->value( 0 ).toString();
-         buffer.GUID        = db->value( 1 ).toString();
-         buffer.description = db->value( 2 ).toString();
-      }
-      
-      if ( ! buffer.readFromDB( db, buffer.bufferID ) )
-         return IUS_DB2::NO_BUFFER;
-
-      // We need to get a list of analyteGUID's and amounts first
-      q.clear();
-      q  << "get_solutionAnalyte"
-         << QString::number( solutionID );
-      db->query( q );
-
-      QList< QString > GUIDs;
-      QList< double  > amounts;
-      while ( db->next() )
-      {
-         GUIDs   << db->value( 1 ).toString();
-         amounts << db->value( 3 ).toDouble();
-      }
-
-      // Now get the rest of the analyte info
-      for ( int i = 0; i < GUIDs.size(); i++ )
-      {
-         AnalyteInfo newInfo;
-
-         int status = newInfo.analyte.load( true, GUIDs[ i ], db );
-         if ( status != IUS_DB2::OK )
-            return IUS_DB2::NO_ANALYTE;
-
-         newInfo.amount = amounts[ i ];
-         analyteInfo << newInfo;
-      }
+      return IUS_DB2::NO_SOLUTION;
+   }
+   if ( status != IUS_DB2::OK )
+   {
+      return status;
+   }
+   if ( !db->next() )
+   {
+      return IUS_DB2::NO_SOLUTION;
    }
 
+   loaded.solutionID   = solutionID;
+   loaded.solutionGUID = db->value( 0 ).toString();
+   loaded.solutionDesc = db->value( 1 ).toString();
+   loaded.commonVbar20 = db->value( 2 ).toDouble();
+   loaded.storageTemp  = db->value( 3 ).toDouble();
+   loaded.notes        = db->value( 4 ).toString();
+
+   q.clear();
+   q << "get_solutionBuffer" << QString::number( solutionID );
+   db->query( q );
+
+   status = db->lastErrno();
+   if ( status == IUS_DB2::NOROWS )
+   {
+      return IUS_DB2::NO_BUFFER;
+   }
+   if ( status != IUS_DB2::OK )
+   {
+      return status;
+   }
+   if ( !db->next() )
+   {
+      return IUS_DB2::NO_BUFFER;
+   }
+
+   loaded.buffer.bufferID    = db->value( 0 ).toString();
+   loaded.buffer.GUID        = db->value( 1 ).toString();
+   loaded.buffer.description = db->value( 2 ).toString();
+
+   if ( !loaded.buffer.readFromDB( db, loaded.buffer.bufferID ) )
+   {
+      return IUS_DB2::NO_BUFFER;
+   }
+
+   // We need to get a list of analyteGUID's and amounts first
+   q.clear();
+   q << "get_solutionAnalyte" << QString::number( solutionID );
+   db->query( q );
+
+   status = db->lastErrno();
+   if ( status != IUS_DB2::OK && status != IUS_DB2::NOROWS )
+   {
+      return status;
+   }
+
+   QList<QString> GUIDs;
+   QList<double>  amounts;
+   while ( db->next() )
+   {
+      GUIDs << db->value( 1 ).toString();
+      amounts << db->value( 3 ).toDouble();
+   }
+
+   // Now get the rest of the analyte info
+   for ( int i = 0; i < GUIDs.size(); i++ )
+   {
+      AnalyteInfo newInfo;
+
+      int         astatus = newInfo.analyte.load( true, GUIDs[i], db );
+      if ( astatus != IUS_DB2::OK )
+      {
+         return IUS_DB2::NO_ANALYTE;
+      }
+
+      newInfo.amount = amounts[i];
+      loaded.analyteInfo << newInfo;
+   }
+
+   // A solution without a stored profile has no extinction values (clear() emptied them).
    QString compType("Sample");
    QString valType("molarExtinction");
-   US_ExtProfile::fetch_eprofile( db, solutionID, compType, valType, extinction );
+   US_ExtProfile::fetch_eprofile( db, solutionID, compType, valType, loaded.extinction );
 
-   saveStatus = DB_ONLY;
+   loaded.saveStatus = DB_ONLY;
+   *this             = loaded;
 
    return IUS_DB2::OK;
 }
@@ -330,7 +365,12 @@ qDebug() << "SolSvDB: ToDisk complete" << "expID,chnID" << expID << channelID;
 qDebug() << "SolSvDB: bufID stat" << status;
 
       if ( status == IUS_DB2::NOROWS )
-         buffer.saveToDB( db, QString::number( 1 ) );      // 1 = private
+      {
+         if ( buffer.saveToDB( db, QString::number( 1 ) ) < 0 ) // 1 = private
+         {
+            return IUS_DB2::NO_BUFFER;
+         }
+      }
 
       else if ( status != IUS_DB2::OK )
          return status;
@@ -347,7 +387,12 @@ qDebug() << "SolSvDB: bufID stat" << status;
       status = db->lastErrno();
 qDebug() << "SolSvDB: anaID stat" << status;
       if ( status == IUS_DB2::NOROWS )
-         newInfo.analyte.write( true, "", db );
+      {
+         if ( newInfo.analyte.write( true, "", db ) != IUS_DB2::OK )
+         {
+            return IUS_DB2::NO_ANALYTE;
+         }
+      }
 
       else if ( status != IUS_DB2::OK )
          return status;
@@ -363,10 +408,15 @@ qDebug() << "SolSvDB: anaID stat" << status;
    q  << "get_solutionID_from_GUID"
       << solutionGUID;
    db->query( q );
-   db->next();
 
    status = db->lastErrno();
 qDebug() << "SolSvDB: soGID stat" << status;
+// A lookup that succeeds without a row finds no stored solution.
+if ( status == IUS_DB2::OK && !db->next() )
+{
+   status = IUS_DB2::NOROWS;
+}
+
    if ( status == IUS_DB2::OK )
    {
       // Edit existing solution entry
@@ -380,8 +430,12 @@ qDebug() << "SolSvDB: soGID stat" << status;
          << QString::number( storageTemp )
          << notes;
 
-      db->statusQuery( q );
-qDebug() << "SolSvDB: updSO solID" << solutionID << "lastErr" << db->lastError() << db->lastErrno();
+      status = db->statusQuery( q );
+      qDebug() << "SolSvDB: updSO solID" << solutionID << "status" << status;
+      if ( status != IUS_DB2::OK )
+      {
+         return status;
+      }
    }
 
    else if ( status == IUS_DB2::NOROWS  &&
@@ -400,11 +454,14 @@ qDebug() << "SolSvDB: updSO solID" << solutionID << "lastErr" << db->lastError()
          << QString::number( channelID )
          << QString::number( US_Settings::us_inv_ID() );
 
-      db->statusQuery( q );
+      status = db->statusQuery( q );
+      if ( status != IUS_DB2::OK )
+      {
+         return status;
+      }
       solutionID = db->lastInsertID();
-qDebug() << "SolSvDB: newSO newID" << solutionID << "lastErr" << db->lastError()
- << db->lastErrno() << "expID" << expID << "chnID" << channelID;
-qDebug() << "SolSvDB: newSO q" << q;
+      qDebug() << "SolSvDB: newSO newID" << solutionID << "expID" << expID << "chnID" << channelID;
+      qDebug() << "SolSvDB: newSO q" << q;
    }
 
    else   // unspecified error
@@ -443,9 +500,13 @@ qDebug() << "SolSvDB: soBuf q=" << q;
    q  << "delete_solutionAnalytes"
       << QString::number( solutionID );
 
+   // NOROWS: the solution had no analytes to remove.
    status = db->statusQuery( q );
-   if ( status != IUS_DB2::OK )
-      qDebug() << "MySQL error: " << db->lastError();
+   if ( status != IUS_DB2::OK && status != IUS_DB2::NOROWS )
+   {
+      qDebug() << "MySQL error removing solution analytes:" << status;
+      return status;
+   }
 
    // Now add zero or more analyte associations
    for (const auto& newInfo : analyteInfo)
@@ -483,12 +544,15 @@ qDebug() << "SolSvDB: soAna stat" << status << db->lastError();
       QMap<double, double> stored;
       int profileID = replace_spectrum ? US_ExtProfile::fetch_eprofile( db, solutionID, compType, valType, stored ) : -1;
 
-      if ( profileID == -1 )
-      {
-         US_ExtProfile::create_eprofile( db, solutionID, compType, valType, extinction );
+      const bool           profile_ok = ( profileID == -1 )
+                                           ? US_ExtProfile::create_eprofile( db, solutionID, compType, valType, extinction ) > 0
+                                           : US_ExtProfile::update_eprofile( db, profileID, solutionID, compType, valType, extinction );
+
+      if ( !profile_ok )
+      { // The spectrum is still new or changed; a later save retries it
+         qDebug() << "extinction profile write failed for solution" << solutionID;
+         return IUS_DB2::DBERROR;
       }
-      else
-         US_ExtProfile::update_eprofile( db, profileID, solutionID, compType, valType, extinction );
 
       replace_spectrum        = false;
       new_or_changed_spectrum = false;
@@ -624,10 +688,18 @@ int US_Solution::deleteFromDB( IUS_DB2* db )
       q << "get_solutionID_from_GUID"
         << solutionGUID;
       db->query( q );
-   
-      if ( db->next() )
-         solutionID = db->value( 0 ).toInt();
 
+      // NOROWS: the solution is not in the DB, so there is nothing to delete.
+      const int lookup = db->lastErrno();
+      if ( lookup != IUS_DB2::OK && lookup != IUS_DB2::NOROWS )
+      {
+         return lookup;
+      }
+
+      if ( lookup == IUS_DB2::OK && db->next() )
+      {
+         solutionID = db->value( 0 ).toInt();
+      }
     }
 
    if ( solutionID > 0 ) // otherwise it's not there to delete
@@ -638,12 +710,11 @@ int US_Solution::deleteFromDB( IUS_DB2* db )
 
       status = db->statusQuery( q );
 
-      if ( status == IUS_DB2::SOLUT_IN_USE )
-         return status;
-
       if ( status != IUS_DB2::OK )
-         qDebug() << "MySQL error: " << db->lastError();
-
+      { // In use or failed: still saved as before
+         qDebug() << "delete_solution status:" << status;
+         return status;
+      }
    }
 
    saveStatus = ( saveStatus == BOTH ) ? HD_ONLY : NOT_SAVED;
@@ -725,6 +796,9 @@ US_Solution& US_Solution::operator=( const US_Solution& rhs )
       storageTemp   = rhs.storageTemp;
       notes         = rhs.notes;
       saveStatus    = rhs.saveStatus;
+      extinction              = rhs.extinction;
+      replace_spectrum        = rhs.replace_spectrum;
+      new_or_changed_spectrum = rhs.new_or_changed_spectrum;
 
       for (const auto & i : rhs.analyteInfo)
          analyteInfo      << i;
@@ -885,8 +959,15 @@ int US_Solution::countInProtocols( IUS_DB2* dbP )
       qry << "get_protocol_desc" << QString::number( US_Settings::us_inv_ID() );
       dbP->query( qry );
 
-      if ( dbP->lastErrno() != IUS_DB2::OK )
-         return 0;    // Error exit:  unable to read DB record
+      const int status = dbP->lastErrno();
+      if ( status == IUS_DB2::NOROWS )
+      {
+         return 0; // No protocols
+      }
+      if ( status != IUS_DB2::OK )
+      {
+         return -1; // Unable to read: the caller must not treat this as "not in use"
+      }
 
       while ( dbP->next() )
       {

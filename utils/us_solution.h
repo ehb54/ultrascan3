@@ -79,7 +79,9 @@ class US_UTIL_EXTERN US_Solution
 
           \param    solutionID The database solutionID of the desired solution
           \param    db For database access, an open database connection
-          \return   One of the IUS_DB2 error codes
+          \return   One of the IUS_DB2 error codes: NO_SOLUTION, NO_BUFFER or
+                    NO_ANALYTE when a required row is missing or unreadable, or a
+                    failed query's status. On failure the solution is unchanged.
       */
       int readFromDB  ( int, IUS_DB2* = 0 );
 
@@ -123,7 +125,8 @@ class US_UTIL_EXTERN US_Solution
 
       //! \brief Function to count occurrences of solution in protocols
       //! \param    dbP  Pointer to database connection or NULL if local test
-      //! \returns       Count of this solution in protocols
+      //! \returns       Count of this solution in protocols, or -1 if the DB
+      //!                protocols could not be read
       int countInProtocols   ( IUS_DB2* = 0 );
 
       //! \brief An overloaded assignment operator
