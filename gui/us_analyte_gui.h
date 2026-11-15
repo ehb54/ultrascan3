@@ -171,11 +171,12 @@ class US_GUI_EXTERN US_AnalyteMgrSelect: public US_Widgets
       bool analyte_in_use  ( QString& );
       void info_analyte    ( void );
       void accept_analyte  ( void );
-      void select_analyte  ( QListWidgetItem* );
+      bool    select_analyte( QListWidgetItem* );
       void select_analyte  ( );
-      void read_from_disk  ( QListWidgetItem* );
-      void read_from_db    ( QListWidgetItem* );
-      void read_from_db    ( const QString&   );
+      bool    read_from_disk( QListWidgetItem* );
+      bool    read_from_db( QListWidgetItem* );
+      bool    read_from_db( const QString& );
+      void    show_load_failure( const QString& );
       void search          ( const QString& = QString() );
 //      void show_component  ( const QString&, double );
       void reject          ( void );

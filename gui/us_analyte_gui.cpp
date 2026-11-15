@@ -259,31 +259,48 @@ DbgLv(1) << "AnaS:  aAcc : nsel" << nsel;
    {
       QListWidgetItem *item = lw_analyte_list->currentItem();
 
-      select_analyte( item );
-
-      ms_analytes << *analyte;
+      if ( select_analyte( item ) )
+      {
+         ms_analytes << *analyte;
+      }
    }
    else if ( nsel > 1 )
    {
+      bool all_loaded = true;
 
       for ( int ii = 0; ii < nsel; ii++ )
       {
 DbgLv(1) << "AnaS:  aAcc :   ii" << ii;
          QListWidgetItem* item = selItems[ ii ];
 
-         select_analyte( item );
+         if ( select_analyte( item ) )
+         {
+            ms_analytes << *analyte;
+         }
+         else
+         {
+            all_loaded = false;
+         }
+      }
 
-         ms_analytes << *analyte;
+      if ( !all_loaded )
+      { // Never accept part of a multiple selection
+         ms_analytes.clear();
+         pb_accept->setEnabled( false );
       }
    }
 }
 
 // Select the analyte for the currently selected list item
-void US_AnalyteMgrSelect::select_analyte( QListWidgetItem *tmp_item )
+bool US_AnalyteMgrSelect::select_analyte( QListWidgetItem* tmp_item )
 {
    QListWidgetItem *item = tmp_item;
-   if ( from_db )  read_from_db  ( item );
-   else            read_from_disk( item );
+   const bool       loaded = from_db ? read_from_db( item ) : read_from_disk( item );
+
+   if ( !loaded )
+   {
+      return false;
+   }
 DbgLv(1) << "AnaS:   ana-descr " << analyte->description;
 DbgLv(1) << "AnaS:   ana-type  " << analyte->type;
 DbgLv(1) << "AnaS:   ana-mw    " << analyte->mw;
@@ -373,34 +390,59 @@ DbgLv(1) << "AnaS:   ana-extsiz" << analyte->extinction.keys().size();
    pb_info    ->setEnabled ( true );
    pb_spectrum->setEnabled ( true );
    pb_sequence->setEnabled ( true );
+   return true;
+}
+
+// A failed load keeps the previously loaded analyte. Its actions are disabled
+// because they would act on that analyte while another list entry is selected.
+void US_AnalyteMgrSelect::show_load_failure( const QString& message )
+{
+   pb_accept->setEnabled( false );
+   pb_delete->setEnabled( false );
+   pb_info->setEnabled( false );
+   pb_spectrum->setEnabled( false );
+   pb_sequence->setEnabled( false );
+
+   te_analyte_smry->setText( tr( "The selected analyte could not be loaded:\n%1" ).arg( message ) );
 }
 
 // Read analyte information from the local disk
-void US_AnalyteMgrSelect::read_from_disk( QListWidgetItem* item )
+bool US_AnalyteMgrSelect::read_from_disk( QListWidgetItem* item )
 {
    int row = lw_analyte_list->row( item );
    int ana = analyte_metadata[ row ].index;
-DbgLv(1) << "row: " << row << " ana: "  << ana;
-   analyte->extinction.clear();
+   DbgLv( 1 ) << "row: " << row << " ana: " << ana;
 
    QString analyGUID = analyte_metadata[ row ].guid;
-DbgLv(1) << "AnaS-rddk-item  row" << row << "anaGUID" << analyGUID;
-   analyte->load( false, analyGUID, NULL );
+   DbgLv( 1 ) << "AnaS-rddk-item  row" << row << "anaGUID" << analyGUID;
+   // The disk reader keeps fields the file omits, so start without a spectrum
+   // and publish only a complete load.
+   US_Analyte candidate( *analyte );
+   candidate.extinction.clear();
+
+   if ( candidate.load( false, analyGUID, NULL ) != US_DB2::OK )
+   {
+      show_load_failure( candidate.message );
+      return false;
+   }
+
+   *analyte = candidate;
+   return true;
 }
 
 // Read analyte information from the database (by analyte list item)
-void US_AnalyteMgrSelect::read_from_db( QListWidgetItem* item )
+bool US_AnalyteMgrSelect::read_from_db( QListWidgetItem* item )
 {
    int row           = lw_analyte_list->row( item );
    QString analyGUID = analyte_metadata[ row ].guid;
-DbgLv(1) << "AnaS-rddb-item  row" << row << "anaGUID" << analyGUID;
-   read_from_db( analyGUID );
+   DbgLv( 1 ) << "AnaS-rddb-item  row" << row << "anaGUID" << analyGUID;
+   return read_from_db( analyGUID );
 }
 
 // Read analyte information from the database (by analyte GUID)
-void US_AnalyteMgrSelect::read_from_db( const QString& analyGUID )
+bool US_AnalyteMgrSelect::read_from_db( const QString& analyGUID )
 {
-DbgLv(1) << "agS: rddb: anaID" << analyGUID;
+   DbgLv( 1 ) << "agS: rddb: anaID" << analyGUID;
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
 
@@ -408,12 +450,22 @@ DbgLv(1) << "agS: rddb: anaID" << analyGUID;
    if ( db.lastErrno() != US_DB2::OK )
    {
       connect_error( db.lastError() );
-      return;
+      show_load_failure( db.lastError() );
+      return false;
    }
 
-   analyte->extinction.clear();
-DbgLv(1) << "AnaS-rddb-anid  anaGUID" << analyGUID;
-   analyte->load( true, analyGUID, &db );
+   DbgLv( 1 ) << "AnaS-rddb-anid  anaGUID" << analyGUID;
+   US_Analyte candidate( *analyte );
+   candidate.extinction.clear();
+
+   if ( candidate.load( true, analyGUID, &db ) != US_DB2::OK )
+   {
+      show_load_failure( candidate.message );
+      return false;
+   }
+
+   *analyte = candidate;
+   return true;
 }
 
 // Accept the currently selected analyte
