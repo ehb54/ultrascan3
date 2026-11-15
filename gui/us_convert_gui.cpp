@@ -9089,9 +9089,11 @@ DbgLv(1) << "DBSv:  REPEAT disk save for raw IDs";
 
    // Insure that we have a TimeState record in the DB for this run
    le_status->setText( tr( "Writing Time State to DB..." ) );
-   writeTimeStateDB();
+   const int tmst_status = writeTimeStateDB();
 
-   le_status->setText( tr( "DB data save complete. Saving reports..." ) );
+   le_status->setText( tmst_status == US_DB2::OK
+                          ? tr( "DB data save complete. Saving reports..." )
+                          : tr( "DB data saved without its Time State (status %1). Saving reports..." ).arg( tmst_status ) );
    qApp->processEvents();
    saveStatus = BOTH;
    enableRunIDControl( false );
@@ -10984,10 +10986,16 @@ DbgLv(1) << "wTSdb:  examine status" << status << "cksum-db" << cksum;
 DbgLv(1) << "wTSdb:   upload status" << status;
       }
    }
-   else
-   { // No record: invalid arguments, missing local files or a failed DB write
-      qDebug() << "writeTimeStateDB: dbCreate failed with" << timestateID;
+   else if ( timestateID != -2 )
+   { // No record: invalid arguments, an unreadable definitions file or a failed DB write
       status = timestateID;
+   }
+   // -2: the run has no local time-state files, so there is nothing to save.
+
+   if ( status != US_DB2::OK )
+   {
+      qWarning() << "writeTimeStateDB: time state not saved to the DB, status" << status;
+      le_status->setText( tr( "Time State was not saved to the DB (status %1)." ).arg( status ) );
    }
 DbgLv(1) << "wTSdb:  Timestate from DB is used";
    return status;

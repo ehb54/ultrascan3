@@ -64,14 +64,16 @@ class US_UTIL_EXTERN US_Analyte
       //! \param db        - For DB access, an open database connection
       //! \returns         - The \ref IUS_DB2 return code for the operation
       int load( bool, const QString&, IUS_DB2* = 0 );
-      
+
       //! Write an analyte to the disk or database
       //! \param db_access - A flag to indicate if the DB (true) or disk (false)
       //!                    should be used to save the analyte
-      //! \param filename  - The filename (with path) where the xml file 
+      //! \param filename  - The filename (with path) where the xml file
       //!                    be written if disk access is specified
       //! \param db        - For DB access, an open database connection
-      //! \returns         - The \ref IUS_DB2 retrun code for the operation
+      //! \returns         - The \ref IUS_DB2 return code for the operation. A DB
+      //!                    write also fails when the lookup, the nucleotide info
+      //!                    or the disk copy fails; message says which.
       int  write( bool, const QString&, IUS_DB2* = 0 );
 
       //! Read/write XML through a caller-owned, already-open device.
@@ -109,6 +111,6 @@ class US_UTIL_EXTERN US_Analyte
       int    write_disk      ( const QString& );
       int    write_db        ( IUS_DB2* );
       void   set_spectrum    ( IUS_DB2* );
-      void   write_nucleotide( IUS_DB2* );
+      int    write_nucleotide( IUS_DB2* );
 };
 #endif

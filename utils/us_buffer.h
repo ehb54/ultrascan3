@@ -103,11 +103,14 @@ class US_UTIL_EXTERN US_Buffer
       //! \return A boolean success or failure
       bool readFromDisk( const QString& );
 
-      //! \brief Write a new buffer to the DB.  
+      //! \brief Write a new buffer to the DB.
       //! \param db An open database connection
-      //! \param private_buffer An indication to mark the buffer 
+      //! \param private_buffer An indication to mark the buffer
       //!        public "0" or private "1";
-      //! \return The bufferID of the new buffer
+      //! \return The bufferID of the new buffer, or a negative error: -9 failed
+      //!         lookup, -1 failed insert, -2 failed update, -3 failed component
+      //!         delete, -4 failed component write, -5 failed extinction-profile
+      //!         write, -6 failed disk copy.
       int saveToDB( IUS_DB2* = 0, const QString = "1" );
 
       //! \brief Read a buffer from the DB

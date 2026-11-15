@@ -272,11 +272,12 @@ DEBUG_QUERY;
       fluorescence[ lambda ] = coeff;
    }
    */
+   // An analyte without a stored profile has no extinction values.
    QString compType("Analyte");
    QString valType("molarExtinction");
+   extinction.clear();
    US_ExtProfile::fetch_eprofile( db, analyteID.toInt(), compType, valType, extinction );
-   
-   
+
    return IUS_DB2::OK;
 }
 
@@ -937,16 +938,23 @@ int US_Analyte::write_db( IUS_DB2* db )
    db->query( q2 );
 DEBUG_QUERY;
 
-   if ( db->lastErrno() == IUS_DB2::OK )
-   {
-      db->next();
-      analyteID = db->value( 0 ).toString();
-      q[ 0 ] = "update_analyte";
-      q[ 1 ] = analyteID;
-      message = QObject::tr( "updated in" );
-      insert = false;
-   }
-      
+// Update a stored analyte; insert one the lookup did not find.
+const int lookup = db->lastErrno();
+if ( lookup != IUS_DB2::OK && lookup != IUS_DB2::NOROWS )
+{
+   message = QObject::tr( "Could not look up the analyte in the DB" );
+   return lookup;
+}
+
+if ( lookup == IUS_DB2::OK && db->next() )
+{
+   analyteID = db->value( 0 ).toString();
+   q[0]      = "update_analyte";
+   q[1]      = analyteID;
+   message   = QObject::tr( "updated in" );
+   insert    = false;
+}
+
    // Finish populating the query
    if      ( type == US_Analyte::PROTEIN ) q << "Protein";
    else if ( type == US_Analyte::DNA     ) q << "DNA";
@@ -1003,7 +1011,13 @@ DEBUG_QUERY;
    if ( insert ) analyteID = QString::number( db->lastInsertID() );
    
    if ( type == US_Analyte::DNA  || type == US_Analyte::RNA )
-      write_nucleotide( db );
+   {
+      const int nucleotide = write_nucleotide( db );
+      if ( nucleotide != IUS_DB2::OK )
+      {
+         return nucleotide;
+      }
+   }
 
    //set_spectrum( db );
    
@@ -1033,14 +1047,24 @@ DEBUG_QUERY;
       replace_spectrum        = false;
       new_or_changed_spectrum = false;
    }
-   
 
-   // Write to disk too
+
+   // Write to disk too; a failed disk copy is reported, with its message.
    QString path;
-   analyte_path( path );
+   if ( !analyte_path( path ) )
+   {
+      message = QObject::tr( "Could not create the analyte directory" );
+      return IUS_DB2::DBERROR;
+   }
    QString filename = get_filename( path, analyteGUID );
-   write_disk( filename );
+   const QString saved_message = message;
+   const int     disk          = write_disk( filename );
+   if ( disk != IUS_DB2::OK )
+   {
+      return disk;
+   }
 
+   message = saved_message;
    return IUS_DB2::OK;
 }
 
@@ -1050,7 +1074,7 @@ QString US_Analyte::get_filename( const QString& path, const QString& guid )
       US_DataFiles::get_filename( path, guid, "A", "analyte", "analyteGUID" );
 }
 
-void US_Analyte::write_nucleotide( IUS_DB2* db )
+int US_Analyte::write_nucleotide( IUS_DB2* db )
 {
    QStringList q;
    q << "set_nucleotide_info" << analyteID;
@@ -1066,8 +1090,12 @@ void US_Analyte::write_nucleotide( IUS_DB2* db )
 
    db->statusQuery( q );
 
-   if ( db->lastErrno() != IUS_DB2::OK )
-      message = QObject::tr ( "Could not update nucleotide info" );
+   const int error = db->lastErrno();
+   if ( error != IUS_DB2::OK )
+   {
+      message = QObject::tr( "Could not update nucleotide info" );
+   }
+   return error;
 }
 
 void US_Analyte::dump( void )
