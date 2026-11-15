@@ -7,8 +7,10 @@ The libraries are layered: utils (us_utils) is the base, gui (us_gui) builds on
 utils, and the programs build on both. A library must never use code from a
 layer above it, or the programs and libraries become circular again.
 
-  * A gui/ or utils/ source must not include a path into programs/, or any
-    path that climbs out of its library with "../".
+  * A gui/ or utils/ source must not include a path into programs/, or a
+    "../" path that leads out of its library. A "../" path that stays inside
+    the library, such as gui/moc/moc_us_widget.cpp including "../us_widget.h",
+    is allowed.
   * A gui/ or utils/ source must not include a header that exists only under
     programs/ (it would compile only where a program's directory is on the
     include path).
@@ -39,8 +41,9 @@ BUILD_FILES = {
     "utils": ("utils/CMakeLists.txt", "utils/libus_utils.pro", "library.pri"),
     "gui": ("gui/CMakeLists.txt", "gui/libus_gui.pro", "library.pri"),
 }
-# Ways the utils build files could name the GUI library.
-GUI_LINK = re.compile(r"\bus_gui\b|-lus_gui|UltraScan3::Gui|\bGui_Static\b")
+# Ways the utils build files could name the GUI library or one of its variants
+# (us_gui, us_gui_static, UltraScan3::Gui, -lus_gui, ...).
+GUI_LINK = re.compile(r"\bus_gui\w*|-lus_gui\w*|\bUltraScan3::Gui\w*|\bGui_Static\b")
 
 
 def files_under(root, top, suffixes):
@@ -169,9 +172,11 @@ def check(root):
                 target = match.group(1)
                 name = os.path.basename(target)
                 where = "%s:%d: %s includes %s" % (path, number, library, target)
-                if "programs/" in target or target.startswith("programs"):
+                climbs = target.startswith("../") or "/../" in target
+                resolved = os.path.normpath(os.path.join(os.path.dirname(path), target))
+                if "programs/" in target or target.startswith("programs") or resolved.startswith("programs" + os.sep):
                     problems.append(where + ": a path into programs/")
-                elif target.startswith("../") or "/../" in target:
+                elif climbs and not resolved.startswith(library + os.sep):
                     problems.append(where + ': a path that climbs out of the library with "../"')
                 elif name in program_only:
                     problems.append(where + ": a header that exists only under programs/")

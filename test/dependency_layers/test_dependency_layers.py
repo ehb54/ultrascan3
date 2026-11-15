@@ -78,6 +78,21 @@ class DependencyLayersTest(unittest.TestCase):
         files["gui/us_widget.cpp"] += '#include "programs/us_alpha/us_alpha.h"\n'
         self.assertRejected(files, "gui includes programs/us_alpha/us_alpha.h: a path into programs/")
 
+    def test_dot_dot_include_staying_inside_the_library_passes(self):
+        files = dict(VALID)
+        files["gui/moc/moc_us_widget.cpp"] = '#include "../us_widget.h"\n'
+        files["utils/moc/moc_us_base.cpp"] = '#include "../moc/../us_base.h"\n'
+        code, output = run_checker(files)
+        self.assertEqual(code, 0, output)
+
+    def test_nested_library_file_climbing_out_is_rejected(self):
+        files = dict(VALID)
+        files["utils/moc/moc_us_base.cpp"] = '#include "../../gui/us_widget.h"\n'
+        self.assertRejected(files, 'utils/moc/moc_us_base.cpp:1: utils includes ../../gui/us_widget.h: a path that climbs out')
+        files = dict(VALID)
+        files["gui/moc/moc_us_widget.cpp"] = '#include "../../programs/us_alpha/us_alpha.h"\n'
+        self.assertRejected(files, "a path into programs/")
+
     def test_library_climbing_out_with_dot_dot_is_rejected(self):
         files = dict(VALID)
         files["utils/us_base.cpp"] += '#include "../programs/us_alpha/us_alpha.h"\n'
@@ -113,6 +128,10 @@ class DependencyLayersTest(unittest.TestCase):
         files = dict(VALID)
         files["utils/CMakeLists.txt"] += "target_link_libraries(us_utils PRIVATE UltraScan3::Gui)\n"
         self.assertRejected(files, "the utils build links the GUI library")
+        for link in ("target_link_libraries(us_utils PRIVATE us_gui_static)\n", "LIBS += -lus_gui_static\n"):
+            files = dict(VALID)
+            files["utils/CMakeLists.txt"] += link
+            self.assertRejected(files, "the utils build links the GUI library")
 
     def test_program_include_cycle_is_rejected(self):
         files = dict(VALID)
