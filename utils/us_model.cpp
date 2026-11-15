@@ -816,6 +816,12 @@ int US_Model::load_stream( QXmlStreamReader& xml )
       }
    }
 
+   // Truncated or malformed XML must not load as a complete model.
+   if ( xml.hasError() )
+   {
+      return IUS_DB2::DBERROR;
+   }
+
    return IUS_DB2::OK;
 }
 
@@ -1113,14 +1119,26 @@ void US_Model::get_metadata( QXmlStreamReader &xml )
 // Load a model from DB (by GUID)
 int US_Model::load_db( const QString& guid, IUS_DB2* db )
 {
+   if ( db == nullptr )
+   {
+      return IUS_DB2::NOT_CONNECTED;
+   }
+
    QStringList q;
 
    q << "get_modelID" << guid;
    db->query( q );
 
-   if ( db->lastErrno() != IUS_DB2::OK ) return db->lastErrno();
-   
-   db->next();
+   const int status = db->lastErrno();
+   if ( status != IUS_DB2::OK )
+   {
+      return status;
+   }
+   if ( !db->next() )
+   {
+      return IUS_DB2::NOROWS;
+   }
+
    QString id = db->value( 0 ).toString();
    return load( id, db );
 }
@@ -1128,28 +1146,48 @@ int US_Model::load_db( const QString& guid, IUS_DB2* db )
 // Load a model from DB (by DB id)
 int US_Model::load( const QString& id, IUS_DB2* db )
 {
+   if ( db == nullptr )
+   {
+      return IUS_DB2::NOT_CONNECTED;
+   }
+
    QStringList q;
 
    q << "get_model_info" << id;
    db->query( q );
-   
-   if ( db->lastErrno() != IUS_DB2::OK ) return db->lastErrno();
 
-   db->next();
-   QByteArray contents  = db->value( 2 ).toString().toLatin1();
-   timeCreated = db->value( 6 ).toString();
+   const int status = db->lastErrno();
+   if ( status != IUS_DB2::OK )
+   {
+      return status;
+   }
+   if ( !db->next() )
+   {
+      return IUS_DB2::NOROWS;
+   }
 
-   // Read the model file into an array in memory
+   // The model XML was written as UTF-8.
+   QByteArray contents = db->value( 2 ).toString().toUtf8();
+
+   // Load into a copy; this model changes only when the stored XML loads completely.
+   US_Model   loaded  = *this;
+   loaded.timeCreated = db->value( 6 ).toString();
+
    QXmlStreamReader xml( contents );
-   
-   int result = load_stream( xml );
 
-   if ( result == IUS_DB2::NO_MODEL  &&  monteCarlo )
+   int              result = loaded.load_stream( xml );
+
+   if ( result == IUS_DB2::NO_MODEL && loaded.monteCarlo )
    {  // Handle a multi-model stream
       QTextStream tsi( contents );
 
-      result     = load_multi_model( tsi );
-      variance   = db->value( 3 ).toDouble();
+      result          = loaded.load_multi_model( tsi );
+      loaded.variance = db->value( 3 ).toDouble();
+   }
+
+   if ( result == IUS_DB2::OK )
+   {
+      *this = loaded;
    }
 
    return result;
@@ -1165,6 +1203,12 @@ int US_Model::write( bool db_access, const QString& filename, IUS_DB2* db )
 // Write a model DB record
 int US_Model::write( IUS_DB2* db )
 {
+   if ( db == nullptr )
+   {
+      message = QObject::tr( "could not be written: no database connection" );
+      return IUS_DB2::NOT_CONNECTED;
+   }
+
    // Create the model xml file in a stream.  It is passed raw: the query
    // layer escapes every argument.
    QByteArray contents;
@@ -1193,8 +1237,16 @@ int US_Model::write( IUS_DB2* db )
     
    QString meni = QString::number( meniscus );
    QString vari = QString::number( variance );
-     
-   if ( db->lastErrno() != IUS_DB2::OK )
+
+   // Update a stored model; insert one the lookup did not find.
+   const int lookup = db->lastErrno();
+   if ( lookup != IUS_DB2::OK && lookup != IUS_DB2::NOROWS )
+   {
+      message = QObject::tr( "could not be looked up" );
+      return lookup;
+   }
+
+   if ( lookup != IUS_DB2::OK || !db->next() )
    {
       q.clear();
       q << "new_model" << modelGUID << description << contents
@@ -1204,7 +1256,6 @@ int US_Model::write( IUS_DB2* db )
    }
    else
    {
-      db->next();
       QString id = db->value( 0 ).toString();
       q.clear();
       q << "update_model" << id << description << contents
@@ -1214,6 +1265,12 @@ int US_Model::write( IUS_DB2* db )
 
    int wstat = db->statusQuery( q );
 qDebug() << "model writedb message" << message << "wstat" << wstat;
+if ( wstat != IUS_DB2::OK )
+{ // The DB copy failed, so do not save a disk copy that claims it exists
+   message = QObject::tr( "could not be written" );
+   return wstat;
+}
+
    QString path;
    model_path( path );
    bool newFile;

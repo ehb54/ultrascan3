@@ -16,11 +16,8 @@ using ::testing::Matcher;
 using ::testing::Return;
 using ::testing::StrictMock;
 
-// Known defects in US_Buffer (ehb54/ultrascan-tickets#1228) that these tests deliberately do not assert:
-// - saveToDB ignores profile-write failures and returns the buffer ID when the disk copy
-//   cannot be written.
-// - writeToDisk writes refraction and fluorescence values at the extinction wavelengths.
-// A failed component write leaves the buffer row it already created or updated; there is no rollback.
+// Not covered: a failed component write leaves the buffer row it already created or updated;
+// rolling that back is a policy change tracked in ehb54/ultrascan-tickets#1247.
 
 namespace
 {
@@ -407,6 +404,69 @@ TEST_F( BufferDb, SaveCreatesANewBufferWithComponentsProfileAndDiskCopy )
    EXPECT_EQ( ( QStringList{ "5", "6" } ), disk.componentIDs );
    EXPECT_EQ( ( QList<double>{ 0.15, 0.025 } ), disk.concentration );
    EXPECT_EQ( buffer.extinction, disk.extinction );
+}
+
+TEST_F( BufferDb, SaveReportsAFailedProfileWriteAndKeepsTheSpectrumPending )
+{
+   prepareBuffer();
+   buffer.component.clear();
+   buffer.componentIDs.clear();
+   buffer.concentration.clear();
+   buffer.extinction              = { { 280.0, 1.25 } };
+   buffer.new_or_changed_spectrum = true;
+   {
+      InSequence sequence;
+      expectLookup( false );
+      expectStatus( newBufferArgs() );
+      EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 88 ) );
+      EXPECT_CALL( db, query( args( { "get_eprofile", "88", "Buffer" } ) ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOROWS ) );
+      EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::DBERROR ) );
+   }
+
+   EXPECT_EQ( -5, buffer.saveToDB( &db, "1" ) );
+   EXPECT_TRUE( buffer.new_or_changed_spectrum );
+   EXPECT_TRUE( diskCopy().isEmpty() );
+}
+
+TEST_F( BufferDb, SaveReportsAFailedDiskCopy )
+{
+   prepareBuffer();
+   buffer.component.clear();
+   buffer.componentIDs.clear();
+   buffer.concentration.clear();
+   // A file where the buffers directory should be makes the disk copy impossible.
+   ASSERT_TRUE( QDir( bufferPath() ).removeRecursively() );
+   {
+      QFile blocker( bufferPath() );
+      ASSERT_TRUE( blocker.open( QIODevice::WriteOnly ) );
+   }
+   {
+      InSequence sequence;
+      expectLookup( false );
+      expectStatus( newBufferArgs() );
+      EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 88 ) );
+   }
+
+   EXPECT_EQ( -6, buffer.saveToDB( &db, "1" ) );
+   ASSERT_TRUE( QFile::remove( bufferPath() ) );
+}
+
+TEST_F( BufferDb, DiskCopyKeepsEachSpectrumAtItsOwnWavelengths )
+{
+   prepareBuffer();
+   buffer.extinction   = { { 250.0, 0.75 }, { 280.0, 1.25 } };
+   buffer.refraction   = { { 600.0, 1.333 } };
+   buffer.fluorescence = { { 350.0, 0.5 }, { 450.0, 0.25 }, { 550.0, 0.125 } };
+   const QString file  = bufferPath() + "/spectra.xml";
+   ASSERT_TRUE( buffer.writeToDisk( file ) );
+
+   US_Buffer disk;
+   ASSERT_TRUE( disk.readFromDisk( file ) );
+   EXPECT_EQ( buffer.extinction, disk.extinction );
+   EXPECT_EQ( buffer.refraction, disk.refraction );
+   EXPECT_EQ( buffer.fluorescence, disk.fluorescence );
+   ASSERT_TRUE( QFile::remove( file ) );
 }
 
 TEST_F( BufferDb, SaveUpdatesAnExistingBufferAndReplacesItsComponents )

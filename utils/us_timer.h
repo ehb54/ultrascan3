@@ -49,7 +49,9 @@ public:
      * @brief Ends a timer with a given name.
      *
      * @param name The name of the timer to end.
-     * @return True if the timer was successfully ended, false otherwise.
+     * @return True if the timer was running and its time was recorded; false
+     *         for an undefined timer or one that was not started since it was
+     *         initialized or last ended.
      */
     bool end_timer(const QString& name);
 

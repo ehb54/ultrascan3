@@ -411,44 +411,27 @@ bool US_Buffer::writeToDisk( const QString& filename ) const
 
    xml.writeStartElement( "spectrum" );
 
-   QList< double > keys = extinction.keys();
-
-   for ( int i = 0; i < extinction.size(); i++ )
+   // Each spectrum is written at its own wavelengths.
+   const auto writeSpectrum = [&xml]( const char* name, const QMap<double, double>& values )
    {
-      xml.writeStartElement( "extinction" );
-      double wavelength = keys[ i ];
-      double value      = extinction[ wavelength ];
-      xml.writeAttribute( "wavelength", QString::number( wavelength, 'f', 1 ) );
-      xml.writeAttribute( "value"     , QString::number( value,      'e', 4 ) );
-      xml.writeEndElement(); // extinction
-   }
-
-   for ( int i = 0; i < refraction.size(); i++ )
-   {
-      xml.writeStartElement( "refraction" );
-      double wavelength = keys[ i ];
-      double value      = refraction[ wavelength ];
-      xml.writeAttribute( "wavelength", QString::number( wavelength, 'f', 1 ) );
-      xml.writeAttribute( "value"     , QString::number( value,      'e', 4 ) );
-      xml.writeEndElement(); // refraction
-   }
-
-   for ( int i = 0; i < fluorescence.size(); i++ )
-   {
-      xml.writeStartElement( "fluorescence" );
-      double wavelength = keys[ i ];
-      double value      = fluorescence[ wavelength ];
-      xml.writeAttribute( "wavelength", QString::number( wavelength, 'f', 1 ) );
-      xml.writeAttribute( "value"     , QString::number( value,      'e', 4 ) );
-      xml.writeEndElement(); // fluorescence
-   }
+      for ( auto it = values.constBegin(); it != values.constEnd(); ++it )
+      {
+         xml.writeStartElement( name );
+         xml.writeAttribute( "wavelength", QString::number( it.key(), 'f', 1 ) );
+         xml.writeAttribute( "value", QString::number( it.value(), 'e', 4 ) );
+         xml.writeEndElement();
+      }
+   };
+   writeSpectrum( "extinction", extinction );
+   writeSpectrum( "refraction", refraction );
+   writeSpectrum( "fluorescence", fluorescence );
 
    xml.writeEndElement(); // spectrum
    xml.writeEndElement(); // buffer
    xml.writeEndElement(); // US_Buffer
    xml.writeEndDocument();
 
-   return true;
+   return !xml.hasError() && file.flush() && file.error() == QFileDevice::NoError;
 }
 
 bool US_Buffer::readFromDB( IUS_DB2* db, const QString& bufID )
@@ -643,12 +626,15 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
       QMap<double, double> stored;
       int profileID = replace_spectrum ? US_ExtProfile::fetch_eprofile( db, bufferID.toInt(), compType, valType, stored ) : -1;
 
-      if ( profileID == -1 )
-      {
-         US_ExtProfile::create_eprofile( db, bufferID.toInt(), compType, valType, extinction );
+      const bool           profile_ok = ( profileID == -1 )
+                                           ? US_ExtProfile::create_eprofile( db, bufferID.toInt(), compType, valType, extinction ) > 0
+                                           : US_ExtProfile::update_eprofile( db, profileID, bufferID.toInt(), compType, valType, extinction );
+
+      if ( !profile_ok )
+      { // The spectrum is still new or changed; a later save retries it
+         qDebug() << "extinction profile write failed for buffer" << bufferID;
+         return -5;
       }
-      else
-         US_ExtProfile::update_eprofile( db, profileID, bufferID.toInt(), compType, valType, extinction );
 
       replace_spectrum        = false;
       new_or_changed_spectrum = false;
@@ -661,8 +647,12 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
    bool    newFile;
    QString path     = US_Settings::dataDir() + "/buffers";
    QString filename = get_filename( path, GUID, newFile );
-   writeToDisk( filename );
-   
+   if ( !writeToDisk( filename ) )
+   {
+      qDebug() << "buffer disk copy failed:" << filename;
+      return -6;
+   }
+
    qDebug() << "bufferID upon saveToDB() completion: " << bufferID;
 
    return bufferID.toInt();

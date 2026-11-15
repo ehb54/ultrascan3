@@ -15,15 +15,6 @@ using ::testing::Matcher;
 using ::testing::Return;
 using ::testing::StrictMock;
 
-// Known defects these tests deliberately do not assert:
-// - load() and write() dereference a null DB pointer.
-// - When a lookup or info query succeeds without a row, load() still returns OK, clearing the
-//   components (an empty ID is sent to get_model_info after an empty lookup).
-// - load() ignores XML errors, so truncated XML returns OK with partial data.
-// - load() converts the stored XML with toLatin1(), so a model with non-ASCII text (for example
-//   "λ 280 nm – Å") returns OK without its stored data.
-// - A failed write() still saves the model to disk and reports "created".
-
 namespace
 {
 const QString               kGuid     = "11111111-2222-3333-4444-555555555555";
@@ -281,7 +272,7 @@ TEST_F( ModelDb, WriteAssignsAGuidWhenTheModelHasNone )
    EXPECT_EQ( model.modelGUID, written );
 }
 
-TEST_F( ModelDb, WriteReturnsTheStatusOfAFailedWrite )
+TEST_F( ModelDb, WriteReturnsTheStatusOfAFailedWriteAndSavesNoDiskCopy )
 {
    prepareModel();
    {
@@ -291,5 +282,160 @@ TEST_F( ModelDb, WriteReturnsTheStatusOfAFailedWrite )
       EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::DBERROR ) );
    }
    EXPECT_EQ( IUS_DB2::DBERROR, model.write( true, QString(), &db ) );
+   EXPECT_EQ( QString( "could not be written" ), model.message );
+#ifndef NO_DB
+   EXPECT_TRUE( modelFiles().isEmpty() );
+#endif
+}
+
+TEST_F( ModelDb, FailedLookupWritesNothing )
+{
+   prepareModel();
+   for ( int status : { IUS_DB2::DBERROR, IUS_DB2::NOT_CONNECTED } )
+   {
+      SCOPED_TRACE( status );
+      {
+         InSequence sequence;
+         EXPECT_CALL( db, query( args( { "get_modelID", kGuid } ) ) );
+         EXPECT_CALL( db, lastErrno() ).WillOnce( Return( status ) );
+      }
+      EXPECT_EQ( status, model.write( true, QString(), &db ) );
+      EXPECT_EQ( QString( "could not be looked up" ), model.message );
+      ::testing::Mock::VerifyAndClearExpectations( &db );
+   }
+#ifndef NO_DB
+   EXPECT_TRUE( modelFiles().isEmpty() );
+#endif
+}
+
+TEST_F( ModelDb, WriteInsertsWhenTheLookupFindsNoRow )
+{
+   prepareModel();
+   QStringList written;
+   {
+      InSequence sequence;
+      EXPECT_CALL( db, query( args( { "get_modelID", kGuid } ) ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, next() ).WillOnce( Return( false ) );
+      EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) )
+         .WillOnce( Invoke(
+            [&written]( const QStringList& q )
+            {
+               written = q;
+               return IUS_DB2::OK;
+            } ) );
+   }
+   EXPECT_EQ( IUS_DB2::OK, model.write( true, QString(), &db ) );
+   EXPECT_EQ( QString( "new_model" ), written.value( 0 ) );
+}
+
+// A failed or empty load leaves the model it was called on unchanged.
+class ModelDbLoadFailure : public ModelDb
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( ModelDb::SetUp() );
+         prepareModel();
+      }
+
+      void expectModelUnchanged()
+      {
+         EXPECT_EQ( QString( "test-CustomGrid.model" ), model.description );
+         EXPECT_EQ( kGuid, model.modelGUID );
+         ASSERT_EQ( 1, model.components.size() );
+         EXPECT_EQ( QString( "solute" ), model.components[0].name );
+      }
+};
+
+TEST_F( ModelDbLoadFailure, NullDatabaseIsNotConnected )
+{
+   EXPECT_EQ( IUS_DB2::NOT_CONNECTED, model.load( true, kGuid, nullptr ) );
+   EXPECT_EQ( IUS_DB2::NOT_CONNECTED, model.load( QString( "42" ), nullptr ) );
+   EXPECT_EQ( IUS_DB2::NOT_CONNECTED, model.write( true, QString(), nullptr ) );
+   expectModelUnchanged();
+#ifndef NO_DB
+   EXPECT_TRUE( modelFiles().isEmpty() );
+#endif
+}
+
+TEST_F( ModelDbLoadFailure, LookupWithoutARowReturnsNoRows )
+{
+   {
+      InSequence sequence;
+      EXPECT_CALL( db, query( args( { "get_modelID", kGuid } ) ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, next() ).WillOnce( Return( false ) );
+   }
+   EXPECT_EQ( IUS_DB2::NOROWS, model.load( true, kGuid, &db ) );
+   expectModelUnchanged();
+}
+
+TEST_F( ModelDbLoadFailure, InfoWithoutARowReturnsNoRows )
+{
+   {
+      InSequence sequence;
+      EXPECT_CALL( db, query( args( { "get_model_info", "42" } ) ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, next() ).WillOnce( Return( false ) );
+   }
+   EXPECT_EQ( IUS_DB2::NOROWS, model.load( QString( "42" ), &db ) );
+   expectModelUnchanged();
+}
+
+TEST_F( ModelDbLoadFailure, TruncatedXmlFailsAndKeepsTheModel )
+{
+   const QString stored    = QString::fromUtf8( kStoredXml );
+   const QString truncated = stored.left( stored.indexOf( "<analyte" ) + 20 );
+   {
+      InSequence sequence;
+      expectInfo( "42", truncated );
+   }
+   EXPECT_EQ( IUS_DB2::DBERROR, model.load( QString( "42" ), &db ) );
+   expectModelUnchanged();
+}
+
+TEST_F( ModelDb, MonteCarloStreamLoadsAsAnAveragedCompositeModel )
+{
+   // One model per Monte Carlo iteration, one XML element per line.
+   const QString iteration = "<model description=\"run.2DSA-MC_01.model\" modelGUID=\"%1\" monteCarlo=\"1\" "
+                             "variance=\"0.1\" meniscus=\"5.9\" analysisType=\"1\">\n"
+                             "<analyte name=\"solute\" vbar20=\"0.72\" mw=\"50000\" s=\"%2\" D=\"6e-07\" "
+                             "f_f0=\"1.3\" signal=\"%3\"/>\n"
+                             "</model>\n";
+   const QString xml       = QString( "<?xml version=\"1.0\"?>\n<!DOCTYPE US_Model>\n<ModelData version=\"1.0\">\n" ) +
+                       iteration.arg( kGuid, "4e-13", "0.6" ) + iteration.arg( kGuid, "5e-13", "0.4" ) + "</ModelData>\n";
+   {
+      InSequence sequence;
+      expectInfo( "42", xml );
+      EXPECT_CALL( db, value( 3 ) ).WillOnce( Return( QVariant( "0.0125" ) ) );
+   }
+
+   ASSERT_EQ( IUS_DB2::OK, model.load( QString( "42" ), &db ) );
+   EXPECT_TRUE( model.monteCarlo );
+   EXPECT_EQ( 2, model.nmcixs );
+   EXPECT_DOUBLE_EQ( 0.0125, model.variance );
+   EXPECT_EQ( QString( "2026-11-14 09:30:00" ), model.timeCreated );
+   EXPECT_EQ( QString( "run.2DSA-MC_mcN002.model" ), model.description );
+   // Each iteration's solute becomes a component, its signal scaled by 1/iterations.
+   ASSERT_EQ( 2, model.components.size() );
+   EXPECT_DOUBLE_EQ( 4e-13, model.components[0].s );
+   EXPECT_DOUBLE_EQ( 0.3, model.components[0].signal_concentration );
+   EXPECT_DOUBLE_EQ( 5e-13, model.components[1].s );
+   EXPECT_DOUBLE_EQ( 0.2, model.components[1].signal_concentration );
+}
+
+TEST_F( ModelDb, NonAsciiTextLoadsIntact )
+{
+   const QString description = QString( QChar( 0x03bb ) ) + " 280 nm " + QChar( 0x2013 ) + " " + QChar( 0x00c5 );
+   QString       xml         = QString::fromUtf8( kStoredXml );
+   xml.replace( "stored &amp; loaded", description );
+   {
+      InSequence sequence;
+      expectInfo( "42", xml );
+   }
+   ASSERT_EQ( IUS_DB2::OK, model.load( QString( "42" ), &db ) );
+   EXPECT_EQ( description, model.description );
+   ASSERT_EQ( 1, model.components.size() );
 }
 } // namespace

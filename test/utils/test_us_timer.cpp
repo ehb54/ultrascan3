@@ -1,6 +1,7 @@
 //! \file test_us_timer.cpp
 #include "qt_test_base.h"
 #include "us_timer.h"
+#include <QElapsedTimer>
 #include <QRegularExpression>
 #include <cmath>
 
@@ -239,18 +240,40 @@ TEST_F( US_TimerTest, EndTimerNonExistentTimer )
 TEST_F( US_TimerTest, EndTimerWithoutStart )
 {
    timer.init_timer( "end_without_start" );
-   EXPECT_TRUE( timer.end_timer( "end_without_start" ) );
-   expectCalls( "end_without_start", 1 );
+   EXPECT_FALSE( timer.end_timer( "end_without_start" ) );
+   EXPECT_EQ( unusedMessage( "end_without_start" ), timer.list_time( "end_without_start" ) );
 }
 
 TEST_F( US_TimerTest, EndTimerMultipleTimes )
 {
+   // Ending stops the timer, so only the first end after a start is recorded.
    timer.init_timer( "multiple_end_timer" );
    ASSERT_TRUE( timer.start_timer( "multiple_end_timer" ) );
    EXPECT_TRUE( timer.end_timer( "multiple_end_timer" ) );
-   EXPECT_TRUE( timer.end_timer( "multiple_end_timer" ) );
-   EXPECT_TRUE( timer.end_timer( "multiple_end_timer" ) );
-   expectStats( "multiple_end_timer", 3 );
+   EXPECT_FALSE( timer.end_timer( "multiple_end_timer" ) );
+   EXPECT_FALSE( timer.end_timer( "multiple_end_timer" ) );
+   expectStats( "multiple_end_timer", 1 );
+}
+
+TEST_F( US_TimerTest, ReinitClearsPreviousStatistics )
+{
+   timer.init_timer( "reinit_timer" );
+   ASSERT_TRUE( timer.start_timer( "reinit_timer" ) );
+   QElapsedTimer spin;
+   spin.start();
+   while ( spin.elapsed() < 3 )
+   {
+   }
+   ASSERT_TRUE( timer.end_timer( "reinit_timer" ) );
+
+   timer.init_timer( "reinit_timer" );
+   EXPECT_EQ( unusedMessage( "reinit_timer" ), timer.list_time( "reinit_timer" ) );
+   ASSERT_NO_FATAL_FAILURE( cycle( "reinit_timer" ) );
+   // One recorded call has no spread; a sum of squares kept from before the re-init would.
+   TimerLine line;
+   ASSERT_TRUE( parseLine( timer.list_time( "reinit_timer" ), line ) );
+   EXPECT_EQ( 1u, line.count );
+   EXPECT_EQ( QString( "0" ), line.sd );
 }
 
 TEST_F( US_TimerTest, EndTimerAccumulatesTime )
@@ -420,20 +443,20 @@ TEST_F( US_TimerErrorTest, ListNonExistentTimer )
 TEST_F( US_TimerErrorTest, MultipleEndWithoutStart )
 {
    timer.init_timer( "end_without_start" );
-   EXPECT_TRUE( timer.end_timer( "end_without_start" ) );
-   EXPECT_TRUE( timer.end_timer( "end_without_start" ) );
-   EXPECT_TRUE( timer.end_timer( "end_without_start" ) );
-   expectCalls( "end_without_start", 3 );
+   EXPECT_FALSE( timer.end_timer( "end_without_start" ) );
+   EXPECT_FALSE( timer.end_timer( "end_without_start" ) );
+   EXPECT_FALSE( timer.end_timer( "end_without_start" ) );
+   EXPECT_EQ( unusedMessage( "end_without_start" ), timer.list_time( "end_without_start" ) );
 }
 
 TEST_F( US_TimerErrorTest, StartAfterMultipleEnds )
 {
    timer.init_timer( "start_after_ends" );
-   timer.end_timer( "start_after_ends" );
-   timer.end_timer( "start_after_ends" );
+   EXPECT_FALSE( timer.end_timer( "start_after_ends" ) );
+   EXPECT_FALSE( timer.end_timer( "start_after_ends" ) );
    EXPECT_TRUE( timer.start_timer( "start_after_ends" ) );
    EXPECT_TRUE( timer.end_timer( "start_after_ends" ) );
-   expectCalls( "start_after_ends", 3 );
+   expectStats( "start_after_ends", 1 );
 }
 
 // Method Sequence Tests
@@ -460,10 +483,10 @@ TEST_F( US_TimerSequenceTest, OverlappingTimers )
    ASSERT_TRUE( timer.start_timer( "timer1" ) );
    ASSERT_TRUE( timer.start_timer( "timer2" ) );
    ASSERT_TRUE( timer.end_timer( "timer1" ) );
-   ASSERT_TRUE( timer.end_timer( "timer1" ) );
+   EXPECT_FALSE( timer.end_timer( "timer1" ) );
    ASSERT_TRUE( timer.end_timer( "timer2" ) );
 
-   expectStats( "timer1", 2 );
+   expectStats( "timer1", 1 );
    expectStats( "timer2", 1 );
 }
 

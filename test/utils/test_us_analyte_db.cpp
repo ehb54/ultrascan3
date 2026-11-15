@@ -19,11 +19,6 @@ using ::testing::StrictMock;
 
 // Load lookups and their failures are covered in test_us_experiment_db_failures.cpp; this suite
 // covers the loaded column mapping and the write path.
-//
-// Known defects these tests deliberately do not assert:
-// - A load that finds no extinction profile keeps the extinction values already in the object.
-// - write() returns OK when set_nucleotide_info fails or the disk copy cannot be written.
-// - When the GUID lookup succeeds without a row, write() updates analyte "" instead of inserting.
 
 namespace
 {
@@ -208,7 +203,105 @@ TEST_F( AnalyteDb, LoadMapsNucleotideFlagsAndCounterions )
    EXPECT_EQ( QString( "acgt" ), analyte.sequence );
 }
 
+TEST_F( AnalyteDb, LoadWithoutAStoredProfileHasNoExtinction )
+{
+   analyte.extinction = { { 300.0, 9.0 } }; // left over from another analyte
+   {
+      InSequence sequence;
+      expectInfoRow( "Protein", "MKV" );
+      expectNoProfile();
+   }
+   ASSERT_EQ( IUS_DB2::OK, analyte.load( true, kGuid, &db ) );
+   EXPECT_TRUE( analyte.extinction.isEmpty() );
+}
+
 // Write
+
+TEST_F( AnalyteDb, WriteInsertsWhenTheLookupFindsNoRow )
+{
+   prepareProtein();
+   {
+      InSequence sequence;
+      EXPECT_CALL( db, query( args( { "get_analyteID", kGuid } ) ) );
+      // DEBUG_QUERY also reads the status.
+      EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, next() ).WillOnce( Return( false ) );
+      EXPECT_CALL(
+         db,
+         statusQuery( args( { "new_analyte", kGuid, "Protein", "MKV", "0.7125", "Salt & <buffer>", "", "45000.5", "0", "23" } ) ) )
+         .WillOnce( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 456 ) );
+   }
+   EXPECT_CALL( db, value( _ ) ).Times( 0 );
+
+   EXPECT_EQ( IUS_DB2::OK, analyte.write( true, QString(), &db ) );
+   EXPECT_EQ( QString( "456" ), analyte.analyteID );
+}
+
+TEST_F( AnalyteDb, FailedLookupWritesNothing )
+{
+   prepareProtein();
+   for ( int status : { IUS_DB2::DBERROR, IUS_DB2::NOT_CONNECTED } )
+   {
+      SCOPED_TRACE( status );
+      {
+         InSequence sequence;
+         EXPECT_CALL( db, query( args( { "get_analyteID", kGuid } ) ) );
+         EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( status ) );
+      }
+      EXPECT_EQ( status, analyte.write( true, QString(), &db ) );
+      EXPECT_EQ( QString( "Could not look up the analyte in the DB" ), analyte.message );
+      EXPECT_TRUE( diskDescription().isEmpty() );
+      ASSERT_TRUE( ::testing::Mock::VerifyAndClearExpectations( &db ) );
+      EXPECT_CALL( db, lastError() ).Times( AnyNumber() ).WillRepeatedly( Return( QString() ) );
+   }
+}
+
+TEST_F( AnalyteDb, FailedNucleotideWriteIsReportedBeforeTheProfileAndDisk )
+{
+   prepareProtein();
+   analyte.type                    = US_Analyte::DNA;
+   analyte.extinction[280.0]       = 43824.0;
+   analyte.new_or_changed_spectrum = true;
+   {
+      InSequence sequence;
+      expectLookup( true );
+      EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::DBERROR ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::DBERROR ) );
+   }
+
+   EXPECT_EQ( IUS_DB2::DBERROR, analyte.write( true, QString(), &db ) );
+   EXPECT_EQ( QString( "Could not update nucleotide info" ), analyte.message );
+   EXPECT_TRUE( analyte.new_or_changed_spectrum );
+   EXPECT_TRUE( diskDescription().isEmpty() );
+}
+
+TEST_F( AnalyteDb, FailedDiskCopyIsReported )
+{
+   prepareProtein();
+   // A file where the analytes directory should be makes the disk copy impossible.
+   QString path;
+   ASSERT_TRUE( US_Analyte::analyte_path( path ) );
+   ASSERT_TRUE( QDir( path ).removeRecursively() );
+   {
+      QFile blocker( path );
+      ASSERT_TRUE( blocker.open( QIODevice::WriteOnly ) );
+   }
+   {
+      InSequence sequence;
+      expectLookup( true );
+      EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::OK ) );
+   }
+
+   EXPECT_NE( IUS_DB2::OK, analyte.write( true, QString(), &db ) );
+   EXPECT_FALSE( analyte.message.isEmpty() );
+   EXPECT_NE( QString( "updated in" ), analyte.message );
+   ASSERT_TRUE( QFile::remove( path ) );
+}
 
 TEST_F( AnalyteDb, WriteInsertsNewAnalyteWithInvestigatorAndSavesToDisk )
 {

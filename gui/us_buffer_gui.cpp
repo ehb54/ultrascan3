@@ -1741,7 +1741,12 @@ DbgLv(1) << "BufN:SL: write_db()  bufID" << buffer->bufferID;
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
    int idBuf    = buffer->saveToDB( &db, "1" );
-   buffer->bufferID = QString::number( idBuf );
+   // -5 (profile) and -6 (disk copy) fail after the buffer row is saved; saveToDB
+   // has already set the buffer's real ID, so keep it.
+   if ( idBuf != -5 && idBuf != -6 )
+   {
+      buffer->bufferID = QString::number( idBuf );
+   }
 
    if ( idBuf < 0 )
    {
