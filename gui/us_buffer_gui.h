@@ -274,7 +274,7 @@ class US_GUI_EXTERN US_BufferGuiEdit : public US_Widgets
       void spectrum_class    ( void );
       void editAccepted( void );
       void editCanceled( void );
-      void write_db    ( void );
+      bool write_db( void );
       void write_disk  ( void );
       void help( void ) { showHelp.show_help( "buffer/buffer_edit.html" ); };
       

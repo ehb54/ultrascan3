@@ -1949,7 +1949,10 @@ void US_BufferGuiEdit::editAccepted()
 DbgLv(1) << "BufE:SL: editAccepted()  bufGUID" << buffer->GUID;
    if ( from_db )
    { // Update buffer in database
-      write_db  ();
+      if ( !write_db() )
+      { // The error is shown; stay on the edit so it can be retried or cancelled
+         return;
+      }
 DbgLv(1) << "BufE:SL:  edtAcc: DB  id" << buffer->bufferID;
    }
 
@@ -1962,8 +1965,8 @@ DbgLv(1) << "BufE:SL:  edtAcc: Disk";
    emit editBufAccepted();
 }
 
-// Write updated buffer to database
-void US_BufferGuiEdit::write_db()
+// Write updated buffer to database; true when the database holds the edit
+bool US_BufferGuiEdit::write_db()
 {
 DbgLv(1) << "BufE:SL: write_db()  bufID" << buffer->bufferID;
    US_Passwd pw;
@@ -1972,6 +1975,8 @@ DbgLv(1) << "BufE:SL: write_db()  bufID" << buffer->bufferID;
    int       idBuf = buffer->saveToDB( &db, "1", &error );
 
    showBufferSaveError( this, idBuf, error );
+   // -6: the database save committed and only the local copy failed
+   return idBuf >= 0 || idBuf == -6;
 }
 
 // Write updated buffer to local disk file
