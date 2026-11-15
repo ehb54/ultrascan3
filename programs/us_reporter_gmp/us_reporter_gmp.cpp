@@ -8,6 +8,7 @@
 #include <QPainter>
 #include <QPdfWriter>
 #include <QPrinter>
+#include <QTimer>
 
 #include "../us/us_revision.h"
 #include "us_calc_matching.h"
@@ -4032,6 +4033,7 @@ void US_ReporterGMP::generate_report( void )
                 {
                    if ( report_aborted )
                    {
+                      report_generation_aborted();
                       return;
                    }
                    continue;
@@ -4148,6 +4150,7 @@ void US_ReporterGMP::generate_report( void )
                    {
                       if ( report_aborted )
                       {
+                         report_generation_aborted();
                          return;
                       }
                       continue;
@@ -5155,6 +5158,40 @@ DbgLv(1) << "ScMd:scan time(3)" << timer.elapsed();
 }
 
 //simulate triple
+// Tell the user an aborted simulation stopped the report, and let them generate it
+// again. In AUTO mode the Generate Report button is hidden, so the message offers
+// the retry itself.
+void US_ReporterGMP::report_generation_aborted()
+{
+   gmp_progress_hide();
+   QApplication::restoreOverrideCursor();
+   pb_gen_report->setEnabled( true );
+
+   QMessageBox msgBox( this );
+   msgBox.setIcon( QMessageBox::Information );
+   msgBox.setWindowTitle( tr( "Report Generation Aborted" ) );
+   msgBox.setText( tr( "The simulation was aborted, so no report was written." ) );
+   QPushButton* bRetry = nullptr;
+   if ( auto_mode )
+   {
+      msgBox.setInformativeText( tr( "Select Generate Again to start the report over." ) );
+      bRetry = msgBox.addButton( tr( "Generate Again" ), QMessageBox::AcceptRole );
+      msgBox.addButton( tr( "Close" ), QMessageBox::RejectRole );
+   }
+   else
+   {
+      msgBox.setInformativeText( tr( "Select Generate Report to start the report over." ) );
+      msgBox.addButton( QMessageBox::Ok );
+   }
+   msgBox.exec();
+
+   if ( bRetry != nullptr && msgBox.clickedButton() == bRetry )
+   {
+      // After generate_report has returned, so the retry does not run inside it.
+      QTimer::singleShot( 0, this, &US_ReporterGMP::generate_report );
+   }
+}
+
 bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_model )
 {
    // Show msg while data downloaded and simulated

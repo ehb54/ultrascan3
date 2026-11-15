@@ -586,6 +586,7 @@ class US_ReporterGMP : public US_Widgets
         QString rmsd_global; //!< Global RMSD
 
         bool                      simulate_triple( const QString, QString ); //!< Simulate triple; false on load failure or abort
+        void        report_generation_aborted();       //!< Tell the user the report was aborted and offer to generate it again
         bool loadData(QMap<QString, QString>&); //!< Load data
         bool loadModel(QMap<QString, QString>&); //!< Load model
         bool loadNoises(QMap<QString, QString>&); //!< Load noises
