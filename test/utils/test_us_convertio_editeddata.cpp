@@ -44,12 +44,7 @@ class EditedDataOpsTest : public ::testing::Test
    protected:
       void SetUp() override
       {
-         db = std::make_unique<NiceMock<US_DB2_Mock>>();
-
-         // Nothing failed unless a test says so.
-         ON_CALL( *db, lastErrno() ).WillByDefault( Return( IUS_DB2::OK ) );
-         ON_CALL( *db, lastError() ).WillByDefault( Return( QString() ) );
-         ON_CALL( *db, isConnected() ).WillByDefault( Return( true ) );
+         db = MockBuilder::createConnectedMock<NiceMock<US_DB2_Mock>>();
       }
 
       std::unique_ptr<NiceMock<US_DB2_Mock>> db;
@@ -78,8 +73,12 @@ TEST_F( EditedDataOpsTest, DistinguishesAMissingRawRecordFromAFailedQuery )
 {
    // The query worked and named no row.  That is data that was never
    // uploaded, not a broken connection, and callers treat the two differently.
-   EXPECT_CALL( *db, query( An<const QStringList&>() ) );
+   EXPECT_CALL(
+      *db, query( ::testing::Matcher<const QStringList&>( ::testing::Eq( QStringList{ "get_rawDataID_from_GUID", kRawGUID } ) ) ) );
    EXPECT_CALL( *db, next() ).WillOnce( Return( false ) );
+
+   EXPECT_CALL( *db, value( _ ) ).Times( 0 );
+   EXPECT_CALL( *db, lastError() ).Times( 0 );
 
    int rawDataID = -1;
    EXPECT_EQ( US_ConvertIO::findRawDataId( db.get(), kRawGUID, rawDataID, error ), (int) IUS_DB2::NO_RAWDATA );
@@ -90,9 +89,13 @@ TEST_F( EditedDataOpsTest, DistinguishesAMissingRawRecordFromAFailedQuery )
 
 TEST_F( EditedDataOpsTest, ReportsNoRowsAsAMissingRawRecord )
 {
-   EXPECT_CALL( *db, query( An<const QStringList&>() ) );
+   EXPECT_CALL(
+      *db, query( ::testing::Matcher<const QStringList&>( ::testing::Eq( QStringList{ "get_rawDataID_from_GUID", kRawGUID } ) ) ) );
    EXPECT_CALL( *db, lastErrno() ).WillRepeatedly( Return( IUS_DB2::NOROWS ) );
    EXPECT_CALL( *db, next() ).Times( 0 );
+
+   EXPECT_CALL( *db, value( _ ) ).Times( 0 );
+   EXPECT_CALL( *db, lastError() ).Times( 0 );
 
    int rawDataID = -1;
    EXPECT_EQ( US_ConvertIO::findRawDataId( db.get(), kRawGUID, rawDataID, error ), (int) IUS_DB2::NO_RAWDATA );
@@ -103,12 +106,15 @@ TEST_F( EditedDataOpsTest, ReportsNoRowsAsAMissingRawRecord )
 
 TEST_F( EditedDataOpsTest, ReturnsTheUnderlyingStatusWhenTheLookupQueryFails )
 {
-   EXPECT_CALL( *db, query( An<const QStringList&>() ) );
+   EXPECT_CALL(
+      *db, query( ::testing::Matcher<const QStringList&>( ::testing::Eq( QStringList{ "get_rawDataID_from_GUID", kRawGUID } ) ) ) );
    EXPECT_CALL( *db, lastErrno() ).WillRepeatedly( Return( IUS_DB2::NOT_CONNECTED ) );
    EXPECT_CALL( *db, lastError() ).WillRepeatedly( Return( QString( "server has gone away" ) ) );
 
    // The row is never fetched once the query itself failed.
    EXPECT_CALL( *db, next() ).Times( 0 );
+
+   EXPECT_CALL( *db, value( _ ) ).Times( 0 );
 
    int rawDataID = -1;
    EXPECT_EQ( US_ConvertIO::findRawDataId( db.get(), kRawGUID, rawDataID, error ), (int) IUS_DB2::NOT_CONNECTED );
@@ -121,7 +127,8 @@ TEST_F( EditedDataOpsTest, ReturnsTheUnderlyingStatusWhenTheLookupQueryFails )
 TEST_F( EditedDataOpsTest, RejectsANonNumericRawDataId )
 {
    // toInt() would otherwise turn it into row 0 without a word.
-   EXPECT_CALL( *db, query( An<const QStringList&>() ) );
+   EXPECT_CALL(
+      *db, query( ::testing::Matcher<const QStringList&>( ::testing::Eq( QStringList{ "get_rawDataID_from_GUID", kRawGUID } ) ) ) );
    EXPECT_CALL( *db, next() ).WillOnce( Return( true ) );
    EXPECT_CALL( *db, value( 0 ) ).WillOnce( Return( QVariant( "abc" ) ) );
 

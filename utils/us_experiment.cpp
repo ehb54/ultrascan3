@@ -311,7 +311,12 @@ int US_Experiment::readFromDB( QString runID, IUS_DB2* db, QVector<SP_SPEEDPROFI
    db->query( q );
 
    qDebug() << "US_Experiment::readFromDB: q -- " << q;
-   
+   const int queryStatus = db->lastErrno();
+   if ( queryStatus != IUS_DB2::OK )
+   {
+      return queryStatus == IUS_DB2::NOROWS ? IUS_DB2::NO_EXPERIMENT : queryStatus;
+   }
+
    QByteArray xmlFile;
 
    if ( db->next() )
@@ -337,13 +342,11 @@ int US_Experiment::readFromDB( QString runID, IUS_DB2* db, QVector<SP_SPEEDPROFI
 qDebug() << "Exp:rdDB: ExpInfRun: xmlFile size" << xmlFile.size();
    }
 
-   else if ( db->lastErrno() == IUS_DB2::NOROWS )
-   {
-      return IUS_DB2::NO_EXPERIMENT;
-   }
-
    else
-      return( db->lastErrno() );
+   {
+      const int rowStatus = db->lastErrno();
+      return rowStatus == IUS_DB2::OK || rowStatus == IUS_DB2::NOROWS ? IUS_DB2::NO_EXPERIMENT : rowStatus;
+   }
 
    // Get the rest of the info we need
    q.clear();

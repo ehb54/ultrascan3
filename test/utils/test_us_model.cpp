@@ -19,9 +19,9 @@ using ::qt_matchers::QStringEq;
 class US_ModelTest : public QtTestBase {
 protected:
     void SetUp() override {
-        QtTestBase::SetUp();
-        model = std::make_unique<US_Model>();
-        mockDb = std::make_unique<NiceMock<US_DB2_Mock>>();
+       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+       model  = std::make_unique<US_Model>();
+       mockDb = std::make_unique<NiceMock<US_DB2_Mock>>();
     }
 
     void TearDown() override {

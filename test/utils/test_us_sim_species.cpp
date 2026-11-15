@@ -9,7 +9,7 @@ class US_SimSpeciesTest : public QtTestBase
    protected:
       void SetUp() override
       {
-         QtTestBase::SetUp();
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
       }
 
       US_Model build( const US_SimSpecies::Component& component )

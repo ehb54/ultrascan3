@@ -47,7 +47,8 @@ class ScriptedDb : public NiceMock<US_DB2_Mock>
          ON_CALL( *this, next() ).WillByDefault( Invoke( this, &ScriptedDb::onNext ) );
          ON_CALL( *this, value( _ ) ).WillByDefault( Invoke( this, &ScriptedDb::onValue ) );
          ON_CALL( *this, lastErrno() ).WillByDefault( Invoke( [this] { return errno_; } ) );
-         ON_CALL( *this, lastError() ).WillByDefault( Return( QString( "scripted failure" ) ) );
+         ON_CALL( *this, lastError() )
+            .WillByDefault( Invoke( [this] { return errno_ == IUS_DB2::OK ? QString() : QString( "scripted failure" ); } ) );
          ON_CALL( *this, lastInsertID() ).WillByDefault( Invoke( [this] { return insertID; } ) );
          ON_CALL( *this, writeBlobToDB( _, _, _ ) ).WillByDefault( Invoke( this, &ScriptedDb::onBlob ) );
       }
@@ -77,6 +78,7 @@ class ScriptedDb : public NiceMock<US_DB2_Mock>
          called << procedure;
          errno_ = scripted( procedure );
          pending.clear();
+         current.clear();
 
          if ( errno_ == IUS_DB2::OK )
          {
@@ -100,6 +102,7 @@ class ScriptedDb : public NiceMock<US_DB2_Mock>
       {
          if ( pending.isEmpty() )
          {
+            current.clear();
             return false;
          }
 
@@ -115,6 +118,7 @@ class ScriptedDb : public NiceMock<US_DB2_Mock>
       int onBlob( const QString&, const QString& procedure, const int )
       {
          blobs << procedure;
+         errno_ = blobStatus;
          return blobStatus;
       }
 

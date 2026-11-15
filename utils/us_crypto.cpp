@@ -159,13 +159,19 @@ QString US_Crypto::decryptLegacy( const QString& ciphertext, const QString& pw,
       return QString();
    }
 
+   const QByteArray iv_ba     = QByteArray::fromHex( initVector.toLatin1() );
+   const QByteArray cipher_ba = QByteArray::fromHex( ciphertext.toLatin1() );
+   // Validate before passing storage to OpenSSL, which requires a full IV.
+   if ( iv_ba.size() != 16 || cipher_ba.isEmpty() || cipher_ba.size() % 16 != 0 )
+   {
+      return QString();
+   }
+
    unsigned char key[16];
    if ( !deriveLegacyKey_16( pw, key ) ) {
       return QString();
    }
 
-   QByteArray           iv_ba      = QByteArray::fromHex( initVector.toLatin1() );
-   QByteArray           cipher_ba  = QByteArray::fromHex( ciphertext.toLatin1() );
    const unsigned char* iv_ptr     = reinterpret_cast<const unsigned char*>(iv_ba.constData());
    const unsigned char* cipher_ptr = reinterpret_cast<const unsigned char*>(cipher_ba.constData());
 
@@ -214,7 +220,7 @@ QString US_Crypto::decryptLegacy( const QString& ciphertext, const QString& pw,
    out.resize( ol + ol_final );
 
    // Legacy encrypt used toLatin1(); keep legacy behavior on decode.
-   return QString::fromLatin1( out );
+   return QString::fromLatin1( out.constData(), out.size() );
 }
 
 QString US_Crypto::decrypt( const QString& ciphertext, const QString& pw,
@@ -314,5 +320,5 @@ QString US_Crypto::decrypt( const QString& ciphertext, const QString& pw,
    }
 
    plain.resize( outLen );
-   return QString::fromUtf8( plain );
+   return QString::fromUtf8( plain.constData(), plain.size() );
 }
