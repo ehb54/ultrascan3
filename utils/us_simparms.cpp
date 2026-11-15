@@ -641,7 +641,7 @@ DbgLv(1) << "SP:rSS:   step" << nsteps << "rotorspeed" << sp.rotorspeed
    return nsteps;
 }
 
-// Compute the speed steps vector from data scans
+// Whether experiment speed steps cover the first and last scan times of a data set
 bool US_SimulationParameters::speedStepsCoverData( const QVector<SpeedProfile>& speedsteps, const US_DataIO::EditedData& editdata )
 {
    if ( speedsteps.isEmpty() || editdata.scanData.isEmpty() )
@@ -663,6 +663,7 @@ bool US_SimulationParameters::speedStepsCoverData( const QVector<SpeedProfile>& 
    return true;
 }
 
+// Compute the speed steps vector from data scans
 void US_SimulationParameters::computeSpeedSteps(
       QVector< US_DataIO::Scan >* scans,
       QVector< SpeedProfile >& speedsteps )
