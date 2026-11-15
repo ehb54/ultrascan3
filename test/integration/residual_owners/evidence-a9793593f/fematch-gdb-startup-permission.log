@@ -1,0 +1,3 @@
+/tmp/us3-residual-2ddf75d6e/build/bin/us_fematch: error while loading shared libraries: libus_gui4.so.4: cannot open shared object file: No such file or directory
+[Inferior 1 (process 122062) exited with code 0177]
+You can't do that without a process to debug.
