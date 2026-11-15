@@ -644,8 +644,10 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
    //putSpectrum( db, "Fluorescence" );
 
    // Also write to to disk
+   // A missing buffers directory is created; only a real write failure is reported.
    bool    newFile;
    QString path     = US_Settings::dataDir() + "/buffers";
+   QDir().mkpath( path );
    QString filename = get_filename( path, GUID, newFile );
    if ( !writeToDisk( filename ) )
    {

@@ -439,6 +439,53 @@ TEST_F( ReportDb, SaveCreatesOrUpdatesTheReportAndReadsItsExperiment )
    EXPECT_EQ( ( QStringList{ "update_report", "10", "run-1 Report" } ), written.mid( 0, 3 ) );
 }
 
+TEST_F( ReportDb, SavingADocumentStopsWhenTheReportCannotBeReadOrCreated )
+{
+   for ( const bool readFails : { true, false } )
+   {
+      SCOPED_TRACE( readFails );
+      US_Report report;
+      report.runID = "run-1"; // callers set the run before saving its documents
+      {
+         InSequence sequence;
+         if ( readFails )
+         {
+            expectQuery( { "get_report_info_by_runID", "23", "run-1" }, IUS_DB2::DBERROR, false );
+         }
+         else
+         {
+            expectQuery( { "get_report_info_by_runID", "23", "run-1" }, IUS_DB2::NOROWS, false );
+            expectQuery( { "get_reportID_by_runID", "23", "run-1" }, IUS_DB2::NOROWS, false );
+            EXPECT_CALL( db, query( Matcher<const QStringList&>( _ ) ) );
+            EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::DBERROR ) );
+            // The failure's debug line reads the status once more.
+            EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::DBERROR ) );
+         }
+      }
+      EXPECT_CALL( db, lastError() ).WillRepeatedly( Return( QString() ) );
+      // Without a report ID no triple or document may be written.
+      EXPECT_EQ( US_Report::DB_ERROR, report.saveDocumentFromFile( "/results/run-1", "2DSA.1A280.residuals.png", &db, 4, "data" ) );
+      EXPECT_TRUE( report.triples.isEmpty() );
+      ASSERT_TRUE( ::testing::Mock::VerifyAndClearExpectations( &db ) );
+   }
+}
+
+TEST_F( ReportDb, SavingFileDocumentsStopsWhenTheReportCannotBeRead )
+{
+   US_Report report;
+   report.runID = "run-1";
+   // An empty file list is rejected before any DB access.
+   EXPECT_EQ( US_Report::MISC_ERROR, report.saveFileDocuments( "/results/run-1", QStringList(), &db, 4, "data" ) );
+
+   {
+      InSequence sequence;
+      expectQuery( { "get_report_info_by_runID", "23", "run-1" }, IUS_DB2::DBERROR, false );
+   }
+   EXPECT_EQ( US_Report::DB_ERROR,
+              report.saveFileDocuments( "/results/run-1", { "/results/run-1/2DSA.1A280.residuals.png" }, &db, 4, "data" ) );
+   EXPECT_TRUE( report.triples.isEmpty() );
+}
+
 TEST_F( ReportDb, SaveAllStopsAtTheFirstFailure )
 {
    US_Report report;

@@ -202,7 +202,7 @@ TEST_F( ExperimentSaveDb, MissingSavedExperimentInfoStopsBeforeSpeedSteps )
       EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );
       EXPECT_CALL( db, next() ).WillOnce( Return( false ) );
    }
-   EXPECT_EQ( IUS_DB2::NOROWS, save( false ) );
+   EXPECT_EQ( IUS_DB2::NO_EXPERIMENT, save( false ) );
 }
 
 TEST_F( ExperimentSaveDb, FailedSpeedStepDeleteOrWriteIsReported )

@@ -162,7 +162,7 @@ int US_Experiment::saveToDB_auto( bool update, IUS_DB2* db, QVector<SP_SPEEDPROF
    status = db->lastErrno();
    if ( status != IUS_DB2::OK || !db->next() )
    {
-      return status != IUS_DB2::OK ? status : IUS_DB2::NOROWS;
+      return status != IUS_DB2::OK ? status : IUS_DB2::NO_EXPERIMENT;
    }
 
    date = db->value( 12 ).toString();

@@ -9036,11 +9036,14 @@ DbgLv(1) << "DBSv:  files count" << files.size();
 
    else if ( status == US_DB2::DBERROR )
    {
-      // This is what happens in the case of RI data, and the xml is bad
+      // The experiment, its details or a speed step could not be written. Do not
+      // write raw data for an experiment that was not saved.
       QMessageBox::warning( this,
-         tr( "Bad RI XML" ),
-         tr( "There was a problem with the xml data"
-             " read from the database.\n" ) );
+                            tr( "Problem saving experiment information" ),
+                            tr( "The experiment could not be saved to the database.\n"
+                                "For RI data, the RI profile XML may be invalid.\n" ) +
+                               db.lastError() );
+      return;
    }
 
    else if ( status != US_DB2::OK )

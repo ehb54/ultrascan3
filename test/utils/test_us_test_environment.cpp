@@ -148,7 +148,8 @@ TEST( TestEnvironmentIsolation, NestedWorkDirectoriesAreUniqueAndRemoved )
       }
       EXPECT_FALSE( QDir( secondPath ).exists() );
       EXPECT_EQ( US_Settings::workBaseDir(), firstPath );
-      EXPECT_EQ( QDir::currentPath(), firstPath );
+      // Compare canonical paths: on macOS the temporary root /var is a symlink to /private/var.
+      EXPECT_EQ( QDir( QDir::currentPath() ).canonicalPath(), QDir( firstPath ).canonicalPath() );
    }
    EXPECT_FALSE( QDir( firstPath ).exists() );
    EXPECT_EQ( US_Settings::workBaseDir(), originalWork );

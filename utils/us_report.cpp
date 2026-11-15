@@ -830,7 +830,12 @@ US_Report::Status US_Report::saveDocumentFromFile_auto( int invID, const QString
                   << saveStatus;
          qDebug() << db->lastError() << db->lastErrno();
          this->show();
+         return saveStatus; // No report ID to attach triples to
       }
+   }
+   else if ( status != US_Report::REPORT_OK )
+   { // A failed read leaves no usable report ID
+      return status;
    }
 
    // Read an existing triple, or create a new one
@@ -947,11 +952,10 @@ qDebug() << "rpt:svFD: dir" << dir << "idEdit" << idEdit << "datDsc" << dataDesc
       return US_Report::MISC_ERROR;
 
    // Parse the triple string from the first filename
-   int     nfiles     = filepaths.count();
-qDebug() << "rpt:svFD:  nfiles" << nfiles << "fpath0" << filepaths[0];
-
+   int nfiles = filepaths.count();
    if ( nfiles < 1 )
       return US_Report::MISC_ERROR;
+   qDebug() << "rpt:svFD:  nfiles" << nfiles << "fpath0" << filepaths[0];
 
    QStringList filenames;
    for ( int jj = 0; jj < nfiles; jj++ )
@@ -977,7 +981,12 @@ qDebug() << "rpt:svFD:  rdDB stat" << status;
                   << saveStatus;
          qDebug() << db->lastError() << db->lastErrno();
          this->show();
+         return saveStatus; // No report ID to attach triples to
       }
+   }
+   else if ( status != US_Report::REPORT_OK )
+   { // A failed read leaves no usable report ID
+      return status;
    }
 
    // Read an existing triple, or create a new one

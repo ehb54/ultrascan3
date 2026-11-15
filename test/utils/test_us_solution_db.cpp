@@ -52,7 +52,7 @@ class SolutionDb : public QtTestBase
          EXPECT_CALL( db, lastError() ).Times( AnyNumber() ).WillRepeatedly( Return( QString() ) );
       }
 
-      // A loaded solution that a failed read must leave as it was.
+      // A loaded solution that a failed read must not leave in place.
       void prepareLoaded()
       {
          solution.solutionID   = 3;
@@ -67,16 +67,18 @@ class SolutionDb : public QtTestBase
          solution.analyteInfo << info;
       }
 
-      void expectLoadedUnchanged()
+      // A failed read clears the solution: callers that ignore the status must not keep
+      // the previously loaded solution, and nothing from the failed read is published.
+      void expectCleared()
       {
-         EXPECT_EQ( 3, solution.solutionID );
-         EXPECT_EQ( QString( "previous-guid" ), solution.solutionGUID );
-         EXPECT_EQ( QString( "Previous solution" ), solution.solutionDesc );
-         EXPECT_EQ( QString( "previous notes" ), solution.notes );
-         EXPECT_EQ( QString( "previous-buffer" ), solution.buffer.GUID );
-         ASSERT_EQ( 1, solution.analyteInfo.size() );
-         EXPECT_EQ( QString( "previous-analyte" ), solution.analyteInfo[0].analyte.analyteGUID );
-         EXPECT_EQ( ( QMap<double, double>{ { 300.0, 9.0 } } ), solution.extinction );
+         EXPECT_EQ( 0, solution.solutionID );
+         EXPECT_TRUE( solution.solutionGUID.isEmpty() );
+         EXPECT_TRUE( solution.solutionDesc.isEmpty() );
+         EXPECT_TRUE( solution.notes.isEmpty() );
+         EXPECT_TRUE( solution.buffer.GUID.isEmpty() );
+         EXPECT_TRUE( solution.analyteInfo.isEmpty() );
+         EXPECT_TRUE( solution.extinction.isEmpty() );
+         EXPECT_EQ( US_Solution::NOT_SAVED, solution.saveStatus );
       }
 
       void expectSolutionRow()
@@ -202,12 +204,12 @@ TEST_F( SolutionDb, ReadMapsSolutionBufferAndProfile )
    EXPECT_EQ( US_Solution::DB_ONLY, solution.saveStatus );
 }
 
-TEST_F( SolutionDb, FailedOrMissingSolutionRowKeepsTheSolution )
+TEST_F( SolutionDb, FailedOrMissingSolutionRowClearsTheSolution )
 {
-   prepareLoaded();
    for ( int status : { IUS_DB2::DBERROR, IUS_DB2::NOT_CONNECTED, IUS_DB2::NOROWS, IUS_DB2::OK } )
    {
       SCOPED_TRACE( status );
+      prepareLoaded();
       {
          InSequence sequence;
          EXPECT_CALL( db, query( args( { "get_solution", "7" } ) ) );
@@ -219,18 +221,18 @@ TEST_F( SolutionDb, FailedOrMissingSolutionRowKeepsTheSolution )
       }
       const int expected = ( status == IUS_DB2::OK || status == IUS_DB2::NOROWS ) ? IUS_DB2::NO_SOLUTION : status;
       EXPECT_EQ( expected, solution.readFromDB( 7, &db ) );
-      expectLoadedUnchanged();
+      expectCleared();
       ASSERT_TRUE( ::testing::Mock::VerifyAndClearExpectations( &db ) );
       EXPECT_CALL( db, lastError() ).Times( AnyNumber() ).WillRepeatedly( Return( QString() ) );
    }
 }
 
-TEST_F( SolutionDb, FailedOrMissingSolutionBufferKeepsTheSolution )
+TEST_F( SolutionDb, FailedOrMissingSolutionBufferClearsTheSolution )
 {
-   prepareLoaded();
    for ( const bool missingRow : { false, true } )
    {
       SCOPED_TRACE( missingRow );
+      prepareLoaded();
       {
          InSequence sequence;
          expectSolutionRow();
@@ -242,13 +244,13 @@ TEST_F( SolutionDb, FailedOrMissingSolutionBufferKeepsTheSolution )
          }
       }
       EXPECT_EQ( missingRow ? IUS_DB2::NO_BUFFER : IUS_DB2::DBERROR, solution.readFromDB( 7, &db ) );
-      expectLoadedUnchanged();
+      expectCleared();
       ASSERT_TRUE( ::testing::Mock::VerifyAndClearExpectations( &db ) );
       EXPECT_CALL( db, lastError() ).Times( AnyNumber() ).WillRepeatedly( Return( QString() ) );
    }
 }
 
-TEST_F( SolutionDb, UnreadableBufferKeepsTheSolution )
+TEST_F( SolutionDb, UnreadableBufferClearsTheSolution )
 {
    prepareLoaded();
    {
@@ -259,10 +261,10 @@ TEST_F( SolutionDb, UnreadableBufferKeepsTheSolution )
       EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::DBERROR ) );
    }
    EXPECT_EQ( IUS_DB2::NO_BUFFER, solution.readFromDB( 7, &db ) );
-   expectLoadedUnchanged();
+   expectCleared();
 }
 
-TEST_F( SolutionDb, FailedAnalyteQueryOrUnreadableAnalyteKeepsTheSolution )
+TEST_F( SolutionDb, FailedAnalyteQueryOrUnreadableAnalyteClearsTheSolution )
 {
    prepareLoaded();
    {
@@ -274,9 +276,10 @@ TEST_F( SolutionDb, FailedAnalyteQueryOrUnreadableAnalyteKeepsTheSolution )
       EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::DBERROR ) );
    }
    EXPECT_EQ( IUS_DB2::DBERROR, solution.readFromDB( 7, &db ) );
-   expectLoadedUnchanged();
+   expectCleared();
    ASSERT_TRUE( ::testing::Mock::VerifyAndClearExpectations( &db ) );
    EXPECT_CALL( db, lastError() ).Times( AnyNumber() ).WillRepeatedly( Return( QString() ) );
+   prepareLoaded();
 
    {
       InSequence sequence;
@@ -288,7 +291,7 @@ TEST_F( SolutionDb, FailedAnalyteQueryOrUnreadableAnalyteKeepsTheSolution )
       EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::NOROWS ) );
    }
    EXPECT_EQ( IUS_DB2::NO_ANALYTE, solution.readFromDB( 7, &db ) );
-   expectLoadedUnchanged();
+   expectCleared();
 }
 
 TEST_F( SolutionDb, ReadWithoutAStoredProfileHasNoExtinction )
