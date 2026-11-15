@@ -510,3 +510,13 @@ TEST_F( US_SettingsTest, AssistantQtDirectoriesComeFromLinkedQt )
       EXPECT_TRUE( dir.startsWith( QDir::cleanPath( qtPrefix ) ) ) << dir.toStdString();
    }
 }
+
+// Qt paths that do not exist, such as bin/bin under a deployed tree's
+// qt.conf, are neither searched nor reported.
+TEST_F( US_SettingsTest, AssistantQtDirectoriesExist )
+{
+   for ( const QString& dir : US_Settings::assistantQtDirs() )
+   {
+      EXPECT_TRUE( QFileInfo( dir ).isDir() ) << dir.toStdString();
+   }
+}

@@ -180,13 +180,15 @@ QStringList US_Settings::assistantQtDirs( void )
                         QLibraryInfo::location( QLibraryInfo::LibraryExecutablesPath ) };
 #endif
 
+   // A deployed tree's qt.conf gives paths such as bin/bin that do not
+   // exist; only directories that exist are searched or reported.
    QStringList unique;
 
    for ( const QString& dir : dirs )
    {
       const QString clean = QDir::cleanPath( dir );
 
-      if ( !dir.isEmpty() && !unique.contains( clean ) )
+      if ( !dir.isEmpty() && QFileInfo( clean ).isDir() && !unique.contains( clean ) )
       {
          unique << clean;
       }

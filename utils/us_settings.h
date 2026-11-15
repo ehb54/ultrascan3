@@ -92,7 +92,8 @@ class US_UTIL_EXTERN US_Settings
     //! preference order, for this platform.
     static QStringList        assistantNames();
 
-    //! \brief Directories of the linked Qt installation searched for Assistant.
+    //! \brief Existing directories of the linked Qt installation searched
+    //! for Assistant.
     static QStringList        assistantQtDirs();
 
     //! \brief Get work base directory for archive,results,reports.etc
