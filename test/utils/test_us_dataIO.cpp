@@ -44,7 +44,7 @@ protected:
            {
               scan.rvalues << 0.1 + i * 0.05 + j * 0.01;
               scan.stddevs << 0.001 + j * 0.0001;
-            }
+           }
 
             // Initialize interpolated array
             scan.interpolated = QByteArray(1, 0); // 8 bits for 8 readings

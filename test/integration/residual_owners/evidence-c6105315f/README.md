@@ -1,6 +1,7 @@
 # Linux real-owner verification after c6105315f
 
-Verification found and repaired five additional defects, D07–D11, in #628.
+Verification found and repaired five additional production defects, D07–D11,
+and the D12 test-fixture initialization defects in #628.
 Final Linux production revision: `043d83ea962c64b780b55cb8c9925a5dca3ad878`.
 The initial frozen archive was `2ddf75d6e` (production-identical to c6105315f),
 then the committed delta was applied. `verified-source-manifest.json` records
@@ -38,20 +39,26 @@ Leak detection is disabled; no leak-detector pass is claimed.
 | Actual autoflow overlay | PASS under sanitizers; same variance/RMSD, no Zero Target Speed warning; `autoflow-sanitized-overlay.png` and owner log. See entry-point limitation below. |
 | Reporter normal run | PASS under sanitizers; normal warning threshold, no Zero Target Speed warning, two saved plots and a four-page PDF. `reporter-complete.png`, `reporter-normal.pdf`, `reporter-normal.log`. All four rendered PDF pages were visually inspected. |
 | Reporter Abort/retry/Continue | PASS in the same process; see D05 procedure and screenshots below. Retry PNGs exactly match the normal-run PNGs (`d05-retry-image-comparison.json`). |
-| Windows recheck after C12/new fixes | Pending; prior T10 Windows evidence remains at its recorded revision and is not claimed as a pass at this tip. |
+| Windows recheck after C12/new fixes | PASS; all seven consumers build/link at production revision 043d83ea9, Qt 6.10.1/MSVC x64. The new speedStepsCoverData DLL export is present. See windows-build-record.json, build/configure logs and windows-helper-export.txt. Build/link only, not Windows UI. |
+| Full utility suite, fatal ASan/UBSan | 888 passed, 0 failed, 10 opt-in live-DB tests skipped (898 total); utils-final-strict.log.gz. Run as us3 with hardware-definition resources installed for the external wrapper. |
 
 ## Actual-owner entry points and comparisons
 
 FEMatch used its real DB loader, selected edit 1015/model 1037, simulated,
-opened Plot Residuals and used Save Data (Skip 3D). This capture precedes D07–D11;
-those fixes address unrelated initialization and counter-width paths, not the
-residual calculations. A later full characterization run uses the final libraries.
+opened Plot Residuals and used Save Data (Skip 3D). The final rerun after D07–D11
+again produced variance 7.81078e-05 and RMSD 0.00883786. All 27 files match the
+earlier captured candidate, which already matched the pre-T04 baseline; SVGZ
+comparison decompresses only the gzip container. See fematch-final-dialog.png,
+fematch-final.log and fematch-final-comparison.json. Save Data also stores these
+artifacts in the isolated test database, as the UI completion notice states.
 
 Autoflow's standalone window has no fixture-load UI. `autoflow-owner-driver.cpp`
 uses the actual application's public `initPanel` and `show_overlay` slot with
 workflow 1240001 and `2DSA-IT (1 / A / 123)`. It links the actual owner objects
 and libraries, replacing only main; no owner/plot/model/simulation stand-ins are
-used. It does not test traversal of the entire project workflow. Closing its
+used. The final rerun is recorded in autoflow-final-overlay.png and
+autoflow-final.log: the same statistics and no sanitizer/zero-speed diagnostic.
+It does not test traversal of the entire project workflow. Closing its
 residual window also closed its newly opened bitmap while an independent
 FEMatch bitmap remained open. The source and link-reuse script are retained.
 
@@ -104,16 +111,36 @@ that setup error was corrected before the recorded warning/Abort/retry sequence.
 
 ## Limits and remaining sign-off work
 
-The exploratory full utility suite is **not a pass** (`utils-run.log.gz`): root
-invalidates a permissions test, and an unrelated existing EditedDataReadTest
-fixture constructs a Scan with an unset bool, stopping UBSan. Focused required
-regressions were run separately and passed. This is not evidence that the entire
-library is free from uninitialized fields. C13's edited plateau test passes;
-the separate raw-plateau follow-up remains #1245 and is not a #628 fix.
+The original exploratory utility run (`utils-run.log.gz`) failed: running as root
+invalidated the permissions check, and uninitialized test fixtures stopped UBSan.
+D12 repairs only test fixtures in commits 9f15a19c7 and 7a8471d7b. The later
+strict run as us3 passes 888 tests, with 10 opt-in live-DB tests skipped. The
+cache diagnostic run used recovering UBSan to inventory fixture defects and is
+**not** a pass. Its eight assertions caused by missing hardware XML resources
+were resolved by providing the source etc directory in the external wrapper.
+The final strict run uses fatal ASan/UBSan, with leak detection disabled.
+D12 evidence: d12-before/after logs, d12-temperature-before.log.gz,
+d12-cache-before.log.gz, d12-simparms-before.log.gz, utils-final-strict.log.gz.
+Formatting after that run changes whitespace only; production remains 043d83ea9.
+C13's edited plateau test passes; raw plateau remains separate issue #1245.
 
-The new exported helper and subsequent fixes still need the current Windows
-build result. Historical reporter/autoflow comparisons remain limited as above.
-Do not check all overall completion boxes solely because this fixture succeeds.
+### D13 candidate: resumed FEMatch process aborted
+
+During the final verification, the already-open FEMatch process (PID 116063)
+aborted while resuming fixture loading. coredumpctl records SIGABRT, but no core
+was retained and stderr contains no sanitizer stack or cause. Preserve
+fematch-resumed-abort.log and fematch-resumed-abort-info.txt. A fresh process
+loaded the same edit/model, simulated and saved all 27 matching artifacts
+successfully. This is an unresolved observation, not a proven regression or an
+excuse to classify the run as wholly clean. Reproduce under a debugger before
+writing a fix; do not infer a database timeout or source defect from this log.
+
+The current Windows build/export check is complete. Historical report comparison
+and full-workflow limitations remain as above. The plan's M12 automated boundary
+check with a deliberate negative test was not found in scripts/test; source and
+link audits do not substitute for that planned enforcement test. Overall sign-off
+therefore remains open for the D13 investigation and boundary-gate disposition.
+The broad proposed Qt5/Qt6-every-platform matrix is not claimed by these runs.
 
 `utils-tests.cmake` is an external test wrapper around the exact verified shared
 libraries and repository tests, needed because the APP profile disables tests.
