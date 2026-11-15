@@ -2179,10 +2179,17 @@ void US_ConvertGui::process_optics()
 // User pressed the import data button
 void US_ConvertGui::import()
 {
-   impType     = getImports();
-DbgLv(1) << "CGui:IMP: impType" << impType;
+   const int selectedType = getImports();
 
- description_changed.clear();
+   if ( selectedType < 0 )
+   { // The directory picker was cancelled: leave the current state untouched
+      return;
+   }
+
+   impType = selectedType;
+   DbgLv( 1 ) << "CGui:IMP: impType" << impType;
+
+   description_changed.clear();
 
    if ( impType == 1 )
    {
