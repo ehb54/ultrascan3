@@ -6,6 +6,7 @@
 #include "us_settings.h"
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 
 using ::testing::_;
 using ::testing::AtLeast;
@@ -53,14 +54,26 @@ class BufferDb : public QtTestBase
       {
          ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
          US_Settings::set_us_inv_ID( 23 );
+         removeBlocker();
          ASSERT_TRUE( QDir().mkpath( bufferPath() ) );
          removeDiskCopy();
       }
 
       void TearDown() override
       {
+         removeBlocker();
          removeDiskCopy();
          QtTestBase::TearDown();
+      }
+
+      // SaveReportsAFailedDiskCopy puts a file where the buffers directory goes;
+      // remove it even when that test stops early so later tests can set up.
+      static void removeBlocker()
+      {
+         if ( QFileInfo( bufferPath() ).isFile() )
+         {
+            QFile::remove( bufferPath() );
+         }
       }
 
       static QString bufferPath()
@@ -501,7 +514,6 @@ TEST_F( BufferDb, SaveReportsAFailedDiskCopy )
    EXPECT_EQ( -6, buffer.saveToDB( &db, "1", &error ) );
    EXPECT_TRUE( error.contains( bufferPath() ) );
    EXPECT_EQ( QString( "88" ), buffer.bufferID );
-   ASSERT_TRUE( QFile::remove( bufferPath() ) );
 }
 
 TEST_F( BufferDb, DiskCopyKeepsEachSpectrumAtItsOwnWavelengths )

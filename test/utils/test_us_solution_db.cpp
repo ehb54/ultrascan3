@@ -4,6 +4,8 @@
 #include "us_eprofile.h"
 #include "us_settings.h"
 #include "us_solution.h"
+#include <QDir>
+#include <QFile>
 
 using ::testing::_;
 using ::testing::AnyNumber;
@@ -576,6 +578,51 @@ TEST_F( SolutionDb, NewBufferSaveParticipatesInRunImportTransaction )
    ASSERT_EQ( IUS_DB2::OK, solution.saveToDB( 11, 2, &db ) );
    EXPECT_EQ( QString( "41" ), solution.buffer.bufferID );
    ASSERT_TRUE( db.commitTransaction( error ) );
+}
+
+TEST_F( SolutionDb, BufferDiskCopyFailureStillSavesTheSolution )
+{
+   prepareToSave();
+   solution.analyteInfo.clear();
+   solution.buffer.GUID        = kBufferGuid;
+   solution.buffer.description = "Saved buffer";
+   // A file where the buffers directory goes makes only the buffer's disk copy fail.
+   const QString buffers       = US_Settings::dataDir() + "/buffers";
+   ASSERT_TRUE( QDir().mkpath( US_Settings::dataDir() ) );
+   ASSERT_TRUE( QDir( buffers ).removeRecursively() );
+   {
+      QFile blocker( buffers );
+      ASSERT_TRUE( blocker.open( QIODevice::WriteOnly ) );
+   }
+   {
+      InSequence sequence;
+      EXPECT_CALL( db, query( args( { "get_bufferID", kBufferGuid } ) ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOROWS ) );
+      EXPECT_CALL( db, query( args( { "get_bufferID", kBufferGuid } ) ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOROWS ) );
+      EXPECT_CALL( db, transactionActive() ).WillOnce( Return( false ) );
+      EXPECT_CALL( db, beginTransaction( _ ) ).WillOnce( Return( true ) );
+      EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) )
+         .WillOnce( Invoke(
+            []( const QStringList& q )
+            {
+               EXPECT_EQ( ( QStringList{ "new_buffer", kBufferGuid, "Saved buffer" } ), q.mid( 0, 3 ) );
+               return IUS_DB2::OK;
+            } ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 41 ) );
+      EXPECT_CALL( db, commitTransaction( _ ) ).WillOnce( Return( true ) );
+      expectNoSolutionRow();
+      EXPECT_CALL( db, statusQuery( args( newSolutionArgs() ) ) ).WillOnce( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 55 ) );
+      EXPECT_CALL( db, statusQuery( args( { "new_solutionBuffer", "55", "0", kBufferGuid } ) ) ).WillOnce( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, statusQuery( args( { "delete_solutionAnalytes", "55" } ) ) ).WillOnce( Return( IUS_DB2::NOROWS ) );
+   }
+   const int result = solution.saveToDB( 11, 2, &db );
+   QFile::remove( buffers );
+   ASSERT_EQ( IUS_DB2::OK, result );
+   EXPECT_EQ( QString( "41" ), solution.buffer.bufferID );
+   EXPECT_EQ( 55, solution.solutionID );
 }
 
 } // namespace

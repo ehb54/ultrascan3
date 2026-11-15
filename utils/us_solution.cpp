@@ -381,7 +381,10 @@ qDebug() << "SolSvDB: bufID stat" << status;
 
       if ( status == IUS_DB2::NOROWS )
       {
-         if ( buffer.saveToDB( db, QString::number( 1 ) ) < 0 ) // 1 = private
+         // -6: the buffer is committed and only its local disk copy failed,
+         // so the solution can still link to it.
+         const int bufferResult = buffer.saveToDB( db, QString::number( 1 ) ); // 1 = private
+         if ( bufferResult < 0 && bufferResult != -6 )
          {
             return IUS_DB2::NO_BUFFER;
          }

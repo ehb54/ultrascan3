@@ -26,10 +26,14 @@ void showBufferSaveError( QWidget* parent, int result, const QString& error )
    }
    else if ( result < 0 )
    {
+      // -8: the commit failed and the rollback was confirmed, so nothing was kept.
+      // -10: the rollback could not be confirmed; the error text gives what is known.
       const QString message =
-         ( result == -8 || result == -10 )
-            ? QObject::tr( "The database save could not be confirmed. Check the stored buffer before retrying.\n" )
-            : QObject::tr( "Error saving the buffer to the database:\n" );
+         result == -8    ? QObject::tr( "The database commit failed and the save was rolled back, so the buffer was "
+                                        "not stored. You can save it again.\n" )
+         : result == -10 ? QObject::tr( "The buffer save failed and its rollback could not be confirmed, so some of it "
+                                        "may be stored. Check the stored buffer before retrying.\n" )
+                         : QObject::tr( "Error saving the buffer to the database:\n" );
       QMessageBox::critical(
          parent, QObject::tr( "DB Buffer Write Error" ), message + QObject::tr( "(Return Code = %1) " ).arg( result ) + error );
    }

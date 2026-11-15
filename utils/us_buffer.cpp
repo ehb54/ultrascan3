@@ -704,7 +704,7 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer, QString* err
       {
          *error = transactionError;
       }
-      qWarning() << "buffer commit could not be confirmed:" << transactionError;
+      qWarning() << "buffer commit failed:" << transactionError;
       return fail( -8 );
    }
    if ( !extinction.isEmpty() && new_or_changed_spectrum )

@@ -115,7 +115,7 @@ bool US_ExtProfile::parse_eprofile( QString& epxml, int* compID,
    if ( valType != NULL )
       *valType         = xValType;
 
-    return ( ( natag + nptag ) > 0 );
+   return true;
 }
 
 // Create a new extinction profile in the database
