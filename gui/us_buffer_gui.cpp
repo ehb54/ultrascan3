@@ -12,6 +12,30 @@
 #include "us_math2.h"
 #include "us_eprofile.h"
 
+namespace
+{
+void showBufferSaveError( QWidget* parent, int result, const QString& error )
+{
+   if ( result == -6 )
+   {
+      QMessageBox::warning( parent,
+                            QObject::tr( "Local Buffer Copy Error" ),
+                            QObject::tr( "The buffer was saved to the database, but its local disk copy could not be written.\n"
+                                         "You do not need to save it to the database again.\n\n" ) +
+                               error );
+   }
+   else if ( result < 0 )
+   {
+      const QString message =
+         ( result == -8 || result == -10 )
+            ? QObject::tr( "The database save could not be confirmed. Check the stored buffer before retrying.\n" )
+            : QObject::tr( "Error saving the buffer to the database:\n" );
+      QMessageBox::critical(
+         parent, QObject::tr( "DB Buffer Write Error" ), message + QObject::tr( "(Return Code = %1) " ).arg( result ) + error );
+   }
+}
+}
+
 //! Tab for selection of a buffer
 US_BufferGuiSelect::US_BufferGuiSelect( int *invID, int *select_db_disk,
       US_Buffer *tmp_buffer ) : US_Widgets()
@@ -1740,25 +1764,13 @@ void US_BufferGuiNew::write_db()
 DbgLv(1) << "BufN:SL: write_db()  bufID" << buffer->bufferID;
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
-   int idBuf    = buffer->saveToDB( &db, "1" );
-   // -5 (profile) and -6 (disk copy) fail after the buffer row is saved; saveToDB
-   // has already set the buffer's real ID, so keep it.
-   if ( idBuf != -5 && idBuf != -6 )
-   {
-      buffer->bufferID = QString::number( idBuf );
-   }
+   QString   error;
+   int       idBuf = buffer->saveToDB( &db, "1", &error );
+   // saveToDB manages bufferID: rollback restores the old ID, while a disk
+   // copy failure (-6) retains the committed ID. Never store an error as an ID.
 
-   if ( idBuf < 0 )
-   {
+   showBufferSaveError( this, idBuf, error );
 
-      QString msg  = tr( "(Return Code = %1 ) " ).arg( idBuf )
-                     + db.lastError();
-      QMessageBox::critical( this,
-          tr( "DB Buffer Write Error" ),
-          tr( "Error updating buffer in the database:\n" )
-          + msg );
-   }
-   
    qDebug() << "BufferID: " << buffer->bufferID << ", Description: " << buffer->description << ", Extintcion key #: " << buffer->extinction.keys().count();
    
 }
@@ -1945,18 +1957,10 @@ void US_BufferGuiEdit::write_db()
 DbgLv(1) << "BufE:SL: write_db()  bufID" << buffer->bufferID;
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
-   int idBuf    = buffer->saveToDB( &db, "1" );
+   QString   error;
+   int       idBuf = buffer->saveToDB( &db, "1", &error );
 
-   if ( idBuf < 0 )
-   {
-
-      QString msg  = tr( "(Return Code = %1 ) " ).arg( idBuf )
-                     + db.lastError();
-      QMessageBox::critical( this,
-          tr( "DB Buffer Write Error" ),
-          tr( "Error updating buffer in the database:\n" )
-          + msg );
-   }
+   showBufferSaveError( this, idBuf, error );
 }
 
 // Write updated buffer to local disk file

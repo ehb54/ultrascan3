@@ -539,4 +539,43 @@ TEST_F( SolutionDb, CountInProtocolsMatchesTheSolutionIdAndReportsAFailedQuery )
    }
    EXPECT_LT( solution.countInProtocols( &db ), 0 );
 }
+
+TEST_F( SolutionDb, NewBufferSaveParticipatesInRunImportTransaction )
+{
+   prepareToSave();
+   solution.analyteInfo.clear();
+   solution.buffer.GUID        = kBufferGuid;
+   solution.buffer.description = "Import buffer";
+   QString error;
+   {
+      InSequence sequence;
+      // The import caller opens and closes the transaction around solution save.
+      EXPECT_CALL( db, beginTransaction( _ ) ).WillOnce( Return( true ) );
+      EXPECT_CALL( db, query( args( { "get_bufferID", kBufferGuid } ) ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOROWS ) );
+      EXPECT_CALL( db, query( args( { "get_bufferID", kBufferGuid } ) ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOROWS ) );
+      EXPECT_CALL( db, transactionActive() ).WillOnce( Return( true ) );
+      EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) )
+         .WillOnce( Invoke(
+            []( const QStringList& q )
+            {
+               EXPECT_EQ( ( QStringList{ "new_buffer", kBufferGuid, "Import buffer" } ), q.mid( 0, 3 ) );
+               return IUS_DB2::OK;
+            } ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 41 ) );
+      expectNoSolutionRow();
+      EXPECT_CALL( db, statusQuery( args( newSolutionArgs() ) ) ).WillOnce( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 55 ) );
+      EXPECT_CALL( db, statusQuery( args( { "new_solutionBuffer", "55", "0", kBufferGuid } ) ) ).WillOnce( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, statusQuery( args( { "delete_solutionAnalytes", "55" } ) ) ).WillOnce( Return( IUS_DB2::NOROWS ) );
+      EXPECT_CALL( db, commitTransaction( _ ) ).WillOnce( Return( true ) );
+   }
+   ASSERT_TRUE( db.beginTransaction( error ) );
+   ASSERT_EQ( IUS_DB2::OK, solution.saveToDB( 11, 2, &db ) );
+   EXPECT_EQ( QString( "41" ), solution.buffer.bufferID );
+   ASSERT_TRUE( db.commitTransaction( error ) );
+}
+
 } // namespace

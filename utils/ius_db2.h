@@ -76,6 +76,13 @@ public:
                          const QString& user, const QString& password,
                          QString& err) = 0;
 
+    /*! \brief Whether this adapter owns an unfinished transaction.
+        This reports client ownership, not server health. A failed commit still
+        requires rollback. A participating writer must leave commit/rollback to
+        the owner, which must roll back if any participating write fails.
+    */
+    virtual bool                 transactionActive() const = 0;
+
     /*! \brief Begin a transaction on the connection.
 
         Transactions do not nest: a second begin before the commit or rollback

@@ -24,6 +24,7 @@ public:
     MOCK_METHOD(bool, connect, (const QString& host, const QString& dbname,
             const QString& user, const QString& password,
             QString& error), (override));
+    MOCK_METHOD( bool, transactionActive, (), ( const, override ) );
     MOCK_METHOD( bool, beginTransaction, ( QString & error ), ( override ) );
     MOCK_METHOD( bool, commitTransaction, ( QString & error ), ( override ) );
     MOCK_METHOD( bool, rollbackTransaction, ( QString & error ), ( override ) );

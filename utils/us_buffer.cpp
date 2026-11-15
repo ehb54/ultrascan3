@@ -509,8 +509,12 @@ bool US_Buffer::readFromDB( IUS_DB2* db, const QString& bufID )
    return true;
 }
 
-int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
+int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer, QString* error )
 {
+   if ( error != nullptr )
+   {
+      error->clear();
+   }
    int idBuffer = 0;
    QStringList q;
    q << "get_bufferID" << GUID;
@@ -527,11 +531,61 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
 
    if ( status != IUS_DB2::OK  &&  status != IUS_DB2::NOROWS )
    {
+      if ( error != nullptr )
+      {
+         *error = db->lastError();
+      }
       qDebug() << "get_bufferID error=" << status;
       return -9;
    }
 
-   else if ( status == IUS_DB2::NOROWS )
+   // Transaction control drains query results: capture the existing ID first.
+   if ( status == IUS_DB2::OK )
+   {
+      if ( !db->next() )
+      {
+         if ( error != nullptr )
+         {
+            *error = QObject::tr( "Buffer lookup returned no row." );
+         }
+         return -9;
+      }
+      idBuffer = db->value( 0 ).toInt();
+   }
+
+   const bool ownsTransaction = !db->transactionActive();
+   QString    transactionError;
+   if ( ownsTransaction && !db->beginTransaction( transactionError ) )
+   {
+      if ( error != nullptr )
+      {
+         *error = transactionError;
+      }
+      qWarning() << "buffer transaction begin failed:" << transactionError;
+      return -7;
+   }
+   const QString previousID = bufferID;
+   const auto    fail       = [&]( int code )
+   {
+      bufferID = previousID;
+      if ( error != nullptr && error->isEmpty() )
+      {
+         *error = db->lastError();
+      }
+      QString rollbackError;
+      if ( ownsTransaction && !db->rollbackTransaction( rollbackError ) )
+      {
+         if ( error != nullptr )
+         {
+            *error += QObject::tr( "\nRollback could not be confirmed: %1" ).arg( rollbackError );
+         }
+         qWarning() << "buffer rollback could not be confirmed:" << rollbackError;
+         return -10;
+      }
+      return code;
+   };
+
+   if ( status == IUS_DB2::NOROWS )
    {  // There is no buffer with the given GUID, so create a new one
       q.clear();
       q << "new_buffer"
@@ -550,7 +604,7 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
       if ( db->lastErrno() != IUS_DB2::OK )
       {
          qDebug() << "new_buffer error=" << db->lastErrno();
-         return -1;
+         return fail( -1 );
       }
 
       idBuffer    = db->lastInsertID();
@@ -558,11 +612,9 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
       qDebug() << "bufferID for new buffer: " << bufferID;
    }
 
-   else { 
-	  // The buffer exists, so update it
-      db->next();            // Get the ID of the existing buffer record
-      QString bufID   = db->value( 0 ).toString(); // The local buffer id from the database as string
-      idBuffer        = bufID.toInt(); // numeric buffer id
+   else
+   {
+      // The buffer exists, so update it
       bufferID        = QString::number( idBuffer ); // class variable string buffer id
 	  
       qDebug() << "BufferID in saveToDB(): " << bufferID;
@@ -581,7 +633,7 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
       if ( db->lastErrno() != IUS_DB2::OK )
       {
          qDebug() << "update_buffer error=" << db->lastErrno();
-         return -2;
+         return fail( -2 );
       }
 
       // Delete any components, so any given are a new list
@@ -592,7 +644,7 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
       if ( status != IUS_DB2::OK   &&  status != IUS_DB2::NOROWS )
       {
          qDebug() << "delete_buffer_components error=" << db->lastErrno();
-         return -3;
+         return fail( -3 );
       }
    }
 
@@ -610,7 +662,7 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
       if ( db->lastErrno() != IUS_DB2::OK )
       {
          qDebug() << "add_buffer_component i,error=" << i << db->lastErrno();
-         return -4;
+         return fail( -4 );
       }
    }
    
@@ -631,16 +683,37 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
                            : !US_ExtProfile::update_eprofile( db, profileID, bufferID.toInt(), compType, valType, extinction ) )
       { // The spectrum is still new or changed; a later save retries it
          qDebug() << "extinction profile write failed for buffer" << bufferID;
-         return -5;
+         return fail( -5 );
       }
-
-      replace_spectrum        = false;
-      new_or_changed_spectrum = false;
    }
    //putSpectrum( db, "Extinction" );
    //putSpectrum( db, "Refraction" );
    //putSpectrum( db, "Fluorescence" );
 
+   // A run import owns the encompassing transaction. Its caller must roll back
+   // on any error. The ID is provisional; keep spectrum flags pending and do
+   // not publish a disk copy of data that the owner may still roll back.
+   if ( !ownsTransaction )
+   {
+      return bufferID.toInt();
+   }
+
+   if ( !db->commitTransaction( transactionError ) )
+   {
+      if ( error != nullptr )
+      {
+         *error = transactionError;
+      }
+      qWarning() << "buffer commit could not be confirmed:" << transactionError;
+      return fail( -8 );
+   }
+   if ( !extinction.isEmpty() && new_or_changed_spectrum )
+   {
+      replace_spectrum        = false;
+      new_or_changed_spectrum = false;
+   }
+
+   // The disk copy is made only after a confirmed DB commit.
    // Also write to to disk
    // A missing buffers directory is created; only a real write failure is reported.
    bool    newFile;
@@ -649,6 +722,10 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
    QString filename = get_filename( path, GUID, newFile );
    if ( !writeToDisk( filename ) )
    {
+      if ( error != nullptr )
+      {
+         *error = QObject::tr( "Could not write local buffer file: %1" ).arg( filename );
+      }
       qDebug() << "buffer disk copy failed:" << filename;
       return -6;
    }

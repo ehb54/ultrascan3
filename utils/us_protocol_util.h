@@ -2,11 +2,11 @@
 #ifndef US_PROTO_UTIL_H
 #define US_PROTO_UTIL_H
 
+#include "ius_db2.h"
+#include "us_datafiles.h"
 #include "us_extern.h"
-#include "us_db2.h"
 #include "us_settings.h"
 #include "us_util.h"
-#include "us_datafiles.h"
 
 
 //! \brief Run Protocol utilities for UltraScan
@@ -27,9 +27,9 @@ class US_UTIL_EXTERN US_ProtocolUtil
       //! \param protdata  Output list of QStringLists for each protocol.
       //! \param dbP       Pointer to DB connector or NULL to read from disk.
       //! \returns         The count of records listed.
-      static int list_all( QList< QStringList >&, US_DB2* );
-      static int list_all_auto( QList< QStringList >&, US_DB2* );
-      
+      static int  list_all( QList<QStringList>&, IUS_DB2* );
+      static int  list_all_auto( QList<QStringList>&, IUS_DB2* );
+
       //! \brief Update the protocol data list with a new entry.
       //!
       //! This adds a new entry to the list of protocol summary entries or
@@ -50,7 +50,7 @@ class US_UTIL_EXTERN US_ProtocolUtil
       //! \param xml       XML string comprising protocol record information.
       //! \param dbP       Pointer to DB connector or NULL to write to disk.
       //! \returns         The db_id or filename suffix of the new record.
-      static int write_record( const QString, US_DB2* );
+      static int  write_record( const QString, IUS_DB2* );
 
       //! \brief Read in a protocol XML and entry, as indicated by a given name.
       //!
@@ -62,12 +62,9 @@ class US_UTIL_EXTERN US_ProtocolUtil
       //! \param protentry Pointer to summary protocol created.
       //! \param dbP       Pointer to DB connector or NULL to read from disk.
       //! \returns         Database Id of record or filename suffix.
-      static int read_record( const QString protname, QString* xml,
-                              QStringList*, US_DB2* );
+      static int  read_record( const QString protname, QString* xml, QStringList*, IUS_DB2* );
 
-      static int read_record_auto( const QString protname,
-				   int invID_passed, QString* xml,
-				   QStringList*, US_DB2* );
+      static int  read_record_auto( const QString protname, int invID_passed, QString* xml, QStringList*, IUS_DB2* );
 
       //! \brief Delete a protocol record from the database or local disk.
       //!
@@ -77,6 +74,6 @@ class US_UTIL_EXTERN US_ProtocolUtil
       //! \param protid    Protocol db ID or GUID in file.
       //! \param dbP       Pointer to DB connector or NULL to delete from disk.
       //! \returns         Flag if delete was successful.
-      static bool delete_record( const QString, US_DB2* );
+      static bool delete_record( const QString, IUS_DB2* );
 };
 #endif

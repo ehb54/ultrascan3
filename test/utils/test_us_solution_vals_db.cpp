@@ -11,7 +11,7 @@ using ::testing::Matcher;
 using ::testing::Return;
 using ::testing::StrictMock;
 
-// Not covered: values(), which combines these with the disk readers, and the disk readers.
+// Missing-solution policy remains compatible pending the decision in #1247.
 
 namespace
 {
@@ -258,5 +258,19 @@ TEST_F( SolutionValsDb, UnmatchedDescriptionReadsNoBuffer )
    EXPECT_FALSE( bufvals() );
    EXPECT_TRUE( bufId.isEmpty() );
    expectBufferValuesUnchanged();
+}
+
+TEST_F( SolutionValsDb, MissingVbarStillLoadsAvailableBufferAndPreservesCallerDefault )
+{
+   InSequence sequence;
+   expectRawRow();
+   expectSolutionBufferRow( "7" );
+   expectQuery( { "get_solution", "7" }, IUS_DB2::OK, false );
+   expectBufferInfo( "41", "Buffer A" );
+   EXPECT_TRUE( US_SolutionVals::values( &db, &edata, soluID, cvbar20, density, viscosity, compress, manual, errmsg ) );
+   EXPECT_EQ( QString( "0.70" ), cvbar20 );
+   EXPECT_EQ( QString( "1.00512" ), density );
+   EXPECT_EQ( QString( "1.0213" ), viscosity );
+   EXPECT_FALSE( errmsg.isEmpty() );
 }
 } // namespace

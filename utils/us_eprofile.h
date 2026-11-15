@@ -37,8 +37,8 @@ class US_UTIL_EXTERN US_ExtProfile
       //! \param  compType   Pointer for returned component Type
       //! \param  valType    Pointer for returned value Type
       //! \param  extinction Reference for returned extinction profile
-      //! \return            Count of profiles found (1 or 0)
-      //! \return            Flag of parse success
+      //! \return            True for a well-formed profile or legacy analyte XML.
+      //!                    Failure leaves all outputs unchanged.
       static bool parse_eprofile( QString&, int*, QString*, QString*,
                                   QMap< double, double >& );
 
@@ -60,7 +60,7 @@ class US_UTIL_EXTERN US_ExtProfile
       //! \param  valueType  Value type ("absorbance"|"molarExtinction"|
       //!                    "massExtinction"|(other))
       //! \param  extinction Extinction profile to store
-      //! \param  xmlout     Reference for XML string to create
+      //! \param  xmlout     Reference for XML string to replace (double round-trip precision)
       //! \return            Flag of creation success
       static bool xml_eprofile( const int, QString&, QString&,
                                 QMap< double, double >&, QString& );
