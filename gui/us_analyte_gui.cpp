@@ -548,6 +548,14 @@ DbgLv(1) << "agS-search:  *ERROR* ii" << ii << "jj" << jj
 
       lw_analyte_list->addItem( info.description );
    }
+
+   // Rebuilding the list drops the selection without a selection signal, so
+   // the accept payload and the actions that need a selection must be reset.
+   if ( lw_analyte_list->currentRow() < 0 )
+   {
+      ms_analytes.clear();
+      reset();
+   }
 }
 
 // Verify path to local analyte files and create directory if need be
