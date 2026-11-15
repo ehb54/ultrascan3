@@ -70,7 +70,6 @@ target_include_directories(us_reporter_gmp PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_abde
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_analysis_profile
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_ddist_combine
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_fematch
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_integral
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_pseudo3d_combine
         )

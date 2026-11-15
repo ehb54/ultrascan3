@@ -96,7 +96,6 @@ target_include_directories(us_autoflow_analysis PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_abde
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_analysis_profile
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_edit
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_fematch
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_fit_meniscus
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_mwl_species_fit
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_mwl_species_sim

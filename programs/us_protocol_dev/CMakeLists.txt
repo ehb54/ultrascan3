@@ -40,7 +40,6 @@ set(CROSS_DIR_SOURCES
         # us_fit_meniscus
         ../us_fit_meniscus/us_fit_meniscus.cpp
 
-        # us_fematch
 
         # shared edited-data loaders
         ../us_edited_data_loaders.cpp
@@ -159,7 +158,6 @@ target_include_directories(us_protocoldev PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_edit
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_autoflow_analysis
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_fit_meniscus
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_fematch
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_reporter_gmp
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_ddist_combine
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_pseudo3d_combine
