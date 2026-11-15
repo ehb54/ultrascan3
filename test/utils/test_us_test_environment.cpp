@@ -20,10 +20,13 @@ namespace
 {
 bool isWithin( const QString& child, const QString& parent )
 {
-    const QString cleanChild = QDir::cleanPath( child );
-    QString cleanParent = QDir::cleanPath( parent );
-    if ( ! cleanParent.endsWith( QDir::separator() ) )
-        cleanParent += QDir::separator();
+   // cleanPath always uses '/', on Windows too, so the prefix must end in '/'.
+   const QString cleanChild  = QDir::cleanPath( child );
+   QString       cleanParent = QDir::cleanPath( parent );
+   if ( !cleanParent.endsWith( '/' ) )
+   {
+      cleanParent += '/';
+   }
 
     return cleanChild == QDir::cleanPath( parent ) ||
            cleanChild.startsWith( cleanParent );
