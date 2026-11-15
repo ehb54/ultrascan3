@@ -473,6 +473,13 @@ DbgLv(1) << "BufS-search:  *ERROR* ii" << ii << "jj" << jj
 
       lw_buffer_list->addItem( info.description );
    }
+
+   // Rebuilding the list drops the selection without a selection signal, so
+   // actions that need a selected buffer must be reset here.
+   if ( lw_buffer_list->currentRow() < 0 )
+   {
+      reset();
+   }
 }
 
 // Verify path to local buffer files and create directory if need be
