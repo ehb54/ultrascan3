@@ -646,7 +646,8 @@ if(VCPKG_TARGET_IS_OSX)
             execute_process(COMMAND install_name_tool -change "${_dep}"
                 "@loader_path/${_name}" "${_parser}" COMMAND_ERROR_IS_FATAL ANY)
         endforeach()
-        execute_process(COMMAND codesign --force --sign - "${_parser}"
-            COMMAND_ERROR_IS_FATAL ANY)
+        # Keep the linker's ad-hoc signature: install_name_tool updates it here
+        # and in vcpkg's later rpath fixup. Re-signing with codesign replaces it,
+        # and Xcode 15's install_name_tool then leaves the parser unrunnable.
     endif()
 endif()
