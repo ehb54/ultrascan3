@@ -1274,7 +1274,10 @@ DbgLv(1) << "SP:ssToDB: dbP expid spi" << dbP << expID << spi;
          << QString::number( spi->set_speed )
          << QString::number( spi->avg_speed )
          << QString::number( spi->speed_stddev );
-   dbP->statusQuery( query );
+   if ( dbP->statusQuery( query ) != IUS_DB2::OK )
+   {
+      return -1;
+   }
    sstepID    = dbP->lastInsertID();
 DbgLv(1) << "SP:ssToDB: speedstep" << sstepID << dbP->lastError();
 DbgLv(1) << "SP:ssToDB:  w2t" << spi->w2t_first << spi->w2t_last

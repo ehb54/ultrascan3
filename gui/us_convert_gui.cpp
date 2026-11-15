@@ -10986,11 +10986,16 @@ DbgLv(1) << "wTSdb:  examine status" << status << "cksum-db" << cksum;
 DbgLv(1) << "wTSdb:   upload status" << status;
       }
    }
-   else if ( timestateID != -2 )
-   { // No record: invalid arguments, an unreadable definitions file or a failed DB write
-      status = timestateID;
+   else
+   { // No record. -2 means a local file is missing: with neither the .tmst nor its .xml
+      // definitions there is nothing to save, but one without the other is incomplete.
+      const QString defs_fname = QString( tmst_fname ).section( ".", 0, -2 ) + ".xml";
+      const bool    nothing    = ( timestateID == -2 ) && !QFile::exists( tmst_fname ) && !QFile::exists( defs_fname );
+      if ( !nothing )
+      {
+         status = timestateID;
+      }
    }
-   // -2: the run has no local time-state files, so there is nothing to save.
 
    if ( status != US_DB2::OK )
    {

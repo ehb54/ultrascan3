@@ -611,6 +611,21 @@ int US_Model::load_disk( const QString& guid )
    return error;
 }
 
+namespace
+{
+// True when the whole document parses. The multi-model reader splits the text by lines,
+// so it cannot itself notice a truncated or malformed later model.
+bool completeXml( const QByteArray& contents )
+{
+   QXmlStreamReader xml( contents );
+   while ( !xml.atEnd() )
+   {
+      xml.readNext();
+   }
+   return !xml.hasError();
+}
+} // namespace
+
 // Load a model from a local file
 int US_Model::load( const QString& filename )
 {
@@ -631,7 +646,14 @@ int US_Model::load( const QString& filename )
          return IUS_DB2::DBERROR;
       }
 
-      QTextStream tsi( &file );
+      const QByteArray contents = file.readAll();
+      if ( !completeXml( contents ) )
+      {
+         file.close();
+         return IUS_DB2::DBERROR;
+      }
+
+      QTextStream tsi( contents );
 
       result     = load_multi_model( tsi );
    }
@@ -869,6 +891,11 @@ int US_Model::load_multi_model( QTextStream& tsi )
       }
    }
 
+   if ( nmcixs < 1 )
+   {
+      return IUS_DB2::DBERROR; // No complete model in the stream
+   }
+
    QVector< SimulationComponent >  mmcomps;
    QVector< Association >          mmassos;
    int ncnstv    = 0;
@@ -879,7 +906,11 @@ int US_Model::load_multi_model( QTextStream& tsi )
    {
       mcont            = mcixmls[ ii ];
       QXmlStreamReader xml( mcont );
-      load_stream( xml );
+      const int        iteration = load_stream( xml );
+      if ( iteration != IUS_DB2::OK )
+      {
+         return iteration;
+      }
 
       mmcomps << components;
       mmassos << associations;
@@ -1178,7 +1209,12 @@ int US_Model::load( const QString& id, IUS_DB2* db )
    int              result = loaded.load_stream( xml );
 
    if ( result == IUS_DB2::NO_MODEL && loaded.monteCarlo )
-   {  // Handle a multi-model stream
+   { // Handle a multi-model stream; every model in it must parse
+      if ( !completeXml( contents ) )
+      {
+         return IUS_DB2::DBERROR;
+      }
+
       QTextStream tsi( contents );
 
       result          = loaded.load_multi_model( tsi );
