@@ -23,6 +23,22 @@
 //----------------------------------------------------------------------
 // Load a speed profile from the speed steps, through a private timestate
 //----------------------------------------------------------------------
+QStringList US_AstfemMath::timestate_dir_templates( const QString& base, const QString& fallback )
+{
+   const QString pattern = QStringLiteral( "/us3-tmst-XXXXXX" );
+   QStringList   templates;
+   if ( !base.isEmpty() )
+   {
+      templates << base + pattern;
+   }
+   if ( !fallback.isEmpty() && fallback != base )
+   {
+      templates << fallback + pattern;
+   }
+   return templates;
+}
+
+//----------------------------------------------------------------------
 int US_AstfemMath::timestate_from_speedsteps( US_SimulationParameters& simparams, US_DataIO::RawData& sim_data )
 {
    int dbg_level = US_Settings::us_debug();
@@ -34,17 +50,14 @@ int US_AstfemMath::timestate_from_speedsteps( US_SimulationParameters& simparams
    const QString base = US_Settings::tmpDir();
    QDir().mkpath( base );
 #endif
-   const QString                  pattern = QStringLiteral( "/us3-tmst-XXXXXX" );
    std::unique_ptr<QTemporaryDir> tdir;
-   if ( !base.isEmpty() )
+   for ( const QString& path_template : timestate_dir_templates( base, QDir::tempPath() ) )
    {
-      tdir.reset( new QTemporaryDir( base + pattern ) );
-   }
-
-   const QString fallback = QDir::tempPath();
-   if ( ( !tdir || !tdir->isValid() ) && !fallback.isEmpty() && base != fallback )
-   {
-      tdir.reset( new QTemporaryDir( fallback + pattern ) );
+      tdir.reset( new QTemporaryDir( path_template ) );
+      if ( tdir->isValid() )
+      {
+         break;
+      }
    }
 
    if ( !tdir || !tdir->isValid() )

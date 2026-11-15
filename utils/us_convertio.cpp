@@ -827,26 +827,38 @@ else
       return error.isEmpty() ? QObject::tr( "Could not read experiment from database." ) : error;
    }
 
-   // Now read the auc data
-qDebug() << "rDBE: call readRawDataFromDB";
+   // Now read the auc data. readRawDataFromDB downloads into the results
+   // folder and sets dir to it.
+   const QString callerDir = dir;
+   qDebug() << "rDBE: call readRawDataFromDB";
    QString status = readRawDataFromDB( ExpData, triples, dir, db );
    if ( status != QString( "" ) )
       return status;
 
    // Only discard stale AUC files after selection and the raw-data read succeed.
    // Retain the downloaded files; a failed DB read must not erase local data.
+   // Clean both the caller's folder and the results folder, so a caller that
+   // copies the results folder into its own gets only the database's files.
    QStringList downloaded;
    for ( const auto& triple : triples )
    {
       downloaded << triple.tripleFilename;
    }
-   QDir              local( dir );
-   const QStringList files = local.entryList( { "*.auc" }, QDir::Files );
-   for ( const QString& file : files )
+   QStringList cleanDirs{ QDir::cleanPath( dir ) };
+   if ( !callerDir.isEmpty() && !cleanDirs.contains( QDir::cleanPath( callerDir ) ) )
    {
-      if ( !downloaded.contains( file ) && !local.remove( file ) )
+      cleanDirs << QDir::cleanPath( callerDir );
+   }
+   for ( const QString& cleanDir : cleanDirs )
+   {
+      QDir              local( cleanDir );
+      const QStringList files = local.entryList( { "*.auc" }, QDir::Files );
+      for ( const QString& file : files )
       {
-         qDebug() << "Unable to remove stale file " << file;
+         if ( !downloaded.contains( file ) && !local.remove( file ) )
+         {
+            qDebug() << "Unable to remove stale file " << local.filePath( file );
+         }
       }
    }
 

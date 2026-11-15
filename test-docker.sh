@@ -643,7 +643,8 @@ if [ "$VALGRIND" = "true" ]; then
         exit 1
     fi
     echo 'Running memory analysis with Valgrind...'
-    valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes "$UNIT_TEST_BIN" --gtest_filter="$SELECTED_GTEST_FILTER"
+    valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes \
+        "$UNIT_TEST_BIN" --gtest_filter="$SELECTED_GTEST_FILTER"
     exit 0
 fi
 

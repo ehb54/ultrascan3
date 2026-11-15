@@ -283,3 +283,25 @@ TEST_F( ReadDbRunFailure, MissingRawMetadataOrCellsReturnsErrorWithoutStaleClean
       ASSERT_NO_FATAL_FAILURE( expectOriginalFiles() );
    }
 }
+
+static int writeDownloadedBlob( const QString& path, const QString&, int )
+{
+   return us3WriteTestFile( path, "downloaded blob" ) ? IUS_DB2::OK : IUS_DB2::DBERROR;
+}
+
+TEST_F( ReadDbRunFailure, SuccessfulReadFromImportsFolderRemovesStaleAucsThereAndInResults )
+{
+   const QString imports = US_Settings::importDir() + "/run";
+   ASSERT_TRUE( us3WriteTestFile( imports + "/imported.auc", "stale imported AUC" ) );
+   ASSERT_TRUE( us3WriteTestFile( imports + "/run.RA.1.A.280.auc", "older copy of the run" ) );
+   ASSERT_TRUE( us3WriteTestFile( imports + "/keep.xml", "imported XML bytes" ) );
+   RunReadDb db;
+   db.addRawRecord();
+   EXPECT_CALL( db, readBlobFromDB( directory + "/run.RA.1.A.280.auc", QString( "download_aucData" ), 23 ) )
+      .WillOnce( Invoke( writeDownloadedBlob ) );
+   EXPECT_EQ( US_ConvertIO::readDBExperiment( "run", imports + "/", &db, steps, "19" ), QString() );
+   EXPECT_EQ( QDir( imports ).entryList( { "*.auc" }, QDir::Files ), QStringList{ "run.RA.1.A.280.auc" } );
+   EXPECT_EQ( QDir( directory ).entryList( { "*.auc" }, QDir::Files ), QStringList{ "run.RA.1.A.280.auc" } );
+   EXPECT_TRUE( QFile::exists( imports + "/keep.xml" ) );
+   EXPECT_TRUE( QFile::exists( directory + "/keep.xml" ) );
+}
