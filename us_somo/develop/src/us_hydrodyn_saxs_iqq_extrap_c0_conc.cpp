@@ -32,6 +32,10 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
                                                                           QString *out_reference,
                                                                           double *out_merge_q,
                                                                           bool *out_merge_sd_join,
+                                                                          bool *out_spike_reject,
+                                                                          double *out_spike_sigma,
+                                                                          bool *out_ref_scatter,
+                                                                          bool *out_save_curve,
                                                                           void *us_hydrodyn,
                                                                           QWidget *p,
                                                                           const char *
@@ -59,6 +63,10 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    this->out_reference          = out_reference;
    this->out_merge_q            = out_merge_q;
    this->out_merge_sd_join      = out_merge_sd_join;
+   this->out_spike_reject       = out_spike_reject;
+   this->out_spike_sigma        = out_spike_sigma;
+   this->out_ref_scatter        = out_ref_scatter;
+   this->out_save_curve         = out_save_curve;
    this->us_hydrodyn        = us_hydrodyn;
 
    *out_ok = false;
@@ -93,7 +101,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    }
    int width = qBound( 600, 250 + max_name_len * 8, 1400 );
 
-   setGeometry( 200, 150, width, 100 + 30 * ( names.size() + 13 ) );
+   setGeometry( 200, 150, width, 100 + 30 * ( names.size() + 17 ) );
 }
 
 US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::~US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc()
@@ -205,6 +213,24 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
                                 "reference's own (the factor is applied only when it is above 1). The factor is\n"
                                 "reported in the log. Only used when the high-q splice is enabled." ) );
 
+   // Optional: pick the spliced curve after the extrapolation, by point scatter.
+   cb_ref_scatter = new QCheckBox( us_tr( "Splice the curve whose point scatter best matches the extrapolation's" ), this );
+   cb_ref_scatter->setChecked( false );
+   cb_ref_scatter->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_ref_scatter->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_ref_scatter );
+   cb_ref_scatter->setMinimumHeight( minHeight1 );
+   cb_ref_scatter->setToolTip(
+                         us_tr( "Unchecked: the reference curve (normally the highest concentration) is spliced.\n\n"
+                                "Checked: after the extrapolation, splice instead the curve whose point-to-point scatter,\n"
+                                "scaled onto the extrapolation, is closest to the extrapolation's own over the 50 points\n"
+                                "below the switchover. The switchover is located first (or pinned above), so this choice\n"
+                                "does not move it, and the absolute scale stays on the reference. The log lists every\n"
+                                "curve's scatter ratio and how far its high-q I/c departs from the most concentrated\n"
+                                "curve's, and warns when the chosen curve departs by more than 5%: the noisier, more\n"
+                                "dilute curves often carry their own background at high q. Only used with the high-q\n"
+                                "splice, and not together with an explicitly chosen reference curve." ) );
+
    // Reference-curve selection. Default = automatic (highest concentration), which is the right
    // default because intensity scales with concentration, so the top curve normally has the best
    // high-q signal-to-noise -- exactly what the splice copies. It is only wrong when that curve is
@@ -313,6 +339,20 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
                            us_tr( "After extrapolating, open a pop-up showing the per-q linear regression\n"
                                   "(the concentration data points with error bars, the fit, and the c=0\n"
                                   "intercept), scrollable q-by-q with a wheel." ) );
+
+   cb_save_curve = new QCheckBox( us_tr( "Save the extrapolated curve to a file (asks where)" ), this );
+   cb_save_curve->setChecked( true );
+   cb_save_curve->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
+   cb_save_curve->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_save_curve );
+   cb_save_curve->setMinimumHeight( minHeight1 );
+   cb_save_curve->setToolTip(
+                           us_tr( "Checked (default): once the extrapolated curve is added to the plot (with the per-q\n"
+                                  "regression plots shown: once you press Keep there), ask where to save it as a .dat file,\n"
+                                  "starting in the folder the curves were last loaded from. The file header carries Conc:,\n"
+                                  "PSV: and I0se: (when known), and the curves used with their concentrations. Cancel the\n"
+                                  "save dialog to skip it.\n\n"
+                                  "Unchecked: the curve is only added to the plot." ) );
 
    // Concentration-dependence model (Zimm mode only): how I(q,c) is fit vs c at each q.
    // Additive I/c is unbiased for the profile but reads MW low for a saturating structure
@@ -439,6 +479,50 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    hbl_sd_mode->addWidget( lbl_sd_mode );
    hbl_sd_mode->addWidget( cb_sd_mode, 1 );
 
+   // Single-point spike check, along q within each curve; a spike is fitted at its neighbours' value.
+   cb_spike = new QCheckBox( us_tr( "Replace single-point spikes in the fits (by their own curve's neighbours)" ), this );
+   cb_spike->setChecked( false );
+   cb_spike->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
+   cb_spike->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_spike );
+   cb_spike->setMinimumHeight( minHeight1 );
+   cb_spike->setToolTip(
+                        us_tr( "Off (default): every point of the selected curves is fitted as measured.\n\n"
+                               "On: each point is compared with a local fit through its own curve's neighbours in q\n"
+                               "(+-10 points, the point itself left out), in units of its own error bar. A point beyond\n"
+                               "the threshold is fitted at that local-fit value instead (keeping its own error bar), so\n"
+                               "every q is still fitted on the same curves -- leaving it out would change the curve set at\n"
+                               "that q and, where the concentration model does not follow the series exactly, make that q\n"
+                               "jump. The input curves are not changed. The measured values of replaced points are drawn\n"
+                               "in magenta in the per-q regression plots and counted in the log, and the output name gets\n"
+                               "_spk<n>. A spike on the spliced curve above the switchover is left out of the output.\n\n"
+                               "The test looks along each curve rather than across the concentrations because the most\n"
+                               "concentrated curve pulls the concentration fit onto itself and hides its own spikes." ) );
+
+   QHBoxLayout * hbl_spike = new QHBoxLayout; hbl_spike->setContentsMargins( 4, 0, 4, 0 ); hbl_spike->setSpacing( 6 );
+   lbl_spike_sigma = new QLabel( us_tr( "Spike threshold (sigma):" ), this );
+   lbl_spike_sigma->setAlignment( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_spike_sigma->setMinimumHeight( minHeight1 );
+   lbl_spike_sigma->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_spike_sigma );
+   lbl_spike_sigma->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
+   lbl_spike_sigma->setToolTip( us_tr( "How far, in the point's own error bars, a point must sit off its neighbours' local\n"
+                                       "fit to be replaced (default 6; ordinary noise essentially never reaches 5)." ) );
+
+   le_spike_sigma = new QLineEdit( this );
+   le_spike_sigma->setText( "6.0" );
+   le_spike_sigma->setValidator( new QDoubleValidator( 1.0, 1000.0, 2, le_spike_sigma ) );
+   le_spike_sigma->setAlignment( Qt::AlignCenter | Qt::AlignVCenter );
+   le_spike_sigma->setMinimumHeight( minHeight1 );
+   le_spike_sigma->setMaximumWidth( 70 );
+   le_spike_sigma->setPalette( PALET_NORMAL );
+   AUTFBACK( le_spike_sigma );
+   le_spike_sigma->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+
+   hbl_spike->addWidget( lbl_spike_sigma );
+   hbl_spike->addWidget( le_spike_sigma );
+   hbl_spike->addStretch( 1 );
+
    // Robust one-outlier-curve QC. A bad concentration / scale / aggregating curve is off the
    // concentration trend at essentially every q; detected at the curve level and, if this box is
    // checked, discarded from the whole fit (at most one). The two thresholds tune detection: a
@@ -538,6 +622,8 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    connect( cb_se_repair, SIGNAL( toggled( bool ) ), SLOT( refresh_se_repair_enabled() ) );
    connect( cb_model,  SIGNAL( currentIndexChanged( int ) ), SLOT( refresh_model_enabled() ) );
    connect( cb_recompute_inputs, SIGNAL( toggled( bool ) ), SLOT( refresh_recompute_enabled() ) );
+   connect( cb_ref_scatter, SIGNAL( toggled( bool ) ), SLOT( refresh_reference_enabled() ) );
+   connect( cb_spike, SIGNAL( toggled( bool ) ), SLOT( refresh_spike_enabled() ) );
 
    hbl_broaden->addWidget( lbl_broaden );
    hbl_broaden->addWidget( le_broaden );
@@ -591,20 +677,29 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
       background->addLayout( hbl_merge_sd_join );
    }
    {
+      QHBoxLayout *hbl_ref_scatter = new QHBoxLayout(); hbl_ref_scatter->setContentsMargins( 0, 0, 0, 0 ); hbl_ref_scatter->setSpacing( 0 );
+      hbl_ref_scatter->addSpacing( 12 );
+      hbl_ref_scatter->addWidget( cb_ref_scatter );
+      background->addLayout( hbl_ref_scatter );
+   }
+   {
       QHBoxLayout *hbl_reference = new QHBoxLayout(); hbl_reference->setContentsMargins( 0, 0, 0, 0 ); hbl_reference->setSpacing( 2 );
       hbl_reference->addWidget( lbl_reference );
       hbl_reference->addWidget( cb_reference );
       background->addLayout( hbl_reference );
    }
-   // rows below follow the processing order: input SDs -> outlier-curve QC -> fit -> output errors
-   // (low-q SD correction, then the optional output SD recompute)
+   // rows below follow the processing order: input SDs -> outlier-curve QC -> spike check -> fit ->
+   // output errors (low-q SD correction, then the optional output SD recompute)
    background->addWidget( cb_weight );
    background->addWidget( cb_regplots );
+   background->addWidget( cb_save_curve );
    background->addLayout( hbl_model );
    background->addWidget( cb_recompute_inputs );
    background->addLayout( hbl_ri );
    background->addWidget( cb_outlier );
    background->addLayout( hbl_outlier );
+   background->addWidget( cb_spike );
+   background->addLayout( hbl_spike );
    background->addLayout( hbl_broaden );
    background->addWidget( cb_se_repair );
    background->addLayout( hbl_se_repair );
@@ -618,6 +713,15 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    refresh_model_enabled();
    refresh_recompute_enabled();
    refresh_se_repair_enabled();
+   refresh_spike_enabled();
+}
+
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::refresh_spike_enabled()
+{
+   // the threshold only applies when the spike check is on
+   bool on = cb_spike->isChecked();
+   le_spike_sigma->setEnabled( on );
+   lbl_spike_sigma->setEnabled( on );
 }
 
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::refresh_broaden_enabled()
@@ -655,13 +759,20 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::refresh_recompute_enabled()
 
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::refresh_reference_enabled()
 {
-   // a reference curve is only used by the absolute scale and/or the high-q splice
+   // a reference curve is only used by the absolute scale and/or the high-q splice; picking the
+   // spliced curve by point scatter excludes choosing the reference explicitly
    bool enable = cb_ref_scale->isChecked() || cb_merge->isChecked();
-   cb_reference->setEnabled( enable );
-   lbl_reference->setEnabled( enable );
+   bool by_scatter = cb_merge->isChecked() && cb_ref_scatter->isChecked();
+   if ( by_scatter )
+   {
+      cb_reference->setCurrentIndex( 0 );
+   }
+   cb_reference->setEnabled( enable && !by_scatter );
+   lbl_reference->setEnabled( enable && !by_scatter );
    le_merge_q->setEnabled( cb_merge->isChecked() );
    lbl_merge_q->setEnabled( cb_merge->isChecked() );
    cb_merge_sd_join->setEnabled( cb_merge->isChecked() );
+   cb_ref_scatter->setEnabled( cb_merge->isChecked() );
 }
 
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::populate_table()
@@ -782,6 +893,13 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::ok()
    *out_ref_scale       = cb_ref_scale->isChecked();
    *out_merge_ref       = cb_merge->isChecked();
    *out_merge_sd_join   = cb_merge->isChecked() && cb_merge_sd_join->isChecked();
+   *out_ref_scatter     = cb_merge->isChecked() && cb_ref_scatter->isChecked();
+   *out_spike_reject    = cb_spike->isChecked();
+   {
+      bool ok_t = false; double t = le_spike_sigma->text().toDouble( &ok_t );
+      *out_spike_sigma = ( ok_t && t > 0e0 ) ? t : 6e0;
+   }
+   *out_save_curve      = cb_save_curve->isChecked();
    *out_show_regplots = cb_regplots->isChecked();
    *out_se_repair     = cb_se_repair->isChecked();
    {

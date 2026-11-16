@@ -8,6 +8,8 @@
 #include <QFile>
 #include <QTextStream>
 #include <QMessageBox>
+#include <QFileDialog>
+#include <QDir>
 #include <set>
 #include <algorithm>
 #include <limits>
@@ -41,12 +43,30 @@ static QString us_extrap_c0_common_prefix( const QStringList &names )
    return prefix;
 }
 
+// A concentration for the output name: one decimal with "p" for the decimal point (3.45 -> 3p5,
+// 0.8625 -> 0p9). A value that would read 0p0 keeps enough decimals to show its first significant
+// digit (0.04 -> 0p04), so a dilute end never reads as zero.
+static QString us_extrap_c0_conc_token( double c )
+{
+   QString s = QString::number( c, 'f', 1 );
+   if ( c > 0e0 && s == "0.0" )
+   {
+      for ( int d = 2; d <= 6; d++ )
+      {
+         s = QString::number( c, 'f', d );
+         if ( s.contains( QRegularExpression( "[1-9]" ) ) ) { break; }
+      }
+   }
+   return s.replace( '.', 'p' );
+}
+
 static QString us_extrap_c0_curve_name( const QStringList &names, int model, bool ref_scale,
                                         bool merge_ref, double merge_q, int sd_mode,
                                         int n_outlier_dropped, bool unweighted, int ri_mode,
                                         int fit_broaden, double ref_override_conc,
                                         bool raw_residual, bool se_repair, double se_repair_sigma,
-                                        bool sd_join )
+                                        bool sd_join, int n_conc, double c_max, double c_min,
+                                        int n_spikes, double spike_sigma, double ref_scatter_conc )
 {
    // Method token encoding the choices that produced the curve, so distinct selections give
    // distinct (self-describing) names rather than colliding on a bare -1/-2 suffix.
@@ -56,6 +76,13 @@ static QString us_extrap_c0_curve_name( const QStringList &names, int model, boo
    // NON-DEFAULT choice, so an ordinary run keeps a short name.
    QString method = "_extrap_c0";
    method += ( model == 2 ) ? "_virial2" : ( model == 1 ) ? "_recip" : "_add";
+   // which concentrations went into the fit: how many curves, and their range from the highest
+   // concentration down (e.g. _n5_c3p5-0p2), after any outlier-QC discard
+   if ( n_conc > 0 )
+   {
+      method += QString( "_n%1_c%2-%3" ).arg( n_conc )
+         .arg( us_extrap_c0_conc_token( c_max ) ).arg( us_extrap_c0_conc_token( c_min ) );
+   }
    if ( ref_scale ) { method += "_abs"; }
    if ( merge_ref )
    {
@@ -81,6 +108,11 @@ static QString us_extrap_c0_curve_name( const QStringList &names, int model, boo
    {
       method += "_refc" + QString::number( ref_override_conc, 'f', 4 ).replace( '.', '_' );
    }
+   // the spliced curve was picked by point scatter and is not the default reference
+   if ( ref_scatter_conc > 0e0 )
+   {
+      method += "_refsc" + QString::number( ref_scatter_conc, 'f', 4 ).replace( '.', '_' );
+   }
    // input-SD recompute (before the fit) precedes the output SD reassessment token
    if ( ri_mode == 1 ) { method += "_riC"; }
    else if ( ri_mode == 2 ) { method += "_riN"; }
@@ -94,6 +126,15 @@ static QString us_extrap_c0_curve_name( const QStringList &names, int model, boo
       // the leverage correction can change WHICH curve is dropped, so two runs could otherwise
       // both read _qc1 while resting on different curves
       if ( raw_residual ) { method += "_rawres"; }
+   }
+   // single-point spikes discarded from the fits: how many, and the threshold if not the default 6
+   if ( n_spikes > 0 )
+   {
+      method += "_spk" + QString::number( n_spikes );
+      if ( std::fabs( spike_sigma - 6e0 ) > 1e-9 )
+      {
+         method += "s" + QString::number( spike_sigma, 'f', 1 ).replace( '.', '_' );
+      }
    }
    if ( unweighted ) { method += "_uw"; }
 
@@ -497,6 +538,275 @@ static int us_extrap_c0_detect_outlier(
    return j_star;
 }
 
+// Leave-one-out local quadratic at grid point j: fit y over the +-half neighbours of j (j itself
+// left out, NaN values skipped) with weights w (empty = unweighted) and return the prediction at
+// q[ j ] in pred. var_pred is the (0,0) element of the inverse normal matrix, i.e. the variance of
+// the prediction when the weights are 1/sd^2. x is centred on q[ j ] and scaled to the window, which
+// leaves the prediction and its variance unchanged but keeps the 3x3 solve well conditioned.
+static bool us_extrap_c0_loo_quad( const vector < double > & q,
+                                   const vector < double > & y,
+                                   const vector < double > & w,
+                                   int                       j,
+                                   int                       half,
+                                   double                  & pred,
+                                   double                  & var_pred )
+{
+   int n  = (int) y.size();
+   int lo = qMax( 0, j - half );
+   int hi = qMin( n - 1, j + half );
+   double h = qMax( qAbs( q[ lo ] - q[ j ] ), qAbs( q[ hi ] - q[ j ] ) );
+   if ( !( h > 0e0 ) )
+   {
+      return false;
+   }
+   double S0 = 0e0, S1 = 0e0, S2 = 0e0, S3 = 0e0, S4 = 0e0, Z0 = 0e0, Z1 = 0e0, Z2 = 0e0;
+   int    m  = 0;
+   for ( int k = lo; k <= hi; k++ )
+   {
+      if ( k == j || us_isnan( y[ k ] ) )
+      {
+         continue;
+      }
+      double wk = w.empty() ? 1e0 : w[ k ];
+      if ( !( wk > 0e0 ) || us_isnan( wk ) )
+      {
+         continue;
+      }
+      double x  = ( q[ k ] - q[ j ] ) / h;
+      double x2 = x * x;
+      S0 += wk;      S1 += wk * x;      S2 += wk * x2;
+      S3 += wk * x2 * x;                S4 += wk * x2 * x2;
+      Z0 += wk * y[ k ]; Z1 += wk * x * y[ k ]; Z2 += wk * x2 * y[ k ];
+      m++;
+   }
+   if ( m < 8 )
+   {
+      return false;
+   }
+   double det = S0 * ( S2 * S4 - S3 * S3 ) - S1 * ( S1 * S4 - S3 * S2 ) + S2 * ( S1 * S3 - S2 * S2 );
+   if ( !( qAbs( det ) > 0e0 ) || us_isnan( det ) )
+   {
+      return false;
+   }
+   pred     = ( Z0 * ( S2 * S4 - S3 * S3 ) - S1 * ( Z1 * S4 - Z2 * S3 ) + S2 * ( Z1 * S3 - Z2 * S2 ) ) / det;
+   var_pred = ( S2 * S4 - S3 * S3 ) / det;
+   return !us_isnan( pred );
+}
+
+// Single-point spike test ALONG q, within one curve: each point against a local quadratic through its
+// own +-10 neighbours (the point itself left out). When every point has a positive SD the fit is
+// weighted by 1/sd^2 and t = ( I - pred ) / sqrt( sd^2 + var(pred) ); otherwise it is unweighted and
+// the residual is divided by a robust local spread (1.4826 x the median |residual| over +-25 points).
+// t is NaN where no fit can be made; pred is the neighbours' local-fit value at each point (the value
+// a spike is replaced by). The test does not involve the concentration fit, so a spike is judged the
+// same way on every curve -- a residual from the concentration regression cannot do that, because the
+// most concentrated curve pulls the line onto itself and hides its own spike.
+static void us_extrap_c0_spike_t( const vector < double > & q,
+                                  const vector < double > & I,
+                                  const vector < double > & sd,
+                                  unsigned int              npts,
+                                  vector < double >       & t,
+                                  vector < double >       & pred_out )
+{
+   const double nan = numeric_limits < double >::quiet_NaN();
+   t.assign( npts, nan );
+   pred_out.assign( npts, nan );
+   if ( npts < 12 || I.size() < npts || q.size() < npts )
+   {
+      return;
+   }
+   vector < double > qq( q.begin(), q.begin() + npts );
+   vector < double > yy( I.begin(), I.begin() + npts );
+
+   bool weighted = ( sd.size() >= npts );
+   for ( unsigned int i = 0; weighted && i < npts; i++ )
+   {
+      if ( !us_isnan( yy[ i ] ) && !( sd[ i ] > 0e0 ) )
+      {
+         weighted = false;
+      }
+   }
+   vector < double > w;
+   if ( weighted )
+   {
+      w.resize( npts );
+      for ( unsigned int i = 0; i < npts; i++ )
+      {
+         w[ i ] = 1e0 / ( sd[ i ] * sd[ i ] );
+      }
+   }
+
+   vector < double > r( npts, nan );
+   for ( int j = 0; j < (int) npts; j++ )
+   {
+      if ( us_isnan( yy[ j ] ) )
+      {
+         continue;
+      }
+      double pred = 0e0, vp = 0e0;
+      if ( !us_extrap_c0_loo_quad( qq, yy, w, j, 10, pred, vp ) )
+      {
+         continue;
+      }
+      r[ j ]        = yy[ j ] - pred;
+      pred_out[ j ] = pred;
+      if ( weighted )
+      {
+         t[ j ] = r[ j ] / std::sqrt( sd[ j ] * sd[ j ] + qMax( vp, 0e0 ) );
+      }
+   }
+   if ( weighted )
+   {
+      return;
+   }
+   for ( int j = 0; j < (int) npts; j++ )
+   {
+      if ( us_isnan( r[ j ] ) )
+      {
+         continue;
+      }
+      vector < double > ar;
+      for ( int k = qMax( 0, j - 25 ); k <= qMin( (int) npts - 1, j + 25 ); k++ )
+      {
+         if ( !us_isnan( r[ k ] ) )
+         {
+            ar.push_back( qAbs( r[ k ] ) );
+         }
+      }
+      if ( ar.size() < 10 )
+      {
+         continue;
+      }
+      std::sort( ar.begin(), ar.end() );
+      double scale = 1.4826e0 * ar[ ar.size() / 2 ];
+      if ( scale > 0e0 )
+      {
+         t[ j ] = r[ j ] / scale;
+      }
+   }
+}
+
+// Point-to-point scatter of y over grid points [lo, hi): rms of the leave-one-out residual about an
+// unweighted local quadratic (+-10 neighbours, which may lie outside [lo, hi)). NaN marks a missing
+// value. Returns 0 when fewer than 5 points can be evaluated.
+static double us_extrap_c0_local_scatter( const vector < double > & q,
+                                          const vector < double > & y,
+                                          int                       lo,
+                                          int                       hi )
+{
+   vector < double > none;
+   double ss = 0e0;
+   int    m  = 0;
+   for ( int j = qMax( 0, lo ); j < hi && j < (int) y.size(); j++ )
+   {
+      if ( us_isnan( y[ j ] ) )
+      {
+         continue;
+      }
+      double pred = 0e0, vp = 0e0;
+      if ( !us_extrap_c0_loo_quad( q, y, none, j, 10, pred, vp ) )
+      {
+         continue;
+      }
+      ss += ( y[ j ] - pred ) * ( y[ j ] - pred );
+      m++;
+   }
+   return ( m >= 5 ) ? std::sqrt( ss / (double) m ) : 0e0;
+}
+
+// Write an extrapolated curve as a 3-column q / I(q) / sd .dat file, in the same format as the inputs
+// so it loads back (the header carries Conc:, and PSV:/I0se: when known, plus hdr_extra).
+static bool us_extrap_c0_write_dat( const QString           & path,
+                                    const QString           & name,
+                                    double                    conc_tag,
+                                    const QString           & hdr_extra,
+                                    const vector < double > & q,
+                                    const vector < double > & I,
+                                    const vector < double > & e,
+                                    QString                 & error )
+{
+   QFile of( path );
+   if ( !of.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
+      error = of.errorString();
+      return false;
+   }
+   QTextStream os( &of );
+   os << QString( "US-SOMO: extrapolate-to-zero-concentration: %1 q units:1/A Conc:%2 [mg/mL]%3\n" )
+      .arg( name ).arg( conc_tag, 0, 'g', 8 ).arg( hdr_extra );
+   os << "q\tI(q)\tsd\n";
+   for ( unsigned int i = 0; i < (unsigned int) q.size() && i < (unsigned int) I.size(); i++ )
+   {
+      double ei = ( i < e.size() ) ? e[ i ] : 0e0;
+      os << QString( "%1\t%2\t%3\n" )
+         .arg( q[ i ], 0, 'e', 6 )
+         .arg( I[ i ], 0, 'e', 6 )
+         .arg( ei, 0, 'e', 6 );
+   }
+   of.close();
+   return true;
+}
+
+QString US_Hydrodyn_Saxs::extrap_c0_commit( QString           base_name,
+                                            vector < double > q,
+                                            vector < double > I,
+                                            vector < double > I_err,
+                                            double            conc_tag,
+                                            double            psv,
+                                            double            i0se,
+                                            QString           hdr_extra,
+                                            bool              offer_save,
+                                            QString           msg_tail )
+{
+   // the name is made unique only now: with the fit viewer open, other curves may have been
+   // plotted (or extrapolations kept) since this one was computed
+   QString final_name = base_name;
+   {
+      int suffix = 1;
+      while ( qsl_plotted_iq_names.contains( final_name ) )
+      {
+         final_name = QString( "%1-%2" ).arg( base_name ).arg( suffix++ );
+      }
+   }
+
+   plot_one_iqq( q, I, I_err, final_name );
+   update_conc_csv( final_name, conc_tag, psv, i0se );
+
+   editor_msg( "black", QString( us_tr( "Added zero-concentration curve \"%1\"" ) ).arg( final_name ) + msg_tail );
+
+   if ( offer_save )
+   {
+      QString use_dir = our_saxs_options->path_load_saxs_curve.isEmpty()
+         ? QDir::currentPath() : our_saxs_options->path_load_saxs_curve;
+      QString fn = QFileDialog::getSaveFileName( this,
+                                                 us_tr( "Save the extrapolated curve" ),
+                                                 use_dir + "/" + final_name + ".dat",
+                                                 "*.dat" );
+      if ( fn.isEmpty() )
+      {
+         editor_msg( "black", us_tr( "Extrapolated curve not saved to a file (save cancelled).\n" ) );
+      }
+      else
+      {
+         if ( QFileInfo( fn ).suffix().isEmpty() )
+         {
+            fn += ".dat";
+         }
+         QString error;
+         if ( us_extrap_c0_write_dat( fn, final_name, conc_tag, hdr_extra, q, I, I_err, error ) )
+         {
+            editor_msg( "black", QString( us_tr( "Saved the extrapolated curve to %1\n" ) ).arg( fn ) );
+         }
+         else
+         {
+            editor_msg( "red", QString( us_tr( "Could not save the extrapolated curve to %1: %2\n" ) )
+                        .arg( fn ).arg( error ) );
+         }
+      }
+   }
+   return final_name;
+}
+
 void US_Hydrodyn_Saxs::do_extrap_c0(
                                     QStringList qsl_sel_names,
                                     QStringList qsl_data,
@@ -676,6 +986,17 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    // Scale the spliced reference's error bars by one factor so they join the extrapolation's at the
    // switchover (see 6b2). Off by default: the reference keeps its own error bars.
    bool    merge_sd_join    = false;
+   // Replace single-point spikes in the fits: a point more than spike_sigma of its own SDs off a local
+   // fit through its own curve's neighbours in q is fitted at that local-fit value instead (5c). Off by
+   // default.
+   bool    spike_reject     = false;
+   double  spike_sigma      = 6e0;
+   // Pick the spliced curve after the extrapolation, as the one whose point scatter best matches
+   // the extrapolation's just below the switchover (the absolute scale stays on the reference). Off
+   // by default.
+   bool    ref_scatter      = false;
+   // Interactive only: ask where to save the extrapolated curve once it is added (or kept).
+   bool    save_curve       = true;
    double outlier_sigma       = 3e0;   // detection threshold: median standardized residual across q
    double outlier_chi2_ratio  = 1.5e0; // required pooled reduced-chi^2 improvement to confirm a drop
    if ( extrap_c0_script )
@@ -725,10 +1046,14 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       merge_sd_join      = extrap_c0_script_merge_sd_join;
       outlier_sigma      = extrap_c0_script_outlier_sigma;
       outlier_chi2_ratio = extrap_c0_script_outlier_chi2;
+      spike_reject       = extrap_c0_script_spike_reject;
+      spike_sigma        = extrap_c0_script_spike_sigma;
+      ref_scatter        = extrap_c0_script_ref_scatter;
+      save_curve         = false;                // the "output" directive writes the file
    }
    else
    {
-      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &ref_scale, &merge_ref, &show_regplots, &fit_broaden, &se_repair, &se_repair_sigma, &use_sd_weights, &extrap_model, &recompute_inputs, &recompute_inputs_mode, &sd_mode, &discard_outlier, &outlier_sigma, &outlier_chi2_ratio, &ref_override, &merge_q_override, &merge_sd_join, us_hydrodyn, this );
+      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &ref_scale, &merge_ref, &show_regplots, &fit_broaden, &se_repair, &se_repair_sigma, &use_sd_weights, &extrap_model, &recompute_inputs, &recompute_inputs_mode, &sd_mode, &discard_outlier, &outlier_sigma, &outlier_chi2_ratio, &ref_override, &merge_q_override, &merge_sd_join, &spike_reject, &spike_sigma, &ref_scatter, &save_curve, us_hydrodyn, this );
       US_Hydrodyn::fixWinButtons( &dlg );
       dlg.exec();
    }
@@ -985,6 +1310,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    //     as a red "x" on the excluded point. Targets concentration/scale outliers; aggregation is
    //     the Guinier QC's job.
    QString           excl_name;                 // name of the QC-excluded curve ("" => none)
+   QStringList       qc_dropped;                // every QC-discarded curve, "name conc mg/mL" (saved header)
    double            excl_conc = -1e0;           // its concentration (regplot x); < 0 => none
    vector < double > reg_excl_y;                 // its per-q y on the plot axis (NaN where none)
    // ---- Per-curve forward-scatter diagnostic (REPORTED, never acted on) ----------------------
@@ -1155,6 +1481,11 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                     QString( us_tr( "Outlier QC: DISCARDED (%1 of at most %2) -- %3. Refit on %4 curves.\n" ) )
                     .arg( n_outlier_dropped + 1 ).arg( outlier_max ).arg( detail ).arg( n_participating - 1 ) );
 
+         {
+            QString dq = ordered_names[ j_star ];
+            dq.remove( QRegularExpression( "^\"" ) ).remove( QRegularExpression( "\"$" ) );
+            qc_dropped << QString( "%1 %2 mg/mL" ).arg( dq ).arg( concs[ j_star ], 0, 'g', 6 );
+         }
          ordered_names.removeAt( j_star );
          concs.erase( concs.begin() + j_star );
          is_istar.erase( is_istar.begin() + j_star );
@@ -1206,12 +1537,113 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       break;                                      // nothing (further) discarded -> stop iterating
    }
 
+   // 5c. optional single-point spike check, ALONG q within each curve (us_extrap_c0_spike_t). Runs
+   //     after the outlier-curve QC, on the curves that will be fitted. A point more than spike_sigma
+   //     off the local fit through its own curve's neighbours is REPLACED, for the concentration fit
+   //     only, by that local-fit value (keeping its own SD), so every q is still fitted on the same set
+   //     of curves. Leaving the point out instead would change the curve set at that q, and where the
+   //     concentration model does not follow the series exactly (e.g. compounded dilution errors), a
+   //     fit without the most concentrated curve differs from its neighbours by that misfit -- on a
+   //     five-curve lysozyme series by 2.3 SD, more than the 10-SD spike itself had moved it. The input
+   //     curves are not changed; the measured values of replaced points are drawn in magenta in the
+   //     per-q fit viewer. A spike on the spliced curve above the switchover is dropped from the output
+   //     instead (see 6b2), since the output there is that curve itself.
+   map < QString, vector < char > >   name_to_spike;    // per curve, per grid q: 1 = replaced in the fit
+   map < QString, vector < double > > name_to_spike_t;  // per curve, per grid q: the along-q statistic
+   map < QString, vector < double > > name_to_spike_p;  // per curve, per grid q: the neighbours' value
+   int n_spikes = 0;
+   if ( spike_reject )
+   {
+      for ( int ci = 0; ci < ordered_names.size(); ci++ )
+      {
+         if ( concs[ ci ] <= 0e0 )
+         {
+            continue;
+         }
+         const QString & nm = ordered_names[ ci ];
+         vector < double > sdv;
+         if ( name_to_err.count( nm ) )
+         {
+            sdv = name_to_err[ nm ];
+         }
+         us_extrap_c0_spike_t( q, name_to_I[ nm ], sdv, npts, name_to_spike_t[ nm ], name_to_spike_p[ nm ] );
+         name_to_spike[ nm ].assign( npts, 0 );
+      }
+      int                  n_multi_q = 0;       // q with more than one curve flagged (a shared artifact?)
+      QStringList          examples;
+      map < QString, int > per_curve;
+      for ( unsigned int qi = 0; qi < npts; qi++ )
+      {
+         int n_here = 0;
+         for ( int ci = 0; ci < ordered_names.size(); ci++ )
+         {
+            if ( concs[ ci ] <= 0e0 )
+            {
+               continue;
+            }
+            const QString & nm = ordered_names[ ci ];
+            double tv = name_to_spike_t[ nm ][ qi ];
+            if ( us_isnan( tv ) || !( qAbs( tv ) > spike_sigma ) || us_isnan( name_to_spike_p[ nm ][ qi ] ) )
+            {
+               continue;
+            }
+            name_to_spike[ nm ][ qi ] = 1;
+            n_spikes++;
+            n_here++;
+            per_curve[ nm ]++;
+            if ( examples.size() < 10 )
+            {
+               QString dq = nm;
+               dq.remove( QRegularExpression( "^\"" ) ).remove( QRegularExpression( "\"$" ) );
+               examples << QString( us_tr( "%1 at q = %2 (%3 SD)" ) )
+                  .arg( dq ).arg( q[ qi ], 0, 'f', 4 ).arg( tv, 0, 'f', 1 );
+            }
+         }
+         if ( n_here > 1 )
+         {
+            n_multi_q++;
+         }
+      }
+      if ( n_spikes == 0 )
+      {
+         editor_msg( "black",
+                    QString( us_tr( "Spike check (each point against its own curve's neighbours in q): no point is "
+                                    "more than %1 SD off; nothing replaced.\n" ) ).arg( spike_sigma, 0, 'f', 1 ) );
+      }
+      else
+      {
+         QStringList pc;
+         for ( map < QString, int >::iterator it = per_curve.begin(); it != per_curve.end(); it++ )
+         {
+            QString dq = it->first;
+            dq.remove( QRegularExpression( "^\"" ) ).remove( QRegularExpression( "\"$" ) );
+            pc << QString( "%1: %2" ).arg( dq ).arg( it->second );
+         }
+         editor_msg( "dark red",
+                    QString( us_tr( "Spike check (each point against its own curve's neighbours in q, threshold %1 SD): "
+                                    "%2 point(s) replaced in the fits by their neighbours' local fit (%3); %4%5.%6\n" ) )
+                    .arg( spike_sigma, 0, 'f', 1 ).arg( n_spikes ).arg( pc.join( ", " ) )
+                    .arg( examples.join( "; " ) )
+                    .arg( n_spikes > examples.size() ? QString( us_tr( "; ..." ) ) : QString( "" ) )
+                    .arg( n_multi_q
+                          ? QString( us_tr( " At %1 q more than one curve was flagged: a spike shared by several curves "
+                                            "(e.g. in a common buffer) or a sharp feature -- check those q." ) ).arg( n_multi_q )
+                          : QString( "" ) ) );
+      }
+   }
+   auto spike_at = [ &name_to_spike ]( const QString & nm, unsigned int qi ) -> bool
+   {
+      map < QString, vector < char > >::const_iterator it = name_to_spike.find( nm );
+      return it != name_to_spike.end() && qi < it->second.size() && it->second[ qi ];
+   };
+
    // Absolute-scale setup: pick the reference (highest-concentration) curve, compute a
    // least-squares scale factor for every curve onto that reference over the common
    // q-grid, and grab the reference curve's error column to carry into the output.
 
    int    ref_ci   = -1;
    double ref_override_conc_used = 0e0;         // >0 => the reference was user-selected (name token)
+   double ref_scatter_conc_used  = 0e0;         // >0 => another curve was spliced, picked by point scatter
    double ref_conc = 0e0;
    vector < double > ref_sd;
    vector < double > Iref_full;                 // reference (highest-conc) raw I(q), full grid
@@ -1393,6 +1825,11 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    vector < double >               reg_b;
    vector < double >               reg_c;      // quadratic coeff (2nd-virial); 0 for linear fits
    vector < double >               reg_siga;
+   vector < vector < int > >       reg_ci;     // curve index (into ordered_names) of each fitted point
+   vector < vector < double > >    reg_sx;     // MEASURED values of spikes replaced at this q: conc, y,
+   vector < vector < double > >    reg_sy;     //   y-error and curve index (the fit used the replacement)
+   vector < vector < double > >    reg_se;
+   vector < vector < int > >       reg_sci;
 
    // per-output-point concentration centroids, used only for Zimm fit-broadening:
    // for an OLS line a = ybar - b*xbar, so after smoothing the slope the intercept
@@ -1451,6 +1888,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          {
             if ( concs[ ci ] <= 0e0 ) { continue; }
             double Iv = name_to_I[ ordered_names[ ci ] ][ qi ];
+            if ( spike_at( ordered_names[ ci ], qi ) ) { Iv = name_to_spike_p[ ordered_names[ ci ] ][ qi ]; }
             if ( us_isnan( Iv ) || Iv <= 0e0 ) { continue; }
             double sd = ( name_to_err.count( ordered_names[ ci ] ) && qi < name_to_err[ ordered_names[ ci ] ].size() )
                ? name_to_err[ ordered_names[ ci ] ][ qi ] : 0e0;
@@ -1483,6 +1921,11 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       vector < double > x;
       vector < double > y;
       vector < double > ye;
+      vector < int >    xci;                     // curve index (into ordered_names) of each fitted point
+      vector < double > sx;                      // measured values of replaced spikes (fit viewer / CSV only)
+      vector < double > sy;
+      vector < double > se;
+      vector < int >    sci;
 
       for ( int ci = 0; ci < ordered_names.size(); ci++ )
       {
@@ -1504,28 +1947,52 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                sd = 0e0;
             }
          }
-         double yv;
-         double yev;
-         if ( reciprocal )
+         // onto the fit axis; false where the point cannot be used there
+         auto to_axis = [ & ]( double Ii, double & yo, double & eo ) -> bool
          {
-            // reciprocal axis z = c/I (for I*(q), I = Iv*c so z = 1/Iv); needs I>0
-            if ( Iv <= 0e0 ) { continue; }
-            if ( is_istar[ ci ] ) { yv = 1e0 / Iv;          yev = sd / ( Iv * Iv ); }
-            else                  { yv = concs[ ci ] / Iv;  yev = sd * concs[ ci ] / ( Iv * Iv ); }
+            if ( reciprocal )
+            {
+               // reciprocal axis z = c/I (for I*(q), I = Iv*c so z = 1/Iv); needs I>0
+               if ( Ii <= 0e0 ) { return false; }
+               if ( is_istar[ ci ] ) { yo = 1e0 / Ii;          eo = sd / ( Ii * Ii ); }
+               else                  { yo = concs[ ci ] / Ii;  eo = sd * concs[ ci ] / ( Ii * Ii ); }
+            }
+            else if ( is_istar[ ci ] )
+            {
+               yo = Ii;                 // already I*(q)/concentration-normalized; do not re-divide
+               eo = sd;
+            }
+            else
+            {
+               yo = Ii / concs[ ci ];
+               eo = sd / concs[ ci ];
+            }
+            return true;
+         };
+         // a spike is fitted at its neighbours' local-fit value (own SD kept); its measured value is
+         // kept for the fit viewer / CSV
+         if ( spike_at( ordered_names[ ci ], qi ) )
+         {
+            double ym = 0e0, em = 0e0;
+            if ( to_axis( Iv, ym, em ) )
+            {
+               sx.push_back( concs[ ci ] );
+               sy.push_back( ym );
+               se.push_back( em );
+               sci.push_back( ci );
+            }
+            Iv = name_to_spike_p[ ordered_names[ ci ] ][ qi ];
          }
-         else if ( is_istar[ ci ] )
+         double yv  = 0e0;
+         double yev = 0e0;
+         if ( !to_axis( Iv, yv, yev ) )
          {
-            yv  = Iv;                // already I*(q)/concentration-normalized; do not re-divide
-            yev = sd;
-         }
-         else
-         {
-            yv  = Iv / concs[ ci ];
-            yev = sd / concs[ ci ];
+            continue;
          }
          x.push_back( concs[ ci ] );
          y.push_back( yv );
          ye.push_back( yev );
+         xci.push_back( ci );
       }
 
       // inverse-variance weighting is used only when EVERY point at this q carries a usable
@@ -1653,6 +2120,11 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       reg_b   .push_back( fit_b );             // slope
       reg_c   .push_back( fit_c );             // quadratic coeff (2nd-virial), 0 otherwise
       reg_siga.push_back( reciprocal ? fit_siga : err_val );   // SE in the plotted axis
+      reg_ci  .push_back( xci );
+      reg_sx  .push_back( sx );
+      reg_sy  .push_back( sy );
+      reg_se  .push_back( se );
+      reg_sci .push_back( sci );
    }
 
    if ( skipped_points )
@@ -1890,8 +2362,210 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          }
       }
 
+      // Optional: pick the spliced curve by point scatter. The switchover is already fixed (pinned, or
+      // found against the reference above), so the choice cannot move it. Each candidate is scaled onto
+      // the extrapolation (median ratio over the 25 points below the switchover, as for the continuity
+      // factor) and its point-to-point scatter is compared with the extrapolation's over the 50 points
+      // below the switchover; the curve whose ratio is nearest 1 is spliced. The absolute scale stays on
+      // the reference. Each candidate's high-q I/c relative to the most concentrated curve is logged as
+      // well: on real series the noisier, dilute curves often carry their own background at high q, and
+      // a scatter match favours exactly those curves.
+      int    spl_ci = ref_ci;                    // curve spliced above the switchover
+      double c_spl  = c_ref;                     // its concentration
+      if ( ref_scatter && merge_ref )
+      {
+         if ( !ref_override.isEmpty() )
+         {
+            editor_msg( "dark red", us_tr( "Spliced curve by point scatter: not applied -- a reference curve was "
+                                           "chosen explicitly.\n" ) );
+         }
+         else if ( merge_idx < 10 || merge_idx >= (int) npts )
+         {
+            editor_msg( "dark red", us_tr( "Spliced curve by point scatter: not applied -- there is no switchover "
+                                           "with points below it to compare.\n" ) );
+         }
+         else
+         {
+            const double nan = numeric_limits < double >::quiet_NaN();
+            int w_lo = qMax( 0, merge_idx - 50 );
+            int f_lo = qMax( 0, merge_idx - 25 );
+            vector < double > ext_n( npts, nan );
+            for ( unsigned int i = 0; i < npts; i++ )
+            {
+               if ( grid_to_out[ i ] >= 0 )
+               {
+                  ext_n[ i ] = out_I0[ grid_to_out[ i ] ];
+               }
+            }
+            double s_ext = us_extrap_c0_local_scatter( q, ext_n, w_lo, merge_idx );
+            auto normalized = [ & ]( int ci ) -> vector < double >
+            {
+               vector < double > cn( npts, nan );
+               const vector < double > & Iv = name_to_I[ ordered_names[ ci ] ];
+               for ( unsigned int i = 0; i < npts && i < Iv.size(); i++ )
+               {
+                  if ( !us_isnan( Iv[ i ] ) )
+                  {
+                     cn[ i ] = is_istar[ ci ] ? Iv[ i ] : Iv[ i ] / concs[ ci ];
+                  }
+               }
+               return cn;
+            };
+            auto median_of = []( vector < double > v ) -> double
+            {
+               if ( v.empty() )
+               {
+                  return numeric_limits < double >::quiet_NaN();
+               }
+               std::sort( v.begin(), v.end() );
+               return v[ v.size() / 2 ];
+            };
+            vector < double > top_n = normalized( ref_ci );
+            if ( !( s_ext > 0e0 ) )
+            {
+               editor_msg( "dark red", us_tr( "Spliced curve by point scatter: not applied -- the extrapolation's "
+                                              "scatter below the switchover could not be measured.\n" ) );
+            }
+            else
+            {
+               editor_msg( "black",
+                          QString( us_tr( "Spliced curve by point scatter, over q %1 to %2 below the switchover (each "
+                                          "curve scaled onto the extrapolation; its high-q I/c is compared with the "
+                                          "most concentrated curve's, relative to just below the switchover):\n" ) )
+                          .arg( q[ w_lo ], 0, 'f', 4 ).arg( q[ merge_idx - 1 ], 0, 'f', 4 ) );
+               int    best_ci    = -1;
+               double best_score = 1e300;
+               double best_ratio = 0e0;
+               double best_dev   = nan;
+               for ( int ci = 0; ci < ordered_names.size(); ci++ )
+               {
+                  if ( concs[ ci ] <= 0e0 )
+                  {
+                     continue;
+                  }
+                  vector < double > cn = normalized( ci );
+                  vector < double > fr;
+                  for ( int i = f_lo; i < merge_idx; i++ )
+                  {
+                     if ( !us_isnan( ext_n[ i ] ) && !us_isnan( cn[ i ] ) && cn[ i ] != 0e0 )
+                     {
+                        fr.push_back( ext_n[ i ] / cn[ i ] );
+                     }
+                  }
+                  double F = median_of( fr );
+                  if ( us_isnan( F ) || !( F > 0e0 ) )
+                  {
+                     continue;
+                  }
+                  vector < double > ys( npts, nan );
+                  for ( unsigned int i = 0; i < npts; i++ )
+                  {
+                     if ( !us_isnan( cn[ i ] ) )
+                     {
+                        ys[ i ] = F * cn[ i ];
+                     }
+                  }
+                  double s_c = us_extrap_c0_local_scatter( q, ys, w_lo, merge_idx );
+                  if ( !( s_c > 0e0 ) )
+                  {
+                     continue;
+                  }
+                  double ratio = s_c / s_ext;
+                  // high-q shape: median of (I/c) / (top I/c) above the switchover over the same ratio
+                  // just below it
+                  vector < double > r_hi, r_lo;
+                  for ( unsigned int i = 0; i < npts; i++ )
+                  {
+                     if ( us_isnan( cn[ i ] ) || us_isnan( top_n[ i ] ) || !( top_n[ i ] > 0e0 ) )
+                     {
+                        continue;
+                     }
+                     if ( (int) i >= merge_idx )
+                     {
+                        r_hi.push_back( cn[ i ] / top_n[ i ] );
+                     }
+                     else if ( (int) i >= f_lo )
+                     {
+                        r_lo.push_back( cn[ i ] / top_n[ i ] );
+                     }
+                  }
+                  double m_hi = median_of( r_hi );
+                  double m_lo = median_of( r_lo );
+                  double dev  = ( !us_isnan( m_hi ) && !us_isnan( m_lo ) && m_lo != 0e0 ) ? m_hi / m_lo - 1e0 : nan;
+                  QString nm  = ordered_names[ ci ];
+                  nm.remove( QRegularExpression( "^\"" ) ).remove( QRegularExpression( "\"$" ) );
+                  editor_msg( "black",
+                             QString( us_tr( "   conc %1 (\"%2\"): scatter %3 x the extrapolation's; high-q I/c %4 vs the "
+                                             "most concentrated curve\n" ) )
+                             .arg( concs[ ci ], 0, 'g', 6 ).arg( nm ).arg( ratio, 0, 'f', 2 )
+                             .arg( us_isnan( dev ) ? us_tr( "n/a" )
+                                   : ( dev >= 0e0 ? QString( "+" ) : QString( "" ) ) + QString::number( 100e0 * dev, 'f', 1 ) + "%" ) );
+                  double score = qAbs( std::log( ratio ) );
+                  if ( score < best_score )
+                  {
+                     best_score = score;
+                     best_ci    = ci;
+                     best_ratio = ratio;
+                     best_dev   = dev;
+                  }
+               }
+               if ( best_ci < 0 )
+               {
+                  editor_msg( "dark red", us_tr( "Spliced curve by point scatter: not applied -- no curve's scatter "
+                                                 "could be measured; the reference is spliced.\n" ) );
+               }
+               else
+               {
+                  spl_ci = best_ci;
+                  c_spl  = concs[ best_ci ];
+                  QString nm = ordered_names[ spl_ci ];
+                  nm.remove( QRegularExpression( "^\"" ) ).remove( QRegularExpression( "\"$" ) );
+                  if ( spl_ci != ref_ci )
+                  {
+                     ref_scatter_conc_used = c_spl;
+                     const vector < double > & Is = name_to_I[ ordered_names[ spl_ci ] ];
+                     Iref_full.assign( npts, 0e0 );
+                     for ( unsigned int qi = 0; qi < npts && qi < Is.size(); qi++ )
+                     {
+                        Iref_full[ qi ] = us_isnan( Is[ qi ] ) ? 0e0 : Is[ qi ];
+                     }
+                     if ( name_to_err.count( ordered_names[ spl_ci ] ) && !name_to_err[ ordered_names[ spl_ci ] ].empty() )
+                     {
+                        ref_sd = name_to_err[ ordered_names[ spl_ci ] ];
+                        ref_sd.resize( npts );
+                     }
+                     else
+                     {
+                        ref_sd.assign( npts, 0e0 );
+                     }
+                  }
+                  editor_msg( "black",
+                             QString( us_tr( "Spliced curve by point scatter: \"%1\" (conc %2), scatter %3 x the "
+                                             "extrapolation's%4. The absolute scale stays on the reference (conc %5).\n" ) )
+                             .arg( nm ).arg( c_spl, 0, 'g', 6 ).arg( best_ratio, 0, 'f', 2 )
+                             .arg( spl_ci == ref_ci ? us_tr( " (the reference itself)" ) : QString( "" ) )
+                             .arg( c_ref, 0, 'g', 6 ) );
+                  if ( !us_isnan( best_dev ) && qAbs( best_dev ) > 5e-2 )
+                  {
+                     editor_msg( "dark red",
+                                QString( us_tr( "Spliced curve by point scatter: above the switchover its I/c differs by "
+                                                "%1% from the most concentrated curve's (relative to just below the "
+                                                "switchover). It may carry its own background (buffer subtraction) into the "
+                                                "high-q part -- check before relying on it, or choose the reference "
+                                                "explicitly.\n" ) )
+                                .arg( 100e0 * best_dev, 0, 'f', 1 ) );
+                  }
+               }
+            }
+         }
+      }
+
       double S_out  = ref_scale ? c_ref : 1e0;                               // extrapolation scale
-      double refdiv = ref_scale ? 1e0 : ( c_ref > 0e0 ? 1e0 / c_ref : 1e0 ); // reference onto output scale
+      // spliced curve onto the output scale: normalized by its own concentration, then onto the
+      // reference's absolute scale if requested (equal to the old 1 or 1/c_ref when it is the reference)
+      double refdiv = ref_scale
+         ? ( c_spl > 0e0 ? c_ref / c_spl : 1e0 )
+         : ( c_spl > 0e0 ? 1e0 / c_spl : 1e0 );
 
       // Continuity: the extrapolation (which carries the dilute-limit scale) and the reference
       // generally differ by a few percent at the merge point, so copying the reference verbatim
@@ -1907,7 +2581,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          {
             if ( grid_to_out[ i ] >= 0 && i < (int) Iref_full.size() && Iref_full[ i ] != 0e0 )
             {
-               double rn = Iref_full[ i ] / ( c_ref > 0e0 ? c_ref : 1e0 );   // reference normalized
+               double rn = Iref_full[ i ] / ( c_spl > 0e0 ? c_spl : 1e0 );   // reference normalized
                if ( rn != 0e0 ) { ratios.push_back( out_I0[ grid_to_out[ i ] ] / rn ); }
             }
          }
@@ -1930,8 +2604,8 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          {
             if ( grid_to_out[ i ] < 0 || i >= (int) Iref_full.size() || i >= (int) ref_sd.size() ) { continue; }
             int    k  = grid_to_out[ i ];
-            double rn = Iref_full[ i ] / ( c_ref > 0e0 ? c_ref : 1e0 );
-            double sn = ref_sd[ i ]    / ( c_ref > 0e0 ? c_ref : 1e0 );
+            double rn = Iref_full[ i ] / ( c_spl > 0e0 ? c_spl : 1e0 );
+            double sn = ref_sd[ i ]    / ( c_spl > 0e0 ? c_spl : 1e0 );
             if ( rn == 0e0 || out_I0[ k ] == 0e0 || !( sn > 0e0 ) || !( out_I0_err[ k ] > 0e0 ) ) { continue; }
             double ratio = out_I0[ k ] / rn;
             double sr    = qAbs( ratio ) * std::sqrt( std::pow( out_I0_err[ k ] / out_I0[ k ], 2 ) + std::pow( sn / rn, 2 ) );
@@ -1976,7 +2650,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
             for ( int i = w0; i < merge_idx; i++ )
             {
                if ( grid_to_out[ i ] < 0 || i >= (int) ref_sd.size() ) { continue; }
-               double sn = ref_sd[ i ] / ( c_ref > 0e0 ? c_ref : 1e0 ) * qAbs( ref_cont );
+               double sn = ref_sd[ i ] / ( c_spl > 0e0 ? c_spl : 1e0 ) * qAbs( ref_cont );
                double se = out_I0_err[ grid_to_out[ i ] ];
                if ( sn > 0e0 && se > 0e0 && !us_isnan( se ) ) { sdr.push_back( se / sn ); }
             }
@@ -2013,11 +2687,24 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          }
       }
 
+      // with the spike check on, a spike on the spliced curve above the switchover would be copied
+      // straight into the output: leave that q out of the output instead
+      const vector < double > * spl_t = 0;
+      if ( spike_reject && merge_ref && spl_ci >= 0 && name_to_spike_t.count( ordered_names[ spl_ci ] ) )
+      {
+         spl_t = &name_to_spike_t[ ordered_names[ spl_ci ] ];
+      }
+      int n_tail_spikes = 0;
       vector < double > nq, nI, nE;
       for ( unsigned int qi = 0; qi < npts; qi++ )
       {
          if ( merge_ref && (int) qi >= merge_idx )
          {
+            if ( spl_t && qi < spl_t->size() && !us_isnan( ( *spl_t )[ qi ] ) && qAbs( ( *spl_t )[ qi ] ) > spike_sigma )
+            {
+               n_tail_spikes++;
+               continue;
+            }
             nq.push_back( q[ qi ] );
             nI.push_back( ( qi < Iref_full.size() ? Iref_full[ qi ] : 0e0 ) * refdiv * ref_cont );
             nE.push_back( ( qi < ref_sd.size() ? ref_sd[ qi ] : 0e0 ) * refdiv * ref_cont * ref_sd_join );
@@ -2031,6 +2718,14 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          }
       }
       out_q = nq; out_I0 = nI; out_I0_err = nE;
+      if ( n_tail_spikes )
+      {
+         n_spikes += n_tail_spikes;
+         editor_msg( "dark red",
+                    QString( us_tr( "Spike check: %1 point(s) of the spliced curve above the switchover are more than %2 SD "
+                                    "off their neighbours and were left out of the output.\n" ) )
+                    .arg( n_tail_spikes ).arg( spike_sigma, 0, 'f', 1 ) );
+      }
    }
 
    // 6c. Guinier quality check of the extrapolated curve (ground-truth-free): a clean
@@ -2132,64 +2827,56 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       }
    }
 
-   // 7. name the new curve, avoiding collisions with already-plotted curves
+   // 7. name the new curve; the name is made unique against the plotted curves when it is added
 
+   int    n_conc = 0;
+   double c_max  = 0e0;
+   double c_min  = 0e0;
+   for ( int ci = 0; ci < (int) concs.size(); ci++ )
+   {
+      if ( concs[ ci ] <= 0e0 )
+      {
+         continue;
+      }
+      if ( !n_conc || concs[ ci ] > c_max ) { c_max = concs[ ci ]; }
+      if ( !n_conc || concs[ ci ] < c_min ) { c_min = concs[ ci ]; }
+      n_conc++;
+   }
    QString base_name  = us_extrap_c0_curve_name( ordered_names, extrap_model, ref_scale, merge_ref, merge_q, sd_mode, n_outlier_dropped, !use_sd_weights,
                                                   recompute_inputs ? ( recompute_inputs_mode + 1 ) : 0,
                                                   fit_broaden_effective, ref_override_conc_used,
                                                   !outlier_leverage, se_repair, se_repair_sigma,
-                                                  ref_sd_join != 1e0 );
-   QString final_name = base_name;
-   {
-      int suffix = 1;
-      while ( qsl_plotted_iq_names.contains( final_name ) )
-      {
-         final_name = QString( "%1-%2" ).arg( base_name ).arg( suffix++ );
-      }
-   }
-
-   // 8. plot the extrapolated curve
-
-   plot_one_iqq( out_q, out_I0, out_I0_err, final_name );
+                                                  ref_sd_join != 1e0, n_conc, c_max, c_min,
+                                                  n_spikes, spike_sigma, ref_scatter_conc_used );
 
    // Tag the output: reference (absolute) scale -> tag with the reference concentration so
    // dividing by it recovers the normalized form; otherwise Conc:1. Already-I*(q) inputs are
    // always Conc:1.
    double out_conc_tag = ( ref_scale && !all_istar ) ? ref_conc : 1e0;
-   update_conc_csv( final_name, out_conc_tag, common_psv, common_i0se );
 
-   // scripted run: also write the extrapolated curve to the requested output path, in the same
-   // 3-column q/I(q)/sd .dat format as the inputs (with a Conc: header) so it round-trips and
-   // can be diffed against a regression baseline.
-   if ( extrap_c0_script && !extrap_c0_script_out.isEmpty() )
+   // Extra header for a saved file: psv/i0se (same tokens/format as HPLC/MALS/DAD, only when an
+   // explicit value was present) so the curve round-trips, then the curves that went into the fit
+   // with their concentrations, and any curve the outlier QC discarded.
+   QString hdr_extra;
+   if ( have_psv )  { hdr_extra += QString( " PSV:%1 [mL/g]" ).arg( common_psv,  0, 'g', 8 ); }
+   if ( have_i0se ) { hdr_extra += QString( " I0se:%1 [a.u.]" ).arg( common_i0se, 0, 'g', 8 ); }
+   QStringList fit_names;                        // dequoted, index = ordered_names index
    {
-      QFile of( extrap_c0_script_out );
-      if ( !of.open( QIODevice::WriteOnly | QIODevice::Text ) )
+      QStringList used;
+      for ( int ci = 0; ci < ordered_names.size(); ci++ )
       {
-         editor_msg( "red", QString( us_tr( "saxs_extrap_c0: cannot write output file '%1'\n" ) ).arg( extrap_c0_script_out ) );
-      }
-      else
-      {
-         QTextStream os( &of );
-         // carry psv/i0se forward in the header (same tokens/format as HPLC/MALS/DAD) so the
-         // extrapolated curve round-trips; only when an explicit value was actually present.
-         QString hdr_extra;
-         if ( have_psv )  { hdr_extra += QString( " PSV:%1 [mL/g]" ).arg( common_psv,  0, 'g', 8 ); }
-         if ( have_i0se ) { hdr_extra += QString( " I0se:%1 [a.u.]" ).arg( common_i0se, 0, 'g', 8 ); }
-         os << QString( "US-SOMO: extrapolate-to-zero-concentration: %1 q units:1/A Conc:%2 [mg/mL]%3\n" )
-            .arg( final_name ).arg( out_conc_tag, 0, 'g', 8 ).arg( hdr_extra );
-         os << "q\tI(q)\tsd\n";
-         for ( unsigned int oi = 0; oi < (unsigned int) out_q.size(); oi++ )
+         QString dq = ordered_names[ ci ];
+         dq.remove( QRegularExpression( "^\"" ) ).remove( QRegularExpression( "\"$" ) );
+         fit_names << dq;
+         if ( concs[ ci ] > 0e0 )
          {
-            double oe = ( oi < out_I0_err.size() ) ? out_I0_err[ oi ] : 0e0;
-            os << QString( "%1\t%2\t%3\n" )
-               .arg( out_q[ oi ], 0, 'e', 6 )
-               .arg( out_I0[ oi ], 0, 'e', 6 )
-               .arg( oe, 0, 'e', 6 );
+            used << QString( "%1 %2 mg/mL" ).arg( dq ).arg( concs[ ci ], 0, 'g', 6 );
          }
-         of.close();
-         editor_msg( "black", QString( us_tr( "saxs_extrap_c0: wrote %1 points to %2\n" ) )
-                     .arg( out_q.size() ).arg( extrap_c0_script_out ) );
+      }
+      hdr_extra += QString( " Inputs (%1): %2" ).arg( used.size() ).arg( used.join( ", " ) );
+      if ( !qc_dropped.isEmpty() )
+      {
+         hdr_extra += QString( " QC-discarded: %1" ).arg( qc_dropped.join( ", " ) );
       }
    }
 
@@ -2201,20 +2888,48 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       : QString( us_tr( "normalized (tagged Conc:1)" ) );
    QString merge_note = merge_ref
       ? ( merge_q > 0e0
-          ? QString( us_tr( "; reference curve spliced above q = %1%2" ) ).arg( merge_q )
+          ? QString( us_tr( "; %1 spliced above q = %2%3" ) )
+            .arg( ref_scatter_conc_used > 0e0
+                  ? QString( us_tr( "curve at conc %1 (picked by point scatter)" ) ).arg( ref_scatter_conc_used )
+                  : us_tr( "reference curve" ) )
+            .arg( merge_q )
             .arg( ref_sd_join != 1e0
                   ? QString( us_tr( ", its error bars x%1 to join the extrapolation's" ) ).arg( ref_sd_join, 0, 'f', 3 )
                   : QString( "" ) )
           : QString( us_tr( "; reference splice requested but skipped (no merge point found)" ) ) )
       : QString( us_tr( "; no high-q reference splice" ) );
-   editor_msg( "black",
-              QString( us_tr( "Added zero-concentration curve \"%1\" (%2 q-points, %3 skipped). "
-                              "Fit: %4; %5%6.%7\n" ) )
-              .arg( final_name ).arg( out_q.size() ).arg( skipped_points )
-              .arg( fit_name ).arg( scale_note ).arg( merge_note )
-              .arg( all_istar ? QString( us_tr( " Inputs were I*(q) (I(0)=MW)." ) ) : QString( "" ) ) );
+   QString msg_tail = QString( us_tr( " (%1 q-points, %2 skipped). Fit: %3; %4%5.%6\n" ) )
+      .arg( out_q.size() ).arg( skipped_points )
+      .arg( fit_name ).arg( scale_note ).arg( merge_note )
+      .arg( all_istar ? QString( us_tr( " Inputs were I*(q) (I(0)=MW)." ) ) : QString( "" ) );
 
-   // 9. optional per-q regression viewer (scrollable pop-up requested from the dialog)
+   // 8. scripted run: add the curve now and write it to the requested output path, in the same
+   //    3-column q/I(q)/sd .dat format as the inputs (with a Conc: header) so it round-trips and
+   //    can be diffed against a regression baseline. Never opens the fit viewer.
+   if ( extrap_c0_script )
+   {
+      QString final_name = extrap_c0_commit( base_name, out_q, out_I0, out_I0_err, out_conc_tag,
+                                             common_psv, common_i0se, hdr_extra, false, msg_tail );
+      if ( !extrap_c0_script_out.isEmpty() )
+      {
+         QString error;
+         if ( us_extrap_c0_write_dat( extrap_c0_script_out, final_name, out_conc_tag, hdr_extra,
+                                      out_q, out_I0, out_I0_err, error ) )
+         {
+            editor_msg( "black", QString( us_tr( "saxs_extrap_c0: wrote %1 points to %2\n" ) )
+                        .arg( out_q.size() ).arg( extrap_c0_script_out ) );
+         }
+         else
+         {
+            editor_msg( "red", QString( us_tr( "saxs_extrap_c0: cannot write output file '%1'\n" ) ).arg( extrap_c0_script_out ) );
+         }
+      }
+      return;
+   }
+
+   // 9. interactive: with the per-q fit viewer requested, the curve is added only when the user
+   //    keeps it there (Keep, or closing the viewer) and is dropped by Discard; otherwise it is
+   //    added now. Either way, the save dialog follows if "Save the extrapolated curve" is on.
 
    if ( show_regplots && reg_q.size() )
    {
@@ -2224,6 +2939,21 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          reciprocal ? us_tr( "concentration / I(q)   (c/I)" )
                     : ( all_istar ? us_tr( "I*(q)  (normalized)" )
                                   : us_tr( "I(q)/concentration" ) );
+
+      US_Hydrodyn_Saxs_Extrap_C0_Pending pending;
+      pending.base_name   = base_name;
+      pending.q           = out_q;
+      pending.I           = out_I0;
+      pending.I_err       = out_I0_err;
+      pending.conc_tag    = out_conc_tag;
+      pending.psv         = common_psv;
+      pending.i0se        = common_i0se;
+      pending.hdr_extra   = hdr_extra;
+      pending.msg_tail    = msg_tail;
+      pending.offer_save  = save_curve;
+      pending.curve_names = fit_names;
+      pending.curve_concs = concs;
+      pending.model_desc  = fit_name;
 
       US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot *regplot =
          new US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot(
@@ -2237,9 +2967,21 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                                                     excl_conc,                     // QC-excluded curve conc (<0 => none)
                                                     reg_excl_y,                    // its per-q y on the plot axis
                                                     QString( excl_name ).remove( QRegularExpression( "^\"" ) ).remove( QRegularExpression( "\"$" ) ),
+                                                    reg_ci,                        // curve of each fitted point
+                                                    reg_sx, reg_sy, reg_se, reg_sci, // measured values of replaced spikes
+                                                    pending,
+                                                    this,                          // SAS window: adds the kept curve
                                                     this
                                                     );
       regplot->setAttribute( Qt::WA_DeleteOnClose );
       regplot->show();
+      editor_msg( "black",
+                 QString( us_tr( "Per-q fit viewer open: \"%1\" is added to the plot when you press Keep (or close the "
+                                 "viewer); Discard drops it.\n" ) ).arg( base_name ) );
+   }
+   else
+   {
+      extrap_c0_commit( base_name, out_q, out_I0, out_I0_err, out_conc_tag,
+                        common_psv, common_i0se, hdr_extra, save_curve, msg_tail );
    }
 }

@@ -129,6 +129,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       friend class US_Hydrodyn_SasOptionsSaxs;
 
       friend class US_Hydrodyn_Saxs_Iqq_Residuals;
+      friend class US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot;
       friend class US_Hydrodyn;
       friend class US_Hydrodyn_Dad;
       friend class US_Hydrodyn_Dad_Conc;
@@ -814,6 +815,22 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
                           vector < double > q,
                           QString filename );
 
+      // Add a finished extrapolated curve to the plot (its name is made unique at this point),
+      // record its concentration tag / psv / i0se and, when offer_save is set, ask where to save it.
+      // Called at the end of do_extrap_c0(), or later by the per-q fit viewer when the user keeps the
+      // curve. hdr_extra is appended to the saved file's header line; msg_tail completes the
+      // "Added zero-concentration curve" log line. Returns the name the curve was plotted under.
+      QString extrap_c0_commit( QString           base_name,
+                                vector < double > q,
+                                vector < double > I,
+                                vector < double > I_err,
+                                double            conc_tag,
+                                double            psv,
+                                double            i0se,
+                                QString           hdr_extra,
+                                bool              offer_save,
+                                QString           msg_tail );
+
       // ---- extrapolate-to-zero-concentration scripting (us3_somo -g "saxs_extrap_c0 <ctrl>") ----
       // Non-interactive driver + state: when extrap_c0_script is set, load_iqq_csv() and
       // do_extrap_c0() skip their two modal dialogs and read every choice from these members,
@@ -841,6 +858,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       bool    extrap_c0_script_merge_sd_join = false;      // scale spliced reference SDs to join the extrapolation's
       bool    extrap_c0_script_se_repair     = true;       // low-q SD correction of the output errors
       double  extrap_c0_script_se_repair_sigma = 3e0;      // ...only for points > this many sd off the trend
+      bool    extrap_c0_script_spike_reject  = false;      // drop single-point spikes (test along q, <= 1 per q)
+      double  extrap_c0_script_spike_sigma   = 6e0;        // ...points > this many sd off their own curve's neighbours
+      bool    extrap_c0_script_ref_scatter   = false;      // splice the curve whose point scatter best matches
 
       bool iq_plot_experimental_and_calculated_present();
       bool iq_plot_only_experimental_present();

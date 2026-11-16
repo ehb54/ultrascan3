@@ -211,6 +211,23 @@ the measured reference curve has; it is reported in the log, and the output name
 about 6 (nearly the same whether 25, 50 or 100 points were used), lowering the share of the total fit
 weight above the merge from 99.6% to 89%.
 
+<p><b>Splice the curve whose point scatter best matches the extrapolation's</b> (off by default;
+only with the splice, and not together with an explicitly chosen reference curve). The extrapolation
+always scatters more than any single measured curve, so a spliced high-concentration reference looks
+much cleaner above the merge than the extrapolation does below it. With this box checked, the spliced
+curve is chosen <i>after</i> the extrapolation: each curve is scaled onto the extrapolation (the
+median ratio over the 25 points below the merge, as for the continuity factor), its point-to-point
+scatter about a local quadratic is measured over the 50 points below the merge, and the curve whose
+scatter is closest to the extrapolation's own is spliced. The merge point is located first (or pinned
+by the switchover field), so the choice cannot move it, and the absolute scale stays on the reference
+curve. The log lists, for every curve, its scatter relative to the extrapolation's and how far its
+high-<i>q</i> <i>I</i>/<i>c</i> departs from the most concentrated curve's (relative to just below the
+merge), and warns when the chosen curve departs by more than 5%. That check matters: the curve whose
+scatter matches is usually one of the most dilute, and on real series those often carry their own
+background at high <i>q</i> (buffer subtraction), which the splice then copies into the output. When
+the chosen curve is not the reference, the output name gains <code>_refsc</code><i>c</i> (its
+concentration, decimal written as an underscore).</p>
+
 <p>Whenever a splice is made, the log reports the <b>splice check</b>: the inverse-variance mean
 ratio of extrapolation to reference, with its standard error, over the points just below the
 merge. If the two differ by more than 5% and more than three standard errors, a warning says so,
@@ -312,8 +329,10 @@ limit (see <code>outlier_max</code> below), in which case detection is simply re
 cleaned set until no curve qualifies. Raising it matters when more than one curve is contaminated,
 because a single pass judges every curve against a trend that still contains the other offender, so
 the nominee itself can be the wrong curve. Detection is at the curve level, never per-<i>q</i>:
-per-<i>q</i> outlier trimming would overfit at these small point counts and stitch discontinuities
-into the output, whereas a bad concentration is a whole-curve property. The two fields tune it:
+per-<i>q</i> outlier trimming across the concentrations would overfit at these small point counts and
+stitch discontinuities into the output, whereas a bad concentration is a whole-curve property (single
+bad points are the job of the spike check below, which looks along each curve and replaces rather than
+removes). The two fields tune it:
 <b>Outlier threshold (sigma)</b> (default 3.0) is the mean <i>studentized</i> residual across <i>q</i>
 above which a curve is flagged, and <b>Min &chi;&sup2; gain to discard</b> (default 1.5) is the
 factor by which removing the curve must improve the pooled reduced <i>&chi;</i><sup>2</sup> before
@@ -347,6 +366,38 @@ has essentially <i>no</i> information with which to judge it &mdash; its residua
 however it is scaled. No residual-based test, corrected or not, can assess such a curve. Judging it
 requires information from outside the concentration regression, for example comparing the molecular
 weight deduced from each curve's <i>I</i>(0) against the known value.</p>
+
+<p><b>Replace single-point spikes in the fits</b> (checkbox, off by default, with a <b>Spike
+threshold (sigma)</b> field, default 6.0). This guards against clear spikes &mdash; a single bad
+point on one curve. Each point is compared with a local quadratic fitted through its own curve's
+neighbours in <i>q</i> (&plusmn;10 points, the point itself left out), in units of its own error bar
+(the error of the local fit included); a curve without usable error bars is judged against a robust
+local spread of its residuals instead. A point beyond the threshold is <b>replaced, for the
+concentration fit only, by that local-fit value</b>, keeping its own error bar. The check runs after
+the outlier-concentration QC, on the curves being fitted; the input curves themselves are not
+changed. The measured values of replaced points are drawn in <span style="color:#CC00CC">magenta</span>
+in the per-<i>q</i> regression plots (the fit uses the ordinary point at the same concentration), the
+log reports how many were replaced (per curve, with the first few listed, and how many <i>q</i> had
+more than one curve flagged &mdash; a spike shared by several curves, e.g. in a common buffer, or a
+sharp feature), and the output name gains <code>_spk</code><i>N</i> for <i>N</i> points (plus
+<code>s</code><i>x</i> for a non-default threshold, e.g. <code>_spk2s5_0</code>). With the splice on, a
+spike on the spliced curve above the merge would be copied straight into the output, so that
+<i>q</i> is left out of the output instead (and counted in <i>N</i>).</p>
+
+<p><i>Why replace rather than leave the point out:</i> leaving it out changes the set of curves
+fitted at that one <i>q</i>. Where the concentration model does not follow the series exactly (for
+example with compounded dilution errors), a fit without one of the curves, especially the most
+concentrated one, differs from its neighbours by that misfit: on a five-curve lysozyme series a
++10&nbsp;SD spike on the most concentrated curve moved the additive result at its <i>q</i> by
+&minus;0.9&nbsp;SD, but leaving the point out moved it by +2.3&nbsp;SD. Replacing it keeps every
+<i>q</i> on the same curves. <i>Why along each curve rather than across the concentrations:</i> in
+the concentration fit the most concentrated curve pulls the line onto itself, so a spike on it shows
+up only once it is many times its own error bar (on the same series, about 30&ndash;50&nbsp;SD for the
+straight-line fits at a 6-SD threshold and well over 100 for the 2nd-order virial), and points on the
+end curves are flagged where the line simply misfits the concentration trend. Along the curve, at the
+default threshold a spike of about 6.4 of its own SDs is caught half the time and one of 8&nbsp;SDs
+about 95% of the time, on any curve; on that lysozyme series no point of any curve was more than
+4.2&nbsp;SD off its neighbours, so nothing was replaced.</p>
 
 <p><b>Low-q SD correction</b> (checkbox, on by default, with a <b>threshold (sigma)</b> field,
 default 3.0; applies to any model). This acts on the <i>extrapolated</i> curve's error bars only,
@@ -401,8 +452,23 @@ readout also gives the recovered forward scatter <i>I</i>(0)&nbsp;=&nbsp;1/<i>u<
 propagated error; the 2nd-order virial draws its fitted parabola rather than a straight line.
 When the manual fit-broadening window is active, the fit line uses the smoothed slope &mdash; a
 note above the plot says so &mdash; so it may not pass exactly through the raw per-<i>q</i>
-intercept. This is a diagnostic view; it does not add
-or change any plotted curve.</p>
+intercept. The measured value of a point replaced as a single-point spike (see the spike check) is
+drawn in <span style="color:#CC00CC">magenta</span> with its error bar, so it is visible why it was
+replaced; the fit uses the ordinary point at the same concentration, and the readout notes it. An
+outlier-QC discarded curve is drawn as a red <b>x</b>.</p>
+
+<p><b>Keep, Discard and Save CSV.</b> While the regression plots are open, the extrapolated curve is
+<i>not yet</i> added to the plot, so the fits can be inspected first. <b>Keep</b> closes the window and
+adds the curve (closing the window any other way does the same); <b>Discard</b> closes it without adding
+anything. <b>Save CSV</b> writes the per-<i>q</i> fits to a file (default name: the curve name plus
+<code>_fits.csv</code>, in the folder the curves were last loaded from). Its comment lines (starting
+with <code>#</code>) give the curve name, model, fit axis, switchover <i>q</i> and each input curve with
+its concentration; then one row per <i>q</i> holds the fit intercept with its error, the slope (and
+quadratic coefficient for the 2nd-order virial), the number of curves fitted, the extrapolated value
+and error as added (after any splice and scale), and for every curve its value on the fit axis, its
+error and its status (<code>fit</code>; <code>replaced</code> for a spike fitted at its neighbours'
+value, with the measured value in an extra column; blank where it has no value at that <i>q</i>), plus
+a column for an outlier-QC discarded curve.</p>
 
 <p><b>A negative <i>R</i>&sup2; is expected at some <i>q</i> and is not an error.</b>
 <i>R</i>&sup2; here is the fraction of the points' variance explained <i>by the plotted line</i>
@@ -420,16 +486,23 @@ below zero. With only a few concentrations the statistic is noisy in any case; j
 extrapolation on the reduced &chi;&sup2; and the overall Guinier quality check as well, not on a
 single <i>q</i>'s <i>R</i>&sup2;.</p>
 
-<!-- IMAGE NEEDED (optional): the per-q regression pop-up showing points with error
-     bars, the fit line, the c=0 intercept, and the scroll wheel -->
 <center><img SRC="somo_saxs_extrap_c0_regplot.png" BORDER="1" ALT="Per-q regression pop-up"></center>
+<p><center><i>The per-q regression pop-up (2nd-order virial) at a q where a +10&nbsp;SD spike was put on the
+most concentrated curve: its measured value (magenta) was replaced in the fit by its neighbours'
+local-fit value (cyan, on the curve).</i></center></p>
 
 <h3><center>Output</center></h3>
 
-<p>A new curve is added to the plot. Its name is the longest common prefix of the
+<p>A new curve is added to the plot (with the per-<i>q</i> regression plots open, when you press
+<b>Keep</b> there). Its name is the longest common prefix of the
 selected curve names followed by <code>_extrap_c0</code> and tokens encoding the choices
 that produced it &mdash; the concentration model
-(<code>_add</code>&nbsp;/&nbsp;<code>_recip</code>&nbsp;/&nbsp;<code>_virial2</code>), then
+(<code>_add</code>&nbsp;/&nbsp;<code>_recip</code>&nbsp;/&nbsp;<code>_virial2</code>), then the
+curves used: <code>_n</code><i>k</i><code>_c</code><i>max</i><code>-</code><i>min</i> for <i>k</i>
+curves with concentrations from <i>max</i> down to <i>min</i>, after any outlier-QC discard, written
+with one decimal and <code>p</code> for the decimal point (e.g. <code>_n5_c3p5-0p2</code> for 3.45 to
+0.216&nbsp;mg/mL; a value that would read <code>0p0</code> keeps enough decimals to show its first
+digit, e.g. <code>0p04</code>), then
 <code>_abs</code> if on the reference scale and <code>_merge</code> if the reference was
 spliced &mdash; and, when spliced, the merge point <i>q</i> (with the decimal written as an
 underscore, e.g. <code>_merge_q0_0898</code> for a cutover at <i>q</i>&nbsp;=&nbsp;0.0898)
@@ -437,16 +510,18 @@ followed by <code>_sdj</code> if the reference's error bars were scaled to join 
 <code>_fb</code><i>N</i> for a manual fit-broadening window, <code>_nolqsd</code> if the low-<i>q</i>
 SD correction was off or <code>_lqsd</code><i>x</i> for a non-default threshold, <code>_refc</code><i>c</i> if a
 reference curve was chosen explicitly (with its concentration, decimal written as an underscore),
+<code>_refsc</code><i>c</i> if another curve was spliced because its point scatter matched best,
 an input-SD recompute if one was applied
 (<code>_riC</code>&nbsp;/&nbsp;<code>_riN</code>&nbsp;/&nbsp;<code>_riI</code>), the
 output SD-reassessment mode if one was applied
 (<code>_sdC</code>&nbsp;/&nbsp;<code>_sdN</code>&nbsp;/&nbsp;<code>_sdI</code>), and
 <code>_qc</code><i>N</i> if outlier concentrations were discarded (with <code>_rawres</code> appended
 when the leverage correction was disabled, since that can change <i>which</i> curve was dropped),
+<code>_spk</code><i>N</i> if single-point spikes were replaced,
 and <code>_uw</code> if the
 regression was unweighted (curve errors not used), so a
 run's cutover is visible in its name (for example
-<code>Sub_..._extrap_c0_recip_abs_merge_q0_0898</code>). Distinct selections
+<code>Sub_..._extrap_c0_recip_n4_c6p8-0p9_abs_merge_q0_0898</code>). Distinct selections
 therefore produce distinct, self-describing names; a genuine repeat of the same configuration
 gets a numeric suffix. Curves with a concentration of zero are excluded from the fit, and any
 <i>q</i> point with fewer than two usable values is skipped; the editor window reports how many
@@ -458,7 +533,19 @@ used, its identity and the merge point.</p>
 the plot, so that a subsequent Guinier / molecular-weight analysis of it uses the correct values
 rather than the program defaults, and in the saved file's header, so they round-trip. These
 values are also preserved on the input curves themselves (re-plotting no longer resets them to the
-defaults).</p>
+defaults). Sending curves from this window to <b>HPLC/KIN</b> carries each curve's explicit
+<code>PSV:</code> and <code>I0se:</code> values along with its concentration, so a curve saved from
+there keeps them too (values that are only the program defaults are not passed on).</p>
+
+<p><b>Save the extrapolated curve to a file</b> (checkbox, on by default). Once the curve is added
+(after <b>Keep</b> when the regression plots are open), a file dialog asks where to save it, starting
+in the folder the curves were last loaded from, with the curve name as the file name; cancel it to
+skip saving. The file has the same three-column <i>q</i>&nbsp;/&nbsp;<i>I</i>(<i>q</i>)&nbsp;/&nbsp;sd
+format as the inputs, and its header line carries the curve name, <code>Conc:</code>, the series'
+<code>PSV:</code>&nbsp;/&nbsp;<code>I0se:</code> when present, and the curves used with their
+concentrations (<code>Inputs (</code><i>k</i><code>): </code><i>name</i> <i>c</i>&nbsp;mg/mL, ...),
+plus any curve the outlier QC discarded. The scripted interface writes the same file for its
+<code>output</code> directive.</p>
 
 <p><b>Guinier quality check.</b> After the curve is produced, the editor window reports a
 Guinier fit of it (a straight-line fit of ln&nbsp;<i>I</i> versus <i>q</i><sup>2</sup> over
@@ -504,8 +591,9 @@ are comments). The <code>input</code> and <code>output</code> values may contain
 <code>Conc:</code> header); repeat for each curve (at least three). The concentration is read
 from each file's header, as are the optional <code>PSV:</code> and <code>I0se:</code> tags.<br>
 <code>output&nbsp;&nbsp;<i>path</i></code> &mdash; where the extrapolated curve is written
-(same three-column format; the header carries <code>Conc:</code>, and the series'
-<code>PSV:</code>&nbsp;/&nbsp;<code>I0se:</code> when present, so it round-trips).<br>
+(same three-column format; the header carries <code>Conc:</code>, the series'
+<code>PSV:</code>&nbsp;/&nbsp;<code>I0se:</code> when present, so it round-trips, and the curves
+used with their concentrations).<br>
 <code>common_crop&nbsp;0|1</code> &mdash; crop the inputs to their shared <i>q</i>-overlap before
 loading (default&nbsp;1). Curves that sit on one detector grid but were cut at different low <i>q</i>
 then load as identical grids with no interpolation; without it the loader resamples the mismatched
@@ -523,6 +611,12 @@ affected curves are named in the log. Set 0 to reproduce the raw, unrepaired beh
 locating it automatically (requires <code>merge_ref&nbsp;1</code>; blank or 0 = automatic).<br>
 <code>merge_sd_join&nbsp;0|1</code> (default&nbsp;0) &mdash; scale the spliced reference's error bars
 to join the extrapolation's at the merge (requires <code>merge_ref&nbsp;1</code>).<br>
+<code>reference_by_scatter&nbsp;0|1</code> (default&nbsp;0) &mdash; splice the curve whose point
+scatter best matches the extrapolation's (requires <code>merge_ref&nbsp;1</code>; ignored with an
+explicit <code>reference</code>).<br>
+<code>spike_reject&nbsp;0|1</code> (default&nbsp;0), <code>spike_sigma&nbsp;<i>x</i></code>
+(default&nbsp;6.0) &mdash; replace single-point spikes in the per-<i>q</i> fits, and the
+threshold.<br>
 <code>ref_scale&nbsp;0|1</code>, <code>merge_ref&nbsp;0|1</code> &mdash; output on the reference
 absolute scale, and splice the reference above the merge point.<br>
 <code>sd_weights&nbsp;0|1</code> (default&nbsp;1), <code>fit_broaden&nbsp;<i>N</i></code>
@@ -615,7 +709,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on November 13, 2026.
+Last modified on November 16, 2026.
 </font>
 </body>
 </html>

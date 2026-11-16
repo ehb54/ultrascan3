@@ -6574,6 +6574,16 @@ void US_Hydrodyn_Saxs::saxs_hplc()
       }
       double this_conc, this_psv, this_I0se;
       get_conc_csv_values( qsl_plotted_iq_names[ i ], this_conc, this_psv, this_I0se );
+      // carry psv / I0se along with the concentration, so a curve saved from HPLC/KIN keeps its PSV: and
+      // I0se: header tokens. conc_csv holds the global defaults for a curve that never had them, so pass
+      // only values that differ from the defaults (the same rule the extrapolation uses); otherwise
+      // every transferred curve would be saved with default values written as if they were measured.
+      auto differs = []( double a, double b )
+      {
+         return qAbs( a - b ) > 1e-6 + 1e-4 * qMax( qAbs( a ), qAbs( b ) );
+      };
+      double pass_psv  = differs( this_psv,  our_saxs_options->psv    ) ? this_psv  : -1e0;
+      double pass_I0se = differs( this_I0se, our_saxs_options->I0_exp ) ? this_I0se : -1e0;
       if ( plotted_I_error[ i ].size() == plotted_I[ i ].size() )
       {
          ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->add_plot( qsl_plotted_iq_names[ i ],
@@ -6582,14 +6592,18 @@ void US_Hydrodyn_Saxs::saxs_hplc()
                                                                    plotted_I_error[ i ],
                                                                    false,
                                                                    true,
-                                                                   this_conc );
+                                                                   this_conc,
+                                                                   pass_psv,
+                                                                   pass_I0se );
       } else {
          ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->add_plot( qsl_plotted_iq_names[ i ],
                                                                    plotted_q[ i ],
                                                                    plotted_I[ i ],
                                                                    false,
                                                                    true,
-                                                                   this_conc );
+                                                                   this_conc,
+                                                                   pass_psv,
+                                                                   pass_I0se );
       }
    }
    ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->update_enables();

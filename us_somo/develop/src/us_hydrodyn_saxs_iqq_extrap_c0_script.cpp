@@ -72,6 +72,18 @@
 //                                      because the extreme-concentration curve has leverage ~1 and
 //                                      the fit passes essentially through it. A non-matching value
 //                                      is reported, never silently ignored.)
+//   reference_by_scatter 0 | 1        (splice, instead of the reference, the curve whose point scatter
+//                                      -- scaled onto the extrapolation -- best matches the
+//                                      extrapolation's over the 50 points below the switchover. The
+//                                      switchover is located first (or pinned by merge_q); the absolute
+//                                      scale stays on the reference. Requires merge_ref 1; ignored with
+//                                      an explicit reference. Default 0.)
+//   spike_reject    0 | 1             (replace single-point spikes in the per-q fits: a point more than
+//                                      spike_sigma of its own SDs off a local fit through its own curve's
+//                                      neighbours in q is fitted at that local-fit value (own SD kept); a
+//                                      spike on the spliced curve above the switchover is dropped from
+//                                      the output. Default 0.)
+//   spike_sigma     <double>          (spike threshold in SDs; default 6.0, must be > 0)
 //   conc    <curve-name> <double>     (optional; override a curve's concentration. name may be
 //                                      quoted; matched against the plotted/dequoted curve name)
 //   dump_conc_csv   <path>            (optional; after the run, write the conc_csv table as
@@ -240,6 +252,9 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
    extrap_c0_script_merge_sd_join  = false;
    extrap_c0_script_se_repair      = true;
    extrap_c0_script_se_repair_sigma = 3e0;
+   extrap_c0_script_spike_reject   = false;
+   extrap_c0_script_spike_sigma    = 6e0;
+   extrap_c0_script_ref_scatter    = false;
    extrap_c0_script_conc.clear();
 
    QRegularExpression rx_key( "^\\s*(\\S+)\\s+(.*\\S)\\s*$" );
@@ -312,6 +327,15 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
       else if ( key == "merge_q" )         { extrap_c0_script_merge_q       = val.toDouble(); }
       else if ( key == "merge_sd_join" )   { extrap_c0_script_merge_sd_join = ( val.toInt() != 0 ); }
       else if ( key == "se_repair" )       { extrap_c0_script_se_repair     = ( val.toInt() != 0 ); }
+      else if ( key == "reference_by_scatter" ) { extrap_c0_script_ref_scatter = ( val.toInt() != 0 ); }
+      else if ( key == "spike_reject" )    { extrap_c0_script_spike_reject  = ( val.toInt() != 0 ); }
+      else if ( key == "spike_sigma" )
+      {
+         bool ok_d = false;
+         double d = val.toDouble( &ok_d );
+         if ( ok_d && d > 0e0 ) { extrap_c0_script_spike_sigma = d; }
+         else { TSO << QString( "saxs_extrap_c0: line %1: spike_sigma must be a number > 0, got '%2'\n" ).arg( lineno ).arg( val ); parse_ok = false; }
+      }
       else if ( key == "se_repair_sigma" )
       {
          bool ok_d = false;

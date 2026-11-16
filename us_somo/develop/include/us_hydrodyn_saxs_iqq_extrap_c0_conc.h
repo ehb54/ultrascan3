@@ -52,6 +52,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
                                           QString *out_reference,
                                           double *out_merge_q,
                                           bool *out_merge_sd_join,
+                                          bool *out_spike_reject,
+                                          double *out_spike_sigma,
+                                          bool *out_ref_scatter,
+                                          bool *out_save_curve,
                                           void *us_hydrodyn,
                                           QWidget *p = 0,
                                           const char *name = 0
@@ -69,6 +73,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       QLabel       *lbl_merge_q;
       QLineEdit    *le_merge_q;
       QCheckBox    *cb_merge_sd_join;
+      QCheckBox    *cb_ref_scatter;
+      QCheckBox    *cb_spike;
+      QLabel       *lbl_spike_sigma;
+      QLineEdit    *le_spike_sigma;
+      QCheckBox    *cb_save_curve;
       QCheckBox    *cb_se_repair;
       QLabel       *lbl_se_repair_sigma;
       QLineEdit    *le_se_repair_sigma;
@@ -117,6 +126,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       QString      *out_reference;
       double       *out_merge_q;
       bool         *out_merge_sd_join;
+      bool         *out_spike_reject;
+      double       *out_spike_sigma;
+      bool         *out_ref_scatter;
+      bool         *out_save_curve;
       void         *us_hydrodyn;
 
       bool          disable_updates;
@@ -134,6 +147,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       void refresh_model_enabled();
       void refresh_recompute_enabled();
       void refresh_se_repair_enabled();
+      void refresh_spike_enabled();
       void ok();
       void cancel();
       void help();
