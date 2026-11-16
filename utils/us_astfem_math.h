@@ -54,6 +54,13 @@ class US_UTIL_EXTERN US_AstfemMath
       //!          timestate could be written
       static int         timestate_from_speedsteps( US_SimulationParameters& simparams, US_DataIO::RawData& sim_data );
 
+      //! \brief Templates for the per-call timestate directory, in the order tried
+      //! \param base     The configured temporary directory
+      //! \param fallback The system temporary directory
+      //! \returns One template per non-empty, distinct directory; an empty
+      //!          directory never yields a template at the filesystem root
+      static QStringList timestate_dir_templates( const QString& base, const QString& fallback );
+
       //! \brief Determine if first time step's acceleration is too low
       //! \param speedsteps  Vector of speed steps
       //! \param min_accel   Minimum reasonable acceleration value
