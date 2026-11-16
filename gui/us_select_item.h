@@ -61,6 +61,10 @@ class US_GUI_EXTERN US_SelectItem : public US_WidgetsDialog
 
       QStringList    itemlist;    //!< List of column-0 item text
 
+      //! Index into items of the record shown in a table row; kept on the
+      //! row's column-0 item so it survives sorting and filtering.
+      int                    source_index( int ) const;
+
       bool           multi_sel;   //!< Flag: multiple selections enabled?
       bool           deleted_button; //If Delete button is present
       bool           deleted_button_autoflow; //If Delete Autoflow button is present

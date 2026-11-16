@@ -404,6 +404,8 @@ void US_SelectItem::list_data()
       // Set the column 0 name field
       //tw_data->setItem( kk, 0, new QTableWidgetItem( iname ) );
       tw_data->setItem( kk, 0, new QTableWidgetItem( items[ ii ][ 0 ] ) );
+      // Labels need not be unique, so keep the record index with the row
+      tw_data->item( kk, 0 )->setData( Qt::UserRole, ii );
 
       //qDebug() << "4a: autoflow_da, items[ ii ][ ncols -1 ]: " << autoflow_da << "," <<  items[ ii ][ ncols -1 ];
       
@@ -461,6 +463,20 @@ qDebug() << "SelI: listd: adj tw size" << tw_data->size();
 qDebug() << "SelI: listd: adj ma size" << size();
 }
 
+// Index into items of the record shown in a table row
+int US_SelectItem::source_index( int row ) const
+{
+   const QTableWidgetItem* twi = tw_data->item( row, 0 );
+   if ( twi == nullptr )
+   {
+      return 0;
+   }
+
+   bool      ok    = false;
+   const int index = twi->data( Qt::UserRole ).toInt( &ok );
+   return ( ok && index >= 0 && index < items.count() ) ? index : qMax( 0, itemlist.indexOf( twi->text() ) );
+}
+
 // Cancel button:  no item index(es) returned
 void US_SelectItem::cancelled()
 {
@@ -491,7 +507,7 @@ void US_SelectItem::accepted()
          int irow          = twi->row();
          twi               = tw_data->item( irow, 0 );
 
-         (*selxsP) << qMax( 0, itemlist.indexOf( twi->text() ) );
+         ( *selxsP ) << source_index( irow );
       }
    }
 
@@ -501,8 +517,7 @@ void US_SelectItem::accepted()
       int irow          = twi->row();
       twi               = tw_data->item( irow, 0 );
 
-      (*selxP)          = qMax( 0, itemlist.indexOf( twi->text() ) );
-
+      ( *selxP ) = source_index( irow );
    }
 
    
@@ -547,9 +562,9 @@ void US_SelectItem::deleted_autoflow()
    QTableWidgetItem* twi  = selitems.at( 0 );
    int irow          = twi->row();
    twi               = tw_data->item( irow, 0 );
-   
-   AutoflowRow            = qMax( 0, itemlist.indexOf( twi->text() ) );
-   
+
+   AutoflowRow = source_index( irow );
+
    AutoflowID = items[ AutoflowRow ][ 0 ];
 
    //Attempt autoflow record deletion:
@@ -680,9 +695,9 @@ void US_SelectItem::deleted()
    QTableWidgetItem* twi  = selitems.at( 0 );
    int irow          = twi->row();
    twi               = tw_data->item( irow, 0 );
-   
-   ProtRow            = qMax( 0, itemlist.indexOf( twi->text() ) );
-   
+
+   ProtRow = source_index( irow );
+
    ProtID = items[ ProtRow ][ 2 ];
 
    //Attempt protocol deletion:
@@ -790,9 +805,9 @@ void US_SelectItem::set_unset_failed_autoflow()
    int irow          = twi->row();
    failed_run_row    = irow;
    twi               = tw_data->item( irow, 0 );
-   
-   AutoflowRow            = qMax( 0, itemlist.indexOf( twi->text() ) );
-   
+
+   AutoflowRow = source_index( irow );
+
    AutoflowID = items[ AutoflowRow ][ 0 ];
 
    //
