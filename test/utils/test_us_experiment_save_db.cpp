@@ -120,7 +120,6 @@ TEST_F( ExperimentSaveDb, SaveCreatesTheExperimentAndItsSpeedSteps )
       EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 44 ) );
       expectInfoAndStepDelete( IUS_DB2::NOROWS );
       expectWrite( "new_speedstep", step, IUS_DB2::OK );
-      EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 7 ) );
    }
    ASSERT_EQ( IUS_DB2::OK, save( false ) );
    EXPECT_EQ( 44, experiment.expID );
@@ -153,7 +152,6 @@ TEST_F( ExperimentSaveDb, SaveUpdatesAStoredRunOnlyWhenAllowed )
       expectWrite( "update_experiment", written, IUS_DB2::OK );
       expectInfoAndStepDelete( IUS_DB2::OK );
       expectWrite( "new_speedstep", step, IUS_DB2::OK );
-      EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 7 ) );
    }
    ASSERT_EQ( IUS_DB2::OK, save( true ) );
    EXPECT_EQ( ( QStringList{ "update_experiment", "44", kExperimentGuid, "5", "run-1" } ), written.mid( 0, 5 ) );
