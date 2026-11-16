@@ -371,14 +371,39 @@ DbgLv(1) << "RSA:calc: SSS:    tf tl wf wl" << time_first << time_last << w2t_fi
    }
 DbgLv(1) << "RSA:calc: strch_rot" << strch_rot << "mspd_data" << mspd_data;
 
-   //----------------------------------------------------------------------------
-   // For each component vector find the scans. "af_data" i.e. scans on the
-   // experimental grid or simdata i.e. scans on the simulation grid as required.
-   // Here size_cv refers to  number of components in the component vector.
-   // ---------------------------------------------------------------------------
-
-   for ( int cc = 0; cc < size_cv; cc++ )
+// A composite simulation contains scans from several speed steps. The
+// generic interpolator tolerates a few scans beyond its simulated time
+// range; for sparse multi-speed data those are scans of the NEXT step,
+// and extrapolating into them adds invalid signal a second time.
+auto interpolate_step =
+   [&]( US_AstfemMath::MfemData& data, US_AstfemMath::MfemData& simulated, const US_SimulationParameters::SpeedProfile& step )
+{
+   if ( !mspd_data )
    {
+      return US_AstfemMath::interpolate( data, simulated, use_time );
+   }
+
+   int first = 0;
+   while ( first < data.scan.size() && data.scan[first].time < step.time_first )
+   {
+      first++;
+   }
+   int last = first;
+   while ( last < data.scan.size() && data.scan[last].time <= step.time_last )
+   {
+      last++;
+   }
+   return first == last ? 0 : US_AstfemMath::interpolate( data, simulated, use_time, first, last );
+};
+
+//----------------------------------------------------------------------------
+// For each component vector find the scans. "af_data" i.e. scans on the
+// experimental grid or simdata i.e. scans on the simulation grid as required.
+// Here size_cv refers to  number of components in the component vector.
+// ---------------------------------------------------------------------------
+
+for ( int cc = 0; cc < size_cv; cc++ )
+{
 #ifdef TIMING_RA
 QDateTime clcSt1 = QDateTime::currentDateTime();
 #endif
@@ -689,7 +714,7 @@ totT4+=(clcSt4.msecsTo(clcSt5));
 
             if  ( in_step )
             {
-               US_AstfemMath::interpolate( af_data, simdata, use_time );
+               interpolate_step( af_data, simdata, *sp );
             }
 
             if ( !simout_flag )
@@ -721,7 +746,7 @@ DbgLv(1) << "RSA:emit ccomp: component" << cc+1;
 #endif
       } // Non-interacting case
 
-   } // Model Component loop
+} // Model Component loop
 
 #ifdef TIMING_RA
 QDateTime clcSt6 = QDateTime::currentDateTime();
@@ -1069,7 +1094,7 @@ DbgLv(2) << "RSA:    current_time" << current_time << "fscan lscan"
          if ( ed->scan[ fscan ].time <= sp->time_last  &&
               ed->scan[ lscan ].time >= sp->time_first )
          {
-            US_AstfemMath::interpolate( *ed, simdata, use_time );
+            interpolate_step( *ed, simdata, *sp );
          }
 
          if ( !simout_flag )

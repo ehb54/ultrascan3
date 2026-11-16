@@ -325,6 +325,38 @@ class US_AstfemSimPersistTest : public QObject
          }
       }
 
+      void sparseMultiSpeedScansStayPhysical()
+      {
+         // A three-scan step must not extrapolate into the following step
+         // and add its concentrations a second time. The 1 OD BSA model has
+         // only 1% random/RI noise; allow ample noise margin away from the
+         // meniscus spike and bottom accumulation.
+         for ( int rpm : { 40000, 50000 } )
+         {
+            US_DataIO::RawData data;
+            QCOMPARE( US_DataIO::readRawData( speedDir( rpm ) + "/" + aucName( rpm ), data ), (int) US_DataIO::OK );
+            const double meniscus = attributeOf( speedDir( rpm ) + "/" + editName( rpm ), "meniscus", "radius" ).toDouble();
+            const double bottom   = attributeOf( speedDir( rpm ) + "/" + editName( rpm ), "bottom", "radius" ).toDouble();
+            for ( const US_DataIO::Scan& scan : data.scanData )
+            {
+               for ( int point = 0; point < data.xvalues.size(); point++ )
+               {
+                  if ( data.xvalues[point] < meniscus + 0.05 || data.xvalues[point] > bottom - 0.15 )
+                  {
+                     continue;
+                  }
+                  const double value = scan.rvalues[point];
+                  QVERIFY2( value >= -0.1 && value <= 1.1,
+                            qPrintable( QString( "%1 rpm, t=%2, r=%3: unexpected concentration %4" )
+                                           .arg( rpm )
+                                           .arg( scan.seconds )
+                                           .arg( data.xvalues[point] )
+                                           .arg( value ) ) );
+               }
+            }
+         }
+      }
+
       void riNoiseRecordCoversEachScanOfItsStep()
       {
          for ( int rpm : { 40000, 50000 } )
