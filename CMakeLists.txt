@@ -1697,11 +1697,31 @@ if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
     message(STATUS "  Qt6: ${_LNX_VCPKG_TOOLS_QT6}")
     message(STATUS "  Qt5: ${_LNX_VCPKG_TOOLS_QT5}")
 
+    # The binary and plugin directories of the Qt this build links. A distro
+    # Qt keeps Assistant there; its /usr/bin/assistant is a qtchooser link.
+    set(_lnx_qt_bin_dir "")
+    set(_lnx_qt_plugin_dir "")
+    if(QT6_INSTALL_PREFIX AND QT6_INSTALL_BINS AND QT6_INSTALL_PLUGINS)
+        set(_lnx_qt_bin_dir "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_BINS}")
+        set(_lnx_qt_plugin_dir "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_PLUGINS}")
+    elseif(TARGET Qt5::qmake)
+        get_target_property(_lnx_qt5_qmake Qt5::qmake IMPORTED_LOCATION)
+        execute_process(COMMAND "${_lnx_qt5_qmake}" -query QT_INSTALL_BINS
+            OUTPUT_VARIABLE _lnx_qt_bin_dir
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_QUIET)
+        execute_process(COMMAND "${_lnx_qt5_qmake}" -query QT_INSTALL_PLUGINS
+            OUTPUT_VARIABLE _lnx_qt_plugin_dir
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_QUIET)
+    endif()
+
     find_program(_LNX_ASSISTANT_EXE assistant
         HINTS
             "${_LNX_VCPKG_TOOLS_QT6}"
             "${_LNX_VCPKG_TOOLS_QT5}"
             "${_LNX_VCPKG_TOOLS_QT5B}"
+            "${_lnx_qt_bin_dir}"
             "${Qt6_DIR}/../../../bin"
             "${Qt5_DIR}/../../../bin"
             "$ENV{QTDIR}/bin"
@@ -1739,23 +1759,12 @@ if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
     message(STATUS "vcpkg plugin dir (Linux):     ${_LNX_VCPKG_PLUGIN_DIR}")
     message(STATUS "vcpkg Qt6 plugin dir (Linux): ${_LNX_VCPKG_QT6_PLUGIN_DIR}")
 
-    # The SQLite driver of the Qt this build links, for a Qt that does not
-    # come from vcpkg; Assistant needs it to open manual.qhc.
-    set(_lnx_qt_plugin_dir "")
-    if(QT6_INSTALL_PREFIX AND QT6_INSTALL_PLUGINS)
-        set(_lnx_qt_plugin_dir "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_PLUGINS}")
-    elseif(TARGET Qt5::qmake)
-        get_target_property(_lnx_qt5_qmake Qt5::qmake IMPORTED_LOCATION)
-        execute_process(COMMAND "${_lnx_qt5_qmake}" -query QT_INSTALL_PLUGINS
-            OUTPUT_VARIABLE _lnx_qt_plugin_dir
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-            ERROR_QUIET)
+    # The plugins of the Qt this build links, staged when Qt is not from vcpkg.
+    set(_LNX_QT_PLUGIN_DIR "")
+    if(_lnx_qt_plugin_dir AND IS_DIRECTORY "${_lnx_qt_plugin_dir}")
+        set(_LNX_QT_PLUGIN_DIR "${_lnx_qt_plugin_dir}")
     endif()
-    set(_LNX_QT_SQLITE_PLUGIN "")
-    if(_lnx_qt_plugin_dir AND EXISTS "${_lnx_qt_plugin_dir}/sqldrivers/libqsqlite.so")
-        set(_LNX_QT_SQLITE_PLUGIN "${_lnx_qt_plugin_dir}/sqldrivers/libqsqlite.so")
-    endif()
-    message(STATUS "Qt SQLite driver (Linux):     ${_LNX_QT_SQLITE_PLUGIN}")
+    message(STATUS "Qt plugin dir (Linux):        ${_LNX_QT_PLUGIN_DIR}")
 
     # -------------------------------------------------------------------------
     # Copy assistant into the dev-build bin/ so us_helpdaemon can find it.
@@ -1865,7 +1874,7 @@ if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
                 -DVCPKG_LIB_DIR=${_LNX_VCPKG_LIB_DIR}
                 -DVCPKG_PLUGIN_DIR=${_LNX_VCPKG_PLUGIN_DIR}
                 -DVCPKG_QT6_PLUGIN_DIR=${_LNX_VCPKG_QT6_PLUGIN_DIR}
-                -DQT_SQLITE_PLUGIN=${_LNX_QT_SQLITE_PLUGIN}
+                -DQT_PLUGIN_DIR=${_LNX_QT_PLUGIN_DIR}
                 -DUS3_VERSION_STRING=${US3_VERSION_STRING}
                 -DUS3_LINUX_ARCHIVE_NAME=${US3_LINUX_ARCHIVE_NAME}
                 -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/linux/LinuxDeploy.cmake

@@ -32,7 +32,8 @@ class AppPackageTest(unittest.TestCase):
                   "macos": "libqsqlite.dylib"}[platform]
         for name in (f"plugins/sqldrivers/{plugin}", "plugins/platforms/qwindows.dll",
                      "plugins/platforms/libqcocoa.dylib", "runtime/sqlite3.dll",
-                     f"system-qt/plugins/sqldrivers/{plugin}"):
+                     f"system-qt/plugins/sqldrivers/{plugin}",
+                     "system-qt/plugins/platforms/libqxcb.so"):
             p = src / name
             p.parent.mkdir(parents=True, exist_ok=True)
             p.write_text("fixture")
@@ -43,8 +44,8 @@ class AppPackageTest(unittest.TestCase):
             help_files.append("Assistant.app/Contents/MacOS/Assistant")
         (src / "help.cmake").write_text("\n".join(
             f'file(WRITE "${{OUTPUT}}/{name}" "fixture help")' for name in help_files))
-        # A Qt not from vcpkg has no vcpkg plugin dirs, only its own driver.
-        plugin_args = (f"-DQT_SQLITE_PLUGIN=${{CMAKE_SOURCE_DIR}}/system-qt/plugins/sqldrivers/{plugin}"
+        # A Qt not from vcpkg has no vcpkg plugin dirs, only its own.
+        plugin_args = ("-DQT_PLUGIN_DIR=${CMAKE_SOURCE_DIR}/system-qt/plugins"
                        if system_qt else "-DVCPKG_PLUGIN_DIR=${CMAKE_SOURCE_DIR}/plugins")
         script = {"linux": "LinuxDeploy.cmake", "windows": "WinDeploy.cmake",
                   "macos": "MacDeploy.cmake"}[platform]
@@ -65,7 +66,7 @@ function(file)
         cmake_language(EVAL CODE "${{_call}})")
         if(ARGV0 MATCHES "^(GLOB|GLOB_RECURSE)$")
             set(${{ARGV1}} "${{${{ARGV1}}}}" PARENT_SCOPE)
-        elseif(ARGV0 MATCHES "^(READ|SIZE|STRINGS)$")
+        elseif(ARGV0 MATCHES "^(READ|SIZE|STRINGS|REAL_PATH)$")
             set(${{ARGV2}} "${{${{ARGV2}}}}" PARENT_SCOPE)
         endif()
     endif()
@@ -183,15 +184,25 @@ add_custom_target(package_fixture
                 self.assertEqual("us_protocoldev" in inventory, not apple)
                 self.assertEqual(len(inventory), 62 if apple else 71 if mpi else 70)
 
-    def test_linux_qt_without_vcpkg_stages_sqlite_driver(self):
+    def test_linux_qt_without_vcpkg_stages_its_plugins(self):
         with tempfile.TemporaryDirectory(prefix="us3 package ") as d:
-            _, build, target = self.fixture(d, "linux", system_qt=True)
+            src, build, target = self.fixture(d, "linux", system_qt=True)
+            # A distro's assistant is a symlink to a binary outside the package.
+            help_script = src / "help.cmake"
+            help_script.write_text("\n".join(
+                line for line in help_script.read_text().splitlines() if "/assistant" not in line) +
+                '\nfile(WRITE "${OUTPUT}/../system-qt-bin/assistant" "system assistant")'
+                '\nfile(CREATE_LINK "${OUTPUT}/../system-qt-bin/assistant" "${OUTPUT}/assistant" SYMBOLIC)\n')
             self.run_command("cmake", "--build", str(build), "--target", target)
             archives = list(build.glob("*.tar.xz"))
             self.assertEqual(len(archives), 1)
             with tarfile.open(archives[0]) as archive:
                 names = archive.getnames()
-            self.assertTrue(any(n.endswith("/plugins/sqldrivers/libqsqlite.so") for n in names), names)
+                assistant = archive.getmember("UltraScan3/bin/assistant")
+                self.assertTrue(assistant.isfile(), "assistant is staged as a link")
+                self.assertEqual(archive.extractfile(assistant).read(), b"system assistant")
+            for name in ("plugins/sqldrivers/libqsqlite.so", "plugins/platforms/libqxcb.so"):
+                self.assertIn(f"UltraScan3/{name}", names)
 
     def test_missing_assistant_fails(self):
         with tempfile.TemporaryDirectory() as d:

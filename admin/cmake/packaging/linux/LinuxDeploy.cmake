@@ -32,8 +32,8 @@
 #   VCPKG_PLUGIN_DIR    - vcpkg installed plugins/ dir (Qt5 / legacy layout)
 #   VCPKG_QT6_PLUGIN_DIR - vcpkg Qt6/plugins/ dir (<triplet>/Qt6/plugins);
 #                          preferred over VCPKG_PLUGIN_DIR for Qt6 builds
-#   QT_SQLITE_PLUGIN    - The linked Qt's SQLite driver; staged when the vcpkg
-#                          plugin dirs have none
+#   QT_PLUGIN_DIR       - Plugin dir of the linked Qt; staged when neither
+#                          vcpkg plugin dir exists (a Qt not from vcpkg)
 #   ASSISTANT_EXE       - Path to assistant binary
 #   SOMO_BIN_DIR        - SoMo bin/ directory
 #   SOMO_LIB_DIR        - SoMo lib/ directory
@@ -269,6 +269,11 @@ if(VCPKG_QT6_PLUGIN_DIR AND EXISTS "${VCPKG_QT6_PLUGIN_DIR}")
 elseif(VCPKG_PLUGIN_DIR AND EXISTS "${VCPKG_PLUGIN_DIR}")
     set(_effective_plugin_dir "${VCPKG_PLUGIN_DIR}")
     message(STATUS "[LinuxDeploy] Using legacy plugin dir: ${VCPKG_PLUGIN_DIR}")
+elseif(QT_PLUGIN_DIR AND EXISTS "${QT_PLUGIN_DIR}")
+    # qt.conf points Qt at plugins/ only, so a Qt not from vcpkg needs its
+    # own plugins staged too.
+    set(_effective_plugin_dir "${QT_PLUGIN_DIR}")
+    message(STATUS "[LinuxDeploy] Using the linked Qt's plugin dir: ${QT_PLUGIN_DIR}")
 endif()
 
 if(_effective_plugin_dir)
@@ -276,7 +281,7 @@ if(_effective_plugin_dir)
     file(COPY "${_effective_plugin_dir}/" DESTINATION "${S_PLUG}")
 else()
     message(STATUS "[LinuxDeploy] No Qt plugin dir found -- platform plugins not bundled")
-    message(STATUS "  Set VCPKG_QT6_PLUGIN_DIR (Qt6) or VCPKG_PLUGIN_DIR (Qt5).")
+    message(STATUS "  Set VCPKG_QT6_PLUGIN_DIR (Qt6), VCPKG_PLUGIN_DIR (Qt5) or QT_PLUGIN_DIR.")
     message(STATUS "  The app requires platform plugins (libqxcb.so / libqwayland*.so) to run.")
 endif()
 
@@ -308,13 +313,6 @@ if(NOT EXISTS "${S_PLUG}/sqldrivers/libqsqlite.so")
             break()
         endif()
     endforeach()
-    # A Qt that does not come from vcpkg: use the driver of the Qt the
-    # build links.
-    if(NOT _QSQLITE_FOUND AND QT_SQLITE_PLUGIN AND EXISTS "${QT_SQLITE_PLUGIN}")
-        message(STATUS "[LinuxDeploy] Copying the linked Qt's SQLite driver: ${QT_SQLITE_PLUGIN}")
-        file(COPY_FILE "${QT_SQLITE_PLUGIN}" "${S_PLUG}/sqldrivers/libqsqlite.so")
-        set(_QSQLITE_FOUND TRUE)
-    endif()
     if(NOT _QSQLITE_FOUND)
         message(WARNING "[LinuxDeploy] sqldrivers/libqsqlite.so not found -- install Qt's SQLite driver; Assistant needs it to open manual.qhc")
     endif()
@@ -378,15 +376,18 @@ endif()
 #    handled by the sqldrivers safety-net in section 5b above.
 # =========================================================================
 if(ASSISTANT_EXE AND EXISTS "${ASSISTANT_EXE}")
-    message(STATUS "[LinuxDeploy] Copying assistant -> bin/")
-    file(COPY "${ASSISTANT_EXE}" DESTINATION "${S_BIN}"
+    # Copy the binary itself; a symlink would point outside the package.
+    file(REAL_PATH "${ASSISTANT_EXE}" _ASSISTANT_REAL)
+    message(STATUS "[LinuxDeploy] Copying assistant -> bin/: ${_ASSISTANT_REAL}")
+    set(_ASSISTANT_STAGED "${S_BIN}/assistant")
+    file(COPY_FILE "${_ASSISTANT_REAL}" "${_ASSISTANT_STAGED}")
+    file(CHMOD "${_ASSISTANT_STAGED}"
          FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
                           GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 
     # Patch RPATH so assistant finds Qt .so files from the tarball lib/ dir.
     # $ORIGIN resolves to the directory containing the binary (bin/).
     # $ORIGIN/../lib is therefore <tarball-root>/lib/ at runtime.
-    set(_ASSISTANT_STAGED "${S_BIN}/assistant")
     find_program(_PATCHELF patchelf)
     if(_PATCHELF AND EXISTS "${_ASSISTANT_STAGED}")
         execute_process(
