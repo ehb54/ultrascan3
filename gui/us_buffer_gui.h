@@ -112,6 +112,7 @@ class US_GUI_EXTERN US_BufferGuiSelect: public US_Widgets
       void accept_buffer   ( void );
       void select_buffer   ( QListWidgetItem* );
       void select_buffer   ( );
+      void show_no_buffers( void );
       void read_from_disk  ( QListWidgetItem* );
       void read_from_db    ( QListWidgetItem* );
       void read_from_db    ( const QString&   );

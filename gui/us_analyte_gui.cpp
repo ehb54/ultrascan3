@@ -242,7 +242,8 @@ US_AnalyteMgrSelect::US_AnalyteMgrSelect( int *invID, int *select_db_disk,
 
 void US_AnalyteMgrSelect::select_analyte()
 {
-   if ( lw_analyte_list->currentRow() < 0 )
+   // A row without a record (none selected, or the empty-list placeholder)
+   if ( lw_analyte_list->currentRow() < 0 || lw_analyte_list->currentRow() >= analyte_metadata.size() )
    {
 DbgLv(1) << "AnaS:  selana: ROW<0";
       reset();
@@ -295,7 +296,13 @@ DbgLv(1) << "AnaS:  aAcc :   ii" << ii;
 bool US_AnalyteMgrSelect::select_analyte( QListWidgetItem* tmp_item )
 {
    QListWidgetItem *item = tmp_item;
-   const bool       loaded = from_db ? read_from_db( item ) : read_from_disk( item );
+   const int        row  = lw_analyte_list->row( item );
+   if ( row < 0 || row >= analyte_metadata.size() )
+   {
+      reset();
+      return false;
+   }
+   const bool loaded = from_db ? read_from_db( item ) : read_from_disk( item );
 
    if ( !loaded )
    {
@@ -1027,6 +1034,12 @@ void US_AnalyteMgrSelect::read_analyte( void )
    atype_set          = rb_rna  ->isChecked() ? "RNA"          : atype_set;
    atype_set          = rb_carbo->isChecked() ? "CARBOHYDRATE" : atype_set;
 
+   // Drop the old list and its records first: clearing a list with a selected
+   // row signals a selection, which must not read the records being replaced
+   analyte_metadata.clear();
+   ms_analytes.clear();
+   lw_analyte_list->clear();
+
    filenames   .clear();
    descriptions.clear();
    GUIDs       .clear();
@@ -1079,12 +1092,23 @@ void US_AnalyteMgrSelect::read_analyte( void )
    lw_analyte_list->clear();
 
    if ( descriptions.isEmpty() )
-      lw_analyte_list->addItem( "No analyte files found." );
+      show_no_analytes();
    else
    {
       le_search->setReadOnly( false );
       search();
    }
+}
+
+// Show an empty list: the placeholder is not a record, and records listed
+// earlier must not be matched or selected any more
+void US_AnalyteMgrSelect::show_no_analytes( void )
+{
+   analyte_metadata.clear();
+   ms_analytes.clear();
+   lw_analyte_list->addItem( tr( "No analyte files found." ) );
+   lw_analyte_list->item( 0 )->setFlags( Qt::NoItemFlags );
+   reset();
 }
 
 // Read analyte information from the database
@@ -1108,10 +1132,16 @@ DbgLv(1) << "agS-rddb: ==A2==";
    atype_set      = rb_rna  ->isChecked() ? US_Analyte::RNA          : atype_set;
 DbgLv(1) << "agS-rddb: ==A3==";
    atype_set      = rb_carbo->isChecked() ? US_Analyte::CARBOHYDRATE : atype_set;
-DbgLv(1) << "agS-rddb: atype_set" << atype_set;
+   DbgLv( 1 ) << "agS-rddb: atype_set" << atype_set;
+
+   // Drop the old list and its records first: clearing a list with a selected
+   // row signals a selection, which must not read the records being replaced
+   analyte_metadata.clear();
+   ms_analytes.clear();
+   lw_analyte_list->clear();
 
    analyteIDs  .clear();
-DbgLv(1) << "agS-rddb: ==A==";
+   DbgLv( 1 ) << "agS-rddb: ==A==";
    descriptions.clear();
 DbgLv(1) << "agS-rddb: ==B==";
    GUIDs       .clear();
@@ -1164,7 +1194,7 @@ DbgLv(1) << "agS-rddb:     aID descr" << anaID << descr;
 
    if ( descriptions.isEmpty() )
    {
-      lw_analyte_list->addItem( "No analyte files found." );
+      show_no_analytes();
    }
    else
    {

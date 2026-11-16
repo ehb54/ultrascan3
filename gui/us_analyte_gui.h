@@ -173,6 +173,7 @@ class US_GUI_EXTERN US_AnalyteMgrSelect: public US_Widgets
       void accept_analyte  ( void );
       bool    select_analyte( QListWidgetItem* );
       void select_analyte  ( );
+      void    show_no_analytes( void );
       bool    read_from_disk( QListWidgetItem* );
       bool    read_from_db( QListWidgetItem* );
       bool    read_from_db( const QString& );

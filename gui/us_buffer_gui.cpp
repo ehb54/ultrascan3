@@ -222,7 +222,8 @@ bool US_BufferGuiSelect::load_buffer(const QString& load_init, US_Buffer& buffer
 
 void US_BufferGuiSelect::select_buffer()
 {
-   if ( lw_buffer_list->currentRow() < 0 )
+   // A row without a record (none selected, or the empty-list placeholder)
+   if ( lw_buffer_list->currentRow() < 0 || lw_buffer_list->currentRow() >= buffer_metadata.size() )
    {
 DbgLv(1) << "BufS:  selbuf: ROW<0";
       reset();
@@ -272,6 +273,12 @@ DbgLv(0) << "MwDa: dbg_level" << dbg_level;
 void US_BufferGuiSelect::select_buffer( QListWidgetItem *tmp_item )
 {
    QListWidgetItem *item = tmp_item;
+   const int        row  = lw_buffer_list->row( item );
+   if ( row < 0 || row >= buffer_metadata.size() )
+   {
+      reset();
+      return;
+   }
    if ( from_db )  read_from_db  ( item );
    else            read_from_disk( item );
 
@@ -312,6 +319,10 @@ DbgLv(1) << "shco: name conc unit" << name << sconc << unit
 void US_BufferGuiSelect::read_from_disk( QListWidgetItem* item )
 {
    int row = lw_buffer_list->row( item );
+   if ( row < 0 || row >= buffer_metadata.size() || buffer_metadata[row].index >= filenames.size() )
+   { // Not a listed record; leave the loaded buffer unchanged
+      return;
+   }
    int buf = buffer_metadata[ row ].index;
 DbgLv(1) << "row: " << row << " buf: "  << buf;
    buffer->extinction.clear();
@@ -807,11 +818,26 @@ void US_BufferGuiSelect::query( void )
    }
 }
 
+// Show an empty list: the placeholder is not a record, and records listed
+// earlier must not be matched or selected any more
+void US_BufferGuiSelect::show_no_buffers( void )
+{
+   buffer_metadata.clear();
+   lw_buffer_list->addItem( tr( "No buffer files found." ) );
+   lw_buffer_list->item( 0 )->setFlags( Qt::NoItemFlags );
+   reset();
+}
+
 // Read buffer information from local disk
 void US_BufferGuiSelect::read_buffer( void )
 {
    QString path;
    if ( ! buffer_path( path ) ) return;
+
+   // Drop the old list and its records first: clearing a list with a selected
+   // row signals a selection, which must not read the records being replaced
+   buffer_metadata.clear();
+   lw_buffer_list->clear();
 
    filenames   .clear();
    descriptions.clear();
@@ -861,7 +887,7 @@ void US_BufferGuiSelect::read_buffer( void )
    lw_buffer_list->clear();
 
    if ( descriptions.size() == 0 )
-      lw_buffer_list->addItem( "No buffer files found." );
+      show_no_buffers();
    else
    {
       le_search->setReadOnly( false );
@@ -880,6 +906,11 @@ void US_BufferGuiSelect::read_db( void )
       connect_error( db.lastError() );
       return;
    }
+
+   // Drop the old list and its records first: clearing a list with a selected
+   // row signals a selection, which must not read the records being replaced
+   buffer_metadata.clear();
+   lw_buffer_list->clear();
 
    bufferIDs   .clear();
    descriptions.clear();
@@ -903,7 +934,7 @@ void US_BufferGuiSelect::read_db( void )
 
    if ( descriptions.size() == 0 )
    {
-      lw_buffer_list->addItem( "No buffer files found." );
+      show_no_buffers();
    }
    else
    {
