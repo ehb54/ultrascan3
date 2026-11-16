@@ -20,10 +20,13 @@ namespace
 {
 bool isWithin( const QString& child, const QString& parent )
 {
-    const QString cleanChild = QDir::cleanPath( child );
-    QString cleanParent = QDir::cleanPath( parent );
-    if ( ! cleanParent.endsWith( QDir::separator() ) )
-        cleanParent += QDir::separator();
+   // cleanPath always uses '/', on Windows too, so the prefix must end in '/'.
+   const QString cleanChild  = QDir::cleanPath( child );
+   QString       cleanParent = QDir::cleanPath( parent );
+   if ( !cleanParent.endsWith( '/' ) )
+   {
+      cleanParent += '/';
+   }
 
     return cleanChild == QDir::cleanPath( parent ) ||
            cleanChild.startsWith( cleanParent );
@@ -148,7 +151,8 @@ TEST( TestEnvironmentIsolation, NestedWorkDirectoriesAreUniqueAndRemoved )
       }
       EXPECT_FALSE( QDir( secondPath ).exists() );
       EXPECT_EQ( US_Settings::workBaseDir(), firstPath );
-      EXPECT_EQ( QDir::currentPath(), firstPath );
+      // Compare canonical paths: on macOS the temporary root /var is a symlink to /private/var.
+      EXPECT_EQ( QDir( QDir::currentPath() ).canonicalPath(), QDir( firstPath ).canonicalPath() );
    }
    EXPECT_FALSE( QDir( firstPath ).exists() );
    EXPECT_EQ( US_Settings::workBaseDir(), originalWork );

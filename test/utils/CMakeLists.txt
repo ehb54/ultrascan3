@@ -102,7 +102,8 @@ endfunction()
 
 us3_add_utils_suite(test_us_utils gtest-unit-utils
     ${AUTO_TEST_SOURCES} ${AUTO_TEST_HEADERS}
-    support/disk_run_fixture.cpp support/disk_run_fixture.h)
+    support/disk_run_fixture.cpp support/disk_run_fixture.h
+    fixtures/analyte.qrc)
 # Unit resource readers use appBaseDir()/etc. Never point that layout at
 # source/etc: stage only declared inputs next to the isolated unit executable.
 set(US3_UNIT_LAYOUT "${CMAKE_CURRENT_BINARY_DIR}/unit-layout")
