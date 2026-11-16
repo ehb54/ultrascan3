@@ -42,6 +42,7 @@ bool US_BufferComponent::getAllFromDB( const QString& masterPW, QMap<QString, US
       cids << db.value( 0 ).toString();
    }
 
+   int read = 0;
    for ( int ii = 0; ii < cids.size(); ii++ )
    {
       US_BufferComponent c;
@@ -49,9 +50,10 @@ bool US_BufferComponent::getAllFromDB( const QString& masterPW, QMap<QString, US
       if ( c.getInfoFromDB( &db ) )
       {
          componentList[c.componentID] = c;
+         read++;
       }
    }
-   if ( !cids.isEmpty() && componentList.isEmpty() )
+   if ( !cids.isEmpty() && read == 0 )
    {
       if ( error != nullptr )
       {
