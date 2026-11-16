@@ -182,12 +182,11 @@ int US_Experiment::saveToDB_auto( bool update, IUS_DB2* db, QVector<SP_SPEEDPROF
 qDebug() << "Exp:svToDB:  ss count" << speedsteps.count() << "expID" << expID;
    for ( int jj = 0; jj < speedsteps.count(); jj++ )
    {
-      // speedstepToDB returns the new step's ID, below 1 on failure
-      const int stepID = US_SimulationParameters::speedstepToDB( db, expID, &speedsteps[jj] );
-      qDebug() << "Exp:svToDB:   jj" << jj << "expID" << expID << "stepID=" << stepID;
-      if ( stepID < 1 )
+      const int stepStatus = US_SimulationParameters::speedstepToDB( db, expID, &speedsteps[jj] );
+      qDebug() << "Exp:svToDB:   jj" << jj << "expID" << expID << "step status" << stepStatus;
+      if ( stepStatus != IUS_DB2::OK )
       {
-         return IUS_DB2::DBERROR;
+         return stepStatus;
       }
    }
 
