@@ -1,10 +1,8 @@
 This overlay is copied from ports/qtbase at the vcpkg baseline in vcpkg.json
 (a44707152fabbedcf1c17fe80d7bfb7d9370d8d5). Every copied file is byte-identical
-to that port in the repository, including CRLF line endings. Checkout line
-ending conversion is left at Git's default, because the pinned toolchains were
-built from checkouts made that way; buildsys/vcpkg/.gitattributes only turns off
-whitespace checks, so git diff --check does not report the port's CRs. Two
-files are added: this README and macos-accessibility-interface-ownership.patch.
+to that port, including CRLF line endings, which buildsys/vcpkg/.gitattributes
+keeps Git from converting. Two files are added: this README and
+macos-accessibility-interface-ownership.patch.
 
 portfile.cmake differs from the port only by two VCPKG_TARGET_IS_OSX blocks.
 Neither changes the build on Windows or Linux, but vcpkg's package ABI covers
