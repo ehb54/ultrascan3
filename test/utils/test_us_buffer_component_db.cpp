@@ -3,6 +3,8 @@
 #include "qt_test_base.h"
 #include "us_buffer.h"
 
+#include <QUuid>
+
 using ::testing::_;
 using ::testing::AtLeast;
 using ::testing::Eq;
@@ -145,7 +147,14 @@ TEST_F( BufferComponentDb, SaveRoutesMetadataAndPublishesSuccessfulInsertId )
             .WillOnce( Invoke(
                [gradient]( const QStringList& args )
                {
+                  // create_buffer_component( p_personGUID, p_password, p_componentGUID, p_name, p_unit,
+                  // p_range, p_grad_form, p_density, p_viscosity ): the query layer supplies the
+                  // first two, so the call carries the other seven.
+                  const QString componentGuid = args.value( 1 );
+                  EXPECT_EQ( 36, componentGuid.size() );
+                  EXPECT_FALSE( QUuid( componentGuid ).isNull() );
                   EXPECT_EQ( ( QStringList{ "create_buffer_component",
+                                            componentGuid,
                                             "Salt & sugar",
                                             "mM",
                                             "0 to 9",
@@ -200,13 +209,13 @@ TEST_F( BufferComponentDb, SavedCoefficientsReadBackUnchanged )
       EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 73 ) );
    }
    ASSERT_EQ( 73, component.saveToDB( &db ) );
-   ASSERT_EQ( 7, sent.size() );
+   ASSERT_EQ( 8, sent.size() );
    ASSERT_TRUE( ::testing::Mock::VerifyAndClearExpectations( &db ) );
 
    // The stored procedure takes density before viscosity; the info query returns viscosity first.
    US_BufferComponent loaded;
    loaded.componentID = "73";
-   expectColumns( sent[6], sent[5], sent[3], sent[4] );
+   expectColumns( sent[7], sent[6], sent[4], sent[5] );
    ASSERT_TRUE( loaded.getInfoFromDB( &db ) );
    for ( int i = 0; i < 6; ++i )
    {

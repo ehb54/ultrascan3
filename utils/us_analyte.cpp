@@ -230,7 +230,12 @@ DEBUG_QUERY;
       magnesium      = db->value( 7 ).toString().toDouble();
       calcium        = db->value( 8 ).toString().toDouble();
 
-      nucleotide();
+      // A stored analyte can supply mass without a sequence.
+      // Do not replace that mass with the mass of terminal groups alone.
+      if ( !sequence.trimmed().isEmpty() )
+      {
+         nucleotide();
+      }
    }
 
    q.clear();
@@ -931,24 +936,24 @@ int US_Analyte::write_db( IUS_DB2* db )
    q2 << "get_analyteID" << analyteGUID;
 
    db->query( q2 );
-DEBUG_QUERY;
+   DEBUG_QUERY;
 
-// Update a stored analyte; insert one the lookup did not find.
-const int lookup = db->lastErrno();
-if ( lookup != IUS_DB2::OK && lookup != IUS_DB2::NOROWS )
-{
-   message = QObject::tr( "Could not look up the analyte in the DB" );
-   return lookup;
-}
+   // Update a stored analyte; insert one the lookup did not find.
+   const int lookup = db->lastErrno();
+   if ( lookup != IUS_DB2::OK && lookup != IUS_DB2::NOROWS )
+   {
+      message = QObject::tr( "Could not look up the analyte in the DB" );
+      return lookup;
+   }
 
-if ( lookup == IUS_DB2::OK && db->next() )
-{
-   analyteID = db->value( 0 ).toString();
-   q[0]      = "update_analyte";
-   q[1]      = analyteID;
-   message   = QObject::tr( "updated in" );
-   insert    = false;
-}
+   if ( lookup == IUS_DB2::OK && db->next() )
+   {
+      analyteID = db->value( 0 ).toString();
+      q[0]      = "update_analyte";
+      q[1]      = analyteID;
+      message   = QObject::tr( "updated in" );
+      insert    = false;
+   }
 
    // Finish populating the query
    if      ( type == US_Analyte::PROTEIN ) q << "Protein";
@@ -1024,23 +1029,24 @@ DEBUG_QUERY;
 
    qDebug() << "new_or_changed_spectrum: " << new_or_changed_spectrum;
    qDebug() << "Extinciton 2 : " << extinction.count();
-   
 
+
+   bool profileFailed = false;
    if ( !extinction.isEmpty() && new_or_changed_spectrum )
    {
       // Create the profile, or replace a stored one (whose old values are discarded).
       QMap<double, double> stored;
       int profileID = replace_spectrum ? US_ExtProfile::fetch_eprofile( db, analyteID.toInt(), compType, valType, stored ) : -1;
 
-      if ( profileID == -1 )
-      {
-         US_ExtProfile::create_eprofile( db, analyteID.toInt(), compType, valType, extinction );
+      // A failed create returns -1; update reports success directly.
+      profileFailed = profileID == -1
+                         ? US_ExtProfile::create_eprofile( db, analyteID.toInt(), compType, valType, extinction ) < 1
+                         : !US_ExtProfile::update_eprofile( db, profileID, analyteID.toInt(), compType, valType, extinction );
+      if ( !profileFailed )
+      { // Otherwise the spectrum is still new or changed, and a later save retries it
+         replace_spectrum        = false;
+         new_or_changed_spectrum = false;
       }
-      else
-         US_ExtProfile::update_eprofile( db, profileID, analyteID.toInt(), compType, valType, extinction );
-
-      replace_spectrum        = false;
-      new_or_changed_spectrum = false;
    }
 
 
@@ -1057,6 +1063,12 @@ DEBUG_QUERY;
    if ( disk != IUS_DB2::OK )
    {
       return disk;
+   }
+
+   if ( profileFailed )
+   {
+      message = QObject::tr( "The extinction profile could not be saved to the DB" );
+      return IUS_DB2::DBERROR;
    }
 
    message = saved_message;

@@ -7,21 +7,34 @@
 #include "us_util.h"
 #include "us_eprofile.h"
 
-void US_BufferComponent::getAllFromDB( const QString& masterPW, 
-         QMap< QString, US_BufferComponent >& componentList )
+bool US_BufferComponent::getAllFromDB( const QString& masterPW, QMap<QString, US_BufferComponent>& componentList, QString* error )
 {
    US_DB2 db( masterPW );
-   
+
    if ( db.lastErrno() != IUS_DB2::OK )
    {
-      qDebug() << "Database Error" 
+      qDebug() << "Database Error"
                << "US_BufferComponent ::connectDB: Could not open DB\n"
                << db.lastError();
-      return;
+      if ( error != nullptr )
+      {
+         *error = db.lastError();
+      }
+      return false;
    }
 
    QStringList q( "get_buffer_component_desc" );
    db.query( q );
+   const int status = db.lastErrno();
+   if ( status != IUS_DB2::OK && status != IUS_DB2::NOROWS )
+   {
+      if ( error != nullptr )
+      {
+         *error = db.lastError();
+      }
+      return false;
+   }
+
    QStringList cids;
 
    while ( db.next() )
@@ -29,6 +42,7 @@ void US_BufferComponent::getAllFromDB( const QString& masterPW,
       cids << db.value( 0 ).toString();
    }
 
+   int read = 0;
    for ( int ii = 0; ii < cids.size(); ii++ )
    {
       US_BufferComponent c;
@@ -36,8 +50,18 @@ void US_BufferComponent::getAllFromDB( const QString& masterPW,
       if ( c.getInfoFromDB( &db ) )
       {
          componentList[c.componentID] = c;
+         read++;
       }
    }
+   if ( !cids.isEmpty() && read == 0 )
+   {
+      if ( error != nullptr )
+      {
+         *error = QObject::tr( "none of the %1 buffer components could be read" ).arg( cids.size() );
+      }
+      return false;
+   }
+   return true;
 }
 
 namespace
@@ -256,9 +280,11 @@ int US_BufferComponent::saveToDB(IUS_DB2 * db) {
       viscosity << QString::number( visc_coeff[i], 'f', 5 );
    }
 
+   // The procedure takes a component GUID before the name; the query layer adds the
+   // person GUID and password in front of these arguments.
    q.clear();
-   q << "create_buffer_component" << name << unit << range << US_Util::bool_string( grad_form ) << density.join( " " )
-     << viscosity.join( " " );
+   q << "create_buffer_component" << US_Util::new_guid() << name << unit << range << US_Util::bool_string( grad_form )
+     << density.join( " " ) << viscosity.join( " " );
 
    db->statusQuery(q);
 
@@ -671,7 +697,7 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer, QString* err
    QString compType("Buffer");
    QString valType("molarExtinction");
    qDebug() << "bufferID for extProfile: " << bufferID;
-   
+
    if ( !extinction.isEmpty() && new_or_changed_spectrum )
    {
       // Create the profile, or replace a stored one (whose old values are discarded).

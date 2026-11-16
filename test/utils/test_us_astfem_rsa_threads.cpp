@@ -303,7 +303,6 @@ TEST_F( TestUSAstfemRsaThreads, MissingSystemTempPathNeverFallsBackToFilesystemR
 {
    const QString missing = US_Settings::workBaseDir() + "/missing/system-temp";
    ASSERT_FALSE( QFileInfo::exists( missing ) );
-   US_Settings::set_tmpDir( missing + "/configured" );
    // A regular file prevents the configured path from being created.
    const QString blocker = US_Settings::workBaseDir() + "/temp-blocker";
    ASSERT_TRUE( us3WriteTestFile( blocker, "blocker" ) );
@@ -318,6 +317,23 @@ TEST_F( TestUSAstfemRsaThreads, MissingSystemTempPathNeverFallsBackToFilesystemR
    EXPECT_EQ( US_AstfemMath::timestate_from_speedsteps( sp, rdata ), -1 );
    EXPECT_TRUE( sp.sim_speed_prof.isEmpty() );
    EXPECT_FALSE( QFileInfo::exists( missing ) );
+}
+
+// Qt5 reports a missing system temporary directory as an empty path; Qt6
+// reports the path itself. Test the template choice directly so a regression
+// fails with either Qt version, as any user.
+TEST( TimestateDirTemplates, EmptyDirectoriesNeverYieldATemplateAtTheFilesystemRoot )
+{
+   EXPECT_TRUE( US_AstfemMath::timestate_dir_templates( "", "" ).isEmpty() );
+   EXPECT_EQ( US_AstfemMath::timestate_dir_templates( "/configured", "" ), QStringList{ "/configured/us3-tmst-XXXXXX" } );
+   EXPECT_EQ( US_AstfemMath::timestate_dir_templates( "", "/system" ), QStringList{ "/system/us3-tmst-XXXXXX" } );
+}
+
+TEST( TimestateDirTemplates, ConfiguredDirectoryIsTriedBeforeADistinctSystemDirectory )
+{
+   EXPECT_EQ( US_AstfemMath::timestate_dir_templates( "/configured", "/system" ),
+              ( QStringList{ "/configured/us3-tmst-XXXXXX", "/system/us3-tmst-XXXXXX" } ) );
+   EXPECT_EQ( US_AstfemMath::timestate_dir_templates( "/same", "/same" ), QStringList{ "/same/us3-tmst-XXXXXX" } );
 }
 
 TEST_F( TestUSAstfemRsaThreads, InvalidConfiguredTempUsesValidSystemDirectory )

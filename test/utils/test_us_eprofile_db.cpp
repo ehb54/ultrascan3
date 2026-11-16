@@ -110,7 +110,7 @@ TEST_F( ExtProfileDb, FetchFailureOrMissingRowKeepsOutputs )
 
 TEST_F( ExtProfileDb, FetchRejectsXmlWithoutAProfile )
 {
-   for ( const QString xml : { QString(), QString( "not xml" ), QString( "<EProfileData version='1.0'/>" ) } )
+   for ( const QString& xml : { QString(), QString( "not xml" ), QString( "<EProfileData version='1.0'/>" ) } )
    {
       SCOPED_TRACE( xml.toStdString() );
       {

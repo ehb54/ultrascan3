@@ -127,13 +127,18 @@ TEST_F( CsvData, AutoDetectsCommaSemicolonAndSpaceDelimitedInput )
 
 TEST_F( CsvData, AutoDetectionPrefersEarlierValidDelimiter )
 {
-   // Both tab and space give a numeric table; tab is tried first.
+   // Cells are trimmed, so tab and space each give a two-column numeric table, with
+   // different headers; tab is tried first.
    const QString path = caseWorkRoot() + "/tab-space.txt";
-   ASSERT_TRUE( us3WriteTestFile( path, "a b\tc\n1\t2\n3\t4\n" ) );
+   ASSERT_TRUE( us3WriteTestFile( path, "x y\tz\n1\t 2\n3\t 4\n" ) );
    US_CSV_Data csv;
+   ASSERT_TRUE( csv.readFile( path, " " ) );
+   EXPECT_EQ( ( QStringList{ "x", "y\tz" } ), csv.header() );
+
    ASSERT_TRUE( csv.readFile( path, QString() ) );
-   EXPECT_EQ( ( QStringList{ "a b", "c" } ), csv.header() );
+   EXPECT_EQ( ( QStringList{ "x y", "z" } ), csv.header() );
    EXPECT_EQ( ( QVector<double>{ 1, 3 } ), csv.columnAt( 0 ) );
+   EXPECT_EQ( ( QVector<double>{ 2, 4 } ), csv.columnAt( 1 ) );
 }
 
 TEST_F( CsvData, FailedReadsReportConversionAndSplitErrors )

@@ -5,7 +5,12 @@
 #include "us_settings.h"
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
+#include <QTemporaryDir>
 #include <QXmlStreamReader>
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
+#include <QTextCodec>
+#endif
 
 using ::testing::_;
 using ::testing::Eq;
@@ -272,7 +277,7 @@ TEST_F( ModelDb, WriteAssignsAGuidWhenTheModelHasNone )
    EXPECT_EQ( model.modelGUID, written );
 }
 
-TEST_F( ModelDb, WriteReturnsTheStatusOfAFailedWriteAndSavesNoDiskCopy )
+TEST_F( ModelDb, FailedWriteReturnsItsStatusAndKeepsTheDiskCopy )
 {
    prepareModel();
    {
@@ -282,13 +287,19 @@ TEST_F( ModelDb, WriteReturnsTheStatusOfAFailedWriteAndSavesNoDiskCopy )
       EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::DBERROR ) );
    }
    EXPECT_EQ( IUS_DB2::DBERROR, model.write( true, QString(), &db ) );
-   EXPECT_EQ( QString( "could not be written" ), model.message );
-#ifndef NO_DB
-   EXPECT_TRUE( modelFiles().isEmpty() );
+#ifdef NO_DB
+   // NO_DB builds have no models directory, so whether the copy is saved depends on the host.
+   EXPECT_TRUE( model.message.startsWith( "could not be written; " ) ) << model.message.toStdString();
+#else
+   EXPECT_EQ( QString( "could not be written; a local copy was saved and can be uploaded later" ), model.message );
+   // The model stays on disk so it can be uploaded later.
+   const QMap<QString, QByteArray> files = modelFiles();
+   ASSERT_EQ( 1, files.size() );
+   EXPECT_EQ( kGuid, modelAttributes( QString::fromUtf8( files.first() ) ).value( "modelGUID" ).toString() );
 #endif
 }
 
-TEST_F( ModelDb, FailedLookupWritesNothing )
+TEST_F( ModelDb, FailedLookupWritesOnlyTheDiskCopy )
 {
    prepareModel();
    for ( int status : { IUS_DB2::DBERROR, IUS_DB2::NOT_CONNECTED } )
@@ -300,13 +311,43 @@ TEST_F( ModelDb, FailedLookupWritesNothing )
          EXPECT_CALL( db, lastErrno() ).WillOnce( Return( status ) );
       }
       EXPECT_EQ( status, model.write( true, QString(), &db ) );
-      EXPECT_EQ( QString( "could not be looked up" ), model.message );
+#ifdef NO_DB
+      EXPECT_TRUE( model.message.startsWith( "could not be looked up; " ) ) << model.message.toStdString();
+#else
+      EXPECT_EQ( QString( "could not be looked up; a local copy was saved and can be uploaded later" ), model.message );
+#endif
       ::testing::Mock::VerifyAndClearExpectations( &db );
    }
 #ifndef NO_DB
-   EXPECT_TRUE( modelFiles().isEmpty() );
+   // The model stays on disk so it can be uploaded later.
+   const QMap<QString, QByteArray> files = modelFiles();
+   ASSERT_EQ( 1, files.size() );
+   EXPECT_EQ( kGuid, modelAttributes( QString::fromUtf8( files.first() ) ).value( "modelGUID" ).toString() );
 #endif
 }
+
+#ifndef NO_DB
+TEST_F( ModelDb, FailedWriteSaysWhenNoLocalCopyCouldBeSaved )
+{
+   prepareModel();
+   // A plain file where the models directory belongs makes the disk copy fail too.
+   QString path;
+   ASSERT_TRUE( US_Model::model_path( path ) );
+   ASSERT_TRUE( QDir( path ).removeRecursively() );
+   QFile blocker( path );
+   ASSERT_TRUE( blocker.open( QIODevice::WriteOnly ) );
+   blocker.close();
+   {
+      InSequence sequence;
+      EXPECT_CALL( db, query( args( { "get_modelID", kGuid } ) ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOROWS ) );
+      EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::DBERROR ) );
+   }
+   EXPECT_EQ( IUS_DB2::DBERROR, model.write( true, QString(), &db ) );
+   EXPECT_EQ( QString( "could not be written; no local copy could be saved either" ), model.message );
+   EXPECT_TRUE( QFileInfo( path ).isFile() );
+}
+#endif
 
 TEST_F( ModelDb, WriteInsertsWhenTheLookupFindsNoRow )
 {
@@ -348,14 +389,17 @@ class ModelDbLoadFailure : public ModelDb
       }
 };
 
-TEST_F( ModelDbLoadFailure, NullDatabaseIsNotConnected )
+TEST_F( ModelDbLoadFailure, NullDatabaseIsNotConnectedAndWriteKeepsTheDiskCopy )
 {
    EXPECT_EQ( IUS_DB2::NOT_CONNECTED, model.load( true, kGuid, nullptr ) );
    EXPECT_EQ( IUS_DB2::NOT_CONNECTED, model.load( QString( "42" ), nullptr ) );
    EXPECT_EQ( IUS_DB2::NOT_CONNECTED, model.write( true, QString(), nullptr ) );
    expectModelUnchanged();
 #ifndef NO_DB
-   EXPECT_TRUE( modelFiles().isEmpty() );
+   // The model stays on disk so it can be uploaded later.
+   const QMap<QString, QByteArray> files = modelFiles();
+   ASSERT_EQ( 1, files.size() );
+   EXPECT_EQ( kGuid, modelAttributes( QString::fromUtf8( files.first() ) ).value( "modelGUID" ).toString() );
 #endif
 }
 
@@ -456,5 +500,82 @@ TEST_F( ModelDb, NonAsciiTextLoadsIntact )
    ASSERT_EQ( IUS_DB2::OK, model.load( QString( "42" ), &db ) );
    EXPECT_EQ( description, model.description );
    ASSERT_EQ( 1, model.components.size() );
+}
+
+// Local loads, which share the stream readers with the DB loads.
+
+// The XML of a two-iteration Monte Carlo model of the given run.
+QString monteCarloXml( const QString& run )
+{
+   const QString iteration = "<model description=\"%1.2DSA-MC_01.model\" modelGUID=\"%2\" monteCarlo=\"1\" "
+                             "variance=\"0.1\" meniscus=\"5.9\" analysisType=\"1\">\n"
+                             "<analyte name=\"solute\" vbar20=\"0.72\" mw=\"50000\" s=\"%3\" D=\"6e-07\" "
+                             "f_f0=\"1.3\" signal=\"0.5\"/>\n"
+                             "</model>\n";
+   return QString( "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE US_Model>\n<ModelData version=\"1.0\">\n" ) +
+          iteration.arg( run, kGuid, "4e-13" ) + iteration.arg( run, kGuid, "5e-13" ) + "</ModelData>\n";
+}
+
+// Write text to a file as UTF-8 and return the file's path.
+QString writeUtf8( const QTemporaryDir& dir, const QString& name, const QString& text )
+{
+   const QString path = dir.filePath( name );
+   QFile         file( path );
+   EXPECT_TRUE( file.open( QIODevice::WriteOnly ) );
+   file.write( text.toUtf8() );
+   return path;
+}
+
+TEST_F( ModelDbLoadFailure, TruncatedLocalFileFailsAndKeepsTheModel )
+{
+   QTemporaryDir dir;
+   ASSERT_TRUE( dir.isValid() );
+   const QString stored = QString::fromUtf8( kStoredXml );
+   EXPECT_EQ( IUS_DB2::DBERROR, model.load( writeUtf8( dir, "single.xml", stored.left( stored.indexOf( "<analyte" ) + 20 ) ) ) );
+   expectModelUnchanged();
+
+   const QString mc = monteCarloXml( "run" );
+   EXPECT_EQ( IUS_DB2::DBERROR, model.load( writeUtf8( dir, "mc.xml", mc.left( mc.lastIndexOf( "s=\"5e-13\"" ) ) ) ) );
+   expectModelUnchanged();
+}
+
+TEST_F( ModelDbLoadFailure, MalformedStringFailsAndKeepsTheModel )
+{
+   const QString stored = QString::fromUtf8( kStoredXml );
+   EXPECT_EQ( IUS_DB2::DBERROR, model.load_string( stored.left( stored.indexOf( "<analyte" ) + 20 ) ) );
+   expectModelUnchanged();
+}
+
+TEST_F( ModelDb, NonAsciiMonteCarloTextLoadsIntactFromTheDbAndALocalFile )
+{
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
+   // A Latin-1 locale codec makes a stream that is not set to UTF-8 decode the text wrongly.
+   struct LocaleCodec
+   {
+         QTextCodec* saved = QTextCodec::codecForLocale();
+         LocaleCodec()
+         {
+            QTextCodec::setCodecForLocale( QTextCodec::codecForName( "ISO-8859-1" ) );
+         }
+         ~LocaleCodec()
+         {
+            QTextCodec::setCodecForLocale( saved );
+         }
+   } latin1;
+#endif
+   const QString run = QString( "run " ) + QChar( 0x00c5 ) + QChar( 0x00b5 );
+   {
+      InSequence sequence;
+      expectInfo( "42", monteCarloXml( run ) );
+      EXPECT_CALL( db, value( 3 ) ).WillOnce( Return( QVariant( "0.0125" ) ) );
+   }
+   ASSERT_EQ( IUS_DB2::OK, model.load( QString( "42" ), &db ) );
+   EXPECT_EQ( run + ".2DSA-MC_mcN002.model", model.description );
+
+   QTemporaryDir dir;
+   ASSERT_TRUE( dir.isValid() );
+   US_Model local;
+   ASSERT_EQ( IUS_DB2::OK, local.load( writeUtf8( dir, "mc.xml", monteCarloXml( run ) ) ) );
+   EXPECT_EQ( run + ".2DSA-MC_mcN002.model", local.description );
 }
 } // namespace

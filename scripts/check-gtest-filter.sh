@@ -16,6 +16,7 @@ if ! awk '
     }
     END { exit(count > 0 ? 0 : 1) }
 ' <<< "$listing"; then
-    echo "No enabled tests match '$filter' in $binary. Check the filter and selected suite; host/source/live-DB tests are separate." >&2
+    echo "No enabled tests match '$filter' in $binary." >&2
+    echo "Check the filter and selected suite; host/source/live-DB tests are separate." >&2
     exit 2
 fi

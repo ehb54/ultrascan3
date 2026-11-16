@@ -3532,10 +3532,12 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    
    //Lab
    QVector< US_Rotor::Lab > labList_auto;
-   
-   if ( db.lastErrno() == US_DB2::OK )
-     US_Rotor::readLabsDB( labList_auto, &db );
-   
+
+   if ( db.lastErrno() == US_DB2::OK && US_Rotor::readLabsDB( labList_auto, &db ) != US_Rotor::ROTOR_OK )
+   {
+      QMessageBox::warning( this, tr( "Database Problem" ), tr( "Could not read lab information\n" ) + db.lastError() );
+   }
+
    int currentLab_auto = 0;
    for ( int ii = 0; ii < labList_auto.size(); ii++ )
      {
@@ -3580,7 +3582,11 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    qDebug() << "RotorID/CalID  READ!!! ";
    
    // Instrument
-   QList< US_Rotor::Instrument > instruments = labList_auto[ currentLab_auto ].instruments;
+   QList<US_Rotor::Instrument> instruments;
+   if ( currentLab_auto < labList_auto.size() )
+   {
+      instruments = labList_auto[currentLab_auto].instruments;
+   }
    US_Rotor::Instrument currentInstrument_auto; 
    foreach ( US_Rotor::Instrument instrument, instruments )
      {
@@ -3643,7 +3649,24 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    
    //Solutions / Triple / Centerpiece Descriptions
    int solutionID;  // ALEXEY change to protocol's solution IDs
-   US_Solution solution_auto;
+
+   // A solution that records each failed DB read, with its reason, for the warning at the end
+   struct ProtocolSolution : public US_Solution
+   {
+         QStringList* failed;
+         int          readFromDB( int id, IUS_DB2* db )
+         {
+            const int status = US_Solution::readFromDB( id, db );
+            if ( status != IUS_DB2::OK )
+            {
+               *failed << QString( "%1: %2" ).arg( id ).arg( US_Solution::readErrorText( status, db->lastError() ) );
+            }
+            return status;
+         }
+   };
+   QStringList      failedSolutions; // Solutions that could not be read; their channels have none
+   ProtocolSolution solution_auto;
+   solution_auto.failed = &failedSolutions;
 
    int nchans     = out_channels.count();
    int ntrips     = out_triples.count();
@@ -4012,7 +4035,17 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 
    //le_status->setText( tr( "AUC data import IS COMPLETE." ) );
    le_status->setText( tr( "Data Acquision COMPLETE." ) );
-   
+
+   if ( !failedSolutions.isEmpty() )
+   {
+      failedSolutions.removeDuplicates();
+      QMessageBox::warning( this,
+                            tr( "Solutions Not Loaded" ),
+                            tr( "These protocol solutions could not be read from the database, so their "
+                                "channels have no solution:\n" ) +
+                               failedSolutions.join( "\n" ) );
+   }
+
    enableSaveBtn_auto();
 }
 

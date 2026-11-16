@@ -71,7 +71,8 @@ class US_UTIL_EXTERN US_Solution
       /*! \brief    Function to read an entire solution structure from the disk
 
           \param    guid The GUID of the solution to look for
-          \return   One of the IUS_DB2 error codes
+          \return   One of the IUS_DB2 error codes. On failure the solution is
+                    cleared, never partly loaded.
       */
       int readFromDisk( QString& );
 
@@ -85,6 +86,13 @@ class US_UTIL_EXTERN US_Solution
                     partly loaded.
       */
       int readFromDB  ( int, IUS_DB2* = 0 );
+
+      /*! \brief    Describe why readFromDB failed, for a message to the user
+
+          \param    status  The status readFromDB returned
+          \param    dbError The connection's lastError(), used for any other status
+      */
+      static QString         readErrorText( int, const QString& );
 
       //! \brief    Quick method to zero out the solution attributes
       void clear             ( void );
@@ -139,6 +147,7 @@ class US_UTIL_EXTERN US_Solution
    private:
 
       void readSolutionInfo  ( QXmlStreamReader& xml );
+      int     loadFromDisk( QString& );
       int readBufferDiskGUID ( US_Buffer& , QString& );
       void saveBufferDisk    ( void ) const;
       void saveAnalytesDisk  ( void );

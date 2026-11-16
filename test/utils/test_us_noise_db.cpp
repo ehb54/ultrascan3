@@ -5,6 +5,7 @@
 #include "us_settings.h"
 #include <QDir>
 #include <QFile>
+#include <QTemporaryDir>
 
 using ::testing::_;
 using ::testing::Eq;
@@ -199,6 +200,22 @@ TEST_F( NoiseDb, TruncatedXmlFailsAndKeepsTheNoise )
    expectLoadedUnchanged();
 }
 
+TEST_F( NoiseDb, TruncatedLocalFileFailsAndKeepsTheNoise )
+{
+   prepareLoaded();
+   QTemporaryDir dir;
+   ASSERT_TRUE( dir.isValid() );
+   const QString xml  = storedXml( "run.ri_noise" );
+   const QString path = dir.filePath( "noise.xml" );
+   {
+      QFile file( path );
+      ASSERT_TRUE( file.open( QIODevice::WriteOnly ) );
+      file.write( xml.left( xml.indexOf( "<d v=\"-0.25\"" ) + 4 ).toUtf8() );
+   }
+   EXPECT_EQ( IUS_DB2::DBERROR, noise.load( path ) );
+   expectLoadedUnchanged();
+}
+
 // Write
 
 TEST_F( NoiseDb, WriteInsertsWithTheModelAndEditIds )
@@ -317,5 +334,6 @@ TEST_F( NoiseDb, WriteReturnsTheStatusOfAFailedWrite )
       expectWrite( { "new_noise" }, xml, IUS_DB2::DBERROR );
    }
    EXPECT_EQ( IUS_DB2::DBERROR, noise.write( true, QString(), &db ) );
+   EXPECT_EQ( QString( "could not be written" ), noise.message );
 }
 } // namespace

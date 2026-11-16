@@ -114,8 +114,8 @@ class US_GUI_EXTERN US_BufferGuiSelect: public US_Widgets
       void select_buffer   ( );
       void show_no_buffers( void );
       void read_from_disk  ( QListWidgetItem* );
-      void read_from_db    ( QListWidgetItem* );
-      void read_from_db    ( const QString&   );
+      bool read_from_db( QListWidgetItem* );
+      bool read_from_db( const QString& );
       void search          ( const QString& = QString() );
       void show_component  ( const QString&, double );
       void reject          ( void );
