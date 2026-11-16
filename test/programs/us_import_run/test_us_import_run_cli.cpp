@@ -170,6 +170,30 @@ class US_ImportRunCliTest : public QObject
          QVERIFY2( out.contains( "1 triples, 1 edits" ), qPrintable( out + err ) );
       }
 
+      void incompleteTimeStateIsRefused_data()
+      {
+         QTest::addColumn<QString>( "suffix" );
+         QTest::newRow( "missing definitions" ) << ".time_state.tmst";
+         QTest::newRow( "missing binary" ) << ".time_state.xml";
+      }
+
+      void incompleteTimeStateIsRefused()
+      {
+         QFETCH( QString, suffix );
+         const QString          name = suffix.endsWith( "tmst" ) ? "run-tmst" : "run-defs";
+         const us3test::DiskRun fixture =
+            us3test::writeDiskRun( scratch.path(), name, "RA", { us3test::DatasetSpec{ 1, 'A', "280" } } );
+         QVERIFY( !fixture.dir.isEmpty() );
+         QVERIFY( us3test::writeRunRecords( fixture ) );
+         QFile file( fixture.dir + name + suffix );
+         QVERIFY( file.open( QIODevice::WriteOnly ) );
+         file.write( "incomplete pair" );
+         file.close();
+         QString err;
+         QCOMPARE( run( { "--dir", fixture.dir, "--dry-run", "--work-dir", workParent() }, err ), 2 );
+         QVERIFY2( err.contains( "TimeState binary/definitions pair" ), qPrintable( err ) );
+      }
+
       void anEditForAnotherWavelengthIsRefused()
       {
          const us3test::DiskRun fixture =

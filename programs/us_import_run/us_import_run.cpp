@@ -32,6 +32,7 @@
 #include "us_settings.h"
 #include "us_simparms.h"
 #include "us_solution.h"
+#include "us_time_state.h"
 #include "us_util.h"
 
 namespace
@@ -384,6 +385,7 @@ struct PreparedRun
 {
       US_ConvertIO::DiskRun disk;  //!< Raw data, triples, experiment, speed steps
       QList<EditFile>       edits; //!< Found by collectEdits(); readDiskRun() does not read edits
+      QString               timestate; //!< Optional saved rotor history, preserved without reconstruction
 };
 
 //! Read \p run_dir and validate it, loading its project and solutions from the
@@ -402,6 +404,20 @@ bool prepareRun( const QString& run_dir, const QString& wanted_run, const QStrin
    }
 
    const QString run_id = run.disk.runID;
+
+   const QString tmst = QDir( run.disk.directory ).filePath( run_id + ".time_state.tmst" );
+   const QString defs = QDir( run.disk.directory ).filePath( run_id + ".time_state.xml" );
+   if ( QFile::exists( tmst ) || QFile::exists( defs ) )
+   {
+      QFile binary( tmst ), definitions( defs );
+      if ( !binary.open( QIODevice::ReadOnly ) || !definitions.open( QIODevice::ReadOnly ) || binary.size() == 0 ||
+           definitions.size() == 0 )
+      {
+         error = "Run " + run_id + " requires a readable, nonempty TimeState binary/definitions pair";
+         return false;
+      }
+      run.timestate = tmst;
+   }
 
    if ( !wanted_run.isEmpty() && wanted_run != run_id )
    {
@@ -840,6 +856,19 @@ int main( int argc, char* argv[] )
    {
       err() << edit_error << Qt::endl;
       return 3;
+   }
+
+   if ( !run.timestate.isEmpty() )
+   {
+      // The desktop uploads this separately from experiment/raw/edit data.
+      // Preserve the supplied history in this transaction: reconstructing it
+      // from a split speed-step record loses the earlier rotor speeds.
+      const int timestate_id = US_TimeState::dbCreate( &db, run.disk.experiment.expID, run.timestate );
+      if ( timestate_id <= 0 || US_TimeState::dbUpload( &db, timestate_id, run.timestate ) != US_DB2::OK )
+      {
+         err() << "Could not save TimeState for " << run.disk.runID << ": " << db.lastError() << Qt::endl;
+         return 3;
+      }
    }
 
    if ( !db.commitTransaction( transaction_error ) )
