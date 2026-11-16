@@ -43,9 +43,9 @@ static QString us_extrap_c0_common_prefix( const QStringList &names )
    return prefix;
 }
 
-// A concentration for the output name: one decimal with "p" for the decimal point (3.45 -> 3p5,
-// 0.8625 -> 0p9). A value that would read 0p0 keeps enough decimals to show its first significant
-// digit (0.04 -> 0p04), so a dilute end never reads as zero.
+// A concentration for the output name: one decimal, the decimal point written as an underscore like
+// the other name tokens (3.45 -> 3_5, 0.8625 -> 0_9). A value that would read 0_0 keeps enough
+// decimals to show its first significant digit (0.04 -> 0_04), so a dilute end never reads as zero.
 static QString us_extrap_c0_conc_token( double c )
 {
    QString s = QString::number( c, 'f', 1 );
@@ -57,7 +57,7 @@ static QString us_extrap_c0_conc_token( double c )
          if ( s.contains( QRegularExpression( "[1-9]" ) ) ) { break; }
       }
    }
-   return s.replace( '.', 'p' );
+   return s.replace( '.', '_' );
 }
 
 static QString us_extrap_c0_curve_name( const QStringList &names, int model, bool ref_scale,
@@ -77,7 +77,7 @@ static QString us_extrap_c0_curve_name( const QStringList &names, int model, boo
    QString method = "_extrap_c0";
    method += ( model == 2 ) ? "_virial2" : ( model == 1 ) ? "_recip" : "_add";
    // which concentrations went into the fit: how many curves, and their range from the highest
-   // concentration down (e.g. _n5_c3p5-0p2), after any outlier-QC discard
+   // concentration down (e.g. _n5_c3_5-0_2), after any outlier-QC discard
    if ( n_conc > 0 )
    {
       method += QString( "_n%1_c%2-%3" ).arg( n_conc )

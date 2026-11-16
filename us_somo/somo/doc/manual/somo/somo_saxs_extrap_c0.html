@@ -500,9 +500,9 @@ that produced it &mdash; the concentration model
 (<code>_add</code>&nbsp;/&nbsp;<code>_recip</code>&nbsp;/&nbsp;<code>_virial2</code>), then the
 curves used: <code>_n</code><i>k</i><code>_c</code><i>max</i><code>-</code><i>min</i> for <i>k</i>
 curves with concentrations from <i>max</i> down to <i>min</i>, after any outlier-QC discard, written
-with one decimal and <code>p</code> for the decimal point (e.g. <code>_n5_c3p5-0p2</code> for 3.45 to
-0.216&nbsp;mg/mL; a value that would read <code>0p0</code> keeps enough decimals to show its first
-digit, e.g. <code>0p04</code>), then
+with one decimal, the decimal point written as an underscore like the other tokens (e.g.
+<code>_n5_c3_5-0_2</code> for 3.45 to 0.216&nbsp;mg/mL; a value that would read <code>0_0</code> keeps
+enough decimals to show its first digit, e.g. <code>0_04</code>), then
 <code>_abs</code> if on the reference scale and <code>_merge</code> if the reference was
 spliced &mdash; and, when spliced, the merge point <i>q</i> (with the decimal written as an
 underscore, e.g. <code>_merge_q0_0898</code> for a cutover at <i>q</i>&nbsp;=&nbsp;0.0898)
@@ -521,7 +521,7 @@ when the leverage correction was disabled, since that can change <i>which</i> cu
 and <code>_uw</code> if the
 regression was unweighted (curve errors not used), so a
 run's cutover is visible in its name (for example
-<code>Sub_..._extrap_c0_recip_n4_c6p8-0p9_abs_merge_q0_0898</code>). Distinct selections
+<code>Sub_..._extrap_c0_recip_n4_c6_8-0_9_abs_merge_q0_0898</code>). Distinct selections
 therefore produce distinct, self-describing names; a genuine repeat of the same configuration
 gets a numeric suffix. Curves with a concentration of zero are excluded from the fit, and any
 <i>q</i> point with fewer than two usable values is skipped; the editor window reports how many
