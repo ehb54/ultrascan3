@@ -251,7 +251,12 @@ int US_Noise::write( IUS_DB2* db )
       //qDebug() << "get_noiseID ID GUID" << noiseID << noiseGUID;
    }
 
-   return db->statusQuery( q );
+   const int wstat = db->statusQuery( q );
+   if ( wstat != IUS_DB2::OK )
+   {
+      message = QObject::tr( "could not be written" );
+   }
+   return wstat;
    //int updstat = db->statusQuery( q );
    //qDebug() << "new/update_noise stat" << updstat;
    //return updstat;

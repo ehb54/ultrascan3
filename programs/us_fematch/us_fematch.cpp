@@ -734,7 +734,18 @@ DbgLv(1) << "Fem:Upd: (0)svbar" << svbar;
 
       else if ( solID.length() < 36  &&  dbP != NULL )
       {
-         solution_rec.readFromDB( solID.toInt(), dbP );
+         const int solstat = solution_rec.readFromDB( solID.toInt(), dbP );
+         if ( solstat != IUS_DB2::OK )
+         { // The cleared solution has no analytes, so later vbar calculations use the default
+            QMessageBox::warning( this,
+                                  tr( "Solution/Buffer Fetch" ),
+                                  tr( "Solution %1 could not be read from the database:\n%2\n"
+                                      "The default vbar, %3, is used." )
+                                     .arg( solID, US_Solution::readErrorText( solstat, dbP->lastError() ) )
+                                     .arg( TYPICAL_VBAR ) );
+            solution_rec.commonVbar20 = TYPICAL_VBAR;
+            solution_rec.solutionDesc = tr( "( ***Undefined*** )" );
+         }
       }
 
       else

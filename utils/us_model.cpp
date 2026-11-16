@@ -1239,10 +1239,33 @@ int US_Model::write( bool db_access, const QString& filename, IUS_DB2* db )
 // Write a model DB record
 int US_Model::write( IUS_DB2* db )
 {
+   // Generate a guid if necessary
+   // The guid may be valid from a disk read, but is not in the DB
+   if ( modelGUID.size() != 36 )
+   {
+      modelGUID = US_Util::new_guid();
+   }
+
+   // The disk copy is written whatever happens to the DB record, so a model the DB
+   // refuses stays in the models directory and can be uploaded later. When the DB
+   // write fails, the message says whether that copy exists.
+   const auto saveDiskCopy = [this]( int status )
+   {
+      QString    path;
+      bool       newFile;
+      const bool saved = model_path( path ) && write( get_filename( path, modelGUID, newFile ) ) == IUS_DB2::OK;
+      if ( status != IUS_DB2::OK )
+      {
+         message += saved ? QObject::tr( "; a local copy was saved and can be uploaded later" )
+                          : QObject::tr( "; no local copy could be saved either" );
+      }
+      return status;
+   };
+
    if ( db == nullptr )
    {
       message = QObject::tr( "could not be written: no database connection" );
-      return IUS_DB2::NOT_CONNECTED;
+      return saveDiskCopy( IUS_DB2::NOT_CONNECTED );
    }
 
    // Create the model xml file in a stream.  It is passed raw: the query
@@ -1263,10 +1286,6 @@ int US_Model::write( IUS_DB2* db )
 
    QStringList q;
 
-   // Generate a guid if necessary
-   // The guid may be valid from a disk read, but is not in the DB
-   if ( modelGUID.size() != 36 ) modelGUID = US_Util::new_guid();
-
    q << "get_modelID" << modelGUID;
       
    db->query( q );
@@ -1279,7 +1298,7 @@ int US_Model::write( IUS_DB2* db )
    if ( lookup != IUS_DB2::OK && lookup != IUS_DB2::NOROWS )
    {
       message = QObject::tr( "could not be looked up" );
-      return lookup;
+      return saveDiskCopy( lookup );
    }
 
    if ( lookup != IUS_DB2::OK || !db->next() )
@@ -1300,20 +1319,13 @@ int US_Model::write( IUS_DB2* db )
    }
 
    int wstat = db->statusQuery( q );
-qDebug() << "model writedb message" << message << "wstat" << wstat;
-if ( wstat != IUS_DB2::OK )
-{ // The DB copy failed, so do not save a disk copy that claims it exists
-   message = QObject::tr( "could not be written" );
-   return wstat;
-}
+   qDebug() << "model writedb message" << message << "wstat" << wstat;
+   if ( wstat != IUS_DB2::OK )
+   {
+      message = QObject::tr( "could not be written" );
+   }
 
-   QString path;
-   model_path( path );
-   bool newFile;
-   QString filename = get_filename( path, modelGUID, newFile );
-   write( filename );
-
-   return wstat;
+   return saveDiskCopy( wstat );
 }
 
 // Write a model file

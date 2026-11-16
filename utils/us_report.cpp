@@ -419,12 +419,12 @@ DbgLv(1) << "Trip::addDoc - ndx" << ndx << "ana,subA,Type"
    // Easier to delete/add the document if it exists
    if ( ndx != -1 )
    {
-DbgLv(1) << "Trip::addDoc - remove Doc";
-const US_Report::Status removed = this->removeDocument( ndx, db );
-if ( removed != REPORT_OK )
-{
-   return removed; // Adding would leave two copies
-}
+      DbgLv( 1 ) << "Trip::addDoc - remove Doc";
+      const US_Report::Status removed = this->removeDocument( ndx, db );
+      if ( removed != REPORT_OK )
+      {
+         return removed; // Adding would leave two copies
+      }
    }
 
    this->docs << d;

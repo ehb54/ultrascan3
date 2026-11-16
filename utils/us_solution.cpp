@@ -154,10 +154,10 @@ void US_Solution::readSolutionInfo( QXmlStreamReader& xml )
 // Function to load a solution from the db
 int US_Solution::readFromDB  ( int solutionID, IUS_DB2* db )
 {
-   // Load into a copy and publish it only when every query succeeds. A failed read
-   // leaves the solution cleared, never partly loaded: callers that ignore the status
+   // Load into a fresh solution and publish it only when every query succeeds. A failed
+   // read leaves the solution cleared, never partly loaded: callers that ignore the status
    // must not keep using the previously loaded solution.
-   US_Solution loaded = *this;
+   US_Solution loaded;
    loaded.clear();
 
    const auto load = [&]() -> int
@@ -269,6 +269,21 @@ int US_Solution::readFromDB  ( int solutionID, IUS_DB2* db )
    }
 
    return status;
+}
+
+QString US_Solution::readErrorText( int status, const QString& dbError )
+{
+   switch ( status )
+   {
+      case IUS_DB2::NO_SOLUTION:
+         return QObject::tr( "the solution was not found" );
+      case IUS_DB2::NO_BUFFER:
+         return QObject::tr( "its buffer could not be read" );
+      case IUS_DB2::NO_ANALYTE:
+         return QObject::tr( "one of its analytes could not be read" );
+      default:
+         return dbError.isEmpty() ? QObject::tr( "database error %1" ).arg( status ) : dbError;
+   }
 }
 
 // Function to save solution information to disk
@@ -425,12 +440,12 @@ qDebug() << "SolSvDB: anaID stat" << status;
    db->query( q );
 
    status = db->lastErrno();
-qDebug() << "SolSvDB: soGID stat" << status;
-// A lookup that succeeds without a row finds no stored solution.
-if ( status == IUS_DB2::OK && !db->next() )
-{
-   status = IUS_DB2::NOROWS;
-}
+   qDebug() << "SolSvDB: soGID stat" << status;
+   // A lookup that succeeds without a row finds no stored solution.
+   if ( status == IUS_DB2::OK && !db->next() )
+   {
+      status = IUS_DB2::NOROWS;
+   }
 
    if ( status == IUS_DB2::OK )
    {

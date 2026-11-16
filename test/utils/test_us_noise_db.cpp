@@ -317,5 +317,6 @@ TEST_F( NoiseDb, WriteReturnsTheStatusOfAFailedWrite )
       expectWrite( { "new_noise" }, xml, IUS_DB2::DBERROR );
    }
    EXPECT_EQ( IUS_DB2::DBERROR, noise.write( true, QString(), &db ) );
+   EXPECT_EQ( QString( "could not be written" ), noise.message );
 }
 } // namespace

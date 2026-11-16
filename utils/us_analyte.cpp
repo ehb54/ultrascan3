@@ -936,24 +936,24 @@ int US_Analyte::write_db( IUS_DB2* db )
    q2 << "get_analyteID" << analyteGUID;
 
    db->query( q2 );
-DEBUG_QUERY;
+   DEBUG_QUERY;
 
-// Update a stored analyte; insert one the lookup did not find.
-const int lookup = db->lastErrno();
-if ( lookup != IUS_DB2::OK && lookup != IUS_DB2::NOROWS )
-{
-   message = QObject::tr( "Could not look up the analyte in the DB" );
-   return lookup;
-}
+   // Update a stored analyte; insert one the lookup did not find.
+   const int lookup = db->lastErrno();
+   if ( lookup != IUS_DB2::OK && lookup != IUS_DB2::NOROWS )
+   {
+      message = QObject::tr( "Could not look up the analyte in the DB" );
+      return lookup;
+   }
 
-if ( lookup == IUS_DB2::OK && db->next() )
-{
-   analyteID = db->value( 0 ).toString();
-   q[0]      = "update_analyte";
-   q[1]      = analyteID;
-   message   = QObject::tr( "updated in" );
-   insert    = false;
-}
+   if ( lookup == IUS_DB2::OK && db->next() )
+   {
+      analyteID = db->value( 0 ).toString();
+      q[0]      = "update_analyte";
+      q[1]      = analyteID;
+      message   = QObject::tr( "updated in" );
+      insert    = false;
+   }
 
    // Finish populating the query
    if      ( type == US_Analyte::PROTEIN ) q << "Protein";

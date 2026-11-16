@@ -5,6 +5,7 @@
 #include "us_settings.h"
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QXmlStreamReader>
 
 using ::testing::_;
@@ -272,7 +273,7 @@ TEST_F( ModelDb, WriteAssignsAGuidWhenTheModelHasNone )
    EXPECT_EQ( model.modelGUID, written );
 }
 
-TEST_F( ModelDb, WriteReturnsTheStatusOfAFailedWriteAndSavesNoDiskCopy )
+TEST_F( ModelDb, FailedWriteReturnsItsStatusAndKeepsTheDiskCopy )
 {
    prepareModel();
    {
@@ -282,13 +283,19 @@ TEST_F( ModelDb, WriteReturnsTheStatusOfAFailedWriteAndSavesNoDiskCopy )
       EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::DBERROR ) );
    }
    EXPECT_EQ( IUS_DB2::DBERROR, model.write( true, QString(), &db ) );
-   EXPECT_EQ( QString( "could not be written" ), model.message );
-#ifndef NO_DB
-   EXPECT_TRUE( modelFiles().isEmpty() );
+#ifdef NO_DB
+   // NO_DB builds have no models directory, so whether the copy is saved depends on the host.
+   EXPECT_TRUE( model.message.startsWith( "could not be written; " ) ) << model.message.toStdString();
+#else
+   EXPECT_EQ( QString( "could not be written; a local copy was saved and can be uploaded later" ), model.message );
+   // The model stays on disk so it can be uploaded later.
+   const QMap<QString, QByteArray> files = modelFiles();
+   ASSERT_EQ( 1, files.size() );
+   EXPECT_EQ( kGuid, modelAttributes( QString::fromUtf8( files.first() ) ).value( "modelGUID" ).toString() );
 #endif
 }
 
-TEST_F( ModelDb, FailedLookupWritesNothing )
+TEST_F( ModelDb, FailedLookupWritesOnlyTheDiskCopy )
 {
    prepareModel();
    for ( int status : { IUS_DB2::DBERROR, IUS_DB2::NOT_CONNECTED } )
@@ -300,13 +307,43 @@ TEST_F( ModelDb, FailedLookupWritesNothing )
          EXPECT_CALL( db, lastErrno() ).WillOnce( Return( status ) );
       }
       EXPECT_EQ( status, model.write( true, QString(), &db ) );
-      EXPECT_EQ( QString( "could not be looked up" ), model.message );
+#ifdef NO_DB
+      EXPECT_TRUE( model.message.startsWith( "could not be looked up; " ) ) << model.message.toStdString();
+#else
+      EXPECT_EQ( QString( "could not be looked up; a local copy was saved and can be uploaded later" ), model.message );
+#endif
       ::testing::Mock::VerifyAndClearExpectations( &db );
    }
 #ifndef NO_DB
-   EXPECT_TRUE( modelFiles().isEmpty() );
+   // The model stays on disk so it can be uploaded later.
+   const QMap<QString, QByteArray> files = modelFiles();
+   ASSERT_EQ( 1, files.size() );
+   EXPECT_EQ( kGuid, modelAttributes( QString::fromUtf8( files.first() ) ).value( "modelGUID" ).toString() );
 #endif
 }
+
+#ifndef NO_DB
+TEST_F( ModelDb, FailedWriteSaysWhenNoLocalCopyCouldBeSaved )
+{
+   prepareModel();
+   // A plain file where the models directory belongs makes the disk copy fail too.
+   QString path;
+   ASSERT_TRUE( US_Model::model_path( path ) );
+   ASSERT_TRUE( QDir( path ).removeRecursively() );
+   QFile blocker( path );
+   ASSERT_TRUE( blocker.open( QIODevice::WriteOnly ) );
+   blocker.close();
+   {
+      InSequence sequence;
+      EXPECT_CALL( db, query( args( { "get_modelID", kGuid } ) ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOROWS ) );
+      EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::DBERROR ) );
+   }
+   EXPECT_EQ( IUS_DB2::DBERROR, model.write( true, QString(), &db ) );
+   EXPECT_EQ( QString( "could not be written; no local copy could be saved either" ), model.message );
+   EXPECT_TRUE( QFileInfo( path ).isFile() );
+}
+#endif
 
 TEST_F( ModelDb, WriteInsertsWhenTheLookupFindsNoRow )
 {
@@ -348,14 +385,17 @@ class ModelDbLoadFailure : public ModelDb
       }
 };
 
-TEST_F( ModelDbLoadFailure, NullDatabaseIsNotConnected )
+TEST_F( ModelDbLoadFailure, NullDatabaseIsNotConnectedAndWriteKeepsTheDiskCopy )
 {
    EXPECT_EQ( IUS_DB2::NOT_CONNECTED, model.load( true, kGuid, nullptr ) );
    EXPECT_EQ( IUS_DB2::NOT_CONNECTED, model.load( QString( "42" ), nullptr ) );
    EXPECT_EQ( IUS_DB2::NOT_CONNECTED, model.write( true, QString(), nullptr ) );
    expectModelUnchanged();
 #ifndef NO_DB
-   EXPECT_TRUE( modelFiles().isEmpty() );
+   // The model stays on disk so it can be uploaded later.
+   const QMap<QString, QByteArray> files = modelFiles();
+   ASSERT_EQ( 1, files.size() );
+   EXPECT_EQ( kGuid, modelAttributes( QString::fromUtf8( files.first() ) ).value( "modelGUID" ).toString() );
 #endif
 }
 

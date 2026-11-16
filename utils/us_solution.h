@@ -86,6 +86,13 @@ class US_UTIL_EXTERN US_Solution
       */
       int readFromDB  ( int, IUS_DB2* = 0 );
 
+      /*! \brief    Describe why readFromDB failed, for a message to the user
+
+          \param    status  The status readFromDB returned
+          \param    dbError The connection's lastError(), used for any other status
+      */
+      static QString         readErrorText( int, const QString& );
+
       //! \brief    Quick method to zero out the solution attributes
       void clear             ( void );
 

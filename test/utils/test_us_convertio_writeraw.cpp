@@ -214,7 +214,7 @@ TEST_F( WriteRawDataInjectionTest, WritesARunAndDoesNotCleanUpAfterItself )
                              "new_experiment_solution" } ) );
    EXPECT_EQ( db.blobs, QStringList{ "upload_aucData" } );
 
-   for ( const QString& procedure : { "delete_rawData", "delete_experiment_solutions", "delete_cell_experiments" } )
+   for ( const QString& procedure : QStringList{ "delete_rawData", "delete_experiment_solutions", "delete_cell_experiments" } )
    {
       EXPECT_EQ( db.argsFor[procedure], ( QStringList{ procedure, "11" } ) );
    }
