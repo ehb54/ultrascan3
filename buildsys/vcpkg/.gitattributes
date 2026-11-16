@@ -1,2 +1,3 @@
-# Ports copied from vcpkg keep their exact bytes, including CRLF line endings.
-overlay-ports/qtbase/** -text -whitespace
+# Ports copied from vcpkg keep their exact bytes, including CRLF line endings,
+# so whitespace checks must not report those CRs.
+overlay-ports/qtbase/** -whitespace
