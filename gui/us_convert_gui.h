@@ -471,7 +471,7 @@ class US_GUI_EXTERN US_ConvertGui : public US_Widgets
       QString comment_for_drop_dialog( QString );
       void saveUS3           ( void );
       int  saveUS3Disk       ( void );
-      void saveUS3DB         ( void );
+      bool                      saveUS3DB( void );
       void saveReportsToDB   ( void );
 
       void record_import_status( bool, QString );
