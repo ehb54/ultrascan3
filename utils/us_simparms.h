@@ -206,6 +206,98 @@ class US_UTIL_EXTERN US_SimulationParameters
    double    cp_angle;          //!< Angle of centerpiece sector
    double    cp_width;          //!< Width of centerpiece channel if rectangular
 
+   //! \brief Intensity-mode settings, from an <intensity> element.
+   //! Used when a simulator writes RI data: the absorbance is turned into the
+   //! intensities a sample (A) and a reference (B) sector record.
+   class US_UTIL_EXTERN IntensitySettings
+   {
+      public:
+         bool   given         = false;  //!< The simparams file has an <intensity> element
+         double source_counts = 9000.0; //!< Light-source intensity at the window center, in counts
+         bool   curved        = true;   //!< Radial light profile: curved (true) or flat
+         double read_noise    = 12.0;   //!< Read noise a, in counts
+         double shot_noise    = 0.24;   //!< Shot-noise factor b: sigma(I) = sqrt( a^2 + b I ); 12-60 counts over 3.6k-14k
+         double dark          = 20.0;   //!< Counts recorded where no light reaches the detector
+   };
+
+   //! \brief Instrument window settings, from a <window> element.
+   //! Data covers this fixed radial window instead of starting at the meniscus.
+   class US_UTIL_EXTERN WindowSettings
+   {
+      public:
+         bool   given             = false; //!< The simparams file has a <window> element
+         double start             = 5.75;  //!< First radius, cm
+         double end               = 7.25;  //!< Radius one step past the last point, cm
+         double resolution        = 0.001; //!< Point spacing, cm
+         double meniscus_artifact = 1.5;   //!< Least meniscus spike height, as a multiple of the loading
+   };
+
+   //! \brief Scan scheduling, from a <schedule> element.
+   //! A run's cells are scanned in turn, one slot each, in cycles. Every
+   //! channel of a run is given the same slots and its own slot index, so
+   //! each can compute the whole run's scan times.
+   class US_UTIL_EXTERN ScheduleSettings
+   {
+      public:
+         bool            given = false;             //!< The simparams file has a <schedule> element
+         QVector<double> slot_seconds;              //!< Seconds each cell's slot takes, in scan order
+         int             slot               = 0;    //!< This channel's slot
+         double          wavelength_seconds = 40.0; //!< Seconds between a multi-wavelength cell's wavelengths
+         double          interval           = 0.0;  //!< Seconds between cycle starts; 0 runs cycles back to back
+   };
+
+   //! \brief Recorded telemetry, from a <telemetry> element.
+   //! Changes what the TimeState and scan headers record, never the
+   //! sedimentation, which runs at the set speed and temperature.
+   class US_UTIL_EXTERN TelemetrySettings
+   {
+      public:
+         bool    given             = false; //!< The simparams file has a <telemetry> element
+         quint32 seed              = 1;     //!< Seeds the telemetry stream; a run's channels share it
+         double  rpm_jitter        = 2.0;   //!< Largest recorded departure from the set speed, rpm
+         double  temperature_sd    = 0.1;   //!< Spread of the recorded temperature, degrees C
+         double  temperature_drift = 0.0;   //!< Steady temperature change, degrees C per hour
+   };
+
+   //! \brief Interference optics, from an <interference> element.
+   //! An IP run then records fringes on the interference detector's grid, with
+   //! the interference noise model in place of the absorbance one.
+   class US_UTIL_EXTERN InterferenceSettings
+   {
+      public:
+         bool   given             = false;   //!< The simparams file has an <interference> element
+         double start             = 5.80;    //!< First radius, cm
+         int    points            = 2048;    //!< Detector points
+         double resolution        = 0.00068; //!< Point spacing, cm
+         double scale             = 3.3;     //!< Fringes per unit of signal (loading)
+         double random            = 0.0015;  //!< Random noise sigma, fringes
+         double offset            = 0.02;    //!< Per-scan baseline offset sigma, fringes
+         double structure         = 0.01;    //!< Fixed radial structure sigma, fringes
+         double jump_rate         = 0.02;    //!< Chance per scan of an integer fringe jump
+         double step_fraction     = 0.5;     //!< Share of jumps that are steps at a radius, not whole-scan
+         double meniscus_artifact = 1.5;     //!< Least meniscus spike height, as a multiple of the loading
+   };
+
+   //! \brief A wavelength scan, from a <wavelength_scan> element.
+   //! A WI run records intensity across wavelengths at one radius.
+   class US_UTIL_EXTERN WavelengthScanSettings
+   {
+      public:
+         bool                 given    = false; //!< The simparams file has a <wavelength_scan> element
+         double               position = 6.5;   //!< Radius scanned, cm
+         double               start    = 180.0; //!< First wavelength, nm
+         double               end      = 800.0; //!< Last wavelength, nm
+         double               step     = 1.0;   //!< Wavelength increment, nm
+         QMap<double, double> spectrum;         //!< Sample extinction by wavelength, from <point> children
+   };
+
+   IntensitySettings      intensity;       //!< Intensity mode for RI output
+   WindowSettings         window;          //!< Fixed instrument window; off unless given
+   ScheduleSettings       schedule;        //!< Staggered scan times; off unless given
+   TelemetrySettings      telemetry;       //!< Recorded speed and temperature variation; off unless given
+   InterferenceSettings   interference;    //!< Interference optics for IP runs; off unless given
+   WavelengthScanSettings wavelength_scan; //!< Wavelength scan for WI runs; off unless given
+
    //! Each distinct RPM value in a series of speeds 
    class US_UTIL_EXTERN  SpeedProfile
    {
