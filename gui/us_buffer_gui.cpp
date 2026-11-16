@@ -1736,13 +1736,18 @@ DbgLv(1) << "BufN:SL: newCanceled()";
 // Slot to accept edited buffer
 void US_BufferGuiNew::newAccepted()
 {
-DbgLv(1) << "BufN:SL: newAccepted()";
+   DbgLv( 1 ) << "BufN:SL: newAccepted()";
+   const QString previousGUID = buffer->GUID;
    buffer->GUID         = US_Util::new_guid();
 
    
    if ( from_db )
    { // Add buffer to database
-      write_db  ();
+      if ( !write_db() )
+      { // The error is shown; keep the entered buffer on New for retry or Cancel
+         buffer->GUID = previousGUID;
+         return;
+      }
       DbgLv(1) << "BufN:SL:  newAcc: DB  id" << buffer->bufferID;
       qDebug() << "BufferID: " << buffer->bufferID;
    }
@@ -1769,8 +1774,8 @@ DbgLv(1) << "BufN:SL:  newAcc: Disk";
    emit newBufAccepted();
 }
 
-// Write new buffer to database
-void US_BufferGuiNew::write_db()
+// Write new buffer to database; true when the database holds the buffer
+bool US_BufferGuiNew::write_db()
 {
 DbgLv(1) << "BufN:SL: write_db()  bufID" << buffer->bufferID;
    US_Passwd pw;
@@ -1783,7 +1788,8 @@ DbgLv(1) << "BufN:SL: write_db()  bufID" << buffer->bufferID;
    showBufferSaveError( this, idBuf, error );
 
    qDebug() << "BufferID: " << buffer->bufferID << ", Description: " << buffer->description << ", Extintcion key #: " << buffer->extinction.keys().count();
-   
+   // -6: the database save committed and only the local copy failed
+   return idBuf >= 0 || idBuf == -6;
 }
 
 // Write new buffer to local disk file
