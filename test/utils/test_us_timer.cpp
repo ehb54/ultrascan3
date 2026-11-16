@@ -344,7 +344,7 @@ TEST_F( US_TimerTest, ListTimesSingleTimer )
 
 TEST_F( US_TimerTest, ListTimesMultipleTimers )
 {
-   for ( const QString& name : { "timer_c", "timer_a", "timer_b" } )
+   for ( const QString& name : QStringList{ "timer_c", "timer_a", "timer_b" } )
    {
       timer.init_timer( name );
       ASSERT_NO_FATAL_FAILURE( cycle( name ) );

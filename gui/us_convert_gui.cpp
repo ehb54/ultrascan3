@@ -3634,7 +3634,24 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    
    //Solutions / Triple / Centerpiece Descriptions
    int solutionID;  // ALEXEY change to protocol's solution IDs
-   US_Solution solution_auto;
+
+   // A solution that records each failed DB read, with its reason, for the warning at the end
+   struct ProtocolSolution : public US_Solution
+   {
+         QStringList* failed;
+         int          readFromDB( int id, IUS_DB2* db )
+         {
+            const int status = US_Solution::readFromDB( id, db );
+            if ( status != IUS_DB2::OK )
+            {
+               *failed << QString( "%1: %2" ).arg( id ).arg( US_Solution::readErrorText( status, db->lastError() ) );
+            }
+            return status;
+         }
+   };
+   QStringList      failedSolutions; // Solutions that could not be read; their channels have none
+   ProtocolSolution solution_auto;
+   solution_auto.failed = &failedSolutions;
 
    int nchans     = out_channels.count();
    int ntrips     = out_triples.count();
@@ -4003,7 +4020,17 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 
    //le_status->setText( tr( "AUC data import IS COMPLETE." ) );
    le_status->setText( tr( "Data Acquision COMPLETE." ) );
-   
+
+   if ( !failedSolutions.isEmpty() )
+   {
+      failedSolutions.removeDuplicates();
+      QMessageBox::warning( this,
+                            tr( "Solutions Not Loaded" ),
+                            tr( "These protocol solutions could not be read from the database, so their "
+                                "channels have no solution:\n" ) +
+                               failedSolutions.join( "\n" ) );
+   }
+
    enableSaveBtn_auto();
 }
 

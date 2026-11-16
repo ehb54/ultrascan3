@@ -170,7 +170,10 @@ bool US_BufferGuiSelect::load_buffer(const QString& load_init, US_Buffer& buffer
       if (bufferIDs[i] == load_init || GUIDs[i] == load_init ) {
          // found the matching buffer, let's load it
          if ( from_db ) {
-            read_from_db(bufferIDs[i]);
+            if ( !read_from_db( bufferIDs[i] ) )
+            {
+               return false;
+            }
             buffer = *(this->buffer);
          } else {
             buffer.readFromDisk(filenames[i]);
@@ -204,7 +207,14 @@ else
 DbgLv(1) << "BufS:  selbuf: ROW" << lw_buffer_list->currentRow();
 
    QListWidgetItem *item = lw_buffer_list->currentItem();
-   if ( from_db ) read_from_db  ( item );
+   if ( from_db )
+   {
+      if ( !read_from_db( item ) )
+      {
+         reset();
+         return;
+      }
+   }
    else           read_from_disk( item );
 
    // Write values to screen
@@ -244,7 +254,14 @@ DbgLv(0) << "MwDa: dbg_level" << dbg_level;
 void US_BufferGuiSelect::select_buffer( QListWidgetItem *tmp_item )
 {
    QListWidgetItem *item = tmp_item;
-   if ( from_db )  read_from_db  ( item );
+   if ( from_db )
+   {
+      if ( !read_from_db( item ) )
+      {
+         reset();
+         return;
+      }
+   }
    else            read_from_disk( item );
 
    // Write values to screen
@@ -301,16 +318,17 @@ DbgLv(1) << "row: " << row << " buf: "  << buf;
 }
 
 // Read buffer information from the database (by buffer list item)
-void US_BufferGuiSelect::read_from_db( QListWidgetItem* item )
+bool US_BufferGuiSelect::read_from_db( QListWidgetItem* item )
 {
    int row = lw_buffer_list->row( item );
    QString bufferID = buffer_metadata[ row ].bufferID;
-DbgLv(1) << "BufS-rddb-item  row" << row << "bufID" << bufferID;
-   read_from_db( bufferID );
+   DbgLv( 1 ) << "BufS-rddb-item  row" << row << "bufID" << bufferID;
+   return read_from_db( bufferID );
 }
 
-// Read buffer information from the database (by buffer ID)
-void US_BufferGuiSelect::read_from_db( const QString& bufferID )
+// Read buffer information from the database (by buffer ID). On failure the user is told
+// and the buffer is unchanged.
+bool US_BufferGuiSelect::read_from_db( const QString& bufferID )
 {
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
@@ -319,16 +337,26 @@ void US_BufferGuiSelect::read_from_db( const QString& bufferID )
    if ( db.lastErrno() != IUS_DB2::OK )
    {
       connect_error( db.lastError() );
-      return;
+      return false;
    }
 
-   buffer->extinction.clear();
-DbgLv(1) << "BufS-rddb-bfid  bufID" << bufferID;
-   buffer->readFromDB( &db, bufferID );
-if(buffer->component.size()>0)
-DbgLv(1) << "BufS-rddb-bfid   comp0 nm,rng,un,id" << buffer->component[0].name
- << buffer->component[0].range << buffer->component[0].unit
- << buffer->component[0].componentID;
+   DbgLv( 1 ) << "BufS-rddb-bfid  bufID" << bufferID;
+   if ( !buffer->readFromDB( &db, bufferID ) )
+   {
+      QMessageBox::warning(
+         this,
+         tr( "Buffer Not Loaded" ),
+         tr( "Buffer %1 could not be read from the database:\n%2" )
+            .arg( bufferID,
+                  db.lastError().isEmpty() ? tr( "the buffer or one of its components was not found" ) : db.lastError() ) );
+      return false;
+   }
+   if ( buffer->component.size() > 0 )
+   {
+      DbgLv( 1 ) << "BufS-rddb-bfid   comp0 nm,rng,un,id" << buffer->component[0].name << buffer->component[0].range
+                 << buffer->component[0].unit << buffer->component[0].componentID;
+   }
+   return true;
 }
 
 // Accept the currently selected buffer
@@ -1370,15 +1398,31 @@ void US_BufferGuiNew::create_new_buffer_component() {
    {
       return;
    }
-   bc.saveToDB(&db);
+   if ( bc.saveToDB( &db ) < 0 )
+   {
+      QMessageBox::warning(
+         this,
+         tr( "Buffer Component Not Saved" ),
+         tr( "The buffer component \"%1\" could not be saved to the database:\n%2" ).arg( bc.name, db.lastError() ) );
+      return;
+   }
 
-   // update component list
+   // Reload the component list and the $ULTRASCAN3/etc/bufferComponents.xml file; keep both
+   // as they are when the list cannot be read back.
+   QMap<QString, US_BufferComponent> reloaded;
+   QString                           error;
+   if ( !US_BufferComponent::getAllFromDB( pw.getPasswd(), reloaded, &error ) )
+   {
+      QMessageBox::warning( this,
+                            tr( "Buffer Components Not Reloaded" ),
+                            tr( "The buffer component \"%1\" was saved, but the component list could not be "
+                                "read back from the database:\n%2" )
+                               .arg( bc.name, error ) );
+      return;
+   }
+   component_list = reloaded;
+   US_BufferComponent::putAllToHD( component_list );
    lw_allcomps->clear();
-   // update buffer components file
-   //  $ULTRASCAN3/etc/bufferComponents xml file:
-   component_list.clear();
-   US_BufferComponent::getAllFromDB(pw.getPasswd(), component_list);
-   US_BufferComponent::putAllToHD(component_list);
    QStringList keys = component_list.keys();
    std::sort(keys.begin(),keys.end());
 
@@ -2082,7 +2126,12 @@ DbgLv(1) << "setB:synchc read to HD from DB";
 
    // Read components from DB, write to HD
    component_list.clear();
-   US_BufferComponent::getAllFromDB( pw.getPasswd(), component_list );
+   QString error;
+   if ( !US_BufferComponent::getAllFromDB( pw.getPasswd(), component_list, &error ) )
+   {
+      le_syncstat->setText( tr( "Not synchronized; the database could not be read: %1" ).arg( error ) );
+      return;
+   }
    US_BufferComponent::putAllToHD  ( component_list );
 DbgLv(1) << "setB:synchc   synch complete:  components:"
  << component_list.size();

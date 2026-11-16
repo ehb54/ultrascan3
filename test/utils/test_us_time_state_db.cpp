@@ -184,7 +184,7 @@ TEST_F( TimeStateDb, CreateRenamesAMatchingRecordUnderItsOwnId )
 TEST_F( TimeStateDb, CreateReplacesAMismatchedRecord )
 {
    writeLocalFiles();
-   for ( const QString defs : { kDefs, QString( "<TimeState/>" ) } )
+   for ( const QString& defs : { kDefs, QString( "<TimeState/>" ) } )
    {
       SCOPED_TRACE( defs.toStdString() );
       const QString checksum = defs == kDefs ? QString( "0123abcd 17" ) : localChecksum();

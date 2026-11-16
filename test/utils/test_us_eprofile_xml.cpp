@@ -57,7 +57,8 @@ TEST_F( ExtProfileXml, FrequencyTakesPrecedenceAndMissingWavelengthDefaultsTo280
 TEST_F( ExtProfileXml, DuplicateWavelengthUsesLastValueAndSupportsScientificNumbers )
 {
    QString              xml = "<extinctionProfile><extinction wavelength='2.8e2' value='1'/>"
-                              "<extinction frequency='280' value='-2.5e1'/><extinction wavelength='300' value='+4'/></extinctionProfile>";
+                              "<extinction frequency='280' value='-2.5e1'/>"
+                              "<extinction wavelength='300' value='+4'/></extinctionProfile>";
    QMap<double, double> spectrum;
    ASSERT_TRUE( US_ExtProfile::parse_eprofile( xml, nullptr, nullptr, nullptr, spectrum ) );
    EXPECT_EQ( ( QMap<double, double>{ { 280, -25 }, { 300, 4 } } ), spectrum );

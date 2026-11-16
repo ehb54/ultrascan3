@@ -18,10 +18,13 @@ class US_UTIL_EXTERN US_BufferComponent
       QString range;             //!< The buffer component's range. 
       bool    grad_form{false};         //!< Flag if gradient forming.
 
-      //! Get all component data from the DB
+      //! Get all component data from the DB. Components whose rows cannot be read are skipped.
       //! \param masterPW The user's master password.
       //! \param componentList A reference to where the data should be placed.
-      static void getAllFromDB ( const QString&, QMap< QString, US_BufferComponent >& );
+      //! \param error If not null, receives the reason when the read fails.
+      //! \return False when the DB cannot be opened, the component list cannot be queried, or
+      //!         none of the listed components can be read.
+      static bool getAllFromDB( const QString&, QMap<QString, US_BufferComponent>&, QString* error = nullptr );
 
       //! Get all component data from the etc/buffer_comp.xml file
       //! \param componentList A reference to where the data should be placed.

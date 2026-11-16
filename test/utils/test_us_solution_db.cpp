@@ -539,4 +539,13 @@ TEST_F( SolutionDb, CountInProtocolsMatchesTheSolutionIdAndReportsAFailedQuery )
    }
    EXPECT_LT( solution.countInProtocols( &db ), 0 );
 }
+
+TEST( SolutionReadErrorText, NamesTheMissingPartOrUsesTheDbError )
+{
+   EXPECT_EQ( "the solution was not found", US_Solution::readErrorText( IUS_DB2::NO_SOLUTION, "ignored" ) );
+   EXPECT_EQ( "its buffer could not be read", US_Solution::readErrorText( IUS_DB2::NO_BUFFER, "ignored" ) );
+   EXPECT_EQ( "one of its analytes could not be read", US_Solution::readErrorText( IUS_DB2::NO_ANALYTE, "ignored" ) );
+   EXPECT_EQ( "Lost connection", US_Solution::readErrorText( IUS_DB2::DBERROR, "Lost connection" ) );
+   EXPECT_EQ( QString( "database error %1" ).arg( IUS_DB2::DBERROR ), US_Solution::readErrorText( IUS_DB2::DBERROR, "" ) );
+}
 } // namespace
