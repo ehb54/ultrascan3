@@ -54,6 +54,7 @@ message(STATUS "Auto-discovered ${num_sources} test source files")
 # Non-unit dependencies are kept out of the unit binary as well as its label.
 # This also makes direct --gtest_shuffle/--gtest_repeat runs offline.
 set(DB_TEST_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_us_buffer_component_live.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_us_db2_connect_authenticated.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_us_db2_roundtrip.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_us_db2_transactions.cpp)
