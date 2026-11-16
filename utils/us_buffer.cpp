@@ -643,7 +643,8 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
    QString compType("Buffer");
    QString valType("molarExtinction");
    qDebug() << "bufferID for extProfile: " << bufferID;
-   
+
+   bool profileFailed = false;
    if ( !extinction.isEmpty() && new_or_changed_spectrum )
    {
       // Create the profile, or replace a stored one (whose old values are discarded).
@@ -651,15 +652,19 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
       int profileID = replace_spectrum ? US_ExtProfile::fetch_eprofile( db, bufferID.toInt(), compType, valType, stored ) : -1;
 
       // A failed create returns -1; update reports success directly.
-      if ( profileID == -1 ? US_ExtProfile::create_eprofile( db, bufferID.toInt(), compType, valType, extinction ) < 1
-                           : !US_ExtProfile::update_eprofile( db, profileID, bufferID.toInt(), compType, valType, extinction ) )
-      { // The spectrum is still new or changed; a later save retries it
+      profileFailed = profileID == -1
+                         ? US_ExtProfile::create_eprofile( db, bufferID.toInt(), compType, valType, extinction ) < 1
+                         : !US_ExtProfile::update_eprofile( db, profileID, bufferID.toInt(), compType, valType, extinction );
+      if ( profileFailed )
+      { // The spectrum is still new or changed; a later save retries it. The disk copy
+         // below is still written, since the buffer row and components are already stored.
          qDebug() << "extinction profile write failed for buffer" << bufferID;
-         return -5;
       }
-
-      replace_spectrum        = false;
-      new_or_changed_spectrum = false;
+      else
+      {
+         replace_spectrum        = false;
+         new_or_changed_spectrum = false;
+      }
    }
    //putSpectrum( db, "Extinction" );
    //putSpectrum( db, "Refraction" );
@@ -675,6 +680,10 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
    {
       qDebug() << "buffer disk copy failed:" << filename;
       return -6;
+   }
+   if ( profileFailed )
+   {
+      return -5;
    }
 
    qDebug() << "bufferID upon saveToDB() completion: " << bufferID;

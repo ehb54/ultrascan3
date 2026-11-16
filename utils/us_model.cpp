@@ -613,6 +613,16 @@ int US_Model::load_disk( const QString& guid )
 
 namespace
 {
+// Read stored model XML as UTF-8. Qt 6 text streams default to UTF-8; Qt 5 ones use the locale.
+void setUtf8( QTextStream& ts )
+{
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
+   ts.setCodec( "UTF-8" );
+#else
+   Q_UNUSED( ts );
+#endif
+}
+
 // True when the whole document parses. The multi-model reader splits the text by lines,
 // so it cannot itself notice a truncated or malformed later model.
 bool completeXml( const QByteArray& contents )
@@ -631,15 +641,19 @@ int US_Model::load( const QString& filename )
 {
    QFile file( filename );
 
-   if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text) )
+   if ( !file.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   {
       return IUS_DB2::DBERROR;
+   }
 
+   // Load into a copy; this model changes only when the file loads completely.
+   US_Model         loaded = *this;
    QXmlStreamReader xml( &file );
-   
-   int result = load_stream( xml );
 
-   if ( result == IUS_DB2::NO_MODEL  &&  monteCarlo )
-   {  // Handle a multi-model stream
+   int              result = loaded.load_stream( xml );
+
+   if ( result == IUS_DB2::NO_MODEL && loaded.monteCarlo )
+   { // Handle a multi-model stream; every model in it must parse
       file.close();
       if ( !file.open( QIODevice::ReadOnly | QIODevice::Text ) )
       {
@@ -654,19 +668,31 @@ int US_Model::load( const QString& filename )
       }
 
       QTextStream tsi( contents );
+      setUtf8( tsi );
 
-      result     = load_multi_model( tsi );
+      result = loaded.load_multi_model( tsi );
    }
 
    file.close();
+
+   if ( result == IUS_DB2::OK )
+   {
+      *this = loaded;
+   }
    return result;
 }
 
 // Load a model from an XML string
 int US_Model::load_string( const QString& mcont )
 {
+   // Load into a copy; this model changes only when the string loads completely.
+   US_Model         loaded = *this;
    QXmlStreamReader xml( mcont );
-   int result = load_stream( xml );
+   const int        result = loaded.load_stream( xml );
+   if ( result == IUS_DB2::OK )
+   {
+      *this = loaded;
+   }
    return result;
 }
 
@@ -1216,6 +1242,7 @@ int US_Model::load( const QString& id, IUS_DB2* db )
       }
 
       QTextStream tsi( contents );
+      setUtf8( tsi );
 
       result          = loaded.load_multi_model( tsi );
       loaded.variance = db->value( 3 ).toDouble();
@@ -1281,6 +1308,7 @@ int US_Model::write( IUS_DB2* db )
    else
    {
       QTextStream tso( &contents );
+      setUtf8( tso );
       write_mm_stream( tso );
    }
 
@@ -1345,6 +1373,7 @@ int US_Model::write( const QString& filename )
    else
    {
       QTextStream tso( &file );
+      setUtf8( tso );
       write_mm_stream( tso );
    }
 
@@ -1645,6 +1674,7 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
          }
 
          QTextStream tsi( &filei );
+         setUtf8( tsi );
          QString mcont   = tsi.readAll();
          filei.close();
          int jj          = qMax( 0, mcont.indexOf( "description=" ) );
@@ -1673,6 +1703,7 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
          if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text) )
             continue;
          QTextStream tsi( &filei );
+         setUtf8( tsi );
          QString mcont  = tsi.readAll();
          filei.close();
          int jj         = qMax( 0, mcont.indexOf( "description=" ) );
@@ -1709,6 +1740,7 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
                                         return empty_str;
       }
       QTextStream tsi( &filei );
+      setUtf8( tsi );
       QString mcont    = tsi.readAll();
       filei.close();
       int jj           = qMax( 0, mcont.indexOf( "modelGUID=" ) );
@@ -1753,6 +1785,7 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
 
       // Output contents of first iteration model except last line
       QTextStream tso( &fileo );
+      setUtf8( tso );
       jj               = qMax( 0, mcont.indexOf( "modelGUID=" ) );
       QString miguid   = QString( mcont ).mid( jj, 99 ).section( dquo, 1, 1 );
       if ( miguid != mcguid )
@@ -1769,6 +1802,7 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
          if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text) )
             continue;
          QTextStream tsi( &filei );
+         setUtf8( tsi );
          mcont          = tsi.readAll();
          filei.close();
          jj             = qMax( 0, mcont.indexOf( "modelGUID=" ) );
@@ -1792,6 +1826,7 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
       }
       // Read in contents of existing composite model; skip last line
       QTextStream tsi( &filei );
+      setUtf8( tsi );
       QString mcont    = tsi.readAll();
       filei.close();
       mcont            = mcont.section( "\n", 0, -3 ) + "\n";
@@ -1836,6 +1871,7 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
 
       // Output contents of previous composite except for last line
       QTextStream tso( &fileo );
+      setUtf8( tso );
       int flx        = 0;
       int llx        = -3;
       tso << mcont.section( "\n", flx, llx ) << "\n";
@@ -1848,6 +1884,7 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
          if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text) )
             continue;
          QTextStream tsi( &filei );
+         setUtf8( tsi );
          mcont          = tsi.readAll();
          filei.close();
          jj             = qMax( 0, mcont.indexOf( "modelGUID=" ) );
@@ -1895,6 +1932,7 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
             }
 
             QTextStream tsi( &filei );
+            setUtf8( tsi );
             QString mcont  = tsi.readAll();
             filei.close();
             int jj         = qMax( 0, mcont.indexOf( "description=" ) );

@@ -5674,7 +5674,7 @@ DbgLv(1) << "EGSo:solDat:    NEWfound descr" << soludata.solutionDesc << stat;
          }
          else
          {
-            soludata.readFromDisk( solID );
+            found = ( soludata.readFromDisk( solID ) == US_DB2::OK );
          }
          solu_data[ sdescr ] = soludata;
       }

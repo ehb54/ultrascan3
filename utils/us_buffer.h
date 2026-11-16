@@ -113,7 +113,7 @@ class US_UTIL_EXTERN US_Buffer
       //! \return The bufferID of the new buffer, or a negative error: -9 failed
       //!         lookup, -1 failed insert, -2 failed update, -3 failed component
       //!         delete, -4 failed component write, -5 failed extinction-profile
-      //!         write, -6 failed disk copy.
+      //!         write (the disk copy is still written), -6 failed disk copy.
       int saveToDB( IUS_DB2* = 0, const QString = "1" );
 
       //! \brief Read a buffer from the DB

@@ -138,7 +138,7 @@ bool US_RotorGui::load_rotor(QString& load_init, double& coeff1, double& coeff2)
       }
 
       // Get information about all the labs
-      if ( US_Rotor::readLabsDB( labList, &db ) == US_Rotor::NOT_FOUND )
+      if ( US_Rotor::readLabsDB( labList, &db ) != US_Rotor::ROTOR_OK )
       {
          QMessageBox::warning( this, tr( "Database Problem" ),
             tr( "Could not read lab information \n" ) );
@@ -1051,7 +1051,7 @@ bool US_RotorGui::load( void )
       }
       
       // Get information about all the labs
-      if ( US_Rotor::readLabsDB( labList, &db ) == US_Rotor::NOT_FOUND )
+      if ( US_Rotor::readLabsDB( labList, &db ) != US_Rotor::ROTOR_OK )
       {
          QMessageBox::warning( this, tr( "Database Problem" ),
             tr( "Could not read lab information \n" ) );

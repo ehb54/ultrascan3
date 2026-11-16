@@ -12,9 +12,6 @@ using ::testing::Matcher;
 using ::testing::Return;
 using ::testing::StrictMock;
 
-// Not covered: saveDocumentFromFile and saveFileDocuments, which combine these calls with
-// file-name parsing; their plain and _auto forms now share one implementation.
-
 namespace
 {
 const QString               kReportGuid   = "11111111-aaaa-bbbb-cccc-000000000001";
@@ -399,6 +396,29 @@ TEST_F( ReportLoad, AutoReadUsesTheGivenInvestigator )
    }
    EXPECT_EQ( US_Report::NOT_FOUND, report.readDB_auto( 77, "run-1", &db ) );
    expectReportUnchanged();
+}
+
+TEST_F( ReportLoad, SavingDocumentsStopsWhenAChangedTripleCannotBeSaved )
+{
+   for ( const bool oneFile : { true, false } )
+   {
+      SCOPED_TRACE( oneFile );
+      US_Report stored;
+      {
+         InSequence sequence;
+         expectReportRow();
+         expectTripleRow();
+         expectQuery( { "get_reportDocument_desc", "21" }, IUS_DB2::NOROWS, false );
+         // The new data description is written to the stored triple first.
+         expectQuery( { "get_reportTripleID", kTripleGuid }, IUS_DB2::DBERROR, false );
+      }
+      // No document may be written after the triple failed.
+      const US_Report::Status status =
+         oneFile ? stored.saveDocumentFromFile( "/results/run-1", "2DSA.1A280.residuals.png", &db, 4, "changed" )
+                 : stored.saveFileDocuments( "/results/run-1", { "/results/run-1/2DSA.1A280.residuals.png" }, &db, 4, "changed" );
+      EXPECT_EQ( US_Report::DB_ERROR, status );
+      ASSERT_TRUE( ::testing::Mock::VerifyAndClearExpectations( &db ) );
+   }
 }
 
 TEST_F( ReportDb, SaveCreatesOrUpdatesTheReportAndReadsItsExperiment )

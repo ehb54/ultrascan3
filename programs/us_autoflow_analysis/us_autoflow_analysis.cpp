@@ -4873,16 +4873,17 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
 				   bvisc, bcomp, bmanu, errmsg );
   // Read the solution; when that fails, use the default vbar, which later vbar calculations
   // also use for the cleared solution, since it has no analytes
-  const auto read_db_solution = [&]()
+  const auto read_solution = [&]( bool fromDb )
   {
-     const int solstat = solution_rec.readFromDB( solID.toInt(), dbP );
+     const int     solstat = fromDb ? solution_rec.readFromDB( solID.toInt(), dbP ) : solution_rec.readFromDisk( solID );
+     const QString solerr  = fromDb ? dbP->lastError() : tr( "the solution file could not be read" );
      if ( solstat != IUS_DB2::OK )
      {
         QMessageBox::warning( this,
                               tr( "Solution/Buffer Fetch" ),
-                              tr( "Solution %1 could not be read from the database:\n%2\n"
+                              tr( "Solution %1 could not be read:\n%2\n"
                                   "The default vbar, %3, is used." )
-                                 .arg( solID, US_Solution::readErrorText( solstat, dbP->lastError() ) )
+                                 .arg( solID, US_Solution::readErrorText( solstat, solerr ) )
                                  .arg( TYPICAL_VBAR ) );
         solution_rec.commonVbar20 = TYPICAL_VBAR;
      }
@@ -4908,14 +4909,14 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
       
       else if ( solID.length() < 36  &&  dbP != NULL )
       {
-         read_db_solution();
+         read_solution( true );
       }
 
       else
-	{
-	  solution_rec.readFromDisk( solID );
-	}
-      
+      {
+         read_solution( false );
+      }
+
       vbar          = solution_rec.commonVbar20;
       svbar         = QString::number( vbar );
       

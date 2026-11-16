@@ -254,6 +254,18 @@ TEST_F( RotorDb, AbstractRotorListStopsAtAFailedRotor )
    EXPECT_EQ( QString( "previous" ), rotors[0].name );
 }
 
+TEST_F( RotorDb, AbstractRotorListReportsAFailedListQuery )
+{
+   QVector<US_Rotor::AbstractRotor> rotors( 1 );
+   rotors[0].name = "previous";
+   EXPECT_CALL( db, query( args( { "get_abstractRotor_names" } ) ) );
+   EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::DBERROR ) );
+   // A failed query is an error, not an empty list.
+   EXPECT_EQ( US_Rotor::MISC_ERROR, US_Rotor::readAbstractRotorsDB( rotors, &db ) );
+   ASSERT_EQ( 1, rotors.size() );
+   EXPECT_EQ( QString( "previous" ), rotors[0].name );
+}
+
 TEST_F( RotorDb, RotorReadMapsColumnsAndRejectsAMissingRow )
 {
    {

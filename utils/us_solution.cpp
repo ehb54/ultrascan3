@@ -19,6 +19,23 @@ US_Solution::US_Solution()
 // Function to load a solution from the disk
 int US_Solution::readFromDisk( QString& guid )
 {
+   // Load into a fresh solution and publish it only when the file, its buffer and its
+   // analytes all load. A failed read leaves the solution cleared, never partly loaded.
+   US_Solution loaded;
+   const int   status = loaded.loadFromDisk( guid );
+   if ( status == IUS_DB2::OK )
+   {
+      *this = loaded;
+   }
+   else
+   {
+      clear();
+   }
+   return status;
+}
+
+int US_Solution::loadFromDisk( QString& guid )
+{
    QString filename;
    bool found = diskFilename( guid, filename );
 

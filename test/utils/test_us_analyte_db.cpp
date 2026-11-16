@@ -443,6 +443,28 @@ TEST_F( AnalyteDb, WriteCreatesExtinctionProfileForANewSpectrum )
    EXPECT_FALSE( analyte.new_or_changed_spectrum );
 }
 
+TEST_F( AnalyteDb, FailedProfileWriteIsReportedAndStaysPendingWithTheDiskCopy )
+{
+   prepareProtein();
+   analyte.extinction[280.0]       = 43824.0;
+   analyte.new_or_changed_spectrum = true;
+   {
+      InSequence sequence;
+      expectLookup( true );
+      EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, query( args( { "get_eprofile", "17", "Analyte" } ) ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOROWS ) );
+      EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::DBERROR ) );
+   }
+
+   EXPECT_EQ( IUS_DB2::DBERROR, analyte.write( true, QString(), &db ) );
+   EXPECT_EQ( QString( "The extinction profile could not be saved to the DB" ), analyte.message );
+   // The spectrum is retried by the next save; the disk copy is written regardless.
+   EXPECT_TRUE( analyte.new_or_changed_spectrum );
+   EXPECT_FALSE( diskDescription().isEmpty() );
+}
+
 TEST_F( AnalyteDb, WriteReplacesTheStoredProfileAndKeepsTheNewValues )
 {
    prepareProtein();

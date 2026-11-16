@@ -93,9 +93,16 @@ int US_Noise::load( const QString& filename )
       return -1;
    }
 
-   QXmlStreamReader     xml( &file );
+   // Load into a copy; this noise changes only when the file loads completely.
+   US_Noise         loaded = *this;
+   QXmlStreamReader xml( &file );
 
-   return load_stream( xml );
+   const int        result = loaded.load_stream( xml );
+   if ( result == IUS_DB2::OK )
+   {
+      *this = loaded;
+   }
+   return result;
 }
 
 // load noise from an XML stream
