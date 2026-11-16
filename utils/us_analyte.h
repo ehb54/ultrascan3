@@ -72,8 +72,10 @@ class US_UTIL_EXTERN US_Analyte
       //!                    be written if disk access is specified
       //! \param db        - For DB access, an open database connection
       //! \returns         - The \ref IUS_DB2 return code for the operation. A DB
-      //!                    write also fails when the lookup, the nucleotide info
-      //!                    or the disk copy fails; message says which.
+      //!                    write also fails when the lookup, the nucleotide info,
+      //!                    the extinction profile or the disk copy fails; message
+      //!                    says which. The disk copy is written even when the
+      //!                    profile fails, and the spectrum stays pending.
       int  write( bool, const QString&, IUS_DB2* = 0 );
 
       //! Read/write XML through a caller-owned, already-open device.

@@ -426,7 +426,8 @@ TEST_F( BufferDb, SaveReportsAFailedProfileWriteAndKeepsTheSpectrumPending )
 
    EXPECT_EQ( -5, buffer.saveToDB( &db, "1" ) );
    EXPECT_TRUE( buffer.new_or_changed_spectrum );
-   EXPECT_TRUE( diskCopy().isEmpty() );
+   // The buffer row is already stored, so its disk copy is written too.
+   EXPECT_FALSE( diskCopy().isEmpty() );
 }
 
 TEST_F( BufferDb, SaveCreatesAMissingBuffersDirectory )

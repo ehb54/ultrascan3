@@ -4,6 +4,7 @@
 #include "us_eprofile.h"
 #include "us_settings.h"
 #include "us_solution.h"
+#include <QDir>
 
 using ::testing::_;
 using ::testing::AnyNumber;
@@ -538,6 +539,34 @@ TEST_F( SolutionDb, CountInProtocolsMatchesTheSolutionIdAndReportsAFailedQuery )
       EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::DBERROR ) );
    }
    EXPECT_LT( solution.countInProtocols( &db ), 0 );
+}
+
+// Disk reads, which clear the solution on failure as DB reads do.
+
+TEST_F( SolutionDb, MissingSolutionFileClearsTheSolution )
+{
+   prepareLoaded();
+   QString guid = "99999999-8888-7777-6666-555555555555";
+   EXPECT_EQ( IUS_DB2::NO_SOLUTION, solution.readFromDisk( guid ) );
+   expectCleared();
+}
+
+TEST_F( SolutionDb, SolutionFileWithAMissingBufferClearsTheSolution )
+{
+   // A solution file on disk whose buffer has no file.
+   US_Solution stored;
+   stored.solutionGUID    = "99999999-8888-7777-6666-444444444444";
+   stored.solutionDesc    = "Stored on disk";
+   stored.buffer.GUID     = "99999999-8888-7777-6666-333333333333";
+   stored.buffer.bufferID = "5";
+   stored.saveToDisk();
+   // saveToDisk also writes the buffer file; remove it.
+   ASSERT_TRUE( QDir( US_Settings::dataDir() + "/buffers" ).removeRecursively() );
+   QString guid = stored.solutionGUID;
+
+   prepareLoaded();
+   EXPECT_EQ( IUS_DB2::NO_BUFFER, solution.readFromDisk( guid ) );
+   expectCleared();
 }
 
 TEST( SolutionReadErrorText, NamesTheMissingPartOrUsesTheDbError )

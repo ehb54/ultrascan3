@@ -3523,10 +3523,12 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    
    //Lab
    QVector< US_Rotor::Lab > labList_auto;
-   
-   if ( db.lastErrno() == US_DB2::OK )
-     US_Rotor::readLabsDB( labList_auto, &db );
-   
+
+   if ( db.lastErrno() == US_DB2::OK && US_Rotor::readLabsDB( labList_auto, &db ) != US_Rotor::ROTOR_OK )
+   {
+      QMessageBox::warning( this, tr( "Database Problem" ), tr( "Could not read lab information\n" ) + db.lastError() );
+   }
+
    int currentLab_auto = 0;
    for ( int ii = 0; ii < labList_auto.size(); ii++ )
      {
@@ -3571,7 +3573,11 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    qDebug() << "RotorID/CalID  READ!!! ";
    
    // Instrument
-   QList< US_Rotor::Instrument > instruments = labList_auto[ currentLab_auto ].instruments;
+   QList<US_Rotor::Instrument> instruments;
+   if ( currentLab_auto < labList_auto.size() )
+   {
+      instruments = labList_auto[currentLab_auto].instruments;
+   }
    US_Rotor::Instrument currentInstrument_auto; 
    foreach ( US_Rotor::Instrument instrument, instruments )
      {
