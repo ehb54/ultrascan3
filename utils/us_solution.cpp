@@ -220,8 +220,9 @@ int US_Solution::readFromDB  ( int solutionID, IUS_DB2* db )
       q << "get_solutionAnalyte" << QString::number( solutionID );
       db->query( q );
 
+      // get_solutionAnalyte reports a solution with no analytes as NO_ANALYTE.
       status = db->lastErrno();
-      if ( status != IUS_DB2::OK && status != IUS_DB2::NOROWS )
+      if ( status != IUS_DB2::OK && status != IUS_DB2::NOROWS && status != IUS_DB2::NO_ANALYTE )
       {
          return status;
       }

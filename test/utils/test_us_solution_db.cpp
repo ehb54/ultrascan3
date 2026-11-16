@@ -126,10 +126,11 @@ class SolutionDb : public QtTestBase
          EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOROWS ) );
       }
 
+      // get_solutionAnalyte reports a solution without analytes as NO_ANALYTE.
       void expectAnalyteRows( const QStringList& guids )
       {
          EXPECT_CALL( db, query( args( { "get_solutionAnalyte", "7" } ) ) );
-         EXPECT_CALL( db, lastErrno() ).WillOnce( Return( guids.isEmpty() ? IUS_DB2::NOROWS : IUS_DB2::OK ) );
+         EXPECT_CALL( db, lastErrno() ).WillOnce( Return( guids.isEmpty() ? IUS_DB2::NO_ANALYTE : IUS_DB2::OK ) );
          for ( const QString& guid : guids )
          {
             EXPECT_CALL( db, next() ).WillOnce( Return( true ) );
@@ -278,6 +279,21 @@ TEST_F( SolutionDb, FailedAnalyteQueryOrUnreadableAnalyteClearsTheSolution )
       EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::DBERROR ) );
    }
    EXPECT_EQ( IUS_DB2::DBERROR, solution.readFromDB( 7, &db ) );
+   expectCleared();
+   ASSERT_TRUE( ::testing::Mock::VerifyAndClearExpectations( &db ) );
+   EXPECT_CALL( db, lastError() ).Times( AnyNumber() ).WillRepeatedly( Return( QString() ) );
+   prepareLoaded();
+
+   // A refused permission check is a failure, not an empty analyte list.
+   {
+      InSequence sequence;
+      expectSolutionRow();
+      expectSolutionBufferRow();
+      expectBufferRead();
+      EXPECT_CALL( db, query( args( { "get_solutionAnalyte", "7" } ) ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOTPERMITTED ) );
+   }
+   EXPECT_EQ( IUS_DB2::NOTPERMITTED, solution.readFromDB( 7, &db ) );
    expectCleared();
    ASSERT_TRUE( ::testing::Mock::VerifyAndClearExpectations( &db ) );
    EXPECT_CALL( db, lastError() ).Times( AnyNumber() ).WillRepeatedly( Return( QString() ) );
