@@ -39,6 +39,8 @@ void          assertEnvelope( const QStringList& envelope, const QString& plaint
 }
 } // namespace
 
+// Decrypting an empty plaintext and a failed decryption both return an empty string.
+
 class TestUSCryptoUnit : public QtTestBase
 {
 };
@@ -184,6 +186,42 @@ TEST_F( TestUSCryptoUnit, LegacyRejectsIncompleteCipherBlocksWithAValidIv )
    const QString truncated = legacyCiphertext.left( legacyCiphertext.size() - 2 );
    EXPECT_TRUE( US_Crypto::decryptLegacy( truncated, "legacy-pass", legacyIv ).isEmpty() );
    EXPECT_TRUE( US_Crypto::decrypt( truncated, "legacy-pass", legacyIv ).isEmpty() );
+}
+
+TEST_F( TestUSCryptoUnit, AcceptsUppercaseHexAndRejectsOddLengthHex )
+{
+   EXPECT_EQ( US_Crypto::decrypt( gcmCiphertext.toUpper(), gcmPassword, gcmMetadata.toUpper() ), gcmPlaintext );
+   const QString legacy = QString::fromLatin1( "Legacy caf\xe9" );
+   EXPECT_EQ( US_Crypto::decrypt( legacyCiphertext.toUpper(), "legacy-pass", legacyIv.toUpper() ), legacy );
+
+   // An odd digit count cannot be the hex of whole bytes.
+   for ( const QString& ciphertext : { gcmCiphertext + "0", gcmCiphertext.left( gcmCiphertext.size() - 1 ) } )
+   {
+      EXPECT_TRUE( US_Crypto::decrypt( ciphertext, gcmPassword, gcmMetadata ).isEmpty() ) << ciphertext.size();
+   }
+   EXPECT_TRUE( US_Crypto::decrypt( gcmCiphertext, gcmPassword, gcmMetadata + "0" ).isEmpty() );
+   EXPECT_TRUE( US_Crypto::decrypt( legacyCiphertext + "0", "legacy-pass", legacyIv ).isEmpty() );
+   EXPECT_TRUE( US_Crypto::decrypt( legacyCiphertext, "legacy-pass", legacyIv.left( legacyIv.size() - 1 ) ).isEmpty() );
+}
+
+TEST_F( TestUSCryptoUnit, RejectsAnyNonHexCharacter )
+{
+   // Each altered envelope keeps an even length and would decode to the original bytes if
+   // non-hex characters were skipped.
+   const QStringList inserts{ "  ", "\r\n", "\t\t", "gg", "::", "--", "zz" };
+   for ( const QString& insert : inserts )
+   {
+      SCOPED_TRACE( insert.toStdString() );
+      const QString gcmAltered = gcmCiphertext.left( 4 ) + insert + gcmCiphertext.mid( 4 );
+      EXPECT_TRUE( US_Crypto::decrypt( gcmAltered, gcmPassword, gcmMetadata ).isEmpty() );
+      EXPECT_TRUE( US_Crypto::decrypt( gcmCiphertext, gcmPassword, gcmMetadata + insert ).isEmpty() );
+      EXPECT_TRUE( US_Crypto::decrypt( insert + legacyCiphertext, "legacy-pass", legacyIv ).isEmpty() );
+      EXPECT_TRUE(
+         US_Crypto::decrypt( legacyCiphertext, "legacy-pass", legacyIv.left( 2 ) + insert + legacyIv.mid( 2 ) ).isEmpty() );
+      EXPECT_TRUE( US_Crypto::decryptLegacy( legacyCiphertext + insert, "legacy-pass", legacyIv ).isEmpty() );
+   }
+   // The unaltered envelopes still decrypt.
+   EXPECT_EQ( gcmPlaintext, US_Crypto::decrypt( gcmCiphertext, gcmPassword, gcmMetadata ) );
 }
 
 // This is a regression against accidental salt/nonce reuse, not a statistical

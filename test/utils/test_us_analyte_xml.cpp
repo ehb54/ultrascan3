@@ -123,6 +123,78 @@ TEST_P( AnalyteXml, NucleotidesRecomputeMassAndNormalizeCase )
    }
 }
 
+// Synthetic cases model observed legacy formatting, without copying research sequences or GUIDs.
+TEST_P( AnalyteXml, NumberedNucleotideSequencesPreserveTextWithoutCountingLineNumbers )
+{
+   for ( bool rna : { false, true } )
+   {
+      for ( bool numbered : { false, true } )
+      {
+         SCOPED_TRACE( ::testing::Message() << "RNA=" << rna << " numbered=" << numbered );
+         const QByteArray letters  = rna ? "AACU" : "AACT";
+         const QByteArray sequence = numbered ? "\n0001 AA\n0003 " + letters.mid( 2 ) + "\n" : letters;
+         US_Analyte       a;
+         ASSERT_NO_FATAL_FAILURE( read( a,
+                                        QByteArray( "<analyte analyteGUID='fixture' type='" ) + ( rna ? "RNA" : "DNA" ) +
+                                           "' mw='9999' vbar20='0.55' stranded='0' complement_only='0' ThreePrimeHydroxyl='0' "
+                                           "FivePrimeHydroxyl='0' sodium='0' potassium='0' lithium='0' magnesium='0' calcium='0'>"
+                                           "<sequence>" +
+                                           sequence + "</sequence></analyte>" ) );
+         EXPECT_EQ( rna ? US_Analyte::RNA : US_Analyte::DNA, a.type );
+         EXPECT_EQ( QString::fromUtf8( sequence ).toLower(), a.sequence );
+         // Two A, one C and one T/U, plus a 3-prime phosphate (94.87).
+         // RNA adds one oxygen per nucleotide. These totals do not use the production calculator.
+         EXPECT_NEAR( rna ? 1348.638 : 1314.668, a.mw, 1e-9 );
+         EXPECT_DOUBLE_EQ( 0.55, a.vbar20 );
+         EXPECT_FALSE( a.doubleStranded );
+         EXPECT_FALSE( a.complement );
+         EXPECT_FALSE( a._3prime );
+         EXPECT_FALSE( a._5prime );
+         EXPECT_TRUE( a.extinction.isEmpty() );
+      }
+   }
+}
+
+TEST_P( AnalyteXml, ComplementOnlyRnaUsesComplementMassAndHydroxylEndsWithoutSpectrum )
+{
+   US_Analyte a;
+   ASSERT_NO_FATAL_FAILURE( read( a,
+                                  "<analyte analyteGUID='fixture' type='RNA' mw='9999' vbar20='0.55' stranded='0' "
+                                  "complement_only='1' ThreePrimeHydroxyl='1' FivePrimeHydroxyl='1' sodium='0' potassium='0' "
+                                  "lithium='0' magnesium='0' calcium='0'><sequence>\n0001 AACG\n</sequence></analyte>" ) );
+   EXPECT_EQ( US_Analyte::RNA, a.type );
+   EXPECT_EQ( QString( "\n0001 aacg\n" ), a.sequence );
+   EXPECT_FALSE( a.doubleStranded );
+   EXPECT_TRUE( a.complement );
+   EXPECT_TRUE( a._3prime );
+   EXPECT_TRUE( a._5prime );
+   // Complement UUGC: 2*290.169 + 345.207 + 305.183 + 17.01 - 77.96.
+   EXPECT_NEAR( 1169.778, a.mw, 1e-9 );
+   EXPECT_DOUBLE_EQ( 0.55, a.vbar20 );
+   EXPECT_DOUBLE_EQ( 0, a.sodium );
+   EXPECT_DOUBLE_EQ( 0, a.potassium );
+   EXPECT_DOUBLE_EQ( 0, a.lithium );
+   EXPECT_DOUBLE_EQ( 0, a.magnesium );
+   EXPECT_DOUBLE_EQ( 0, a.calcium );
+   EXPECT_TRUE( a.extinction.isEmpty() );
+}
+
+TEST_P( AnalyteXml, PopulatedOtherSequencePreservesExplicitMassAndZeroVbar )
+{
+   US_Analyte a;
+   ASSERT_NO_FATAL_FAILURE(
+      read( a,
+            "<analyte analyteGUID='fixture' type='CARBOHYDRATE' description='synthetic Other' "
+            "mw='12345' vbar20='0' gradient_forming='0'><sequence>\n0001 pppp\n0005 pppp\n</sequence></analyte>" ) );
+   EXPECT_EQ( US_Analyte::CARBOHYDRATE, a.type );
+   EXPECT_EQ( QString( "synthetic Other" ), a.description );
+   EXPECT_EQ( QString( "\n0001 pppp\n0005 pppp\n" ), a.sequence );
+   EXPECT_DOUBLE_EQ( 12345, a.mw );
+   EXPECT_DOUBLE_EQ( 0, a.vbar20 );
+   EXPECT_FALSE( a.grad_form );
+   EXPECT_TRUE( a.extinction.isEmpty() );
+}
+
 TEST_P( AnalyteXml, MalformedXmlFailsWithoutPublishingPartialState )
 {
    US_Analyte a;

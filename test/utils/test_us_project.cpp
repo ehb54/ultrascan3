@@ -1,4 +1,3 @@
-#include "mock_us_db2.h"
 #include "us3_file_test_base.h"
 #include "us3_test_io.h"
 #include "us_project.h"
@@ -10,12 +9,11 @@
 #include <QXmlStreamWriter>
 
 using ::testing::_;
+using ::testing::DoAll;
+using ::testing::InSequence;
 using ::testing::Return;
 using ::testing::SetArgReferee;
-using ::testing::DoAll;
-using ::testing::NiceMock;
 using ::testing::StrictMock;
-using ::testing::InSequence;
 
 class US_ProjectTest : public Us3FileTestBase
 {
@@ -24,18 +22,15 @@ class US_ProjectTest : public Us3FileTestBase
       {
          ASSERT_NO_FATAL_FAILURE( Us3FileTestBase::SetUp() );
          project = std::make_unique<US_Project>();
-         mockDb  = std::make_unique<NiceMock<US_DB2_Mock>>();
       }
 
       void TearDown() override
       {
          project.reset();
-         mockDb.reset();
          Us3FileTestBase::TearDown();
       }
 
       std::unique_ptr<US_Project>            project;
-      std::unique_ptr<NiceMock<US_DB2_Mock>> mockDb;
 
       // Helper to create a valid project XML file
       QString                                createTestProjectXml( const QString& guid = "test-guid-123", int id = 42 )

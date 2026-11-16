@@ -938,12 +938,12 @@ qDebug() << "rDBE:  HAVE tmst Loc: cksumf" << cksumf;
 qDebug() << "rDBE:  needTmst" << needTmst;
       if ( needTmst )
       {  // Download the .tmst file
-         US_TimeState::dbDownload( db, tmstID, tfpath );
-         // And write the xdefs sibling file
+         const bool tmstOK = ( US_TimeState::dbDownload( db, tmstID, tfpath ) == IUS_DB2::OK );
+         // And write the xdefs sibling file, only next to a downloaded .tmst
          QString xfpath = QString( tfpath ).replace( ".tmst", ".xml" );
-qDebug() << "rDBE:   xfpath" << xfpath;
+         qDebug() << "rDBE:   xfpath" << xfpath << "downloaded" << tmstOK;
          QFile fileo( xfpath );
-         if ( fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
+         if ( tmstOK && fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
          {
             QTextStream tso( &fileo );
             tso << xdefs;

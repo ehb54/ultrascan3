@@ -3523,10 +3523,12 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    
    //Lab
    QVector< US_Rotor::Lab > labList_auto;
-   
-   if ( db.lastErrno() == US_DB2::OK )
-     US_Rotor::readLabsDB( labList_auto, &db );
-   
+
+   if ( db.lastErrno() == US_DB2::OK && US_Rotor::readLabsDB( labList_auto, &db ) != US_Rotor::ROTOR_OK )
+   {
+      QMessageBox::warning( this, tr( "Database Problem" ), tr( "Could not read lab information\n" ) + db.lastError() );
+   }
+
    int currentLab_auto = 0;
    for ( int ii = 0; ii < labList_auto.size(); ii++ )
      {
@@ -3571,7 +3573,11 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    qDebug() << "RotorID/CalID  READ!!! ";
    
    // Instrument
-   QList< US_Rotor::Instrument > instruments = labList_auto[ currentLab_auto ].instruments;
+   QList<US_Rotor::Instrument> instruments;
+   if ( currentLab_auto < labList_auto.size() )
+   {
+      instruments = labList_auto[currentLab_auto].instruments;
+   }
    US_Rotor::Instrument currentInstrument_auto; 
    foreach ( US_Rotor::Instrument instrument, instruments )
      {
@@ -3634,7 +3640,24 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    
    //Solutions / Triple / Centerpiece Descriptions
    int solutionID;  // ALEXEY change to protocol's solution IDs
-   US_Solution solution_auto;
+
+   // A solution that records each failed DB read, with its reason, for the warning at the end
+   struct ProtocolSolution : public US_Solution
+   {
+         QStringList* failed;
+         int          readFromDB( int id, IUS_DB2* db )
+         {
+            const int status = US_Solution::readFromDB( id, db );
+            if ( status != IUS_DB2::OK )
+            {
+               *failed << QString( "%1: %2" ).arg( id ).arg( US_Solution::readErrorText( status, db->lastError() ) );
+            }
+            return status;
+         }
+   };
+   QStringList      failedSolutions; // Solutions that could not be read; their channels have none
+   ProtocolSolution solution_auto;
+   solution_auto.failed = &failedSolutions;
 
    int nchans     = out_channels.count();
    int ntrips     = out_triples.count();
@@ -4003,7 +4026,17 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 
    //le_status->setText( tr( "AUC data import IS COMPLETE." ) );
    le_status->setText( tr( "Data Acquision COMPLETE." ) );
-   
+
+   if ( !failedSolutions.isEmpty() )
+   {
+      failedSolutions.removeDuplicates();
+      QMessageBox::warning( this,
+                            tr( "Solutions Not Loaded" ),
+                            tr( "These protocol solutions could not be read from the database, so their "
+                                "channels have no solution:\n" ) +
+                               failedSolutions.join( "\n" ) );
+   }
+
    enableSaveBtn_auto();
 }
 
@@ -9036,11 +9069,14 @@ DbgLv(1) << "DBSv:  files count" << files.size();
 
    else if ( status == US_DB2::DBERROR )
    {
-      // This is what happens in the case of RI data, and the xml is bad
+      // The experiment, its details or a speed step could not be written. Do not
+      // write raw data for an experiment that was not saved.
       QMessageBox::warning( this,
-         tr( "Bad RI XML" ),
-         tr( "There was a problem with the xml data"
-             " read from the database.\n" ) );
+                            tr( "Problem saving experiment information" ),
+                            tr( "The experiment could not be saved to the database.\n"
+                                "For RI data, the RI profile XML may be invalid.\n" ) +
+                               db.lastError() );
+      return;
    }
 
    else if ( status != US_DB2::OK )
@@ -9089,9 +9125,11 @@ DbgLv(1) << "DBSv:  REPEAT disk save for raw IDs";
 
    // Insure that we have a TimeState record in the DB for this run
    le_status->setText( tr( "Writing Time State to DB..." ) );
-   writeTimeStateDB();
+   const int tmst_status = writeTimeStateDB();
 
-   le_status->setText( tr( "DB data save complete. Saving reports..." ) );
+   le_status->setText( tmst_status == US_DB2::OK
+                          ? tr( "DB data save complete. Saving reports..." )
+                          : tr( "DB data saved without its Time State (status %1). Saving reports..." ).arg( tmst_status ) );
    qApp->processEvents();
    saveStatus = BOTH;
    enableRunIDControl( false );
@@ -10983,6 +11021,22 @@ DbgLv(1) << "wTSdb:  examine status" << status << "cksum-db" << cksum;
                                                      tmst_fname );
 DbgLv(1) << "wTSdb:   upload status" << status;
       }
+   }
+   else
+   { // No record. -2 means a local file is missing: with neither the .tmst nor its .xml
+      // definitions there is nothing to save, but one without the other is incomplete.
+      const QString defs_fname = QString( tmst_fname ).section( ".", 0, -2 ) + ".xml";
+      const bool    nothing    = ( timestateID == -2 ) && !QFile::exists( tmst_fname ) && !QFile::exists( defs_fname );
+      if ( !nothing )
+      {
+         status = timestateID;
+      }
+   }
+
+   if ( status != US_DB2::OK )
+   {
+      qWarning() << "writeTimeStateDB: time state not saved to the DB, status" << status;
+      le_status->setText( tr( "Time State was not saved to the DB (status %1)." ).arg( status ) );
    }
 DbgLv(1) << "wTSdb:  Timestate from DB is used";
    return status;
