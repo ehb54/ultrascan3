@@ -1964,8 +1964,11 @@ DbgLv(1) << "BufE:SL:  edtAcc: DB  id" << buffer->bufferID;
 
    else
    { // Update buffer on local disk
-DbgLv(1) << "BufE:SL:  edtAcc: Disk";
-      write_disk();
+      DbgLv( 1 ) << "BufE:SL:  edtAcc: Disk";
+      if ( !write_disk() )
+      { // The error is shown; stay on the edit so it can be retried or cancelled
+         return;
+      }
    }
 
    emit editBufAccepted();
@@ -1985,17 +1988,23 @@ DbgLv(1) << "BufE:SL: write_db()  bufID" << buffer->bufferID;
    return idBuf >= 0 || idBuf == -6;
 }
 
-// Write updated buffer to local disk file
-void US_BufferGuiEdit::write_disk()
+// Write updated buffer to local disk file; true when the file was written
+bool US_BufferGuiEdit::write_disk()
 {
-DbgLv(1) << "BufE:SL: write_disk()  GUID" << buffer->GUID;
-   QString path     = US_Settings::dataDir() + "/buffers";
+   DbgLv( 1 ) << "BufE:SL: write_disk()  GUID" << buffer->GUID;
+   QString path = US_Settings::dataDir() + "/buffers";
 
    bool    newFile;
    QString filename = US_Buffer::get_filename( path, buffer->GUID, newFile );
 
-   buffer->writeToDisk( filename );
-DbgLv(1) << "BufE:SL: write_disk()    newFile" << newFile;
+   if ( !buffer->writeToDisk( filename ) )
+   {
+      QMessageBox::critical(
+         this, tr( "Buffer Write Error" ), tr( "The buffer could not be saved to the local file:\n%1" ).arg( filename ) );
+      return false;
+   }
+   DbgLv( 1 ) << "BufE:SL: write_disk()    newFile" << newFile;
+   return true;
 }
 
 
