@@ -1458,12 +1458,10 @@ DbgLv(1) << "SP:ssFromDB: speedstep" << nspeeds << "id" << sspeedID;
 int US_SimulationParameters::speedstepToDB( IUS_DB2* dbP, int expID,
       SpeedProfile* spi )
 {
-int dbg_level=US_Settings::us_debug();
-DbgLv(1) << "SP:ssToDB: dbP expid spi" << dbP << expID << spi;
-   int sstepID    = -1;
-
+   int dbg_level = US_Settings::us_debug();
+   DbgLv( 1 ) << "SP:ssToDB: dbP expid spi" << dbP << expID << spi;
    if ( dbP == NULL  ||  expID < 0  ||  spi == NULL )
-      return sstepID;
+      return IUS_DB2::DBERROR;
 
    QString idExp = QString::number( expID );
    QStringList query;
@@ -1483,13 +1481,12 @@ DbgLv(1) << "SP:ssToDB: dbP expid spi" << dbP << expID << spi;
          << QString::number( spi->set_speed )
          << QString::number( spi->avg_speed )
          << QString::number( spi->speed_stddev );
-   dbP->statusQuery( query );
-   sstepID    = dbP->lastInsertID();
-DbgLv(1) << "SP:ssToDB: speedstep" << sstepID << dbP->lastError();
-DbgLv(1) << "SP:ssToDB:  w2t" << spi->w2t_first << spi->w2t_last
- << QString::number(spi->w2t_first) << QString::number(spi->w2t_last);
+   const int status = dbP->statusQuery( query );
+   DbgLv( 1 ) << "SP:ssToDB: speedstep status" << status << dbP->lastError();
+   DbgLv( 1 ) << "SP:ssToDB:  w2t" << spi->w2t_first << spi->w2t_last << QString::number( spi->w2t_first )
+              << QString::number( spi->w2t_last );
 
-   return sstepID;
+   return status;
 }
 
 // Pre-fetch a TimeState object from a pair of files, create the pointer

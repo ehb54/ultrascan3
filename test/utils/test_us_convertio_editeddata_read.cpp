@@ -18,10 +18,11 @@
 #include <QTemporaryDir>
 
 using ::testing::_;
+using ::testing::AnyNumber;
 using ::testing::Eq;
 using ::testing::Invoke;
-using ::testing::NiceMock;
 using ::testing::Return;
+using ::testing::StrictMock;
 
 namespace
 {
@@ -87,6 +88,9 @@ class EditedDataReadTest : public ::testing::Test
 
          ON_CALL( db, isConnected() ).WillByDefault( Return( true ) );
          ON_CALL( db, lastError() ).WillByDefault( Return( QString() ) );
+         // Connection checks and diagnostic reads are allowed; any other call fails the test.
+         EXPECT_CALL( db, isConnected() ).Times( AnyNumber() );
+         EXPECT_CALL( db, lastError() ).Times( AnyNumber() );
       }
 
       US_ConvertIO::EditedDataReadRequest request() const
@@ -108,7 +112,7 @@ class EditedDataReadTest : public ::testing::Test
 
       QTemporaryDir                  source;
       QTemporaryDir                  destination;
-      NiceMock<US_DB2_Mock>          db;
+      StrictMock<US_DB2_Mock>        db;
       US_DataIO::RawData             raw;
       QVector<US_DataIO::EditedData> edited;
       QVector<US_DataIO::RawData>    loadedRaw;

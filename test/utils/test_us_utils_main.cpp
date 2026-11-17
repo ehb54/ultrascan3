@@ -6,6 +6,7 @@
 #include "unit_resources.h"
 #endif
 #include "us_defines.h"
+#include "us_math2.h"
 #include "us_settings.h"
 #include <QCoreApplication>
 #include <QDir>
@@ -114,6 +115,8 @@ class QtTestEnvironment : public ::testing::Environment
 
 class UtilityCaseIsolation : public ::testing::EmptyTestEventListener
 {
+      static constexpr uint kCaseRandomSeed = 20261114u;
+
    public:
       explicit UtilityCaseIsolation( QtTestEnvironment& environment ) : environment_( environment )
       {
@@ -151,6 +154,9 @@ class UtilityCaseIsolation : public ::testing::EmptyTestEventListener
             }
             std::exit( 2 );
          }
+         // Every case starts from the same generator state and an empty Box-Muller cache,
+         // so results that draw random numbers do not depend on test order.
+         US_Math2::randomize( kCaseRandomSeed );
       }
       void OnTestEnd( const ::testing::TestInfo& ) override
       {

@@ -17,6 +17,7 @@ void US_Timer::init_timer( const QString& qs )
    timers[ qs ] = QElapsedTimer();
    counts[ qs ] = 0;
    times [ qs ] = 0l;
+   times2[qs]   = 0l;
 }
 
 bool US_Timer::start_timer( const QString& qs )
@@ -32,7 +33,8 @@ bool US_Timer::start_timer( const QString& qs )
 
 bool US_Timer::end_timer( const QString& qs )
 {
-   if ( !timers.count( qs ) )
+   // Only a running timer can end; ending stops it until the next start.
+   if ( !timers.count( qs ) || !timers[qs].isValid() )
    {
       return false;
    }
@@ -41,6 +43,7 @@ bool US_Timer::end_timer( const QString& qs )
    const auto ul = static_cast<unsigned long>( timers[ qs ].elapsed() );
    times [ qs ] += ul;
    times2[ qs ] += ul * ul;
+   timers[qs].invalidate();
    return true;
 }
 

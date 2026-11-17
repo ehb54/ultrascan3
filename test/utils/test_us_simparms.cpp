@@ -11,10 +11,9 @@
 
 using ::testing::_;
 using ::testing::An;
+using ::testing::DoAll;
 using ::testing::Return;
 using ::testing::SetArgReferee;
-using ::testing::DoAll;
-using ::testing::NiceMock;
 using ::testing::StrictMock;
 
 class US_SimulationParametersTest : public QtTestBase
@@ -24,7 +23,6 @@ class US_SimulationParametersTest : public QtTestBase
       {
          ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
          simparms = std::make_unique<US_SimulationParameters>();
-         mockDb   = std::make_unique<NiceMock<US_DB2_Mock>>();
          tempDir  = std::make_unique<QTemporaryDir>();
          ASSERT_TRUE( tempDir->isValid() );
       }
@@ -32,13 +30,11 @@ class US_SimulationParametersTest : public QtTestBase
       void TearDown() override
       {
          simparms.reset();
-         mockDb.reset();
          tempDir.reset();
          QtTestBase::TearDown();
       }
 
       std::unique_ptr<US_SimulationParameters> simparms;
-      std::unique_ptr<NiceMock<US_DB2_Mock>>   mockDb;
       std::unique_ptr<QTemporaryDir>           tempDir;
 
       // Helper to create test RawData
@@ -180,15 +176,6 @@ TEST_F(US_SimulationParametersTest, SimSpeedProf_Constructor_InitializesCorrectl
     EXPECT_EQ(ssp.time_l_scan, 0);
 }
 
-// Debug Method Tests
-TEST_F(US_SimulationParametersTest, Debug_DoesNotCrash) {
-    // Add some test data
-    simparms->simpoints = 100;
-    simparms->temperature = 25.0;
-
-    EXPECT_NO_THROW(simparms->debug());
-}
-
 // SetHardware Tests
 TEST_F(US_SimulationParametersTest, SetHardware_WithoutDatabase_SetsDefaults) {
     QString testCalID = "test_cal_123";
@@ -200,20 +187,30 @@ TEST_F(US_SimulationParametersTest, SetHardware_WithoutDatabase_SetsDefaults) {
     EXPECT_EQ(simparms->rotorCalID, testCalID);
 }
 
-TEST_F(US_SimulationParametersTest, SetHardware_WithDatabase_CallsCorrectly) {
-    QString testCalID = "test_cal_456";
-    int testCp = 2;
+TEST_F( US_SimulationParametersTest, SetHardware_DisconnectedDatabaseUsesLocalHardwareFiles )
+{
+   US_SimulationParameters local;
+   ASSERT_TRUE( local.setHardware( "0", 3, 1 ) );
 
-    EXPECT_NO_THROW(simparms->setHardware(mockDb.get(), testCalID, testCp));
-    EXPECT_EQ(simparms->rotorCalID, testCalID);
+   StrictMock<US_DB2_Mock> db;
+   EXPECT_CALL( db, isConnected() ).Times( ::testing::AtLeast( 1 ) ).WillRepeatedly( Return( false ) );
+   EXPECT_TRUE( simparms->setHardware( &db, "0", 3, 1 ) );
+   EXPECT_EQ( QString( "0" ), simparms->rotorCalID );
+   EXPECT_DOUBLE_EQ( local.bottom_position, simparms->bottom_position );
+   EXPECT_DOUBLE_EQ( local.cp_pathlen, simparms->cp_pathlen );
+   EXPECT_DOUBLE_EQ( local.cp_width, simparms->cp_width );
+   EXPECT_EQ( local.cp_sector, simparms->cp_sector );
 }
 
-TEST_F(US_SimulationParametersTest, SetHardware_NegativeCp_HandlesSerialNumber) {
-    QString testCalID = "test_cal_789";
-    int testSerialNumber = -12345;  // Negative indicates serial number
-    int testCh = 0;
-
-    EXPECT_NO_THROW(simparms->setHardware(testCalID, testSerialNumber, testCh));
+TEST_F( US_SimulationParametersTest, SetHardware_NegativeCpSelectsTheCenterpieceBySerialNumber )
+{
+   // Serial number 4 is the fourth entry in etc/abstractCenterpieces.xml: Epon 6-channel rectangular.
+   ASSERT_TRUE( simparms->setHardware( "0", -4, 1 ) );
+   EXPECT_DOUBLE_EQ( 6.613, simparms->bottom_position );
+   EXPECT_DOUBLE_EQ( 0.3, simparms->cp_pathlen );
+   EXPECT_DOUBLE_EQ( 0.323, simparms->cp_width );
+   EXPECT_EQ( 2, simparms->cp_sector ); // rectangular
+   EXPECT_FALSE( simparms->band_forming );
 }
 
 TEST_F( US_SimulationParametersTest, SetHardware_RejectsOutOfRangeIndexes )
@@ -308,7 +305,7 @@ TEST_F(US_SimulationParametersTest, InitFromData_RawData_SetsBasicParameters) {
     QString runID = "test_run";
     QString dataType = "RA";
 
-    EXPECT_NO_THROW(simparms->initFromData(nullptr, rawData, true, runID, dataType));
+    simparms->initFromData( nullptr, rawData, true, runID, dataType );
 
     // Basic parameters should be set
     EXPECT_EQ(simparms->rotorCalID, "0");
@@ -318,7 +315,7 @@ TEST_F(US_SimulationParametersTest, InitFromData_RawData_SetsBasicParameters) {
 TEST_F(US_SimulationParametersTest, InitFromData_EditedData_SetsBasicParameters) {
     US_DataIO::EditedData editData = createTestEditedData();
 
-    EXPECT_NO_THROW(simparms->initFromData(nullptr, editData, true));
+    simparms->initFromData( nullptr, editData, true );
 
     EXPECT_EQ(simparms->meniscus, 5.8);
     EXPECT_EQ(simparms->bottom_position, 7.2);

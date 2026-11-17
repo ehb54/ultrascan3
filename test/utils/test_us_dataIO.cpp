@@ -126,9 +126,10 @@ EXPECT_EQ(index, 7) << "Should return last index for value above range";
 }
 
 TEST_F(TestUSDataIOUnit, RawDataXindexClosestMatch) {
-// Test xindex with value between points (should return closest)
-int index = rawData.xindex(6.05);
-EXPECT_TRUE(index == 2 || index == 3) << "Should return closest index";
+   // Values between radii return the index of the nearer one.
+   EXPECT_EQ( rawData.xindex( 6.02 ), 2 );
+   EXPECT_EQ( rawData.xindex( 6.07 ), 3 );
+   EXPECT_EQ( rawData.xindex( 6.44 ), 6 );
 }
 
 TEST_F(TestUSDataIOUnit, RawDataRadius) {
@@ -354,17 +355,6 @@ int index = US_DataIO::index(xvals, 2.3);
 EXPECT_EQ(index, 1) << "Should return index of closest value";
 }
 
-TEST_F(TestUSDataIOUnit, StaticIndexEmptyVector) {
-// Test static index method with empty vector
-QVector<double> xvals;
-// This would likely cause undefined behavior, but test defensively
-// Note: This is an edge case that might crash, so we document the behavior
-
-// Since the method doesn't check for empty vectors, this is a boundary case
-// that highlights a potential improvement needed in the implementation
-SUCCEED() << "Empty vector test - implementation should handle this case";
-}
-
 TEST_F(TestUSDataIOUnit, StaticIndexSingleElement) {
 // Test static index method with single element
 QVector<double> xvals = {2.5};
@@ -477,10 +467,8 @@ TEST_F(TestUSDataIOUnit, TemperatureCalculationsEdgeCases) {
 US_DataIO::RawData edgeCaseData;
 
 // Test with zero scans
-double avgTemp = edgeCaseData.average_temperature();
-// This will likely cause division by zero - document this behavior
-// EXPECT_TRUE(std::isnan(avgTemp) || std::isinf(avgTemp))
-//     << "Should handle empty scan data gracefully";
+// The mean of no temperatures is undefined: 0/0.
+EXPECT_TRUE( std::isnan( edgeCaseData.average_temperature() ) );
 
 // Test with extreme temperature values
 US_DataIO::Scan extremeScan1, extremeScan2;

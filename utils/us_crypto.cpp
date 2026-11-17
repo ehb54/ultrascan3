@@ -12,6 +12,28 @@ namespace {
    {
       void operator()(EVP_CIPHER_CTX* p) const { EVP_CIPHER_CTX_free( p ); }
    };
+
+   // Decodes hex strictly: an even number of hex digits and nothing else.
+   // QByteArray::fromHex would skip other characters, so altered input could still decrypt.
+   bool strictFromHex( const QString& hex, QByteArray& bytes )
+   {
+      bytes.clear();
+      if ( hex.size() % 2 != 0 )
+      {
+         return false;
+      }
+      for ( const QChar c : hex )
+      {
+         const char16_t u     = c.unicode();
+         const bool     digit = ( u >= '0' && u <= '9' ) || ( u >= 'a' && u <= 'f' ) || ( u >= 'A' && u <= 'F' );
+         if ( !digit )
+         {
+            return false;
+         }
+      }
+      bytes = QByteArray::fromHex( hex.toLatin1() );
+      return true;
+   }
 } // namespace
 
 void US_Crypto::fillRandomBytes( QByteArray& ba )
@@ -159,8 +181,12 @@ QString US_Crypto::decryptLegacy( const QString& ciphertext, const QString& pw,
       return QString();
    }
 
-   const QByteArray iv_ba     = QByteArray::fromHex( initVector.toLatin1() );
-   const QByteArray cipher_ba = QByteArray::fromHex( ciphertext.toLatin1() );
+   QByteArray iv_ba;
+   QByteArray cipher_ba;
+   if ( !strictFromHex( initVector, iv_ba ) || !strictFromHex( ciphertext, cipher_ba ) )
+   {
+      return QString();
+   }
    // Validate before passing storage to OpenSSL, which requires a full IV.
    if ( iv_ba.size() != 16 || cipher_ba.isEmpty() || cipher_ba.size() % 16 != 0 )
    {
@@ -231,8 +257,12 @@ QString US_Crypto::decrypt( const QString& ciphertext, const QString& pw,
    }
 
    const QByteArray pw_ba     = pw.toUtf8();
-   const QByteArray cipher_ba = QByteArray::fromHex( ciphertext.toLatin1() );
-   const QByteArray meta_ba   = QByteArray::fromHex( initVector.toLatin1() );
+   QByteArray       cipher_ba;
+   QByteArray       meta_ba;
+   if ( !strictFromHex( ciphertext, cipher_ba ) || !strictFromHex( initVector, meta_ba ) )
+   {
+      return QString();
+   }
 
    // meta 16 bytes indicate legacy AES-128-CBC encryption
    if ( meta_ba.size() == 16 ) {
