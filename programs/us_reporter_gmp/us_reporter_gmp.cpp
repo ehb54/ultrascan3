@@ -5372,6 +5372,23 @@ bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   
   bufvl = US_SolutionVals::values( dbP, edata, solID, svbar, bdens,
 				   bvisc, bcomp, bmanu, errmsg );
+  // Read the solution; when that fails, use the default vbar, which later vbar calculations
+  // also use for the cleared solution, since it has no analytes
+  const auto read_solution = [&]( bool fromDb )
+  {
+     const int     solstat = fromDb ? solution_rec.readFromDB( solID.toInt(), dbP ) : solution_rec.readFromDisk( solID );
+     const QString solerr  = fromDb ? dbP->lastError() : tr( "the solution file could not be read" );
+     if ( solstat != IUS_DB2::OK )
+     {
+        QMessageBox::warning( this,
+                              tr( "Solution/Buffer Fetch" ),
+                              tr( "Solution %1 could not be read:\n%2\n"
+                                  "The default vbar, %3, is used." )
+                                 .arg( solID, US_Solution::readErrorText( solstat, solerr ) )
+                                 .arg( TYPICAL_VBAR ) );
+        solution_rec.commonVbar20 = TYPICAL_VBAR;
+     }
+  };
   progress_msg->setValue( 3 );
 
   //Hardwire compressibility to zero, for now
@@ -5391,15 +5408,15 @@ bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
 	}
       
       else if ( solID.length() < 36  &&  dbP != NULL )
-	{
-	  solution_rec.readFromDB( solID.toInt(), dbP );
-	}
-      
+      {
+         read_solution( true );
+      }
+
       else
-	{
-	  solution_rec.readFromDisk( solID );
-	}
-      
+      {
+         read_solution( false );
+      }
+
       vbar          = solution_rec.commonVbar20;
       svbar         = QString::number( vbar );
       
@@ -7537,20 +7554,20 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 	edir.mkpath( dirname );
       
       QString tfpath = dirname + "/" +  tfname;
-      
-      US_TimeState::dbDownload( dbP, tmstID, tfpath );
-      // And write the xdefs sibling file
+
+      const bool tmstOK = ( US_TimeState::dbDownload( dbP, tmstID, tfpath ) == US_DB2::OK );
+      // And write the xdefs sibling file, only next to a downloaded .tmst
       QString xfpath = QString( tfpath ).replace( ".tmst", ".xml" );
-      qDebug() << "Assembling Run Details:   xfpath" << xfpath;
+      qDebug() << "Assembling Run Details:   xfpath" << xfpath << "downloaded" << tmstOK;
       QFile fileo( xfpath );
-      if ( fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
-	{
-	  QTextStream tso( &fileo );
-	  tso << xdefs;
-	  tso.flush();
-	  fileo.close();
-	  qDebug() << "Assembling Run Details:    xdefs WRITTEN";
-	}
+      if ( tmstOK && fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
+      {
+         QTextStream tso( &fileo );
+         tso << xdefs;
+         tso.flush();
+         fileo.close();
+         qDebug() << "Assembling Run Details:    xdefs WRITTEN";
+      }
 
 
       //6. Get access to Timestamp info, possibly plots also...

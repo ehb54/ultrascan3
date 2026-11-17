@@ -11,15 +11,17 @@
 
 using ::testing::_;
 using ::testing::An;
+using ::testing::AnyNumber;
 using ::testing::Invoke;
-using ::testing::NiceMock;
 using ::testing::Return;
+using ::testing::StrictMock;
 
 namespace
 {
 // Finite query results for the real experiment/download coordinator. This is
 // an interaction script, not a database emulator or an AUC parser fixture.
-class RunReadDb : public NiceMock<US_DB2_Mock>
+// Only the scripted read calls are allowed; any write or other call fails the test.
+class RunReadDb : public StrictMock<US_DB2_Mock>
 {
    public:
       RunReadDb()
@@ -102,6 +104,11 @@ class RunReadDb : public NiceMock<US_DB2_Mock>
                   EXPECT_LT( col, static_cast<unsigned>( current.size() ) ) << procedure.toStdString();
                   return current.value( static_cast<int>( col ) );
                } ) );
+         EXPECT_CALL( *this, query( An<const QStringList&>() ) ).Times( AnyNumber() );
+         EXPECT_CALL( *this, lastErrno() ).Times( AnyNumber() );
+         EXPECT_CALL( *this, lastError() ).Times( AnyNumber() );
+         EXPECT_CALL( *this, next() ).Times( AnyNumber() );
+         EXPECT_CALL( *this, value( _ ) ).Times( AnyNumber() );
       }
       void addRawRecord()
       {
@@ -304,4 +311,26 @@ TEST_F( ReadDbRunFailure, SuccessfulReadFromImportsFolderRemovesStaleAucsThereAn
    EXPECT_EQ( QDir( directory ).entryList( { "*.auc" }, QDir::Files ), QStringList{ "run.RA.1.A.280.auc" } );
    EXPECT_TRUE( QFile::exists( imports + "/keep.xml" ) );
    EXPECT_TRUE( QFile::exists( directory + "/keep.xml" ) );
+}
+
+TEST_F( ReadDbRunFailure, TimeStateDefinitionsAreWrittenOnlyNextToADownloadedTimeState )
+{
+   for ( const bool downloaded : { false, true } )
+   {
+      SCOPED_TRACE( downloaded );
+      QFile::remove( directory + "/run.time_state.tmst" );
+      QFile::remove( directory + "/run.time_state.xml" );
+      RunReadDb db;
+      db.addRawRecord();
+      db.queryErrors.remove( "get_experiment_timestate" );
+      db.rows["get_experiment_timestate"] << QVariantList{ 29, "run.time_state.tmst", "<definitions/>", "0123", "4", QVariant() };
+      EXPECT_CALL( db, readBlobFromDB( directory + "/run.RA.1.A.280.auc", QString( "download_aucData" ), 23 ) )
+         .WillOnce( Invoke( []( const QString& path, const QString&, int )
+                            { return us3WriteTestFile( path, "downloaded blob" ) ? IUS_DB2::OK : IUS_DB2::DBERROR; } ) );
+      EXPECT_CALL( db, readBlobFromDB( directory + "/run.time_state.tmst", QString( "download_timestate" ), 29 ) )
+         .WillOnce( Invoke( [downloaded]( const QString& path, const QString&, int )
+                            { return downloaded && us3WriteTestFile( path, "time state" ) ? IUS_DB2::OK : IUS_DB2::DBERROR; } ) );
+      EXPECT_EQ( read( db ), QString() );
+      EXPECT_EQ( downloaded, QFile::exists( directory + "/run.time_state.xml" ) );
+   }
 }

@@ -224,13 +224,11 @@ EXPECT_GE(mem_available, 0) << "Available memory should be non-negative";
 EXPECT_LE(mem_available, mem_total) << "Available should not exceed total";
 }
 
-TEST_F(TestUSMemoryUnit, MemoryProfileNullParameters) {
-// Test memory_profile with null parameters (should not crash)
-EXPECT_NO_THROW({
-int result = US_Memory::memory_profile(nullptr, nullptr, nullptr);
-EXPECT_GE(result, 0) << "Should return valid percentage with null parameters";
-EXPECT_LE(result, 100) << "Should return valid percentage with null parameters";
-}) << "memory_profile should handle null parameters gracefully";
+TEST_F( TestUSMemoryUnit, MemoryProfileNullParameters )
+{
+   int result = US_Memory::memory_profile( nullptr, nullptr, nullptr );
+   EXPECT_GE( result, 0 ) << "Should return valid percentage with null parameters";
+   EXPECT_LE( result, 100 ) << "Should return valid percentage with null parameters";
 }
 
 TEST_F(TestUSMemoryUnit, MemoryProfileConsistentCalls) {

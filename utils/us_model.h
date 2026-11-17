@@ -109,7 +109,10 @@ class US_UTIL_EXTERN US_Model
       //!                    should be searched for the model
       //! \param guid      - The guid of the model to be loaded
       //! \param db        - For DB access, pointer to open database connection
-      //! \returns         - The \ref US_DB2 return code for the operation
+      //! \returns         - The \ref US_DB2 return code for the operation:
+      //!                    NOT_CONNECTED for a null DB, NOROWS when no model
+      //!                    matches, DBERROR for truncated or malformed XML. A
+      //!                    failed DB load leaves the model unchanged.
       int load( bool, const QString&, IUS_DB2* = 0 );
 
       //! \brief An overloaded function to read a model from a database

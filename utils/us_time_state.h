@@ -169,7 +169,10 @@ class US_UTIL_EXTERN US_TimeState : public QObject
       //! \param dbP     Pointer to opened DB connection
       //! \param expID   Experiment ID of new record
       //! \param fpath   File path of local TMST from which to create
-      //! \return        New timestateID (<0 if error)
+      //! \return        Timestate ID of the new or matching record: -1 for
+      //!                invalid arguments, -2 if a local file is missing, -3 if
+      //!                the definitions file cannot be read, -4 if a DB lookup,
+      //!                update, delete or insert fails
       static int dbCreate  ( IUS_DB2*, const int, const QString );
 
       //! \brief Static function to delete a TMST record from DB
@@ -186,7 +189,8 @@ class US_UTIL_EXTERN US_TimeState : public QObject
       //! \param xdefsP   Pointer for return of .xml definitions string
       //! \param cksumP   Pointer for return of binary data cksum+size string
       //! \param lastupdP Pointer for return of last-updated datetime
-      //! \return         Status of action (IUS_DB2::OK,...)
+      //! \return         Status of action (IUS_DB2::OK,...); IUS_DB2::NOROWS
+      //!                 if no record matches, with no outputs changed
       static int dbExamine ( IUS_DB2*, int* = 0, int* = 0, QString* = 0,
                              QString* = 0, QString* = 0, QDateTime* = 0 );
 
@@ -208,7 +212,8 @@ class US_UTIL_EXTERN US_TimeState : public QObject
       //! \param dbP     Pointer to opened DB connection
       //! \param fpath   Full path to local file to possibly create
       //! \param expID   The experiment ID of timestate to examine
-      //! \return        Flag if new file was created
+      //! \return        Flag if new file was created; the .xml definitions
+      //!                file is written only after a successful download
       static bool dbSyncToLF( IUS_DB2*, const QString, const int );
 
       void setImportType( IMPORT_TYPE );
