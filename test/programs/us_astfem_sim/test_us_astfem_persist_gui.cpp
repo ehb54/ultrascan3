@@ -8,6 +8,7 @@
 #include <QXmlStreamReader>
 
 #include "us3_dev_license.h"
+#include "us_astfem_rsa.h"
 #include "us_convert.h"
 #include "us_convertio.h"
 #include "us_dataIO.h"
@@ -322,6 +323,121 @@ class US_AstfemSimPersistTest : public QObject
                QVERIFY( scan.seconds > lastTime );
                lastTime = scan.seconds;
             }
+         }
+      }
+
+      void uncoveredMultiSpeedScanIsReported()
+      {
+         US_Model                model;
+         US_SimulationParameters params;
+         params.speed_step.resize( 2 );
+         params.speed_step[0].time_first = 10;
+         params.speed_step[0].time_last  = 20;
+         params.speed_step[1].time_first = 30;
+         params.speed_step[1].time_last  = 40;
+         US_DataIO::RawData data;
+         data.scanData.resize( 2 );
+         data.scanData[0].seconds = 15;
+         data.scanData[0].rpm     = 40000;
+         data.scanData[1].seconds = 25;
+         data.scanData[1].rpm     = 50000;
+         US_Astfem_RSA solver( model, params );
+         QTest::ignoreMessage( QtWarningMsg, "ASTFEM: scan 1 at 25 seconds lies outside every speed step; simulation refused" );
+         QCOMPARE( solver.calculate( data ), -1 );
+      }
+
+      void sparseMultiSpeedScansStayPhysical_data()
+      {
+         QTest::addColumn<bool>( "reacting" );
+         QTest::newRow( "noninteracting" ) << false;
+         QTest::newRow( "reacting" ) << true;
+      }
+
+      void sparseMultiSpeedScansStayPhysical()
+      {
+         QFETCH( bool, reacting );
+         QString root = outRoot;
+         if ( reacting )
+         {
+            const QString model = inputs + "/reacting.xml";
+            QVERIFY( writeText( model, QString::fromUtf8( R"MODEL(<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE US_Model>
+<ModelData version="1.0">
+    <model description="BSA reversible monomer-dimer, Kd 1e-6 M" modelGUID="e887c65d-c102-49ce-b7eb-55edda84fdd3" editGUID="" wavelength="280" coSedSolute="-1" opticsType="0" analysisType="0" globalType="0">
+        <analyte analyteGUID="89b55578-d982-4fca-bd3a-c5053400c456" name="BSA monomer" mw="66485.08560089396" s="4.69734e-13" D="6.39444634227356e-07" f="6.329519130549486e-08" f_f0="1.25" vbar20="0.732" extinction="41180" axial="1" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.5"/>
+        <analyte analyteGUID="5b219cfd-0154-4c73-89fa-078109387308" name="BSA dimer" mw="132970.17120178792" s="7.456562457452302e-13" D="5.075275425239627e-07" f="7.974694388291593e-08" f_f0="1.25" vbar20="0.732" extinction="82360" axial="1" sigma="0" delta="0" oligomer="2" shape="0" type="0" molar="0" signal="0.5"/>
+        <association K_d="1e-06" k_off="1.0">
+            <component index="0" stoich="2"/>
+            <component index="1" stoich="-1"/>
+        </association>
+    </model>
+</ModelData>
+)MODEL" ) ) );
+            // Keep the faster dimer boundary in the short-column centerpiece.
+            const QString params = inputs + "/reacting-simparams.xml";
+            QVERIFY( writeText( params, QString::fromUtf8( kSimParams ).replace( "duration_hrs=\"1\"", "duration_hrs=\"0\"" ) ) );
+            root += "/reacting";
+            QVERIFY( QDir().mkpath( root + "/" + kRunID ) );
+            QProcess sim;
+            sim.setProcessEnvironment( env );
+            sim.start( US_ASTFEM_SIM_EXE, { "--no-db",          "--errors-cl",
+                                            "--start",          "--close",
+                                            "--model",          model,
+                                            "--buffer",         inputs + "/buffer.xml",
+                                            "--simparams",      params,
+                                            "--rotor",          "1",
+                                            "--save",           root + "/" + kRunID,
+                                            "--guid-seed",      kGuidSeed,
+                                            "--edit-timestamp", kEditStamp,
+                                            "--noise-seed",     "4242",
+                                            "--centerpiece",    "3" } );
+            QVERIFY( sim.waitForFinished( 300000 ) );
+            QCOMPARE( sim.exitStatus(), QProcess::NormalExit );
+            QVERIFY2( sim.exitCode() == 0, sim.readAllStandardError().constData() );
+         }
+
+         // A three-scan step must not extrapolate into the following step
+         // and add its concentrations a second time. The 1 OD BSA model has
+         // only 1% random/RI noise; allow ample noise margin away from the
+         // meniscus spike and bottom accumulation.
+         for ( int rpm : { 40000, 50000 } )
+         {
+            US_DataIO::RawData data;
+            QCOMPARE( US_DataIO::readRawData( root + "/" + speedRunID( rpm ) + "/" +
+                                                 QString( aucName( rpm ) ).replace( ".123.", reacting ? ".280." : ".123." ),
+                                              data ),
+                      (int) US_DataIO::OK );
+            const double meniscus = attributeOf( root + "/" + speedRunID( rpm ) + "/" +
+                                                    QString( editName( rpm ) ).replace( ".123.", reacting ? ".280." : ".123." ),
+                                                 "meniscus",
+                                                 "radius" )
+                                       .toDouble();
+            const double bottom = attributeOf( root + "/" + speedRunID( rpm ) + "/" +
+                                                  QString( editName( rpm ) ).replace( ".123.", reacting ? ".280." : ".123." ),
+                                               "bottom",
+                                               "radius" )
+                                     .toDouble();
+            QCOMPARE( data.scanCount(), kScansPerStep );
+            double peak = 0.0;
+            for ( const US_DataIO::Scan& scan : data.scanData )
+            {
+               for ( int point = 0; point < data.xvalues.size(); point++ )
+               {
+                  if ( data.xvalues[point] < meniscus + 0.05 || data.xvalues[point] > bottom - 0.15 )
+                  {
+                     continue;
+                  }
+                  const double value = scan.rvalues[point];
+                  peak               = qMax( peak, value );
+                  QVERIFY2( value >= -0.1 && value <= 1.1,
+                            qPrintable( QString( "%1 rpm, t=%2, r=%3: unexpected concentration %4" )
+                                           .arg( rpm )
+                                           .arg( scan.seconds )
+                                           .arg( data.xvalues[point] )
+                                           .arg( value ) ) );
+               }
+            }
+            QVERIFY( peak > 0.1 );
          }
       }
 
