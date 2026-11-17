@@ -773,7 +773,7 @@ DbgLv(1) << "RSA:emit ccomp: component" << cc+1;
       } // Non-interacting case
 
    } // Model Component loop
-// clang-format on
+   // clang-format on
 
 #ifdef TIMING_RA
 QDateTime clcSt6 = QDateTime::currentDateTime();
