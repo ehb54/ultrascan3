@@ -8,6 +8,10 @@
 #include <QHeaderView>
 #include <QIntValidator>
 #include <QDoubleValidator>
+#include <QScrollArea>
+#include <QScrollBar>
+#include <QScreen>
+#include <QGuiApplication>
 
 US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
                                                                           QStringList names,
@@ -101,7 +105,37 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    }
    int width = qBound( 600, 250 + max_name_len * 8, 1400 );
 
-   setGeometry( 200, 150, width, 100 + 30 * ( names.size() + 17 ) );
+   // tall enough for the table and every option row, but never taller than the screen: the option
+   // rows scroll, so the window can also be resized down from here
+   int width_extra = sa_options->verticalScrollBar()->sizeHint().width();
+   int row_h       = t_conc->verticalHeader()->defaultSectionSize();
+   int table_fixed = t_conc->horizontalHeader()->sizeHint().height() + 2 * t_conc->frameWidth() + 4;
+   // the table keeps room for up to 6 curves when the window is made short (then it scrolls), and the
+   // options at least a few rows; neither grows past its full content, so a window tall enough for
+   // everything shows all of it without scrolling
+   t_conc->setMinimumHeight( table_fixed + row_h * qMin( (int) names.size(), 6 ) );
+   t_conc->setMaximumHeight( table_fixed + row_h * (int) names.size() );
+   sa_options->setMaximumHeight( sa_options->widget()->sizeHint().height() + 2 * sa_options->frameWidth() );
+   sa_options->setMinimumWidth( sa_options->widget()->minimumSizeHint().width() + width_extra );
+   int want_h = qMax( lbl_info->minimumHeight(), lbl_info->sizeHint().height() )
+      + t_conc->maximumHeight() + sa_options->maximumHeight()
+      + qMax( lbl_status->minimumHeight(), lbl_status->sizeHint().height() )
+      + qMax( pb_ok->minimumHeight(), pb_ok->sizeHint().height() );
+   int x0 = 200, y0 = 150;
+   QScreen * screen = QGuiApplication::primaryScreen();
+   if ( screen )
+   {
+      QRect avail = screen->availableGeometry();
+      int max_h = avail.height() - 60;
+      if ( max_h > 200 && want_h > max_h )
+      {
+         want_h = max_h;
+      }
+      y0 = avail.y() + qMax( 0, qMin( 150, avail.height() - want_h - 40 ) );
+      x0 = avail.x() + qMax( 0, qMin( 200, avail.width() - width - width_extra - 20 ) );
+   }
+
+   setGeometry( x0, y0, width + width_extra, want_h );
 }
 
 US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::~US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc()
@@ -659,51 +693,67 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    hbl_bottom->addWidget( pb_cancel );
    hbl_bottom->addWidget( pb_ok );
 
-   QVBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
-   background->addWidget( lbl_info );
-   background->addWidget( t_conc );
-   background->addWidget( cb_ref_scale );
-   background->addWidget( cb_merge );
+   // the option rows sit in a scroll area between the curve table and the status line / buttons, so
+   // the window can be made shorter than all the rows (it scrolls) and still fits a small screen
+   QWidget * w_options = new QWidget;
+   w_options->setPalette( PALET_FRAME );
+   QVBoxLayout * options = new QVBoxLayout( w_options ); options->setContentsMargins( 0, 0, 0, 0 ); options->setSpacing( 0 );
+   options->addWidget( cb_ref_scale );
+   options->addWidget( cb_merge );
    {
       QHBoxLayout *hbl_merge_q = new QHBoxLayout(); hbl_merge_q->setContentsMargins( 0, 0, 0, 0 ); hbl_merge_q->setSpacing( 2 );
       hbl_merge_q->addWidget( lbl_merge_q );
       hbl_merge_q->addWidget( le_merge_q );
-      background->addLayout( hbl_merge_q );
+      options->addLayout( hbl_merge_q );
    }
    {
       QHBoxLayout *hbl_merge_sd_join = new QHBoxLayout(); hbl_merge_sd_join->setContentsMargins( 0, 0, 0, 0 ); hbl_merge_sd_join->setSpacing( 0 );
       hbl_merge_sd_join->addSpacing( 12 );
       hbl_merge_sd_join->addWidget( cb_merge_sd_join );
-      background->addLayout( hbl_merge_sd_join );
+      options->addLayout( hbl_merge_sd_join );
    }
    {
       QHBoxLayout *hbl_ref_scatter = new QHBoxLayout(); hbl_ref_scatter->setContentsMargins( 0, 0, 0, 0 ); hbl_ref_scatter->setSpacing( 0 );
       hbl_ref_scatter->addSpacing( 12 );
       hbl_ref_scatter->addWidget( cb_ref_scatter );
-      background->addLayout( hbl_ref_scatter );
+      options->addLayout( hbl_ref_scatter );
    }
    {
       QHBoxLayout *hbl_reference = new QHBoxLayout(); hbl_reference->setContentsMargins( 0, 0, 0, 0 ); hbl_reference->setSpacing( 2 );
       hbl_reference->addWidget( lbl_reference );
       hbl_reference->addWidget( cb_reference );
-      background->addLayout( hbl_reference );
+      options->addLayout( hbl_reference );
    }
    // rows below follow the processing order: input SDs -> outlier-curve QC -> spike check -> fit ->
    // output errors (low-q SD correction, then the optional output SD recompute)
-   background->addWidget( cb_weight );
-   background->addWidget( cb_regplots );
-   background->addWidget( cb_save_curve );
-   background->addLayout( hbl_model );
-   background->addWidget( cb_recompute_inputs );
-   background->addLayout( hbl_ri );
-   background->addWidget( cb_outlier );
-   background->addLayout( hbl_outlier );
-   background->addWidget( cb_spike );
-   background->addLayout( hbl_spike );
-   background->addLayout( hbl_broaden );
-   background->addWidget( cb_se_repair );
-   background->addLayout( hbl_se_repair );
-   background->addLayout( hbl_sd_mode );
+   options->addWidget( cb_weight );
+   options->addWidget( cb_regplots );
+   options->addWidget( cb_save_curve );
+   options->addLayout( hbl_model );
+   options->addWidget( cb_recompute_inputs );
+   options->addLayout( hbl_ri );
+   options->addWidget( cb_outlier );
+   options->addLayout( hbl_outlier );
+   options->addWidget( cb_spike );
+   options->addLayout( hbl_spike );
+   options->addLayout( hbl_broaden );
+   options->addWidget( cb_se_repair );
+   options->addLayout( hbl_se_repair );
+   options->addLayout( hbl_sd_mode );
+   options->addStretch( 1 );
+
+   sa_options = new QScrollArea( this );
+   sa_options->setPalette( PALET_FRAME );
+   sa_options->setFrameShape( QFrame::NoFrame );
+   sa_options->setWidgetResizable( true );
+   sa_options->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
+   sa_options->setWidget( w_options );
+   sa_options->setMinimumHeight( 4 * minHeight1 );
+
+   QVBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
+   background->addWidget( lbl_info );
+   background->addWidget( t_conc, 1 );
+   background->addWidget( sa_options, 2 );
    background->addWidget( lbl_status );
    background->addLayout( hbl_bottom );
 

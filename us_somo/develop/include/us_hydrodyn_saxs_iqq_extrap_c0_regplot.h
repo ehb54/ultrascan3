@@ -8,6 +8,11 @@
 //Added by qt3to4:
 #include <QFrame>
 #include <QCloseEvent>
+#include <QCheckBox>
+#include <QLineEdit>
+#include <QRadioButton>
+#include <QTimer>
+#include <QSet>
 
 #include "us_util.h"
 #include <map>
@@ -46,7 +51,8 @@ struct US_Hydrodyn_Saxs_Extrap_C0_Pending
 // Pop-up viewer for the per-q linear regressions behind an extrapolation to zero
 // concentration. One q-value is shown at a time: the (concentration, y) data points
 // with error bars, the fitted line, and the c=0 intercept. A qwt wheel (plus
-// prev/next) scrolls through the q grid.
+// prev/next) scrolls through the q grid; the movie controls step through it on a
+// timer and can save every frame shown as an image.
 
 class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot : public QFrame
 {
@@ -123,6 +129,27 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot : public QFrame
       QPushButton *                   pb_discard;
       QPushButton *                   pb_keep;
 
+      // movie: steps through q on a timer, optionally saving each frame (plot + results line) as an
+      // image, as the HPLC/KIN movie does; frames go to <inputs folder>/<prefix>_frames/
+      QPushButton *                   pb_movie_front;
+      QPushButton *                   pb_movie_slower;
+      QPushButton *                   pb_movie_start;
+      QPushButton *                   pb_movie_faster;
+      QPushButton *                   pb_movie_end;
+      QLabel *                        lbl_movie_state;
+      QCheckBox *                     cb_save_frames;
+      QLineEdit *                     le_save_prefix;
+      QRadioButton *                  rb_save_png;
+      QRadioButton *                  rb_save_jpeg;
+      QRadioButton *                  rb_save_bmp;
+      QCheckBox *                     cb_save_overwrite;
+      QTimer *                        movie_timer;
+      int                             movie_timer_ms;
+      int                             n_frames_saved;
+      int                             n_frames_kept;    // existing frame files not overwritten
+      QString                         frames_dir_used;
+      QSet < QString >                run_files;        // frame files met since the last report
+
       mQwtPlot *                      plot;
       US_Plot *                       usp_plot;
       ScrollZoomer *                  plot_zoomer;
@@ -136,13 +163,28 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot : public QFrame
       int                             clamp_index( int i );
       void                            set_index( int i );
       void                            update_plot();
+      void                            after_redraw();
       void                            clear_plot_items();
+      void                            fit_quality( int i, double & r2, double & chi2, double & red_chi2,
+                                                   int & n_err, int & nparam );
+      QString                         frames_dir();
+      bool                            save_frame();
+      void                            movie_stop();
+      void                            report_frames();
+      void                            update_movie_state();
 
    private slots:
 
       void                            wheel_changed( double );
       void                            prev();
       void                            next();
+      void                            movie_front();
+      void                            movie_slower();
+      void                            movie_start();
+      void                            movie_faster();
+      void                            movie_end();
+      void                            movie_tick();
+      void                            set_save_frames();
       void                            help();
       void                            save_csv();
       void                            discard();

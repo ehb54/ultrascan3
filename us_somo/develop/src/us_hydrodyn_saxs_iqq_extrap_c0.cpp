@@ -66,7 +66,8 @@ static QString us_extrap_c0_curve_name( const QStringList &names, int model, boo
                                         int fit_broaden, double ref_override_conc,
                                         bool raw_residual, bool se_repair, double se_repair_sigma,
                                         bool sd_join, int n_conc, double c_max, double c_min,
-                                        int n_spikes, double spike_sigma, double ref_scatter_conc )
+                                        int n_spikes, double spike_sigma, double ref_scatter_conc,
+                                        bool qc_on, bool spike_on )
 {
    // Method token encoding the choices that produced the curve, so distinct selections give
    // distinct (self-describing) names rather than colliding on a bare -1/-2 suffix.
@@ -120,15 +121,18 @@ static QString us_extrap_c0_curve_name( const QStringList &names, int model, boo
    if ( sd_mode == 1 ) { method += "_sdC"; }
    else if ( sd_mode == 2 ) { method += "_sdN"; }
    else if ( sd_mode == 3 ) { method += "_sdI"; }
-   if ( n_outlier_dropped > 0 )
+   // outlier QC on: how many curves it discarded, _qc0 when it was on and discarded none (so a run
+   // with the QC on is told apart from one without it)
+   if ( qc_on || n_outlier_dropped > 0 )
    {
       method += "_qc" + QString::number( n_outlier_dropped );
       // the leverage correction can change WHICH curve is dropped, so two runs could otherwise
       // both read _qc1 while resting on different curves
-      if ( raw_residual ) { method += "_rawres"; }
+      if ( raw_residual && n_outlier_dropped > 0 ) { method += "_rawres"; }
    }
-   // single-point spikes discarded from the fits: how many, and the threshold if not the default 6
-   if ( n_spikes > 0 )
+   // spike check on: how many points it replaced in the fits (_spk0 when none), and the threshold
+   // if not the default 6
+   if ( spike_on || n_spikes > 0 )
    {
       method += "_spk" + QString::number( n_spikes );
       if ( std::fabs( spike_sigma - 6e0 ) > 1e-9 )
@@ -2847,7 +2851,8 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                                                   fit_broaden_effective, ref_override_conc_used,
                                                   !outlier_leverage, se_repair, se_repair_sigma,
                                                   ref_sd_join != 1e0, n_conc, c_max, c_min,
-                                                  n_spikes, spike_sigma, ref_scatter_conc_used );
+                                                  n_spikes, spike_sigma, ref_scatter_conc_used,
+                                                  discard_outlier, spike_reject );
 
    // Tag the output: reference (absolute) scale -> tag with the reference concentration so
    // dividing by it recovers the normalized form; otherwise Conc:1. Already-I*(q) inputs are

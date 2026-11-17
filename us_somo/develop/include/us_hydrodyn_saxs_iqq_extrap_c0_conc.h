@@ -11,6 +11,7 @@
 #include <qdialog.h>
 #include <qstringlist.h>
 #include <qtablewidget.h>
+#include <QScrollArea>
 
 #include "us_util.h"
 
@@ -66,6 +67,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
 
       QLabel       *lbl_info;
       QTableWidget *t_conc;
+      QScrollArea  *sa_options;          // the option rows (scroll when the window is short)
       QCheckBox    *cb_ref_scale;
       QCheckBox    *cb_merge;
       QLabel       *lbl_reference;

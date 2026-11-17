@@ -79,6 +79,10 @@ rows) to change the selection. The <b>Extrapolate</b> button becomes active only
 when at least three rows are selected and every selected row has a valid
 concentration; the status line below the table reports the current state.</p>
 
+<p>The option rows below the table sit in a scrolling area: the window opens no taller than the
+screen and can be resized to any height, the options scrolling when it is shorter than they are,
+while the table, the status line and the buttons stay in view.</p>
+
 <p><i>Note:</i> because the concentration cells remain editable, double-clicking a
 cell to edit it may collapse the selection to that single row. Set the
 concentrations first, then choose the selection.</p>
@@ -344,7 +348,8 @@ conservative. Every run reports the most-outlying curve and all of these numbers
 the thresholds can be tuned), whether or not anything is discarded. A discarded curve is drawn as
 a <b>red x</b> in the per-<i>q</i> regression plots and noted in the log, and the output name gains
 <code>_qc</code><i>N</i> for <i>N</i> discarded curves (<code>_qc1</code> in the usual single-discard
-case). When more than one curve is discarded the red <b>x</b> marks the first (strongest) one, while
+case; <code>_qc0</code> when the QC was on and discarded none, also when there were too few curves
+to evaluate). When more than one curve is discarded the red <b>x</b> marks the first (strongest) one, while
 the log records every discard.
 This targets concentration/scale outliers; curve-shape problems such as aggregation are the job of
 the Guinier quality check below.</p>
@@ -379,8 +384,9 @@ changed. The measured values of replaced points are drawn in <span style="color:
 in the per-<i>q</i> regression plots (the fit uses the ordinary point at the same concentration), the
 log reports how many were replaced (per curve, with the first few listed, and how many <i>q</i> had
 more than one curve flagged &mdash; a spike shared by several curves, e.g. in a common buffer, or a
-sharp feature), and the output name gains <code>_spk</code><i>N</i> for <i>N</i> points (plus
-<code>s</code><i>x</i> for a non-default threshold, e.g. <code>_spk2s5_0</code>). With the splice on, a
+sharp feature), and the output name gains <code>_spk</code><i>N</i> for <i>N</i> points
+(<code>_spk0</code> when the check was on and replaced none; plus <code>s</code><i>x</i> for a
+non-default threshold, e.g. <code>_spk2s5_0</code>). With the splice on, a
 spike on the spliced curve above the merge would be copied straight into the output, so that
 <i>q</i> is left out of the output instead (and counted in <i>N</i>).</p>
 
@@ -464,11 +470,32 @@ anything. <b>Save CSV</b> writes the per-<i>q</i> fits to a file (default name: 
 <code>_fits.csv</code>, in the folder the curves were last loaded from). Its comment lines (starting
 with <code>#</code>) give the curve name, model, fit axis, switchover <i>q</i> and each input curve with
 its concentration; then one row per <i>q</i> holds the fit intercept with its error, the slope (and
-quadratic coefficient for the 2nd-order virial), the number of curves fitted, the extrapolated value
+quadratic coefficient for the 2nd-order virial), the number of curves fitted, the fit's goodness of
+fit (<code>fit_r2</code>, <code>fit_chi2</code> and <code>fit_reduced_chi2</code>: the <i>R</i>&sup2;,
+the &chi;&sup2; of the fitted points with their own errors, and that &chi;&sup2; divided by the number
+of points with an error minus the number of fitted parameters, 2 or 3 for the 2nd-order virial
+&mdash; the values shown below the plot; blank where not defined), the extrapolated value
 and error as added (after any splice and scale), and for every curve its value on the fit axis, its
 error and its status (<code>fit</code>; <code>replaced</code> for a spike fitted at its neighbours'
 value, with the measured value in an extra column; blank where it has no value at that <i>q</i>), plus
 a column for an outlier-QC discarded curve.</p>
+
+<p><b>Movie.</b> The row of buttons below the results line steps through the <i>q</i> grid on a timer,
+as the HPLC/KIN movie does: <b>[]</b> starts the movie from the current <i>q</i> (from the first if at
+the last) and <b>||</b> stops it, <b>S-</b> and <b>S+</b> halve or double the speed (50&nbsp;ms to
+5&nbsp;s per frame; the label shows it), and <b>|&lt;</b> and <b>&gt;|</b> go to the first and last
+<i>q</i>. With <b>Save frames</b> checked, every <i>q</i> shown &mdash; by the movie, Prev/Next or the
+wheel &mdash; is also saved as an image of the plot with its results line, as png (default), jpeg or bmp,
+named <i>prefix</i><code>_</code><i>NNNNN</i> by the <i>q</i> point number (e.g.
+<code>..._00042.png</code>) in a folder <i>prefix</i><code>_frames</code> next to the input curves
+(the folder they were last loaded from). The prefix defaults to the extrapolated curve's name. A
+frame file already there is kept unless <b>Overwrite</b> is checked. When the movie reaches the last
+<i>q</i> it stops and turns frame saving (and Overwrite) off, so later stepping does not add frames;
+the log reports how many frames were saved and where. SOMO saves only the frames: a movie is made from
+them with an external tool, for example
+<code>ffmpeg -framerate 10 -start_number 1 -i prefix_%05d.png -pix_fmt yuv420p movie.mp4</code>
+(with <code>-start_number</code> set to the first frame's number). The speed and the image format
+are remembered for the session.</p>
 
 <p><b>A negative <i>R</i>&sup2; is expected at some <i>q</i> and is not an error.</b>
 <i>R</i>&sup2; here is the fraction of the points' variance explained <i>by the plotted line</i>
@@ -515,9 +542,11 @@ an input-SD recompute if one was applied
 (<code>_riC</code>&nbsp;/&nbsp;<code>_riN</code>&nbsp;/&nbsp;<code>_riI</code>), the
 output SD-reassessment mode if one was applied
 (<code>_sdC</code>&nbsp;/&nbsp;<code>_sdN</code>&nbsp;/&nbsp;<code>_sdI</code>), and
-<code>_qc</code><i>N</i> if outlier concentrations were discarded (with <code>_rawres</code> appended
-when the leverage correction was disabled, since that can change <i>which</i> curve was dropped),
-<code>_spk</code><i>N</i> if single-point spikes were replaced,
+<code>_qc</code><i>N</i> with the outlier QC on, for <i>N</i> discarded curves (<code>_qc0</code>
+if it discarded none; with <code>_rawres</code> appended after a discard when the leverage correction
+was disabled, since that can change <i>which</i> curve was dropped),
+<code>_spk</code><i>N</i> with the spike check on, for <i>N</i> replaced points (<code>_spk0</code>
+if none),
 and <code>_uw</code> if the
 regression was unweighted (curve errors not used), so a
 run's cutover is visible in its name (for example
@@ -709,7 +738,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on November 16, 2026.
+Last modified on November 17, 2026.
 </font>
 </body>
 </html>

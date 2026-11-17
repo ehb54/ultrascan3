@@ -15,6 +15,9 @@
 #include <QTextStream>
 #include <QDir>
 #include <QMessageBox>
+#include <QPainter>
+#include <QPixmap>
+#include <QRegularExpression>
 #include <qwt_symbol.h>
 
 US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot(
@@ -73,6 +76,15 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot(
    cur_index   = 0;
    plot_zoomer = (ScrollZoomer *) 0;
 
+   n_frames_saved = 0;
+   n_frames_kept  = 0;
+   movie_timer_ms = 250;
+   US_Hydrodyn * ush = (US_Hydrodyn *) us_hydrodyn;
+   if ( ush && ush->gparams.count( "extrap_c0_movie_timer_ms" ) )
+   {
+      movie_timer_ms = qBound( 50, ush->gparams[ "extrap_c0_movie_timer_ms" ].toInt(), 5000 );
+   }
+
    USglobal = new US_Config();
    // top-level window, not a child widget embedded in the SAS window
    setWindowFlags( Qt::Window );
@@ -81,9 +93,12 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot(
 
    setupGUI();
 
+   movie_timer = new QTimer( this );
+   connect( movie_timer, SIGNAL( timeout() ), SLOT( movie_tick() ) );
+
    global_Xpos += 30;
    global_Ypos += 30;
-   setGeometry( global_Xpos, global_Ypos, 700, 560 );
+   setGeometry( global_Xpos, global_Ypos, 760, 640 );
 
    set_index( 0 );
 }
@@ -127,6 +142,8 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::setupGUI()
                                      "their measured values are shown in magenta." ) ).arg( n_spk );
       }
    }
+   info_txt += us_tr( "\nMovie: [] starts or stops stepping through q (S- / S+ change the speed); "
+                      "with Save frames on, each q shown is also saved as an image." );
    if ( pending_open )
    {
       info_txt += us_tr( "\nKeep adds the extrapolated curve to the SAS plot (closing this window does the same); "
@@ -195,6 +212,95 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::setupGUI()
    pb_next->setPalette( PALET_PUSHB );
    connect( pb_next, SIGNAL( clicked() ), SLOT( next() ) );
 
+   // movie controls (the same layout as the HPLC/KIN movie)
+   pb_movie_front = new QPushButton( "|<", this );
+   pb_movie_front->setToolTip( us_tr( "Go to the first q" ) );
+   connect( pb_movie_front, SIGNAL( clicked() ), SLOT( movie_front() ) );
+
+   pb_movie_slower = new QPushButton( "S-", this );
+   pb_movie_slower->setToolTip( us_tr( "Go slower" ) );
+   connect( pb_movie_slower, SIGNAL( clicked() ), SLOT( movie_slower() ) );
+
+   pb_movie_start = new QPushButton( "[]", this );
+   pb_movie_start->setToolTip( us_tr( "Start [] or stop || the movie: steps through q from the current point to the last" ) );
+   connect( pb_movie_start, SIGNAL( clicked() ), SLOT( movie_start() ) );
+
+   pb_movie_faster = new QPushButton( "S+", this );
+   pb_movie_faster->setToolTip( us_tr( "Go faster" ) );
+   connect( pb_movie_faster, SIGNAL( clicked() ), SLOT( movie_faster() ) );
+
+   pb_movie_end = new QPushButton( ">|", this );
+   pb_movie_end->setToolTip( us_tr( "Go to the last q" ) );
+   connect( pb_movie_end, SIGNAL( clicked() ), SLOT( movie_end() ) );
+
+   QPushButton * movie_buttons[] = { pb_movie_front, pb_movie_slower, pb_movie_start, pb_movie_faster, pb_movie_end };
+   for ( int k = 0; k < 5; k++ )
+   {
+      movie_buttons[ k ]->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+      movie_buttons[ k ]->setMinimumHeight( minHeight1 );
+      movie_buttons[ k ]->setPalette( PALET_PUSHB );
+   }
+
+   lbl_movie_state = new QLabel( "", this );
+   lbl_movie_state->setAlignment( Qt::AlignCenter | Qt::AlignVCenter );
+   lbl_movie_state->setMinimumHeight( minHeight1 );
+   lbl_movie_state->setMinimumWidth( 200 );
+   lbl_movie_state->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_movie_state );
+   lbl_movie_state->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold ) );
+
+   cb_save_frames = new QCheckBox( this );
+   cb_save_frames->setText( us_tr( "Save frames  Prefix:" ) );
+   cb_save_frames->setChecked( false );
+   cb_save_frames->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_save_frames->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_save_frames );
+   cb_save_frames->setToolTip( us_tr( "Save every q shown (by the movie, Prev/Next or the wheel) as an image of the plot and\n"
+                                      "its results line, numbered by the q point, in a folder <prefix>_frames next to the\n"
+                                      "input curves. Make the movie from the frames with an external tool." ) );
+   connect( cb_save_frames, SIGNAL( clicked() ), SLOT( set_save_frames() ) );
+
+   le_save_prefix = new QLineEdit( this );
+   le_save_prefix->setText( pending.base_name.isEmpty() ? QString( "extrap_c0" ) : pending.base_name );
+   le_save_prefix->setPalette( PALET_NORMAL );
+   AUTFBACK( le_save_prefix );
+   le_save_prefix->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   le_save_prefix->setMinimumHeight( minHeight1 );
+   le_save_prefix->setToolTip( us_tr( "Prefix for the frame files and their folder (<prefix>_frames)" ) );
+
+   QString fmt = "png";
+   {
+      US_Hydrodyn * ush = (US_Hydrodyn *) us_hydrodyn;
+      if ( ush && ush->gparams.count( "extrap_c0_movie_format" ) )
+      {
+         fmt = ush->gparams[ "extrap_c0_movie_format" ];
+      }
+   }
+   rb_save_png = new QRadioButton( us_tr( "png" ), this );
+   rb_save_png->setToolTip( us_tr( "Save as PNG files" ) );
+   rb_save_jpeg = new QRadioButton( us_tr( "jpeg" ), this );
+   rb_save_jpeg->setToolTip( us_tr( "Save as JPEG files" ) );
+   rb_save_bmp = new QRadioButton( us_tr( "bmp" ), this );
+   rb_save_bmp->setToolTip( us_tr( "Save as BMP files" ) );
+   QRadioButton * fmt_buttons[] = { rb_save_png, rb_save_jpeg, rb_save_bmp };
+   for ( int k = 0; k < 3; k++ )
+   {
+      fmt_buttons[ k ]->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+      fmt_buttons[ k ]->setPalette( PALET_NORMAL );
+      AUTFBACK( fmt_buttons[ k ] );
+   }
+   rb_save_png ->setChecked( fmt != "jpeg" && fmt != "bmp" );
+   rb_save_jpeg->setChecked( fmt == "jpeg" );
+   rb_save_bmp ->setChecked( fmt == "bmp" );
+
+   cb_save_overwrite = new QCheckBox( this );
+   cb_save_overwrite->setText( us_tr( "Overwrite" ) );
+   cb_save_overwrite->setChecked( false );
+   cb_save_overwrite->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_save_overwrite->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_save_overwrite );
+   cb_save_overwrite->setToolTip( us_tr( "Replace frame files that already exist (otherwise they are kept)" ) );
+
    pb_help = new QPushButton( us_tr( "Help" ), this );
    pb_help->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
    pb_help->setMinimumHeight( minHeight1 );
@@ -206,8 +312,8 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::setupGUI()
    pb_csv->setMinimumHeight( minHeight1 );
    pb_csv->setPalette( PALET_PUSHB );
    pb_csv->setToolTip( us_tr( "Write the per-q fits to a CSV file: for every q the points used (per curve: value on the\n"
-                              "fit axis, its error, and whether it was replaced as a spike), the fit coefficients, and the\n"
-                              "extrapolated value with its error." ) );
+                              "fit axis, its error, and whether it was replaced as a spike), the fit coefficients, the\n"
+                              "fit's R\302\262 and \317\207\302\262, and the extrapolated value with its error." ) );
    connect( pb_csv, SIGNAL( clicked() ), SLOT( save_csv() ) );
 
    pb_discard = new QPushButton( us_tr( "Discard" ), this );
@@ -233,6 +339,22 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::setupGUI()
    hbl_wheel->addWidget( qwtw_wheel );
    hbl_wheel->addWidget( pb_next );
 
+   QHBoxLayout * hbl_movie = new QHBoxLayout; hbl_movie->setContentsMargins( 0, 0, 0, 0 ); hbl_movie->setSpacing( 0 );
+   hbl_movie->addWidget( pb_movie_front );
+   hbl_movie->addWidget( pb_movie_slower );
+   hbl_movie->addWidget( pb_movie_start );
+   hbl_movie->addWidget( pb_movie_faster );
+   hbl_movie->addWidget( pb_movie_end );
+   hbl_movie->addWidget( lbl_movie_state, 1 );
+
+   QHBoxLayout * hbl_frames = new QHBoxLayout; hbl_frames->setContentsMargins( 4, 0, 4, 0 ); hbl_frames->setSpacing( 4 );
+   hbl_frames->addWidget( cb_save_frames );
+   hbl_frames->addWidget( le_save_prefix, 1 );
+   hbl_frames->addWidget( rb_save_png );
+   hbl_frames->addWidget( rb_save_jpeg );
+   hbl_frames->addWidget( rb_save_bmp );
+   hbl_frames->addWidget( cb_save_overwrite );
+
    QHBoxLayout * hbl_bottom = new QHBoxLayout; hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addWidget( pb_help );
    hbl_bottom->addWidget( pb_csv );
@@ -244,7 +366,11 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::setupGUI()
    background->addWidget( plot );
    background->addLayout( hbl_wheel );
    background->addWidget( lbl_results );
+   background->addLayout( hbl_movie );
+   background->addLayout( hbl_frames );
    background->addLayout( hbl_bottom );
+
+   set_save_frames();
 }
 
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::clear_plot_items()
@@ -333,6 +459,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::update_plot()
    if ( i < 0 || i >= (int) reg_q.size() || !reg_x[ i ].size() )
    {
       plot->replot();
+      after_redraw();
       return;
    }
 
@@ -536,22 +663,9 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::update_plot()
 
    // goodness of fit at this q: R^2 (fraction of variance explained) and, when the data
    // carry error bars, the reduced chi^2 of the points about the plotted fit
-   double ss_res = 0e0, ss_tot = 0e0, chi2 = 0e0, ybar_s = 0e0;
-   int    nfit = (int) x.size(), have_err = 0;
-   for ( int j = 0; j < nfit; j++ ) { ybar_s += y[ j ]; }
-   if ( nfit ) { ybar_s /= (double) nfit; }
-   for ( int j = 0; j < nfit; j++ )
-   {
-      double yp = a + b * x[ j ] + c_coef * x[ j ] * x[ j ];
-      double r  = y[ j ] - yp;
-      ss_res += r * r;
-      ss_tot += ( y[ j ] - ybar_s ) * ( y[ j ] - ybar_s );
-      double ej = ( j < (int) e.size() ) ? e[ j ] : 0e0;
-      if ( ej > 0e0 ) { chi2 += ( r / ej ) * ( r / ej ); have_err++; }
-   }
-   int    nparam   = ( c_coef != 0e0 ) ? 3 : 2;
-   double r2       = ( ss_tot > 0e0 ) ? 1e0 - ss_res / ss_tot : 1e0;
-   double red_chi2 = ( have_err > nparam ) ? chi2 / ( have_err - nparam ) : 0e0;
+   double r2, chi2, red_chi2;
+   int    have_err, nparam;
+   fit_quality( i, r2, chi2, red_chi2, have_err, nparam );
 
    // for the reciprocal/virial models the plotted intercept is u = 1/I0; report both
    QString fit_desc;
@@ -584,6 +698,285 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::update_plot()
    plot_zoomer->setTrackerPen( QPen( Qt::red ) );
 
    plot->replot();
+   after_redraw();
+}
+
+// after every redraw: the movie position, and the frame when frames are being saved
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::after_redraw()
+{
+   update_movie_state();
+   if ( cb_save_frames->isChecked() && !save_frame() )
+   {
+      movie_stop();
+      cb_save_frames->setChecked( false );
+      set_save_frames();
+   }
+}
+
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::update_movie_state()
+{
+   lbl_movie_state->setText( QString( us_tr( "%1: %2 of %3   (%4 ms per frame)" ) )
+                             .arg( movie_timer->isActive() ? us_tr( "Running" ) : us_tr( "Stopped" ) )
+                             .arg( reg_q.size() ? cur_index + 1 : 0 )
+                             .arg( (int) reg_q.size() )
+                             .arg( movie_timer_ms ) );
+}
+
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::movie_front()
+{
+   set_index( 0 );
+}
+
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::movie_end()
+{
+   set_index( (int) reg_q.size() - 1 );
+}
+
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::movie_slower()
+{
+   movie_timer_ms = qMin( 5000, movie_timer_ms * 2 );
+   if ( movie_timer->isActive() )
+   {
+      movie_timer->setInterval( movie_timer_ms );
+   }
+   update_movie_state();
+}
+
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::movie_faster()
+{
+   movie_timer_ms = qMax( 50, movie_timer_ms / 2 );
+   if ( movie_timer->isActive() )
+   {
+      movie_timer->setInterval( movie_timer_ms );
+   }
+   update_movie_state();
+}
+
+// start / stop; starting on the last q restarts from the first
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::movie_start()
+{
+   if ( movie_timer->isActive() )
+   {
+      movie_stop();
+      return;
+   }
+   if ( !reg_q.size() )
+   {
+      return;
+   }
+   movie_timer->start( movie_timer_ms );
+   pb_movie_start->setText( "||" );
+   if ( cur_index >= (int) reg_q.size() - 1 )
+   {
+      set_index( 0 );                            // saves the frame, if saving
+   }
+   else
+   {
+      after_redraw();                            // the frame already shown
+   }
+}
+
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::movie_stop()
+{
+   if ( movie_timer->isActive() )
+   {
+      movie_timer->stop();
+   }
+   pb_movie_start->setText( "[]" );
+   update_movie_state();
+   report_frames();
+}
+
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::movie_tick()
+{
+   if ( cur_index < (int) reg_q.size() - 1 )
+   {
+      set_index( cur_index + 1 );
+      return;
+   }
+   // reached the last q: stop, and turn saving off so later stepping does not add or replace frames
+   movie_stop();
+   cb_save_frames->setChecked( false );
+   cb_save_overwrite->setChecked( false );
+   set_save_frames();
+}
+
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::set_save_frames()
+{
+   bool on = cb_save_frames->isChecked();
+   le_save_prefix   ->setEnabled( on );
+   rb_save_png      ->setEnabled( on );
+   rb_save_jpeg     ->setEnabled( on );
+   rb_save_bmp      ->setEnabled( on );
+   cb_save_overwrite->setEnabled( on );
+   if ( !on )
+   {
+      report_frames();
+   }
+}
+
+// <folder the input curves were loaded from>/<prefix>_frames (the SOMO saxs/tmp folder if none)
+QString US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::frames_dir()
+{
+   QString prefix = le_save_prefix->text().trimmed();
+   prefix.replace( QRegularExpression( "[/\\\\:]" ), "_" );
+   if ( prefix.isEmpty() )
+   {
+      prefix = pending.base_name.isEmpty() ? QString( "extrap_c0" ) : pending.base_name;
+   }
+   US_Hydrodyn_Saxs * saxs = (US_Hydrodyn_Saxs *) saxs_window;
+   US_Hydrodyn      * ush  = (US_Hydrodyn *) us_hydrodyn;
+   QString base_dir;
+   if ( saxs && !saxs->our_saxs_options->path_load_saxs_curve.isEmpty()
+        && QDir( saxs->our_saxs_options->path_load_saxs_curve ).exists() )
+   {
+      base_dir = saxs->our_saxs_options->path_load_saxs_curve;
+   }
+   else if ( ush )
+   {
+      base_dir = ush->somo_dir + "/saxs/tmp";
+   }
+   else
+   {
+      base_dir = QDir::currentPath();
+   }
+   return base_dir + "/" + prefix + "_frames";
+}
+
+// the plot with its results line below it, as <prefix>_<q point, 5 digits>.<format>
+bool US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::save_frame()
+{
+   if ( !reg_q.size() )
+   {
+      return true;
+   }
+   QString dir = frames_dir();
+   if ( !QDir().mkpath( dir ) )
+   {
+      QMessageBox::warning( this, windowTitle(),
+                            QString( us_tr( "Could not create the folder %1 for the frames; frame saving is turned off." ) ).arg( dir ) );
+      return false;
+   }
+   QString prefix = QFileInfo( dir ).fileName();
+   prefix.chop( QString( "_frames" ).length() );
+
+   QString ext = rb_save_jpeg->isChecked() ? "jpeg" : rb_save_bmp->isChecked() ? "bmp" : "png";
+   QString fn  = QString( "%1/%2_%3.%4" ).arg( dir ).arg( prefix ).arg( cur_index + 1, 5, 10, QChar( '0' ) ).arg( ext );
+   frames_dir_used = dir;
+   // a frame already written in this run (e.g. the one shown when the movie is started) is not
+   // counted again; a file from before this run is kept unless Overwrite is checked
+   bool this_run = run_files.contains( fn );
+   if ( !cb_save_overwrite->isChecked() && QFile::exists( fn ) )
+   {
+      if ( !this_run )
+      {
+         n_frames_kept++;
+         run_files.insert( fn );
+      }
+      return true;
+   }
+
+   QPixmap pix_plot = plot->grab();
+   QPixmap pix_res  = lbl_results->grab();
+   if ( pix_plot.isNull() )
+   {
+      return true;                               // nothing drawn yet; not an error
+   }
+   QPixmap frame( qMax( pix_plot.width(), pix_res.width() ), pix_plot.height() + pix_res.height() );
+   frame.fill( USglobal->global_colors.plot );
+   {
+      QPainter painter( &frame );
+      painter.drawPixmap( 0, 0, pix_plot );
+      if ( !pix_res.isNull() )
+      {
+         painter.drawPixmap( 0, pix_plot.height(), pix_res );
+      }
+      painter.end();
+   }
+   if ( !frame.save( fn, ext == "jpeg" ? "JPEG" : ext == "bmp" ? "BMP" : "PNG" ) )
+   {
+      QMessageBox::warning( this, windowTitle(),
+                            QString( us_tr( "Could not write the frame %1; frame saving is turned off." ) ).arg( fn ) );
+      return false;
+   }
+   if ( !this_run )
+   {
+      n_frames_saved++;
+      run_files.insert( fn );
+   }
+   return true;
+}
+
+// one log line per run of saved frames (on stop, when saving is turned off, and on close)
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::report_frames()
+{
+   if ( !n_frames_saved && !n_frames_kept )
+   {
+      return;
+   }
+   US_Hydrodyn_Saxs * saxs = (US_Hydrodyn_Saxs *) saxs_window;
+   if ( saxs )
+   {
+      QString msg = QString( us_tr( "Fit viewer movie: saved %1 frame(s) in %2" ) ).arg( n_frames_saved ).arg( frames_dir_used );
+      if ( n_frames_kept )
+      {
+         msg += QString( us_tr( "; %1 frame file(s) already there were kept (check Overwrite to replace them)" ) ).arg( n_frames_kept );
+      }
+      saxs->editor_msg( n_frames_kept ? "dark red" : "black", msg + "\n" );
+   }
+   n_frames_saved = 0;
+   n_frames_kept  = 0;
+   run_files.clear();
+}
+
+// goodness of the fit at q index i, about the fitted line / parabola: R^2 (unweighted, the fraction of
+// the points' variance explained), chi^2 of the points with their own error bars (n_err = how many
+// points carry one) and the reduced chi^2 = chi^2 / ( n_err - nparam ) (0 when n_err <= nparam)
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::fit_quality( int i, double & r2, double & chi2, double & red_chi2,
+                                                          int & n_err, int & nparam )
+{
+   r2       = 1e0;
+   chi2     = 0e0;
+   red_chi2 = 0e0;
+   n_err    = 0;
+   nparam   = 2;
+   if ( i < 0 || i >= (int) reg_q.size() )
+   {
+      return;
+   }
+   const vector < double > & x = reg_x[ i ];
+   const vector < double > & y = reg_y[ i ];
+   const vector < double > & e = reg_e[ i ];
+   double a      = reg_a[ i ];
+   double b      = reg_b[ i ];
+   double c_coef = ( i < (int) reg_c.size() ) ? reg_c[ i ] : 0e0;
+
+   double ss_res = 0e0, ss_tot = 0e0, ybar_s = 0e0;
+   int    nfit = (int) qMin( x.size(), y.size() );
+   for ( int j = 0; j < nfit; j++ )
+   {
+      ybar_s += y[ j ];
+   }
+   if ( nfit )
+   {
+      ybar_s /= (double) nfit;
+   }
+   for ( int j = 0; j < nfit; j++ )
+   {
+      double yp = a + b * x[ j ] + c_coef * x[ j ] * x[ j ];
+      double r  = y[ j ] - yp;
+      ss_res += r * r;
+      ss_tot += ( y[ j ] - ybar_s ) * ( y[ j ] - ybar_s );
+      double ej = ( j < (int) e.size() ) ? e[ j ] : 0e0;
+      if ( ej > 0e0 )
+      {
+         chi2 += ( r / ej ) * ( r / ej );
+         n_err++;
+      }
+   }
+   nparam   = ( c_coef != 0e0 ) ? 3 : 2;
+   r2       = ( ss_tot > 0e0 ) ? 1e0 - ss_res / ss_tot : 1e0;
+   red_chi2 = ( n_err > nparam ) ? chi2 / ( n_err - nparam ) : 0e0;
 }
 
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::usp_config_plot( const QPoint & )
@@ -656,6 +1049,9 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::save_csv()
    ts << "# fit axis," << us_extrap_c0_csv_quote( y_axis_title ) << "\n";
    ts << "# switchover q," << ( merge_q > 0e0 ? QString::number( merge_q, 'g', 8 ) : QString( "none" ) ) << "\n";
    ts << "# fit_* columns are the per-q fit on the fit axis (for c/I fits the intercept is 1/I(0));"
+         " fit_r2 is the (unweighted) R^2 of the fitted points about the fit, fit_chi2 their chi^2 with"
+         " their own errors and fit_reduced_chi2 = fit_chi2 / (points with an error - fitted parameters),"
+         " blank when not defined;"
          " output_I and output_sd are the extrapolated curve as added (after any splice and scale);"
          " per curve: value on the fit axis used in the fit, its error, status (fit = measured value used;"
          " replaced = a single-point spike fitted at its neighbours' local-fit value; blank = not available"
@@ -671,6 +1067,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::save_csv()
    }
    QStringList hdr;
    hdr << "q" << "fit_intercept" << "fit_intercept_sd" << "fit_slope" << "fit_quadratic" << "n_fit"
+       << "fit_r2" << "fit_chi2" << "fit_reduced_chi2"
        << "output_I" << "output_sd";
    for ( int k = 0; k < (int) cols.size(); k++ )
    {
@@ -693,6 +1090,15 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::save_csv()
           << QString::number( reg_b[ i ], 'g', 10 )
           << QString::number( i < (int) reg_c.size() ? reg_c[ i ] : 0e0, 'g', 10 )
           << QString::number( (int) reg_x[ i ].size() );
+      {
+         double r2, chi2, red_chi2;
+         int    n_err, nparam;
+         fit_quality( i, r2, chi2, red_chi2, n_err, nparam );
+         bool   have_pts = reg_x[ i ].size() > 0;
+         row << ( have_pts ? QString::number( r2, 'g', 10 ) : QString( "" ) )
+             << ( n_err > 0 ? QString::number( chi2, 'g', 10 ) : QString( "" ) )
+             << ( n_err > nparam ? QString::number( red_chi2, 'g', 10 ) : QString( "" ) );
+      }
       map < double, int >::iterator it = out_at.find( reg_q[ i ] );
       if ( it != out_at.end() )
       {
@@ -764,6 +1170,16 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::keep()
 
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::closeEvent( QCloseEvent * e )
 {
+   movie_stop();
+   {
+      US_Hydrodyn * ush = (US_Hydrodyn *) us_hydrodyn;
+      if ( ush )
+      {
+         ush->gparams[ "extrap_c0_movie_timer_ms" ] = QString::number( movie_timer_ms );
+         ush->gparams[ "extrap_c0_movie_format"   ] =
+            rb_save_jpeg->isChecked() ? "jpeg" : rb_save_bmp->isChecked() ? "bmp" : "png";
+      }
+   }
    // closing the viewer keeps the curve; only Discard drops it
    if ( pending_open )
    {
