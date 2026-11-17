@@ -17,9 +17,10 @@
 
 using ::testing::_;
 using ::testing::An;
-using ::testing::NiceMock;
+using ::testing::AnyNumber;
 using ::testing::Return;
 using ::testing::SaveArg;
+using ::testing::StrictMock;
 
 namespace
 {
@@ -44,10 +45,14 @@ class EditedDataOpsTest : public ::testing::Test
    protected:
       void SetUp() override
       {
-         db = MockBuilder::createConnectedMock<NiceMock<US_DB2_Mock>>();
+         db = MockBuilder::createConnectedMock<StrictMock<US_DB2_Mock>>();
+         // Connection checks and diagnostic reads are allowed; any other call fails the test.
+         EXPECT_CALL( *db, isConnected() ).Times( AnyNumber() );
+         EXPECT_CALL( *db, lastErrno() ).Times( AnyNumber() );
+         EXPECT_CALL( *db, lastError() ).Times( AnyNumber() );
       }
 
-      std::unique_ptr<NiceMock<US_DB2_Mock>> db;
+      std::unique_ptr<StrictMock<US_DB2_Mock>> db;
       QString                                error;
 };
 

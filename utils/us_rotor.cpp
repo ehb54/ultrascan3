@@ -14,23 +14,35 @@ US_Rotor::Status US_Rotor::readLabsDB(
 {
    QStringList q( "get_lab_names" );
    db->query( q );
+   const int status = db->lastErrno();
+   if ( status != IUS_DB2::OK && status != IUS_DB2::NOROWS )
+   {
+      return MISC_ERROR;
+   }
 
    QStringList labIDs;
-   while ( db->next() )
+   while ( status == IUS_DB2::OK && db->next() )
+   {
       labIDs << db->value( 0 ).toString();
+   }
 
    if ( labIDs.size() == 0 )
       return NOT_FOUND;
 
-   // Save information about all the labs
-   labList.clear();
+   // Read every lab before publishing the list
+   QVector<US_Rotor::Lab> labs;
    for ( int i = 0; i < labIDs.size(); i++ )
    {
       US_Rotor::Lab lab;
 
-      lab.readDB( labIDs[ i ].toInt(), db );
-      labList.push_back( lab );
+      const Status  labStatus = lab.readDB( labIDs[i].toInt(), db );
+      if ( labStatus != ROTOR_OK )
+      {
+         return labStatus;
+      }
+      labs.push_back( lab );
    }
+   labList = labs;
 
    // Since we're not really editing labs, let's just copy
    // the information to disk directly
@@ -229,23 +241,35 @@ US_Rotor::Status US_Rotor::readAbstractRotorsDB(
 {
    QStringList q( "get_abstractRotor_names" );
    db->query( q );
+   const int status = db->lastErrno();
+   if ( status != IUS_DB2::OK && status != IUS_DB2::NOROWS )
+   {
+      return MISC_ERROR;
+   }
 
    QStringList arIDs;
-   while ( db->next() )
+   while ( status == IUS_DB2::OK && db->next() )
+   {
       arIDs << db->value( 0 ).toString();
+   }
 
    if ( arIDs.size() == 0 )
       return NOT_FOUND;
 
-   // Save information about all the abstract rotors
-   arList.clear();
+   // Read every abstract rotor before publishing the list
+   QVector<US_Rotor::AbstractRotor> rotors;
    for ( int i = 0; i < arIDs.size(); i++ )
    {
       US_Rotor::AbstractRotor ar;
 
-      ar.readDB( arIDs[ i ].toInt(), db );
-      arList.push_back( ar );
+      const Status            arStatus = ar.readDB( arIDs[i].toInt(), db );
+      if ( arStatus != ROTOR_OK )
+      {
+         return arStatus;
+      }
+      rotors.push_back( ar );
    }
+   arList = rotors;
 
    return ROTOR_OK;
 }
@@ -344,12 +368,19 @@ US_Rotor::Status US_Rotor::readRotorsFromDB( QVector< US_Rotor::Rotor >& rotors,
    QStringList qry;
    qry << "get_rotor_names" << QString::number( labID );
    db->query( qry );
+   const int status = db->lastErrno();
+   if ( status != IUS_DB2::OK && status != IUS_DB2::NOROWS )
+   {
+      return US_Rotor::MISC_ERROR;
+   }
 
-   while ( db->next() )
+   while ( status == IUS_DB2::OK && db->next() )
    {  // Get the list of rotor IDs for the specified laboratory
       rotorIDs << db->value( 0 ).toString();
    }
 
+   // Read every rotor before adding any to the caller's list
+   QVector<US_Rotor::Rotor> found;
    qry.clear();     
    qry << "get_rotor_info" << " ";
    for ( int ii = 0; ii < rotorIDs.count(); ii++ )
@@ -357,7 +388,10 @@ US_Rotor::Status US_Rotor::readRotorsFromDB( QVector< US_Rotor::Rotor >& rotors,
       QString rotorID = rotorIDs[ ii ];
       qry[ 1 ]        = rotorID;
       db->query( qry );
-      db->next();
+      if ( db->lastErrno() != IUS_DB2::OK || !db->next() )
+      {
+         return US_Rotor::MISC_ERROR;
+      }
 
       US_Rotor::Rotor rotor;
       rotor.ID                 = rotorID.toInt();
@@ -368,14 +402,17 @@ US_Rotor::Status US_Rotor::readRotorsFromDB( QVector< US_Rotor::Rotor >& rotors,
       rotor.name               = db->value( 1 ).toString();
       rotor.serialNumber       = db->value( 2 ).toString();
 
-      rotors << rotor;
+      found << rotor;
 
       //qDebug() << "ROTOR INFO !!!!: " << rotors[ ii ].name << ", " << rotors[ ii ].abstractRotorID <<  ", " << rotors[ ii ].labID << ", "  << rotors[ ii ].serialNumber;
    }
 
-   if ( rotors.size() == 0 )
+   if ( found.size() == 0 )
+   {
       return US_Rotor::NOT_FOUND;
+   }
 
+   rotors << found;
    return US_Rotor::ROTOR_OK;
 }
 
@@ -456,12 +493,19 @@ US_Rotor::Status US_Rotor::readCalibrationProfilesDB(
    QStringList qry;
    qry << "get_rotor_calibration_profiles" << QString::number( rotorID );
    db->query( qry );
+   const int status = db->lastErrno();
+   if ( status != IUS_DB2::OK && status != IUS_DB2::NOROWS )
+   {
+      return US_Rotor::MISC_ERROR;
+   }
 
-   while ( db->next() )
+   while ( status == IUS_DB2::OK && db->next() )
    {  // Get the list of calibration IDs for the specified rotor
       calibIDs << db->value( 0 ).toString();
    }
 
+   // Read every profile before adding any to the caller's list
+   QVector<US_Rotor::RotorCalibration> found;
    qry.clear();     
    qry << "get_rotor_calibration_info" << QString::number( rotorID );
    for ( int ii = 0; ii < calibIDs.count(); ii++ )
@@ -469,7 +513,10 @@ US_Rotor::Status US_Rotor::readCalibrationProfilesDB(
       QString calibID = calibIDs[ ii ];
       qry[ 1 ]        = calibID;
       db->query( qry );
-      db->next();
+      if ( db->lastErrno() != IUS_DB2::OK || !db->next() )
+      {
+         return US_Rotor::MISC_ERROR;
+      }
 
       US_Rotor::RotorCalibration rc;
       rc.ID          = calibID.toInt();
@@ -485,12 +532,15 @@ US_Rotor::Status US_Rotor::readCalibrationProfilesDB(
       rc.lastUpdated = db->value( 7 ).toDate();
       rc.omega2t     = db->value( 6 ).toDouble();
 
-      profiles << rc;
+      found << rc;
    }
 
-   if ( profiles.size() == 0 )
+   if ( found.size() == 0 )
+   {
       return US_Rotor::NOT_FOUND;
+   }
 
+   profiles << found;
    return US_Rotor::ROTOR_OK;
 }
 
@@ -710,6 +760,9 @@ US_Rotor::Lab::Lab()
 // A function to read information about a single lab from DB
 US_Rotor::Status US_Rotor::Lab::readDB( int labID, IUS_DB2* db )
 {
+   // A failed instrument or operator query restores the lab as it was.
+   const Lab   previous = *this;
+
    // Try to get lab info
    QStringList q( "get_lab_info" );
    q  << QString::number( labID );
@@ -722,7 +775,10 @@ US_Rotor::Status US_Rotor::Lab::readDB( int labID, IUS_DB2* db )
    else if ( readStatus != IUS_DB2::OK )
       return MISC_ERROR;
 
-   db->next();
+   if ( !db->next() )
+   {
+      return NOT_FOUND;
+   }
    this->ID          = labID;
    GUID              = db->value( 0 ).toString();
    name              = db->value( 1 ).toString();
@@ -737,7 +793,13 @@ US_Rotor::Status US_Rotor::Lab::readDB( int labID, IUS_DB2* db )
    db->query( q );
    readStatus = db->lastErrno();
 
-   if ( readStatus == IUS_DB2::OK )      // If not, no instruments defined
+   if ( readStatus != IUS_DB2::OK && readStatus != IUS_DB2::NOROWS )
+   {
+      *this = previous;
+      return MISC_ERROR;
+   }
+
+   if ( readStatus == IUS_DB2::OK ) // NOROWS: no instruments defined
    {
       QList< int > instrumentIDs;
 
@@ -757,7 +819,11 @@ US_Rotor::Status US_Rotor::Lab::readDB( int labID, IUS_DB2* db )
          q  << QString( "get_instrument_info_new" )
             << QString::number( ID );
          db->query( q );
-         db->next();
+         if ( db->lastErrno() != IUS_DB2::OK || !db->next() )
+         {
+            *this = previous;
+            return MISC_ERROR;
+         }
 
          instrument.ID     = ID;
          instrument.name   = db->value( 0 ).toString();
@@ -788,7 +854,14 @@ US_Rotor::Status US_Rotor::Lab::readDB( int labID, IUS_DB2* db )
             << QString::number( instruments[ i ].ID );
          db->query( q );
 
-         if ( db->lastErrno() == IUS_DB2::OK )
+         const int operStatus = db->lastErrno();
+         if ( operStatus != IUS_DB2::OK && operStatus != IUS_DB2::NOROWS )
+         {
+            *this = previous;
+            return MISC_ERROR;
+         }
+
+         if ( operStatus == IUS_DB2::OK ) // NOROWS: no operators
          {
             while ( db->next() )
             {
@@ -864,7 +937,10 @@ US_Rotor::Status US_Rotor::AbstractRotor::readDB( int abstractRotorID, IUS_DB2* 
    else if ( readStatus != IUS_DB2::OK )
       return MISC_ERROR;
 
-   db->next();
+   if ( !db->next() )
+   {
+      return NOT_FOUND;
+   }
    this->ID          = abstractRotorID;
    GUID              = db->value(0).toString();
    name              = db->value(1).toString();
@@ -940,7 +1016,10 @@ US_Rotor::Status US_Rotor::Rotor::readDB( int rotorID, IUS_DB2* db )
    else if ( readStatus != IUS_DB2::OK )
       return MISC_ERROR;
 
-   db->next();
+   if ( !db->next() )
+   {
+      return NOT_FOUND;
+   }
    this->ID          = rotorID;
    abstractRotorID   = db->value( 4 ).toString().toInt();
    abstractRotorGUID = db->value( 5 ).toString();
@@ -1136,7 +1215,10 @@ US_Rotor::Status US_Rotor::RotorCalibration::readDB( int calibrationID, IUS_DB2*
    else if ( readStatus != IUS_DB2::OK )
       return MISC_ERROR;
 
-   db->next();
+   if ( !db->next() )
+   {
+      return NOT_FOUND;
+   }
    this->ID          = calibrationID;
    this->GUID        = db->value( 0 ).toString();
    this->rotorID     = db->value( 1 ).toString().toInt();
@@ -1179,14 +1261,20 @@ int US_Rotor::RotorCalibration::replaceDummyDB( int& oldCalibrationID, IUS_DB2* 
    q  << QString::number( rotorID );
 
    db->query( q );
-   
-   while ( db->next() )
+   int status = db->lastErrno();
+   if ( status != IUS_DB2::OK && status != IUS_DB2::NOROWS )
+   {
+      return status;
+   }
+
+   while ( status == IUS_DB2::OK && db->next() )
+   {
       calibrationIDs << db->value( 0 ).toString();
+   }
 
    // Let's remove the one we just added from the list
-   int ndx = calibrationIDs.indexOf( QString::number( this->ID ) );
-   calibrationIDs.removeAt( ndx );
-   
+   calibrationIDs.removeAll( QString::number( this->ID ) );
+
    // Let's make sure we still have some
    if ( calibrationIDs.isEmpty() )
       return IUS_DB2::OK;                        // Not really an error
@@ -1199,7 +1287,15 @@ int US_Rotor::RotorCalibration::replaceDummyDB( int& oldCalibrationID, IUS_DB2* 
          << calibrationID;
 
       db->query( q );
-      db->next();
+      status = db->lastErrno();
+      if ( status != IUS_DB2::OK )
+      {
+         return status;
+      }
+      if ( !db->next() )
+      {
+         continue; // Gone since the list was read
+      }
       QString report = db->value( 3 ).toString();
       QString label  = db->value( 9 ).toString();
 
@@ -1220,7 +1316,7 @@ int US_Rotor::RotorCalibration::replaceDummyDB( int& oldCalibrationID, IUS_DB2* 
    q  << "replace_rotor_calibration"
       << QString::number( oldCalibrationID )
       << QString::number( this->ID );
-   int status = db->statusQuery( q );
+   status = db->statusQuery( q );
 
    return status;
 }

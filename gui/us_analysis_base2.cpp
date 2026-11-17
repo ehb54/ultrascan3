@@ -356,6 +356,8 @@ void US_AnalysisBase2::update( int selection )
       manual      = ( !bmanu.isEmpty()  &&  bmanu == "1" );
       buffLoaded  = true;
       solution_rec.buffer.manual = manual;
+      int     solstat            = IUS_DB2::OK;
+      QString solerr; // Used when the status alone does not say why the read failed
 
       if ( solID.isEmpty() )
       {
@@ -365,17 +367,35 @@ void US_AnalysisBase2::update( int selection )
 
       else if ( solID.length() < 36  &&  dbP != nullptr )
       {  // Have DB solution ID
-         solution_rec.readFromDB( solID.toInt(), dbP );
+         solstat = solution_rec.readFromDB( solID.toInt(), dbP );
+         solerr  = dbP->lastError();
       }
 
       else
       {  // Have Local solution GUID
-         solution_rec.readFromDisk( solID );
+         solstat = solution_rec.readFromDisk( solID );
+         solerr  = tr( "the solution file could not be read" );
       }
 
-      le_solution ->setText( solution_rec.solutionDesc );
-      vbar         = US_Math2::calcCommonVbar( solution_rec, 20.0 );
-      svbar        = QString::number( vbar );
+      if ( solstat == IUS_DB2::OK )
+      {
+         le_solution->setText( solution_rec.solutionDesc );
+         vbar  = US_Math2::calcCommonVbar( solution_rec, 20.0 );
+         svbar = QString::number( vbar );
+      }
+      else
+      { // The cleared solution has no analytes, so later vbar calculations use the default
+         QMessageBox::warning( this,
+                               tr( "Solution/Buffer Values Fetch" ),
+                               tr( "Solution %1 could not be read:\n%2\n"
+                                   "The default vbar, %3, is used." )
+                                  .arg( solID, US_Solution::readErrorText( solstat, solerr ) )
+                                  .arg( TYPICAL_VBAR ) );
+         vbar                      = TYPICAL_VBAR;
+         svbar                     = QString::number( vbar );
+         solution_rec.commonVbar20 = vbar;
+         le_solution->setText( tr( "( ***Undefined*** )" ) );
+      }
       le_vbar     ->setText( svbar );
    }
 

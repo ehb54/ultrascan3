@@ -248,11 +248,11 @@ DbgLv(1) << "sTS: db :    NEW DOWNLOAD";
       if ( needTmst )
       {
          // Download the .tmst file
-         US_TimeState::dbDownload( &db, idTmst, tspath );
-         // And write the xdefs sibling file
+         const bool tmstOK = ( US_TimeState::dbDownload( &db, idTmst, tspath ) == US_DB2::OK );
+         // And write the xdefs sibling file, only next to a downloaded .tmst
          QString xfpath = QString( tspath ).replace( ".tmst", ".xml" );
          QFile fileo( xfpath );
-         if( fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
+         if ( tmstOK && fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
          {
             QTextStream tso( &fileo );
             tso << xdefs;

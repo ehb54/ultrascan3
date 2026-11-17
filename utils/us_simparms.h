@@ -125,7 +125,8 @@ class US_UTIL_EXTERN US_SimulationParameters
    //! \param dbP    Pointer to opened database connection
    //! \param expID  ID of experiment for which to upload a speed step
    //! \param spi    Pointer to speed profile to upload to the database
-   //! \returns      The speedstep DB ID number (<1 if error)
+   //! \returns      IUS_DB2::OK, or the failing status of new_speedstep
+   //!               (which does not report the new row's ID)
    static int speedstepToDB( IUS_DB2*, int, SpeedProfile* );
 
    //! \brief Static function to build a simulation speed step profile
