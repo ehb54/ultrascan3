@@ -483,7 +483,7 @@ bool prepareRun( const QString& run_dir, const QString& wanted_run, const QStrin
          }
       }
       run.timestateRecords = history.time_count();
-      run.timestate = tmst;
+      run.timestate        = tmst;
    }
 
    if ( !wanted_run.isEmpty() && wanted_run != run_id )
