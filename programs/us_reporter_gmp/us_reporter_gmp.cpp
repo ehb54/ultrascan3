@@ -9,20 +9,22 @@
 #include <QPdfWriter>
 #include <QPrinter>
 
-#include "us_reporter_gmp.h"
-#include "us_settings.h"
+#include "../us/us_revision.h"
+#include "../us_fematch/us_thread_worker.h"
+#include "us_constants.h"
+#include "us_convertio.h"
+#include "us_defines.h"
+#include "us_edited_data_loaders.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
-#include "us_protocol_util.h"
-#include "us_math2.h"
-#include "us_constants.h"
-#include "us_solution_vals.h"
 #include "us_lamm_astfvm.h"
-#include "../us_fematch/us_thread_worker.h"
-#include "us_tmst_plot.h"
+#include "us_math2.h"
+#include "us_protocol_util.h"
+#include "us_reporter_gmp.h"
+#include "us_settings.h"
+#include "us_solution_vals.h"
 #include "us_tar.h"
-#include "us_defines.h"
-#include "../us/us_revision.h"
+#include "us_tmst_plot.h"
 
 #define MIN_NTC   25
 
@@ -4026,7 +4028,11 @@ void US_ReporterGMP::generate_report( void )
 
              for ( int j = 0; j < models_to_do.size(); ++j )
              {
-                simulate_triple( currentTripleName, models_to_do[j] );
+                // Without its data, this triple's plots would show the last one's.
+                if ( !simulate_triple( currentTripleName, models_to_do[j] ) )
+                {
+                   continue;
+                }
 
                 // Pseudo3D Distr.
                 gmp_busy( tr( "Plotting pseudo-3D distribution: %1, model %2" ).arg( currentTripleName ).arg( models_to_do[j] ) );
@@ -4134,7 +4140,11 @@ void US_ReporterGMP::generate_report( void )
                      perChanMask_edited.has_tripleModelPlot_items[triplename_alt][models_to_do[j]] ||
                      perChanMask_edited.has_tripleModelIndCombo_items[triplename_alt][models_to_do[j]] )
                 {
-                   simulate_triple( currentTripleName, models_to_do[j] );
+                   // Without its data, this triple's plots would show the last one's.
+                   if ( !simulate_triple( currentTripleName, models_to_do[j] ) )
+                   {
+                      continue;
+                   }
 
                    // Pseudo3D Distr.
                    gmp_busy(
@@ -5175,8 +5185,8 @@ DbgLv(1) << "ScMd:scan time(3)" << timer.elapsed();
    return wDescrs;
 }
 
-//simulate triple 
-void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_model )
+//simulate triple
+bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_model )
 {
    // Show msg while data downloaded and simulated
    // One dialog for the whole of Part 2 (never re-created per triple/model):
@@ -5245,8 +5255,12 @@ void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   dataLoaded = false;
   buffLoaded = false;
   haveSim    = false;
-  
-  loadData( triple_info_map );
+
+  // The progress dialog belongs to the whole report, so it stays open.
+  if ( !loadData( triple_info_map ) )
+  {
+     return false;
+  }
   progress_msg->setValue( 1 );
   
   triple_info_map[ "eID" ]         = QString::number( eID_global );
@@ -5358,6 +5372,23 @@ void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   
   bufvl = US_SolutionVals::values( dbP, edata, solID, svbar, bdens,
 				   bvisc, bcomp, bmanu, errmsg );
+  // Read the solution; when that fails, use the default vbar, which later vbar calculations
+  // also use for the cleared solution, since it has no analytes
+  const auto read_solution = [&]( bool fromDb )
+  {
+     const int     solstat = fromDb ? solution_rec.readFromDB( solID.toInt(), dbP ) : solution_rec.readFromDisk( solID );
+     const QString solerr  = fromDb ? dbP->lastError() : tr( "the solution file could not be read" );
+     if ( solstat != IUS_DB2::OK )
+     {
+        QMessageBox::warning( this,
+                              tr( "Solution/Buffer Fetch" ),
+                              tr( "Solution %1 could not be read:\n%2\n"
+                                  "The default vbar, %3, is used." )
+                                 .arg( solID, US_Solution::readErrorText( solstat, solerr ) )
+                                 .arg( TYPICAL_VBAR ) );
+        solution_rec.commonVbar20 = TYPICAL_VBAR;
+     }
+  };
   progress_msg->setValue( 3 );
 
   //Hardwire compressibility to zero, for now
@@ -5377,15 +5408,15 @@ void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
 	}
       
       else if ( solID.length() < 36  &&  dbP != NULL )
-	{
-	  solution_rec.readFromDB( solID.toInt(), dbP );
-	}
-      
+      {
+         read_solution( true );
+      }
+
       else
-	{
-	  solution_rec.readFromDisk( solID );
-	}
-      
+      {
+         read_solution( false );
+      }
+
       vbar          = solution_rec.commonVbar20;
       svbar         = QString::number( vbar );
       
@@ -5448,6 +5479,8 @@ void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   // Dialog stays up (next triple/model, combined plots, PDF...)
   qApp->processEvents();
 
+  return true;
+
   /*
   // Show plot
   resplotd = new US_ResidPlotFem( this, true );
@@ -5484,129 +5517,55 @@ QString  US_ReporterGMP::rg_tripleInfo()  { return tripleInfo;    }
 //Load rawData/editedData
 bool US_ReporterGMP::loadData( QMap < QString, QString > & triple_information )
 {
-  rawData.clear();
-  editedData.clear();
-  
-  US_Passwd   pw;
-  US_DB2* db = new US_DB2( pw.getPasswd() );
-    
-  if ( db->lastErrno() != US_DB2::OK )
-    {
+   rawData.clear();
+   editedData.clear();
+
+   const auto fail = [this]( const QString& detail )
+   {
       QApplication::restoreOverrideCursor();
-      QMessageBox::information( this,
-				tr( "DB Connection Problem" ),
-				tr( "There was an error connecting to the database:\n" )
-				+ db->lastError() );
-      
+      QMessageBox::warning( this, tr( "Data Load Problem" ), detail );
       return false;
-    }
+   };
 
-  qDebug() << "In load Data: triple, eID (from modelsLink) -- "
-	   << triple_information[ "triple_name" ]
-	   << Triple_to_ModelsDesc[ triple_information[ "triple_name" ] ] [ "eID" ] ;
-  
-  int rID=0;
-  QString rfilename;
-  //int eID=0;
-  int eID = Triple_to_ModelsDesc[ triple_information[ "triple_name" ] ] [ "eID" ].toInt();
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
 
-  QString efilename;
-  
-  //get EditedData filename && editedDataID for current triple, then infer rawDataID 
-  QStringList query;
-  query << "get_editedDataFilenamesIDs_forReport" << triple_information["filename"] << QString::number( eID ) ;
-  db->query( query );
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      return fail( tr( "There was an error connecting to the database:\n" ) + db.lastError() );
+   }
 
-  qDebug() << "In loadData() Query: " << query;
-  qDebug() << "In loadData() Query: triple_information[ \"triple_name\" ]  -- " << triple_information[ "triple_name" ];
+   const QString tripleName      = triple_information["triple_name"];
+   const QString runID           = triple_information["filename"];
+   const int     requestedEditID = Triple_to_ModelsDesc[tripleName]["eID"].toInt();
 
-  int latest_update_time = 1e100;
+   qDebug() << "In load Data: triple, eID (from modelsLink) -- " << tripleName << requestedEditID;
 
-  QString triple_name_actual = triple_information[ "triple_name" ];
+   // loadReporter() refuses an edit ID below 1 with its own message.
+   int       editedDataID = -1;
+   QString   editUpdated;
+   QString   error;
+   const int status = US_EditedDataLoaders::loadReporter( &db,
+                                                          tripleName,
+                                                          runID,
+                                                          requestedEditID,
+                                                          US_Settings::resultDir() + "/" + runID,
+                                                          editedData,
+                                                          rawData,
+                                                          editedDataID,
+                                                          editUpdated,
+                                                          error );
 
-  if ( triple_name_actual.contains("Interference") )
-    triple_name_actual.replace( "Interference", "660" );
-  
-  while ( db->next() )
-    {
-      QString  filename            = db->value( 0 ).toString();
-      int      editedDataID        = db->value( 1 ).toInt();
-      int      rawDataID           = db->value( 2 ).toInt();
-      rID         = rawDataID;
-      efilename   = filename;
-      
-      QDateTime date               = db->value( 3 ).toDateTime();
-      eID_updated                  = db->value( 3 ).toString();
-      
-      // QDateTime now = QDateTime::currentDateTime();
-               
-      // if ( filename.contains( triple_name_actual ) ) 
-      // 	{
-      // 	  int time_to_now = date.secsTo(now);
-      // 	  if ( time_to_now < latest_update_time )
-      // 	    {
-      // 	      latest_update_time = time_to_now;
-      // 	      //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
+   if ( status != IUS_DB2::OK )
+   {
+      return fail( error );
+   }
 
-      // 	      rID         = rawDataID;
-      // 	      eID         = editedDataID;
-      // 	      efilename   = filename;
-      // 	      eID_updated = db->value( 3 ).toString();
-      // 	    }
-      // 	}
-    }
+   eID_global  = editedDataID;
+   eID_updated = editUpdated;
 
-  
-  qDebug() << "In loadData() after Query ";
-  
-  QString edirpath  = US_Settings::resultDir() + "/" + triple_information[ "filename" ];
-  QDir edir( edirpath );
-  if (!edir.exists())
-    edir.mkpath( edirpath );
-  
-  QString efilepath = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/" + efilename;
-
-  qDebug() << "In loadData() efilename: " << efilename;
-
-  
-  // Can check here if such filename exists
-  // QFileInfo check_file( efilepath );
-  // if ( check_file.exists() && check_file.isFile() )
-  //   qDebug() << "EditProfile file: " << efilepath << " exists";
-  // else
-  db->readBlobFromDB( efilepath, "download_editData", eID );
-
-  qDebug() << "In loadData() after readBlobFromDB ";
-
-  //Now download rawData corresponding to rID:
-  QString efilename_copy = efilename;
-  QStringList efilename_copy_list = efilename_copy.split(".");
-
-  rfilename = triple_information[ "filename" ] + "." + efilename_copy_list[2] + "."
-                                               + efilename_copy_list[3] + "."
-                                               + efilename_copy_list[4] + "."
-                                               + efilename_copy_list[5] + ".auc";
-  
-  QString rfilepath = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/" + rfilename;
-  //do we need to check for existance ?
-  db->readBlobFromDB( rfilepath, "download_aucData", rID );
-
-  qApp->processEvents();
-
-  qDebug() << "Loading eData, rawData: efilepath, rfilepath, eID, rID --- " << efilepath << rfilepath << eID << rID;
-
-  //Put downloaded data in memory:
-  QString uresdir = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/"; 
-  US_DataIO::loadData( uresdir, efilename, editedData, rawData );
-
-  eID_global = eID;
-
-  qDebug() << "END of loadData(), eID_global: " << eID_global;
-
-  //test:
-  delete db;
-    
-  return true;
+   qDebug() << "END of loadData(), eID_global: " << eID_global;
+   return true;
 }
 
 //Load rawData/editedData
@@ -7595,20 +7554,20 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 	edir.mkpath( dirname );
       
       QString tfpath = dirname + "/" +  tfname;
-      
-      US_TimeState::dbDownload( dbP, tmstID, tfpath );
-      // And write the xdefs sibling file
+
+      const bool tmstOK = ( US_TimeState::dbDownload( dbP, tmstID, tfpath ) == US_DB2::OK );
+      // And write the xdefs sibling file, only next to a downloaded .tmst
       QString xfpath = QString( tfpath ).replace( ".tmst", ".xml" );
-      qDebug() << "Assembling Run Details:   xfpath" << xfpath;
+      qDebug() << "Assembling Run Details:   xfpath" << xfpath << "downloaded" << tmstOK;
       QFile fileo( xfpath );
-      if ( fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
-	{
-	  QTextStream tso( &fileo );
-	  tso << xdefs;
-	  tso.flush();
-	  fileo.close();
-	  qDebug() << "Assembling Run Details:    xdefs WRITTEN";
-	}
+      if ( tmstOK && fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
+      {
+         QTextStream tso( &fileo );
+         tso << xdefs;
+         tso.flush();
+         fileo.close();
+         qDebug() << "Assembling Run Details:    xdefs WRITTEN";
+      }
 
 
       //6. Get access to Timestamp info, possibly plots also...
@@ -15142,4 +15101,3 @@ void US_ReporterGMP::add_solution_details( const QString sol_id, const QString s
 	;
     }
 }
-

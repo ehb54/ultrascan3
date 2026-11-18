@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE US_JobSubmit>
+<US_JobSubmit method="GA" version="1.0">
+ <job>
+  <gateway id="lims.example.org_00000000-0000-4000-8000-000000000000"/>
+  <cluster name="lims.example.org" shortname="node0" queue="batch"/>
+  <udp port="12233" server="127.0.0.1"/>
+  <directory name="/srv/lims/data/00000000-0000-4000-8000-000000000001/"/>
+  <datasetCount value="1"/>
+  <global_fit value="0"/>
+  <request id="4711" guid="00000000-0000-4000-8000-000000000001"/>
+  <database>
+   <name value="uslims3_TEST"/>
+   <host value="localhost"/>
+   <user email="user@example.org" user_id="Test_User_00000000-0000-4000-8000-000000000002"/>
+   <submitter email="user@example.org"/>
+  </database>
+  <jobParameters>
+   <mc_iterations value="1"/>
+   <req_mgroupcount value="1"/>
+   <demes value="1"/>
+   <population value="200"/>
+   <generations value="100"/>
+   <crossover value="50"/>
+   <mutation value="50"/>
+   <plague value="4"/>
+   <elitism value="2"/>
+   <migration value="3"/>
+   <regularization value="0.05"/>
+   <seed value="0"/>
+   <conc_threshold value="0.00001"/>
+   <s_grid value="100"/>
+   <k_grid value="100"/>
+   <mutate_sigma value="0"/>
+   <p_mutate_s value="20"/>
+   <p_mutate_k value="20"/>
+   <p_mutate_sk value="20"/>
+   <debug_timings value="0"/>
+   <debug_level value="0"/>
+   <debug_text value=""/>
+   <bucket_fixed value="0" fixedtype="vbar" xtype="s" ytype="ff0"/>
+   <bucket x_min="0.5956" x_max="1.404" y_min="1" y_max="1.24"/>
+   <bucket x_min="3.671" x_max="4.48" y_min="2.76" y_max="3.24"/>
+   <bucket x_min="4.48" x_max="4.842" y_min="2.76" y_max="3.24"/>
+   <bucket x_min="5.209" x_max="6.017" y_min="2.639" y_max="3.119"/>
+   <bucket x_min="5.39" x_max="6.198" y_min="2.578" y_max="2.639"/>
+   <bucket x_min="6.017" x_max="6.198" y_min="2.639" y_max="3.058"/>
+   <bucket x_min="5.525" x_max="6.334" y_min="1.406" y_max="1.887"/>
+   <bucket x_min="5.661" x_max="6.334" y_min="1.887" y_max="1.967"/>
+   <bucket x_min="6.334" x_max="6.47" y_min="1.487" y_max="1.967"/>
+   <bucket x_min="6.068" x_max="6.334" y_min="1" y_max="1.406"/>
+   <bucket x_min="6.334" x_max="7.058" y_min="1.406" y_max="1.422"/>
+   <bucket x_min="6.334" x_max="7.058" y_min="1.002" y_max="1.406"/>
+   <bucket x_min="6.334" x_max="6.877" y_min="1.422" y_max="1.483"/>
+   <bucket x_min="6.877" x_max="7.058" y_min="1.422" y_max="1.483"/>
+   <bucket x_min="9.008" x_max="9.816" y_min="2.76" y_max="3.24"/>
+  </jobParameters>
+  <analysis_type value="GA"/>
+ </job>
+ <!--the dataset section is repeated for each dataset-->
+ <dataset>
+  <files>
+   <auc filename="demo-ga.RI.1.A.280.auc"/>
+   <edit filename="demo-ga.2610051052.RI.1.A.280.xml"/>
+   <noise filename="0kChQg.ti_noise"/>
+   <noise filename="zBC3LT.ri_noise"/>
+   <timestate filename="demo-ga.time_state.tmst"/>
+  </files>
+  <parameters>
+   <simpoints value="200"/>
+   <band_volume value="0"/>
+   <radial_grid value="0"/>
+   <time_grid value="1"/>
+   <rotor_stretch value="1.396E-7 6.49679E-12"/>
+   <centerpiece_shape value="standard"/>
+   <centerpiece_bottom value="7.2"/>
+   <centerpiece_angle value="2.5"/>
+   <centerpiece_pathlength value="1.2"/>
+   <centerpiece_width value="0"/>
+   <total_concentration value="0.219131808"/>
+   <speedstep stepID="1" rotorspeed="30000" scans="1597" timefirst="265" timelast="39100" w2tfirst="1925900000" w2tlast="385220000000" duration_hrs="10" duration_mins="51.6667" delay_hrs="0" delay_mins="4.41667" acceleration="400" accelerflag="1" expID="1"/>
+   <solution>
+    <buffer density="1.0042" viscosity="1.03809" manual="0"/>
+    <analyte vbar20="0.7261" amount="1" mw="81211" type="Protein"/>
+   </solution>
+  </parameters>
+ </dataset>
+</US_JobSubmit>

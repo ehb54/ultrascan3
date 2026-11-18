@@ -148,7 +148,7 @@ bool US_AbstractRotorGui::loadAbstractRotors( void )
       }
      
       // Get information about all the abstract rotors
-      if ( US_Rotor::readAbstractRotorsDB( abstractRotorList, &db ) == US_Rotor::NOT_FOUND )
+      if ( US_Rotor::readAbstractRotorsDB( abstractRotorList, &db ) != US_Rotor::ROTOR_OK )
       {
          QMessageBox::warning( this, tr( "Database Problem" ),
             tr( "Could not read abstract rotor information \n" ) );

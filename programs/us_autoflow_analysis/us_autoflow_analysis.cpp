@@ -8,6 +8,7 @@
 #include <QJsonObject>
 #include <QJsonValue>
 #include <QScrollArea>
+#include <QSet>
 #include <QTimer>
 #include <QXmlStreamReader>
 #include <QtNumeric>
@@ -15,6 +16,8 @@
 #include "../us_fematch/us_thread_worker.h"
 #include "us_autoflow_analysis.h"
 #include "us_constants.h"
+#include "us_convertio.h"
+#include "us_edited_data_loaders.h"
 #include "us_gui_settings.h"
 #include "us_lamm_astfvm.h"
 #include "us_protocol_util.h"
@@ -174,6 +177,53 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
 
   // -----------------
 
+}
+
+// Collect the exact stage names present in an autoflowAnalysis status_json:
+//   { "to_process":["2DSA_IT",..], "processed":[{"2DSA":{..}},..], "submitted":"2DSA_FM" }
+// Stage names are compared as whole strings, so e.g. "2DSA" does not match "2DSA_FM" or "2DSA_IT".
+static QSet<QString> us_statusJsonStages( const QString& status_json )
+{
+   QSet<QString> stages;
+   QJsonDocument jdoc = QJsonDocument::fromJson( status_json.toUtf8() );
+
+   if ( !jdoc.isObject() )
+   {
+      qDebug() << "us_statusJsonStages: NOT a JSON object: " << status_json;
+      return stages;
+   }
+
+   QJsonObject      jobj = jdoc.object();
+
+   // "to_process": array of stage-name strings
+   const QJsonArray to_process = jobj.value( "to_process" ).toArray();
+   for ( const QJsonValue& v : to_process )
+   {
+      if ( v.isString() )
+      {
+         stages.insert( v.toString() );
+      }
+   }
+
+   // "processed": array of single-key objects, the key being the stage name
+   const QJsonArray processed = jobj.value( "processed" ).toArray();
+   for ( const QJsonValue& v : processed )
+   {
+      const QJsonObject o = v.toObject();
+      for ( const QString& key : o.keys() )
+      {
+         stages.insert( key );
+      }
+   }
+
+   // "submitted": stage-name string
+   const QJsonValue submitted = jobj.value( "submitted" );
+   if ( submitted.isString() && !submitted.toString().isEmpty() )
+   {
+      stages.insert( submitted.toString() );
+   }
+
+   return stages;
 }
 
 //init correct # of us_labels rows based on passed # stages from AProfile
@@ -388,11 +438,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       Canceled_triples[ triple_name ]  = false;
       History_read[ triple_name ]      = false;
 
-      if ( status_json.contains("2DSA_FM") ) 
-	Process_2dsafm[ triple_name ] = true;
-      else
-	Process_2dsafm[ triple_name ] = false;
-	
+      Process_2dsafm[triple_name] = us_statusJsonStages( status_json ).contains( "2DSA_FM" );
+
       //Define triple's channels
       QStringList triple_name_parts = triple_name.split(".");
       channels_all << triple_name_parts[0] + "." + triple_name_parts[1];
@@ -463,21 +510,17 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       //TEST
       //json = "{\"to_process\":[\"FITMEN\",\"2DSA_IT\",\"2DSA_MC\"],\"processed\":[\"2DSA\"],\"submitted\":\"2DSA_FM\"}" ;
 
-      if ( json.contains("2DSA") )    //ALEXEY: maybe more strict condition here? (as 2DSA is in other stages...)
-	job1run = true;
-      if ( json.contains("2DSA_FM") )
-	job2run = true;
-      if ( json.contains("FITMEN") )
-	job3run = true;
-      if ( json.contains("FITMEN_AUTO") )
-	job3run = false;
-      if ( json.contains("2DSA_IT") )
-	job4run = true;	  
-      if ( json.contains("2DSA_MC") )
-	job5run = true;
-      if ( json.contains("PCSA") )
-	job6run_pcsa = true;
-          
+      // Exact stage-name matching on the parsed JSON ("to_process", "processed", "submitted"),
+      // NOT substring search: "2DSA" must not match "2DSA_FM", "2DSA_IT", "2DSA_MC"
+      const QSet<QString> json_stages = us_statusJsonStages( json );
+
+      job1run      = json_stages.contains( "2DSA" );
+      job2run      = json_stages.contains( "2DSA_FM" );
+      job3run      = json_stages.contains( "FITMEN" ) && !json_stages.contains( "FITMEN_AUTO" );
+      job4run      = json_stages.contains( "2DSA_IT" );
+      job5run      = json_stages.contains( "2DSA_MC" );
+      job6run_pcsa = json_stages.contains( "PCSA" );
+
       triple_name_width = fmet.horizontalAdvance( triple_curr );
       
       qDebug() << "Triple,  width:  " << triple_curr << ", " << triple_name_width;
@@ -2555,6 +2598,23 @@ void US_Analysis_auto::start_next_2dsa_channel( void )
       // protocol_details_at_analysis_2dsa[ "k_max" ]   = QString::number( 1.5 );
       // protocol_details_at_analysis_2dsa[ "k_grpts" ] = QString::number( 28 );
 
+      // Custom grid is a per-channel Analysis Profile setting: when chosen, the
+      // grid to fit is the custom-grid MODEL (DB id / GUID), not s/k limits above.
+      if ( ap.have_custg )
+      {
+         protocol_details_at_analysis_2dsa["custom_grid_id"]   = QString::number( ap.cust_id );
+         protocol_details_at_analysis_2dsa["custom_grid_guid"] = ap.cust_grid;
+         protocol_details_at_analysis_2dsa["custom_grid_name"] = ap.cgrid_name;
+      }
+      else
+      {  // map is reused across channels: drop a previous channel's custom grid
+         protocol_details_at_analysis_2dsa.remove( "custom_grid_id" );
+         protocol_details_at_analysis_2dsa.remove( "custom_grid_guid" );
+         protocol_details_at_analysis_2dsa.remove( "custom_grid_name" );
+      }
+
+      qDebug() << "[US_Autoflow_analysis] 2DSA-IT: channel" << chan_norm << "have_custg" << ap.have_custg << "cust_id" << ap.cust_id
+               << "cgrid_name" << ap.cgrid_name;
       qDebug() << "[US_Autoflow_analysis] 2DSA-IT: channel" << chan_norm << "Analysis Profile grid: s[" << ap.s_min << ","
                << ap.s_max << "] x" << ap.s_grpts << "  f/f0[" << ap.k_min << "," << ap.k_max << "] x" << ap.k_grpts;
    }
@@ -2572,6 +2632,9 @@ void US_Analysis_auto::start_next_2dsa_channel( void )
       protocol_details_at_analysis_2dsa.remove( "k_min" );
       protocol_details_at_analysis_2dsa.remove( "k_max" );
       protocol_details_at_analysis_2dsa.remove( "k_grpts" );
+      protocol_details_at_analysis_2dsa.remove( "custom_grid_id" );
+      protocol_details_at_analysis_2dsa.remove( "custom_grid_guid" );
+      protocol_details_at_analysis_2dsa.remove( "custom_grid_name" );
 
       qDebug() << "[US_Autoflow_analysis] 2DSA-IT: channel" << chan_norm
                << "not found in 2DSA Analysis Profile -- falling back to "
@@ -3275,115 +3338,41 @@ QString  US_Analysis_auto::aa_tripleInfo()  { return tripleInfo;    }
 //Load rawData/editedData
 bool US_Analysis_auto::loadData( QMap < QString, QString > & triple_information )
 {
-  rawData.clear();
-  editedData.clear();
-  
-  US_Passwd   pw;
-  US_DB2* db = new US_DB2( pw.getPasswd() );
-    
-  if ( db->lastErrno() != US_DB2::OK )
-    {
+   rawData.clear();
+   editedData.clear();
+
+   const auto fail = [this]( const QString& detail )
+   {
       QApplication::restoreOverrideCursor();
-      QMessageBox::information( this,
-				tr( "DB Connection Problem" ),
-				tr( "There was an error connecting to the database:\n" )
-				+ db->lastError() );
-      
+      QMessageBox::warning( this, tr( "Data Load Problem" ), detail );
       return false;
-    }
+   };
 
-  int rID=0;
-  QString rfilename;
-  int eID=0;
-  QString efilename;
-  
-  //get EditedData filename && editedDataID for current triple, then infer rawDataID 
-  QStringList query;
-  query << "get_editedDataFilenamesIDs" << triple_information["filename"];
-  db->query( query );
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
 
-  qDebug() << "In loadData() Query: " << query;
-  qDebug() << "In loadData() Query: triple_information[ \"triple_name\" ]  -- " << triple_information[ "triple_name" ];
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      return fail( tr( "There was an error connecting to the database:\n" ) + db.lastError() );
+   }
 
-  int latest_update_time = 1e100;
+   const QString tripleName   = triple_information["triple_name"];
+   const QString runID        = triple_information["filename"];
+   int           editedDataID = -1;
+   QString       error;
+   const int     status = US_EditedDataLoaders::loadAutoflow(
+      &db, tripleName, runID, US_Settings::resultDir() + "/" + runID, editedData, rawData, editedDataID, error );
 
-  QString triple_name_actual = triple_information[ "triple_name" ];
+   if ( status != IUS_DB2::OK )
+   {
+      return fail( error );
+   }
 
-  if ( triple_name_actual.contains("Interference") )
-    triple_name_actual.replace( "Interference", "660" );
-  
-  while ( db->next() )
-    {
-      QString  filename            = db->value( 0 ).toString();
-      int      editedDataID        = db->value( 1 ).toInt();
-      int      rawDataID           = db->value( 2 ).toInt();
-      //QString  date                = US_Util::toUTCDatetimeText( db->value( 3 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
-      QDateTime date               = db->value( 3 ).toDateTime();
+   eID_global = editedDataID;
 
-      QDateTime now = QDateTime::currentDateTime();
-               
-      if ( filename.contains( triple_name_actual ) ) 
-	{
-	  int time_to_now = date.secsTo(now);
-	  if ( time_to_now < latest_update_time )
-	    {
-	      latest_update_time = time_to_now;
-	      //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
+   qDebug() << "END of loadData(), eID_global: " << eID_global;
 
-	      rID       = rawDataID;
-	      eID       = editedDataID;
-	      efilename = filename;
-	    }
-	}
-    }
-
-  qDebug() << "In loadData() after Query ";
-  
-  QString edirpath  = US_Settings::resultDir() + "/" + triple_information[ "filename" ];
-  QDir edir( edirpath );
-  if (!edir.exists())
-    edir.mkpath( edirpath );
-  
-  QString efilepath = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/" + efilename;
-
-  qDebug() << "In loadData() efilename: " << efilename;
-
-  
-  // Can check here if such filename exists
-  // QFileInfo check_file( efilepath );
-  // if ( check_file.exists() && check_file.isFile() )
-  //   qDebug() << "EditProfile file: " << efilepath << " exists";
-  // else
-  db->readBlobFromDB( efilepath, "download_editData", eID );
-
-  qDebug() << "In loadData() after readBlobFromDB ";
-
-  //Now download rawData corresponding to rID:
-  QString efilename_copy = efilename;
-  QStringList efilename_copy_list = efilename_copy.split(".");
-
-  rfilename = triple_information[ "filename" ] + "." + efilename_copy_list[2] + "."
-                                               + efilename_copy_list[3] + "."
-                                               + efilename_copy_list[4] + "."
-                                               + efilename_copy_list[5] + ".auc";
-  
-  QString rfilepath = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/" + rfilename;
-  //do we need to check for existance ?
-  db->readBlobFromDB( rfilepath, "download_aucData", rID );
-
-  qApp->processEvents();
-
-  qDebug() << "Loading eData, rawData: efilepath, rfilepath, eID, rID --- " << efilepath << rfilepath << eID << rID;
-
-  //Put downloaded data in memory:
-  QString uresdir = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/"; 
-  US_DataIO::loadData( uresdir, efilename, editedData, rawData );
-
-  eID_global = eID;
-
-  qDebug() << "END of loadData(), eID_global: " << eID_global;
-
-  return true;
+   return true;
 }
 
 //Load rawData/editedData
@@ -4769,7 +4758,12 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
     buffLoaded = false;
     haveSim    = false;
 
-    loadData( triple_info_map );
+    if ( !loadData( triple_info_map ) )
+    {
+       progress_msg->close();
+       resplot_done(); // restart the update timer stopped above
+       return;
+    }
     progress_msg->setValue( 1 );
     qApp->processEvents();
 
@@ -4877,6 +4871,23 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
   
   bufvl = US_SolutionVals::values( dbP, edata, solID, svbar, bdens,
 				   bvisc, bcomp, bmanu, errmsg );
+  // Read the solution; when that fails, use the default vbar, which later vbar calculations
+  // also use for the cleared solution, since it has no analytes
+  const auto read_solution = [&]( bool fromDb )
+  {
+     const int     solstat = fromDb ? solution_rec.readFromDB( solID.toInt(), dbP ) : solution_rec.readFromDisk( solID );
+     const QString solerr  = fromDb ? dbP->lastError() : tr( "the solution file could not be read" );
+     if ( solstat != IUS_DB2::OK )
+     {
+        QMessageBox::warning( this,
+                              tr( "Solution/Buffer Fetch" ),
+                              tr( "Solution %1 could not be read:\n%2\n"
+                                  "The default vbar, %3, is used." )
+                                 .arg( solID, US_Solution::readErrorText( solstat, solerr ) )
+                                 .arg( TYPICAL_VBAR ) );
+        solution_rec.commonVbar20 = TYPICAL_VBAR;
+     }
+  };
   progress_msg->setValue( 3 );
   qApp->processEvents();
   
@@ -4897,15 +4908,15 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
 	}
       
       else if ( solID.length() < 36  &&  dbP != NULL )
-	{
-	  solution_rec.readFromDB( solID.toInt(), dbP );
-	}
-      
+      {
+         read_solution( true );
+      }
+
       else
-	{
-	  solution_rec.readFromDisk( solID );
-	}
-      
+      {
+         read_solution( false );
+      }
+
       vbar          = solution_rec.commonVbar20;
       svbar         = QString::number( vbar );
       
@@ -7765,16 +7776,19 @@ DbgLv(1) << "updDbEd: edGUID" << edGUID;
    db.query( query );
    db.next();
    idEdit           = db.value( 0 ).toString().toInt();
-DbgLv(1) << "updDbEd: idEdit" << idEdit;
-   if ( db.writeBlobToDB( efilepath, "upload_editData", idEdit ) != US_DB2::OK )
-     {
-       qDebug() << tr( "*ERROR* update_db_edit: " ) << db.lastError();
-       //msg += tr( "*ERROR* update_db_edit: " );
-       //msg += db.lastError();
-       return;
-     }
-   
-   
+   DbgLv( 1 ) << "updDbEd: idEdit" << idEdit;
+   // How the existing edit is found is unchanged; only the upload is shared.
+   QString upload_error;
+
+   if ( US_ConvertIO::uploadEditedDataBlob( &db, idEdit, efilepath, upload_error ) != IUS_DB2::OK )
+   {
+      qDebug() << tr( "*ERROR* update_db_edit: " ) << upload_error;
+      //msg += tr( "*ERROR* update_db_edit: " );
+      //msg += upload_error;
+      return;
+   }
+
+
    return;
 }
 

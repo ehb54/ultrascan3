@@ -46,19 +46,40 @@ int US_Noise::load( bool db_access, const QString& guid, IUS_DB2* db )
 // load noise from db
 int US_Noise::load( const QString& id, IUS_DB2* db )
 {
+   if ( db == nullptr )
+   {
+      return IUS_DB2::NOT_CONNECTED;
+   }
+
    QStringList q;
 
    q << "get_noise_info" << id;
    db->query( q );
-   
-   if ( db->lastErrno() != IUS_DB2::OK ) return db->lastErrno();
 
-   db->next();
-   QByteArray contents = db->value( 5 ).toString().toLatin1();
+   const int status = db->lastErrno();
+   if ( status != IUS_DB2::OK )
+   {
+      return status;
+   }
+   if ( !db->next() )
+   {
+      return IUS_DB2::NOROWS;
+   }
 
-   QXmlStreamReader     xml( contents );
+   // The noise XML was written as UTF-8.
+   QByteArray       contents = db->value( 5 ).toString().toUtf8();
 
-   return load_stream( xml );
+   // Load into a copy; this noise changes only when the stored XML loads completely.
+   US_Noise         loaded = *this;
+   QXmlStreamReader xml( contents );
+
+   const int        result = loaded.load_stream( xml );
+   if ( result == IUS_DB2::OK )
+   {
+      *this = loaded;
+   }
+
+   return result;
 }
 
 // load noise from local disk
@@ -72,9 +93,16 @@ int US_Noise::load( const QString& filename )
       return -1;
    }
 
-   QXmlStreamReader     xml( &file );
+   // Load into a copy; this noise changes only when the file loads completely.
+   US_Noise         loaded = *this;
+   QXmlStreamReader xml( &file );
 
-   return load_stream( xml );
+   const int        result = loaded.load_stream( xml );
+   if ( result == IUS_DB2::OK )
+   {
+      *this = loaded;
+   }
+   return result;
 }
 
 // load noise from an XML stream
@@ -115,6 +143,12 @@ int US_Noise::load_stream( QXmlStreamReader& xml )
       }
    }
 
+   // Truncated or malformed XML must not load as a complete noise.
+   if ( xml.hasError() )
+   {
+      return IUS_DB2::DBERROR;
+   }
+
    count       = values.size();
 //qDebug() << "NOI: ldTemp: count" << count;
    if ( US_Settings::us_debug() > 2 )
@@ -133,72 +167,106 @@ int US_Noise::write( bool db_access, const QString& filename, IUS_DB2* db )
 // write noise to db
 int US_Noise::write( IUS_DB2* db )
 {
-      // Create the noise xml file in a string
-      QByteArray       temp_contents;
-      QXmlStreamWriter xml( &temp_contents );
-      write_stream( xml );
+   if ( db == nullptr )
+   {
+      message = QObject::tr( "could not be written: no database connection" );
+      return IUS_DB2::NOT_CONNECTED;
+   }
 
-      QByteArray     contents;
-      QStringList    q;
+   // Create the noise xml file in a string.  It is passed raw: the query
+   // layer escapes every argument.
+   QByteArray       contents;
+   QXmlStreamWriter xml( &contents );
+   write_stream( xml );
 
-      // Get type and model IDD
-      QString typen   = ( type == TI ) ? "ti_noise" : "ri_noise";
+   QStringList q;
 
-      q << "get_modelID" << modelGUID;
-      db->query( q );
-      db->next();
-      QString modelID = db->value( 0 ).toString();
+   // Get type and model IDD
+   QString     typen = ( type == TI ) ? "ti_noise" : "ri_noise";
 
-      // Encapsulate the XML contents
-      db->mysqlEscapeString( contents, temp_contents, temp_contents.size() );
+   q << "get_modelID" << modelGUID;
+   db->query( q );
 
-      // Determine the edit ID
-      QString invID   = QString::number( US_Settings::us_inv_ID() );
-      QString editID  = "0";
-      q.clear();
-      q << "get_model_desc" << invID;
-      db->query( q );
-      while( db->next() )
+   // A noise belongs to a stored model
+   int status = db->lastErrno();
+   if ( status != IUS_DB2::OK && status != IUS_DB2::NOROWS )
+   {
+      message = QObject::tr( "could not look up its model" );
+      return status;
+   }
+   if ( status == IUS_DB2::NOROWS || !db->next() )
+   {
+      message = QObject::tr( "could not be written: its model is not in the database" );
+      return IUS_DB2::NO_MODEL;
+   }
+   QString modelID = db->value( 0 ).toString();
+
+   // Determine the edit ID
+   QString invID  = QString::number( US_Settings::us_inv_ID() );
+   QString editID = "0";
+   q.clear();
+   q << "get_model_desc" << invID;
+   db->query( q );
+   status = db->lastErrno();
+   if ( status != IUS_DB2::OK && status != IUS_DB2::NOROWS )
+   {
+      message = QObject::tr( "could not look up its edit" );
+      return status;
+   }
+   while ( status == IUS_DB2::OK && db->next() )
+   {
+      if ( db->value( 0 ).toString() == modelID )
       {
-         if ( db->value( 0 ).toString() == modelID )
-         {
-            editID         = db->value( 6 ).toString();
-            break;
-         }
+         editID = db->value( 6 ).toString();
+         break;
       }
+   }
 
-      // Generate a noise guid if necessary
-      // The guid may be valid from a disk read, but is not in the DB
-      if ( noiseGUID.size() != 36 ) noiseGUID = US_Util::new_guid();
+   // Generate a noise guid if necessary
+   // The guid may be valid from a disk read, but is not in the DB
+   if ( noiseGUID.size() != 36 )
+   {
+      noiseGUID = US_Util::new_guid();
+   }
 
-      q.clear();
-      q << "get_noiseID" << noiseGUID;
-      
-      db->query( q );
-      
-      q.clear();
-     
-      if ( db->lastErrno() != IUS_DB2::OK )
-      {
-         q << "new_noise" << noiseGUID << editID << modelID << modelGUID
-           << typen << description << contents;
-         message = QObject::tr( "created" );
-//qDebug() << "get_noiseID stat GUID" << db->lastErrno() << noiseGUID;
-      }
-      else
-      {
-         db->next();
-         QString noiseID = db->value( 0 ).toString();
-         q << "update_noise" << noiseID << noiseGUID << editID << modelID
-           << modelGUID << typen << description << contents;
-         message = QObject::tr( "updated" );
-//qDebug() << "get_noiseID ID GUID" << noiseID << noiseGUID;
-      }
+   q.clear();
+   q << "get_noiseID" << noiseGUID;
 
-      return db->statusQuery( q );
-//int updstat = db->statusQuery( q );
-//qDebug() << "new/update_noise stat" << updstat;
-//return updstat;
+   db->query( q );
+
+   q.clear();
+
+   // Update a stored noise; insert one the lookup did not find.
+   status = db->lastErrno();
+   if ( status != IUS_DB2::OK && status != IUS_DB2::NOROWS )
+   {
+      message = QObject::tr( "could not be looked up" );
+      return status;
+   }
+
+   if ( status != IUS_DB2::OK || !db->next() )
+   {
+      q << "new_noise" << noiseGUID << editID << modelID << modelGUID << typen << description << contents;
+      message = QObject::tr( "created" );
+      //qDebug() << "get_noiseID stat GUID" << db->lastErrno() << noiseGUID;
+   }
+   else
+   {
+      QString noiseID = db->value( 0 ).toString();
+      q << "update_noise" << noiseID << noiseGUID << editID << modelID << modelGUID << typen << description << contents;
+      message = QObject::tr( "updated" );
+      //qDebug() << "get_noiseID ID GUID" << noiseID << noiseGUID;
+   }
+
+   const int wstat = db->statusQuery( q );
+   if ( wstat != IUS_DB2::OK )
+   {
+      message = QObject::tr( "could not be written" );
+   }
+   return wstat;
+   //int updstat = db->statusQuery( q );
+   //qDebug() << "new/update_noise stat" << updstat;
+   //return updstat;
 }
 
 // write noise to local disk
@@ -365,14 +433,26 @@ int US_Noise::load_disk( const QString& guid )
 // load noise that matches guid from db
 int US_Noise::load_db( const QString& guid, IUS_DB2* db )
 {
+   if ( db == nullptr )
+   {
+      return IUS_DB2::NOT_CONNECTED;
+   }
+
    QStringList q;
 
    q << "get_noiseID" << guid;
    db->query( q );
 
-   if ( db->lastErrno() != IUS_DB2::OK ) return db->lastErrno();
-   
-   db->next();
+   const int status = db->lastErrno();
+   if ( status != IUS_DB2::OK )
+   {
+      return status;
+   }
+   if ( !db->next() )
+   {
+      return IUS_DB2::NOROWS;
+   }
+
    QString id = db->value( 0 ).toString();
    return load( id, db );
 }
@@ -529,4 +609,3 @@ bool US_Noise::sum_noises( US_Noise& noise1, US_Noise noise2, bool always_sum )
 
    return noise1.sum_noise( noise2, always_sum );
 }
-

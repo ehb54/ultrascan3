@@ -3523,10 +3523,12 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    
    //Lab
    QVector< US_Rotor::Lab > labList_auto;
-   
-   if ( db.lastErrno() == US_DB2::OK )
-     US_Rotor::readLabsDB( labList_auto, &db );
-   
+
+   if ( db.lastErrno() == US_DB2::OK && US_Rotor::readLabsDB( labList_auto, &db ) != US_Rotor::ROTOR_OK )
+   {
+      QMessageBox::warning( this, tr( "Database Problem" ), tr( "Could not read lab information\n" ) + db.lastError() );
+   }
+
    int currentLab_auto = 0;
    for ( int ii = 0; ii < labList_auto.size(); ii++ )
      {
@@ -3571,7 +3573,11 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    qDebug() << "RotorID/CalID  READ!!! ";
    
    // Instrument
-   QList< US_Rotor::Instrument > instruments = labList_auto[ currentLab_auto ].instruments;
+   QList<US_Rotor::Instrument> instruments;
+   if ( currentLab_auto < labList_auto.size() )
+   {
+      instruments = labList_auto[currentLab_auto].instruments;
+   }
    US_Rotor::Instrument currentInstrument_auto; 
    foreach ( US_Rotor::Instrument instrument, instruments )
      {
@@ -3634,7 +3640,24 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    
    //Solutions / Triple / Centerpiece Descriptions
    int solutionID;  // ALEXEY change to protocol's solution IDs
-   US_Solution solution_auto;
+
+   // A solution that records each failed DB read, with its reason, for the warning at the end
+   struct ProtocolSolution : public US_Solution
+   {
+         QStringList* failed;
+         int          readFromDB( int id, IUS_DB2* db )
+         {
+            const int status = US_Solution::readFromDB( id, db );
+            if ( status != IUS_DB2::OK )
+            {
+               *failed << QString( "%1: %2" ).arg( id ).arg( US_Solution::readErrorText( status, db->lastError() ) );
+            }
+            return status;
+         }
+   };
+   QStringList      failedSolutions; // Solutions that could not be read; their channels have none
+   ProtocolSolution solution_auto;
+   solution_auto.failed = &failedSolutions;
 
    int nchans     = out_channels.count();
    int ntrips     = out_triples.count();
@@ -4003,7 +4026,17 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 
    //le_status->setText( tr( "AUC data import IS COMPLETE." ) );
    le_status->setText( tr( "Data Acquision COMPLETE." ) );
-   
+
+   if ( !failedSolutions.isEmpty() )
+   {
+      failedSolutions.removeDuplicates();
+      QMessageBox::warning( this,
+                            tr( "Solutions Not Loaded" ),
+                            tr( "These protocol solutions could not be read from the database, so their "
+                                "channels have no solution:\n" ) +
+                               failedSolutions.join( "\n" ) );
+   }
+
    enableSaveBtn_auto();
 }
 
@@ -4138,84 +4171,60 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    le_status->setText( tr( "Loading data from local disk ..." ) );
    qApp->processEvents();
 
-   // Check the runID
-   QStringList components =  dir.split( "/", Qt::SkipEmptyParts );
-   QString new_runID      = components.last();
+   // readDiskRun() reads the run directory and describes any problems it
+   // finds in readError; whether a problem stops the load is decided below.
+   le_status->setText( tr( "Loading data from Disk (raw data) ..." ) );
+   qApp->processEvents();
+   DbgLv( 1 ) << "CGui: ldUS3Dk: call read";
+   US_ConvertIO::DiskRun diskRun;
+   QString               readError;
 
-   static const QRegularExpression rx( "^[A-Za-z0-9_-]{1,80}$" );
-   if ( !rx.match( new_runID ).hasMatch() )
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   int status = US_ConvertIO::readDiskRun( dir, diskRun, readError );
+   QApplication::restoreOverrideCursor();
+
+   if ( status == US_Convert::BAD_RUNID )
    {
-      QMessageBox::warning( this,
-            tr( "Bad runID Name" ),
-            tr( "The runID name may consist only of alphanumeric\n"
-                "characters, the underscore, and the hyphen." ) );
+      QMessageBox::warning( this, tr( "Bad runID Name" ), readError );
       return;
    }
 
    // Set the runID and directory
-   runID       = new_runID;
+   runID        = diskRun.runID;
+   runType      = diskRun.runType;
+   allData      = diskRun.rawData;
+   all_tripinfo = diskRun.triples;
    le_runID ->setText( runID );
    le_runID2->setText( runID );
    le_dir   ->setText( dir );
    currentDir  = QString( dir );
 
-   // Reload the AUC data
-   le_status->setText( tr( "Loading data from Disk (raw data) ..." ) );
-   qApp->processEvents();
-DbgLv(1) << "CGui: ldUS3Dk: call read";
-   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-   int status = US_Convert::readUS3Disk( dir, allData, all_tripinfo, runType );
-   QApplication::restoreOverrideCursor();
-
    if ( status == US_Convert::NODATA )
    {
-      QMessageBox::warning( this,
-            tr( "No Files Found" ),
-            tr( "There were no files of the form *.auc\n"
-                "found in the specified directory." ) );
+      QMessageBox::warning( this, tr( "No Files Found" ), readError );
       return;
    }
 
    if ( status == US_Convert::NOAUC )
    {
-      QMessageBox::warning( this,
-         tr( "UltraScan Error" ),
-         tr( "Could not read data file.\n" ) );
+      QMessageBox::warning( this, tr( "UltraScan Error" ), readError );
       return;
    }
 
-   // Now try to read the xml file
 DbgLv(1) << "CGui: ldUS3Dk: call rdExp  sz(trinfo)" << all_tripinfo.count();
    le_status->setText( tr( "Loading data from Disk (experiment) ..." ) );
    qApp->processEvents();
-   ExpData.clear();
-   status = ExpData.readFromDisk( all_tripinfo, runType, runID, dir );
+   ExpData = diskRun.experiment;
 
-   if ( status == US_Convert::CANTOPEN )
+   if ( status == US_Convert::CANTOPEN || status == US_Convert::BADXML )
    {
-      QString readFile = runID      + "."
-                       + runType    + ".xml";
-      QMessageBox::information( this,
-         tr( "Error" ),
-         tr( "US3 run data ok, but unable to assocate run with DB.\n " ) +
-         tr( "Cannot open read file: " ) + dir + readFile );
-   }
-
-   else if ( status == US_Convert::BADXML )
-   {
-      QString readFile = runID      + "."
-                       + runType    + ".xml";
-      QMessageBox::information( this,
-         tr( "Error" ),
-         tr( "US3 run data ok, but there is an error in association with DB.\n"
-             "Improper XML in read file: " ) + dir + readFile );
+      QMessageBox::information( this, tr( "Error" ), tr( "US3 run data ok, but unable to associate run with DB:\n" ) + readError );
    }
 
    else if ( status != US_Convert::OK )
-   {
-      QMessageBox::information( this,
-         tr( "Error" ),
-         tr( "Unknown error: " ) + QString::number( status ) );
+   { // PARTIAL_XML, BADGUID and INVALID_RUN: the run loads, and the user is
+      // told what is inconsistent about it.
+      QMessageBox::information( this, tr( "Error" ), tr( "US3 run data ok, but the run is not self-consistent:\n" ) + readError );
    }
 
    // Now that we have the experiment, let's read the rest of the
@@ -4249,74 +4258,69 @@ DbgLv(1) << "CGui: ldUS3Dk: call prj-rDk";
    le_status->setText( tr( "Project and experiment are loaded." ) );
    qApp->processEvents();
    QString psolGUID = "";
-DbgLv(1) << "CGui: SOLCHK:loop";
+   DbgLv( 1 ) << "CGui: SOLCHK:loop";
 
-   // Now the solutions
+   // Now the solutions.  A triple sharing the previous triple's solution
+   // copies it instead of reading it again.
+   US_ConvertIO::fillSolutionGaps( all_tripinfo );
+
    for ( int ii = 0; ii < all_tripinfo.size(); ii++ )
    {
-      QString csolGUID = all_tripinfo[ ii ].solution.solutionGUID;
+      QString csolGUID = all_tripinfo[ii].solution.solutionGUID;
 
-      if ( csolGUID == psolGUID )
+      if ( ii > 0 && csolGUID == psolGUID )
       {
-         all_tripinfo[ ii ].solution = all_tripinfo[ ii - 1 ].solution;
-         status   = US_DB2::OK;
+         all_tripinfo[ii].solution = all_tripinfo[ii - 1].solution;
+         status                    = US_DB2::OK;
          continue;
       }
-      else
-      {
-         if ( csolGUID.isEmpty() )
-         {
-DbgLv(1) << "SOLCHK:  ii csolGUID EMPTY" << ii << csolGUID;
-            if ( ii > 0 )
-            {
-               csolGUID = psolGUID;
-               all_tripinfo[ ii ].solution.solutionGUID = csolGUID;
-            }
-         }
-         status   = all_tripinfo[ ii ].solution.readFromDisk( csolGUID );
-         psolGUID = csolGUID;
-      }
+
+      status   = all_tripinfo[ii].solution.readFromDisk( csolGUID );
+      psolGUID = csolGUID;
 
       // Error reporting
       if ( status == US_DB2::NO_SOLUTION )
       {
          QMessageBox::information( this,
-            tr( "Attention" ),
-            tr( "A solution this run refers to was not found,"
-                " or could not be read.\n"
-                "Please select an existing solution and try again.\n" ) );
-DbgLv(1) << "SOLERR: ii psolGUID csolGUI" << ii << psolGUID << csolGUID;
+                                   tr( "Attention" ),
+                                   tr( "A solution this run refers to was not found,"
+                                       " or could not be read.\n"
+                                       "Please select an existing solution and try again.\n" ) );
+         DbgLv( 1 ) << "SOLERR: ii psolGUID csolGUI" << ii << psolGUID << csolGUID;
       }
 
       else if ( status == US_DB2::NO_BUFFER )
       {
          QMessageBox::information( this,
-            tr( "Attention" ),
-            tr( "The buffer this solution refers to was not found.\n"
-                "Please restore and try again.\n" ) );
+                                   tr( "Attention" ),
+                                   tr( "The buffer this solution refers to was not found.\n"
+                                       "Please restore and try again.\n" ) );
       }
 
       else if ( status == US_DB2::NO_ANALYTE )
       {
          QMessageBox::information( this,
-            tr( "Attention" ),
-            tr( "One of the analytes this solution refers to was not found.\n"
-                "Please restore and try again.\n" ) );
+                                   tr( "Attention" ),
+                                   tr( "One of the analytes this solution refers to was not found.\n"
+                                       "Please restore and try again.\n" ) );
       }
 
       else if ( status != US_DB2::OK )
       {
          QMessageBox::information( this,
-            tr( "Disk Read Problem" ),
-            tr( "Could not read data from the disk.\n"
-                "Disk status: " ) + QString::number( status ) );
+                                   tr( "Disk Read Problem" ),
+                                   tr( "Could not read data from the disk.\n"
+                                       "Disk status: " ) +
+                                      QString::number( status ) );
       }
 
       // Just clear it out
       if ( status != US_DB2::OK )
-         all_tripinfo[ ii ].solution.clear();
+      {
+         all_tripinfo[ii].solution.clear();
+      }
    }
-DbgLv(1) << "CGui: SOLCHK:loop-END";
+   DbgLv( 1 ) << "CGui: SOLCHK:loop-END";
 
    le_status->setText( tr( "Solutions are now loaded." ) );
    qApp->processEvents();
@@ -7656,19 +7660,15 @@ void US_ConvertGui::saveUS3( void )
 	  gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run IMPORT Form", "Please fill out GMP run IMPORT form:", user_submitter );
 	  
 	  int gmp_submitter_map_size = gmp_submitter_map.keys().size();
-	  qDebug() << "Submitter map: "
-		   << gmp_submitter_map.keys()  << gmp_submitter_map.keys().size() << gmp_submitter_map_size
-		   << gmp_submitter_map.keys().isEmpty() 
-		   << gmp_submitter_map[ "User:" ]
-		   << gmp_submitter_map[ "Comment:" ]
-		   << gmp_submitter_map[ "Master Password:" ];
-	  
-	  if ( gmp_submitter_map_size == 0 ||  gmp_submitter_map.keys().isEmpty() )
-	    {
-	      revert_autoflow_stages_record( autoflowID_passed );
-	      return;
-	    }
-	}
+     qDebug() << "Submitter map: " << gmp_submitter_map.keys() << gmp_submitter_map.keys().size() << gmp_submitter_map_size
+              << gmp_submitter_map.keys().isEmpty() << gmp_submitter_map["User:"] << gmp_submitter_map["Comment:"];
+
+     if ( gmp_submitter_map_size == 0 || gmp_submitter_map.keys().isEmpty() )
+     {
+        revert_autoflow_stages_record( autoflowID_passed );
+        return;
+     }
+   }
       ////////////////////////////////////////////////////////////////////////////////////
       
       // First, create a QMap relating excluded triples' tripleDesc and reportIDs:
@@ -9069,11 +9069,14 @@ DbgLv(1) << "DBSv:  files count" << files.size();
 
    else if ( status == US_DB2::DBERROR )
    {
-      // This is what happens in the case of RI data, and the xml is bad
+      // The experiment, its details or a speed step could not be written. Do not
+      // write raw data for an experiment that was not saved.
       QMessageBox::warning( this,
-         tr( "Bad RI XML" ),
-         tr( "There was a problem with the xml data"
-             " read from the database.\n" ) );
+                            tr( "Problem saving experiment information" ),
+                            tr( "The experiment could not be saved to the database.\n"
+                                "For RI data, the RI profile XML may be invalid.\n" ) +
+                               db.lastError() );
+      return;
    }
 
    else if ( status != US_DB2::OK )
@@ -9122,9 +9125,11 @@ DbgLv(1) << "DBSv:  REPEAT disk save for raw IDs";
 
    // Insure that we have a TimeState record in the DB for this run
    le_status->setText( tr( "Writing Time State to DB..." ) );
-   writeTimeStateDB();
+   const int tmst_status = writeTimeStateDB();
 
-   le_status->setText( tr( "DB data save complete. Saving reports..." ) );
+   le_status->setText( tmst_status == US_DB2::OK
+                          ? tr( "DB data save complete. Saving reports..." )
+                          : tr( "DB data saved without its Time State (status %1). Saving reports..." ).arg( tmst_status ) );
    qApp->processEvents();
    saveStatus = BOTH;
    enableRunIDControl( false );
@@ -11016,6 +11021,22 @@ DbgLv(1) << "wTSdb:  examine status" << status << "cksum-db" << cksum;
                                                      tmst_fname );
 DbgLv(1) << "wTSdb:   upload status" << status;
       }
+   }
+   else
+   { // No record. -2 means a local file is missing: with neither the .tmst nor its .xml
+      // definitions there is nothing to save, but one without the other is incomplete.
+      const QString defs_fname = QString( tmst_fname ).section( ".", 0, -2 ) + ".xml";
+      const bool    nothing    = ( timestateID == -2 ) && !QFile::exists( tmst_fname ) && !QFile::exists( defs_fname );
+      if ( !nothing )
+      {
+         status = timestateID;
+      }
+   }
+
+   if ( status != US_DB2::OK )
+   {
+      qWarning() << "writeTimeStateDB: time state not saved to the DB, status" << status;
+      le_status->setText( tr( "Time State was not saved to the DB (status %1)." ).arg( status ) );
    }
 DbgLv(1) << "wTSdb:  Timestate from DB is used";
    return status;

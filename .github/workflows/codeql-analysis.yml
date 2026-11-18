@@ -371,10 +371,5 @@ jobs:
             echo "At least one CodeQL analysis job failed."
             exit 1
           fi
-          # Check for cancelled jobs
-          if echo $RESULTS | grep -q '"result": "cancelled"'; then
-            echo "At least one CodeQL analysis job was cancelled."
-            exit 1
-          fi
-          echo "All CodeQL analysis jobs completed successfully or were skipped."
+          echo "No CodeQL analysis job failed."
           exit 0

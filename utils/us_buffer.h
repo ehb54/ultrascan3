@@ -13,15 +13,18 @@ class US_UTIL_EXTERN US_BufferComponent
       QString componentID;       //!< The BufferComponentID field in the DB.
       QString name;              //!< The buffer component's description. 
       QString unit;              //!< The buffer component value's unit.
-      double  dens_coeff[ 6 ];   //!< The density coefficients. 
-      double  visc_coeff[ 6 ];   //!< The viscosity coefficients. 
+      double      dens_coeff[6]{ 0.0 }; //!< The density coefficients.
+      double      visc_coeff[6]{ 0.0 }; //!< The viscosity coefficients.
       QString range;             //!< The buffer component's range. 
       bool    grad_form{false};         //!< Flag if gradient forming.
 
-      //! Get all component data from the DB
+      //! Get all component data from the DB. Components whose rows cannot be read are skipped.
       //! \param masterPW The user's master password.
       //! \param componentList A reference to where the data should be placed.
-      static void getAllFromDB ( const QString&, QMap< QString, US_BufferComponent >& );
+      //! \param error If not null, receives the reason when the read fails.
+      //! \return False when the DB cannot be opened, the component list cannot be queried, or
+      //!         none of the listed components can be read.
+      static bool getAllFromDB( const QString&, QMap<QString, US_BufferComponent>&, QString* error = nullptr );
 
       //! Get all component data from the etc/buffer_comp.xml file
       //! \param componentList A reference to where the data should be placed.
@@ -33,8 +36,10 @@ class US_UTIL_EXTERN US_BufferComponent
 
       //! Get the info for an individual component from the DB.
       //! \param db A \ref IUS_DB2 structure to an opened connection to the DB.
-      void getInfoFromDB( IUS_DB2* = 0 );
-   
+      //! \return False, leaving the component unchanged, when the query fails,
+      //!         finds no row or the row lacks six numeric coefficients per field.
+      bool        getInfoFromDB( IUS_DB2* = 0 );
+
       //! \brief Write a new buffer to the DB.
       //! \param db An open database connection
       //! \return The buffercomponentID of the new buffer component
@@ -101,17 +106,23 @@ class US_UTIL_EXTERN US_Buffer
       //! \return A boolean success or failure
       bool readFromDisk( const QString& );
 
-      //! \brief Write a new buffer to the DB.  
+      //! \brief Write a new buffer to the DB.
       //! \param db An open database connection
-      //! \param private_buffer An indication to mark the buffer 
+      //! \param private_buffer An indication to mark the buffer
       //!        public "0" or private "1";
-      //! \return The bufferID of the new buffer
+      //! \return The bufferID of the new buffer, or a negative error: -9 failed
+      //!         lookup, -1 failed insert, -2 failed update, -3 failed component
+      //!         delete, -4 failed component write, -5 failed extinction-profile
+      //!         write (the disk copy is still written), -6 failed disk copy.
       int saveToDB( IUS_DB2* = 0, const QString = "1" );
 
       //! \brief Read a buffer from the DB
       //! \param db  An open database connection
       //! \param bufID  ID number in string format of the buffer to be read.
-      //! \return A boolean success or failure
+      //! \return A boolean success or failure. On failure (a failed query, a
+      //!         missing buffer row or an unreadable component) the buffer is
+      //!         unchanged. A buffer with no stored profile loads with empty
+      //!         extinction values.
       bool readFromDB( IUS_DB2*, const QString& );
 
       //! \brief Get spectrum data from the DB for a type

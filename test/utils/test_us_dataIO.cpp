@@ -1,76 +1,80 @@
 // test_us_dataio_unit.cpp - Unit tests for US_DataIO class
 #include "qt_test_base.h"
 #include "us_dataIO.h"
-#include <QString>
-#include <QVector>
 #include <QByteArray>
+#include <QFile>
+#include <QString>
+#include <QTemporaryDir>
+#include <QVector>
 #include <limits>
 
 using namespace qt_matchers;
 
-class TestUSDataIOUnit : public QtTestBase {
-protected:
-    void SetUp() override {
-        QtTestBase::SetUp();
-        setupTestData();
-    }
+class TestUSDataIOUnit : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+         setupTestData();
+      }
 
-    void TearDown() override {
-        QtTestBase::TearDown();
-    }
 
-    void setupTestData() {
-        // Create test RawData
-        rawData.xvalues = {5.8, 5.9, 6.0, 6.1, 6.2, 6.3, 6.4, 6.5};
-        rawData.cell = 1;
-        rawData.channel = 'A';
-        rawData.description = "Test raw data";
+      void setupTestData()
+      {
+         // Create test RawData
+         rawData.xvalues     = { 5.8, 5.9, 6.0, 6.1, 6.2, 6.3, 6.4, 6.5 };
+         rawData.cell        = 1;
+         rawData.channel     = 'A';
+         rawData.description = "Test raw data";
 
-        // Create test scans
-        for (int i = 0; i < 3; i++) {
+         // Create test scans
+         for ( int i = 0; i < 3; i++ )
+         {
             US_DataIO::Scan scan;
             scan.temperature = 20.0 + i;
-            scan.rpm = 3000.0 + i * 100;
-            scan.seconds = i * 60;
-            scan.omega2t = i * 100.0;
-            scan.wavelength = 280.0;
-            scan.delta_r = 0.003;
-            scan.nz_stddev = true;
+            scan.rpm         = 3000.0 + i * 100;
+            scan.seconds     = i * 60;
+            scan.omega2t     = i * 100.0;
+            scan.wavelength  = 280.0;
+            scan.delta_r     = 0.003;
+            scan.nz_stddev   = true;
 
             // Add readings data
-            for (int j = 0; j < rawData.xvalues.size(); j++) {
-                scan.rvalues << 0.1 + i * 0.05 + j * 0.01;
-                scan.stddevs << 0.001 + j * 0.0001;
+            for ( int j = 0; j < rawData.xvalues.size(); j++ )
+            {
+               scan.rvalues << 0.1 + i * 0.05 + j * 0.01;
+               scan.stddevs << 0.001 + j * 0.0001;
             }
 
             // Initialize interpolated array
-            scan.interpolated = QByteArray(1, 0); // 8 bits for 8 readings
+            scan.interpolated = QByteArray( 1, 0 ); // 8 bits for 8 readings
 
             rawData.scanData << scan;
-        }
+         }
 
-        // Create test EditedData
-        editedData.runID = "test_run";
-        editedData.editID = "test_edit";
-        editedData.dataType = "RA";
-        editedData.cell = "1";
-        editedData.channel = "A";
-        editedData.wavelength = "280";
-        editedData.description = "Test edited data";
-        editedData.meniscus = 5.9;
-        editedData.bottom = 6.4;
-        editedData.plateau = 6.2;
-        editedData.baseline = 0.0;
-        editedData.ODlimit = 1.5;
-        editedData.floatingData = false;
+         // Create test EditedData
+         editedData.runID        = "test_run";
+         editedData.editID       = "test_edit";
+         editedData.dataType     = "RA";
+         editedData.cell         = "1";
+         editedData.channel      = "A";
+         editedData.wavelength   = "280";
+         editedData.description  = "Test edited data";
+         editedData.meniscus     = 5.9;
+         editedData.bottom       = 6.4;
+         editedData.plateau      = 6.2;
+         editedData.baseline     = 0.0;
+         editedData.ODlimit      = 1.5;
+         editedData.floatingData = false;
 
-        // Copy some data from rawData
-        editedData.xvalues = rawData.xvalues;
-        editedData.scanData = rawData.scanData;
-    }
+         // Copy some data from rawData
+         editedData.xvalues  = rawData.xvalues;
+         editedData.scanData = rawData.scanData;
+      }
 
-    US_DataIO::RawData rawData;
-    US_DataIO::EditedData editedData;
+      US_DataIO::RawData    rawData;
+      US_DataIO::EditedData editedData;
 };
 
 // ============================================================================
@@ -122,9 +126,10 @@ EXPECT_EQ(index, 7) << "Should return last index for value above range";
 }
 
 TEST_F(TestUSDataIOUnit, RawDataXindexClosestMatch) {
-// Test xindex with value between points (should return closest)
-int index = rawData.xindex(6.05);
-EXPECT_TRUE(index == 2 || index == 3) << "Should return closest index";
+   // Values between radii return the index of the nearer one.
+   EXPECT_EQ( rawData.xindex( 6.02 ), 2 );
+   EXPECT_EQ( rawData.xindex( 6.07 ), 3 );
+   EXPECT_EQ( rawData.xindex( 6.44 ), 6 );
 }
 
 TEST_F(TestUSDataIOUnit, RawDataRadius) {
@@ -350,17 +355,6 @@ int index = US_DataIO::index(xvals, 2.3);
 EXPECT_EQ(index, 1) << "Should return index of closest value";
 }
 
-TEST_F(TestUSDataIOUnit, StaticIndexEmptyVector) {
-// Test static index method with empty vector
-QVector<double> xvals;
-// This would likely cause undefined behavior, but test defensively
-// Note: This is an edge case that might crash, so we document the behavior
-
-// Since the method doesn't check for empty vectors, this is a boundary case
-// that highlights a potential improvement needed in the implementation
-SUCCEED() << "Empty vector test - implementation should handle this case";
-}
-
 TEST_F(TestUSDataIOUnit, StaticIndexSingleElement) {
 // Test static index method with single element
 QVector<double> xvals = {2.5};
@@ -473,10 +467,8 @@ TEST_F(TestUSDataIOUnit, TemperatureCalculationsEdgeCases) {
 US_DataIO::RawData edgeCaseData;
 
 // Test with zero scans
-double avgTemp = edgeCaseData.average_temperature();
-// This will likely cause division by zero - document this behavior
-// EXPECT_TRUE(std::isnan(avgTemp) || std::isinf(avgTemp))
-//     << "Should handle empty scan data gracefully";
+// The mean of no temperatures is undefined: 0/0.
+EXPECT_TRUE( std::isnan( edgeCaseData.average_temperature() ) );
 
 // Test with extreme temperature values
 US_DataIO::Scan extremeScan1, extremeScan2;
@@ -489,4 +481,242 @@ EXPECT_DOUBLE_EQ(spread, 1273.15) << "Should handle extreme temperature range";
 
 double avg = edgeCaseData.average_temperature();
 EXPECT_DOUBLE_EQ(avg, 363.425) << "Should calculate average of extreme values";
+}
+class TestUSDataIOEdits : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+         ASSERT_TRUE( tmp.isValid() ) << "Could not create a temporary directory";
+      }
+
+      QString path( const QString& name )
+      {
+         return tmp.filePath( name );
+      }
+
+      QString slurp( const QString& file )
+      {
+         QFile ff( file );
+         if ( !ff.open( QIODevice::ReadOnly | QIODevice::Text ) )
+         {
+            return QString();
+         }
+         QString text = QString::fromUtf8( ff.readAll() );
+         ff.close();
+         return text;
+      }
+
+      // Populate every optional velocity section.
+      US_DataIO::EditValues fullVelocity()
+      {
+         US_DataIO::EditValues ev;
+         ev.expType            = "Velocity";
+         ev.runID              = "testrun-1";
+         ev.cell               = "2";
+         ev.channel            = "A";
+         ev.wavelength         = "280";
+         ev.editGUID           = "11111111-2222-3333-4444-555555555555";
+         ev.dataGUID           = "66666666-7777-8888-9999-000000000000";
+         ev.meniscus           = 5.83000000;
+         ev.bottom             = 7.19000000;
+         ev.rangeLeft          = 5.83050000;
+         ev.rangeRight         = 7.09000000;
+         ev.plateau            = 6.89000000;
+         ev.baseline           = 5.83550000;
+         ev.ODlimit            = 0.91250000;
+         ev.airGapLeft         = 6.10000000;
+         ev.airGapRight        = 6.40000000;
+         ev.gapTolerance       = 0.02000000;
+         ev.bl_corr_slope      = 0.00125000;
+         ev.bl_corr_yintercept = -0.00400000;
+         ev.noiseOrder         = 3;
+         ev.removeSpikes       = true;
+         ev.floatingData       = true;
+         ev.invert             = -1.0;
+         ev.excludes << 0 << 4 << 9;
+
+         US_DataIO::EditedPoint pt;
+         pt.scan   = 2;
+         pt.radius = 17;
+         pt.value  = 0.4321;
+         ev.editedPoints << pt;
+
+         return ev;
+      }
+
+      QTemporaryDir tmp;
+};
+
+TEST_F( TestUSDataIOEdits, VelocityEditsSurviveARoundTrip )
+{
+   US_DataIO::EditValues out  = fullVelocity();
+   QString               file = path( "velocity.xml" );
+
+   ASSERT_EQ( US_DataIO::writeEdits( file, out ), US_DataIO::OK );
+
+   US_DataIO::EditValues in;
+   ASSERT_EQ( US_DataIO::readEdits( file, in ), US_DataIO::OK );
+
+   EXPECT_EQ( in.expType, out.expType );
+   EXPECT_EQ( in.runID, out.runID );
+   EXPECT_EQ( in.cell, out.cell );
+   EXPECT_EQ( in.channel, out.channel );
+   EXPECT_EQ( in.wavelength, out.wavelength );
+   EXPECT_EQ( in.editGUID, out.editGUID );
+   EXPECT_EQ( in.dataGUID, out.dataGUID );
+
+   EXPECT_DOUBLE_EQ( in.meniscus, out.meniscus );
+   EXPECT_DOUBLE_EQ( in.bottom, out.bottom );
+   EXPECT_DOUBLE_EQ( in.rangeLeft, out.rangeLeft );
+   EXPECT_DOUBLE_EQ( in.rangeRight, out.rangeRight );
+   EXPECT_DOUBLE_EQ( in.plateau, out.plateau );
+   EXPECT_DOUBLE_EQ( in.baseline, out.baseline );
+   EXPECT_DOUBLE_EQ( in.ODlimit, out.ODlimit );
+   EXPECT_DOUBLE_EQ( in.airGapLeft, out.airGapLeft );
+   EXPECT_DOUBLE_EQ( in.airGapRight, out.airGapRight );
+   EXPECT_DOUBLE_EQ( in.gapTolerance, out.gapTolerance );
+   EXPECT_DOUBLE_EQ( in.bl_corr_slope, out.bl_corr_slope );
+   EXPECT_DOUBLE_EQ( in.bl_corr_yintercept, out.bl_corr_yintercept );
+
+   EXPECT_EQ( in.noiseOrder, out.noiseOrder );
+   EXPECT_EQ( in.removeSpikes, out.removeSpikes );
+   EXPECT_EQ( in.floatingData, out.floatingData );
+   EXPECT_DOUBLE_EQ( in.invert, out.invert );
+
+   EXPECT_EQ( in.excludes, out.excludes );
+
+   ASSERT_EQ( in.editedPoints.size(), out.editedPoints.size() );
+   EXPECT_EQ( in.editedPoints[0].scan, out.editedPoints[0].scan );
+   EXPECT_EQ( in.editedPoints[0].radius, out.editedPoints[0].radius );
+   EXPECT_DOUBLE_EQ( in.editedPoints[0].value, out.editedPoints[0].value );
+}
+
+TEST_F( TestUSDataIOEdits, ParameterElementsUseTheNamesReadEditsExpects )
+{
+   // Unknown tags are ignored, so verify their exact spellings.
+   QString file = path( "names.xml" );
+   ASSERT_EQ( US_DataIO::writeEdits( file, fullVelocity() ), US_DataIO::OK );
+
+   QString text = slurp( file );
+   ASSERT_FALSE( text.isEmpty() );
+
+   EXPECT_TRUE( text.contains( "<!DOCTYPE UltraScanEdits>" ) );
+   EXPECT_TRUE( text.contains( "<data_range " ) );
+   EXPECT_TRUE( text.contains( "<od_limit " ) );
+   EXPECT_TRUE( text.contains( "<plateau " ) );
+   EXPECT_TRUE( text.contains( "<air_gap " ) );
+   EXPECT_TRUE( text.contains( "<linear_baseline_correction " ) );
+   EXPECT_TRUE( text.contains( "<subtract_ri_noise " ) );
+   EXPECT_FALSE( text.contains( "dataRange" ) );
+}
+
+TEST_F( TestUSDataIOEdits, DefaultedSectionsAreOmitted )
+{
+   US_DataIO::EditValues out;
+   out.expType    = "Velocity";
+   out.runID      = "bare";
+   out.cell       = "1";
+   out.channel    = "A";
+   out.wavelength = "280";
+
+   QString file = path( "bare.xml" );
+   ASSERT_EQ( US_DataIO::writeEdits( file, out ), US_DataIO::OK );
+
+   QString text = slurp( file );
+   EXPECT_FALSE( text.contains( "<excludes>" ) );
+   EXPECT_FALSE( text.contains( "<edited>" ) );
+   EXPECT_FALSE( text.contains( "<lambdas>" ) );
+   EXPECT_FALSE( text.contains( "<operations>" ) );
+   EXPECT_FALSE( text.contains( "<air_gap" ) );
+   EXPECT_FALSE( text.contains( "<linear_baseline_correction" ) );
+
+   US_DataIO::EditValues in;
+   ASSERT_EQ( US_DataIO::readEdits( file, in ), US_DataIO::OK );
+
+   EXPECT_TRUE( in.excludes.isEmpty() );
+   EXPECT_TRUE( in.editedPoints.isEmpty() );
+   EXPECT_TRUE( in.lambdas.isEmpty() );
+   EXPECT_EQ( in.noiseOrder, 0 );
+   EXPECT_FALSE( in.removeSpikes );
+   EXPECT_FALSE( in.floatingData );
+   EXPECT_DOUBLE_EQ( in.invert, 1.0 );
+   EXPECT_DOUBLE_EQ( in.gapTolerance, 0.0 );
+}
+
+TEST_F( TestUSDataIOEdits, EquilibriumSpeedStepsSurviveARoundTrip )
+{
+   US_DataIO::EditValues out;
+   out.expType    = "Equilibrium";
+   out.runID      = "equil";
+   out.cell       = "3";
+   out.channel    = "B";
+   out.wavelength = "230";
+
+   for ( int ii = 0; ii < 3; ii++ )
+   {
+      US_DataIO::SpeedData sd;
+      sd.speed      = 10000.0 + ii * 5000.0;
+      sd.first_scan = ii * 4;
+      sd.scan_count = 4;
+      sd.meniscus   = 5.90 + ii * 0.001;
+      sd.dataLeft   = 5.95 + ii * 0.001;
+      sd.dataRight  = 7.10 - ii * 0.001;
+      out.speedData << sd;
+   }
+
+   QString file = path( "equil.xml" );
+   ASSERT_EQ( US_DataIO::writeEdits( file, out ), US_DataIO::OK );
+
+   US_DataIO::EditValues in;
+   ASSERT_EQ( US_DataIO::readEdits( file, in ), US_DataIO::OK );
+
+   EXPECT_EQ( in.expType, out.expType );
+   ASSERT_EQ( in.speedData.size(), out.speedData.size() );
+
+   for ( int ii = 0; ii < out.speedData.size(); ii++ )
+   {
+      EXPECT_DOUBLE_EQ( in.speedData[ii].speed, out.speedData[ii].speed );
+      EXPECT_EQ( in.speedData[ii].first_scan, out.speedData[ii].first_scan );
+      EXPECT_EQ( in.speedData[ii].scan_count, out.speedData[ii].scan_count );
+      EXPECT_DOUBLE_EQ( in.speedData[ii].meniscus, out.speedData[ii].meniscus );
+      EXPECT_DOUBLE_EQ( in.speedData[ii].dataLeft, out.speedData[ii].dataLeft );
+      EXPECT_DOUBLE_EQ( in.speedData[ii].dataRight, out.speedData[ii].dataRight );
+   }
+
+   // Top-level radii retain the final equilibrium speed step.
+   EXPECT_DOUBLE_EQ( in.meniscus, out.speedData.last().meniscus );
+   EXPECT_DOUBLE_EQ( in.rangeLeft, out.speedData.last().dataLeft );
+   EXPECT_DOUBLE_EQ( in.rangeRight, out.speedData.last().dataRight );
+}
+
+TEST_F( TestUSDataIOEdits, LambdasRoundTripForWavelengthRange )
+{
+   US_DataIO::EditValues out;
+   out.expType    = "Velocity";
+   out.runID      = "mwl";
+   out.cell       = "1";
+   out.channel    = "A";
+   out.wavelength = "250-450";
+   out.lambdas << 250 << 280 << 350 << 450;
+
+   QString file = path( "mwl.xml" );
+   ASSERT_EQ( US_DataIO::writeEdits( file, out ), US_DataIO::OK );
+
+   QString text = slurp( file );
+   EXPECT_TRUE( text.contains( "<lambdas>" ) );
+
+   US_DataIO::EditValues in;
+   ASSERT_EQ( US_DataIO::readEdits( file, in ), US_DataIO::OK );
+
+   EXPECT_EQ( in.lambdas, out.lambdas );
+   EXPECT_DOUBLE_EQ( in.meniscus, out.meniscus );
+   EXPECT_DOUBLE_EQ( in.bottom, out.bottom );
+}
+
+TEST_F( TestUSDataIOEdits, WriteEditsReportsAnUnwritablePath )
+{
+   US_DataIO::EditValues ev = fullVelocity();
+   EXPECT_EQ( US_DataIO::writeEdits( path( "no/such/dir/edit.xml" ), ev ), US_DataIO::CANTOPEN );
 }

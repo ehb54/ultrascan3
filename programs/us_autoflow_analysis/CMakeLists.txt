@@ -4,10 +4,12 @@
 set(AUTOFLOW_SOURCES
         us_autoflow_analysis_main.cpp
         us_autoflow_analysis.cpp
+        ../us_edited_data_loaders.cpp
         )
 
 set(AUTOFLOW_HEADERS
         us_autoflow_analysis.h
+        ../us_edited_data_loaders.h
         )
 
 # Cross-directory sources exactly as specified in .pro file

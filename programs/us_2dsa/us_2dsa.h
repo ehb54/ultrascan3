@@ -125,10 +125,6 @@ class US_2dsa : public US_AnalysisBase2
         //! \return Pointer to an integer.
         int* mw_base_rss();
 
-        //! \brief Get the temporary ID name.
-        //! \return QString of the temporary ID name.
-        QString temp_Id_name();
-
         //! \brief true when this instance was constructed via the
         //! protocol_details-taking (auto) constructor -- gates the
         //! headless load()/fit/save path exactly as US_MwlSpeciesFit::
@@ -175,6 +171,26 @@ class US_2dsa : public US_AnalysisBase2
         QString                auto_last_tripleID;
 
      private:
+        //! \brief true when the last save() saved nothing or could not write a
+        //! model to the DB.
+        bool                           save_failed;
+
+        //! \brief true when a save() for this channel did not save everything
+        //! (GMP auto mode); the channel then reports failure.
+        bool                           auto_save_failed;
+
+        //! \brief Describe a noise whose DB write failed.
+        //! \param noise  The noise.
+        //! \param ondisk Whether its local copy was saved.
+        QString                        noise_failure( const US_Noise&, bool );
+
+        //! \brief Report what save() could not write, to the user or (GMP auto
+        //! mode) the log.
+        //! \param head   The message's first part.
+        //! \param models Models whose DB write failed.
+        //! \param noises Noises whose DB write failed.
+        void                           report_save_failures( const QString&, const QStringList&, const QStringList& );
+
         QGridLayout* progressLayout; //!< Layout for progress display.
 
         US_Editor* te_results; //!< Text editor for results.

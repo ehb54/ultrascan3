@@ -590,7 +590,7 @@ class US_ReporterGMP : public US_Widgets
 
         QString rmsd_global; //!< Global RMSD
 
-        void simulate_triple(const QString, QString); //!< Simulate triple
+        bool        simulate_triple( const QString, QString ); //!< Simulate triple; false if its data could not be loaded
         bool loadData(QMap<QString, QString>&); //!< Load data
         bool loadModel(QMap<QString, QString>&); //!< Load model
         bool loadNoises(QMap<QString, QString>&); //!< Load noises

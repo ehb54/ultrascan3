@@ -6,6 +6,45 @@
 #include "us_constants.h"
 #include "us_math2.h"
 
+namespace
+{
+// Read an optional attribute of a simparams element; absent leaves field as it is.
+void readNumber( const QXmlStreamAttributes& a, const char* name, double& field )
+{
+   const QString value = a.value( name ).toString();
+   if ( !value.isEmpty() )
+   {
+      field = value.toDouble();
+   }
+}
+
+void readNumber( const QXmlStreamAttributes& a, const char* name, int& field )
+{
+   const QString value = a.value( name ).toString();
+   if ( !value.isEmpty() )
+   {
+      field = value.toInt();
+   }
+}
+
+void readNumber( const QXmlStreamAttributes& a, const char* name, quint32& field )
+{
+   const QString value = a.value( name ).toString();
+   if ( !value.isEmpty() )
+   {
+      field = value.toUInt();
+   }
+}
+
+// A value written so that reading it back gives the same number: 15
+// significant digits keep any decimal a user writes without exposing binary
+// noise.
+QString exact( double value )
+{
+   return QString::number( value, 'g', 15 );
+}
+}
+
 //!< level-conditioned debug print
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
@@ -787,8 +826,7 @@ void US_SimulationParameters::computeSpeedSteps(
 }
 
 // Set parameters from hardware files, related to rotor and centerpiece
-void US_SimulationParameters::setHardware( IUS_DB2* db, QString rCalID,
-      int cp, int ch )
+bool US_SimulationParameters::setHardware( IUS_DB2* db, QString rCalID, int cp, int ch )
 {
    int dbg_level    = US_Settings::us_debug();
    rotorCalID       = rCalID;
@@ -798,6 +836,7 @@ void US_SimulationParameters::setHardware( IUS_DB2* db, QString rCalID,
    QList< US_AbstractCenterpiece > cp_list;
    QMap < QString, QString       > rotor_map;
    rotor_map.clear();
+   bool hardware_ok = true;
 
    if ( US_AbstractCenterpiece::read_centerpieces( db, cp_list ) )
    {
@@ -817,33 +856,47 @@ void US_SimulationParameters::setHardware( IUS_DB2* db, QString rCalID,
 DbgLv(1) << "sH: cp ch cp_id" << cp << ch << cp_id;
       }
 
-      // Pick up centerpiece info by Centerpiece and Channel indecies
-      QStringList shapes;
-      shapes << "sector" << "standard" << "rectangular" << "band forming"
-             << "meniscus matching" << "circular" << "synthetic";
-      QString shape   = cp_list[ cp ].shape;
-      bottom_position = cp_list[ cp ].bottom_position[ ch ];
-      cp_pathlen      = cp_list[ cp ].path_length    [ ch ];
-      cp_angle        = cp_list[ cp ].angle;
-      cp_width        = cp_list[ cp ].width;
-      cp_sector       = qMax( 0, shapes.indexOf( shape ) );
-      band_forming    = ( shape == "band forming" );
-
+      if ( cp < 0 || cp >= cp_list.size() || ch < 0 || ch >= cp_list[cp].bottom_position.size() ||
+           ch >= cp_list[cp].path_length.size() )
+      {
+         qDebug() << "setHardware: centerpiece or channel index out of range" << cp << ch;
+         hardware_ok = false;
+      }
+      else
+      {
+         // Pick up centerpiece info by centerpiece and row indexes.
+         const QStringList shapes = { "sector",   "standard", "rectangular", "band forming", "meniscus matching",
+                                      "circular", "synthetic" };
+         QString           shape  = cp_list[cp].shape;
+         bottom_position          = cp_list[cp].bottom_position[ch];
+         cp_pathlen               = cp_list[cp].path_length[ch];
+         cp_angle                 = cp_list[cp].angle;
+         cp_width                 = cp_list[cp].width;
+         cp_sector                = qMax( 0, shapes.indexOf( shape ) );
+         band_forming             = ( shape == "band forming" );
+      }
+   }
+   else
+   {
+      hardware_ok = false;
    }
 
    if ( US_Hardware::readRotorMap( db, rotor_map ) )
    {  // Get rotor coefficients by matching calibration ID
-      US_Hardware::rotorValues( rotorCalID, rotor_map, rotorcoeffs );
+      hardware_ok = US_Hardware::rotorValues( rotorCalID, rotor_map, rotorcoeffs ) && hardware_ok;
    }
 
-   else
+   else if ( rotorCalID != "0" )
+   {
       qDebug() << "setHardware:readRotorMap *ERROR*";
+      hardware_ok = false;
+   }
 
-   return;
+   return hardware_ok;
 }
 
 // Set parameters from hardware files, related to rotor and centerpiece (Local)
-void US_SimulationParameters::setHardware( QString rCalID, int cp, int ch )
+bool US_SimulationParameters::setHardware( QString rCalID, int cp, int ch )
 {
    return setHardware( NULL, rCalID, cp, ch );
 }
@@ -868,6 +921,13 @@ int US_SimulationParameters::load_simparms( QString fname )
       QString astr;
       int     kk;
       speed_step.clear();
+      // Off unless this file gives them.
+      intensity       = IntensitySettings();
+      window          = WindowSettings();
+      schedule        = ScheduleSettings();
+      telemetry       = TelemetrySettings();
+      interference    = InterferenceSettings();
+      wavelength_scan = WavelengthScanSettings();
 
       while ( ! xml.atEnd() )
       {
@@ -956,6 +1016,89 @@ int US_SimulationParameters::load_simparms( QString fname )
             speedstepFromXml( xml, sp );
 
             speed_step.append( sp );
+         }
+
+         else if ( xml.isStartElement() && xml.name() == "intensity" )
+         {
+            a               = xml.attributes();
+            intensity       = IntensitySettings();
+            intensity.given = true;
+            readNumber( a, "source_counts", intensity.source_counts );
+            readNumber( a, "read_noise", intensity.read_noise );
+            readNumber( a, "shot_noise", intensity.shot_noise );
+            readNumber( a, "dark", intensity.dark );
+            intensity.curved = a.value( "profile" ).toString() != "flat";
+         }
+
+         else if ( xml.isStartElement() && xml.name() == "window" )
+         {
+            a            = xml.attributes();
+            window       = WindowSettings();
+            window.given = true;
+            readNumber( a, "start", window.start );
+            readNumber( a, "end", window.end );
+            readNumber( a, "resolution", window.resolution );
+            readNumber( a, "meniscus_artifact", window.meniscus_artifact );
+         }
+
+         else if ( xml.isStartElement() && xml.name() == "interference" )
+         {
+            a                  = xml.attributes();
+            interference       = InterferenceSettings();
+            interference.given = true;
+            readNumber( a, "start", interference.start );
+            readNumber( a, "points", interference.points );
+            readNumber( a, "resolution", interference.resolution );
+            readNumber( a, "scale", interference.scale );
+            readNumber( a, "random", interference.random );
+            readNumber( a, "offset", interference.offset );
+            readNumber( a, "structure", interference.structure );
+            readNumber( a, "jump_rate", interference.jump_rate );
+            readNumber( a, "step_fraction", interference.step_fraction );
+            readNumber( a, "meniscus_artifact", interference.meniscus_artifact );
+         }
+
+         else if ( xml.isStartElement() && xml.name() == "wavelength_scan" )
+         {
+            a                     = xml.attributes();
+            wavelength_scan       = WavelengthScanSettings();
+            wavelength_scan.given = true;
+            readNumber( a, "position", wavelength_scan.position );
+            readNumber( a, "start", wavelength_scan.start );
+            readNumber( a, "end", wavelength_scan.end );
+            readNumber( a, "step", wavelength_scan.step );
+         }
+
+         else if ( xml.isStartElement() && xml.name() == "point" && wavelength_scan.given )
+         { // A spectrum point of the wavelength scan above
+            a = xml.attributes();
+            wavelength_scan.spectrum.insert( a.value( "wavelength" ).toString().toDouble(),
+                                             a.value( "extinction" ).toString().toDouble() );
+         }
+
+         else if ( xml.isStartElement() && xml.name() == "schedule" )
+         {
+            a              = xml.attributes();
+            schedule       = ScheduleSettings();
+            schedule.given = true;
+            for ( const QString& value : a.value( "slots" ).toString().split( ",", Qt::SkipEmptyParts ) )
+            {
+               schedule.slot_seconds << value.trimmed().toDouble();
+            }
+            readNumber( a, "slot", schedule.slot );
+            readNumber( a, "wavelength_seconds", schedule.wavelength_seconds );
+            readNumber( a, "interval", schedule.interval );
+         }
+
+         else if ( xml.isStartElement() && xml.name() == "telemetry" )
+         {
+            a               = xml.attributes();
+            telemetry       = TelemetrySettings();
+            telemetry.given = true;
+            readNumber( a, "seed", telemetry.seed );
+            readNumber( a, "rpm_jitter", telemetry.rpm_jitter );
+            readNumber( a, "temperature_sd", telemetry.temperature_sd );
+            readNumber( a, "temperature_drift", telemetry.temperature_drift );
          }
 
          else if ( xml.isStartElement()  &&  xml.name() == "usermesh" )
@@ -1055,6 +1198,86 @@ int US_SimulationParameters::save_simparms( QString fname )
          spi = &speed_step[ ii ];
 
          speedstepToXml( xml, spi );
+      }
+
+      // Written only when given, so files without them round-trip unchanged.
+      if ( intensity.given )
+      {
+         xml.writeStartElement( "intensity" );
+         xml.writeAttribute( "source_counts", exact( intensity.source_counts ) );
+         xml.writeAttribute( "profile", intensity.curved ? "curved" : "flat" );
+         xml.writeAttribute( "read_noise", exact( intensity.read_noise ) );
+         xml.writeAttribute( "shot_noise", exact( intensity.shot_noise ) );
+         xml.writeAttribute( "dark", exact( intensity.dark ) );
+         xml.writeEndElement();
+      }
+
+      if ( interference.given )
+      {
+         xml.writeStartElement( "interference" );
+         xml.writeAttribute( "start", exact( interference.start ) );
+         xml.writeAttribute( "points", exact( interference.points ) );
+         xml.writeAttribute( "resolution", exact( interference.resolution ) );
+         xml.writeAttribute( "scale", exact( interference.scale ) );
+         xml.writeAttribute( "random", exact( interference.random ) );
+         xml.writeAttribute( "offset", exact( interference.offset ) );
+         xml.writeAttribute( "structure", exact( interference.structure ) );
+         xml.writeAttribute( "jump_rate", exact( interference.jump_rate ) );
+         xml.writeAttribute( "step_fraction", exact( interference.step_fraction ) );
+         xml.writeAttribute( "meniscus_artifact", exact( interference.meniscus_artifact ) );
+         xml.writeEndElement();
+      }
+
+      if ( wavelength_scan.given )
+      {
+         xml.writeStartElement( "wavelength_scan" );
+         xml.writeAttribute( "position", exact( wavelength_scan.position ) );
+         xml.writeAttribute( "start", exact( wavelength_scan.start ) );
+         xml.writeAttribute( "end", exact( wavelength_scan.end ) );
+         xml.writeAttribute( "step", exact( wavelength_scan.step ) );
+         for ( auto it = wavelength_scan.spectrum.constBegin(); it != wavelength_scan.spectrum.constEnd(); ++it )
+         {
+            xml.writeStartElement( "point" );
+            xml.writeAttribute( "wavelength", exact( it.key() ) );
+            xml.writeAttribute( "extinction", exact( it.value() ) );
+            xml.writeEndElement();
+         }
+         xml.writeEndElement();
+      }
+
+      if ( schedule.given )
+      {
+         QStringList slot_list;
+         for ( double seconds : schedule.slot_seconds )
+         {
+            slot_list << exact( seconds );
+         }
+         xml.writeStartElement( "schedule" );
+         xml.writeAttribute( "slots", slot_list.join( "," ) );
+         xml.writeAttribute( "slot", exact( schedule.slot ) );
+         xml.writeAttribute( "wavelength_seconds", exact( schedule.wavelength_seconds ) );
+         xml.writeAttribute( "interval", exact( schedule.interval ) );
+         xml.writeEndElement();
+      }
+
+      if ( telemetry.given )
+      {
+         xml.writeStartElement( "telemetry" );
+         xml.writeAttribute( "seed", exact( telemetry.seed ) );
+         xml.writeAttribute( "rpm_jitter", exact( telemetry.rpm_jitter ) );
+         xml.writeAttribute( "temperature_sd", exact( telemetry.temperature_sd ) );
+         xml.writeAttribute( "temperature_drift", exact( telemetry.temperature_drift ) );
+         xml.writeEndElement();
+      }
+
+      if ( window.given )
+      {
+         xml.writeStartElement( "window" );
+         xml.writeAttribute( "start", exact( window.start ) );
+         xml.writeAttribute( "end", exact( window.end ) );
+         xml.writeAttribute( "resolution", exact( window.resolution ) );
+         xml.writeAttribute( "meniscus_artifact", exact( window.meniscus_artifact ) );
+         xml.writeEndElement();
       }
 
       xml.writeEndElement  ();   // params
@@ -1235,12 +1458,10 @@ DbgLv(1) << "SP:ssFromDB: speedstep" << nspeeds << "id" << sspeedID;
 int US_SimulationParameters::speedstepToDB( IUS_DB2* dbP, int expID,
       SpeedProfile* spi )
 {
-int dbg_level=US_Settings::us_debug();
-DbgLv(1) << "SP:ssToDB: dbP expid spi" << dbP << expID << spi;
-   int sstepID    = -1;
-
+   int dbg_level = US_Settings::us_debug();
+   DbgLv( 1 ) << "SP:ssToDB: dbP expid spi" << dbP << expID << spi;
    if ( dbP == NULL  ||  expID < 0  ||  spi == NULL )
-      return sstepID;
+      return IUS_DB2::DBERROR;
 
    QString idExp = QString::number( expID );
    QStringList query;
@@ -1260,13 +1481,12 @@ DbgLv(1) << "SP:ssToDB: dbP expid spi" << dbP << expID << spi;
          << QString::number( spi->set_speed )
          << QString::number( spi->avg_speed )
          << QString::number( spi->speed_stddev );
-   dbP->statusQuery( query );
-   sstepID    = dbP->lastInsertID();
-DbgLv(1) << "SP:ssToDB: speedstep" << sstepID << dbP->lastError();
-DbgLv(1) << "SP:ssToDB:  w2t" << spi->w2t_first << spi->w2t_last
- << QString::number(spi->w2t_first) << QString::number(spi->w2t_last);
+   const int status = dbP->statusQuery( query );
+   DbgLv( 1 ) << "SP:ssToDB: speedstep status" << status << dbP->lastError();
+   DbgLv( 1 ) << "SP:ssToDB:  w2t" << spi->w2t_first << spi->w2t_last << QString::number( spi->w2t_first )
+              << QString::number( spi->w2t_last );
 
-   return sstepID;
+   return status;
 }
 
 // Pre-fetch a TimeState object from a pair of files, create the pointer
@@ -1274,13 +1494,58 @@ DbgLv(1) << "SP:ssToDB:  w2t" << spi->w2t_first << spi->w2t_last
 //  speed profile vector implied.
 int US_SimulationParameters::simSpeedsFromTimeState( const QString tmst_fpath )
 {
-   tsobj            = new US_TimeState();        // Create TimeState
-   tsobj->open_read_data( tmst_fpath, true );    // Open with prefetch
-   ssProfFromTimeState( tsobj, sim_speed_prof ); // Create SSP vector
-   int dbg_level    = US_Settings::us_debug();
-DbgLv(1) << "SP: ssFts: ispeed" << sim_speed_prof[0].rotorspeed
- << "ssp count" << sim_speed_prof.count();
-   return sim_speed_prof.count();                // Return number steps
+   int                   dbg_level = US_Settings::us_debug();
+   // Load into locals, and set tsobj only once the timestate is complete:
+   //  never dereference or delete tsobj here, which a copy of these
+   //  parameters (or, wrongly, another thread) may still be using.
+   US_TimeState*         tstate    = new US_TimeState(); // Create TimeState
+   QVector<SimSpeedProf> ssprof;
+
+   if ( tstate->open_read_data( tmst_fpath, true ) != 0 ) // Open with prefetch
+   {                                                      // Unreadable timestate (data or definitions file):  no speed profile
+      DbgLv( 0 ) << "SP: ssFts: could not read time state" << tmst_fpath << tstate->last_error_message();
+      delete tstate;
+      tsobj = NULL;
+      sim_speed_prof.clear();
+      return -1;
+   }
+
+   if ( ssProfFromTimeState( tstate, ssprof ) < 0 ) // Create SSP vector
+   {
+      DbgLv( 0 ) << "SP: ssFts: time state lacks needed keys" << tmst_fpath;
+      delete tstate;
+      tsobj = NULL;
+      sim_speed_prof.clear();
+      return -1;
+   }
+
+   tsobj          = tstate;
+   sim_speed_prof = ssprof;
+   DbgLv( 1 ) << "SP: ssFts: ispeed" << ( sim_speed_prof.isEmpty() ? 0 : sim_speed_prof[0].rotorspeed ) << "ssp count"
+              << sim_speed_prof.count();
+   return sim_speed_prof.count(); // Return number steps
+}
+
+// Set the edit radii implied by a simulated cell geometry.
+// The only optical artifact in simulated data is the spike the simulators put
+// at the meniscus, so the fit range spans the rest of the column.
+void US_SimulationParameters::editRadiiFromCell( US_DataIO::EditValues& edits, double meniscus, double bottom, double resolution )
+{
+   // Start one grid step past the spike: a point between two readings would
+   // leave US_DataIO::index() to break the tie, and it picks the spike.
+   const double past_meniscus   = resolution;
+   const double baseline_offset = 0.0055; // cm past the meniscus
+   const double plateau_inset   = 0.3;    // cm before the bottom
+   const double standard_column = 1.4;    // cm; shorter columns scale the inset
+
+   double       fract = qMin( 1.0, ( bottom - meniscus ) / standard_column );
+
+   edits.meniscus   = meniscus;
+   edits.bottom     = bottom;
+   edits.rangeLeft  = meniscus + past_meniscus;
+   edits.rangeRight = bottom;
+   edits.baseline   = meniscus + baseline_offset;
+   edits.plateau    = bottom - plateau_inset * fract;
 }
 
 // Create a referenced simulation speed step profile from an opened
@@ -1719,4 +1984,3 @@ void US_SimulationParameters::debug( void )
       qDebug() << "   Speed StdDev  " << speed_step[ i ].speed_stddev;
    }
 }
-

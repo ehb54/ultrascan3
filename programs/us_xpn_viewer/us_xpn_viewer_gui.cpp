@@ -2213,13 +2213,9 @@ void US_XpnDataViewer::stop_optima( void )
       gmp_stopOptima_map  = pw_at.getPasswd_auditTrail( "GMP Stop Optima Form", "Please fill out GMP Stop Optima form:", user_stop );
       
       int gmp_stopOptima_map_size = gmp_stopOptima_map.keys().size();
-      qDebug() << "stopOptima map: "
-	       << gmp_stopOptima_map.keys()  << gmp_stopOptima_map.keys().size() << gmp_stopOptima_map_size
-	       << gmp_stopOptima_map.keys().isEmpty() 
-	       << gmp_stopOptima_map[ "User:" ]
-	       << gmp_stopOptima_map[ "Comment:" ]
-	       << gmp_stopOptima_map[ "Master Password:" ];
-      
+      qDebug() << "stopOptima map: " << gmp_stopOptima_map.keys() << gmp_stopOptima_map.keys().size() << gmp_stopOptima_map_size
+               << gmp_stopOptima_map.keys().isEmpty() << gmp_stopOptima_map["User:"] << gmp_stopOptima_map["Comment:"];
+
       if ( gmp_stopOptima_map_size == 0 ||  gmp_stopOptima_map.keys().isEmpty() ) 
 	return;
       ///////////////////////////////////////
@@ -2316,13 +2312,9 @@ void US_XpnDataViewer::skip_optima_stage( void )
       gmp_stopOptima_map  = pw_at.getPasswd_auditTrail( "GMP Skip Stage Optima Form", "Please fill out GMP Skip Stage Optima form:", user_stop );
       
       int gmp_stopOptima_map_size = gmp_stopOptima_map.keys().size();
-      qDebug() << "skipOptima map: "
-	       << gmp_stopOptima_map.keys()  << gmp_stopOptima_map.keys().size() << gmp_stopOptima_map_size
-	       << gmp_stopOptima_map.keys().isEmpty() 
-	       << gmp_stopOptima_map[ "User:" ]
-	       << gmp_stopOptima_map[ "Comment:" ]
-	       << gmp_stopOptima_map[ "Master Password:" ];
-      
+      qDebug() << "skipOptima map: " << gmp_stopOptima_map.keys() << gmp_stopOptima_map.keys().size() << gmp_stopOptima_map_size
+               << gmp_stopOptima_map.keys().isEmpty() << gmp_stopOptima_map["User:"] << gmp_stopOptima_map["Comment:"];
+
       if ( gmp_stopOptima_map_size == 0 ||  gmp_stopOptima_map.keys().isEmpty() ) 
 	return;
       ///////////////////////////////////////

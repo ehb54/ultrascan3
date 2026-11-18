@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE US_JobSubmit>
+<US_JobSubmit method="PCSA" version="1.0">
+ <job>
+  <gateway id="lims.example.org_00000000-0000-4000-8000-000000000000"/>
+  <cluster name="lims.example.org" shortname="node0" queue="batch"/>
+  <udp port="12233" server="127.0.0.1"/>
+  <directory name="/srv/lims/data/00000000-0000-4000-8000-000000000001/"/>
+  <datasetCount value="1"/>
+  <global_fit value="0"/>
+  <request id="4711" guid="00000000-0000-4000-8000-000000000001"/>
+  <database>
+   <name value="uslims3_TEST"/>
+   <host value="localhost"/>
+   <user email="user@example.org" user_id="Test_User_00000000-0000-4000-8000-000000000002"/>
+   <submitter email="user@example.org"/>
+  </database>
+  <jobParameters>
+   <curve_type value="IS"/>
+   <solute_type value="013.skv"/>
+   <req_mgroupcount value="1"/>
+   <tinoise_option value="0"/>
+   <rinoise_option value="0"/>
+   <x_min value="1"/>
+   <x_max value="4"/>
+   <y_min value="1"/>
+   <y_max value="4"/>
+   <z_value value="0"/>
+   <vars_count value="10"/>
+   <gfit_iterations value="3"/>
+   <thr_deltr_ratio value="0.0001"/>
+   <curves_points value="200"/>
+   <tikreg_option value="2"/>
+   <tikreg_alpha value="0.275"/>
+   <mc_iterations value="1"/>
+   <debug_timings value="0"/>
+   <debug_level value="0"/>
+   <debug_text value=""/>
+  </jobParameters>
+  <analysis_type value="PCSA-IS-TR"/>
+ </job>
+ <!--the dataset section is repeated for each dataset-->
+ <dataset>
+  <files>
+   <auc filename="demo-pcsa.RI.4.A.232.auc"/>
+   <edit filename="demo-pcsa.2504030203SB2.RI.4.A.232.xml"/>
+   <noise filename="05EuhR.ti_noise"/>
+   <noise filename="5KPvcs.ri_noise"/>
+   <timestate filename="demo-pcsa.time_state.tmst"/>
+  </files>
+  <parameters>
+   <simpoints value="200"/>
+   <band_volume value="0"/>
+   <radial_grid value="0"/>
+   <time_grid value="1"/>
+   <rotor_stretch value="5.46455E-8 7.54016E-12"/>
+   <centerpiece_shape value="standard"/>
+   <centerpiece_bottom value="7.2"/>
+   <centerpiece_angle value="2.5"/>
+   <centerpiece_pathlength value="1.2"/>
+   <centerpiece_width value="0"/>
+   <total_concentration value="0.61068616"/>
+   <speedstep stepID="1" rotorspeed="50000" scans="675" timefirst="194" timelast="51378" w2tfirst="3094600000" w2tlast="1406330000000" duration_hrs="14" duration_mins="16.3" delay_hrs="0" delay_mins="3.23333" acceleration="400" accelerflag="1" expID="1"/>
+   <solution>
+    <buffer density="0.99964" viscosity="1.00405" manual="0"/>
+    <analyte vbar20="0.7262" amount="1" mw="16538" type="Protein"/>
+   </solution>
+  </parameters>
+ </dataset>
+</US_JobSubmit>

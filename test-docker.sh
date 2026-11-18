@@ -41,6 +41,10 @@ PROFILE="TEST"
 # Keep DB and NO_DB builds separate to avoid mixing incompatible objects.
 NO_DB_VARIANT=false
 COVERAGE=false
+# Opt-in: the TEST profile forces US3_BUILD_PROGRAMS off, so GUI-dependent
+# tests under test/programs/ (for example, the simulator CLI GUI tests)
+# can't build or run by default. This builds the full programs suite too.
+BUILD_PROGRAMS_VARIANT=false
 
 
 show_help() {
@@ -78,6 +82,10 @@ Usage: ./test-docker.sh [options]
                           (default is the DB-enabled TEST profile in build-docker)
   --coverage              Measure line and branch coverage of utils/ in
                           build-docker-coverage and write reports there
+  --build-programs        Also build programs/ (us_astfem_sim, etc.) in
+                          build-docker-programs, for GUI-dependent tests
+                          under test/programs/ that the default TEST
+                          profile skips because it builds no programs
 
 
 === EXAMPLES FOR DEBUGGING WORKFLOW ===
@@ -142,19 +150,19 @@ Inside container, you can:
   # List and filter tests
   ctest -N                                       # All CTest tests
   ctest -N | grep -i xml                         # Filter CTest tests
-  ./test/utils/test_us_utils --gtest_list_tests  # All GTest cases
-  ./test/utils/test_us_utils --gtest_list_tests | grep Profile  # Filter GTest
+  ./test/utils/unit-layout/bin/test_us_utils --gtest_list_tests  # All GTest cases
+  ./test/utils/unit-layout/bin/test_us_utils --gtest_list_tests | grep Profile  # Filter GTest
 
   # Run tests with various options
   ctest -R "pattern" -V                          # CTest with pattern
-  ./test/utils/test_us_utils --gtest_filter="Test.*" --gtest_print_time=1
+  ./test/utils/unit-layout/bin/test_us_utils --gtest_filter="Test.*" --gtest_print_time=1
 
   # Debug crashed tests
-  gdb --args ./test/utils/test_us_utils --gtest_filter="CrashedTest"
-  valgrind --tool=memcheck ./test/utils/test_us_utils --gtest_filter="MemoryTest"
+  gdb --args ./test/utils/unit-layout/bin/test_us_utils --gtest_filter="CrashedTest"
+  valgrind --tool=memcheck ./test/utils/unit-layout/bin/test_us_utils --gtest_filter="MemoryTest"
 
   # Analyze test output
-  ./test/utils/test_us_utils --gtest_filter="*" 2>&1 | tee test_output.log
+  ./test/utils/unit-layout/bin/test_us_utils --gtest_filter="*" 2>&1 | tee test_output.log
 
 EOF
 }
@@ -178,6 +186,7 @@ while [[ $# -gt 0 ]]; do
         --profile) PROFILE="$2"; shift 2 ;;
         --no-db) NO_DB_VARIANT=true; shift ;;
         --coverage) COVERAGE=true; shift ;;
+        --build-programs) BUILD_PROGRAMS_VARIANT=true; shift ;;
         --rebuild) REBUILD=true; shift ;;
         --stats) SHOW_STATS=true; shift ;;
         -q|--quick) QUICK_MODE=true; shift ;;
@@ -220,13 +229,13 @@ export DOCKER_BUILDKIT=0
 
 if [ "$QUICK_MODE" = true ]; then
     print_status "Quick mode: Building image quietly..."
-    docker build -f admin/test/docker/Dockerfile -t us3comp-test:latest . --quiet
+    docker build --quiet -f admin/test/docker/Dockerfile -t us3comp-test:latest admin/test/docker
 elif [ "$DEBUG_MODE" = true ]; then
     print_status "Debug mode: Building with full output..."
-    docker build -f admin/test/docker/Dockerfile -t us3comp-test:latest .
+    docker build -f admin/test/docker/Dockerfile -t us3comp-test:latest admin/test/docker
 else
     print_status "Building image (use -d for full build output)..."
-    docker build -f admin/test/docker/Dockerfile -t us3comp-test:latest . --quiet
+    docker build --quiet -f admin/test/docker/Dockerfile -t us3comp-test:latest admin/test/docker
 fi
 
 print_success "Docker image built successfully"
@@ -242,12 +251,19 @@ if [ "$COVERAGE" = true ]; then
     BUILD_SUBDIR="build-docker-coverage"
 elif [ "$NO_DB_VARIANT" = true ]; then
     BUILD_SUBDIR="build-docker-nodb"
+elif [ "$BUILD_PROGRAMS_VARIANT" = true ]; then
+    BUILD_SUBDIR="build-docker-programs"
 else
     BUILD_SUBDIR="build-docker"
 fi
 
 if [ "$COVERAGE" = true ] && [ "$NO_DB_VARIANT" = true ]; then
     print_error "--coverage and --no-db cannot be combined; the coverage baseline is measured on the DB-enabled variant"
+    exit 1
+fi
+
+if [ "$BUILD_PROGRAMS_VARIANT" = true ] && [ "$NO_DB_VARIANT" = true ]; then
+    print_error "--build-programs and --no-db cannot be combined; the GUI-dependent tests it exists for need the DB-enabled variant"
     exit 1
 fi
 BUILD_DIR="${ROOT_DIR}/${BUILD_SUBDIR}"
@@ -400,21 +416,21 @@ if [ "$INTERACTIVE" = true ]; then
     echo "DISCOVER TESTS:"
     echo "  ctest -N                                    # List CTest tests"
     echo "  ctest -N | grep -i 'pattern'                # Filter CTest tests"
-    echo "  ./test/utils/test_us_utils --gtest_list_tests              # List GTest cases"
-    echo "  ./test/utils/test_us_utils --gtest_list_tests | grep Pattern # Filter GTest"
+    echo "  ./test/utils/unit-layout/bin/test_us_utils --gtest_list_tests              # List GTest cases"
+    echo "  ./test/utils/unit-layout/bin/test_us_utils --gtest_list_tests | grep Pattern # Filter GTest"
     echo ""
     echo "RUN TESTS:"
     echo "  ctest -R 'pattern' -V                       # Run CTest with pattern, verbose"
     echo "  ctest -L utils --output-on-failure          # Run by label"
-    echo "  ./test/utils/test_us_utils --gtest_filter='Test.*' -v    # Run GTest with filter"
-    echo "  ./test/utils/test_us_utils --gtest_filter='Test.*' --gtest_print_time=1"
+    echo "  ./test/utils/unit-layout/bin/test_us_utils --gtest_filter='Test.*' -v    # Run GTest with filter"
+    echo "  ./test/utils/unit-layout/bin/test_us_utils --gtest_filter='Test.*' --gtest_print_time=1"
     echo ""
     echo "DEBUG:"
-    echo "  gdb --args ./test/utils/test_us_utils --gtest_filter='CrashedTest'"
-    echo "  valgrind --tool=memcheck ./test/utils/test_us_utils --gtest_filter='MemoryTest'"
+    echo "  gdb --args ./test/utils/unit-layout/bin/test_us_utils --gtest_filter='CrashedTest'"
+    echo "  valgrind --tool=memcheck ./test/utils/unit-layout/bin/test_us_utils --gtest_filter='MemoryTest'"
     echo ""
     echo "ANALYZE:"
-    echo "  ./test/utils/test_us_utils 2>&1 | tee full_test_log.txt"
+    echo "  ./test/utils/unit-layout/bin/test_us_utils 2>&1 | tee full_test_log.txt"
     echo "  grep -A5 -B5 'FAILED' full_test_log.txt    # Find failure context"
     echo ""
 
@@ -465,6 +481,10 @@ fi
 
 cd "/ultrascan3/${BUILD_SUBDIR}"
 
+# The unit runner lives in its own layout so appBaseDir()/etc is a private,
+# read-only resource copy rather than the source etc/ symlink.
+UNIT_TEST_BIN=./test/utils/unit-layout/bin/test_us_utils
+
 if [ "$QUICK_MODE" = "false" ]; then
     echo 'Configuring with CMake...'
 else
@@ -490,8 +510,16 @@ if [ ! -f CMakeCache.txt ] || [ "$REBUILD" = "true" ]; then
 
 #    Enable testing to build static library
     # Set options explicitly: the TEST profile forces US3_NO_DB=OFF.
+    BUILD_PROGRAMS_FLAG="OFF"
     if [ "$NO_DB_VARIANT" = "true" ]; then
         VARIANT_ARGS=(-DUS3_NO_DB=ON -DUS3_PREFER_STATIC=ON -DBUILD_DOCUMENTATION=OFF)
+    elif [ "$BUILD_PROGRAMS_VARIANT" = "true" ]; then
+        # Match the TEST profile's other settings, but leave US3_PROFILE
+        # unset: that profile forces US3_BUILD_PROGRAMS off (via CACHE
+        # FORCE), which would silently override -DUS3_BUILD_PROGRAMS=ON
+        # below regardless of argument order.
+        VARIANT_ARGS=(-DUS3_NO_DB=OFF -DUS3_PREFER_STATIC=ON -DBUILD_DOCUMENTATION=OFF)
+        BUILD_PROGRAMS_FLAG="ON"
     else
         VARIANT_ARGS=(-DUS3_PROFILE=TEST)
     fi
@@ -501,7 +529,7 @@ if [ ! -f CMakeCache.txt ] || [ "$REBUILD" = "true" ]; then
         -DCMAKE_BUILD_TYPE=Debug \
         "${VARIANT_ARGS[@]}" \
         -DBUILD_TESTING=ON \
-        -DUS3_BUILD_PROGRAMS=OFF \
+        -DUS3_BUILD_PROGRAMS="$BUILD_PROGRAMS_FLAG" \
         -DCMAKE_MODULE_PATH=/ultrascan3/admin/cmake \
         | tee configure.log
 
@@ -529,11 +557,11 @@ fi
 if [ "$SHOW_STATS" = "true" ]; then
     echo ''
     echo '=== TEST SUITE STATISTICS ==='
-    echo "Total CTest cases: $(ctest -N 2>/dev/null | grep -c 'Test #' || echo 'Unknown')"
-    if [ -f ./test/utils/test_us_utils ]; then
-        GTEST_COUNT=$(./test/utils/test_us_utils --gtest_list_tests 2>/dev/null | grep -c '\.' || echo 'Unknown')
-        echo "Total GTest cases: $GTEST_COUNT"
-    fi
+    # Count from ctest's JSON: 'grep Test #' misses the padded 'Test  #10:' lines.
+    ctest --show-only=json-v1 > all-tests.json 2>/dev/null
+    ctest -L gtest-unit-utils --show-only=json-v1 > unit-utils-tests.json 2>/dev/null
+    echo "Total CTest cases: $(python3 -c 'import json, sys; print(len(json.load(open(sys.argv[1]))["tests"]))' all-tests.json 2>/dev/null || echo 'Unknown')"
+    echo "Utility unit cases: $(python3 -c 'import json, sys; print(len(json.load(open(sys.argv[1]))["tests"]))' unit-utils-tests.json 2>/dev/null || echo 'Unknown')"
     echo "Build directory size: $(du -sh . | cut -f1)"
     echo "Parallel jobs: $PARALLEL_JOBS"
     echo '============================='
@@ -552,9 +580,9 @@ if [ "$LIST_TESTS" = "true" ]; then
     fi
     echo ''
     echo 'GTest Cases (first 20):'
-    if [ -f ./test/utils/test_us_utils ]; then
-        ./test/utils/test_us_utils --gtest_list_tests 2>/dev/null | head -20
-        TOTAL_GTESTS=$(./test/utils/test_us_utils --gtest_list_tests 2>/dev/null | wc -l)
+    if [ -f "$UNIT_TEST_BIN" ]; then
+        "$UNIT_TEST_BIN" --gtest_list_tests 2>/dev/null | head -20
+        TOTAL_GTESTS=$("$UNIT_TEST_BIN" --gtest_list_tests 2>/dev/null | wc -l)
         if [ $TOTAL_GTESTS -gt 20 ]; then
             echo "... and $(($TOTAL_GTESTS - 20)) more GTest cases"
         fi
@@ -572,11 +600,17 @@ if [ -n "$SEARCH_TESTS" ]; then
     ctest -N | grep -i "$SEARCH_TESTS" || echo 'No matching CTest cases'
     echo ''
     echo 'Matching GTest cases:'
-    if [ -f ./test/utils/test_us_utils ]; then
-        ./test/utils/test_us_utils --gtest_list_tests 2>/dev/null | grep -i "$SEARCH_TESTS" || echo 'No matching GTest cases'
+    if [ -f "$UNIT_TEST_BIN" ]; then
+        "$UNIT_TEST_BIN" --gtest_list_tests 2>/dev/null | grep -i "$SEARCH_TESTS" || echo 'No matching GTest cases'
     fi
     echo '===================='
     exit 0
+fi
+
+# Explicit execution filters must select an enabled test in the offline unit suite.
+SELECTED_GTEST_FILTER=${SPECIFIC_TEST:-*}
+if [ -n "$SPECIFIC_TEST" ] || [ "$GDB" = "true" ] || [ "$VALGRIND" = "true" ]; then
+    bash /ultrascan3/scripts/check-gtest-filter.sh "$UNIT_TEST_BIN" "$SELECTED_GTEST_FILTER" || exit $?
 fi
 
 # GDB debugging
@@ -596,7 +630,7 @@ if [ "$GDB" = "true" ]; then
     echo '  print variable_name    # Print variable value'
     echo '  quit                   # Exit GDB'
     echo ''
-    gdb --args ./test/utils/test_us_utils --gtest_filter="$SPECIFIC_TEST"
+    gdb --args "$UNIT_TEST_BIN" --gtest_filter="$SELECTED_GTEST_FILTER"
     exit 0
 fi
 
@@ -609,7 +643,8 @@ if [ "$VALGRIND" = "true" ]; then
         exit 1
     fi
     echo 'Running memory analysis with Valgrind...'
-    valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes ./test/utils/test_us_utils --gtest_filter="$SPECIFIC_TEST"
+    valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes \
+        "$UNIT_TEST_BIN" --gtest_filter="$SELECTED_GTEST_FILTER"
     exit 0
 fi
 
@@ -620,14 +655,14 @@ if [ -n "$SPECIFIC_TEST" ]; then
         echo "Repeating $REPEAT times to check for flaky behavior..."
         for i in $(seq 1 $REPEAT); do
             echo "=== Run $i/$REPEAT ==="
-            ./test/utils/test_us_utils --gtest_filter="$SPECIFIC_TEST" ${VERBOSE:+--gtest_print_time=1} || {
+            "$UNIT_TEST_BIN" --gtest_filter="$SELECTED_GTEST_FILTER" ${VERBOSE:+--gtest_print_time=1} || {
                 echo "Test failed on run $i"
                 exit 1
             }
         done
         echo "All $REPEAT runs passed successfully!"
     else
-        ./test/utils/test_us_utils --gtest_filter="$SPECIFIC_TEST" ${VERBOSE:+--gtest_print_time=1}
+        "$UNIT_TEST_BIN" --gtest_filter="$SELECTED_GTEST_FILTER" ${VERBOSE:+--gtest_print_time=1}
     fi
     exit $?
 fi
@@ -699,6 +734,7 @@ if [ "$SAVE_LOGS" = true ]; then
         -w /ultrascan3 \
         -e BUILD_SUBDIR="$BUILD_SUBDIR" \
         -e NO_DB_VARIANT="$NO_DB_VARIANT" \
+        -e BUILD_PROGRAMS_VARIANT="$BUILD_PROGRAMS_VARIANT" \
         -e DEBUG_MODE="$DEBUG_MODE" \
         -e QUICK_MODE="$QUICK_MODE" \
         -e REBUILD="$REBUILD" \
@@ -727,6 +763,7 @@ else
         -w /ultrascan3 \
         -e BUILD_SUBDIR="$BUILD_SUBDIR" \
         -e NO_DB_VARIANT="$NO_DB_VARIANT" \
+        -e BUILD_PROGRAMS_VARIANT="$BUILD_PROGRAMS_VARIANT" \
         -e DEBUG_MODE="$DEBUG_MODE" \
         -e QUICK_MODE="$QUICK_MODE" \
         -e REBUILD="$REBUILD" \

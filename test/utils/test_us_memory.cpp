@@ -1,21 +1,14 @@
 // test_us_memory_unit.cpp - Unit tests for US_Memory class
 #include "qt_test_base.h"
 #include "us_memory.h"
+#include "us_settings.h"
+#include "us_sim_cache.h"
 #include <QString>
 #include <limits>
 
 using namespace qt_matchers;
 
-class TestUSMemoryUnit : public QtTestBase {
-protected:
-    void SetUp() override {
-        QtTestBase::SetUp();
-    }
-
-    void TearDown() override {
-        QtTestBase::TearDown();
-    }
-};
+using TestUSMemoryUnit = QtTestBase;
 
 // ============================================================================
 // RSS_NOW METHOD TESTS
@@ -231,13 +224,11 @@ EXPECT_GE(mem_available, 0) << "Available memory should be non-negative";
 EXPECT_LE(mem_available, mem_total) << "Available should not exceed total";
 }
 
-TEST_F(TestUSMemoryUnit, MemoryProfileNullParameters) {
-// Test memory_profile with null parameters (should not crash)
-EXPECT_NO_THROW({
-int result = US_Memory::memory_profile(nullptr, nullptr, nullptr);
-EXPECT_GE(result, 0) << "Should return valid percentage with null parameters";
-EXPECT_LE(result, 100) << "Should return valid percentage with null parameters";
-}) << "memory_profile should handle null parameters gracefully";
+TEST_F( TestUSMemoryUnit, MemoryProfileNullParameters )
+{
+   int result = US_Memory::memory_profile( nullptr, nullptr, nullptr );
+   EXPECT_GE( result, 0 ) << "Should return valid percentage with null parameters";
+   EXPECT_LE( result, 100 ) << "Should return valid percentage with null parameters";
 }
 
 TEST_F(TestUSMemoryUnit, MemoryProfileConsistentCalls) {
@@ -351,4 +342,13 @@ EXPECT_GE(rss_after_alloc, rss_initial)
 EXPECT_GT(rss_after_dealloc, 0L) << "RSS should remain positive after deallocation";
 EXPECT_LT(rss_after_dealloc, rss_after_alloc + 10240L)
 << "RSS should not increase significantly after deallocation";
+}
+
+// This default probes the host; explicit SimCache settings stay in unit tests.
+TEST_F( TestUSMemoryUnit, DefaultSimulationCacheBudgetIsBounded )
+{
+   US_Settings::set_debug_text( QStringList() );
+   const qint64 bytes = US_SimCache::default_max_bytes();
+   EXPECT_GE( bytes, 256LL * 1024 * 1024 );
+   EXPECT_LE( bytes, 4096LL * 1024 * 1024 );
 }

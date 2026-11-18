@@ -42,6 +42,10 @@ class US_UTIL_EXTERN US_Solution
          BOTH                                 //!< The file has been saved to both HD and DB
       };
 
+      //! The longest description, in characters, that the LIMS
+      //! solution.description column (VARCHAR(80)) holds.
+      static constexpr int   descriptionLimit = 80;
+
       int              solutionID;         //!< The ID of the solution for this triple
       QString          solutionGUID;       //!< The GUID of the solution for this triple
       QString          solutionDesc;       //!< A description of the solution 
@@ -67,7 +71,8 @@ class US_UTIL_EXTERN US_Solution
       /*! \brief    Function to read an entire solution structure from the disk
 
           \param    guid The GUID of the solution to look for
-          \return   One of the IUS_DB2 error codes
+          \return   One of the IUS_DB2 error codes. On failure the solution is
+                    cleared, never partly loaded.
       */
       int readFromDisk( QString& );
 
@@ -75,9 +80,19 @@ class US_UTIL_EXTERN US_Solution
 
           \param    solutionID The database solutionID of the desired solution
           \param    db For database access, an open database connection
-          \return   One of the IUS_DB2 error codes
+          \return   One of the IUS_DB2 error codes: NO_SOLUTION, NO_BUFFER or
+                    NO_ANALYTE when a required row is missing or unreadable, or a
+                    failed query's status. On failure the solution is cleared, never
+                    partly loaded.
       */
       int readFromDB  ( int, IUS_DB2* = 0 );
+
+      /*! \brief    Describe why readFromDB failed, for a message to the user
+
+          \param    status  The status readFromDB returned
+          \param    dbError The connection's lastError(), used for any other status
+      */
+      static QString         readErrorText( int, const QString& );
 
       //! \brief    Quick method to zero out the solution attributes
       void clear             ( void );
@@ -119,7 +134,8 @@ class US_UTIL_EXTERN US_Solution
 
       //! \brief Function to count occurrences of solution in protocols
       //! \param    dbP  Pointer to database connection or NULL if local test
-      //! \returns       Count of this solution in protocols
+      //! \returns       Count of this solution in protocols, or -1 if the DB
+      //!                protocols could not be read
       int countInProtocols   ( IUS_DB2* = 0 );
 
       //! \brief An overloaded assignment operator
@@ -131,6 +147,7 @@ class US_UTIL_EXTERN US_Solution
    private:
 
       void readSolutionInfo  ( QXmlStreamReader& xml );
+      int     loadFromDisk( QString& );
       int readBufferDiskGUID ( US_Buffer& , QString& );
       void saveBufferDisk    ( void ) const;
       void saveAnalytesDisk  ( void );

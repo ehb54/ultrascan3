@@ -1,6 +1,7 @@
 //! \file us_hardware.cpp
 #include "us_hardware.h"
 #include "us_settings.h"
+#include "us_util.h"
 
 // Read rotor information and generate a rotorCalID,coeffs map from Local
 bool US_Hardware::readRotorMap( QMap< QString, QString >& rotor_map )
@@ -209,6 +210,7 @@ bool US_AbstractCenterpiece::read_centerpieces( IUS_DB2* db,
       }
 
       std::sort( cpids.begin(), cpids.end() );
+      bool info_ok = true;
 
       for ( int ii = 0; ii < cpids.size(); ii++ )
       {
@@ -217,7 +219,13 @@ bool US_AbstractCenterpiece::read_centerpieces( IUS_DB2* db,
          query.clear();
          query << "get_abstractCenterpiece_info" << cpid;
          db->query( query );
-         db->next();
+
+         if ( db->lastErrno() != IUS_DB2::OK || !db->next() )
+         {
+            qDebug() << "*ERROR* Unable to get info for centerpiece ID" << cpid;
+            info_ok = false;
+            break;
+         }
 
          cp.guid          = db->value( 0 ).toString();
          cp.name          = db->value( 1 ).toString();
@@ -243,12 +251,15 @@ bool US_AbstractCenterpiece::read_centerpieces( IUS_DB2* db,
          centerpieces << cp;       // Add centerpiece entry
       }
 
-      got_cp  = true;
+      // An incomplete DB list would silently drop centerpieces, so use the local file instead.
+      got_cp = info_ok;
       break;
    }
 
    if ( ! got_cp )
    {  // Get centerpiece information from local (if db==NULL or db failed)
+      centerpieces.clear();
+      cp = US_AbstractCenterpiece();
       QFile   cp_file( US_Settings::appBaseDir() + "/etc/abstractCenterpieces.xml" );
 
       if ( ! cp_file.open( QIODevice::ReadOnly | QIODevice::Text ) )
@@ -326,4 +337,87 @@ bool US_AbstractCenterpiece::read_centerpieces(
    return read_centerpieces( NULL, centerpieces );
 }
 
+bool US_AbstractCenterpiece::parse_channel( const QString& value, int& channel, QString& error )
+{
+   // channel_letters() leads with "S" for the single-channel case, handled below.
+   const QString letters = US_Util::channel_letters().mid( 1 );
+   const QString trimmed = value.trimmed();
 
+   if ( trimmed.isEmpty() )
+   {
+      error = "centerpiece-channel is empty";
+      return false;
+   }
+
+   if ( trimmed.compare( "S", Qt::CaseInsensitive ) == 0 )
+   { // A single-channel centerpiece has only row 0
+      channel = 0;
+      return true;
+   }
+
+   if ( trimmed.length() == 1 )
+   {
+      int letter_index = letters.indexOf( trimmed.toUpper() );
+      if ( letter_index >= 0 )
+      { // A channel and its reference share a position, so A/B are 0
+         channel = letter_index / 2;
+         return true;
+      }
+   }
+
+   bool numeric = false;
+   int  parsed  = trimmed.toInt( &numeric );
+   if ( !numeric )
+   {
+      error = QString( "centerpiece-channel \"%1\" is neither a channel letter "
+                       "(S or A-H) nor a channel index" )
+                 .arg( value );
+      return false;
+   }
+
+   channel = parsed;
+   return true;
+}
+
+bool US_AbstractCenterpiece::parse_index( const QString& value, int& index, QString& error )
+{
+   bool numeric = false;
+   int  parsed  = value.trimmed().toInt( &numeric );
+   if ( !numeric )
+   {
+      error = QString( "centerpiece \"%1\" is not a numeric index" ).arg( value );
+      return false;
+   }
+
+   index = parsed;
+   return true;
+}
+
+QString US_AbstractCenterpiece::validate( int centerpiece, int channel )
+{
+   QList<US_AbstractCenterpiece> cp_list;
+   if ( !US_AbstractCenterpiece::read_centerpieces( NULL, cp_list ) || cp_list.isEmpty() )
+   {
+      return noCenterpiecesMessage;
+   }
+
+   if ( centerpiece < 0 || centerpiece >= cp_list.size() )
+   {
+      return QString( "centerpiece index %1 is out of range (0-%2)" ).arg( centerpiece ).arg( cp_list.size() - 1 );
+   }
+
+   // Validate against the per-row geometry lists used by setHardware().
+   // The XML channels count can differ from the number of rows.
+   const US_AbstractCenterpiece& cp            = cp_list[centerpiece];
+   int                           channel_count = qMin( cp.bottom_position.size(), cp.path_length.size() );
+   if ( channel < 0 || channel >= channel_count )
+   {
+      return QString( "centerpiece-channel index %1 is out of range for "
+                      "centerpiece %2 (0-%3)" )
+         .arg( channel )
+         .arg( centerpiece )
+         .arg( channel_count - 1 );
+   }
+
+   return QString();
+}

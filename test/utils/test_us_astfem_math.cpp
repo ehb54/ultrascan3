@@ -9,16 +9,7 @@ using ::testing::DoubleEq;
 using ::testing::DoubleNear;
 using ::testing::Eq;
 
-class US_AstfemMathTest : public QtTestBase {
-protected:
-    void SetUp() override {
-        QtTestBase::SetUp();
-    }
-
-    void TearDown() override {
-        QtTestBase::TearDown();
-    }
-};
+using US_AstfemMathTest = QtTestBase;
 
 // Test basic utility functions
 TEST_F(US_AstfemMathTest, MaxvalBasic) {

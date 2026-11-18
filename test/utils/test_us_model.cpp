@@ -1,37 +1,26 @@
 #include "qt_test_base.h"
-#include "us_model.h"
-#include "mock_us_db2.h"
 #include "us_constants.h"
+#include "us_model.h"
 #include <QTemporaryDir>
 #include <QTextStream>
 #include <QXmlStreamWriter>
 
-using ::testing::_;
-using ::testing::Return;
-using ::testing::SetArgReferee;
-using ::testing::DoAll;
-using ::testing::NiceMock;
-using ::testing::StrictMock;
-using ::testing::TypedEq;
 using ::qt_matchers::QStringContains;
 using ::qt_matchers::QStringEq;
 
 class US_ModelTest : public QtTestBase {
 protected:
     void SetUp() override {
-        QtTestBase::SetUp();
-        model = std::make_unique<US_Model>();
-        mockDb = std::make_unique<NiceMock<US_DB2_Mock>>();
+       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+       model = std::make_unique<US_Model>();
     }
 
     void TearDown() override {
-        model.reset();
-        mockDb.reset();
-        QtTestBase::TearDown();
+       model.reset();
+       QtTestBase::TearDown();
     }
 
-    std::unique_ptr<US_Model> model;
-    std::unique_ptr<NiceMock<US_DB2_Mock>> mockDb;
+    std::unique_ptr<US_Model>     model;
 
     // Helper to create valid simulation component
     US_Model::SimulationComponent createValidComponent() {

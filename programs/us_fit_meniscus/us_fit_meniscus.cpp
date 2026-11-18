@@ -6,20 +6,21 @@
 #include <QJsonArray>
 #include <QJsonObject>
 
+#include "us_convertio.h"
+#include "us_db2.h"
 #include "us_fit_meniscus.h"
-#include "us_license_t.h"
-#include "us_license.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
-#include "us_settings.h"
-#include "us_db2.h"
-#include "us_passwd.h"
-#include "us_report.h"
 #include "us_investigator.h"
+#include "us_license.h"
+#include "us_license_t.h"
 #include "us_math2.h"
 #include "us_matrix.h"
 #include "us_model.h"
 #include "us_noise.h"
+#include "us_passwd.h"
+#include "us_report.h"
+#include "us_settings.h"
 
 //US_FitMeniscus::US_FitMeniscus( QString auto_mode ) : US_Widgets()
 US_FitMeniscus::US_FitMeniscus( QMap<QString, QString> triple_info_map ) : US_Widgets()
@@ -3226,13 +3227,15 @@ DbgLv(1) << "updDbEd: edGUID" << edGUID;
    db.query( query );
    db.next();
    idEdit           = db.value( 0 ).toString().toInt();
-DbgLv(1) << "updDbEd: idEdit" << idEdit;
-   if ( db.writeBlobToDB( efilepath, "upload_editData", idEdit )
-        != US_DB2::OK )
+   DbgLv( 1 ) << "updDbEd: idEdit" << idEdit;
+   // How the existing edit is found is unchanged; only the upload is shared.
+   QString upload_error;
+
+   if ( US_ConvertIO::uploadEditedDataBlob( &db, idEdit, efilepath, upload_error ) != IUS_DB2::OK )
    {
-      qDebug() << tr( "*ERROR* update_db_edit: " ) << db.lastError();
+      qDebug() << tr( "*ERROR* update_db_edit: " ) << upload_error;
       msg += tr( "*ERROR* update_db_edit: " );
-      msg += db.lastError();
+      msg += upload_error;
       return;
    }
 

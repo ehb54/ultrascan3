@@ -24,6 +24,9 @@ public:
     MOCK_METHOD(bool, connect, (const QString& host, const QString& dbname,
             const QString& user, const QString& password,
             QString& error), (override));
+    MOCK_METHOD( bool, beginTransaction, ( QString & error ), ( override ) );
+    MOCK_METHOD( bool, commitTransaction, ( QString & error ), ( override ) );
+    MOCK_METHOD( bool, rollbackTransaction, ( QString & error ), ( override ) );
 
     // Test connection methods
     MOCK_METHOD(bool, test_db_connection,
@@ -83,42 +86,6 @@ public:
 };
 
 /**
- * @brief Helper class to create a mock database with default behaviors
- */
-class US_DB2_MockHelper {
-public:
-    static std::unique_ptr<US_DB2_Mock> createMockWithDefaults() {
-        auto mock = std::make_unique<US_DB2_Mock>();
-
-        // Set up default behaviors
-        ON_CALL(*mock, isConnected())
-                .WillByDefault(::testing::Return(true));
-
-        ON_CALL(*mock, lastErrno())
-                .WillByDefault(::testing::Return(IUS_DB2::OK));
-
-        ON_CALL(*mock, lastError())
-                .WillByDefault(::testing::Return(QString()));
-
-        // Default successful connections
-        ON_CALL(*mock, connect(::testing::An<const QString&>(), ::testing::An<QString&>()))
-                .WillByDefault(::testing::Return(true));
-        ON_CALL(*mock, connect(::testing::An<const QString&>(), ::testing::An<const QString&>(),
-                               ::testing::An<const QString&>(), ::testing::An<const QString&>(),
-                               ::testing::An<QString&>()))
-                .WillByDefault(::testing::Return(true));
-
-        // Default successful queries
-        ON_CALL(*mock, statusQuery(::testing::An<const QString&>()))
-                .WillByDefault(::testing::Return(IUS_DB2::OK));
-        ON_CALL(*mock, statusQuery(::testing::An<const QStringList&>()))
-                .WillByDefault(::testing::Return(IUS_DB2::OK));
-
-        return mock;
-    }
-};
-
-/**
  * @brief Builder class for creating mocks with defaults (used by tests)
  */
 class MockBuilder {
@@ -133,10 +100,16 @@ public:
         ON_CALL(*mock, lastError()).WillByDefault(::testing::Return(QString()));
 
         // Default successful connections
-        ON_CALL(*mock, connect(::testing::_, ::testing::_))
-                .WillByDefault(::testing::Return(true));
-        ON_CALL(*mock, connect(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
-                .WillByDefault(::testing::Return(true));
+        ON_CALL( *mock, connect( ::testing::_, ::testing::_ ) )
+           .WillByDefault( ::testing::DoAll( ::testing::SetArgReferee<1>( QString() ), ::testing::Return( true ) ) );
+        ON_CALL( *mock, connect( ::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_ ) )
+           .WillByDefault( ::testing::DoAll( ::testing::SetArgReferee<4>( QString() ), ::testing::Return( true ) ) );
+        ON_CALL( *mock, beginTransaction( ::testing::_ ) )
+           .WillByDefault( ::testing::DoAll( ::testing::SetArgReferee<0>( QString() ), ::testing::Return( true ) ) );
+        ON_CALL( *mock, commitTransaction( ::testing::_ ) )
+           .WillByDefault( ::testing::DoAll( ::testing::SetArgReferee<0>( QString() ), ::testing::Return( true ) ) );
+        ON_CALL( *mock, rollbackTransaction( ::testing::_ ) )
+           .WillByDefault( ::testing::DoAll( ::testing::SetArgReferee<0>( QString() ), ::testing::Return( true ) ) );
 
         // Default successful queries
         ON_CALL(*mock, statusQuery(::testing::An<const QString&>()))
@@ -147,10 +120,6 @@ public:
         return mock;
     }
 };
-
-// Convenient typedefs for different mock types
-using US_DB2_MockNice = ::testing::NiceMock<US_DB2_Mock>;
-using US_DB2_MockStrict = ::testing::StrictMock<US_DB2_Mock>;
 
 // Additional aliases used by test files
 using MockDB = US_DB2_Mock;

@@ -611,37 +611,88 @@ int US_Model::load_disk( const QString& guid )
    return error;
 }
 
+namespace
+{
+// Read stored model XML as UTF-8. Qt 6 text streams default to UTF-8; Qt 5 ones use the locale.
+void setUtf8( QTextStream& ts )
+{
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
+   ts.setCodec( "UTF-8" );
+#else
+   Q_UNUSED( ts );
+#endif
+}
+
+// True when the whole document parses. The multi-model reader splits the text by lines,
+// so it cannot itself notice a truncated or malformed later model.
+bool completeXml( const QByteArray& contents )
+{
+   QXmlStreamReader xml( contents );
+   while ( !xml.atEnd() )
+   {
+      xml.readNext();
+   }
+   return !xml.hasError();
+}
+} // namespace
+
 // Load a model from a local file
 int US_Model::load( const QString& filename )
 {
    QFile file( filename );
 
-   if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text) )
+   if ( !file.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   {
       return IUS_DB2::DBERROR;
+   }
 
+   // Load into a copy; this model changes only when the file loads completely.
+   US_Model         loaded = *this;
    QXmlStreamReader xml( &file );
-   
-   int result = load_stream( xml );
 
-   if ( result == IUS_DB2::NO_MODEL  &&  monteCarlo )
-   {  // Handle a multi-model stream
+   int              result = loaded.load_stream( xml );
+
+   if ( result == IUS_DB2::NO_MODEL && loaded.monteCarlo )
+   { // Handle a multi-model stream; every model in it must parse
       file.close();
-      file.open( QIODevice::ReadOnly | QIODevice::Text );
+      if ( !file.open( QIODevice::ReadOnly | QIODevice::Text ) )
+      {
+         return IUS_DB2::DBERROR;
+      }
 
-      QTextStream tsi( &file );
+      const QByteArray contents = file.readAll();
+      if ( !completeXml( contents ) )
+      {
+         file.close();
+         return IUS_DB2::DBERROR;
+      }
 
-      result     = load_multi_model( tsi );
+      QTextStream tsi( contents );
+      setUtf8( tsi );
+
+      result = loaded.load_multi_model( tsi );
    }
 
    file.close();
+
+   if ( result == IUS_DB2::OK )
+   {
+      *this = loaded;
+   }
    return result;
 }
 
 // Load a model from an XML string
 int US_Model::load_string( const QString& mcont )
 {
+   // Load into a copy; this model changes only when the string loads completely.
+   US_Model         loaded = *this;
    QXmlStreamReader xml( mcont );
-   int result = load_stream( xml );
+   const int        result = loaded.load_stream( xml );
+   if ( result == IUS_DB2::OK )
+   {
+      *this = loaded;
+   }
    return result;
 }
 
@@ -813,6 +864,12 @@ int US_Model::load_stream( QXmlStreamReader& xml )
       }
    }
 
+   // Truncated or malformed XML must not load as a complete model.
+   if ( xml.hasError() )
+   {
+      return IUS_DB2::DBERROR;
+   }
+
    return IUS_DB2::OK;
 }
 
@@ -860,6 +917,11 @@ int US_Model::load_multi_model( QTextStream& tsi )
       }
    }
 
+   if ( nmcixs < 1 )
+   {
+      return IUS_DB2::DBERROR; // No complete model in the stream
+   }
+
    QVector< SimulationComponent >  mmcomps;
    QVector< Association >          mmassos;
    int ncnstv    = 0;
@@ -870,7 +932,11 @@ int US_Model::load_multi_model( QTextStream& tsi )
    {
       mcont            = mcixmls[ ii ];
       QXmlStreamReader xml( mcont );
-      load_stream( xml );
+      const int        iteration = load_stream( xml );
+      if ( iteration != IUS_DB2::OK )
+      {
+         return iteration;
+      }
 
       mmcomps << components;
       mmassos << associations;
@@ -1110,14 +1176,26 @@ void US_Model::get_metadata( QXmlStreamReader &xml )
 // Load a model from DB (by GUID)
 int US_Model::load_db( const QString& guid, IUS_DB2* db )
 {
+   if ( db == nullptr )
+   {
+      return IUS_DB2::NOT_CONNECTED;
+   }
+
    QStringList q;
 
    q << "get_modelID" << guid;
    db->query( q );
 
-   if ( db->lastErrno() != IUS_DB2::OK ) return db->lastErrno();
-   
-   db->next();
+   const int status = db->lastErrno();
+   if ( status != IUS_DB2::OK )
+   {
+      return status;
+   }
+   if ( !db->next() )
+   {
+      return IUS_DB2::NOROWS;
+   }
+
    QString id = db->value( 0 ).toString();
    return load( id, db );
 }
@@ -1125,28 +1203,54 @@ int US_Model::load_db( const QString& guid, IUS_DB2* db )
 // Load a model from DB (by DB id)
 int US_Model::load( const QString& id, IUS_DB2* db )
 {
+   if ( db == nullptr )
+   {
+      return IUS_DB2::NOT_CONNECTED;
+   }
+
    QStringList q;
 
    q << "get_model_info" << id;
    db->query( q );
-   
-   if ( db->lastErrno() != IUS_DB2::OK ) return db->lastErrno();
 
-   db->next();
-   QByteArray contents  = db->value( 2 ).toString().toLatin1();
-   timeCreated = db->value( 6 ).toString();
+   const int status = db->lastErrno();
+   if ( status != IUS_DB2::OK )
+   {
+      return status;
+   }
+   if ( !db->next() )
+   {
+      return IUS_DB2::NOROWS;
+   }
 
-   // Read the model file into an array in memory
+   // The model XML was written as UTF-8.
+   QByteArray contents = db->value( 2 ).toString().toUtf8();
+
+   // Load into a copy; this model changes only when the stored XML loads completely.
+   US_Model   loaded  = *this;
+   loaded.timeCreated = db->value( 6 ).toString();
+
    QXmlStreamReader xml( contents );
-   
-   int result = load_stream( xml );
 
-   if ( result == IUS_DB2::NO_MODEL  &&  monteCarlo )
-   {  // Handle a multi-model stream
+   int              result = loaded.load_stream( xml );
+
+   if ( result == IUS_DB2::NO_MODEL && loaded.monteCarlo )
+   { // Handle a multi-model stream; every model in it must parse
+      if ( !completeXml( contents ) )
+      {
+         return IUS_DB2::DBERROR;
+      }
+
       QTextStream tsi( contents );
+      setUtf8( tsi );
 
-      result     = load_multi_model( tsi );
-      variance   = db->value( 3 ).toDouble();
+      result          = loaded.load_multi_model( tsi );
+      loaded.variance = db->value( 3 ).toDouble();
+   }
+
+   if ( result == IUS_DB2::OK )
+   {
+      *this = loaded;
    }
 
    return result;
@@ -1162,30 +1266,53 @@ int US_Model::write( bool db_access, const QString& filename, IUS_DB2* db )
 // Write a model DB record
 int US_Model::write( IUS_DB2* db )
 {
-   // Create the model xml file in a stream
-   QByteArray temporary;
+   // Generate a guid if necessary
+   // The guid may be valid from a disk read, but is not in the DB
+   if ( modelGUID.size() != 36 )
+   {
+      modelGUID = US_Util::new_guid();
+   }
+
+   // The disk copy is written whatever happens to the DB record, so a model the DB
+   // refuses stays in the models directory and can be uploaded later. When the DB
+   // write fails, the message says whether that copy exists.
+   const auto saveDiskCopy = [this]( int status )
+   {
+      QString    path;
+      bool       newFile;
+      const bool saved = model_path( path ) && write( get_filename( path, modelGUID, newFile ) ) == IUS_DB2::OK;
+      if ( status != IUS_DB2::OK )
+      {
+         message += saved ? QObject::tr( "; a local copy was saved and can be uploaded later" )
+                          : QObject::tr( "; no local copy could be saved either" );
+      }
+      return status;
+   };
+
+   if ( db == nullptr )
+   {
+      message = QObject::tr( "could not be written: no database connection" );
+      return saveDiskCopy( IUS_DB2::NOT_CONNECTED );
+   }
+
+   // Create the model xml file in a stream.  It is passed raw: the query
+   // layer escapes every argument.
    QByteArray contents;
 
    if ( ! monteCarlo  ||  nmcixs < 1 )
    {
-      QXmlStreamWriter xml( &temporary );
+      QXmlStreamWriter xml( &contents );
       write_stream( xml );
    }
 
    else
    {
-      QTextStream tso( &temporary );
+      QTextStream tso( &contents );
+      setUtf8( tso );
       write_mm_stream( tso );
    }
 
-   db->mysqlEscapeString( contents, temporary, temporary.size() );
-qDebug() << "model writedb contsize tempsize" << contents.size() << temporary.size();
-
    QStringList q;
-
-   // Generate a guid if necessary
-   // The guid may be valid from a disk read, but is not in the DB
-   if ( modelGUID.size() != 36 ) modelGUID = US_Util::new_guid();
 
    q << "get_modelID" << modelGUID;
       
@@ -1193,8 +1320,16 @@ qDebug() << "model writedb contsize tempsize" << contents.size() << temporary.si
     
    QString meni = QString::number( meniscus );
    QString vari = QString::number( variance );
-     
-   if ( db->lastErrno() != IUS_DB2::OK )
+
+   // Update a stored model; insert one the lookup did not find.
+   const int lookup = db->lastErrno();
+   if ( lookup != IUS_DB2::OK && lookup != IUS_DB2::NOROWS )
+   {
+      message = QObject::tr( "could not be looked up" );
+      return saveDiskCopy( lookup );
+   }
+
+   if ( lookup != IUS_DB2::OK || !db->next() )
    {
       q.clear();
       q << "new_model" << modelGUID << description << contents
@@ -1204,7 +1339,6 @@ qDebug() << "model writedb contsize tempsize" << contents.size() << temporary.si
    }
    else
    {
-      db->next();
       QString id = db->value( 0 ).toString();
       q.clear();
       q << "update_model" << id << description << contents
@@ -1213,14 +1347,13 @@ qDebug() << "model writedb contsize tempsize" << contents.size() << temporary.si
    }
 
    int wstat = db->statusQuery( q );
-qDebug() << "model writedb message" << message << "wstat" << wstat;
-   QString path;
-   model_path( path );
-   bool newFile;
-   QString filename = get_filename( path, modelGUID, newFile );
-   write( filename );
+   qDebug() << "model writedb message" << message << "wstat" << wstat;
+   if ( wstat != IUS_DB2::OK )
+   {
+      message = QObject::tr( "could not be written" );
+   }
 
-   return wstat;
+   return saveDiskCopy( wstat );
 }
 
 // Write a model file
@@ -1240,6 +1373,7 @@ int US_Model::write( const QString& filename )
    else
    {
       QTextStream tso( &file );
+      setUtf8( tso );
       write_mm_stream( tso );
    }
 
@@ -1540,6 +1674,7 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
          }
 
          QTextStream tsi( &filei );
+         setUtf8( tsi );
          QString mcont   = tsi.readAll();
          filei.close();
          int jj          = qMax( 0, mcont.indexOf( "description=" ) );
@@ -1568,6 +1703,7 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
          if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text) )
             continue;
          QTextStream tsi( &filei );
+         setUtf8( tsi );
          QString mcont  = tsi.readAll();
          filei.close();
          int jj         = qMax( 0, mcont.indexOf( "description=" ) );
@@ -1604,6 +1740,7 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
                                         return empty_str;
       }
       QTextStream tsi( &filei );
+      setUtf8( tsi );
       QString mcont    = tsi.readAll();
       filei.close();
       int jj           = qMax( 0, mcont.indexOf( "modelGUID=" ) );
@@ -1648,6 +1785,7 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
 
       // Output contents of first iteration model except last line
       QTextStream tso( &fileo );
+      setUtf8( tso );
       jj               = qMax( 0, mcont.indexOf( "modelGUID=" ) );
       QString miguid   = QString( mcont ).mid( jj, 99 ).section( dquo, 1, 1 );
       if ( miguid != mcguid )
@@ -1664,6 +1802,7 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
          if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text) )
             continue;
          QTextStream tsi( &filei );
+         setUtf8( tsi );
          mcont          = tsi.readAll();
          filei.close();
          jj             = qMax( 0, mcont.indexOf( "modelGUID=" ) );
@@ -1687,6 +1826,7 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
       }
       // Read in contents of existing composite model; skip last line
       QTextStream tsi( &filei );
+      setUtf8( tsi );
       QString mcont    = tsi.readAll();
       filei.close();
       mcont            = mcont.section( "\n", 0, -3 ) + "\n";
@@ -1731,6 +1871,7 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
 
       // Output contents of previous composite except for last line
       QTextStream tso( &fileo );
+      setUtf8( tso );
       int flx        = 0;
       int llx        = -3;
       tso << mcont.section( "\n", flx, llx ) << "\n";
@@ -1743,6 +1884,7 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
          if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text) )
             continue;
          QTextStream tsi( &filei );
+         setUtf8( tsi );
          mcont          = tsi.readAll();
          filei.close();
          jj             = qMax( 0, mcont.indexOf( "modelGUID=" ) );
@@ -1790,6 +1932,7 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
             }
 
             QTextStream tsi( &filei );
+            setUtf8( tsi );
             QString mcont  = tsi.readAll();
             filei.close();
             int jj         = qMax( 0, mcont.indexOf( "description=" ) );
@@ -1891,4 +2034,3 @@ void US_Model::debug( void )
       }
    }
 }
-

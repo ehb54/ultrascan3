@@ -1,9 +1,15 @@
 //! \file us_db2.cpp
 #include "us_db2.h"
+#ifndef NO_DB
+#include "errmsg.h"
+#include "mysqld_error.h"
+#endif
 #include "us_settings.h"
 #include "us_crypto.h"
 #include "us_gzip.h"
 #include "us_util.h"
+
+#include <QRegularExpression>
 
 #define CIPHER \
 /* TLS 1.2 (Prioritize Galois/Counter Mode) */ \
@@ -76,6 +82,14 @@ US_DB2::US_DB2( const QString& masterPW )
 US_DB2::~US_DB2()
 {
 #ifndef NO_DB
+   // Closing would end the transaction anyway; roll it back explicitly so a
+   // dangling one is undone by us, not by however the server treats the close.
+   if ( inTransaction && connected )
+   {
+      drainResults();
+      mysql_rollback( db );
+   }
+
   mysql_free_result( result );
   mysql_close(db);
 
@@ -179,8 +193,10 @@ bool US_DB2::test_secure_connection(
 
    // Let's see if the user can log in
    status    = false;
-   QString q = "CALL validate_user( '', '" + email + "', '" + pw + "' )";
-   
+   // validate_user takes (guid, email, password): no guid yet, and the email
+   // goes in the slot composeQuery reserves for the password.
+   QString q = composeQuery( "CALL", QStringList() << "validate_user" << pw, QString(), email );
+
    this->query( q );
 
    if ( db_errno != OK )
@@ -255,7 +271,9 @@ bool US_DB2::connect( const QString& masterPW, QString& err )
 
    db_errno = OK;
    error = "";
-   
+   inTransaction        = false;
+   rolledBackByDeadlock = false;
+
    if ( ! connected )
    {
       db_errno = NOT_CONNECTED;
@@ -272,8 +290,10 @@ bool US_DB2::connect( const QString& masterPW, QString& err )
    userPW = US_Crypto::decrypt( cipher, masterPW, iv );
    guid   = defaultDB.at( 9 );
 
-   QString q = "CALL validate_user( '" + guid + "', '', '" + userPW + "' )";
-   
+   // validate_user takes (guid, email, password), so the password goes in the
+   // first caller-argument slot and the empty email in the password slot.
+   QString q = composeQuery( "CALL", QStringList() << "validate_user" << userPW, guid, QString() );
+
    this->query( q );
 
    if ( db_errno != OK )
@@ -355,6 +375,8 @@ bool US_DB2::connect(
 
    db_errno = OK;
    error = "";
+   inTransaction        = false;
+   rolledBackByDeadlock = false;
    if ( ! connected )
    {
       db_errno = NOT_CONNECTED;
@@ -368,27 +390,287 @@ bool US_DB2::connect(
 #endif
 
 #ifdef NO_DB
-void US_DB2::rawQuery( const QString& ){}
-#else
-void US_DB2::rawQuery( const QString& sqlQuery )
+bool US_DB2::connectAuthenticated( const QString&,
+                                   const QString&,
+                                   const QString&,
+                                   const QString&,
+                                   const QString&,
+                                   const QString&,
+                                   QString& err )
 {
-   // Make sure that we clear out any unused
-   //   result sets
+   err = "Database support is disabled";
+   return false;
+}
+#else
+bool US_DB2::connectAuthenticated( const QString& host,
+                                   const QString& dbname,
+                                   const QString& user,
+                                   const QString& password,
+                                   const QString& personGUID,
+                                   const QString& personPassword,
+                                   QString&       err )
+{
+   if ( !connect( host, dbname, user, password, err ) )
+   {
+      return false;
+   }
+
+   guid   = personGUID;
+   userPW = personPassword;
+
+   // validate_user takes (guid, email, password), so the password goes in the
+   // first caller-argument slot and the empty email in the password slot.
+   query( composeQuery( "CALL", QStringList() << "validate_user" << userPW, guid, QString() ) );
+
+   if ( db_errno != OK )
+   {
+      err = error;
+      return false;
+   }
+
+   // Leave the row where the profile connect leaves it, so callers that read
+   // value() straight after connecting behave the same either way.
+   next();
+   email = value( 1 ).toString();
+
+   return connected;
+}
+#endif
+
+#ifdef NO_DB
+bool US_DB2::beginTransaction( QString& transaction_error )
+{
+   transaction_error = QObject::tr( notConnectedMessage ).arg( "beginTransaction" );
+   return false;
+}
+bool US_DB2::commitTransaction( QString& transaction_error )
+{
+   transaction_error = QObject::tr( notConnectedMessage ).arg( "commitTransaction" );
+   return false;
+}
+bool US_DB2::rollbackTransaction( QString& transaction_error )
+{
+   transaction_error = QObject::tr( notConnectedMessage ).arg( "rollbackTransaction" );
+   return false;
+}
+#else
+bool US_DB2::beginTransaction( QString& transaction_error )
+{
+   if ( !connected )
+   {
+      transaction_error = QObject::tr( notConnectedMessage ).arg( "beginTransaction" );
+      return false;
+   }
+
+   if ( inTransaction )
+   {
+      transaction_error = QObject::tr( transactionOpenMessage ).arg( "beginTransaction" );
+      return false;
+   }
+
+   // Whatever ran before this call may have left results pending.
+   drainResults();
+
+   // START TRANSACTION rather than turning autocommit off: the server restores
+   // autocommit itself at the COMMIT or ROLLBACK, so there is no second step
+   // that can fail after the transaction has already ended.
+   if ( mysql_query( db, "START TRANSACTION" ) != 0 )
+   {
+      transaction_error = mysql_error( db );
+      return false;
+   }
+
+   inTransaction        = true;
+   rolledBackByDeadlock = false;
+   transaction_error.clear();
+   return true;
+}
+
+bool US_DB2::commitTransaction( QString& transaction_error )
+{
+   if ( !connected )
+   {
+      transaction_error = QObject::tr( notConnectedMessage ).arg( "commitTransaction" );
+      return false;
+   }
+
+   if ( !inTransaction )
+   {
+      transaction_error = QObject::tr( noTransactionMessage ).arg( "commitTransaction" );
+      return false;
+   }
+
+   // The last query of the transaction left its results on the connection, and
+   // a CALL left a status set behind them.  mysql_commit() talks to the server
+   // directly rather than through rawQuery(), so without this it is answered
+   // with "Commands out of sync" and the whole transaction is lost at the last
+   // step -- with the rollback that follows failing for the same reason.
+   drainResults();
+
+   // A COMMIT after the transaction has ended succeeds as a no-op, so check
+   // first or lost writes would be reported as committed.  The client does
+   // not always see what ended it: a procedure can catch a deadlock itself,
+   // or roll back on its own.
+   if ( transactionEndedEarly() )
+   {
+      transaction_error = transactionEndedText();
+      return false;
+   }
+
+   if ( mysql_commit( db ) != 0 )
+   {
+      // The server may have committed before the connection dropped; only a
+      // lost connection leaves that open, so only then is the outcome unknown.
+      const unsigned int code = mysql_errno( db );
+      if ( code == CR_SERVER_LOST || code == CR_SERVER_GONE_ERROR )
+      {
+         transaction_error = QObject::tr( commitUnknownMessage ).arg( mysql_error( db ) );
+      }
+      else
+      {
+         transaction_error = mysql_error( db );
+      }
+
+      // Still open as far as the caller is concerned: it rolls back next.
+      return false;
+   }
+
+   inTransaction = false;
+   transaction_error.clear();
+   return true;
+}
+
+bool US_DB2::rollbackTransaction( QString& transaction_error )
+{
+   if ( !connected )
+   {
+      inTransaction     = false;
+      transaction_error = QObject::tr( notConnectedMessage ).arg( "rollbackTransaction" );
+      return false;
+   }
+
+   if ( !inTransaction )
+   {
+      transaction_error = QObject::tr( noTransactionMessage ).arg( "rollbackTransaction" );
+      return false;
+   }
+
+   // Same reason as commitTransaction(), and it matters more here: a rollback
+   // that cannot run is a partial load left in place.
+   drainResults();
+
+   inTransaction = false;
+
+   // If the server no longer has the transaction open, something ended it
+   // before this call and the rollback below undoes nothing, so a quiet
+   // success here would be a lie.
+   const bool ended_early = transactionEndedEarly();
+
+   if ( mysql_rollback( db ) != 0 )
+   {
+      transaction_error = mysql_error( db );
+      return false;
+   }
+
+   if ( ended_early )
+   {
+      transaction_error = transactionEndedText();
+      return false;
+   }
+
+   transaction_error.clear();
+   return true;
+}
+#endif
+
+#ifndef NO_DB
+bool US_DB2::transactionEndedEarly()
+{
+   // The status comes from the last statement that succeeded; an error packet
+   // does not carry one, so it may predate a rollback by the server.  One
+   // empty statement brings it up to date.  A connection that cannot run even
+   // that has lost the transaction with it.
+   if ( mysql_query( db, "DO 0" ) != 0 )
+   {
+      return true;
+   }
+
+   // The C API has no accessor for the status flags; MYSQL documents the field.
+   return ( db->server_status & SERVER_STATUS_IN_TRANS ) == 0;
+}
+
+void US_DB2::noteStatementError()
+{
+   // InnoDB always answers a deadlock by rolling back the whole transaction,
+   // so that error alone says what ended it.  A lock wait timeout does so only
+   // when innodb_rollback_on_timeout is set, and is not recorded.  Remember
+   // the error while it is still on the connection; the next statement
+   // replaces it.
+   if ( inTransaction && mysql_errno( db ) == ER_LOCK_DEADLOCK )
+   {
+      rolledBackByDeadlock = true;
+   }
+}
+
+QString US_DB2::transactionEndedText() const
+{
+   return QObject::tr( rolledBackByDeadlock ? serverRollbackMessage : transactionEndedMessage );
+}
+#endif
+
+#ifdef NO_DB
+void US_DB2::drainResults()
+{
+}
+#else
+void US_DB2::drainResults()
+{
    if ( result )
-      mysql_free_result( result ); 
+      mysql_free_result( result );
 
    while ( mysql_next_result( db ) == 0 )
    {
       result = mysql_store_result( db );
       mysql_free_result( result );
    }
+
+   // A procedure that failed part way reports it on the result set after the
+   // last good one, which ends the loop above.
+   noteStatementError();
+
    result = NULL;
+}
+#endif
+
+#ifdef NO_DB
+void US_DB2::rawQuery( const QString& )
+{
+}
+#else
+void US_DB2::rawQuery( const QString& sqlQuery )
+{
+   // Make sure that we clear out any unused
+   //   result sets
+   drainResults();
 
    if ( mysql_query( db, sqlQuery.toLatin1() ) != 0 )
+   {
       error = QString( "MySQL error: " ) + mysql_error( db );
+      noteStatementError();
+   }
 
    else
+   {
       result = mysql_store_result( db );
+
+      // A statement without a result set gives NULL too; only an error code
+      // says that reading the result failed.
+      if ( result == NULL && mysql_errno( db ) != 0 )
+      {
+         error = QString( "MySQL error: " ) + mysql_error( db );
+         noteStatementError();
+      }
+   }
 }
 #endif
 
@@ -426,12 +708,33 @@ int US_DB2::statusQuery( const QString& sqlQuery )
 
 int US_DB2::statusQuery( const QStringList& arguments )
 {
-   return statusQuery( buildQuery( arguments ) );
+   const QString composed = buildQuery( arguments );
+   if ( composed.isEmpty() )
+   {
+      return refuseArguments( arguments );
+   }
+
+   return statusQuery( composed );
 }
 
 int US_DB2::functionQuery( const QStringList& arguments )
 {
-   return statusQuery( buildQuerySelect( arguments ) );
+   const QString composed = buildQuerySelect( arguments );
+   if ( composed.isEmpty() )
+   {
+      return refuseArguments( arguments );
+   }
+
+   return statusQuery( composed );
+}
+
+int US_DB2::refuseArguments( const QStringList& arguments )
+{
+   // Nothing is sent, so clear what the last query left for next() to read.
+   drainResults();
+   db_errno = DBERROR;
+   error    = QObject::tr( invalidProcedureMessage ).arg( arguments.value( 0 ) );
+   return db_errno;
 }
 
 #ifdef NO_DB
@@ -440,6 +743,19 @@ void US_DB2::query( const QString& ) {}
 void US_DB2::query( const QString& sqlQuery )
 {
    this->rawQuery( sqlQuery );
+
+   // A statement the server refused outright leaves no result set, and
+   // rawQuery() reports that only through `error`.  Without this, db_errno
+   // still holds whatever the previous query returned, so lastErrno() answers
+   // OK for a query that never ran -- a lost connection, a deadlock, a
+   // lock-wait timeout.  statusQuery() has always defaulted to DBERROR for the
+   // same reason; this brings query() in line with it.
+   if ( mysql_errno( db ) != 0 )
+   {
+      db_errno = DBERROR;
+      return;
+   }
+
    if ( result )
    {
       // This is a 2-set result: status, then data
@@ -448,7 +764,18 @@ void US_DB2::query( const QString& sqlQuery )
       mysql_free_result( result );
       result = NULL;
 
-      if ( mysql_next_result( db ) == 0 ) // get the result data
+      const int next = mysql_next_result( db );
+
+      // The procedure failed after its status row, while producing its data.
+      if ( next > 0 )
+      {
+         error    = QString( "MySQL error: " ) + mysql_error( db );
+         db_errno = DBERROR;
+         noteStatementError();
+         return;
+      }
+
+      else if ( next == 0 ) // get the result data
       {
          result = mysql_store_result( db );
          if ( ! result )
@@ -459,6 +786,26 @@ void US_DB2::query( const QString& sqlQuery )
             else
             {} // Error retrieving result set
          }
+      }
+   }
+
+   // A procedure that returns before its status set -- an empty GUID, a
+   // failed verify_user -- still records its status in @US3_LAST_ERRNO.  Read
+   // it, or db_errno keeps the previous query's status, usually OK.
+   else if ( sqlQuery.trimmed().startsWith( "CALL", Qt::CaseInsensitive ) )
+   {
+      db_errno = DBERROR;
+      this->rawQuery( "SELECT last_errno()" );
+
+      if ( result )
+      {
+         row = mysql_fetch_row( result );
+         if ( row != NULL && row[0] != NULL )
+         {
+            db_errno = atoi( row[0] );
+         }
+         mysql_free_result( result );
+         result = NULL;
       }
    }
 
@@ -482,45 +829,71 @@ void US_DB2::query( const QString& sqlQuery )
 
 void US_DB2::query( const QStringList& arguments )
 {
-   query( buildQuery( arguments ) );
+   const QString composed = buildQuery( arguments );
+   if ( composed.isEmpty() )
+   {
+      refuseArguments( arguments );
+      return;
+   }
+
+   query( composed );
+}
+
+QString US_DB2::escapeLiteral( QString value )
+{
+   // Backslash first:  escaping the quotes first would then double the
+   // backslashes this step inserts.  A NUL would end the query string early.
+   // This assumes the server's default sql_mode, without NO_BACKSLASH_ESCAPES.
+   value.replace( "\\", "\\\\" );
+   value.replace( "'", "\\'" );
+   value.replace( QChar( '\0' ), "\\0" );
+   return value;
+}
+
+bool US_DB2::isProcedureName( const QString& name )
+{
+   // The name is a SQL identifier, not a quoted literal, so escaping cannot
+   // make it safe -- it is interpolated as written.  Accept only a plain
+   // identifier so anything else is refused rather than emitted.
+   static const QRegularExpression procName( "\\A[A-Za-z_][A-Za-z0-9_]*\\z" );
+   return procName.match( name ).hasMatch();
+}
+
+QString US_DB2::composeQuery( const QString& keyword, const QStringList& arguments, const QString& guid, const QString& password )
+{
+   // The procedure name is arguments[ 0 ], so an empty list has nothing to call.
+   if ( arguments.isEmpty() )
+   {
+      return QString();
+   }
+
+   if ( !isProcedureName( arguments[0] ) )
+   {
+      return QString();
+   }
+
+   // The guid and password are quoted literals like every other argument and
+   // are escaped the same way.
+   QString newquery = keyword + " " + arguments[0] + "('" + escapeLiteral( guid ) + "', '" + escapeLiteral( password ) + "'";
+
+   for ( int i = 1; i < arguments.size(); i++ )
+   {
+      newquery += ", '" + escapeLiteral( arguments[i] ) + "'";
+   }
+
+   newquery += ")";
+
+   return newquery;
 }
 
 QString US_DB2::buildQuery( const QStringList& arguments )
 {
-   QString newquery = "CALL " + arguments[ 0 ]
-                    + "('" + guid + "', '" + userPW + "'";
-
-   for ( int i = 1; i < arguments.size(); i++ )
-   {
-      QString arg = arguments[ i ];
-      arg.replace( "'", "\\'" );
-
-      newquery += ", '" + arg + "'";
-   }
-
-   newquery += ")";
-
-//qDebug() << "NewQuery:" << newquery;
-   return newquery;
+   return composeQuery( "CALL", arguments, guid, userPW );
 }
 
 QString US_DB2::buildQuerySelect( const QStringList& arguments )
 {
-   QString newquery = "SELECT " + arguments[ 0 ]
-                    + "('" + guid + "', '" + userPW + "'";
-
-   for ( int i = 1; i < arguments.size(); i++ )
-   {
-      QString arg = arguments[ i ];
-      arg.replace( "'", "\\'" );
-
-      newquery += ", '" + arg + "'";
-   }
-
-   newquery += ")";
-
-//qDebug() << "NewQuerySelect:" << newquery;
-   return newquery;
+   return composeQuery( "SELECT", arguments, guid, userPW );
 }
 
 #ifdef NO_DB
@@ -571,6 +944,13 @@ int US_DB2::writeBlobToDB( const QString& , const QString& , const int ) { retur
 int US_DB2::writeBlobToDB( const QString& filename, 
     const QString& procedure, const int tableID )
 {
+   // The procedure name is pasted into the query below, so refuse it before
+   // reading the file.
+   if ( !isProcedureName( procedure ) )
+   {
+      return refuseArguments( QStringList() << procedure );
+   }
+
    // First let's read the file
    QFile fin( filename );
 
@@ -607,11 +987,8 @@ int US_DB2::writeBlobToDB( const QString& filename,
         QCryptographicHash::hash( blobData, QCryptographicHash::Md5 ).toHex();
 
    // Now let's start building the query
-   QString queryPart1 = "CALL " + procedure +
-                        "('"    + guid      + 
-                        "', '"  + userPW    + 
-                        "', "   + QString::number( tableID )   +
-                        ", '"   ;
+   QString queryPart1 = "CALL " + procedure + "('" + escapeLiteral( guid ) + "', '" + escapeLiteral( userPW ) + "', " +
+                        QString::number( tableID ) + ", '";
    QByteArray sqlQuery( escaped_length 
                       + queryPart1.size()
                       + checksum.size() + 7, '\0' );
@@ -625,7 +1002,7 @@ int US_DB2::writeBlobToDB( const QString& filename,
    queryPtr += checksum.size();
    strcpy( queryPtr, "')\0" );
 
-/*
+   /*
    QByteArray sqlQuery2( escaped_length 
                        + queryPart1.size()
                        + checksum.size() + 7, '\0' );
@@ -637,25 +1014,17 @@ int US_DB2::writeBlobToDB( const QString& filename,
    qDebug() << ( ( sqlQuery == sqlQuery2 ) ? "check equal" : "check not equal" );
    qDebug() << "check2 " << memcmp( sqlQuery.data(), sqlQuery2.data(), checkSize );
 */
- 
-   // We can't use standard methods since they use QStrings
-   // Clear out any unused result sets
-   if ( result )
-      mysql_free_result( result ); 
 
-   while ( mysql_next_result( db ) == 0 )
-   {
-      result = mysql_store_result( db );
-      mysql_free_result( result );
-   }
-   result = NULL;
+   // We can't use rawQuery() since it takes a QString
+   drainResults();
 
    if ( mysql_query( db, sqlQuery.data() ) != 0 )
    {
      error = QString( "MySQL error: " ) + mysql_error( db ); // ALEXEY: writing huge blob, MySql server has gone away...
-  
-      db_errno = DBERROR;
-      return DBERROR;
+     noteStatementError();
+
+     db_errno = DBERROR;
+     return DBERROR;
    }
 
    result   = mysql_store_result( db );
@@ -691,30 +1060,23 @@ int US_DB2::readBlobFromDB( const QString& filename,
     const QString& procedure, const int tableID )
 {
    // First let's build the query
-   QString sqlQuery = "CALL " + procedure +
-                      "('"    + guid      + 
-                      "', '"  + userPW    + 
-                      "', "   + QString::number( tableID )   +
-                      ")"   ;
+   const QString sqlQuery = composeQuery( "CALL", QStringList() << procedure << QString::number( tableID ), guid, userPW );
+   if ( sqlQuery.isEmpty() )
+   {
+      return refuseArguments( QStringList() << procedure );
+   }
 
    // We can't use standard methods because the
    // binary data doesn't all transfer
 
    // Make sure that we clear out any unused
    //   result sets
-   if ( result )
-      mysql_free_result( result ); 
-
-   while ( mysql_next_result( db ) == 0 )
-   {
-      result = mysql_store_result( db );
-      mysql_free_result( result );
-   }
-   result = NULL;
+   drainResults();
 
    if ( mysql_query( db, sqlQuery.toLatin1() ) != OK )
    {
       error = QString( "MySQL error: " ) + mysql_error( db );
+      noteStatementError();
       db_errno = DBERROR;
       return DBERROR;
    }
@@ -997,4 +1359,3 @@ bool US_DB2::configure_ssl( QString& err )
    return true;
 }
 #endif
-

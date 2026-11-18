@@ -25,6 +25,15 @@ QString US_Passwd::getPasswd( void  )
   QString pw = g.passwd();
   if ( ! pw.isEmpty() ) return pw;
 
+  // A headless run has no one to answer the password dialog.
+  if ( qApp != nullptr && qApp->property( "us3_headless" ).toBool() )
+  {
+     qWarning() << "Error: the master password is not available to this "
+                   "headless run; start UltraScan to unlock the database, "
+                   "or use --no-db";
+     return QString();
+  }
+
   // See if the master pasword has been set
   QByteArray currentHash = US_Settings::UltraScanPW();
 
@@ -167,19 +176,20 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
 	      {
 		pw = lineEdit->text();
 	      }
-	    qDebug() << lineEdit->text();
+         // Log field names only: values include the master password.
+         qDebug() << "Audit form field:" << lineEdit->objectName();
 
-	    form_map[ lineEdit->objectName() ] = lineEdit->text();
-	  }
-	//for e-Sigs, capture Approve/Reject status to form_map
-	foreach(QRadioButton * radioB, fields_radio)
-	  {
-	    if ( radioB->isChecked() )
-	      {
-		qDebug() << "RadioB checked-- " << radioB->objectName();
-		form_map[ "Decision:" ] = radioB->objectName();
-	      }
-	  }
+         form_map[lineEdit->objectName()] = lineEdit->text();
+     }
+     //for e-Sigs, capture Approve/Reject status to form_map
+     foreach ( QRadioButton* radioB, fields_radio )
+     {
+        if ( radioB->isChecked() )
+        {
+           qDebug() << "RadioB checked-- " << radioB->objectName();
+           form_map["Decision:"] = radioB->objectName();
+        }
+     }
       }
     else 
       {

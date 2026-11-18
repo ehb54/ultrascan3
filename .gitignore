@@ -35,6 +35,7 @@ gui/qrc_images.cpp
 /build-docker/
 /build-docker-nodb/
 /build-docker-coverage/
+/build-docker-programs/
 /cmake-build-debug/
 doc/manual/build
 /vcpkg/
@@ -45,6 +46,7 @@ vcpkg_installed/
 configure-arm64.log
 programs/us/us.rc
 CMakeUserPresets.json
+compile_commands.json
 __pycache__
 *.pyc
 /build-mac/
