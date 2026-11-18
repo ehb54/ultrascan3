@@ -481,21 +481,40 @@ value, with the measured value in an extra column; blank where it has no value a
 a column for an outlier-QC discarded curve.</p>
 
 <p><b>Movie.</b> The row of buttons below the results line steps through the <i>q</i> grid on a timer,
-as the HPLC/KIN movie does: <b>[]</b> starts the movie from the current <i>q</i> (from the first if at
-the last) and <b>||</b> stops it, <b>S-</b> and <b>S+</b> halve or double the speed (50&nbsp;ms to
-5&nbsp;s per frame; the label shows it), and <b>|&lt;</b> and <b>&gt;|</b> go to the first and last
-<i>q</i>. With <b>Save frames</b> checked, every <i>q</i> shown &mdash; by the movie, Prev/Next or the
+as the HPLC/KIN movie does: <b>[]</b> starts the movie from the current <i>q</i> and <b>||</b> stops
+it, <b>S-</b> and <b>S+</b> halve or double the speed (50&nbsp;ms to 5&nbsp;s per frame; the label
+shows it), and <b>|&lt;</b> and <b>&gt;|</b> go to the first and last <i>q</i> of the movie range.
+The <b>Movie range</b> row sets the <i>q</i> points the movie steps through: from the first <i>q</i>
+point at or above <b>q from</b> to the last at or below <b>to</b> (both default to the whole grid),
+taking <b>every</b> <i>n</i>-th point (default 1, every point); the label next to it gives the number of
+frames and their <i>q</i> point numbers. Started from outside the range, or at its end, the movie starts
+again from the range's first point. Prev/Next and the wheel still step through every <i>q</i>.
+With <b>Save frames</b> checked, every <i>q</i> shown &mdash; by the movie, Prev/Next or the
 wheel &mdash; is also saved as an image of the plot with its results line, as png (default), jpeg or bmp,
 named <i>prefix</i><code>_</code><i>NNNNN</i> by the <i>q</i> point number (e.g.
 <code>..._00042.png</code>) in a folder <i>prefix</i><code>_frames</code> next to the input curves
 (the folder they were last loaded from). The prefix defaults to the extrapolated curve's name. A
-frame file already there is kept unless <b>Overwrite</b> is checked. When the movie reaches the last
-<i>q</i> it stops and turns frame saving (and Overwrite) off, so later stepping does not add frames;
-the log reports how many frames were saved and where. SOMO saves only the frames: a movie is made from
-them with an external tool, for example
-<code>ffmpeg -framerate 10 -start_number 1 -i prefix_%05d.png -pix_fmt yuv420p movie.mp4</code>
-(with <code>-start_number</code> set to the first frame's number). The speed and the image format
-are remembered for the session.</p>
+frame file already there is kept unless <b>Overwrite</b> is checked. When the movie reaches the end of
+the range it stops and turns frame saving (and Overwrite) off, so later stepping does not add frames;
+the log reports how many frames were saved and where.</p>
+
+<p><b>Make movie</b> makes a video of the movie range in one step: it saves the frame of every
+<i>q</i> point of the range (as quickly as they can be drawn; <b>||</b> stops it), then joins them
+with ffmpeg (<code>ffmpeg.org</code>) into <i>prefix</i><code>.mp4</code> in the folder of the
+input curves, at the frames per second set next to the button (default 10; S-/S+ do not change it).
+The video is H.264 if the ffmpeg found has it, otherwise MPEG-4; its frame size is that of the first
+frame (rounded up to an even number of pixels), and frames of another size, e.g. after the window was
+resized, are scaled to fit it. ffmpeg is looked for next to the SOMO program, on the PATH, and in
+<code>/opt/homebrew/bin</code>, <code>/usr/local/bin</code> and <code>/opt/local/bin</code>; if it
+is not found the button reads <i>Make movie (ffmpeg not found)</i> and is disabled (Save frames still
+works, and the frames can be joined with any external tool). Frame files already there are used as
+they are, and an existing movie file is not replaced, unless <b>Overwrite</b> is checked; the new
+movie replaces the old one only once ffmpeg has finished successfully. With <b>Remove frames
+afterwards</b> checked, the frame files the movie was made from are deleted once it is made, and the
+<i>prefix</i><code>_frames</code> folder too if nothing else is left in it (other files in it, such
+as frames of <i>q</i> points outside the range, are kept). If ffmpeg fails or is stopped, no movie is
+made, the frames are kept, and the log shows ffmpeg's last messages. The speed, image format, frames
+per second and Remove frames afterwards are remembered for the session.</p>
 
 <p><b>A negative <i>R</i>&sup2; is expected at some <i>q</i> and is not an error.</b>
 <i>R</i>&sup2; here is the fraction of the points' variance explained <i>by the plotted line</i>

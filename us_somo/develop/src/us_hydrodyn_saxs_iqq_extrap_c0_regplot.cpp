@@ -18,7 +18,26 @@
 #include <QPainter>
 #include <QPixmap>
 #include <QRegularExpression>
+#include <QStandardPaths>
+#include <QCoreApplication>
+#include <QImageReader>
 #include <qwt_symbol.h>
+
+// ffmpeg for Make movie: next to the SOMO program first, then on the PATH, then where the macOS
+// package managers put it (a program started from the Finder does not get the shell's PATH)
+static QString us_extrap_c0_find_ffmpeg()
+{
+   QString exe = QStandardPaths::findExecutable( "ffmpeg", QStringList() << QCoreApplication::applicationDirPath() );
+   if ( exe.isEmpty() )
+   {
+      exe = QStandardPaths::findExecutable( "ffmpeg" );
+   }
+   if ( exe.isEmpty() )
+   {
+      exe = QStandardPaths::findExecutable( "ffmpeg", QStringList() << "/opt/homebrew/bin" << "/usr/local/bin" << "/opt/local/bin" );
+   }
+   return exe;
+}
 
 US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot(
                                                                                 void *                          us_hydrodyn,
@@ -85,6 +104,18 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot(
       movie_timer_ms = qBound( 50, ush->gparams[ "extrap_c0_movie_timer_ms" ].toInt(), 5000 );
    }
 
+   making_movie            = false;
+   encode_cancelled        = false;
+   save_frames_before_make = false;
+   ffmpeg_exe              = us_extrap_c0_find_ffmpeg();
+   ffmpeg_proc             = new QProcess( this );
+   ffmpeg_proc->setProcessChannelMode( QProcess::MergedChannels );
+   connect( ffmpeg_proc, SIGNAL( finished( int, QProcess::ExitStatus ) ), SLOT( encode_done( int, QProcess::ExitStatus ) ) );
+   connect( ffmpeg_proc, SIGNAL( errorOccurred( QProcess::ProcessError ) ), SLOT( encode_error( QProcess::ProcessError ) ) );
+
+   movie_timer = new QTimer( this );
+   connect( movie_timer, SIGNAL( timeout() ), SLOT( movie_tick() ) );
+
    USglobal = new US_Config();
    // top-level window, not a child widget embedded in the SAS window
    setWindowFlags( Qt::Window );
@@ -93,12 +124,9 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot(
 
    setupGUI();
 
-   movie_timer = new QTimer( this );
-   connect( movie_timer, SIGNAL( timeout() ), SLOT( movie_tick() ) );
-
    global_Xpos += 30;
    global_Ypos += 30;
-   setGeometry( global_Xpos, global_Ypos, 760, 640 );
+   setGeometry( global_Xpos, global_Ypos, 760, 700 );
 
    set_index( 0 );
 }
@@ -142,8 +170,9 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::setupGUI()
                                      "their measured values are shown in magenta." ) ).arg( n_spk );
       }
    }
-   info_txt += us_tr( "\nMovie: [] starts or stops stepping through q (S- / S+ change the speed); "
-                      "with Save frames on, each q shown is also saved as an image." );
+   info_txt += us_tr( "\nMovie: [] starts or stops stepping through the q range set below (S- / S+ change the speed); "
+                      "with Save frames on,\neach q shown is also saved as an image. "
+                      "Make movie saves the range's frames and joins them into a video (needs ffmpeg)." );
    if ( pending_open )
    {
       info_txt += us_tr( "\nKeep adds the extrapolated curve to the SAS plot (closing this window does the same); "
@@ -214,7 +243,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::setupGUI()
 
    // movie controls (the same layout as the HPLC/KIN movie)
    pb_movie_front = new QPushButton( "|<", this );
-   pb_movie_front->setToolTip( us_tr( "Go to the first q" ) );
+   pb_movie_front->setToolTip( us_tr( "Go to the first q of the movie range" ) );
    connect( pb_movie_front, SIGNAL( clicked() ), SLOT( movie_front() ) );
 
    pb_movie_slower = new QPushButton( "S-", this );
@@ -222,7 +251,8 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::setupGUI()
    connect( pb_movie_slower, SIGNAL( clicked() ), SLOT( movie_slower() ) );
 
    pb_movie_start = new QPushButton( "[]", this );
-   pb_movie_start->setToolTip( us_tr( "Start [] or stop || the movie: steps through q from the current point to the last" ) );
+   pb_movie_start->setToolTip( us_tr( "Start [] or stop || the movie: steps through the q range from the current point to\n"
+                                      "the end of the range (from its start if outside it); || also stops Make movie" ) );
    connect( pb_movie_start, SIGNAL( clicked() ), SLOT( movie_start() ) );
 
    pb_movie_faster = new QPushButton( "S+", this );
@@ -230,7 +260,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::setupGUI()
    connect( pb_movie_faster, SIGNAL( clicked() ), SLOT( movie_faster() ) );
 
    pb_movie_end = new QPushButton( ">|", this );
-   pb_movie_end->setToolTip( us_tr( "Go to the last q" ) );
+   pb_movie_end->setToolTip( us_tr( "Go to the last q of the movie range" ) );
    connect( pb_movie_end, SIGNAL( clicked() ), SLOT( movie_end() ) );
 
    QPushButton * movie_buttons[] = { pb_movie_front, pb_movie_slower, pb_movie_start, pb_movie_faster, pb_movie_end };
@@ -257,7 +287,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::setupGUI()
    AUTFBACK( cb_save_frames );
    cb_save_frames->setToolTip( us_tr( "Save every q shown (by the movie, Prev/Next or the wheel) as an image of the plot and\n"
                                       "its results line, numbered by the q point, in a folder <prefix>_frames next to the\n"
-                                      "input curves. Make the movie from the frames with an external tool." ) );
+                                      "input curves. Make movie saves the frames of the q range and joins them into a video." ) );
    connect( cb_save_frames, SIGNAL( clicked() ), SLOT( set_save_frames() ) );
 
    le_save_prefix = new QLineEdit( this );
@@ -266,7 +296,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::setupGUI()
    AUTFBACK( le_save_prefix );
    le_save_prefix->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    le_save_prefix->setMinimumHeight( minHeight1 );
-   le_save_prefix->setToolTip( us_tr( "Prefix for the frame files and their folder (<prefix>_frames)" ) );
+   le_save_prefix->setToolTip( us_tr( "Prefix for the frame files, their folder (<prefix>_frames) and the movie (<prefix>.mp4)" ) );
 
    QString fmt = "png";
    {
@@ -299,7 +329,94 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::setupGUI()
    cb_save_overwrite->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    cb_save_overwrite->setPalette( PALET_NORMAL );
    AUTFBACK( cb_save_overwrite );
-   cb_save_overwrite->setToolTip( us_tr( "Replace frame files that already exist (otherwise they are kept)" ) );
+   cb_save_overwrite->setToolTip( us_tr( "Replace frame files, and the movie file of Make movie, that already exist\n"
+                                         "(otherwise existing frames are kept and an existing movie is not replaced)" ) );
+
+   // the q range of the movie and of Make movie: q from .. to, every n-th q point
+   QLabel * lbl_q_from = new QLabel( us_tr( "Movie range:  q from" ), this );
+   QLabel * lbl_q_to   = new QLabel( us_tr( "to" ), this );
+   QLabel * lbl_every  = new QLabel( us_tr( "every" ), this );
+   QLabel * lbl_every2 = new QLabel( us_tr( "q point(s)" ), this );
+   QLabel * lbl_fps    = new QLabel( us_tr( "at" ), this );
+   QLabel * range_labels[] = { lbl_q_from, lbl_q_to, lbl_every, lbl_every2, lbl_fps };
+   for ( int k = 0; k < 5; k++ )
+   {
+      range_labels[ k ]->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+      range_labels[ k ]->setPalette( PALET_NORMAL );
+      AUTFBACK( range_labels[ k ] );
+   }
+
+   le_movie_q_from = new QLineEdit( this );
+   le_movie_q_from->setText( reg_q.size() ? QString::number( reg_q.front(), 'g', 6 ) : QString( "" ) );
+   le_movie_q_from->setToolTip( us_tr( "First q of the movie range (the nearest q point at or above it is used)" ) );
+   le_movie_q_to = new QLineEdit( this );
+   le_movie_q_to->setText( reg_q.size() ? QString::number( reg_q.back(), 'g', 6 ) : QString( "" ) );
+   le_movie_q_to->setToolTip( us_tr( "Last q of the movie range (the nearest q point at or below it is used)" ) );
+   QLineEdit * range_edits[] = { le_movie_q_from, le_movie_q_to };
+   for ( int k = 0; k < 2; k++ )
+   {
+      range_edits[ k ]->setPalette( PALET_NORMAL );
+      AUTFBACK( range_edits[ k ] );
+      range_edits[ k ]->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+      range_edits[ k ]->setMinimumHeight( minHeight1 );
+      range_edits[ k ]->setMaximumWidth( 100 );
+      connect( range_edits[ k ], SIGNAL( textChanged( const QString & ) ), SLOT( update_range_info() ) );
+   }
+
+   sb_movie_every = new QSpinBox( this );
+   sb_movie_every->setRange( 1, qMax( 1, (int) reg_q.size() ) );
+   sb_movie_every->setValue( 1 );
+   sb_movie_every->setToolTip( us_tr( "Step through every n-th q point of the range" ) );
+   sb_movie_every->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   sb_movie_every->setMinimumHeight( minHeight1 );
+   sb_movie_every->setPalette( PALET_NORMAL );
+   AUTFBACK( sb_movie_every );
+   connect( sb_movie_every, SIGNAL( valueChanged( int ) ), SLOT( update_range_info() ) );
+
+   lbl_movie_range_info = new QLabel( "", this );
+   lbl_movie_range_info->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   lbl_movie_range_info->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_movie_range_info );
+
+   US_Hydrodyn * ushp = (US_Hydrodyn *) us_hydrodyn;
+
+   pb_make_movie = new QPushButton( ffmpeg_exe.isEmpty() ? us_tr( "Make movie (ffmpeg not found)" ) : us_tr( "Make movie" ), this );
+   pb_make_movie->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   pb_make_movie->setMinimumHeight( minHeight1 );
+   pb_make_movie->setPalette( PALET_PUSHB );
+   pb_make_movie->setToolTip(
+      ffmpeg_exe.isEmpty()
+      ? us_tr( "Make movie runs ffmpeg, which was not found next to the SOMO program, on the PATH, or in\n"
+               "/opt/homebrew/bin, /usr/local/bin or /opt/local/bin. Install ffmpeg to make movies here;\n"
+               "Save frames works without it." )
+      : QString( us_tr( "Save the frames of the movie range (existing ones are kept unless Overwrite is checked)\n"
+                        "and join them into <prefix>.mp4 next to the input curves, using\n%1\n"
+                        "|| stops it." ) ).arg( ffmpeg_exe ) );
+   pb_make_movie->setEnabled( !ffmpeg_exe.isEmpty() );
+   connect( pb_make_movie, SIGNAL( clicked() ), SLOT( make_movie() ) );
+
+   sb_movie_fps = new QSpinBox( this );
+   sb_movie_fps->setRange( 1, 60 );
+   sb_movie_fps->setValue( ( ushp && ushp->gparams.count( "extrap_c0_movie_fps" ) )
+                           ? qBound( 1, ushp->gparams[ "extrap_c0_movie_fps" ].toInt(), 60 ) : 10 );
+   sb_movie_fps->setSuffix( us_tr( " frames/s" ) );
+   sb_movie_fps->setToolTip( us_tr( "Frames per second of the movie file" ) );
+   sb_movie_fps->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   sb_movie_fps->setMinimumHeight( minHeight1 );
+   sb_movie_fps->setPalette( PALET_NORMAL );
+   AUTFBACK( sb_movie_fps );
+   sb_movie_fps->setEnabled( !ffmpeg_exe.isEmpty() );
+
+   cb_remove_frames = new QCheckBox( this );
+   cb_remove_frames->setText( us_tr( "Remove frames afterwards" ) );
+   cb_remove_frames->setChecked( ushp && ushp->gparams.count( "extrap_c0_movie_remove_frames" )
+                                 && ushp->gparams[ "extrap_c0_movie_remove_frames" ] == "1" );
+   cb_remove_frames->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_remove_frames->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_remove_frames );
+   cb_remove_frames->setToolTip( us_tr( "Once the movie is made, delete the frame files it was made from, and the\n"
+                                        "<prefix>_frames folder if nothing else is left in it" ) );
+   cb_remove_frames->setEnabled( !ffmpeg_exe.isEmpty() );
 
    pb_help = new QPushButton( us_tr( "Help" ), this );
    pb_help->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
@@ -347,6 +464,17 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::setupGUI()
    hbl_movie->addWidget( pb_movie_end );
    hbl_movie->addWidget( lbl_movie_state, 1 );
 
+   QHBoxLayout * hbl_range = new QHBoxLayout; hbl_range->setContentsMargins( 4, 0, 4, 0 ); hbl_range->setSpacing( 4 );
+   hbl_range->addWidget( lbl_q_from );
+   hbl_range->addWidget( le_movie_q_from );
+   hbl_range->addWidget( lbl_q_to );
+   hbl_range->addWidget( le_movie_q_to );
+   hbl_range->addWidget( lbl_every );
+   hbl_range->addWidget( sb_movie_every );
+   hbl_range->addWidget( lbl_every2 );
+   hbl_range->addSpacing( 8 );
+   hbl_range->addWidget( lbl_movie_range_info, 1 );
+
    QHBoxLayout * hbl_frames = new QHBoxLayout; hbl_frames->setContentsMargins( 4, 0, 4, 0 ); hbl_frames->setSpacing( 4 );
    hbl_frames->addWidget( cb_save_frames );
    hbl_frames->addWidget( le_save_prefix, 1 );
@@ -354,6 +482,14 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::setupGUI()
    hbl_frames->addWidget( rb_save_jpeg );
    hbl_frames->addWidget( rb_save_bmp );
    hbl_frames->addWidget( cb_save_overwrite );
+
+   QHBoxLayout * hbl_make = new QHBoxLayout; hbl_make->setContentsMargins( 4, 0, 4, 0 ); hbl_make->setSpacing( 4 );
+   hbl_make->addWidget( pb_make_movie );
+   hbl_make->addWidget( lbl_fps );
+   hbl_make->addWidget( sb_movie_fps );
+   hbl_make->addSpacing( 8 );
+   hbl_make->addWidget( cb_remove_frames );
+   hbl_make->addStretch( 1 );
 
    QHBoxLayout * hbl_bottom = new QHBoxLayout; hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addWidget( pb_help );
@@ -367,10 +503,12 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::setupGUI()
    background->addLayout( hbl_wheel );
    background->addWidget( lbl_results );
    background->addLayout( hbl_movie );
+   background->addLayout( hbl_range );
    background->addLayout( hbl_frames );
+   background->addLayout( hbl_make );
    background->addLayout( hbl_bottom );
 
-   set_save_frames();
+   update_range_info();
 }
 
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::clear_plot_items()
@@ -701,20 +839,32 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::update_plot()
    after_redraw();
 }
 
-// after every redraw: the movie position, and the frame when frames are being saved
+// after every redraw: the frame when frames are being saved, and the movie position
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::after_redraw()
 {
-   update_movie_state();
    if ( cb_save_frames->isChecked() && !save_frame() )
    {
       movie_stop();
       cb_save_frames->setChecked( false );
       set_save_frames();
    }
+   update_movie_state();
 }
 
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::update_movie_state()
 {
+   if ( ffmpeg_proc->state() != QProcess::NotRunning )
+   {
+      lbl_movie_state->setText( QString( us_tr( "Encoding the movie from %1 frame(s) ..." ) ).arg( movie_frames.size() ) );
+      return;
+   }
+   if ( making_movie )
+   {
+      int first, last, step;
+      int n = movie_range( first, last, step ) ? ( last - first ) / step + 1 : 0;
+      lbl_movie_state->setText( QString( us_tr( "Making the movie: frame %1 of %2" ) ).arg( movie_frames.size() ).arg( n ) );
+      return;
+   }
    lbl_movie_state->setText( QString( us_tr( "%1: %2 of %3   (%4 ms per frame)" ) )
                              .arg( movie_timer->isActive() ? us_tr( "Running" ) : us_tr( "Stopped" ) )
                              .arg( reg_q.size() ? cur_index + 1 : 0 )
@@ -722,14 +872,88 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::update_movie_state()
                              .arg( movie_timer_ms ) );
 }
 
+// the q points of the movie: the first at or above "q from", then every n-th point up to "to"
+// (the fields show q to 6 digits, so a q within that rounding of the typed value counts);
+// false when the fields are not numbers or no q point is in the range
+bool US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::movie_range( int & first, int & last, int & step )
+{
+   first = 0;
+   last  = (int) reg_q.size() - 1;
+   step  = qMax( 1, sb_movie_every->value() );
+   if ( !reg_q.size() )
+   {
+      return false;
+   }
+   bool ok_from;
+   bool ok_to;
+   double q_from = le_movie_q_from->text().trimmed().toDouble( &ok_from );
+   double q_to   = le_movie_q_to  ->text().trimmed().toDouble( &ok_to );
+   if ( !ok_from || !ok_to )
+   {
+      return false;
+   }
+   double tol_from = 1e-5 * qAbs( q_from );
+   double tol_to   = 1e-5 * qAbs( q_to );
+   int f = -1;
+   int l = -1;
+   for ( int i = 0; i < (int) reg_q.size(); i++ )
+   {
+      if ( f < 0 && reg_q[ i ] >= q_from - tol_from )
+      {
+         f = i;
+      }
+      if ( reg_q[ i ] <= q_to + tol_to )
+      {
+         l = i;
+      }
+   }
+   if ( f < 0 || l < f )
+   {
+      return false;
+   }
+   first = f;
+   last  = f + ( ( l - f ) / step ) * step;
+   return true;
+}
+
+// the movie's next q index after i (the range's first if i is before it); -1 at the end of the range
+int US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::movie_next( int i )
+{
+   int first, last, step;
+   if ( !movie_range( first, last, step ) )
+   {
+      return -1;
+   }
+   if ( i < first )
+   {
+      return first;
+   }
+   int n = first + ( ( i - first ) / step + 1 ) * step;
+   return n <= last ? n : -1;
+}
+
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::update_range_info()
+{
+   int first, last, step;
+   if ( !movie_range( first, last, step ) )
+   {
+      lbl_movie_range_info->setText( us_tr( "no q point in this range" ) );
+      return;
+   }
+   lbl_movie_range_info->setText( QString( us_tr( "%1 frame(s): q points %2 to %3" ) )
+                                  .arg( ( last - first ) / step + 1 ).arg( first + 1 ).arg( last + 1 ) );
+}
+
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::movie_front()
 {
-   set_index( 0 );
+   int first, last, step;
+   set_index( movie_range( first, last, step ) ? first : 0 );
 }
 
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::movie_end()
 {
-   set_index( (int) reg_q.size() - 1 );
+   int first, last, step;
+   set_index( movie_range( first, last, step ) ? last : (int) reg_q.size() - 1 );
 }
 
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::movie_slower()
@@ -752,9 +976,17 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::movie_faster()
    update_movie_state();
 }
 
-// start / stop; starting on the last q restarts from the first
+// start / stop the movie over the q range: from the current point if it is in the range (from the
+// range's start if it is outside it or at its end); for Make movie always from the start, with no
+// pause between frames. While Make movie is encoding, || stops ffmpeg.
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::movie_start()
 {
+   if ( ffmpeg_proc->state() != QProcess::NotRunning )
+   {
+      encode_cancelled = true;
+      ffmpeg_proc->kill();                       // encode_done reports it
+      return;
+   }
    if ( movie_timer->isActive() )
    {
       movie_stop();
@@ -764,15 +996,25 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::movie_start()
    {
       return;
    }
-   movie_timer->start( movie_timer_ms );
-   pb_movie_start->setText( "||" );
-   if ( cur_index >= (int) reg_q.size() - 1 )
+   int first, last, step;
+   if ( !movie_range( first, last, step ) )
    {
-      set_index( 0 );                            // saves the frame, if saving
+      lbl_movie_state->setText( us_tr( "No q point is in the movie range" ) );
+      return;
+   }
+   movie_timer->start( making_movie ? 0 : movie_timer_ms );
+   pb_movie_start->setText( "||" );
+   if ( making_movie || cur_index < first || cur_index >= last )
+   {
+      set_index( first );                        // saves the frame, if saving
+   }
+   else if ( ( cur_index - first ) % step == 0 )
+   {
+      after_redraw();                            // the frame already shown
    }
    else
    {
-      after_redraw();                            // the frame already shown
+      set_index( movie_next( cur_index ) );
    }
 }
 
@@ -783,18 +1025,32 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::movie_stop()
       movie_timer->stop();
    }
    pb_movie_start->setText( "[]" );
+   bool was_making = making_movie;
+   making_movie = false;
    update_movie_state();
    report_frames();
+   if ( was_making )
+   {
+      end_make( false, us_tr( "Make movie stopped before the end of the q range: no movie was made; the frames saved are kept" ) );
+   }
 }
 
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::movie_tick()
 {
-   if ( cur_index < (int) reg_q.size() - 1 )
+   int i = movie_next( cur_index );
+   if ( i >= 0 )
    {
-      set_index( cur_index + 1 );
+      set_index( i );
       return;
    }
-   // reached the last q: stop, and turn saving off so later stepping does not add or replace frames
+   // end of the range
+   if ( making_movie )
+   {
+      movie_timer->stop();
+      start_encode();
+      return;
+   }
+   // stop, and turn saving off so later stepping does not add or replace frames
    movie_stop();
    cb_save_frames->setChecked( false );
    cb_save_overwrite->setChecked( false );
@@ -803,20 +1059,14 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::movie_tick()
 
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::set_save_frames()
 {
-   bool on = cb_save_frames->isChecked();
-   le_save_prefix   ->setEnabled( on );
-   rb_save_png      ->setEnabled( on );
-   rb_save_jpeg     ->setEnabled( on );
-   rb_save_bmp      ->setEnabled( on );
-   cb_save_overwrite->setEnabled( on );
-   if ( !on )
+   if ( !cb_save_frames->isChecked() )
    {
       report_frames();
    }
 }
 
-// <folder the input curves were loaded from>/<prefix>_frames (the SOMO saxs/tmp folder if none)
-QString US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::frames_dir()
+// the frame and movie file prefix (path separators and ':' made '_')
+QString US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::frames_prefix()
 {
    QString prefix = le_save_prefix->text().trimmed();
    prefix.replace( QRegularExpression( "[/\\\\:]" ), "_" );
@@ -824,23 +1074,31 @@ QString US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::frames_dir()
    {
       prefix = pending.base_name.isEmpty() ? QString( "extrap_c0" ) : pending.base_name;
    }
+   return prefix;
+}
+
+// the folder the input curves were loaded from (the SOMO saxs/tmp folder if none): the frames folder
+// and the movie go there
+QString US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::frames_base_dir()
+{
    US_Hydrodyn_Saxs * saxs = (US_Hydrodyn_Saxs *) saxs_window;
    US_Hydrodyn      * ush  = (US_Hydrodyn *) us_hydrodyn;
-   QString base_dir;
    if ( saxs && !saxs->our_saxs_options->path_load_saxs_curve.isEmpty()
         && QDir( saxs->our_saxs_options->path_load_saxs_curve ).exists() )
    {
-      base_dir = saxs->our_saxs_options->path_load_saxs_curve;
+      return saxs->our_saxs_options->path_load_saxs_curve;
    }
-   else if ( ush )
+   if ( ush )
    {
-      base_dir = ush->somo_dir + "/saxs/tmp";
+      return ush->somo_dir + "/saxs/tmp";
    }
-   else
-   {
-      base_dir = QDir::currentPath();
-   }
-   return base_dir + "/" + prefix + "_frames";
+   return QDir::currentPath();
+}
+
+// <folder the input curves were loaded from>/<prefix>_frames
+QString US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::frames_dir()
+{
+   return frames_base_dir() + "/" + frames_prefix() + "_frames";
 }
 
 // the plot with its results line below it, as <prefix>_<q point, 5 digits>.<format>
@@ -873,6 +1131,10 @@ bool US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::save_frame()
          n_frames_kept++;
          run_files.insert( fn );
       }
+      if ( making_movie && ( movie_frames.isEmpty() || movie_frames.last() != fn ) )
+      {
+         movie_frames << fn;
+      }
       return true;
    }
 
@@ -904,7 +1166,250 @@ bool US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::save_frame()
       n_frames_saved++;
       run_files.insert( fn );
    }
+   if ( making_movie && ( movie_frames.isEmpty() || movie_frames.last() != fn ) )
+   {
+      movie_frames << fn;
+   }
    return true;
+}
+
+// Make movie: save the frames of the q range (movie_tick then calls start_encode)
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::make_movie()
+{
+   if ( ffmpeg_exe.isEmpty() || making_movie || ffmpeg_proc->state() != QProcess::NotRunning )
+   {
+      return;
+   }
+   if ( movie_timer->isActive() )
+   {
+      movie_stop();
+   }
+   int first, last, step;
+   if ( !movie_range( first, last, step ) )
+   {
+      QMessageBox::warning( this, windowTitle(), us_tr( "No q point is in the movie range (q from / to); no movie was made." ) );
+      return;
+   }
+   movie_file = frames_base_dir() + "/" + frames_prefix() + ".mp4";
+   if ( QFile::exists( movie_file ) && !cb_save_overwrite->isChecked() )
+   {
+      QMessageBox::warning( this, windowTitle(),
+                            QString( us_tr( "The movie file %1 already exists.\n"
+                                            "Check Overwrite to replace it, or change the prefix." ) ).arg( movie_file ) );
+      return;
+   }
+   if ( cb_save_frames->isChecked() )
+   {
+      report_frames();                           // frames saved before, on their own log line
+   }
+   save_frames_before_make = cb_save_frames->isChecked();
+   movie_frames.clear();
+   encode_cancelled = false;
+   making_movie     = true;
+   cb_save_frames->setChecked( true );
+   set_making_controls( true );
+   movie_start();
+}
+
+// while Make movie runs only || (stop) is active
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::set_making_controls( bool making )
+{
+   QWidget * ws[] = { pb_prev, pb_next, qwtw_wheel, pb_movie_front, pb_movie_slower, pb_movie_faster, pb_movie_end,
+                      le_movie_q_from, le_movie_q_to, sb_movie_every, cb_save_frames, le_save_prefix,
+                      rb_save_png, rb_save_jpeg, rb_save_bmp, cb_save_overwrite, pb_csv, pb_discard, pb_keep };
+   for ( int k = 0; k < (int) ( sizeof( ws ) / sizeof( ws[ 0 ] ) ); k++ )
+   {
+      ws[ k ]->setEnabled( !making );
+   }
+   pb_make_movie   ->setEnabled( !making && !ffmpeg_exe.isEmpty() );
+   sb_movie_fps    ->setEnabled( !making && !ffmpeg_exe.isEmpty() );
+   cb_remove_frames->setEnabled( !making && !ffmpeg_exe.isEmpty() );
+}
+
+// the frames are saved: join them with ffmpeg into a temporary file next to the movie (renamed to
+// <prefix>.mp4 when ffmpeg succeeds, so a failed run leaves an existing movie as it was)
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::start_encode()
+{
+   report_frames();
+   if ( movie_frames.isEmpty() )
+   {
+      end_make( false, us_tr( "Make movie: no frame was saved, so no movie was made" ) );
+      return;
+   }
+   movie_frames_dir = QFileInfo( movie_frames.first() ).absolutePath();
+
+   // the movie's frame size is the first frame's, made even (H.264 needs even sizes); frames of
+   // another size (window resized, or kept from an earlier run) are scaled and padded to it
+   QSize sz = QImageReader( movie_frames.first() ).size();
+   if ( !sz.isValid() )
+   {
+      end_make( false, QString( us_tr( "Make movie: could not read the frame %1; no movie was made" ) ).arg( movie_frames.first() ) );
+      return;
+   }
+   int w = sz.width()  + ( sz.width()  % 2 );
+   int h = sz.height() + ( sz.height() % 2 );
+
+   // frames are numbered by q point, so every n-th point leaves gaps in the numbers: give ffmpeg
+   // the list of frames (its concat format, names relative to the list's folder)
+   movie_list_file = movie_frames_dir + "/" + frames_prefix() + "_movie.ffconcat";
+   {
+      QFile lf( movie_list_file );
+      if ( !lf.open( QIODevice::WriteOnly ) )      // "\n" line ends on every platform
+      {
+         end_make( false, QString( us_tr( "Make movie: could not write %1; no movie was made" ) ).arg( movie_list_file ) );
+         return;
+      }
+      QTextStream ts( &lf );
+      QString dur = QString::number( 1e0 / (double) sb_movie_fps->value(), 'g', 10 );
+      QString nm;
+      ts << "ffconcat version 1.0\n";
+      for ( int k = 0; k < (int) movie_frames.size(); k++ )
+      {
+         nm = QFileInfo( movie_frames[ k ] ).fileName();
+         nm.replace( "'", "'\\''" );
+         ts << "file '" << nm << "'\nduration " << dur << "\n";
+      }
+      // ffmpeg's concat reader ignores the last entry's duration: list the last frame once more
+      ts << "file '" << nm << "'\n";
+      lf.close();
+   }
+
+   // the encoder: H.264 if this ffmpeg has it, else MPEG-4 part 2 (built into every ffmpeg)
+   if ( ffmpeg_encoder.isEmpty() )
+   {
+      QProcess p;
+      p.start( ffmpeg_exe, QStringList() << "-hide_banner" << "-encoders" );
+      ffmpeg_encoder = "mpeg4";
+      if ( p.waitForFinished( 10000 )
+           && QString::fromLocal8Bit( p.readAllStandardOutput() ).contains( QRegularExpression( "\\slibx264\\s" ) ) )
+      {
+         ffmpeg_encoder = "libx264";
+      }
+   }
+
+   QString pad = "0x" + USglobal->global_colors.plot.name().mid( 1 );
+   QString vf  = QString( "fps=%1,scale=%2:%3:force_original_aspect_ratio=decrease,pad=%2:%3:(ow-iw)/2:(oh-ih)/2:color=%4" )
+      .arg( sb_movie_fps->value() ).arg( w ).arg( h ).arg( pad );
+   movie_tmp_file = movie_file + ".part";
+   QFile::remove( movie_tmp_file );
+
+   QStringList args;
+   args << "-hide_banner" << "-nostdin" << "-loglevel" << "error" << "-y"
+        << "-f" << "concat" << "-safe" << "0" << "-i" << movie_list_file
+        << "-vf" << vf
+        << "-c:v" << ffmpeg_encoder;
+   if ( ffmpeg_encoder == "libx264" )
+   {
+      args << "-crf" << "18";
+   }
+   else
+   {
+      args << "-q:v" << "2";
+   }
+   args << "-pix_fmt" << "yuv420p" << "-f" << "mp4" << movie_tmp_file;
+
+   ffmpeg_proc->setWorkingDirectory( movie_frames_dir );
+   ffmpeg_proc->start( ffmpeg_exe, args );
+   update_movie_state();
+}
+
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::encode_error( QProcess::ProcessError err )
+{
+   // a started ffmpeg that fails or is stopped reports through finished(); this is for one that never ran
+   if ( err != QProcess::FailedToStart )
+   {
+      return;
+   }
+   QFile::remove( movie_list_file );
+   end_make( false, QString( us_tr( "Make movie: could not run %1; no movie was made, the frames are kept in %2" ) )
+             .arg( ffmpeg_exe ).arg( movie_frames_dir ) );
+}
+
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::encode_done( int exit_code, QProcess::ExitStatus status )
+{
+   QString out = QString::fromLocal8Bit( ffmpeg_proc->readAll() ).trimmed();
+   QFile::remove( movie_list_file );
+   if ( encode_cancelled )
+   {
+      QFile::remove( movie_tmp_file );
+      end_make( false, QString( us_tr( "Make movie stopped while encoding: no movie was made; the frames are kept in %1" ) )
+                .arg( movie_frames_dir ) );
+      return;
+   }
+   if ( status != QProcess::NormalExit || exit_code != 0
+        || !QFile::exists( movie_tmp_file ) || QFileInfo( movie_tmp_file ).size() == 0 )
+   {
+      QFile::remove( movie_tmp_file );
+      QStringList lines = out.split( "\n" );
+      while ( lines.size() > 10 )
+      {
+         lines.removeFirst();
+      }
+      end_make( false, QString( us_tr( "Make movie: ffmpeg failed (exit code %1); no movie was made, the frames are kept in %2%3" ) )
+                .arg( exit_code ).arg( movie_frames_dir )
+                .arg( lines.join( "\n" ).trimmed().isEmpty() ? QString( "" ) : ":\n" + lines.join( "\n" ).trimmed() ) );
+      return;
+   }
+   if ( QFile::exists( movie_file ) && !QFile::remove( movie_file ) )
+   {
+      end_make( false, QString( us_tr( "Make movie: could not replace %1; the new movie is %2" ) ).arg( movie_file ).arg( movie_tmp_file ) );
+      return;
+   }
+   if ( !QFile::rename( movie_tmp_file, movie_file ) )
+   {
+      end_make( false, QString( us_tr( "Make movie: could not rename %1 to %2" ) ).arg( movie_tmp_file ).arg( movie_file ) );
+      return;
+   }
+   QString msg = QString( us_tr( "Fit viewer movie: made %1 from %2 frame(s) at %3 frames/s (%4)" ) )
+      .arg( movie_file ).arg( movie_frames.size() ).arg( sb_movie_fps->value() ).arg( ffmpeg_encoder );
+   if ( cb_remove_frames->isChecked() )
+   {
+      // only the frames the movie was made from; the folder only if that left it empty
+      int n_removed = 0;
+      for ( int k = 0; k < (int) movie_frames.size(); k++ )
+      {
+         if ( QFile::remove( movie_frames[ k ] ) )
+         {
+            n_removed++;
+         }
+      }
+      msg += QString( us_tr( "; removed its %1 frame file(s)" ) ).arg( n_removed );
+      if ( QDir().rmdir( movie_frames_dir ) )
+      {
+         msg += QString( us_tr( " and the folder %1" ) ).arg( movie_frames_dir );
+      }
+      else
+      {
+         msg += QString( us_tr( "; the folder %1 was kept, it holds other files" ) ).arg( movie_frames_dir );
+      }
+   }
+   else
+   {
+      msg += QString( us_tr( "; the frames are in %1" ) ).arg( movie_frames_dir );
+   }
+   end_make( true, msg );
+}
+
+// Make movie is over (made, failed or stopped): saving back as it was before, Overwrite off (as at the
+// end of the movie), the controls back, and one log line
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::end_make( bool ok, const QString & msg )
+{
+   making_movie = false;
+   if ( movie_timer->isActive() )
+   {
+      movie_timer->stop();
+   }
+   pb_movie_start->setText( "[]" );
+   set_making_controls( false );
+   cb_save_frames->setChecked( save_frames_before_make );
+   cb_save_overwrite->setChecked( false );
+   set_save_frames();
+   US_Hydrodyn_Saxs * saxs = (US_Hydrodyn_Saxs *) saxs_window;
+   if ( saxs )
+   {
+      saxs->editor_msg( ok ? "black" : "dark red", msg + "\n" );
+   }
+   update_movie_state();
 }
 
 // one log line per run of saved frames (on stop, when saving is turned off, and on close)
@@ -1170,6 +1675,12 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::keep()
 
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::closeEvent( QCloseEvent * e )
 {
+   if ( ffmpeg_proc->state() != QProcess::NotRunning )
+   {
+      encode_cancelled = true;
+      ffmpeg_proc->kill();
+      ffmpeg_proc->waitForFinished( 5000 );      // encode_done reports it
+   }
    movie_stop();
    {
       US_Hydrodyn * ush = (US_Hydrodyn *) us_hydrodyn;
@@ -1178,6 +1689,8 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::closeEvent( QCloseEvent * e )
          ush->gparams[ "extrap_c0_movie_timer_ms" ] = QString::number( movie_timer_ms );
          ush->gparams[ "extrap_c0_movie_format"   ] =
             rb_save_jpeg->isChecked() ? "jpeg" : rb_save_bmp->isChecked() ? "bmp" : "png";
+         ush->gparams[ "extrap_c0_movie_fps"           ] = QString::number( sb_movie_fps->value() );
+         ush->gparams[ "extrap_c0_movie_remove_frames" ] = cb_remove_frames->isChecked() ? "1" : "0";
       }
    }
    // closing the viewer keeps the curve; only Discard drops it

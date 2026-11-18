@@ -11,6 +11,8 @@
 #include <QCheckBox>
 #include <QLineEdit>
 #include <QRadioButton>
+#include <QSpinBox>
+#include <QProcess>
 #include <QTimer>
 #include <QSet>
 
@@ -51,8 +53,9 @@ struct US_Hydrodyn_Saxs_Extrap_C0_Pending
 // Pop-up viewer for the per-q linear regressions behind an extrapolation to zero
 // concentration. One q-value is shown at a time: the (concentration, y) data points
 // with error bars, the fitted line, and the c=0 intercept. A qwt wheel (plus
-// prev/next) scrolls through the q grid; the movie controls step through it on a
-// timer and can save every frame shown as an image.
+// prev/next) scrolls through the q grid; the movie controls step through a chosen q range
+// (every n-th point) on a timer, can save every frame shown as an image, and Make movie
+// joins the frames of the range into a video with an external ffmpeg.
 
 class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot : public QFrame
 {
@@ -150,6 +153,29 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot : public QFrame
       QString                         frames_dir_used;
       QSet < QString >                run_files;        // frame files met since the last report
 
+      // the q points the movie steps through: q from .. to, every n-th point
+      QLineEdit *                     le_movie_q_from;
+      QLineEdit *                     le_movie_q_to;
+      QSpinBox *                      sb_movie_every;
+      QLabel *                        lbl_movie_range_info;
+
+      // Make movie: save the frames of the range, then join them with ffmpeg into <prefix>.mp4
+      // next to the input curves
+      QPushButton *                   pb_make_movie;
+      QSpinBox *                      sb_movie_fps;
+      QCheckBox *                     cb_remove_frames;
+      QString                         ffmpeg_exe;       // empty => not found, Make movie disabled
+      QString                         ffmpeg_encoder;   // chosen on first use: libx264, else mpeg4
+      QProcess *                      ffmpeg_proc;
+      bool                            making_movie;     // saving the frames for Make movie
+      bool                            encode_cancelled; // ffmpeg stopped with || or by closing the window
+      bool                            save_frames_before_make;
+      QStringList                     movie_frames;     // frame files of the movie, in order
+      QString                         movie_file;
+      QString                         movie_tmp_file;
+      QString                         movie_list_file;
+      QString                         movie_frames_dir;
+
       mQwtPlot *                      plot;
       US_Plot *                       usp_plot;
       ScrollZoomer *                  plot_zoomer;
@@ -167,11 +193,18 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot : public QFrame
       void                            clear_plot_items();
       void                            fit_quality( int i, double & r2, double & chi2, double & red_chi2,
                                                    int & n_err, int & nparam );
+      QString                         frames_prefix();
+      QString                         frames_base_dir();
       QString                         frames_dir();
       bool                            save_frame();
       void                            movie_stop();
       void                            report_frames();
       void                            update_movie_state();
+      bool                            movie_range( int & first, int & last, int & step );
+      int                             movie_next( int i );
+      void                            set_making_controls( bool making );
+      void                            start_encode();
+      void                            end_make( bool ok, const QString & msg );
 
    private slots:
 
@@ -185,6 +218,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot : public QFrame
       void                            movie_end();
       void                            movie_tick();
       void                            set_save_frames();
+      void                            update_range_info();
+      void                            make_movie();
+      void                            encode_done( int, QProcess::ExitStatus );
+      void                            encode_error( QProcess::ProcessError );
       void                            help();
       void                            save_csv();
       void                            discard();
