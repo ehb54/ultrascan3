@@ -821,7 +821,7 @@ void US_ExperGuiGeneral::check_user_level()
 	     }
 	   
 	   QVector< US_Rotor::Lab > lablist;
-	   US_Rotor::readLabsDB( lablist, &db );
+	   US_Rotor::readLabsDB( lablist, &db, true );  // active operators only
 
 	   qDebug() << "check_user_level():  lablist.count() -- " << lablist.count();
 	   
