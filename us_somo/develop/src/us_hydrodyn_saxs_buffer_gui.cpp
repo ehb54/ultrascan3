@@ -27,12 +27,16 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    cb_lock_dir->setPalette( PALET_NORMAL );
    AUTFBACK( cb_lock_dir );
 
-   lbl_dir = new mQLabel( QDir::currentPath(), this );
-   lbl_dir->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   lbl_dir->setPalette( PALET_NORMAL );
-   AUTFBACK( lbl_dir );
-   lbl_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2));
-   connect( lbl_dir, SIGNAL(pressed()), SLOT( dir_pressed() ));
+   le_dir = new mQLineEdit( this );
+   le_dir->setFrame( false );
+   le_dir->setReadOnly( true );
+   le_dir->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_dir->setPalette( PALET_NORMAL );
+   AUTFBACK( le_dir );
+   le_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2));
+   connect( le_dir, &QLineEdit::textChanged, le_dir, &QWidget::setToolTip );
+   le_dir->setText( QDir::currentPath() );
+   connect( le_dir, SIGNAL(pressed()), SLOT( dir_pressed() ));
 
    pb_add_files = new QPushButton(us_tr("Add files"), this);
    pb_add_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -249,12 +253,16 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    AUTFBACK( lbl_created_files );
    lbl_created_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   lbl_created_dir = new mQLabel( QDir::currentPath(), this );
-   lbl_created_dir->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   lbl_created_dir->setPalette( PALET_NORMAL );
-   AUTFBACK( lbl_created_dir );
-   lbl_created_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2));
-   connect( lbl_created_dir, SIGNAL(pressed()), SLOT( created_dir_pressed() ));
+   le_created_dir = new mQLineEdit( this );
+   le_created_dir->setFrame( false );
+   le_created_dir->setReadOnly( true );
+   le_created_dir->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_created_dir->setPalette( PALET_NORMAL );
+   AUTFBACK( le_created_dir );
+   le_created_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2));
+   connect( le_created_dir, &QLineEdit::textChanged, le_created_dir, &QWidget::setToolTip );
+   le_created_dir->setText( QDir::currentPath() );
+   connect( le_created_dir, SIGNAL(pressed()), SLOT( created_dir_pressed() ));
 
    lb_created_files = new QListWidget( this );
    lb_created_files->setPalette( PALET_NORMAL );
@@ -926,7 +934,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
 
    QHBoxLayout * hbl_dir = new QHBoxLayout(); hbl_dir->setContentsMargins( 0, 0, 0, 0 ); hbl_dir->setSpacing( 0 );
    hbl_dir->addWidget( cb_lock_dir );
-   hbl_dir->addWidget( lbl_dir );
+   hbl_dir->addWidget( le_dir );
 
    QBoxLayout * vbl_files = new QVBoxLayout( 0 ); vbl_files->setContentsMargins( 0, 0, 0, 0 ); vbl_files->setSpacing( 0 );
    vbl_files->addWidget( lbl_files );
@@ -943,7 +951,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    vbl_files->addLayout( hbl_empty );
    vbl_files->addLayout( hbl_signal );
    vbl_files->addWidget( lbl_created_files );
-   vbl_files->addWidget( lbl_created_dir );
+   vbl_files->addWidget( le_created_dir );
    vbl_files->addWidget( lb_created_files );
    vbl_files->addWidget( lbl_selected_created );
    vbl_files->addLayout( hbl_created );

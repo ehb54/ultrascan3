@@ -90,8 +90,9 @@ closing the main window closes both.
 <h3>Loading data</h3>
 
 The upper left panel is labeled <b><i>Data files</i></b>. Above the list, the current working directory is
-shown; clicking on it opens a directory navigator. Checking the <b><i>Lock</i></b> checkbox next to it keeps
-that directory as the default instead of following whichever directory you last loaded from.
+shown; clicking on it opens a directory navigator. When the path is too long for the panel, its end is
+shown, and resting the mouse on it shows the whole path. Checking the <b><i>Lock</i></b> checkbox next to it
+keeps that directory as the default instead of following whichever directory you last loaded from.
 <p>
 
 <ul>
@@ -592,7 +593,7 @@ instance &mdash; keeps its state.
 Every curve created by the module &mdash; subtractions, divisions, joins, averages, normalizations and cropped
 copies &mdash; is added both to the <b><i>Data files</i></b> list, so it can be used as input to further
 operations, and to the <b><i>Produced Data</i></b> list below it. The directory to which produced curves will
-be written is shown above that list. It starts at the <b><i>SOMO</i></b> <i>saxs</i> directory and is then set
+be written is shown above that list, in the same way. It starts at the <b><i>SOMO</i></b> <i>saxs</i> directory and is then set
 to a subdirectory named <i>produced</i> under the directory you last loaded from, unless <b><i>Lock</i></b>
 is checked. Clicking on it opens a directory navigator, and the directory is created on the first save if it
 does not exist.
