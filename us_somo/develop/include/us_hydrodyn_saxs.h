@@ -20,6 +20,7 @@
 #include <qwt_wheel.h>
 #include <qtimer.h>
 #include <qmutex.h>
+#include <qsplitter.h>
 
 #include "qwt/scrollbar.h"
 #include "qwt/scrollzoomer.h"
@@ -338,6 +339,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void usp_config_plot_resid( const QPoint & );
       void           resid_zoomed( const QRect & );
       void           resid_resized();
+      void           qs_plots_moved();
 
    public:
       // --- gui_script entry points (see the "sas" command in us_hydrodyn_script.cpp) ---
@@ -527,6 +529,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QBoxLayout * qbl_plots;
       QBoxLayout * qbl_resid;
+      QSplitter  * qs_plots;
+      bool         qs_plots_user_sized;
 
       void replot_pr();
 

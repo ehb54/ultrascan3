@@ -94,7 +94,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       QLabel        *lbl_files;
       QCheckBox     *cb_lock_dir;
-      mQLabel       *lbl_dir;
+      mQLineEdit    *le_dir;
       QPushButton   *pb_add_files;
       QPushButton   *pb_similar_files;
       QPushButton   *pb_conc;
@@ -143,7 +143,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QCheckBox     *cb_multi_sub_conc_avg;
 
       QLabel        *lbl_created_files;
-      mQLabel       *lbl_created_dir;
+      mQLineEdit    *le_created_dir;
       QListWidget      *lb_created_files;
       QLabel        *lbl_selected_created;
 
