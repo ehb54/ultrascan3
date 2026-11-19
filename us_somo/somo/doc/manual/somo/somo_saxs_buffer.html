@@ -244,14 +244,20 @@ the <a href="#Conc">Concentrations</a> table or, when that is blank, the <i>Conc
 theoretical value, which is then shown next to the revised one. Any stated value can be changed the same
 way. Each curve's intensity is fitted over the chosen <i>q</i> range as
 <i>ratio</i> &times; <i>reference</i> + <i>offset</i>, the curve being interpolated onto the reference's
-<i>q</i> points. With standard deviations on both curves each point is weighted by
-1/(&sigma;<sub>curve</sub><sup>2</sup> + <i>ratio</i><sup>2</sup> &sigma;<sub>reference</sub><sup>2</sup>).
+<i>q</i> points. With standard deviations on both curves, the line is fitted with the errors of both taken
+into account (York <i>et al.</i>, <i>Am. J. Phys.</i> <b>72</b>, 367 (2004)), each point weighted by
+1/(&sigma;<sub>curve</sub><sup>2</sup> + <i>ratio</i><sup>2</sup> &sigma;<sub>reference</sub><sup>2</sup>):
+a noisy reference, such as a dilute curve, does not bias the ratios, and fitting the reference to a curve
+gives the inverse of fitting the curve to the reference.
 The table gives the ratio with its standard error (enlarged by the square root of the reduced
 &chi;<sup>2</sup> when that is above 1), the revised concentration (<i>ratio</i> &times; the reference's
 concentration) and its difference from the stated one, the offset and the reduced &chi;<sup>2</sup>.
 <ul>
 <li><b><i>Reference</i></b>: the curve whose concentration is taken as correct; by default the most
-concentrated, as at least the highest concentration of a dilution series has to be assumed correct.<p>
+concentrated. The intensities fix only the ratios between the curves: all the revised concentrations, and
+so any molecular weight computed from them, scale with the reference's concentration. Choose the curve whose
+concentration is best known (e.g. measured by UV absorbance); any curve of the series can be the
+reference.<p>
 <li><b><i>Fit over q from ... to</i></b>: by default from 0.15 A<sup>-1</sup> (or the upper half of the
 common <i>q</i> range when it ends below 0.2 A<sup>-1</sup>) to the end of the <i>q</i> range all the curves
 cover. Choose a range where interactions play no role and the curves are above the noise.<p>
@@ -761,7 +767,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on November 18, 2026
+Last modified on November 19, 2026
 </font>
 </body>
 </html>
