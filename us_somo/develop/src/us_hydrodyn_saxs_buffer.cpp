@@ -150,8 +150,8 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
       }
    }
    
-   // lbl_dir        ->setMaximumWidth( lb_files->width() - cb_lock_dir->width() );
-   // lbl_created_dir->setMaximumWidth( lb_files->width() );
+   // le_dir        ->setMaximumWidth( lb_files->width() - cb_lock_dir->width() );
+   // le_created_dir->setMaximumWidth( lb_files->width() );
 
    // int left_over = ( csv_width / 3 ) - pb_regex_load->maximumWidth();
    // le_regex->setMaximumWidth( left_over / 3 );
@@ -1587,7 +1587,7 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
 
    if ( cb_lock_dir->isChecked() )
    {
-      QDir::setCurrent( lbl_dir->text() );
+      QDir::setCurrent( le_dir->text() );
    }
 
    QString use_dir = QDir::currentPath();
@@ -1603,7 +1603,7 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
    // {
    if ( cb_lock_dir->isChecked() )
    {
-      ((US_Hydrodyn  *)us_hydrodyn)->add_to_directory_history( lbl_dir->text() );
+      ((US_Hydrodyn  *)us_hydrodyn)->add_to_directory_history( le_dir->text() );
    }
    ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    raise();
@@ -1626,8 +1626,8 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
       if ( !cb_lock_dir->isChecked() )
       {
          QDir::setCurrent( last_load_dir );
-         lbl_dir        ->setText( QDir::currentPath() );
-         lbl_created_dir->setText( QDir::currentPath() + "/produced" ); 
+         le_dir        ->setText( QDir::currentPath() );
+         le_created_dir->setText( QDir::currentPath() + "/produced" ); 
       }
       editor_msg( "black", QString( us_tr( "loaded from %1:" ) ).arg( last_load_dir ) );
    }
@@ -1793,8 +1793,8 @@ void US_Hydrodyn_Saxs_Buffer::add_files( QStringList filenames )
       if ( !cb_lock_dir->isChecked() )
       {
          QDir::setCurrent( last_load_dir );
-         lbl_dir        ->setText( QDir::currentPath() );
-         lbl_created_dir->setText( QDir::currentPath() + "/produced" ); 
+         le_dir        ->setText( QDir::currentPath() );
+         le_created_dir->setText( QDir::currentPath() + "/produced" ); 
       }
       editor_msg( "black", QString( us_tr( "loaded from %1:" ) ).arg( last_load_dir ) );
    }
@@ -2961,22 +2961,22 @@ bool US_Hydrodyn_Saxs_Buffer::save_files_csv( QStringList files )
    }
 
    {
-      QDir dir1( lbl_created_dir->text() );
+      QDir dir1( le_created_dir->text() );
       if ( !dir1.exists() )
       {
-         if ( dir1.mkdir( lbl_created_dir->text() ) )
+         if ( dir1.mkdir( le_created_dir->text() ) )
          {
-            editor_msg( "black", QString( us_tr( "Created directory %1" ) ).arg( lbl_created_dir->text() ) );
+            editor_msg( "black", QString( us_tr( "Created directory %1" ) ).arg( le_created_dir->text() ) );
          } else {
-            editor_msg( "red", QString( us_tr( "Error: Can not create directory %1 Check permissions." ) ).arg( lbl_created_dir->text() ) );
+            editor_msg( "red", QString( us_tr( "Error: Can not create directory %1 Check permissions." ) ).arg( le_created_dir->text() ) );
             return false;
          }
       }
    }         
 
-   if ( !QDir::setCurrent( lbl_created_dir->text() ) )
+   if ( !QDir::setCurrent( le_created_dir->text() ) )
    {
-      editor_msg( "red", QString( us_tr( "Error: can not set directory %1" ) ).arg( lbl_created_dir->text() ) );
+      editor_msg( "red", QString( us_tr( "Error: can not set directory %1" ) ).arg( le_created_dir->text() ) );
       return false;
    }
 
@@ -3174,22 +3174,22 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file, bool &cancel, bool &overw
    } 
 
    {
-      QDir dir1( lbl_created_dir->text() );
+      QDir dir1( le_created_dir->text() );
       if ( !dir1.exists() )
       {
-         if ( dir1.mkdir( lbl_created_dir->text() ) )
+         if ( dir1.mkdir( le_created_dir->text() ) )
          {
-            editor_msg( "black", QString( us_tr( "Created directory %1" ) ).arg( lbl_created_dir->text() ) );
+            editor_msg( "black", QString( us_tr( "Created directory %1" ) ).arg( le_created_dir->text() ) );
          } else {
-            editor_msg( "red", QString( us_tr( "Error: Can not create directory %1 Check permissions." ) ).arg( lbl_created_dir->text() ) );
+            editor_msg( "red", QString( us_tr( "Error: Can not create directory %1 Check permissions." ) ).arg( le_created_dir->text() ) );
             return false;
          }
       }
    }         
 
-   if ( !QDir::setCurrent( lbl_created_dir->text() ) )
+   if ( !QDir::setCurrent( le_created_dir->text() ) )
    {
-      editor_msg( "red", QString( us_tr( "Error: can not set directory %1" ) ).arg( lbl_created_dir->text() ) );
+      editor_msg( "red", QString( us_tr( "Error: can not set directory %1" ) ).arg( le_created_dir->text() ) );
       return false;
    }
 
@@ -5623,7 +5623,7 @@ void US_Hydrodyn_Saxs_Buffer::similar_files()
    QDir::setCurrent( dir );
    if ( !cb_lock_dir->isChecked() )
    {
-      lbl_dir->setText( QDir::currentPath() );
+      le_dir->setText( QDir::currentPath() );
    }
    QDir qd;
    add_files( qd.entryList( QStringList() << "*" ).filter( QRegularExpression( match ) ) );
@@ -5631,12 +5631,12 @@ void US_Hydrodyn_Saxs_Buffer::similar_files()
 
 void US_Hydrodyn_Saxs_Buffer::regex_load()
 {
-   // make list of lbl_dir all files
+   // make list of le_dir all files
    // filter with regex for each # in list
-   QString dir     = lbl_dir->text();
+   QString dir     = le_dir->text();
 
    QDir::setCurrent( dir );
-   lbl_dir->setText( QDir::currentPath() );
+   le_dir->setText( QDir::currentPath() );
    QDir qd;
 
 
@@ -7471,27 +7471,27 @@ void US_Hydrodyn_Saxs_Buffer::push_back_color_if_ok( QColor bg, QColor set )
 
 void US_Hydrodyn_Saxs_Buffer::dir_pressed()
 {
-   QString use_dir = lbl_dir->text();
+   QString use_dir = le_dir->text();
    ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    QString s = QFileDialog::getExistingDirectory( this , us_tr( "Choose a new base directory" ) , use_dir , QFileDialog::ShowDirsOnly );
 
    if ( !s.isEmpty() )
    {
       QDir::setCurrent( s );
-      lbl_dir->setText(  QDir::currentPath() );
+      le_dir->setText(  QDir::currentPath() );
       ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( s );
    }
 }
 
 void US_Hydrodyn_Saxs_Buffer::created_dir_pressed()
 {
-   QString use_dir = lbl_dir->text();
+   QString use_dir = le_dir->text();
    ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    QString s = QFileDialog::getExistingDirectory( this , us_tr( "Choose a new base directory for saving files" ) , use_dir , QFileDialog::ShowDirsOnly );
 
    if ( !s.isEmpty() )
    {
-      lbl_created_dir->setText( s );
+      le_created_dir->setText( s );
       ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( s );
    }
 }

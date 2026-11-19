@@ -1551,7 +1551,7 @@ void US_Hydrodyn_Saxs::set_manual_guinier()
    } else {
       hide_widgets( manual_guinier_widgets );
    }
-   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_cb_manual_guinier" ] = cb_resid_sd->isChecked() ? "1" : "0"; 
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_cb_manual_guinier" ] = cb_manual_guinier->isChecked() ? "1" : "0"; 
 }
 
 void US_Hydrodyn_Saxs::set_resid_show()
@@ -1577,6 +1577,11 @@ void US_Hydrodyn_Saxs::set_resid_show()
       // qbl_plots->setStretchFactor( plot_saxs, 80 );
       // qbl_plots->setStretchFactor( qbl_resid, 20 );
       hide_widgets( resid_widgets, false );
+      if ( !qs_plots_user_sized )
+      {
+         // I(q) 80%, residuals 20%, until the user drags the divider
+         qs_plots->setSizes( QList < int >() << 8000 << 2000 );
+      }
       if ( !started_in_expert_mode ||
            plotted_q.size() != 1 )
       {
@@ -1813,9 +1818,6 @@ void US_Hydrodyn_Saxs::do_rescale_y() {
 
    US_Plot_Util::rescale( plot_info, plot_to_zoomer, true, true );
 
-   // try maxHeight ? - this works but rescaling is an issue
-
-   plot_resid->setMaximumHeight( (int) ( 0.2 * ( plot_resid->height() + plot_saxs->height() ) ) );
    // plot_resid->replot();
    emit plot_resid->resized();
 
@@ -1846,8 +1848,12 @@ void US_Hydrodyn_Saxs::do_rescale_y() {
 
 void US_Hydrodyn_Saxs::resid_resized() {
    // qDebug() << "resid_resized";
-   plot_resid->setMaximumHeight( (int) ( 0.2 * ( plot_resid->height() + plot_saxs->height() ) ) );
    plot_resid->replot();
+}
+
+void US_Hydrodyn_Saxs::qs_plots_moved() {
+   // the user has set the residuals plot's height, keep it
+   qs_plots_user_sized = true;
 }
 
 void US_Hydrodyn_Saxs::pr_replot() {

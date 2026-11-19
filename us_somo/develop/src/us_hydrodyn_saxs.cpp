@@ -2262,14 +2262,20 @@ void US_Hydrodyn_Saxs::setupGUI()
    gl_manual_guinier->setColumnStretch( 2, 2 );
    gl_manual_guinier->setColumnStretch( 3, 0 );
 
-   QBoxLayout * qbl_resid = new QVBoxLayout( 0 ); qbl_resid->setContentsMargins( 0, 0, 0, 0 ); qbl_resid->setSpacing( 0 );
-   qbl_resid->addWidget( plot_resid );
-   qbl_resid->addLayout( hbl_plot_resid_buttons );
-   qbl_resid->addLayout( gl_manual_guinier );
+   // the residuals plot's height can be changed by dragging the divider; it starts at 20% (set_resid_show())
+   qs_plots = new QSplitter( Qt::Vertical, this );
+   qs_plots->setChildrenCollapsible( false );
+   // a minimum below the QwtPlot's own (about 150 px), so that the residuals plot can start at 20% of a short window
+   plot_resid->setMinimumHeight( 80 );
+   qs_plots->addWidget( plot_saxs );
+   qs_plots->addWidget( plot_resid );
+   qs_plots_user_sized = false;
+   connect( qs_plots, SIGNAL( splitterMoved( int, int ) ), SLOT( qs_plots_moved() ) );
 
    qbl_plots = new QVBoxLayout(0); qbl_plots->setContentsMargins( 0, 0, 0, 0 ); qbl_plots->setSpacing( 0 );
-   qbl_plots->addWidget( plot_saxs );
-   qbl_plots->addLayout( qbl_resid );
+   qbl_plots->addWidget( qs_plots );
+   qbl_plots->addLayout( hbl_plot_resid_buttons );
+   qbl_plots->addLayout( gl_manual_guinier );
    qbl_plots->addWidget( plot_pr );
    qbl_plots->addWidget( lbl_core_progress );
    background->addLayout( qbl_plots , 0 , 2 , 1 + ( j ) - ( 0 ) , 1 + ( 2 ) - ( 2 ) );
@@ -5440,6 +5446,7 @@ void US_Hydrodyn_Saxs::clear_plot_saxs_data()
    plotted_guinier_b.clear( );
    plotted_guinier_x.clear( );
    plotted_guinier_y.clear( );
+   plotted_guinier_pts_removed.clear( );
    plotted_cs_guinier_valid.clear( );
    plotted_cs_guinier_plotted.clear( );
    plotted_cs_guinier_lowq2.clear( );
@@ -5448,6 +5455,7 @@ void US_Hydrodyn_Saxs::clear_plot_saxs_data()
    plotted_cs_guinier_b.clear( );
    plotted_cs_guinier_x.clear( );
    plotted_cs_guinier_y.clear( );
+   plotted_cs_guinier_pts_removed.clear( );
    plotted_Rt_guinier_valid.clear( );
    plotted_Rt_guinier_plotted.clear( );
    plotted_Rt_guinier_lowq2.clear( );
@@ -5456,6 +5464,7 @@ void US_Hydrodyn_Saxs::clear_plot_saxs_data()
    plotted_Rt_guinier_b.clear( );
    plotted_Rt_guinier_x.clear( );
    plotted_Rt_guinier_y.clear( );
+   plotted_Rt_guinier_pts_removed.clear( );
 
 #if QT_VERSION >= 0x040000
    saxs_legend_vis = false;
