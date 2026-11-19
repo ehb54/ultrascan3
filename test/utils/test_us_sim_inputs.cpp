@@ -8,11 +8,6 @@
 class US_SimInputsTest : public QtTestBase
 {
    protected:
-      void SetUp() override
-      {
-         QtTestBase::SetUp();
-      }
-
       US_SimulationParameters build( const US_SimInputs::Params& params )
       {
          US_SimulationParameters result;

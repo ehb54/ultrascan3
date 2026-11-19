@@ -105,6 +105,31 @@ US_Astfem_RSA::US_Astfem_RSA( US_Model&                model,
 //!< care for non-reacting systems and calculate_ra2 takes care for reacting systems.
 int US_Astfem_RSA::calculate( US_DataIO::RawData& exp_data )
 {
+   // Reject inconsistent composite input before a scan can silently retain
+   // zero signal because it belongs to no speed step.
+   const bool composite = !exp_data.scanData.isEmpty() &&
+                          std::any_of( exp_data.scanData.cbegin(),
+                                       exp_data.scanData.cend(),
+                                       [&]( const US_DataIO::Scan& scan ) { return scan.rpm != exp_data.scanData.first().rpm; } );
+   if ( composite )
+   {
+      for ( int index = 0; index < exp_data.scanCount(); index++ )
+      {
+         const double seconds = exp_data.scanData[index].seconds;
+         const bool   covered = std::any_of( simparams.speed_step.cbegin(),
+                                           simparams.speed_step.cend(),
+                                           [&]( const US_SimulationParameters::SpeedProfile& step )
+                                           { return seconds >= step.time_first && seconds <= step.time_last; } );
+         if ( !covered )
+         {
+            qWarning().noquote() << QString( "ASTFEM: scan %1 at %2 seconds lies outside every speed step; simulation refused" )
+                                       .arg( index )
+                                       .arg( seconds );
+            return -1;
+         }
+      }
+   }
+
    US_AstfemMath::MfemInitial* vC0 = NULL; // Initial concentration for multiple components
    US_AstfemMath::MfemInitial  CT0;        // Initial  concentration vector
    US_AstfemMath::MfemData     simdata;    // Contains scans on the simulation grid
@@ -370,6 +395,32 @@ DbgLv(1) << "RSA:calc: SSS:    tf tl wf wl" << time_first << time_last << w2t_fi
       }
    }
 DbgLv(1) << "RSA:calc: strch_rot" << strch_rot << "mspd_data" << mspd_data;
+
+// clang-format off
+   // A composite simulation contains scans from several speed steps. The
+   // generic interpolator tolerates a few scans beyond its simulated time
+   // range; for sparse multi-speed data those are scans of the NEXT step,
+   // and extrapolating into them adds invalid signal a second time.
+   auto interpolate_step =
+      [&]( US_AstfemMath::MfemData& data, US_AstfemMath::MfemData& simulated, const US_SimulationParameters::SpeedProfile& step )
+   {
+      if ( !mspd_data )
+      {
+         return US_AstfemMath::interpolate( data, simulated, use_time );
+      }
+
+      int first = 0;
+      while ( first < data.scan.size() && data.scan[first].time < step.time_first )
+      {
+         first++;
+      }
+      int last = first;
+      while ( last < data.scan.size() && data.scan[last].time <= step.time_last )
+      {
+         last++;
+      }
+      return first == last ? 0 : US_AstfemMath::interpolate( data, simulated, use_time, first, last );
+   };
 
    //----------------------------------------------------------------------------
    // For each component vector find the scans. "af_data" i.e. scans on the
@@ -689,7 +740,7 @@ totT4+=(clcSt4.msecsTo(clcSt5));
 
             if  ( in_step )
             {
-               US_AstfemMath::interpolate( af_data, simdata, use_time );
+               interpolate_step( af_data, simdata, *sp );
             }
 
             if ( !simout_flag )
@@ -722,6 +773,7 @@ DbgLv(1) << "RSA:emit ccomp: component" << cc+1;
       } // Non-interacting case
 
    } // Model Component loop
+   // clang-format on
 
 #ifdef TIMING_RA
 QDateTime clcSt6 = QDateTime::currentDateTime();
@@ -1069,7 +1121,7 @@ DbgLv(2) << "RSA:    current_time" << current_time << "fscan lscan"
          if ( ed->scan[ fscan ].time <= sp->time_last  &&
               ed->scan[ lscan ].time >= sp->time_first )
          {
-            US_AstfemMath::interpolate( *ed, simdata, use_time );
+            interpolate_step( *ed, simdata, *sp );
          }
 
          if ( !simout_flag )

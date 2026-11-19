@@ -27,16 +27,7 @@ TEST_NOINLINE static void dirtyStack()
    }
 }
 
-class US_AstfemMathTest : public QtTestBase {
-protected:
-    void SetUp() override {
-        QtTestBase::SetUp();
-    }
-
-    void TearDown() override {
-        QtTestBase::TearDown();
-    }
-};
+using US_AstfemMathTest = QtTestBase;
 
 // Test basic utility functions
 TEST_F(US_AstfemMathTest, MaxvalBasic) {

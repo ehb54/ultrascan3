@@ -2,14 +2,7 @@
 #include "qt_test_base.h"
 #include "us_hardware.h"
 
-class US_AbstractCenterpieceTest : public QtTestBase
-{
-   protected:
-      void SetUp() override
-      {
-         QtTestBase::SetUp();
-      }
-};
+using US_AbstractCenterpieceTest = QtTestBase;
 
 TEST_F( US_AbstractCenterpieceTest, ParseChannelAcceptsLetters )
 {
@@ -80,12 +73,8 @@ TEST_F( US_AbstractCenterpieceTest, ParseIndexAcceptsIndicesAndRejectsGarbage )
 
 TEST_F( US_AbstractCenterpieceTest, ValidateRejectsOutOfRangeIndices )
 {
-   // Skip if the centerpiece table is not reachable in this environment;
-   // validate() reports that case with its own message.
-   if ( US_AbstractCenterpiece::validate( 0, 0 ) == US_AbstractCenterpiece::noCenterpiecesMessage )
-   {
-      GTEST_SKIP() << "centerpiece definitions unavailable";
-   }
+   ASSERT_FALSE( US_AbstractCenterpiece::validate( 0, 0 ) == US_AbstractCenterpiece::noCenterpiecesMessage )
+      << "Required staged centerpiece definitions are missing";
 
    EXPECT_TRUE( US_AbstractCenterpiece::validate( 0, 0 ).isEmpty() );
    EXPECT_FALSE( US_AbstractCenterpiece::validate( -1, 0 ).isEmpty() );

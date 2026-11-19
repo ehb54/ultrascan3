@@ -23,26 +23,7 @@ US_Experiment::US_Experiment( void )
 // Function to see if the current runID already exists in the database
 int US_Experiment::checkRunID( IUS_DB2* db )
 {
-   if ( db == nullptr )
-   {
-      return IUS_DB2::NOT_CONNECTED;
-   }
-
-   // Let's see if we can find the run ID
-   expID = 0;
-   QStringList q( "get_experiment_info_by_runID" );
-   q << runID
-     << QString::number( US_Settings::us_inv_ID() );
-   db->query( q );
-   if ( db->lastErrno() == IUS_DB2::NOROWS )
-   {
-      return IUS_DB2::NOROWS;
-   }
-
-   // Ok, let's update the experiment ID
-   db->next();
-   expID = db->value( 1 ).toString().toInt();
-   return IUS_DB2::OK;
+   return checkRunID_auto( US_Settings::us_inv_ID(), db );
 }
 
 // Copy of checkRunID when invID propagated in autoflow
@@ -60,124 +41,24 @@ int US_Experiment::checkRunID_auto( int invID_passed, IUS_DB2* db )
      << QString::number( invID_passed );
    db->query( q );
    qDebug() << "checkRunID_auto(), query -- " << q;
-   if ( db->lastErrno() == IUS_DB2::NOROWS )
+   const int status = db->lastErrno();
+   if ( status != IUS_DB2::OK )
+   {
+      return status; // NOROWS: the run is not stored yet
+   }
+   if ( !db->next() )
    {
       return IUS_DB2::NOROWS;
    }
 
    // Ok, let's update the experiment ID
-   db->next();
    expID = db->value( 1 ).toString().toInt();
    return IUS_DB2::OK;
 }
 
 int US_Experiment::saveToDB( bool update, IUS_DB2* db, QVector<SP_SPEEDPROFILE>& speedsteps )
 {
-   if ( db == nullptr )
-   {
-      return IUS_DB2::NOT_CONNECTED;
-   }
-
-   // Let's see if the project is in the db already
-   int status = project.saveToDB( db );
-   if ( status == IUS_DB2::NO_PROJECT )
-   {
-      return status;
-   }
-   else if ( status != IUS_DB2::OK )
-   {
-      return status;
-   }
-
-   // Get the RI information, if appropriate
-   // Passed raw: the query layer escapes every argument.
-   QByteArray RIxml;
-   createRIXml( RIxml );
-
-   // Check for experiment runID in database
-   int saveStatus = 0;
-   QStringList q;
-   status = checkRunID( db );
-   if ( status == IUS_DB2::OK && !update )
-   {
-      // Then the runID exists already, and we're not updating
-      return IUS_DB2::DUPFIELD;
-   }
-
-   if ( status == IUS_DB2::OK )
-   {
-      // It's ok to update the existing experiment entry
-      q.clear();
-      q << "update_experiment" << QString::number( expID ) << QString( expGUID ) << QString::number( project.projectID ) << runID
-        << QString::number( labID ) << QString::number( instrumentID ) << QString::number( operatorID )
-        << QString::number( rotorID ) << QString::number( calibrationID ) << expType << opticalSystem << RIxml << runTemp << label
-        << comments << protocolGUID;
-
-      saveStatus = db->statusQuery( q );
-   }
-
-   else if ( status == IUS_DB2::NOROWS )
-   {
-      // Create new experiment entry
-      q.clear();
-      q  << "new_experiment"
-         << expGUID
-         << QString::number( project.projectID )
-         << runID
-         << QString::number( labID )
-         << QString::number( instrumentID )
-         << QString::number( operatorID )
-         << QString::number( rotorID )
-         << QString::number( calibrationID )
-         << expType
-         << opticalSystem
-         << RIxml
-         << runTemp
-         << label
-         << comments
-         << protocolGUID
-         << QString::number( US_Settings::us_inv_ID() );
-
-      saveStatus = db->statusQuery( q );
-      expID = db->lastInsertID();
-   }
-
-   if ( expID == 0 )      // double check
-   {
-      qDebug() << "Error saving experiment: " << saveStatus
-               << " " << db->lastError();
-      return saveStatus;
-   }
-
-   // Let's get some info after db update
-   QString idExp = QString::number( expID );
-   q.clear();
-   q << "get_experiment_info" << idExp;
-   db->query( q );
-   db->next();
-
-   date = db->value( 12 ).toString();
-
-   // If multispeed, add speed steps to the database
-   q.clear();
-   q << "delete_speedsteps" << idExp;   // Delete any records for experiment
-   saveStatus = db->statusQuery( q );
-   if ( saveStatus != 0 )
-   {
-      qDebug() << "Delete_SpeedSteps" << saveStatus << db->lastError();
-   }
-qDebug() << "Exp:svToDB: delss status" << saveStatus << db->lastError();
-
-qDebug() << "Exp:svToDB:  ss count" << speedsteps.count() << "expID" << expID;
-   for ( int jj = 0; jj < speedsteps.count(); jj++ )
-   {
-qDebug() << "Exp:svToDB:   jj" << jj << "expID" << expID;
-int ssstat=
-      US_SimulationParameters::speedstepToDB( db, expID, &speedsteps[ jj ] );
-qDebug() << "Exp:svToDB:     ssstat=" << ssstat;
-   }
-
-   return IUS_DB2::OK;
+   return saveToDB_auto( update, db, speedsteps, US_Settings::us_inv_ID() );
 }
 
 //Same as above but for AutoFlow with ExpData.invID set as owner
@@ -215,6 +96,11 @@ int US_Experiment::saveToDB_auto( bool update, IUS_DB2* db, QVector<SP_SPEEDPROF
       return IUS_DB2::DUPFIELD;
    }
 
+   if ( status != IUS_DB2::OK && status != IUS_DB2::NOROWS )
+   {
+      return status; // Cannot tell whether the run is stored
+   }
+
    if ( status == IUS_DB2::OK )
    {
       // It's ok to update the existing experiment entry
@@ -225,6 +111,10 @@ int US_Experiment::saveToDB_auto( bool update, IUS_DB2* db, QVector<SP_SPEEDPROF
         << comments << protocolGUID;
 
       saveStatus = db->statusQuery( q );
+      if ( saveStatus != IUS_DB2::OK )
+      {
+         return saveStatus;
+      }
    }
 
    else if ( status == IUS_DB2::NOROWS )
@@ -250,6 +140,10 @@ int US_Experiment::saveToDB_auto( bool update, IUS_DB2* db, QVector<SP_SPEEDPROF
          << QString::number( invID_passed ); //ALEXEY: passed invID, NOT the US_Settings ::us_inv_ID()
 
       saveStatus = db->statusQuery( q );
+      if ( saveStatus != IUS_DB2::OK )
+      {
+         return saveStatus;
+      }
       expID = db->lastInsertID();
    }
 
@@ -265,27 +159,35 @@ int US_Experiment::saveToDB_auto( bool update, IUS_DB2* db, QVector<SP_SPEEDPROF
    q.clear();
    q << "get_experiment_info" << idExp;
    db->query( q );
-   db->next();
+   status = db->lastErrno();
+   if ( status != IUS_DB2::OK || !db->next() )
+   {
+      return status != IUS_DB2::OK ? status : IUS_DB2::NO_EXPERIMENT;
+   }
 
    date = db->value( 12 ).toString();
 
    // If multispeed, add speed steps to the database
    q.clear();
    q << "delete_speedsteps" << idExp;   // Delete any records for experiment
+   // NOROWS: there were no speed steps to delete. Any other failure would
+   // leave the old steps beside the new ones.
    saveStatus = db->statusQuery( q );
-   if ( saveStatus != 0 )
+   if ( saveStatus != IUS_DB2::OK && saveStatus != IUS_DB2::NOROWS )
    {
-      qDebug() << "Delete_SpeedSteps" << saveStatus << db->lastError();
+      qDebug() << "Delete_SpeedSteps" << saveStatus;
+      return saveStatus;
    }
-qDebug() << "Exp:svToDB: delss status" << saveStatus << db->lastError();
 
 qDebug() << "Exp:svToDB:  ss count" << speedsteps.count() << "expID" << expID;
    for ( int jj = 0; jj < speedsteps.count(); jj++ )
    {
-qDebug() << "Exp:svToDB:   jj" << jj << "expID" << expID;
-int ssstat=
-      US_SimulationParameters::speedstepToDB( db, expID, &speedsteps[ jj ] );
-qDebug() << "Exp:svToDB:     ssstat=" << ssstat;
+      const int stepStatus = US_SimulationParameters::speedstepToDB( db, expID, &speedsteps[jj] );
+      qDebug() << "Exp:svToDB:   jj" << jj << "expID" << expID << "step status" << stepStatus;
+      if ( stepStatus != IUS_DB2::OK )
+      {
+         return stepStatus;
+      }
    }
 
    return IUS_DB2::OK;
@@ -311,7 +213,12 @@ int US_Experiment::readFromDB( QString runID, IUS_DB2* db, QVector<SP_SPEEDPROFI
    db->query( q );
 
    qDebug() << "US_Experiment::readFromDB: q -- " << q;
-   
+   const int queryStatus = db->lastErrno();
+   if ( queryStatus != IUS_DB2::OK )
+   {
+      return queryStatus == IUS_DB2::NOROWS ? IUS_DB2::NO_EXPERIMENT : queryStatus;
+   }
+
    QByteArray xmlFile;
 
    if ( db->next() )
@@ -337,13 +244,11 @@ int US_Experiment::readFromDB( QString runID, IUS_DB2* db, QVector<SP_SPEEDPROFI
 qDebug() << "Exp:rdDB: ExpInfRun: xmlFile size" << xmlFile.size();
    }
 
-   else if ( db->lastErrno() == IUS_DB2::NOROWS )
-   {
-      return IUS_DB2::NO_EXPERIMENT;
-   }
-
    else
-      return( db->lastErrno() );
+   {
+      const int rowStatus = db->lastErrno();
+      return rowStatus == IUS_DB2::OK || rowStatus == IUS_DB2::NOROWS ? IUS_DB2::NO_EXPERIMENT : rowStatus;
+   }
 
    // Get the rest of the info we need
    q.clear();
@@ -440,10 +345,9 @@ qDebug() << "Exp:rdDB: importRIxml status" << status;
 
       if ( status != US_Convert::OK )
       {
-         // This isn't exactly an error; data is read but we don't have an
-         // intensity profile
+         // The profile is optional. An empty RIProfile records its absence;
+         // reserve DBERROR for database failures and still load speed steps.
          RIProfile.clear();
-         return IUS_DB2::DBERROR;
       }
 
    }

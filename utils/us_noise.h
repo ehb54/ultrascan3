@@ -43,7 +43,10 @@ class US_UTIL_EXTERN US_Noise
       //!                  should be searched for the noise vector
       //! \param guid      The guid of the noise vector to be loaded
       //! \param db        For DB access, pointer to an open database connection
-      //! \returns         The \ref IUS_DB2 return code for the operation
+      //! \returns         The \ref IUS_DB2 return code for the operation:
+      //!                  NOT_CONNECTED for a null DB, NOROWS when no noise
+      //!                  matches, DBERROR for truncated or malformed XML. A
+      //!                  failed DB load leaves the noise unchanged.
       int load( bool, const QString&, IUS_DB2* = 0 );
 
       //! An overloaded function to read a noise vector from a database
@@ -74,8 +77,11 @@ class US_UTIL_EXTERN US_Noise
       int write( bool, const QString&, IUS_DB2* = 0 );
 
       //! An overloaded function to write a noise vector to the DB
-      //! \param db        A pointer to an open database connection 
-      //! \returns         The \ref US_DB2 return code for the operation
+      //! \param db        A pointer to an open database connection
+      //! \returns         The \ref US_DB2 return code for the operation:
+      //!                  NOT_CONNECTED for a null DB, NO_MODEL when the
+      //!                  noise's model is not stored, or the failed lookup's
+      //!                  or write's status. A failed lookup writes nothing.
       int write( IUS_DB2* );
 
       //! An overloaded function to write a noise vector to a file on disk
