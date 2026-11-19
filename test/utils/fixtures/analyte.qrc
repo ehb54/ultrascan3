@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/test/analyte">
+    <file alias="netrin1.xml">analyte/netrin1.xml</file>
+    <file alias="dna-208bp.xml">analyte/dna-208bp.xml</file>
+  </qresource>
+</RCC>

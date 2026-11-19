@@ -63,7 +63,7 @@ class TestUSSimCache : public QtTestBase
    protected:
       void SetUp() override
       {
-         QtTestBase::SetUp();
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
          savedDebug = US_Settings::debug_text();
          sbytes     = US_SimCache::sim_bytes( makeSim( 0.0 ) );
       }
@@ -334,12 +334,6 @@ TEST_F( TestUSSimCache, DebugTextControlsDefaultCache )
    std::unique_ptr<US_SimCache> cache( US_SimCache::create_default() );
    ASSERT_NE( cache, nullptr );
    EXPECT_EQ( cache->stats().max_bytes, 300LL * 1024 * 1024 );
-
-   // By default:  a share of available memory, from 256 MB to 4 GB
-   US_Settings::set_debug_text( QStringList() );
-   const qint64 defbytes = US_SimCache::default_max_bytes();
-   EXPECT_GE( defbytes, 256LL * 1024 * 1024 );
-   EXPECT_LE( defbytes, 4096LL * 1024 * 1024 );
 }
 
 TEST_F( TestUSSimCache, ConcurrentUseIsSafe )

@@ -350,7 +350,16 @@ qDebug() << "SAVE:     (2)cmodel_name" << cmodel_name;
    {
       US_Passwd pw;
       US_DB2 db( pw.getPasswd() );
-      cmodel.write( &db );
+      const bool    connected = ( db.lastErrno() == US_DB2::OK );
+      const QString dberror   = db.lastError();
+      // Without a connection, write() saves only the local copy.
+      if ( cmodel.write( connected ? &db : nullptr ) != IUS_DB2::OK )
+      {
+         QMessageBox::warning(
+            this,
+            tr( "Model Not Saved to the Database" ),
+            tr( "The combined model \"%1\" %2.\n%3" ).arg( cmodel_name, cmodel.message, connected ? db.lastError() : dberror ) );
+      }
 qDebug() << "SAVE:      DB";
    }
 

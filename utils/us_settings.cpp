@@ -178,7 +178,9 @@ void US_Settings::set_UltraScanPW( const QByteArray& hash )
 double US_Settings::tempTolerance( void )
 {
   US_SettingsStore settings;
-  return settings.value( "tempTolerance", 0.5 ).toDouble(); // No default
+  bool             ok    = false;
+  const double     value = settings.value( "tempTolerance", 0.5 ).toDouble( &ok );
+  return ok && qIsFinite( value ) && value >= 0.0 ? value : 0.5;
 }
 
 void US_Settings::set_tempTolerance( double tempTolerance )
@@ -246,6 +248,11 @@ void US_Settings::set_default_data_location( int location )
 void US_Settings::set_default_data_location_override( int location )
 {
    dataLocationOverride = location;
+}
+
+int US_Settings::default_data_location_override( void )
+{
+   return dataLocationOverride;
 }
 
 void US_Settings::clear_default_data_location_override( void )
@@ -403,7 +410,9 @@ void US_Settings::set_advanced_level( int level )
 int US_Settings::threads( void )
 {
   US_SettingsStore settings;
-  return settings.value( "threads", 1 ).toInt(); // No default
+  bool             ok    = false;
+  const int        value = settings.value( "threads", 1 ).toInt( &ok );
+  return ok && value > 0 ? value : 1;
 }
 
 void US_Settings::set_threads( int threads )
@@ -552,8 +561,13 @@ void US_Settings::set_DA_status( const QString& status )
 {
   US_SettingsStore settings;
 
-  QStringList status_list = status.split(":");
-  
+  const QStringList status_list = status.split( ":" );
+  // Ignore malformed updates; do not replace an existing valid state.
+  if ( status_list.size() != 2 || ( status_list[1] != "0" && status_list[1] != "1" ) )
+  {
+     return;
+  }
+
   if ( status_list[0] == "COM" ) 
     settings.setValue( "daComOpened", status_list[1] );
   if ( status_list[0] == "ACAD" ) 
@@ -601,5 +615,3 @@ QString US_Settings::status()
      break;
   }
 }
-     
-     

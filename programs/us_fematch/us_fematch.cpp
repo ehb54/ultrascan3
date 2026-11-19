@@ -726,6 +726,8 @@ DbgLv(1) << "Fem:Upd: (0)svbar" << svbar;
       viscosity   = bvisc.toDouble();
       compress    = bcomp.toDouble();
       manual      = ( !bmanu.isEmpty()  &&  bmanu == "1" );
+      int     solstat = IUS_DB2::OK;
+      QString solerr; // Used when the status alone does not say why the read failed
       if ( solID.isEmpty() )
       {
          QMessageBox::warning( this, tr( "Solution/Buffer Fetch" ),
@@ -734,12 +736,26 @@ DbgLv(1) << "Fem:Upd: (0)svbar" << svbar;
 
       else if ( solID.length() < 36  &&  dbP != NULL )
       {
-         solution_rec.readFromDB( solID.toInt(), dbP );
+         solstat = solution_rec.readFromDB( solID.toInt(), dbP );
+         solerr  = dbP->lastError();
       }
 
       else
       {
-         solution_rec.readFromDisk( solID );
+         solstat = solution_rec.readFromDisk( solID );
+         solerr  = tr( "the solution file could not be read" );
+      }
+
+      if ( solstat != IUS_DB2::OK )
+      { // The cleared solution has no analytes, so later vbar calculations use the default
+         QMessageBox::warning( this,
+                               tr( "Solution/Buffer Fetch" ),
+                               tr( "Solution %1 could not be read:\n%2\n"
+                                   "The default vbar, %3, is used." )
+                                  .arg( solID, US_Solution::readErrorText( solstat, solerr ) )
+                                  .arg( TYPICAL_VBAR ) );
+         solution_rec.commonVbar20 = TYPICAL_VBAR;
+         solution_rec.solutionDesc = tr( "( ***Undefined*** )" );
       }
 
       le_solution ->setText( solution_rec.solutionDesc );

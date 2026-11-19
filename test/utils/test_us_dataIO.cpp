@@ -10,69 +10,71 @@
 
 using namespace qt_matchers;
 
-class TestUSDataIOUnit : public QtTestBase {
-protected:
-    void SetUp() override {
-        QtTestBase::SetUp();
-        setupTestData();
-    }
+class TestUSDataIOUnit : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+         setupTestData();
+      }
 
-    void TearDown() override {
-        QtTestBase::TearDown();
-    }
 
-    void setupTestData() {
-        // Create test RawData
-        rawData.xvalues = {5.8, 5.9, 6.0, 6.1, 6.2, 6.3, 6.4, 6.5};
-        rawData.cell = 1;
-        rawData.channel = 'A';
-        rawData.description = "Test raw data";
+      void setupTestData()
+      {
+         // Create test RawData
+         rawData.xvalues     = { 5.8, 5.9, 6.0, 6.1, 6.2, 6.3, 6.4, 6.5 };
+         rawData.cell        = 1;
+         rawData.channel     = 'A';
+         rawData.description = "Test raw data";
 
-        // Create test scans
-        for (int i = 0; i < 3; i++) {
+         // Create test scans
+         for ( int i = 0; i < 3; i++ )
+         {
             US_DataIO::Scan scan;
             scan.temperature = 20.0 + i;
-            scan.rpm = 3000.0 + i * 100;
-            scan.seconds = i * 60;
-            scan.omega2t = i * 100.0;
-            scan.wavelength = 280.0;
-            scan.delta_r = 0.003;
-            scan.nz_stddev = true;
+            scan.rpm         = 3000.0 + i * 100;
+            scan.seconds     = i * 60;
+            scan.omega2t     = i * 100.0;
+            scan.wavelength  = 280.0;
+            scan.delta_r     = 0.003;
+            scan.nz_stddev   = true;
 
             // Add readings data
-            for (int j = 0; j < rawData.xvalues.size(); j++) {
-                scan.rvalues << 0.1 + i * 0.05 + j * 0.01;
-                scan.stddevs << 0.001 + j * 0.0001;
+            for ( int j = 0; j < rawData.xvalues.size(); j++ )
+            {
+               scan.rvalues << 0.1 + i * 0.05 + j * 0.01;
+               scan.stddevs << 0.001 + j * 0.0001;
             }
 
             // Initialize interpolated array
-            scan.interpolated = QByteArray(1, 0); // 8 bits for 8 readings
+            scan.interpolated = QByteArray( 1, 0 ); // 8 bits for 8 readings
 
             rawData.scanData << scan;
-        }
+         }
 
-        // Create test EditedData
-        editedData.runID = "test_run";
-        editedData.editID = "test_edit";
-        editedData.dataType = "RA";
-        editedData.cell = "1";
-        editedData.channel = "A";
-        editedData.wavelength = "280";
-        editedData.description = "Test edited data";
-        editedData.meniscus = 5.9;
-        editedData.bottom = 6.4;
-        editedData.plateau = 6.2;
-        editedData.baseline = 0.0;
-        editedData.ODlimit = 1.5;
-        editedData.floatingData = false;
+         // Create test EditedData
+         editedData.runID        = "test_run";
+         editedData.editID       = "test_edit";
+         editedData.dataType     = "RA";
+         editedData.cell         = "1";
+         editedData.channel      = "A";
+         editedData.wavelength   = "280";
+         editedData.description  = "Test edited data";
+         editedData.meniscus     = 5.9;
+         editedData.bottom       = 6.4;
+         editedData.plateau      = 6.2;
+         editedData.baseline     = 0.0;
+         editedData.ODlimit      = 1.5;
+         editedData.floatingData = false;
 
-        // Copy some data from rawData
-        editedData.xvalues = rawData.xvalues;
-        editedData.scanData = rawData.scanData;
-    }
+         // Copy some data from rawData
+         editedData.xvalues  = rawData.xvalues;
+         editedData.scanData = rawData.scanData;
+      }
 
-    US_DataIO::RawData rawData;
-    US_DataIO::EditedData editedData;
+      US_DataIO::RawData    rawData;
+      US_DataIO::EditedData editedData;
 };
 
 // ============================================================================
@@ -124,9 +126,10 @@ EXPECT_EQ(index, 7) << "Should return last index for value above range";
 }
 
 TEST_F(TestUSDataIOUnit, RawDataXindexClosestMatch) {
-// Test xindex with value between points (should return closest)
-int index = rawData.xindex(6.05);
-EXPECT_TRUE(index == 2 || index == 3) << "Should return closest index";
+   // Values between radii return the index of the nearer one.
+   EXPECT_EQ( rawData.xindex( 6.02 ), 2 );
+   EXPECT_EQ( rawData.xindex( 6.07 ), 3 );
+   EXPECT_EQ( rawData.xindex( 6.44 ), 6 );
 }
 
 TEST_F(TestUSDataIOUnit, RawDataRadius) {
@@ -352,17 +355,6 @@ int index = US_DataIO::index(xvals, 2.3);
 EXPECT_EQ(index, 1) << "Should return index of closest value";
 }
 
-TEST_F(TestUSDataIOUnit, StaticIndexEmptyVector) {
-// Test static index method with empty vector
-QVector<double> xvals;
-// This would likely cause undefined behavior, but test defensively
-// Note: This is an edge case that might crash, so we document the behavior
-
-// Since the method doesn't check for empty vectors, this is a boundary case
-// that highlights a potential improvement needed in the implementation
-SUCCEED() << "Empty vector test - implementation should handle this case";
-}
-
 TEST_F(TestUSDataIOUnit, StaticIndexSingleElement) {
 // Test static index method with single element
 QVector<double> xvals = {2.5};
@@ -475,10 +467,8 @@ TEST_F(TestUSDataIOUnit, TemperatureCalculationsEdgeCases) {
 US_DataIO::RawData edgeCaseData;
 
 // Test with zero scans
-double avgTemp = edgeCaseData.average_temperature();
-// This will likely cause division by zero - document this behavior
-// EXPECT_TRUE(std::isnan(avgTemp) || std::isinf(avgTemp))
-//     << "Should handle empty scan data gracefully";
+// The mean of no temperatures is undefined: 0/0.
+EXPECT_TRUE( std::isnan( edgeCaseData.average_temperature() ) );
 
 // Test with extreme temperature values
 US_DataIO::Scan extremeScan1, extremeScan2;
@@ -497,7 +487,7 @@ class TestUSDataIOEdits : public QtTestBase
    protected:
       void SetUp() override
       {
-         QtTestBase::SetUp();
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
          ASSERT_TRUE( tmp.isValid() ) << "Could not create a temporary directory";
       }
 

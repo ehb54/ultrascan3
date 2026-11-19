@@ -92,11 +92,17 @@ class US_UTIL_EXTERN US_Experiment
                            (maybe the user is updating a DB record)?
           \param    db For database access, an open database connection
           \param    speedsteps Reference to vector of experiment speed steps
+          \return   IUS_DB2::OK, DUPFIELD when the run exists and update is
+                    false, or the status of the first failed lookup or write
+                    (DBERROR for a failed speed step). Speed steps are only
+                    written after the old ones are deleted.
       */
       int saveToDB( bool, IUS_DB2*, QVector<SP_SPEEDPROFILE>& );
       int saveToDB_auto( bool, IUS_DB2*, QVector<SP_SPEEDPROFILE>&, int );
 
-      /*! \brief    Reads experiment information from the db
+      /*! \brief    Reads experiment information from the db.
+          A missing optional RI intensity profile leaves RIProfile empty and
+          does not prevent speed-step loading or turn success into DBERROR.
 
           \param runID  The run ID of the experiment.
           \param    db For database access, an open database connection

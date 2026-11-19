@@ -21,13 +21,15 @@
 
 #include <QMap>
 #include <QQueue>
+#include <QRegularExpression>
 #include <QStringList>
 
 using ::testing::_;
 using ::testing::An;
+using ::testing::AnyNumber;
 using ::testing::Invoke;
-using ::testing::NiceMock;
 using ::testing::Return;
+using ::testing::StrictMock;
 
 namespace
 {
@@ -35,7 +37,8 @@ namespace
 //
 // Rows are scripted per procedure so the writer's two listing loops and its
 // solution lookup behave; anything not scripted returns OK with no rows.
-class ScriptedDb : public NiceMock<US_DB2_Mock>
+// Calls outside the scripted methods fail the test.
+class ScriptedDb : public StrictMock<US_DB2_Mock>
 {
    public:
       ScriptedDb()
@@ -47,9 +50,18 @@ class ScriptedDb : public NiceMock<US_DB2_Mock>
          ON_CALL( *this, next() ).WillByDefault( Invoke( this, &ScriptedDb::onNext ) );
          ON_CALL( *this, value( _ ) ).WillByDefault( Invoke( this, &ScriptedDb::onValue ) );
          ON_CALL( *this, lastErrno() ).WillByDefault( Invoke( [this] { return errno_; } ) );
-         ON_CALL( *this, lastError() ).WillByDefault( Return( QString( "scripted failure" ) ) );
+         ON_CALL( *this, lastError() )
+            .WillByDefault( Invoke( [this] { return errno_ == IUS_DB2::OK ? QString() : QString( "scripted failure" ); } ) );
          ON_CALL( *this, lastInsertID() ).WillByDefault( Invoke( [this] { return insertID; } ) );
          ON_CALL( *this, writeBlobToDB( _, _, _ ) ).WillByDefault( Invoke( this, &ScriptedDb::onBlob ) );
+         EXPECT_CALL( *this, query( An<const QStringList&>() ) ).Times( AnyNumber() );
+         EXPECT_CALL( *this, statusQuery( An<const QStringList&>() ) ).Times( AnyNumber() );
+         EXPECT_CALL( *this, next() ).Times( AnyNumber() );
+         EXPECT_CALL( *this, value( _ ) ).Times( AnyNumber() );
+         EXPECT_CALL( *this, lastErrno() ).Times( AnyNumber() );
+         EXPECT_CALL( *this, lastError() ).Times( AnyNumber() );
+         EXPECT_CALL( *this, lastInsertID() ).Times( AnyNumber() );
+         EXPECT_CALL( *this, writeBlobToDB( _, _, _ ) ).Times( AnyNumber() );
       }
 
       //! Make one procedure fail; everything else keeps succeeding.
@@ -77,6 +89,7 @@ class ScriptedDb : public NiceMock<US_DB2_Mock>
          called << procedure;
          errno_ = scripted( procedure );
          pending.clear();
+         current.clear();
 
          if ( errno_ == IUS_DB2::OK )
          {
@@ -100,6 +113,7 @@ class ScriptedDb : public NiceMock<US_DB2_Mock>
       {
          if ( pending.isEmpty() )
          {
+            current.clear();
             return false;
          }
 
@@ -115,6 +129,7 @@ class ScriptedDb : public NiceMock<US_DB2_Mock>
       int onBlob( const QString&, const QString& procedure, const int )
       {
          blobs << procedure;
+         errno_ = blobStatus;
          return blobStatus;
       }
 
@@ -183,12 +198,37 @@ TEST_F( WriteRawDataInjectionTest, WritesARunAndDoesNotCleanUpAfterItself )
    const QString error = write();
 
    EXPECT_TRUE( error.isEmpty() ) << error.toStdString();
-   EXPECT_TRUE( db.called.contains( "new_rawData" ) );
+   // The cleanup only runs on failure, so a clean write never deletes the
+   // experiment it just populated.
+   EXPECT_EQ( db.called,
+              ( QStringList{ "get_edit_desc_by_runID",
+                             "get_mrecs_desc",
+                             "delete_rawData",
+                             "delete_experiment_solutions",
+                             "delete_cell_experiments",
+                             "get_solutionID_from_GUID",
+                             "new_rawData",
+                             "all_cell_experiments",
+                             "get_solutionIDs",
+                             "new_cell_experiment",
+                             "new_experiment_solution" } ) );
    EXPECT_EQ( db.blobs, QStringList{ "upload_aucData" } );
 
-   // The cleanup only runs on failure; a clean write must not delete the
-   // experiment it just populated.
-   EXPECT_FALSE( db.called.contains( "delete_experiment" ) );
+   for ( const QString& procedure : QStringList{ "delete_rawData", "delete_experiment_solutions", "delete_cell_experiments" } )
+   {
+      EXPECT_EQ( db.argsFor[procedure], ( QStringList{ procedure, "11" } ) );
+   }
+   EXPECT_EQ(
+      db.argsFor["new_rawData"],
+      ( QStringList{
+         "new_rawData", "66666666-7777-8888-9999-aaaaaaaaaaaa", "inject-run", "inject-run.RA.1.A.280.auc", "", "11", "7", "1" } ) );
+   const QStringList cell = db.argsFor["new_cell_experiment"];
+   ASSERT_EQ( cell.size(), 6 );
+   EXPECT_EQ( cell[0], QString( "new_cell_experiment" ) );
+   EXPECT_TRUE( QRegularExpression( "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$" ).match( cell[1] ).hasMatch() )
+      << cell[1].toStdString();
+   EXPECT_EQ( cell.mid( 2 ), ( QStringList{ "1", "1", "1", "11" } ) );
+   EXPECT_EQ( db.argsFor["new_experiment_solution"], ( QStringList{ "new_experiment_solution", "11", "7", "1" } ) );
 }
 
 TEST_F( WriteRawDataInjectionTest, StopsBeforeTheTriplesWhenTheRawDeleteFails )

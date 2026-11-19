@@ -6,16 +6,7 @@
 
 using namespace qt_matchers;
 
-class TestUSCrcUnit : public QtTestBase {
-protected:
-    void SetUp() override {
-        QtTestBase::SetUp();
-    }
-
-    void TearDown() override {
-        QtTestBase::TearDown();
-    }
-};
+using TestUSCrcUnit = QtTestBase;
 
 // Test the crc32 method with null buffer
 TEST_F(TestUSCrcUnit, Crc32NullBuffer) {

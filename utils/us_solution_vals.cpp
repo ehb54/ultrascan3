@@ -47,55 +47,55 @@ bool US_SolutionVals::solinfo_db( IUS_DB2* dbP, US_DataIO::EditedData* edata,
       QString& cvbar20, QString& soluID, QString& bufId, QString& bufGuid,
       QString& bufDesc, QString& errmsg )
 {
-   bool bufinfo = false;
-
    QStringList query;
    QString rawGUID  = edata->dataGUID;
 
    query << "get_rawDataID_from_GUID" << rawGUID;
    dbP->query( query );
 
-   if ( dbP->lastErrno() != IUS_DB2::OK )
+   if ( dbP->lastErrno() != IUS_DB2::OK || !dbP->next() )
    {
       errmsg += QObject::tr( "  Unable to get raw data ID from GUID " )
          + rawGUID + "\n" + dbP->lastError() + "\n";
-
-      return bufinfo;
+      return false;
    }
 
-   dbP->next();
-   QString rawID    = dbP->value( 0 ).toString();
    QString expID    = dbP->value( 1 ).toString();
-   soluID           = dbP->value( 2 ).toString();
+   QString solution = dbP->value( 2 ).toString();
 
    query.clear();
-   query << "get_solutionBuffer" << soluID;
+   query << "get_solutionBuffer" << solution;
    dbP->query( query );
-   
-   if ( dbP->lastErrno() != IUS_DB2::OK )
-   {
+
+   if ( dbP->lastErrno() != IUS_DB2::OK || !dbP->next() )
+   { // Fall back to the experiment's solution
       query.clear();
       query << "get_solutionIDs" << expID;
       dbP->query( query );
-      dbP->next();
-      soluID = dbP->value( 0 ).toString();
+
+      if ( dbP->lastErrno() != IUS_DB2::OK || !dbP->next() )
+      {
+         errmsg += QObject::tr( "Unable to get a solution for experiment ID " ) + expID + "\n" + dbP->lastError() + "\n";
+         return false;
+      }
+      solution = dbP->value( 0 ).toString();
 
       query.clear();
-      query << "get_solutionBuffer" << soluID;
+      query << "get_solutionBuffer" << solution;
       dbP->query( query );
 
-      if ( dbP->lastErrno() != IUS_DB2::OK )
+      if ( dbP->lastErrno() != IUS_DB2::OK || !dbP->next() )
       {
-         errmsg +=
-            QObject::tr( "Unable to get solutionBuffer from solution ID" )
-            + soluID + "\n" + dbP->lastError() + "\n";
+         errmsg += QObject::tr( "Unable to get solutionBuffer from solution ID" ) + solution + "\n" + dbP->lastError() + "\n";
+         return false;
       }
    }
 
-   dbP->next();
+   soluID           = solution;
    QString id       = dbP->value( 0 ).toString();
    QString guid     = dbP->value( 1 ).toString();
    QString desc     = dbP->value( 2 ).toString();
+   bool    bufinfo  = false;
 
    if ( ! id.isEmpty() )
    {
@@ -108,8 +108,8 @@ bool US_SolutionVals::solinfo_db( IUS_DB2* dbP, US_DataIO::EditedData* edata,
    query.clear();
    query << "get_solution" << soluID;
    dbP->query( query );
-   
-   if ( dbP->lastErrno() != IUS_DB2::OK )
+
+   if ( dbP->lastErrno() != IUS_DB2::OK || !dbP->next() )
    {
       errmsg +=
          QObject::tr( "Unable to get solution vbar from solution ID" )
@@ -117,7 +117,6 @@ bool US_SolutionVals::solinfo_db( IUS_DB2* dbP, US_DataIO::EditedData* edata,
    }
    else
    {
-      dbP->next();
       cvbar20 = dbP->value( 2 ).toString();
    }
 
@@ -250,43 +249,20 @@ bool US_SolutionVals::bufvals_db( IUS_DB2*dbP, QString& bufId,
    QString& bufGuid, QString& bufDesc, QString& density, QString& viscosity,
    QString& compress, QString& manual, QString& errmsg  )
 {
-   bool      bufvals = false;
-
    QStringList query;
 
-   if ( bufId.isEmpty()  &&  ! bufGuid.isEmpty() )
+   // Read one buffer's values; keep the inputs when its row is missing.
+   const auto  readBuffer = [&]( const QString& id )
    {
       query.clear();
-      query << "get_bufferID" << bufGuid;
+      query << "get_buffer_info" << id;
       dbP->query( query );
-      
-      if ( dbP->lastErrno() != IUS_DB2::OK )
+      if ( dbP->lastErrno() != IUS_DB2::OK || !dbP->next() )
       {
-         errmsg += QObject::tr( "Unable to get buffer ID from buffer GUID " )
-            + bufGuid + "\n" + dbP->lastError() + "\n";
-      }
-      else
-      {
-         dbP->next();
-         bufId = dbP->value( 0 ).toString();
-         bufId = bufId.isEmpty() ? "N/A" : bufId;
-      }
-   }
-
-   if ( ! bufId.isEmpty() )
-   {
-      query.clear();
-      query << "get_buffer_info" << bufId;
-      dbP->query( query );
-      if ( dbP->lastErrno() != IUS_DB2::OK )
-      {
-         errmsg +=
-            QObject::tr( "Unable to get buffer information from buffer ID " )
-            + bufId + "\n" + dbP->lastError() + "\n";
-         return bufvals;
+         errmsg += QObject::tr( "Unable to get buffer information from buffer ID " ) + id + "\n" + dbP->lastError() + "\n";
+         return false;
       }
 
-      dbP->next();
       QString ddesc = dbP->value( 1 ).toString();
       QString dcomp = dbP->value( 2 ).toString();
       QString dvisc = dbP->value( 4 ).toString();
@@ -297,64 +273,54 @@ bool US_SolutionVals::bufvals_db( IUS_DB2*dbP, QString& bufId,
       compress      = dcomp.isEmpty() ? compress  : dcomp;
       manual        = dmanu.isEmpty() ? manual    :
                       ddesc.contains( "  [M]" ) ? "1" : dmanu;
-      bufvals       = true;
-   }
-   else
+      return true;
+   };
+
+   if ( bufId.isEmpty() && !bufGuid.isEmpty() )
    {
-      QString invID  = QString::number( US_Settings::us_inv_ID() );
       query.clear();
-      query << "get_buffer_desc" << invID;
+      query << "get_bufferID" << bufGuid;
       dbP->query( query );
 
       if ( dbP->lastErrno() != IUS_DB2::OK )
       {
-         errmsg +=
-            QObject::tr( "Unable to get buffer description for investigator " )
-            + invID + "\n" + dbP->lastError() + "\n";
-         return bufvals;
+         errmsg += QObject::tr( "Unable to get buffer ID from buffer GUID " ) + bufGuid + "\n" + dbP->lastError() + "\n";
       }
-
-      while ( dbP->next() )
+      else
       {
-         QString desc = dbP->value( 1 ).toString();
-         
-         if ( desc == bufDesc )
-         {
-            bufId         = dbP->value( 0 ).toString();
-            break;
-         }
-      }
-
-      if ( ! bufId.isEmpty() )
-      {
-         query.clear();
-         query << "get_buffer_info" << bufId;
-         dbP->query( query );
-
-         if ( dbP->lastErrno() != IUS_DB2::OK )
-         {
-            errmsg +=
-               QObject::tr( "Unable to get buffer information for buffer ID " )
-               + bufId + "\n" + dbP->lastError() + "\n";
-            return bufvals;
-         }
-
-         dbP->next();
-         QString ddesc = dbP->value( 1 ).toString();
-         QString dcomp = dbP->value( 2 ).toString();
-         QString dvisc = dbP->value( 4 ).toString();
-         QString ddens = dbP->value( 5 ).toString();
-         QString dmanu = dbP->value( 6 ).toString();
-         density       = ddens.isEmpty() ? density   : ddens;
-         viscosity     = dvisc.isEmpty() ? viscosity : dvisc;
-         compress      = dcomp.isEmpty() ? compress  : dcomp;
-         manual        = dmanu.isEmpty() ? manual    :
-                         ddesc.contains( "  [M]" ) ? "1" : dmanu;
-         bufvals       = true;
+         bufId = dbP->next() ? dbP->value( 0 ).toString() : QString();
+         bufId = bufId.isEmpty() ? "N/A" : bufId;
       }
    }
 
-   return bufvals;
+   if ( !bufId.isEmpty() )
+   {
+      return readBuffer( bufId );
+   }
+
+   QString invID = QString::number( US_Settings::us_inv_ID() );
+   query.clear();
+   query << "get_buffer_desc" << invID;
+   dbP->query( query );
+
+   if ( dbP->lastErrno() != IUS_DB2::OK )
+   {
+      errmsg += QObject::tr( "Unable to get buffer description for investigator " ) + invID + "\n" + dbP->lastError() + "\n";
+      return false;
+   }
+
+   while ( dbP->next() )
+   {
+      QString desc = dbP->value( 1 ).toString();
+
+      if ( desc == bufDesc )
+      {
+         bufId = dbP->value( 0 ).toString();
+         break;
+      }
+   }
+
+   return !bufId.isEmpty() && readBuffer( bufId );
 }
 
 // Get buffer values from local disk:  density, viscosity

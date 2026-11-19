@@ -2598,6 +2598,23 @@ void US_Analysis_auto::start_next_2dsa_channel( void )
       // protocol_details_at_analysis_2dsa[ "k_max" ]   = QString::number( 1.5 );
       // protocol_details_at_analysis_2dsa[ "k_grpts" ] = QString::number( 28 );
 
+      // Custom grid is a per-channel Analysis Profile setting: when chosen, the
+      // grid to fit is the custom-grid MODEL (DB id / GUID), not s/k limits above.
+      if ( ap.have_custg )
+      {
+         protocol_details_at_analysis_2dsa["custom_grid_id"]   = QString::number( ap.cust_id );
+         protocol_details_at_analysis_2dsa["custom_grid_guid"] = ap.cust_grid;
+         protocol_details_at_analysis_2dsa["custom_grid_name"] = ap.cgrid_name;
+      }
+      else
+      {  // map is reused across channels: drop a previous channel's custom grid
+         protocol_details_at_analysis_2dsa.remove( "custom_grid_id" );
+         protocol_details_at_analysis_2dsa.remove( "custom_grid_guid" );
+         protocol_details_at_analysis_2dsa.remove( "custom_grid_name" );
+      }
+
+      qDebug() << "[US_Autoflow_analysis] 2DSA-IT: channel" << chan_norm << "have_custg" << ap.have_custg << "cust_id" << ap.cust_id
+               << "cgrid_name" << ap.cgrid_name;
       qDebug() << "[US_Autoflow_analysis] 2DSA-IT: channel" << chan_norm << "Analysis Profile grid: s[" << ap.s_min << ","
                << ap.s_max << "] x" << ap.s_grpts << "  f/f0[" << ap.k_min << "," << ap.k_max << "] x" << ap.k_grpts;
    }
@@ -2615,6 +2632,9 @@ void US_Analysis_auto::start_next_2dsa_channel( void )
       protocol_details_at_analysis_2dsa.remove( "k_min" );
       protocol_details_at_analysis_2dsa.remove( "k_max" );
       protocol_details_at_analysis_2dsa.remove( "k_grpts" );
+      protocol_details_at_analysis_2dsa.remove( "custom_grid_id" );
+      protocol_details_at_analysis_2dsa.remove( "custom_grid_guid" );
+      protocol_details_at_analysis_2dsa.remove( "custom_grid_name" );
 
       qDebug() << "[US_Autoflow_analysis] 2DSA-IT: channel" << chan_norm
                << "not found in 2DSA Analysis Profile -- falling back to "
@@ -4851,6 +4871,23 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
   
   bufvl = US_SolutionVals::values( dbP, edata, solID, svbar, bdens,
 				   bvisc, bcomp, bmanu, errmsg );
+  // Read the solution; when that fails, use the default vbar, which later vbar calculations
+  // also use for the cleared solution, since it has no analytes
+  const auto read_solution = [&]( bool fromDb )
+  {
+     const int     solstat = fromDb ? solution_rec.readFromDB( solID.toInt(), dbP ) : solution_rec.readFromDisk( solID );
+     const QString solerr  = fromDb ? dbP->lastError() : tr( "the solution file could not be read" );
+     if ( solstat != IUS_DB2::OK )
+     {
+        QMessageBox::warning( this,
+                              tr( "Solution/Buffer Fetch" ),
+                              tr( "Solution %1 could not be read:\n%2\n"
+                                  "The default vbar, %3, is used." )
+                                 .arg( solID, US_Solution::readErrorText( solstat, solerr ) )
+                                 .arg( TYPICAL_VBAR ) );
+        solution_rec.commonVbar20 = TYPICAL_VBAR;
+     }
+  };
   progress_msg->setValue( 3 );
   qApp->processEvents();
   
@@ -4871,15 +4908,15 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
 	}
       
       else if ( solID.length() < 36  &&  dbP != NULL )
-	{
-	  solution_rec.readFromDB( solID.toInt(), dbP );
-	}
-      
+      {
+         read_solution( true );
+      }
+
       else
-	{
-	  solution_rec.readFromDisk( solID );
-	}
-      
+      {
+         read_solution( false );
+      }
+
       vbar          = solution_rec.commonVbar20;
       svbar         = QString::number( vbar );
       
