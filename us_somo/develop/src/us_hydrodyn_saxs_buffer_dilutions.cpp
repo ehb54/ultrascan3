@@ -86,7 +86,8 @@ void US_Hydrodyn_Saxs_Buffer_Dilutions::setupGUI()
 
    lbl_info = new QLabel( us_tr( "Each curve is fitted over the q range as ratio x reference + offset; the ratio times the reference's "
                                  "concentration is the revised concentration. The reference (by default the most concentrated curve) is "
-                                 "taken as correct. Use a q range where interactions play no role (high q); the ratio over the check "
+                                 "taken as correct, so all the revised concentrations scale with its concentration: choose the curve whose "
+                                 "concentration is best known. Use a q range where interactions play no role (high q); the ratio over the check "
                                  "range should agree, and when it does not the difference is not just the concentration.\n"
                                  "Type a stated concentration where there is none (or to change one), then press Fit. Make the new series "
                                  "copies the curves, unchanged, each with its stated or its revised concentration (Use revised)." ), this );
@@ -133,7 +134,8 @@ void US_Hydrodyn_Saxs_Buffer_Dilutions::setupGUI()
    AUTFBACK( cmb_ref );
    cmb_ref->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    cmb_ref->addItems( files );
-   cmb_ref->setToolTip( us_tr( "The curve whose concentration is taken as correct (default: the most concentrated)" ) );
+   cmb_ref->setToolTip( us_tr( "The curve whose concentration is taken as correct (default: the most concentrated);\n"
+                               "all the revised concentrations scale with it, so choose the curve whose concentration is best known" ) );
    connect( cmb_ref, SIGNAL( currentIndexChanged( int ) ), SLOT( inputs_changed() ) );
 
    le_q_from  = new QLineEdit( s_fit_from, this );
@@ -261,8 +263,11 @@ QTableWidgetItem * US_Hydrodyn_Saxs_Buffer_Dilutions::cell( const QString & text
 }
 
 // least squares I_file( q ) = ratio * I_ref( q ) + offset over the reference's q points in [ q_from, q_to ],
-// the file's intensity (and error) linearly interpolated onto them. With errors on both curves each point
-// is weighted by 1 / ( sd_file^2 + ratio^2 sd_ref^2 ), iterated since the weights depend on the ratio.
+// the file's intensity (and error) linearly interpolated onto them. With errors on both curves the line is
+// fitted with errors in both coordinates (York et al., Am. J. Phys. 72, 367 (2004); through the origin without
+// the offset), each point weighted by 1 / ( sd_file^2 + ratio^2 sd_ref^2 ): weighting a least squares fit of
+// the file on the reference alone biases the ratio towards 0 when the reference is noisy (a dilute reference).
+// Fitting the reference to the file then gives the inverse ratio. Without errors, unweighted least squares.
 // ratio_sd is the ratio's standard error, scaled up by sqrt( reduced chi^2 ) when that is above 1.
 bool US_Hydrodyn_Saxs_Buffer_Dilutions::fit_ratio( const QString & file, const QString & ref, double q_from, double q_to,
                                                    bool offset, double & ratio, double & ratio_sd, double & off,
@@ -335,6 +340,7 @@ bool US_Hydrodyn_Saxs_Buffer_Dilutions::fit_ratio( const QString & file, const Q
    }
    ratio = ( sum_x != 0e0 ) ? sum_y / sum_x : 1e0;
 
+   // a first estimate: weighted least squares of the file on the reference
    double Sw = 0e0, Sx = 0e0, Sy = 0e0, Sxx = 0e0, Sxy = 0e0;
    for ( int it = 0; it < ( have_err ? 6 : 1 ); it++ )
    {
@@ -375,6 +381,92 @@ bool US_Hydrodyn_Saxs_Buffer_Dilutions::fit_ratio( const QString & file, const Q
          off   = 0e0;
       }
    }
+   double var = offset ? Sw / ( Sw * Sxx - Sx * Sx ) : 1e0 / Sxx;
+
+   if ( have_err )
+   {
+      // errors in both coordinates (York et al. 2004): the weights W, the weighted means (0 through the origin)
+      // and beta for a given ratio; the next ratio is sum( W beta V ) / sum( W beta U )
+      vector < double > W( npts );
+      vector < double > beta( npts );
+      double Xb = 0e0;
+      double Yb = 0e0;
+      auto york_step = [ & ]( double b, double & b_out ) -> bool {
+         double sw  = 0e0;
+         double swx = 0e0;
+         double swy = 0e0;
+         for ( int i = 0; i < npts; i++ )
+         {
+            double v = sy[ i ] * sy[ i ] + b * b * sx[ i ] * sx[ i ];
+            W[ i ] = ( v > 0e0 ) ? 1e0 / v : 0e0;
+            sw  += W[ i ];
+            swx += W[ i ] * x[ i ];
+            swy += W[ i ] * y[ i ];
+         }
+         if ( sw == 0e0 )
+         {
+            return false;
+         }
+         Xb = offset ? swx / sw : 0e0;
+         Yb = offset ? swy / sw : 0e0;
+         double num = 0e0;
+         double den = 0e0;
+         for ( int i = 0; i < npts; i++ )
+         {
+            double U = x[ i ] - Xb;
+            double V = y[ i ] - Yb;
+            beta[ i ] = W[ i ] * ( U * sy[ i ] * sy[ i ] + b * V * sx[ i ] * sx[ i ] );
+            num += W[ i ] * beta[ i ] * V;
+            den += W[ i ] * beta[ i ] * U;
+         }
+         if ( den == 0e0 )
+         {
+            return false;
+         }
+         b_out = num / den;
+         return true;
+      };
+      bool converged = false;
+      for ( int it = 0; it < 200 && !converged; it++ )
+      {
+         double b_next;
+         if ( !york_step( ratio, b_next ) )
+         {
+            err = us_tr( "singular fit" );
+            return false;
+         }
+         converged = b_next == ratio || fabs( b_next - ratio ) <= 1e-12 * fabs( b_next );
+         ratio = b_next;
+      }
+      double b_next;
+      if ( !converged || !york_step( ratio, b_next ) )
+      {
+         err = us_tr( "the fit did not converge" );
+         return false;
+      }
+      off = Yb - ratio * Xb;
+      // the variance of the ratio, from the adjusted reference values Xb + beta
+      double sw   = 0e0;
+      double swxa = 0e0;
+      for ( int i = 0; i < npts; i++ )
+      {
+         sw   += W[ i ];
+         swxa += W[ i ] * ( Xb + beta[ i ] );
+      }
+      double xm   = offset ? swxa / sw : 0e0;
+      double swu2 = 0e0;
+      for ( int i = 0; i < npts; i++ )
+      {
+         double u = Xb + beta[ i ] - xm;
+         swu2 += W[ i ] * u * u;
+      }
+      if ( swu2 <= 0e0 )
+      {
+         err = us_tr( "singular fit" );
+         return false;
+      }
+      var = 1e0 / swu2;
+   }
 
    double chi2 = 0e0;
    for ( int i = 0; i < npts; i++ )
@@ -389,7 +481,6 @@ bool US_Hydrodyn_Saxs_Buffer_Dilutions::fit_ratio( const QString & file, const Q
       chi2 += w * r * r;
    }
    chi2r = chi2 / (double) ( npts - nparam );
-   double var = offset ? Sw / ( Sw * Sxx - Sx * Sx ) : 1e0 / Sxx;
    // without errors the weights are 1 and the variance comes from the scatter of the residuals
    double scale = have_err ? max( 1e0, chi2r ) : chi2r;
    ratio_sd = sqrt( var * scale );
