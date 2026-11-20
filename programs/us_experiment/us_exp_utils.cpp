@@ -821,7 +821,7 @@ void US_ExperGuiGeneral::check_user_level()
 	     }
 	   
 	   QVector< US_Rotor::Lab > lablist;
-	   US_Rotor::readLabsDB( lablist, &db );
+	   US_Rotor::readLabsDB( lablist, &db, true );  // active operators only
 
 	   qDebug() << "check_user_level():  lablist.count() -- " << lablist.count();
 	   
@@ -1366,7 +1366,7 @@ void US_ExperGuiRotor::init_gsmes( void )
     }
   
   QStringList query;
-  query << "get_people" << "%" + QString("") + "%";
+  query << "get_people_gsme" << "%" + QString("") + "%";
   qDebug() << "init_smes(), query --  " << query;
   db.query( query );
 

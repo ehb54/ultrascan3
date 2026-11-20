@@ -10,7 +10,7 @@ US_Rotor::US_Rotor()
 
 // A function to read information about all labs
 US_Rotor::Status US_Rotor::readLabsDB( 
-    QVector< US_Rotor::Lab >& labList, IUS_DB2* db )
+    QVector< US_Rotor::Lab >& labList, IUS_DB2* db, bool activeOperatorsOnly )
 {
    QStringList q( "get_lab_names" );
    db->query( q );
@@ -35,7 +35,7 @@ US_Rotor::Status US_Rotor::readLabsDB(
    {
       US_Rotor::Lab lab;
 
-      const Status  labStatus = lab.readDB( labIDs[i].toInt(), db );
+      const Status  labStatus = lab.readDB( labIDs[i].toInt(), db, activeOperatorsOnly );
       if ( labStatus != ROTOR_OK )
       {
          return labStatus;
@@ -758,7 +758,7 @@ US_Rotor::Lab::Lab()
 }
 
 // A function to read information about a single lab from DB
-US_Rotor::Status US_Rotor::Lab::readDB( int labID, IUS_DB2* db )
+US_Rotor::Status US_Rotor::Lab::readDB( int labID, IUS_DB2* db, bool activeOperatorsOnly )
 {
    // A failed instrument or operator query restores the lab as it was.
    const Lab   previous = *this;
@@ -850,7 +850,9 @@ US_Rotor::Status US_Rotor::Lab::readDB( int labID, IUS_DB2* db )
       for ( int i = 0; i < instruments.size(); i++ )
       {
          q.clear();
-         q  << QString( "get_operator_names" )
+         // GMP/Experiment callers ask for activated && account_enabled operators only
+         q  << QString( activeOperatorsOnly ? "get_operator_names_active"
+                                            : "get_operator_names" )
             << QString::number( instruments[ i ].ID );
          db->query( q );
 

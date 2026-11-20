@@ -85,8 +85,11 @@ class US_UTIL_EXTERN US_Rotor
              \param    labID The database labID of the
                        desired abstract rotor
              \param    db For database access, an open database connection
+             \param    activeOperatorsOnly If true, only operators whose account is
+                       activated and enabled are loaded (GMP/Experiment use);
+                       default false keeps all permitted operators (hardware editors)
          */
-         Status readDB        ( int, IUS_DB2* = 0 );
+         Status readDB        ( int, IUS_DB2* = 0, bool = false );
 
          //! \brief Resets the class variables to default values
          void      reset( void );
@@ -270,8 +273,11 @@ class US_UTIL_EXTERN US_Rotor
           \param labList A reference to a vector that contains,
                          or will contain, the list of available labs
           \param    db   For database access, an open database connection
+          \param    activeOperatorsOnly If true, skip operators whose account is
+                         not activated/enabled (see Lab::readDB)
       */
-      static Status readLabsDB( QVector< US_Rotor::Lab >&, IUS_DB2* db );
+      static Status readLabsDB( QVector< US_Rotor::Lab >&, IUS_DB2* db,
+                                bool activeOperatorsOnly = false );
 
       /*! \brief A function to read information about all labs from disk
 
