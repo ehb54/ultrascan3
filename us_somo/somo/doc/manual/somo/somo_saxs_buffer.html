@@ -54,7 +54,11 @@ Curves already plotted in the <b><i>SAS</i></b> module <i>I(q)</i> panel are han
 <b><i>Data Utility</i></b> automatically each time it is opened. They arrive in both the
 <b><i>Data files</i></b> and the <a href="#Produced"><b><i>Produced Data</i></b></a> lists, since they do not
 yet exist on disk as far as this module is concerned, and any character that is awkward in a file name
-(whitespace, quotes, slashes, periods) is replaced by an underscore. Conversely, any curve held in the
+(whitespace, quotes, slashes, periods) is replaced by an underscore. Each curve keeps the concentration the
+<b><i>SAS</i></b> module holds for it, and its PSV and <i>I</i>(0) standard error when these differ from the
+<b><i>SAS</i></b> defaults (a curve that never had them is not given the defaults as if they were measured).
+A curve sent back keeps its concentration, PSV and <i>I</i>(0) standard error, and takes the defaults only
+for those it does not have. Conversely, any curve held in the
 <b><i>Data Utility</i></b> can be sent to the <i>I(q)</i> panel with the <b><i>S</i></b> button.
 <p>
 
@@ -194,20 +198,22 @@ refused and you should use <a href="#Cropping"><b><i>Crop Common</i></b></a> fir
 If <i>every</i> selected curve carries non-zero standard deviations throughout, the mean is weighted by
 1/&sigma;<sup>2</sup> and the standard deviation of the mean is computed accordingly; otherwise a plain
 unweighted mean is used. Which of the two was applied is always stated in the
-<b><i>Messages</i></b> area. The concentration, PSV and <i>I</i>(0) standard error of the result are the
-averages of those of the contributing curves.<p>
+<b><i>Messages</i></b> area. The concentration of the result is the mean of those of the contributing curves;
+its PSV and <i>I</i>(0) standard error are the means over the contributing curves that have one.<p>
 <li>
 <b><i>Concentration normalized average</i></b> divides each curve by its own concentration before
 averaging, and then re-multiplies the result by the mean concentration. This is the correct way to average
 exposures of the <i>same</i> sample taken at slightly different concentrations, and it becomes active only
-when every selected curve has a non-zero concentration.<p>
+when every selected curve has a non-zero concentration. The PSV and <i>I</i>(0) standard error of the result
+are taken as for <b><i>Average</i></b>.<p>
 <li>
 <b><i>N</i></b> (normalize) produces, for each selected curve, a copy divided by its own concentration; the
-standard deviations are divided by the same factor and the concentration of the result is set to 1.
-Like the previous button, it requires all the selected curves to have a non-zero concentration.<p>
+standard deviations are divided by the same factor and the concentration of the result is set to 1; the
+PSV and <i>I</i>(0) standard error are kept. Like the previous button, it requires all the selected curves to have a non-zero concentration.<p>
 <li>
 <b><i>WS</i></b> (weighted sum) prompts for a multiplier for each selected curve in turn and forms the
-weighted sum. This button is only shown when the
+weighted sum. Its concentration is the sum of each curve's multiplier times its concentration, and its PSV
+and <i>I</i>(0) standard error are taken as for <b><i>Average</i></b>. This button is only shown when the
 <a href=somo_advanced_config.html>advanced configuration</a> <b><i>expert mode</i></b> is enabled.<p>
 </ul>
 
@@ -414,6 +420,7 @@ curves have them, and sets the offset to zero. <b><i>Linear</i></b> would instea
 <b><i>Keep</i></b> commits the join: a new curve is created, made of the low-<i>q</i> curve up to
 <b><i>Cut</i></b> followed by the high-<i>q</i> curve beyond it, with the offset and multiplier applied to
 whichever of the two is being scaled, and with standard deviations carried over when both curves have them.
+It has the concentration, PSV and <i>I</i>(0) standard error of the curve that is not scaled.
 The two source curves are deselected and the new one selected. <b><i>Cancel</i></b> abandons the join and
 restores the original display.
 <p>
@@ -506,7 +513,8 @@ cropped to the common grid are included in the output for compatibility, and a n
 <li><b><i>Show</i></b> adds the selected produced curves to the plot, and <b><i>Show only</i></b>
 displays them and nothing else.<p>
 <li>Right-clicking an entry in the <b><i>Produced Data</i></b> list makes a copy of it under a new name;
-the original stays. The copy keeps the description of how the curve was made (see below).<p>
+the original stays. The copy keeps the concentration, PSV and <i>I</i>(0) standard error, and the
+description of how the curve was made (see below).<p>
 </ul>
 
 Individual files are written with a one-line header of the form
@@ -553,7 +561,12 @@ The <b><i>Concentrations</i></b> button opens the
 curve and its concentration in mg/ml. The buffer and the blank are excluded, and the table is kept in step
 with the file list as curves are added, removed and created. Concentrations found in <b><i>.dat</i></b> file
 headers appear there automatically, and curves produced by the module inherit an appropriate value &mdash;
-the concentration of the solution for a subtraction, the mean for an average, 1 for a normalized curve.
+the concentration of the solution for a subtraction or a division, the mean for an average, 1 for a
+normalized curve, that of the curve that is not scaled for a join, and the sum of each curve's multiplier
+times its concentration for a weighted sum. The PSV and <i>I</i>(0) standard error are carried the same way:
+from the solution for a subtraction or a division, from the source for a normalized curve or a copy, from the
+curve that is not scaled for a join, and as the mean over the curves that have one for an average, a
+concentration normalized average or a weighted sum. They are written into the header of each saved curve.
 Concentrations are needed for the <b><i>PSV</i></b> route to &alpha;, for <b><i>N</i></b> and for
 <b><i>Concentration normalized average</i></b>, and are written into the header of each saved curve.
 <p>
