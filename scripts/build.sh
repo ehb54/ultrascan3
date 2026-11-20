@@ -87,7 +87,7 @@ while [[ $# -gt 0 ]]; do
       echo "PROFILE:"
       echo "  APP           Desktop/user build (GUI + programs + DB) [default]"
       echo "  TEST          Dev/CI build (programs + tests, prefer static libs)"
-      echo "  HPC           Headless / no DB / no GUI (us_mpi_analysis) [Linux only]"
+      echo "  HPC           Headless / no DB / no GUI"
       echo ""
       echo "VCPKG LOCATION (in order of priority):"
       echo "  1. --vcpkg-root <path> argument"
@@ -191,12 +191,8 @@ if [[ "$PLATFORM" == "macOS" && "$ARCH" == "x64" ]]; then
   X64_SUFFIX="-x64"
 fi
 
-# HPC (us_mpi_analysis) is built only on Linux, with dedicated presets (separate binary dir, no GUI)
-if [[ "$PROFILE" == "HPC" ]]; then
-  if [[ "$PLATFORM" != "Linux" ]]; then
-    echo "ERROR: the HPC profile (us_mpi_analysis) is built only on Linux."
-    exit 1
-  fi
+# HPC on Linux and macOS uses dedicated presets (separate binary dir, no GUI)
+if [[ "$PROFILE" == "HPC" && ( "$PLATFORM" == "Linux" || "$PLATFORM" == "macOS" ) ]]; then
   if [ "$BUILD_CONFIGURATION" = "debug" ]; then
     echo "ERROR: --debug is supported for APP and TEST; HPC has release presets only."
     exit 1
@@ -347,7 +343,8 @@ if [ "$PLATFORM" = "macOS" ]; then
   fi
 
   _BOOTSTRAP_ARGS=()
-  [ "$BUILD_PKG" = true ] && _BOOTSTRAP_ARGS+=("--pkg")
+  [ "$PROFILE" = "HPC" ] && _BOOTSTRAP_ARGS+=("--hpc")
+  [ "$BUILD_PKG" = true ] && [ "$PROFILE" != "HPC" ] && _BOOTSTRAP_ARGS+=("--pkg")
 
   if [ ${#_BOOTSTRAP_ARGS[@]} -gt 0 ]; then
     bash "$_BOOTSTRAP" "${_BOOTSTRAP_ARGS[@]}"
@@ -1086,45 +1083,86 @@ if [ "$BUILD_PKG" = true ] && [ "$PLATFORM" = "macOS" ]; then
     exit 1
   fi
 
-  # ------------------------------------------------------------------
-  # macOS APP: produce the PKG installer (pkgbuild + productbuild)
-  # ------------------------------------------------------------------
-  echo ""
-  echo "=========================================="
-  echo "Building macOS PKG installer..."
-  echo "=========================================="
-  echo "  CMake target : package_macos_pkg"
-  echo "  Build dir    : ${BUILD_DIR}"
-  echo ""
+  if [ "$PROFILE" = "HPC" ]; then
+    # ------------------------------------------------------------------
+    # macOS HPC: produce a portable tar.gz (no PKG installer, no GUI)
+    # ------------------------------------------------------------------
+    _MAC_PKG_TARGET="package_macos_hpc_tarball"
+    _MAC_PKG_LABEL="macOS HPC tarball"
+    _MAC_DEPLOY_TARGET="deploy_macos_hpc"
 
-  if ! cmake --build --preset "$BUILD_PRESET" \
-             --target package_macos_pkg \
-             --parallel "$BUILD_JOBS"; then
     echo ""
-    echo "ERROR: 'package_macos_pkg' target failed."
+    echo "=========================================="
+    echo "Building ${_MAC_PKG_LABEL}..."
+    echo "=========================================="
+    echo "  CMake target : ${_MAC_PKG_TARGET}"
+    echo "  Build dir    : ${BUILD_DIR}"
     echo ""
-    echo "Common causes:"
-    echo "  1. deploy_macos failed (macdeployqt not found or 'us' target missing)."
-    echo "     Run: cmake --build --preset $BUILD_PRESET --target deploy_macos"
-    echo "  2. pkgbuild or productbuild returned an error."
-    echo "  3. pkg/macos/resources/Welcome.txt or LICENSE.txt is missing."
+
+    if ! cmake --build --preset "$BUILD_PRESET" \
+               --target "${_MAC_PKG_TARGET}" \
+               --parallel "$BUILD_JOBS"; then
+      echo ""
+      echo "ERROR: '${_MAC_PKG_TARGET}' target failed."
+      echo ""
+      echo "Common causes:"
+      echo "  1. ${_MAC_DEPLOY_TARGET} failed (macdeployqt not found or no us_* targets built)."
+      echo "     Run: cmake --build --preset $BUILD_PRESET --target ${_MAC_DEPLOY_TARGET}"
+      echo "  2. tar failed (check that _hpc_stage/UltraScan3-HPC was created)."
+      echo ""
+      exit 1
+    fi
+
     echo ""
-    exit 1
+    echo "=========================================="
+    echo "${_MAC_PKG_LABEL} complete!"
+    echo "=========================================="
+    echo ""
+
+    bash scripts/report-package.sh "$BUILD_DIR/package-path.txt"
+    echo ""
+
+  else
+    # ------------------------------------------------------------------
+    # macOS APP: produce the PKG installer (pkgbuild + productbuild)
+    # ------------------------------------------------------------------
+    echo ""
+    echo "=========================================="
+    echo "Building macOS PKG installer..."
+    echo "=========================================="
+    echo "  CMake target : package_macos_pkg"
+    echo "  Build dir    : ${BUILD_DIR}"
+    echo ""
+
+    if ! cmake --build --preset "$BUILD_PRESET" \
+               --target package_macos_pkg \
+               --parallel "$BUILD_JOBS"; then
+      echo ""
+      echo "ERROR: 'package_macos_pkg' target failed."
+      echo ""
+      echo "Common causes:"
+      echo "  1. deploy_macos failed (macdeployqt not found or 'us' target missing)."
+      echo "     Run: cmake --build --preset $BUILD_PRESET --target deploy_macos"
+      echo "  2. pkgbuild or productbuild returned an error."
+      echo "  3. pkg/macos/resources/Welcome.txt or LICENSE.txt is missing."
+      echo ""
+      exit 1
+    fi
+
+    echo ""
+    echo "=========================================="
+    echo "macOS PKG installer complete!"
+    echo "=========================================="
+    echo ""
+
+    bash scripts/report-package.sh "$BUILD_DIR/package-path.txt"
+    echo ""
+    echo "To install (requires admin password):"
+    echo "  sudo installer -pkg <path>.pkg -target /"
+    echo ""
+    echo "To verify after install:"
+    echo "  sudo launchctl list | grep ultrascan_sysctl"
+    echo "  sysctl kern.sysv.shmmax kern.sysv.shmall"
+    echo ""
   fi
-
-  echo ""
-  echo "=========================================="
-  echo "macOS PKG installer complete!"
-  echo "=========================================="
-  echo ""
-
-  bash scripts/report-package.sh "$BUILD_DIR/package-path.txt"
-  echo ""
-  echo "To install (requires admin password):"
-  echo "  sudo installer -pkg <path>.pkg -target /"
-  echo ""
-  echo "To verify after install:"
-  echo "  sudo launchctl list | grep ultrascan_sysctl"
-  echo "  sysctl kern.sysv.shmmax kern.sysv.shmall"
-  echo ""
 fi
