@@ -1664,7 +1664,11 @@ void US_2dsaProcess::requeue_tasks()
    kcsteps   = 0;
    emit stage_complete( kcsteps, nctotal );
    int jdpth = 0;
-   int jnois = 0;
+   // Subgrids fit the noise as in start_fit() and iterate()
+   int  jnois = fnoionly ? 0 : noisflag;
+
+   // The task size limit restarts from this model's subgrids, as in iterate()
+   maxtsols = mintsols;
 
    for ( int ktask = 0; ktask < nsubgrid; ktask++ )
    {
@@ -1674,6 +1678,7 @@ void US_2dsaProcess::requeue_tasks()
       QVector< US_Solute > isolutes = orig_sols[ ktask ];
       WorkPacket2D wtask;
       queue_task( wtask, llss, llsk, ktask, jdpth, jnois, isolutes );
+      maxtsols = qMax( maxtsols, isolutes.size() );
    }
 
    // Make sure calculated solutes are cleared out for new iteration
@@ -1693,6 +1698,11 @@ void US_2dsaProcess::requeue_tasks()
    ntisols   = 0;
    ntcsols   = 0;
    r_iter    = 0;
+
+   // The refinement stop test in process_final() reads these records by
+   //  r_iter, so a new model must start them afresh, as r_iter does
+   itvaris.clear();
+   ical_sols.clear();
 
    emit message_update(
       tr( "Starting iteration %1 computations of %2 subgrids\n"
