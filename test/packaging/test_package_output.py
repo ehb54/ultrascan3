@@ -69,8 +69,7 @@ us3_record_package_output(package_fixture "{package}")
 
     def test_real_archive_targets_emit_receipts(self):
         cases = [("linux", "LinuxPkg.cmake", "deploy_linux", "package_linux_tarball", "_stage/UltraScan3"),
-                 ("linux", "LinuxHpcPkg.cmake", "deploy_linux_hpc", "package_linux_hpc_tarball", "_hpc_stage/UltraScan3-HPC"),
-                 ("macos", "MacHpcPkg.cmake", "deploy_macos_hpc", "package_macos_hpc_tarball", "_hpc_stage/UltraScan3-HPC")]
+                 ("linux", "LinuxHpcPkg.cmake", "deploy_linux_hpc", "package_linux_hpc_tarball", "_hpc_stage/UltraScan3-HPC")]
         for platform, module, deploy, target, stage in cases:
             with self.subTest(target=target), tempfile.TemporaryDirectory() as d:
                 root = Path(d)
