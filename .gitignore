@@ -9,6 +9,7 @@ local.pri
 !/.clang-tidy
 !/.pre-commit-config.yaml
 !/.githooks/
+!/buildsys/vcpkg/.gitattributes
 *.o
 tmp/
 moc/

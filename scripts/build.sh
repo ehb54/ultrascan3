@@ -905,10 +905,16 @@ _fix_qt6_x11r6_paths
 # CONFIGURE AND BUILD
 # =============================================================================
 echo "Configuring..."
+# TEST builds use the app presets; vcpkg.json's test feature adds GoogleTest.
+FEATURE_ARGS=()
+if [ "$PROFILE" = "TEST" ]; then
+  FEATURE_ARGS=(-DVCPKG_MANIFEST_FEATURES="${QT_VARIANT}-app;test")
+fi
 cmake --preset "$CONFIGURE_PRESET" \
   -DUS3_PROFILE="${PROFILE}" \
   -DVCPKG_ROOT="$US3_VCPKG_ROOT" \
-  -DVCPKG_INSTALL_OPTIONS="$VCPKG_INSTALL_OPTIONS"
+  -DVCPKG_INSTALL_OPTIONS="$VCPKG_INSTALL_OPTIONS" \
+  ${FEATURE_ARGS[@]+"${FEATURE_ARGS[@]}"}
 
 # Read back what the toolchain resolved rather than recomputing its rule.
 VCPKG_INSTALLED_DIR="$(sed -n 's|^VCPKG_INSTALLED_DIR:PATH=||p' \
@@ -1019,13 +1025,11 @@ if [ "$BUILD_PKG" = true ] && [ "$PLATFORM" = "Linux" ]; then
   if [ "$PROFILE" = "HPC" ]; then
     _PKG_TARGET="package_linux_hpc_tarball"
     _PKG_LABEL="Linux HPC tarball"
-    _PKG_GLOB="${BUILD_DIR}/UltraScan3-HPC-*-Linux-*.tar.xz"
     _PKG_STAGE="_hpc_stage/UltraScan3-HPC"
     _DEPLOY_TARGET="deploy_linux_hpc"
   else
     _PKG_TARGET="package_linux_tarball"
     _PKG_LABEL="Linux tarball"
-    _PKG_GLOB="${BUILD_DIR}/UltraScan3-*-Linux-*.tar.xz"
     _PKG_STAGE="_stage/UltraScan3"
     _DEPLOY_TARGET="deploy_linux"
   fi
@@ -1058,13 +1062,7 @@ if [ "$BUILD_PKG" = true ] && [ "$PLATFORM" = "Linux" ]; then
   echo "=========================================="
   echo ""
 
-  for pkg in ${_PKG_GLOB}; do
-    if [ -f "$pkg" ]; then
-      PKG_SIZE=$(du -sh "$pkg" 2>/dev/null | cut -f1 || echo "unknown")
-      echo "  Created : $pkg"
-      echo "  Size    : ${PKG_SIZE}"
-    fi
-  done
+  bash scripts/report-package.sh "$BUILD_DIR/package-path.txt"
   echo ""
 fi
 
@@ -1091,7 +1089,6 @@ if [ "$BUILD_PKG" = true ] && [ "$PLATFORM" = "macOS" ]; then
     # ------------------------------------------------------------------
     _MAC_PKG_TARGET="package_macos_hpc_tarball"
     _MAC_PKG_LABEL="macOS HPC tarball"
-    _MAC_PKG_GLOB="${BUILD_DIR}/UltraScan3-HPC-*-macOS-*.tar.gz"
     _MAC_DEPLOY_TARGET="deploy_macos_hpc"
 
     echo ""
@@ -1122,13 +1119,7 @@ if [ "$BUILD_PKG" = true ] && [ "$PLATFORM" = "macOS" ]; then
     echo "=========================================="
     echo ""
 
-    for pkg in ${_MAC_PKG_GLOB}; do
-      if [ -f "$pkg" ]; then
-        PKG_SIZE=$(du -sh "$pkg" 2>/dev/null | cut -f1 || echo "unknown")
-        echo "  Created : $pkg"
-        echo "  Size    : ${PKG_SIZE}"
-      fi
-    done
+    bash scripts/report-package.sh "$BUILD_DIR/package-path.txt"
     echo ""
 
   else
@@ -1164,13 +1155,7 @@ if [ "$BUILD_PKG" = true ] && [ "$PLATFORM" = "macOS" ]; then
     echo "=========================================="
     echo ""
 
-    for pkg in "$BUILD_DIR"/UltraScan3-*-macOS.pkg; do
-      if [ -f "$pkg" ]; then
-        PKG_SIZE=$(du -sh "$pkg" 2>/dev/null | cut -f1 || echo "unknown")
-        echo "  Created : $pkg"
-        echo "  Size    : ${PKG_SIZE}"
-      fi
-    done
+    bash scripts/report-package.sh "$BUILD_DIR/package-path.txt"
     echo ""
     echo "To install (requires admin password):"
     echo "  sudo installer -pkg <path>.pkg -target /"

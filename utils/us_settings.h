@@ -69,6 +69,33 @@ class US_UTIL_EXTERN US_Settings
     //! \brief Get the base directory in which ./bin apps reside
     static QString     appBaseDir();
 
+    //! \brief Locate the Qt Assistant executable used for help.
+    //!
+    //! Uses Assistant bundled in appBaseDir()/bin when present; otherwise
+    //! the Qt installation this program is linked against.
+    //! \param error If non-null, receives the reason when no path is returned.
+    //! \param searched If non-null, receives every location examined.
+    //! \return The executable path, or an empty string on failure.
+    static QString            assistantPath( QString* error = nullptr, QStringList* searched = nullptr );
+
+    //! \brief Resolve Qt Assistant from explicit directories.
+    //!
+    //! Bundled directories are examined first. A bundled candidate that
+    //! exists but is not an executable file is an error; the Qt directories
+    //! are then not searched.
+    static QString            resolveAssistant( const QStringList& bundledDirs,
+                                                const QStringList& qtDirs,
+                                                QString*           error    = nullptr,
+                                                QStringList*       searched = nullptr );
+
+    //! \brief Assistant executable paths relative to a directory, in
+    //! preference order, for this platform.
+    static QStringList        assistantNames();
+
+    //! \brief Existing directories of the linked Qt installation searched
+    //! for Assistant.
+    static QStringList        assistantQtDirs();
+
     //! \brief Get work base directory for archive,results,reports.etc
     static QString     workBaseDir();
     //! \brief Set the work base directory for archive,results,reports.etc

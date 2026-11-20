@@ -11,6 +11,7 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSettings>
@@ -46,7 +47,10 @@ class QtTestEnvironment : public ::testing::Environment
          sandbox_ = std::make_unique<QTemporaryDir>( parent + "/ultrascan3-utils-tests-XXXXXX" );
          ASSERT_TRUE( sandbox_->isValid() ) << "Could not create the process-local test sandbox";
 
-         const QString root          = sandbox_->path();
+         // Canonical, so paths under it match QDir::currentPath() where the
+         // temporary directory is under a symlink, such as /var on macOS.
+         const QString root = QFileInfo( sandbox_->path() ).canonicalFilePath();
+         ASSERT_FALSE( root.isEmpty() ) << "Could not resolve the test sandbox path";
          const QString settingsRoot  = root + "/settings";
          const QString workRoot      = root + "/work";
          const QString importRoot    = workRoot + "/imports";

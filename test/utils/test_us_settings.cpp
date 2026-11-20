@@ -1,9 +1,12 @@
 #include "qt_test_base.h"
 #include "us_settings.h"
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
+#include <QLibraryInfo>
 #include <QSettings>
 #include <QStandardPaths>
+#include <QTemporaryDir>
 
 // The utility runner restores all persisted and process-only settings per case.
 class US_SettingsTest : public QtTestBase
@@ -410,4 +413,111 @@ TEST_F( US_SettingsTest, EmptyCredentialsAndDefaultDatabaseClearPreviousValues )
    EXPECT_TRUE( US_Settings::UltraScanPW().isEmpty() );
    US_SettingsStore settings;
    EXPECT_FALSE( settings.contains( "defaultDB" ) );
+}
+
+// Create an executable file at dir/relative, making parent directories.
+static QString makeExecutable( const QString& dir, const QString& relative )
+{
+   const QString path = dir + "/" + relative;
+   QDir().mkpath( QFileInfo( path ).absolutePath() );
+   QFile file( path );
+
+   if ( !file.open( QIODevice::WriteOnly ) )
+   {
+      return QString();
+   }
+
+   file.close();
+   file.setPermissions( file.permissions() | QFileDevice::ExeOwner );
+   return QFileInfo( path ).absoluteFilePath();
+}
+
+// A bundled Assistant is used even when the Qt directory also has one.
+TEST_F( US_SettingsTest, AssistantPrefersBundledViewer )
+{
+   QTemporaryDir bundled, qt;
+   ASSERT_TRUE( bundled.isValid() && qt.isValid() );
+   const QString name = US_Settings::assistantNames().first();
+   const QString want = makeExecutable( bundled.path(), name );
+   ASSERT_FALSE( makeExecutable( qt.path(), name ).isEmpty() );
+
+   QString error;
+   EXPECT_EQ( US_Settings::resolveAssistant( { bundled.path() }, { qt.path() }, &error ), want );
+   EXPECT_TRUE( error.isEmpty() );
+}
+
+// Without a bundled Assistant the Qt directories are used, after the
+// bundled locations have been examined.
+TEST_F( US_SettingsTest, AssistantFallsBackToQtDirectory )
+{
+   QTemporaryDir bundled, qt;
+   ASSERT_TRUE( bundled.isValid() && qt.isValid() );
+   const QString want = makeExecutable( qt.path(), US_Settings::assistantNames().first() );
+
+   QString       error;
+   QStringList   searched;
+   EXPECT_EQ( US_Settings::resolveAssistant( { bundled.path() }, { qt.path() }, &error, &searched ), want );
+   EXPECT_TRUE( error.isEmpty() );
+   ASSERT_FALSE( searched.isEmpty() );
+   EXPECT_TRUE( searched.first().startsWith( QDir::cleanPath( bundled.path() ) + "/" ) );
+}
+
+// A bundled Assistant that exists but cannot run is an error; the working
+// Qt installation is not substituted for it.
+TEST_F( US_SettingsTest, AssistantBrokenBundledViewerIsAnError )
+{
+   QTemporaryDir bundled, qt;
+   ASSERT_TRUE( bundled.isValid() && qt.isValid() );
+   const QString name = US_Settings::assistantNames().first();
+   // A directory where the executable should be: present but not runnable
+   // on every platform.
+   ASSERT_TRUE( QDir().mkpath( bundled.path() + "/" + name ) );
+   ASSERT_FALSE( makeExecutable( qt.path(), name ).isEmpty() );
+
+   QString error;
+   EXPECT_TRUE( US_Settings::resolveAssistant( { bundled.path() }, { qt.path() }, &error ).isEmpty() );
+   EXPECT_TRUE( error.contains( name.section( '/', -1 ) ) );
+}
+
+// Nothing found yields an empty path, a reason, and every location examined.
+TEST_F( US_SettingsTest, AssistantNotFoundReportsSearchedLocations )
+{
+   QTemporaryDir bundled, qt;
+   ASSERT_TRUE( bundled.isValid() && qt.isValid() );
+
+   QString     error;
+   QStringList searched;
+   EXPECT_TRUE( US_Settings::resolveAssistant( { bundled.path() }, { qt.path() }, &error, &searched ).isEmpty() );
+   EXPECT_FALSE( error.isEmpty() );
+   EXPECT_EQ( searched.size(), 2 * US_Settings::assistantNames().size() );
+}
+
+// The linked Qt's binaries directory is searched; nothing outside Qt is.
+TEST_F( US_SettingsTest, AssistantQtDirectoriesComeFromLinkedQt )
+{
+#if QT_VERSION >= QT_VERSION_CHECK( 6, 0, 0 )
+   const QString qtBins   = QLibraryInfo::path( QLibraryInfo::BinariesPath );
+   const QString qtPrefix = QLibraryInfo::path( QLibraryInfo::PrefixPath );
+#else
+   const QString qtBins   = QLibraryInfo::location( QLibraryInfo::BinariesPath );
+   const QString qtPrefix = QLibraryInfo::location( QLibraryInfo::PrefixPath );
+#endif
+   const QStringList dirs = US_Settings::assistantQtDirs();
+
+   EXPECT_TRUE( dirs.contains( QDir::cleanPath( qtBins ) ) );
+
+   for ( const QString& dir : dirs )
+   {
+      EXPECT_TRUE( dir.startsWith( QDir::cleanPath( qtPrefix ) ) ) << dir.toStdString();
+   }
+}
+
+// Qt paths that do not exist, such as bin/bin under a deployed tree's
+// qt.conf, are neither searched nor reported.
+TEST_F( US_SettingsTest, AssistantQtDirectoriesExist )
+{
+   for ( const QString& dir : US_Settings::assistantQtDirs() )
+   {
+      EXPECT_TRUE( QFileInfo( dir ).isDir() ) << dir.toStdString();
+   }
 }

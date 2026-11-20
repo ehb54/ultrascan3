@@ -14,6 +14,7 @@
 # Expected variables (passed via -D on the cmake -P command line):
 #   STAGE_DIR           - Root of the staged directory tree
 #   WINDEPLOYQT         - Path to windeployqt.exe
+#   APP_PROGRAM_MANIFEST - Generated manifest of required APP target outputs
 #   BIN_DIR             - Build-tree bin/ containing us.exe and us_*.exe
 #   LIB_DIR             - Build-tree lib/ (currently unused by this script)
 #   ETC_SOURCE_DIR      - Source etc/ directory
@@ -76,24 +77,9 @@ file(MAKE_DIRECTORY "${S_LIB}")
 file(MAKE_DIRECTORY "${S_PLUG}")
 
 # =========================================================================
-# 1) Copy us.exe into bin/
+# 1) Copy declared core APP executables into bin/
 # =========================================================================
-if(EXISTS "${BIN_DIR}/us.exe")
-    message(STATUS "Copying us.exe → ${S_BIN}/")
-    file(COPY "${BIN_DIR}/us.exe" DESTINATION "${S_BIN}")
-else()
-    message(FATAL_ERROR "[WinDeploy] us.exe not found in ${BIN_DIR}")
-endif()
-
-# =========================================================================
-# 2) Copy companion us_*.exe executables into bin/
-# =========================================================================
-file(GLOB extra_exes "${BIN_DIR}/us_*.exe")
-foreach(exe ${extra_exes})
-    get_filename_component(exe_name "${exe}" NAME)
-    message(STATUS "  Copying program: ${exe_name}")
-    file(COPY "${exe}" DESTINATION "${S_BIN}")
-endforeach()
+include("${CMAKE_CURRENT_LIST_DIR}/../StageAppPrograms.cmake")
 
 # =========================================================================
 # 3) Copy all non-Qt runtime DLLs from BIN_DIR into staged bin/
@@ -413,9 +399,11 @@ endif()
 # 9b) Stage SoMo binaries and libraries
 #     Mirrors MacDeploy.cmake section 11b.
 # =========================================================================
+# Do not reimport stale core APP outputs from the legacy source bin directory.
 if(SOMO_BIN_DIR AND EXISTS "${SOMO_BIN_DIR}")
     message(STATUS "[WinDeploy] Staging SoMo binaries from ${SOMO_BIN_DIR} → bin/")
-    file(GLOB _somo_exes "${SOMO_BIN_DIR}/*.exe")
+    file(GLOB _somo_exes "${SOMO_BIN_DIR}/us3_*.exe" "${SOMO_BIN_DIR}/us_somo*.exe"
+        "${SOMO_BIN_DIR}/us_admin.exe" "${SOMO_BIN_DIR}/us_saxs_cmds_t.exe")
     foreach(_exe ${_somo_exes})
         get_filename_component(_exe_name "${_exe}" NAME)
         message(STATUS "  SoMo binary: ${_exe_name}")
@@ -516,23 +504,7 @@ if(EXISTS "${S_BIN}/assistant.exe")
     message(STATUS "  qt.conf covers assistant.exe (shared bin/ location)")
 endif()
 
-# 12) Verify the complete runtime help system before CPack consumes the stage
-foreach(_help_runtime_file IN ITEMS
-        "${S_BIN}/assistant.exe"
-        "${S_BIN}/manual.qch"
-        "${S_BIN}/manual.qhc"
-        "${S_PLUG}/sqldrivers/qsqlite.dll")
-    if(NOT EXISTS "${_help_runtime_file}")
-        message(FATAL_ERROR
-            "[WinDeploy] Required staged help component is missing: ${_help_runtime_file}")
-    endif()
-    file(SIZE "${_help_runtime_file}" _help_runtime_size)
-    if(_help_runtime_size EQUAL 0)
-        message(FATAL_ERROR
-            "[WinDeploy] Required staged help component is empty: ${_help_runtime_file}")
-    endif()
-endforeach()
-message(STATUS "[WinDeploy] Verified Qt Assistant, manual.qch, manual.qhc, and qsqlite.dll")
+include("${CMAKE_CURRENT_LIST_DIR}/../ValidateAppHelp.cmake")
 
 # =========================================================================
 # Summary
