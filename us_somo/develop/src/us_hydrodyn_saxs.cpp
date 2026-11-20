@@ -6534,18 +6534,37 @@ void US_Hydrodyn_Saxs::saxs_buffer()
       ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_window->show();
    }
 
+   // a curve that never had a PSV or I0se holds the global defaults, so pass only values that differ from
+   // them; otherwise every transferred curve would be saved with the defaults written as if measured
+   auto differs = []( double a, double b )
+   {
+      return qAbs( a - b ) > 1e-6 + 1e-4 * qMax( qAbs( a ), qAbs( b ) );
+   };
+
    for ( unsigned int i = 0; i < plotted_q.size(); i++ )
    {
+      double this_conc;
+      double this_psv;
+      double this_I0se;
+      get_conc_csv_values( qsl_plotted_iq_names[ i ], this_conc, this_psv, this_I0se );
+      double pass_psv  = differs( this_psv,  our_saxs_options->psv    ) ? this_psv  : -1e0;
+      double pass_I0se = differs( this_I0se, our_saxs_options->I0_exp ) ? this_I0se : -1e0;
       if ( plotted_I_error[ i ].size() == plotted_I[ i ].size() )
       {
          ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_window->add_plot( qsl_plotted_iq_names[ i ],
                                                                      plotted_q[ i ],
                                                                      plotted_I[ i ],
-                                                                     plotted_I_error[ i ] );
+                                                                     plotted_I_error[ i ],
+                                                                     this_conc,
+                                                                     pass_psv,
+                                                                     pass_I0se );
       } else {
          ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_window->add_plot( qsl_plotted_iq_names[ i ],
                                                                      plotted_q[ i ],
-                                                                     plotted_I[ i ] );
+                                                                     plotted_I[ i ],
+                                                                     this_conc,
+                                                                     pass_psv,
+                                                                     pass_I0se );
       }
    }
 }

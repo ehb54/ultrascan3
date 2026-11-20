@@ -72,14 +72,21 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
                              );
       ~US_Hydrodyn_Saxs_Buffer();
 
+      // conc < 0: none; psv, I0se <= 0: none
       void add_plot( QString           name,
                      vector < double > q,
-                     vector < double > I );
+                     vector < double > I,
+                     double            conc = -1e0,
+                     double            psv  = -1e0,
+                     double            I0se = -1e0 );
 
       void add_plot( QString           name,
                      vector < double > q,
                      vector < double > I,
-                     vector < double > errors );
+                     vector < double > errors,
+                     double            conc = -1e0,
+                     double            psv  = -1e0,
+                     double            I0se = -1e0 );
 
    private:
       csv           csv1;
@@ -261,6 +268,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       map < QString, double >             f_extc;
       // how a created file was made, written into its saved header line
       map < QString, QString >            f_header;
+
+      // the PSV and I0se of a curve made from one curve, or from several (the mean of those that have one)
+      void                                copy_psv_I0se( const QString & to, const QString & from );
+      void                                mean_psv_I0se( const QString & to, const QStringList & from );
+      // the concentration of a created curve: f_conc and its row of the concentration table
+      void                                set_created_conc( const QString & name, double conc );
 
       map < QString, bool >               created_files_not_saved;
 

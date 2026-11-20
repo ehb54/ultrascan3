@@ -1065,6 +1065,7 @@ void US_Hydrodyn_Saxs_Buffer::run_one( bool do_plot )
       .arg( empty.isEmpty() ? QString( "" ) : QString( " - %1 * %2" ).arg( 1e0 - alpha ).arg( empty ) )
       .arg( use_psv ? QString( ", alpha from gamma %1, conc %2, psv %3" ).arg( gamma ).arg( this_conc ).arg( psv ) : QString( "" ) )
       .arg( np_note );
+   copy_psv_I0se( bsub_name, solution );
    
    // we could check if it has changed and then delete
    if ( do_plot )
@@ -2551,8 +2552,6 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
    update_csv_conc();
    map < QString, double > concs = current_concs();
    double avg_conc = 0e0;
-   double avg_psv  = 0e0;
-   double avg_I0se = 0e0;
 
    // copies for potential cropping:
 
@@ -2685,8 +2684,6 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
             concs.count( this_file ) ?
             concs[ this_file ] :
             0e0;
-         avg_psv  = f_psv.count( this_file ) ? f_psv[ this_file ] : 0e0;
-         avg_I0se = f_I0se.count( this_file ) ? f_I0se[ this_file ] : 0e0;
       } else {
          if ( avg_qs.size() != t_qs[ this_file ].size() )
          {
@@ -2711,8 +2708,6 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
             concs.count( this_file ) ?
             concs[ this_file ] :
             0e0;
-         avg_psv  += f_psv.count( this_file ) ? f_psv[ this_file ] : 0e0;
-         avg_I0se += f_I0se.count( this_file ) ? f_I0se[ this_file ] : 0e0;
       }            
    }
 
@@ -2740,8 +2735,6 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
    }
 
    avg_conc /= files.size();
-   avg_psv  /= files.size();
-   avg_I0se /= files.size();
 
    // determine name
    // find common header & tail substrings
@@ -2799,14 +2792,7 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
       .arg( crop ? QString( ", cropped to %1 points" ).arg( min_q_len ) : QString( "" ) )
       .arg( selected_files.join( "," ) );
    
-   if ( avg_psv )
-   {
-      f_psv       [ avg_name ] = avg_psv;
-   }
-   if ( avg_I0se )
-   {
-      f_I0se      [ avg_name ] = avg_I0se;
-   }
+   mean_psv_I0se( avg_name, selected_files );
 
    // we could check if it has changed and then delete
    // if ( plot_dist_zoomer )
@@ -3807,6 +3793,7 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
          .arg( used_concs.join( "," ) )
          .arg( avg_conc );
    }
+   mean_psv_I0se( avg_name, selected_files );
    
    // we could check if it has changed and then delete
    // if ( plot_dist_zoomer )
@@ -4390,9 +4377,12 @@ void US_Hydrodyn_Saxs_Buffer::to_saxs()
                                           this_file );
             }
 
-            saxs_window->update_conc_csv( 
-                                         saxs_window->qsl_plotted_iq_names.back(), 
-                                         ( concs.count( this_file ) && concs[ this_file ] != 0e0 ) ? concs[ this_file ] : ((US_Hydrodyn *)us_hydrodyn)->saxs_options.conc
+            // the curve's PSV and I0se, else the defaults
+            saxs_window->update_conc_csv(
+                                         saxs_window->qsl_plotted_iq_names.back(),
+                                         ( concs.count( this_file ) && concs[ this_file ] != 0e0 ) ? concs[ this_file ] : ((US_Hydrodyn *)us_hydrodyn)->saxs_options.conc,
+                                         ( f_psv.count( this_file ) && f_psv[ this_file ] > 0e0 ) ? f_psv[ this_file ] : ((US_Hydrodyn *)us_hydrodyn)->saxs_options.psv,
+                                         ( f_I0se.count( this_file ) && f_I0se[ this_file ] > 0e0 ) ? f_I0se[ this_file ] : ((US_Hydrodyn *)us_hydrodyn)->saxs_options.I0_exp
                                          );
             
 
@@ -5782,6 +5772,7 @@ void US_Hydrodyn_Saxs_Buffer::rename_created( QListWidgetItem *lbi, const QPoint
    {
       f_header   [ text ] = f_header   [ lbi->text() ];
    }
+   copy_psv_I0se( text, lbi->text() );
 
    update_csv_conc();
    map < QString, double > concs = current_concs();
@@ -5875,6 +5866,7 @@ void US_Hydrodyn_Saxs_Buffer::normalize()
       f_header   [ norm_name ] = QString( " Concentration normalized: %1 / %2 mg/ml" )
          .arg( files[ i ] )
          .arg( concs.count( files[ i ] ) ? concs[ files[ i ] ] : 0e0 );
+      copy_psv_I0se( norm_name, files[ i ] );
 
       update_csv_conc();
 
@@ -5896,22 +5888,88 @@ void US_Hydrodyn_Saxs_Buffer::normalize()
    update_enables();
 }
 
+void US_Hydrodyn_Saxs_Buffer::copy_psv_I0se( const QString & to, const QString & from )
+{
+   mean_psv_I0se( to, QStringList() << from );
+}
+
+void US_Hydrodyn_Saxs_Buffer::mean_psv_I0se( const QString & to, const QStringList & from )
+{
+   // the mean over the curves that have a value, so a curve without one does not count as 0
+   double sum_psv  = 0e0;
+   double sum_I0se = 0e0;
+   int    n_psv    = 0;
+   int    n_I0se   = 0;
+   for ( int i = 0; i < (int) from.size(); i++ )
+   {
+      if ( f_psv.count( from[ i ] ) && f_psv[ from[ i ] ] != 0e0 )
+      {
+         sum_psv += f_psv[ from[ i ] ];
+         n_psv++;
+      }
+      if ( f_I0se.count( from[ i ] ) && f_I0se[ from[ i ] ] != 0e0 )
+      {
+         sum_I0se += f_I0se[ from[ i ] ];
+         n_I0se++;
+      }
+   }
+   if ( n_psv )
+   {
+      f_psv[ to ] = sum_psv / n_psv;
+   } else {
+      f_psv.erase( to );
+   }
+   if ( n_I0se )
+   {
+      f_I0se[ to ] = sum_I0se / n_I0se;
+   } else {
+      f_I0se.erase( to );
+   }
+}
+
+void US_Hydrodyn_Saxs_Buffer::set_created_conc( const QString & name, double conc )
+{
+   update_csv_conc();
+   for ( int i = 0; i < (int) csv_conc.data.size(); i++ )
+   {
+      if ( csv_conc.data[ i ].size() > 1 &&
+           csv_conc.data[ i ][ 0 ] == name )
+      {
+         csv_conc.data[ i ][ 1 ] = conc != 0e0 ? QString::number( conc, 'g', 10 ) : QString( "" );
+         if ( i < (int) csv_conc.num_data.size() && csv_conc.num_data[ i ].size() > 1 )
+         {
+            csv_conc.num_data[ i ][ 1 ] = conc;
+         }
+      }
+   }
+   if ( conc_widget )
+   {
+      conc_window->refresh( csv_conc );
+   }
+}
+
 void US_Hydrodyn_Saxs_Buffer::add_plot( QString           name,
                                         vector < double > q,
-                                        vector < double > I )
+                                        vector < double > I,
+                                        double            conc,
+                                        double            psv,
+                                        double            I0se )
 {
    vector < double > errors( I.size() );
    for ( unsigned int i = 0; i < ( unsigned int ) errors.size(); i++ )
    {
       errors[ i ] = 0e0;
    }
-   add_plot( name, q, I, errors );
+   add_plot( name, q, I, errors, conc, psv, I0se );
 }
 
 void US_Hydrodyn_Saxs_Buffer::add_plot( QString           name,
                                         vector < double > q,
                                         vector < double > I,
-                                        vector < double > errors )
+                                        vector < double > errors,
+                                        double            conc,
+                                        double            psv,
+                                        double            I0se )
 {
    name.replace( QRegularExpression( "(\\s+|\"|'|\\/|\\.)" ), "_" );
    
@@ -5949,7 +6007,28 @@ void US_Hydrodyn_Saxs_Buffer::add_plot( QString           name,
    f_qs        [ bsub_name ] = q;
    f_Is        [ bsub_name ] = I;
    f_errors    [ bsub_name ] = errors;
-   
+
+   // the concentration, PSV and I0se the sending window holds for the curve, as a file header would give them
+   if ( conc > 0e0 )
+   {
+      f_conc[ bsub_name ] = conc;
+   } else {
+      f_conc.erase( bsub_name );
+   }
+   if ( psv > 0e0 )
+   {
+      f_psv[ bsub_name ] = psv;
+   } else {
+      f_psv.erase( bsub_name );
+   }
+   if ( I0se > 0e0 )
+   {
+      f_I0se[ bsub_name ] = I0se;
+   } else {
+      f_I0se.erase( bsub_name );
+   }
+   set_created_conc( bsub_name, conc > 0e0 ? conc : 0e0 );
+
    // we could check if it has changed and then delete
    if ( plot_dist_zoomer )
    {
@@ -6238,6 +6317,7 @@ void US_Hydrodyn_Saxs_Buffer::run_one_divide()
       .arg( empty.isEmpty() ? QString( "" ) : QString( " - %1 * %2" ).arg( 1e0 - alpha ).arg( empty ) )
       .arg( use_psv ? QString( ", alpha from gamma %1, conc %2, psv %3" ).arg( gamma ).arg( this_conc ).arg( psv ) : QString( "" ) )
       .arg( np_note );
+   copy_psv_I0se( bsub_name, solution );
    
    // we could check if it has changed and then delete
    if ( plot_dist_zoomer )
@@ -7456,6 +7536,14 @@ void US_Hydrodyn_Saxs_Buffer::wheel_save()
          .arg( point )
          .arg( join_adjust_lowq ? join_file : scaled );
    }
+   {
+      // the joined curve is on the scale of the curve that was not scaled: keep its concentration, PSV and I0se
+      QString kept = join_adjust_lowq ? join_file : wheel_file;
+      update_csv_conc();
+      map < QString, double > concs = current_concs();
+      copy_psv_I0se( save_name, kept );
+      set_created_conc( save_name, concs.count( kept ) ? concs[ kept ] : 0e0 );
+   }
 
    lb_files->item( f_pos[ save_name ])->setSelected( true );
 
@@ -7589,8 +7677,6 @@ void US_Hydrodyn_Saxs_Buffer::asum( QStringList files )
    update_csv_conc();
    map < QString, double > concs = current_concs();
    double avg_conc = 0e0;
-   double avg_psv  = 0e0;
-   double avg_I0se = 0e0;
 
    // copies for potential cropping:
 
@@ -7751,8 +7837,6 @@ void US_Hydrodyn_Saxs_Buffer::asum( QStringList files )
             concs.count( this_file ) ?
             mults[ i ] * concs[ this_file ] :
             0e0;
-         avg_psv  = f_psv.count( this_file ) ? f_psv[ this_file ] : 0e0;
-         avg_I0se = f_I0se.count( this_file ) ? f_I0se[ this_file ] : 0e0;
 
       } else {
          if ( avg_qs.size() != t_qs[ this_file ].size() )
@@ -7777,10 +7861,8 @@ void US_Hydrodyn_Saxs_Buffer::asum( QStringList files )
          }
          avg_conc +=
             concs.count( this_file ) ?
-            concs[ this_file ] :
+            mults[ i ] * concs[ this_file ] :
             0e0;
-         avg_psv  += f_psv.count( this_file ) ? f_psv[ this_file ] : 0e0;
-         avg_I0se += f_I0se.count( this_file ) ? f_I0se[ this_file ] : 0e0;
       }            
    }
 
@@ -7839,14 +7921,7 @@ void US_Hydrodyn_Saxs_Buffer::asum( QStringList files )
          .arg( terms.join( " + " ) );
    }
    
-   if ( avg_psv )
-   {
-      f_psv       [ wsum_name ] = avg_psv;
-   }
-   if ( avg_I0se )
-   {
-      f_I0se      [ wsum_name ] = avg_I0se;
-   }
+   mean_psv_I0se( wsum_name, selected_files );
 
    // we could check if it has changed and then delete
    // if ( plot_dist_zoomer )
