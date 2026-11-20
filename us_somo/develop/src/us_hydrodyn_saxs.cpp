@@ -2262,14 +2262,20 @@ void US_Hydrodyn_Saxs::setupGUI()
    gl_manual_guinier->setColumnStretch( 2, 2 );
    gl_manual_guinier->setColumnStretch( 3, 0 );
 
-   QBoxLayout * qbl_resid = new QVBoxLayout( 0 ); qbl_resid->setContentsMargins( 0, 0, 0, 0 ); qbl_resid->setSpacing( 0 );
-   qbl_resid->addWidget( plot_resid );
-   qbl_resid->addLayout( hbl_plot_resid_buttons );
-   qbl_resid->addLayout( gl_manual_guinier );
+   // the residuals plot's height can be changed by dragging the divider; it starts at 20% (set_resid_show())
+   qs_plots = new QSplitter( Qt::Vertical, this );
+   qs_plots->setChildrenCollapsible( false );
+   // a minimum below the QwtPlot's own (about 150 px), so that the residuals plot can start at 20% of a short window
+   plot_resid->setMinimumHeight( 80 );
+   qs_plots->addWidget( plot_saxs );
+   qs_plots->addWidget( plot_resid );
+   qs_plots_user_sized = false;
+   connect( qs_plots, SIGNAL( splitterMoved( int, int ) ), SLOT( qs_plots_moved() ) );
 
    qbl_plots = new QVBoxLayout(0); qbl_plots->setContentsMargins( 0, 0, 0, 0 ); qbl_plots->setSpacing( 0 );
-   qbl_plots->addWidget( plot_saxs );
-   qbl_plots->addLayout( qbl_resid );
+   qbl_plots->addWidget( qs_plots );
+   qbl_plots->addLayout( hbl_plot_resid_buttons );
+   qbl_plots->addLayout( gl_manual_guinier );
    qbl_plots->addWidget( plot_pr );
    qbl_plots->addWidget( lbl_core_progress );
    background->addLayout( qbl_plots , 0 , 2 , 1 + ( j ) - ( 0 ) , 1 + ( 2 ) - ( 2 ) );
@@ -5440,6 +5446,7 @@ void US_Hydrodyn_Saxs::clear_plot_saxs_data()
    plotted_guinier_b.clear( );
    plotted_guinier_x.clear( );
    plotted_guinier_y.clear( );
+   plotted_guinier_pts_removed.clear( );
    plotted_cs_guinier_valid.clear( );
    plotted_cs_guinier_plotted.clear( );
    plotted_cs_guinier_lowq2.clear( );
@@ -5448,6 +5455,7 @@ void US_Hydrodyn_Saxs::clear_plot_saxs_data()
    plotted_cs_guinier_b.clear( );
    plotted_cs_guinier_x.clear( );
    plotted_cs_guinier_y.clear( );
+   plotted_cs_guinier_pts_removed.clear( );
    plotted_Rt_guinier_valid.clear( );
    plotted_Rt_guinier_plotted.clear( );
    plotted_Rt_guinier_lowq2.clear( );
@@ -5456,6 +5464,7 @@ void US_Hydrodyn_Saxs::clear_plot_saxs_data()
    plotted_Rt_guinier_b.clear( );
    plotted_Rt_guinier_x.clear( );
    plotted_Rt_guinier_y.clear( );
+   plotted_Rt_guinier_pts_removed.clear( );
 
 #if QT_VERSION >= 0x040000
    saxs_legend_vis = false;
@@ -6525,18 +6534,37 @@ void US_Hydrodyn_Saxs::saxs_buffer()
       ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_window->show();
    }
 
+   // a curve that never had a PSV or I0se holds the global defaults, so pass only values that differ from
+   // them; otherwise every transferred curve would be saved with the defaults written as if measured
+   auto differs = []( double a, double b )
+   {
+      return qAbs( a - b ) > 1e-6 + 1e-4 * qMax( qAbs( a ), qAbs( b ) );
+   };
+
    for ( unsigned int i = 0; i < plotted_q.size(); i++ )
    {
+      double this_conc;
+      double this_psv;
+      double this_I0se;
+      get_conc_csv_values( qsl_plotted_iq_names[ i ], this_conc, this_psv, this_I0se );
+      double pass_psv  = differs( this_psv,  our_saxs_options->psv    ) ? this_psv  : -1e0;
+      double pass_I0se = differs( this_I0se, our_saxs_options->I0_exp ) ? this_I0se : -1e0;
       if ( plotted_I_error[ i ].size() == plotted_I[ i ].size() )
       {
          ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_window->add_plot( qsl_plotted_iq_names[ i ],
                                                                      plotted_q[ i ],
                                                                      plotted_I[ i ],
-                                                                     plotted_I_error[ i ] );
+                                                                     plotted_I_error[ i ],
+                                                                     this_conc,
+                                                                     pass_psv,
+                                                                     pass_I0se );
       } else {
          ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_window->add_plot( qsl_plotted_iq_names[ i ],
                                                                      plotted_q[ i ],
-                                                                     plotted_I[ i ] );
+                                                                     plotted_I[ i ],
+                                                                     this_conc,
+                                                                     pass_psv,
+                                                                     pass_I0se );
       }
    }
 }
@@ -6574,6 +6602,16 @@ void US_Hydrodyn_Saxs::saxs_hplc()
       }
       double this_conc, this_psv, this_I0se;
       get_conc_csv_values( qsl_plotted_iq_names[ i ], this_conc, this_psv, this_I0se );
+      // carry psv / I0se along with the concentration, so a curve saved from HPLC/KIN keeps its PSV: and
+      // I0se: header tokens. conc_csv holds the global defaults for a curve that never had them, so pass
+      // only values that differ from the defaults (the same rule the extrapolation uses); otherwise
+      // every transferred curve would be saved with default values written as if they were measured.
+      auto differs = []( double a, double b )
+      {
+         return qAbs( a - b ) > 1e-6 + 1e-4 * qMax( qAbs( a ), qAbs( b ) );
+      };
+      double pass_psv  = differs( this_psv,  our_saxs_options->psv    ) ? this_psv  : -1e0;
+      double pass_I0se = differs( this_I0se, our_saxs_options->I0_exp ) ? this_I0se : -1e0;
       if ( plotted_I_error[ i ].size() == plotted_I[ i ].size() )
       {
          ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->add_plot( qsl_plotted_iq_names[ i ],
@@ -6582,14 +6620,18 @@ void US_Hydrodyn_Saxs::saxs_hplc()
                                                                    plotted_I_error[ i ],
                                                                    false,
                                                                    true,
-                                                                   this_conc );
+                                                                   this_conc,
+                                                                   pass_psv,
+                                                                   pass_I0se );
       } else {
          ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->add_plot( qsl_plotted_iq_names[ i ],
                                                                    plotted_q[ i ],
                                                                    plotted_I[ i ],
                                                                    false,
                                                                    true,
-                                                                   this_conc );
+                                                                   this_conc,
+                                                                   pass_psv,
+                                                                   pass_I0se );
       }
    }
    ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->update_enables();

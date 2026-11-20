@@ -3,6 +3,8 @@
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_saxs_buffer.h"
 #include "../include/us_hydrodyn_saxs_buffer_nth.h"
+#include "../include/us_hydrodyn_saxs_buffer_dilutions.h"
+#include "../include/us_hydrodyn_saxs_buffer_upturn.h"
 #if QT_VERSION >= 0x040000
 #include <qwt_scale_engine.h>
 //Added by qt3to4:
@@ -150,8 +152,8 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
       }
    }
    
-   // lbl_dir        ->setMaximumWidth( lb_files->width() - cb_lock_dir->width() );
-   // lbl_created_dir->setMaximumWidth( lb_files->width() );
+   // le_dir        ->setMaximumWidth( lb_files->width() - cb_lock_dir->width() );
+   // le_created_dir->setMaximumWidth( lb_files->width() );
 
    // int left_over = ( csv_width / 3 ) - pb_regex_load->maximumWidth();
    // le_regex->setMaximumWidth( left_over / 3 );
@@ -415,14 +417,54 @@ void US_Hydrodyn_Saxs_Buffer::closeEvent(QCloseEvent *e)
 
 void US_Hydrodyn_Saxs_Buffer::showEvent( QShowEvent *e )
 {
+   // the subtraction window is no longer opened with this one: the Buffer subtraction button opens it
    QFrame::showEvent( e );
+}
 
-   // show the subtraction window once this one is on screen, so it opens in front
-   if ( !e->spontaneous() )
+// the buffer subtraction window: opened, or brought to the front if it already is
+void US_Hydrodyn_Saxs_Buffer::show_subtraction()
+{
+   fit_widget->show();
+   fit_widget->raise();
+   fit_widget->activateWindow();
+}
+
+// the selected curves other than the buffer and the blank
+static QStringList us_buffer_selected_solutions( QListWidget * lb, const QString & buffer, const QString & empty )
+{
+   QStringList files;
+   for ( int i = 0; i < lb->count(); i++ )
    {
-      QTimer::singleShot( 0, fit_widget, SLOT( show() ) );
-      QTimer::singleShot( 0, fit_widget, SLOT( raise() ) );
+      if ( lb->item( i )->isSelected() &&
+           lb->item( i )->text() != buffer &&
+           lb->item( i )->text() != empty )
+      {
+         files << lb->item( i )->text();
+      }
    }
+   return files;
+}
+
+void US_Hydrodyn_Saxs_Buffer::check_dilutions()
+{
+   QStringList files = us_buffer_selected_solutions( lb_files, lbl_buffer->text(), lbl_empty->text() );
+   if ( files.size() < 2 )
+   {
+      return;
+   }
+   US_Hydrodyn_Saxs_Buffer_Dilutions * w = new US_Hydrodyn_Saxs_Buffer_Dilutions( this, files, this );
+   w->show();
+}
+
+void US_Hydrodyn_Saxs_Buffer::upturn()
+{
+   QStringList files = us_buffer_selected_solutions( lb_files, lbl_buffer->text(), lbl_empty->text() );
+   if ( !files.size() )
+   {
+      return;
+   }
+   US_Hydrodyn_Saxs_Buffer_Upturn * w = new US_Hydrodyn_Saxs_Buffer_Upturn( this, files, this );
+   w->show();
 }
 
 void US_Hydrodyn_Saxs_Buffer::table_value( int row, int col )
@@ -1023,6 +1065,7 @@ void US_Hydrodyn_Saxs_Buffer::run_one( bool do_plot )
       .arg( empty.isEmpty() ? QString( "" ) : QString( " - %1 * %2" ).arg( 1e0 - alpha ).arg( empty ) )
       .arg( use_psv ? QString( ", alpha from gamma %1, conc %2, psv %3" ).arg( gamma ).arg( this_conc ).arg( psv ) : QString( "" ) )
       .arg( np_note );
+   copy_psv_I0se( bsub_name, solution );
    
    // we could check if it has changed and then delete
    if ( do_plot )
@@ -1148,7 +1191,9 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
    pb_asum               ->setEnabled( files_selected_count );
    pb_normalize          ->setEnabled( all_selected_have_nonzero_conc() );
    pb_conc_avg           ->setEnabled( all_selected_have_nonzero_conc() );
-   pb_set_buffer         ->setEnabled( files_selected_count == 1 && 
+   pb_check_dilutions    ->setEnabled( non_buffer_non_empty_files_selected_count > 1 );
+   pb_upturn             ->setEnabled( non_buffer_non_empty_files_selected_count > 0 );
+   pb_set_buffer         ->setEnabled( files_selected_count == 1 &&
                                        lb_files->item( last_selected_pos )->text() != lbl_buffer->text() &&
                                        lb_files->item( last_selected_pos )->text() != lbl_empty ->text() &&
                                        lb_files->item( last_selected_pos )->text() != lbl_signal->text()
@@ -1587,7 +1632,7 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
 
    if ( cb_lock_dir->isChecked() )
    {
-      QDir::setCurrent( lbl_dir->text() );
+      QDir::setCurrent( le_dir->text() );
    }
 
    QString use_dir = QDir::currentPath();
@@ -1603,7 +1648,7 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
    // {
    if ( cb_lock_dir->isChecked() )
    {
-      ((US_Hydrodyn  *)us_hydrodyn)->add_to_directory_history( lbl_dir->text() );
+      ((US_Hydrodyn  *)us_hydrodyn)->add_to_directory_history( le_dir->text() );
    }
    ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    raise();
@@ -1626,8 +1671,8 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
       if ( !cb_lock_dir->isChecked() )
       {
          QDir::setCurrent( last_load_dir );
-         lbl_dir        ->setText( QDir::currentPath() );
-         lbl_created_dir->setText( QDir::currentPath() + "/produced" ); 
+         le_dir        ->setText( QDir::currentPath() );
+         le_created_dir->setText( QDir::currentPath() + "/produced" ); 
       }
       editor_msg( "black", QString( us_tr( "loaded from %1:" ) ).arg( last_load_dir ) );
    }
@@ -1793,8 +1838,8 @@ void US_Hydrodyn_Saxs_Buffer::add_files( QStringList filenames )
       if ( !cb_lock_dir->isChecked() )
       {
          QDir::setCurrent( last_load_dir );
-         lbl_dir        ->setText( QDir::currentPath() );
-         lbl_created_dir->setText( QDir::currentPath() + "/produced" ); 
+         le_dir        ->setText( QDir::currentPath() );
+         le_created_dir->setText( QDir::currentPath() + "/produced" ); 
       }
       editor_msg( "black", QString( us_tr( "loaded from %1:" ) ).arg( last_load_dir ) );
    }
@@ -2507,8 +2552,6 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
    update_csv_conc();
    map < QString, double > concs = current_concs();
    double avg_conc = 0e0;
-   double avg_psv  = 0e0;
-   double avg_I0se = 0e0;
 
    // copies for potential cropping:
 
@@ -2641,8 +2684,6 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
             concs.count( this_file ) ?
             concs[ this_file ] :
             0e0;
-         avg_psv  = f_psv.count( this_file ) ? f_psv[ this_file ] : 0e0;
-         avg_I0se = f_I0se.count( this_file ) ? f_I0se[ this_file ] : 0e0;
       } else {
          if ( avg_qs.size() != t_qs[ this_file ].size() )
          {
@@ -2667,8 +2708,6 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
             concs.count( this_file ) ?
             concs[ this_file ] :
             0e0;
-         avg_psv  += f_psv.count( this_file ) ? f_psv[ this_file ] : 0e0;
-         avg_I0se += f_I0se.count( this_file ) ? f_I0se[ this_file ] : 0e0;
       }            
    }
 
@@ -2696,8 +2735,6 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
    }
 
    avg_conc /= files.size();
-   avg_psv  /= files.size();
-   avg_I0se /= files.size();
 
    // determine name
    // find common header & tail substrings
@@ -2755,14 +2792,7 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
       .arg( crop ? QString( ", cropped to %1 points" ).arg( min_q_len ) : QString( "" ) )
       .arg( selected_files.join( "," ) );
    
-   if ( avg_psv )
-   {
-      f_psv       [ avg_name ] = avg_psv;
-   }
-   if ( avg_I0se )
-   {
-      f_I0se      [ avg_name ] = avg_I0se;
-   }
+   mean_psv_I0se( avg_name, selected_files );
 
    // we could check if it has changed and then delete
    // if ( plot_dist_zoomer )
@@ -2961,22 +2991,22 @@ bool US_Hydrodyn_Saxs_Buffer::save_files_csv( QStringList files )
    }
 
    {
-      QDir dir1( lbl_created_dir->text() );
+      QDir dir1( le_created_dir->text() );
       if ( !dir1.exists() )
       {
-         if ( dir1.mkdir( lbl_created_dir->text() ) )
+         if ( dir1.mkdir( le_created_dir->text() ) )
          {
-            editor_msg( "black", QString( us_tr( "Created directory %1" ) ).arg( lbl_created_dir->text() ) );
+            editor_msg( "black", QString( us_tr( "Created directory %1" ) ).arg( le_created_dir->text() ) );
          } else {
-            editor_msg( "red", QString( us_tr( "Error: Can not create directory %1 Check permissions." ) ).arg( lbl_created_dir->text() ) );
+            editor_msg( "red", QString( us_tr( "Error: Can not create directory %1 Check permissions." ) ).arg( le_created_dir->text() ) );
             return false;
          }
       }
    }         
 
-   if ( !QDir::setCurrent( lbl_created_dir->text() ) )
+   if ( !QDir::setCurrent( le_created_dir->text() ) )
    {
-      editor_msg( "red", QString( us_tr( "Error: can not set directory %1" ) ).arg( lbl_created_dir->text() ) );
+      editor_msg( "red", QString( us_tr( "Error: can not set directory %1" ) ).arg( le_created_dir->text() ) );
       return false;
    }
 
@@ -3174,22 +3204,22 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file, bool &cancel, bool &overw
    } 
 
    {
-      QDir dir1( lbl_created_dir->text() );
+      QDir dir1( le_created_dir->text() );
       if ( !dir1.exists() )
       {
-         if ( dir1.mkdir( lbl_created_dir->text() ) )
+         if ( dir1.mkdir( le_created_dir->text() ) )
          {
-            editor_msg( "black", QString( us_tr( "Created directory %1" ) ).arg( lbl_created_dir->text() ) );
+            editor_msg( "black", QString( us_tr( "Created directory %1" ) ).arg( le_created_dir->text() ) );
          } else {
-            editor_msg( "red", QString( us_tr( "Error: Can not create directory %1 Check permissions." ) ).arg( lbl_created_dir->text() ) );
+            editor_msg( "red", QString( us_tr( "Error: Can not create directory %1 Check permissions." ) ).arg( le_created_dir->text() ) );
             return false;
          }
       }
    }         
 
-   if ( !QDir::setCurrent( lbl_created_dir->text() ) )
+   if ( !QDir::setCurrent( le_created_dir->text() ) )
    {
-      editor_msg( "red", QString( us_tr( "Error: can not set directory %1" ) ).arg( lbl_created_dir->text() ) );
+      editor_msg( "red", QString( us_tr( "Error: can not set directory %1" ) ).arg( le_created_dir->text() ) );
       return false;
    }
 
@@ -3308,7 +3338,9 @@ void US_Hydrodyn_Saxs_Buffer::update_csv_conc()
          {
             vector < QString > tmp_data;
             tmp_data.push_back( lb_files->item( i )->text() );
-            tmp_data.push_back( "" );
+            // a new row starts from the concentration in the curve's file header, if it had one
+            tmp_data.push_back( ( f_conc.count( tmp_data[ 0 ] ) && f_conc[ tmp_data[ 0 ] ] != 0e0 )
+                                ? QString::number( f_conc[ tmp_data[ 0 ] ], 'g', 10 ) : QString( "" ) );
             
             csv_conc.prepended_names.push_back(tmp_data[0]);
             csv_conc.data.push_back(tmp_data);
@@ -3345,7 +3377,9 @@ void US_Hydrodyn_Saxs_Buffer::update_csv_conc()
          {
             vector < QString > tmp_data;
             tmp_data.push_back( lb_files->item( i )->text() );
-            tmp_data.push_back( "" );
+            // a new row starts from the concentration in the curve's file header, if it had one
+            tmp_data.push_back( ( f_conc.count( tmp_data[ 0 ] ) && f_conc[ tmp_data[ 0 ] ] != 0e0 )
+                                ? QString::number( f_conc[ tmp_data[ 0 ] ], 'g', 10 ) : QString( "" ) );
             
             new_csv.prepended_names.push_back(tmp_data[0]);
             new_csv.data.push_back(tmp_data);
@@ -3759,6 +3793,7 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
          .arg( used_concs.join( "," ) )
          .arg( avg_conc );
    }
+   mean_psv_I0se( avg_name, selected_files );
    
    // we could check if it has changed and then delete
    // if ( plot_dist_zoomer )
@@ -4342,9 +4377,12 @@ void US_Hydrodyn_Saxs_Buffer::to_saxs()
                                           this_file );
             }
 
-            saxs_window->update_conc_csv( 
-                                         saxs_window->qsl_plotted_iq_names.back(), 
-                                         ( concs.count( this_file ) && concs[ this_file ] != 0e0 ) ? concs[ this_file ] : ((US_Hydrodyn *)us_hydrodyn)->saxs_options.conc
+            // the curve's PSV and I0se, else the defaults
+            saxs_window->update_conc_csv(
+                                         saxs_window->qsl_plotted_iq_names.back(),
+                                         ( concs.count( this_file ) && concs[ this_file ] != 0e0 ) ? concs[ this_file ] : ((US_Hydrodyn *)us_hydrodyn)->saxs_options.conc,
+                                         ( f_psv.count( this_file ) && f_psv[ this_file ] > 0e0 ) ? f_psv[ this_file ] : ((US_Hydrodyn *)us_hydrodyn)->saxs_options.psv,
+                                         ( f_I0se.count( this_file ) && f_I0se[ this_file ] > 0e0 ) ? f_I0se[ this_file ] : ((US_Hydrodyn *)us_hydrodyn)->saxs_options.I0_exp
                                          );
             
 
@@ -5623,7 +5661,7 @@ void US_Hydrodyn_Saxs_Buffer::similar_files()
    QDir::setCurrent( dir );
    if ( !cb_lock_dir->isChecked() )
    {
-      lbl_dir->setText( QDir::currentPath() );
+      le_dir->setText( QDir::currentPath() );
    }
    QDir qd;
    add_files( qd.entryList( QStringList() << "*" ).filter( QRegularExpression( match ) ) );
@@ -5631,12 +5669,12 @@ void US_Hydrodyn_Saxs_Buffer::similar_files()
 
 void US_Hydrodyn_Saxs_Buffer::regex_load()
 {
-   // make list of lbl_dir all files
+   // make list of le_dir all files
    // filter with regex for each # in list
-   QString dir     = lbl_dir->text();
+   QString dir     = le_dir->text();
 
    QDir::setCurrent( dir );
-   lbl_dir->setText( QDir::currentPath() );
+   le_dir->setText( QDir::currentPath() );
    QDir qd;
 
 
@@ -5734,6 +5772,7 @@ void US_Hydrodyn_Saxs_Buffer::rename_created( QListWidgetItem *lbi, const QPoint
    {
       f_header   [ text ] = f_header   [ lbi->text() ];
    }
+   copy_psv_I0se( text, lbi->text() );
 
    update_csv_conc();
    map < QString, double > concs = current_concs();
@@ -5827,6 +5866,7 @@ void US_Hydrodyn_Saxs_Buffer::normalize()
       f_header   [ norm_name ] = QString( " Concentration normalized: %1 / %2 mg/ml" )
          .arg( files[ i ] )
          .arg( concs.count( files[ i ] ) ? concs[ files[ i ] ] : 0e0 );
+      copy_psv_I0se( norm_name, files[ i ] );
 
       update_csv_conc();
 
@@ -5848,22 +5888,88 @@ void US_Hydrodyn_Saxs_Buffer::normalize()
    update_enables();
 }
 
+void US_Hydrodyn_Saxs_Buffer::copy_psv_I0se( const QString & to, const QString & from )
+{
+   mean_psv_I0se( to, QStringList() << from );
+}
+
+void US_Hydrodyn_Saxs_Buffer::mean_psv_I0se( const QString & to, const QStringList & from )
+{
+   // the mean over the curves that have a value, so a curve without one does not count as 0
+   double sum_psv  = 0e0;
+   double sum_I0se = 0e0;
+   int    n_psv    = 0;
+   int    n_I0se   = 0;
+   for ( int i = 0; i < (int) from.size(); i++ )
+   {
+      if ( f_psv.count( from[ i ] ) && f_psv[ from[ i ] ] != 0e0 )
+      {
+         sum_psv += f_psv[ from[ i ] ];
+         n_psv++;
+      }
+      if ( f_I0se.count( from[ i ] ) && f_I0se[ from[ i ] ] != 0e0 )
+      {
+         sum_I0se += f_I0se[ from[ i ] ];
+         n_I0se++;
+      }
+   }
+   if ( n_psv )
+   {
+      f_psv[ to ] = sum_psv / n_psv;
+   } else {
+      f_psv.erase( to );
+   }
+   if ( n_I0se )
+   {
+      f_I0se[ to ] = sum_I0se / n_I0se;
+   } else {
+      f_I0se.erase( to );
+   }
+}
+
+void US_Hydrodyn_Saxs_Buffer::set_created_conc( const QString & name, double conc )
+{
+   update_csv_conc();
+   for ( int i = 0; i < (int) csv_conc.data.size(); i++ )
+   {
+      if ( csv_conc.data[ i ].size() > 1 &&
+           csv_conc.data[ i ][ 0 ] == name )
+      {
+         csv_conc.data[ i ][ 1 ] = conc != 0e0 ? QString::number( conc, 'g', 10 ) : QString( "" );
+         if ( i < (int) csv_conc.num_data.size() && csv_conc.num_data[ i ].size() > 1 )
+         {
+            csv_conc.num_data[ i ][ 1 ] = conc;
+         }
+      }
+   }
+   if ( conc_widget )
+   {
+      conc_window->refresh( csv_conc );
+   }
+}
+
 void US_Hydrodyn_Saxs_Buffer::add_plot( QString           name,
                                         vector < double > q,
-                                        vector < double > I )
+                                        vector < double > I,
+                                        double            conc,
+                                        double            psv,
+                                        double            I0se )
 {
    vector < double > errors( I.size() );
    for ( unsigned int i = 0; i < ( unsigned int ) errors.size(); i++ )
    {
       errors[ i ] = 0e0;
    }
-   add_plot( name, q, I, errors );
+   add_plot( name, q, I, errors, conc, psv, I0se );
 }
 
 void US_Hydrodyn_Saxs_Buffer::add_plot( QString           name,
                                         vector < double > q,
                                         vector < double > I,
-                                        vector < double > errors )
+                                        vector < double > errors,
+                                        double            conc,
+                                        double            psv,
+                                        double            I0se )
 {
    name.replace( QRegularExpression( "(\\s+|\"|'|\\/|\\.)" ), "_" );
    
@@ -5901,7 +6007,28 @@ void US_Hydrodyn_Saxs_Buffer::add_plot( QString           name,
    f_qs        [ bsub_name ] = q;
    f_Is        [ bsub_name ] = I;
    f_errors    [ bsub_name ] = errors;
-   
+
+   // the concentration, PSV and I0se the sending window holds for the curve, as a file header would give them
+   if ( conc > 0e0 )
+   {
+      f_conc[ bsub_name ] = conc;
+   } else {
+      f_conc.erase( bsub_name );
+   }
+   if ( psv > 0e0 )
+   {
+      f_psv[ bsub_name ] = psv;
+   } else {
+      f_psv.erase( bsub_name );
+   }
+   if ( I0se > 0e0 )
+   {
+      f_I0se[ bsub_name ] = I0se;
+   } else {
+      f_I0se.erase( bsub_name );
+   }
+   set_created_conc( bsub_name, conc > 0e0 ? conc : 0e0 );
+
    // we could check if it has changed and then delete
    if ( plot_dist_zoomer )
    {
@@ -6190,6 +6317,7 @@ void US_Hydrodyn_Saxs_Buffer::run_one_divide()
       .arg( empty.isEmpty() ? QString( "" ) : QString( " - %1 * %2" ).arg( 1e0 - alpha ).arg( empty ) )
       .arg( use_psv ? QString( ", alpha from gamma %1, conc %2, psv %3" ).arg( gamma ).arg( this_conc ).arg( psv ) : QString( "" ) )
       .arg( np_note );
+   copy_psv_I0se( bsub_name, solution );
    
    // we could check if it has changed and then delete
    if ( plot_dist_zoomer )
@@ -6582,6 +6710,8 @@ void US_Hydrodyn_Saxs_Buffer::disable_all()
    pb_avg                ->setEnabled( false );
    pb_normalize          ->setEnabled( false );
    pb_conc_avg           ->setEnabled( false );
+   pb_check_dilutions    ->setEnabled( false );
+   pb_upturn             ->setEnabled( false );
    pb_set_buffer         ->setEnabled( false );
    pb_set_signal         ->setEnabled( false );
    pb_set_empty          ->setEnabled( false );
@@ -7406,6 +7536,14 @@ void US_Hydrodyn_Saxs_Buffer::wheel_save()
          .arg( point )
          .arg( join_adjust_lowq ? join_file : scaled );
    }
+   {
+      // the joined curve is on the scale of the curve that was not scaled: keep its concentration, PSV and I0se
+      QString kept = join_adjust_lowq ? join_file : wheel_file;
+      update_csv_conc();
+      map < QString, double > concs = current_concs();
+      copy_psv_I0se( save_name, kept );
+      set_created_conc( save_name, concs.count( kept ) ? concs[ kept ] : 0e0 );
+   }
 
    lb_files->item( f_pos[ save_name ])->setSelected( true );
 
@@ -7471,27 +7609,27 @@ void US_Hydrodyn_Saxs_Buffer::push_back_color_if_ok( QColor bg, QColor set )
 
 void US_Hydrodyn_Saxs_Buffer::dir_pressed()
 {
-   QString use_dir = lbl_dir->text();
+   QString use_dir = le_dir->text();
    ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    QString s = QFileDialog::getExistingDirectory( this , us_tr( "Choose a new base directory" ) , use_dir , QFileDialog::ShowDirsOnly );
 
    if ( !s.isEmpty() )
    {
       QDir::setCurrent( s );
-      lbl_dir->setText(  QDir::currentPath() );
+      le_dir->setText(  QDir::currentPath() );
       ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( s );
    }
 }
 
 void US_Hydrodyn_Saxs_Buffer::created_dir_pressed()
 {
-   QString use_dir = lbl_dir->text();
+   QString use_dir = le_dir->text();
    ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    QString s = QFileDialog::getExistingDirectory( this , us_tr( "Choose a new base directory for saving files" ) , use_dir , QFileDialog::ShowDirsOnly );
 
    if ( !s.isEmpty() )
    {
-      lbl_created_dir->setText( s );
+      le_created_dir->setText( s );
       ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( s );
    }
 }
@@ -7539,8 +7677,6 @@ void US_Hydrodyn_Saxs_Buffer::asum( QStringList files )
    update_csv_conc();
    map < QString, double > concs = current_concs();
    double avg_conc = 0e0;
-   double avg_psv  = 0e0;
-   double avg_I0se = 0e0;
 
    // copies for potential cropping:
 
@@ -7701,8 +7837,6 @@ void US_Hydrodyn_Saxs_Buffer::asum( QStringList files )
             concs.count( this_file ) ?
             mults[ i ] * concs[ this_file ] :
             0e0;
-         avg_psv  = f_psv.count( this_file ) ? f_psv[ this_file ] : 0e0;
-         avg_I0se = f_I0se.count( this_file ) ? f_I0se[ this_file ] : 0e0;
 
       } else {
          if ( avg_qs.size() != t_qs[ this_file ].size() )
@@ -7727,10 +7861,8 @@ void US_Hydrodyn_Saxs_Buffer::asum( QStringList files )
          }
          avg_conc +=
             concs.count( this_file ) ?
-            concs[ this_file ] :
+            mults[ i ] * concs[ this_file ] :
             0e0;
-         avg_psv  += f_psv.count( this_file ) ? f_psv[ this_file ] : 0e0;
-         avg_I0se += f_I0se.count( this_file ) ? f_I0se[ this_file ] : 0e0;
       }            
    }
 
@@ -7789,14 +7921,7 @@ void US_Hydrodyn_Saxs_Buffer::asum( QStringList files )
          .arg( terms.join( " + " ) );
    }
    
-   if ( avg_psv )
-   {
-      f_psv       [ wsum_name ] = avg_psv;
-   }
-   if ( avg_I0se )
-   {
-      f_I0se      [ wsum_name ] = avg_I0se;
-   }
+   mean_psv_I0se( wsum_name, selected_files );
 
    // we could check if it has changed and then delete
    // if ( plot_dist_zoomer )

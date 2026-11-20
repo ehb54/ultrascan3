@@ -1694,7 +1694,24 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
          gsp.maxpts = pointsmax > 0 ? pointsmax : 0;
          gsp.qrgmax = sRgmaxlimit;
          gsp.usesd  = use_SD_weighting ? -1 : 0;
-         if ( !usu.guinier_search( "data", gsp, gsr ) )
+         // guinier_search() forms the CS Guinier plot itself, so it gets I(q), not the q I(q) in "data"
+         usu.wave[ "data_I" ].q.clear( );
+         usu.wave[ "data_I" ].r.clear( );
+         usu.wave[ "data_I" ].s.clear( );
+         for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
+         {
+            if ( plotted_q[ i ][ j ] >= our_saxs_options->qstart &&
+                 plotted_q[ i ][ j ] <= our_saxs_options->qend )
+            {
+               usu.wave[ "data_I" ].q.push_back( plotted_q[ i ][ j ] );
+               usu.wave[ "data_I" ].r.push_back( plotted_I[ i ][ j ] );
+               if ( use_SD_weighting )
+               {
+                  usu.wave[ "data_I" ].s.push_back( plotted_I_error[ i ][ j ] );
+               }
+            }
+         }
+         if ( !usu.guinier_search( "data_I", gsp, gsr ) )
          {
             editor->append( QString( "Error performing CS Guinier analysis on %1\n" + gsr.errormsg + "\n" )
                             .arg( qsl_plotted_iq_names[ i ] ) );
@@ -1713,7 +1730,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
          sRgmin    = gsr.qrgmin;
          sRgmax    = gsr.qrgmax;
          chi2      = gsr.chi2_red;
-         plotted_guinier_pts_removed.erase( i );
+         plotted_cs_guinier_pts_removed.erase( i );
          {
             QString msg =
                QString( us_tr( "Robust range search for %1: quality %2, %3 windows, low-q z %4%5" ) )
@@ -2343,7 +2360,24 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
          gsp.maxpts = pointsmax > 0 ? pointsmax : 0;
          gsp.qrgmax = sRgmaxlimit;
          gsp.usesd  = use_SD_weighting ? -1 : 0;
-         if ( !usu.guinier_search( "data", gsp, gsr ) )
+         // guinier_search() forms the TV Guinier plot itself, so it gets I(q), not the q^2 I(q) in "data"
+         usu.wave[ "data_I" ].q.clear( );
+         usu.wave[ "data_I" ].r.clear( );
+         usu.wave[ "data_I" ].s.clear( );
+         for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
+         {
+            if ( plotted_q[ i ][ j ] >= our_saxs_options->qstart &&
+                 plotted_q[ i ][ j ] <= our_saxs_options->qend )
+            {
+               usu.wave[ "data_I" ].q.push_back( plotted_q[ i ][ j ] );
+               usu.wave[ "data_I" ].r.push_back( plotted_I[ i ][ j ] );
+               if ( use_SD_weighting )
+               {
+                  usu.wave[ "data_I" ].s.push_back( plotted_I_error[ i ][ j ] );
+               }
+            }
+         }
+         if ( !usu.guinier_search( "data_I", gsp, gsr ) )
          {
             editor->append( QString( "Error performing TV Guinier analysis on %1\n" + gsr.errormsg + "\n" )
                             .arg( qsl_plotted_iq_names[ i ] ) );
@@ -2362,7 +2396,7 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
          sRgmin    = gsr.qrgmin;
          sRgmax    = gsr.qrgmax;
          chi2      = gsr.chi2_red;
-         plotted_guinier_pts_removed.erase( i );
+         plotted_Rt_guinier_pts_removed.erase( i );
          {
             QString msg =
                QString( us_tr( "Robust range search for %1: quality %2, %3 windows, low-q z %4%5" ) )

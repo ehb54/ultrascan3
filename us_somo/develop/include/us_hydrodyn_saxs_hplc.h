@@ -154,12 +154,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
                              );
       ~US_Hydrodyn_Saxs_Hplc();
 
+      // psv / I0se > 0 are recorded for the curve (written as PSV: / I0se: on save); <= 0 leaves
+      // whatever is already recorded under that name untouched
       void add_plot( QString           name,
                      vector < double > q,
                      vector < double > I,
                      bool              is_time = false,
                      bool              replot  = true,
-                     double            conc    = -1e0 );
+                     double            conc    = -1e0,
+                     double            psv     = -1e0,
+                     double            I0se    = -1e0 );
 
       void add_plot( QString           name,
                      vector < double > q,
@@ -167,7 +171,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
                      vector < double > errors,
                      bool              is_time = false,
                      bool              replot  = true,
-                     double            conc    = -1e0 );
+                     double            conc    = -1e0,
+                     double            psv     = -1e0,
+                     double            I0se    = -1e0 );
 
       void add_plot_gaussian(
                              const QString     & file,

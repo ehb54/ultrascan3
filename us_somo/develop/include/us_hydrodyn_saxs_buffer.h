@@ -60,6 +60,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       friend class US_Hydrodyn_Saxs;
       friend class US_Hydrodyn_Saxs_Buffer_Conc;
       friend class US_Hydrodyn_Saxs_Buffer_Nth;
+      friend class US_Hydrodyn_Saxs_Buffer_Dilutions;
+      friend class US_Hydrodyn_Saxs_Buffer_Upturn;
 
    public:
       US_Hydrodyn_Saxs_Buffer(
@@ -70,14 +72,21 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
                              );
       ~US_Hydrodyn_Saxs_Buffer();
 
+      // conc < 0: none; psv, I0se <= 0: none
       void add_plot( QString           name,
                      vector < double > q,
-                     vector < double > I );
+                     vector < double > I,
+                     double            conc = -1e0,
+                     double            psv  = -1e0,
+                     double            I0se = -1e0 );
 
       void add_plot( QString           name,
                      vector < double > q,
                      vector < double > I,
-                     vector < double > errors );
+                     vector < double > errors,
+                     double            conc = -1e0,
+                     double            psv  = -1e0,
+                     double            I0se = -1e0 );
 
    private:
       csv           csv1;
@@ -94,7 +103,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       QLabel        *lbl_files;
       QCheckBox     *cb_lock_dir;
-      mQLabel       *lbl_dir;
+      mQLineEdit    *le_dir;
       QPushButton   *pb_add_files;
       QPushButton   *pb_similar_files;
       QPushButton   *pb_conc;
@@ -121,6 +130,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QPushButton   *pb_normalize;
       QPushButton   *pb_conc_avg;
       QPushButton   *pb_fit;
+      QPushButton   *pb_check_dilutions;
+      QPushButton   *pb_upturn;
+      QPushButton   *pb_subtraction;
 
       QPushButton   *pb_set_buffer;
       QLabel        *lbl_buffer;
@@ -143,7 +155,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QCheckBox     *cb_multi_sub_conc_avg;
 
       QLabel        *lbl_created_files;
-      mQLabel       *lbl_created_dir;
+      mQLineEdit    *le_created_dir;
       QListWidget      *lb_created_files;
       QLabel        *lbl_selected_created;
 
@@ -256,6 +268,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       map < QString, double >             f_extc;
       // how a created file was made, written into its saved header line
       map < QString, QString >            f_header;
+
+      // the PSV and I0se of a curve made from one curve, or from several (the mean of those that have one)
+      void                                copy_psv_I0se( const QString & to, const QString & from );
+      void                                mean_psv_I0se( const QString & to, const QStringList & from );
+      // the concentration of a created curve: f_conc and its row of the concentration table
+      void                                set_created_conc( const QString & name, double conc );
 
       map < QString, bool >               created_files_not_saved;
 
@@ -418,6 +436,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void normalize();
       void conc_avg();
       void fit();
+      void check_dilutions();
+      void upturn();
+      void show_subtraction();
       void set_buffer();
       void set_empty();
       void set_signal();
