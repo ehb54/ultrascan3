@@ -2,16 +2,9 @@
 #ifndef US_HELP_H
 #define US_HELP_H
 
-#include <QtCore>
-#if QT_VERSION > 0x050000
-#include <QtWidgets>
-#else
-#include <QtGui>
-#define setSingleStep(a) setStep(a)
-#define setMinorPen(a) setMinPen(a)
-#define setMajorPen(a) setMajPen(a)
-#endif
 #include "us_extern.h"
+#include <QtCore>
+#include <QtWidgets>
 
 //! \brief Launch help programs
 
@@ -48,15 +41,7 @@ class US_GUI_EXTERN US_Help : public QObject
     */
     void show_html_file(  const QString& );
 
-    /*! \brief Register the QCH file path
-    */
-    void register_init( void );
-
-  private:
-    // Only needed because we don't want it to be deleted when 
-    // show_help() returns.
-    QProcess* assistant;
-
+ private:
     void openBrowser( const QString& );
 };
 #endif
