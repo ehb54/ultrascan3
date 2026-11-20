@@ -1,0 +1,18 @@
+# Ports copied from vcpkg keep their exact bytes. Files committed with CRLF line
+# endings are -text so Git never converts them; the other files keep Git's
+# default checkout conversion, which the pinned toolchains were built from.
+# Whitespace checks skip the whole port so its CRs are not reported.
+overlay-ports/qtbase/** -whitespace
+overlay-ports/qtbase/clang-cl_source_location.patch -text
+overlay-ports/qtbase/cmake/qt_install_copyright.cmake -text
+overlay-ports/qtbase/cmake/qt_install_submodule.cmake -text
+overlay-ports/qtbase/env.patch -text
+overlay-ports/qtbase/fix_cmake_build.patch -text
+overlay-ports/qtbase/fix_deploy_windows.patch -text
+overlay-ports/qtbase/fix_egl.patch -text
+overlay-ports/qtbase/installed_dir.patch -text
+overlay-ports/qtbase/port.data.cmake -text
+overlay-ports/qtbase/qmake.debug.bat -text
+overlay-ports/qtbase/qt.conf.in -text
+overlay-ports/qtbase/qtpaths.debug.bat -text
+overlay-ports/qtbase/windeployqt.debug.bat -text

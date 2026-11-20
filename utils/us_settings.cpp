@@ -2,6 +2,9 @@
 #include "us_settings.h"
 #include "us_defines.h"
 
+#include <QDir>
+#include <QFileInfo>
+#include <QLibraryInfo>
 #include <QtNumeric>
 
 QSettings::Format US_SettingsStore::format( void )
@@ -147,6 +150,134 @@ QString US_Settings::appBaseDir( void )
    return base;
 }
 
+// Executable names for Qt Assistant within a directory, in preference order
+QStringList US_Settings::assistantNames( void )
+{
+#if defined( Q_OS_MAC )
+   return { "Assistant.app/Contents/MacOS/Assistant", "assistant" };
+#elif defined( Q_OS_WIN )
+   return { "assistant.exe" };
+#else
+   return { "assistant" };
+#endif
+}
+
+// Directories of the linked Qt installation that may hold Assistant
+QStringList US_Settings::assistantQtDirs( void )
+{
+#if QT_VERSION >= QT_VERSION_CHECK( 6, 0, 0 )
+   const QString prefix = QLibraryInfo::path( QLibraryInfo::PrefixPath );
+   QStringList   dirs   = { QLibraryInfo::path( QLibraryInfo::BinariesPath ),
+                            QLibraryInfo::path( QLibraryInfo::LibraryExecutablesPath ) };
+
+   // vcpkg installs Qt 6 tools under the prefix's tools/Qt6/bin.
+   if ( !prefix.isEmpty() )
+   {
+      dirs << prefix + "/tools/Qt6/bin";
+   }
+#else
+   QStringList dirs = { QLibraryInfo::location( QLibraryInfo::BinariesPath ),
+                        QLibraryInfo::location( QLibraryInfo::LibraryExecutablesPath ) };
+#endif
+
+   // A deployed tree's qt.conf gives paths such as bin/bin that do not
+   // exist; only directories that exist are searched or reported.
+   QStringList unique;
+
+   for ( const QString& dir : dirs )
+   {
+      const QString clean = QDir::cleanPath( dir );
+
+      if ( !dir.isEmpty() && QFileInfo( clean ).isDir() && !unique.contains( clean ) )
+      {
+         unique << clean;
+      }
+   }
+
+   return unique;
+}
+
+// Locate Qt Assistant: bundled beside the programs, else the linked Qt
+QString US_Settings::assistantPath( QString* error, QStringList* searched )
+{
+   return resolveAssistant( { appBaseDir() + "/bin" }, assistantQtDirs(), error, searched );
+}
+
+// Resolve Qt Assistant from explicit bundled and Qt directories
+QString US_Settings::resolveAssistant( const QStringList& bundledDirs,
+                                       const QStringList& qtDirs,
+                                       QString*           error,
+                                       QStringList*       searched )
+{
+   const QStringList names = assistantNames();
+
+   if ( error )
+   {
+      error->clear();
+   }
+
+   // A bundled viewer that exists must be usable; never substitute another.
+   for ( const QString& dir : bundledDirs )
+   {
+      for ( const QString& name : names )
+      {
+         const QString   path = QDir::cleanPath( dir + "/" + name );
+         const QFileInfo info( path );
+
+         if ( searched )
+         {
+            *searched << path;
+         }
+
+         // A present Assistant.app with no usable inner binary is broken too.
+         const QString top = QDir::cleanPath( dir + "/" + name.section( '/', 0, 0 ) );
+
+         if ( !QFileInfo::exists( top ) )
+         {
+            continue;
+         }
+
+         if ( info.isFile() && info.isExecutable() )
+         {
+            return info.absoluteFilePath();
+         }
+
+         if ( error )
+         {
+            *error = QObject::tr( "The bundled Qt Assistant is not an "
+                                  "executable file:\n%1" )
+                        .arg( path );
+         }
+         return QString();
+      }
+   }
+
+   for ( const QString& dir : qtDirs )
+   {
+      for ( const QString& name : names )
+      {
+         const QString   path = QDir::cleanPath( dir + "/" + name );
+         const QFileInfo info( path );
+
+         if ( searched )
+         {
+            *searched << path;
+         }
+
+         if ( info.isFile() && info.isExecutable() )
+         {
+            return info.absoluteFilePath();
+         }
+      }
+   }
+
+   if ( error )
+   {
+      *error = QObject::tr( "Qt Assistant, which displays UltraScan help, "
+                            "was not found." );
+   }
+   return QString();
+}
 
 // License
 QStringList US_Settings::license( void )
