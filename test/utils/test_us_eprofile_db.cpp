@@ -108,9 +108,13 @@ TEST_F( ExtProfileDb, FetchFailureOrMissingRowKeepsOutputs )
    EXPECT_EQ( stale, spectrum );
 }
 
-TEST_F( ExtProfileDb, FetchRejectsXmlWithoutAProfile )
+TEST_F( ExtProfileDb, FetchRejectsInvalidXmlOrMissingProfile )
 {
-   for ( const QString& xml : { QString(), QString( "not xml" ), QString( "<EProfileData version='1.0'/>" ) } )
+   for ( const QString& xml : { QString(),
+                                QString( "not xml" ),
+                                QString( "<EProfileData version='1.0'/>" ),
+                                QString( "<extinctionProfile componentID='5' valueType='changed'><extinction value='1'/>" ),
+                                kProfileXml + "<broken" } )
    {
       SCOPED_TRACE( xml.toStdString() );
       {
