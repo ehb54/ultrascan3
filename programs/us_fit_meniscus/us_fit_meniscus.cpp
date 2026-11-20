@@ -5,6 +5,7 @@
 #include <QJsonValue>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QTimer>
 
 #include "us_convertio.h"
 #include "us_db2.h"
@@ -31,6 +32,11 @@ US_FitMeniscus::US_FitMeniscus( QMap<QString, QString> triple_info_map ) : US_Wi
   auto_mode = true;
   no_fm_data = false;
   bad_men_vals = false;
+  fail_type.clear();
+  fail_reason.clear();
+  fit_out_of_range = false;
+  fit_range_min = 0.0;
+  fit_range_max = 0.0;
   
   setWindowTitle( tr( "Fit Meniscus from 2DSA Data: ") + triple_information[ "triple_name" ] );
   setPalette( US_GuiSettings::frameColor() );
@@ -336,6 +342,10 @@ DbgLv(1) << "Main: BB";
    scan_dbase_auto( triple_information );
    get_editProfile_copy( triple_information );
    file_loaded_auto( triple_information );
+
+   // GMP: evaluate the fit once the caller has shown the window and connected the signals
+   // (out-of-range => Continue/Stop dialog). NaN is flagged synchronously via bad_men_vals.
+   QTimer::singleShot( 0, this, &US_FitMeniscus::check_fit_result );
 }
 
 //Regular constructor
@@ -344,6 +354,11 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
    auto_mode = false;
    no_fm_data = false;
    bad_men_vals = false;
+   fail_type.clear();
+   fail_reason.clear();
+   fit_out_of_range = false;
+   fit_range_min = 0.0;
+   fit_range_max = 0.0;
    
    setWindowTitle( tr( "Fit Meniscus from 2DSA Data" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -733,7 +748,16 @@ void US_FitMeniscus::mouse( const QPointF& p )
 {
   double radius_min[ 2 ];
   double rmsd_min  [ 2 ];
- 
+
+  // GMP: the user has to pick a position within the range of the 2DSA-FM models
+  if ( auto_mode  &&  !have3val  &&  fit_range_max > fit_range_min  &&
+       ( p.x() < fit_range_min - 1.0e-5  ||  p.x() > fit_range_max + 1.0e-5 ) )
+  {
+    le_status->setText( tr( "Selection %1 ignored: outside of the allowed range ( %2 - %3 )" )
+                        .arg( p.x(), 0, 'f', 5 ).arg( fit_range_min, 0, 'f', 5 ).arg( fit_range_max, 0, 'f', 5 ) );
+    return;
+  }
+
   // Plot the minimum selected by user
      
   radius_min[ 0 ] = p.x();
@@ -843,6 +867,16 @@ DbgLv(1) << "pl3d:  ixs" << jx << "f_meni f_bott w_rmsd"
    f_meni       /= w_rmsd;
    f_bott       /= w_rmsd;
 DbgLv(1) << "pl3d:  f_meni f_bott" << f_meni << f_bott;
+
+   // GMP: NaN / non-finite weighted-average result => bad fit, the triple has to be stopped.
+   // (The weighted average of neighboring points cannot extrapolate beyond the fitted range.)
+   if ( auto_mode  &&  ( !qIsFinite( f_meni )  ||  !qIsFinite( f_bott ) ) )
+   {
+      flag_bad_fit( "nan", tr( "NaN meniscus/bottom position (bad fit)" ) );
+      le_men_fit->setText( "NaN" );
+      le_bot_fit->setText( "NaN" );
+      return;
+   }
 
    le_men_fit->setText( QString::number( f_meni, 'f', 5 ) );
    le_bot_fit->setText( QString::number( f_bott, 'f', 5 ) );
@@ -1053,7 +1087,16 @@ void US_FitMeniscus::plot_2d( void )
       maxy = qMax( maxy, rmsd_values[ ii ] );
    }
 
-   if ( count < 3 ) return;
+   if ( count < 3 )
+   {
+      if ( auto_mode )
+         flag_bad_fit( "nan", tr( "Not enough fit-meniscus data points for a fit (bad fit)" ) );
+      return;
+   }
+
+   // GMP: remember the radial range covered by the 2DSA-FM models
+   fit_range_min = minx;
+   fit_range_max = maxx;
 
    double overscan = ( maxx - minx ) * 0.10;  // 10% overscan
 
@@ -1078,6 +1121,14 @@ void US_FitMeniscus::plot_2d( void )
 
    if ( ! US_Matrix::lsfit( c, radius_values, rmsd_values, count, order + 1 ) )
    {
+      if ( auto_mode )
+      {  // GMP: treat as NaN / bad fit; the triple will be stopped
+         flag_bad_fit( "nan", tr( "Polynomial fit failed (bad fit)" ) );
+         le_men_sel->setText( "NaN" );
+         meniscus_plot->replot();
+         return;
+      }
+
       QMessageBox::warning( this,
             tr( "Data Problem" ),
             tr( "The data is inadequate for this fit order" ) );
@@ -1098,7 +1149,7 @@ void US_FitMeniscus::plot_2d( void )
    double* fit_x = vfitx.data();
    double* fit_y = vfity.data();
    double  x     = minx - overscan;
-   double fit_xvl;
+   double fit_xvl = qQNaN();
 
    for ( int i = 0; i < fit_count; i++, x += 0.001 )
    {
@@ -1181,6 +1232,16 @@ void US_FitMeniscus::plot_2d( void )
       } while ( true );
    }
 
+   // GMP: NaN / non-finite result of the (possibly high-order) polynomial fit => bad fit
+   if ( auto_mode  &&  ( !qIsFinite( fit_xvl )  ||  !qIsFinite( rms_err ) ) )
+   {
+      flag_bad_fit( "nan", tr( "NaN %1 position (bad fit)" )
+                             .arg( bott_fit ? tr( "bottom" ) : tr( "meniscus" ) ) );
+      le_men_sel->setText( "NaN" );
+      meniscus_plot->replot();
+      return;
+   }
+
    fit_curve = us_curve( meniscus_plot, tr( "Fitted Data" ) ); 
    fit_curve->setPen    ( QPen( Qt::red ) );
    fit_curve->setSamples( fit_x, fit_y, fit_count );
@@ -1207,6 +1268,11 @@ void US_FitMeniscus::plot_2d( void )
 
    // Display selected meniscus/bottom
    le_men_sel->setText( QString::number( fit_xvl, 'f', 5 ) );
+
+   // GMP: extrapolated minimum outside of the range of the 2DSA-FM models. The user will be
+   // warned (check_fit_result()) and has to pick a point within the range, or stop the triple.
+   if ( auto_mode  &&  ( fit_xvl < minx - 1.0e-5  ||  fit_xvl > maxx + 1.0e-5 ) )
+      fit_out_of_range = true;
 
    //Save Best (Fitted) Meniscus Value for later comparison:
    Meniscus_fitted_2d_val = le_men_sel->text().toDouble();
@@ -1324,9 +1390,115 @@ QMap< QString, QString> US_FitMeniscus::read_autoflowAnalysis_record( const QStr
   return analysis_details;
 }
 
+// GMP: flag the triple as having a bad fit (no signal here: may be called from the constructor)
+void US_FitMeniscus::flag_bad_fit( const QString& type, const QString& reason )
+{
+  bad_men_vals = true;
+  fail_type    = type;
+  fail_reason  = reason;
+  triple_information[ "failed" ]      = reason;
+  triple_information[ "failed_type" ] = type;
+  qDebug() << "FITMEN: bad fit for triple" << triple_information[ "triple_name" ]
+           << "-- type, reason:" << type << reason;
+}
+
+// GMP: is the position selected by the user within the range of the 2DSA-FM models?
+bool US_FitMeniscus::selection_in_range( void )
+{
+  if ( have3val  ||  fit_range_max <= fit_range_min )
+    return true;   // nothing to select by hand in the 3-D case / no range known
+
+  const double eps = 1.0e-5;
+  QString what     = bott_fit ? tr( "bottom" ) : tr( "meniscus" );
+  bool    ok       = false;
+  double  val      = le_men_sel->text().toDouble( &ok );
+
+  if ( !ok  ||  !qIsFinite( val ) )
+  {
+    QMessageBox::warning( this, tr( "No valid selection" ),
+                          tr( "No valid %1 position is selected.\n"
+                              "Please select a value within the range ( %2 - %3 )." )
+                          .arg( what ).arg( fit_range_min, 0, 'f', 5 ).arg( fit_range_max, 0, 'f', 5 ) );
+    return false;
+  }
+
+  if ( val < fit_range_min - eps  ||  val > fit_range_max + eps )
+  {
+    QMessageBox::warning( this, tr( "Selection outside of allowed range" ),
+                          tr( "The selected %1 position, %2, is outside of the allowed range ( %3 - %4 ).\n\n"
+                              "Please select a value within the range." )
+                          .arg( what ).arg( val, 0, 'f', 5 )
+                          .arg( fit_range_min, 0, 'f', 5 ).arg( fit_range_max, 0, 'f', 5 ) );
+    return false;
+  }
+
+  return true;
+}
+
+// GMP: stop processing of this triple -- close the window and let the analysis
+// window cancel all subsequent sub-stages (-IT, -MC, PCSA) for the triple
+void US_FitMeniscus::stop_triple( const QString& type, const QString& reason )
+{
+  bad_men_vals = true;
+  fail_type    = type;
+  fail_reason  = reason;
+  triple_information[ "failed" ]      = reason;
+  triple_information[ "failed_type" ] = type;
+
+  QMap< QString, QString > info = triple_information;   // copy: window may go away on close()
+  close();
+  emit bad_meniscus_values( info );
+}
+
+// GMP: called (deferred) once the window has been created and shown
+void US_FitMeniscus::check_fit_result( void )
+{
+  // NaN / no data are handled synchronously by the caller via bad_men_vals / no_fm_data
+  if ( !auto_mode  ||  no_fm_data  ||  bad_men_vals  ||  !fit_out_of_range )
+    return;
+
+  QString what = bott_fit ? tr( "bottom" ) : tr( "meniscus" );
+  double  fval = le_men_sel->text().toDouble();
+
+  QMessageBox mb( this );
+  mb.setIcon( QMessageBox::Warning );
+  mb.setWindowTitle( tr( "FITMEN: %1" ).arg( triple_information[ "triple_name" ] ) );
+  mb.setText( tr( "Warning:\n"
+                  "The calculated %1 position is outside of the allowed range.\n"
+                  "You can manually select a value within the range or stop\n"
+                  "processing this triple." ).arg( what ) );
+  mb.setInformativeText( tr( "Calculated %1 position: %2\nAllowed range: %3 - %4" )
+                         .arg( what ).arg( fval, 0, 'f', 5 )
+                         .arg( fit_range_min, 0, 'f', 5 ).arg( fit_range_max, 0, 'f', 5 ) );
+  mb.setWindowFlags( mb.windowFlags() | Qt::CustomizeWindowHint | Qt::WindowTitleHint );
+
+  QPushButton* btn_continue = mb.addButton( tr( "Continue" ), QMessageBox::AcceptRole );
+  QPushButton* btn_stop     = mb.addButton( tr( "Stop" ),     QMessageBox::DestructiveRole );
+  mb.setDefaultButton( btn_continue );
+  mb.setEscapeButton ( btn_continue );   // Esc must never stop the triple
+  mb.exec();
+
+  if ( mb.clickedButton() == btn_stop )
+  {
+    stop_triple( "range",
+                 tr( "Calculated %1 position %2 is outside of the allowed range ( %3 - %4 )" )
+                 .arg( what ).arg( fval, 0, 'f', 5 )
+                 .arg( fit_range_min, 0, 'f', 5 ).arg( fit_range_max, 0, 'f', 5 ) );
+    return;
+  }
+
+  le_status->setText( tr( "Select a %1 position within the range ( %2 - %3 ) and use Update Edit" )
+                      .arg( what ).arg( fit_range_min, 0, 'f', 5 ).arg( fit_range_max, 0, 'f', 5 ) );
+}
+
 // Update an edit file with a new meniscus and/or bottom radius value
 void US_FitMeniscus::edit_update( void )
 {
+  // GMP: the selected meniscus (or bottom) must be within the range of the 2DSA-FM models.
+  // Checked before the stage is locked, so the user can simply select another point.
+  if ( auto_mode  &&  !selection_in_range() )
+    return;
+
   /***/
   //ALEXEY: if autoflow: check if edit profiles already updated from other FITMEN session
   if ( auto_mode )
