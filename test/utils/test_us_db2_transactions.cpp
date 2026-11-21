@@ -15,9 +15,10 @@
 //                         to read INNODB_TRX while setting up the deadlock
 //   US3_TEST_DB_PASSWORD
 //
-// US_DB2 always connects over TLS with the client certificates in etc/mysql,
-// so the server must trust etc/mysql/ca-cert.pem.  Without that the connect
-// fails and the tests fail rather than skip.
+// US_DB2 always connects over TLS, with etc/mysql/ca-cert.pem as its CA and
+// no client certificate, so the server must have TLS on.  Some client
+// libraries also check that the server certificate chains to that CA.
+// Without that the connect fails and the tests fail rather than skip.
 
 #include <gtest/gtest.h>
 
