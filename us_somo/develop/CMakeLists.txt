@@ -358,6 +358,7 @@ endif()
 # us_somo_genheaders produces, so it is left out here.
 include(${SOMO_ROOT}/cmake/SomoQmakeSources.cmake)
 somo_qmake_sources(${SOMO_ROOT}/libus_somo.pro SOMO_LIB_SOURCES SOMO_LIB_HEADERS
+    INCLUDEPATH SOMO_LIB_INCLUDEPATH
     EXCLUDE "/include/us_(revision|version)\\.h$")
 list(LENGTH SOMO_LIB_SOURCES _n_src)
 list(LENGTH SOMO_LIB_HEADERS _n_hdr)
@@ -377,6 +378,9 @@ endif()
 # grpy/ is the header-only GRPY driver module (libus_somo.pro: INCLUDEPATH += $$PWD/grpy)
 target_include_directories(us_somo PUBLIC
     ${SOMO_ROOT}/include ${SOMO_ROOT}/src ${SOMO_ROOT}/grpy ${SOMO_QWT_INCLUDE_DIR})
+# and libus_somo.pro's own in-tree INCLUDEPATH, for the library's sources as
+# under qmake: e.g. NIST ZENO's zeno/libzeno/include and zeno/zeno-cli/src
+target_include_directories(us_somo PRIVATE ${SOMO_LIB_INCLUDEPATH})
 
 target_compile_definitions(us_somo PUBLIC NO_DB THREAD NO_EDITOR_PRINT)
 if(WIN32)
@@ -461,27 +465,28 @@ function(somo_mac_bundle tgt pro)
 endfunction()
 
 function(somo_add_gui_app tgt pro)
-    somo_qmake_sources(${SOMO_ROOT}/${pro} _srcs _hdrs)
+    somo_qmake_sources(${SOMO_ROOT}/${pro} _srcs _hdrs INCLUDEPATH _incs)
     add_executable(${tgt} ${_srcs} ${_hdrs})
     # On Windows a windowed program with Qt's WinMain, as qmake builds it, so
     # no console window opens with it (ignored on other platforms).
     set_target_properties(${tgt} PROPERTIES WIN32_EXECUTABLE TRUE)
     somo_mac_bundle(${tgt} ${SOMO_ROOT}/${pro})
     target_link_libraries(${tgt} PRIVATE us_somo)
-    target_include_directories(${tgt} PRIVATE ${SOMO_ROOT}/include ${SOMO_ROOT}/src)
+    target_include_directories(${tgt} PRIVATE ${SOMO_ROOT}/include ${SOMO_ROOT}/src ${_incs})
     add_dependencies(${tgt} us_somo_genheaders)
 endfunction()
 
 # Command-line tool: its .pro's ../src subset, no libus_somo, no qwt (cmdline.pri).
 function(somo_add_tool tgt)
-    somo_qmake_sources(${SOMO_ROOT}/${tgt}/${tgt}.pro _srcs _hdrs)
+    somo_qmake_sources(${SOMO_ROOT}/${tgt}/${tgt}.pro _srcs _hdrs INCLUDEPATH _incs)
     add_executable(${tgt} ${_srcs} ${_hdrs})
     # Tools compile SOMO headers that #include <qwt_*.h> (the qwt code paths are
     # compiled out under -DCMDLINE, so no qwt LINK is needed — matching the qmake
-    # build/ldd — but the headers must be on the include path).
+    # build/ldd — but the headers must be on the include path). _incs is the
+    # .pro's own in-tree INCLUDEPATH (us_saxs_cmds_t: NIST ZENO's).
     target_include_directories(${tgt} PRIVATE
         ${SOMO_ROOT}/include ${SOMO_ROOT}/src ${SOMO_ROOT}/${tgt}
-        ${SOMO_QWT_INCLUDE_DIR})
+        ${SOMO_QWT_INCLUDE_DIR} ${_incs})
     target_compile_definitions(${tgt} PRIVATE CMDLINE NO_DB NO_EDITOR_PRINT)
     # All of SOMO's Qt modules, as qmake links them: the SOMO headers the tool
     # compiles include headers from each (us_hydrodyn.h includes <qprinter.h>,

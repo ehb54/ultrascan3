@@ -1,7 +1,8 @@
 # Building SOMO with CMake
 
-The CMake build compiles the same files as qmake: it reads the source lists
-from `libus_somo.pro` and each program's `.pro` when it configures. It builds
+The CMake build compiles the same files as qmake: it reads the source lists,
+and the include directories inside the tree (`INCLUDEPATH`), from
+`libus_somo.pro` and each program's `.pro` when it configures. It builds
 `libus_somo` and the programs `us3_somo`, `us3_config` and (not on Windows, as
 under qmake) `us_saxs_cmds_t`. The MPI and CUDA tools are not in the CMake
 build yet; qmake still builds them. `us_admin`, UltraScan II's

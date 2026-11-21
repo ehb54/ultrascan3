@@ -1,5 +1,6 @@
 # =============================================================================
-# SomoQmakeSources.cmake — read SOURCES / HEADERS from SOMO's qmake files
+# SomoQmakeSources.cmake — read SOURCES / HEADERS / INCLUDEPATH from SOMO's
+# qmake files
 # =============================================================================
 # While qmake and CMake coexist, the .pro files stay the ONE list of what gets
 # compiled. Every branch (main, somo-dev, issue branches) carries its own .pro
@@ -7,10 +8,16 @@
 # branch with no second list to keep in step. When qmake is retired, write the
 # lists out as plain CMake one last time and drop this module.
 #
-#   somo_qmake_sources(<pro-file> <sources-var> <headers-var> [EXCLUDE <regex>...])
+#   somo_qmake_sources(<pro-file> <sources-var> <headers-var>
+#                      [INCLUDEPATH <var>] [EXCLUDE <regex>...])
 #
 # Returns absolute paths. EXCLUDE drops entries matching any of the regexes
 # (e.g. generated headers that a .pro lists but CMake produces itself).
+# INCLUDEPATH <var> also returns the .pro's in-tree include directories: the
+# INCLUDEPATH entries written as $$PWD/... or as a relative path (e.g. NIST
+# ZENO's zeno/libzeno/include). Entries built on any other qmake variable
+# ($$US3SOMOPATH, $$QWTDIR, ...) are a developer's or a toolchain's paths,
+# which CMake finds itself, so they are skipped.
 #
 # The qmake subset understood here is everything SOMO's .pro/.pri files use:
 #   - SOURCES / HEADERS with  =  (reset),  +=  and  *=  (append),  -=  (remove)
@@ -20,16 +27,18 @@
 #     the untracked, per-developer local.pri and missing files are skipped
 #   - relative entries resolve against the top-level .pro's directory (qmake's
 #     $$_PRO_FILE_PWD_), even when they come from an included .pri
+#   - in INCLUDEPATH, $$PWD (or $${PWD}): the directory of the file it is in
 # Anything else that touches SOURCES/HEADERS — inside a { } scope, behind a
 # "unix:" condition, using a $$variable — stops the configure step and names
-# the file, instead of being silently misread. Every file read is added to
+# the file, instead of being silently misread; so does an in-tree INCLUDEPATH
+# entry inside a scope or behind a condition. Every file read is added to
 # CMAKE_CONFIGURE_DEPENDS, so editing a .pro re-runs the configure step.
 # =============================================================================
 include_guard(GLOBAL)
 
-# Reads one .pro/.pri and updates _somo_qm_SOURCES / _somo_qm_HEADERS in the
-# caller's scope (include() recurses, and each level hands the lists back up
-# with PARENT_SCOPE).
+# Reads one .pro/.pri and updates _somo_qm_SOURCES / _somo_qm_HEADERS /
+# _somo_qm_INCLUDEPATH in the caller's scope (include() recurses, and each
+# level hands the lists back up with PARENT_SCOPE).
 function(_somo_qmake_read file pro_dir)
     file(READ "${file}" text)
     string(REPLACE "\r" "" text "${text}")
@@ -87,6 +96,34 @@ function(_somo_qmake_read file pro_dir)
             else()
                 list(APPEND _somo_qm_${var} ${paths})
             endif()
+        elseif(line MATCHES "(^|[^A-Za-z0-9_])INCLUDEPATH[ \t]*([-+*]?=)(.*)$")
+            set(op "${CMAKE_MATCH_2}")
+            set(rest "${CMAKE_MATCH_3}")
+            string(REGEX MATCHALL "[^ \t]+" items "${rest}")
+            set(paths "")
+            foreach(item IN LISTS items)
+                string(REGEX REPLACE "^\\$\\$(PWD|\\{PWD\\})" "${file_dir}" item "${item}")
+                if(item MATCHES "\\$")
+                    continue()   # a developer's or a toolchain's path: CMake finds those
+                endif()
+                cmake_path(ABSOLUTE_PATH item BASE_DIRECTORY "${pro_dir}" NORMALIZE)
+                list(APPEND paths "${item}")
+            endforeach()
+            if(depth GREATER 0 OR NOT line MATCHES "^[ \t]*INCLUDEPATH[ \t]*[-+*]?=")
+                if(paths)
+                    message(FATAL_ERROR "SOMO: an in-tree INCLUDEPATH inside a qmake scope or "
+                                        "behind a condition is not supported (${file}): ${line}")
+                endif()
+                # only a developer's or a toolchain's paths, conditionally: nothing to do
+            elseif(op STREQUAL "=")
+                set(_somo_qm_INCLUDEPATH ${paths})
+            elseif(op STREQUAL "-=")
+                if(paths)
+                    list(REMOVE_ITEM _somo_qm_INCLUDEPATH ${paths})
+                endif()
+            else()
+                list(APPEND _somo_qm_INCLUDEPATH ${paths})
+            endif()
         elseif(line MATCHES "(^|[^A-Za-z0-9_])(SOURCES|HEADERS)([^A-Za-z0-9_]|$)")
             message(FATAL_ERROR "SOMO: unsupported qmake construct for "
                                 "${CMAKE_MATCH_2} (${file}): ${line}")
@@ -102,10 +139,11 @@ function(_somo_qmake_read file pro_dir)
 
     set(_somo_qm_SOURCES "${_somo_qm_SOURCES}" PARENT_SCOPE)
     set(_somo_qm_HEADERS "${_somo_qm_HEADERS}" PARENT_SCOPE)
+    set(_somo_qm_INCLUDEPATH "${_somo_qm_INCLUDEPATH}" PARENT_SCOPE)
 endfunction()
 
 function(somo_qmake_sources pro sources_var headers_var)
-    cmake_parse_arguments(PARSE_ARGV 3 arg "" "" "EXCLUDE")
+    cmake_parse_arguments(PARSE_ARGV 3 arg "" "INCLUDEPATH" "EXCLUDE")
     cmake_path(ABSOLUTE_PATH pro BASE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" NORMALIZE)
     if(NOT EXISTS "${pro}")
         message(FATAL_ERROR "SOMO: qmake project ${pro} not found")
@@ -114,7 +152,18 @@ function(somo_qmake_sources pro sources_var headers_var)
 
     set(_somo_qm_SOURCES "")
     set(_somo_qm_HEADERS "")
+    set(_somo_qm_INCLUDEPATH "")
     _somo_qmake_read("${pro}" "${pro_dir}")
+
+    if(arg_INCLUDEPATH)
+        list(REMOVE_DUPLICATES _somo_qm_INCLUDEPATH)
+        foreach(d IN LISTS _somo_qm_INCLUDEPATH)
+            if(NOT IS_DIRECTORY "${d}")
+                message(FATAL_ERROR "SOMO: ${pro} has an INCLUDEPATH that is not a directory: ${d}")
+            endif()
+        endforeach()
+        set(${arg_INCLUDEPATH} "${_somo_qm_INCLUDEPATH}" PARENT_SCOPE)
+    endif()
 
     foreach(var SOURCES HEADERS)
         list(REMOVE_DUPLICATES _somo_qm_${var})
