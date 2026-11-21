@@ -1,0 +1,13 @@
+Internal ctest changing into directory: /tmp/us3-residual-2ddf75d6e/a979-verification/m12-clean-build
+Test project /tmp/us3-residual-2ddf75d6e/a979-verification/m12-clean-build
+    Start 1: dependency_layers
+1/2 Test #1: dependency_layers ......................   Passed    0.48 sec
+    Start 2: dependency_layers_rejects_violations
+2/2 Test #2: dependency_layers_rejects_violations ...   Passed    0.46 sec
+
+100% tests passed, 0 tests failed out of 2
+
+Label Time Summary:
+dependency_layers    =   0.94 sec*proc (2 tests)
+
+Total Test time (real) =   0.94 sec

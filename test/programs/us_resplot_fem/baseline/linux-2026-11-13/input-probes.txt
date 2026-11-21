@@ -1,0 +1,604 @@
+
+===== ANALYSIS-bad-exclusion.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+QWARN  : ResidualDialogTest::invalidInputProbe() This plugin does not support propagateSizeHints()
+RESIDUAL_PROBE_COMPLETED
+PASS   : ResidualDialogTest::invalidInputProbe()
+PASS   : ResidualDialogTest::cleanupTestCase()
+Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 80ms
+********* Finished testing of ResidualDialogTest *********
+
+===== ANALYSIS-empty-edited.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+QFATAL : ResidualDialogTest::invalidInputProbe() ASSERT failure in QVector<T>::operator[]: "index out of range", file /usr/include/aarch64-linux-gnu/qt5/QtCore/qvector.h, line 457
+FAIL!  : ResidualDialogTest::invalidInputProbe() Received a fatal error.
+   Loc: [Unknown file(0)]
+Totals: 1 passed, 1 failed, 0 skipped, 0 blacklisted, 32ms
+********* Finished testing of ResidualDialogTest *********
+
+===== ANALYSIS-empty-simulated.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+QFATAL : ResidualDialogTest::invalidInputProbe() ASSERT failure in QVector<T>::operator[]: "index out of range", file /usr/include/aarch64-linux-gnu/qt5/QtCore/qvector.h, line 457
+FAIL!  : ResidualDialogTest::invalidInputProbe() Received a fatal error.
+   Loc: [Unknown file(0)]
+Totals: 1 passed, 1 failed, 0 skipped, 0 blacklisted, 37ms
+********* Finished testing of ResidualDialogTest *********
+
+===== ANALYSIS-nonfinite.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+QWARN  : ResidualDialogTest::invalidInputProbe() This plugin does not support propagateSizeHints()
+RESIDUAL_PROBE_COMPLETED
+PASS   : ResidualDialogTest::invalidInputProbe()
+PASS   : ResidualDialogTest::cleanupTestCase()
+Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 71ms
+********* Finished testing of ResidualDialogTest *********
+
+===== ANALYSIS-null-parent.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+/src/test/programs/us_resplot_fem/../../../programs/us_fematch/us_resplot_fem.cpp:822:40: runtime error: member call on misaligned address 0xffff86ce59fc for type 'struct EditedData', which requires 8 byte alignment
+0xffff86ce59fc: note: pointer points here
+  b2 fe ff 97 a0 36 00 b5  e1 02 40 b9 e7 ff ff 17  00 00 80 52 fd 7b 42 a9  f3 53 43 a9 f5 5b 44 a9
+              ^ 
+    #0 0xaaaac252e5e0 in US_ResidPlotFem::plot_rdata() /src/test/programs/us_resplot_fem/../../../programs/us_fematch/us_resplot_fem.cpp:822
+    #1 0xaaaac252061c in US_ResidPlotFem::plot_data() /src/test/programs/us_resplot_fem/../../../programs/us_fematch/us_resplot_fem.cpp:577
+    #2 0xaaaac25129e4 in US_ResidPlotFem::US_ResidPlotFem(QWidget*, QString) /src/test/programs/us_resplot_fem/../../../programs/us_fematch/us_resplot_fem.cpp:292
+    #3 0xaaaac24a9118 in ResidualDialogTest::invalidInputProbe() (/src/build/linux-sanitize-make/bin/test_us_resplot_fem+0x3329118)
+    #4 0xaaaac248fcec in ResidualDialogTest::qt_static_metacall(QObject*, QMetaObject::Call, int, void**) /src/build/linux-sanitize-make/test/programs/us_resplot_fem/test_us_resplot_fem_autogen/include/test_us_resplot_fem.moc:124
+    #5 0xffff84328ec0 in QMetaMethod::invoke(QObject*, Qt::ConnectionType, QGenericReturnArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument) const (/lib/aarch64-linux-gnu/libQt5Core.so.5+0x2a8ec0)
+    #6 0xffff861c83a0  (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x183a0)
+    #7 0xffff861c8e10  (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x18e10)
+    #8 0xffff861c94a0  (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x194a0)
+    #9 0xffff861c9810 in QTest::qRun() (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x19810)
+    #10 0xffff861c9ce4 in QTest::qExec(QObject*, int, char**) (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x19ce4)
+    #11 0xaaaac248ef34 in main /src/test/programs/us_resplot_fem/test_us_resplot_fem.cpp:451
+    #12 0xffff834073fc  (/lib/aarch64-linux-gnu/libc.so.6+0x273fc)
+    #13 0xffff834074d4 in __libc_start_main (/lib/aarch64-linux-gnu/libc.so.6+0x274d4)
+    #14 0xaaaac247cd6c in _start (/src/build/linux-sanitize-make/bin/test_us_resplot_fem+0x32fcd6c)
+
+
+===== ANALYSIS-short-radius.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+QFATAL : ResidualDialogTest::invalidInputProbe() ASSERT failure in QVector<T>::operator[]: "index out of range", file /usr/include/aarch64-linux-gnu/qt5/QtCore/qvector.h, line 457
+FAIL!  : ResidualDialogTest::invalidInputProbe() Received a fatal error.
+   Loc: [Unknown file(0)]
+Totals: 1 passed, 1 failed, 0 skipped, 0 blacklisted, 106ms
+********* Finished testing of ResidualDialogTest *********
+
+===== ANALYSIS-short-ri.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+QFATAL : ResidualDialogTest::invalidInputProbe() ASSERT failure in QVector<T>::operator[]: "index out of range", file /usr/include/aarch64-linux-gnu/qt5/QtCore/qvector.h, line 457
+FAIL!  : ResidualDialogTest::invalidInputProbe() Received a fatal error.
+   Loc: [Unknown file(0)]
+Totals: 1 passed, 1 failed, 0 skipped, 0 blacklisted, 33ms
+********* Finished testing of ResidualDialogTest *********
+
+===== ANALYSIS-short-scan.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+QFATAL : ResidualDialogTest::invalidInputProbe() ASSERT failure in QVector<T>::operator[]: "index out of range", file /usr/include/aarch64-linux-gnu/qt5/QtCore/qvector.h, line 453
+FAIL!  : ResidualDialogTest::invalidInputProbe() Received a fatal error.
+   Loc: [Unknown file(0)]
+Totals: 1 passed, 1 failed, 0 skipped, 0 blacklisted, 37ms
+********* Finished testing of ResidualDialogTest *********
+
+===== ANALYSIS-short-ti.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+QFATAL : ResidualDialogTest::invalidInputProbe() ASSERT failure in QVector<T>::operator[]: "index out of range", file /usr/include/aarch64-linux-gnu/qt5/QtCore/qvector.h, line 457
+FAIL!  : ResidualDialogTest::invalidInputProbe() Received a fatal error.
+   Loc: [Unknown file(0)]
+Totals: 1 passed, 1 failed, 0 skipped, 0 blacklisted, 38ms
+********* Finished testing of ResidualDialogTest *********
+
+===== ANALYSIS-unknown-mode.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+/src/test/programs/us_resplot_fem/../../../programs/us_fematch/us_resplot_fem.cpp:822:40: runtime error: member call on misaligned address 0xffffa92469fc for type 'struct EditedData', which requires 8 byte alignment
+0xffffa92469fc: note: pointer points here
+  b2 fe ff 97 a0 36 00 b5  e1 02 40 b9 e7 ff ff 17  00 00 80 52 fd 7b 42 a9  f3 53 43 a9 f5 5b 44 a9
+              ^ 
+    #0 0xaaaacddbe5e0 in US_ResidPlotFem::plot_rdata() /src/test/programs/us_resplot_fem/../../../programs/us_fematch/us_resplot_fem.cpp:822
+    #1 0xaaaacddb061c in US_ResidPlotFem::plot_data() /src/test/programs/us_resplot_fem/../../../programs/us_fematch/us_resplot_fem.cpp:577
+    #2 0xaaaacdda29e4 in US_ResidPlotFem::US_ResidPlotFem(QWidget*, QString) /src/test/programs/us_resplot_fem/../../../programs/us_fematch/us_resplot_fem.cpp:292
+    #3 0xaaaacdd39118 in ResidualDialogTest::invalidInputProbe() (/src/build/linux-sanitize-make/bin/test_us_resplot_fem+0x3329118)
+    #4 0xaaaacdd1fcec in ResidualDialogTest::qt_static_metacall(QObject*, QMetaObject::Call, int, void**) /src/build/linux-sanitize-make/test/programs/us_resplot_fem/test_us_resplot_fem_autogen/include/test_us_resplot_fem.moc:124
+    #5 0xffffa6888ec0 in QMetaMethod::invoke(QObject*, Qt::ConnectionType, QGenericReturnArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument) const (/lib/aarch64-linux-gnu/libQt5Core.so.5+0x2a8ec0)
+    #6 0xffffa87283a0  (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x183a0)
+    #7 0xffffa8728e10  (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x18e10)
+    #8 0xffffa87294a0  (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x194a0)
+    #9 0xffffa8729810 in QTest::qRun() (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x19810)
+    #10 0xffffa8729ce4 in QTest::qExec(QObject*, int, char**) (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x19ce4)
+    #11 0xaaaacdd1ef34 in main /src/test/programs/us_resplot_fem/test_us_resplot_fem.cpp:451
+    #12 0xffffa59673fc  (/lib/aarch64-linux-gnu/libc.so.6+0x273fc)
+    #13 0xffffa59674d4 in __libc_start_main (/lib/aarch64-linux-gnu/libc.so.6+0x274d4)
+    #14 0xaaaacdd0cd6c in _start (/src/build/linux-sanitize-make/bin/test_us_resplot_fem+0x32fcd6c)
+
+
+===== FEMATCH-bad-exclusion.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+QWARN  : ResidualDialogTest::invalidInputProbe() This plugin does not support propagateSizeHints()
+RESIDUAL_PROBE_COMPLETED
+PASS   : ResidualDialogTest::invalidInputProbe()
+PASS   : ResidualDialogTest::cleanupTestCase()
+Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 69ms
+********* Finished testing of ResidualDialogTest *********
+
+===== FEMATCH-empty-edited.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+QFATAL : ResidualDialogTest::invalidInputProbe() ASSERT failure in QVector<T>::operator[]: "index out of range", file /usr/include/aarch64-linux-gnu/qt5/QtCore/qvector.h, line 457
+FAIL!  : ResidualDialogTest::invalidInputProbe() Received a fatal error.
+   Loc: [Unknown file(0)]
+Totals: 1 passed, 1 failed, 0 skipped, 0 blacklisted, 40ms
+********* Finished testing of ResidualDialogTest *********
+
+===== FEMATCH-empty-simulated.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+QFATAL : ResidualDialogTest::invalidInputProbe() ASSERT failure in QVector<T>::operator[]: "index out of range", file /usr/include/aarch64-linux-gnu/qt5/QtCore/qvector.h, line 457
+FAIL!  : ResidualDialogTest::invalidInputProbe() Received a fatal error.
+   Loc: [Unknown file(0)]
+Totals: 1 passed, 1 failed, 0 skipped, 0 blacklisted, 52ms
+********* Finished testing of ResidualDialogTest *********
+
+===== FEMATCH-nonfinite.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+QWARN  : ResidualDialogTest::invalidInputProbe() This plugin does not support propagateSizeHints()
+RESIDUAL_PROBE_COMPLETED
+PASS   : ResidualDialogTest::invalidInputProbe()
+PASS   : ResidualDialogTest::cleanupTestCase()
+Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 52ms
+********* Finished testing of ResidualDialogTest *********
+
+===== FEMATCH-null-parent.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+/src/test/programs/us_resplot_fem/../../../programs/us_fematch/us_resplot_fem.cpp:822:40: runtime error: member call on misaligned address 0xffff930629fc for type 'struct EditedData', which requires 8 byte alignment
+0xffff930629fc: note: pointer points here
+  b2 fe ff 97 a0 36 00 b5  e1 02 40 b9 e7 ff ff 17  00 00 80 52 fd 7b 42 a9  f3 53 43 a9 f5 5b 44 a9
+              ^ 
+    #0 0xaaaaafdae5e0 in US_ResidPlotFem::plot_rdata() /src/test/programs/us_resplot_fem/../../../programs/us_fematch/us_resplot_fem.cpp:822
+    #1 0xaaaaafda061c in US_ResidPlotFem::plot_data() /src/test/programs/us_resplot_fem/../../../programs/us_fematch/us_resplot_fem.cpp:577
+    #2 0xaaaaafd929e4 in US_ResidPlotFem::US_ResidPlotFem(QWidget*, QString) /src/test/programs/us_resplot_fem/../../../programs/us_fematch/us_resplot_fem.cpp:292
+    #3 0xaaaaafd29118 in ResidualDialogTest::invalidInputProbe() (/src/build/linux-sanitize-make/bin/test_us_resplot_fem+0x3329118)
+    #4 0xaaaaafd0fcec in ResidualDialogTest::qt_static_metacall(QObject*, QMetaObject::Call, int, void**) /src/build/linux-sanitize-make/test/programs/us_resplot_fem/test_us_resplot_fem_autogen/include/test_us_resplot_fem.moc:124
+    #5 0xffff906a8ec0 in QMetaMethod::invoke(QObject*, Qt::ConnectionType, QGenericReturnArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument) const (/lib/aarch64-linux-gnu/libQt5Core.so.5+0x2a8ec0)
+    #6 0xffff925483a0  (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x183a0)
+    #7 0xffff92548e10  (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x18e10)
+    #8 0xffff925494a0  (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x194a0)
+    #9 0xffff92549810 in QTest::qRun() (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x19810)
+    #10 0xffff92549ce4 in QTest::qExec(QObject*, int, char**) (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x19ce4)
+    #11 0xaaaaafd0ef34 in main /src/test/programs/us_resplot_fem/test_us_resplot_fem.cpp:451
+    #12 0xffff8f7873fc  (/lib/aarch64-linux-gnu/libc.so.6+0x273fc)
+    #13 0xffff8f7874d4 in __libc_start_main (/lib/aarch64-linux-gnu/libc.so.6+0x274d4)
+    #14 0xaaaaafcfcd6c in _start (/src/build/linux-sanitize-make/bin/test_us_resplot_fem+0x32fcd6c)
+
+
+===== FEMATCH-short-radius.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+QFATAL : ResidualDialogTest::invalidInputProbe() ASSERT failure in QVector<T>::operator[]: "index out of range", file /usr/include/aarch64-linux-gnu/qt5/QtCore/qvector.h, line 457
+FAIL!  : ResidualDialogTest::invalidInputProbe() Received a fatal error.
+   Loc: [Unknown file(0)]
+Totals: 1 passed, 1 failed, 0 skipped, 0 blacklisted, 61ms
+********* Finished testing of ResidualDialogTest *********
+
+===== FEMATCH-short-ri.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+QFATAL : ResidualDialogTest::invalidInputProbe() ASSERT failure in QVector<T>::operator[]: "index out of range", file /usr/include/aarch64-linux-gnu/qt5/QtCore/qvector.h, line 457
+FAIL!  : ResidualDialogTest::invalidInputProbe() Received a fatal error.
+   Loc: [Unknown file(0)]
+Totals: 1 passed, 1 failed, 0 skipped, 0 blacklisted, 50ms
+********* Finished testing of ResidualDialogTest *********
+
+===== FEMATCH-short-scan.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+QFATAL : ResidualDialogTest::invalidInputProbe() ASSERT failure in QVector<T>::operator[]: "index out of range", file /usr/include/aarch64-linux-gnu/qt5/QtCore/qvector.h, line 453
+FAIL!  : ResidualDialogTest::invalidInputProbe() Received a fatal error.
+   Loc: [Unknown file(0)]
+Totals: 1 passed, 1 failed, 0 skipped, 0 blacklisted, 48ms
+********* Finished testing of ResidualDialogTest *********
+
+===== FEMATCH-short-ti.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+QFATAL : ResidualDialogTest::invalidInputProbe() ASSERT failure in QVector<T>::operator[]: "index out of range", file /usr/include/aarch64-linux-gnu/qt5/QtCore/qvector.h, line 457
+FAIL!  : ResidualDialogTest::invalidInputProbe() Received a fatal error.
+   Loc: [Unknown file(0)]
+Totals: 1 passed, 1 failed, 0 skipped, 0 blacklisted, 68ms
+********* Finished testing of ResidualDialogTest *********
+
+===== FEMATCH-unknown-mode.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+/src/test/programs/us_resplot_fem/../../../programs/us_fematch/us_resplot_fem.cpp:822:40: runtime error: member call on misaligned address 0xffffad2219fc for type 'struct EditedData', which requires 8 byte alignment
+0xffffad2219fc: note: pointer points here
+  b2 fe ff 97 a0 36 00 b5  e1 02 40 b9 e7 ff ff 17  00 00 80 52 fd 7b 42 a9  f3 53 43 a9 f5 5b 44 a9
+              ^ 
+    #0 0xaaaabcabe5e0 in US_ResidPlotFem::plot_rdata() /src/test/programs/us_resplot_fem/../../../programs/us_fematch/us_resplot_fem.cpp:822
+    #1 0xaaaabcab061c in US_ResidPlotFem::plot_data() /src/test/programs/us_resplot_fem/../../../programs/us_fematch/us_resplot_fem.cpp:577
+    #2 0xaaaabcaa29e4 in US_ResidPlotFem::US_ResidPlotFem(QWidget*, QString) /src/test/programs/us_resplot_fem/../../../programs/us_fematch/us_resplot_fem.cpp:292
+    #3 0xaaaabca39118 in ResidualDialogTest::invalidInputProbe() (/src/build/linux-sanitize-make/bin/test_us_resplot_fem+0x3329118)
+    #4 0xaaaabca1fcec in ResidualDialogTest::qt_static_metacall(QObject*, QMetaObject::Call, int, void**) /src/build/linux-sanitize-make/test/programs/us_resplot_fem/test_us_resplot_fem_autogen/include/test_us_resplot_fem.moc:124
+    #5 0xffffaa858ec0 in QMetaMethod::invoke(QObject*, Qt::ConnectionType, QGenericReturnArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument) const (/lib/aarch64-linux-gnu/libQt5Core.so.5+0x2a8ec0)
+    #6 0xffffac6f83a0  (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x183a0)
+    #7 0xffffac6f8e10  (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x18e10)
+    #8 0xffffac6f94a0  (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x194a0)
+    #9 0xffffac6f9810 in QTest::qRun() (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x19810)
+    #10 0xffffac6f9ce4 in QTest::qExec(QObject*, int, char**) (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x19ce4)
+    #11 0xaaaabca1ef34 in main /src/test/programs/us_resplot_fem/test_us_resplot_fem.cpp:451
+    #12 0xffffa99373fc  (/lib/aarch64-linux-gnu/libc.so.6+0x273fc)
+    #13 0xffffa99374d4 in __libc_start_main (/lib/aarch64-linux-gnu/libc.so.6+0x274d4)
+    #14 0xaaaabca0cd6c in _start (/src/build/linux-sanitize-make/bin/test_us_resplot_fem+0x32fcd6c)
+
+
+===== REPORT-bad-exclusion.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+RESIDUAL_PROBE_COMPLETED
+PASS   : ResidualDialogTest::invalidInputProbe()
+PASS   : ResidualDialogTest::cleanupTestCase()
+Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 53ms
+********* Finished testing of ResidualDialogTest *********
+
+===== REPORT-empty-edited.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+QFATAL : ResidualDialogTest::invalidInputProbe() ASSERT failure in QVector<T>::operator[]: "index out of range", file /usr/include/aarch64-linux-gnu/qt5/QtCore/qvector.h, line 457
+FAIL!  : ResidualDialogTest::invalidInputProbe() Received a fatal error.
+   Loc: [Unknown file(0)]
+Totals: 1 passed, 1 failed, 0 skipped, 0 blacklisted, 45ms
+********* Finished testing of ResidualDialogTest *********
+
+===== REPORT-empty-simulated.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+QFATAL : ResidualDialogTest::invalidInputProbe() ASSERT failure in QVector<T>::operator[]: "index out of range", file /usr/include/aarch64-linux-gnu/qt5/QtCore/qvector.h, line 457
+FAIL!  : ResidualDialogTest::invalidInputProbe() Received a fatal error.
+   Loc: [Unknown file(0)]
+Totals: 1 passed, 1 failed, 0 skipped, 0 blacklisted, 43ms
+********* Finished testing of ResidualDialogTest *********
+
+===== REPORT-nonfinite.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+RESIDUAL_PROBE_COMPLETED
+PASS   : ResidualDialogTest::invalidInputProbe()
+PASS   : ResidualDialogTest::cleanupTestCase()
+Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 55ms
+********* Finished testing of ResidualDialogTest *********
+
+===== REPORT-null-parent.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+/src/test/programs/us_resplot_fem/../../../programs/us_fematch/us_resplot_fem.cpp:822:40: runtime error: member call on misaligned address 0xffff979679fc for type 'struct EditedData', which requires 8 byte alignment
+0xffff979679fc: note: pointer points here
+  b2 fe ff 97 a0 36 00 b5  e1 02 40 b9 e7 ff ff 17  00 00 80 52 fd 7b 42 a9  f3 53 43 a9 f5 5b 44 a9
+              ^ 
+    #0 0xaaaaec04e5e0 in US_ResidPlotFem::plot_rdata() /src/test/programs/us_resplot_fem/../../../programs/us_fematch/us_resplot_fem.cpp:822
+    #1 0xaaaaec04061c in US_ResidPlotFem::plot_data() /src/test/programs/us_resplot_fem/../../../programs/us_fematch/us_resplot_fem.cpp:577
+    #2 0xaaaaec0329e4 in US_ResidPlotFem::US_ResidPlotFem(QWidget*, QString) /src/test/programs/us_resplot_fem/../../../programs/us_fematch/us_resplot_fem.cpp:292
+    #3 0xaaaaebfc9118 in ResidualDialogTest::invalidInputProbe() (/src/build/linux-sanitize-make/bin/test_us_resplot_fem+0x3329118)
+    #4 0xaaaaebfafcec in ResidualDialogTest::qt_static_metacall(QObject*, QMetaObject::Call, int, void**) /src/build/linux-sanitize-make/test/programs/us_resplot_fem/test_us_resplot_fem_autogen/include/test_us_resplot_fem.moc:124
+    #5 0xffff94fa8ec0 in QMetaMethod::invoke(QObject*, Qt::ConnectionType, QGenericReturnArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument) const (/lib/aarch64-linux-gnu/libQt5Core.so.5+0x2a8ec0)
+    #6 0xffff96e483a0  (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x183a0)
+    #7 0xffff96e48e10  (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x18e10)
+    #8 0xffff96e494a0  (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x194a0)
+    #9 0xffff96e49810 in QTest::qRun() (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x19810)
+    #10 0xffff96e49ce4 in QTest::qExec(QObject*, int, char**) (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x19ce4)
+    #11 0xaaaaebfaef34 in main /src/test/programs/us_resplot_fem/test_us_resplot_fem.cpp:451
+    #12 0xffff940873fc  (/lib/aarch64-linux-gnu/libc.so.6+0x273fc)
+    #13 0xffff940874d4 in __libc_start_main (/lib/aarch64-linux-gnu/libc.so.6+0x274d4)
+    #14 0xaaaaebf9cd6c in _start (/src/build/linux-sanitize-make/bin/test_us_resplot_fem+0x32fcd6c)
+
+
+===== REPORT-short-radius.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+QFATAL : ResidualDialogTest::invalidInputProbe() ASSERT failure in QVector<T>::operator[]: "index out of range", file /usr/include/aarch64-linux-gnu/qt5/QtCore/qvector.h, line 457
+FAIL!  : ResidualDialogTest::invalidInputProbe() Received a fatal error.
+   Loc: [Unknown file(0)]
+Totals: 1 passed, 1 failed, 0 skipped, 0 blacklisted, 49ms
+********* Finished testing of ResidualDialogTest *********
+
+===== REPORT-short-ri.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+QFATAL : ResidualDialogTest::invalidInputProbe() ASSERT failure in QVector<T>::operator[]: "index out of range", file /usr/include/aarch64-linux-gnu/qt5/QtCore/qvector.h, line 457
+FAIL!  : ResidualDialogTest::invalidInputProbe() Received a fatal error.
+   Loc: [Unknown file(0)]
+Totals: 1 passed, 1 failed, 0 skipped, 0 blacklisted, 32ms
+********* Finished testing of ResidualDialogTest *********
+
+===== REPORT-short-scan.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+QFATAL : ResidualDialogTest::invalidInputProbe() ASSERT failure in QVector<T>::operator[]: "index out of range", file /usr/include/aarch64-linux-gnu/qt5/QtCore/qvector.h, line 453
+FAIL!  : ResidualDialogTest::invalidInputProbe() Received a fatal error.
+   Loc: [Unknown file(0)]
+Totals: 1 passed, 1 failed, 0 skipped, 0 blacklisted, 34ms
+********* Finished testing of ResidualDialogTest *********
+
+===== REPORT-short-ti.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+QFATAL : ResidualDialogTest::invalidInputProbe() ASSERT failure in QVector<T>::operator[]: "index out of range", file /usr/include/aarch64-linux-gnu/qt5/QtCore/qvector.h, line 457
+FAIL!  : ResidualDialogTest::invalidInputProbe() Received a fatal error.
+   Loc: [Unknown file(0)]
+Totals: 1 passed, 1 failed, 0 skipped, 0 blacklisted, 34ms
+********* Finished testing of ResidualDialogTest *********
+
+===== REPORT-unknown-mode.log =====
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+RESIDUAL_PROBE_STARTED
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+/src/test/programs/us_resplot_fem/../../../programs/us_fematch/us_resplot_fem.cpp:822:40: runtime error: member call on misaligned address 0xffffbad4d9fc for type 'struct EditedData', which requires 8 byte alignment
+0xffffbad4d9fc: note: pointer points here
+  b2 fe ff 97 a0 36 00 b5  e1 02 40 b9 e7 ff ff 17  00 00 80 52 fd 7b 42 a9  f3 53 43 a9 f5 5b 44 a9
+              ^ 
+    #0 0xaaaaaffde5e0 in US_ResidPlotFem::plot_rdata() /src/test/programs/us_resplot_fem/../../../programs/us_fematch/us_resplot_fem.cpp:822
+    #1 0xaaaaaffd061c in US_ResidPlotFem::plot_data() /src/test/programs/us_resplot_fem/../../../programs/us_fematch/us_resplot_fem.cpp:577
+    #2 0xaaaaaffc29e4 in US_ResidPlotFem::US_ResidPlotFem(QWidget*, QString) /src/test/programs/us_resplot_fem/../../../programs/us_fematch/us_resplot_fem.cpp:292
+    #3 0xaaaaaff59118 in ResidualDialogTest::invalidInputProbe() (/src/build/linux-sanitize-make/bin/test_us_resplot_fem+0x3329118)
+    #4 0xaaaaaff3fcec in ResidualDialogTest::qt_static_metacall(QObject*, QMetaObject::Call, int, void**) /src/build/linux-sanitize-make/test/programs/us_resplot_fem/test_us_resplot_fem_autogen/include/test_us_resplot_fem.moc:124
+    #5 0xffffb8388ec0 in QMetaMethod::invoke(QObject*, Qt::ConnectionType, QGenericReturnArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument, QGenericArgument) const (/lib/aarch64-linux-gnu/libQt5Core.so.5+0x2a8ec0)
+    #6 0xffffba2283a0  (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x183a0)
+    #7 0xffffba228e10  (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x18e10)
+    #8 0xffffba2294a0  (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x194a0)
+    #9 0xffffba229810 in QTest::qRun() (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x19810)
+    #10 0xffffba229ce4 in QTest::qExec(QObject*, int, char**) (/lib/aarch64-linux-gnu/libQt5Test.so.5+0x19ce4)
+    #11 0xaaaaaff3ef34 in main /src/test/programs/us_resplot_fem/test_us_resplot_fem.cpp:451
+    #12 0xffffb74673fc  (/lib/aarch64-linux-gnu/libc.so.6+0x273fc)
+    #13 0xffffb74674d4 in __libc_start_main (/lib/aarch64-linux-gnu/libc.so.6+0x274d4)
+    #14 0xaaaaaff2cd6c in _start (/src/build/linux-sanitize-make/bin/test_us_resplot_fem+0x32fcd6c)
+

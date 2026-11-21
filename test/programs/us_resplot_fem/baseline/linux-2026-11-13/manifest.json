@@ -1,0 +1,23 @@
+{
+  "revision": "dc7fb11a6c977341e127d8214ab61643f929d29e",
+  "sha256": {
+    "test/programs/us_resplot_fem/test_us_resplot_fem.cpp": "eaed1332d98657b4d04df15eacdd283139a9d91512a78425e0ddd87cb3fc98fc",
+    "test/programs/us_resplot_fem/legacy_dialog.cpp": "453bc78e141b3641202c34dcd22cacad37eeaa4860a3683cb60c5273d471ff62",
+    "test/programs/us_resplot_fem/owner_doubles.h": "24146018592420b0183ce2a4c26643a5ec4c6c6236fd1509be16322ad8b6d573",
+    "test/programs/us_resplot_fem/owner_contract.cpp": "ad082f0cc6b9a7b79aa7f09b23bd5b653164bf2c321f6d7c82552cb93cded7e2",
+    "programs/us_fematch/us_resplot_fem.cpp": "b6b10dfb4a970430dc48daaedc87fb00069bfb6cc850c7e73141d8b9a55f12b1",
+    "programs/us_fematch/us_resplot_fem.h": "2fe2b5ec9db05b2459bf1ccbbeca44ab36aa8790fb36b81a3de8545a5a6a87b1",
+    "build/linux-sanitize-make/bin/test_us_resplot_fem": "635d2af0bc10f907ff9c01a1f5a8e870065fc3ed80fc7cbb219e4800d23f0b62",
+    "build/linux-sanitize-make/CMakeCache.txt": "a462ba026cc32f066db5021c8622d9d4c13a6a0a3bd084d0884c49f9c97f4f71"
+  },
+  "result": "105 passed, 0 failed, 1 skipped",
+  "environment": "Linux aarch64, GCC 11.4, Qt 5.15.3, Qwt 6.1.4; Docker us3-tsan-review:latest; offscreen",
+  "sanitizers": "address,undefined; detect_leaks=0; halt_on_error=1",
+  "limitations": [
+    "Owner doubles, not real-owner UI",
+    "Expected invalid-input failures isolated in child processes",
+    "Not a leak-freedom claim",
+    "Native UI, database workflows and seven-consumer Linux build matrix are not covered."
+  ],
+  "source_identity": "Parent revision plus characterization source committed alongside this record; source hashes identify the tested files."
+}

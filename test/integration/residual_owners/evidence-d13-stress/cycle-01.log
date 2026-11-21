@@ -1,0 +1,29 @@
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+[New Thread 0xffffe03febf0 (LWP 127946)]
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 60
+shmat succeeded
+[New Thread 0xffffd1dfebf0 (LWP 127949)]
+[Detaching after fork from child process 127950]
+[New Thread 0xffffd0ffabf0 (LWP 127951)]
+[New Thread 0xffffd07f9bf0 (LWP 127952)]
+[New Thread 0xffffcfff8bf0 (LWP 127953)]
+[New Thread 0xffffcf7f7bf0 (LWP 127954)]
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 61
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 62
+shmat succeeded
+[Thread 0xffffcfff8bf0 (LWP 127953) exited]
+[Thread 0xffffd07f9bf0 (LWP 127952) exited]
+[Thread 0xffffd0ffabf0 (LWP 127951) exited]
+[Thread 0xffffcf7f7bf0 (LWP 127954) exited]
+[Thread 0xffffe03febf0 (LWP 127946) exited]
+[Thread 0xffffd1dfebf0 (LWP 127949) exited]
+[Inferior 1 (process 127933) exited normally]
+You can't do that without a process to debug.

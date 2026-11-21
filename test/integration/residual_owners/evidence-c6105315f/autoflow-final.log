@@ -1,0 +1,36 @@
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 37
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 38
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 39
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 40
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 41
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 42
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 43
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 44
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 45
+shmat succeeded

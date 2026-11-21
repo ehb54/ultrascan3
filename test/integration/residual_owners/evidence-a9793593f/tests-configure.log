@@ -1,0 +1,8 @@
+-- Using Google Test from FetchContent
+-- Auto-discovered 54 test source files
+-- test_us_utils: DB-enabled variant (utils library is also DB-enabled)
+-- Linking tests against shared utils library (static not available)
+-- MySQL found and linked
+-- Configuring done (0.2s)
+-- Generating done (0.1s)
+-- Build files have been written to: /tmp/us3-residual-2ddf75d6e/utils-test-build

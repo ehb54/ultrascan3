@@ -1,0 +1,11 @@
+Running main() from /tmp/us3-residual-2ddf75d6e/googletest/googletest/src/gtest_main.cc
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from US_RunProtocolDefaults
+[ RUN      ] US_RunProtocolDefaults.ResetCopiesInitializedControlFlags
+[       OK ] US_RunProtocolDefaults.ResetCopiesInitializedControlFlags (0 ms)
+[----------] 1 test from US_RunProtocolDefaults (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.

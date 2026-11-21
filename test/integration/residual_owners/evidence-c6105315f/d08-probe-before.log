@@ -1,0 +1,21 @@
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 1
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 2
+shmat succeeded
+/tmp/us3-residual-2ddf75d6e/source/programs/us_analysis_profile/us_anapro_utils.cpp:1514:9: runtime error: load of value 190, which is not a valid value for type 'bool'
+    #0 0x1539de7 in US_AnaprofPan2DSA::initPanel() /tmp/us3-residual-2ddf75d6e/source/programs/us_analysis_profile/us_anapro_utils.cpp:1514
+    #1 0xc1218f in US_AnaprofPan2DSA::US_AnaprofPan2DSA(QWidget*) /tmp/us3-residual-2ddf75d6e/source/programs/us_analysis_profile/us_analysis_profile.cpp:3421
+    #2 0xb39567 in US_AnalysisProfileGui::US_AnalysisProfileGui() /tmp/us3-residual-2ddf75d6e/source/programs/us_analysis_profile/us_analysis_profile.cpp:43
+    #3 0x53d1b7 in main /tmp/us3-residual-2ddf75d6e/analysis-profile-probe.cpp:9
+    #4 0xffff8751146b in __libc_start_main (/lib64/libc.so.6+0x2546b)
+    #5 0x45e70b  (/tmp/us3-residual-2ddf75d6e/build/bin/us_analysis_profile_probe+0x45e70b)
+

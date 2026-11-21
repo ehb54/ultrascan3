@@ -13,7 +13,7 @@ namespace
 // A simulation of a 4-scan, 10-point grid, filled with values from a seed
 US_DataIO::RawData makeSim( double seed )
 {
-   US_DataIO::RawData simdat;
+   US_DataIO::RawData simdat{};
    simdat.cell    = 1;
    simdat.channel = 'S';
    for ( int rr = 0; rr < 10; rr++ )
@@ -22,7 +22,7 @@ US_DataIO::RawData makeSim( double seed )
    }
    for ( int ss = 0; ss < 4; ss++ )
    {
-      US_DataIO::Scan scan;
+      US_DataIO::Scan scan{};
       scan.seconds = 100.0 * ( ss + 1 );
       for ( int rr = 0; rr < 10; rr++ )
       {
@@ -89,7 +89,7 @@ class TestUSSimCache : public QtTestBase
          }
          for ( int ss = 0; ss < 4; ss++ )
          {
-            US_DataIO::Scan scan;
+            US_DataIO::Scan scan{};
             scan.temperature = 20.0;
             scan.rpm         = 50000.0;
             scan.seconds     = 100.0 * ( ss + 1 );
@@ -110,7 +110,7 @@ TEST_F( TestUSSimCache, FetchReturnsStoredSimulationExactly )
 {
    US_SimCache        cache( 1024 * 1024 );
    US_DataIO::RawData simdat = makeSim( 0.1 );
-   US_DataIO::RawData fetched;
+   US_DataIO::RawData fetched{};
 
    EXPECT_FALSE( cache.fetch( key( 1 ), fetched ) );
    EXPECT_TRUE( cache.store( key( 1 ), simdat, false ) );
@@ -120,7 +120,7 @@ TEST_F( TestUSSimCache, FetchReturnsStoredSimulationExactly )
 
    // Changing a fetched simulation does not change the cached one
    fetched.scanData[0].rvalues[0] = -1.0;
-   US_DataIO::RawData again;
+   US_DataIO::RawData again{};
    ASSERT_TRUE( cache.fetch( key( 1 ), again ) );
    EXPECT_TRUE( sameValues( again, simdat ) );
 
@@ -142,7 +142,7 @@ TEST_F( TestUSSimCache, FullCacheRefusesNonSurvivors )
    }
    EXPECT_FALSE( cache.store( key( 3 ), makeSim( 3 ), false ) );
 
-   US_DataIO::RawData fetched;
+   US_DataIO::RawData fetched{};
    EXPECT_TRUE( cache.fetch( key( 0 ), fetched ) ); // Earlier ones are kept
    EXPECT_FALSE( cache.fetch( key( 3 ), fetched ) );
    EXPECT_EQ( cache.stats().rejected, 1 );
@@ -160,7 +160,7 @@ TEST_F( TestUSSimCache, SurvivorsEvictNewestNonSurvivors )
    EXPECT_TRUE( cache.store( key( 10 ), makeSim( 10 ), true ) );
    EXPECT_TRUE( cache.store( key( 11 ), makeSim( 11 ), true ) );
 
-   US_DataIO::RawData fetched;
+   US_DataIO::RawData fetched{};
    EXPECT_TRUE( cache.fetch( key( 0 ), fetched ) );
    EXPECT_FALSE( cache.fetch( key( 1 ), fetched ) );
    EXPECT_FALSE( cache.fetch( key( 2 ), fetched ) );
@@ -191,7 +191,7 @@ TEST_F( TestUSSimCache, StoredSimulationBecomesSurvivor )
    EXPECT_EQ( cache.stats().survivors, 1 );
    EXPECT_TRUE( cache.store( key( 2 ), makeSim( 2 ), true ) );
 
-   US_DataIO::RawData fetched;
+   US_DataIO::RawData fetched{};
    EXPECT_FALSE( cache.fetch( key( 0 ), fetched ) );
    EXPECT_TRUE( cache.fetch( key( 1 ), fetched ) );
    EXPECT_TRUE( sameValues( fetched, makeSim( 1 ) ) );
@@ -206,7 +206,7 @@ TEST_F( TestUSSimCache, ClearRemovesAllSimulations )
    cache.store( key( 1 ), makeSim( 1 ), true );
    cache.clear();
 
-   US_DataIO::RawData fetched;
+   US_DataIO::RawData fetched{};
    EXPECT_FALSE( cache.fetch( key( 0 ), fetched ) );
    EXPECT_FALSE( cache.fetch( key( 1 ), fetched ) );
    US_SimCache::Stats st = cache.stats();
@@ -219,7 +219,7 @@ TEST_F( TestUSSimCache, ClearRemovesAllSimulations )
 TEST_F( TestUSSimCache, DatasetKeyCoversGridAndParameters )
 {
    US_SimulationParameters simparams;
-   US_DataIO::EditedData   edata;
+   US_DataIO::EditedData   edata{};
    makeDataSet( simparams, edata );
    const QByteArray dskey = US_SimCache::dataset_key( simparams, edata );
    EXPECT_EQ( US_SimCache::dataset_key( simparams, edata ), dskey );
@@ -264,7 +264,7 @@ TEST_F( TestUSSimCache, DatasetKeyCoversGridAndParameters )
 TEST_F( TestUSSimCache, DatasetKeyMemoGivesTheSameKeys )
 {
    US_SimulationParameters simparams;
-   US_DataIO::EditedData   edata;
+   US_DataIO::EditedData   edata{};
    makeDataSet( simparams, edata );
    const QByteArray dskey = US_SimCache::dataset_key( simparams, edata );
 
@@ -350,7 +350,7 @@ TEST_F( TestUSSimCache, ConcurrentUseIsSafe )
             for ( int ii = 0; ii < 400; ii++ )
             {
                const int          kk = ( ii * 7 + tt ) % 60;
-               US_DataIO::RawData simdat;
+               US_DataIO::RawData simdat{};
                if ( cache.fetch( key( kk ), simdat ) )
                {
                   if ( !sameValues( simdat, makeSim( kk ) ) )
@@ -394,7 +394,7 @@ TEST_F( TestUSSimCache, LruEvictsLeastRecentlyUsedInABatch )
    }
 
    // A fetch counts as a use, so key 0 is no longer the oldest
-   US_DataIO::RawData fetched;
+   US_DataIO::RawData fetched{};
    ASSERT_TRUE( cache.fetch( key( 0 ), fetched ) );
 
    // Room for one more means going down to 90% of the cap besides the new one
@@ -421,7 +421,7 @@ TEST_F( TestUSSimCache, LruIgnoresSurvivorFlags )
    {
       EXPECT_TRUE( cache.store( key( ii ), makeSim( ii ), true ) ) << ii;
    }
-   US_DataIO::RawData fetched;
+   US_DataIO::RawData fetched{};
    EXPECT_TRUE( cache.fetch( key( 11 ), fetched ) );
    EXPECT_FALSE( cache.fetch( key( 0 ), fetched ) );
    EXPECT_EQ( cache.stats().rejected, 0 );
@@ -441,7 +441,7 @@ TEST_F( TestUSSimCache, LruStoringAgainCountsAsUse )
    EXPECT_EQ( cache.stats().entries, 10 ); // Not stored twice
 
    ASSERT_TRUE( cache.store( key( 10 ), makeSim( 10 ), false ) );
-   US_DataIO::RawData fetched;
+   US_DataIO::RawData fetched{};
    EXPECT_TRUE( cache.fetch( key( 0 ), fetched ) );
    EXPECT_FALSE( cache.fetch( key( 1 ), fetched ) );
 }
@@ -482,7 +482,7 @@ TEST_F( TestUSSimCache, LruConcurrentUseIsSafe )
             for ( int ii = 0; ii < 400; ii++ )
             {
                const int          kk = ( ii * 7 + tt ) % 60;
-               US_DataIO::RawData simdat;
+               US_DataIO::RawData simdat{};
                if ( cache.fetch( key( kk ), simdat ) )
                {
                   if ( !sameValues( simdat, makeSim( kk ) ) )
@@ -516,7 +516,7 @@ TEST_F( TestUSSimCache, LruConcurrentUseIsSafe )
 TEST_F( TestUSSimCache, KeyMemoReturnsTheDatasetKey )
 {
    US_SimulationParameters simparams;
-   US_DataIO::EditedData   edata;
+   US_DataIO::EditedData   edata{};
    makeDataSet( simparams, edata );
    const QByteArray full = US_SimCache::dataset_key( simparams, edata );
 
@@ -530,7 +530,7 @@ TEST_F( TestUSSimCache, KeyMemoReturnsTheDatasetKey )
 TEST_F( TestUSSimCache, KeyMemoSeesScalarAndResizedChanges )
 {
    US_SimulationParameters simparams;
-   US_DataIO::EditedData   edata;
+   US_DataIO::EditedData   edata{};
    makeDataSet( simparams, edata );
    US_SimCache cache( 10 * sbytes );
    cache.set_key_memo( true );
@@ -551,7 +551,7 @@ TEST_F( TestUSSimCache, KeyMemoLimitationAndClear )
    // Documented limit of the memo:  a value changed in place (same address and
    //  size) is not seen.  Without the memo, or after clear(), it is.
    US_SimulationParameters simparams;
-   US_DataIO::EditedData   edata;
+   US_DataIO::EditedData   edata{};
    makeDataSet( simparams, edata );
    US_SimCache cache( 10 * sbytes );
    cache.set_key_memo( true );
@@ -606,7 +606,7 @@ TEST( SimCachePack, RoundTripRestoresEveryField )
 {
    US_DataIO::RawData in    = makeFullSim();
    QByteArray         bytes = US_SimCache::pack( in );
-   US_DataIO::RawData out;
+   US_DataIO::RawData out{};
 
    ASSERT_TRUE( US_SimCache::unpack( bytes.constData(), bytes.size(), out ) );
 
@@ -639,7 +639,7 @@ TEST( SimCachePack, RoundTripRestoresEveryField )
 TEST( SimCachePack, TruncatedOrPaddedBytesAreRejected )
 {
    QByteArray         bytes = US_SimCache::pack( makeFullSim() );
-   US_DataIO::RawData out;
+   US_DataIO::RawData out{};
 
    for ( int cut : { 0, 1, 18, (int) bytes.size() / 2, (int) bytes.size() - 1 } )
    {

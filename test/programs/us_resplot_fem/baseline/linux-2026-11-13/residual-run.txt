@@ -1,0 +1,1889 @@
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+********* Start testing of ResidualDialogTest *********
+Config: Using QtTest library 5.15.3, Qt 5.15.3 (arm64-little_endian-lp64 shared (dynamic) release build; by GCC 11.3.0), ubuntu 22.04
+PASS   : ResidualDialogTest::initTestCase()
+PASS   : ResidualDialogTest::invalidInputs(FEMATCH-null-parent)
+PASS   : ResidualDialogTest::invalidInputs(FEMATCH-unknown-mode)
+PASS   : ResidualDialogTest::invalidInputs(FEMATCH-empty-edited)
+PASS   : ResidualDialogTest::invalidInputs(FEMATCH-empty-simulated)
+PASS   : ResidualDialogTest::invalidInputs(FEMATCH-short-ti)
+PASS   : ResidualDialogTest::invalidInputs(FEMATCH-short-ri)
+PASS   : ResidualDialogTest::invalidInputs(FEMATCH-short-scan)
+PASS   : ResidualDialogTest::invalidInputs(FEMATCH-short-radius)
+PASS   : ResidualDialogTest::invalidInputs(FEMATCH-nonfinite)
+PASS   : ResidualDialogTest::invalidInputs(FEMATCH-bad-exclusion)
+PASS   : ResidualDialogTest::invalidInputs(ANALYSIS-null-parent)
+PASS   : ResidualDialogTest::invalidInputs(ANALYSIS-unknown-mode)
+PASS   : ResidualDialogTest::invalidInputs(ANALYSIS-empty-edited)
+PASS   : ResidualDialogTest::invalidInputs(ANALYSIS-empty-simulated)
+PASS   : ResidualDialogTest::invalidInputs(ANALYSIS-short-ti)
+PASS   : ResidualDialogTest::invalidInputs(ANALYSIS-short-ri)
+PASS   : ResidualDialogTest::invalidInputs(ANALYSIS-short-scan)
+PASS   : ResidualDialogTest::invalidInputs(ANALYSIS-short-radius)
+PASS   : ResidualDialogTest::invalidInputs(ANALYSIS-nonfinite)
+PASS   : ResidualDialogTest::invalidInputs(ANALYSIS-bad-exclusion)
+PASS   : ResidualDialogTest::invalidInputs(REPORT-null-parent)
+PASS   : ResidualDialogTest::invalidInputs(REPORT-unknown-mode)
+PASS   : ResidualDialogTest::invalidInputs(REPORT-empty-edited)
+PASS   : ResidualDialogTest::invalidInputs(REPORT-empty-simulated)
+PASS   : ResidualDialogTest::invalidInputs(REPORT-short-ti)
+PASS   : ResidualDialogTest::invalidInputs(REPORT-short-ri)
+PASS   : ResidualDialogTest::invalidInputs(REPORT-short-scan)
+PASS   : ResidualDialogTest::invalidInputs(REPORT-short-radius)
+PASS   : ResidualDialogTest::invalidInputs(REPORT-nonfinite)
+PASS   : ResidualDialogTest::invalidInputs(REPORT-bad-exclusion)
+SKIP   : ResidualDialogTest::invalidInputProbe() Child-process entry point, exercised by invalidInputs rows.
+   Loc: [/src/test/programs/us_resplot_fem/test_us_resplot_fem.cpp(179)]
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+QWARN  : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise0-exclude0) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise0-exclude0)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 1
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise0-exclude1) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise0-exclude1)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 2
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise0-exclude2) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise0-exclude2)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 3
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise0-exclude3) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise0-exclude3)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 4
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise0-exclude4) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise0-exclude4)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 5
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise1-exclude0) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise1-exclude0)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 6
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise1-exclude1) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise1-exclude1)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 7
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise1-exclude2) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise1-exclude2)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 8
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise1-exclude3) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise1-exclude3)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 9
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise1-exclude4) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise1-exclude4)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 10
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise2-exclude0) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise2-exclude0)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 11
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise2-exclude1) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise2-exclude1)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 12
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise2-exclude2) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise2-exclude2)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 13
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise2-exclude3) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise2-exclude3)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 14
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise2-exclude4) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise2-exclude4)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 15
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise3-exclude0) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise3-exclude0)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 16
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise3-exclude1) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise3-exclude1)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 17
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise3-exclude2) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise3-exclude2)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 18
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise3-exclude3) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise3-exclude3)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 19
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise3-exclude4) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(FEMATCH-noise3-exclude4)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 20
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise0-exclude0) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise0-exclude0)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 21
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise0-exclude1) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise0-exclude1)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 22
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise0-exclude2) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise0-exclude2)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 23
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise0-exclude3) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise0-exclude3)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 24
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise0-exclude4) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise0-exclude4)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 25
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise1-exclude0) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise1-exclude0)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 26
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise1-exclude1) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise1-exclude1)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 27
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise1-exclude2) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise1-exclude2)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 28
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise1-exclude3) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise1-exclude3)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 29
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise1-exclude4) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise1-exclude4)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 30
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise2-exclude0) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise2-exclude0)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 31
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise2-exclude1) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise2-exclude1)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 32
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise2-exclude2) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise2-exclude2)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 33
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise2-exclude3) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise2-exclude3)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 34
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise2-exclude4) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise2-exclude4)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 35
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise3-exclude0) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise3-exclude0)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 36
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise3-exclude1) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise3-exclude1)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 37
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise3-exclude2) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise3-exclude2)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 38
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise3-exclude3) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise3-exclude3)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 39
+shmat succeeded
+QWARN  : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise3-exclude4) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::curvesAndStatistics(ANALYSIS-noise3-exclude4)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 40
+shmat succeeded
+PASS   : ResidualDialogTest::curvesAndStatistics(REPORT-noise0-exclude0)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 41
+shmat succeeded
+PASS   : ResidualDialogTest::curvesAndStatistics(REPORT-noise0-exclude1)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 42
+shmat succeeded
+PASS   : ResidualDialogTest::curvesAndStatistics(REPORT-noise0-exclude2)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 43
+shmat succeeded
+PASS   : ResidualDialogTest::curvesAndStatistics(REPORT-noise0-exclude3)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 44
+shmat succeeded
+PASS   : ResidualDialogTest::curvesAndStatistics(REPORT-noise0-exclude4)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 45
+shmat succeeded
+PASS   : ResidualDialogTest::curvesAndStatistics(REPORT-noise1-exclude0)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 46
+shmat succeeded
+PASS   : ResidualDialogTest::curvesAndStatistics(REPORT-noise1-exclude1)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 47
+shmat succeeded
+PASS   : ResidualDialogTest::curvesAndStatistics(REPORT-noise1-exclude2)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 48
+shmat succeeded
+PASS   : ResidualDialogTest::curvesAndStatistics(REPORT-noise1-exclude3)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 49
+shmat succeeded
+PASS   : ResidualDialogTest::curvesAndStatistics(REPORT-noise1-exclude4)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 50
+shmat succeeded
+PASS   : ResidualDialogTest::curvesAndStatistics(REPORT-noise2-exclude0)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 51
+shmat succeeded
+PASS   : ResidualDialogTest::curvesAndStatistics(REPORT-noise2-exclude1)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 52
+shmat succeeded
+PASS   : ResidualDialogTest::curvesAndStatistics(REPORT-noise2-exclude2)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 53
+shmat succeeded
+PASS   : ResidualDialogTest::curvesAndStatistics(REPORT-noise2-exclude3)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 54
+shmat succeeded
+PASS   : ResidualDialogTest::curvesAndStatistics(REPORT-noise2-exclude4)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 55
+shmat succeeded
+PASS   : ResidualDialogTest::curvesAndStatistics(REPORT-noise3-exclude0)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 56
+shmat succeeded
+PASS   : ResidualDialogTest::curvesAndStatistics(REPORT-noise3-exclude1)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 57
+shmat succeeded
+PASS   : ResidualDialogTest::curvesAndStatistics(REPORT-noise3-exclude2)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 58
+shmat succeeded
+PASS   : ResidualDialogTest::curvesAndStatistics(REPORT-noise3-exclude3)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 59
+shmat succeeded
+PASS   : ResidualDialogTest::curvesAndStatistics(REPORT-noise3-exclude4)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 60
+shmat succeeded
+QWARN  : ResidualDialogTest::noiseAndVisibilityControls(fematch) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::noiseAndVisibilityControls(fematch)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 61
+shmat succeeded
+QWARN  : ResidualDialogTest::noiseAndVisibilityControls(analysis) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::noiseAndVisibilityControls(analysis)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 62
+shmat succeeded
+PASS   : ResidualDialogTest::noiseAndVisibilityControls(report)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 63
+shmat succeeded
+QWARN  : ResidualDialogTest::lowerPlotSelection(fematch) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::lowerPlotSelection(fematch)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 64
+shmat succeeded
+QWARN  : ResidualDialogTest::lowerPlotSelection(analysis) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::lowerPlotSelection(analysis)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 65
+shmat succeeded
+PASS   : ResidualDialogTest::lowerPlotSelection(report)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 66
+shmat succeeded
+QWARN  : ResidualDialogTest::closeAndReopen(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 67
+shmat succeeded
+QWARN  : ResidualDialogTest::closeAndReopen(fematch) This plugin does not support propagateSizeHints()
+QWARN  : ResidualDialogTest::closeAndReopen(fematch) This plugin does not support raise()
+QWARN  : ResidualDialogTest::closeAndReopen(fematch) This plugin does not support propagateSizeHints()
+QWARN  : ResidualDialogTest::closeAndReopen(fematch) This plugin does not support raise()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 68
+shmat succeeded
+QWARN  : ResidualDialogTest::closeAndReopen(fematch) This plugin does not support propagateSizeHints()
+QWARN  : ResidualDialogTest::closeAndReopen(fematch) This plugin does not support raise()
+QWARN  : ResidualDialogTest::closeAndReopen(fematch) This plugin does not support raise()
+PASS   : ResidualDialogTest::closeAndReopen(fematch)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 69
+shmat succeeded
+QWARN  : ResidualDialogTest::closeAndReopen(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 70
+shmat succeeded
+QWARN  : ResidualDialogTest::closeAndReopen(analysis) This plugin does not support propagateSizeHints()
+QWARN  : ResidualDialogTest::closeAndReopen(analysis) This plugin does not support raise()
+QWARN  : ResidualDialogTest::closeAndReopen(analysis) This plugin does not support propagateSizeHints()
+QWARN  : ResidualDialogTest::closeAndReopen(analysis) This plugin does not support raise()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 71
+shmat succeeded
+QWARN  : ResidualDialogTest::closeAndReopen(analysis) This plugin does not support propagateSizeHints()
+QWARN  : ResidualDialogTest::closeAndReopen(analysis) This plugin does not support raise()
+QWARN  : ResidualDialogTest::closeAndReopen(analysis) This plugin does not support raise()
+PASS   : ResidualDialogTest::closeAndReopen(analysis)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 72
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 73
+shmat succeeded
+QWARN  : ResidualDialogTest::closeAndReopen(report) This plugin does not support propagateSizeHints()
+QWARN  : ResidualDialogTest::closeAndReopen(report) This plugin does not support raise()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 74
+shmat succeeded
+QWARN  : ResidualDialogTest::closeAndReopen(report) This plugin does not support propagateSizeHints()
+QWARN  : ResidualDialogTest::closeAndReopen(report) This plugin does not support raise()
+QWARN  : ResidualDialogTest::closeAndReopen(report) This plugin does not support propagateSizeHints()
+QWARN  : ResidualDialogTest::closeAndReopen(report) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::closeAndReopen(report)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 75
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 76
+shmat succeeded
+QWARN  : ResidualDialogTest::borrowedBitmapAndRefresh() This plugin does not support propagateSizeHints()
+QWARN  : ResidualDialogTest::borrowedBitmapAndRefresh() This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::borrowedBitmapAndRefresh()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 77
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 78
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 79
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 80
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 81
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 82
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 83
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 84
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 85
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 86
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 87
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 88
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 89
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 90
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 91
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 92
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 93
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 94
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 95
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 96
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 97
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 98
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 99
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 100
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 101
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 102
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 103
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 104
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 105
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 106
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 107
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 108
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 109
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 110
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 111
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 112
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 113
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 114
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 115
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 116
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 117
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 118
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 119
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 120
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 121
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 122
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 123
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 124
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 125
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 126
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 127
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 128
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 129
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 130
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 131
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 132
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 133
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 134
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 135
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 136
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 137
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 138
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 139
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 140
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 141
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 142
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 143
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 144
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 145
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 146
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 147
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 148
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 149
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 150
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 151
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 152
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 153
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 154
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 155
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 156
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 157
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 158
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 159
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 160
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 161
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 162
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 163
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 164
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 165
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 166
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 167
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 168
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 169
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 170
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 171
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 172
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 173
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 174
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 175
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 176
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(fematch)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 177
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 178
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 179
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 180
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 181
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 182
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 183
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 184
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 185
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 186
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 187
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 188
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 189
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 190
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 191
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 192
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 193
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 194
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 195
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 196
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 197
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 198
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 199
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 200
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 201
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 202
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 203
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 204
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 205
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 206
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 207
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 208
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 209
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 210
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 211
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 212
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 213
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 214
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 215
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 216
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 217
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 218
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 219
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 220
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 221
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 222
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 223
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 224
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 225
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 226
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 227
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 228
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 229
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 230
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 231
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 232
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 233
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 234
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 235
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 236
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 237
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 238
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 239
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 240
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 241
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 242
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 243
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 244
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 245
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 246
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 247
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 248
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 249
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 250
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 251
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 252
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 253
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 254
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 255
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 256
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 257
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 258
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 259
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 260
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 261
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 262
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 263
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 264
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 265
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 266
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 267
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 268
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 269
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 270
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 271
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 272
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 273
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 274
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 275
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 276
+shmat succeeded
+QWARN  : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis) This plugin does not support propagateSizeHints()
+PASS   : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(analysis)
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 277
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 278
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 279
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 280
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 281
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 282
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 283
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 284
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 285
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 286
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 287
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 288
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 289
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 290
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 291
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 292
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 293
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 294
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 295
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 296
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 297
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 298
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 299
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 300
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 301
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 302
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 303
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 304
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 305
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 306
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 307
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 308
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 309
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 310
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 311
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 312
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 313
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 314
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 315
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 316
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 317
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 318
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 319
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 320
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 321
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 322
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 323
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 324
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 325
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 326
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 327
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 328
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 329
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 330
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 331
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 332
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 333
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 334
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 335
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 336
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 337
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 338
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 339
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 340
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 341
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 342
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 343
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 344
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 345
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 346
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 347
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 348
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 349
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 350
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 351
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 352
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 353
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 354
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 355
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 356
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 357
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 358
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 359
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 360
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 361
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 362
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 363
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 364
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 365
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 366
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 367
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 368
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 369
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 370
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 371
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 372
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 373
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 374
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 375
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 376
+shmat succeeded
+PASS   : ResidualDialogTest::repeatedCloseRetainsDialogsUntilExplicitDeletion(report)
+PASS   : ResidualDialogTest::cleanupTestCase()
+Totals: 105 passed, 0 failed, 1 skipped, 0 blacklisted, 16378ms
+********* Finished testing of ResidualDialogTest *********

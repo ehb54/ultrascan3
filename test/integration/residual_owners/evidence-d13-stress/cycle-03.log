@@ -1,0 +1,22 @@
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+[New Thread 0xffffe03febf0 (LWP 128318)]
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 78
+shmat succeeded
+[New Thread 0xffffd1dfebf0 (LWP 128321)]
+[Detaching after fork from child process 128322]
+[New Thread 0xffffd0ffabf0 (LWP 128323)]
+[New Thread 0xffffd07f9bf0 (LWP 128324)]
+[New Thread 0xffffcfff8bf0 (LWP 128325)]
+[New Thread 0xffffcf7f7bf0 (LWP 128326)]
+[Thread 0xffffcf7f7bf0 (LWP 128326) exited]
+[Thread 0xffffcfff8bf0 (LWP 128325) exited]
+[Thread 0xffffd07f9bf0 (LWP 128324) exited]
+[Thread 0xffffd0ffabf0 (LWP 128323) exited]
+Exception ignored in: <gdb.GdbOutputFile object at 0xffffa9531ac8>
+Traceback (most recent call last):
+  File "/usr/share/gdb/python/gdb/__init__.py", line 43, in flush
+    def flush(self):
+KeyboardInterrupt

@@ -1,0 +1,67 @@
+[
+  {
+    "program": "us_fematch",
+    "sha256": "75e4bf72c75eb1e00dde0da32cd3bda219af3661de3d015f5b8b6cad6e5a33d2",
+    "alive": true,
+    "window_titles": [
+      "Compare Experimental Data to Sums of Finite Element Solutions"
+    ],
+    "missing_libraries": false
+  },
+  {
+    "program": "us_autoflow_analysis",
+    "sha256": "d0847e259445f118a635f6ce8b3d3737b53576cb26879c89ceba2c41ddc3a4c7",
+    "alive": true,
+    "window_titles": [
+      "Autoflow Analysis Monitor"
+    ],
+    "missing_libraries": false
+  },
+  {
+    "program": "us_query_rmsd",
+    "sha256": "d525f69a1298d41f7232e0f72efca88c898ca21e7ef20b604278619463a0c705",
+    "alive": true,
+    "window_titles": [
+      "Query Model RMSDs"
+    ],
+    "missing_libraries": false
+  },
+  {
+    "program": "us_reporter_gmp",
+    "sha256": "3b8007f1ed1b7a41e4cc3fab443c385e1f18f81c5655ac2b81a670232bc6852b",
+    "alive": true,
+    "window_titles": [
+      "GMP Report Generator & Viewer"
+    ],
+    "missing_libraries": false
+  },
+  {
+    "program": "us_comproject",
+    "sha256": "b2a35873a05d9422d54304bec95d33b7d590b2eb16b99f8aca617ec7ba6eec2b",
+    "alive": true,
+    "window_titles": [
+      "UltraScan Optima AUC Interface",
+      "Optima System Data Server Connection Problem!"
+    ],
+    "missing_libraries": false
+  },
+  {
+    "program": "us_comproject_academic",
+    "sha256": "866f0e0343334e3c7f1a141e56ba3cdb82ea99116e64ea187b362e181be06af5",
+    "alive": true,
+    "window_titles": [
+      "UltraScan Optima AUC Interface",
+      "Optima System Data Server Connection Problem!"
+    ],
+    "missing_libraries": false
+  },
+  {
+    "program": "us_protocoldev",
+    "sha256": "41d390b18ca205cc57eae61eb6f4af08ba947e487fe2e2582c387a9d017876f3",
+    "alive": true,
+    "window_titles": [
+      "UltraScan Protocol Development Module"
+    ],
+    "missing_libraries": false
+  }
+]

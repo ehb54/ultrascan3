@@ -1,0 +1,16 @@
+[
+  {
+    "case": "static GUI target",
+    "expected": 1,
+    "actual": 0,
+    "output": "",
+    "passed": false
+  },
+  {
+    "case": "intralibrary generated include",
+    "expected": 0,
+    "actual": 1,
+    "output": "1 dependency layer violation(s)\ngui/moc/moc_us_widget.cpp:1: gui includes ../us_widget.h: a path that climbs out of the library with \"../\"\n",
+    "passed": false
+  }
+]

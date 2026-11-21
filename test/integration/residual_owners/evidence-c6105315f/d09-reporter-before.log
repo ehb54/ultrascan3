@@ -1,0 +1,107 @@
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 19
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 20
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 21
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 22
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 23
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 24
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 25
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 26
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 27
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 28
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 29
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 30
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 31
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 32
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 33
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 34
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 35
+shmat succeeded
+/tmp/us3-residual-2ddf75d6e/source/utils/us_model.h:44:14: runtime error: load of value 190, which is not a valid value for type 'bool'
+    #0 0x7c03c3 in US_Model::CustomGridMetadata::operator=(US_Model::CustomGridMetadata const&) /tmp/us3-residual-2ddf75d6e/source/utils/us_model.h:44
+    #1 0x7c1dd7 in US_Model::operator=(US_Model const&) /tmp/us3-residual-2ddf75d6e/source/utils/us_model.h:19
+    #2 0x600297 in US_ReporterGMP::loadModel(QMap<QString, QString>&) /tmp/us3-residual-2ddf75d6e/source/programs/us_reporter_gmp/us_reporter_gmp.cpp:5599
+    #3 0x5fb30f in US_ReporterGMP::simulate_triple(QString, QString) /tmp/us3-residual-2ddf75d6e/source/programs/us_reporter_gmp/us_reporter_gmp.cpp:5403
+    #4 0x5bb5bf in US_ReporterGMP::generate_report() /tmp/us3-residual-2ddf75d6e/source/programs/us_reporter_gmp/us_reporter_gmp.cpp:4147
+    #5 0x88b60b in QtPrivate::FunctorCall<QtPrivate::IndexesList<>, QtPrivate::List<>, void, void (US_ReporterGMP::*)()>::call(void (US_ReporterGMP::*)(), US_ReporterGMP*, void**) (/tmp/us3-residual-2ddf75d6e/build/bin/us_reporter_gmp+0x88b60b)
+    #6 0x85fabf in void QtPrivate::FunctionPointer<void (US_ReporterGMP::*)()>::call<QtPrivate::List<>, void>(void (US_ReporterGMP::*)(), US_ReporterGMP*, void**) /usr/include/qt5/QtCore/qobjectdefs_impl.h:185
+    #7 0x82d7ab in QtPrivate::QSlotObject<void (US_ReporterGMP::*)(), QtPrivate::List<>, void>::impl(int, QtPrivate::QSlotObjectBase*, QObject*, void**, bool*) /usr/include/qt5/QtCore/qobjectdefs_impl.h:418
+    #8 0xffff94968ce7  (/lib64/libQt5Core.so.5+0x2c2ce7)
+    #9 0xffff955bb54b in QAbstractButton::clicked(bool) (/lib64/libQt5Widgets.so.5+0x27254b)
+    #10 0xffff955bb777  (/lib64/libQt5Widgets.so.5+0x272777)
+    #11 0xffff955bcc3f  (/lib64/libQt5Widgets.so.5+0x273c3f)
+    #12 0xffff955bce07 in QAbstractButton::mouseReleaseEvent(QMouseEvent*) (/lib64/libQt5Widgets.so.5+0x273e07)
+    #13 0xffff9551a72f in QWidget::event(QEvent*) (/lib64/libQt5Widgets.so.5+0x1d172f)
+    #14 0xffff9565d98b in QPushButton::event(QEvent*) (/lib64/libQt5Widgets.so.5+0x31498b)
+    #15 0xffff954d982b in QApplicationPrivate::notify_helper(QObject*, QEvent*) (/lib64/libQt5Widgets.so.5+0x19082b)
+    #16 0xffff954e16e7 in QApplication::notify(QObject*, QEvent*) (/lib64/libQt5Widgets.so.5+0x1986e7)
+    #17 0xffff9493339b in QCoreApplication::notifyInternal2(QObject*, QEvent*) (/lib64/libQt5Core.so.5+0x28d39b)
+    #18 0xffff954e0107 in QApplicationPrivate::sendMouseEvent(QWidget*, QMouseEvent*, QWidget*, QWidget*, QWidget**, QPointer<QWidget>&, bool, bool) (/lib64/libQt5Widgets.so.5+0x197107)
+    #19 0xffff9553466b  (/lib64/libQt5Widgets.so.5+0x1eb66b)
+    #20 0xffff9553763f  (/lib64/libQt5Widgets.so.5+0x1ee63f)
+    #21 0xffff954d982b in QApplicationPrivate::notify_helper(QObject*, QEvent*) (/lib64/libQt5Widgets.so.5+0x19082b)
+    #22 0xffff954e091b in QApplication::notify(QObject*, QEvent*) (/lib64/libQt5Widgets.so.5+0x19791b)
+    #23 0xffff9493339b in QCoreApplication::notifyInternal2(QObject*, QEvent*) (/lib64/libQt5Core.so.5+0x28d39b)
+    #24 0xffff94d683cf in QGuiApplicationPrivate::processMouseEvent(QWindowSystemInterfacePrivate::MouseEvent*) (/lib64/libQt5Gui.so.5+0x13d3cf)
+    #25 0xffff94d692fb in QGuiApplicationPrivate::processWindowSystemEvent(QWindowSystemInterfacePrivate::WindowSystemEvent*) (/lib64/libQt5Gui.so.5+0x13e2fb)
+    #26 0xffff94d4530b in QWindowSystemInterface::sendWindowSystemEvents(QFlags<QEventLoop::ProcessEventsFlag>) (/lib64/libQt5Gui.so.5+0x11a30b)
+    #27 0xffff860f98c7  (/lib64/libQt5XcbQpa.so.5+0x6c8c7)
+    #28 0xffff8d6324cb in g_main_context_dispatch (/lib64/libglib-2.0.so.0+0x4e4cb)
+    #29 0xffff8d63286b  (/lib64/libglib-2.0.so.0+0x4e86b)
+    #30 0xffff8d632903 in g_main_context_iteration (/lib64/libglib-2.0.so.0+0x4e903)
+    #31 0xffff9498be63 in QEventDispatcherGlib::processEvents(QFlags<QEventLoop::ProcessEventsFlag>) (/lib64/libQt5Core.so.5+0x2e5e63)
+    #32 0xffff94931ce7 in QEventLoop::exec(QFlags<QEventLoop::ProcessEventsFlag>) (/lib64/libQt5Core.so.5+0x28bce7)
+    #33 0xffff9493a9a3 in QCoreApplication::exec() (/lib64/libQt5Core.so.5+0x2949a3)
+    #34 0x4b24e7 in main /tmp/us3-residual-2ddf75d6e/source/programs/us_reporter_gmp/us_reporter_gmp_main.cpp:24
+    #35 0xffff8fc2446b in __libc_start_main (/lib64/libc.so.6+0x2546b)
+    #36 0x436bfb  (/tmp/us3-residual-2ddf75d6e/build/bin/us_reporter_gmp+0x436bfb)
+

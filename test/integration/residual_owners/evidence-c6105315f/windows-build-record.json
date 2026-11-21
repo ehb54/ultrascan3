@@ -1,0 +1,56 @@
+{
+  "Qwt": "6.3.0",
+  "exit_code": 0,
+  "platform": "Windows 11 ARM VM, ARM64-host MSVC targeting x64",
+  "artifacts": [
+    {
+      "Path": "C:\\src\\us3-residual-t10\\build\\bin\\us_utils4.dll",
+      "Hash": "1F192F272C1482D0684A542F9A885F0AA8EDC6BC82CE6D973B48CCCAB390C480"
+    },
+    {
+      "Path": "C:\\src\\us3-residual-t10\\build\\bin\\us_gui4.dll",
+      "Hash": "6851BF45974D61356B5032A0610378A187273C9E387B5FA7C33939AE232C0254"
+    },
+    {
+      "Path": "C:\\src\\us3-residual-t10\\build\\bin\\us_fematch.exe",
+      "Hash": "E2BE0ECCE98EAE75AD98E2ECF80027C26917A05DA7E859B2580A0E6612C556B5"
+    },
+    {
+      "Path": "C:\\src\\us3-residual-t10\\build\\bin\\us_autoflow_analysis.exe",
+      "Hash": "65B6DCF17D5C9EDECD36E991E5F65544196143D1BEEDC67F06BCBFDB5C007C0A"
+    },
+    {
+      "Path": "C:\\src\\us3-residual-t10\\build\\bin\\us_query_rmsd.exe",
+      "Hash": "9DC4B871578D5ACF83F68DB2A22D447C777978F625B5DEA89DBAF262C0C718FC"
+    },
+    {
+      "Path": "C:\\src\\us3-residual-t10\\build\\bin\\us_reporter_gmp.exe",
+      "Hash": "0AD72396FBF6AD0DA627CCBFB9E3F434CE98254A81590CA30B3F342F0CE2D934"
+    },
+    {
+      "Path": "C:\\src\\us3-residual-t10\\build\\bin\\us_comproject.exe",
+      "Hash": "92DEE22000899AC6214C7C4CFF887A8586682A81EE2192D63894454988E46B3F"
+    },
+    {
+      "Path": "C:\\src\\us3-residual-t10\\build\\bin\\us_comproject_academic.exe",
+      "Hash": "AF7E3C5770DFE18F88B111F5F5542EADF145F0CF7E0AD41A9E1DBE77026FF21D"
+    },
+    {
+      "Path": "C:\\src\\us3-residual-t10\\build\\bin\\us_protocoldev.exe",
+      "Hash": "D31EB144080BC910C8BA48E55CF03F025C51E0C3BB35C182418CE36176AD54EE"
+    }
+  ],
+  "scope": "Build/link only; no Windows UI verification",
+  "revision": "043d83ea962c64b780b55cb8c9925a5dca3ad878",
+  "Qt": "6.10.1",
+  "compiler": "MSVC 19.44",
+  "all_seven_consumers_linked": true,
+  "source_verification": {
+    "revision": "043d83ea962c64b780b55cb8c9925a5dca3ad878",
+    "checked_files": 22,
+    "source_mismatches": []
+  },
+  "interruption": "First attempt was interrupted when the VM stopped. Restarted and resumed with D11 sources; final build exited 0.",
+  "build_log_sha256": "a8b64feb39de22c592a0900c0be1e8ea14a481a64e8906ac9986ac95a76e476d",
+  "configure_log_sha256": "efadb309ee89f5f2231d6931f714a8026c2c612fb7137e8a57ba5a9b8ae5ef7d"
+}

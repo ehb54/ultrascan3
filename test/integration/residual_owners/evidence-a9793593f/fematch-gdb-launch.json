@@ -1,0 +1,32 @@
+{
+  "command": [
+    "runuser",
+    "-u",
+    "us3",
+    "--",
+    "env",
+    "DISPLAY=:43",
+    "HOME=/home/us3",
+    "US3_SETTINGS_ROOT=/tmp/us3-residual-2ddf75d6e/settings-a979",
+    "ASAN_OPTIONS=detect_leaks=0:halt_on_error=1:disable_coredump=0",
+    "UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1",
+    "gdb",
+    "-q",
+    "-batch",
+    "-ex",
+    "set pagination off",
+    "-ex",
+    "set confirm off",
+    "-ex",
+    "handle SIGPIPE nostop noprint pass",
+    "-ex",
+    "run",
+    "-ex",
+    "thread apply all bt full",
+    "-ex",
+    "generate-core-file /tmp/us3-residual-2ddf75d6e/a979-verification/fematch.core",
+    "--args",
+    "/tmp/us3-residual-2ddf75d6e/build/bin/us_fematch"
+  ],
+  "pid": 125265
+}

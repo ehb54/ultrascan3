@@ -1,0 +1,17 @@
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 19
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 20
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 21
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 22
+shmat succeeded
+Aborted (core dumped)

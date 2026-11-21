@@ -4216,7 +4216,7 @@ void US_Astfem_RSA::printsimparams( void )
 
 // Make sure simparams has a timestate and speed profile loaded:  if not,
 //  build them from this experiment's speed steps, in a private file.
-//  Threads may share one simparams (us_fematch's ThreadWorker holds a
+//  Threads may share one simparams (US_ThreadWorker holds a
 //  reference), so the check and the build are done under a lock:  one thread
 //  builds the timestate, and the others find it complete.  Returns 0, or -1
 //  if no timestate could be built (then the speed profile is empty, not

@@ -1,0 +1,6 @@
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 0
+shmat succeeded
+zeroing data
+PASS: real counters have bounded widths for zero, negative, fractional and positive values

@@ -1,0 +1,20 @@
+Running main() from /tmp/us3-residual-2ddf75d6e/googletest/googletest/src/gtest_main.cc
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from US_ModelDefaults
+[ RUN      ] US_ModelDefaults.OrdinaryModelCanBeCopiedWithoutCustomGridMetadata
+/tmp/us3-residual-2ddf75d6e/source/test/utils/test_us_model_defaults.cpp:20: Failure
+Expected equality of these values:
+  flagByte( model->customGridData.xLogarithmic )
+    Which is: '\xAA' (170)
+  0
+[  FAILED  ] US_ModelDefaults.OrdinaryModelCanBeCopiedWithoutCustomGridMetadata (0 ms)
+[----------] 1 test from US_ModelDefaults (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 0 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] US_ModelDefaults.OrdinaryModelCanBeCopiedWithoutCustomGridMetadata
+
+ 1 FAILED TEST

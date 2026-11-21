@@ -1,0 +1,25 @@
+Note: Google Test filter = EditedDataReadTest.*
+[==========] Running 8 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 8 tests from EditedDataReadTest
+[ RUN      ] EditedDataReadTest.OneFilenameRuleServesNormalAndMwlEdits
+/tmp/us3-residual-2ddf75d6e/source/utils/us_dataIO.h:70:13: runtime error: load of value 152, which is not a valid value for type 'bool'
+    #0 0x7d73ff in US_DataIO::Scan::Scan(US_DataIO::Scan const&) /tmp/us3-residual-2ddf75d6e/source/utils/us_dataIO.h:70
+    #1 0x7d871f in QVector<US_DataIO::Scan>::append(US_DataIO::Scan const&) /usr/include/qt5/QtCore/qvector.h:782
+    #2 0x7cfe47 in QVector<US_DataIO::Scan>::operator<<(US_DataIO::Scan const&) /usr/include/qt5/QtCore/qvector.h:293
+    #3 0x9ae9cb in sampleRawData /tmp/us3-residual-2ddf75d6e/source/test/utils/test_us_convertio_editeddata_read.cpp:48
+    #4 0x9cdeab in EditedDataReadTest::SetUp() /tmp/us3-residual-2ddf75d6e/source/test/utils/test_us_convertio_editeddata_read.cpp:82
+    #5 0x132db3f in void testing::internal::HandleSehExceptionsInMethodIfSupported<testing::Test, void>(testing::Test*, void (testing::Test::*)(), char const*) /tmp/us3-residual-2ddf75d6e/googletest/googletest/src/gtest.cc:2607
+    #6 0x130726f in void testing::internal::HandleExceptionsInMethodIfSupported<testing::Test, void>(testing::Test*, void (testing::Test::*)(), char const*) /tmp/us3-residual-2ddf75d6e/googletest/googletest/src/gtest.cc:2643
+    #7 0x123515f in testing::Test::Run() /tmp/us3-residual-2ddf75d6e/googletest/googletest/src/gtest.cc:2677
+    #8 0x1238fbf in testing::TestInfo::Run() /tmp/us3-residual-2ddf75d6e/googletest/googletest/src/gtest.cc:2861
+    #9 0x123d6bf in testing::TestSuite::Run() /tmp/us3-residual-2ddf75d6e/googletest/googletest/src/gtest.cc:3015
+    #10 0x128a0b7 in testing::internal::UnitTestImpl::RunAllTests() /tmp/us3-residual-2ddf75d6e/googletest/googletest/src/gtest.cc:5855
+    #11 0x1333de3 in bool testing::internal::HandleSehExceptionsInMethodIfSupported<testing::internal::UnitTestImpl, bool>(testing::internal::UnitTestImpl*, bool (testing::internal::UnitTestImpl::*)(), char const*) /tmp/us3-residual-2ddf75d6e/googletest/googletest/src/gtest.cc:2607
+    #12 0x130cebf in bool testing::internal::HandleExceptionsInMethodIfSupported<testing::internal::UnitTestImpl, bool>(testing::internal::UnitTestImpl*, bool (testing::internal::UnitTestImpl::*)(), char const*) /tmp/us3-residual-2ddf75d6e/googletest/googletest/src/gtest.cc:2643
+    #13 0x127c64b in testing::UnitTest::Run() /tmp/us3-residual-2ddf75d6e/googletest/googletest/src/gtest.cc:5438
+    #14 0x45d443 in RUN_ALL_TESTS() (/tmp/us3-residual-2ddf75d6e/utils-test-build/utils/test_us_utils+0x45d443)
+    #15 0x45532f in main /tmp/us3-residual-2ddf75d6e/source/test/utils/test_us_utils_main.cpp:112
+    #16 0xffff808ee46b in __libc_start_main (/lib64/libc.so.6+0x2546b)
+    #17 0x44ae8b  (/tmp/us3-residual-2ddf75d6e/utils-test-build/utils/test_us_utils+0x44ae8b)
+

@@ -1,0 +1,50 @@
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 19
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 20
+shmat succeeded
+shmget (create) succeeded
+shmctl IPC_STAT succedded
+shmctl nattch is 21
+shmat succeeded
+/tmp/us3-residual-2ddf75d6e/source/utils/us_run_protocol.h:13:28: runtime error: load of value 176, which is not a valid value for type 'bool'
+    #0 0x7b6a3b in US_RunProtocol::RunProtoRotor::operator=(US_RunProtocol::RunProtoRotor&&) /tmp/us3-residual-2ddf75d6e/source/utils/us_run_protocol.h:13
+    #1 0x7b9a17 in US_RunProtocol::operator=(US_RunProtocol&&) /tmp/us3-residual-2ddf75d6e/source/utils/us_run_protocol.h:9
+    #2 0x5ab8b7 in US_ReporterGMP::reset_report_panel() /tmp/us3-residual-2ddf75d6e/source/programs/us_reporter_gmp/us_reporter_gmp.cpp:3786
+    #3 0x53e933 in US_ReporterGMP::load_gmp_run() /tmp/us3-residual-2ddf75d6e/source/programs/us_reporter_gmp/us_reporter_gmp.cpp:1651
+    #4 0x88b60b in QtPrivate::FunctorCall<QtPrivate::IndexesList<>, QtPrivate::List<>, void, void (US_ReporterGMP::*)()>::call(void (US_ReporterGMP::*)(), US_ReporterGMP*, void**) (/tmp/us3-residual-2ddf75d6e/build/bin/us_reporter_gmp+0x88b60b)
+    #5 0x85fabf in void QtPrivate::FunctionPointer<void (US_ReporterGMP::*)()>::call<QtPrivate::List<>, void>(void (US_ReporterGMP::*)(), US_ReporterGMP*, void**) /usr/include/qt5/QtCore/qobjectdefs_impl.h:185
+    #6 0x82d7ab in QtPrivate::QSlotObject<void (US_ReporterGMP::*)(), QtPrivate::List<>, void>::impl(int, QtPrivate::QSlotObjectBase*, QObject*, void**, bool*) /usr/include/qt5/QtCore/qobjectdefs_impl.h:418
+    #7 0xffff86733ce7  (/lib64/libQt5Core.so.5+0x2c2ce7)
+    #8 0xffff8738654b in QAbstractButton::clicked(bool) (/lib64/libQt5Widgets.so.5+0x27254b)
+    #9 0xffff87386777  (/lib64/libQt5Widgets.so.5+0x272777)
+    #10 0xffff87387c3f  (/lib64/libQt5Widgets.so.5+0x273c3f)
+    #11 0xffff87387e07 in QAbstractButton::mouseReleaseEvent(QMouseEvent*) (/lib64/libQt5Widgets.so.5+0x273e07)
+    #12 0xffff872e572f in QWidget::event(QEvent*) (/lib64/libQt5Widgets.so.5+0x1d172f)
+    #13 0xffff8742898b in QPushButton::event(QEvent*) (/lib64/libQt5Widgets.so.5+0x31498b)
+    #14 0xffff872a482b in QApplicationPrivate::notify_helper(QObject*, QEvent*) (/lib64/libQt5Widgets.so.5+0x19082b)
+    #15 0xffff872ac6e7 in QApplication::notify(QObject*, QEvent*) (/lib64/libQt5Widgets.so.5+0x1986e7)
+    #16 0xffff866fe39b in QCoreApplication::notifyInternal2(QObject*, QEvent*) (/lib64/libQt5Core.so.5+0x28d39b)
+    #17 0xffff872ab107 in QApplicationPrivate::sendMouseEvent(QWidget*, QMouseEvent*, QWidget*, QWidget*, QWidget**, QPointer<QWidget>&, bool, bool) (/lib64/libQt5Widgets.so.5+0x197107)
+    #18 0xffff872ff66b  (/lib64/libQt5Widgets.so.5+0x1eb66b)
+    #19 0xffff8730263f  (/lib64/libQt5Widgets.so.5+0x1ee63f)
+    #20 0xffff872a482b in QApplicationPrivate::notify_helper(QObject*, QEvent*) (/lib64/libQt5Widgets.so.5+0x19082b)
+    #21 0xffff872ab91b in QApplication::notify(QObject*, QEvent*) (/lib64/libQt5Widgets.so.5+0x19791b)
+    #22 0xffff866fe39b in QCoreApplication::notifyInternal2(QObject*, QEvent*) (/lib64/libQt5Core.so.5+0x28d39b)
+    #23 0xffff86b333cf in QGuiApplicationPrivate::processMouseEvent(QWindowSystemInterfacePrivate::MouseEvent*) (/lib64/libQt5Gui.so.5+0x13d3cf)
+    #24 0xffff86b342fb in QGuiApplicationPrivate::processWindowSystemEvent(QWindowSystemInterfacePrivate::WindowSystemEvent*) (/lib64/libQt5Gui.so.5+0x13e2fb)
+    #25 0xffff86b1030b in QWindowSystemInterface::sendWindowSystemEvents(QFlags<QEventLoop::ProcessEventsFlag>) (/lib64/libQt5Gui.so.5+0x11a30b)
+    #26 0xffff77ef98c7  (/lib64/libQt5XcbQpa.so.5+0x6c8c7)
+    #27 0xffff7f3fd4cb in g_main_context_dispatch (/lib64/libglib-2.0.so.0+0x4e4cb)
+    #28 0xffff7f3fd86b  (/lib64/libglib-2.0.so.0+0x4e86b)
+    #29 0xffff7f3fd903 in g_main_context_iteration (/lib64/libglib-2.0.so.0+0x4e903)
+    #30 0xffff86756e63 in QEventDispatcherGlib::processEvents(QFlags<QEventLoop::ProcessEventsFlag>) (/lib64/libQt5Core.so.5+0x2e5e63)
+    #31 0xffff866fcce7 in QEventLoop::exec(QFlags<QEventLoop::ProcessEventsFlag>) (/lib64/libQt5Core.so.5+0x28bce7)
+    #32 0xffff867059a3 in QCoreApplication::exec() (/lib64/libQt5Core.so.5+0x2949a3)
+    #33 0x4b24e7 in main /tmp/us3-residual-2ddf75d6e/source/programs/us_reporter_gmp/us_reporter_gmp_main.cpp:24
+    #34 0xffff819ef46b in __libc_start_main (/lib64/libc.so.6+0x2546b)
+    #35 0x436bfb  (/tmp/us3-residual-2ddf75d6e/build/bin/us_reporter_gmp+0x436bfb)
+
