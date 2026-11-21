@@ -10857,10 +10857,10 @@ model_used.components[ ii ].vbar20 ),
       // own arithmetic gave.  An inverted range selects nothing.  An item
       // type that is not a range type also selects nothing:  its fraction is
       // 0 / C * 100.
-      bool                       range_type   = false;
-      const US_Calc::Quantity    quantity     = US_Calc::quantity_from_report_type( type, &range_type );
-      const US_Calc::RangeResult range_result = US_Calc::range_summary( range_model, { quantity, low, high } );
-      double                     int_val_m    = range_result.range_concentration;
+      bool                       range_type                = false;
+      const US_Calc::Quantity    quantity                  = US_Calc::quantity_from_report_type( type, &range_type );
+      const US_Calc::RangeResult range_result              = US_Calc::range_summary( range_model, { quantity, low, high } );
+      double                     int_val_m                 = range_result.range_concentration;
       double                     frac_tot_m                = range_type ? range_result.fraction_percent : ( 0.0 / sum_c ) * 100.0;
       double                     wav_variable_within_range = range_result.within_range_mean;
 
