@@ -339,13 +339,21 @@ foreach(kind version revision)
         list(APPEND SOMO_GENHEADER_BYPRODUCTS ${SOMO_ROOT}/${_hdr})
     endif()
 endforeach()
+# The branch and commit SOMO shows at startup and in its title go in
+# include/us_somo_gitinfo.h (gitignored), written on every build as
+# libus_somo.pro's FORCE target runs gitinfo.sh, and only when it changes. Only
+# a branch that has gitinfo.sh reads that header, so only there is it written.
+if(EXISTS ${SOMO_ROOT}/gitinfo.sh)
+    list(APPEND _somo_gen_args -DSOMO_GEN_GITINFO=ON)
+    list(APPEND SOMO_GENHEADER_BYPRODUCTS ${SOMO_ROOT}/include/us_somo_gitinfo.h)
+endif()
 if(_somo_gen_args)
     add_custom_target(us_somo_genheaders ALL
         COMMAND ${CMAKE_COMMAND} "-DSOMO_ROOT=${SOMO_ROOT}" "-DREPO_ROOT=${SOMO_REPO_ROOT}"
                 "-DGIT_EXECUTABLE=${GIT_EXECUTABLE}" ${_somo_gen_args}
                 -P ${SOMO_ROOT}/cmake/SomoGenHeaders.cmake
         BYPRODUCTS ${SOMO_GENHEADER_BYPRODUCTS}
-        COMMENT "Generating SOMO version headers")
+        COMMENT "Generating SOMO version and build headers")
 else()
     add_custom_target(us_somo_genheaders)   # nothing to generate
 endif()

@@ -24,6 +24,11 @@ are already there (somo-dev commits them) and are otherwise written with
 version "unknown" and revision 0. The macOS programs then also lose their
 icons, which live in `us_somo/etc`.
 
+Where `gitinfo.sh` is present, each build also writes
+`include/us_somo_gitinfo.h`, the branch and commit SOMO shows at startup and
+in its window title, as `gitinfo.sh` does for qmake; without git both read
+"unknown".
+
 ## Against the Qt and Qwt of the qmake build
 
 The presets take Qt 5 and the qmake-built Qwt from `QTDIR` and `QWTDIR`, which

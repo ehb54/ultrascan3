@@ -1,17 +1,23 @@
 # SomoGenHeaders.cmake — writes SOMO's version headers, as version.sh and
-# revision.sh do for the qmake build, with nothing but CMake and git: no sh,
-# so it also runs where there is no POSIX shell (MSVC, plain Windows).
+# revision.sh do for the qmake build, and its git branch/commit header, as
+# gitinfo.sh does, with nothing but CMake and git: no sh, so it also runs
+# where there is no POSIX shell (MSVC, plain Windows).
 #
 # Run at build time by the us_somo_genheaders target:
 #   cmake -DSOMO_ROOT=<us_somo/develop> -DREPO_ROOT=<repository root>
 #         -DGIT_EXECUTABLE=<git, may be empty>
-#         [-DSOMO_GEN_VERSION=ON] [-DSOMO_GEN_REVISION=ON]
+#         [-DSOMO_GEN_VERSION=ON] [-DSOMO_GEN_REVISION=ON] [-DSOMO_GEN_GITINFO=ON]
 #         -P SomoGenHeaders.cmake
 #
 #   include/us_version.h   US_Version from utils/us_defines.h, and SOMO's
 #                          revision: the number of commits touching us_somo/
 #   include/us_revision.h  the date of the last commit touching us_somo/, and
 #                          its position in the history (git log order)
+#   include/us_somo_gitinfo.h  the branch and commit the tree is built from,
+#                          which SOMO shows at startup and in its title:
+#                          the same (gitignored) file gitinfo.sh writes, with
+#                          the same contents, so a qmake build and a CMake
+#                          build of one tree do not rewrite it for each other
 #
 # A header is rewritten only when its contents change, so an unchanged
 # revision does not recompile the files that include it.
@@ -126,4 +132,26 @@ if(SOMO_GEN_REVISION)
 #define REVISION_DATE \"${_date}\"
 ")
     endif()
+endif()
+
+if(SOMO_GEN_GITINFO)
+    # gitinfo.sh: the branch ("detached" for a detached HEAD, its name kept a
+    # plain C string) and the short commit, or "unknown" without git
+    set(_hdr "${SOMO_ROOT}/include/us_somo_gitinfo.h")
+    _somo_git(_branch rev-parse --abbrev-ref HEAD)
+    _somo_git(_commit rev-parse --short=9 HEAD)
+    if(_branch STREQUAL "")
+        set(_branch unknown)
+    elseif(_branch STREQUAL "HEAD")
+        set(_branch detached)
+    endif()
+    string(REGEX REPLACE "[^A-Za-z0-9._/+-]" "_" _branch "${_branch}")
+    if(_commit STREQUAL "")
+        set(_commit unknown)
+    endif()
+    _somo_write("${_hdr}"
+"// Generated at build time (gitinfo.sh, or cmake/SomoGenHeaders.cmake): do not edit, do not commit.
+#define US_SOMO_GIT_BRANCH \"${_branch}\"
+#define US_SOMO_GIT_COMMIT \"${_commit}\"
+")
 endif()
