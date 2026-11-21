@@ -243,6 +243,7 @@ DbgLv(1) << "MD:   reset: AA";
    v_difcs .clear();
    v_vbars .clear();
    v_rhs   .clear();
+   v_dist_errors.clear();
 
    pb_refresh->setEnabled( false );
    pb_save   ->setEnabled( false );
@@ -268,9 +269,15 @@ void US_Integral::save( void )
    if ( !diro.exists( ) )  // Make sure report directory exists
       QDir( US_Settings::reportDir() ).mkdir( runid );
 
-   // Write sedimentation coeff, bfrac CSV files
+   // Write sedimentation coeff, bfrac CSV files; a model whose distribution
+   // failed has none
    for ( int ii = 0; ii < ndists; ii++ )
    {
+      if ( v_sedcs[ii].isEmpty() )
+      {
+         continue;
+      }
+
       fname           = fpfix + "sedc_" + QString::number( (ii+1) ) + ".csv";
       fpath           = reppath + fname;
       write_csv( fpath, "sedi_coeff", v_sedcs[ ii ],
@@ -372,13 +379,38 @@ DbgLv(1) << "DaPl: plot_x" << plot_x;
    QVector< QVector< double > >  v_sedcs;
    QVector< QVector< double > >  v_difcs;
 #endif
-   int npoint     = v_bfracs.size();
-   int ncurvs     = 1;
-   double* yy     = v_bfracs.data();
-   double* xx     = v_sedcs[ 0 ].data();
-   QString curvtitl( "curve" );
-   // Plot title
-   QString tstr   = QString( tsys->run_name ).section( ".", 0, -2 );
+// Each curve plots the levels against its own series.  A model whose
+// distribution failed has an empty series and is listed in the legend
+// without a line; a series never supplies more points than it holds.
+int     npoint = v_bfracs.size();
+int     ncurvs = 1;
+double* yy     = v_bfracs.data();
+auto    series = [this]( int ii ) -> const QVector<double>&
+{
+   switch ( plot_x )
+   {
+      case ATTR_D:
+         return v_difcs[ii];
+      case ATTR_W:
+         return v_mmass[ii];
+      case ATTR_K:
+         return v_frats[ii];
+      case ATTR_V:
+         return v_vbars[ii];
+      case ATTR_R:
+         return v_rhs[ii];
+      default:
+         return v_sedcs[ii];
+   }
+};
+auto curve_title = [this]( int ii )
+{
+   return v_dist_errors.value( ii ).isEmpty() ? legend_label( ii )
+                                              : legend_label( ii ) + tr( " (not drawn: %1)" ).arg( v_dist_errors[ii] );
+};
+QString curvtitl( "curve" );
+// Plot title
+QString tstr = QString( tsys->run_name ).section( ".", 0, -2 );
 DbgLv(1) << "DaPl: (1)tstr" << tstr;
 DbgLv(1) << "DaPl:    tstr len" << tstr.length();
    if ( tstr.length() > 30 )
@@ -393,14 +425,12 @@ DbgLv(1) << "DaPl: (2)tstr" << tstr;
    // X pointer, curve title, rest of plot title; based on plot type
    if      ( plot_x == ATTR_S )
    {
-      xx             = v_sedcs[ 0 ].data();
       ncurvs         = v_sedcs.size();
       curvtitl       = alldis[ 0 ].label;
       tstr          += tr( "Sedimentation Coeffs. per Distribution" );
    }
    else if ( plot_x == ATTR_W )
    {
-      xx             = v_mmass[ 0 ].data();
       ncurvs         = v_mmass.size();
       curvtitl       = alldis[ 0 ].label;
       tstr          += tr( "Molar Mass. per Distribution" );
@@ -408,7 +438,6 @@ DbgLv(1) << "DaPl: (2)tstr" << tstr;
 
    else if ( plot_x == ATTR_D )
    {
-      xx             = v_difcs[ 0 ].data();
       ncurvs         = v_difcs.size();
       curvtitl       = alldis[ 0 ].label;
       tstr          += tr( "Diffusion Coeffs. per Distribution" );
@@ -416,7 +445,6 @@ DbgLv(1) << "DaPl: (2)tstr" << tstr;
 
    else if ( plot_x == ATTR_K )
    {
-      xx             = v_frats[ 0 ].data();
       ncurvs         = v_frats.size();
       curvtitl       =alldis[0].label;
       tstr          += tr( "Frictional Ratio" );
@@ -424,7 +452,6 @@ DbgLv(1) << "DaPl: (2)tstr" << tstr;
 
    else if ( plot_x == ATTR_V )
    {
-      xx             = v_vbars[ 0 ].data();
       ncurvs         = v_vbars.size();
       curvtitl       =alldis[0].label;
       tstr          += tr( "Partial Specific Volume" );
@@ -432,7 +459,6 @@ DbgLv(1) << "DaPl: (2)tstr" << tstr;
 
    else if ( plot_x == ATTR_R )
    {
-      xx             = v_rhs[ 0 ].data();
       ncurvs         = v_rhs.size();
       curvtitl       =alldis[0].label;
       tstr          += tr( "Hydrodynamic Radius" );
@@ -462,13 +488,18 @@ DbgLv(1) << "DaPl: (3)tstr" << tstr;
    {
       // Plot a single line
       QColor colr1( Qt::blue );
-      data_curv = us_curve( data_plot, legend_label( 0 ) );
+      data_curv = us_curve( data_plot, curve_title( 0 ) );
       data_curv->setItemAttribute( QwtPlotItem::Legend, true );
       data_curv->setPen( QPen( QBrush( colr1 ), 3.0, Qt::SolidLine ) );
       data_curv->setStyle( QwtPlotCurve::Lines );
 
-      DbgLv( 1 ) << "DaPl:   npoint" << npoint << "xx" << xx[0] << xx[npoint - 1] << "yy" << yy[0] << yy[npoint - 1];
-      data_curv->setSamples( xx, yy, npoint );
+      const QVector<double>& xs   = series( 0 );
+      const int              npts = qMin( npoint, static_cast<int>( xs.size() ) );
+      if ( npts > 0 )
+      {
+         DbgLv( 1 ) << "DaPl:   npoint" << npts << "xx" << xs[0] << xs[npts - 1] << "yy" << yy[0] << yy[npts - 1];
+         data_curv->setSamples( xs.data(), yy, npts );
+      }
 
       // Insert the legend after the curve exists, so its layout is current
       data_plot->detachItems( QwtPlotItem::Rtti_PlotLegend, true );
@@ -524,34 +555,18 @@ DbgLv(1) << "pC:  pos" << pos << "color" << QColor(colormap->rgb(colorinterv,pos
 
    for ( int ii = 0; ii < ncurvs; ii++ )
    {  // Draw each model line
-      curvtitl  = legend_label( ii );
+      curvtitl  = curve_title( ii );
       data_curv = us_curve( data_plot, curvtitl );
       data_curv->setPen( QPen( QBrush( lncolrs[ii] ), 3.0, Qt::SolidLine ) );
-      switch ( plot_x )
-      {
-         case ATTR_S:
-            xx = v_sedcs[ii].data();
-            break;
-         case ATTR_D:
-            xx = v_difcs[ii].data();
-            break;
-         case ATTR_W:
-            xx = v_mmass[ii].data();
-            break;
-         case ATTR_K:
-            xx = v_frats[ii].data();
-            break;
-         case ATTR_V:
-            xx = v_vbars[ii].data();
-            break;
-         case ATTR_R:
-            xx = v_rhs[ii].data();
-            break;
-      }
-
       data_curv->setStyle( QwtPlotCurve::Lines );
       data_curv->setItemAttribute( QwtPlotItem::Legend, true );
-      data_curv->setSamples( xx, yy, npoint );
+
+      const QVector<double>& xs   = series( ii );
+      const int              npts = qMin( npoint, static_cast<int>( xs.size() ) );
+      if ( npts > 0 )
+      {
+         data_curv->setSamples( xs.data(), yy, npts );
+      }
    }
 
    // Insert the legend after all curves exist (as US_Norm_Profile does), so
@@ -1058,6 +1073,7 @@ void US_Integral::build_bf_vects()
    v_frats.clear();
    v_vbars.clear();
    v_rhs.clear();
+   v_dist_errors.clear();
 
    int ndists       = alldis.size();
    if ( ndists < 1 )
@@ -1092,12 +1108,15 @@ void US_Integral::build_bf_vects()
    settings.boundary_extent_percent = ct_boundaryPct->value();
    settings.smoothing               = (int) ( ct_smoothing->value() );
 
+   // The levels depend only on the settings, so every model shares them.
+   v_bfracs = US_Calc::boundary_levels( settings );
    v_sedcs.resize( ndists );
    v_difcs.resize( ndists );
    v_mmass.resize( ndists );
    v_frats.resize( ndists );
    v_vbars.resize( ndists );
    v_rhs  .resize( ndists );
+   v_dist_errors.fill( QString(), ndists );
 
    for ( int ii = 0; ii < ndists; ii++ )
    {
@@ -1108,12 +1127,11 @@ void US_Integral::build_bf_vects()
          if ( d.severity == US_Calc::Severity::Error )
          {
             qDebug() << "US_Integral:" << alldis[ii].label << d.detail;
+            if ( dist.s.isEmpty() && v_dist_errors[ii].isEmpty() )
+            { // No distribution:  the legend says why
+               v_dist_errors[ii] = d.detail;
+            }
          }
-      }
-
-      if ( ii == 0 )
-      {
-         v_bfracs = dist.boundary_fractions;
       }
 
       v_sedcs[ii] = dist.s;
@@ -1212,8 +1230,9 @@ DbgLv(1) << "WrCsv: fpath" << fpath;
    // Write header line
    ts << "\"" + hdr1 + "\",\"" + hdr2 + "\"\n";
 
-   // Write data lines
-   for ( int jj = 0; jj < vals1.size(); jj++ )
+   // Write data lines, as many as both series hold
+   const int nvals = qMin( vals1.size(), vals2.size() );
+   for ( int jj = 0; jj < nvals; jj++ )
    {
       QString line  = QString::asprintf(
          "\"%9.6e\",\"%6.4f\"\n", vals1[ jj ], vals2[ jj ] );

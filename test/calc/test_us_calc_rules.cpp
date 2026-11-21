@@ -13,6 +13,7 @@
 #include <QtNumeric>
 
 #include "us_calc_matching.h"
+#include "us_calc_range.h"
 #include "us_calc_replicate.h"
 #include "us_calc_statistics.h"
 #include "us_calc_test_print.h"
@@ -187,7 +188,7 @@ TEST( UsCalcStatistics, AreaCountsEveryValueIncludingTheMaximum )
    }
 }
 
-TEST( UsCalcStatistics, UndefinedValuesAreNaN )
+TEST( UsCalcStatistics, UndefinedValuesAreAsTheArithmeticGivesThem )
 {
    // One nonzero concentration:  the weighted variance divides by zero.
    const WeightedStatistics one = distribution( { 1.0, 2.0 }, { 1.0, 0.0 } );
@@ -291,4 +292,133 @@ TEST( UsCalcStatistics, LineFitOfALine )
    EXPECT_DOUBLE_EQ( f.intercept, 1.0 );
    EXPECT_DOUBLE_EQ( f.correlation, 1.0 );
    EXPECT_DOUBLE_EQ( f.average, 4.0 );
+}
+
+// outputStats printed inf where its division by zero gave inf; so does
+// US_Calc, and a diagnostic names the value.  With one nonzero
+// concentration the mean (0.1 * 3) / 3 differs from 0.1 by one rounding
+// step, so the squared deviation is not zero and the bias factor 1/0 makes
+// the variance infinite.
+TEST( UsCalcStatistics, InfiniteValuesAreKept )
+{
+   const WeightedStatistics st = distribution( { 0.1, 0.5 }, { 3.0, 0.0 } );
+   ASSERT_NE( st.mean, 0.1 );
+   EXPECT_TRUE( std::isinf( st.variance ) );
+   EXPECT_TRUE( std::isinf( st.standard_deviation ) );
+   EXPECT_TRUE( std::isinf( st.standard_error ) );
+   bool named = false;
+   for ( const Diagnostic& d : st.diagnostics )
+   {
+      named = named || ( d.issue == Issue::NonFiniteValue && d.detail.contains( "standard deviation" ) );
+   }
+   EXPECT_TRUE( named );
+}
+
+namespace
+{
+Component solute( double s, double c )
+{
+   Component x;
+   x.s                    = s;
+   x.D                    = 5.0e-7;
+   x.mw                   = 75000.0;
+   x.f                    = 4.0e-8;
+   x.f_f0                 = 1.6;
+   x.vbar20               = 0.72;
+   x.signal_concentration = c;
+   return x;
+}
+
+bool has( const QVector<Diagnostic>& d, Issue issue, Severity severity )
+{
+   for ( const Diagnostic& x : d )
+   {
+      if ( x.issue == issue && x.severity == severity )
+      {
+         return true;
+      }
+   }
+   return false;
+}
+
+// Same value, NaN included (NaN != NaN).
+bool same( double a, double b )
+{
+   return ( qIsNaN( a ) && qIsNaN( b ) ) || a == b;
+}
+} // namespace
+
+// The reporter selected nothing for low > high and reported (0 / C) * 100,
+// so a 0 % target passed.
+TEST( UsCalcRange, InvertedRangeSelectsNothing )
+{
+   Model m;
+   m.components        = { solute( 4.5e-13, 0.4 ), solute( 6.0e-13, 0.6 ) };
+   const RangeResult r = range_summary( m, { Quantity::Sedimentation, 7.0, 4.0 } );
+   EXPECT_EQ( r.selected_count, 0 );
+   EXPECT_EQ( r.range_concentration, 0.0 );
+   EXPECT_EQ( r.fraction_percent, 0.0 );
+   EXPECT_TRUE( has( r.diagnostics, Issue::InvalidRange, Severity::Warning ) );
+   EXPECT_FALSE( has_error( r.diagnostics ) );
+   EXPECT_TRUE( passes( r.fraction_percent, { ToleranceRule::AbsolutePercentagePoints, 0.0, 1.0 } ) );
+}
+
+TEST( UsCalcRange, NonFiniteBounds )
+{
+   const double nan = std::numeric_limits<double>::quiet_NaN();
+   const double inf = std::numeric_limits<double>::infinity();
+   Model        m;
+   m.components = { solute( 4.5e-13, 0.4 ), solute( 6.0e-13, 0.6 ) };
+   EXPECT_EQ( range_summary( m, { Quantity::Sedimentation, nan, 7.0 } ).fraction_percent, 0.0 );
+   EXPECT_EQ( range_summary( m, { Quantity::Sedimentation, 5.0, inf } ).selected_count, 1 );
+   EXPECT_FALSE( has_error( range_summary( m, { Quantity::Sedimentation, 5.0, inf } ).diagnostics ) );
+}
+
+// A non-finite value changes only the results that use it, as in the
+// reporter's sums.
+TEST( UsCalcRange, NonFiniteValuesAffectOnlyTheirResults )
+{
+   const double nan = std::numeric_limits<double>::quiet_NaN();
+   Model        clean;
+   clean.components       = { solute( 4.5e-13, 0.4 ), solute( 6.0e-13, 0.6 ), solute( 9.0e-13, 0.2 ) };
+   Model unused           = clean;
+   unused.components[1].f = nan;
+   for ( const Range& range : { Range{ Quantity::Sedimentation, 4.0, 7.0 }, Range{ Quantity::MolecularWeight, 50.0, 100.0 } } )
+   {
+      const RangeResult a = range_summary( clean, range );
+      const RangeResult b = range_summary( unused, range );
+      EXPECT_EQ( a.fraction_percent, b.fraction_percent );
+      EXPECT_EQ( a.within_range_mean, b.within_range_mean );
+      EXPECT_TRUE( b.diagnostics.isEmpty() );
+   }
+   const ModelMeans ma = model_means( clean );
+   const ModelMeans mb = model_means( unused );
+   EXPECT_EQ( ma.total_concentration, mb.total_concentration );
+   EXPECT_EQ( ma.s, mb.s );
+   EXPECT_EQ( ma.mw, mb.mw );
+
+   // A NaN s is never within an s range, and makes only the s mean NaN.
+   Model nan_s           = clean;
+   nan_s.components[1].s = nan;
+   const RangeResult r   = range_summary( nan_s, { Quantity::Sedimentation, 4.0, 7.0 } );
+   EXPECT_EQ( r.selected_count, 1 );
+   EXPECT_EQ( r.fraction_percent, ( 0.4 / ( ( 0.4 + 0.6 ) + 0.2 ) ) * 100.0 );
+   EXPECT_TRUE( has( r.diagnostics, Issue::NonFiniteValue, Severity::Warning ) );
+   const ModelMeans mn = model_means( nan_s );
+   EXPECT_TRUE( qIsNaN( mn.s ) );
+   EXPECT_TRUE( same( mn.mw, ma.mw ) );
+   EXPECT_EQ( mn.total_concentration, ma.total_concentration );
+}
+
+// Divisions are not guarded:  a zero total with a nonzero in-range sum gives
+// an infinite fraction, as the reporter printed.
+TEST( UsCalcRange, ZeroTotalDividesAsTheReporter )
+{
+   Model m;
+   m.components        = { solute( 4.5e-13, 1.0 ), solute( 9.0e-13, -1.0 ) };
+   const RangeResult r = range_summary( m, { Quantity::Sedimentation, 4.0, 7.0 } );
+   EXPECT_EQ( r.total_concentration, 0.0 );
+   EXPECT_TRUE( std::isinf( r.fraction_percent ) );
+   EXPECT_TRUE( has( r.diagnostics, Issue::ZeroTotal, Severity::Error ) );
+   EXPECT_TRUE( qIsNaN( range_summary( Model(), { Quantity::Sedimentation, 4.0, 7.0 } ).fraction_percent ) );
 }

@@ -4,6 +4,7 @@
 
 #include "us_calc_version.h"
 
+#include <QStringList>
 #include <QtGlobal>
 #include <QtNumeric>
 
@@ -51,12 +52,6 @@ LineFit linefit( const double* x, const double* y, int arraysize )
 
 namespace
 {
-// A result value, or NaN when the calculation gives no finite value.
-double finite( double v )
-{
-   return qIsFinite( v ) ? v : qQNaN();
-}
-
 // 50 bins that partition [minimum, maximum]:  bin ii holds the values from
 // its edge up to the next bin's edge, and the last bin also holds the
 // maximum.  Every value is counted once, so the area is the total
@@ -135,16 +130,16 @@ void monte_carlo_statistics( WeightedStatistics&    st,
 
    if ( st.constant )
    {
-      st.median             = finite( vmean );
-      st.mode_center        = finite( vmean );
+      st.median             = vmean;
+      st.mode_center        = vmean;
       st.skew               = 0.0;
       st.kurtosis           = 0.0;
       st.mode_low           = 0.0;
       st.mode_high          = 0.0;
-      st.confidence95_low   = finite( vmean );
-      st.confidence95_high  = finite( vmean );
-      st.confidence99_low   = finite( vmean );
-      st.confidence99_high  = finite( vmean );
+      st.confidence95_low   = vmean;
+      st.confidence95_high  = vmean;
+      st.confidence99_low   = vmean;
+      st.confidence99_high  = vmean;
       st.variance           = 0.0;
       st.correlation        = 0.0;
       st.standard_deviation = 0.0;
@@ -190,21 +185,21 @@ void monte_carlo_statistics( WeightedStatistics&    st,
    const double mode_hi  = mode_lo + bininc;
    const double mode_cen = ( mode_lo + mode_hi ) * 0.5;
 
-   st.median             = finite( vmedi );
-   st.skew               = finite( skew );
-   st.kurtosis           = finite( kurto );
-   st.variance           = finite( vm2 );
-   st.standard_deviation = finite( sdevi );
-   st.standard_error     = finite( sderr );
-   st.correlation        = finite( fit.correlation );
-   st.area               = finite( area );
-   st.mode_low           = finite( mode_lo );
-   st.mode_high          = finite( mode_hi );
-   st.mode_center        = finite( mode_cen );
-   st.confidence99_low   = finite( vmean - 2.576 * sdevi );
-   st.confidence99_high  = finite( vmean + 2.576 * sdevi );
-   st.confidence95_low   = finite( vmean - 1.960 * sdevi );
-   st.confidence95_high  = finite( vmean + 1.960 * sdevi );
+   st.median             = vmedi;
+   st.skew               = skew;
+   st.kurtosis           = kurto;
+   st.variance           = vm2;
+   st.standard_deviation = sdevi;
+   st.standard_error     = sderr;
+   st.correlation        = fit.correlation;
+   st.area               = area;
+   st.mode_low           = mode_lo;
+   st.mode_high          = mode_hi;
+   st.mode_center        = mode_cen;
+   st.confidence99_low   = vmean - 2.576 * sdevi;
+   st.confidence99_high  = vmean + 2.576 * sdevi;
+   st.confidence95_low   = vmean - 1.960 * sdevi;
+   st.confidence95_high  = vmean + 1.960 * sdevi;
 }
 
 // US_SoluteData::outputStats, in its order.  The common part is already in
@@ -314,27 +309,27 @@ void distribution_statistics( WeightedStatistics&    st,
    }
 
    st.constant           = fvdif < 0.0001;
-   st.variance           = finite( vm2 );
-   st.standard_deviation = finite( sdevi );
-   st.standard_error     = finite( sderr );
-   st.skew               = finite( skew );
-   st.kurtosis           = finite( kurto );
-   st.correlation        = finite( fit.correlation );
-   st.mode_low           = finite( mode_lo );
-   st.mode_high          = finite( mode_hi );
-   st.mode_center        = finite( mode_cen );
-   st.area               = finite( area );
+   st.variance           = vm2;
+   st.standard_deviation = sdevi;
+   st.standard_error     = sderr;
+   st.skew               = skew;
+   st.kurtosis           = kurto;
+   st.correlation        = fit.correlation;
+   st.mode_low           = mode_lo;
+   st.mode_high          = mode_hi;
+   st.mode_center        = mode_cen;
+   st.area               = area;
 
    // An index is undefined when the cumulative concentration never reaches
    // a limit (negative concentrations), or for a single value, whose upper
    // index is set to -1 and never corrected.
-   auto quantile        = [&]( int id ) { return id >= 0 && id < nvals ? finite( vals_sorted[id] ) : qQNaN(); };
+   auto quantile        = [&]( int id ) { return id >= 0 && id < nvals ? vals_sorted[id] : qQNaN(); };
    st.confidence95_low  = quantile( lo95_id );
    st.confidence95_high = quantile( hi95_id );
    st.confidence99_low  = quantile( lo99_id );
    st.confidence99_high = quantile( hi99_id );
 
-   if ( qIsNaN( st.variance ) )
+   if ( !qIsFinite( st.variance ) )
    {
       st.diagnostics.push_back(
          { Issue::ZeroTotal, Severity::Warning, "the weighted variance is undefined (a single nonzero concentration)" } );
@@ -387,8 +382,8 @@ WeightedStatistics weighted_statistics( const QVector<double>& vals, const QVect
    const double vmean = vsum / vctot;
    st.minimum         = vlo;
    st.maximum         = vhi;
-   st.mean            = finite( vmean );
-   st.midrange        = finite( ( vlo + vhi ) / 2.0 );
+   st.mean            = vmean;
+   st.midrange        = ( vlo + vhi ) / 2.0;
 
    if ( convention == StatisticsConvention::MonteCarloIterations )
    {
@@ -402,6 +397,38 @@ WeightedStatistics weighted_statistics( const QVector<double>& vals, const QVect
    if ( vctot == 0.0 )
    {
       st.diagnostics.prepend( { Issue::ZeroTotal, Severity::Error, "the total concentration is zero" } );
+   }
+
+   // Every value the arithmetic left undefined is named, so that each NaN or
+   // infinity in the result has a diagnostic.
+   const std::pair<const char*, double> fields[] = { { "mean", st.mean },
+                                                     { "midrange", st.midrange },
+                                                     { "median", st.median },
+                                                     { "variance", st.variance },
+                                                     { "standard deviation", st.standard_deviation },
+                                                     { "standard error", st.standard_error },
+                                                     { "skew", st.skew },
+                                                     { "kurtosis", st.kurtosis },
+                                                     { "correlation", st.correlation },
+                                                     { "mode low", st.mode_low },
+                                                     { "mode high", st.mode_high },
+                                                     { "mode center", st.mode_center },
+                                                     { "area", st.area },
+                                                     { "95% low", st.confidence95_low },
+                                                     { "95% high", st.confidence95_high },
+                                                     { "99% low", st.confidence99_low },
+                                                     { "99% high", st.confidence99_high } };
+   QStringList                          undefined;
+   for ( const auto& f : fields )
+   {
+      if ( !qIsFinite( f.second ) )
+      {
+         undefined << f.first;
+      }
+   }
+   if ( !undefined.isEmpty() )
+   {
+      st.diagnostics.push_back( { Issue::NonFiniteValue, Severity::Warning, "not finite: " + undefined.join( ", " ) } );
    }
    return st;
 }

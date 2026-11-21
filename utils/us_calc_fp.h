@@ -4,10 +4,14 @@
 //! Every us_calc source file includes this.  Compilers may fuse a multiply
 //! and an add into one instruction (FMA), which rounds once instead of
 //! twice; where they do depends on the compiler, the target and the shape
-//! of the surrounding code.  These files turn this contraction off so that
-//! they give the same doubles on every platform.  utils/CMakeLists.txt also
-//! sets -ffp-contract=off on them; the pragmas cover every build, qmake
-//! included.
+//! of the surrounding code.  These files turn this contraction off, so the
+//! basic arithmetic of the calculations does not depend on it.
+//! utils/CMakeLists.txt also sets -ffp-contract=off on them; qmake builds
+//! rely on these pragmas alone.  Shown on macOS arm64 (clang), Linux x86_64
+//! (GCC) and Windows x64 (MSVC); not shown on builds that contract by
+//! default, such as GCC on aarch64 or -march=native.  pow, exp, log and
+//! sqrt come from each platform's math library, so results that use them
+//! can still differ between platforms in the last bits.
 #ifndef US_CALC_FP_H
 #define US_CALC_FP_H
 

@@ -85,8 +85,11 @@ enum class Issue
 
 //! \brief A condition found while calculating.
 //!
-//! A result value that cannot be defined (a division by zero, or a value
-//! that is not finite) is NaN and explained by a diagnostic.
+//! A result the arithmetic leaves undefined (a division by zero, or a value
+//! that is not finite) is the NaN or infinity the legacy calculation gave,
+//! and is explained by a diagnostic.  A value that cannot be calculated at
+//! all (an unsupported quantity, a confidence index before the first value)
+//! is NaN.
 struct Diagnostic
 {
       Issue    issue    = Issue::EmptyModel;

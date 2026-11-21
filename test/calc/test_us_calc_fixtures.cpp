@@ -180,7 +180,7 @@ TEST_F( UsCalcFixtures, RangeSummariesMatchTheOracle )
 
       if ( e["fraction"].isNull() )
       {
-         EXPECT_TRUE( qIsNaN( r.fraction_percent ) );
+         EXPECT_FALSE( std::isfinite( r.fraction_percent ) );
          EXPECT_TRUE( hasIssue( r.diagnostics, Issue::ZeroTotal ) || hasIssue( r.diagnostics, Issue::EmptyModel ) );
       }
       else
@@ -200,7 +200,7 @@ TEST_F( UsCalcFixtures, RangeSummariesMatchTheOracle )
 
       if ( e["within_mean"].isNull() )
       {
-         EXPECT_TRUE( qIsNaN( r.within_range_mean ) );
+         EXPECT_FALSE( std::isfinite( r.within_range_mean ) );
       }
       else
       {
@@ -229,7 +229,7 @@ TEST_F( UsCalcFixtures, WholeModelMeansMatchTheOracle )
       {
          if ( e[mean.first].isNull() )
          {
-            EXPECT_TRUE( qIsNaN( mean.second ) ) << mean.first;
+            EXPECT_FALSE( std::isfinite( mean.second ) ) << mean.first;
          }
          else
          {
@@ -293,10 +293,11 @@ TEST_F( UsCalcFixtures, ReplicateGroupsMatchTheOracle )
    }
 }
 
-// US_Calc reproduces the smoothing captured from US_Math2 before
-// US_Calc replaced it (fixtures/expected/legacy_smoothing.json) within the legacy
-// series tolerance:  the capture was made by a build that fused multiply-adds,
-// which US_Calc does not (us_calc_fp.h).
+// US_Calc reproduces the smoothing captured from US_Math2
+// (fixtures/expected/legacy_smoothing.json) within the legacy series
+// tolerance.  The capture was made without contraction (us_calc_fp.h); the
+// tolerance also covers a build of the legacy code that fuses multiply-adds,
+// which differs from it by at most 3.6e-16 relative.
 TEST( UsCalcLegacyCaptures, SmoothingMatchesTheCapture )
 {
    const QJsonObject captured = readJson( "expected/legacy_smoothing.json" );

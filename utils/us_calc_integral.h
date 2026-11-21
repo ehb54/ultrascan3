@@ -56,12 +56,21 @@ struct IntegralDistribution
       AlgorithmVersion    algorithm;
 };
 
+//! \brief The boundary fractions of the levels:  divisions + 1 values from
+//! the start percent in steps of extent / divisions, accumulated as
+//! US_Integral does.  Empty when divisions < 1.  They depend only on the
+//! settings, so they are the same for every model.
+US_UTIL_EXTERN QVector<double>      boundary_levels( const IntegralSettings& settings );
+
 //! \brief The integral distribution of a model along an axis.
 //!
-//! Coefficients are completed as US_Model::update_coefficients does.  A
-//! model without components or with a zero total concentration is an
-//! error; so is a smoothing width the levels cannot support, in which case
-//! the series are left unsmoothed.
+//! The coefficients of every component are completed with
+//! calc_coefficients.  (US_Model::update_coefficients, which US_Integral
+//! used, stops at the first component it cannot complete and leaves the
+//! later ones as stored.)  A model without components, with a non-finite
+//! value or with a zero total concentration is an error and gives empty
+//! series.  A smoothing width the levels cannot support is also an error;
+//! the series are then left unsmoothed.
 US_UTIL_EXTERN IntegralDistribution integral_distribution( const Model&            model,
                                                            DistributionAxis        axis,
                                                            const IntegralSettings& settings = {} );

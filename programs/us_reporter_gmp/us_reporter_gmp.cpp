@@ -4480,10 +4480,17 @@ QString US_ReporterGMP::html_header_velmwl( QString title, QString runName, QStr
 }
 
 // Percent of the model's concentration within a report item's range, from
-// US_Calc.  An item type that is not a range type is unsupported; a total
+// US_Calc.  An item type that is not a range type is unsupported, except on
+// a model without components, where the type is never examined; a total
 // that is not positive gives 0.
 static double velmwl_range_fraction( const US_Model& mdl, const QString& type, double low, double high, bool& supported )
 {
+   supported = true;
+   if ( mdl.components.isEmpty() )
+   {
+      return 0.0;
+   }
+
    const US_Calc::Quantity quantity = US_Calc::quantity_from_report_type( type, &supported );
    if ( !supported )
    {
@@ -4491,11 +4498,7 @@ static double velmwl_range_fraction( const US_Model& mdl, const QString& type, d
    }
 
    const US_Calc::RangeResult r = US_Calc::range_summary( mdl.calc_model(), { quantity, low, high } );
-   if ( !( r.total_concentration > 0.0 ) || US_Calc::has_error( r.diagnostics ) )
-   {
-      return 0.0;
-   }
-   return r.fraction_percent;
+   return ( r.total_concentration > 0.0 ) ? r.fraction_percent : 0.0;
 }
 
 // VELOCITY-MWL: timestamps, species (models) used, analysis settings,
@@ -10299,8 +10302,8 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
       maxv        = qMax( vval, maxv );
    }
 
-   // Weight averages and total concentration from US_Calc; an undefined
-   // average prints as nan, as the division by a zero total did.
+   // Weight averages and total concentration from US_Calc, divided as
+   // before, so a zero total still prints nan or inf.
    const US_Calc::ModelMeans means = US_Calc::model_means( model_used.calc_model() );
    const double              sum_c = means.total_concentration;
 
@@ -10849,14 +10852,16 @@ model_used.components[ ii ].vbar20 ),
       QString                    range = "[" + QString::number( low ) + " - " + QString::number( high ) + "]";
 
       // Integrate over model_used with US_Calc:  inclusive range in report
-      // units, sums in component order.  Values the arithmetic leaves
-      // undefined print as nan, as the divisions by zero did; an item type
-      // that is not a range type selects nothing (fraction 0).
+      // units, sums in component order, divisions unguarded, so every value
+      // (nan and inf included) and every pass/fail is the one the reporter's
+      // own arithmetic gave.  An inverted range selects nothing.  An item
+      // type that is not a range type also selects nothing:  its fraction is
+      // 0 / C * 100.
       bool                       range_type   = false;
       const US_Calc::Quantity    quantity     = US_Calc::quantity_from_report_type( type, &range_type );
       const US_Calc::RangeResult range_result = US_Calc::range_summary( range_model, { quantity, low, high } );
       double                     int_val_m    = range_result.range_concentration;
-      double                     frac_tot_m   = range_type ? range_result.fraction_percent : ( sum_c != 0.0 ? 0.0 : qQNaN() );
+      double                     frac_tot_m                = range_type ? range_result.fraction_percent : ( 0.0 / sum_c ) * 100.0;
       double                     wav_variable_within_range = range_result.within_range_mean;
 
       QString                    tot_frac_passed =

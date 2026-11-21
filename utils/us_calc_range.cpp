@@ -23,16 +23,16 @@ RangeResult range_summary( const Model& model, const Range& range )
    result.range           = range;
    result.component_count = static_cast<int>( model.components.size() );
    result.algorithm       = algorithm( "range_summary" );
-   result.diagnostics << validate_model( model ) << validate_range( range );
    if ( !range_quantity_supported( range.quantity ) )
    {
       result.diagnostics.push_back(
          { Issue::UnsupportedQuantity, Severity::Error, quantity_name( range.quantity ) + " is not a range quantity" } );
-   }
-   if ( has_error( result.diagnostics ) )
-   {
       return result;
    }
+   // Everything else is diagnosed and calculated as distrib_info does:  an
+   // inverted range or a NaN bound selects nothing, a non-finite value
+   // affects only the sums it enters, and the divisions are not guarded.
+   result.diagnostics << validate_values( model, { range.quantity } ) << validate_range( range );
 
    // As distrib_info:  C over every component, then R and sum(x*c) over the
    // components within the range, each in component order.
@@ -58,21 +58,18 @@ RangeResult range_summary( const Model& model, const Range& range )
    result.total_concentration = c_total;
    result.range_concentration = r_total;
 
+   result.fraction_percent  = ( r_total / c_total ) * 100.0;
+   result.within_range_mean = xc_sum / r_total;
+
    if ( c_total == 0.0 )
    {
-      result.diagnostics.push_back( { Issue::ZeroTotal, Severity::Error, "the total concentration is zero" } );
-   }
-   else
-   {
-      result.fraction_percent = ( r_total / c_total ) * 100.0;
+      result.diagnostics.push_back(
+         { Issue::ZeroTotal, Severity::Error, "the total concentration is zero, so the fraction is not finite" } );
    }
    if ( r_total == 0.0 )
    {
-      result.diagnostics.push_back( { Issue::EmptyRange, Severity::Warning, "no concentration lies within the range" } );
-   }
-   else
-   {
-      result.within_range_mean = xc_sum / r_total;
+      result.diagnostics.push_back(
+         { Issue::EmptyRange, Severity::Warning, "no concentration lies within the range, so its mean is not finite" } );
    }
    return result;
 }
@@ -82,11 +79,12 @@ ModelMeans model_means( const Model& model )
    ModelMeans result;
    result.component_count = static_cast<int>( model.components.size() );
    result.algorithm       = algorithm( "range_summary" );
-   result.diagnostics << validate_model( model );
-   if ( has_error( result.diagnostics ) )
-   {
-      return result;
-   }
+   result.diagnostics << validate_values( model,
+                                          { Quantity::Sedimentation,
+                                            Quantity::Diffusion,
+                                            Quantity::MolecularWeight,
+                                            Quantity::FrictionalRatio,
+                                            Quantity::PartialSpecificVolume } );
 
    // As distrib_info:  all sums in one pass in component order.
    double sum_c = 0.0, sum_s = 0.0, sum_D = 0.0, sum_mw = 0.0, sum_k = 0.0, sum_v = 0.0;
@@ -103,8 +101,8 @@ ModelMeans model_means( const Model& model )
    result.total_concentration = sum_c;
    if ( sum_c == 0.0 )
    {
-      result.diagnostics.push_back( { Issue::ZeroTotal, Severity::Error, "the total concentration is zero" } );
-      return result;
+      result.diagnostics.push_back(
+         { Issue::ZeroTotal, Severity::Error, "the total concentration is zero, so the means are not finite" } );
    }
    result.s      = sum_s / sum_c;
    result.D      = sum_D / sum_c;

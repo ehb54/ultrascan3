@@ -133,6 +133,7 @@ class US_Integral : public US_Widgets
         QVector< QVector< double > >  v_sedcs;   //!< Vector of sedimentation coefficient vectors per distribution
         QVector< QVector< double > >  v_difcs;   //!< Vector of diffusion coefficient vectors per distribution
         QVector< QVector< double > >  v_rhs;     //!< Vector of hydrodynamic radius vectors per distribution
+        QVector<QString>              v_dist_errors; //!< Per distribution, why it could not be built (empty if it was)
 
         int           dbg_level;        //!< Debug level
         int           plot_x;           //!< x-axis plot selection
