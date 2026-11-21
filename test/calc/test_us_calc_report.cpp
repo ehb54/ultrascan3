@@ -1,6 +1,6 @@
 //! \file test_us_calc_report.cpp
 // The GMP reporter's rules in US_Calc, with hand-checked values at their
-// edges:  report items on a model.
+// edges:  report items on a model and replicate groups.
 
 #include <gtest/gtest.h>
 
@@ -9,6 +9,7 @@
 #include <QStringList>
 #include <QtNumeric>
 
+#include "us_calc_replicate_group.h"
 #include "us_calc_report_item.h"
 #include "us_calc_test_print.h"
 #include "us_calc_tolerance.h"
@@ -233,4 +234,178 @@ TEST( UsCalcVelMwlItem, UnsupportedEmptyAndNonPositiveTotals )
    const VelMwlItemResult n = evaluate_velmwl_item( negative, item( "s", 4.0, 7.0, 0.0, 0.0 ) );
    EXPECT_EQ( n.fraction_percent, 0.0 );
    EXPECT_TRUE( n.passed );
+}
+
+namespace
+{
+ReplicateItem replicate_item( double range_concentration, double fraction_percent )
+{
+   ReplicateItem r;
+   r.type                = "s";
+   r.method              = "2DSA-IT";
+   r.low                 = 3.2;
+   r.high                = 3.7;
+   r.integration_value   = 0.57;
+   r.target_percent      = 26.0;
+   r.tolerance           = 10.0;
+   r.range_concentration = range_concentration;
+   r.fraction_percent    = fraction_percent;
+   return r;
+}
+
+// One channel per member, each with one item.
+QVector<QVector<ReplicateItem>> one_item_each( const QVector<ReplicateItem>& items )
+{
+   QVector<QVector<ReplicateItem>> channels;
+   for ( const ReplicateItem& item : items )
+   {
+      channels.push_back( { item } );
+   }
+   return channels;
+}
+} // namespace
+
+// 3a.  Members match the reference exactly in type, method and bounds, and
+// in the integration value as QString::number formats it.
+TEST( UsCalcReplicateGroup, SameItem )
+{
+   const ReplicateItem ref = replicate_item( -1.0, -1.0 );
+   EXPECT_TRUE( same_replicate_item( ref, ref ) );
+   auto changed = [&]( auto change )
+   {
+      ReplicateItem x = ref;
+      change( x );
+      return same_replicate_item( ref, x );
+   };
+   EXPECT_FALSE( changed( []( ReplicateItem& x ) { x.type = "D"; } ) );
+   EXPECT_FALSE( changed( []( ReplicateItem& x ) { x.method = "2DSA-MC"; } ) );
+   EXPECT_FALSE( changed( []( ReplicateItem& x ) { x.low = std::nextafter( 3.2, 4.0 ); } ) );
+   EXPECT_FALSE( changed( []( ReplicateItem& x ) { x.high = 3.71; } ) );
+   EXPECT_FALSE( changed( []( ReplicateItem& x ) { x.integration_value = 0.570001; } ) );
+   // QString::number keeps 6 significant digits, so these format as "0.57".
+   EXPECT_TRUE( changed( []( ReplicateItem& x ) { x.integration_value = 0.5700001; } ) );
+   EXPECT_TRUE( changed( []( ReplicateItem& x ) { x.integration_value = 0.56999999; } ) );
+   // A member's own target and tolerance do not matter.
+   EXPECT_TRUE( changed(
+      []( ReplicateItem& x )
+      {
+         x.target_percent = 50.0;
+         x.tolerance      = 1.0;
+      } ) );
+}
+
+// 3a.  A member's report is the one of the first channel description that
+// contains the channel.
+TEST( UsCalcReplicateGroup, ChannelIndex )
+{
+   const QStringList descs = { "1A:UV/vis.:(unspecified)", "2A:UV/vis.:buffer", "1A:Interf.:(unspecified)" };
+   EXPECT_EQ( replicate_channel_index( descs, "1A:UV/vis." ), 0 );
+   EXPECT_EQ( replicate_channel_index( descs, "2A:UV/vis." ), 1 );
+   EXPECT_EQ( replicate_channel_index( descs, "1A:Interf." ), 2 );
+   EXPECT_EQ( replicate_channel_index( descs, "3A:UV/vis." ), -1 );
+   EXPECT_EQ( replicate_channel_index( {}, "1A:UV/vis." ), -1 );
+}
+
+// 3b.  Which triples take part, and how they split into subgroups.
+TEST( UsCalcReplicateGroup, TriplesAndSubgroups )
+{
+   EXPECT_TRUE( replicate_triple_included( "260", "", true ) );
+   EXPECT_FALSE( replicate_triple_included( "260", "260:280", true ) );
+   EXPECT_TRUE( replicate_triple_included( "280", "260", true ) );
+   EXPECT_TRUE( replicate_triple_included( "260", "2600", true ) ); // whole wavelengths only
+   EXPECT_FALSE( replicate_triple_included( "260", "", false ) );   // Integration Results off
+
+   const QStringList     triples = { "1A.260", "2A.280", "3A.260", "1A.280" };
+   const ReplicateLayout all     = replicate_layout( triples, { true, true, true, true } );
+   EXPECT_EQ( all.channels, QStringList( { "1A", "2A", "3A" } ) );
+   ASSERT_EQ( all.subgroups.size(), 2 );
+   EXPECT_EQ( all.subgroups[0].wavelength, "260" );
+   EXPECT_EQ( all.subgroups[0].channels, QStringList( { "1A", "3A" } ) );
+   EXPECT_EQ( all.subgroups[1].wavelength, "280" );
+   EXPECT_EQ( all.subgroups[1].channels, QStringList( { "2A", "1A" } ) );
+
+   const ReplicateLayout some = replicate_layout( triples, { true, false, true, true } );
+   EXPECT_EQ( some.channels, QStringList( { "1A", "3A" } ) );
+   ASSERT_EQ( some.subgroups.size(), 2 );
+   EXPECT_EQ( some.subgroups[1].channels, QStringList( { "1A" } ) );
+
+   EXPECT_TRUE( replicate_layout( triples, { false, false, false, false } ).subgroups.isEmpty() );
+}
+
+// 3c.  Members not evaluated (-1) or with a negative in-range concentration
+// are left out; a group without members gives 0.
+TEST( UsCalcReplicateGroup, NegativeAndEmptyMembers )
+{
+   const ReplicateItem  ref   = replicate_item( -1.0, -1.0 );
+   ReplicateGroupResult empty = evaluate_replicate_group( ref, one_item_each( { ref, ref } ), 2 );
+   EXPECT_EQ( empty.summary.used_count, 0 );
+   EXPECT_EQ( empty.mean_range_concentration, 0.0 );
+   EXPECT_EQ( empty.mean_fraction_percent, 0.0 );
+   EXPECT_EQ( empty.sd_range_concentration, 0.0 );
+   EXPECT_EQ( empty.sd_fraction_percent, 0.0 );
+   EXPECT_FALSE( empty.passed ); // 0 is outside 26 +/- 10 % of 26
+
+   ReplicateItem zero_target  = ref;
+   zero_target.target_percent = 0.0;
+   EXPECT_TRUE( evaluate_replicate_group( zero_target, one_item_each( { ref } ), 1 ).passed ); // 0 within 0 +/- 0
+
+   // A channel without a report contributes nothing.
+   EXPECT_EQ( evaluate_replicate_group( ref, { {} }, 1 ).summary.member_count, 0 );
+
+   // One of three left out (negative in-range concentration).
+   const ReplicateGroupResult two = evaluate_replicate_group(
+      ref, one_item_each( { replicate_item( 0.2, 24.0 ), replicate_item( -0.1, 90.0 ), replicate_item( 0.4, 28.0 ) } ), 3 );
+   EXPECT_EQ( two.summary.used_count, 2 );
+   EXPECT_EQ( two.mean_fraction_percent, 26.0 );
+   EXPECT_EQ( two.sd_fraction_percent, 2.0 );
+   EXPECT_TRUE( two.passed );
+
+   // Every matching item of a channel is a member; others are not.
+   ReplicateItem other = replicate_item( 0.9, 90.0 );
+   other.type          = "D";
+   const ReplicateGroupResult several =
+      evaluate_replicate_group( ref, { { replicate_item( 0.2, 24.0 ), other, replicate_item( 0.4, 28.0 ) } }, 1 );
+   EXPECT_EQ( several.summary.used_count, 2 );
+   EXPECT_EQ( several.mean_fraction_percent, 26.0 );
+
+   // A member with a NaN fraction (zero total) makes the mean NaN, which fails.
+   const ReplicateGroupResult nan =
+      evaluate_replicate_group( ref, one_item_each( { replicate_item( 0.2, 24.0 ), replicate_item( 0.0, qQNaN() ) } ), 2 );
+   EXPECT_TRUE( qIsNaN( nan.mean_fraction_percent ) );
+   EXPECT_FALSE( nan.passed );
+}
+
+// 3d.  The SD is shown when the subgroup lists more than one triple, even if
+// only one of them gives a member.
+TEST( UsCalcReplicateGroup, ShowSd )
+{
+   const ReplicateItem ref = replicate_item( -1.0, -1.0 );
+   EXPECT_FALSE( evaluate_replicate_group( ref, one_item_each( { replicate_item( 0.2, 26.0 ) } ), 1 ).show_sd );
+   const ReplicateGroupResult one_used = evaluate_replicate_group( ref, one_item_each( { replicate_item( 0.2, 26.0 ), ref } ), 2 );
+   EXPECT_TRUE( one_used.show_sd );
+   EXPECT_EQ( one_used.summary.used_count, 1 );
+   EXPECT_EQ( one_used.sd_fraction_percent, 0.0 );
+}
+
+// 3e.  The mean passes within tolerance percent of the target (relative),
+// unlike a single triple (percentage points); see ultrascan-tickets#1299.
+TEST( UsCalcReplicateGroup, RelativeTolerance )
+{
+   const ReplicateItem ref         = replicate_item( -1.0, -1.0 );
+   const double        lower       = 26.0 * ( 1.0 - 10.0 / 100.0 );
+   const double        upper       = 26.0 * ( 1.0 + 10.0 / 100.0 );
+   auto                mean_passes = [&]( double fraction )
+   { return evaluate_replicate_group( ref, one_item_each( { replicate_item( 0.2, fraction ) } ), 1 ).passed; };
+   EXPECT_TRUE( mean_passes( lower ) );
+   EXPECT_TRUE( mean_passes( upper ) );
+   EXPECT_FALSE( mean_passes( std::nextafter( lower, 0.0 ) ) );
+   EXPECT_FALSE( mean_passes( std::nextafter( upper, 100.0 ) ) );
+
+   // Three triples at 30 % pass one by one (26 +/- 10 points), but their
+   // 30 % mean fails (26 +/- 10 % is 23.4 - 28.6).
+   EXPECT_TRUE( passes( 30.0, { ToleranceRule::AbsolutePercentagePoints, 26.0, 10.0 } ) );
+   const ReplicateGroupResult three = evaluate_replicate_group(
+      ref, one_item_each( { replicate_item( 0.3, 30.0 ), replicate_item( 0.3, 30.0 ), replicate_item( 0.3, 30.0 ) } ), 3 );
+   EXPECT_EQ( three.mean_fraction_percent, 30.0 );
+   EXPECT_FALSE( three.passed );
 }

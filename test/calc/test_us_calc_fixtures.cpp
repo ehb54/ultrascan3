@@ -25,6 +25,7 @@
 #include "us_calc_matching.h"
 #include "us_calc_range.h"
 #include "us_calc_replicate.h"
+#include "us_calc_replicate_group.h"
 #include "us_calc_report_item.h"
 #include "us_calc_smoothing.h"
 #include "us_calc_test_print.h"
@@ -346,6 +347,38 @@ TEST_F( UsCalcFixtures, ReplicateGroupsMatchTheOracle )
                  tol.sd_abs_of_mean * std::fabs( e["fraction_mean"].toDouble() ) );
       const ToleranceCheck check{ ToleranceRule::RelativePercentOfTarget, item["target"].toDouble(), item["tolerance"].toDouble() };
       EXPECT_EQ( passes( r.mean_fraction_percent, check ), e["pass_relative"].toBool() );
+
+      // The reporter's path:  each member channel's item evaluated on its
+      // model (distrib_info), then the subgroup (one channel per member).
+      ReplicateItem reference;
+      reference.type              = item["type"].toString();
+      reference.method            = item["method"].toString();
+      reference.low               = item["low"].toDouble();
+      reference.high              = item["high"].toDouble();
+      reference.integration_value = item["integration"].toDouble();
+      reference.target_percent    = item["target"].toDouble();
+      reference.tolerance         = item["tolerance"].toDouble();
+      QVector<QVector<ReplicateItem>> channels;
+      for ( auto it = models.begin(); it != models.end(); ++it )
+      {
+         if ( cases.contains( it.key().section( '/', 0, 0 ) ) && it.value().toObject()["reporter"].toBool() )
+         {
+            const ReportItemResult evaluated = evaluate_report_item(
+               inputs.value( it.key() ),
+               { reference.type, reference.method, reference.low, reference.high, reference.target_percent, reference.tolerance } );
+            ReplicateItem member       = reference;
+            member.range_concentration = evaluated.range_concentration;
+            member.fraction_percent    = evaluated.fraction_percent;
+            channels.push_back( { member } );
+         }
+      }
+      const ReplicateGroupResult averaged = evaluate_replicate_group( reference, channels, channels.size() );
+      EXPECT_EQ( averaged.summary.used_count, e["n"].toInt() );
+      EXPECT_EQ( averaged.mean_fraction_percent, r.mean_fraction_percent );
+      EXPECT_EQ( averaged.sd_fraction_percent, r.sd_fraction_percent );
+      EXPECT_EQ( averaged.mean_range_concentration, r.mean_range_concentration );
+      EXPECT_TRUE( averaged.show_sd );
+      EXPECT_EQ( averaged.passed, e["pass_relative"].toBool() );
    }
 }
 
