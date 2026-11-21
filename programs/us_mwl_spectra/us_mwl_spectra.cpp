@@ -24,8 +24,25 @@
 
 #ifdef Q_OS_WIN
 #include <float.h>
+
 #define isnan _isnan
 #endif
+
+
+// Gaussian smoothing needs at least 2 * width - 1 points; with fewer the
+// series is left as it is.  Says so in the status line instead of leaving
+// the series unsmoothed without notice.
+static void report_unsmoothed( QLineEdit* status, int npoints, int nsmooth )
+{
+   if ( nsmooth > 1 && npoints < 2 * nsmooth - 1 )
+   {
+      status->setText( QObject::tr( "Smoothing %1 needs at least %2 points; the %3 points are not smoothed" )
+                          .arg( nsmooth )
+                          .arg( 2 * nsmooth - 1 )
+                          .arg( npoints ) );
+   }
+}
+
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -1022,6 +1039,7 @@ void US_MwlSpectra::plot_all( void )
    have_rngs    = false;
    compute_ranges();
 
+   report_unsmoothed( le_status, pltyvals.size(), nsmooth );
    US_Math2::gaussian_smoothing( pltyvals, nsmooth );
 
 int knz=0;
@@ -1317,6 +1335,7 @@ DbgLv(1) << "Plt3D";
    p3dxyz.clear();
 
    // Create the 2-D concentration vectors for each sed.coeff.
+   report_unsmoothed( le_status, lmbxe - lmbxs, nsmooth );
    for ( int jj = sedxs; jj < sedxe; jj++ )
    {
       QVector< double > cvect;
