@@ -39,7 +39,8 @@ The <b><i>Data Utility</i></b> module (window title <i>US-SOMO: SAXS: Data Utili
 <p>
 <ul>
 <li><b>Buffer (and blank/capillary) subtraction</b>, with either a directly specified scaling factor or one
-computed from the solute partial specific volume and concentration, with full propagation of the standard deviations;<p>
+computed from the solute partial specific volume and concentration, with full propagation of the standard deviations,
+and the buffer <b>division</b>, which shows how well a buffer matches a solution;<p>
 <li><b>Joining</b> of two curves measured over different <i>q</i> ranges (for example a
 <i>small-angle</i> and a <i>wide-angle</i> detector configuration, or two different sample-to-detector distances)
 into a single curve, with interactive scaling and an automatic scaling fit;<p>
@@ -202,15 +203,44 @@ refused and you should use <a href="#Cropping"><b><i>Crop Common</i></b></a> fir
 <li>
 <b><i>Average</i></b> (active with two or more curves selected) forms the mean of the selected curves.
 If <i>every</i> selected curve carries non-zero standard deviations throughout, the mean is weighted by
-1/&sigma;<sup>2</sup> and the standard deviation of the mean is computed accordingly; otherwise a plain
-unweighted mean is used. Which of the two was applied is always stated in the
-<b><i>Messages</i></b> area. The concentration of the result is the mean of those of the contributing curves;
+1/&sigma;<sup>2</sup>, and its standard deviation is that of the weighted mean, propagated from the curves' own,
+&sigma; = 1/&radic;(&Sigma; 1/&sigma;<sub><i>i</i></sub><sup>2</sup>): for <i>n</i> curves of equal &sigma;, &sigma;/&radic;<i>n</i>,
+as in <a href=somo_saxs_hplc.html><b><i>HPLC/KIN</i></b></a>. The <b><i>Messages</i></b> area then also reports the
+reduced &chi;<sup>2</sup> of the curves about their mean, &Sigma; (<i>I<sub>i</sub></i> &minus; &lt;<i>I</i>&gt;)<sup>2</sup>/&sigma;<sub><i>i</i></sub><sup>2</sup>
+divided by <i>n</i> &minus; 1 and by the number of points. It is about 1 when the curves agree within their standard
+deviations, and well above 1 when they differ by more than that, <i>e.g.</i> through drift or radiation damage.
+Otherwise a plain unweighted mean is used, and its standard deviation is estimated from the scatter of the curves,
+their sample standard deviation divided by &radic;<i>n</i>; with few curves this estimate is itself very uncertain.
+Which of the two was applied is always stated in the <b><i>Messages</i></b> area.
+<p>
+Right-clicking <b><i>Average</i></b> (or <b><i>Concentration normalized average</i></b>, while the button is
+active) opens a menu with two options, which apply to both buttons and to the averages made in the
+<a href="#Subtraction">buffer subtraction</a> window, are remembered, and are described in the buttons' tooltips:
+<ul>
+<li><b><i>sd of the mean from the curves' scatter</i></b>, instead of the default <b><i>sd of the mean propagated
+from the curves' own sd</i></b>: at each <i>q</i> the propagated standard deviation is multiplied by the square root
+of that point's reduced &chi;<sup>2</sup>, so that it becomes &radic;(&Sigma; <i>w<sub>i</sub></i> (<i>I<sub>i</sub></i> &minus; &lt;<i>I</i>&gt;)<sup>2</sup> / ((<i>n</i> &minus; 1) &Sigma; <i>w<sub>i</sub></i>)),
+the sample standard deviation divided by &radic;<i>n</i> for curves of equal &sigma;. This also includes variation the
+curves' own standard deviations do not, such as drift, but with few curves it is very uncertain. The saved header
+says <i>sd from their scatter</i>.<p>
+<li><b><i>Leave out spikes</i></b>, with <b><i>Spike threshold...</i></b> (6 by default): at each <i>q</i>, the curve whose
+point is farthest from the weighted mean of the other curves, in standard deviations of their difference, is left out
+of that point's average if it is more than the threshold away; this is repeated while three or more curves remain.
+It needs standard deviations on every curve, and relies on most of the curves being free of a spike at each
+<i>q</i>: where most of them have one, the test cannot tell the spikes from the others. The points left out, per curve, are listed in the <b><i>Messages</i></b>
+area, and their number is written into the saved header.<p>
+</ul>
+The concentration of the result is the mean of those of the contributing curves;
 its PSV and <i>I</i>(0) standard error are the means over the contributing curves that have one.<p>
 <li>
 <b><i>Concentration normalized average</i></b> divides each curve by its own concentration before
 averaging, and then re-multiplies the result by the mean concentration. This is the correct way to average
 exposures of the <i>same</i> sample taken at slightly different concentrations, and it becomes active only
-when every selected curve has a non-zero concentration. The PSV and <i>I</i>(0) standard error of the result
+when every selected curve has a non-zero concentration. With standard deviations, each normalized curve
+<i>I<sub>i</sub></i>/<i>c<sub>i</sub></i> is weighted by 1/(&sigma;<sub><i>i</i></sub>/<i>c<sub>i</sub></i>)<sup>2</sup>, so that the curves at higher
+concentration, whose normalized curves are less noisy, count more. The standard deviation, the reduced
+&chi;<sup>2</sup> and the right-click options follow those of <b><i>Average</i></b> for the normalized curves, and the standard deviation is
+multiplied by the mean concentration like the curve. The PSV and <i>I</i>(0) standard error of the result
 are taken as for <b><i>Average</i></b>.<p>
 <li>
 <b><i>N</i></b> (normalize) produces, for each selected curve, a copy divided by its own concentration; the
@@ -218,7 +248,9 @@ standard deviations are divided by the same factor and the concentration of the 
 PSV and <i>I</i>(0) standard error are kept. Like the previous button, it requires all the selected curves to have a non-zero concentration.<p>
 <li>
 <b><i>WS</i></b> (weighted sum) prompts for a multiplier for each selected curve in turn and forms the
-weighted sum. Its concentration is the sum of each curve's multiplier times its concentration, and its PSV
+weighted sum. Its standard deviation adds those of the weighted curves in quadrature,
+&radic;(&Sigma; <i>w<sub>i</sub></i><sup>2</sup> &sigma;<sub><i>i</i></sub><sup>2</sup>), as for independent measurements.
+Its concentration is the sum of each curve's multiplier times its concentration, and its PSV
 and <i>I</i>(0) standard error are taken as for <b><i>Average</i></b>. This button is only shown when the
 <a href=somo_advanced_config.html>advanced configuration</a> <b><i>expert mode</i></b> is enabled.<p>
 </ul>
@@ -342,7 +374,13 @@ curve's concentration, PSV and <i>I</i>(0) standard error, and a header line say
 Three buttons assign roles to a single selected curve; the assigned name is shown to the right of each button:
 <p>
 <ul>
-<li><b><i>Set buffer</i></b> &mdash; the matching buffer or solvent scattering.<p>
+<li><b><i>Set buffer</i></b> &mdash; the matching buffer or solvent scattering. <b><i>Subtract</i></b>, to the right
+of its name, subtracts it from every selected curve (other than the buffer and the blank) point by point, with
+&alpha; = 1 and the standard deviations added in quadrature, as &radic;(&sigma;<sup>2</sup><sub>curve</sub> +
+&sigma;<sup>2</sup><sub>buffer</sub>). Each result, named <i>curve</i><tt>_bsub_a1</tt>, keeps the concentration, PSV and
+<i>I</i>(0) standard error of its curve; non-positive results are left as they are and counted in its header. The results share the buffer, so an <b><i>Average</i></b> of them
+understates its contribution, as explained under <i>Processing many samples at once</i> below. For a
+scaled buffer, a blank, or a range of values, use the <a href="#Subtraction">buffer subtraction</a> window.<p>
 <li><b><i>Set blank</i></b> &mdash; the empty cell, capillary or blank measurement. This one is optional;
 leave it unset for the usual two-curve subtraction.<p>
 <li><b><i>Set solution</i></b> &mdash; the sample from which the buffer is to be subtracted.<p>
@@ -460,7 +498,10 @@ interrupted with <b><i>Stop</i></b>.<p>
 <i>I</i><sub>solution</sub>(<i>q</i>) / [&alpha; <i>I</i><sub>buffer</sub>(<i>q</i>)] instead of the
 difference. This is a diagnostic: a well-matched buffer gives a ratio that is flat and close to one over the
 region where the solute does not scatter. If a blank has been assigned, its
-(1 &minus; &alpha;) term is subtracted from the ratio.<p>
+(1 &minus; &alpha;) term is subtracted from the ratio. The standard deviation is that of a ratio,
+&sigma;<sub><i>R</i></sub><sup>2</sup> = <i>R</i><sup>2</sup> [(&sigma;<sub>solution</sub>/<i>I</i><sub>solution</sub>)<sup>2</sup> +
+(&sigma;<sub>buffer</sub>/<i>I</i><sub>buffer</sub>)<sup>2</sup>] + (1 &minus; &alpha;)<sup>2</sup> &sigma;<sup>2</sup><sub>blank</sub>,
+where <i>R</i> = <i>I</i><sub>solution</sub> / (&alpha; <i>I</i><sub>buffer</sub>).<p>
 </ul>
 
 <h4>Processing many samples at once</h4>
@@ -471,6 +512,16 @@ of the above act on every selected curve in turn rather than only on the one ass
 normal way to reduce a whole set of exposures in one step. Two further checkboxes then become available:
 <b><i>Average</i></b> and <b><i>Concentration normalized average</i></b>, which automatically apply the
 corresponding operation to the set of curves just produced.
+<p>
+The curves produced this way all contain the same buffer (and blank), so their noise is not independent:
+the buffer's is the same in each of them. The averages these two checkboxes make take this into account and
+count the buffer's and the blank's standard deviations once, so that the result's standard deviation combines
+that of the mean of the solutions with that of the buffer subtracted; the reduced &chi;<sup>2</sup> reported is that of
+the solutions' own parts. An <b><i>Average</i></b> made afterwards from the produced curves with the button cannot
+know this, and treats them as independent, which understates the buffer's contribution: the standard deviation
+comes out about 1.3 times too small for 10 curves and a buffer averaged from 10 frames, and 2 times for a buffer
+averaged from 2. To average curves that share a buffer, use these checkboxes, or average the solutions first and
+subtract the buffer from their average; the averaged intensities are practically the same either way.
 <p>
 
 <hr>
@@ -760,7 +811,8 @@ Buffer subtraction, averaging and the related operations all require identical <
 within 5&times;10<sup>-6</sup> A<sup>-1</sup>. The error message <i>incompatible grids</i> means either
 that the point counts differ or that the <i>q</i> values do; <b><i>Crop Common</i></b> resolves both.<p>
 <li>
-Standard deviations are propagated only where all of the participating curves carry them. Since a single
+Standard deviations are propagated only where all of the participating curves carry them (an average of curves
+without them gets one estimated from their scatter). Since a single
 non-positive standard deviation causes the whole error column of a file to be discarded on loading,
 an unexpected <i>NOT using standard deviation</i> notice is usually traced back to that.<p>
 </ul>

@@ -172,6 +172,9 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_avg->setMinimumHeight(minHeight1);
    pb_avg->setPalette( PALET_PUSHB );
    connect(pb_avg, SIGNAL(clicked()), SLOT(avg()));
+   // right-click: how the sd of the average is obtained, and the spike option (avg_options_menu())
+   pb_avg->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( pb_avg, SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( avg_options_menu( const QPoint & ) ) );
 
    pb_normalize = new QPushButton(us_tr("N"), this);
    pb_normalize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -184,6 +187,8 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_conc_avg->setMinimumHeight(minHeight1);
    pb_conc_avg->setPalette( PALET_PUSHB );
    connect(pb_conc_avg, SIGNAL(clicked()), SLOT(conc_avg()));
+   pb_conc_avg->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( pb_conc_avg, SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( avg_options_menu( const QPoint & ) ) );
 
    pb_check_dilutions = new QPushButton( us_tr( "Check dilutions" ), this );
    pb_check_dilutions->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
@@ -219,6 +224,14 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    lbl_buffer->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_buffer );
    lbl_buffer->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   pb_subtract_buffer = new QPushButton( us_tr( "Subtract" ), this );
+   pb_subtract_buffer->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   pb_subtract_buffer->setMinimumHeight( minHeight1 );
+   pb_subtract_buffer->setPalette( PALET_PUSHB );
+   pb_subtract_buffer->setToolTip( us_tr( "Subtract the buffer from every selected curve, point by point (alpha 1), with the sd added\n"
+                                          "in quadrature; the Buffer subtraction window has the scaling, blank and range options" ) );
+   connect( pb_subtract_buffer, SIGNAL( clicked() ), SLOT( subtract_buffer() ) );
 
    pb_set_empty = new QPushButton(us_tr("Set blank"), this);
    pb_set_empty->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -907,6 +920,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    QBoxLayout * hbl_buffer = new QHBoxLayout(); hbl_buffer->setContentsMargins( 0, 0, 0, 0 ); hbl_buffer->setSpacing( 0 );
    hbl_buffer->addWidget ( pb_set_buffer );
    hbl_buffer->addWidget ( lbl_buffer );
+   hbl_buffer->addWidget ( pb_subtract_buffer );
 
    QBoxLayout * hbl_empty = new QHBoxLayout(); hbl_empty->setContentsMargins( 0, 0, 0, 0 ); hbl_empty->setSpacing( 0 );
    hbl_empty->addWidget ( pb_set_empty );
