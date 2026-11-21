@@ -14,6 +14,7 @@
 #include "us_calc_matching.h"
 #include "us_calc_range.h"
 #include "us_calc_replicate.h"
+#include "us_calc_report_item.h"
 #include "us_calc_tolerance.h"
 #include "us_calc_units.h"
 #include "us_constants.h"
@@ -10799,31 +10800,16 @@ model_used.components[ ii ].vbar20 ),
        mstr += indent( 2 ) + "</table>\n";
      }
 
-   //Now, integration results
-   //1st, check if for a given model (method) there are reportItems:
-   bool method_type_combo_exists = false;
-   int report_items_number = reportGMP-> reportItems.size();
-   for ( int kk = 0; kk < report_items_number; ++kk )
+     //Now, integration results:  shown when a report item applies to this model
+     int         report_items_number = reportGMP->reportItems.size();
+     QStringList item_methods;
+     for ( int kk = 0; kk < report_items_number; ++kk )
      {
-       US_ReportGMP::ReportItem curr_item = reportGMP-> reportItems[ kk ];
-       QString method         = curr_item.method;
-       if( method.contains ("PCSA") )
-	 method = "PCSA";
-       /* */
-       QStringList a_method_types = method.split("-");
-       bool method_identity = true;
-       for (const QString& sub : a_method_types )
-	 {
-	  if (!mdla.contains(sub) )
-	    method_identity = false; 
-	 }
-	/* */
-	 
-       if ( mdla.contains ( method ) || method_identity )
-	 method_type_combo_exists = true;
+        item_methods << reportGMP->reportItems[kk].method;
      }
-   
-   if ( show_integration && method_type_combo_exists )
+     const bool method_type_combo_exists = US_Calc::any_method_matches( item_methods, model_used.description );
+
+     if ( show_integration && method_type_combo_exists )
      {
        mstr += "\n" + indent( 2 ) + tr( "<h3>Integration Results: Fraction of Total Concentration:</h3>\n" );
        mstr += indent( 2 ) + "<table>\n";
@@ -10837,62 +10823,49 @@ model_used.components[ ii ].vbar20 ),
        const US_Calc::Model range_model = model_used.calc_model();
        for ( int kk = 0; kk < report_items_number; ++kk )
 	 {
-	   US_ReportGMP::ReportItem curr_item = reportGMP-> reportItems[ kk ];
-	   QString type           = curr_item.type;
-	   QString method         = curr_item.method;
-	   if( method.contains ("PCSA") )
-	     method = "PCSA";
-	   
-	   QString int_val_r      = QString::number( curr_item.integration_val );
-	   double  frac_tot_r     = curr_item.total_percent;
-	   double  frac_tot_tol_r = curr_item.tolerance ;
-	   double  low            = curr_item.range_low;
-      double                     high           = curr_item.range_high;
+       US_ReportGMP::ReportItem        curr_item      = reportGMP->reportItems[kk];
+       QString                         type           = curr_item.type;
+       QString                         int_val_r      = QString::number( curr_item.integration_val );
+       double                          frac_tot_r     = curr_item.total_percent;
+       double                          frac_tot_tol_r = curr_item.tolerance;
+       double                          low            = curr_item.range_low;
+       double                          high           = curr_item.range_high;
 
-      QString                    range = "[" + QString::number( low ) + " - " + QString::number( high ) + "]";
+       QString                         range = "[" + QString::number( low ) + " - " + QString::number( high ) + "]";
 
-      // Integrate over model_used with US_Calc:  inclusive range in report
-      // units, sums in component order, divisions unguarded, so every value
-      // (nan and inf included) and every pass/fail is the one the reporter's
-      // own arithmetic gave.  An inverted range selects nothing.  An item
-      // type that is not a range type also selects nothing:  its fraction is
-      // 0 / C * 100.
-      bool                       range_type                = false;
-      const US_Calc::Quantity    quantity                  = US_Calc::quantity_from_report_type( type, &range_type );
-      const US_Calc::RangeResult range_result              = US_Calc::range_summary( range_model, { quantity, low, high } );
-      double                     int_val_m                 = range_result.range_concentration;
-      double                     frac_tot_m                = range_type ? range_result.fraction_percent : ( 0.0 / sum_c ) * 100.0;
-      double                     wav_variable_within_range = range_result.within_range_mean;
+       // The item's range result, fraction and pass/fail (US_Calc "report_item")
+       const US_Calc::ReportItemResult item_result =
+          US_Calc::evaluate_report_item( range_model, { type, curr_item.method, low, high, frac_tot_r, frac_tot_tol_r } );
+       double     int_val_m                 = item_result.range_concentration;
+       double     frac_tot_m                = item_result.fraction_percent;
+       double     wav_variable_within_range = item_result.within_range_mean;
+       QString    tot_frac_passed           = item_result.passed ? "YES" : "NO";
 
-      QString                    tot_frac_passed =
-         US_Calc::passes( frac_tot_m, { US_Calc::ToleranceRule::AbsolutePercentagePoints, frac_tot_r, frac_tot_tol_r } ) ? "YES"
-                                                                                                                                            : "NO";
+       const bool method_identity = US_Calc::method_matches( curr_item.method, model_used.description );
 
-      const bool method_identity = US_Calc::method_matches( curr_item.method, model_used.description );
+       //if ( mdla.contains ( method ) )
+       if ( method_identity )
+       {
+          // curr_item. integration_val_sim = int_val_m;
+          // curr_item. total_percent_sim   = frac_tot_m;
+          // curr_item. passed              = tot_frac_passed;
 
-      //if ( mdla.contains ( method ) )
-      if ( method_identity )
-      {
-         // curr_item. integration_val_sim = int_val_m;
-         // curr_item. total_percent_sim   = frac_tot_m;
-         // curr_item. passed              = tot_frac_passed;
+          reportGMP->reportItems[kk].integration_val_sim = int_val_m;
+          reportGMP->reportItems[kk].total_percent_sim   = frac_tot_m;
+          reportGMP->reportItems[kk].passed              = tot_frac_passed;
 
-         reportGMP->reportItems[kk].integration_val_sim = int_val_m;
-         reportGMP->reportItems[kk].total_percent_sim   = frac_tot_m;
-         reportGMP->reportItems[kk].passed              = tot_frac_passed;
+          qDebug() << "In distrib_info(), fill simulated integration vals: for chann/wvl/type/method/low/high, "
+                   << "Inter. val. Sim -- " << wvl << curr_item.type << curr_item.method << curr_item.range_low
+                   << curr_item.range_high << int_val_m;
 
-         qDebug() << "In distrib_info(), fill simulated integration vals: for chann/wvl/type/method/low/high, "
-                  << "Inter. val. Sim -- " << wvl << curr_item.type << curr_item.method << curr_item.range_low
-                  << curr_item.range_high << int_val_m;
-
-         mstr += table_row( type,
-                            range,
-                            QString::asprintf( "%10.4e", wav_variable_within_range ),
-                            QString::asprintf( "%10.4e", int_val_m ) + " (" + int_val_r + ")",
-                            QString::asprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
-                            QString::number( frac_tot_tol_r ),
-                            tot_frac_passed );
-      }
+          mstr += table_row( type,
+                             range,
+                             QString::asprintf( "%10.4e", wav_variable_within_range ),
+                             QString::asprintf( "%10.4e", int_val_m ) + " (" + int_val_r + ")",
+                             QString::asprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
+                             QString::number( frac_tot_tol_r ),
+                             tot_frac_passed );
+       }
     }
        mstr += indent( 2 ) + "</table>\n";
      }

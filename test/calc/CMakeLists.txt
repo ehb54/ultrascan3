@@ -16,6 +16,7 @@ endif()
 # Unit tests of the calculations (namespace US_Calc).
 add_executable(test_us_calc
         test_us_calc_preparation.cpp
+        test_us_calc_report.cpp
         test_us_calc_rules.cpp
         test_us_calc_units.cpp
         test_us_calc_validation.cpp

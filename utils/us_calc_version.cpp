@@ -7,7 +7,7 @@ namespace US_Calc
 {
 QString library_version()
 {
-   return "0.2.0";
+   return "0.3.0";
 }
 
 QVector<AlgorithmVersion> algorithms()
@@ -47,6 +47,10 @@ QVector<AlgorithmVersion> algorithms()
         1,
         "A report item applies to a model when every '-' part of its method (PCSA methods count as PCSA) "
         "occurs in the model's analysis label, as distrib_info" },
+      { "report_item",
+        1,
+        "A report item on a model as distrib_info:  range_summary for a range type, (0 / C) * 100 for any other "
+        "type, passed when |fraction - target| <= tolerance (percentage points)" },
    };
 }
 

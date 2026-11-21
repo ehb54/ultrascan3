@@ -25,6 +25,7 @@
 #include "us_calc_matching.h"
 #include "us_calc_range.h"
 #include "us_calc_replicate.h"
+#include "us_calc_report_item.h"
 #include "us_calc_smoothing.h"
 #include "us_calc_test_print.h"
 #include "us_calc_tolerance.h"
@@ -210,6 +211,46 @@ TEST_F( UsCalcFixtures, RangeSummariesMatchTheOracle )
       ++checked;
    }
    EXPECT_EQ( checked, expected["ranges"].toArray().size() );
+}
+
+// Each report item on each fixture model, as the reporter's Integration
+// Results row:  the fraction (0 for a type that is not a range type), the
+// pass/fail in percentage points and whether the item applies to the model.
+TEST_F( UsCalcFixtures, ReportItemsMatchTheOracle )
+{
+   int checked = 0;
+   for ( const QJsonValue& v : expected["ranges"].toArray() )
+   {
+      const QJsonObject e    = v.toObject();
+      const QString     key  = e["model"].toString();
+      const QJsonObject item = itemFor( items, e );
+      SCOPED_TRACE( key + " item " + QString::number( e["item"].toInt() ) + " (" + e["sample"].toString() + ")" );
+      const Model            model = input( key );
+      const ReportItemResult r     = evaluate_report_item( model,
+                                                           { item["type"].toString(),
+                                                             item["method"].toString(),
+                                                             item["low"].toDouble(),
+                                                             item["high"].toDouble(),
+                                                             item["target"].toDouble(),
+                                                             item["tolerance"].toDouble() } );
+      EXPECT_EQ( r.range_type, e["supported"].toBool() );
+      EXPECT_EQ( any_method_matches( { item["method"].toString() }, model.description ), e["matched"].toBool() );
+      if ( e["fraction"].isNull() )
+      {
+         EXPECT_FALSE( std::isfinite( r.fraction_percent ) );
+         EXPECT_FALSE( r.passed );
+      }
+      else
+      {
+         EXPECT_EQ( r.fraction_percent, e["fraction_double"].toDouble() );
+      }
+      if ( e.contains( "pass_pp" ) && !e["pass_pp"].isNull() )
+      {
+         EXPECT_EQ( r.passed, e["pass_pp"].toBool() );
+      }
+      ++checked;
+   }
+   EXPECT_EQ( checked, 552 );
 }
 
 TEST_F( UsCalcFixtures, WholeModelMeansMatchTheOracle )
