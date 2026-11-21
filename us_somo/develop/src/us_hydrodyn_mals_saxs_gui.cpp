@@ -5253,7 +5253,7 @@ void US_Hydrodyn_Mals_Saxs::update_enables()
                                     plot_dist_zoomer && 
                                     plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase()
                                     );
-   pb_legend           ->setEnabled( lb_files->count() && files_selected_count <= 20 && !cb_eb->isChecked() );
+   pb_legend           ->setEnabled( lb_files->count() && files_selected_count <= 20 );
    pb_axis_x           ->setEnabled( lb_files->count() );
    pb_axis_y           ->setEnabled( lb_files->count() );
 
