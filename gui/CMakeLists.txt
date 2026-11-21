@@ -210,21 +210,26 @@ add_library(UltraScan3::Gui ALIAS us_gui)
 # ============================================================================
 # STATIC LIBRARY
 # ============================================================================
-message(STATUS "Building static us_gui library")
+# APP programs use the shared GUI library. Build the static variant only for
+# tests or callers that explicitly prefer static UltraScan libraries, matching
+# the condition used for us_utils_static.
+if(BUILD_TESTING OR US3_PREFER_STATIC)
+    message(STATUS "Building static us_gui library")
 
-add_library(us_gui_static STATIC ${GUI_SOURCES} ${GUI_HEADERS} ${GUI_FORMS})
+    add_library(us_gui_static STATIC ${GUI_SOURCES} ${GUI_HEADERS} ${GUI_FORMS})
 
-# Set properties unique to static library
-set_target_properties(us_gui_static PROPERTIES
-        OUTPUT_NAME "us_gui${PROJECT_VERSION_MAJOR}_static"
-        POSITION_INDEPENDENT_CODE ON
-        )
+    # Set properties unique to static library
+    set_target_properties(us_gui_static PROPERTIES
+            OUTPUT_NAME "us_gui${PROJECT_VERSION_MAJOR}_static"
+            POSITION_INDEPENDENT_CODE ON
+            )
 
-# Apply common configuration
-configure_us_gui_target(us_gui_static TRUE)
+    # Apply common configuration
+    configure_us_gui_target(us_gui_static TRUE)
 
-# Create static alias
-add_library(UltraScan3::Gui_Static ALIAS us_gui_static)
+    # Create static alias
+    add_library(UltraScan3::Gui_Static ALIAS us_gui_static)
+endif()
 
 # ============================================================================
 # INSTALLATION - Only install shared library

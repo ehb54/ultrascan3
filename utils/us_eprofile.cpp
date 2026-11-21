@@ -1,6 +1,7 @@
 //! \file us_eprofile.cpp
 #include "us_eprofile.h"
 #include "us_settings.h"
+#include <QLocale>
 
 // This source contains static utility functions for handling extinctionProfile
 // XML strings and database tables.
@@ -31,7 +32,7 @@ int US_ExtProfile::fetch_eprofile( IUS_DB2* dbP, const int compID,
    QString              epxml     = dbP->value( 2 ).toString(); // Extinction profile XML
 
    // Parse the fetched XML; publish nothing unless it holds a profile
-   int                  xCompID;
+   int                  xCompID = 0;
    QString              xCompType;
    QString              xValType;
    QMap<double, double> profile;
@@ -62,7 +63,7 @@ bool US_ExtProfile::parse_eprofile( QString& epxml, int* compID,
    int nptag        = 0;
    int natag        = 0;
    QXmlStreamAttributes attr;
-   extinction.clear();
+   QMap<double, double> parsed;
 
    while( ! xml.atEnd() )
    {
@@ -81,7 +82,7 @@ bool US_ExtProfile::parse_eprofile( QString& epxml, int* compID,
             double wl        = sWln.isEmpty() ? 280.0 : sWln.toDouble();
             wl               = sFrq.isEmpty() ? wl    : sFrq.toDouble();
             double va        = attr.value( "value" ).toString().toDouble();
-            extinction[ wl ] = va;
+            parsed[wl]        = va;
          }
 
          else if ( tname == "extinctionProfile" )
@@ -101,6 +102,12 @@ bool US_ExtProfile::parse_eprofile( QString& epxml, int* compID,
       }
    }
 
+   if ( xml.hasError() || ( natag + nptag ) == 0 )
+   {
+      return false;
+   }
+
+   extinction = parsed;
    if ( compID != NULL )
       *compID          = xCompID;   // Store general profile attribute values
    if ( compType != NULL )
@@ -108,7 +115,7 @@ bool US_ExtProfile::parse_eprofile( QString& epxml, int* compID,
    if ( valType != NULL )
       *valType         = xValType;
 
-    return ( ( natag + nptag ) > 0 );
+   return true;
 }
 
 // Create a new extinction profile in the database
@@ -168,6 +175,7 @@ bool US_ExtProfile::xml_eprofile( const int compID, QString& compType,
    bool create_ok   = true;
    QList< double > keys = extinction.keys();
 
+   xmlout.clear();
    QXmlStreamWriter xml( &xmlout );
    xml.setAutoFormatting( true );
    xml.writeStartDocument();
@@ -184,9 +192,9 @@ bool US_ExtProfile::xml_eprofile( const int compID, QString& compType,
    {
       double wvln      = keys[ ii ];
       double valu      = extinction[ wvln ];
-      QString sWvln    = QString::number( wvln );
-      QString sValu    = QString::number( valu );
-      
+      QString sWvln     = QLocale::c().toString( wvln, 'g', QLocale::FloatingPointShortest );
+      QString sValu     = QLocale::c().toString( valu, 'g', QLocale::FloatingPointShortest );
+
       qDebug() << "Writing XML: " << wvln << ", " << valu;
       
       xml.writeStartElement( "extinction" );

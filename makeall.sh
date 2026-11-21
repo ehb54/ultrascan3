@@ -1,14 +1,17 @@
 #!/bin/bash
 
-QTVERS=`qmake --version|sed -n 2,2p|awk '{print $4}'`
+QTVERS=`qmake --version 2>/dev/null|sed -n 2,2p|awk '{print $4}'`
 echo "Make All for Qt Version ${QTVERS} ..."
 QTMAJV=`echo ${QTVERS}|cut -d. -f1`
-if [ `echo "56"|grep -ci "${QTMAJV}"` -eq 0 ]; then
-  echo "Wrong qmake, check environment"
-  echo " QT Major version must be 4 or 5; is ${QTMAJV}"
-  qmake --version
-  exit
-fi
+case "${QTMAJV}" in
+  5|6) ;;
+  *)
+    echo "Wrong qmake, check environment"
+    echo " QT Major version must be 5 or 6; is '${QTMAJV}'"
+    qmake --version
+    exit 1
+    ;;
+esac
 
 MKARGS="$@"
 if [ $# -eq 0 ]; then
@@ -135,15 +138,19 @@ do
   if [ $d == "programs/us_mwla_viewer"  ]; then continue; fi
   pushd $d
   sdir=`pwd`
-  if [ $ISMAC -eq 0 ]; then
-    qmake *.pro
-  else
-    qmake *.pro
-    if [ "$d" = "gui" ]; then
-      ${FIXMAC}
-    fi
-  fi
   echo "Making in $d"   >> $DIR/build.log
+  # A failed qmake can leave an older Makefile that still builds, so its
+  # failure is counted on its own.
+  if ! qmake *.pro; then
+     echo "  ***ERROR*** qmake failed in $d"
+     echo "*** [qmake] Error in $d" >> $DIR/build.log
+     NBERR=`expr ${NBERR} + 1`
+     popd
+     continue
+  fi
+  if [ $ISMAC -ne 0 ] && [ "$d" = "gui" ]; then
+    ${FIXMAC}
+  fi
   (cd $sdir;${MAKE} 2>&1)  >> $DIR/build.log
   stat=$?
   if [ $stat -gt 0 ]; then
@@ -157,25 +164,33 @@ if [ $DOMAN -ne 0 ]; then
   d=doc/manual
   pushd $d
   sdir=`pwd`
-  echo "Making in $d"   >> $DIR/build.log
-  ## n.b. the make failes with parallel builds, require -j1
+  # doc/manual/Makefile invokes the interpreter as plain "python3"; if the
+  # interpreter we found is named e.g. python3.11, shim a "python3" on
+  # PATH for this build only, so we don't affect anything else.
+  DOC_PATH="$PATH"
+  DOC_PYTHON_BINDIR=
   if [ -n "$DOC_PYTHON" ]; then
-    # doc/manual/Makefile invokes the interpreter as plain "python3"; if the
-    # interpreter we found is named e.g. python3.11, shim a "python3" on
-    # PATH for this build only, so we don't affect anything else.
     DOC_PYTHON_BINDIR=`mktemp -d`
     ln -s "$DOC_PYTHON" "$DOC_PYTHON_BINDIR/python3"
-    PATH="$DOC_PYTHON_BINDIR:$PATH" make -j1 2>&1  >> $DIR/build.log
-  else
-    make -j1 2>&1  >> $DIR/build.log
+    DOC_PATH="$DOC_PYTHON_BINDIR:$PATH"
   fi
-  stat=$?
+  # The same check as doc/manual/manual.pro: without Sphinx or
+  # qhelpgenerator the manual is skipped with a warning.
+  if PATH="$DOC_PATH" make -s qch-tools; then
+    echo "Making in $d"   >> $DIR/build.log
+    ## n.b. the make failes with parallel builds, require -j1
+    PATH="$DOC_PATH" make -j1 2>&1  >> $DIR/build.log
+    stat=$?
+    if [ $stat -gt 0 ]; then
+       echo "  ***ERROR*** building $d"
+       NBERR=`expr ${NBERR} + 1`
+    fi
+  else
+    echo "WARNING: documentation tools not found - the help manual will not be built."
+    echo "  Install them: python3 -m pip install -r doc/manual/source/requirements.txt"
+  fi
   if [ -n "$DOC_PYTHON_BINDIR" ]; then
     rm -rf "$DOC_PYTHON_BINDIR"
-  fi
-  if [ $stat -gt 0 ]; then
-     echo "  ***ERROR*** building $d"
-     NBERR=`expr ${NBERR} + 1`
   fi
   popd
 fi
@@ -197,4 +212,9 @@ fi
 if [ $NBERR -gt 0 ]; then
   echo "*** $NBERR Build Error(s) ***"
   echo "*** $NBERR Build Error(s) ***" >> $DIR/build.log
+  # Callers such as release images and us_branch.php keep only this output,
+  # so show the first errors from the log here.
+  echo "First errors from $DIR/build.log:"
+  grep -n -E ': (fatal )?error|\*\*\* \[|Error [0-9]+' $DIR/build.log | head -40
+  exit 1
 fi

@@ -2,14 +2,8 @@
 #include "qt_test_base.h"
 #include "us_eprofile.h"
 #include <QXmlStreamReader>
-
-// Known defects in US_ExtProfile (ehb54/ultrascan-tickets#1239) that these tests
-// deliberately do not assert, so a fix will not break them:
-// - parse_eprofile ignores the XML error state, so a truncated document containing a
-//   profile element returns true with partial data.
-// - xml_eprofile writes values with default QString::number precision (wavelengths
-//   280.00001 and 280.00002 both become 280), so fixtures use values with few significant digits.
-// - xml_eprofile appends to a nonempty output string, so every writer test starts empty.
+#include <cmath>
+#include <limits>
 
 namespace
 {
@@ -192,5 +186,94 @@ TEST_F( ExtProfileXml, WriterProducesARecognizableEmptyProfileEnvelope )
    }
    EXPECT_FALSE( xml.hasError() );
    EXPECT_EQ( ( QStringList{ "EProfileData", "extinctionProfile" } ), elements );
+}
+
+TEST_F( ExtProfileXml, MalformedProfilePublishesNothing )
+{
+   for ( QString xml : { QString( "<extinctionProfile componentID='17'><extinction wavelength='280' value='1'/>" ),
+                         QString( "<analyte><extinction value='2'/></wrong>" ),
+                         QString( "<extinctionProfile/><broken" ),
+                         QString( "<unknown/>" ),
+                         QString(),
+                         QString( "<root><extinction value='2'/></root>" ),
+                         QString( "<root><extinctionProfile/></root>trailing" ) } )
+   {
+      SCOPED_TRACE( xml.toStdString() );
+      int                  id   = 99;
+      QString              type = "old", valueType = "old";
+      QMap<double, double> spectrum{ { 999, 99 } };
+      EXPECT_FALSE( US_ExtProfile::parse_eprofile( xml, &id, &type, &valueType, spectrum ) );
+      EXPECT_EQ( 99, id );
+      EXPECT_EQ( QString( "old" ), type );
+      EXPECT_EQ( QString( "old" ), valueType );
+      EXPECT_EQ( ( QMap<double, double>{ { 999, 99 } } ), spectrum );
+   }
+}
+
+TEST_F( ExtProfileXml, ProfileWriterReplacesReusedOutput )
+{
+   QString              type = "Buffer", valueType = "molarExtinction", output = "previous";
+   QMap<double, double> spectrum{ { 280, 1 }, { 300, 2 } };
+   for ( int i = 0; i < 2; ++i )
+   {
+      ASSERT_TRUE( US_ExtProfile::xml_eprofile( 17, type, valueType, spectrum, output ) );
+      QMap<double, double> actual;
+      ASSERT_TRUE( US_ExtProfile::parse_eprofile( output, nullptr, nullptr, nullptr, actual ) );
+      EXPECT_EQ( spectrum, actual );
+      spectrum.clear();
+   }
+}
+
+TEST_F( ExtProfileXml, ProfileWriterPreservesAdjacentWavelengthsAndValuePrecision )
+{
+   QString              type = "Buffer", valueType = "molarExtinction", output;
+   const double         adjacent = std::nextafter( 280.0, 281.0 );
+   QMap<double, double> spectrum{ { 280.0, 1.2345678901234567 },
+                                  { adjacent, 9.876543210987654 },
+                                  { 280.00001, -1.234567890123456e-100 },
+                                  { 280.00002, std::numeric_limits<double>::max() },
+                                  { 300, std::numeric_limits<double>::min() } };
+   ASSERT_TRUE( US_ExtProfile::xml_eprofile( 17, type, valueType, spectrum, output ) );
+   // Inspect the writer independently of parse_eprofile, so reader behavior
+   // cannot hide a collapsed wavelength or rounded value.
+   QXmlStreamReader     xml( output );
+   QMap<double, double> written;
+   int                  points = 0;
+   while ( !xml.atEnd() )
+   {
+      xml.readNext();
+      if ( xml.isStartElement() && xml.name() == QStringLiteral( "extinction" ) )
+      {
+         const auto   attrs = xml.attributes();
+         bool         keyOk = false, valueOk = false;
+         const double key   = attrs.value( "wavelength" ).toDouble( &keyOk );
+         const double value = attrs.value( "value" ).toDouble( &valueOk );
+         EXPECT_TRUE( keyOk );
+         EXPECT_TRUE( valueOk );
+         written[key] = value;
+         ++points;
+      }
+   }
+   EXPECT_FALSE( xml.hasError() );
+   EXPECT_EQ( spectrum.size(), points );
+   EXPECT_EQ( spectrum, written );
+   QMap<double, double> actual;
+   ASSERT_TRUE( US_ExtProfile::parse_eprofile( output, nullptr, nullptr, nullptr, actual ) );
+   EXPECT_EQ( spectrum, actual );
+}
+
+TEST_F( ExtProfileXml, ProfileWriterUsesShortestLocaleIndependentRoundTripNumbers )
+{
+   const QLocale previous = QLocale();
+   QLocale::setDefault( QLocale( QLocale::German ) );
+   QString              type = "Buffer", valueType = "molarExtinction", output;
+   QMap<double, double> spectrum{ { 280.1, 0.1 } };
+   EXPECT_TRUE( US_ExtProfile::xml_eprofile( 17, type, valueType, spectrum, output ) );
+   QLocale::setDefault( previous );
+   EXPECT_TRUE( output.contains( "wavelength=\"280.1\"" ) );
+   EXPECT_TRUE( output.contains( "value=\"0.1\"" ) );
+   QMap<double, double> actual;
+   ASSERT_TRUE( US_ExtProfile::parse_eprofile( output, nullptr, nullptr, nullptr, actual ) );
+   EXPECT_EQ( spectrum, actual );
 }
 }
