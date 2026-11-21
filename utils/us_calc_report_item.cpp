@@ -31,6 +31,28 @@ ReportItemResult evaluate_report_item( const Model& model, const ReportItem& ite
    return result;
 }
 
+VelMwlItemResult evaluate_velmwl_item( const Model& model, const ReportItem& item )
+{
+   VelMwlItemResult result;
+   result.algorithm = algorithm( "velmwl_report_item" );
+   if ( model.components.isEmpty() )
+   {
+      result.passed =
+         passes( result.fraction_percent, { ToleranceRule::AbsolutePercentagePoints, item.target_percent, item.tolerance } );
+      return result;
+   }
+   const Quantity quantity = quantity_from_report_type( item.type, &result.supported );
+   if ( !result.supported )
+   {
+      return result;
+   }
+   result.range            = range_summary( model, { quantity, item.low, item.high } );
+   result.fraction_percent = ( result.range.total_concentration > 0.0 ) ? result.range.fraction_percent : 0.0;
+   result.passed =
+      passes( result.fraction_percent, { ToleranceRule::AbsolutePercentagePoints, item.target_percent, item.tolerance } );
+   return result;
+}
+
 bool any_method_matches( const QStringList& item_methods, const QString& model_description )
 {
    for ( const QString& method : item_methods )

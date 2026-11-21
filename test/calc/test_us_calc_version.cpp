@@ -36,7 +36,8 @@ TEST( UsCalcVersion, AlgorithmsAreNamedVersionedAndDescribed )
                               "gaussian_smoothing",
                               "weighted_statistics",
                               "report_item_matching",
-                              "report_item" } )
+                              "report_item",
+                              "velmwl_report_item" } )
    {
       EXPECT_TRUE( names.contains( name ) ) << name;
    }

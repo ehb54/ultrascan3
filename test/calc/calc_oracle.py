@@ -4,7 +4,7 @@
 The oracle reads the fixture models and report items and computes what the
 GMP reporter's range and replicate calculations produce for them
 (programs/us_reporter_gmp/us_reporter_gmp.cpp: distrib_info near 10262,
-velmwl_range_fraction at 4479, get_replicate_group_results at 10140, and the
+distrib_info_velmwl, get_replicate_group_results at 10140, and the
 tolerance checks at 10045, 10728 and 10946).
 
 Model values are read as the C++ code reads them (to IEEE doubles).  Range
@@ -231,7 +231,7 @@ def range_result(model, item):
     c_total = sum((F(c["signal"]) for c in comps), Fraction(0))
     if attr is None:
         # distrib_info matches no type branch, so nothing is selected and the
-        # fraction is 0/C; velmwl_range_fraction reports the type unsupported.
+        # fraction is 0/C; distrib_info_velmwl reports the type unsupported.
         out = {
             "supported": False,
             "matched": method_matches(item["method"], model["description"]),
@@ -252,7 +252,7 @@ def range_result(model, item):
         "selected": len(selected),
         "R": float(r),
         "C": float(c_total),
-        # distrib_info divides without a guard; velmwl_range_fraction returns 0
+        # distrib_info divides without a guard; distrib_info_velmwl gives 0
         "fraction": to_float(100 * r / c_total) if c_total != 0 else None,
         "fraction_velmwl": to_float(100 * r / c_total) if c_total > 0 else 0.0,
         "within_mean": to_float(num / r) if r != 0 else None,

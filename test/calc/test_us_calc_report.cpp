@@ -183,3 +183,54 @@ TEST( UsCalcReportItem, AnyMethodMatches )
    // An empty method has one empty part, which every label contains.
    EXPECT_TRUE( any_method_matches( { QString() }, it ) );
 }
+
+// 2.  VELOCITY-MWL items:  as report items when the total is positive.
+TEST( UsCalcVelMwlItem, PositiveTotalAsReportItem )
+{
+   const Model m = three_solutes();
+   for ( const ReportItem& it :
+         { item( "s", 4.0, 7.0, 75.0, 0.0 ), item( "f/f0", 1.6, 1.6, 40.0, 10.0 ), item( "s", 7.0, 4.0, 0.0, 0.0 ) } )
+   {
+      SCOPED_TRACE( it.type + " " + QString::number( it.low ) + "-" + QString::number( it.high ) );
+      const VelMwlItemResult v = evaluate_velmwl_item( m, it );
+      const ReportItemResult r = evaluate_report_item( m, it );
+      EXPECT_TRUE( v.supported );
+      EXPECT_EQ( v.fraction_percent, r.fraction_percent );
+      EXPECT_EQ( v.passed, r.passed );
+   }
+   // Percentage-point edges
+   EXPECT_TRUE( evaluate_velmwl_item( m, item( "s", 4.0, 7.0, 65.0, 10.0 ) ).passed );
+   EXPECT_FALSE( evaluate_velmwl_item( m, item( "s", 4.0, 7.0, 64.99, 10.0 ) ).passed );
+}
+
+// 2.  A type that is not a range type shows n/a; a model without components
+// is never examined and gives 0; a total that is not positive gives 0.
+TEST( UsCalcVelMwlItem, UnsupportedEmptyAndNonPositiveTotals )
+{
+   const VelMwlItemResult unsupported = evaluate_velmwl_item( three_solutes(), item( "vbar", 0.0, 1.0, 0.0, 0.0 ) );
+   EXPECT_FALSE( unsupported.supported );
+   EXPECT_EQ( unsupported.fraction_percent, 0.0 );
+
+   for ( const QString& type : { QString( "s" ), QString( "vbar" ) } )
+   {
+      SCOPED_TRACE( type );
+      const VelMwlItemResult empty = evaluate_velmwl_item( Model(), item( type, 0.0, 10.0, 0.0, 0.0 ) );
+      EXPECT_TRUE( empty.supported );
+      EXPECT_EQ( empty.fraction_percent, 0.0 );
+      EXPECT_TRUE( empty.passed );
+   }
+
+   // C = 0:  the report item divides (NaN), the VELOCITY-MWL item gives 0.
+   Model zero;
+   zero.components = { solute( 4.5e-13, 1.2, 1.0 ), solute( 9.0e-13, 2.0, -1.0 ) };
+   EXPECT_TRUE( std::isinf( evaluate_report_item( zero, item( "s", 4.0, 7.0, 0.0, 0.0 ) ).fraction_percent ) );
+   EXPECT_EQ( evaluate_velmwl_item( zero, item( "s", 4.0, 7.0, 0.0, 0.0 ) ).fraction_percent, 0.0 );
+
+   // C < 0 with R > 0:  the report item gives -100 %, the VELOCITY-MWL item 0.
+   Model negative;
+   negative.components = { solute( 4.5e-13, 1.2, 1.0 ), solute( 9.0e-13, 2.0, -2.0 ) };
+   EXPECT_EQ( evaluate_report_item( negative, item( "s", 4.0, 7.0, 0.0, 0.0 ) ).fraction_percent, -100.0 );
+   const VelMwlItemResult n = evaluate_velmwl_item( negative, item( "s", 4.0, 7.0, 0.0, 0.0 ) );
+   EXPECT_EQ( n.fraction_percent, 0.0 );
+   EXPECT_TRUE( n.passed );
+}

@@ -13,7 +13,7 @@ namespace US_Calc
 //! times the reporter's scale factor.
 //!
 //! The scale factors are those of the GMP reporter (us_reporter_gmp.cpp,
-//! distrib_info and velmwl_range_fraction):  1e-13 for s, 1e-7 for D, 1e3
+//! distrib_info and distrib_info_velmwl):  1e-13 for s, 1e-7 for D, 1e3
 //! for MW and 1 otherwise.  The product is formed exactly as there, so a
 //! component on a bound is included or excluded as before.
 US_UTIL_EXTERN double   to_model_units( Quantity quantity, double report_value );

@@ -248,6 +248,21 @@ TEST_F( UsCalcFixtures, ReportItemsMatchTheOracle )
       {
          EXPECT_EQ( r.passed, e["pass_pp"].toBool() );
       }
+
+      // The same item in a VELOCITY-MWL table:  n/a for an unsupported
+      // type, 0 when the total is not positive.
+      const VelMwlItemResult w = evaluate_velmwl_item( model,
+                                                       { item["type"].toString(),
+                                                         item["method"].toString(),
+                                                         item["low"].toDouble(),
+                                                         item["high"].toDouble(),
+                                                         item["target"].toDouble(),
+                                                         item["tolerance"].toDouble() } );
+      EXPECT_EQ( w.supported, e["supported"].toBool() || model.components.isEmpty() );
+      if ( e.contains( "fraction_velmwl" ) )
+      {
+         EXPECT_LE( std::fabs( w.fraction_percent - e["fraction_velmwl"].toDouble() ), tol.fraction_abs );
+      }
       ++checked;
    }
    EXPECT_EQ( checked, 552 );

@@ -51,6 +51,11 @@ QVector<AlgorithmVersion> algorithms()
         1,
         "A report item on a model as distrib_info:  range_summary for a range type, (0 / C) * 100 for any other "
         "type, passed when |fraction - target| <= tolerance (percentage points)" },
+      { "velmwl_report_item",
+        1,
+        "A report item on a VELOCITY-MWL species model as distrib_info_velmwl:  0 for a model without components, "
+        "unsupported (n/a) for a type that is not a range type, 0 when the total is not positive, otherwise "
+        "range_summary's fraction; passed when |fraction - target| <= tolerance (percentage points)" },
    };
 }
 

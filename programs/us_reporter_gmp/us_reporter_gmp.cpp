@@ -4480,28 +4480,6 @@ QString US_ReporterGMP::html_header_velmwl( QString title, QString runName, QStr
    return s;
 }
 
-// Percent of the model's concentration within a report item's range, from
-// US_Calc.  An item type that is not a range type is unsupported, except on
-// a model without components, where the type is never examined; a total
-// that is not positive gives 0.
-static double velmwl_range_fraction( const US_Model& mdl, const QString& type, double low, double high, bool& supported )
-{
-   supported = true;
-   if ( mdl.components.isEmpty() )
-   {
-      return 0.0;
-   }
-
-   const US_Calc::Quantity quantity = US_Calc::quantity_from_report_type( type, &supported );
-   if ( !supported )
-   {
-      return 0.0;
-   }
-
-   const US_Calc::RangeResult r = US_Calc::range_summary( mdl.calc_model(), { quantity, low, high } );
-   return ( r.total_concentration > 0.0 ) ? r.fraction_percent : 0.0;
-}
-
 // VELOCITY-MWL: timestamps, species (models) used, analysis settings,
 // distribution info (separate .pdf), and Integration Results: for each species
 // model, the fraction of total concentration within each report item's range
@@ -4628,19 +4606,19 @@ QString US_ReporterGMP::distrib_info_velmwl( const QString&         chan_tag,
             double                   high       = curr_item.range_high;
             QString                  range      = "[" + QString::number( low ) + " - " + QString::number( high ) + "]";
 
-            bool                     supported;
-            double                   frac_tot_m = velmwl_range_fraction( models[im], type, low, high, supported );
+            // The fraction and pass/fail (US_Calc "velmwl_report_item")
+            const US_Calc::VelMwlItemResult item_result =
+               US_Calc::evaluate_velmwl_item( models[im].calc_model(), { type, curr_item.method, low, high, frac_tot_r, tol_r } );
 
-            if ( !supported )
+            if ( !item_result.supported )
             {
                mstr_sp += table_row(
                   type, range, tr( "n/a" ) + " (" + QString::number( frac_tot_r ) + "%)", QString::number( tol_r ), tr( "n/a" ) );
                continue;
             }
 
-            QString passed = US_Calc::passes( frac_tot_m, { US_Calc::ToleranceRule::AbsolutePercentagePoints, frac_tot_r, tol_r } )
-                                ? "YES"
-                                : "NO";
+            double  frac_tot_m = item_result.fraction_percent;
+            QString passed     = item_result.passed ? "YES" : "NO";
 
             mstr_sp += table_row( type,
                                   range,

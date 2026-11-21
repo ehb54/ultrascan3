@@ -50,6 +50,28 @@ struct ReportItemResult
 //! \brief Evaluates a report item on a model.
 US_UTIL_EXTERN ReportItemResult evaluate_report_item( const Model& model, const ReportItem& item );
 
+//! \brief A report item's result on one species model of a VELOCITY-MWL
+//! channel (algorithm "velmwl_report_item").
+struct VelMwlItemResult
+{
+      //! False for a type that is not a range type:  the reporter shows n/a
+      //! and no pass/fail.  A model without components is never examined, so
+      //! its result is supported whatever the type.
+      bool             supported        = true;
+      //! (R / C) * 100 when C > 0, otherwise 0; 0 for a model without
+      //! components and for an unsupported type.
+      double           fraction_percent = 0.0;
+      //! |fraction - target| <= tolerance; not meaningful when unsupported.
+      bool             passed           = false;
+      RangeResult      range; //!< The range result (empty for a model without components or an unsupported type)
+      AlgorithmVersion algorithm;
+};
+
+//! \brief Evaluates a report item on a VELOCITY-MWL species model, as
+//! distrib_info_velmwl:  unlike evaluate_report_item, a total that is not
+//! positive gives 0 rather than the undivided fraction.
+US_UTIL_EXTERN VelMwlItemResult evaluate_velmwl_item( const Model& model, const ReportItem& item );
+
 //! \brief True when any of the methods applies to the model (method_matches):
 //! the reporter shows a model's Integration Results table only then.
 US_UTIL_EXTERN bool             any_method_matches( const QStringList& item_methods, const QString& model_description );
