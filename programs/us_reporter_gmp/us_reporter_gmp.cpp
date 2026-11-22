@@ -10622,7 +10622,7 @@ model_used.components[ ii ].vbar20 ),
        double     wav_variable_within_range = item_result.within_range_mean;
        QString    tot_frac_passed           = item_result.passed ? "YES" : "NO";
 
-       const bool method_identity = US_Calc::method_matches( curr_item.method, model_used.description );
+       const bool method_identity = US_Calc::Gmp::method_matches( curr_item.method, model_used.description );
 
        //if ( mdla.contains ( method ) )
        if ( method_identity )

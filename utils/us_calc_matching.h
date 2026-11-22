@@ -14,6 +14,9 @@
 
 namespace US_Calc
 {
+//! GMP report rules
+namespace Gmp
+{
 //! \brief The analysis label of a model description:
 //! description.section('.', -2, -2).section('_', 1, -1), or
 //! description.section('.', 0, -2) when that is empty.
@@ -21,6 +24,7 @@ US_UTIL_EXTERN QString analysis_label( const QString& description );
 
 //! \brief True when a report item's method applies to a model.
 US_UTIL_EXTERN bool    method_matches( const QString& item_method, const QString& model_description );
+} // namespace Gmp
 } // namespace US_Calc
 
 #endif
