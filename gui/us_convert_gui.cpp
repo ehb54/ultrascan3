@@ -3037,7 +3037,20 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
 
       // Information is there, but we need to see if the runID exists in the
       // DB. If we didn't load it from there, then we shouldn't be able to sync
+      const bool connected = ( db.lastErrno() == US_DB2::OK );
       int recStatus = ExpData.checkRunID( &db );
+
+      // A failed lookup on a working connection leaves it unknown
+      //  whether the runID is stored, so saving waits for a retry
+      if ( connected && recStatus != US_DB2::OK && recStatus != US_DB2::NOROWS )
+      {
+         count++;
+         lw_todoinfo->addItem( QString::number( count ) +
+                               tr( ": Retry; the database could not be"
+                                   " checked for this runID: " ) +
+                               db.lastError() );
+         completed = false;
+      }
 
       // if a record is found but saveStatus==BOTH,
       //  then we are editing that record
@@ -4615,6 +4628,15 @@ DbgLv(1) << "CGui: gExpInf: IN";
       //int recStatus = ExpData.checkRunID( &db );
       int recStatus = ExpData.checkRunID_auto( ExpData.invID, &db );
 
+      if ( recStatus != US_DB2::OK && recStatus != US_DB2::NOROWS )
+      {
+         QMessageBox::warning( this,
+                tr( "Database Problem" ),
+                tr( "Could not check whether the current runID is in"
+                    " the database:\n" ) + db.lastError() );
+         return;
+      }
+
       qDebug() << "IN getExpInfo_auto( void ) !";
       // if saveStatus == BOTH, then we are editing the record from the database
       if ( ( recStatus == US_DB2::OK ) && ( saveStatus != BOTH ) )
@@ -4747,6 +4769,16 @@ DbgLv(1) << "CGui: gExpInf: IN";
 
       // Check if the run ID already exists in the DB
       int recStatus = ExpData.checkRunID( &db );
+
+      if ( recStatus != US_DB2::OK && recStatus != US_DB2::NOROWS )
+      {
+         QMessageBox::warning( this,
+                               tr( "Database Problem" ),
+                               tr( "Could not check whether the current runID is in"
+                                   " the database:\n" ) +
+                                  db.lastError() );
+         return;
+      }
 
       // if saveStatus == BOTH, then we are editing the record from the database
       if ( ( recStatus == US_DB2::OK ) && ( saveStatus != BOTH ) )
