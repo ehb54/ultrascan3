@@ -5,9 +5,11 @@
 #include <dlfcn.h>
 #endif
 
-#include "us_math2.h"
+#include "us_calc_smoothing.h"
+#include "us_calc_statistics.h"
 #include "us_constants.h"
 #include "us_dataIO.h"
+#include "us_math2.h"
 #include "us_matrix.h"
 #include "us_settings.h"
 
@@ -113,41 +115,12 @@ double US_Math2::linefit( double** x       , double** y    , double* slope,
                           double* intercept, double*  sigma, double* correlation, 
                           int     arraysize )
 {
-   double sumx      = 0.0;
-   double sumy      = 0.0;
-   double sumxy     = 0.0;
-   double sumx_sq   = 0.0;
-   double sumy_sq   = 0.0;
-   double sumchi_sq = 0.0;
-   double average;
-   
-   for ( int i = 0; i < arraysize; i++ ) sumy += (*y)[ i ]; 
-   
-   average = sumy / arraysize;
-   
-   for ( int i = 0; i < arraysize; i++ )
-   {
-      sumx      += (*x)[ i ];
-      sumxy     += (*x)[ i ] * (*y)[ i ];
-      sumx_sq   += (*x)[ i ] * (*x)[ i ];
-      sumy_sq   += (*y)[ i ] * (*y)[ i ];
-
-      sumchi_sq += ( (*y)[ i ] - average ) * ( (*y)[ i ] - average );
-   }
-
-   *slope       = ( arraysize * sumxy   - sumx * sumy ) / 
-                  ( arraysize * sumx_sq - sumx * sumx );
-
-   *intercept   = ( sumy - *slope * sumx ) / arraysize;
-   
-   *correlation = ( arraysize * sumxy - sumx * sumy ) /
-                  ( sqrt( arraysize * sumx_sq - sumx * sumx ) * 
-                    sqrt( arraysize * sumy_sq - sumy * sumy )
-                  );
-   
-   *sigma       = sqrt( sumchi_sq ) / arraysize;
-   
-   return average;
+   const US_Calc::LineFit fit = US_Calc::linefit( *x, *y, arraysize );
+   *slope                     = fit.slope;
+   *intercept                 = fit.intercept;
+   *correlation               = fit.correlation;
+   *sigma                     = fit.sigma;
+   return fit.average;
 }
 /*
 float US_Math2::linefit( float** x        , float** y    , float* slope, 
@@ -732,8 +705,7 @@ DbgLv(1) << QObject::tr("dataCorr: factor: sed=%1, diff=%2").arg(d.s20w_correcti
 
 double US_Math2::normal_distribution( double sigma, double mean, double x )
 {
-   double exponent = -sq( ( x - mean ) / sigma ) / 2.0;
-   return exp( exponent ) / sqrt( 2.0 * M_PI * sq( sigma ) );
+   return US_Calc::normal_distribution( sigma, mean, x );
 }
 
 double US_Math2::time_correction(
@@ -1420,122 +1392,8 @@ int US_Math2::_nnls_h12 (
 
 void US_Math2::gaussian_smoothing( QVector< double >& array, int smooth )
 {
-   if ( smooth <= 1 ) return;
-
-   // Apply a normalized Gaussian smoothing kernel that goes out 
-   // to 2 standard deviations
-
-   int points = array.size();
-   
-   QVector< double > temp_array( points );
-   QVector< double > y_weights( smooth );
-   double            x_weight;
-   
-   temp_array = array;
-   
-   // Standard deviation = 1.0, Mean = 0;
-   x_weight         = 0.0;
-   y_weights[ 0 ]   = normal_distribution( 1.0, 0.0, x_weight ); 
-   double increment = 2.0 / (double)smooth;
-   
-   // Only calculate half a Gaussian, since the other side is symmetric
-   for ( int i = 1; i < smooth; i++ )
-   {
-      x_weight      += increment;
-      y_weights[ i ] = normal_distribution( 1.0, 0.0, x_weight );
-   }
-
-   // First, take care of the left border, using an "appearing frame" algorithm,
-   // starting with half a frame visible:
-
-   for ( int j = 0; j < smooth; j++ )   // Loop over all border point centers
-   {
-      double sum      = 0.0;
-      double sum_y    = 0.0;
-      int    position = 0;
-
-      // Sum all applicable points on the left of center
-      for ( int k = j - 1; k >= 0; k-- )
-      {
-         position++;
-         sum   += y_weights[ position ] * temp_array[ k ];  
-         sum_y += y_weights[ position ];
-      }
-
-      position = 0;
-
-      // Sum the weighted points right of center, including center
-      for ( int k = j; k < j + smooth; k++ )
-      {
-         sum   += y_weights[ position ] * temp_array[ k ];  
-         sum_y += y_weights[ position ];
-         position++;
-      }
-
-      // Normalize by the sum of all weights that were used
-      array[ j ] = sum / sum_y;
-   }
-
-   // Now deal with all non-border points:
-   for ( int j = smooth; j < points - smooth; j++ ) 
-   {
-      double sum      = 0.0;
-      double sum_y    = 0.0;
-      int    position = 0;
-      
-      // Sum all applicable points on the left of center
-      for ( int k = j - 1; k >= j - smooth + 1; k-- )
-      {
-         position++;
-         sum   += y_weights[ position ] * temp_array[ k ];   
-         sum_y += y_weights[ position ];
-      }
-
-      position = 0;
-      
-      // Sum the weighted points right of center, including center
-      for ( int k = j; k < j + smooth; k++ )
-      {
-         sum   += y_weights[ position ] * temp_array[ k ];  
-         sum_y += y_weights[ position ];
-         position++;
-      }
-
-      // Normalize by the sum of all weights that were used
-      array[ j ] = sum / sum_y;
-   }
-
-   // Now deal with all points from the right border, using a "disappearing
-   // frame" algorithm, starting with a full frame minus 1 point visible:
-
-   // Loop over all right-border points
-   for ( int j = points - smooth; j < points; j++ )
-   {
-      double sum      = 0.0;
-      double sum_y    = 0.0;
-      int    position = 0;
-      
-      // Sum all points on the left of center
-      for ( int k = j - 1; k >= j - smooth + 1; k-- )
-      {
-         position++;
-         sum   += y_weights[ position ] * temp_array[ k ]; 
-         sum_y += y_weights[ position ];
-      }
-
-      position = 0;
-
-      // Right of center, including center
-      for ( int k = j; k < points; k++ )
-      {
-         sum   += y_weights[ position ] * temp_array[ k ]; 
-         sum_y += y_weights[ position ];
-         position++;
-      }
-
-      // normalize by the sum of all weights that were used
-      array[ j ] = sum / sum_y;
-   }
+   // A width the series cannot support leaves the series unchanged.
+   US_Calc::gaussian_smoothing( array, smooth );
 }
 
 // Calculate the weighted average of temperature-corrected vbars
