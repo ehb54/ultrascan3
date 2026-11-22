@@ -2655,8 +2655,9 @@ DbgLv(1) << "AnaN:SL: newCanceled()";
 void US_AnalyteMgrNew::newAccepted()
 {
    DbgLv( 1 ) << "AnaN:SL: newAccepted()";
-   // A retry after a failed save keeps the GUID, so a partly saved analyte
-   // is updated rather than saved a second time.
+   // A retry after a failed save keeps the GUID. When the DB save committed
+   // and only the disk copy failed, the retry updates that analyte rather
+   // than storing it a second time.
    if ( analyte->analyteGUID.isEmpty() )
    {
       analyte->analyteGUID = US_Util::new_guid();

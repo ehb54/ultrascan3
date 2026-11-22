@@ -74,8 +74,13 @@ class US_UTIL_EXTERN US_Analyte
       //! \returns         - The \ref IUS_DB2 return code for the operation. A DB
       //!                    write also fails when the lookup, the nucleotide info,
       //!                    the extinction profile or the disk copy fails; message
-      //!                    says which. The disk copy is written even when the
-      //!                    profile fails, and the spectrum stays pending.
+      //!                    says which.
+      //! A DB write stores the analyte row, its nucleotide info and its extinction
+      //! profile in one transaction. A failure in any of them rolls all back, keeps
+      //! the ID of a stored analyte (a new one's is not set) and leaves the spectrum pending. An open transaction
+      //! of the caller is joined instead: the caller commits or rolls it back, and
+      //! the spectrum stays pending with no disk copy written. The disk copy follows
+      //! a confirmed commit; when it fails, the DB keeps the analyte.
       int  write( bool, const QString&, IUS_DB2* = 0 );
 
       //! Read/write XML through a caller-owned, already-open device.
