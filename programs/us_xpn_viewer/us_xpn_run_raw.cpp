@@ -23,39 +23,41 @@ US_XpnRunRaw::US_XpnRunRaw( QString& runDesc, QStringList& rdLists )
    QHBoxLayout* search       = new QHBoxLayout;
    QLabel*      lb_search    = us_label( tr( "Search" ) );
                 le_search    = us_lineedit( "" );
-   search      ->addWidget( lb_search );
-   search      ->addWidget( le_search );
-   connect( le_search, &QLineEdit::textChanged,
-            this,      &US_XpnRunRaw::limit_data );
-qDebug() << "XRR:  runDesc" << runDesc;
+                le_search->setAccessibleName( tr( "Search" ) );
+                lb_search->setBuddy( le_search );
+                search->addWidget( lb_search );
+                search->addWidget( le_search );
+                connect( le_search, &QLineEdit::textChanged, this, &US_XpnRunRaw::limit_data );
+                qDebug() << "XRR:  runDesc" << runDesc;
 
-   // Load the runInfo structure with current data
-   load_runs();
-qDebug() << "XRR:  load_runs() return";
+                // Load the runInfo structure with current data
+                load_runs();
+                qDebug() << "XRR:  load_runs() return";
 
-   // Tree
-   tw                     = new QTableWidget( runInfo.size(), 11, this );
-   populate_list();
-qDebug() << "XRR:  populate_list() return";
+                // Tree
+                tw = new QTableWidget( runInfo.size(), 11, this );
+                tw->setAccessibleName( tr( "Raw Runs" ) );
+                populate_list();
+                qDebug() << "XRR:  populate_list() return";
 
-   // Button Row
-   QHBoxLayout* buttons   = new QHBoxLayout;
+                // Button Row
+                QHBoxLayout* buttons = new QHBoxLayout;
 
-   QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-   connect( pb_cancel, &QAbstractButton::clicked, this, &QDialog::reject );
-   buttons->addWidget( pb_cancel );
+                QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
+                connect( pb_cancel, &QAbstractButton::clicked, this, &QDialog::reject );
+                buttons->addWidget( pb_cancel );
 
-   QPushButton* pb_accept = us_pushbutton( tr( "Select" ) );
-   connect( pb_accept, &QAbstractButton::clicked, this, &US_XpnRunRaw::select );
-   buttons->addWidget( pb_accept );
+                QPushButton* pb_accept = us_pushbutton( tr( "Select" ) );
+                connect( pb_accept, &QAbstractButton::clicked, this, &US_XpnRunRaw::select );
+                buttons->addWidget( pb_accept );
 
-   main->addLayout( search );
-   main->addWidget( tw );
-   main->addLayout( buttons );
-qDebug() << "XRR: size" << size();
+                main->addLayout( search );
+                main->addWidget( tw );
+                main->addLayout( buttons );
+                qDebug() << "XRR: size" << size();
 
-   resize( 600, 300 );
-qDebug() << "XRR: size" << size();
+                resize( 600, 300 );
+                qDebug() << "XRR: size" << size();
 }
 
 // Function to load the runInfo structure with all runID's on local disk

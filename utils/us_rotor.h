@@ -295,6 +295,19 @@ class US_UTIL_EXTERN US_Rotor
       */
       static Status readAbstractRotorsDisk( QVector< US_Rotor::AbstractRotor >& );
 
+      /*! \brief    Number of cell holes in a rotor's abstract-rotor type.
+
+          Reads from db when it is non-null and connected, otherwise falls
+          back to disk.
+
+          \param    rotor The rotor whose abstract-rotor type to look up
+          \param    db    For database access, an open database connection,
+                          or nullptr to look up from disk
+          \return   The hole count, or -1 if the rotor has no abstract-rotor
+                    type or that type cannot be read
+      */
+      static int        holeCount( const US_Rotor::Rotor& rotor, IUS_DB2* db );
+
       /*! \brief    Function to retrieve all the rotors in a particular lab from DB
 
           \param    rotors A reference to where the rotors will be stored

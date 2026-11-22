@@ -14,11 +14,7 @@
 #include <qdir.h>
 #include <qdatetime.h>
 
-#if QT_VERSION >= 0x040000
 typedef QIODevice::OpenModeFlag OpenMode;
-#else
-typedef int OpenMode;
-#endif
 
 class US_EXTERN US_File_Util
 {

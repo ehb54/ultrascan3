@@ -22,6 +22,12 @@
         "gtest"
       ]
     },
+    "mpi": {
+      "description": "MPI for us_mpi_analysis",
+      "dependencies": [
+        "mpi"
+      ]
+    },
     "qt5-hpc": {
       "description": "HPC build with minimal Qt5 (no GUI, no DB)",
       "dependencies": [

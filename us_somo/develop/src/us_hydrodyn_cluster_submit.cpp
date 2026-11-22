@@ -157,20 +157,12 @@ unsigned int US_Hydrodyn_Cluster_Submit::update_files( bool set_lv_files )
          // qt3 QFileInfo::size() is incorrect uint is too small
          // so use fstat()
 
-#if QT_VERSION < 0x040000
-         new QTreeWidgetItem( lv_files, 
-                            files[ i ], 
-                            QString( " %1 " ).arg( QFileInfo( files[ i ] ).lastModified().toString() ),
-                            QString( " %1 bytes " ).arg( QFileInfo( files[ i ] ).size() )
-                            );
-#else
          lv_files->addTopLevelItem( new QTreeWidgetItem(
                                                         QStringList()
                                                         << files[ i ]
                                                         << QString( " %1 " ).arg( QFileInfo( files[ i ] ).lastModified().toString() )
                                                         << QString( " %1 bytes " ).arg( QFileInfo( files[ i ] ).size() )
                                                         ) );
-#endif
       }
    }
 
@@ -284,35 +276,6 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
    AUTFBACK( editor );
    editor->setReadOnly(true);
 
-#if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
-   {
- //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-
-      QMenuBar *menu = new QMenuBar( this );
-      AUTFBACK( menu );
-
-      menu->insertItem(us_tr("&Messages"), file );
-   }
-# else
-   QFrame *frame;
-   frame = new QFrame(this);
-   frame->setMinimumHeight(minHeight1);
-
-   m = new QMenuBar( frame );    m->setObjectName( "menu" );
-   m->setMinimumHeight(minHeight1 - 5);
-   m->setPalette( PALET_NORMAL );
-   AUTFBACK( m );
- //   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-# endif
-#else
    QFrame *frame;
    frame = new QFrame(this);
    frame->setMinimumHeight(minHeight1);
@@ -337,7 +300,6 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
       qa3->setShortcut( Qt::ALT+Qt::Key_X );
       connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
    }
-#endif
 
    editor->setWordWrapMode (QTextOption::WordWrap);
    editor->setMinimumHeight(100);
@@ -383,7 +345,7 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
    hbl_bottom->addSpacing( 4 );
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
-#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
+#if !defined(Q_OS_MAC)
    vbl_editor_group->addWidget(frame);
 #endif
    vbl_editor_group->addWidget(editor);
@@ -985,13 +947,9 @@ bool US_Hydrodyn_Cluster_Submit::system_cmd( QStringList cmd )
 
    system_proc = new QProcess( this );
 
-#if QT_VERSION < 0x040000
-   system_proc->setArguments( cmd );
-#else
    QString prog = cmd.front();
    cmd.pop_front();
    QStringList args = cmd;
-#endif
 
    system_proc_active = true;
 
@@ -1001,36 +959,18 @@ bool US_Hydrodyn_Cluster_Submit::system_cmd( QStringList cmd )
    connect( system_proc, SIGNAL(started()),  this, SLOT(system_proc_started()) );
 
 
-#if QT_VERSION < 0x040000
-   return system_proc->start();
-#else
    system_proc->start( prog, args );
    return system_proc->waitForStarted();
-#endif
 }
 
 void US_Hydrodyn_Cluster_Submit::system_proc_readFromStdout()
 {
-#if QT_VERSION < 0x040000
-   while ( system_proc->canReadLineStdout() )
-   {
-      editor_msg("brown", system_proc->readLineStdout());
-   }
-#else
    editor_msg( "brown", QString( system_proc->readAllStandardOutput() ) );
-#endif   
 }
    
 void US_Hydrodyn_Cluster_Submit::system_proc_readFromStderr()
 {
-#if QT_VERSION < 0x040000
-   while ( system_proc->canReadLineStderr() )
-   {
-      editor_msg("red", system_proc->readLineStderr());
-   }
-#else
    editor_msg( "red", QString( system_proc->readAllStandardError() ) );
-#endif   
 }
    
 void US_Hydrodyn_Cluster_Submit::system_proc_finished( int, QProcess::ExitStatus )
@@ -1205,24 +1145,6 @@ void US_Hydrodyn_Cluster_Submit::remove()
       return;
    }
 
-#if QT_VERSION < 0x040000
-   QTreeWidgetItem *lvi = lv_files->firstChild();
-
-   if ( lvi )
-   {
-      do {
-         if ( lvi->isSelected() )
-         {
-            if ( !QFile::remove( lvi->text( 0 ) ) )
-            {
-               editor_msg( "red" , QString( us_tr( "can not remove file %1" ) ).arg( lvi->text( 0 ) ) );
-            } else {
-               editor_msg( "black" , QString( us_tr( "Removed file: %1" ) ).arg( lvi->text( 0 ) ) );
-            }
-         }
-      } while ( ( lvi = lvi->nextSibling() ) );
-   }
-#else
    QTreeWidgetItemIterator it( lv_files, QTreeWidgetItemIterator::Selected );
    QTreeWidgetItem *lvi;
    while ( *it ) {
@@ -1235,7 +1157,6 @@ void US_Hydrodyn_Cluster_Submit::remove()
       }
       ++it;
    }
-#endif
    if ( !update_files() )
    {
       QMessageBox::information( this, 

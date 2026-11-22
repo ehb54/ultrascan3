@@ -9,7 +9,6 @@
 #ifndef WIN32
 # include <sys/time.h>
 #endif
-#if QT_VERSION >= 0x040000
 # include <qwt_scale_engine.h>
 //Added by qt3to4:
 #include <QBoxLayout>
@@ -21,7 +20,6 @@
 #include <QVBoxLayout>
 #include <QFrame>
  //#include <Q3PopupMenu>
-#endif
 
 #if defined( HAS_CBF )
 #  include <cbf.h>
@@ -128,7 +126,7 @@ US_Hydrodyn_Saxs_1d::~US_Hydrodyn_Saxs_1d()
 void US_Hydrodyn_Saxs_1d::setupGUI()
 {
    int minHeight1 = 30;
-#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
+#if !defined(Q_OS_MAC)
    int minHeight3 = 30;
 #endif
 
@@ -424,34 +422,6 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    AUTFBACK( editor );
    editor->setReadOnly(true);
 
-#if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
-   {
- //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-
-      QMenuBar *menu = new QMenuBar( this );
-      AUTFBACK( menu );
-
-      menu->insertItem(us_tr("&Messages"), file );
-   }
-# else
-   QFrame *frame;
-   frame = new QFrame(this);
-   frame->setMinimumHeight(minHeight3);
-   m = new QMenuBar( frame );    m->setObjectName( "menu" );
-   m->setMinimumHeight(minHeight1 - 5);
-   m->setPalette( PALET_NORMAL );
-   AUTFBACK( m );
- //   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-# endif
-#else
 # if defined(Q_OS_MAC)
    m = new QMenuBar( this );
    m->setObjectName( "menu" );
@@ -482,7 +452,6 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
       qa3->setShortcut( Qt::ALT+Qt::Key_X );
       connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
    }
-#endif
 
    editor->setWordWrapMode (QTextOption::WordWrap);
    // editor->setMinimumHeight(300);
@@ -507,56 +476,25 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    ((QWidget *)plot_saxs->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
    connect( (QWidget *)plot_saxs->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_saxs( const QPoint & ) ) );
    ((QWidget *)plot_saxs->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
-#if QT_VERSION < 0x040000
-   // plot_saxs->enableOutline(true);
-   plot_saxs->setOutlinePen(Qt::white);
-   plot_saxs->setOutlineStyle(Qwt::VLine);
-   plot_saxs->enableGridXMin();
-   plot_saxs->enableGridYMin();
-#else
    grid_saxs = new QwtPlotGrid;
    grid_saxs->enableXMin( true );
    grid_saxs->enableYMin( true );
-#endif
    plot_saxs->setPalette( PALET_NORMAL );
    AUTFBACK( plot_saxs );
-#if QT_VERSION < 0x040000
-   plot_saxs->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
-   plot_saxs->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
-#else
    grid_saxs->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
    grid_saxs->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_saxs->attach( plot_saxs );
-#endif
    plot_saxs->setAxisTitle( QwtPlot::xBottom, false /* cb_guinier->isChecked() */ ? us_tr( "q^2 (1/Angstrom^2)" ) : us_tr( "q (1/Angstrom)" ) );
    plot_saxs->setAxisTitle( QwtPlot::yLeft,   false /* cb_kratky ->isChecked() */ ? us_tr( " q^2 * I(q)"        ) : us_tr( "Log10 I(q)"     ) );
-#if QT_VERSION < 0x040000
-   plot_saxs->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
-   plot_saxs->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot_saxs->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot_saxs->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot_saxs->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot_saxs->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot_saxs->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 //    plot_saxs->setMargin(USglobal->config_list.margin);
    plot_saxs->setTitle("");
-#if QT_VERSION < 0x040000
-   plot_saxs->setAxisOptions(QwtPlot::yLeft, 
-                             false ? // kratky option
-                             QwtAutoScale::None :
-                             QwtAutoScale::Logarithmic
-                             );
-#else
    plot_saxs->setAxisScaleEngine(QwtPlot::yLeft, 
                                  false ?  // kratky option
                                  new QwtLogScaleEngine(10) :  
                                  new QwtLogScaleEngine(10));
-#endif
    plot_saxs->setCanvasBackground(USglobal->global_colors.plot);
 
    // build layout
@@ -624,7 +562,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout( 0 ); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
    vbl_editor_group->addLayout( gl_options );
-#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
+#if !defined(Q_OS_MAC)
    vbl_editor_group->addWidget( frame      );
 #endif
    vbl_editor_group->addWidget( editor     );
@@ -784,13 +722,8 @@ bool US_Hydrodyn_Saxs_1d::update_image()
 
    QString name = "saxs data";
 
-#if QT_VERSION < 0x040000
-   long Iq = plot_saxs->insertCurve( name );
-   plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
-#else
    QwtPlotCurve *curve = new QwtPlotCurve( name );
    curve->setStyle( QwtPlotCurve::Lines );
-#endif
 
    vector < double > q( detector_pixels_width );
    for ( int i = 0; i < ( int ) q.size(); i++ )
@@ -800,13 +733,6 @@ bool US_Hydrodyn_Saxs_1d::update_image()
 
    if ( !cb_memory_conserve->isChecked() )
    {
-#if QT_VERSION < 0x040000
-      plot_saxs->setCurveData(Iq, 
-                              ( double *)& q      [0],
-                              ( double *)& modulii[0],
-                              detector_pixels_width );
-      plot_saxs->setCurvePen(Iq, QPen(plot_colors[plot_count % plot_colors.size()], 2, SolidLine));
-#else
       curve->setSamples(
                      ( double *)& q      [0],
                      ( double *)& modulii[0],
@@ -814,20 +740,14 @@ bool US_Hydrodyn_Saxs_1d::update_image()
                      );
       curve->setPen( QPen( plot_colors[ plot_count % plot_colors.size() ], 2, Qt::SolidLine ) );
       curve->attach( plot_saxs );
-#endif
 
       if ( plot_saxs_zoomer )
       {
          delete plot_saxs_zoomer;
       }
       plot_saxs_zoomer = new ScrollZoomer(plot_saxs->canvas());
-#if QT_VERSION < 0x040000
-      plot_saxs_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-      plot_saxs_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#else
       plot_saxs_zoomer->setRubberBandPen( QPen( Qt::red, 1, Qt::DotLine ) );
       plot_saxs_zoomer->setTrackerPen( QPen( Qt::red ) );
-#endif
 
       plot_saxs->replot();
    }

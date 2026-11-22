@@ -3,14 +3,16 @@
 #define US_THREAD_WORKER_H
 
 #include <QtCore>
+#include <memory>
 
-#include "us_extern.h"
 #include "us_dataIO.h"
-#include "us_simparms.h"
+#include "us_extern.h"
 #include "us_model.h"
 #include "us_noise.h"
-#include "us_zsolute.h"
+#include "us_sim_cache.h"
+#include "us_simparms.h"
 #include "us_solve_sim.h"
+#include "us_zsolute.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -41,6 +43,7 @@ typedef struct work_packet_pc_s
    QList< US_SolveSim::DataSet* > dsets; //!< list of data set object pointers
    US_SolveSim::Simulation  sim_vals;    //!< simulation values
 
+   std::shared_ptr<US_SimCache>   simcache; //!< simulation cache (or none)
 } WorkPacketPc;
 
 //! \brief Worker thread to do the actual computational work of PCSA analysis
@@ -119,6 +122,7 @@ class WorkerThreadPc : public QThread
       QList< US_SolveSim::DataSet* > dsets;     // list of data set obj. ptrs.
       US_SolveSim::Simulation        sim_vals;  // simulation values
       US_SolveSim*                   solvesim;  // object for calc_residuals()
+      std::shared_ptr<US_SimCache>   simcache;  // simulation cache (or none)
       US_SolveSim::DataSet           dset_wk;   // local copy of data set
 
       QVector< US_ZSolute >   solutes_i;   // solutes input

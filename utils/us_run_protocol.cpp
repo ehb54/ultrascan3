@@ -3,10 +3,21 @@
 #include "us_constants.h"
 #include "us_settings.h"
 #include "us_util.h"
+#include <QRegularExpression>
 
 #ifndef _TR_
 #define _TR_(a) QObject::tr(a)
 #endif
+
+// Sanitize a name (protocol name, label, file name); see header for modes
+QString US_RunProtocol::sanitize_name( const QString& name, bool strict )
+{
+   static const QRegularExpression rx_safe( "[/\\\\:*?\"<>|\\x00-\\x1f]" );
+   static const QRegularExpression rx_strict( "[^A-Za-z0-9_-]" );
+   QString                         out = name.trimmed();
+   out.replace( strict ? rx_strict : rx_safe, "_" );
+   return out;
+}
 
 // RunProtocol constructor
 US_RunProtocol::US_RunProtocol()
@@ -319,6 +330,19 @@ bool US_RunProtocol::RunProtoRotor::fromXml( QXmlStreamReader& xmli )
             operID      = attr.value( "operid"       ).toString().toInt();
             instID      = attr.value( "instid"       ).toString().toInt();
             instrname   = attr.value( "instname" ).toString();
+
+            // Velocity-MWL: backward comp.
+            if ( attr.hasAttribute( "vel_mwl_prot" ) )
+            {
+               qDebug() << "reading ROTOR: vel_mwl_prot is present!";
+               ( attr.value( "vel_mwl_prot" ).toString().toInt() ) ? vel_mwl_prot = true : vel_mwl_prot = false;
+               qDebug() << "reading ROTOR: vel_mwl_prot is present! " << ", value: " << vel_mwl_prot;
+            }
+            else
+            {
+               qDebug() << "reading ROTOR: vel_mwl_prot is NOT present!";
+               vel_mwl_prot = false;
+            }
          }
 
          else
@@ -352,7 +376,10 @@ bool US_RunProtocol::RunProtoRotor::toXml( QXmlStreamWriter& xmlo )
    xmlo.writeAttribute( "operid",      QString::number( operID ) );
    xmlo.writeAttribute( "opername",    opername );
    xmlo.writeAttribute( "exptype",     exptype );
-   
+
+   // Velocity-MWL
+   xmlo.writeAttribute( "vel_mwl_prot", QString::number( vel_mwl_prot ) );
+
    xmlo.writeAttribute( "labguid",     labGUID );
    xmlo.writeAttribute( "rotguid",     rotGUID );
    xmlo.writeAttribute( "calguid",     calGUID );

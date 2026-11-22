@@ -136,6 +136,7 @@ void US_ReportGenGui::build_layout( void )
   QStringList theads;
   theads << "Selected" << "Protocol Settings";
   treeWidget->setHeaderLabels( theads );
+  treeWidget->setAccessibleName( tr( "General Report Settings" ) );
   treeWidget->setFont( QFont( US_Widgets::fixedFont().family(),
 			      US_GuiSettings::fontSize() + 1 ) );
   genL->addWidget(treeWidget);
@@ -153,6 +154,8 @@ void US_ReportGenGui::build_layout( void )
       topItemNameList.clear();
       topItemNameList << "" << indent + topItemName;
       topItem [ topItemName ] = new QTreeWidgetItem( treeWidget, topItemNameList, wiubase );
+      topItem[topItemName]->setData( 0, Qt::AccessibleTextRole, topItemName );
+      topItem[topItemName]->setData( 1, Qt::AccessibleTextRole, topItemName );
 
       //Solutions: add 1-level children
       if( topItemName.contains("Solutions") )
@@ -164,22 +167,32 @@ void US_ReportGenGui::build_layout( void )
 	      solutionItemNameList.clear();
 	      solutionItemNameList << "" << indent.repeated( 2 ) + solutionItemName;
 	      solutionItem [ solutionItemName ] = new QTreeWidgetItem( topItem [ topItemName ], solutionItemNameList, wiubase);
+         {
+            QString a11yPath = topItemName + " / " + solutionItemName;
+            solutionItem[solutionItemName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+            solutionItem[solutionItemName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+         }
 
-	      if ( solutionItems_vals[ is ].toInt() )
-		{
-		  solutionItem [ solutionItemName ] ->setCheckState( 0, Qt::Checked );
-		  ++checked_childs;
-		}
-	      else
-		solutionItem [ solutionItemName ] ->setCheckState( 0, Qt::Unchecked );
-	    }
-	  if ( checked_childs )
-	    topItem [ topItemName ] ->setCheckState( 0, Qt::Checked );
-	  else
-	    topItem [ topItemName ] ->setCheckState( 0, Qt::Unchecked );
-	  
-	}
-      
+         if ( solutionItems_vals[is].toInt() )
+         {
+            solutionItem[solutionItemName]->setCheckState( 0, Qt::Checked );
+            ++checked_childs;
+         }
+         else
+         {
+            solutionItem[solutionItemName]->setCheckState( 0, Qt::Unchecked );
+         }
+       }
+       if ( checked_childs )
+       {
+          topItem[topItemName]->setCheckState( 0, Qt::Checked );
+       }
+       else
+       {
+          topItem[topItemName]->setCheckState( 0, Qt::Unchecked );
+       }
+   }
+
       //Analysis Profile: add 2-levelchildren
       else if ( topItemName.contains("Analysis Profile") )
 	{
@@ -190,99 +203,137 @@ void US_ReportGenGui::build_layout( void )
 	      analysisItemNameList.clear();
 	      analysisItemNameList << "" << indent.repeated( 2 ) + analysisItemName;
 	      analysisItem [ analysisItemName ] = new QTreeWidgetItem( topItem [ topItemName ], analysisItemNameList, wiubase);
-	      
-	      //General analysis
-	      if( analysisItemName.contains("General") )
-		{
-		  int checked_gen = 0;
-		  for ( int iag=0; iag < analysisGenItems.size(); ++iag )
-		    {
-		      QString analysisGenItemName = analysisGenItems[ iag ];
-		      analysisGenItemNameList.clear();
-		      analysisGenItemNameList << "" << indent.repeated( 3 ) + analysisGenItemName;
-		      analysisGenItem [ analysisGenItemName ] = new QTreeWidgetItem( analysisItem [ analysisItemName ], analysisGenItemNameList, wiubase);
+         {
+            QString a11yPath = topItemName + " / " + analysisItemName;
+            analysisItem[analysisItemName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+            analysisItem[analysisItemName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+         }
 
-		      if ( analysisGenItems_vals[ iag ].toInt() )
-			{
-			  analysisGenItem [ analysisGenItemName ] ->setCheckState( 0, Qt::Checked );
-			  ++checked_gen;
-			}
-		      else
-			analysisGenItem [ analysisGenItemName ] ->setCheckState( 0, Qt::Unchecked );
-		    }
+         //General analysis
+         if ( analysisItemName.contains( "General" ) )
+         {
+            int checked_gen = 0;
+            for ( int iag = 0; iag < analysisGenItems.size(); ++iag )
+            {
+               QString analysisGenItemName = analysisGenItems[iag];
+               analysisGenItemNameList.clear();
+               analysisGenItemNameList << "" << indent.repeated( 3 ) + analysisGenItemName;
+               analysisGenItem[analysisGenItemName] =
+                  new QTreeWidgetItem( analysisItem[analysisItemName], analysisGenItemNameList, wiubase );
+               {
+                  QString a11yPath = topItemName + " / " + analysisItemName + " / " + analysisGenItemName;
+                  analysisGenItem[analysisGenItemName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+                  analysisGenItem[analysisGenItemName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+               }
 
-		  if ( checked_gen )
-		    {
-		      analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Checked );
-		      ++checked_childs;
-		    }
-		  else
-		    analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Unchecked );
-		}
-	      //2DSA analysis
-	      if( analysisItemName.contains("2DSA")  )
-		{
-		  int checked_2dsa = 0;
-		  for ( int ia2=0; ia2 < analysis2DSAItems.size(); ++ia2 )
-		    {
-		      QString analysis2DSAItemName = analysis2DSAItems[ ia2 ];
-		      analysis2DSAItemNameList.clear();
-		      analysis2DSAItemNameList << "" << indent.repeated( 3 ) + analysis2DSAItemName;
-		      analysis2DSAItem [ analysis2DSAItemName ] = new QTreeWidgetItem( analysisItem [ analysisItemName ], analysis2DSAItemNameList, wiubase);
+               if ( analysisGenItems_vals[iag].toInt() )
+               {
+                  analysisGenItem[analysisGenItemName]->setCheckState( 0, Qt::Checked );
+                  ++checked_gen;
+               }
+               else
+               {
+                  analysisGenItem[analysisGenItemName]->setCheckState( 0, Qt::Unchecked );
+               }
+            }
 
-		      if ( analysis2DSAItems_vals[ ia2 ].toInt() )
-			{
-			  analysis2DSAItem [ analysis2DSAItemName ] ->setCheckState( 0, Qt::Checked );
-			  ++checked_2dsa;
-			}
-		      else
-			analysis2DSAItem [ analysis2DSAItemName ] ->setCheckState( 0, Qt::Unchecked );
-		    }
+            if ( checked_gen )
+            {
+               analysisItem[analysisItemName]->setCheckState( 0, Qt::Checked );
+               ++checked_childs;
+            }
+            else
+            {
+               analysisItem[analysisItemName]->setCheckState( 0, Qt::Unchecked );
+            }
+         }
+         //2DSA analysis
+         if ( analysisItemName.contains( "2DSA" ) )
+         {
+            int checked_2dsa = 0;
+            for ( int ia2 = 0; ia2 < analysis2DSAItems.size(); ++ia2 )
+            {
+               QString analysis2DSAItemName = analysis2DSAItems[ia2];
+               analysis2DSAItemNameList.clear();
+               analysis2DSAItemNameList << "" << indent.repeated( 3 ) + analysis2DSAItemName;
+               analysis2DSAItem[analysis2DSAItemName] =
+                  new QTreeWidgetItem( analysisItem[analysisItemName], analysis2DSAItemNameList, wiubase );
+               {
+                  QString a11yPath = topItemName + " / " + analysisItemName + " / " + analysis2DSAItemName;
+                  analysis2DSAItem[analysis2DSAItemName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+                  analysis2DSAItem[analysis2DSAItemName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+               }
 
-		  if ( checked_2dsa )
-		    {
-		      analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Checked );
-		      ++checked_childs;
-		    }
-		  else
-		    analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Unchecked );
-		}
+               if ( analysis2DSAItems_vals[ia2].toInt() )
+               {
+                  analysis2DSAItem[analysis2DSAItemName]->setCheckState( 0, Qt::Checked );
+                  ++checked_2dsa;
+               }
+               else
+               {
+                  analysis2DSAItem[analysis2DSAItemName]->setCheckState( 0, Qt::Unchecked );
+               }
+            }
 
-	      //PCSA analysis
-	      if( analysisItemName.contains("PCSA")  )
-		{
-		  int checked_pcsa = 0;
-		  for ( int iap=0; iap < analysisPCSAItems.size(); ++iap )
-		    {
-		      QString analysisPCSAItemName = analysisPCSAItems[ iap ];
-		      analysisPCSAItemNameList.clear();
-		      analysisPCSAItemNameList << "" << indent.repeated( 3 ) + analysisPCSAItemName;
-		      analysisPCSAItem [ analysisPCSAItemName ] = new QTreeWidgetItem( analysisItem [ analysisItemName ], analysisPCSAItemNameList, wiubase);
+            if ( checked_2dsa )
+            {
+               analysisItem[analysisItemName]->setCheckState( 0, Qt::Checked );
+               ++checked_childs;
+            }
+            else
+            {
+               analysisItem[analysisItemName]->setCheckState( 0, Qt::Unchecked );
+            }
+         }
 
-		      if ( analysisPCSAItems_vals[ iap ].toInt() )
-			{
-			  analysisPCSAItem [ analysisPCSAItemName ] ->setCheckState( 0, Qt::Checked );
-			  ++checked_pcsa;
-			}
-		      else
-			analysisPCSAItem [ analysisPCSAItemName ] ->setCheckState( 0, Qt::Unchecked );
-		    }
+         //PCSA analysis
+         if ( analysisItemName.contains( "PCSA" ) )
+         {
+            int checked_pcsa = 0;
+            for ( int iap = 0; iap < analysisPCSAItems.size(); ++iap )
+            {
+               QString analysisPCSAItemName = analysisPCSAItems[iap];
+               analysisPCSAItemNameList.clear();
+               analysisPCSAItemNameList << "" << indent.repeated( 3 ) + analysisPCSAItemName;
+               analysisPCSAItem[analysisPCSAItemName] =
+                  new QTreeWidgetItem( analysisItem[analysisItemName], analysisPCSAItemNameList, wiubase );
+               {
+                  QString a11yPath = topItemName + " / " + analysisItemName + " / " + analysisPCSAItemName;
+                  analysisPCSAItem[analysisPCSAItemName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+                  analysisPCSAItem[analysisPCSAItemName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+               }
 
-		  if ( checked_pcsa )
-		    {
-		      analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Checked );
-		      ++checked_childs;
-		    }
-		  else
-		    analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Unchecked );
+               if ( analysisPCSAItems_vals[iap].toInt() )
+               {
+                  analysisPCSAItem[analysisPCSAItemName]->setCheckState( 0, Qt::Checked );
+                  ++checked_pcsa;
+               }
+               else
+               {
+                  analysisPCSAItem[analysisPCSAItemName]->setCheckState( 0, Qt::Unchecked );
+               }
+            }
 
-		}
-	    }
-	  if ( checked_childs )
-	    topItem [ topItemName ] ->setCheckState( 0, Qt::Checked );
-	  else
-	    topItem [ topItemName ] ->setCheckState( 0, Qt::Unchecked );
-	}
+            if ( checked_pcsa )
+            {
+               analysisItem[analysisItemName]->setCheckState( 0, Qt::Checked );
+               ++checked_childs;
+            }
+            else
+            {
+               analysisItem[analysisItemName]->setCheckState( 0, Qt::Unchecked );
+            }
+         }
+       }
+       if ( checked_childs )
+       {
+          topItem[topItemName]->setCheckState( 0, Qt::Checked );
+       }
+       else
+       {
+          topItem[topItemName]->setCheckState( 0, Qt::Unchecked );
+       }
+   }
 
       //set checked/unchecked for top-level item
       else

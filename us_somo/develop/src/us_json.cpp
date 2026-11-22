@@ -223,12 +223,8 @@ QString US_Json::compose( map < QString, QString > &mqq )
          + ",";
    }
 
-#if QT_VERSION >= 0x040000
    result.chop( 1 );
    result += "}";
-#else
-   result.at( result.length() - 1 ) = '}';
-#endif
 
 #if defined( USJ_DEBUG ) || defined (USJ_DEBUG_SUMMARY )
    cout << QString( "compose summary:\n%1\n" ).arg( result ).toLatin1().data();

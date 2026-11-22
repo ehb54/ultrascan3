@@ -19,29 +19,29 @@ class US_DeleteModels : public US_WidgetsDialog
       //! \brief US_RemoveModels constructor
       //! \param adistros Pointer to model distributions list
       //! \param p        Pointer to the parent of this widget
-      US_DeleteModels( QVector< DisSys >&, QWidget* p = 0 );
+      US_DeleteModels( QVector<IntegralDisSys>&, QWidget* p = 0 );
 
    private:
-      QVector< DisSys >&  distros; // Reference to model distributions vector
+      QVector<IntegralDisSys>& distros; // Reference to model distributions vector
 
-      int           nd_orig;       // Number of distributions in original
-      int           nd_removed;    // Number of total distributions removed
-      int           nd_selected;   // Number of currently selected distributions
+      int                      nd_orig;     // Number of distributions in original
+      int                      nd_removed;  // Number of total distributions removed
+      int                      nd_selected; // Number of currently selected distributions
 
-      QGridLayout*  mainLayout;    // 
+      QGridLayout*             mainLayout; //
 
-      QStringList   mdesc_orig;    // List of descriptions from original
-      QStringList   mdesc_list;    // List of descriptions now listed
+      QStringList              mdesc_orig; // List of descriptions from original
+      QStringList              mdesc_list; // List of descriptions now listed
 
-      QListWidget*  lw_distrs;     // List widget of distributions
+      QListWidget*             lw_distrs; // List widget of distributions
 
-      QTextEdit*    te_status;     // Status text box
+      QTextEdit*               te_status; // Status text box
 
-      QPushButton*  pb_restore;    // Restore button
-      QPushButton*  pb_remove;     // Remove  button
-      QPushButton*  pb_help;       // Help    button
-      QPushButton*  pb_cancel;     // Cancel  button
-      QPushButton*  pb_accept;     // Accept  button
+      QPushButton*             pb_restore; // Restore button
+      QPushButton*             pb_remove;  // Remove  button
+      QPushButton*             pb_help;    // Help    button
+      QPushButton*             pb_cancel;  // Cancel  button
+      QPushButton*             pb_accept;  // Accept  button
 
    protected:
       US_Help       showHelp;

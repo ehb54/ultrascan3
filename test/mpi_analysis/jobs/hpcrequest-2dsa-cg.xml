@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE US_JobSubmit>
+<US_JobSubmit method="2DSA_CG" version="1.0">
+ <job>
+  <gateway id="lims.example.org_00000000-0000-4000-8000-000000000000"/>
+  <cluster name="lims.example.org" shortname="node0" queue="batch"/>
+  <udp port="12233" server="127.0.0.1"/>
+  <directory name="/srv/lims/data/00000000-0000-4000-8000-000000000001/"/>
+  <datasetCount value="1"/>
+  <global_fit value="0"/>
+  <request id="4711" guid="00000000-0000-4000-8000-000000000001"/>
+  <database>
+   <name value="uslims3_TEST"/>
+   <host value="localhost"/>
+   <user email="user@example.org" user_id="Test_User_00000000-0000-4000-8000-000000000002"/>
+   <submitter email="user@example.org"/>
+  </database>
+  <jobParameters>
+   <CG_model id="1" filename="demo-cg.model"/>
+   <uniform_grid value="6"/>
+   <mc_iterations value="1"/>
+   <req_mgroupcount value="1"/>
+   <tinoise_option value="1"/>
+   <rinoise_option value="1"/>
+   <fit_mb_select value="0"/>
+   <meniscus_range value="0"/>
+   <meniscus_points value="1"/>
+   <max_iterations value="10"/>
+   <debug_timings value="0"/>
+   <debug_level value="0"/>
+   <debug_text value=""/>
+  </jobParameters>
+  <analysis_type value="2DSA_CG-IT"/>
+ </job>
+ <!--the dataset section is repeated for each dataset-->
+ <dataset>
+  <files>
+   <auc filename="demo-cg.RA.1.S.280.auc"/>
+   <edit filename="demo-cg.2610051818.RA.1.S.280.xml"/>
+   <timestate filename="demo-cg.time_state.tmst"/>
+  </files>
+  <parameters>
+   <simpoints value="200"/>
+   <band_volume value="0"/>
+   <radial_grid value="0"/>
+   <time_grid value="1"/>
+   <rotor_stretch value="1.84451E-7 5.53169E-12"/>
+   <centerpiece_shape value="standard"/>
+   <centerpiece_bottom value="7.2"/>
+   <centerpiece_angle value="2.5"/>
+   <centerpiece_pathlength value="1.2"/>
+   <centerpiece_width value="0"/>
+   <total_concentration value="0.6000553351"/>
+   <speedstep stepID="1" rotorspeed="42000" scans="100" timefirst="115" timelast="72000" w2tfirst="870499000" w2tlast="1391440000000" duration_hrs="20" duration_mins="0" delay_hrs="0" delay_mins="1.91667" acceleration="400" accelerflag="1" expID="1"/>
+   <solution>
+    <buffer density="0.998515" viscosity="1.00168" manual="0"/>
+    <analyte vbar20="0.713" amount="1" mw="14329" type="Protein"/>
+   </solution>
+  </parameters>
+ </dataset>
+</US_JobSubmit>

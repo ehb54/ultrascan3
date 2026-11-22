@@ -6,20 +6,24 @@
 #include <QtNetwork>
 #include <mpi.h>
 
-#include "us_model.h"
-#include "us_dmga_constr.h"
-#include "us_pcsa_modelrec.h"
 #include "us_dataIO.h"
+#include "us_dmga_constr.h"
+#include "us_math2.h"
+#include "us_model.h"
+#include "us_mpi_jobconfig.h"
+#include "us_mpi_sim_cache.h"
 #include "us_noise.h"
+#include "us_pcsa_modelrec.h"
 #include "us_simparms.h"
 #include "us_solve_sim.h"
 #include "us_vector.h"
-#include "us_math2.h"
 
 #define SIMULATION       US_SolveSim::Simulation
 #define DATASET          US_SolveSim::DataSet
 #define DGene            US_Model
 
+// us_math2.h defines a fallback DbgLv if it is included first
+#undef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
 #define DbTiming if(dbg_timing)qDebug()   //!< debug-timing-conditioned qDebug()
 
@@ -66,6 +70,13 @@ class US_MPI_Analysis : public QObject
         bool is_composite_job;   //!< Composite job flag
 
         MPI_Comm my_communicator; //!< MPI communicator
+        MPI_Comm         node_comm = MPI_COMM_NULL; //!< Ranks sharing this node's memory
+        int              node_rank = 0;             //!< Rank within node_comm
+        int              node_size = 1;             //!< Number of ranks on this node
+        uint             deme_seed = 0;             //!< Random seed shared by all ranks (job seed or rank 0's time seed)
+        US_MPI_NodeSimCache* sim_cache = nullptr;       //!< Simulations shared by the node's ranks (or none)
+        QVector<int>         node_leaders;              //!< World ranks of the first rank of each node
+        bool                 sim_room_fitted = false;   //!< The caches' room was fitted to the job's peak
 
         int current_dataset;      //!< Current dataset for global fit or composite
         int datasets_to_process;  //!< Datasets to process for global fit or composite
@@ -112,6 +123,7 @@ class US_MPI_Analysis : public QObject
         QVector< double > maxods;          //!< Maximum OD values
         QVector< double > mc_data;         //!< Monte Carlo data
         QVector< double > sigmas;          //!< Sigma values
+        QVector<double>   mc_base_data;    //!< 2DSA simulation of the unmodified data, indexed like sigmas
         QVector< long > work_rss;          //!< Work RSS
 
         double meniscus_range;   //!< Meniscus range (Master only)
@@ -129,6 +141,7 @@ class US_MPI_Analysis : public QObject
         int meniscus_points;     //!< Meniscus points
         int bottom_points;       //!< Bottom points
         int set_count;           //!< Set count
+        int               max_iters_all;       //!< Refinement iterations requested
 
         //! \enum WorkerStatus
         //! \brief Enumeration for worker statuses
@@ -136,7 +149,19 @@ class US_MPI_Analysis : public QObject
 
         //! \enum PMGTag
         //! \brief Enumeration for PMG tags
-        enum PMGTag { ADATESIZE=1000, ADATE, STARTITER, STARTLAST, UDPSIZE, UDPMSG, DONEITER, DONELAST };
+        enum PMGTag
+        {
+           ADATESIZE = 1000,
+           ADATE,
+           STARTITER,
+           STARTLAST,
+           UDPSIZE,
+           UDPMSG,
+           DONEITER,
+           DONELAST,
+           STOPITER,
+           MCBASE
+        };
 
         bool fit_meni;           //!< Fit meniscus flag
         bool fit_bott;           //!< Fit bottom flag
@@ -158,6 +183,7 @@ class US_MPI_Analysis : public QObject
 
         QString requestID;                  //!< Request ID
         QString directory;                  //!< Directory path
+        QString                   output_dir;                 //!< Output directory (absolute)
         QString analysis_type;              //!< Analysis type
         QString cluster;                    //!< Cluster name
         QString db_name;                    //!< Database name
@@ -165,7 +191,7 @@ class US_MPI_Analysis : public QObject
         QString requestGUID;                //!< Request GUID
         QString analysisDate;               //!< Analysis date
 
-        QMap< QString, QString > parameters; //!< Parameters map
+        US_MPI_JobConfig          job_config;  //!< The job description (hpcrequest XML)
         QMap< QString, QString > task_params; //!< Task parameters map
 
         QDateTime submitTime;               //!< Submission time
@@ -183,7 +209,17 @@ class US_MPI_Analysis : public QObject
 
                 //! \enum Command
                 //! \brief Enumeration for MPI job commands
-                enum Command { IDLE, PROCESS, WAIT, SHUTDOWN, NEWDATA, PROCESS_MC };
+                enum Command
+                {
+                   IDLE,
+                   PROCESS,
+                   WAIT,
+                   SHUTDOWN,
+                   NEWDATA,
+                   PROCESS_MC,
+                   CLEARCACHE,
+                   FITCACHE
+                };
 
                 //! \enum Status
                 //! \brief Enumeration for MPI job statuses
@@ -224,6 +260,7 @@ class US_MPI_Analysis : public QObject
                 MPI_Job mpi_job;                 //!< MPI job
                 QVector< US_Solute > solutes;    //!< Solutes list
                 QVector< US_ZSolute > zsolutes;  //!< Z solutes list
+                int                   seq = -1;  //!< Queue order within depth
         };
 
         QList< Sa_Job > job_queue; //!< Job queue
@@ -251,11 +288,32 @@ class US_MPI_Analysis : public QObject
             public:
                 int depth;                      //!< Depth of the result
                 int worker;                     //!< Worker index
+                int                   seq;                        //!< Queue order of the job
                 QVector< US_Solute > solutes;   //!< Solutes list
                 QVector< US_ZSolute > zsolutes; //!< Z solutes list
+                double                variance; //!< Fit variance
+                QVector<double>       variances; //!< Fit variances per dataset
+                QVector<double>       ti_noise;  //!< Fitted TI noise
+                QVector<double>       ri_noise;  //!< Fitted RI noise
         };
 
-        QList< Result > cached_results; //!< Cached results list
+        //! \class FitContext
+        //! \brief Simulation parameters shared by the jobs of a fit.
+        //!  Simulations depend on dataset, meniscus and bottom; a Monte
+        //!  Carlo iteration changes only the data.
+        class FitContext
+        {
+           public:
+              int    dataset      = -1;  //!< Dataset index
+              double meniscus     = 0.0; //!< Meniscus sent with jobs
+              double bottom       = 0.0; //!< Bottom sent with jobs
+              int    mc_iteration = 0;   //!< Monte Carlo iteration
+        };
+        FitContext    fit_context; //!< Current fit context
+
+        QList<Result> cached_results;   //!< Results not yet processed
+        int           job_seq_next = 0; //!< Next 2DSA job sequence number
+        QVector<int>  worker_seq;       //!< Sequence number of worker's job
 
         //! \class Bucket
         //! \brief Class representing a bucket for genetic algorithm.
@@ -268,7 +326,16 @@ class US_MPI_Analysis : public QObject
                 double y_max; //!< Maximum Y value
                 double ds;    //!< Delta S value
                 double dk;    //!< Delta K value
+                int    ns;    //!< Grid points in s inside the bucket
+                int    nk;    //!< Grid points in k inside the bucket
+                int    s_glo; //!< Lowest allowed s grid index (< 0: soft bucket)
+                int    s_ghi; //!< Highest allowed s grid index (> ns-1: soft bucket)
+                int    k_glo; //!< Lowest allowed k grid index
+                int    k_ghi; //!< Highest allowed k grid index
         };
+
+        int                                        bucket_soft   = 0;   //!< 0 hard buckets, 1 soft walls, 2 Gaussian prior
+        double                                     bucket_lambda = 1.0; //!< Weight of the soft-bucket penalty
 
         int generation;       //!< Generation count
         int s_grid;           //!< S grid size
@@ -277,6 +344,7 @@ class US_MPI_Analysis : public QObject
         int fitness_count;    //!< Fitness count
 
         typedef QVector< US_Solute > Gene; //!< Gene type
+        Gene                                       fit_gene; //!< Gene of the model the GA master reported last
 
         double regularization; //!< Regularization value
         double concentration_threshold; //!< Concentration threshold
@@ -286,6 +354,15 @@ class US_MPI_Analysis : public QObject
         QList< SIMULATION > sim_values; //!< Simulation values list
         QMap< QString, double > fitness_map; //!< Fitness map
         int fitness_hits; //!< Fitness hits count
+        double                                     fitness_secs    = 0.0;     //!< Worker seconds in fitness evaluations
+        US_SimCache* ga_simcache      = nullptr; //!< Per-rank simulation cache (GA, if the node cache could not be made)
+        qint64       rank_cache_bytes = 0;       //!< Size of ga_simcache (0: none)
+        int                                        ga_normal       = 0;   //!< GA fitness from the normal equations (1; 0 = QR path)
+        int                                        ga_normal_check = 0;   //!< Compare both fitness paths for every gene
+        qint64                                     ga_normal_count = 0;   //!< Fitness values from the normal equations
+        qint64                                     ga_qr_count     = 0;   //!< ... from the QR path (fallback)
+        double                                     ga_normal_dvar  = 0.0; //!< Check:  max relative variance difference
+        double                                     ga_normal_dc    = 0.0; //!< Check:  max concentration difference / sum
         QList< DGene > dgenes; //!< DGene list
         QList< DGene > best_dgenes; //!< Best DGene list (size is number of workers)
         US_dmGA_Constraints constraints; //!< Genetic algorithm constraints
@@ -352,25 +429,51 @@ class US_MPI_Analysis : public QObject
         enum { GENERATION, GENE, IMMIGRATE, EMMIGRATE, UPDATE, FINISHED };
 
         // Methods
-        void     parse         ( const QString& );
-        void     parse_job     ( QXmlStreamReader& );
-        void     parse_dataset ( QXmlStreamReader&, DATASET* );
-        void     parse_files   ( QXmlStreamReader&, DATASET* );
-        void     parse_solution( QXmlStreamReader&, DATASET* );
+        void                   set_solute_types( void );
+        void                   parse_command_line( int, QStringList&, QString&, QString&, QString&, QMap<QString, QString>& ) const;
+        void                   unpack_inputs( const QString& );
+        QString                find_job_file( const QString& );
+        void                   read_task_parameters( const QString&, const QMap<QString, QString>& );
+        void                   announce_start( const QString& );
+        void                   load_data( void );
+        void                   set_fit_controls( void );
+        void                   set_ga_controls( void );
+        void                   prepare_datasets( bool&, int&, int&, int& );
+        void                   prepare_timestates( int, int, int );
+        static QString         timestate_path( const QString&, const QString& );
+        void                   prepare_speed_steps( bool );
+        void                   check_grid_size( void );
+        void                   choose_groups( void );
+        void                   read_job_config( const QString& );
         void     send_udp      ( const QString& );
         void     abort         ( const QString&, int=-1 );
+        void                   abort_all( const QString&, int = -1 );
+        void                   abort_if_any( const QString& );
+        bool                   read_shared_file( const QString&, QByteArray& ) const;
+        QString                shared_text( const QString& ) const;
+        void                   archive_outputs( void );
         long int max_rss       ( void );
-        QString  par_key_value ( const QString, const QString );
+        static void            phys_memory( qint64&, qint64& );
 
         Gene     create_solutes( double, double, double,
                                  double, double, double );
         void     init_solutes  ( void );
         void     fill_queue    ( void );
-        void     limitBucket   ( Bucket& );
+        void                   limitBucket( Bucket& ) const;
 
         // Master
         void     _2dsa_master      ( void );
-        void     submit            ( Sa_Job&, int );
+        void                   submit( Sa_Job&, int ) const;
+        void                   run_2dsa_jobs( void );
+        void                   start_2dsa_dataset( int, bool );
+        QString                progress_2dsa( void );
+        int                    pm_next_unit( int );
+        bool                   pm_iteration_done( int, int& );
+        int                    pm_dataset_done( int );
+        void                   pm_send_mc_base( void );
+        void                   pm_recv_mc_base( void );
+        int                    pm_group_rss( void );
+        void                   wait_workers_ready( void );
         void     submit_pcsa       ( Sa_Job&, int );
         void     add_to_queue      ( Sa_Job& );
         void     process_results   ( int, const int* );
@@ -378,6 +481,20 @@ class US_MPI_Analysis : public QObject
         void     write_noise       ( US_Noise::NoiseType, const QVector< double>& );
         void     iterate           ( void );
         void     set_meniscus      ( void );
+        void                   set_menibott_values( int );
+        void                   begin_fit_context( void );
+        void                   create_node_comm( void );
+        void                   free_node_comm( void );
+        void                   create_sim_cache( void );
+        US_SimCache*           solver_cache( void ) const;
+        void                   clear_sim_caches( void );
+        void                   fit_sim_cache_rooms( void );
+        void                   fit_sim_cache_room( void );
+        qint64                 predicted_node_bytes( void );
+        qint64                 job_memory_limit( const US_MPI_MemLimit::Cgroup& );
+        qint64                 sim_cache_bytes( qint64, bool, bool, qint64 );
+        bool                   worker_fit_context( int, double, double );
+        double                 dataset_bottom( int );
         void     set_monteCarlo    ( void );
         void     write_output      ( void );
         void     write_global      ( void );
@@ -386,14 +503,13 @@ class US_MPI_Analysis : public QObject
         void     write_model       ( const SIMULATION&, US_Model::AnalysisType,
                                      bool = false );
         void     write_superg      ( const SIMULATION&, US_Model::AnalysisType );
-        void     stats_output      ( int, int, int,
-                                     QDateTime, QDateTime, QDateTime );
-        void     pm_2dsa_master    ( void );
+        void                   stats_output( int, int, int, QDateTime, QDateTime, QDateTime );
         void     pm_ga_master      ( void );
         void     pm_dmga_master    ( void );
         int      ready_worker      ( void );
-        int      low_working_depth ( void );
-        void     cache_result      ( Result& );
+        void                   process_ready_results( void );
+        bool                   job_pending_before( int, int );
+        bool                   job_pending_at( int );
         void     process_solutes   ( int&, int&, QVector< US_Solute >& );
         void     dset_matrices     ( int, int*,
                                      QVector< double >&, QVector< double >&,
@@ -406,11 +522,20 @@ class US_MPI_Analysis : public QObject
         void     _2dsa_worker      ( void );
 
         void     calc_residuals     ( int, int, SIMULATION& );
+        void                   seed_deme_random( void );
+        void                   calc_fitness_residuals( int, int, SIMULATION& );
+        void                   debug_residuals( int, int, SIMULATION&, QVector<US_Solute>& );
 
         // GA Master
         void ga_master       ( void );
         void ga_master_loop  ( void );
         void ga_global_fit   ( void );
+        Gene                   refined_gene( const Gene& );
+        void                   report_best_gene( void );
+        void                   setup_bucket_grid( void );
+        void                   setup_ga_simcache( void );
+        double                 bucket_penalty( const Gene&, int );
+        void                   bound_solute( US_Solute&, int );
         void set_gaMonteCarlo( void );
 
         // GA Worker
@@ -433,8 +558,7 @@ class US_MPI_Analysis : public QObject
         void   lamm_gsm_df   ( const US_Vector&, US_Vector& );
         void   align_gene    ( Gene& );
 
-        void   vector_scaled_sum   ( US_Vector&, US_Vector&, double,
-                                     US_Vector&, double = 1.0 );
+        void                   vector_scaled_sum( US_Vector&, const US_Vector&, double, const US_Vector&, double = 1.0 );
         void   solutes_from_gene   ( Gene&, int );
         void   set_comp_attrib     ( US_Model::SimulationComponent&,
                                      double, int );
@@ -453,11 +577,9 @@ class US_MPI_Analysis : public QObject
                                      const int, const int );
         void    marker_to_dgenes   ( QVector< double >&, QList< DGene >&,
                                      const int, const int );
-        bool    store_attr_value   ( double&, US_Model&,
-                                     US_dmGA_Constraints::AttribType&, int& );
-        bool    fetch_attr_value   ( double&, US_Model&,
-                                     US_dmGA_Constraints::AttribType&, int& );
-        void    model_from_dgene   ( US_Model&, DGene& dgene );
+        bool                   store_attr_value( const double&, US_Model&, const US_dmGA_Constraints::AttribType&, const int& );
+        bool                   fetch_attr_value( double&, US_Model&, const US_dmGA_Constraints::AttribType&, const int& );
+        void                   model_from_dgene( US_Model&, DGene& ) const;
 
         // DMGA Worker
         void    dmga_worker        ( void );
@@ -467,8 +589,8 @@ class US_MPI_Analysis : public QObject
         void    cross_dgene        ( DGene&, QList< DGene > );
         int     migrate_dgenes     ( void );
         double  get_fitness_dmga   ( DGene& );
-        double  get_fitness_v_dmga ( US_Vector&, US_Vector& );
-        void    lamm_gsm_df_dmga   ( US_Vector&, US_Vector&, US_Vector& );
+        double                 get_fitness_v_dmga( const US_Vector&, const US_Vector& );
+        void                   lamm_gsm_df_dmga( const US_Vector&, US_Vector&, const US_Vector& );
         double  minimize_dmga      ( DGene&, double );
         QString dgene_key          ( DGene& );
         void    calc_residuals_dmga( int, int, SIMULATION&, DGene& );
@@ -478,7 +600,7 @@ class US_MPI_Analysis : public QObject
         void    init_pcsa_solutes   ( void );
         void    fill_pcsa_queue     ( void );
         void    process_pcsa_results( const int, const int* );
-        void    process_pcsa_solutes( Result& );
+        void                   process_pcsa_solutes( const Result& );
         void    write_mrecs         ( void );
         void    iterate_pcsa        ( void );
         void    tikreg_pcsa         ( void );
@@ -487,10 +609,10 @@ class US_MPI_Analysis : public QObject
         void    write_pcsa_aux_model( const int );
         void    filter_mrecs        ( const int, QVector< US_ModelRecord >&,
                                                  QVector< US_ModelRecord >& );
-        void    clean_mrecs         ( QVector< US_ModelRecord >& );
+        void                   clean_mrecs( QVector<US_ModelRecord>& ) const;
         double  alpha_scan          ( void );
-        void    apply_alpha( const double, QVector< double >*, QVector< double >*,
-                             const int, const int, const int, double&, double& );
+        void apply_alpha( const double, QVector<double>*, QVector<double>*, const int, const int, const int, double&, double& )
+           const;
         QString shorter_filename    ( const QString );
 
 
@@ -508,8 +630,7 @@ class US_MPI_Analysis : public QObject
         void    pm_cjobs_supervisor( void );
         void    pm_cjobs_master    ( void );
         void    pm_cjobs_worker    ( void );
-        void    time_datasets_left ( void );
-        void    pm_2dsa_cjmast     ( void );
+        void                   time_datasets_left( void );
         void    pm_ga_cjmast       ( void );
         void    pm_dmga_cjmast     ( void );
         void    pm_pcsa_cjmast     ( void );
@@ -517,7 +638,7 @@ class US_MPI_Analysis : public QObject
         // Debug
         void    dump_buckets( void );
         void    dump_genes  ( int );
-        void    dump_fitness( const QList< Fitness >& );
+        void                   dump_fitness( const QList<Fitness>& ) const;
 };
 
 #endif

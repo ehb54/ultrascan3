@@ -23,24 +23,16 @@
 #include <qwt_plot.h>
 #include "us3i_plot.h"
 
-#if QT_VERSION >= 0x040000
 #include "qwt_plot_grid.h"
 #include "qwt_plot_curve.h"
 #include "qwt/scrollbar.h"
 #include "qwt/scrollzoomer.h"
-#else
-#  include "qwt/scrollbar.h"
-#  include "qwt/scrollzoomer.h"
-#endif
 
 #include "us_mqt.h"
 
 using namespace std;
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-     #pragma warning ( disable: 4251 )
-# endif
 #endif      
 
 class US_EXTERN US_Hydrodyn_Saxs_Hplc_Baseline_Best : public QFrame
@@ -92,9 +84,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Baseline_Best : public QFrame
 
    private:
       ScrollZoomer  *plot_zoomer;
-#if QT_VERSION >= 0x040000
       QwtPlotGrid   *plot_grid;
-#endif
 
       mQwtPlot      *hb_plot;
       US_Plot       *usp_hb_plot;
@@ -103,9 +93,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Baseline_Best : public QFrame
 
    private:
       ScrollZoomer  *hb_plot_zoomer;
-#if QT_VERSION >= 0x040000
       QwtPlotGrid   *hb_plot_grid;
-#endif
 
       QFont         ft;
       QTextEdit     *editor;
@@ -142,9 +130,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Baseline_Best : public QFrame
 };
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
 #endif
 
 #endif

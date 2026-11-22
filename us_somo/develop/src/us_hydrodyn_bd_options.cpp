@@ -133,41 +133,6 @@ void US_Hydrodyn_BD_Options::setupGUI()
    AUTFBACK( cnt_bd_threshold_sc_sc );
    connect(cnt_bd_threshold_sc_sc, SIGNAL(valueChanged(double)), SLOT(update_bd_threshold_sc_sc(double)));
 
-#if QT_VERSION < 0x040000
-   bg_bead_size_type = new QGroupBox(3, Qt::Vertical, " Bead sizes determined ", this);
-   Q_CHECK_PTR(bg_bead_size_type);
-   bg_bead_size_type->setExclusive(true);
-   bg_bead_size_type->setAlignment(Qt::AlignHCenter);
-   bg_bead_size_type->setInsideMargin(3);
-   bg_bead_size_type->setInsideSpacing(0);
-   connect(bg_bead_size_type, SIGNAL(clicked(int)), this, SLOT(set_bead_size_type(int)));
-
-   cb_bead_size_type_1st = new QCheckBox(bg_bead_size_type);
-   cb_bead_size_type_1st->setText(us_tr(" First model's beads "));
-   cb_bead_size_type_1st->setEnabled(true);
-   //   cb_bead_size_type_1st->setMinimumHeight(minHeight1);
-   cb_bead_size_type_1st->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_bead_size_type_1st->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_bead_size_type_1st );
-
-   cb_bead_size_type_min = new QCheckBox(bg_bead_size_type);
-   cb_bead_size_type_min->setText(us_tr(" Minimum size "));
-   cb_bead_size_type_min->setEnabled(true);
-   //   cb_bead_size_type_min->setMinimumHeight(minHeight1);
-   cb_bead_size_type_min->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_bead_size_type_min->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_bead_size_type_min );
-
-   cb_bead_size_type_avg = new QCheckBox(bg_bead_size_type);
-   cb_bead_size_type_avg->setText(us_tr(" Average size "));
-   cb_bead_size_type_avg->setEnabled(true);
-   //   cb_bead_size_type_avg->setMinimumHeight(minHeight1);
-   cb_bead_size_type_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_bead_size_type_avg->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_bead_size_type_avg );
-
-   bg_bead_size_type->setButton(bd_options->bead_size_type);
-#else
    bg_bead_size_type = new QGroupBox( " Bead sizes determined " );
    Q_CHECK_PTR(bg_bead_size_type);
 
@@ -212,7 +177,6 @@ void US_Hydrodyn_BD_Options::setupGUI()
    case 2 : rb_bead_size_type_avg->setChecked( true ); break;
    default : qDebug() << "bd options bead size type selection error"; break;
    }
-#endif
 
    lbl_npadif = new QLabel(us_tr(" Number of consecutive steps without recalculating: "), this);
    lbl_npadif->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -603,41 +567,6 @@ void US_Hydrodyn_BD_Options::setupGUI()
    AUTFBACK( cb_compute_sc_sc_max_elong );
    connect(cb_compute_sc_sc_max_elong, SIGNAL(clicked()), SLOT(set_compute_sc_sc_max_elong()));
 
-#if QT_VERSION < 0x040000
-   bg_inter = new QGroupBox(3, Qt::Vertical, "Type of simulation algorithm:", this);
-   Q_CHECK_PTR(bg_inter);
-   bg_inter->setExclusive(true);
-   bg_inter->setAlignment(Qt::AlignHCenter);
-   bg_inter->setInsideMargin(3);
-   bg_inter->setInsideSpacing(0);
-   connect(bg_inter, SIGNAL(clicked(int)), this, SLOT(set_inter(int)));
-
-   cb_inter_no_hi = new QCheckBox(bg_inter);
-   cb_inter_no_hi->setText(us_tr(" No hydrodynamic interaction (HI) "));
-   cb_inter_no_hi->setEnabled(true);
-   //   cb_inter_no_hi->setMinimumHeight(minHeight1);
-   cb_inter_no_hi->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_inter_no_hi->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_inter_no_hi );
-
-   cb_inter_os = new QCheckBox(bg_inter);
-   cb_inter_os->setText(us_tr(" HI Oseen "));
-   cb_inter_os->setEnabled(true);
-   //   cb_inter_os->setMinimumHeight(minHeight1);
-   cb_inter_os->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_inter_os->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_inter_os );
-
-   cb_inter_mos = new QCheckBox(bg_inter);
-   cb_inter_mos->setText(us_tr(" HI modified Oseen "));
-   cb_inter_mos->setEnabled(true);
-   //   cb_inter_mos->setMinimumHeight(minHeight1);
-   cb_inter_mos->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_inter_mos->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_inter_mos );
-
-   bg_inter->setButton(bd_options->inter);
-#else
    bg_inter = new QGroupBox( "Type of simulation algorithm:" );
    Q_CHECK_PTR(bg_inter);
 
@@ -682,35 +611,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    case 2 : rb_inter_mos->setChecked( true ); break;
    default : qDebug() << "bd options inter selection error"; break;
    }
-#endif
 
-#if QT_VERSION < 0x040000
-   bg_iorder = new QGroupBox(3, Qt::Vertical, "Order of the simulation algorithm:", this);
-   Q_CHECK_PTR(bg_iorder);
-   bg_iorder->setExclusive(true);
-   bg_iorder->setAlignment(Qt::AlignHCenter);
-   bg_iorder->setInsideMargin(3);
-   bg_iorder->setInsideSpacing(0);
-   connect(bg_iorder, SIGNAL(clicked(int)), this, SLOT(set_iorder(int)));
-
-   cb_iorder_em = new QCheckBox(bg_iorder);
-   cb_iorder_em->setText(us_tr(" Ermak-McCammon 1st order "));
-   cb_iorder_em->setEnabled(true);
-   //   cb_iorder_em->setMinimumHeight(minHeight1);
-   cb_iorder_em->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_iorder_em->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_iorder_em );
-
-   cb_iorder_igt = new QCheckBox(bg_iorder);
-   cb_iorder_igt->setText(us_tr(" Iniesta-Garcia de la Torre predictor-corrector"));
-   cb_iorder_igt->setEnabled(true);
-   //   cb_iorder_igt->setMinimumHeight(minHeight1);
-   cb_iorder_igt->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_iorder_igt->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_iorder_igt );
-
-   bg_iorder->setButton(bd_options->iorder);
-#else
    bg_iorder = new QGroupBox( "Order of the simulation algorithm:" );
    Q_CHECK_PTR(bg_iorder);
 
@@ -744,7 +645,6 @@ void US_Hydrodyn_BD_Options::setupGUI()
    case 1 : rb_iorder_igt->setChecked( true ); break;
    default : qDebug() << "bd options iorder selection error"; break;
    }
-#endif
    
    pb_dup_fraenkel = new QPushButton(us_tr("Replicate"), this);
    pb_dup_fraenkel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -752,51 +652,6 @@ void US_Hydrodyn_BD_Options::setupGUI()
    pb_dup_fraenkel->setPalette( PALET_PUSHB );
    connect(pb_dup_fraenkel, SIGNAL(clicked()), SLOT(dup_fraenkel()));
 
-#if QT_VERSION < 0x040000
-   bg_chem_pb_pb_bond_types = new QGroupBox(4, Qt::Vertical, "Bond type:", this);
-   qf = bg_chem_pb_pb_bond_types->font();
-   qf.setPointSize(qf.pointSize() - 1);
-   bg_chem_pb_pb_bond_types->setFont(qf);
-   bg_chem_pb_pb_bond_types->setExclusive(true);
-   bg_chem_pb_pb_bond_types->setAlignment(Qt::AlignHCenter);
-   bg_chem_pb_pb_bond_types->setInsideMargin(3);
-   bg_chem_pb_pb_bond_types->setInsideSpacing(0);
-   connect(bg_chem_pb_pb_bond_types, SIGNAL(clicked(int)), this, SLOT(set_chem_pb_pb_bond_types(int)));
-
-   cb_chem_pb_pb_bond_type_fraenkel = new QCheckBox(bg_chem_pb_pb_bond_types);
-   cb_chem_pb_pb_bond_type_fraenkel->setText(us_tr(" Fraenkel (hard Hookean) "));
-   cb_chem_pb_pb_bond_type_fraenkel->setEnabled(true);
-   //   cb_chem_pb_pb_bond_type_fraenkel->setMinimumHeight(minHeight1);
-   cb_chem_pb_pb_bond_type_fraenkel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_chem_pb_pb_bond_type_fraenkel->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_chem_pb_pb_bond_type_fraenkel );
-
-   cb_chem_pb_pb_bond_type_hookean = new QCheckBox(bg_chem_pb_pb_bond_types);
-   cb_chem_pb_pb_bond_type_hookean->setText(us_tr(" Hookean,Gaussian (soft) "));
-   cb_chem_pb_pb_bond_type_hookean->setEnabled(true);
-   //   cb_chem_pb_pb_bond_type_hookean->setMinimumHeight(minHeight1);
-   cb_chem_pb_pb_bond_type_hookean->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_chem_pb_pb_bond_type_hookean->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_chem_pb_pb_bond_type_hookean );
-
-   cb_chem_pb_pb_bond_type_fene = new QCheckBox(bg_chem_pb_pb_bond_types);
-   cb_chem_pb_pb_bond_type_fene->setText(us_tr(" FENE "));
-   cb_chem_pb_pb_bond_type_fene->setEnabled(true);
-   //   cb_chem_pb_pb_bond_type_fene->setMinimumHeight(minHeight1);
-   cb_chem_pb_pb_bond_type_fene->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_chem_pb_pb_bond_type_fene->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_chem_pb_pb_bond_type_fene );
-
-   cb_chem_pb_pb_bond_type_hard_fene = new QCheckBox(bg_chem_pb_pb_bond_types);
-   cb_chem_pb_pb_bond_type_hard_fene->setText(us_tr(" Hard-FENE "));
-   cb_chem_pb_pb_bond_type_hard_fene->setEnabled(true);
-   //   cb_chem_pb_pb_bond_type_hard_fene->setMinimumHeight(minHeight1);
-   cb_chem_pb_pb_bond_type_hard_fene->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_chem_pb_pb_bond_type_hard_fene->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_chem_pb_pb_bond_type_hard_fene );
-
-   bg_chem_pb_pb_bond_types->setButton(bd_options->chem_pb_pb_bond_type);
-#else
    bg_chem_pb_pb_bond_types = new QGroupBox( "Bond type:" );
 
    rb_chem_pb_pb_bond_type_fraenkel = new QRadioButton();
@@ -852,53 +707,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    default : qDebug() << "bd options chem_pb_pb_bond_type selection error"; break;
    }
    
-#endif
 
-#if QT_VERSION < 0x040000
-   bg_chem_pb_sc_bond_types = new QGroupBox(4, Qt::Vertical, "Bond type:", this);
-   qf = bg_chem_pb_sc_bond_types->font();
-   qf.setPointSize(qf.pointSize() - 1);
-   bg_chem_pb_sc_bond_types->setFont(qf);
-   bg_chem_pb_sc_bond_types->setExclusive(true);
-   bg_chem_pb_sc_bond_types->setAlignment(Qt::AlignHCenter);
-   bg_chem_pb_sc_bond_types->setInsideMargin(3);
-   bg_chem_pb_sc_bond_types->setInsideSpacing(0);
-   connect(bg_chem_pb_sc_bond_types, SIGNAL(clicked(int)), this, SLOT(set_chem_pb_sc_bond_types(int)));
-
-   cb_chem_pb_sc_bond_type_fraenkel = new QCheckBox(bg_chem_pb_sc_bond_types);
-   cb_chem_pb_sc_bond_type_fraenkel->setText(us_tr(" Fraenkel (hard Hookean) "));
-   cb_chem_pb_sc_bond_type_fraenkel->setEnabled(true);
-   //   cb_chem_pb_sc_bond_type_fraenkel->setMinimumHeight(minHeight1);
-   cb_chem_pb_sc_bond_type_fraenkel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_chem_pb_sc_bond_type_fraenkel->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_chem_pb_sc_bond_type_fraenkel );
-
-   cb_chem_pb_sc_bond_type_hookean = new QCheckBox(bg_chem_pb_sc_bond_types);
-   cb_chem_pb_sc_bond_type_hookean->setText(us_tr(" Hookean,Gaussian (soft) "));
-   cb_chem_pb_sc_bond_type_hookean->setEnabled(true);
-   //   cb_chem_pb_sc_bond_type_hookean->setMinimumHeight(minHeight1);
-   cb_chem_pb_sc_bond_type_hookean->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_chem_pb_sc_bond_type_hookean->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_chem_pb_sc_bond_type_hookean );
-
-   cb_chem_pb_sc_bond_type_fene = new QCheckBox(bg_chem_pb_sc_bond_types);
-   cb_chem_pb_sc_bond_type_fene->setText(us_tr(" FENE "));
-   cb_chem_pb_sc_bond_type_fene->setEnabled(true);
-   //   cb_chem_pb_sc_bond_type_fene->setMinimumHeight(minHeight1);
-   cb_chem_pb_sc_bond_type_fene->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_chem_pb_sc_bond_type_fene->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_chem_pb_sc_bond_type_fene );
-
-   cb_chem_pb_sc_bond_type_hard_fene = new QCheckBox(bg_chem_pb_sc_bond_types);
-   cb_chem_pb_sc_bond_type_hard_fene->setText(us_tr(" Hard-FENE "));
-   cb_chem_pb_sc_bond_type_hard_fene->setEnabled(true);
-   //   cb_chem_pb_sc_bond_type_hard_fene->setMinimumHeight(minHeight1);
-   cb_chem_pb_sc_bond_type_hard_fene->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_chem_pb_sc_bond_type_hard_fene->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_chem_pb_sc_bond_type_hard_fene );
-
-   bg_chem_pb_sc_bond_types->setButton(bd_options->chem_pb_sc_bond_type);
-#else
    bg_chem_pb_sc_bond_types = new QGroupBox( "Bond type:" );
 
    rb_chem_pb_sc_bond_type_fraenkel = new QRadioButton();
@@ -953,53 +762,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    case 3 : rb_chem_pb_sc_bond_type_hard_fene->setChecked( true ); break;
    default : qDebug() << "bd options chem_pb_sc_bond_type selection error"; break;
    }
-#endif
 
-#if QT_VERSION < 0x040000
-   bg_chem_sc_sc_bond_types = new QGroupBox(4, Qt::Vertical, "Bond type:", this);
-   qf = bg_chem_sc_sc_bond_types->font();
-   qf.setPointSize(qf.pointSize() - 1);
-   bg_chem_sc_sc_bond_types->setFont(qf);
-   bg_chem_sc_sc_bond_types->setExclusive(true);
-   bg_chem_sc_sc_bond_types->setAlignment(Qt::AlignHCenter);
-   bg_chem_sc_sc_bond_types->setInsideMargin(3);
-   bg_chem_sc_sc_bond_types->setInsideSpacing(0);
-   connect(bg_chem_sc_sc_bond_types, SIGNAL(clicked(int)), this, SLOT(set_chem_sc_sc_bond_types(int)));
-
-   cb_chem_sc_sc_bond_type_fraenkel = new QCheckBox(bg_chem_sc_sc_bond_types);
-   cb_chem_sc_sc_bond_type_fraenkel->setText(us_tr(" Fraenkel (hard Hookean) "));
-   cb_chem_sc_sc_bond_type_fraenkel->setEnabled(true);
-   //   cb_chem_sc_sc_bond_type_fraenkel->setMinimumHeight(minHeight1);
-   cb_chem_sc_sc_bond_type_fraenkel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_chem_sc_sc_bond_type_fraenkel->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_chem_sc_sc_bond_type_fraenkel );
-
-   cb_chem_sc_sc_bond_type_hookean = new QCheckBox(bg_chem_sc_sc_bond_types);
-   cb_chem_sc_sc_bond_type_hookean->setText(us_tr(" Hookean,Gaussian (soft) "));
-   cb_chem_sc_sc_bond_type_hookean->setEnabled(true);
-   //   cb_chem_sc_sc_bond_type_hookean->setMinimumHeight(minHeight1);
-   cb_chem_sc_sc_bond_type_hookean->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_chem_sc_sc_bond_type_hookean->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_chem_sc_sc_bond_type_hookean );
-
-   cb_chem_sc_sc_bond_type_fene = new QCheckBox(bg_chem_sc_sc_bond_types);
-   cb_chem_sc_sc_bond_type_fene->setText(us_tr(" FENE "));
-   cb_chem_sc_sc_bond_type_fene->setEnabled(true);
-   //   cb_chem_sc_sc_bond_type_fene->setMinimumHeight(minHeight1);
-   cb_chem_sc_sc_bond_type_fene->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_chem_sc_sc_bond_type_fene->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_chem_sc_sc_bond_type_fene );
-
-   cb_chem_sc_sc_bond_type_hard_fene = new QCheckBox(bg_chem_sc_sc_bond_types);
-   cb_chem_sc_sc_bond_type_hard_fene->setText(us_tr(" Hard-FENE "));
-   cb_chem_sc_sc_bond_type_hard_fene->setEnabled(true);
-   //   cb_chem_sc_sc_bond_type_hard_fene->setMinimumHeight(minHeight1);
-   cb_chem_sc_sc_bond_type_hard_fene->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_chem_sc_sc_bond_type_hard_fene->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_chem_sc_sc_bond_type_hard_fene );
-
-   bg_chem_sc_sc_bond_types->setButton(bd_options->chem_sc_sc_bond_type);
-#else
    bg_chem_sc_sc_bond_types = new QGroupBox( "Bond type:" );
 
    rb_chem_sc_sc_bond_type_fraenkel = new QRadioButton();
@@ -1055,53 +818,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    default : qDebug() << "bd options chem_sc_sc_bond_type selection error"; break;
    }
    
-#endif
 
-#if QT_VERSION < 0x040000
-   bg_pb_pb_bond_types = new QGroupBox(4, Qt::Vertical, "Bond type:", this);
-   qf = bg_pb_pb_bond_types->font();
-   qf.setPointSize(qf.pointSize() - 1);
-   bg_pb_pb_bond_types->setFont(qf);
-   bg_pb_pb_bond_types->setExclusive(true);
-   bg_pb_pb_bond_types->setAlignment(Qt::AlignHCenter);
-   bg_pb_pb_bond_types->setInsideMargin(3);
-   bg_pb_pb_bond_types->setInsideSpacing(0);
-   connect(bg_pb_pb_bond_types, SIGNAL(clicked(int)), this, SLOT(set_pb_pb_bond_types(int)));
-
-   cb_pb_pb_bond_type_fraenkel = new QCheckBox(bg_pb_pb_bond_types);
-   cb_pb_pb_bond_type_fraenkel->setText(us_tr(" Fraenkel (hard Hookean) "));
-   cb_pb_pb_bond_type_fraenkel->setEnabled(true);
-   //   cb_pb_pb_bond_type_fraenkel->setMinimumHeight(minHeight1);
-   cb_pb_pb_bond_type_fraenkel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_pb_pb_bond_type_fraenkel->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_pb_pb_bond_type_fraenkel );
-
-   cb_pb_pb_bond_type_hookean = new QCheckBox(bg_pb_pb_bond_types);
-   cb_pb_pb_bond_type_hookean->setText(us_tr(" Hookean,Gaussian (soft) "));
-   cb_pb_pb_bond_type_hookean->setEnabled(true);
-   //   cb_pb_pb_bond_type_hookean->setMinimumHeight(minHeight1);
-   cb_pb_pb_bond_type_hookean->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_pb_pb_bond_type_hookean->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_pb_pb_bond_type_hookean );
-
-   cb_pb_pb_bond_type_fene = new QCheckBox(bg_pb_pb_bond_types);
-   cb_pb_pb_bond_type_fene->setText(us_tr(" FENE "));
-   cb_pb_pb_bond_type_fene->setEnabled(true);
-   //   cb_pb_pb_bond_type_fene->setMinimumHeight(minHeight1);
-   cb_pb_pb_bond_type_fene->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_pb_pb_bond_type_fene->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_pb_pb_bond_type_fene );
-
-   cb_pb_pb_bond_type_hard_fene = new QCheckBox(bg_pb_pb_bond_types);
-   cb_pb_pb_bond_type_hard_fene->setText(us_tr(" Hard-FENE "));
-   cb_pb_pb_bond_type_hard_fene->setEnabled(true);
-   //   cb_pb_pb_bond_type_hard_fene->setMinimumHeight(minHeight1);
-   cb_pb_pb_bond_type_hard_fene->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_pb_pb_bond_type_hard_fene->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_pb_pb_bond_type_hard_fene );
-
-   bg_pb_pb_bond_types->setButton(bd_options->pb_pb_bond_type);
-#else
    bg_pb_pb_bond_types = new QGroupBox( "Bond type:" );
 
    rb_pb_pb_bond_type_fraenkel = new QRadioButton();
@@ -1156,53 +873,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    case 3 : rb_pb_pb_bond_type_hard_fene->setChecked( true ); break;
    default : qDebug() << "bd options chem_pb_pb_bond_type selection error"; break;
    }
-#endif
 
-#if QT_VERSION < 0x040000
-   bg_pb_sc_bond_types = new QGroupBox(4, Qt::Vertical, "Bond type:", this);
-   qf = bg_pb_sc_bond_types->font();
-   qf.setPointSize(qf.pointSize() - 1);
-   bg_pb_sc_bond_types->setFont(qf);
-   bg_pb_sc_bond_types->setExclusive(true);
-   bg_pb_sc_bond_types->setAlignment(Qt::AlignHCenter);
-   bg_pb_sc_bond_types->setInsideMargin(3);
-   bg_pb_sc_bond_types->setInsideSpacing(0);
-   connect(bg_pb_sc_bond_types, SIGNAL(clicked(int)), this, SLOT(set_pb_sc_bond_types(int)));
-
-   cb_pb_sc_bond_type_fraenkel = new QCheckBox(bg_pb_sc_bond_types);
-   cb_pb_sc_bond_type_fraenkel->setText(us_tr(" Fraenkel (hard Hookean) "));
-   cb_pb_sc_bond_type_fraenkel->setEnabled(true);
-   //   cb_pb_sc_bond_type_fraenkel->setMinimumHeight(minHeight1);
-   cb_pb_sc_bond_type_fraenkel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_pb_sc_bond_type_fraenkel->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_pb_sc_bond_type_fraenkel );
-
-   cb_pb_sc_bond_type_hookean = new QCheckBox(bg_pb_sc_bond_types);
-   cb_pb_sc_bond_type_hookean->setText(us_tr(" Hookean,Gaussian (soft) "));
-   cb_pb_sc_bond_type_hookean->setEnabled(true);
-   //   cb_pb_sc_bond_type_hookean->setMinimumHeight(minHeight1);
-   cb_pb_sc_bond_type_hookean->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_pb_sc_bond_type_hookean->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_pb_sc_bond_type_hookean );
-
-   cb_pb_sc_bond_type_fene = new QCheckBox(bg_pb_sc_bond_types);
-   cb_pb_sc_bond_type_fene->setText(us_tr(" FENE "));
-   cb_pb_sc_bond_type_fene->setEnabled(true);
-   //   cb_pb_sc_bond_type_fene->setMinimumHeight(minHeight1);
-   cb_pb_sc_bond_type_fene->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_pb_sc_bond_type_fene->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_pb_sc_bond_type_fene );
-
-   cb_pb_sc_bond_type_hard_fene = new QCheckBox(bg_pb_sc_bond_types);
-   cb_pb_sc_bond_type_hard_fene->setText(us_tr(" Hard-FENE "));
-   cb_pb_sc_bond_type_hard_fene->setEnabled(true);
-   //   cb_pb_sc_bond_type_hard_fene->setMinimumHeight(minHeight1);
-   cb_pb_sc_bond_type_hard_fene->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_pb_sc_bond_type_hard_fene->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_pb_sc_bond_type_hard_fene );
-
-   bg_pb_sc_bond_types->setButton(bd_options->pb_sc_bond_type);
-#else
    bg_pb_sc_bond_types = new QGroupBox( "Bond type:" );
 
    rb_pb_sc_bond_type_fraenkel = new QRadioButton();
@@ -1257,53 +928,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    case 3 : rb_pb_sc_bond_type_hard_fene->setChecked( true ); break;
    default : qDebug() << "bd options chem_pb_sc_bond_type selection error"; break;
    }
-#endif
 
-#if QT_VERSION < 0x040000
-   bg_sc_sc_bond_types = new QGroupBox(4, Qt::Vertical, "Bond type:", this);
-   qf = bg_sc_sc_bond_types->font();
-   qf.setPointSize(qf.pointSize() - 1);
-   bg_sc_sc_bond_types->setFont(qf);
-   bg_sc_sc_bond_types->setExclusive(true);
-   bg_sc_sc_bond_types->setAlignment(Qt::AlignHCenter);
-   bg_sc_sc_bond_types->setInsideMargin(3);
-   bg_sc_sc_bond_types->setInsideSpacing(0);
-   connect(bg_sc_sc_bond_types, SIGNAL(clicked(int)), this, SLOT(set_sc_sc_bond_types(int)));
-
-   cb_sc_sc_bond_type_fraenkel = new QCheckBox(bg_sc_sc_bond_types);
-   cb_sc_sc_bond_type_fraenkel->setText(us_tr(" Fraenkel (hard Hookean) "));
-   cb_sc_sc_bond_type_fraenkel->setEnabled(true);
-   //   cb_sc_sc_bond_type_fraenkel->setMinimumHeight(minHeight1);
-   cb_sc_sc_bond_type_fraenkel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_sc_sc_bond_type_fraenkel->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_sc_sc_bond_type_fraenkel );
-
-   cb_sc_sc_bond_type_hookean = new QCheckBox(bg_sc_sc_bond_types);
-   cb_sc_sc_bond_type_hookean->setText(us_tr(" Hookean,Gaussian (soft) "));
-   cb_sc_sc_bond_type_hookean->setEnabled(true);
-   //   cb_sc_sc_bond_type_hookean->setMinimumHeight(minHeight1);
-   cb_sc_sc_bond_type_hookean->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_sc_sc_bond_type_hookean->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_sc_sc_bond_type_hookean );
-
-   cb_sc_sc_bond_type_fene = new QCheckBox(bg_sc_sc_bond_types);
-   cb_sc_sc_bond_type_fene->setText(us_tr(" FENE "));
-   cb_sc_sc_bond_type_fene->setEnabled(true);
-   //   cb_sc_sc_bond_type_fene->setMinimumHeight(minHeight1);
-   cb_sc_sc_bond_type_fene->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_sc_sc_bond_type_fene->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_sc_sc_bond_type_fene );
-
-   cb_sc_sc_bond_type_hard_fene = new QCheckBox(bg_sc_sc_bond_types);
-   cb_sc_sc_bond_type_hard_fene->setText(us_tr(" Hard-FENE "));
-   cb_sc_sc_bond_type_hard_fene->setEnabled(true);
-   //   cb_sc_sc_bond_type_hard_fene->setMinimumHeight(minHeight1);
-   cb_sc_sc_bond_type_hard_fene->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_sc_sc_bond_type_hard_fene->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_sc_sc_bond_type_hard_fene );
-
-   bg_sc_sc_bond_types->setButton(bd_options->sc_sc_bond_type);
-#else
    bg_sc_sc_bond_types = new QGroupBox( "Bond type:" );
 
    rb_sc_sc_bond_type_fraenkel = new QRadioButton();
@@ -1358,7 +983,6 @@ void US_Hydrodyn_BD_Options::setupGUI()
    case 3 : rb_sc_sc_bond_type_hard_fene->setChecked( true ); break;
    default : qDebug() << "bd options chem_sc_sc_bond_type selection error"; break;
    }
-#endif
 
    lbl_chem_pb_pb_force_constant = new QLabel(us_tr(" Hookean spring constant: "), this);
    lbl_chem_pb_pb_force_constant->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);

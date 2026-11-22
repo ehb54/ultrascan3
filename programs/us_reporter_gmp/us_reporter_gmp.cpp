@@ -1,25 +1,36 @@
-#include <QPrinter>
-#include <QPdfWriter>
-#include <QPainter>
-#include <QFontDatabase>
+#include <QCollator>
 #include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
+#include <QFontDatabase>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QPainter>
+#include <QPdfWriter>
+#include <QPrinter>
 
-#include "us_reporter_gmp.h"
-#include "us_settings.h"
+#include "../us/us_revision.h"
+#include "../us_fematch/us_thread_worker.h"
+#include "us_calc_matching.h"
+#include "us_calc_range.h"
+#include "us_calc_replicate.h"
+#include "us_calc_tolerance.h"
+#include "us_calc_units.h"
+#include "us_constants.h"
+#include "us_convertio.h"
+#include "us_defines.h"
+#include "us_edited_data_loaders.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
-#include "us_protocol_util.h"
-#include "us_math2.h"
-#include "us_constants.h"
-#include "us_solution_vals.h"
 #include "us_lamm_astfvm.h"
-#include "../us_fematch/us_thread_worker.h"
-#include "us_tmst_plot.h"
+#include "us_math2.h"
+#include "us_protocol_util.h"
+#include "us_reporter_gmp.h"
+
+#include "us_settings.h"
+#include "us_solution_vals.h"
 #include "us_tar.h"
-#include "us_defines.h"
-#include "../us/us_revision.h"
+#include "us_tmst_plot.h"
 
 #define MIN_NTC   25
 
@@ -216,6 +227,8 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QLabel*      bn_actions     = us_banner( tr( "Generate GMP or Custom Report from Completed GMP Run:" ), 1 );
   QLabel*      lb_loaded_run  = us_label( tr( "Loaded Run:" ) );
   le_loaded_run               = us_lineedit( tr(""), 0, true );
+  le_loaded_run->setAccessibleName( tr( "Run Selected for Report Generation" ) );
+  lb_loaded_run->setBuddy( le_loaded_run );
   QPushButton* pb_loadrun       = us_pushbutton( tr( "Load GMP Run" ) );
   pb_gen_report    = us_pushbutton( tr( "Generate Report" ) );
   pb_view_report   = us_pushbutton( tr( "View Generated Report" ) );
@@ -227,6 +240,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   //Filename path
   QLabel*      lb_fpath_info = us_label( tr( "Report File \nLocation:" ) );
   te_fpath_info =  us_textedit();
+  te_fpath_info->setAccessibleName( tr( "Generated Report File Location" ) );
   QFontMetrics m (te_fpath_info -> font());
   int RowHeight  = m.lineSpacing();
   RowHeight *= 3;
@@ -238,12 +252,15 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QLabel*      bn_actions_db     = us_banner( tr( "Download and View GMP Report from DB:" ), 1 );
   QLabel*      lb_loaded_run_db  = us_label( tr( "Loaded Run:" ) );
   le_loaded_run_db               = us_lineedit( tr(""), 0, true );
+  le_loaded_run_db->setAccessibleName( tr( "Downloaded Report Run" ) );
+  lb_loaded_run_db->setBuddy( le_loaded_run_db );
   QPushButton* pb_loadreport_db  = us_pushbutton( tr( "Load GMP Report from DB (.PDF)" ) );
   pb_view_report_db              = us_pushbutton( tr( "View Downloaded Report" ) );
 
   //Filename DB path
   QLabel*      lb_fpath_info_db  = us_label( tr( "Report File \nLocation:" ) );
   te_fpath_info_db =  us_textedit();
+  te_fpath_info_db->setAccessibleName( tr( "Downloaded Report File Location" ) );
   te_fpath_info_db -> setFixedHeight  ( RowHeight );
   te_fpath_info_db -> setText( tr( "" ) );
   us_setReadOnly( te_fpath_info_db, true );
@@ -319,6 +336,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QStringList theads;
   theads << "Selected" << "Protocol Settings";
   genTree->setHeaderLabels( theads );
+  genTree->setAccessibleName( tr( "General Report Settings" ) );
   genTree->setFont( QFont( US_Widgets::fixedFont().family(),
 			      US_GuiSettings::fontSize() + 1 ) );
   genTree->installEventFilter   ( this );
@@ -333,6 +351,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QStringList misc_theads;
   misc_theads << "Selected" << "Protocol Settings";
   miscTree->setHeaderLabels( misc_theads );
+  miscTree->setAccessibleName( tr( "Miscellaneous Report Settings" ) );
   miscTree->setFont( QFont( US_Widgets::fixedFont().family(),
 			      US_GuiSettings::fontSize() + 1 ) );
   miscTree->installEventFilter   ( this );
@@ -347,6 +366,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QStringList chan_theads;
   chan_theads << "Selected" << "Protocol Settings";
   perChanTree->setHeaderLabels( chan_theads );
+  perChanTree->setAccessibleName( tr( "Per-Channel Report Settings" ) );
   perChanTree->setFont( QFont( US_Widgets::fixedFont().family(),
 			       US_GuiSettings::fontSize() + 1 ) );
   perChanTreeLayout->addWidget( lb_chantree );
@@ -359,6 +379,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QStringList combplots_theads;
   combplots_theads << "Selected" << "Protocol Settings";
   combPlotsTree->setHeaderLabels( combplots_theads );
+  combPlotsTree->setAccessibleName( tr( "Combined Plots Report Settings" ) );
   combPlotsTree->setFont( QFont( US_Widgets::fixedFont().family(),
 				 US_GuiSettings::fontSize() + 1 ) );
   combPlotsLayout->addWidget( lb_combplots );
@@ -450,6 +471,8 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   QLabel*      bn_actions     = us_banner( tr( "Actions:" ), 1 );
   QLabel*      lb_loaded_run  = us_label( tr( "Loaded Run:" ) );
   le_loaded_run               = us_lineedit( tr(""), 0, true );
+  le_loaded_run->setAccessibleName( tr( "Run Selected for Report Generation" ) );
+  lb_loaded_run->setBuddy( le_loaded_run );
 
   QPushButton* pb_loadrun       = us_pushbutton( tr( "Load GMP Run" ) );
   pb_gen_report    = us_pushbutton( tr( "Generate Report" ) );
@@ -510,6 +533,7 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   QStringList theads;
   theads << "Selected" << "Protocol Settings";
   genTree->setHeaderLabels( theads );
+  genTree->setAccessibleName( tr( "General Report Settings" ) );
   genTree->setFont( QFont( US_Widgets::fixedFont().family(),
 			      US_GuiSettings::fontSize() + 1 ) );
   genTree->installEventFilter   ( this );
@@ -524,6 +548,7 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   QStringList misc_theads;
   misc_theads << "Selected" << "Protocol Settings";
   miscTree->setHeaderLabels( misc_theads );
+  miscTree->setAccessibleName( tr( "Miscellaneous Report Settings" ) );
   miscTree->setFont( QFont( US_Widgets::fixedFont().family(),
 			      US_GuiSettings::fontSize() + 1 ) );
   miscTree->installEventFilter   ( this );
@@ -539,6 +564,7 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   QStringList chan_theads;
   chan_theads << "Selected" << "Protocol Settings";
   perChanTree->setHeaderLabels( theads );
+  perChanTree->setAccessibleName( tr( "Per-Channel Report Settings" ) );
   perChanTree->setFont( QFont( US_Widgets::fixedFont().family(),
 			       US_GuiSettings::fontSize() + 1 ) );
   perChanTreeLayout->addWidget( lb_chantree );
@@ -551,6 +577,7 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   QStringList combplots_theads;
   combplots_theads << "Selected" << "Protocol Settings";
   combPlotsTree->setHeaderLabels( combplots_theads );
+  combPlotsTree->setAccessibleName( tr( "Combined Plots Report Settings" ) );
   combPlotsTree->setFont( QFont( US_Widgets::fixedFont().family(),
 				 US_GuiSettings::fontSize() + 1 ) );
   combPlotsLayout->addWidget( lb_combplots );
@@ -618,7 +645,13 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   abde_menisc. clear();
   abde_plots_filenames. clear();
   abde_data_per_channel. clear();
-  
+  velmwl_channList.clear();
+  velmwl_chan_species.clear();
+  velmwl_chan_guids.clear();
+  velmwl_chan_fname.clear();
+  velmwl_chan_selected_species.clear();
+  editing_time_velmwl.clear();
+
   prot_details_at_report = protocol_details;
   
   QString full_runname = protocol_details[ "filename" ];
@@ -637,19 +670,7 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   lb_hdr1->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
   
   //show progress dialog
-  progress_msg = new QProgressDialog ("Accessing run's protocol...", QString(), 0, 12, this);
-  progress_msg->setWindowFlags(Qt::Tool | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
-  progress_msg->setModal( true );
-  progress_msg->setWindowTitle(tr("Assessing Run's Protocol"));
-  QFont font_d  = progress_msg->property("font").value<QFont>();
-  QFontMetrics fm(font_d);
-  int pixelsWide = fm.horizontalAdvance( progress_msg->windowTitle() );
-  qDebug() << "Progress_msg: pixelsWide -- " << pixelsWide;
-  progress_msg ->setMinimumWidth( pixelsWide*2 );
-  progress_msg->adjustSize();
-  progress_msg->setAutoClose( false );
-  progress_msg->setValue( 0 );
-  progress_msg->show();
+  gmp_stage( 1, tr( "Loading run protocol" ), tr( "Accessing run's protocol..." ), 12 );
   qApp->processEvents();
 
   progress_msg->setValue( 1 );
@@ -711,6 +732,12 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
        progress_msg->setValue( 10 );
        qApp->processEvents();
      }
+     else if ( expType == "VELOCITY-MWL" )
+     {
+        build_perChanTree_velmwl();
+        progress_msg->setValue( 10 );
+        qApp->processEvents();
+     }
 
   build_miscTree();  
   progress_msg->setValue( 12 );
@@ -718,19 +745,23 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   
   progress_msg->setValue( progress_msg->maximum() );
   qApp->processEvents();
-  progress_msg->close();
-  
+  // Dialog stays up: generate_report() (below) carries on with the next stage
+
   //compose a message on missing models
   QString msg_missing_models = missing_models_msg();
   
   //Inform user that current configuraiton corresponds to GMP report
   if ( !GMP_report )
     {
-      QMessageBox::information( this, tr( "Report Profile Uploaded" ),
-				tr( "<font color='red'><b>ATTENTION:</b> There are missing models for certain triples: </font><br><br>"
-				    "%1<br><br>"
-				    "As a result, a non-GMP report will be generated!")
-				.arg( msg_missing_models) );
+       gmp_progress_hide(); // show the message on its own; next stage re-shows the
+                            // dialog
+       QMessageBox::information( this,
+                                 tr( "Report Profile Uploaded" ),
+                                 tr( "<font color='red'><b>ATTENTION:</b> There are missing models for "
+                                     "certain triples: </font><br><br>"
+                                     "%1<br><br>"
+                                     "As a result, a non-GMP report will be generated!" )
+                                    .arg( msg_missing_models ) );
     }
   
   //generate report (download models, simulate, create PDFs)
@@ -1628,80 +1659,72 @@ void US_ReporterGMP::load_gmp_run ( void )
 
   
   //show progress dialog
-  progress_msg = new QProgressDialog ("Accessing run's protocol...", QString(), 0, 11, this);
-  progress_msg->setWindowFlags(Qt::Tool | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
-  progress_msg->setModal( true );
-  progress_msg->setWindowTitle(tr("Assessing Run's Protocol"));
-  QFont font_d  = progress_msg->property("font").value<QFont>();
-  QFontMetrics fm(font_d);
-  int pixelsWide = fm.horizontalAdvance( progress_msg->windowTitle() );
-  qDebug() << "Progress_msg: pixelsWide -- " << pixelsWide;
-  progress_msg ->setMinimumWidth( pixelsWide*2 );
-  progress_msg->adjustSize();
-  progress_msg->setAutoClose( false );
-  progress_msg->setValue( 0 );
-  progress_msg->show();
+  gmp_stage( 1, tr( "Loading run protocol" ), tr( "Accessing run's protocol..." ), 11 );
   qApp->processEvents();
-  
-  // Get detailed info on the autoflow record
-  QMap < QString, QString > protocol_details;
-  
-  int autoflowID = autoflow_id_selected.toInt();
-  protocol_details = read_autoflow_record( autoflowID );
-  
-  protocol_details[ "autoflowID" ] = QString::number(autoflowID);
 
-  AutoflowID_auto    = protocol_details[ "autoflowID" ];
-  AProfileGUID       = protocol_details[ "aprofileguid" ];
-  ProtocolName_auto  = protocol_details[ "protocolName" ];
-  invID              = protocol_details[ "invID_passed" ].toInt();
-  runID              = protocol_details[ "runID" ];
-  runName            = protocol_details[ "experimentName" ];
-  FileName           = protocol_details[ "filename" ];
-  intensityID        = protocol_details[ "intensityID" ];
-  analysisIDs        = protocol_details[ "analysisIDs" ];
-  autoflowStatusID   = protocol_details[ "statusID" ];
-  optimaName         = protocol_details[ "OptimaName" ];
-  dataSource         = protocol_details[ "dataSource" ];
-  expType            = protocol_details[ "expType" ] ;
-  simulatedData      = false;
-  abde_channList. clear();
-  abde_ranges_percents. clear();
-  abde_rmsd. clear();
-  abde_menisc. clear();
-  abde_plots_filenames. clear();
-  abde_data_per_channel. clear();
+  // Get detailed info on the autoflow record
+  QMap<QString, QString> protocol_details;
+
+  int                    autoflowID = autoflow_id_selected.toInt();
+  protocol_details                  = read_autoflow_record( autoflowID );
+
+  protocol_details["autoflowID"] = QString::number( autoflowID );
+
+  AutoflowID_auto   = protocol_details["autoflowID"];
+  AProfileGUID      = protocol_details["aprofileguid"];
+  ProtocolName_auto = protocol_details["protocolName"];
+  invID             = protocol_details["invID_passed"].toInt();
+  runID             = protocol_details["runID"];
+  runName           = protocol_details["experimentName"];
+  FileName          = protocol_details["filename"];
+  intensityID       = protocol_details["intensityID"];
+  analysisIDs       = protocol_details["analysisIDs"];
+  autoflowStatusID  = protocol_details["statusID"];
+  optimaName        = protocol_details["OptimaName"];
+  dataSource        = protocol_details["dataSource"];
+  expType           = protocol_details["expType"];
+  simulatedData     = false;
+  abde_channList.clear();
+  abde_ranges_percents.clear();
+  abde_rmsd.clear();
+  abde_menisc.clear();
+  abde_plots_filenames.clear();
+  abde_data_per_channel.clear();
+  velmwl_channList.clear();
+  velmwl_chan_species.clear();
+  velmwl_chan_guids.clear();
+  velmwl_chan_fname.clear();
+  velmwl_chan_selected_species.clear();
+  editing_time_velmwl.clear();
 
   prot_details_at_report = protocol_details;
 
   progress_msg->setValue( 1 );
   qApp->processEvents();
 
-  qDebug() << "1.ExpAborted: "      << protocol_details[ "expAborted" ];
-  qDebug() << "1.CorrectRadii: "    << protocol_details[ "correctRadii" ];
+  qDebug() << "1.ExpAborted: " << protocol_details["expAborted"];
+  qDebug() << "1.CorrectRadii: " << protocol_details["correctRadii"];
 
-  qDebug() << "Exp. Label: "    << protocol_details[ "label" ];
-  qDebug() << "GMP Run ? "      << protocol_details[ "gmpRun" ];
+  qDebug() << "Exp. Label: " << protocol_details["label"];
+  qDebug() << "GMP Run ? " << protocol_details["gmpRun"];
 
-  qDebug() << "AnalysisIDs: "   << protocol_details[ "analysisIDs" ];
-  qDebug() << "aprofileguid: "  << AProfileGUID ;
-  
+  qDebug() << "AnalysisIDs: " << protocol_details["analysisIDs"];
+  qDebug() << "aprofileguid: " << AProfileGUID;
 
-  //Now, read protocol's 'reportMask' && reportItems masks && populate trees
-  read_protocol_and_reportMasks( );
+  // Now, read protocol's 'reportMask' && reportItems masks && populate trees
+  read_protocol_and_reportMasks();
 
+  if ( expType == "VELOCITY" )
+  {
+     //check triples for failure
+     check_failed_triples();
 
-  if ( expType == "VELOCITY")
-    {
-      //check triples for failure
-      check_failed_triples( );
-      
-      //check models existence
-      check_models( autoflowID );
-      progress_msg->setValue( 7 );
-      qApp->processEvents();
-    }
-  
+     //check models existence
+     check_models( autoflowID );
+     progress_msg->setValue( 7 );
+     qApp->processEvents();
+  }
+
   //debug
   for ( int i=0; i < Array_of_tripleNames.size(); ++ i )
     {
@@ -1758,7 +1781,13 @@ void US_ReporterGMP::load_gmp_run ( void )
        progress_msg->setValue( 9 );
        qApp->processEvents();
      }
-   
+     else if ( expType == "VELOCITY-MWL" )
+     {
+        build_perChanTree_velmwl();
+        progress_msg->setValue( 9 );
+        qApp->processEvents();
+     }
+
    build_miscTree();  
    progress_msg->setValue( 11 );
    qApp->processEvents();
@@ -1771,7 +1800,7 @@ void US_ReporterGMP::load_gmp_run ( void )
   
   progress_msg->setValue( progress_msg->maximum() );
   qApp->processEvents();
-  progress_msg->close();
+  gmp_progress_hide();
 
   //Enable some buttons
   //process runname: if combined, correct for nicer appearance
@@ -2078,7 +2107,39 @@ void US_ReporterGMP::read_protocol_and_reportMasks( void )
 
   //read AProfile into US_AnaProfile structure
   sdiag = new US_AnalysisProfileGui;
+
+  // Reflect the (slow) DB reading of reports/reportItems in the progress bar
+  const int     stage_max   = progress_msg->maximum(); // 12 / 11 depending on load path
+  const QString stage_dt    = tr( "Accessing run's protocol..." );
+  bool          in_subrange = false;
+
+  sdiag->progress_cb = [this, stage_max, &in_subrange]( int done, int total, const QString& detail )
+  {
+     if ( total <= 0 )
+     {
+        return;
+     }
+     if ( !in_subrange )
+     {
+        progress_msg->setRange( 0, total ); // bar now shows report-reading progress
+        in_subrange = true;
+     }
+     if ( !detail.isEmpty() )
+     {
+        progress_msg->setLabelText( detail );
+     }
+     progress_msg->setValue( done );
+     qApp->processEvents();
+  };
+
   sdiag->inherit_protocol( &currProto );
+  sdiag->progress_cb = nullptr; // lambda captures a local: clear it
+
+  if ( in_subrange ) // restore the stage's own scale
+  {
+     progress_msg->setRange( 0, stage_max );
+     progress_msg->setLabelText( stage_dt );
+  }
   progress_msg->setValue( 4 );
   qApp->processEvents();
 
@@ -2364,6 +2425,8 @@ void US_ReporterGMP::build_miscTree ( void )
       topItemNameList.clear();
       topItemNameList << "" << indent + topItemName;
       miscItem [ topItemName ] = new QTreeWidgetItem( miscTree, topItemNameList, wiubase );
+      miscItem[topItemName]->setData( 0, Qt::AccessibleTextRole, topItemName );
+      miscItem[topItemName]->setData( 1, Qt::AccessibleTextRole, topItemName );
 
       miscItem [ topItemName ] ->setCheckState( 0, Qt::Checked );
     }
@@ -2399,6 +2462,8 @@ void US_ReporterGMP::build_genTree ( void )
       topItemNameList.clear();
       topItemNameList << "" << indent + topItemName;
       topItem [ topItemName ] = new QTreeWidgetItem( genTree, topItemNameList, wiubase );
+      topItem[topItemName]->setData( 0, Qt::AccessibleTextRole, topItemName );
+      topItem[topItemName]->setData( 1, Qt::AccessibleTextRole, topItemName );
 
       //Solutions: add 1-level children
       if( topItemName.contains("Solutions") )
@@ -2410,22 +2475,32 @@ void US_ReporterGMP::build_genTree ( void )
 	      solutionItemNameList.clear();
 	      solutionItemNameList << "" << indent.repeated( 2 ) + solutionItemName;
 	      solutionItem [ solutionItemName ] = new QTreeWidgetItem( topItem [ topItemName ], solutionItemNameList, wiubase);
+         {
+            QString a11yPath = topItemName + " / " + solutionItemName;
+            solutionItem[solutionItemName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+            solutionItem[solutionItemName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+         }
 
-	      if ( solutionItems_vals[ is ].toInt() )
-		{
-		  solutionItem [ solutionItemName ] ->setCheckState( 0, Qt::Checked );
-		  ++checked_childs;
-		}
-	      else
-		solutionItem [ solutionItemName ] ->setCheckState( 0, Qt::Unchecked );
-	    }
-	  if ( checked_childs )
-	    topItem [ topItemName ] ->setCheckState( 0, Qt::Checked );
-	  else
-	    topItem [ topItemName ] ->setCheckState( 0, Qt::Unchecked );
-	  
-	}
-      
+         if ( solutionItems_vals[is].toInt() )
+         {
+            solutionItem[solutionItemName]->setCheckState( 0, Qt::Checked );
+            ++checked_childs;
+         }
+         else
+         {
+            solutionItem[solutionItemName]->setCheckState( 0, Qt::Unchecked );
+         }
+       }
+       if ( checked_childs )
+       {
+          topItem[topItemName]->setCheckState( 0, Qt::Checked );
+       }
+       else
+       {
+          topItem[topItemName]->setCheckState( 0, Qt::Unchecked );
+       }
+   }
+
       //Analysis Profile: add 2-levelchildren
       else if ( topItemName.contains("Analysis Profile") )
 	{
@@ -2440,98 +2515,137 @@ void US_ReporterGMP::build_genTree ( void )
 	      analysisItemNameList.clear();
 	      analysisItemNameList << "" << indent.repeated( 2 ) + analysisItemName;
 	      analysisItem [ analysisItemName ] = new QTreeWidgetItem( topItem [ topItemName ], analysisItemNameList, wiubase);
-	      
-	      //General analysis
-	      if( analysisItemName.contains("General") )
-		{
-		  int checked_gen = 0;
-		  for ( int iag=0; iag < analysisGenItems.size(); ++iag )
-		    {
-		      QString analysisGenItemName = analysisGenItems[ iag ];
-		      analysisGenItemNameList.clear();
-		      analysisGenItemNameList << "" << indent.repeated( 3 ) + analysisGenItemName;
-		      analysisGenItem [ analysisGenItemName ] = new QTreeWidgetItem( analysisItem [ analysisItemName ], analysisGenItemNameList, wiubase);
+         {
+            QString a11yPath = topItemName + " / " + analysisItemName;
+            analysisItem[analysisItemName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+            analysisItem[analysisItemName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+         }
 
-		      if ( analysisGenItems_vals[ iag ].toInt() )
-			{
-			  analysisGenItem [ analysisGenItemName ] ->setCheckState( 0, Qt::Checked );
-			  ++checked_gen;
-			}
-		      else
-			analysisGenItem [ analysisGenItemName ] ->setCheckState( 0, Qt::Unchecked );
-		    }
+         //General analysis
+         if ( analysisItemName.contains( "General" ) )
+         {
+            int checked_gen = 0;
+            for ( int iag = 0; iag < analysisGenItems.size(); ++iag )
+            {
+               QString analysisGenItemName = analysisGenItems[iag];
+               analysisGenItemNameList.clear();
+               analysisGenItemNameList << "" << indent.repeated( 3 ) + analysisGenItemName;
+               analysisGenItem[analysisGenItemName] =
+                  new QTreeWidgetItem( analysisItem[analysisItemName], analysisGenItemNameList, wiubase );
+               {
+                  QString a11yPath = topItemName + " / " + analysisItemName + " / " + analysisGenItemName;
+                  analysisGenItem[analysisGenItemName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+                  analysisGenItem[analysisGenItemName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+               }
 
-		  if ( checked_gen )
-		    {
-		      analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Checked );
-		      ++checked_childs;
-		    }
-		  else
-		    analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Unchecked );
-		}
-	      //2DSA analysis
-	      if( analysisItemName.contains("2DSA") )
-		{
-		  int checked_2dsa = 0;
-		  for ( int ia2=0; ia2 < analysis2DSAItems.size(); ++ia2 )
-		    {
-		      QString analysis2DSAItemName = analysis2DSAItems[ ia2 ];
-		      analysis2DSAItemNameList.clear();
-		      analysis2DSAItemNameList << "" << indent.repeated( 3 ) + analysis2DSAItemName;
-		      analysis2DSAItem [ analysis2DSAItemName ] = new QTreeWidgetItem( analysisItem [ analysisItemName ], analysis2DSAItemNameList, wiubase);
+               if ( analysisGenItems_vals[iag].toInt() )
+               {
+                  analysisGenItem[analysisGenItemName]->setCheckState( 0, Qt::Checked );
+                  ++checked_gen;
+               }
+               else
+               {
+                  analysisGenItem[analysisGenItemName]->setCheckState( 0, Qt::Unchecked );
+               }
+            }
 
-		      if ( analysis2DSAItems_vals[ ia2 ].toInt() )
-			{
-			  analysis2DSAItem [ analysis2DSAItemName ] ->setCheckState( 0, Qt::Checked );
-			  ++checked_2dsa;
-			}
-		      else
-			analysis2DSAItem [ analysis2DSAItemName ] ->setCheckState( 0, Qt::Unchecked );
-		    }
+            if ( checked_gen )
+            {
+               analysisItem[analysisItemName]->setCheckState( 0, Qt::Checked );
+               ++checked_childs;
+            }
+            else
+            {
+               analysisItem[analysisItemName]->setCheckState( 0, Qt::Unchecked );
+            }
+         }
+         //2DSA analysis
+         if ( analysisItemName.contains( "2DSA" ) )
+         {
+            int checked_2dsa = 0;
+            for ( int ia2 = 0; ia2 < analysis2DSAItems.size(); ++ia2 )
+            {
+               QString analysis2DSAItemName = analysis2DSAItems[ia2];
+               analysis2DSAItemNameList.clear();
+               analysis2DSAItemNameList << "" << indent.repeated( 3 ) + analysis2DSAItemName;
+               analysis2DSAItem[analysis2DSAItemName] =
+                  new QTreeWidgetItem( analysisItem[analysisItemName], analysis2DSAItemNameList, wiubase );
+               {
+                  QString a11yPath = topItemName + " / " + analysisItemName + " / " + analysis2DSAItemName;
+                  analysis2DSAItem[analysis2DSAItemName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+                  analysis2DSAItem[analysis2DSAItemName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+               }
 
-		  if ( checked_2dsa )
-		    {
-		      analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Checked );
-		      ++checked_childs;
-		    }
-		  else
-		    analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Unchecked );
-		}
+               if ( analysis2DSAItems_vals[ia2].toInt() )
+               {
+                  analysis2DSAItem[analysis2DSAItemName]->setCheckState( 0, Qt::Checked );
+                  ++checked_2dsa;
+               }
+               else
+               {
+                  analysis2DSAItem[analysis2DSAItemName]->setCheckState( 0, Qt::Unchecked );
+               }
+            }
 
-	      //PCSA analysis
-	      if( analysisItemName.contains("PCSA") )
-		{
-		  int checked_pcsa = 0;
-		  for ( int iap=0; iap < analysisPCSAItems.size(); ++iap )
-		    {
-		      QString analysisPCSAItemName = analysisPCSAItems[ iap ];
-		      analysisPCSAItemNameList.clear();
-		      analysisPCSAItemNameList << "" << indent.repeated( 3 ) + analysisPCSAItemName;
-		      analysisPCSAItem [ analysisPCSAItemName ] = new QTreeWidgetItem( analysisItem [ analysisItemName ], analysisPCSAItemNameList, wiubase);
+            if ( checked_2dsa )
+            {
+               analysisItem[analysisItemName]->setCheckState( 0, Qt::Checked );
+               ++checked_childs;
+            }
+            else
+            {
+               analysisItem[analysisItemName]->setCheckState( 0, Qt::Unchecked );
+            }
+         }
 
-		      if ( analysisPCSAItems_vals[ iap ].toInt() )
-			{
-			  analysisPCSAItem [ analysisPCSAItemName ] ->setCheckState( 0, Qt::Checked );
-			  ++checked_pcsa;
-			}
-		      else
-			analysisPCSAItem [ analysisPCSAItemName ] ->setCheckState( 0, Qt::Unchecked );
-		    }
+         //PCSA analysis
+         if ( analysisItemName.contains( "PCSA" ) )
+         {
+            int checked_pcsa = 0;
+            for ( int iap = 0; iap < analysisPCSAItems.size(); ++iap )
+            {
+               QString analysisPCSAItemName = analysisPCSAItems[iap];
+               analysisPCSAItemNameList.clear();
+               analysisPCSAItemNameList << "" << indent.repeated( 3 ) + analysisPCSAItemName;
+               analysisPCSAItem[analysisPCSAItemName] =
+                  new QTreeWidgetItem( analysisItem[analysisItemName], analysisPCSAItemNameList, wiubase );
+               {
+                  QString a11yPath = topItemName + " / " + analysisItemName + " / " + analysisPCSAItemName;
+                  analysisPCSAItem[analysisPCSAItemName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+                  analysisPCSAItem[analysisPCSAItemName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+               }
 
-		  if ( checked_pcsa )
-		    {
-		      analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Checked );
-		      ++checked_childs;
-		    }
-		  else
-		    analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Unchecked );
-		}
-	    }
-	  if ( checked_childs )
-	    topItem [ topItemName ] ->setCheckState( 0, Qt::Checked );
-	  else
-	    topItem [ topItemName ] ->setCheckState( 0, Qt::Unchecked );
-	}
+               if ( analysisPCSAItems_vals[iap].toInt() )
+               {
+                  analysisPCSAItem[analysisPCSAItemName]->setCheckState( 0, Qt::Checked );
+                  ++checked_pcsa;
+               }
+               else
+               {
+                  analysisPCSAItem[analysisPCSAItemName]->setCheckState( 0, Qt::Unchecked );
+               }
+            }
+
+            if ( checked_pcsa )
+            {
+               analysisItem[analysisItemName]->setCheckState( 0, Qt::Checked );
+               ++checked_childs;
+            }
+            else
+            {
+               analysisItem[analysisItemName]->setCheckState( 0, Qt::Unchecked );
+            }
+         }
+       }
+       if ( checked_childs )
+       {
+          topItem[topItemName]->setCheckState( 0, Qt::Checked );
+       }
+       else
+       {
+          topItem[topItemName]->setCheckState( 0, Qt::Unchecked );
+       }
+   }
 
       //set checked/unchecked for top-level item
       else
@@ -2625,6 +2739,185 @@ void US_ReporterGMP::changedItem( QTreeWidgetItem* item, int col )
 	   this,                 &US_ReporterGMP::changedItem );
 }
 
+// VELOCITY-MWL per-channel report features (Integral plots), shared by the
+// tree builder and the report generator:  { tree-item label, US_Integral
+// x-axis attribute (see US_Integral::select_x_axis_auto), file-name tag,
+// checked by default }
+namespace
+{
+struct VelMwlIntegralFeature
+{
+      const char* label;
+      int         attr;
+      const char* tag;
+      bool        on_by_default;
+      const char* ritem_type;  //!< report-item type whose ranges are drawn ("" = none)
+      double      ritem_scale; //!< report-item range -> plot x-axis units
+};
+
+const VelMwlIntegralFeature velmwl_integral_features[] = {
+   { "Integral Plot - Sedimentation Coeff. (s)", 0, "s20", true, "s", 1.0 },
+   { "Integral Plot - Molar Mass (MW)", 2, "MW", false, "MW", 1000.0 }, // kDa -> Da
+   { "Integral Plot - Diffusion Coeff. (D)", 3, "D", false, "D", 1.0 },
+   { "Integral Plot - Frictional Ratio (f/f0)", 1, "ff0", false, "f/f0", 1.0 },
+   { "Integral Plot - Partial Spec. Volume (vbar)", 5, "vbar", false, "", 1.0 },
+   { "Integral Plot - Hydrodynamic Radius (Rh)", 6, "Rh", false, "", 1.0 }
+};
+const char* velmwl_integration_label = "Integration Results"; //!< per-channel mask item
+
+const int   n_velmwl_integral_features = int( sizeof( velmwl_integral_features ) / sizeof( velmwl_integral_features[0] ) );
+} // namespace
+
+// Read Approved channels and their deconvolved-species model GUIDs from the
+// run's autoflowAnalysisVelMwl record into velmwl_* members.
+bool US_ReporterGMP::read_velmwl_channels( void )
+{
+   velmwl_channList.clear();
+   velmwl_chan_species.clear();
+   velmwl_chan_guids.clear();
+   velmwl_chan_fname.clear();
+   velmwl_chan_selected_species.clear();
+
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      qDebug() << "[VEL-MWL] DB connection failed -- no channels read.";
+      return false;
+   }
+
+   QStringList qry;
+   qry << "read_autoflowAnalysisVelMwl_record" << AutoflowID_auto;
+   db.query( qry );
+
+   if ( db.lastErrno() != US_DB2::OK || !db.next() )
+   {
+      qDebug() << "[VEL-MWL] no autoflowAnalysisVelMwl record for autoflowID" << AutoflowID_auto;
+      return false;
+   }
+
+   QJsonObject jobj = QJsonDocument::fromJson( db.value( 0 ).toString().toUtf8() ).object();
+
+   // Species the user picked for the Integration Results (column 2): a channel
+   // missing here (older run, or nothing recorded) means "show every species".
+   QJsonObject selobj = QJsonDocument::fromJson( db.value( 2 ).toString().toUtf8() ).object();
+
+   QCollator   collator;
+   collator.setNumericMode( true ); // S2 < S10
+
+   for ( auto it = jobj.constBegin(); it != jobj.constEnd(); ++it )
+   {
+      QJsonObject chdec = it.value().toObject();
+
+      if ( chdec.value( "decision" ).toString() != "Accepted" )
+      {
+         continue; // Rejected/undecided channels: disregard
+      }
+
+      QJsonObject mobj    = chdec.value( "models" ).toObject();
+      QStringList species = mobj.keys();
+      std::sort( species.begin(),
+                 species.end(),
+                 [&collator]( const QString& a, const QString& b ) { return collator.compare( a, b ) < 0; } );
+
+      QStringList guids;
+      for ( int ii = 0; ii < species.size(); ++ii )
+      {
+         guids << mobj.value( species[ii] ).toString();
+      }
+
+      if ( guids.isEmpty() )
+      {
+         qDebug() << "[VEL-MWL] channel" << it.key() << "is Accepted but has no recorded model GUIDs -- skipped.";
+         continue;
+      }
+
+      QString chan_tag = QString( it.key() ).remove( ' ' ).remove( '/' ); // "2 / A" -> "2A"
+
+      velmwl_channList << chan_tag;
+      velmwl_chan_fname[chan_tag]   = chdec.value( "filename" ).toString();
+      velmwl_chan_species[chan_tag] = species;
+      velmwl_chan_guids[chan_tag]   = guids;
+
+      if ( selobj.contains( it.key() ) )
+      {
+         QStringList sel;
+         QJsonArray  sarr = selobj.value( it.key() ).toObject().value( "selected" ).toArray();
+         for ( int is = 0; is < sarr.size(); ++is )
+         {
+            sel << sarr[is].toString();
+         }
+         velmwl_chan_selected_species[chan_tag] = sel;
+      }
+   }
+
+   velmwl_channList.sort();
+   qDebug() << "[VEL-MWL] Approved channels with models -- " << velmwl_channList;
+
+   return !velmwl_channList.isEmpty();
+}
+
+// build perChanTree: VELOCITY-MWL
+// One top-level item per Approved channel ("Channel 2A"), with one checkable
+// child per Integral plot type -- the same 2-level layout/JSON as ABDE.
+void US_ReporterGMP::build_perChanTree_velmwl( void )
+{
+   QStringList chanItemNameList, featItemNameList;
+   QString     indent( "  " );
+   int         wiubase = (int) QTreeWidgetItem::UserType;
+
+   read_velmwl_channels();
+
+   for ( int ic = 0; ic < velmwl_channList.size(); ++ic )
+   {
+      QString chanItemName = "Channel " + velmwl_channList[ic];
+      chanItemNameList.clear();
+      chanItemNameList << "" << indent + chanItemName;
+      chanItem[chanItemName] = new QTreeWidgetItem( perChanTree, chanItemNameList, wiubase );
+
+      int checked_masks = 0;
+
+      // Integration Results (report items vs. models), on by default
+      featItemNameList.clear();
+      featItemNameList << "" << indent.repeated( 2 ) + QString( velmwl_integration_label );
+      QTreeWidgetItem* intItem = new QTreeWidgetItem( chanItem[chanItemName], featItemNameList, wiubase );
+      intItem->setCheckState( 0, Qt::Checked );
+      ++checked_masks;
+
+      for ( int kk = 0; kk < n_velmwl_integral_features; ++kk )
+      {
+         featItemNameList.clear();
+         featItemNameList << "" << indent.repeated( 2 ) + QString( velmwl_integral_features[kk].label );
+         QTreeWidgetItem* featItem = new QTreeWidgetItem( chanItem[chanItemName], featItemNameList, wiubase );
+
+         if ( velmwl_integral_features[kk].on_by_default )
+         {
+            featItem->setCheckState( 0, Qt::Checked );
+            ++checked_masks;
+         }
+         else
+         {
+            featItem->setCheckState( 0, Qt::Unchecked );
+         }
+      }
+
+      chanItem[chanItemName]->setCheckState( 0, checked_masks ? Qt::Checked : Qt::Unchecked );
+   }
+
+   perChanTree->expandAll();
+   perChanTree->resizeColumnToContents( 0 );
+   perChanTree->resizeColumnToContents( 1 );
+
+   if ( first_time_perChan_tree_build )
+   {
+      perChanTree->setMinimumHeight( ( perChanTree->height() ) * 2.0 );
+      first_time_perChan_tree_build = false;
+   }
+
+   connect( perChanTree, &QTreeWidget::itemChanged, this, &US_ReporterGMP::changedItem );
+}
+
 //build perChanTree:ABDE
 void US_ReporterGMP::build_perChanTree_abde ( void )
 {
@@ -2662,6 +2955,8 @@ void US_ReporterGMP::build_perChanTree_abde ( void )
       chanItemNameList.clear();
       chanItemNameList << "" << indent + chanItemName;
       chanItem [ chanItemName ] = new QTreeWidgetItem( perChanTree, chanItemNameList, wiubase );
+      chanItem[chanItemName]->setData( 0, Qt::AccessibleTextRole, chanItemName );
+      chanItem[chanItemName]->setData( 1, Qt::AccessibleTextRole, chanItemName );
 
       //go over report items
       int report_items_number = reportGMP.reportItems.size();
@@ -2693,15 +2988,22 @@ void US_ReporterGMP::build_perChanTree_abde ( void )
 	  tripleMaskItemNameList.clear();
 	  tripleMaskItemNameList << "" << indent.repeated( 2 ) + tripleMaskItemName;
 	  tripleMaskItem [ chanItemName ] = new QTreeWidgetItem(  chanItem [ chanItemName ], tripleMaskItemNameList, wiubase);
-	  
-	  if ( tripleReportMasksList_vals[ kk ] )
-	    {
-	      tripleMaskItem [ chanItemName ] ->setCheckState( 0, Qt::Checked );
-	      ++checked_masks;
-	    }
-	  else
-	    tripleMaskItem [ chanItemName ] ->setCheckState( 0, Qt::Unchecked );
-	}
+     {
+        QString a11yPath = chanItemName + " / " + tripleMaskItemName;
+        tripleMaskItem[chanItemName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+        tripleMaskItem[chanItemName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+     }
+
+     if ( tripleReportMasksList_vals[kk] )
+     {
+        tripleMaskItem[chanItemName]->setCheckState( 0, Qt::Checked );
+        ++checked_masks;
+     }
+     else
+     {
+        tripleMaskItem[chanItemName]->setCheckState( 0, Qt::Unchecked );
+     }
+   }
 
       if ( checked_masks )
 	chanItem [ chanItemName ] ->setCheckState( 0, Qt::Checked );
@@ -2769,328 +3071,375 @@ void US_ReporterGMP::build_perChanTree ( void )
 	  chanItemNameList.clear();
 	  chanItemNameList << "" << indent + chanItemName;
 	  chanItem [ chanItemName ] = new QTreeWidgetItem( perChanTree, chanItemNameList, wiubase );
-	  
-	  //QList < double > chann_wvls                  = ch_wvls[ channel_desc ];
-	  QList < double > chann_wvls                  = ch_wvls[ channel_desc_alt ];
-	  QMap < QString, US_ReportGMP > chann_reports = ch_reports[ channel_desc_alt ];
+     chanItem[chanItemName]->setData( 0, Qt::AccessibleTextRole, chanItemName );
+     chanItem[chanItemName]->setData( 1, Qt::AccessibleTextRole, chanItemName );
 
-	  qDebug() << "channel_desc_alt , channel_desc: "   << channel_desc_alt << " , " <<  channel_desc;
-	  qDebug() << "chann_wvls [ channel_desc ] -- "     << chann_wvls;
-	  qDebug() << "chann_wvls [ channel_desc_alt ] -- " << ch_wvls[ channel_desc_alt ];
-	  
-	  int chann_wvl_number = chann_wvls.size();
+     //QList < double > chann_wvls                  = ch_wvls[ channel_desc ];
+     QList<double>               chann_wvls    = ch_wvls[channel_desc_alt];
+     QMap<QString, US_ReportGMP> chann_reports = ch_reports[channel_desc_alt];
 
-	  int checked_triples = 0;
-	  for ( int jj = 0; jj < chann_wvl_number; ++jj )
-	    {
-	      QString wvl            = QString::number( chann_wvls[ jj ] );
-	      QString triple_name    = channel_desc.split(":")[ 0 ] + "/" + wvl;
+     qDebug() << "channel_desc_alt , channel_desc: " << channel_desc_alt << " , " << channel_desc;
+     qDebug() << "chann_wvls [ channel_desc ] -- " << chann_wvls;
+     qDebug() << "chann_wvls [ channel_desc_alt ] -- " << ch_wvls[channel_desc_alt];
 
-	      //Push to Array_of_triples;
-	      //QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + "." + channel_desc_alt.section( ":", 0, 0 )[1] + "." + wvl;
-	      QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + QString(".") + channel_desc_alt.section( ":", 0, 0 )[1];
+     int chann_wvl_number = chann_wvls.size();
 
-	      if ( channel_desc_alt.contains( "Interf" ) ) 
-		tripleName += ".Interference";
-	      else
-		tripleName += "." + wvl;
+     int checked_triples = 0;
+     for ( int jj = 0; jj < chann_wvl_number; ++jj )
+     {
+        QString wvl         = QString::number( chann_wvls[jj] );
+        QString triple_name = channel_desc.split( ":" )[0] + "/" + wvl;
 
-	      //'S' data
-	      if ( dataSource. contains("DiskAUC:Absorbance") && simulatedData )
-		tripleName = tripleName.replace( ".A.", ".S." );
-	      	      
-	      qDebug() << "[in build_perChanTree()]: TripleName -- " << tripleName; 
-	      Array_of_triples.push_back( tripleName );
+        //Push to Array_of_triples;
+        //QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + "." + channel_desc_alt.section( ":", 0, 0 )[1] + "." + wvl;
+        QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + QString( "." ) + channel_desc_alt.section( ":", 0, 0 )[1];
 
-	      //Triple item: child-level 1 in a perChanTree
-	      QString tripleItemName = wvl + " nm Wavelength";
-	      tripleItemNameList.clear();
-	      tripleItemNameList << "" << indent.repeated( 2 ) + tripleItemName;
-	      tripleItem [ tripleItemName ] = new QTreeWidgetItem( chanItem [ chanItemName ], tripleItemNameList, wiubase);
+        if ( channel_desc_alt.contains( "Interf" ) )
+        {
+           tripleName += ".Interference";
+        }
+        else
+        {
+           tripleName += "." + wvl;
+        }
 
-	      US_ReportGMP reportGMP = chann_reports[ wvl ];
+        //'S' data
+        if ( dataSource.contains( "DiskAUC:Absorbance" ) && simulatedData )
+        {
+           tripleName = tripleName.replace( ".A.", ".S." );
+        }
 
-	      //Identify which type-methods will be in Combined ptols
-	      int report_items_number = reportGMP.reportItems.size();
-	      for ( int kk = 0; kk < report_items_number; ++kk )
-		{
-		  US_ReportGMP::ReportItem curr_item = reportGMP.reportItems[ kk ];
-		  QString type           = curr_item.type;
-		  QString method         = curr_item.method;
-		  if( method.contains ("PCSA") )
-		    method = "PCSA";
-		  int     combPlot       = curr_item.combined_plot;
+        qDebug() << "[in build_perChanTree()]: TripleName -- " << tripleName;
+        Array_of_triples.push_back( tripleName );
 
-		  QString t_m = type + "," + method;
-		  if ( combPlot )
-		    comboPlotsMapTypes[ t_m ] = 1;
+        //Triple item: child-level 1 in a perChanTree
+        QString tripleItemName = wvl + " nm Wavelength";
+        tripleItemNameList.clear();
+        tripleItemNameList << "" << indent.repeated( 2 ) + tripleItemName;
+        tripleItem[tripleItemName] = new QTreeWidgetItem( chanItem[chanItemName], tripleItemNameList, wiubase );
+        {
+           QString a11yPath = chanItemName + " / " + tripleItemName;
+           tripleItem[tripleItemName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+           tripleItem[tripleItemName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+        }
 
-		  //Use ind_combined_plot here, to mark if ind. plots for triple's reportItem is to be plot
-		  int     ind_combPlot   = curr_item.ind_combined_plot;
-		  QString range_l_h = QString::number( curr_item.range_low ) + ":" + QString::number( curr_item.range_high );
+        US_ReportGMP reportGMP = chann_reports[wvl];
 
-		  if ( Triple_to_Models[ tripleName ].contains( method ))
-		    {
-		      if ( ind_combPlot )
-			{
-			  //QMap< QString (triple), QMap< QString( type_method ), QStringList( ranges ) > >
-			  indComboPlotsMapTripleTypeRangeBool[ tripleName ][ t_m ][range_l_h] = true;
-			}
-		      else
-			indComboPlotsMapTripleTypeRangeBool[ tripleName ][ t_m ][range_l_h] = false;
-		    }
-		}
-	      ////////////////////////////////////////////////////////
-	      
-	      qDebug() << "For triple, " << tripleName << ", and models: " << Triple_to_Models[ tripleName ]
-		       << reportGMP. tot_conc_mask
-		       << reportGMP. rmsd_limit_mask
-		       << reportGMP. av_intensity_mask
-		       << reportGMP. experiment_duration_mask
-		       << reportGMP. integration_results_mask
-		       << reportGMP. plots_mask
-		       << reportGMP. pseudo3d_mask;
-	      
-	  
-	      //define models per triple:
-	      tripleReportModelsList.clear();
-	      tripleReportModelsList = Triple_to_Models[ tripleName ];
-	      
-	      int checked_masks = 0;
-	      //start triple's models
-	      for ( int mm = 0; mm < tripleReportModelsList.size(); ++mm )
-		{
-		  //Triple's mask params: child-level 3 in a perChanTree
-		  QString tripleItemModelName = tripleReportModelsList[ mm ] + " Model";
-		  QString tripleModelName     = tripleItemName + "," + tripleItemModelName;
-		  tripleItemModelNameList.clear();
-		  tripleItemModelNameList << "" << indent.repeated( 3 ) + tripleItemModelName;
-		  tripleModelItem [ tripleModelName ] = new QTreeWidgetItem(  tripleItem [ tripleItemName ], tripleItemModelNameList, wiubase);
+        //Identify which type-methods will be in Combined ptols
+        int          report_items_number = reportGMP.reportItems.size();
+        for ( int kk = 0; kk < report_items_number; ++kk )
+        {
+           US_ReportGMP::ReportItem curr_item = reportGMP.reportItems[kk];
+           QString                  type      = curr_item.type;
+           QString                  method    = curr_item.method;
+           if ( method.contains( "PCSA" ) )
+           {
+              method = "PCSA";
+           }
+           int     combPlot = curr_item.combined_plot;
 
-		  //Populate tripleReportMasksList && values from scratch
-		  tripleReportMasksList.clear();
-		  tripleReportMasksList << "Total Concentration"
-					<< "RMSD Limit"
-					<< "Minimum Intensity"
-		    //<< "Experiment Duration"
-					<< "Loading Volume"
-					<< "Integration Results"
-					<< "Plots"
-					<< "Pseudo3d Distributions";
-		  
-		  tripleReportMasksList_vals.clear();
-		  tripleReportMasksList_vals << reportGMP. tot_conc_mask
-					     << reportGMP. rmsd_limit_mask
-					     << reportGMP. av_intensity_mask
-		    //<< reportGMP. experiment_duration_mask
-					     << true
-					     << reportGMP. integration_results_mask
-					     << reportGMP. plots_mask
-					     << reportGMP. pseudo3d_mask;
-		  
-		  //Here: add "Individual Distributions" to tripleReportMasksList IF there is/are type-method(s) matching current model:
-		  QStringList type_methods_list = indComboPlotsMapTripleTypeRangeBool[ tripleName ].keys();
-		  for ( int tm=0; tm<type_methods_list.size(); tm++ )
-		    {
-		      //select type-method for current model only! [e.g. {s,D}-2DSA-IT for 2DSA-IT model]
-		      QString c_method = type_methods_list[ tm ].split(",")[1];
-		      if ( c_method == tripleReportModelsList[ mm ] )
-			{
-			  qDebug() << "In Model, list, ind. : " <<  type_methods_list << tripleReportModelsList[ mm ];
-			  tripleReportMasksList      << "Individual Combined Distributions";
-			  tripleReportMasksList_vals << true;
+           QString t_m = type + "," + method;
+           if ( combPlot )
+           {
+              comboPlotsMapTypes[t_m] = 1;
+           }
 
-			  break;
-			}
-		    }
-		  
-		  //start triple's masks
-		  for ( int kk = 0; kk < tripleReportMasksList.size(); ++kk )
-		    {
-		      //Triple's mask params: child-level 3 in a perChanTree
-		      QString tripleMaskItemName = tripleReportMasksList[ kk ];
-		      tripleMaskItemNameList.clear();
-		      tripleMaskItemNameList << "" << indent.repeated( 4 ) + tripleMaskItemName;
-		      tripleMaskItem [ tripleModelName ] = new QTreeWidgetItem(  tripleModelItem [ tripleModelName ], tripleMaskItemNameList, wiubase);
-		      
-		      if ( tripleReportMasksList_vals[ kk ] )
-			{
-			  tripleMaskItem [ tripleModelName ] ->setCheckState( 0, Qt::Checked );
-			  ++checked_masks;
-			}
-		      else
-			tripleMaskItem [ tripleModelName ] ->setCheckState( 0, Qt::Unchecked );
-		      
-		      //plots
-		      if ( tripleMaskItemName.contains("Plots") )
-			{
-			  tripleReportMasksPlotList.clear();
-			  tripleReportMasksPlotList << "Experiment-Simulation Velocity Data (noise corrected) "
-						    << "Experiment-Simulation Residuals";
-			  
-						    // << "Sedimentation Coefficient Distribution"
-						    // << "Molecular Weight Distribution"
-						    // << "Diffusion Coefficient Distribution"
-						    // << "f/f0-vs-s 2D Model"
-						    // << "f/f0-vs-MW 2D Model"
-						    // << "D-vs-s 2D Model"
-						    // << "D-vs-MW 2D Model";
-			  //<< "3D Model Plot";
-								  
-			  for ( int hh = 0; hh < tripleReportMasksPlotList.size(); ++hh )
-			    {
-			      QString tripleMaskItemPlotName = tripleReportMasksPlotList[ hh ];
-			      tripleMaskItemPlotNameList.clear();
-			      tripleMaskItemPlotNameList << "" << indent.repeated( 5 ) + tripleMaskItemPlotName;
-			      tripleMaskPlotItem [ tripleModelName ] = new QTreeWidgetItem( tripleMaskItem [ tripleModelName ], tripleMaskItemPlotNameList, wiubase);
+           //Use ind_combined_plot here, to mark if ind. plots for triple's reportItem is to be plot
+           int     ind_combPlot = curr_item.ind_combined_plot;
+           QString range_l_h    = QString::number( curr_item.range_low ) + ":" + QString::number( curr_item.range_high );
 
-			      if ( tripleReportMasksList_vals[ kk ] )
-				{
-				  tripleMaskPlotItem [ tripleModelName ] ->setCheckState( 0, Qt::Checked );
-				  ++checked_masks;
-				}
-			      else
-				tripleMaskPlotItem [ tripleModelName ] ->setCheckState( 0, Qt::Unchecked );
-			    }
-			}
-		      //end of triple's masks
-		      
-		      //pseudo3d distr.
-		      if ( tripleMaskItemName.contains("Pseudo3d") )
-			{
-			  tripleReportMasksPseudoList.clear();
-			  tripleReportMasksPseudoList << "Pseudo3d s-vs-f/f0 Distribution"
-						      << "Pseudo3d s-vs-D Distribution"
-						      << "Pseudo3d MW-vs-f/f0 Distribution"
-						      << "Pseudo3d MW-vs-D Distribution";
+           if ( Triple_to_Models[tripleName].contains( method ) )
+           {
+              if ( ind_combPlot )
+              {
+                 //QMap< QString (triple), QMap< QString( type_method ), QStringList( ranges ) > >
+                 indComboPlotsMapTripleTypeRangeBool[tripleName][t_m][range_l_h] = true;
+              }
+              else
+              {
+                 indComboPlotsMapTripleTypeRangeBool[tripleName][t_m][range_l_h] = false;
+              }
+           }
+        }
+        ////////////////////////////////////////////////////////
 
-			  tripleReportMasksPseudoList_vals. clear();
-			  if ( tripleItemModelName.contains( "2DSA-IT" )  )
-			    {
-			      tripleReportMasksPseudoList_vals << reportGMP. pseudo3d_2dsait_s_ff0
-							       << reportGMP. pseudo3d_2dsait_s_d
-							       << reportGMP. pseudo3d_2dsait_mw_ff0
-							       << reportGMP. pseudo3d_2dsait_mw_d;
-			      qDebug() << "In pseudo3d tree: tripleReportMasksPseudoList_vals (2DSA-IT) -- " << tripleReportMasksPseudoList_vals;
-			    }
-			  else if ( tripleItemModelName.contains( "2DSA-MC" ) )
-			    {
-			      tripleReportMasksPseudoList_vals << reportGMP. pseudo3d_2dsamc_s_ff0
-							       << reportGMP. pseudo3d_2dsamc_s_d
-							       << reportGMP. pseudo3d_2dsamc_mw_ff0
-							       << reportGMP. pseudo3d_2dsamc_mw_d;
-			      qDebug() << "In pseudo3d tree: tripleReportMasksPseudoList_vals (2DSA-MC) -- " << tripleReportMasksPseudoList_vals;
-			    }
-			  else if ( tripleItemModelName.contains( "PCSA" ) )
-			    {
-			      tripleReportMasksPseudoList_vals << reportGMP. pseudo3d_pcsa_s_ff0
-							       << reportGMP. pseudo3d_pcsa_s_d
-							       << reportGMP. pseudo3d_pcsa_mw_ff0
-							       << reportGMP. pseudo3d_pcsa_mw_d;
-			      qDebug() << "In pseudo3d tree: tripleReportMasksPseudoList_vals (PCSA) -- " << tripleReportMasksPseudoList_vals;
-			    }
-			  			  
-			  for ( int ps = 0; ps < tripleReportMasksPseudoList.size(); ++ps )
-			    {
-			      QString tripleMaskItemPseudoName = tripleReportMasksPseudoList[ ps ];
-			      tripleMaskItemPseudoNameList.clear();
-			      tripleMaskItemPseudoNameList << "" << indent.repeated( 5 ) + tripleMaskItemPseudoName;
-			      tripleMaskPseudoItem [ tripleModelName ] = new QTreeWidgetItem( tripleMaskItem [ tripleModelName ], tripleMaskItemPseudoNameList, wiubase);
+        qDebug() << "For triple, " << tripleName << ", and models: " << Triple_to_Models[tripleName] << reportGMP.tot_conc_mask
+                 << reportGMP.rmsd_limit_mask << reportGMP.av_intensity_mask << reportGMP.experiment_duration_mask
+                 << reportGMP.integration_results_mask << reportGMP.plots_mask << reportGMP.pseudo3d_mask;
 
-			      if ( tripleReportMasksPseudoList_vals[ ps ] )
-				{
-				  tripleMaskPseudoItem [ tripleModelName ] ->setCheckState( 0, Qt::Checked );
-				  ++checked_masks;
-				}
-			      else
-				tripleMaskPseudoItem [ tripleModelName ] ->setCheckState( 0, Qt::Unchecked );
-			    }
-			}
-		      //end of pseudo3d distr. masks
 
-		      //Individual Combined Distro
-		      if ( tripleMaskItemName.contains("Individual") )
-			{
-			  tripleReportMasksIndividualPlotList.clear();
-			  //populate tripleReportMasksIndividualPlotList based on type-method entries in the reportItem:
-			  QStringList types_methods_list = indComboPlotsMapTripleTypeRangeBool[ tripleName ].keys();
-			  for ( int tm=0; tm<types_methods_list.size(); tm++ )
-			    {
-			      //select type-method for current model only! [e.g. {s,D}-2DSA-IT for 2DSA-IT model]
-			      QString c_method = types_methods_list[ tm ].split(",")[1];
-			      QString c_type   = types_methods_list[ tm ].split(",")[0];
-			      if ( c_method ==  tripleReportModelsList[ mm ] )
-				{
-				  QMap< QString, bool> c_ranges_bool = indComboPlotsMapTripleTypeRangeBool[ tripleName ][ types_methods_list[ tm ] ];
-				  QMap<QString, bool>::iterator r_bool;
-				  for ( r_bool = c_ranges_bool.begin(); r_bool != c_ranges_bool.end(); ++r_bool )
-				    {
-				      QString r_key = r_bool.key();
-				      bool r_value  = r_bool.value();
-				      QString to_show_ind = r_value ? "YES" : "NO";
-				      QString c_type_range = c_type + "[" + r_key + "]" + "--" + to_show_ind;
-				      tripleReportMasksIndividualPlotList << c_type_range;
-				    }
-				}
-			    }
-			  //Now, mark checkboxes
-			  bool top_ind_comboPlot = false;
-			  for ( int icp = 0; icp < tripleReportMasksIndividualPlotList.size(); ++icp )
-			    {
-			      QString individualPlotName = tripleReportMasksIndividualPlotList[ icp ];
-			      QString individualPlotName_name = tripleReportMasksIndividualPlotList[ icp ].split("--")[0];
-			      QString individualPlotName_show = tripleReportMasksIndividualPlotList[ icp ].split("--")[1];
-			      QStringList individualPlotNameList;
-			      individualPlotNameList << "" << indent.repeated( 5 ) + individualPlotName_name;
+        //define models per triple:
+        tripleReportModelsList.clear();
+        tripleReportModelsList = Triple_to_Models[tripleName];
 
-			      tripleMaskIndComboPlotItem [ tripleModelName ] = new QTreeWidgetItem( tripleMaskItem [ tripleModelName ],
-												    individualPlotNameList, wiubase);
-			      //Checked/no
-			      qDebug() << "To show/no Ind.ComboPlots -- "
-				       << tripleReportMasksList_vals[ kk ]
-				       << individualPlotName_show;
-			      if ( tripleReportMasksList_vals[ kk ] && individualPlotName_show=="YES")
-				{
-				  tripleMaskIndComboPlotItem [ tripleModelName ] ->setCheckState( 0, Qt::Checked );
-				  ++checked_masks;
-				  top_ind_comboPlot = true;
-				}
-			      else
-				tripleMaskIndComboPlotItem [ tripleModelName ] ->setCheckState( 0, Qt::Unchecked );
-			    }
+        int checked_masks = 0;
+        //start triple's models
+        for ( int mm = 0; mm < tripleReportModelsList.size(); ++mm )
+        {
+           //Triple's mask params: child-level 3 in a perChanTree
+           QString tripleItemModelName = tripleReportModelsList[mm] + " Model";
+           QString tripleModelName     = tripleItemName + "," + tripleItemModelName;
+           tripleItemModelNameList.clear();
+           tripleItemModelNameList << "" << indent.repeated( 3 ) + tripleItemModelName;
+           tripleModelItem[tripleModelName] = new QTreeWidgetItem( tripleItem[tripleItemName], tripleItemModelNameList, wiubase );
+           {
+              QString a11yPath = chanItemName + " / " + tripleItemName + " / " + tripleItemModelName;
+              tripleModelItem[tripleModelName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+              tripleModelItem[tripleModelName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+           }
 
-			  //Now, set top-level, model-specific Ind. Comboplot item
-			  if ( top_ind_comboPlot )
-			    tripleMaskItem [ tripleModelName ] ->setCheckState( 0, Qt::Checked );
-			  else
-			    tripleMaskItem [ tripleModelName ] ->setCheckState( 0, Qt::Unchecked );
-			}
-		      //end of Individual Combined plots
-		    }
-		  
-		  if ( checked_masks )
-		    tripleModelItem [ tripleModelName ] ->setCheckState( 0, Qt::Checked );
-		  else
-		    tripleModelItem [ tripleModelName ] ->setCheckState( 0, Qt::Unchecked );
-		  
-		}
-	      //end of triple's models
+           //Populate tripleReportMasksList && values from scratch
+           tripleReportMasksList.clear();
+           tripleReportMasksList << "Total Concentration" << "RMSD Limit"
+                                 << "Minimum Intensity"
+                                 //<< "Experiment Duration"
+                                 << "Loading Volume" << "Integration Results" << "Plots" << "Pseudo3d Distributions";
 
-	      if ( checked_masks )
-		{
-		  tripleItem [ tripleItemName ] ->setCheckState( 0, Qt::Checked );
-		  ++checked_triples;
-		}
-	      else
-		tripleItem [ tripleItemName ] ->setCheckState( 0, Qt::Unchecked );
-	    }
-	  
-	  //set checked/unchecked for channel (parent)
-	  if ( checked_triples )
-	    chanItem [ chanItemName ] ->setCheckState( 0, Qt::Checked );
-	  else
-	    chanItem [ chanItemName ] ->setCheckState( 0, Qt::Unchecked );
-	}
+           tripleReportMasksList_vals.clear();
+           tripleReportMasksList_vals << reportGMP.tot_conc_mask << reportGMP.rmsd_limit_mask
+                                      << reportGMP.av_intensity_mask
+                                      //<< reportGMP. experiment_duration_mask
+                                      << true << reportGMP.integration_results_mask << reportGMP.plots_mask
+                                      << reportGMP.pseudo3d_mask;
+
+           //Here: add "Individual Distributions" to tripleReportMasksList IF there is/are type-method(s) matching current model:
+           QStringList type_methods_list = indComboPlotsMapTripleTypeRangeBool[tripleName].keys();
+           for ( int tm = 0; tm < type_methods_list.size(); tm++ )
+           {
+              //select type-method for current model only! [e.g. {s,D}-2DSA-IT for 2DSA-IT model]
+              QString c_method = type_methods_list[tm].split( "," )[1];
+              if ( c_method == tripleReportModelsList[mm] )
+              {
+                 qDebug() << "In Model, list, ind. : " << type_methods_list << tripleReportModelsList[mm];
+                 tripleReportMasksList << "Individual Combined Distributions";
+                 tripleReportMasksList_vals << true;
+
+                 break;
+              }
+           }
+
+           //start triple's masks
+           for ( int kk = 0; kk < tripleReportMasksList.size(); ++kk )
+           {
+              //Triple's mask params: child-level 3 in a perChanTree
+              QString tripleMaskItemName = tripleReportMasksList[kk];
+              tripleMaskItemNameList.clear();
+              tripleMaskItemNameList << "" << indent.repeated( 4 ) + tripleMaskItemName;
+              tripleMaskItem[tripleModelName] =
+                 new QTreeWidgetItem( tripleModelItem[tripleModelName], tripleMaskItemNameList, wiubase );
+              QString a11yPathMask =
+                 chanItemName + " / " + tripleItemName + " / " + tripleItemModelName + " / " + tripleMaskItemName;
+              tripleMaskItem[tripleModelName]->setData( 0, Qt::AccessibleTextRole, a11yPathMask );
+              tripleMaskItem[tripleModelName]->setData( 1, Qt::AccessibleTextRole, a11yPathMask );
+
+              if ( tripleReportMasksList_vals[kk] )
+              {
+                 tripleMaskItem[tripleModelName]->setCheckState( 0, Qt::Checked );
+                 ++checked_masks;
+              }
+              else
+              {
+                 tripleMaskItem[tripleModelName]->setCheckState( 0, Qt::Unchecked );
+              }
+
+              //plots
+              if ( tripleMaskItemName.contains( "Plots" ) )
+              {
+                 tripleReportMasksPlotList.clear();
+                 tripleReportMasksPlotList << "Experiment-Simulation Velocity Data (noise corrected) "
+                                           << "Experiment-Simulation Residuals";
+
+                 // << "Sedimentation Coefficient Distribution"
+                 // << "Molecular Weight Distribution"
+                 // << "Diffusion Coefficient Distribution"
+                 // << "f/f0-vs-s 2D Model"
+                 // << "f/f0-vs-MW 2D Model"
+                 // << "D-vs-s 2D Model"
+                 // << "D-vs-MW 2D Model";
+                 //<< "3D Model Plot";
+
+                 for ( int hh = 0; hh < tripleReportMasksPlotList.size(); ++hh )
+                 {
+                    QString tripleMaskItemPlotName = tripleReportMasksPlotList[hh];
+                    tripleMaskItemPlotNameList.clear();
+                    tripleMaskItemPlotNameList << "" << indent.repeated( 5 ) + tripleMaskItemPlotName;
+                    tripleMaskPlotItem[tripleModelName] =
+                       new QTreeWidgetItem( tripleMaskItem[tripleModelName], tripleMaskItemPlotNameList, wiubase );
+                    {
+                       QString a11yPath = a11yPathMask + " / " + tripleMaskItemPlotName;
+                       tripleMaskPlotItem[tripleModelName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+                       tripleMaskPlotItem[tripleModelName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+                    }
+
+                    if ( tripleReportMasksList_vals[kk] )
+                    {
+                       tripleMaskPlotItem[tripleModelName]->setCheckState( 0, Qt::Checked );
+                       ++checked_masks;
+                    }
+                    else
+                    {
+                       tripleMaskPlotItem[tripleModelName]->setCheckState( 0, Qt::Unchecked );
+                    }
+                 }
+              }
+              //end of triple's masks
+
+              //pseudo3d distr.
+              if ( tripleMaskItemName.contains( "Pseudo3d" ) )
+              {
+                 tripleReportMasksPseudoList.clear();
+                 tripleReportMasksPseudoList << "Pseudo3d s-vs-f/f0 Distribution" << "Pseudo3d s-vs-D Distribution"
+                                             << "Pseudo3d MW-vs-f/f0 Distribution" << "Pseudo3d MW-vs-D Distribution";
+
+                 tripleReportMasksPseudoList_vals.clear();
+                 if ( tripleItemModelName.contains( "2DSA-IT" ) )
+                 {
+                    tripleReportMasksPseudoList_vals << reportGMP.pseudo3d_2dsait_s_ff0 << reportGMP.pseudo3d_2dsait_s_d
+                                                     << reportGMP.pseudo3d_2dsait_mw_ff0 << reportGMP.pseudo3d_2dsait_mw_d;
+                    qDebug() << "In pseudo3d tree: tripleReportMasksPseudoList_vals (2DSA-IT) -- "
+                             << tripleReportMasksPseudoList_vals;
+                 }
+                 else if ( tripleItemModelName.contains( "2DSA-MC" ) )
+                 {
+                    tripleReportMasksPseudoList_vals << reportGMP.pseudo3d_2dsamc_s_ff0 << reportGMP.pseudo3d_2dsamc_s_d
+                                                     << reportGMP.pseudo3d_2dsamc_mw_ff0 << reportGMP.pseudo3d_2dsamc_mw_d;
+                    qDebug() << "In pseudo3d tree: tripleReportMasksPseudoList_vals (2DSA-MC) -- "
+                             << tripleReportMasksPseudoList_vals;
+                 }
+                 else if ( tripleItemModelName.contains( "PCSA" ) )
+                 {
+                    tripleReportMasksPseudoList_vals << reportGMP.pseudo3d_pcsa_s_ff0 << reportGMP.pseudo3d_pcsa_s_d
+                                                     << reportGMP.pseudo3d_pcsa_mw_ff0 << reportGMP.pseudo3d_pcsa_mw_d;
+                    qDebug() << "In pseudo3d tree: tripleReportMasksPseudoList_vals (PCSA) -- " << tripleReportMasksPseudoList_vals;
+                 }
+
+                 for ( int ps = 0; ps < tripleReportMasksPseudoList.size(); ++ps )
+                 {
+                    QString tripleMaskItemPseudoName = tripleReportMasksPseudoList[ps];
+                    tripleMaskItemPseudoNameList.clear();
+                    tripleMaskItemPseudoNameList << "" << indent.repeated( 5 ) + tripleMaskItemPseudoName;
+                    tripleMaskPseudoItem[tripleModelName] =
+                       new QTreeWidgetItem( tripleMaskItem[tripleModelName], tripleMaskItemPseudoNameList, wiubase );
+                    {
+                       QString a11yPath = a11yPathMask + " / " + tripleMaskItemPseudoName;
+                       tripleMaskPseudoItem[tripleModelName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+                       tripleMaskPseudoItem[tripleModelName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+                    }
+
+                    if ( tripleReportMasksPseudoList_vals[ps] )
+                    {
+                       tripleMaskPseudoItem[tripleModelName]->setCheckState( 0, Qt::Checked );
+                       ++checked_masks;
+                    }
+                    else
+                    {
+                       tripleMaskPseudoItem[tripleModelName]->setCheckState( 0, Qt::Unchecked );
+                    }
+                 }
+              }
+              //end of pseudo3d distr. masks
+
+              //Individual Combined Distro
+              if ( tripleMaskItemName.contains( "Individual" ) )
+              {
+                 tripleReportMasksIndividualPlotList.clear();
+                 //populate tripleReportMasksIndividualPlotList based on type-method entries in the reportItem:
+                 QStringList types_methods_list = indComboPlotsMapTripleTypeRangeBool[tripleName].keys();
+                 for ( int tm = 0; tm < types_methods_list.size(); tm++ )
+                 {
+                    //select type-method for current model only! [e.g. {s,D}-2DSA-IT for 2DSA-IT model]
+                    QString c_method = types_methods_list[tm].split( "," )[1];
+                    QString c_type   = types_methods_list[tm].split( "," )[0];
+                    if ( c_method == tripleReportModelsList[mm] )
+                    {
+                       QMap<QString, bool> c_ranges_bool = indComboPlotsMapTripleTypeRangeBool[tripleName][types_methods_list[tm]];
+                       QMap<QString, bool>::iterator r_bool;
+                       for ( r_bool = c_ranges_bool.begin(); r_bool != c_ranges_bool.end(); ++r_bool )
+                       {
+                          QString r_key        = r_bool.key();
+                          bool    r_value      = r_bool.value();
+                          QString to_show_ind  = r_value ? "YES" : "NO";
+                          QString c_type_range = c_type + "[" + r_key + "]" + "--" + to_show_ind;
+                          tripleReportMasksIndividualPlotList << c_type_range;
+                       }
+                    }
+                 }
+                 //Now, mark checkboxes
+                 bool top_ind_comboPlot = false;
+                 for ( int icp = 0; icp < tripleReportMasksIndividualPlotList.size(); ++icp )
+                 {
+                    QString     individualPlotName      = tripleReportMasksIndividualPlotList[icp];
+                    QString     individualPlotName_name = tripleReportMasksIndividualPlotList[icp].split( "--" )[0];
+                    QString     individualPlotName_show = tripleReportMasksIndividualPlotList[icp].split( "--" )[1];
+                    QStringList individualPlotNameList;
+                    individualPlotNameList << "" << indent.repeated( 5 ) + individualPlotName_name;
+
+                    tripleMaskIndComboPlotItem[tripleModelName] =
+                       new QTreeWidgetItem( tripleMaskItem[tripleModelName], individualPlotNameList, wiubase );
+                    {
+                       QString a11yPath = a11yPathMask + " / " + individualPlotName_name;
+                       tripleMaskIndComboPlotItem[tripleModelName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+                       tripleMaskIndComboPlotItem[tripleModelName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+                    }
+                    //Checked/no
+                    qDebug() << "To show/no Ind.ComboPlots -- " << tripleReportMasksList_vals[kk] << individualPlotName_show;
+                    if ( tripleReportMasksList_vals[kk] && individualPlotName_show == "YES" )
+                    {
+                       tripleMaskIndComboPlotItem[tripleModelName]->setCheckState( 0, Qt::Checked );
+                       ++checked_masks;
+                       top_ind_comboPlot = true;
+                    }
+                    else
+                    {
+                       tripleMaskIndComboPlotItem[tripleModelName]->setCheckState( 0, Qt::Unchecked );
+                    }
+                 }
+
+                 //Now, set top-level, model-specific Ind. Comboplot item
+                 if ( top_ind_comboPlot )
+                 {
+                    tripleMaskItem[tripleModelName]->setCheckState( 0, Qt::Checked );
+                 }
+                 else
+                 {
+                    tripleMaskItem[tripleModelName]->setCheckState( 0, Qt::Unchecked );
+                 }
+              }
+              //end of Individual Combined plots
+           }
+
+           if ( checked_masks )
+           {
+              tripleModelItem[tripleModelName]->setCheckState( 0, Qt::Checked );
+           }
+           else
+           {
+              tripleModelItem[tripleModelName]->setCheckState( 0, Qt::Unchecked );
+           }
+        }
+        //end of triple's models
+
+        if ( checked_masks )
+        {
+           tripleItem[tripleItemName]->setCheckState( 0, Qt::Checked );
+           ++checked_triples;
+        }
+        else
+        {
+           tripleItem[tripleItemName]->setCheckState( 0, Qt::Unchecked );
+        }
+     }
+
+     //set checked/unchecked for channel (parent)
+     if ( checked_triples )
+     {
+        chanItem[chanItemName]->setCheckState( 0, Qt::Checked );
+     }
+     else
+     {
+        chanItem[chanItemName]->setCheckState( 0, Qt::Unchecked );
+     }
+   }
     }
 
   //Now check if tripleItem tree widgets have any children (have any models):
@@ -3177,6 +3526,8 @@ void US_ReporterGMP::build_combPlotsTree ( void )
       topItemNameList.clear();
       topItemNameList << "" << indent + tm.key();
       topItemCombPlots [ tm.key() ] = new QTreeWidgetItem( combPlotsTree, topItemNameList, wiubase );
+      topItemCombPlots[tm.key()]->setData( 0, Qt::AccessibleTextRole, tm.key() );
+      topItemCombPlots[tm.key()]->setData( 1, Qt::AccessibleTextRole, tm.key() );
 
       topItemCombPlots [ tm.key() ] ->setCheckState( 0, Qt::Checked );
 
@@ -3186,9 +3537,14 @@ void US_ReporterGMP::build_combPlotsTree ( void )
 	  ItemNameList.clear();
 	  ItemNameList << "" << indent.repeated( 2 ) + unique_models[ i ];
 	  ItemCombPlots [ modelName ] = new QTreeWidgetItem( topItemCombPlots [ tm.key() ], ItemNameList, wiubase);
+     {
+        QString a11yPath = tm.key() + " / " + unique_models[i];
+        ItemCombPlots[modelName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+        ItemCombPlots[modelName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+     }
 
-	  ItemCombPlots [ modelName ] ->setCheckState( 0, Qt::Checked );
-	}
+     ItemCombPlots[modelName]->setCheckState( 0, Qt::Checked );
+   }
     }
 
   combPlotsTree->expandAll();
@@ -3461,10 +3817,125 @@ void US_ReporterGMP::reset_report_panel ( void )
   qApp->processEvents();
 }
 
+// ---------------------------------------------------------------------------
+// Progress dialog helpers.  ONE US_GmpProgress serves the whole run; it is only
+// hidden (never closed / re-created) between stages.  Stages (autoflow, 4
+// steps):
+//   1 Loading run protocol   2 Report: general information
+//   3 Report: models, simulations and plots   4 Creating PDF report
+// Stand-alone: loading a run is "Step 1 of 1"; Generate Report is steps 1-3
+// (canonical stages 2-4).
+// ---------------------------------------------------------------------------
+US_GmpProgress* US_ReporterGMP::gmp_progress( void )
+{
+   // Child of the top-level window: the autoflow main window when embedded, or
+   // the reporter itself when stand-alone.  (Resolved lazily: in autoflow the
+   // reporter is re-parented after construction.)
+   QWidget* top = window();
+   if ( progress_msg && progress_msg->parentWidget() != top && !progress_msg->isVisible() )
+   {
+      delete progress_msg;
+      progress_msg = nullptr;
+   }
+   if ( !progress_msg )
+   {
+      progress_msg = new US_GmpProgress( top );
+   }
+
+   return progress_msg;
+}
+
+void US_ReporterGMP::gmp_stage( int n, const QString& title, const QString& detail, int step_max )
+{
+   int num   = n;
+   int total = 4;
+   if ( !auto_mode )
+   {
+      if ( n == 1 )
+      {
+         num   = 1;
+         total = 1;
+      }
+      else
+      {
+         num   = n - 1;
+         total = 3;
+      }
+   }
+   gmp_progress()->setStage( num, total, title, detail, step_max );
+}
+
+void US_ReporterGMP::gmp_busy( const QString& detail )
+{
+   gmp_progress()->setBusy( detail );
+}
+
+void US_ReporterGMP::gmp_progress_hide( void )
+{
+   if ( progress_msg )
+   {
+      progress_msg->finish();
+   }
+}
+
+// Number of (triple,model) simulations Part 2 will run (mirrors
+// generate_report()'s loops)
+int US_ReporterGMP::count_part2_jobs( void )
+{
+   if ( expType == "VELOCITY-MWL" )
+   {
+      return 0;
+   }
+
+   int njobs = 0;
+   for ( int i = 0; i < Array_of_triples.size(); ++i )
+   {
+      QString     triple = Array_of_triples[i];
+      QStringList models = Triple_to_Models[triple];
+
+      for ( int j = 0; j < models.size(); ++j )
+      {
+         if ( auto_mode )
+         {
+            ++njobs;
+            continue;
+         }
+
+         QString triplename_alt = triple;
+         triplename_alt.replace( ".", "" );
+         if ( dataSource.contains( "DiskAUC:Absorbance" ) && simulatedData )
+         {
+            triplename_alt = triplename_alt.replace( "S", "A" );
+         }
+
+         if ( perChanMask_edited.has_tripleModel_items[triplename_alt][models[j]] ||
+              perChanMask_edited.has_tripleModelPlot_items[triplename_alt][models[j]] ||
+              perChanMask_edited.has_tripleModelIndCombo_items[triplename_alt][models[j]] )
+         {
+            ++njobs;
+         }
+      }
+   }
+   return njobs;
+}
 
 //Generate report
 void US_ReporterGMP::generate_report( void )
 {
+   // Whatever path leaves this function (incl. early returns), the progress
+   // dialog gets hidden
+   struct ProgressGuard
+   {
+         US_ReporterGMP* r;
+         explicit ProgressGuard( US_ReporterGMP* p ) : r( p )
+         {
+         }
+         ~ProgressGuard()
+         {
+            r->gmp_progress_hide();
+         }
+   } progress_guard( this );
+
   //create main folder & clean it of anything
   QString subDirName  = runName + "-run" + runID;
   QString dirName     = US_Settings::reportDir() + "/" + subDirName;
@@ -3472,15 +3943,14 @@ void US_ReporterGMP::generate_report( void )
   QStringList f_exts = QStringList() <<  "*.*"; 
   remove_files_by_mask( dirName, f_exts );
   ///////////////////////////////////////////////////
-  
-  progress_msg->setWindowTitle(tr("Generating Report"));
-  progress_msg->setLabelText( "Generating Report: Part 1..." );
+
   int msg_range = currProto.rpSolut.nschan + 5;
 
   qDebug() << "Generate report: msg_range -- " << msg_range;
-  progress_msg->setRange( 0, msg_range );
-  progress_msg->setValue( 0 );
-  progress_msg->show();
+  gmp_stage( 2,
+             tr( "Generating report - general information" ),
+             tr( "Assembling report header, solutions, optics and run details..." ),
+             msg_range );
   qApp->processEvents();
 
   //reset html assembled strings
@@ -3528,13 +3998,19 @@ void US_ReporterGMP::generate_report( void )
 
   //add trailing </body>\n</html> to part 1
   html_assembled += "</body>\n</html>";
-  
-  progress_msg->setValue( progress_msg->maximum() );
-  progress_msg->close();
-  qApp->processEvents();
-  
 
-  //Part 2
+  progress_msg->setValue( progress_msg->maximum() );
+  qApp->processEvents();
+
+  // Part 2
+  //(same dialog: overall bar = (triple,model) jobs, step bar = current job)
+  part2_total = count_part2_jobs();
+  part2_done  = 0;
+  gmp_stage( 3, tr( "Generating report - models, simulations and plots" ), tr( "Preparing models and simulations..." ), 1 );
+  if ( part2_total > 0 )
+  {
+     gmp_progress()->setOverall( 0, part2_total, tr( "Triple/model 0 of %1" ).arg( part2_total ) );
+  }
 
   //Get proper filename
   QStringList fileNameList;
@@ -3547,24 +4023,34 @@ void US_ReporterGMP::generate_report( void )
   
   if ( auto_mode )
     {
-      for ( int i=0; i<Array_of_triples.size(); ++i )
-	{
-	  currentTripleName = Array_of_triples[i];
-	      
-	  //here should be cycle over triple's models ( 2DSA-IT, 2DSA-MC etc..)
-	  QStringList models_to_do = Triple_to_Models[ currentTripleName ];
-	  
-	  for ( int j = 0; j < models_to_do.size(); ++j )
-	    {
-	      simulate_triple ( currentTripleName, models_to_do[ j ] );
+       if ( expType != "VELOCITY-MWL" )
+       {
+          for ( int i = 0; i < Array_of_triples.size(); ++i )
+          {
+             currentTripleName = Array_of_triples[i];
 
-	      //Pseudo3D Distr.
-	      plot_pseudo3D( currentTripleName, models_to_do[ j ]);
+             // here should be cycle over triple's models ( 2DSA-IT, 2DSA-MC etc..)
+             QStringList models_to_do = Triple_to_Models[currentTripleName];
 
-	      //Individual Combo plots
-	      process_combined_plots_individual ( currentTripleName, models_to_do[ j ] );
-	    }
-	}
+             for ( int j = 0; j < models_to_do.size(); ++j )
+             {
+                // Without its data, this triple's plots would show the last one's.
+                if ( !simulate_triple( currentTripleName, models_to_do[j] ) )
+                {
+                   continue;
+                }
+
+                // Pseudo3D Distr.
+                gmp_busy( tr( "Plotting pseudo-3D distribution: %1, model %2" ).arg( currentTripleName ).arg( models_to_do[j] ) );
+                plot_pseudo3D( currentTripleName, models_to_do[j] );
+
+                // Individual Combo plots
+                gmp_busy(
+                   tr( "Generating individual combined plots: %1, model %2" ).arg( currentTripleName ).arg( models_to_do[j] ) );
+                process_combined_plots_individual( currentTripleName, models_to_do[j] );
+             }
+          }
+       }
 
       if ( expType == "VELOCITY" )
 	{
@@ -3573,155 +4059,199 @@ void US_ReporterGMP::generate_report( void )
 	    process_combined_plots( fileNameList[i] );
 	  
 	  //Replicas' averages
-	  assemble_replicate_av_integration_html();
-	}
-      else if ( expType == "ABDE" )
-	{
-	  process_abde_plots();
+     gmp_busy( tr( "Averaging replicate groups..." ) );
+     assemble_replicate_av_integration_html();
+   }
+   else if ( expType == "VELOCITY-MWL" )
+   {
+      gmp_busy( tr( "Processing VELOCITY-MWL channels..." ) );
+      process_velmwl_analysis();
+   }
+   else if ( expType == "ABDE" )
+   {
+      gmp_busy( tr( "Processing ABDE plots..." ) );
+      process_abde_plots();
 
-	  for (int ac=0; ac<abde_channList.size(); ++ac)
-	    {
-	      QString key_m = "Channel " + abde_channList[ac];
-	      if ( !perChanMask_edited_abde. ShowChannelParts[ key_m ] )
-		{
-		  QString f_name_mask = abde_plots_filenames[abde_channList[ac]];
-		  QDir().remove(f_name_mask);
-		  f_name_mask.replace(".png",".svgz");
-		  QDir().remove(f_name_mask);
-		  continue;
-		}
-	      
-	      bool do_integration = true;
-	      bool do_plots = true;
-	      QMap<QString, QString> channs_features = perChanMask_edited_abde. ShowChannelItemParts[ key_m ];
-	      QStringList channs_features_keys = channs_features.keys();
-	      for ( int fc=0; fc<channs_features_keys.size(); ++fc )
-		{
-		  QString fc_key = channs_features_keys[fc];
-		  bool do_feature = (channs_features[fc_key].toInt()) ? true : false;
-		  if ( fc_key.contains("Integration") )
-		    do_integration = do_feature;
-		  else if ( fc_key.contains("Plots") )
-		    do_plots = do_feature;
-		}
+      for ( int ac = 0; ac < abde_channList.size(); ++ac )
+      {
+         QString key_m = "Channel " + abde_channList[ac];
+         if ( !perChanMask_edited_abde.ShowChannelParts[key_m] )
+         {
+            QString f_name_mask = abde_plots_filenames[abde_channList[ac]];
+            QDir().remove( f_name_mask );
+            f_name_mask.replace( ".png", ".svgz" );
+            QDir().remove( f_name_mask );
+            continue;
+         }
 
-	      //display channel info: RMSD, exp. params, integration ranges & percents
-	      assemble_distrib_ABDE_html( abde_channList[ac] );
-	      
-	      //assemble ABDE plot
-	      if ( do_plots )
-		{
-		  QStringList abdePlots;
-		  abdePlots << abde_plots_filenames[abde_channList[ac]];
-		  assemble_plots_html( abdePlots );
-		}
-	    }
-	}
+         bool                   do_integration       = true;
+         bool                   do_plots             = true;
+         QMap<QString, QString> channs_features      = perChanMask_edited_abde.ShowChannelItemParts[key_m];
+         QStringList            channs_features_keys = channs_features.keys();
+         for ( int fc = 0; fc < channs_features_keys.size(); ++fc )
+         {
+            QString fc_key     = channs_features_keys[fc];
+            bool    do_feature = ( channs_features[fc_key].toInt() ) ? true : false;
+            if ( fc_key.contains( "Integration" ) )
+            {
+               do_integration = do_feature;
+            }
+            else if ( fc_key.contains( "Plots" ) )
+            {
+               do_plots = do_feature;
+            }
+         }
+
+         // display channel info: RMSD, exp. params, integration ranges &
+         // percents
+         assemble_distrib_ABDE_html( abde_channList[ac] );
+
+         // assemble ABDE plot
+         if ( do_plots )
+         {
+            QStringList abdePlots;
+            abdePlots << abde_plots_filenames[abde_channList[ac]];
+            assemble_plots_html( abdePlots );
+         }
+      }
+   }
     }
   else
     { //Will be modified for stand-alone GMP Reporter based on edited tree JSON
-      for ( int i=0; i<Array_of_triples.size(); ++i )
-	{
-	  currentTripleName = Array_of_triples[i];
-	  
-	  //here should be cycle over triple's models ( 2DSA-IT, 2DSA-MC etc..)
-	  QStringList models_to_do = Triple_to_Models[ currentTripleName ];
-	  
-	  for ( int j = 0; j < models_to_do.size(); ++j )
-	    {
-	      QString triplename_alt = currentTripleName;
-	      triplename_alt.replace(".","");
+       if ( expType != "VELOCITY-MWL" )
+       {
+          for ( int i = 0; i < Array_of_triples.size(); ++i )
+          {
+             currentTripleName = Array_of_triples[i];
 
-	      //'S' data
-	      if ( dataSource . contains("DiskAUC:Absorbance") &&  simulatedData )
-		triplename_alt = triplename_alt. replace( "S", "A");
+             // here should be cycle over triple's models ( 2DSA-IT, 2DSA-MC etc..)
+             QStringList models_to_do = Triple_to_Models[currentTripleName];
 
-	      qDebug() << "Triple / Model " <<  triplename_alt << " / " <<  models_to_do[ j ] << "has items ? "
-		       << perChanMask_edited. has_tripleModel_items     [ triplename_alt ][ models_to_do[ j ] ]
-		       << perChanMask_edited. has_tripleModelPlot_items [ triplename_alt ][ models_to_do[ j ] ];
-	      
-	      if ( perChanMask_edited. has_tripleModel_items     [ triplename_alt ][ models_to_do[ j ] ] ||
-		   perChanMask_edited. has_tripleModelPlot_items [ triplename_alt ][ models_to_do[ j ] ] ||
-		   perChanMask_edited. has_tripleModelIndCombo_items[ triplename_alt ][ models_to_do[ j ] ] ) 
-		{
-		  simulate_triple ( currentTripleName, models_to_do[ j ] );
+             for ( int j = 0; j < models_to_do.size(); ++j )
+             {
+                QString triplename_alt = currentTripleName;
+                triplename_alt.replace( ".", "" );
 
-		  //Pseudo3D Distr.
-		  plot_pseudo3D( currentTripleName, models_to_do[ j ]);
+                //'S' data
+                if ( dataSource.contains( "DiskAUC:Absorbance" ) && simulatedData )
+                {
+                   triplename_alt = triplename_alt.replace( "S", "A" );
+                }
 
-		  //Individual Combo plots
-		  qDebug() << "INDCOMBO, perChanMask_edited. has_tripleModelIndCombo_items[ triplename_alt ][ models_to_do[ j ] ] -- "
-			   << triplename_alt << models_to_do[ j ]
-			   << perChanMask_edited. has_tripleModelIndCombo_items[ triplename_alt ][ models_to_do[ j ] ];
-		  process_combined_plots_individual ( currentTripleName, models_to_do[ j ] );
-		}
-	    }
-	}
+                qDebug() << "Triple / Model " << triplename_alt << " / " << models_to_do[j] << "has items ? "
+                         << perChanMask_edited.has_tripleModel_items[triplename_alt][models_to_do[j]]
+                         << perChanMask_edited.has_tripleModelPlot_items[triplename_alt][models_to_do[j]];
 
-      if ( expType == "VELOCITY" )
-	{
-	  //Combined Plots
-	  if ( combPlotsMask_edited. has_combo_plots )
-	    {
-	      for ( int i=0; i<fileNameList.size(); ++i )
-		process_combined_plots( fileNameList[i] );
-	    }
-	  
-	  //Replicas' averages
-	  if ( miscMask_edited. ShowMiscParts[ "Replicate Groups Averaging" ] ) 
-	    assemble_replicate_av_integration_html();
-	}
-      else if ( expType == "ABDE" )
-	{
-	  //go over channels, check if ABDE profile plots exists,
-	  //contruct basic channel description: RMDS, Comparison, Integration (percents)
-	  
-	  qDebug() << "Assembling plots ABDE!";
-	  process_abde_plots();
-	  for (int ac=0; ac<abde_channList.size(); ++ac)
-	    {
-	      QString key_m = "Channel " + abde_channList[ac];
-	      if ( !perChanMask_edited_abde. ShowChannelParts[ key_m ] )
-		{
-		  QString f_name_mask = abde_plots_filenames[abde_channList[ac]];
-		  QDir().remove(f_name_mask);
-		  f_name_mask.replace(".png",".svgz");
-		  QDir().remove(f_name_mask);
-		  continue;
-		}
+                if ( perChanMask_edited.has_tripleModel_items[triplename_alt][models_to_do[j]] ||
+                     perChanMask_edited.has_tripleModelPlot_items[triplename_alt][models_to_do[j]] ||
+                     perChanMask_edited.has_tripleModelIndCombo_items[triplename_alt][models_to_do[j]] )
+                {
+                   // Without its data, this triple's plots would show the last one's.
+                   if ( !simulate_triple( currentTripleName, models_to_do[j] ) )
+                   {
+                      continue;
+                   }
 
-	      //else: go over features for a channel:
-	      bool do_integration = true;
-	      bool do_plots = true;
-	      QMap<QString, QString> channs_features = perChanMask_edited_abde. ShowChannelItemParts[ key_m ];
-	      QStringList channs_features_keys = channs_features.keys();
-	      for ( int fc=0; fc<channs_features_keys.size(); ++fc )
-		{
-		  QString fc_key = channs_features_keys[fc];
-		  bool do_feature = (channs_features[fc_key].toInt()) ? true : false;
-		  if ( fc_key.contains("Integration") )
-		    do_integration = do_feature;
-		  else if ( fc_key.contains("Plots") )
-		    do_plots = do_feature;
-		}
-	      
-	      //display channel info: RMSD, exp. params, integration ranges & percents
-	      assemble_distrib_ABDE_html( abde_channList[ac] );
-	      
-	      //assemble ABDE plot
-	      if ( do_plots )
-		{
-		  QStringList abdePlots;
-		  abdePlots << abde_plots_filenames[abde_channList[ac]];
-		  assemble_plots_html( abdePlots );
-		}
-	    }
-	}
+                   // Pseudo3D Distr.
+                   gmp_busy(
+                      tr( "Plotting pseudo-3D distribution: %1, model %2" ).arg( currentTripleName ).arg( models_to_do[j] ) );
+                   plot_pseudo3D( currentTripleName, models_to_do[j] );
+
+                   // Individual Combo plots
+                   qDebug() << "INDCOMBO, perChanMask_edited. "
+                               "has_tripleModelIndCombo_items[ triplename_alt ][ "
+                               "models_to_do[ j ] ] -- "
+                            << triplename_alt << models_to_do[j]
+                            << perChanMask_edited.has_tripleModelIndCombo_items[triplename_alt][models_to_do[j]];
+                   gmp_busy(
+                      tr( "Generating individual combined plots: %1, model %2" ).arg( currentTripleName ).arg( models_to_do[j] ) );
+                   process_combined_plots_individual( currentTripleName, models_to_do[j] );
+                }
+             }
+          }
+       }
+       if ( expType == "VELOCITY" )
+       {
+          //Combined Plots
+          if ( combPlotsMask_edited.has_combo_plots )
+          {
+             for ( int i = 0; i < fileNameList.size(); ++i )
+             {
+                process_combined_plots( fileNameList[i] );
+             }
+          }
+
+          //Replicas' averages
+          if ( miscMask_edited.ShowMiscParts["Replicate Groups Averaging"] )
+          {
+             gmp_busy( tr( "Averaging replicate groups..." ) );
+             assemble_replicate_av_integration_html();
+          }
+       }
+       else if ( expType == "VELOCITY-MWL" )
+       {
+          gmp_busy( tr( "Processing VELOCITY-MWL channels..." ) );
+          process_velmwl_analysis();
+       }
+       else if ( expType == "ABDE" )
+       {
+          // go over channels, check if ABDE profile plots exists,
+          // contruct basic channel description: RMDS, Comparison, Integration
+          // (percents)
+
+          qDebug() << "Assembling plots ABDE!";
+          gmp_busy( tr( "Processing ABDE plots..." ) );
+          process_abde_plots();
+          for ( int ac = 0; ac < abde_channList.size(); ++ac )
+          {
+             QString key_m = "Channel " + abde_channList[ac];
+             if ( !perChanMask_edited_abde.ShowChannelParts[key_m] )
+             {
+                QString f_name_mask = abde_plots_filenames[abde_channList[ac]];
+                QDir().remove( f_name_mask );
+                f_name_mask.replace( ".png", ".svgz" );
+                QDir().remove( f_name_mask );
+                continue;
+             }
+
+             // else: go over features for a channel:
+             bool                   do_integration       = true;
+             bool                   do_plots             = true;
+             QMap<QString, QString> channs_features      = perChanMask_edited_abde.ShowChannelItemParts[key_m];
+             QStringList            channs_features_keys = channs_features.keys();
+             for ( int fc = 0; fc < channs_features_keys.size(); ++fc )
+             {
+                QString fc_key     = channs_features_keys[fc];
+                bool    do_feature = ( channs_features[fc_key].toInt() ) ? true : false;
+                if ( fc_key.contains( "Integration" ) )
+                {
+                   do_integration = do_feature;
+                }
+                else if ( fc_key.contains( "Plots" ) )
+                {
+                   do_plots = do_feature;
+                }
+             }
+
+             // display channel info: RMSD, exp. params, integration ranges &
+             // percents
+             assemble_distrib_ABDE_html( abde_channList[ac] );
+
+             // assemble ABDE plot
+             if ( do_plots )
+             {
+                QStringList abdePlots;
+                abdePlots << abde_plots_filenames[abde_channList[ac]];
+                assemble_plots_html( abdePlots );
+             }
+          }
+       }
     }
   //End of Part 2
 
   //Create .PDF file && write to Db:
   write_pdf_report( );
+  gmp_progress_hide(); // end of the progress dialog's life for this run
   qApp->processEvents();
 
   pb_view_report -> setEnabled( true );
@@ -3808,80 +4338,476 @@ void US_ReporterGMP::generate_report( void )
 	  return;
 	}
 
-      //Update autoflowGMPReportEsign record with eSignStatusJson
-      qry. clear();
-      qry << "update_gmp_review_record_by_esigner"
-	  << eSign_details[ "ID" ]
-	  << AutoflowID_auto
-	  << eSignStatusJson
-	  << "NO";
-      
-      qDebug() << "Update \"to_sign\": qry -- " << qry;
-      db->query( qry );
+   //Update autoflowGMPReportEsign record with eSignStatusJson
+   qry.clear();
+   qry << "update_gmp_review_record_by_esigner" << eSign_details["ID"] << AutoflowID_auto << eSignStatusJson << "NO";
 
-      
-      /************************************************************************/
-      //copy autoflow record to autoflowHistory table:
-      //INSERT INTO autoflowHistory SELECT * FROM autoflow WHERE ID=${ID}//
-      
-      qry. clear();
-      qry << "new_autoflow_history_record" << AutoflowID_auto;
-      qDebug() << "Query for autoflowHistory -- " << qry;
-      db->query( qry );
+   qDebug() << "Update \"to_sign\": qry -- " << qry;
+   db->query( qry );
 
-      /*** TEST - DO NOT delete parent autoflow YET --------------------------------- **/
-      //delete autoflow record
-      qry.clear();
-      qry << "delete_autoflow_record_by_id" << AutoflowID_auto;
-      db->statusQuery( qry );
-      /****/ 
 
-      //Inform user of the PDF location
-      QMessageBox msgBox_a;
-      msgBox_a.setText(tr("Report PDF Ready!"));
-      msgBox_a.setInformativeText(tr( "Report PDF was saved at: \n%1\n\n"
-				      "When this dialog is closed, the report can be re-opened by clicking \'View Generated Report\' button at the bottom."
-				      "\n\n"
-				      "Reviwer(s) of the current GMP report will be notified.")
-				  .arg( filePath ) );
-				    
-      msgBox_a.setWindowTitle(tr("Report Generation Complete"));
-      QPushButton *Open      = msgBox_a.addButton(tr("View Report"), QMessageBox::YesRole);
-      //QPushButton *Cancel  = msgBox_a.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
-	      
-      msgBox_a.setIcon(QMessageBox::Information);
-      msgBox_a.exec();
-      
-      if (msgBox_a.clickedButton() == Open)
-	{
-	  view_report();
-	}
-      
+   /************************************************************************/
+   //copy autoflow record to autoflowHistory table:
+   //INSERT INTO autoflowHistory SELECT * FROM autoflow WHERE ID=${ID}//
+
+   qry.clear();
+   qry << "new_autoflow_history_record" << AutoflowID_auto;
+   qDebug() << "Query for autoflowHistory -- " << qry;
+   db->query( qry );
+
+   /*** TEST - DO NOT delete parent autoflow YET --------------------------------- **/
+   //delete autoflow record
+   qry.clear();
+   qry << "delete_autoflow_record_by_id" << AutoflowID_auto;
+   db->statusQuery( qry );
+   /****/
+
+   //Inform user of the PDF location
+   QMessageBox msgBox_a;
+   msgBox_a.setText( tr( "Report PDF Ready!" ) );
+   msgBox_a.setInformativeText(
+      tr( "Report PDF was saved at: \n%1\n\n"
+          "When this dialog is closed, the report can be re-opened by clicking \'View Generated Report\' button at the bottom."
+          "\n\n"
+          "Reviwer(s) of the current GMP report will be notified." )
+         .arg( filePath ) );
+
+   msgBox_a.setWindowTitle( tr( "Report Generation Complete" ) );
+   QPushButton* Open = msgBox_a.addButton( tr( "View Report" ), QMessageBox::YesRole );
+   //QPushButton *Cancel  = msgBox_a.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
+
+   msgBox_a.setIcon( QMessageBox::Information );
+   msgBox_a.exec();
+
+   if ( msgBox_a.clickedButton() == Open )
+   {
+      view_report();
+   }
     }
-  else
+    else
     {
-      te_fpath_info  -> setText( filePath );
-      
-      //Inform user of the PDF location
-      QMessageBox msgBox;
-      msgBox.setText(tr("Report PDF Ready!"));
-      msgBox.setInformativeText(tr( "Report PDF was saved at: \n%1\n\n"
-				    "When this dialog is closed, the report can be re-opened by clicking \'View Generated Report\' button on the left.")
-				.arg( filePath ) );
-				    
-      msgBox.setWindowTitle(tr("Report Generation Complete"));
-      QPushButton *Open      = msgBox.addButton(tr("View Report"), QMessageBox::YesRole);
-      //QPushButton *Cancel  = msgBox.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
-	      
-      msgBox.setIcon(QMessageBox::Information);
-      msgBox.exec();
-      
-      if (msgBox.clickedButton() == Open)
-	{
-	  view_report();
-	}
+       te_fpath_info->setText( filePath );
+
+       //Inform user of the PDF location
+       QMessageBox msgBox;
+       msgBox.setText( tr( "Report PDF Ready!" ) );
+       msgBox.setInformativeText(
+          tr( "Report PDF was saved at: \n%1\n\n"
+              "When this dialog is closed, the report can be re-opened by clicking \'View Generated Report\' button on the left." )
+             .arg( filePath ) );
+
+       msgBox.setWindowTitle( tr( "Report Generation Complete" ) );
+       QPushButton* Open = msgBox.addButton( tr( "View Report" ), QMessageBox::YesRole );
+       //QPushButton *Cancel  = msgBox.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
+
+       msgBox.setIcon( QMessageBox::Information );
+       msgBox.exec();
+
+       if ( msgBox.clickedButton() == Open )
+       {
+          view_report();
+       }
     }
-  
+}
+
+// VELOCITY-MWL: the channel's report (parameters + report items), defined
+// per channel: first wavelength's, as for ABDE. nullptr if not found.
+US_ReportGMP* US_ReporterGMP::velmwl_channel_report( const QString& chan_tag )
+{
+   for ( int ich = 0; ich < currAProf.pchans.count(); ++ich )
+   {
+      QString channel_desc_alt = chndescs_alt[ich];
+      if ( channel_desc_alt.split( ":" )[0] == chan_tag && ch_wvls.contains( channel_desc_alt ) &&
+           !ch_wvls[channel_desc_alt].isEmpty() )
+      {
+         QString wvl0 = QString::number( ch_wvls[channel_desc_alt][0] );
+         if ( ch_reports[channel_desc_alt].contains( wvl0 ) )
+         {
+            return &( ch_reports[channel_desc_alt][wvl0] );
+         }
+      }
+   }
+   return nullptr;
+}
+
+// VELOCITY-MWL: load the models of the channel's deconvolved species by
+// modelGUID (2 single-row queries per model). 'species' returns the species
+// names (S1, S2, ...) of the models that were actually loaded, in step with
+// 'models'.
+int US_ReporterGMP::load_velmwl_models( const QString& chan_tag, QList<US_Model>& models, QStringList& species )
+{
+   models.clear();
+   species.clear();
+
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      qDebug() << "[VEL-MWL] load models: DB connection failed:" << db.lastError();
+      return 0;
+   }
+
+   const QStringList guids = velmwl_chan_guids[chan_tag];
+   const QStringList specs = velmwl_chan_species[chan_tag];
+
+   for ( int ii = 0; ii < guids.size(); ++ii )
+   {
+      const QString guid = guids[ii].trimmed();
+      US_Model      mdl;
+      int           rc = mdl.load( true, guid, &db );
+
+      // load() does not check that the GUID was found: verify what came back
+      if ( rc != US_DB2::OK || mdl.components.isEmpty() || mdl.modelGUID.compare( guid, Qt::CaseInsensitive ) != 0 )
+      {
+         qDebug() << "[VEL-MWL] model not loaded, chan/species/GUID/rc --" << chan_tag << specs.value( ii ) << guid << rc;
+         continue;
+      }
+
+      models << mdl;
+      species << specs.value( ii );
+   }
+
+   return models.size();
+}
+
+// VELOCITY-MWL: header of the section, same as ABDE's with own title
+QString US_ReporterGMP::html_header_velmwl( QString title, QString runName, QString chanName )
+{
+   QString s = html_header_abde( title, runName, chanName );
+   s.replace( "<h1>ABDE Analysis", "<h1>VELOCITY-MWL Analysis" );
+   return s;
+}
+
+// Percent of the model's concentration within a report item's range, from
+// US_Calc.  An item type that is not a range type is unsupported, except on
+// a model without components, where the type is never examined; a total
+// that is not positive gives 0.
+static double velmwl_range_fraction( const US_Model& mdl, const QString& type, double low, double high, bool& supported )
+{
+   supported = true;
+   if ( mdl.components.isEmpty() )
+   {
+      return 0.0;
+   }
+
+   const US_Calc::Quantity quantity = US_Calc::quantity_from_report_type( type, &supported );
+   if ( !supported )
+   {
+      return 0.0;
+   }
+
+   const US_Calc::RangeResult r = US_Calc::range_summary( mdl.calc_model(), { quantity, low, high } );
+   return ( r.total_concentration > 0.0 ) ? r.fraction_percent : 0.0;
+}
+
+// VELOCITY-MWL: timestamps, species (models) used, analysis settings,
+// distribution info (separate .pdf), and Integration Results: for each species
+// model, the fraction of total concentration within each report item's range
+// compared with the item's target (+/- tolerance) from the analysis profile.
+QString US_ReporterGMP::distrib_info_velmwl( const QString&         chan_tag,
+                                             const QList<US_Model>& models,
+                                             const QStringList&     species,
+                                             bool                   do_integration )
+{
+   // Timestamps
+   QString analysed;
+   for ( int im = 0; im < models.size(); ++im )
+   {
+      if ( models[im].timeCreated > analysed ) // 'YYYY-MM-DD hh:mm:ss' sorts as text
+      {
+         analysed = models[im].timeCreated;
+      }
+   }
+
+   QString mstr = "\n" + indent( 2 ) + tr( "<h3>Timestamps:</h3>\n" ) + indent( 2 ) + "<table>\n";
+   if ( !editing_time_velmwl.isEmpty() )
+   {
+      mstr += table_row( tr( "Data Edited at:" ), editing_time_velmwl + " (UTC)" );
+   }
+   if ( !analysed.isEmpty() )
+   {
+      mstr += table_row( tr( "Analysed at:" ), analysed + " (UTC)" );
+   }
+   mstr += indent( 2 ) + "</table>\n";
+
+   // Species (deconvolved) whose models are used
+   mstr += "\n" + indent( 2 ) + tr( "<h3>Deconvolved Species (Models Used):</h3>\n" ) + indent( 2 ) + "<table>\n";
+   for ( int im = 0; im < models.size(); ++im )
+   {
+      mstr += table_row( species[im] + ":", models[im].dataDescrip );
+   }
+   mstr += indent( 2 ) + "</table>\n";
+
+   // Analysis settings
+   mstr += "\n" + indent( 2 ) + tr( "<h3>Data Analysis Settings:</h3>\n" ) + indent( 2 ) + "<table>\n";
+   for ( int im = 0; im < models.size(); ++im )
+   {
+      double vari = models[im].variance;
+      double rmsd = ( vari > 0.0 ) ? sqrt( vari ) : 0.0;
+      mstr += table_row( tr( "Residual RMS Deviation, " ) + species[im] + ":",
+                         ( rmsd > 0.0 ) ? QString::number( rmsd ) : tr( "(none)" ) );
+      mstr += table_row( tr( "Number of Components, " ) + species[im] + ":", QString::number( models[im].components.size() ) );
+   }
+   mstr += indent( 2 ) + "</table>\n";
+
+   // Distribution Information - to a separate .pdf file
+   QString subDirName = runName + "-run" + runID;
+   QString dirName    = US_Settings::reportDir() + "/" + subDirName;
+   mkdir( US_Settings::reportDir(), subDirName );
+
+   QString html_d = "Species, s20 (1e-13 s), D20 (1e-7 cm^2/s), MW (Da), f/f0, "
+                    "vbar20 (mL/g), "
+                    "Signal Concentration<br>";
+   for ( int im = 0; im < models.size(); ++im )
+   {
+      html_d += species[im] + ": " + models[im].dataDescrip + "<br>";
+      for ( int ic = 0; ic < models[im].components.size(); ++ic )
+      {
+         const US_Model::SimulationComponent& sc = models[im].components[ic];
+         html_d += species[im] + ", " + QString::asprintf( "%10.4e", sc.s * 1.0e13 ) + ", " +
+                   QString::asprintf( "%10.4e", sc.D * 1.0e7 ) + ", " + QString::asprintf( "%10.4e", sc.mw ) + ", " +
+                   QString::asprintf( "%10.4e", sc.f_f0 ) + ", " + QString::asprintf( "%10.4e", sc.vbar20 ) + ", " +
+                   QString::asprintf( "%10.4e", sc.signal_concentration ) + "<br>";
+      }
+   }
+
+   QString       f_path      = dirName + "/" + "VelMwl_distro_" + chan_tag + ".pdf";
+   QString       f_path_only = "VelMwl_distro_" + chan_tag + ".pdf";
+   QTextDocument document;
+   document.setHtml( html_d );
+
+   QPrinter printer( QPrinter::PrinterResolution );
+   printer.setOutputFormat( QPrinter::PdfFormat );
+   printer.setPageSize( QPageSize( QPageSize::Letter ) );
+   printer.setOutputFileName( f_path );
+   printer.setFullPage( true );
+   printer.setPageMargins( QMarginsF( 0, 0, 0, 0 ), QPageLayout::Millimeter );
+   document.print( &printer );
+
+   mstr += "\n" + indent( 2 ) + tr( "<h3>Distribution Information:</h3>\n" );
+   mstr += indent( 2 ) + "<table>\n";
+   mstr += "<a href=\"./" + f_path_only + "\">View Model Distributions</a>";
+   mstr += indent( 2 ) + "</table>\n";
+
+   // Integration Results
+   if ( do_integration )
+   {
+      US_ReportGMP* reportGMP = velmwl_channel_report( chan_tag );
+      if ( reportGMP == nullptr )
+      {
+         return mstr;
+      }
+
+      mstr += "\n" + indent( 2 ) + tr( "<h3>Integration Results: Fraction of Total Concentration:</h3>\n" );
+
+      QString header_trftp = table_row(
+         tr( "Type:" ), tr( "Range:" ), tr( "Fraction % from Model (target):" ), tr( "Tolerance, %:" ), tr( "PASSED ?" ) );
+
+      const bool filter_sp = velmwl_chan_selected_species.contains( chan_tag );
+
+      for ( int im = 0; im < models.size(); ++im )
+      {
+         if ( filter_sp && !velmwl_chan_selected_species[chan_tag].contains( species[im] ) )
+         {
+            continue; // species not chosen for the Report
+         }
+
+         QString mstr_sp = "<h4>" + species[im] + ": " + models[im].dataDescrip + " signal</h4>\n";
+         mstr_sp += indent( 2 ) + "<table>\n";
+         mstr_sp += header_trftp;
+
+         for ( int kk = 0; kk < reportGMP->reportItems.size(); ++kk )
+         {
+            US_ReportGMP::ReportItem curr_item  = reportGMP->reportItems[kk];
+            QString                  type       = curr_item.type;
+            double                   frac_tot_r = curr_item.total_percent;
+            double                   tol_r      = curr_item.tolerance;
+            double                   low        = curr_item.range_low;
+            double                   high       = curr_item.range_high;
+            QString                  range      = "[" + QString::number( low ) + " - " + QString::number( high ) + "]";
+
+            bool                     supported;
+            double                   frac_tot_m = velmwl_range_fraction( models[im], type, low, high, supported );
+
+            if ( !supported )
+            {
+               mstr_sp += table_row(
+                  type, range, tr( "n/a" ) + " (" + QString::number( frac_tot_r ) + "%)", QString::number( tol_r ), tr( "n/a" ) );
+               continue;
+            }
+
+            QString passed = US_Calc::passes( frac_tot_m, { US_Calc::ToleranceRule::AbsolutePercentagePoints, frac_tot_r, tol_r } )
+                                ? "YES"
+                                : "NO";
+
+            mstr_sp += table_row( type,
+                                  range,
+                                  QString::asprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
+                                  QString::number( tol_r ),
+                                  passed );
+         }
+
+         mstr_sp += indent( 2 ) + "</table>\n";
+         mstr += mstr_sp;
+      }
+   }
+
+   return mstr;
+}
+
+// VELOCITY-MWL: the "VELOCITY-MWL Analysis" section, for every Approved
+// ("Accepted") channel recorded in autoflowAnalysisVelMwl (read into velmwl_*
+// by read_velmwl_channels()) and switched on in the per-channel report mask
+// (perChanMask_edited_velmwl):
+//  - models of the channel's deconvolved species (S1, S2, ...) are loaded by
+//    modelGUID;
+//  - timestamps, species, distributions and Integration Results (fractions from
+//    the models compared with the analysis-profile report items) are written;
+//  - the selected integral-distribution plots are generated by US_Integral
+//    (one plot per plot type, one curve per species).
+void US_ReporterGMP::process_velmwl_analysis( void )
+{
+   if ( velmwl_channList.isEmpty() )
+   {
+      read_velmwl_channels(); // e.g. tree was not built
+   }
+
+   if ( velmwl_channList.isEmpty() )
+   {
+      return;
+   }
+
+   QString subDirName = runName + "-run" + runID;
+   QString dirName    = US_Settings::reportDir() + "/" + subDirName;
+   mkdir( US_Settings::reportDir(), subDirName );
+   const QString svgext( ".svgz" );
+   const QString pngext( ".png" );
+
+   for ( int ic = 0; ic < velmwl_channList.size(); ++ic )
+   {
+      const QString chan_tag = velmwl_channList[ic];
+      const QString key_m    = "Channel " + chan_tag;
+
+      // Channel switched off in the mask (no mask entry => keep default: shown)
+      if ( perChanMask_edited_velmwl.ShowChannelParts.contains( key_m ) && !perChanMask_edited_velmwl.ShowChannelParts[key_m] )
+      {
+         qDebug() << "[VEL-MWL] channel" << chan_tag << "switched off in mask.";
+         continue;
+      }
+
+      // Which features are switched on for this channel
+      const QMap<QString, QString> feats = perChanMask_edited_velmwl.ShowChannelItemParts.value( key_m );
+
+      QString                      int_lbl        = QString( velmwl_integration_label ).trimmed();
+      bool                         do_integration = feats.contains( int_lbl ) ? bool( feats[int_lbl].toInt() ) : true;
+
+      QList<int>                   todo; // integral plot types
+      for ( int kk = 0; kk < n_velmwl_integral_features; ++kk )
+      {
+         QString lbl = QString( velmwl_integral_features[kk].label ).trimmed();
+         bool    on  = feats.contains( lbl ) ? bool( feats[lbl].toInt() ) : velmwl_integral_features[kk].on_by_default;
+         if ( on )
+         {
+            todo << kk;
+         }
+      }
+
+      if ( !do_integration && todo.isEmpty() )
+      {
+         continue;
+      }
+
+      // Load the species models (once per channel; used for integration and
+      // plots)
+      QList<US_Model> models;
+      QStringList     species;
+      int             nloaded = load_velmwl_models( chan_tag, models, species );
+
+      qDebug() << "[VEL-MWL] channel" << chan_tag << "species" << velmwl_chan_species[chan_tag] << "GUIDs"
+               << velmwl_chan_guids[chan_tag] << "loaded" << nloaded;
+
+      if ( nloaded < 1 )
+      {
+         html_assembled += "<p class=\"pagebreak \">\n";
+         html_assembled += html_header_velmwl( "US_Fematch", FileName, chan_tag );
+         html_assembled += "<p>No species models could be loaded for this channel.</p>\n</p>\n";
+         continue;
+      }
+
+      // Section: header, timestamps, species, distributions, integration results
+      html_assembled += "<p class=\"pagebreak \">\n";
+      html_assembled += html_header_velmwl( "US_Fematch", FileName, chan_tag );
+      html_assembled += distrib_info_velmwl( chan_tag, models, species, do_integration );
+      if ( nloaded < velmwl_chan_guids[chan_tag].size() )
+      {
+         html_assembled += "<p>Note: " + QString::number( nloaded ) + " of " +
+                           QString::number( velmwl_chan_guids[chan_tag].size() ) + " species models could be loaded.</p>\n";
+      }
+      html_assembled += "</p>\n";
+      html_assembled += "</body></html>";
+
+      // Integral plots
+      if ( todo.isEmpty() )
+      {
+         continue;
+      }
+
+      // Report-item ranges of the channel, drawn on the plots
+      decltype( US_ReportGMP().reportItems ) ritems;
+      US_ReportGMP*                          reportGMP = velmwl_channel_report( chan_tag );
+      if ( reportGMP != nullptr )
+      {
+         ritems = reportGMP->reportItems;
+      }
+
+      US_Integral* integ = new US_Integral();
+      int          nint  = integ->load_distro_models_auto( models );
+
+      if ( nint < 1 )
+      {
+         delete integ;
+         continue;
+      }
+
+      QStringList imgFiles;
+      for ( int it = 0; it < todo.size(); ++it )
+      {
+         const VelMwlIntegralFeature& f = velmwl_integral_features[todo[it]];
+
+         // Report-item ranges of this plot's type, drawn as vertical lines
+         QList<QPair<double, double>> ranges;
+         if ( QString( f.ritem_type ).size() )
+         {
+            for ( int ir = 0; ir < ritems.size(); ++ir )
+            {
+               if ( ritems[ir].type == QString( f.ritem_type ) )
+               {
+                  ranges << qMakePair( ritems[ir].range_low * f.ritem_scale, ritems[ir].range_high * f.ritem_scale );
+               }
+            }
+         }
+         integ->set_range_lines( ranges );
+
+         integ->select_x_axis_auto( f.attr );
+
+         QString imgFile = dirName + "/" + "VelMwl_integral." + chan_tag + "." + f.tag + svgext;
+         write_plot( imgFile, integ->rp_data_plot() );
+         imgFile.replace( svgext, pngext );
+         imgFiles << imgFile;
+      }
+
+      // Start a new page for the title AND its plots, so the title is never
+      // left alone at the bottom of the previous page (same pagebreak
+      // paragraph the other sections use).
+      html_assembled += "<p class=\"pagebreak \">\n";
+      html_assembled +=
+         "<h3>Integral Distributions, Channel " + chan_tag + " (Deconvolved Species: " + species.join( ", " ) + ")</h3>\n";
+
+      assemble_plots_html( imgFiles );
+
+      delete integ;
+   }
 }
 
 void US_ReporterGMP::process_abde_plots( void )
@@ -4234,17 +5160,22 @@ DbgLv(1) << "ScMd:scan time(3)" << timer.elapsed();
    return wDescrs;
 }
 
-//simulate triple 
-void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_model )
+//simulate triple
+bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_model )
 {
-  // Show msg while data downloaded and simulated
-  progress_msg = new QProgressDialog (QString("Downloading data and models for triple %1...").arg( triplesname ), QString(), 0, 5, this);
-  progress_msg->setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
-  progress_msg->setWindowModality(Qt::WindowModal);
-  progress_msg->setWindowTitle(tr("Generating Report: Part 2..."));
-  progress_msg->setAutoClose( false );
-  progress_msg->setValue( 0 );
-  progress_msg->show();
+   // Show msg while data downloaded and simulated
+   // One dialog for the whole of Part 2 (never re-created per triple/model):
+   // overall bar = (triple,model) job k of N, step bar = work within this job.
+   gmp_stage( 3,
+              tr( "Generating report - models, simulations and plots" ),
+              tr( "Downloading data and models for triple %1..." ).arg( triplesname ),
+              5 );
+   {
+      int k    = ++part2_done;
+      int kmax = qMax( part2_total, k );
+      gmp_progress()->setOverall(
+         k - 1, kmax, tr( "Triple/model %1 of %2:   %3  /  %4" ).arg( k ).arg( kmax ).arg( triplesname ).arg( stage_model ) );
+   }
   qApp->processEvents();
   
   speed_steps  .clear();
@@ -4299,8 +5230,12 @@ void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   dataLoaded = false;
   buffLoaded = false;
   haveSim    = false;
-  
-  loadData( triple_info_map );
+
+  // The progress dialog belongs to the whole report, so it stays open.
+  if ( !loadData( triple_info_map ) )
+  {
+     return false;
+  }
   progress_msg->setValue( 1 );
   
   triple_info_map[ "eID" ]         = QString::number( eID_global );
@@ -4412,6 +5347,23 @@ void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   
   bufvl = US_SolutionVals::values( dbP, edata, solID, svbar, bdens,
 				   bvisc, bcomp, bmanu, errmsg );
+  // Read the solution; when that fails, use the default vbar, which later vbar calculations
+  // also use for the cleared solution, since it has no analytes
+  const auto read_solution = [&]( bool fromDb )
+  {
+     const int     solstat = fromDb ? solution_rec.readFromDB( solID.toInt(), dbP ) : solution_rec.readFromDisk( solID );
+     const QString solerr  = fromDb ? dbP->lastError() : tr( "the solution file could not be read" );
+     if ( solstat != IUS_DB2::OK )
+     {
+        QMessageBox::warning( this,
+                              tr( "Solution/Buffer Fetch" ),
+                              tr( "Solution %1 could not be read:\n%2\n"
+                                  "The default vbar, %3, is used." )
+                                 .arg( solID, US_Solution::readErrorText( solstat, solerr ) )
+                                 .arg( TYPICAL_VBAR ) );
+        solution_rec.commonVbar20 = TYPICAL_VBAR;
+     }
+  };
   progress_msg->setValue( 3 );
 
   //Hardwire compressibility to zero, for now
@@ -4431,15 +5383,15 @@ void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
 	}
       
       else if ( solID.length() < 36  &&  dbP != NULL )
-	{
-	  solution_rec.readFromDB( solID.toInt(), dbP );
-	}
-      
+      {
+         read_solution( true );
+      }
+
       else
-	{
-	  solution_rec.readFromDisk( solID );
-	}
-      
+      {
+         read_solution( false );
+      }
+
       vbar          = solution_rec.commonVbar20;
       svbar         = QString::number( vbar );
       
@@ -4499,11 +5451,10 @@ void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   //Simulate Model
   simulateModel( triple_info_map );
 
-  
-  qDebug() << "Closing sim_msg-- ";
-  //msg_sim->accept();
-  progress_msg->close();
+  // Dialog stays up (next triple/model, combined plots, PDF...)
   qApp->processEvents();
+
+  return true;
 
   /*
   // Show plot
@@ -4541,129 +5492,55 @@ QString  US_ReporterGMP::rg_tripleInfo()  { return tripleInfo;    }
 //Load rawData/editedData
 bool US_ReporterGMP::loadData( QMap < QString, QString > & triple_information )
 {
-  rawData.clear();
-  editedData.clear();
-  
-  US_Passwd   pw;
-  US_DB2* db = new US_DB2( pw.getPasswd() );
-    
-  if ( db->lastErrno() != US_DB2::OK )
-    {
+   rawData.clear();
+   editedData.clear();
+
+   const auto fail = [this]( const QString& detail )
+   {
       QApplication::restoreOverrideCursor();
-      QMessageBox::information( this,
-				tr( "DB Connection Problem" ),
-				tr( "There was an error connecting to the database:\n" )
-				+ db->lastError() );
-      
+      QMessageBox::warning( this, tr( "Data Load Problem" ), detail );
       return false;
-    }
+   };
 
-  qDebug() << "In load Data: triple, eID (from modelsLink) -- "
-	   << triple_information[ "triple_name" ]
-	   << Triple_to_ModelsDesc[ triple_information[ "triple_name" ] ] [ "eID" ] ;
-  
-  int rID=0;
-  QString rfilename;
-  //int eID=0;
-  int eID = Triple_to_ModelsDesc[ triple_information[ "triple_name" ] ] [ "eID" ].toInt();
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
 
-  QString efilename;
-  
-  //get EditedData filename && editedDataID for current triple, then infer rawDataID 
-  QStringList query;
-  query << "get_editedDataFilenamesIDs_forReport" << triple_information["filename"] << QString::number( eID ) ;
-  db->query( query );
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      return fail( tr( "There was an error connecting to the database:\n" ) + db.lastError() );
+   }
 
-  qDebug() << "In loadData() Query: " << query;
-  qDebug() << "In loadData() Query: triple_information[ \"triple_name\" ]  -- " << triple_information[ "triple_name" ];
+   const QString tripleName      = triple_information["triple_name"];
+   const QString runID           = triple_information["filename"];
+   const int     requestedEditID = Triple_to_ModelsDesc[tripleName]["eID"].toInt();
 
-  int latest_update_time = 1e100;
+   qDebug() << "In load Data: triple, eID (from modelsLink) -- " << tripleName << requestedEditID;
 
-  QString triple_name_actual = triple_information[ "triple_name" ];
+   // loadReporter() refuses an edit ID below 1 with its own message.
+   int       editedDataID = -1;
+   QString   editUpdated;
+   QString   error;
+   const int status = US_EditedDataLoaders::loadReporter( &db,
+                                                          tripleName,
+                                                          runID,
+                                                          requestedEditID,
+                                                          US_Settings::resultDir() + "/" + runID,
+                                                          editedData,
+                                                          rawData,
+                                                          editedDataID,
+                                                          editUpdated,
+                                                          error );
 
-  if ( triple_name_actual.contains("Interference") )
-    triple_name_actual.replace( "Interference", "660" );
-  
-  while ( db->next() )
-    {
-      QString  filename            = db->value( 0 ).toString();
-      int      editedDataID        = db->value( 1 ).toInt();
-      int      rawDataID           = db->value( 2 ).toInt();
-      rID         = rawDataID;
-      efilename   = filename;
-      
-      QDateTime date               = db->value( 3 ).toDateTime();
-      eID_updated                  = db->value( 3 ).toString();
-      
-      // QDateTime now = QDateTime::currentDateTime();
-               
-      // if ( filename.contains( triple_name_actual ) ) 
-      // 	{
-      // 	  int time_to_now = date.secsTo(now);
-      // 	  if ( time_to_now < latest_update_time )
-      // 	    {
-      // 	      latest_update_time = time_to_now;
-      // 	      //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
+   if ( status != IUS_DB2::OK )
+   {
+      return fail( error );
+   }
 
-      // 	      rID         = rawDataID;
-      // 	      eID         = editedDataID;
-      // 	      efilename   = filename;
-      // 	      eID_updated = db->value( 3 ).toString();
-      // 	    }
-      // 	}
-    }
+   eID_global  = editedDataID;
+   eID_updated = editUpdated;
 
-  
-  qDebug() << "In loadData() after Query ";
-  
-  QString edirpath  = US_Settings::resultDir() + "/" + triple_information[ "filename" ];
-  QDir edir( edirpath );
-  if (!edir.exists())
-    edir.mkpath( edirpath );
-  
-  QString efilepath = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/" + efilename;
-
-  qDebug() << "In loadData() efilename: " << efilename;
-
-  
-  // Can check here if such filename exists
-  // QFileInfo check_file( efilepath );
-  // if ( check_file.exists() && check_file.isFile() )
-  //   qDebug() << "EditProfile file: " << efilepath << " exists";
-  // else
-  db->readBlobFromDB( efilepath, "download_editData", eID );
-
-  qDebug() << "In loadData() after readBlobFromDB ";
-
-  //Now download rawData corresponding to rID:
-  QString efilename_copy = efilename;
-  QStringList efilename_copy_list = efilename_copy.split(".");
-
-  rfilename = triple_information[ "filename" ] + "." + efilename_copy_list[2] + "."
-                                               + efilename_copy_list[3] + "."
-                                               + efilename_copy_list[4] + "."
-                                               + efilename_copy_list[5] + ".auc";
-  
-  QString rfilepath = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/" + rfilename;
-  //do we need to check for existance ?
-  db->readBlobFromDB( rfilepath, "download_aucData", rID );
-
-  qApp->processEvents();
-
-  qDebug() << "Loading eData, rawData: efilepath, rfilepath, eID, rID --- " << efilepath << rfilepath << eID << rID;
-
-  //Put downloaded data in memory:
-  QString uresdir = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/"; 
-  US_DataIO::loadData( uresdir, efilename, editedData, rawData );
-
-  eID_global = eID;
-
-  qDebug() << "END of loadData(), eID_global: " << eID_global;
-
-  //test:
-  delete db;
-    
-  return true;
+   qDebug() << "END of loadData(), eID_global: " << eID_global;
+   return true;
 }
 
 //Load rawData/editedData
@@ -5534,7 +6411,7 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
   //start_time = QDateTime::currentDateTime();
   int ncomp  = model.components.size();
   //compress   = le_compress->text().toDouble();
-  progress_msg->setRange( 1, ncomp );
+  progress_msg->setRange( 0, ncomp );
   // progress_msg->reset();
   
   nthread    = US_Settings::threads();
@@ -6172,13 +7049,8 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
   //estimate # of combined plots
   int combpl_number = 3*3;
   // Show msg while data downloaded and simulated
-  progress_msg = new QProgressDialog (QString("Generating combined plots..."), QString(), 0, combpl_number, this);
-  progress_msg->setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
-  progress_msg->setWindowModality(Qt::WindowModal);
-  progress_msg->setWindowTitle(tr("Combined Plots"));
-  progress_msg->setAutoClose( false );
-  progress_msg->setValue( 0 );
-  progress_msg->show();
+  gmp_stage( 3, tr( "Generating report - models, simulations and plots" ), tr( "Generating combined plots..." ), combpl_number );
+  progress_msg->hideOverall();
   qApp->processEvents();
 
   int pr_cp_val = 0;
@@ -6346,9 +7218,8 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
   html_assembled += "<h2 align=left>Combined Distribution Plots</h2>";
   assemble_plots_html( CombPlotsFileNames, "CombPlots"  );
   html_assembled += "</p>\n";
-  
+
   progress_msg->setValue( progress_msg->maximum() );
-  progress_msg->close();
   qApp->processEvents();
 }
 
@@ -6658,20 +7529,20 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 	edir.mkpath( dirname );
       
       QString tfpath = dirname + "/" +  tfname;
-      
-      US_TimeState::dbDownload( dbP, tmstID, tfpath );
-      // And write the xdefs sibling file
+
+      const bool tmstOK = ( US_TimeState::dbDownload( dbP, tmstID, tfpath ) == US_DB2::OK );
+      // And write the xdefs sibling file, only next to a downloaded .tmst
       QString xfpath = QString( tfpath ).replace( ".tmst", ".xml" );
-      qDebug() << "Assembling Run Details:   xfpath" << xfpath;
+      qDebug() << "Assembling Run Details:   xfpath" << xfpath << "downloaded" << tmstOK;
       QFile fileo( xfpath );
-      if ( fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
-	{
-	  QTextStream tso( &fileo );
-	  tso << xdefs;
-	  tso.flush();
-	  fileo.close();
-	  qDebug() << "Assembling Run Details:    xdefs WRITTEN";
-	}
+      if ( tmstOK && fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
+      {
+         QTextStream tso( &fileo );
+         tso << xdefs;
+         tso.flush();
+         fileo.close();
+         qDebug() << "Assembling Run Details:    xdefs WRITTEN";
+      }
 
 
       //6. Get access to Timestamp info, possibly plots also...
@@ -6781,73 +7652,73 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 	      mins_r      = (int)qRound( ( val_measured_sec - hours_r * 3600.0 ) / 60.0 );
 	      QString val_measured_hh_mm   = QString::asprintf( "%d %s %02d m", hours_r, hh_r.toLatin1( ).data(), mins_r );
 
-	      val_passed  = ( val_measured_sec >= ( val_target * (1 - val_tol/100.0)  ) && val_measured_sec <= ( val_target * (1 + val_tol/100.0) ) ) ? "YES" : "NO";
-	      
-	      html_assembled += table_row( tr( "Duration" ),
-					   val_target_hh_mm,
-					   QString::number( val_tol ) + "%",
-					   val_measured_hh_mm,
-					   "",
-					   val_passed ) ;
-	    }
+         val_passed = US_Calc::passes( val_measured_sec, { US_Calc::ToleranceRule::RelativePercentOfTarget, val_target, val_tol } )
+                         ? "YES"
+                         : "NO";
 
-	  //Temperature
-	  if ( dkeys[ i ] .contains("Temperature") )
-	    {
-	      val_tol    = 0.5;   //plus-minus 0.5 C
-	      val_target = currProto.temperature; 
-	      val_measured = davgs_stdd_first_scan [ dkeys[ i ] ][ "Avg" ];
-	      val_passed  = ( val_measured  >= ( val_target - val_tol ) && val_measured  <= ( val_target + val_tol ) ) ? "YES" : "NO";
+         html_assembled +=
+            table_row( tr( "Duration" ), val_target_hh_mm, QString::number( val_tol ) + "%", val_measured_hh_mm, "", val_passed );
+       }
 
-	      val_measured_stdd = davgs_stdd_first_scan [ dkeys[ i ] ][ "Stdd" ];
-	  
-	      html_assembled += table_row( dkeys[ i ] + " (&#8451;)",
-					   QString::number( val_target ),
-					   "&#177;" + QString::number( val_tol ),
-					   QString::number( val_measured ),
-					   QString::number( val_measured_stdd ),
-					   val_passed );
+       //Temperature
+       if ( dkeys[i].contains( "Temperature" ) )
+       {
+          val_tol      = 0.5; //plus-minus 0.5 C
+          val_target   = currProto.temperature;
+          val_measured = davgs_stdd_first_scan[dkeys[i]]["Avg"];
+          val_passed =
+             US_Calc::passes( val_measured, { US_Calc::ToleranceRule::AbsoluteUnits, val_target, val_tol } ) ? "YES" : "NO";
 
-	      //Plot Temp. plot
-	      QString img01File = dirName + "/" + "RunDetails_Temperature" + svgext;
-	      write_plot( img01File, tsdiag->rp_data_plot1( "Temperature" ) );
-	      img01File.replace( svgext, pngext ); 
-	      RunDetailsPlotsFileNames << img01File;
-	    }
+          val_measured_stdd = davgs_stdd_first_scan[dkeys[i]]["Stdd"];
 
-	  //RawSpeed
-	  if ( dkeys[ i ] .contains("RawSpeed") )
-	    {
-	      val_tol    = 4; //plus-minus 4 RPM
-	      val_target = currProto. rpSpeed. ssteps[0].speed; 
-	      val_measured = davgs_stdd_first_scan [ dkeys[ i ] ][ "Avg" ];
-	      val_passed  = ( val_measured  >= ( val_target - val_tol ) && val_measured  <= ( val_target + val_tol ) ) ? "YES" : "NO"; 
-	  	  
-	      html_assembled += table_row( "Speed (RPM)",
-					   QString::number( val_target ),
-					   "&#177;" + QString::number( val_tol ),
-					   QString::number( val_measured ),
-					   "",
-					   val_passed );
+          html_assembled += table_row( dkeys[i] + " (&#8451;)",
+                                       QString::number( val_target ),
+                                       "&#177;" + QString::number( val_tol ),
+                                       QString::number( val_measured ),
+                                       QString::number( val_measured_stdd ),
+                                       val_passed );
 
-	      //Plot Raw Speed plot
-	      QString img01File = dirName + "/" + "RunDetails_Speed" + svgext;
-	      write_plot( img01File, tsdiag->rp_data_plot1( "RawSpeed" ) );
-	      img01File.replace( svgext, pngext ); 
-	      RunDetailsPlotsFileNames << img01File;
-	    }
-	   
-	  
-	  // html_assembled += tr(
-	  // 		       "<tr><td>%1: </td> <td>%2 to %3</td> <td>Avg.: %4</td></tr>"
-	  // 		       )
-	  //   .arg( dkeys[ i ] )                 //1
-	  //   .arg( dmins[ dkeys[ i ] ] )        //2
-	  //   .arg( dmaxs[ dkeys[ i ] ] )        //3
-	  //   .arg( davgs [ dkeys[ i ] ] )       //4
-	  //   ;
-	}
-      
+          //Plot Temp. plot
+          QString img01File = dirName + "/" + "RunDetails_Temperature" + svgext;
+          write_plot( img01File, tsdiag->rp_data_plot1( "Temperature" ) );
+          img01File.replace( svgext, pngext );
+          RunDetailsPlotsFileNames << img01File;
+       }
+
+       //RawSpeed
+       if ( dkeys[i].contains( "RawSpeed" ) )
+       {
+          val_tol      = 4; //plus-minus 4 RPM
+          val_target   = currProto.rpSpeed.ssteps[0].speed;
+          val_measured = davgs_stdd_first_scan[dkeys[i]]["Avg"];
+          val_passed =
+             US_Calc::passes( val_measured, { US_Calc::ToleranceRule::AbsoluteUnits, val_target, val_tol } ) ? "YES" : "NO";
+
+          html_assembled += table_row( "Speed (RPM)",
+                                       QString::number( val_target ),
+                                       "&#177;" + QString::number( val_tol ),
+                                       QString::number( val_measured ),
+                                       "",
+                                       val_passed );
+
+          //Plot Raw Speed plot
+          QString img01File = dirName + "/" + "RunDetails_Speed" + svgext;
+          write_plot( img01File, tsdiag->rp_data_plot1( "RawSpeed" ) );
+          img01File.replace( svgext, pngext );
+          RunDetailsPlotsFileNames << img01File;
+       }
+
+
+       // html_assembled += tr(
+       // 		       "<tr><td>%1: </td> <td>%2 to %3</td> <td>Avg.: %4</td></tr>"
+       // 		       )
+       //   .arg( dkeys[ i ] )                 //1
+       //   .arg( dmins[ dkeys[ i ] ] )        //2
+       //   .arg( dmaxs[ dkeys[ i ] ] )        //3
+       //   .arg( davgs [ dkeys[ i ] ] )       //4
+       //   ;
+   }
+
       html_assembled += tr(
 			   "</table>"
 			   );
@@ -6908,7 +7779,8 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
   QMap < QString, QString > data_types_edit_ts;
   QString editRIJson, editIPJson, editRIts, editIPts, analysisJson, analysisCancelJson;
   QString analysisABDEJson, analysisABDEts;
-  
+  QString                   analysisVelMwlJson, analysisVelMwlts;
+
   // //TEMP: DEBUG
   // importRIJson =
   //   "{ \"Person\": [{\"ID\":\"12\",\"fname\":\"Alexey\",\"lname\":\"Savelyev\",\"email\":\"oleksiy.savelyev@umontana.edu\",\"level\":\"4\"}],\"RefScan\": \"automated\"}";
@@ -6927,11 +7799,26 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 
 
   //read autoflowStatus record:
-  read_autoflowStatus_record( importRIJson, importRIts, importIPJson, importIPts,
-			      editRIJson, editRIts, editIPJson, editIPts, analysisJson,
-			      stopOptimaJson, stopOptimats, skipOptimaJson, skipOptimats,
-			      analysisCancelJson, createdGMPrunJson, createdGMPrunts,
-			      analysisABDEJson, analysisABDEts); 
+  read_autoflowStatus_record( importRIJson,
+                              importRIts,
+                              importIPJson,
+                              importIPts,
+                              editRIJson,
+                              editRIts,
+                              editIPJson,
+                              editIPts,
+                              analysisJson,
+                              stopOptimaJson,
+                              stopOptimats,
+                              skipOptimaJson,
+                              skipOptimats,
+                              analysisCancelJson,
+                              createdGMPrunJson,
+                              createdGMPrunts,
+                              analysisABDEJson,
+                              analysisABDEts,
+                              analysisVelMwlJson,
+                              analysisVelMwlts );
   /////////////////////////////
 
   //1. GMP run creation
@@ -7135,7 +8022,64 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 
       //Parse Json
       QMap< QString, QMap < QString, QString > > status_map = parse_autoflowStatus_json( json_str, im.key() );
-      
+
+      // VELOCITY-MWL & ABDE: if an entire channel was dropped, do not list that
+      // channel's triples separately
+      if ( ( expType == "VELOCITY-MWL" || expType == "ABDE" ) && status_map.contains( "DroppedItems" ) )
+      {
+         QStringList dropped_chans;
+         QStringList chan_keys;
+         chan_keys << "Channels" << "Selected Channel";
+         for ( int kk = 0; kk < chan_keys.size(); kk++ )
+         {
+            if ( status_map["DroppedItems"].contains( chan_keys[kk] ) )
+            {
+               QStringList cl = status_map["DroppedItems"][chan_keys[kk]].split( ",", Qt::SkipEmptyParts );
+               for ( int cc = 0; cc < cl.size(); cc++ )
+               {
+                  dropped_chans << cl[cc].simplified().remove( " / " ).remove( " " ); // "3 / B" -> "3B"
+               }
+            }
+         }
+
+         if ( !dropped_chans.isEmpty() )
+         {
+            // profile-based list ("3B.230"):
+            QStringList tr_kept;
+            for ( int tt = 0; tt < dtype_opt_dropped_triples.size(); tt++ )
+            {
+               if ( !dropped_chans.contains( dtype_opt_dropped_triples[tt].section( ".", 0, 0 ).simplified() ) )
+               {
+                  tr_kept << dtype_opt_dropped_triples[tt];
+               }
+            }
+            dtype_opt_dropped_triples = tr_kept;
+
+            // recorded list:
+            if ( status_map["DroppedItems"].contains( "Triples" ) )
+            {
+               QStringList rec = status_map["DroppedItems"]["Triples"].split( ",", Qt::SkipEmptyParts );
+               QStringList rec_kept;
+               for ( int rr = 0; rr < rec.size(); rr++ )
+               {
+                  if ( !dropped_chans.contains( rec[rr].section( ".", 0, 0 ).simplified() ) )
+                  {
+                     rec_kept << rec[rr].trimmed();
+                  }
+               }
+
+               if ( rec_kept.isEmpty() )
+               {
+                  status_map["DroppedItems"].remove( "Triples" );
+               }
+               else
+               {
+                  status_map["DroppedItems"]["Triples"] = rec_kept.join( ", " );
+               }
+            }
+         }
+      }
+
       html_assembled += tr(
 			   "<table style=\"margin-left:10px\">"
 			   "<caption align=left> <b><i>Performed by: </i></b> </caption>"
@@ -7240,7 +8184,45 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 		;
 	    }
 	  html_assembled += tr( "</table>" );
-	}
+
+     // Names of the actually dropped triples / channels (recorded at 3.
+     // IMPORT; the only source for VEL-MWL, where there are no
+     // per-wavelength autoflowReports to build the list above from):
+     if ( status_map.contains( "DroppedItems" ) )
+     {
+        QString                          items_html;
+        QMap<QString, QString>::iterator di;
+        for ( di = status_map["DroppedItems"].begin(); di != status_map["DroppedItems"].end(); ++di )
+        {
+           if ( di.key() == "Triples" )
+           {
+              // skip only if the profile-based list above already contains
+              // every recorded triple
+              QStringList rec        = di.value().split( ",", Qt::SkipEmptyParts );
+              bool        all_listed = !rec.isEmpty();
+              for ( int rr = 0; rr < rec.size(); rr++ )
+              {
+                 if ( !dtype_opt_dropped_triples.contains( rec[rr].trimmed() ) )
+                 {
+                    all_listed = false;
+                 }
+              }
+              if ( all_listed )
+              {
+                 continue;
+              }
+           }
+           items_html += "<tr><td> " + di.key().toHtmlEscaped() +
+                         " dropped: </td>"
+                         "<td style=\"color:red;\"> " +
+                         di.value().toHtmlEscaped() + " </td></tr>";
+        }
+        if ( !items_html.isEmpty() )
+        {
+           html_assembled += "<table style=\"margin-left:25px\">" + items_html + "</table>";
+        }
+     }
+   }
 
       //Add list of scan-count mismatches (ScanDifference) found by check_scans() (if any):
       if ( status_map. contains("ScanDifference") )
@@ -7281,6 +8263,10 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 
   if ( expType == "ABDE" )
     editing_time_abde = editRIts;
+  else if ( expType == "VELOCITY-MWL" )
+  {
+     editing_time_velmwl = editRIts;
+  }
 
   html_assembled += tr( "<h3 align=left>Meniscus Position Determination, Edit Profiles Saving (4. EDITING)</h3>" );
   
@@ -7418,6 +8404,10 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
     user_interactions_analysis( analysisJson, analysisCancelJson );
   else if ( expType == "ABDE" )
     user_interactions_analysis_abde( analysisABDEJson, analysisABDEts );
+  else if ( expType == "VELOCITY-MWL" )
+  {
+     user_interactions_analysis_velmwl( analysisVelMwlJson, analysisVelMwlts );
+  }
   //End of 5. ANALYSIS
   
   html_assembled += "</p>\n";
@@ -7475,8 +8465,230 @@ void US_ReporterGMP::user_interactions_analysis_abde( QString analysisABDEJson, 
 			   )
     .arg( status_map_c[ "Comment" ][ "comment"] )     //1
     ;
-  html_assembled += tr("<hr>");
-  
+  // Signals the user selected (Save Profiles dialog) for the Report's
+  // Integration Results: autoflowAnalysisABDE.xnorms_percents JSON -> per
+  // channel "selected_signals" (chosen) and "percents" keys (available). A
+  // channel without "selected_signals" = older run: every signal is shown.
+  QString signals_html;
+  {
+     US_Passwd pw_sg;
+     US_DB2    db_sg( pw_sg.getPasswd() );
+
+     if ( db_sg.lastErrno() == US_DB2::OK )
+     {
+        QStringList qry_sg;
+        qry_sg << "read_autoflowAnalysisABDE_record" << AutoflowID_auto;
+        db_sg.query( qry_sg );
+
+        if ( db_sg.lastErrno() == US_DB2::OK && db_sg.next() )
+        {
+           QJsonObject root = QJsonDocument::fromJson( db_sg.value( 2 ).toString().toUtf8() ).object();
+
+           for ( auto it = root.constBegin(); it != root.constEnd(); ++it )
+           {
+              if ( it.key() == "filename" || it.key() == "blcorrs" || !it.value().isObject() )
+              {
+                 continue; // not a channel
+              }
+
+              QJsonObject co = it.value().toObject();
+              QStringList s_all;
+              QJsonObject pobj = co.value( "percents" ).toObject();
+              for ( auto pi = pobj.constBegin(); pi != pobj.constEnd(); ++pi )
+              {
+                 if ( pi.value().isObject() ) // new (per-sample) format only
+                 {
+                    s_all << pi.key();
+                 }
+              }
+
+              QString line;
+              if ( co.contains( "selected_signals" ) )
+              {
+                 // pretty analyte names (MWL only; falls back to the sanitized key)
+                 QMap<QString, QString> pretty = US_Norm_Profile::get_channels_analytes_mwl_abde( currProto, it.key() );
+
+                 QStringList            s_sel;
+                 QJsonArray             a1 = co.value( "selected_signals" ).toArray();
+                 for ( int k = 0; k < a1.size(); ++k )
+                 {
+                    s_sel << prettify_abde_sample_name( pretty, a1[k].toString() );
+                 }
+
+                 QStringList s_all_p;
+                 for ( int k = 0; k < s_all.size(); ++k )
+                 {
+                    s_all_p << prettify_abde_sample_name( pretty, s_all[k] );
+                 }
+
+                 line = it.key() + ": " + s_sel.join( ", " );
+                 if ( !s_all_p.isEmpty() )
+                 {
+                    line += "  (of " + s_all_p.join( ", " ) + ")";
+                 }
+              }
+              else
+              {
+                 line = it.key() + ": " + tr( "no selection recorded (all signals shown)" );
+              }
+
+              signals_html += "<tr><td>" + line.toHtmlEscaped() + "</td></tr>";
+           }
+        }
+     }
+  }
+
+  if ( !signals_html.isEmpty() )
+  {
+     html_assembled += tr( "<table style=\"margin-left:10px\">"
+                           "<caption align=left> <b><i>Signals Selected for "
+                           "Report (Integration Results): </i></b> </caption>"
+                           "</table>"
+                           "<table style=\"margin-left:25px\">"
+                           "%1"
+                           "</table>" )
+                          .arg( signals_html ) // 1
+        ;
+  }
+
+  html_assembled += tr( "<hr>" );
+}
+
+// do user-interactions-analysis separately:VELOCITY-MWL
+void US_ReporterGMP::user_interactions_analysis_velmwl( QString analysisVelMwlJson, QString analysisVelMwlts )
+{
+   html_assembled += tr( "<h3 align=left>VELOCITY-MWL Analysis: Species "
+                         "Selection for Report (5. ANALYSIS)</h3>" );
+   QMap<QString, QMap<QString, QString>> status_map_c = parse_autoflowStatus_json( analysisVelMwlJson, "" );
+
+   // html_assembled += tr("<br>");
+   html_assembled += tr( "<table style=\"margin-left:10px\">"
+                         "<caption align=left> <b><i>Performed by: </i></b> </caption>"
+                         "</table>"
+
+                         "<table style=\"margin-left:25px\">"
+                         "<tr><td>User ID: </td> <td>%1</td></tr>"
+                         "<tr><td>Name: </td><td> %2, %3 </td></tr>"
+                         "<tr><td>E-mail: </td><td> %4 </td> </tr>"
+                         "<tr><td>Level: </td><td> %5 </td></tr>"
+                         "</table>" )
+                        .arg( status_map_c["Person"]["ID"] )    // 1
+                        .arg( status_map_c["Person"]["lname"] ) // 2
+                        .arg( status_map_c["Person"]["fname"] ) // 3
+                        .arg( status_map_c["Person"]["email"] ) // 4
+                        .arg( status_map_c["Person"]["level"] ) // 5
+      ;
+
+   html_assembled += tr( "<table style=\"margin-left:10px\">"
+                         "<caption align=left> <b><i>Time of VELOCITY-MWL "
+                         "analysis completion: </i></b> </caption>"
+                         "</table>"
+
+                         "<table style=\"margin-left:25px\">"
+                         "<tr>"
+                         "<td> Completed at:     %1 (UTC) </td>"
+                         "</tr>"
+                         "</table>" )
+                        .arg( analysisVelMwlts ) // 1
+      ;
+
+   analysis_time_velmwl = analysisVelMwlts;
+
+   // Single-cell table (see note above): label and value can no longer be
+   // separated by a page break.
+   html_assembled += tr( "<table style=\"margin-left:10px\">"
+                         "<tr><td><b><i>Comment at the Time of VELOCITY-MWL Analysis "
+                         "Completion: </i></b></td></tr>"
+                         "<tr><td style=\"padding-left:15px\"> Comment:  %1 </td></tr>"
+                         "</table>" )
+                        .arg( status_map_c["Comment"]["comment"] ) // 1
+      ;
+   // Species selected for the Report's Integration Results
+   // (autoflowAnalysisVelMwl.speciesSelections)
+   QString species_html;
+   {
+      US_Passwd pw_sp;
+      US_DB2    db_sp( pw_sp.getPasswd() );
+
+      if ( db_sp.lastErrno() == US_DB2::OK )
+      {
+         QStringList qry_sp;
+         qry_sp << "read_autoflowAnalysisVelMwl_record" << AutoflowID_auto;
+         db_sp.query( qry_sp );
+
+         if ( db_sp.lastErrno() == US_DB2::OK && db_sp.next() )
+         {
+            QJsonObject dec = QJsonDocument::fromJson( db_sp.value( 0 ).toString().toUtf8() ).object(); // channels' decisions
+            QJsonObject sel = QJsonDocument::fromJson( db_sp.value( 2 ).toString().toUtf8() ).object(); // species selections
+
+            // All channels, whether decided (Approved/Rejected) or having a species
+            // selection
+            QStringList chan_keys = dec.keys();
+            for ( const QString& k : sel.keys() )
+            {
+               if ( !chan_keys.contains( k ) )
+               {
+                  chan_keys << k;
+               }
+            }
+            QCollator collator;
+            collator.setNumericMode( true );
+            std::sort( chan_keys.begin(),
+                       chan_keys.end(),
+                       [&collator]( const QString& x, const QString& y ) { return collator.compare( x, y ) < 0; } );
+
+            for ( const QString& key : chan_keys )
+            {
+               QString decision = dec.value( key ).toObject().value( "decision" ).toString();
+               bool    rejected = ( decision == "Rejected" );
+               QString dec_lbl =
+                  ( decision == "Accepted" ) ? tr( "Approved" ) : ( rejected ? tr( "Rejected" ) : tr( "Not decided" ) );
+
+               QString line = key + ": " + dec_lbl;
+               if ( sel.contains( key ) )
+               {
+                  QJsonObject co = sel.value( key ).toObject();
+                  QStringList s_sel, s_all;
+                  QJsonArray  a1 = co.value( "selected" ).toArray();
+                  QJsonArray  a2 = co.value( "available" ).toArray();
+                  for ( int i = 0; i < a1.size(); ++i )
+                  {
+                     s_sel << a1[i].toString();
+                  }
+                  for ( int i = 0; i < a2.size(); ++i )
+                  {
+                     s_all << a2[i].toString();
+                  }
+                  line += " -- " + s_sel.join( ", " ) + "  (of " + s_all.join( ", " ) + ")";
+               }
+
+               QString cell = line.toHtmlEscaped();
+               if ( rejected )
+               {
+                  cell = "<font color=\"red\">" + cell + "</font>";
+               }
+               species_html += "<tr><td>" + cell + "</td></tr>";
+            }
+         }
+      }
+   }
+
+   if ( species_html.isEmpty() )
+   {
+      species_html =
+         "<tr><td>" + tr( "No species selection recorded (all species shown in the Report)." ).toHtmlEscaped() + "</td></tr>";
+   }
+
+   html_assembled += tr( "<table style=\"margin-left:10px\">"
+                         "<caption align=left> <b><i>Channels' Decisions and Species Selected "
+                         "for Report (Integration Results): </i></b> </caption>"
+                         "</table>"
+                         "<table style=\"margin-left:25px\">"
+                         "%1"
+                         "</table>" )
+                        .arg( species_html ) // 1
+      ;
+   html_assembled += tr( "<hr>" );
 }
 
 //do user-interactions-analysis separately:
@@ -7740,41 +8952,57 @@ bool US_ReporterGMP::readReportLists( QXmlStreamReader& xmli, QMap< QString, QSt
 }
 
 //read autoflowStatus, populate internals
-void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString& importRIts, QString& importIPJson, QString& importIPts,
-						 QString& editRIJson, QString& editRIts, QString& editIPJson, QString& editIPts,
-						 QString& analysisJson,
-						 QString& stopOptimaJson, QString& stopOptimats, QString& skipOptimaJson, QString& skipOptimats,
-						 QString& analysisCancelJson, QString& createdGMPrunJson, QString& createdGMPrunts,
-						 QString& analysisABDEJson, QString& analysisABDEts )
+void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson,
+                                                 QString& importRIts,
+                                                 QString& importIPJson,
+                                                 QString& importIPts,
+                                                 QString& editRIJson,
+                                                 QString& editRIts,
+                                                 QString& editIPJson,
+                                                 QString& editIPts,
+                                                 QString& analysisJson,
+                                                 QString& stopOptimaJson,
+                                                 QString& stopOptimats,
+                                                 QString& skipOptimaJson,
+                                                 QString& skipOptimats,
+                                                 QString& analysisCancelJson,
+                                                 QString& createdGMPrunJson,
+                                                 QString& createdGMPrunts,
+                                                 QString& analysisABDEJson,
+                                                 QString& analysisABDEts,
+                                                 QString& analysisVelMwlJson,
+                                                 QString& analysisVelMwlts )
 {
-  importRIJson.clear();
-  importRIts  .clear();
-  importIPJson.clear();
-  importIPts  .clear();
-  editRIJson  .clear();
-  editRIts    .clear();
-  editIPJson  .clear();
-  editIPts    .clear();
-  analysisJson.clear();
-  stopOptimaJson. clear();
-  stopOptimats  . clear();
-  skipOptimaJson. clear();
-  skipOptimats  . clear();
-  analysisCancelJson. clear();
-  createdGMPrunJson .clear();
-  createdGMPrunts   .clear();
-  analysisABDEJson  .clear();
-  analysisABDEts    .clear();
+   importRIJson.clear();
+   importRIts.clear();
+   importIPJson.clear();
+   importIPts.clear();
+   editRIJson.clear();
+   editRIts.clear();
+   editIPJson.clear();
+   editIPts.clear();
+   analysisJson.clear();
+   stopOptimaJson.clear();
+   stopOptimats.clear();
+   skipOptimaJson.clear();
+   skipOptimats.clear();
+   analysisCancelJson.clear();
+   createdGMPrunJson.clear();
+   createdGMPrunts.clear();
+   analysisABDEJson.clear();
+   analysisABDEts.clear();
+   analysisVelMwlJson.clear();
+   analysisVelMwlts.clear();
 
-  US_Passwd pw;
-  US_DB2    db( pw.getPasswd() );
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
 
-  if ( db.lastErrno() != US_DB2::OK )
-    {
+   if ( db.lastErrno() != US_DB2::OK )
+   {
       QMessageBox::warning( this, tr( "Connection Problem: Read autoflowStatus" ),
 			    tr( "Could not connect to database \n" ) +  db.lastError() );
       return;
-    }
+   }
 
   QStringList qry;
   qry << "read_autoflow_status_record" << autoflowStatusID;
@@ -7810,7 +9038,9 @@ void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString&
 	  
 	  analysisABDEJson = db.value( 16 ).toString();
 	  analysisABDEts   = db.value( 17 ).toString();
-	}
+     analysisVelMwlJson = db.value( 18 ).toString();
+     analysisVelMwlts   = db.value( 19 ).toString();
+   }
     }
 
   qDebug() << "Read_autoflow_status: stopOptimaJson, skipOptimaJson, analysisJson -- "
@@ -7922,7 +9152,23 @@ QMap< QString, QMap < QString, QString > > US_ReporterGMP::parse_autoflowStatus_
 
 	  status_map[ key ] = dropped_map;
 	}
-      
+
+   if ( key == "DroppedItems" ) // import: names of actually dropped triples
+                                // / channels
+   {
+      QJsonArray             json_array = value.toArray();
+      QMap<QString, QString> dropped_items_map;
+
+      for ( int i = 0; i < json_array.size(); ++i )
+      {
+         foreach ( const QString& array_key, json_array[i].toObject().keys() )
+         {
+            dropped_items_map[array_key] = json_array[i].toObject().value( array_key ).toString();
+         }
+      }
+
+      status_map[key] = dropped_items_map;
+   }
 
       if ( key == "ScanDifference" )   // import: scan-count mismatches (expected vs. collected) per triple
 	{
@@ -8788,42 +10034,42 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 	      */
 
 	      double frac_tot_m_av = replicate_g_results["tot_percent_av"];
-	      QString tot_av_frac_passed = ( frac_tot_m_av >= ( frac_tot_r * (1 - frac_tot_tol_r/100.0)  )
-					     && frac_tot_m_av <= ( frac_tot_r * (1 + frac_tot_tol_r/100.0)  ) ) ? "YES" : "NO";
+         QString               tot_av_frac_passed =
+            US_Calc::passes( frac_tot_m_av, { US_Calc::ToleranceRule::RelativePercentOfTarget, frac_tot_r, frac_tot_tol_r } )
+                             ? "YES"
+                             : "NO";
 
-	      //descide if we show std deviations
-	      int num_triples_in_subgroup = replicate_subgroup_triples.split(",").size();
-	      qDebug() << "triples_list, num_triples_in_subgroup, replicate_g_results[\"int_st_dev\"], "
-	      	       << "replicate_g_results[\"tot_percent_st_dev\"] -- "
-	      	       << replicate_subgroup_triples << num_triples_in_subgroup << replicate_g_results["int_st_dev"]
-	      	       << replicate_g_results["tot_percent_st_dev"];
-	      
-	      QString int_std_dev     = "N/A";
-	      QString percent_std_dev = "N/A";
-	      if ( num_triples_in_subgroup > 1 )
-		{
-		  int_std_dev     = QString("%1").arg(replicate_g_results["int_st_dev"], 10, 'e', 2);
-		  percent_std_dev = QString("%1%").arg(replicate_g_results["tot_percent_st_dev"], 0, 'f', 2);
-		}
-	      qDebug() << "int_std_dev, percent_std_dev -- " << int_std_dev << percent_std_dev;
-	      
-	      html_str_replicate_av += table_row( type,
-						  method,
-						  range,
-						  QString::asprintf( "%10.4e",  replicate_g_results["int_av"] ) + " (" + int_val_r + ")",
-						  //QString::asprintf( "%10.2e",  int_std_dev ),
-						  int_std_dev,
-						  QString::asprintf( "%5.2f%%", replicate_g_results["tot_percent_av"] ) +
-						                                   " (" + QString::asprintf( "%5.2f%%", frac_tot_r ) + ")",
-						  //QString::asprintf( "%5.2f%%",  percent_std_dev ),
-						  percent_std_dev,
-						  QString::number( frac_tot_tol_r ),
-						  tot_av_frac_passed
-						  );
-	    }
-	  
-	  html_str_replicate_av += indent( 3 ) + "</table>\n";
-	}
+         //descide if we show std deviations
+         int num_triples_in_subgroup = replicate_subgroup_triples.split( "," ).size();
+         qDebug() << "triples_list, num_triples_in_subgroup, replicate_g_results[\"int_st_dev\"], "
+                  << "replicate_g_results[\"tot_percent_st_dev\"] -- " << replicate_subgroup_triples << num_triples_in_subgroup
+                  << replicate_g_results["int_st_dev"] << replicate_g_results["tot_percent_st_dev"];
+
+         QString int_std_dev     = "N/A";
+         QString percent_std_dev = "N/A";
+         if ( num_triples_in_subgroup > 1 )
+         {
+            int_std_dev     = QString( "%1" ).arg( replicate_g_results["int_st_dev"], 10, 'e', 2 );
+            percent_std_dev = QString( "%1%" ).arg( replicate_g_results["tot_percent_st_dev"], 0, 'f', 2 );
+         }
+         qDebug() << "int_std_dev, percent_std_dev -- " << int_std_dev << percent_std_dev;
+
+         html_str_replicate_av += table_row( type,
+                                             method,
+                                             range,
+                                             QString::asprintf( "%10.4e", replicate_g_results["int_av"] ) + " (" + int_val_r + ")",
+                                             //QString::asprintf( "%10.2e",  int_std_dev ),
+                                             int_std_dev,
+                                             QString::asprintf( "%5.2f%%", replicate_g_results["tot_percent_av"] ) + " (" +
+                                                QString::asprintf( "%5.2f%%", frac_tot_r ) + ")",
+                                             //QString::asprintf( "%5.2f%%",  percent_std_dev ),
+                                             percent_std_dev,
+                                             QString::number( frac_tot_tol_r ),
+                                             tot_av_frac_passed );
+       }
+
+       html_str_replicate_av += indent( 3 ) + "</table>\n";
+   }
     }
   
   return html_str_replicate_av;
@@ -8885,25 +10131,14 @@ QString US_ReporterGMP::get_replicate_group_number( QString ch_alt_desc )
 //Get Integration Results from same Replicate subGroup | same-wvl | same-report-items: 
 QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP::ReportItem ref_report_item, QString u_wvl, QStringList channs_for_wvl )
 {
-  double int_res_sim = 0;
-  double int_res_sim_av = 0;
-  double tot_percent_sim = 0;
-  double tot_percent_sim_av = 0;
-  
-  int    same_item_counter = 0;
-  double st_dev_int_1 = 0;
-  double st_dev_int_final = 0;
-  double st_dev_tot_percent_1 = 0;
-  double st_dev_tot_percent_final = 0;
-  QVector< double > int_res_sim_vector;
-  QVector< double > tot_percent_sim_vector;
+   // Members of the group, as US_Calc range results
+   QVector<US_Calc::RangeResult> members;
+   QMap<QString, double>         results;
 
-  QMap< QString, double > results;
-  
-  //iterate over UR_ReportsGMPs && pick ones correspondning to 'chan_desc_alt.contains("ch_wvls[i]")' && wavelength == u_wvl;
-  int nchna   = currAProf.pchans.count();
-  for ( int i = 0; i < channs_for_wvl.size(); ++i )   //over channels for a given wvl in Replicate group:
-    {
+   //iterate over UR_ReportsGMPs && pick ones correspondning to 'chan_desc_alt.contains("ch_wvls[i]")' && wavelength == u_wvl;
+   int                           nchna = currAProf.pchans.count();
+   for ( int i = 0; i < channs_for_wvl.size(); ++i ) //over channels for a given wvl in Replicate group:
+   {
       US_ReportGMP reportGMP;
       for ( int j = 0; j < nchna; j++ )       //over all channels
 	{
@@ -8969,39 +10204,23 @@ QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP:
 
 	       if ( curr_item. integration_val_sim >= 0 )
 		 {
-		   int_res_sim            += curr_item. integration_val_sim;
-		   tot_percent_sim        += curr_item. total_percent_sim;
-		   int_res_sim_vector     .push_back( curr_item. integration_val_sim );
-		   tot_percent_sim_vector .push_back( curr_item. total_percent_sim );
+          US_Calc::RangeResult member;
+          member.range_concentration = curr_item.integration_val_sim;
+          member.fraction_percent    = curr_item.total_percent_sim;
+          members.push_back( member );
+       }
+        }
+   }
+   }
 
-		   ++same_item_counter;
-		 }
-	     }
-	}
-    }
-
-  if ( same_item_counter )
-    {
-      int_res_sim_av     = double( int_res_sim / same_item_counter );
-      tot_percent_sim_av = double( tot_percent_sim / same_item_counter ); 
-
-      for( int i=0; i<int_res_sim_vector.size(); ++i )
-	{
-	  st_dev_int_1         += ( int_res_sim_av - int_res_sim_vector[i] ) * ( int_res_sim_av - int_res_sim_vector[i] );
-	  st_dev_tot_percent_1 += ( tot_percent_sim_av - tot_percent_sim_vector[i] ) * ( tot_percent_sim_av - tot_percent_sim_vector[i] );
-	}
-      
-      st_dev_int_final         = sqrt( st_dev_int_1 ) / (sqrt( int_res_sim_vector.size() ));  
-      st_dev_tot_percent_final = sqrt( st_dev_tot_percent_1 ) / (sqrt( tot_percent_sim_vector.size() ));  
-    }
-
-  results[ "int_av" ]             = int_res_sim_av;
-  results[ "tot_percent_av" ]     = tot_percent_sim_av;
-  results[ "int_st_dev" ]         = st_dev_int_final;
-  results[ "tot_percent_st_dev" ] = st_dev_tot_percent_final;
-
-    
-  return results;
+   // Mean and population SD from US_Calc; a group without members gives 0.
+   const US_Calc::ReplicateResult group = US_Calc::replicate_summary( members );
+   const bool                     empty = ( group.used_count == 0 );
+   results["int_av"]                    = empty ? 0.0 : group.mean_range_concentration;
+   results["tot_percent_av"]            = empty ? 0.0 : group.mean_fraction_percent;
+   results["int_st_dev"]                = empty ? 0.0 : group.sd_range_concentration;
+   results["tot_percent_st_dev"]        = empty ? 0.0 : group.sd_fraction_percent;
+   return results;
 }
 
 // Distribution information HTML string
@@ -9067,13 +10286,7 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 		      rmsd_global  );
    mstr += table_row( tr( "Model-reported RMSD:"    ),
 		      ( rmsd_m > 0.0 ) ? QString::number( rmsd_m ) : "(none)" );
-   
-   double sum_mw  = 0.0;
-   double sum_s   = 0.0;
-   double sum_D   = 0.0;
-   double sum_c   = 0.0;
-   double sum_v   = 0.0;
-   double sum_k   = 0.0;
+
    double mink    = 1e+99;
    double maxk    = -1e+99;
    double minv    = 1e+99;
@@ -9081,33 +10294,26 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 
    for ( int ii = 0; ii < ncomp; ii++ )
    {
-      double conc = model_used.components[ ii ].signal_concentration;
       double kval = model_used.components[ ii ].f_f0;
-      double vval = model_used.components[ ii ].vbar20;
-      sum_c      += conc;
-      sum_mw     += ( model_used.components[ ii ].mw * conc );
-      sum_s      += ( model_used.components[ ii ].s  * conc );
-      sum_D      += ( model_used.components[ ii ].D  * conc );
-      sum_v      += ( vval * conc );
-      sum_k      += ( kval * conc );
+      double vval = model_used.components[ii].vbar20;
       mink        = qMin( kval, mink );
       maxk        = qMax( kval, maxk );
       minv        = qMin( vval, minv );
       maxv        = qMax( vval, maxv );
    }
 
-   mstr += table_row( tr( "Weight Average s20,W:" ),
-                      QString::asprintf( "%6.4e", ( sum_s  / sum_c ) ) );
-   mstr += table_row( tr( "Weight Average D20,W:" ),
-                      QString::asprintf( "%6.4e", ( sum_D  / sum_c ) ) );
-   mstr += table_row( tr( "W.A. Molecular Weight:" ),
-                      QString::asprintf( "%6.4e", ( sum_mw / sum_c ) ) );
+   // Weight averages and total concentration from US_Calc, divided as
+   // before, so a zero total still prints nan or inf.
+   const US_Calc::ModelMeans means = US_Calc::model_means( model_used.calc_model() );
+   const double              sum_c = means.total_concentration;
+
+   mstr += table_row( tr( "Weight Average s20,W:" ), QString::asprintf( "%6.4e", means.s ) );
+   mstr += table_row( tr( "Weight Average D20,W:" ), QString::asprintf( "%6.4e", means.D ) );
+   mstr += table_row( tr( "W.A. Molecular Weight:" ), QString::asprintf( "%6.4e", means.mw ) );
    if ( ! cnstff )
-      mstr += table_row( tr( "Weight Average f/f0:" ),
-                         QString::number( ( sum_k / sum_c ) ) );
+      mstr += table_row( tr( "Weight Average f/f0:" ), QString::number( means.f_f0 ) );
    if ( ! cnstvb )
-      mstr += table_row( tr( "Weight Average vbar20:" ),
-                         QString::number( ( sum_v / sum_c ) ) );
+      mstr += table_row( tr( "Weight Average vbar20:" ), QString::number( means.vbar20 ) );
    mstr += table_row( tr( "Total Concentration:" ),
                       QString::asprintf( "%6.4e", sum_c ) );
 
@@ -9471,12 +10677,16 @@ model_used.components[ ii ].vbar20 ),
 
    //passes
    tot_conc_r *= tot_conc_r_factor;
-   QString tot_conc_passed = ( sum_c  >= ( tot_conc_r * (1 - tot_conc_tol_r/100.0)  ) && sum_c  <= ( tot_conc_r * (1 + tot_conc_tol_r/100.0) ) ) ? "YES" : "NO";
-   QString exp_dur_passed  = ( last_f >= ( exp_dur_r * (1 - exp_dur_tol_r/100.0)  )   && last_f <= ( exp_dur_r * (1 + exp_dur_tol_r/100.0) ) ) ? "YES" : "NO";
-   QString rmsd_passed = ( rmsd_global.toDouble() <= rmsd_r ) ? "YES" : "NO";
-   QString av_int_passed = ( av_int_exp > av_int_r ) ? "YES" : "NO";
-   QString loading_volume_passed  = ( loading_volume_measured >= ( loading_volume_r * (1 - loading_volume_tol_r/100.0)  )
-				      && loading_volume_measured <= ( loading_volume_r * (1 + loading_volume_tol_r/100.0) ) ) ? "YES" : "NO";
+   using US_Calc::ToleranceRule;
+   auto    yes_no = []( bool pass ) { return pass ? QString( "YES" ) : QString( "NO" ); };
+   QString tot_conc_passed =
+      yes_no( US_Calc::passes( sum_c, { ToleranceRule::RelativePercentOfTarget, tot_conc_r, tot_conc_tol_r } ) );
+   QString exp_dur_passed =
+      yes_no( US_Calc::passes( last_f, { ToleranceRule::RelativePercentOfTarget, exp_dur_r, exp_dur_tol_r } ) );
+   QString rmsd_passed           = yes_no( US_Calc::passes( rmsd_global.toDouble(), { ToleranceRule::UpperLimit, rmsd_r, 0.0 } ) );
+   QString av_int_passed         = yes_no( US_Calc::passes( av_int_exp, { ToleranceRule::ExclusiveMinimum, av_int_r, 0.0 } ) );
+   QString loading_volume_passed = yes_no( US_Calc::passes(
+      loading_volume_measured, { ToleranceRule::RelativePercentOfTarget, loading_volume_r, loading_volume_tol_r } ) );
    //end passes
 
    //check what to show on the report
@@ -9624,6 +10834,7 @@ model_used.components[ ii ].vbar20 ),
 			  tr( "Fraction % from Model (target):" ),
 			  tr( "Tolerance, %:"),
 			  tr( "PASSED ?" ));
+       const US_Calc::Model range_model = model_used.calc_model();
        for ( int kk = 0; kk < report_items_number; ++kk )
 	 {
 	   US_ReportGMP::ReportItem curr_item = reportGMP-> reportItems[ kk ];
@@ -9636,103 +10847,53 @@ model_used.components[ ii ].vbar20 ),
 	   double  frac_tot_r     = curr_item.total_percent;
 	   double  frac_tot_tol_r = curr_item.tolerance ;
 	   double  low            = curr_item.range_low;
-	   double  high           = curr_item.range_high;
-	   
-	   QString range = "[" + QString::number(low) + " - " + QString::number(high) + "]";
-	   
-	   //integrate over model_used
-	   double int_val_m = 0;
-	   double variable_val_within_range = 0;
-	   for ( int ii = 0; ii < ncomp; ii++ )
-	     {
-	       double conc = model_used.components[ ii ].signal_concentration;
-	       double s_20 = model_used.components[ ii ].s;
-	       double D_20 = model_used.components[ ii ].D;
-	       double f_f0 = model_used.components[ ii ].f_f0;
-	       double mw   = model_used.components[ ii ].mw;
-	       
-	       if ( type == "s" )
-		 {
-		   if ( s_20 >= low*pow(10,-13) && s_20 <= high*pow(10,-13) )
-		     {
-		       int_val_m += conc;
-		       variable_val_within_range += s_20*conc;
-		     }
-		 }
-	       else if ( type == "D" )
-		 {
-		   if ( D_20 >= low*pow(10,-7) && D_20 <= high*pow(10,-7) )
-		     {
-		       int_val_m += conc;
-		       variable_val_within_range += D_20*conc;
-		     }
-		 }
-	       else if ( type == "f/f0")
-		 {
-		   if ( f_f0 >= low && f_f0 <= high )
-		     {
-		       int_val_m += conc;
-		       variable_val_within_range += f_f0*conc;
-		     }
-		 }
-	       else if ( type == "MW")
-		 {
-		   if ( mw >= low*pow(10,3) && mw <= high*pow(10,3) )
-		     {
-		       int_val_m += conc;
-		       variable_val_within_range += mw*conc;
-		     }
-		 }
-	     }
-	   
-	   double frac_tot_m = double( int_val_m / sum_c ) * 100.0;
-	   // QString tot_frac_passed = ( frac_tot_m >= ( frac_tot_r * (1 - frac_tot_tol_r/100.0)  )
-	   // 			       && frac_tot_m <= ( frac_tot_r * (1 + frac_tot_tol_r/100.0)  ) ) ? "YES" : "NO";
+      double                     high           = curr_item.range_high;
 
-	   QString tot_frac_passed = ( qAbs( frac_tot_m - frac_tot_r ) <= frac_tot_tol_r ) ? "YES" : "NO";
+      QString                    range = "[" + QString::number( low ) + " - " + QString::number( high ) + "]";
 
-	   double wav_variable_within_range = double( variable_val_within_range / int_val_m );
+      // Integrate over model_used with US_Calc:  inclusive range in report
+      // units, sums in component order, divisions unguarded, so every value
+      // (nan and inf included) and every pass/fail is the one the reporter's
+      // own arithmetic gave.  An inverted range selects nothing.  An item
+      // type that is not a range type also selects nothing:  its fraction is
+      // 0 / C * 100.
+      bool                       range_type                = false;
+      const US_Calc::Quantity    quantity                  = US_Calc::quantity_from_report_type( type, &range_type );
+      const US_Calc::RangeResult range_result              = US_Calc::range_summary( range_model, { quantity, low, high } );
+      double                     int_val_m                 = range_result.range_concentration;
+      double                     frac_tot_m                = range_type ? range_result.fraction_percent : ( 0.0 / sum_c ) * 100.0;
+      double                     wav_variable_within_range = range_result.within_range_mean;
 
-	   /* */
-	   QStringList a_method_types = method.split("-");
-	   bool method_identity = true;
-	   for (const QString& sub : a_method_types )
-	     {
-	       if (!mdla.contains(sub) )
-		 method_identity = false; 
-	     }
-	   /* */
-	   
-	   //if ( mdla.contains ( method ) )
-	   if ( method_identity )
-	     {
-	       // curr_item. integration_val_sim = int_val_m;
-	       // curr_item. total_percent_sim   = frac_tot_m;
-	       // curr_item. passed              = tot_frac_passed;
+      QString                    tot_frac_passed =
+         US_Calc::passes( frac_tot_m, { US_Calc::ToleranceRule::AbsolutePercentagePoints, frac_tot_r, frac_tot_tol_r } ) ? "YES"
+                                                                                                                                            : "NO";
 
-	       reportGMP-> reportItems[ kk ]. integration_val_sim = int_val_m;
-	       reportGMP-> reportItems[ kk ]. total_percent_sim   = frac_tot_m;
-	       reportGMP-> reportItems[ kk ]. passed              = tot_frac_passed;
+      const bool method_identity = US_Calc::method_matches( curr_item.method, model_used.description );
 
-	       qDebug() << "In distrib_info(), fill simulated integration vals: for chann/wvl/type/method/low/high, "
-			<< "Inter. val. Sim -- "
-			<< wvl
-			<< curr_item.type
-			<< curr_item.method
-			<< curr_item.range_low
-			<< curr_item.range_high
-			<< int_val_m;
-	       
-	       mstr += table_row( type,
-				  range,
-				  QString::asprintf( "%10.4e", wav_variable_within_range ),
-				  QString::asprintf( "%10.4e", int_val_m ) + " (" + int_val_r + ")",
-				  QString::asprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
-				  QString::number( frac_tot_tol_r ),
-				  tot_frac_passed );
-	     }
+      //if ( mdla.contains ( method ) )
+      if ( method_identity )
+      {
+         // curr_item. integration_val_sim = int_val_m;
+         // curr_item. total_percent_sim   = frac_tot_m;
+         // curr_item. passed              = tot_frac_passed;
 
-	 }
+         reportGMP->reportItems[kk].integration_val_sim = int_val_m;
+         reportGMP->reportItems[kk].total_percent_sim   = frac_tot_m;
+         reportGMP->reportItems[kk].passed              = tot_frac_passed;
+
+         qDebug() << "In distrib_info(), fill simulated integration vals: for chann/wvl/type/method/low/high, "
+                  << "Inter. val. Sim -- " << wvl << curr_item.type << curr_item.method << curr_item.range_low
+                  << curr_item.range_high << int_val_m;
+
+         mstr += table_row( type,
+                            range,
+                            QString::asprintf( "%10.4e", wav_variable_within_range ),
+                            QString::asprintf( "%10.4e", int_val_m ) + " (" + int_val_r + ")",
+                            QString::asprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
+                            QString::number( frac_tot_tol_r ),
+                            tot_frac_passed );
+      }
+    }
        mstr += indent( 2 ) + "</table>\n";
      }
    //End of integration results
@@ -10830,109 +11991,97 @@ QString US_ReporterGMP::get_filename( QString triple_name )
 }
 
 //Start assembling PDF file
-void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
+void US_ReporterGMP::assemble_pdf( US_GmpProgress* progress_msg )
 {
+   QString rptpage;
 
-  QString rptpage;
-
-  // Compose the report header
-  rptpage   = QString( "<?xml version=\"1.0\"?>\n" );
-  rptpage  += "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n";
-  rptpage  += "                      \"http://www.w3.org/TR/xhtml1/DTD"
+   // Compose the report header
+   rptpage = QString( "<?xml version=\"1.0\"?>\n" );
+   rptpage += "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n";
+   rptpage += "                      \"http://www.w3.org/TR/xhtml1/DTD"
               "/xhtml1-strict.dtd\">\n";
-  rptpage  += "<html xmlns=\"http://www.w3.org/1999/xhtml\""
+   rptpage += "<html xmlns=\"http://www.w3.org/1999/xhtml\""
               " xml:lang=\"en\" lang=\"en\">\n";
-  rptpage  += "  <head>\n";
-  rptpage  += "  <title> Ultrascan III Composite Report </title>\n";
-  rptpage  += "  <meta http-equiv=\"Content-Type\" content="
+   rptpage += "  <head>\n";
+   rptpage += "  <title> Ultrascan III Composite Report </title>\n";
+   rptpage += "  <meta http-equiv=\"Content-Type\" content="
               "\"text/html; charset=iso-8859-1\"/>\n";
-  rptpage  += "  <style type=\"text/css\" >\n";
-  rptpage  += "    td { padding-right: 0.75em; }\n";
-  rptpage  += "    body { background-color: white; }\n";
-  rptpage  += "    .pagebreak\n";
-  rptpage  += "    {\n";
-  rptpage  += "      page-break-before: always; border: 1px solid; \n";
-  rptpage  += "    }\n";
-  rptpage  += "    .parahead\n";
-  rptpage  += "    {\n";
-  rptpage  += "      font-weight: bold;\n";
-  rptpage  += "      font-style:  italic;\n";
-  rptpage  += "    }\n";
-  rptpage  += "    .datatext\n";
-  rptpage  += "    {\n";
-  // Pin to the exact fixed-width font we ship (see reportFontFamily()),
-  // with the generic "monospace" keyword only as a last-resort fallback,
-  // instead of relying solely on fontconfig's "monospace" alias -- which
-  // is what let this section's layout/metrics (and therefore page breaks)
-  // differ across OS installs.
-  rptpage  += "      font-family: \"" + US_ReporterGMP::reportFontFamily( true ) + "\", monospace;\n";
-  rptpage  += "    }\n";
+   rptpage += "  <style type=\"text/css\" >\n";
+   rptpage += "    td { padding-right: 0.75em; }\n";
+   rptpage += "    body { background-color: white; }\n";
+   rptpage += "    .pagebreak\n";
+   rptpage += "    {\n";
+   rptpage += "      page-break-before: always; border: 1px solid; \n";
+   rptpage += "    }\n";
+   rptpage += "    .parahead\n";
+   rptpage += "    {\n";
+   rptpage += "      font-weight: bold;\n";
+   rptpage += "      font-style:  italic;\n";
+   rptpage += "    }\n";
+   rptpage += "    .datatext\n";
+   rptpage += "    {\n";
+   // Pin to the exact fixed-width font we ship (see reportFontFamily()),
+   // with the generic "monospace" keyword only as a last-resort fallback,
+   // instead of relying solely on fontconfig's "monospace" alias -- which
+   // is what let this section's layout/metrics (and therefore page breaks)
+   // differ across OS installs.
+   rptpage += "      font-family: \"" + US_ReporterGMP::reportFontFamily( true ) + "\", monospace;\n";
+   rptpage += "    }\n";
 
-  //rptpage  += "   @media print { footer { position: fixed; bottom: 0; } }";
-  //rptpage  += "   footer { position: absolute; bottom: 0; }";
-  
-  // rptpage  += "  div.footer { display: block; text-align: center;  position: running(footer);";
-  // rptpage  += "  @page { @bottom-center { content: element(footer) }}";
-  
-  rptpage  += "  </style>\n";
-  rptpage  += "  </head>\n  <body>\n";
+   //rptpage  += "   @media print { footer { position: fixed; bottom: 0; } }";
+   //rptpage  += "   footer { position: absolute; bottom: 0; }";
 
-  //rptpage  += "  <footer> This is the text that goes at the bottom of every page. </footer>\n";
-  //rptpage  += " <div class='footer'>Footer</div>";
+   // rptpage  += "  div.footer { display: block; text-align: center;  position: running(footer);";
+   // rptpage  += "  @page { @bottom-center { content: element(footer) }}";
 
-  
-  
-  //HEADER: begin
-  QString us_version = QString("Version %1 ( %2 ) for %3")
-          .arg(US_Version)
-          .arg(TOSTRING(BUILDNUM))
-          .arg(TOSTRING(OS_TITLE));
-  QString html_header = QString("");
-  html_header += rptpage;
-  html_header += tr( 
-    "<div align=left>"
-      "Created, %1<br>"
-      "with UltraScan-GMP<br>"
-      "%2<br>"
-      "by AUC Solutions<br>"
-    "</div>"
-		     )
-    .arg( current_date )
-    .arg( us_version ) 
-    ;
-  //HEADER: end
+   rptpage += "  </style>\n";
+   rptpage += "  </head>\n  <body>\n";
 
-  
-  //TITLE: begin
-  QString report_type;
-  GMP_report ? report_type = "GMP" : report_type = "Non-GMP";
-  // QString html_title = tr(
-  //   "<h1 align=center>%1 Report for Run: <br><i>%2</i></h1>"
-  //   "<hr>"
-  // 			  )
-  //   .arg( report_type )                              //1
-  //   .arg( runName )                                  //2
-  //   ;
+   //rptpage  += "  <footer> This is the text that goes at the bottom of every page. </footer>\n";
+   //rptpage  += " <div class='footer'>Footer</div>";
 
-  QString html_title = tr(
-    "<h1 align=center>Report for Run: <br><i>%1</i></h1>"
-    "<hr>"
-			  )
-    .arg( runName )                                  //1
-    ;
-  //TITLE: end
 
-  QString html_paragraph_open = tr(
-    "<p align=justify>"
-				   )
-    ;
+   //HEADER: begin
+   QString us_version =
+      QString( "Version %1 ( %2 ) for %3" ).arg( US_Version ).arg( TOSTRING( BUILDNUM ) ).arg( TOSTRING( OS_TITLE ) );
+   QString html_header = QString( "" );
+   html_header += rptpage;
+   html_header += tr( "<div align=left>"
+                      "Created, %1<br>"
+                      "with UltraScan-GMP<br>"
+                      "%2<br>"
+                      "by AUC Solutions<br>"
+                      "</div>" )
+                     .arg( current_date )
+                     .arg( us_version );
+   //HEADER: end
 
-  
-  //Failed Triples' Analyses, Missing Models info (if any):
-  QString str_failed_stage_missing_models = compose_html_failed_stage_missing_models();
-  qDebug() << "STR_on_failed: " << str_failed_stage_missing_models;
-  if ( !str_failed_stage_missing_models.isEmpty() )
-    {
+
+   //TITLE: begin
+   QString report_type;
+   GMP_report ? report_type = "GMP" : report_type = "Non-GMP";
+   // QString html_title = tr(
+   //   "<h1 align=center>%1 Report for Run: <br><i>%2</i></h1>"
+   //   "<hr>"
+   // 			  )
+   //   .arg( report_type )                              //1
+   //   .arg( runName )                                  //2
+   //   ;
+
+   QString html_title = tr( "<h1 align=center>Report for Run: <br><i>%1</i></h1>"
+                            "<hr>" )
+                           .arg( runName ) //1
+      ;
+   //TITLE: end
+
+   QString html_paragraph_open = tr( "<p align=justify>" );
+
+
+   //Failed Triples' Analyses, Missing Models info (if any):
+   QString str_failed_stage_missing_models = compose_html_failed_stage_missing_models();
+   qDebug() << "STR_on_failed: " << str_failed_stage_missing_models;
+   if ( !str_failed_stage_missing_models.isEmpty() )
+   {
       html_failed  = tr(
 			"<h3 style=\"color:red;\" align=left> ATTENTION: Analyses for Some Triples Failed, or Models are Missing!</h3>"
 			"%1"
@@ -10940,7 +12089,7 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
 			)
 	.arg( str_failed_stage_missing_models )
 	;
-    }
+   }
   //End of failed|missing
 			
 			
@@ -10994,27 +12143,34 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
 
   QString run_id = ( dataSource == "INSTRUMENT" ) ? runID : "N/A";
   QString instr_name = ( dataSource == "INSTRUMENT" ) ? currProto. rpRotor.instrname : "dataDisk";
-  
-  html_operator = tr(     
-    "<h3 align=left>Optima Machine/Operator </h3>"
-      "<table>"
-        "<tr><td>Optima: </td>           <td>%1</td></tr>"
-        "<tr><td>Optima's RunID: </td>   <td>%2</td></tr>"
-        "<tr><td>Operator(s): </td>      <td>%3</td></tr>"
-        "<tr><td>Reviewer(s): </td>      <td>%4</td></tr>"
-        "<tr><td>Approver(s): </td>      <td>%5</td></tr>"
-        "<tr><td>Experiment Type:</td>   <td>%6</td></tr>"
-      "</table>"
-    "<hr>"
-				  )
-    .arg( instr_name )                     //1
-    .arg( run_id )                         //2
-    //.arg( currProto. rpRotor.opername  )   //3 <-- OLD, incorrect
-    .arg( opers_a  )                       //3
-    .arg( revs_a  )                        //4
-    .arg( apprs_a  )                       //5
-    .arg( currProto. rpRotor.exptype )     //6
-    ;
+
+  // Experiment type as shown in the report: protocol's rpRotor.exptype is just
+  // "Velocity" for VELOCITY-MWL runs, so use the run's expType to report it
+  // correctly
+  QString       exp_type_disp = currProto.rpRotor.exptype;
+  if ( expType == "VELOCITY-MWL" )
+  {
+     exp_type_disp = "Velocity-MWL";
+  }
+
+  html_operator = tr( "<h3 align=left>Optima Machine/Operator </h3>"
+                      "<table>"
+                      "<tr><td>Optima: </td>           <td>%1</td></tr>"
+                      "<tr><td>Optima's RunID: </td>   <td>%2</td></tr>"
+                      "<tr><td>Operator(s): </td>      <td>%3</td></tr>"
+                      "<tr><td>Reviewer(s): </td>      <td>%4</td></tr>"
+                      "<tr><td>Approver(s): </td>      <td>%5</td></tr>"
+                      "<tr><td>Experiment Type:</td>   <td>%6</td></tr>"
+                      "</table>"
+                      "<hr>" )
+                     .arg( instr_name ) // 1
+                     .arg( run_id )     // 2
+                     //.arg( currProto. rpRotor.opername  )   //3 <-- OLD, incorrect
+                     .arg( opers_a )       // 3
+                     .arg( revs_a )        // 4
+                     .arg( apprs_a )       // 5
+                     .arg( exp_type_disp ) // 6
+     ;
   //OPERATOR | REVIEWERS | APPROVERS: end 	  
 
   
@@ -11495,56 +12651,52 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
 	run_analysis = tr("YES");
       else
 	run_analysis = tr("NO");
-      
-      if ( expType == "VELOCITY" )
-	{
-	  QString loading_ratio  = QString::number( currAProf.lc_ratios[ i ] );
-	  QString ratio_tol      = QString::number( currAProf.lc_tolers[ i ] );
-	  QString volume         = QString::number( currAProf.l_volumes[ i ] );
-	  QString volume_tol     = QString::number( currAProf.lv_tolers[ i ] );
-	  QString data_end       = QString::number( currAProf.data_ends[ i ] );
-	 	  
-	  html_analysis_gen += tr(
-				  "<table style=\"margin-left:30px\">"
-				  "<tr><td> Loading Ratio:              </td>  <td> %1 </td> </tr>"
-				  "<tr><td> Ratio Tolerance (&#177;%):  </td>  <td> %2 </td> </tr>"
-				  "<tr><td> Loading Volume (&#181;l):   </td>  <td> %3 </td> </tr>"
-				  "<tr><td> Volume Tolerance (&#177;%): </td>  <td> %4 </td> </tr>"
-				  "<tr><td> Data End (cm):              </td>  <td> %5 </td> </tr>"
-				  "</table>"
-				  )
-	    .arg( loading_ratio )             //1
-	    .arg( ratio_tol )                 //2
-	    .arg( volume )                    //3
-	    .arg( volume_tol )                //4
-	    .arg( data_end )                  //5
-	    ;
-	}
+
+      if ( expType == "VELOCITY" || expType == "VELOCITY-MWL" )
+      {
+         QString loading_ratio = QString::number( currAProf.lc_ratios[i] );
+         QString ratio_tol     = QString::number( currAProf.lc_tolers[i] );
+         QString volume        = QString::number( currAProf.l_volumes[i] );
+         QString volume_tol    = QString::number( currAProf.lv_tolers[i] );
+         QString data_end      = QString::number( currAProf.data_ends[i] );
+
+         html_analysis_gen += tr( "<table style=\"margin-left:30px\">"
+                                  "<tr><td> Loading Ratio:              </td>  <td> %1 </td> </tr>"
+                                  "<tr><td> Ratio Tolerance (&#177;%):  </td>  <td> %2 </td> </tr>"
+                                  "<tr><td> Loading Volume (&#181;l):   </td>  <td> %3 </td> </tr>"
+                                  "<tr><td> Volume Tolerance (&#177;%): </td>  <td> %4 </td> </tr>"
+                                  "<tr><td> Data End (cm):              </td>  <td> %5 </td> </tr>"
+                                  "</table>" )
+                                 .arg( loading_ratio ) // 1
+                                 .arg( ratio_tol )     // 2
+                                 .arg( volume )        // 3
+                                 .arg( volume_tol )    // 4
+                                 .arg( data_end )      // 5
+            ;
+      }
       else if ( expType == "ABDE" )
-	{
-	  QString loading_density  = QString::number( currAProf.ld_dens_0s[ i ] );
-	  QString gm_vbar          = QString::number( currAProf.gm_vbars[ i ] );
-	  QString gm_mw            = QString::number( currAProf.gm_mws[ i ] );
-	  QString volume           = QString::number( currAProf.l_volumes[ i ] );
-	  QString volume_tol       = QString::number( currAProf.lv_tolers[ i ] );
-	  	  
-	  html_analysis_gen += tr(
-				  "<table style=\"margin-left:30px\">"
-				  "<tr><td> Loading Density (g/ml):     </td>  <td> %1 </td> </tr>"
-				  "<tr><td> Gradient Mat. vbar (ml/g):  </td>  <td> %2 </td> </tr>"
-				  "<tr><td> Gradient Mat. MW (g/mol):   </td>  <td> %3 </td> </tr>"
-				  "<tr><td> Loading Volume (&#181;l):   </td>  <td> %4 </td> </tr>"
-				  "<tr><td> Volume Tolerance (&#177;%): </td>  <td> %5 </td> </tr>"
-				  "</table>"
-				  )
-	    .arg( loading_density )        //1
-	    .arg( gm_vbar )                //2
-	    .arg( gm_mw )                  //3
-	    .arg( volume )                 //4
-	    .arg( volume_tol )             //5
-	    ;
-	}
-      
+      {
+         QString loading_density = QString::number( currAProf.ld_dens_0s[i] );
+         QString gm_vbar         = QString::number( currAProf.gm_vbars[i] );
+         QString gm_mw           = QString::number( currAProf.gm_mws[i] );
+         QString volume          = QString::number( currAProf.l_volumes[i] );
+         QString volume_tol      = QString::number( currAProf.lv_tolers[i] );
+
+         html_analysis_gen += tr( "<table style=\"margin-left:30px\">"
+                                  "<tr><td> Loading Density (g/ml):     </td>  <td> %1 </td> </tr>"
+                                  "<tr><td> Gradient Mat. vbar (ml/g):  </td>  <td> %2 </td> </tr>"
+                                  "<tr><td> Gradient Mat. MW (g/mol):   </td>  <td> %3 </td> </tr>"
+                                  "<tr><td> Loading Volume (&#181;l):   </td>  <td> %4 </td> </tr>"
+                                  "<tr><td> Volume Tolerance (&#177;%): </td>  <td> %5 </td> </tr>"
+                                  "</table>" )
+                                 .arg( loading_density ) // 1
+                                 .arg( gm_vbar )         // 2
+                                 .arg( gm_mw )           // 3
+                                 .arg( volume )          // 4
+                                 .arg( volume_tol )      // 5
+            ;
+      }
+
       html_analysis_gen    += tr(
 				  "<table style=\"margin-left:30px\">"
 				     "<tr><td> <i>Run Analysis:</i>        </td>  <td> %1 </td> </tr>"
@@ -11650,138 +12802,149 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
 	    
 	  int chann_wvl_number = chann_wvls.size();
 
-	  //for ABDE, identify only 1st wvl in the cahnnel, and proceed with it only!
-	  QString wvl_abde  = QString::number( chann_wvls[0] );
-	  
-	  for ( int jj = 0; jj < chann_wvl_number; ++jj )
-	    {
-	      QString wvl            = QString::number( chann_wvls[ jj ] );
+     // for ABDE and VELOCITY-MWL, identify only 1st wvl in the cahnnel,
+     // and proceed with it only! (report parameters/items are defined per
+     //channel there, not per wavelength)
+     QString                        wvl_abde = QString::number( chann_wvls[0] );
 
-	      //abde
-	      if ( expType == "ABDE" && wvl != wvl_abde )
-		continue;
-	      
-	      QString triple_name    = channel_desc.split(":")[ 0 ] + "/" + wvl;
-	      US_ReportGMP reportGMP = chann_reports[ wvl ];
+     for ( int jj = 0; jj < chann_wvl_number; ++jj )
+     {
+        QString wvl = QString::number( chann_wvls[jj] );
 
-	      //Exp. duration entered in the Channel Report Editor
-	      QList< int > hms_tot;
-	      double total_time = reportGMP.experiment_duration;
-	      US_RunProtocol::timeToList( total_time, hms_tot );
-	      QString exp_dur_str =
-		QString::number( hms_tot[ 0 ] ) + "d " +
-		QString::number( hms_tot[ 1 ] ) + "h " +
-		QString::number( hms_tot[ 2 ] ) + "m ";
+        //abde
+        if ( ( expType == "ABDE" || expType == "VELOCITY-MWL" ) && wvl != wvl_abde )
+        {
+           continue;
+        }
 
-	      if ( genMask_edited.ShowAnalysisGenParts[ "Report Parameters (per-triple)" ].toInt()  )
-		{
-		  html_analysis_profile += tr(
-					      "<table style=\"margin-left:50px\">"
-					      "<tr><td> <b><i> Report Parameters for Triple: </i> &nbsp;&nbsp;&nbsp; %1 </b></td> </tr>"
-					      "</table>"
-					      )
-		    .arg( triple_name )                                             //1
-		    ;
+        QString      triple_name = channel_desc.split( ":" )[0] + "/" + wvl;
+        US_ReportGMP reportGMP   = chann_reports[wvl];
 
+        //Exp. duration entered in the Channel Report Editor
+        QList<int>   hms_tot;
+        double       total_time = reportGMP.experiment_duration;
+        US_RunProtocol::timeToList( total_time, hms_tot );
+        QString exp_dur_str =
+           QString::number( hms_tot[0] ) + "d " + QString::number( hms_tot[1] ) + "h " + QString::number( hms_tot[2] ) + "m ";
 
-		  if ( expType == "VELOCITY" )
-		    {
-		      html_analysis_profile += tr(
-						  "<table style=\"margin-left:70px\">"
-						  "<tr><td> Total Concentration:           </td>  <td> %1 </td> </tr>"
-						  "<tr><td> Total Concentration Tolerance: </td>  <td> %2 </td> </tr>"
-						  "<tr><td> RMSD (upper limit):            </td>  <td> %3 </td> </tr>"
-						  "<tr><td> Average Intensity:             </td>  <td> %4 </td> </tr>"
-						  "<tr><td> Experiment Duration:           </td>  <td> %5 </td> </tr>"
-						  "<tr><td> Experiment Duration Tolerance: </td>  <td> %6 </td> </tr>"
-						  "</table>"
-						  )
-			.arg( QString::number( reportGMP.tot_conc ) )                    //1
-			.arg( QString::number( reportGMP.tot_conc_tol ) )                //2
-			.arg( QString::number( reportGMP.rmsd_limit )  )                 //3
-			.arg( QString::number( reportGMP.av_intensity )  )               //4
-			.arg( exp_dur_str )                                              //5
-			.arg( QString::number( reportGMP.experiment_duration_tol ) )     //6
-			;
-		    }
-		  else if ( expType == "ABDE" )
-		    {
-		      html_analysis_profile += tr(
-						  "<table style=\"margin-left:70px\">"
-						  "<tr><td> Experiment Duration:           </td>  <td> %1 </td> </tr>"
-						  "<tr><td> Experiment Duration Tolerance: </td>  <td> %2 </td> </tr>"
-						  "</table>"
-						  )
-			.arg( exp_dur_str )                                              //1
-			.arg( QString::number( reportGMP.experiment_duration_tol ) )     //2
-			;
-		    }
-		}
+        if ( genMask_edited.ShowAnalysisGenParts["Report Parameters (per-triple)"].toInt() )
+        {
+           html_analysis_profile += tr( "<table style=\"margin-left:50px\">"
+                                        "<tr><td> <b><i> Report Parameters for Triple: </i> &nbsp;&nbsp;&nbsp; %1 </b></td> </tr>"
+                                        "</table>" )
+                                       .arg( triple_name ) //1
+              ;
 
-	      //Now go over ReportItems for the current triple:
-	      int report_items_number = reportGMP.reportItems.size();
+           if ( expType == "VELOCITY" || expType == "VELOCITY-MWL" )
+           {
+              html_analysis_profile += tr( "<table style=\"margin-left:70px\">"
+                                           "<tr><td> Total Concentration:           </td>  "
+                                           "<td> %1 </td> </tr>"
+                                           "<tr><td> Total Concentration Tolerance: </td>  "
+                                           "<td> %2 </td> </tr>"
+                                           "<tr><td> RMSD (upper limit):            </td>  "
+                                           "<td> %3 </td> </tr>"
+                                           "<tr><td> Average Intensity:             </td>  "
+                                           "<td> %4 </td> </tr>"
+                                           "<tr><td> Experiment Duration:           </td>  "
+                                           "<td> %5 </td> </tr>"
+                                           "<tr><td> Experiment Duration Tolerance: </td>  "
+                                           "<td> %6 </td> </tr>"
+                                           "</table>" )
+                                          .arg( QString::number( reportGMP.tot_conc ) )                // 1
+                                          .arg( QString::number( reportGMP.tot_conc_tol ) )            // 2
+                                          .arg( QString::number( reportGMP.rmsd_limit ) )              // 3
+                                          .arg( QString::number( reportGMP.av_intensity ) )            // 4
+                                          .arg( exp_dur_str )                                          // 5
+                                          .arg( QString::number( reportGMP.experiment_duration_tol ) ) // 6
+                 ;
+           }
+           else if ( expType == "ABDE" )
+           {
+              html_analysis_profile += tr( "<table style=\"margin-left:70px\">"
+                                           "<tr><td> Experiment Duration:           </td>  "
+                                           "<td> %1 </td> </tr>"
+                                           "<tr><td> Experiment Duration Tolerance: </td>  "
+                                           "<td> %2 </td> </tr>"
+                                           "</table>" )
+                                          .arg( exp_dur_str )                                          // 1
+                                          .arg( QString::number( reportGMP.experiment_duration_tol ) ) // 2
+                 ;
+           }
+        }
 
-	      for ( int kk = 0; kk < report_items_number; ++kk )
-		{
-		  US_ReportGMP::ReportItem curr_item = reportGMP.reportItems[ kk ];
+        //Now go over ReportItems for the current triple:
+        int report_items_number = reportGMP.reportItems.size();
 
-		  if ( genMask_edited.ShowAnalysisGenParts[ "Report Item Parameters (per-triple)" ].toInt()  )
-		    {
-		      html_analysis_profile += tr(
-						  "<table style=\"margin-left:90px\">"
-						  "<tr><td> <b><i> Report Item #%1: </i> &nbsp;&nbsp; Type | Method Parameters </b></td> </tr>"
-						  "</table>"
-						  )
-			.arg( QString::number( kk + 1 ) )                                 //1
-			;
+        for ( int kk = 0; kk < report_items_number; ++kk )
+        {
+           US_ReportGMP::ReportItem curr_item = reportGMP.reportItems[kk];
 
-		      if ( expType == "VELOCITY" )
-			{
-			  html_analysis_profile += tr(
-						      "<table style=\"margin-left:110px\">"
-						      "<tr><td> Type:                  </td>  <td> %1 </td> </tr>"
-						      "<tr><td> Method:                </td>  <td> %2 </td> </tr>"
-						      "<tr><td> Range Low:             </td>  <td> %3 </td> </tr>"
-						      "<tr><td> Range High:            </td>  <td> %4 </td> </tr>"
-						      "<tr><td> Integration Value:     </td>  <td> %5 </td> </tr>"
-						      "<tr><td> Tolerance (%):         </td>  <td> %6 </td> </tr>"
-						      "<tr><td> Fraction of Total (%): </td>  <td> %7 </td> </tr>"
-						      "</table>"
-						      )
-			    .arg( curr_item.type )                                      //1
-			    .arg( curr_item.method   )                                  //2
-			    .arg( QString::number( curr_item.range_low )  )             //3
-			    .arg( QString::number( curr_item.range_high )  )            //4
-			    .arg( QString::number( curr_item.integration_val )  )       //5
-			    .arg( QString::number( curr_item.tolerance )  )             //6
-			    .arg( QString::number( curr_item.total_percent )  )         //7
-			    ;
-			}
-		      else if ( expType == "ABDE" )
-			{
-			  html_analysis_profile += tr(
-						      "<table style=\"margin-left:110px\">"
-						      "<tr><td> Type:                  </td>  <td> %1 </td> </tr>"
-						      "<tr><td> Method:                </td>  <td> %2 </td> </tr>"
-						      "<tr><td> Range Low:             </td>  <td> %3 </td> </tr>"
-						      "<tr><td> Range High:            </td>  <td> %4 </td> </tr>"
-						      "<tr><td> Tolerance (%):         </td>  <td> %5 </td> </tr>"
-						      "<tr><td> Fraction of Total (%): </td>  <td> %6 </td> </tr>"
-						      "</table>"
-						      )
-			    .arg( curr_item.type )                                      //1
-			    .arg( curr_item.method   )                                  //2
-			    .arg( QString::number( curr_item.range_low )  )             //3
-			    .arg( QString::number( curr_item.range_high )  )            //4
-			    .arg( QString::number( curr_item.tolerance )  )             //5
-			    .arg( QString::number( curr_item.total_percent )  )         //6
-			    ;
-			}
-		    }
-		}
-	    }
-	}
-      
+           if ( genMask_edited.ShowAnalysisGenParts["Report Item Parameters (per-triple)"].toInt() )
+           {
+              html_analysis_profile +=
+                 tr( "<table style=\"margin-left:90px\">"
+                     "<tr><td> <b><i> Report Item #%1: </i> &nbsp;&nbsp; Type | Method Parameters </b></td> </tr>"
+                     "</table>" )
+                    .arg( QString::number( kk + 1 ) ) //1
+                 ;
+
+              if ( expType == "VELOCITY" || expType == "VELOCITY-MWL" )
+              {
+                 html_analysis_profile += tr( "<table style=\"margin-left:110px\">"
+                                              "<tr><td> Type:                  </td>  <td> %1 "
+                                              "</td> </tr>"
+                                              "<tr><td> Method:                </td>  <td> %2 "
+                                              "</td> </tr>"
+                                              "<tr><td> Range Low:             </td>  <td> %3 "
+                                              "</td> </tr>"
+                                              "<tr><td> Range High:            </td>  <td> %4 "
+                                              "</td> </tr>"
+                                              "<tr><td> Integration Value:     </td>  <td> %5 "
+                                              "</td> </tr>"
+                                              "<tr><td> Tolerance (%):         </td>  <td> %6 "
+                                              "</td> </tr>"
+                                              "<tr><td> Fraction of Total (%): </td>  <td> %7 "
+                                              "</td> </tr>"
+                                              "</table>" )
+                                             .arg( curr_item.type )                               // 1
+                                             .arg( curr_item.method )                             // 2
+                                             .arg( QString::number( curr_item.range_low ) )       // 3
+                                             .arg( QString::number( curr_item.range_high ) )      // 4
+                                             .arg( QString::number( curr_item.integration_val ) ) // 5
+                                             .arg( QString::number( curr_item.tolerance ) )       // 6
+                                             .arg( QString::number( curr_item.total_percent ) )   // 7
+                    ;
+              }
+              else if ( expType == "ABDE" )
+              {
+                 html_analysis_profile += tr( "<table style=\"margin-left:110px\">"
+                                              "<tr><td> Type:                  </td>  <td> %1 "
+                                              "</td> </tr>"
+                                              "<tr><td> Method:                </td>  <td> %2 "
+                                              "</td> </tr>"
+                                              "<tr><td> Range Low:             </td>  <td> %3 "
+                                              "</td> </tr>"
+                                              "<tr><td> Range High:            </td>  <td> %4 "
+                                              "</td> </tr>"
+                                              "<tr><td> Tolerance (%):         </td>  <td> %5 "
+                                              "</td> </tr>"
+                                              "<tr><td> Fraction of Total (%): </td>  <td> %6 "
+                                              "</td> </tr>"
+                                              "</table>" )
+                                             .arg( curr_item.type )                             // 1
+                                             .arg( curr_item.method )                           // 2
+                                             .arg( QString::number( curr_item.range_low ) )     // 3
+                                             .arg( QString::number( curr_item.range_high ) )    // 4
+                                             .arg( QString::number( curr_item.tolerance ) )     // 5
+                                             .arg( QString::number( curr_item.total_percent ) ) // 6
+                    ;
+              }
+           }
+        }
+     }
+   }
+
       html_analysis_profile += tr(
 				  "<br>"
 				  )
@@ -12105,7 +13268,6 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
 
   QString html_paragraph_close = tr( "</p>" );
   html_assembled += html_paragraph_close;
-  
 }
 
 //scan exclusions
@@ -12207,8 +13369,9 @@ void US_ReporterGMP::write_pdf_report( void )
   mkdir( US_Settings::reportDir(), subDirName );
     
   //QString fileName  = runName + ".pdf";
-  QString fileName  = ProtocolName_auto + ".pdf"; //Use unique protocol name for .pdf filename
-  
+  QString fileName = US_RunProtocol::sanitize_name( ProtocolName_auto ) + ".pdf"; // Use unique protocol name for .pdf filename;
+                                                                                  // strip path chars (legacy names may contain "/")
+
   //filePath  = US_Settings::tmpDir() + "/" + fileName;
   filePath  = dirName + "/" + fileName;
   
@@ -12259,7 +13422,12 @@ void US_ReporterGMP::write_pdf_report( void )
   //printer.setFullPage(false);
   
   printDocument(printer, &textDocument ); //, 0);
-  
+
+  if ( auto_mode )
+  {
+     gmp_busy( tr( "Archiving the report and saving it to the database..." ) );
+  }
+
   /*************************************************************/
 
   qApp->processEvents();
@@ -12527,40 +13695,28 @@ void US_ReporterGMP::printDocument(QPrinter& printer, QTextDocument* doc) //, QW
   const int pageCount = doc->pageCount();
   // QProgressDialog dialog( QObject::tr( "Printing" ), QObject::tr( "Cancel" ), 0, pageCount, parentWidget );
   // dialog.setWindowModality( Qt::ApplicationModal );
-  progress_msg = new QProgressDialog ("Preparing .PDF...", QString(), 0, pageCount, this);
-  progress_msg->setWindowFlags(Qt::Tool | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
-  progress_msg->setModal( true );
-  progress_msg->setWindowTitle(tr("Printing..."));
-  QFont font_d  = progress_msg->property("font").value<QFont>();
-  QFontMetrics fm(font_d);
-  int pixelsWide = fm.horizontalAdvance( progress_msg->windowTitle() );
-  qDebug() << "Progress_msg: pixelsWide -- " << pixelsWide;
-  progress_msg ->setMinimumWidth( pixelsWide*2 );
-  progress_msg->adjustSize();
-  progress_msg->setAutoClose( false );
-  progress_msg->setValue( 0 );
-  progress_msg->show();
+  gmp_stage( 4, tr( "Creating PDF report" ), tr( "Rendering PDF pages..." ), pageCount );
   qApp->processEvents();
   
   bool firstPage = true;
   for (int pageIndex = 0; pageIndex < pageCount; ++pageIndex)
     {
-      progress_msg->setValue( pageIndex );
-      
-      if (!firstPage)
-	{
-	  //immediately before newPage, set new margins:
-	  //printer.setPageMargins(0, -15, 0, -15, QPrinter::Millimeter);
-	  printer.newPage();
-	}
-      
+       progress_msg->setLabelText( tr( "Rendering PDF page %1 of %2..." ).arg( pageIndex + 1 ).arg( pageCount ) );
+       progress_msg->setValue( pageIndex );
+
+       if ( !firstPage )
+       {
+          // immediately before newPage, set new margins:
+          // printer.setPageMargins(0, -15, 0, -15, QPrinter::Millimeter);
+          printer.newPage();
+       }
+
       paintPage( printer, pageIndex, pageCount, &painter, doc, textRect, footerHeight );
       firstPage = false;
     }
-  
-  qApp->processEvents();
-  progress_msg->close();
-  qApp->processEvents();
+
+    progress_msg->setValue( progress_msg->maximum() );
+    qApp->processEvents();
 }
 
 
@@ -12837,6 +13993,10 @@ void US_ReporterGMP::gui_to_parms( void )
     parse_edited_perChan_mask_json( editedMask_perChan, perChanMask_edited );
   else if ( expType == "ABDE" )
     parse_edited_perChan_mask_json_abde( editedMask_perChan, perChanMask_edited_abde );
+  else if ( expType == "VELOCITY-MWL" )
+  {
+     parse_edited_perChan_mask_json_velmwl( editedMask_perChan, perChanMask_edited_velmwl );
+  }
 
   //tree-to-json: combPlotsTree
   QString editedMask_combPlots = tree_to_json ( topItemCombPlots );
@@ -13039,6 +14199,15 @@ void US_ReporterGMP::parse_edited_perChan_mask_json_abde( const QString maskJson
 	MaskStr.ShowChannelParts[ key ] = false;
     }
   
+}
+
+// Pasre reportMask JSON: perChan: VELOCITY-MWL
+// Same JSON shape as ABDE ({channel: [ {feature: "0"|"2", ...} ]}), so the
+// ABDE parser is reused as is.
+void US_ReporterGMP::parse_edited_perChan_mask_json_velmwl( const QString maskJson, PerChanReportMaskStructureVelMwl& MaskStr )
+{
+   qDebug() << "[in parse_edited_perChan_mask_json_velmwl()] ";
+   parse_edited_perChan_mask_json_abde( maskJson, MaskStr );
 }
 
 //Pasre reportMask JSON: perChan
@@ -13822,4 +14991,3 @@ void US_ReporterGMP::add_solution_details( const QString sol_id, const QString s
 	;
     }
 }
-

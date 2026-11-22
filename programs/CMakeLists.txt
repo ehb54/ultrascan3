@@ -235,6 +235,8 @@ endif()
 
 file(GLOB program_dirs LIST_DIRECTORIES true RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*")
 
+include(${CMAKE_SOURCE_DIR}/admin/cmake/packaging/AppPackage.cmake)
+
 set(added 0)
 foreach(prog_name ${program_dirs})
     if(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${prog_name}")
@@ -249,6 +251,7 @@ foreach(prog_name ${program_dirs})
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${prog_name}/CMakeLists.txt")
         add_subdirectory(${prog_name})
+        us3_register_app_program_directory("${CMAKE_CURRENT_SOURCE_DIR}/${prog_name}")
         math(EXPR added "${added} + 1")
         message(STATUS "Programs: using per-directory CMakeLists.txt for ${prog_name}")
     else()

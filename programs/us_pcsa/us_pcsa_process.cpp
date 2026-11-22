@@ -80,6 +80,10 @@ DbgLv(1) << "PC(pcsaProc): start_fit()";
    fi_itermax  = gfits;
    rd_thresh   = gfthr;
    lmmxcall    = lmmxc;
+
+   // Cache of solute simulations, shared by the grid fit tasks
+   //  (debug text "SimCache=off" disables it, "SimCacheMB=N" sets its cap)
+   simcache.reset( US_SimCache::create_default() );
    st_mask          = dsets[ 0 ]->solute_type;
    attr_x           = ( st_mask >> 6 ) & 7;
    attr_y           = ( st_mask >> 3 ) & 7;
@@ -287,6 +291,7 @@ DbgLv(1) << "  STOPTHR:  thread deleted";
    }
 
    job_queue.clear();
+   simcache.reset();
 
    emit message_update( pmessage_head() +
       tr( "All computations have been aborted." ), false );
@@ -488,6 +493,12 @@ DbgLv(1) << "FIN_FIN:    rd_frac rd_thresh" << rd_frac << rd_thresh;
       return;
    }
 
+   if ( simcache )
+   { // Grid fits are done:  free the simulation cache
+      DbgLv( 1 ) << "FIN_FIN:" << simcache->stats_text();
+      simcache.reset();
+   }
+
    emit process_complete( 8 );     // signal that L-M is starting
 
    // Compute a best model using Levenberg-Marquardt
@@ -636,6 +647,7 @@ DbgLv(1) << "PC:putMRs:  curvtype" << curvtype << "nypts" << nypts;
 void US_pcsaProcess::submit_job( WorkPacketPc& wtask, int thrx )
 {
    wtask.thrn         = thrx + 1;
+   wtask.simcache     = simcache;
 
    WorkerThreadPc* wthr = new WorkerThreadPc( this );
    wthreads[ thrx ]   = wthr;

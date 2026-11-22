@@ -78,6 +78,12 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
 
    disk_controls = new US_Disk_DB_Controls;
 
+   // wrap into widgets
+   wrapper_lo_edlast     = new QWidget;
+   wrapper_disk_controls = new QWidget;
+   wrapper_lo_edlast->setLayout( lo_edlast );
+   wrapper_disk_controls->setLayout( disk_controls );
+
    pb_view    = us_pushbutton( tr( "View Data Report" ) );
    pb_save    = us_pushbutton( tr( "Save Data" ) );
 
@@ -88,8 +94,10 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    int row = 0;
    analysisLayout->addWidget( pb_load,       row,   0, 1, 1 );
    analysisLayout->addWidget( pb_details,    row++, 1, 1, 1 );
-   analysisLayout->addLayout( lo_edlast,     row,   0, 1, 1 );
-   analysisLayout->addLayout( disk_controls, row++, 1, 1, 1 );
+   // analysisLayout->addLayout( lo_edlast,     row,   0, 1, 1 );
+   // analysisLayout->addLayout( disk_controls, row++, 1, 1, 1 );
+   analysisLayout->addWidget( wrapper_lo_edlast, row, 0, 1, 1 );
+   analysisLayout->addWidget( wrapper_disk_controls, row++, 1, 1, 1 );
    analysisLayout->addWidget( pb_view,       row,   0, 1, 1 );
    analysisLayout->addWidget( pb_save,       row++, 1, 1, 1 );
 
@@ -333,6 +341,10 @@ void US_AnalysisBase2::update( int selection )
    bool    bufin  = US_SolutionVals::values( dbP, d, solID, svbar, bdens,
                                              bvisc, bcomp, bmanu, errmsg );
 
+   qDebug() << "[US_AnalysisBase2][DBG] update: selection" << selection << "runID" << runID << "SolVals ok" << bufin
+            << "db" << ( dbP != nullptr ) << "invID" << inv_ID() << "solID" << solID << "dataGUID" << d->dataGUID
+            << "dens" << bdens << "visc" << bvisc << "cvbar20" << svbar << "manual" << bmanu << "\n" << errmsg;
+
    if ( bufin )
    {
       buffLoaded  = false;
@@ -344,6 +356,8 @@ void US_AnalysisBase2::update( int selection )
       manual      = ( !bmanu.isEmpty()  &&  bmanu == "1" );
       buffLoaded  = true;
       solution_rec.buffer.manual = manual;
+      int     solstat            = IUS_DB2::OK;
+      QString solerr; // Used when the status alone does not say why the read failed
 
       if ( solID.isEmpty() )
       {
@@ -353,17 +367,35 @@ void US_AnalysisBase2::update( int selection )
 
       else if ( solID.length() < 36  &&  dbP != nullptr )
       {  // Have DB solution ID
-         solution_rec.readFromDB( solID.toInt(), dbP );
+         solstat = solution_rec.readFromDB( solID.toInt(), dbP );
+         solerr  = dbP->lastError();
       }
 
       else
       {  // Have Local solution GUID
-         solution_rec.readFromDisk( solID );
+         solstat = solution_rec.readFromDisk( solID );
+         solerr  = tr( "the solution file could not be read" );
       }
 
-      le_solution ->setText( solution_rec.solutionDesc );
-      vbar         = US_Math2::calcCommonVbar( solution_rec, 20.0 );
-      svbar        = QString::number( vbar );
+      if ( solstat == IUS_DB2::OK )
+      {
+         le_solution->setText( solution_rec.solutionDesc );
+         vbar  = US_Math2::calcCommonVbar( solution_rec, 20.0 );
+         svbar = QString::number( vbar );
+      }
+      else
+      { // The cleared solution has no analytes, so later vbar calculations use the default
+         QMessageBox::warning( this,
+                               tr( "Solution/Buffer Values Fetch" ),
+                               tr( "Solution %1 could not be read:\n%2\n"
+                                   "The default vbar, %3, is used." )
+                                  .arg( solID, US_Solution::readErrorText( solstat, solerr ) )
+                                  .arg( TYPICAL_VBAR ) );
+         vbar                      = TYPICAL_VBAR;
+         svbar                     = QString::number( vbar );
+         solution_rec.commonVbar20 = vbar;
+         le_solution->setText( tr( "( ***Undefined*** )" ) );
+      }
       le_vbar     ->setText( svbar );
    }
 
@@ -384,7 +416,7 @@ void US_AnalysisBase2::update( int selection )
      int         idExp  = 0;
      query << "get_experiment_info_by_runID"
            << runID
-           << QString::number( US_Settings::us_inv_ID() );
+           << QString::number( inv_ID() );
      dbP->query( query );
 
      if ( dbP->lastErrno() == US_DB2::OK )
@@ -459,12 +491,7 @@ void US_AnalysisBase2::update( int selection )
 
    if ( need_tsfile )
      {
-       QString temp_Id_name = ( "p" + QString::number( getpid() ) + "t" +
-            QDateTime::currentDateTime().toUTC().toString( "yyMMddhhmmss" ) );
-       QString tmp_tmst_fpath = US_Settings::tmpDir() + "/" + temp_Id_name + ".time_state.tmst";
-       US_AstfemMath::writetimestate( tmp_tmst_fpath, simulationParameters, sdata );
-
-       simulationParameters.simSpeedsFromTimeState( tmp_tmst_fpath );
+        US_AstfemMath::timestate_from_speedsteps( simulationParameters, sdata );
      }
 
    // Compute speed steps from sim speed profile
@@ -1493,7 +1520,7 @@ void US_AnalysisBase2::get_solution()
       US_Passwd pw;
       US_DB2 db( pw.getPasswd() );
       QStringList query( "get_experiment_info_by_runID" );
-      query << l_runID << QString::number( US_Settings::us_inv_ID() );
+      query << l_runID << QString::number( inv_ID() );
       db.query( query );
       if ( db.lastErrno() != US_DB2::NOROWS )
       {
@@ -1673,7 +1700,7 @@ bool US_AnalysisBase2::has_intensity_profile( const QString& run_id,
       US_DB2 db( pw.getPasswd() );
       QStringList query;
       query << "get_experiment_info_by_runID" << run_id
-            << QString::number( US_Settings::us_inv_ID() );
+            << QString::number( inv_ID() );
       db.query( query );
       if ( db.lastErrno() == US_DB2::NOROWS )
          return false;                      // No DB records means no profile

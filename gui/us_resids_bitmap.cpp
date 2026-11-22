@@ -20,6 +20,8 @@ US_ResidsBitmap::US_ResidsBitmap( QVector< QVector< double > >& resids,
    main->setContentsMargins( 2, 2, 2, 2 );
 
    lb_bitmap         = new QLabel();      // will draw to a label
+   lb_bitmap->setAccessibleName( tr( "Residuals Pixel Map" ) );
+   lb_bitmap->setAccessibleDescription( tr( "Color-coded image; not navigable by coordinate." ) );
 
    main->addWidget( lb_bitmap );
 

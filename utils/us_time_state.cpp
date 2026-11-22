@@ -945,12 +945,10 @@ DbgLv(1) << "dbCreate: dbP fn ck" << dbP << tmst_fname << tmst_cksm;
 
    QByteArray defs_da = xfi.readAll();
    xfi.close();
-   QString idTmst     = QString::number( tmstID  );
    QString idExp      = QString::number( expID );
    QString fnamedb;
    QString xdefs;
    QString cksumdb;
-   QByteArray defs_ld;
    tmstID             = 0;
    int expIDdb        = expID;
  
@@ -970,12 +968,14 @@ DbgLv(1) << "dbCreate: dbP fn ck" << dbP << tmst_fname << tmst_cksm;
          if ( tmstID > 0  &&  cksumxd == defs_cksm )
          {  // Xml definitions characters also match, return with existing DB
             if ( fnamedb != tmst_fname )
-            {  // If the file name differs, we must update the record
-               dbP->mysqlEscapeString( defs_ld, defs_da, defs_da.size() );
+            { // If the file name differs, we must update the record
                query.clear();
-               query << "update_timestate" << idTmst << idExp
-                     << tmst_fname << defs_ld;
-               dbP->statusQuery( query );
+               query << "update_timestate" << QString::number( tmstID ) << idExp << tmst_fname << defs_da;
+
+               if ( dbP->statusQuery( query ) != IUS_DB2::OK )
+               {
+                  return -4;
+               }
             }
 
             return tmstID;
@@ -983,16 +983,20 @@ DbgLv(1) << "dbCreate: dbP fn ck" << dbP << tmst_fname << tmst_cksm;
       }
 
       // Not a complete match, so we must delete the DB record and re-create it
-      if ( tmstID > 0 )
+      if ( tmstID > 0 && dbDelete( dbP, tmstID ) != IUS_DB2::OK )
       {
-         dbDelete( dbP, tmstID );
+         return -4;
       }
    }
 
-   // Escape definitions xml string, then create a new DB record
-   dbP->mysqlEscapeString( defs_ld, defs_da, defs_da.size() );
+   else if ( stat != IUS_DB2::NOROWS )
+   {
+      return -4; // Cannot tell whether a record already exists
+   }
+
+   // The definitions are passed raw: the query layer escapes every argument.
    query.clear();
-   query << "new_timestate" << idExp << tmst_fname << defs_ld;
+   query << "new_timestate" << idExp << tmst_fname << defs_da;
    stat         = dbP->statusQuery( query );
    int nsrtID   = dbP->lastInsertID();
    tmstID       = ( stat == IUS_DB2::OK  ||  stat == IUS_DB2::NOROWS )
@@ -1038,8 +1042,11 @@ DbgLv(1) << "dbExamine:  get_timestate tmstID" << tmstID << "status" << status;
       if ( status != IUS_DB2::OK )
          return status;
 
-//int nrows=dbP->numRows();
-      dbP->next();
+      if ( !dbP->next() )
+      {
+         return IUS_DB2::NOROWS;
+      }
+
       expID         = dbP->value( 0 ).toString().toInt();
 //DbgLv(1) << "dbExamine:  get_timestate expID" << expID << "nrows" << nrows;
       if ( expIdP != NULL )
@@ -1061,16 +1068,13 @@ DbgLv(1) << "dbExamine:  get_experiment_timestate expID status" << expID << stat
       if ( status != IUS_DB2::OK )
          return status;
 
-//int nrows=dbP->numRows();
-//DbgLv(1) << "dbExamine:  get_experiment_timestate  nrows" << nrows;
-      dbP->next();
-//bool havenx=dbP->next();
-      status        = dbP->lastErrno();
-//DbgLv(1) << "dbExamine:  get_experiment_timestate  next status" << status
-// << "have_next" << havenx;
+      if ( !dbP->next() )
+      {
+         return IUS_DB2::NOROWS;
+      }
+
       tmstID        = dbP->value( 0 ).toString().toInt();
-DbgLv(1) << "dbExamine:  get_experiment_timestate   tmstID" << tmstID
- << dbP->value(0).toString() << dbP->value(1).toString();
+      DbgLv( 1 ) << "dbExamine:  get_experiment_timestate   tmstID" << tmstID;
       if ( tmstIdP != NULL )
          *tmstIdP      = tmstID;
    }
@@ -1188,6 +1192,12 @@ DbgLv(1) << "dbSTLF:  NEEDF=" << needF;
    {  // We need a (new) local file copy
       int stat    = dbDownload( dbP, tmstID, fpath );
       newfile     = ( stat == IUS_DB2::OK );
+
+      if ( !newfile )
+      {
+         return newfile;
+      }
+
       QString xfpath = QString( fpath ).replace( ".tmst", ".xml" );
 
       // Write the xdefs xml sibling file

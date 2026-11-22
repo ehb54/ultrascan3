@@ -69,6 +69,33 @@ class US_UTIL_EXTERN US_Settings
     //! \brief Get the base directory in which ./bin apps reside
     static QString     appBaseDir();
 
+    //! \brief Locate the Qt Assistant executable used for help.
+    //!
+    //! Uses Assistant bundled in appBaseDir()/bin when present; otherwise
+    //! the Qt installation this program is linked against.
+    //! \param error If non-null, receives the reason when no path is returned.
+    //! \param searched If non-null, receives every location examined.
+    //! \return The executable path, or an empty string on failure.
+    static QString            assistantPath( QString* error = nullptr, QStringList* searched = nullptr );
+
+    //! \brief Resolve Qt Assistant from explicit directories.
+    //!
+    //! Bundled directories are examined first. A bundled candidate that
+    //! exists but is not an executable file is an error; the Qt directories
+    //! are then not searched.
+    static QString            resolveAssistant( const QStringList& bundledDirs,
+                                                const QStringList& qtDirs,
+                                                QString*           error    = nullptr,
+                                                QStringList*       searched = nullptr );
+
+    //! \brief Assistant executable paths relative to a directory, in
+    //! preference order, for this platform.
+    static QStringList        assistantNames();
+
+    //! \brief Existing directories of the linked Qt installation searched
+    //! for Assistant.
+    static QStringList        assistantQtDirs();
+
     //! \brief Get work base directory for archive,results,reports.etc
     static QString     workBaseDir();
     //! \brief Set the work base directory for archive,results,reports.etc
@@ -107,6 +134,17 @@ class US_UTIL_EXTERN US_Settings
     static int         default_data_location( void );
     //! \brief Set the default data  setting
     static void        set_default_data_location( int );
+
+    //! \brief Override the default data location for this process only,
+    //! without persisting it. Takes precedence over the stored setting;
+    //! lets concurrent headless runs use --no-db without racing on or
+    //! permanently changing the user's stored setting.
+    static void               set_default_data_location_override( int );
+    //! \brief Clear the process-only default data location override.
+    static void               clear_default_data_location_override( void );
+
+    //! Return the process-only override, or -1 when no override is active.
+    static int                default_data_location_override( void );
 
     //! \brief Get the US_Debug setting
     static int         us_debug( void );
@@ -176,7 +214,7 @@ class US_UTIL_EXTERN US_Settings
     //! \brief Set the current stored database connection description
     static void        set_def_xpn_host( const QStringList& );
 
-    // DA status
+    // DA status: accept only COM:0/1 or ACAD:0/1; ignore malformed updates.
     static void set_DA_status( const QString& );
     static bool get_DA_status( const QString& );
 

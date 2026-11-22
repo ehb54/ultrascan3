@@ -477,14 +477,6 @@ void US_Hydrodyn_Mals_Saxs::adjust_wheel( double pos )
          {
             offset_q[ i ] += pos;
          }
-#if QT_VERSION < 0x040000
-         plot_dist->setCurveData( wheel_curve, 
-                                  /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
-                                  (double *)&( offset_q[ 0 ] ),
-                                  (double *)&( f_Is[ wheel_file ][ 0 ] ),
-                                  offset_q.size()
-                                  );
-#else
          wheel_curve->setSamples(
                               /* cb_guinier->isChecked() ?
                                  (double *)&(plotted_q2[p][0]) : */
@@ -492,7 +484,6 @@ void US_Hydrodyn_Mals_Saxs::adjust_wheel( double pos )
                               (double *)&( f_Is[ wheel_file ][ 0 ] ),
                               offset_q.size()
                               );
-#endif
          if ( !suppress_replot )
          {
             plot_dist->replot();
@@ -569,11 +560,7 @@ void US_Hydrodyn_Mals_Saxs::wheel_cancel( bool from_wheel_save )
          if ( plotted_curves.count( wheel_file ) &&
               f_pos.count( wheel_file ) )
          {
-#if QT_VERSION < 0x040000
-            plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size()], use_line_width, SolidLine));
-#else
             plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
-#endif
          }
       } 
       break;
@@ -588,11 +575,7 @@ void US_Hydrodyn_Mals_Saxs::wheel_cancel( bool from_wheel_save )
          gauss_delete_markers();
          for ( unsigned int i = 0; i < ( unsigned int ) plotted_wyatt.size(); i++ )
          {
-#if QT_VERSION < 0x040000
-            plot_dist->removeCurve( plotted_wyatt[ i ] );
-#else
             plotted_wyatt[ i ]->detach();
-#endif
          }
          //          if ( plotted_curves.count( wheel_file ) &&
          //               f_pos.count( wheel_file ) )
@@ -680,11 +663,7 @@ void US_Hydrodyn_Mals_Saxs::wheel_cancel( bool from_wheel_save )
          if ( plotted_curves.count( wheel_file ) &&
               f_pos.count( wheel_file ) )
          {
-#if QT_VERSION < 0x040000
-            plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size()], use_line_width, SolidLine));
-#else
             plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
-#endif
          }
       }
       break;
@@ -692,14 +671,6 @@ void US_Hydrodyn_Mals_Saxs::wheel_cancel( bool from_wheel_save )
    case MODE_TIMESHIFT :
       {
          lbl_wheel_pos->setText( QString( "%1" ).arg( 0 ) );
-#if QT_VERSION < 0x040000
-         plot_dist->setCurveData( wheel_curve, 
-                                  /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
-                                  (double *)&( f_qs[ wheel_file ][ 0 ] ),
-                                  (double *)&( f_Is[ wheel_file ][ 0 ] ),
-                                  f_qs[ wheel_file ].size()
-                                  );
-#else
          wheel_curve->setSamples(
                               /* cb_guinier->isChecked() ?
                                  (double *)&(plotted_q2[p][0]) : */
@@ -707,7 +678,6 @@ void US_Hydrodyn_Mals_Saxs::wheel_cancel( bool from_wheel_save )
                               (double *)&( f_Is[ wheel_file ][ 0 ] ),
                               f_qs[ wheel_file ].size()
                               );
-#endif
       }
       break;
 
@@ -747,11 +717,7 @@ void US_Hydrodyn_Mals_Saxs::wheel_cancel( bool from_wheel_save )
 
          for ( int i = 0; i < (int) rb_testiq_gaussians.size(); ++i )
          {
-#if QT_VERSION < 0x040000
             hbl_testiq_gaussians->removeWidget( rb_testiq_gaussians[ i ] );
-#else
-            hbl_testiq_gaussians->removeWidget( rb_testiq_gaussians[ i ] );
-#endif
             delete rb_testiq_gaussians[ i ];
          }
          rb_testiq_gaussians.clear( );

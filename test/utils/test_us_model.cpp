@@ -1,37 +1,26 @@
 #include "qt_test_base.h"
-#include "us_model.h"
-#include "mock_us_db2.h"
 #include "us_constants.h"
+#include "us_model.h"
 #include <QTemporaryDir>
 #include <QTextStream>
 #include <QXmlStreamWriter>
 
-using ::testing::_;
-using ::testing::Return;
-using ::testing::SetArgReferee;
-using ::testing::DoAll;
-using ::testing::NiceMock;
-using ::testing::StrictMock;
-using ::testing::TypedEq;
 using ::qt_matchers::QStringContains;
 using ::qt_matchers::QStringEq;
 
 class US_ModelTest : public QtTestBase {
 protected:
     void SetUp() override {
-        QtTestBase::SetUp();
-        model = std::make_unique<US_Model>();
-        mockDb = std::make_unique<NiceMock<US_DB2_Mock>>();
+       ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+       model = std::make_unique<US_Model>();
     }
 
     void TearDown() override {
-        model.reset();
-        mockDb.reset();
-        QtTestBase::TearDown();
+       model.reset();
+       QtTestBase::TearDown();
     }
 
-    std::unique_ptr<US_Model> model;
-    std::unique_ptr<NiceMock<US_DB2_Mock>> mockDb;
+    std::unique_ptr<US_Model>     model;
 
     // Helper to create valid simulation component
     US_Model::SimulationComponent createValidComponent() {
@@ -59,21 +48,19 @@ protected:
 
     // Helper to create XML content for testing
     QString createTestModelXml() {
-        return QString(
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                "<!DOCTYPE US_Model>\n"
-                "<ModelData version=\"1.0\">\n"
-                "<model description=\"Test Model\" modelGUID=\"test-guid-123\" "
-                "editGUID=\"edit-guid-456\" wavelength=\"280.0\" "
-                "opticsType=\"0\" analysisType=\"1\" globalType=\"0\" "
-                "coSedSolute=\"-1\" subGrids=\"0\">\n"
-                "<analyte name=\"Component1\" mw=\"50000\" s=\"2.5e-13\" "
-                "D=\"1e-11\" f=\"1\" f_f0=\"1.25\" vbar20=\"0.73\" "
-                "extinction=\"0\" axial=\"10\" sigma=\"0\" delta=\"0\" "
-                "oligomer=\"1\" shape=\"0\" type=\"0\" molar=\"0\" signal=\"1\" />\n"
-                "</model>\n"
-                "</ModelData>\n"
-        );
+       return QString( "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                       "<!DOCTYPE US_Model>\n"
+                       "<ModelData version=\"1.0\">\n"
+                       "<model description=\"Test Model\" modelGUID=\"test-guid-123\" "
+                       "editGUID=\"edit-guid-456\" wavelength=\"280.0\" "
+                       "opticsType=\"0\" analysisType=\"1\" globalType=\"0\" "
+                       "coSedSolute=\"-1\">\n"
+                       "<analyte name=\"Component1\" mw=\"50000\" s=\"2.5e-13\" "
+                       "D=\"1e-11\" f=\"1\" f_f0=\"1.25\" vbar20=\"0.73\" "
+                       "extinction=\"0\" axial=\"10\" sigma=\"0\" delta=\"0\" "
+                       "oligomer=\"1\" shape=\"0\" type=\"0\" molar=\"0\" signal=\"1\" />\n"
+                       "</model>\n"
+                       "</ModelData>\n" );
     }
 };
 
@@ -85,7 +72,7 @@ EXPECT_EQ(model->variance, 0.0);
 EXPECT_EQ(model->meniscus, 0.0);
 EXPECT_EQ(model->bottom, 0.0);
 EXPECT_EQ(model->alphaRP, 0.0);
-EXPECT_EQ(model->subGrids, 0);
+EXPECT_EQ( model->subGrids, 1 );
 EXPECT_THAT(model->description, QStringEq("New Model"));
 EXPECT_EQ(model->optics, US_Model::ABSORBANCE);
 EXPECT_EQ(model->analysis, US_Model::MANUAL);

@@ -15,16 +15,6 @@
 */
 
 //! \note All spacing values are in pixel units.
-#define spacing        5 //!< Spacing between widgets.
-#define commaWidth    10 //!< Spacing for a simple comma.
-#define buttonw      180 //!< Width of each pushbutton.
-#define full_buttonw 610 //!< Width of large line edit widgets.
-#define half_buttonw 295 //!< Width of small line edit widgets.
-#define pushbutton   156 //!< Width of pushbuttons on bottom row.
-#define rowHeight     26 //!< Height of each row of widgets.
-#define smallColumn   90 //!< Width of a small column
-#define mediumColumn 110 //!< Width of a medium column
-#define codeWidth     60 //!< Width of license code line edit widgets
 
 class US_GUI_EXTERN US_License : public US_Widgets
 {
@@ -44,8 +34,18 @@ class US_GUI_EXTERN US_License : public US_Widgets
 
     //! \brief A null destructor.
     ~US_License() {};
-  
-  private:
+    static constexpr int spacing{ 5 };        //!< Spacing between widgets.
+    static constexpr int commaWidth{ 10 };    //!< Spacing for a simple comma.
+    static constexpr int buttonw{ 180 };      //!< Width of each pushbutton.
+    static constexpr int full_buttonw{ 610 }; //!< Width of large line edit widgets.
+    static constexpr int half_buttonw{ 295 }; //!< Width of small line edit widgets.
+    static constexpr int pushbutton{ 156 };   //!< Width of pushbuttons on bottom row.
+    static constexpr int rowHeight{ 26 };     //!< Height of each row of widgets.
+    static constexpr int smallColumn{ 90 };   //!< Width of a small column
+    static constexpr int mediumColumn{ 110 }; //!< Width of a medium column
+    static constexpr int codeWidth{ 60 };     //!< Width of license code line edit widgets
+
+ private:
     QPushButton* pb_cancel;
     QPushButton* pb_save;
     QPushButton* pb_help;

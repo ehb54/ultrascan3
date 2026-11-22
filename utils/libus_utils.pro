@@ -61,7 +61,14 @@ HEADERS      = us_ana_profile.h   \
                us_rotor.h         \
                us_run_protocol.h  \
                us_settings.h      \
+               us_sim_cli.h       \
+               us_sim_inputs.h    \
+               us_sim_optics.h    \
+               us_sim_record.h    \
+               us_sim_schedule.h  \
+               us_sim_species.h   \
                us_simparms.h      \
+               us_sim_cache.h     \
                us_solute.h        \
                us_solution.h      \
                us_solution_vals.h \
@@ -75,8 +82,8 @@ HEADERS      = us_ana_profile.h   \
                us_vector.h        \
                us_xpn_data.h      \
                us_zsolute.h       \
-               us_utils_qt.h
-
+               us_utils_qt.h      
+         
 SOURCES      = us_ana_profile.cpp   \
                us_analyte.cpp       \
                us_archive.cpp       \
@@ -118,7 +125,14 @@ SOURCES      = us_ana_profile.cpp   \
                us_rotor.cpp         \
                us_run_protocol.cpp  \
                us_settings.cpp      \
+               us_sim_cli.cpp       \
+               us_sim_inputs.cpp    \
+               us_sim_optics.cpp    \
+               us_sim_record.cpp    \
+               us_sim_schedule.cpp  \
+               us_sim_species.cpp   \
                us_simparms.cpp      \
+               us_sim_cache.cpp     \
                us_solute.cpp        \
                us_solution.cpp      \
                us_solution_vals.cpp \
@@ -132,6 +146,10 @@ SOURCES      = us_ana_profile.cpp   \
                us_vector.cpp        \
                us_xpn_data.cpp      \
                us_zsolute.cpp
+
+# The calculations shared by the programs (namespace US_Calc, QtCore only)
+HEADERS      += $$files(us_calc_*.h)
+SOURCES      += $$files(us_calc_*.cpp)
 
 # Only include us_crypto when not on a supercomputer
 

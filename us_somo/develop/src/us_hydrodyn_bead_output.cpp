@@ -41,50 +41,6 @@ void US_Hydrodyn_Bead_Output::setupGUI()
    AUTFBACK( lbl_info );
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-#if QT_VERSION < 0x040000
-   bg_output = new QGroupBox(4, Qt::Horizontal, "Output Format:", this);
-   bg_output->setExclusive(false);
-   connect(bg_output, SIGNAL(clicked(int)), this, SLOT(select_output(int)));
-
-   cb_somo_output = new QCheckBox(bg_output);
-   cb_somo_output->setText(us_tr(" SOMO "));
-   cb_somo_output->setEnabled(true);
-   cb_somo_output->setChecked((*bead_output).output & US_HYDRODYN_OUTPUT_SOMO);
-   cb_somo_output->setMinimumHeight(minHeight1);
-   cb_somo_output->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_somo_output->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_somo_output );
-
-   cb_beams_output = new QCheckBox(bg_output);
-   cb_beams_output->setText(us_tr(" BEAMS "));
-   cb_beams_output->setEnabled(true);
-   cb_beams_output->setChecked((*bead_output).output & US_HYDRODYN_OUTPUT_BEAMS);
-   cb_beams_output->setMinimumHeight(minHeight1);
-   cb_beams_output->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_beams_output->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_beams_output );
-
-   cb_hydro_output = new QCheckBox(bg_output);
-   cb_hydro_output->setText(us_tr(" HYDRO "));
-   cb_hydro_output->setEnabled(true);
-   cb_hydro_output->setChecked((*bead_output).output & US_HYDRODYN_OUTPUT_HYDRO);
-   cb_hydro_output->setMinimumHeight(minHeight1);
-   cb_hydro_output->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_hydro_output->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_hydro_output );
-
-   cb_grpy_output = new QCheckBox(bg_output);
-   cb_grpy_output->setText(us_tr(" GRPY "));
-   cb_grpy_output->setEnabled(true);
-   cb_grpy_output->setChecked((*bead_output).output & US_HYDRODYN_OUTPUT_GRPY);
-   cb_grpy_output->setMinimumHeight(minHeight1);
-   cb_grpy_output->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_grpy_output->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_grpy_output );
-   cb_grpy_output->hide();
-
-   // bg_output->setButton((*bead_output).output);
-#else
    bg_output = new QGroupBox( "Output Format:" );
 
    cb_somo_output = new QCheckBox();
@@ -137,31 +93,7 @@ void US_Hydrodyn_Bead_Output::setupGUI()
       bg_output->setLayout( bl );
    }
       
-#endif
 
-#if QT_VERSION < 0x040000
-   bg_sequence = new QGroupBox(2, Qt::Vertical, "Bead Sequence Format:", this);
-   bg_sequence->setExclusive(true);
-   connect(bg_sequence, SIGNAL(clicked(int)), this, SLOT(select_sequence(int)));
-
-   cb_pdb_sequence = new QCheckBox(bg_sequence);
-   cb_pdb_sequence->setText(us_tr(" as in original PDB  "));
-   cb_pdb_sequence->setEnabled(true);
-   cb_pdb_sequence->setMinimumHeight(minHeight1);
-   cb_pdb_sequence->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_pdb_sequence->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_pdb_sequence );
-
-   cb_chain_sequence = new QCheckBox(bg_sequence);
-   cb_chain_sequence->setText(us_tr(" exposed side chain -> exposed main chain -> buried "));
-   cb_chain_sequence->setEnabled(true);
-   cb_chain_sequence->setMinimumHeight(minHeight1);
-   cb_chain_sequence->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_chain_sequence->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_chain_sequence );
-
-   bg_sequence->setButton((*bead_output).sequence);
-#else
    bg_sequence = new QGroupBox( "Bead Sequence Format:" );
 
    rb_pdb_sequence = new QRadioButton();
@@ -194,29 +126,7 @@ void US_Hydrodyn_Bead_Output::setupGUI()
    case 1 : rb_chain_sequence->setChecked( true ); break;
    default : qDebug() << "bead output sequence switch error"; break;
    }
-#endif
 
-#if QT_VERSION < 0x040000
-   bg_beams = new QGroupBox(1, Qt::Vertical, "BEAMS Format:", this);
-   
-   cb_correspondence = new QCheckBox( bg_beams );
-   cb_correspondence->setText(us_tr(" include bead - original residue correspondence "));
-   if((*bead_output).output & US_HYDRODYN_OUTPUT_BEAMS)
-   {
-      cb_correspondence->setEnabled(true);
-   }
-   else
-   {
-      cb_correspondence->setEnabled(false);
-   }
-   cb_correspondence->setChecked((*bead_output).correspondence);
-   cb_correspondence->setMinimumHeight(minHeight1);
-   cb_correspondence->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_correspondence->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_correspondence );
-   connect(cb_correspondence, SIGNAL(clicked()), this, SLOT(select_correspondence()));
-
-#else
    bg_beams = new QGroupBox( "BEAMS Format:" );
    
    cb_correspondence = new QCheckBox();
@@ -241,7 +151,6 @@ void US_Hydrodyn_Bead_Output::setupGUI()
       bl->addWidget( cb_correspondence );
       bg_beams->setLayout( bl );
    }
-#endif
 
    pb_cancel = new QPushButton(us_tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);

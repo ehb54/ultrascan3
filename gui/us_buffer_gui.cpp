@@ -56,13 +56,25 @@ US_BufferGuiSelect::US_BufferGuiSelect( int *invID, int *select_db_disk,
    QLabel* lb_compressib = us_label( tr( "Compressibility:" ) );
 
    le_search             = us_lineedit();
+   le_search->setAccessibleName( tr( "Search" ) );
+   lb_search->setBuddy( le_search );
    le_density            = us_lineedit();
+   le_density->setAccessibleName( tr( "Density" ) );
+   lb_density->setBuddy( le_density );
    le_ph                 = us_lineedit( "7.0000" );
+   le_ph->setAccessibleName( tr( "pH" ) );
+   lb_ph->setBuddy( le_ph );
    le_viscosity          = us_lineedit();
+   le_viscosity->setAccessibleName( tr( "Viscosity" ) );
+   lb_viscosity->setBuddy( le_viscosity );
    le_compressib         = us_lineedit();
+   le_compressib->setAccessibleName( tr( "Compressibility" ) );
+   lb_compressib->setBuddy( le_compressib );
 
    lw_buffer_list        = us_listwidget();
+   lw_buffer_list->setAccessibleName( tr( "Buffers" ) );
    lw_buffer_comps       = us_listwidget();
+   lw_buffer_comps->setAccessibleName( tr( "Buffer Components" ) );
 
    QLabel* lb_temperature = us_label( tr( "Temperature:" ) );
    lb_temperature->setAlignment(Qt::AlignLeft);
@@ -158,7 +170,10 @@ bool US_BufferGuiSelect::load_buffer(const QString& load_init, US_Buffer& buffer
       if (bufferIDs[i] == load_init || GUIDs[i] == load_init ) {
          // found the matching buffer, let's load it
          if ( from_db ) {
-            read_from_db(bufferIDs[i]);
+            if ( !read_from_db( bufferIDs[i] ) )
+            {
+               return false;
+            }
             buffer = *(this->buffer);
          } else {
             buffer.readFromDisk(filenames[i]);
@@ -192,7 +207,14 @@ else
 DbgLv(1) << "BufS:  selbuf: ROW" << lw_buffer_list->currentRow();
 
    QListWidgetItem *item = lw_buffer_list->currentItem();
-   if ( from_db ) read_from_db  ( item );
+   if ( from_db )
+   {
+      if ( !read_from_db( item ) )
+      {
+         reset();
+         return;
+      }
+   }
    else           read_from_disk( item );
 
    // Write values to screen
@@ -232,7 +254,14 @@ DbgLv(0) << "MwDa: dbg_level" << dbg_level;
 void US_BufferGuiSelect::select_buffer( QListWidgetItem *tmp_item )
 {
    QListWidgetItem *item = tmp_item;
-   if ( from_db )  read_from_db  ( item );
+   if ( from_db )
+   {
+      if ( !read_from_db( item ) )
+      {
+         reset();
+         return;
+      }
+   }
    else            read_from_disk( item );
 
    // Write values to screen
@@ -289,16 +318,17 @@ DbgLv(1) << "row: " << row << " buf: "  << buf;
 }
 
 // Read buffer information from the database (by buffer list item)
-void US_BufferGuiSelect::read_from_db( QListWidgetItem* item )
+bool US_BufferGuiSelect::read_from_db( QListWidgetItem* item )
 {
    int row = lw_buffer_list->row( item );
    QString bufferID = buffer_metadata[ row ].bufferID;
-DbgLv(1) << "BufS-rddb-item  row" << row << "bufID" << bufferID;
-   read_from_db( bufferID );
+   DbgLv( 1 ) << "BufS-rddb-item  row" << row << "bufID" << bufferID;
+   return read_from_db( bufferID );
 }
 
-// Read buffer information from the database (by buffer ID)
-void US_BufferGuiSelect::read_from_db( const QString& bufferID )
+// Read buffer information from the database (by buffer ID). On failure the user is told
+// and the buffer is unchanged.
+bool US_BufferGuiSelect::read_from_db( const QString& bufferID )
 {
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
@@ -307,16 +337,26 @@ void US_BufferGuiSelect::read_from_db( const QString& bufferID )
    if ( db.lastErrno() != IUS_DB2::OK )
    {
       connect_error( db.lastError() );
-      return;
+      return false;
    }
 
-   buffer->extinction.clear();
-DbgLv(1) << "BufS-rddb-bfid  bufID" << bufferID;
-   buffer->readFromDB( &db, bufferID );
-if(buffer->component.size()>0)
-DbgLv(1) << "BufS-rddb-bfid   comp0 nm,rng,un,id" << buffer->component[0].name
- << buffer->component[0].range << buffer->component[0].unit
- << buffer->component[0].componentID;
+   DbgLv( 1 ) << "BufS-rddb-bfid  bufID" << bufferID;
+   if ( !buffer->readFromDB( &db, bufferID ) )
+   {
+      QMessageBox::warning(
+         this,
+         tr( "Buffer Not Loaded" ),
+         tr( "Buffer %1 could not be read from the database:\n%2" )
+            .arg( bufferID,
+                  db.lastError().isEmpty() ? tr( "the buffer or one of its components was not found" ) : db.lastError() ) );
+      return false;
+   }
+   if ( buffer->component.size() > 0 )
+   {
+      DbgLv( 1 ) << "BufS-rddb-bfid   comp0 nm,rng,un,id" << buffer->component[0].name << buffer->component[0].range
+                 << buffer->component[0].unit << buffer->component[0].componentID;
+   }
+   return true;
 }
 
 // Accept the currently selected buffer
@@ -986,14 +1026,27 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
    lo_temp->addWidget(pb_temp20C);
 
    le_descrip          = us_lineedit( "" );
+   le_descrip->setAccessibleName( tr( "Description" ) );
+   lb_descrip->setBuddy( le_descrip );
    le_concen           = us_lineedit( "" );
+   le_concen->setAccessibleName( tr( "Component Concentration" ) );
    le_density          = us_lineedit( "" );
+   le_density->setAccessibleName( tr( "Density" ) );
+   lb_density->setBuddy( le_density );
    le_viscos           = us_lineedit( "" );
+   le_viscos->setAccessibleName( tr( "Viscosity" ) );
+   lb_viscos->setBuddy( le_viscos );
    le_ph               = us_lineedit( "7.0000" );
+   le_ph->setAccessibleName( tr( "pH" ) );
+   lb_ph->setBuddy( le_ph );
    le_compress         = us_lineedit( "0.0000e+0" );
+   le_compress->setAccessibleName( tr( "Compressibility" ) );
+   lb_compress->setBuddy( le_compress );
 
    lw_allcomps         = us_listwidget();
+   lw_allcomps->setAccessibleName( tr( "Available Components" ) );
    lw_bufcomps         = us_listwidget();
+   lw_bufcomps->setAccessibleName( tr( "Buffer Components" ) );
 
 
    QPalette upal       = lb_bselect->palette();
@@ -1340,16 +1393,36 @@ void US_BufferGuiNew::create_new_buffer_component() {
    US_BufferComponentRequerster* bcomp_dialog = new US_BufferComponentRequerster(&bc,component_list);
    bcomp_dialog -> exec();
    qApp->processEvents();
-   if (!bc.name.isEmpty())return;
-   bc.saveToDB(&db);
+   // Cancel clears the name; save only an accepted component.
+   if ( bc.name.isEmpty() )
+   {
+      return;
+   }
+   if ( bc.saveToDB( &db ) < 0 )
+   {
+      QMessageBox::warning(
+         this,
+         tr( "Buffer Component Not Saved" ),
+         tr( "The buffer component \"%1\" could not be saved to the database:\n%2" ).arg( bc.name, db.lastError() ) );
+      return;
+   }
 
-   // update component list
+   // Reload the component list and the $ULTRASCAN3/etc/bufferComponents.xml file; keep both
+   // as they are when the list cannot be read back.
+   QMap<QString, US_BufferComponent> reloaded;
+   QString                           error;
+   if ( !US_BufferComponent::getAllFromDB( pw.getPasswd(), reloaded, &error ) )
+   {
+      QMessageBox::warning( this,
+                            tr( "Buffer Components Not Reloaded" ),
+                            tr( "The buffer component \"%1\" was saved, but the component list could not be "
+                                "read back from the database:\n%2" )
+                               .arg( bc.name, error ) );
+      return;
+   }
+   component_list = reloaded;
+   US_BufferComponent::putAllToHD( component_list );
    lw_allcomps->clear();
-   // update buffer components file
-   //  $ULTRASCAN3/etc/bufferComponents xml file:
-   component_list.clear();
-   US_BufferComponent::getAllFromDB(pw.getPasswd(), component_list);
-   US_BufferComponent::putAllToHD(component_list);
    QStringList keys = component_list.keys();
    std::sort(keys.begin(),keys.end());
 
@@ -1712,7 +1785,12 @@ DbgLv(1) << "BufN:SL: write_db()  bufID" << buffer->bufferID;
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
    int idBuf    = buffer->saveToDB( &db, "1" );
-   buffer->bufferID = QString::number( idBuf );
+   // -5 (profile) and -6 (disk copy) fail after the buffer row is saved; saveToDB
+   // has already set the buffer's real ID, so keep it.
+   if ( idBuf != -5 && idBuf != -6 )
+   {
+      buffer->bufferID = QString::number( idBuf );
+   }
 
    if ( idBuf < 0 )
    {
@@ -1768,7 +1846,9 @@ US_BufferGuiEdit::US_BufferGuiEdit( int *invID, int *select_db_disk,
    QLabel* lb_ph            = us_label( tr( "pH:" ) );
    //QLabel* bn_spacer        = us_banner( "" );
    le_descrip    = us_lineedit( buffer->description );
+   le_descrip->setAccessibleName( tr( "Description" ) );
    le_ph         = us_lineedit( QString::number( buffer->pH, 'f', 4 ) );
+   le_ph->setAccessibleName( tr( "pH" ) );
 
    bn_modbuf->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    //bn_spacer->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
@@ -1967,7 +2047,9 @@ US_BufferGuiSettings::US_BufferGuiSettings( int *invID, int *select_db_disk )
       : "";
 
    le_investigator = us_lineedit( number + US_Settings::us_inv_name() );
+   le_investigator->setAccessibleName( tr( "Investigator" ) );
    le_syncstat     = us_lineedit();
+   le_syncstat->setAccessibleName( tr( "Synchronization Status" ) );
    int idb_or_disk = from_db ? US_Disk_DB_Controls::DB
                              : US_Disk_DB_Controls::Disk;
    disk_controls   = new US_Disk_DB_Controls( idb_or_disk );
@@ -2044,7 +2126,12 @@ DbgLv(1) << "setB:synchc read to HD from DB";
 
    // Read components from DB, write to HD
    component_list.clear();
-   US_BufferComponent::getAllFromDB( pw.getPasswd(), component_list );
+   QString error;
+   if ( !US_BufferComponent::getAllFromDB( pw.getPasswd(), component_list, &error ) )
+   {
+      le_syncstat->setText( tr( "Not synchronized; the database could not be read: %1" ).arg( error ) );
+      return;
+   }
    US_BufferComponent::putAllToHD  ( component_list );
 DbgLv(1) << "setB:synchc   synch complete:  components:"
  << component_list.size();
@@ -2232,21 +2319,37 @@ US_BufferComponentRequerster::US_BufferComponentRequerster(
    lb_visc = us_banner("Viscosity Coefficients");
    lb_dens = us_banner("Density Coefficients");
    le_name = us_lineedit("");
+   le_name->setAccessibleName( tr( "Component Name" ) );
    le_lrange = us_lineedit("");
+   le_lrange->setAccessibleName( tr( "Range Low" ) );
    le_urange = us_lineedit("");
+   le_urange->setAccessibleName( tr( "Range High" ) );
    le_unit = us_lineedit("");
+   le_unit->setAccessibleName( tr( "Unit" ) );
    le_density0 = us_lineedit("");
+   le_density0->setAccessibleName( tr( "Density Coefficient Independent of c" ) );
    le_density1 = us_lineedit("");
+   le_density1->setAccessibleName( tr( "Density Coefficient for sqrt(c) x1E3" ) );
    le_density2 = us_lineedit("");
+   le_density2->setAccessibleName( tr( "Density Coefficient for c x1E2" ) );
    le_density3 = us_lineedit("");
+   le_density3->setAccessibleName( tr( "Density Coefficient for c^2 x1E3" ) );
    le_density4 = us_lineedit("");
+   le_density4->setAccessibleName( tr( "Density Coefficient for c^3 x1E4" ) );
    le_density5 = us_lineedit("");
+   le_density5->setAccessibleName( tr( "Density Coefficient for c^4 x1E6" ) );
    le_viscosity0 = us_lineedit("");
+   le_viscosity0->setAccessibleName( tr( "Viscosity Coefficient Independent of c" ) );
    le_viscosity1 = us_lineedit("");
+   le_viscosity1->setAccessibleName( tr( "Viscosity Coefficient for sqrt(c) x1E3" ) );
    le_viscosity2 = us_lineedit("");
+   le_viscosity2->setAccessibleName( tr( "Viscosity Coefficient for c x1E2" ) );
    le_viscosity3 = us_lineedit("");
+   le_viscosity3->setAccessibleName( tr( "Viscosity Coefficient for c^2 x1E3" ) );
    le_viscosity4 = us_lineedit("");
+   le_viscosity4->setAccessibleName( tr( "Viscosity Coefficient for c^3 x1E4" ) );
    le_viscosity5 = us_lineedit("");
+   le_viscosity5->setAccessibleName( tr( "Viscosity Coefficient for c^4 x1E6" ) );
    QLabel* lb_range3 = us_label(tr("in M"));
    lb_density0 = us_label(tr("Density coefficient independent of c"));
    lb_density1 = us_label(tr("Density coefficient for sqrt(c) *1E3"));
@@ -2260,6 +2363,8 @@ US_BufferComponentRequerster::US_BufferComponentRequerster(
    lb_viscosity3 = us_label(tr("Viscosity coefficient for c<sup>2</sup> *1E3"));
    lb_viscosity4 = us_label(tr("Viscosity coefficient for c<sup>3</sup> *1E4"));
    lb_viscosity5 = us_label(tr("Viscosity coefficient for c<sup>4</sup> *1E6"));
+   lb_name->setBuddy( le_name );
+   lb_unit->setBuddy( le_unit );
    QGridLayout* gfbox   = us_checkbox( tr( "Gradient-Forming" ), ck_gf );
    int row = 0;
    main->addWidget(lb_description, row++, 0, 1, 7);

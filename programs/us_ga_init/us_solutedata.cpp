@@ -1,11 +1,13 @@
 //! \file us_solutedata.cpp
 
 #include "us_solutedata.h"
-#include "us_ga_init.h"
+#include "us_calc_statistics.h"
+#include "us_constants.h"
 #include "us_defines.h"
+#include "us_ga_init.h"
 #include "us_math2.h"
 #include "us_settings.h"
-#include "us_constants.h"
+
 
 // bucket vertex LessThan routine
 bool buck_vx_lessthan( const bucket &buck1, const bucket &buck2 )
@@ -19,7 +21,12 @@ US_SoluteData::US_SoluteData( void ) : QObject()
 {
    bndx      = -1;
    dbg_level = US_Settings::us_debug();
-
+   valid_attrs << US_GA_Initialize::ATTR_S
+               << US_GA_Initialize::ATTR_K
+               << US_GA_Initialize::ATTR_W
+               << US_GA_Initialize::ATTR_V
+               << US_GA_Initialize::ATTR_D
+               << US_GA_Initialize::ATTR_F;
    allbucks.clear();
 }
 
@@ -246,7 +253,7 @@ QSizeF US_SoluteData::bucketSize(  int ix )
 
 QString US_SoluteData::bucketLine( int ix )
 {
-   const QString cts[] = { "s", "ff0", "MW", "vbar", "D", "f" };
+   const QString cts[] = { "s", "ff0", "MW", "vbar", "D", "f", "Rh" };
 
    bucket  buk = bucketAt( ix );
    int     kx  = ( ix < 0 ) ? bucketsCount() : ( ix + 1 );
@@ -657,6 +664,12 @@ else DbgLv(2) << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
 int US_SoluteData::saveGAdata( QString& fname, int xtype, int ytype,
       int ztype, double fixval )
 {
+   if ( !valid_attrs.contains( xtype ) ||
+        !valid_attrs.contains( ytype ) ||
+        !valid_attrs.contains( ztype ) )
+   {
+      return 1;
+   }
    int     rc   = 0;
    int     nbuk = allbucks.size();
    QString line;
@@ -700,55 +713,93 @@ int US_SoluteData::saveGAdata( QString& fname, int xtype, int ytype,
 }
 
 // Read bucket information from file for use by GA
-int US_SoluteData::loadGAdata( QString& fname, int* xtype, int* ytype,
-      int* ztype, double* fixval )
+bool US_SoluteData::loadGAdata( QString& fname, int* xtype, int* ytype,
+                                    int* ztype, double* fixval )
 {
-   int rc       = 0;
-   int nbuk     = allbucks.size();
-   int xt, yt, zt;
-   double fxv   = 0.0;
-   QString line;
-   bucket  buk;
-
-   QFile filei( fname );
-
-   if ( filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   QFile file( fname );
+   if ( !file.open( QIODevice::ReadOnly | QIODevice::Text ) )
    {
-      QTextStream ts( &filei );
+      return false;
+   }
+   QTextStream ts( &file );
+   const QStringList header = ts.readLine().section( '#', 0, 0 ).simplified().split( ' ' );
+   if ( header.size() != 5 )
+   {
+      return false;
+   }
 
-      // Read the header line and get extents
-      line          = ts.readLine();
-      nbuk          = line.section( " ", 0, 0 ).toInt();
-      xt            = line.section( " ", 1, 1 ).toInt();
-      yt            = line.section( " ", 2, 2 ).toInt();
-      zt            = line.section( " ", 3, 3 ).toInt();
-      fxv           = line.section( " ", 4, 4 ).toDouble();
-      int kbuk      = 0;
-      allbucks.clear();
+   bool ok = false;
+   const int count = header[0].toInt( &ok );
+   if ( !ok || count < 0 )
+   {
+      return false;
+   }
 
-      // Loop to read and save each bucket line
-      while ( ! ( line = ts.readLine() ).isEmpty() )
+   int attrs[3];
+   for ( int i = 0; i < 3; ++i )
+   {
+      attrs[i] = header[i + 1].toInt( &ok );
+      if ( !ok || !valid_attrs.contains( attrs[i] ) )
       {
-         buk.x_min     = line.section( ",", 0, 0 ).simplified().toDouble();
-         buk.x_max     = line.section( ",", 1, 1 ).simplified().toDouble();
-         buk.y_min     = line.section( ",", 2, 2 ).simplified().toDouble();
-         buk.y_max     = line.section( ",", 3, 3 ).simplified().toDouble();
+         return false;
+      }
+   }
 
-         allbucks << buk;
-         kbuk++;
+   const double fixed = header[4].toDouble( &ok );
+   if ( !ok || !qIsFinite( fixed ) )
+   {
+      return false;
+   }
+
+   QList<bucket> loaded;
+   while ( !ts.atEnd() )
+   {
+      const QString line = ts.readLine().trimmed();
+      if ( line.isEmpty() )
+      {
+         continue;
       }
 
-      if ( xtype  != NULL )   *xtype  = xt;
-      if ( ytype  != NULL )   *ytype  = yt;
-      if ( ztype  != NULL )   *ztype  = zt;
-      if ( fixval != NULL )   *fixval = fxv;
+      const QStringList fields = line.split( ',' );
+      if ( fields.size() != 4 )
+      {
+         return false;
+      }
 
-      filei.close();
+      double bounds[4];
+      for ( int i = 0; i < 4; ++i )
+      {
+         bounds[i] = fields[i].trimmed().toDouble( &ok );
+         if ( !ok || !qIsFinite( bounds[i] ) )
+         {
+            return false;
+         }
+      }
+
+      if ( bounds[0] >= bounds[1] || bounds[2] >= bounds[3] )
+      {
+         return false;
+      }
+
+      bucket buk;
+      buk.x_min = bounds[0]; buk.x_max = bounds[1];
+      buk.y_min = bounds[2]; buk.y_max = bounds[3];
+      buk.x = ( bounds[0] + bounds[1] ) / 2.0;
+      buk.y = ( bounds[2] + bounds[3] ) / 2.0;
+      loaded.append( buk );
    }
-   else
-      rc    = 1;
 
-   return rc;
+   if ( loaded.size() != count )
+   {
+      return false;
+   }
+   allbucks = loaded;
+   bndx = -1;
+   if ( xtype ) *xtype = attrs[0];
+   if ( ytype ) *ytype = attrs[1];
+   if ( ztype ) *ztype = attrs[2];
+   if ( fixval ) *fixval = fixed;
+   return true;
 }
 
 // build the data lists for Monte Carlo analysis
@@ -1088,193 +1139,32 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
       QList< qreal >& concs, bool details, QString title )
 {
    QString str1;
-   QString str2;
-   int     nvals      = vals.size();
-   int     nbins      = 50;
-   qreal   vsiz       = (qreal)nvals;
-   qreal   binsz      = 50.0;
-   qreal   vlo        = 9.9e30;
-   qreal   vhi        = -9.9e30;
+   QString                           str2;
 
-   QVector< qreal > xpvec( qMax( nvals, nbins ) );
-   QVector< qreal > ypvec( qMax( nvals, nbins ) );
-
-   qreal   *xplot     = xpvec.data();
-   qreal   *yplot     = ypvec.data();
-   qreal   vsum       = 0.0;
-   qreal   vm2        = 0.0;
-   qreal   vm3        = 0.0;
-   qreal   vm4        = 0.0;
-   qreal   vmean;
-   qreal   vctot_square = 0.0;
-   qreal   mode_cen;
-   qreal   mode_lo;
-   qreal   mode_hi;
-   qreal   conf99lo;
-   qreal   conf99hi;
-   qreal   conf95lo;
-   qreal   conf95hi;
-   qreal   skew;
-   qreal   kurto;
-   qreal   vmedi;
-   qreal   slope;
-   qreal   vicep;
-   qreal   sigma;
-   qreal   corr;
-   qreal   sdevi;
-   qreal   sderr;
-   qreal   vari;
-   qreal   area;
-   qreal   bininc;
-   qreal   val;
-   qreal   conc;
-   qreal   vctot = 0.0;
-
-   // get basic min,max,mean information
-
-   for ( int jj = 0; jj < nvals; jj++ )
-   {
-      val       = vals.at( jj );
-      conc      = concs.at( jj );
-      vsum     += ( val * conc );
-      vctot    += conc;
-      vlo       = qMin( vlo, val );
-      vhi       = qMax( vhi, val );
-      xplot[jj] = (qreal)jj;
-      yplot[jj] = val;
-   }
-
-   vmean     = vsum / vctot;
-
-   // get difference information
-
-   for ( int jj = 0; jj < nvals; jj++ )
-   {
-      val       = vals.at( jj );
-      conc      = concs.at( jj );
-      qreal dif = val - vmean;
-      qreal dsq = dif * dif;
-      vm2      += dsq * conc;           // diff squared
-      vm3      += ( dsq * dif ) * conc; // cubed
-      vm4      += ( dsq * dsq ) * conc; // to the 4th
-      vctot_square += conc * conc;
-   }
-
-   vm2      *= vctot_square / (vctot*vctot - vctot_square);
-   vm3      *= vctot_square / (vctot*vctot - vctot_square);
-   vm4      *= vctot_square / (vctot*vctot - vctot_square);
-   skew      = vm3 / pow( vm2, 1.5 );
-   kurto     = vm4 / pow( vm2, 2.0 ) - 3.0;
-   vmedi     = ( vlo + vhi ) / 2.0;
-
-   // do line fit (mainly for corr value)
-
-   US_Math2::linefit( &xplot, &yplot, &slope, &vicep, &sigma, &corr, nvals );
-
-   // standard deviation and error
-
-   sdevi     = pow( vm2, 0.5 );
-   sderr     = sdevi / pow( vsiz, 0.5 );
-   vari      = vm2;
-   area      = 0.0;
-
-   bininc    = ( vhi - vlo ) / binsz;
-
-   // mode and confidence
-
-   for ( int ii = 0; ii < nbins; ii++ )
-   {
-      xplot[ii] = vlo + bininc * (qreal)ii;
-      yplot[ii] = 0.0;
-
-      for ( int jj = 0; jj < nvals; jj++ )
-      {
-         val       = vals.at( jj );
-
-         if ( val >= xplot[ ii ]  &&  val < ( xplot[ ii ] + bininc ) )
-         {
-            yplot[ii] += ( concs.at( jj ) );
-         }
-      }
-
-      area     += yplot[ ii ] * bininc;
-   }
-
-   double fvdif     = qAbs( ( vhi - vlo ) / vlo );
-   bool is_constant = ( fvdif < 0.0001 );
-   val       = -1.0;
-   int thisb = 0;
-
-   for ( int ii = 0; ii < nbins; ii++ )
-   {
-      if ( yplot[ii] > val )
-      {
-         val       = yplot[ ii ];
-         thisb     = ii;
-      }
-   }
-
-   mode_lo   = xplot[ thisb ];
-   mode_hi   = mode_lo + bininc;
-   mode_cen  = ( mode_lo + mode_hi ) / 2.0;
-   conf99lo  = vmean - 2.576 * sdevi;
-   conf99hi  = vmean + 2.576 * sdevi;
-   conf95lo  = vmean - 1.960 * sdevi;
-   conf95hi  = vmean + 1.960 * sdevi;
-
-   QVector <int> idxs(nvals, 0);
-   for ( int jj = 0; jj < nvals; jj++ )
-   {
-       idxs[jj] = jj;
-   }
-   std::sort(idxs.begin(), idxs.end(),
-             [&vals](int a, int b) { return vals[a] < vals[b]; });
-   QVector<qreal> vals_sorted;
-   QVector<qreal> concs_sorted;
-   for ( int jj = 0; jj < nvals; jj++ )
-   {
-       int id = idxs.at(jj);
-       vals_sorted << vals.at(id);
-       concs_sorted << concs.at(id);
-   }
-
-   qreal lo99 = vctot * 0.005;
-   qreal hi99 = vctot * 0.995;
-   qreal lo95 = vctot * 0.025;
-   qreal hi95 = vctot * 0.975;
-
-   qreal acc_conc = 0;
-   int lo99_id  = -1;
-   int hi99_id  = -1;
-   int lo95_id  = -1;
-   int hi95_id  = -1;
-
-   for ( int jj = 0; jj < nvals; jj++ )
-   {
-       acc_conc += concs_sorted.at(jj);
-       if (acc_conc >= lo99 && lo99_id == -1)
-       {
-           lo99_id = jj;
-       }
-       if (acc_conc >= lo95 && lo95_id == -1)
-       {
-           lo95_id = jj;
-       }
-
-       if (acc_conc > hi99 && hi99_id == -1)
-       {
-           hi99_id = jj - 1;
-       }
-       if (acc_conc > hi95 && hi95_id == -1)
-       {
-           hi95_id = jj - 1;
-       }
-   }
-
-   conf99lo = vals_sorted.at(lo99_id);
-   conf99hi = vals_sorted.at(hi99_id);
-   conf95lo = vals_sorted.at(lo95_id);
-   conf95hi = vals_sorted.at(hi95_id);
+   // The statistics come from US_Calc; values the arithmetic leaves
+   // undefined print as nan or inf.
+   const US_Calc::WeightedStatistics st =
+      US_Calc::weighted_statistics( vals.toVector(), concs.toVector(), US_Calc::StatisticsConvention::ConcentrationDistribution );
+   const qreal vlo         = st.minimum;
+   const qreal vhi         = st.maximum;
+   const qreal vmean       = st.mean;
+   const qreal vmedi       = st.midrange;
+   const qreal skew        = st.skew;
+   const qreal kurto       = st.kurtosis;
+   const qreal mode_lo     = st.mode_low;
+   const qreal mode_hi     = st.mode_high;
+   const qreal mode_cen    = st.mode_center;
+   const qreal conf95lo    = st.confidence95_low;
+   const qreal conf95hi    = st.confidence95_high;
+   const qreal conf99lo    = st.confidence99_low;
+   const qreal conf99hi    = st.confidence99_high;
+   const qreal sdevi       = st.standard_deviation;
+   const qreal sderr       = st.standard_error;
+   const qreal vari        = st.variance;
+   const qreal corr        = st.correlation;
+   const qreal area        = st.area;
+   const qreal binsz       = st.bins;
+   const bool  is_constant = st.constant;
 
    if ( details  &&  is_constant )
    {

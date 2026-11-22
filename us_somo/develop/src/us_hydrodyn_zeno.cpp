@@ -13630,14 +13630,10 @@ bool US_Hydrodyn_Zeno::run(
       argv[ argc++ ] = "us_zeno";
 
       QString cmdfile = QFileInfo( filename ).fileName();
-#if QT_VERSION >= 0x050000
       char *data_cmdfile = 0;
       data_cmdfile = new char[cmdfile.size() + 1];
       strcpy(data_cmdfile, cmdfile.toLatin1().data());
       argv[ argc++ ] = data_cmdfile;
-#else
-      argv[ argc++ ] = cmdfile.toLatin1().data();
-#endif
 
       cout << QString ( " zeno <%1> <%2> <%3>\n" )
          .arg( options->zeno_zeno_steps )
@@ -13651,7 +13647,6 @@ bool US_Hydrodyn_Zeno::run(
 
       int progress_steps = 0;
 
-#if QT_VERSION >= 0x050000
       char *data_zeno = 0;
       char *data_interior = 0;
       char *data_surface = 0;
@@ -13678,29 +13673,11 @@ bool US_Hydrodyn_Zeno::run(
          strcpy(data_surface, qs_surface.toLatin1().data());
          argv[ argc++ ] = data_surface;
       }
-#else
-      if ( options->zeno_zeno )
-      {
-         progress_steps += 108;
-         argv[ argc++ ] = qs_zeno.toLatin1().data();
-      }
-      if ( options->zeno_interior )
-      {
-         progress_steps += 108;
-         argv[ argc++ ] = qs_interior.toLatin1().data();
-      }
-      if ( options->zeno_surface )
-      {
-         progress_steps += 108;
-         argv[ argc++ ] = qs_surface.toLatin1().data();
-      }
-#endif
 
       zeno_progress->setValue( 0 ); zeno_progress->setMaximum( progress_steps );
       zeno_main( argc, argv );
       zeno_progress->reset();
 
-#if QT_VERSION >= 0x050000
       delete[] data_cmdfile;
       if ( data_zeno ) {
          delete[] data_zeno;
@@ -13711,7 +13688,6 @@ bool US_Hydrodyn_Zeno::run(
       if ( data_surface ) {
          delete[] data_surface;
       }
-#endif
 
       if ( !us_hydrodyn->stopFlag && !us_hydrodyn->batch_avg_hydro_active() && !us_hydrodyn->zeno_mm )
       {
@@ -13859,11 +13835,7 @@ bool US_Hydrodyn::calc_zeno()
    QString zeno_model_list            = "";
 
    bool zeno_cxx                      =
-#if QT_VERSION < 0x040000
-                 gparams.count( "zeno_cxx" ) && gparams[ "zeno_cxx" ] == "true" && advanced_config.expert_mode
-#else
                  true
-#endif
                  ;
    
 #if defined(USE_OLD_ZENO)
@@ -13876,18 +13848,10 @@ bool US_Hydrodyn::calc_zeno()
       qApp->processEvents();
       zeno_cxx = false;
    }
-# if QT_VERSION >= 0x040000
    return false;
-# endif
 #endif
    
 
-# if !defined(USE_OLD_ZENO) && QT_VERSION < 0x040000
-   if ( zeno_cxx ) {
-      editor_msg( "darkRed", "Notice: the new ZENO method is active" );
-      qApp->processEvents();
-   }
-#endif
    
    if ( zeno_cxx ) {
       editor_msg( "black", QString( "ZENO will use %1 threads\n" ).arg( USglobal->config_list.numThreads ) );

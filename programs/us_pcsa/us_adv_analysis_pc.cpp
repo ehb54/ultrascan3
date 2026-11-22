@@ -1048,6 +1048,9 @@ DbgLv(1) << " MC reset curves:   dyl dyh sdyl sdyh"
    b_progress->reset();
    b_progress->setMaximum( mciters );
 
+   // Every iteration simulates the same solutes:  cache the simulations
+   mccache.reset( US_SimCache::create_default() );
+
    if ( nthr == 1 )
    {  // Monte Carlo with single thread
       for ( int iter = 0; iter < mciters; iter++ )
@@ -1058,6 +1061,7 @@ DbgLv(1) << " MC reset curves:   dyl dyh sdyl sdyh"
          dsets[ 0 ]->run_data      = wdata;
 
          US_SolveSim* solvesim     = new US_SolveSim( dsets, 0, false );
+         solvesim->set_sim_cache( mccache.get() );
 
          solvesim->calc_residuals( 0, 1, sim_vals );
 
@@ -1113,6 +1117,7 @@ DbgLv(1) << "  kciters" << kciters << "rmsd" << mrec_mc.rmsd
       ksiters++;
 
       US_SolveSim* solvesim     = new US_SolveSim( dsets, 0, false );
+      solvesim->set_sim_cache( mccache.get() );
 
       solvesim->calc_residuals( 0, 1, sim_vals );
 
@@ -1142,6 +1147,7 @@ DbgLv(1) << "  kciters" << kciters << "rmsd" << mrec_mc.rmsd
       wtbase.noisf     = 0;
       wtbase.dsets     = dsets;
       wtbase.depth     = 0;
+      wtbase.simcache              = mccache;
       US_SolveSim::DataSet wkdset  = *(dsets[ 0 ]);
       wkdsets.clear();
 
@@ -1316,6 +1322,12 @@ DbgLv(1) << "    ksiters" << ksiters << "      dsets[0]" << wtask.dsets[0];
 void US_AdvAnalysisPc::montecarlo_done( void )
 {
 DbgLv(1) << "==montecarlo_done()==";
+if ( mccache )
+{ // Free the simulation cache
+   DbgLv( 1 ) << "MC:" << mccache->stats_text();
+   mccache.reset();
+}
+
    stat_bfm( tr( "Building MC models and final composite..." ), true );
 #if 0
    int     nccsol   = 0;

@@ -2,20 +2,22 @@
 #ifndef US_PCSA_PROCESS_H
 #define US_PCSA_PROCESS_H
 
-#include <QtCore>
 #include <QTimer>
+#include <QtCore>
+#include <memory>
 
-#include "us_extern.h"
-#include "us_widgets.h"
 #include "us_dataIO.h"
-#include "us_simparms.h"
+#include "us_db2.h"
+#include "us_extern.h"
 #include "us_model.h"
 #include "us_noise.h"
-#include "us_db2.h"
-#include "us_solute.h"
-#include "us_zsolute.h"
-#include "us_worker_pc.h"
 #include "us_pcsa_modelrec.h"
+#include "us_sim_cache.h"
+#include "us_simparms.h"
+#include "us_solute.h"
+#include "us_widgets.h"
+#include "us_worker_pc.h"
+#include "us_zsolute.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -176,6 +178,9 @@ private:
       int        attr_z;       // Attribute Z index
 
       bool       abort;        // flag used with stop_fit clicked
+
+      std::shared_ptr<US_SimCache>    simcache;     // simulation cache of the
+                                                    //  grid fit
       bool       lm_done;      // flag for L-M completion
       bool       alpha_scn;    // flag for alpha-scan only
 

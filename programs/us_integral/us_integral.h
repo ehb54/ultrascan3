@@ -10,38 +10,28 @@
 #include "us_spectrodata.h"
 #include "us_plot.h"
 
-#include "qwt_plot_marker.h"
 #include "qwt_plot_layout.h"
-#include "qwt_plot_zoomer.h"
+#include "qwt_plot_marker.h"
 #include "qwt_plot_panner.h"
-#include "qwt_scale_widget.h"
+#include "qwt_plot_zoomer.h"
 #include "qwt_scale_draw.h"
+#include "qwt_scale_widget.h"
+#include "us_calc_integral.h"
 
 //! \brief Distribution structure
-typedef struct distro_sys
+typedef struct integral_distro_sys
 {
-    QList< S_Solute >   in_distro;      //!< Raw input distribution
-    QList< S_Solute >   nm_distro;      //!< Normalized concentration distribution
-    QList< S_Solute >   bo_distro;      //!< Boundary distribution with original points
-    QList< S_Solute >   bf_distro;      //!< Boundary fractions distribution
-    QString             run_name;       //!< Distribution run name
-    QString             analys_name;    //!< Distribution analysis name
-    QString             method;         //!< Model method (e.g., "2DSA")
-    QString             editGUID;       //!< Associated edit GUID
-    QString             solutionGUID;   //!< Associated solution GUID
-    QString             label;          //!< Distribution label (channel description)
-    int                 distro_type;    //!< Distribution type flag
-    int                 solutionID;     //!< Associated solution database ID
-    double              tot_conc;       //!< Total concentration
-} DisSys;
+      US_Calc::Model  calc_model;   //!< The model the integral distribution is calculated from
+      QString         run_name;     //!< Distribution run name
+      QString         analys_name;  //!< Distribution analysis name
+      QString         method;       //!< Model method (e.g., "2DSA")
+      QString         editGUID;     //!< Associated edit GUID
+      QString         solutionGUID; //!< Associated solution GUID
+      QString         label;        //!< Distribution label (channel description)
+      int             distro_type;  //!< Distribution type flag
+      int             solutionID;   //!< Associated solution database ID
+} IntegralDisSys;
 
-//! \brief Less-than function for sorting distributions by S_Solute attribute
-bool distro_lessthan_s(const S_Solute&, const S_Solute&);
-bool distro_lessthan_k(const S_Solute&, const S_Solute&);
-bool distro_lessthan_w(const S_Solute&, const S_Solute&);
-bool distro_lessthan_d(const S_Solute&, const S_Solute&);
-bool distro_lessthan_v(const S_Solute&, const S_Solute&);
-bool distro_lessthan_r(const S_Solute&, const S_Solute&);
 
 //! \brief Class for displaying models in pseudo-3D
 class US_Integral : public US_Widgets
@@ -56,8 +46,42 @@ class US_Integral : public US_Widgets
         //! \return x-axis value
         int get_x();
 
-    private:
+        //! \brief Non-interactive (GMP report): load models by modelGUID and
+        //!        build the distributions; plots sedimentation-coefficient
+        //!        integral (boundary fraction) curves, one curve per model
+        //! \param invID       Investigator ID (string, as in get_model_desc)
+        //! \param modelGUIDs  Model GUIDs, in the order curves are wanted
+        //! \return            Number of models loaded
+        int  load_distro_auto( const QString& invID, const QStringList& modelGUIDs );
 
+        //! \brief Set ranges to be drawn as vertical lines on the plot.
+        //!        Values must be in the units of the x-axis that will be
+        //!        plotted (s: 1e-13 s; D: 1e-7 cm^2/s; MW: Da; f/f0: none).
+        //!        Applies to subsequent plots; pass an empty list to clear.
+        //! \param ranges  List of (low,high) pairs; each pair gets its own line
+        //! style
+        void set_range_lines( const QList<QPair<double, double>>& ranges )
+        {
+           range_lines = ranges;
+        }
+
+        //! \brief Non-interactive (GMP report): build the distributions from
+        //!        models that the caller has already loaded
+        //! \param models  Loaded models, in the order curves are wanted
+        //! \return        Number of models used
+        int      load_distro_models_auto( const QList<US_Model>& models );
+
+        //! \brief Non-interactive x-axis selection + replot
+        //! \param attr  0:s  1:f/f0  2:molar mass  3:D  5:vbar  6:Rh
+        void     select_x_axis_auto( int attr );
+
+        //! \brief Pointer to the plot (for saving image in report)
+        QwtPlot* rp_data_plot( void )
+        {
+           return data_plot;
+        }
+
+     private:
         //! \brief Enumeration for attribute types
         enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_D, ATTR_F, ATTR_V, ATTR_R };
 
@@ -100,7 +124,7 @@ class US_Integral : public US_Widgets
         QButtonGroup* bg_x_axis;         //!< x-axis button group
         QButtonGroup* bg_di_avg;         //!< Distribution average button group
 
-        QVector< DisSys >             alldis;    //!< All distributions
+        QVector<IntegralDisSys>       alldis; //!< All distributions
 
         QVector< double >             v_bfracs;  //!< Boundary fraction vector
         QVector< QVector< double > >  v_vbars;   //!< Vector of vbars per fraction
@@ -109,6 +133,7 @@ class US_Integral : public US_Widgets
         QVector< QVector< double > >  v_sedcs;   //!< Vector of sedimentation coefficient vectors per distribution
         QVector< QVector< double > >  v_difcs;   //!< Vector of diffusion coefficient vectors per distribution
         QVector< QVector< double > >  v_rhs;     //!< Vector of hydrodynamic radius vectors per distribution
+        QVector<QString>              v_dist_errors; //!< Per distribution, why it could not be built (empty if it was)
 
         int           dbg_level;        //!< Debug level
         int           plot_x;           //!< x-axis plot selection
@@ -120,11 +145,30 @@ class US_Integral : public US_Widgets
         QStringList   pfilts;           //!< Pre-filter string list
         QStringList   mdescs;           //!< Model descriptions string list
 
-    private slots:
+        //! Ranges (low,high), in the units of the current x-axis, drawn as
+        //! vertical lines on the plot (e.g. analysis-profile report-item
+        //! ranges)
+        QList<QPair<double, double>>  range_lines;
 
-                //! \brief Slot to plot data
-                //! \param index Index of the data to be plotted
-                void plot_data(int index);
+        //! If true (GMP report), legend entries show only the model/species
+        //! name, without the trailing " (run-info)[n]" part of the label
+        bool                          short_legend_labels;
+
+        //! \brief Report mode: grow the plot so the legend is not cut
+        void                          fit_legend_to_plot( void );
+
+        //! \brief Legend text for distribution \p ii
+        QString                       legend_label( int ii ) const;
+
+        //! \brief (Re)draw the range lines (columns of symbols, one symbol type
+        //! per range)
+        void                          draw_range_markers( void );
+
+     private slots:
+
+        //! \brief Slot to plot data
+        //! \param index Index of the data to be plotted
+        void    plot_data( int index );
 
         //! \brief Slot to plot data
         void plot_data();
@@ -148,20 +192,11 @@ class US_Integral : public US_Widgets
         //! \param method Method for loading
         void load_distro(US_Model model, QString method);
 
-        //! \brief Slot to resort solution
-        //! \param distributions Vector of distributions to be resorted
-        void resort_sol(QVector< DisSys >& distributions);
-
         //! \brief Slot to reset the interface
         void reset();
 
         //! \brief Slot to save the current state
         void save();
-
-        //! \brief Slot to sort distribution
-        //! \param solutes List of solutes to be sorted
-        //! \param ascending Whether to sort in ascending order
-        void sort_distro(QList< S_Solute >& solutes, bool ascending);
 
         //! \brief Slot to remove distribution
         void remove_distro();
@@ -170,15 +205,13 @@ class US_Integral : public US_Widgets
         //! \param index Index of the selected x-axis
         void select_x_axis(int index);
 
-        //! \brief Slot to build boundary fraction distribution
-        //! \param index Index of the boundary fraction
-        void build_bf_distro(int index);
-
-        //! \brief Slot to build boundary fraction distributions
-        void build_bf_dists();
-
-        //! \brief Slot to build boundary fraction vectors
+        //! \brief Build the boundary-fraction vectors of every distribution
+        //! with US_Calc, from the current axis and controls.
         void build_bf_vects();
+
+        //! \brief Limit the smoothing width to what the division count
+        //! supports (division count + 1 >= 2 * width - 1).
+        void    limit_smoothing();
 
         //! \brief Slot to select x-axis for plotting
         //! \return Selected x-axis index

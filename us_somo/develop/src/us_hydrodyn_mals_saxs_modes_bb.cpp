@@ -449,13 +449,8 @@ void US_Hydrodyn_Mals_Saxs::blanks_enables()
    le_baseline_end_e      ->setEnabled( true );
 
    wheel_enables(
-#if QT_VERSION > 0x050000
                  le_last_focus == le_baseline_end_s ||
                  le_last_focus == le_baseline_end_e
-#else
-                 le_baseline_end_s  ->hasFocus() ||
-                 le_baseline_end_e  ->hasFocus()
-#endif
                  );
    pb_rescale             ->setEnabled( true );
    pb_rescale_y           ->setEnabled( true );
@@ -593,11 +588,7 @@ void US_Hydrodyn_Mals_Saxs::baseline_start( bool from_blanks_mode_save )
    }
 
 
-#if QT_VERSION < 0x040000
-   plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( Qt::cyan, use_line_width, SolidLine));
-#else
    plotted_curves[ wheel_file ]->setPen( QPen( Qt::cyan, use_line_width, Qt::SolidLine ) );
-#endif
 
    double default_baseline_end_s = f_qs[ wheel_file ].back();
    double default_baseline_end   = f_qs[ wheel_file ].back();
@@ -1073,7 +1064,6 @@ void US_Hydrodyn_Mals_Saxs::baseline_enables()
    le_baseline_end        ->setEnabled( true );
    le_baseline_end_e      ->setEnabled( true );
    wheel_enables(
-#if QT_VERSION > 0x050000
                  le_last_focus == le_baseline_start_s || 
                  le_last_focus == le_baseline_start   || 
                  le_last_focus == le_baseline_start_e || 
@@ -1081,15 +1071,6 @@ void US_Hydrodyn_Mals_Saxs::baseline_enables()
                  le_last_focus == le_baseline_end     ||
                  le_last_focus == le_baseline_end_e   ||
                  le_last_focus == le_baseline_width  
-#else
-                 le_baseline_start_s->hasFocus() || 
-                 le_baseline_start  ->hasFocus() || 
-                 le_baseline_start_e->hasFocus() || 
-                 le_baseline_end_s  ->hasFocus() ||
-                 le_baseline_end    ->hasFocus() ||
-                 le_baseline_end_e  ->hasFocus() ||
-                 le_baseline_width  ->hasFocus()
-#endif
                  );
    pb_rescale             ->setEnabled( true );
    pb_rescale_y           ->setEnabled( true );
@@ -1121,11 +1102,7 @@ void US_Hydrodyn_Mals_Saxs::set_baseline_start_zero()
 
    for ( unsigned int i = 0; i < ( unsigned int ) plotted_baseline.size(); i++ )
    {
-#if QT_VERSION < 0x040000
-      plot_dist->removeCurve( plotted_baseline[ i ] );
-#else
       plotted_baseline[ i ]->detach();
-#endif
    }
 
    baseline_init_markers();
@@ -1182,11 +1159,7 @@ void US_Hydrodyn_Mals_Saxs::baseline_init_markers()
 void US_Hydrodyn_Mals_Saxs::replot_baseline_integral()
 {
    for ( int i = 0; i < (int) plotted_baseline.size(); ++i ) {
-#if QT_VERSION < 0x040000
-      plot_dist->removeCurve( plotted_baseline[ i ] );
-#else
       plotted_baseline[ i ]->detach();
-#endif
    }
    plotted_baseline.clear( );
 
@@ -1271,25 +1244,14 @@ void US_Hydrodyn_Mals_Saxs::replot_baseline_integral()
       y[ 0 ] = avg_bl;
       y[ 1 ] = avg_bl;
 
-#if QT_VERSION < 0x040000
-      long curve;
-      curve = plot_dist->insertCurve( "avg buffer" );
-      plot_dist->setCurveStyle( curve, QwtCurve::Lines );
-#else
       QwtPlotCurve *curve = new QwtPlotCurve( "avg buffer" );
       curve->setStyle( QwtPlotCurve::Lines );
-#endif
 
       plotted_baseline.push_back( curve );
 
-#if QT_VERSION < 0x040000
-      plot_dist->setCurvePen( curve, QPen( end_color, use_line_width, Qt::DashLine ) );
-      plot_dist->setCurveData( plotted_baseline.back(), x, y, 2 );
-#else
       curve->setPen( QPen( end_color, use_line_width, Qt::DashLine ) );
       plotted_baseline.back()->setSamples( x, y, 2 );
       curve->attach( plot_dist );
-#endif
    }
 
    if ( !suppress_replot )
@@ -1515,11 +1477,7 @@ void US_Hydrodyn_Mals_Saxs::replot_baseline( QString /* qs */ )
 
    for ( unsigned int i = 0; i < ( unsigned int ) plotted_baseline.size(); i++ )
    {
-#if QT_VERSION < 0x040000
-      plot_dist->removeCurve( plotted_baseline[ i ] );
-#else
       plotted_baseline[ i ]->detach();
-#endif
    }
    plotted_baseline.clear( );
 
@@ -1529,25 +1487,11 @@ void US_Hydrodyn_Mals_Saxs::replot_baseline( QString /* qs */ )
       // printvector( "baseline x", x );
       // printvector( "baseline y", y );
 
-#if QT_VERSION < 0x040000
-      long curve;
-      curve = plot_dist->insertCurve( "baseline" );
-      plot_dist->setCurveStyle( curve, QwtCurve::Lines );
-#else
       QwtPlotCurve *curve = new QwtPlotCurve( "baseline" );
       curve->setStyle( QwtPlotCurve::Lines );
-#endif
 
       plotted_baseline.push_back( curve );
 
-#if QT_VERSION < 0x040000
-      plot_dist->setCurvePen( curve, QPen( Qt::green , use_line_width, Qt::DashLine ) );
-      plot_dist->setCurveData( plotted_baseline[ 0 ],
-                               (double *)&x[ 0 ],
-                               (double *)&y[ 0 ],
-                               2
-                               );
-#else
       curve->setPen( QPen( Qt::green, use_line_width, Qt::DashLine ) );
       plotted_baseline[ 0 ]->setSamples(
                                      (double *)&x[ 0 ],
@@ -1555,7 +1499,6 @@ void US_Hydrodyn_Mals_Saxs::replot_baseline( QString /* qs */ )
                                      2
                                      );
       curve->attach( plot_dist );
-#endif
    }
    if ( set_start )
    {
@@ -1566,25 +1509,11 @@ void US_Hydrodyn_Mals_Saxs::replot_baseline( QString /* qs */ )
       // printvector( "start x", x );
       // printvector( "start y", y );
 
-#if QT_VERSION < 0x040000
-      long curve;
-      curve = plot_dist->insertCurve( "baseline s" );
-      plot_dist->setCurveStyle( curve, QwtCurve::Lines );
-#else
       QwtPlotCurve *curve = new QwtPlotCurve( "baseline s" );
       curve->setStyle( QwtPlotCurve::Lines );
-#endif
 
       plotted_baseline.push_back( curve );
 
-#if QT_VERSION < 0x040000
-      plot_dist->setCurvePen( curve, QPen( start_color, use_line_width, Qt::DashLine ) );
-      plot_dist->setCurveData( plotted_baseline.back(),
-                               (double *)&x[ 0 ],
-                               (double *)&y[ 0 ],
-                               2
-                               );
-#else
       curve->setPen( QPen( start_color, use_line_width, Qt::DashLine ) );
       plotted_baseline.back()->setSamples(
                                        (double *)&x[ 0 ],
@@ -1592,7 +1521,6 @@ void US_Hydrodyn_Mals_Saxs::replot_baseline( QString /* qs */ )
                                        2
                                      );
       curve->attach( plot_dist );
-#endif
    }
 
    if ( set_end )
@@ -1604,25 +1532,11 @@ void US_Hydrodyn_Mals_Saxs::replot_baseline( QString /* qs */ )
       // printvector( "end x", x );
       // printvector( "end y", y );
 
-#if QT_VERSION < 0x040000
-      long curve;
-      curve = plot_dist->insertCurve( "baseline e" );
-      plot_dist->setCurveStyle( curve, QwtCurve::Lines );
-#else
       QwtPlotCurve *curve = new QwtPlotCurve( "baseline e" );
       curve->setStyle( QwtPlotCurve::Lines );
-#endif
 
       plotted_baseline.push_back( curve );
 
-#if QT_VERSION < 0x040000
-      plot_dist->setCurvePen( curve, QPen( end_color, use_line_width, Qt::DashLine ) );
-      plot_dist->setCurveData( plotted_baseline.back(),
-                               (double *)&x[ 0 ],
-                               (double *)&y[ 0 ],
-                               2
-                               );
-#else
       curve->setPen( QPen( end_color, use_line_width, Qt::DashLine ) );
       plotted_baseline.back()->setSamples(
                                        (double *)&x[ 0 ],
@@ -1630,7 +1544,6 @@ void US_Hydrodyn_Mals_Saxs::replot_baseline( QString /* qs */ )
                                        2
                                      );
       curve->attach( plot_dist );
-#endif
    }
 
    if ( !suppress_replot )
@@ -2505,11 +2418,7 @@ int US_Hydrodyn_Mals_Saxs::input_double_to_pos( double d ) {
 
 void US_Hydrodyn_Mals_Saxs::baseline_start_s_text( const QString & text )
 {
-#if QT_VERSION < 0x040000
-   plot_dist->setMarkerPos( plotted_markers[ 0 ], text.toDouble(), 0e0 );
-#else
    plotted_markers[ 0 ]->setXValue( text.toDouble() );
-#endif
    // if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    // {
    //    qwtw_wheel->setValue( text.toDouble() );
@@ -2528,11 +2437,7 @@ void US_Hydrodyn_Mals_Saxs::baseline_start_s_text( const QString & text )
 
 void US_Hydrodyn_Mals_Saxs::baseline_start_text( const QString & text )
 {
-#if QT_VERSION < 0x040000
-   plot_dist->setMarkerPos( plotted_markers[ 1 ], text.toDouble(), 0e0 );
-#else
    plotted_markers[ 1 ]->setXValue( text.toDouble() );
-#endif
    // if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    // {
    //    qwtw_wheel->setValue( text.toDouble() );
@@ -2551,11 +2456,7 @@ void US_Hydrodyn_Mals_Saxs::baseline_start_text( const QString & text )
 
 void US_Hydrodyn_Mals_Saxs::baseline_start_e_text( const QString & text )
 {
-#if QT_VERSION < 0x040000
-   plot_dist->setMarkerPos( plotted_markers[ 2 ], text.toDouble(), 0e0 );
-#else
    plotted_markers[ 2 ]->setXValue( text.toDouble() );
-#endif
    // if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    // {
    //    qwtw_wheel->setValue( text.toDouble() );
@@ -2577,18 +2478,10 @@ void US_Hydrodyn_Mals_Saxs::baseline_end_s_text( const QString & text )
       pos = 0;
    }
 
-#if QT_VERSION < 0x040000
-   plot_dist->setMarkerPos( plotted_markers[ pos ], text.toDouble(), 0e0 );
-#else
    plotted_markers[ pos ]->setXValue( text.toDouble() );
-#endif
 
    if ( current_mode != MODE_BLANKS && baseline_integral ) {
-#if QT_VERSION < 0x040000
-      plot_dist->setMarkerPos( plotted_markers[ pos + 1 ], text.toDouble(), 0e0 );
-#else
       plotted_markers[ pos + 1 ]->setXValue( text.toDouble() );
-#endif
    }
 
    // if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
@@ -2623,11 +2516,7 @@ void US_Hydrodyn_Mals_Saxs::baseline_end_s_text( const QString & text )
          disconnect( le_baseline_end_e, SIGNAL( textChanged( const QString & ) ), 0, 0 );
          le_baseline_end_e->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ new_pos_e ] ) );
          connect( le_baseline_end_e, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_e_text( const QString & ) ) );
-#if QT_VERSION < 0x040000
-         plot_dist->setMarkerPos( plotted_markers[ 3 ], f_qs[ wheel_file ][ new_pos_e ], 0e0 );
-#else
          plotted_markers[ 3 ]->setXValue(  f_qs[ wheel_file ][ new_pos_e ] );
-#endif
          if ( new_pos_s != pos_s ) {
             // disconnect( le_baseline_end_s, SIGNAL( textChanged( const QString & ) ), 0, 0 );
             // le_baseline_end_s->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ new_pos_s ] ) );
@@ -2635,13 +2524,8 @@ void US_Hydrodyn_Mals_Saxs::baseline_end_s_text( const QString & text )
             if ( !wheel_is_pressed && qwtw_wheel->value() != new_pos_s ) {
                qwtw_wheel->setValue( new_pos_s );
             }
-#if QT_VERSION < 0x040000
-            plot_dist->setMarkerPos( plotted_markers[ pos ], f_qs[ wheel_file ][ new_pos_s ], 0e0 );
-            plot_dist->setMarkerPos( plotted_markers[ pos + 1 ], f_qs[ wheel_file ][ new_pos_s ], 0e0 );
-#else
             plotted_markers[ pos ]->setXValue(  f_qs[ wheel_file ][ new_pos_s ] );
             plotted_markers[ pos + 1 ]->setXValue(  f_qs[ wheel_file ][ new_pos_s ] );
-#endif
          }
       } else {
          if ( pos_e - IB_MIN_RANGE + 1 < pos_s ) {
@@ -2649,22 +2533,14 @@ void US_Hydrodyn_Mals_Saxs::baseline_end_s_text( const QString & text )
             disconnect( le_baseline_end_e, SIGNAL( textChanged( const QString & ) ), 0, 0 );
             le_baseline_end_e->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ pos_e ] ) );
             connect( le_baseline_end_e, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_e_text( const QString & ) ) );
-#if QT_VERSION < 0x040000
-            plot_dist->setMarkerPos( plotted_markers[ 3 ], f_qs[ wheel_file ][ pos_e ], 0e0 );
-#else
             plotted_markers[ 3 ]->setXValue(  f_qs[ wheel_file ][ pos_e ] );
-#endif
          } else {
             if ( pos_e > pos_s + baseline_max_window_size - 1 ) {
                pos_e = pos_s + baseline_max_window_size - 1;
                disconnect( le_baseline_end_e, SIGNAL( textChanged( const QString & ) ), 0, 0 );
                le_baseline_end_e->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ pos_e ] ) );
                connect( le_baseline_end_e, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_e_text( const QString & ) ) );
-#if QT_VERSION < 0x040000
-               plot_dist->setMarkerPos( plotted_markers[ 3 ], f_qs[ wheel_file ][ pos_e ], 0e0 );
-#else
                plotted_markers[ 3 ]->setXValue(  f_qs[ wheel_file ][ pos_e ] );
-#endif
             }
          }
 
@@ -2685,11 +2561,7 @@ void US_Hydrodyn_Mals_Saxs::baseline_end_text( const QString & text )
    if ( baseline_integral ) {
       pos++;
    }
-#if QT_VERSION < 0x040000
-   plot_dist->setMarkerPos( plotted_markers[ pos ], text.toDouble(), 0e0 );
-#else
    plotted_markers[ pos ]->setXValue( text.toDouble() );
-#endif
    // if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    // {
    //    qwtw_wheel->setValue( text.toDouble() );
@@ -2718,11 +2590,7 @@ void US_Hydrodyn_Mals_Saxs::baseline_end_e_text( const QString & text )
       pos = 1;
    }
 
-#if QT_VERSION < 0x040000
-   plot_dist->setMarkerPos( plotted_markers[ pos ], text.toDouble(), 0e0 );
-#else
    plotted_markers[ pos ]->setXValue( text.toDouble() );
-#endif
    // if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    // {
    //    qwtw_wheel->setValue( text.toDouble() );
@@ -2754,13 +2622,8 @@ void US_Hydrodyn_Mals_Saxs::baseline_end_e_text( const QString & text )
          disconnect( le_baseline_end_s, SIGNAL( textChanged( const QString & ) ), 0, 0 );
          le_baseline_end_s->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ new_pos_s ] ) );
          connect( le_baseline_end_s, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_s_text( const QString & ) ) );
-#if QT_VERSION < 0x040000
-         plot_dist->setMarkerPos( plotted_markers[ 0 ], f_qs[ wheel_file ][ new_pos_s ], 0e0 );
-         plot_dist->setMarkerPos( plotted_markers[ 1 ], f_qs[ wheel_file ][ new_pos_s ], 0e0 );
-#else
          plotted_markers[ 0 ]->setXValue(  f_qs[ wheel_file ][ new_pos_s ] );
          plotted_markers[ 1 ]->setXValue(  f_qs[ wheel_file ][ new_pos_s ] );
-#endif
          if ( new_pos_e != pos_e ) {
             // disconnect( le_baseline_end_e, SIGNAL( textChanged( const QString & ) ), 0, 0 );
             // le_baseline_end_e->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ new_pos_e ] ) );
@@ -2768,11 +2631,7 @@ void US_Hydrodyn_Mals_Saxs::baseline_end_e_text( const QString & text )
             if ( !wheel_is_pressed && qwtw_wheel->value() != new_pos_e ) {
                qwtw_wheel->setValue( new_pos_e );
             }
-#if QT_VERSION < 0x040000
-            plot_dist->setMarkerPos( plotted_markers[ pos ], f_qs[ wheel_file ][ new_pos_e ], 0e0 );
-#else
             plotted_markers[ pos ]->setXValue(  f_qs[ wheel_file ][ new_pos_e ] );
-#endif
          }
       } else {
          if ( pos_s > pos_e - IB_MIN_RANGE + 1 ) {
@@ -2780,26 +2639,16 @@ void US_Hydrodyn_Mals_Saxs::baseline_end_e_text( const QString & text )
             disconnect( le_baseline_end_s, SIGNAL( textChanged( const QString & ) ), 0, 0 );
             le_baseline_end_s->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ pos_s ] ) );
             connect( le_baseline_end_s, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_s_text( const QString & ) ) );
-#if QT_VERSION < 0x040000
-            plot_dist->setMarkerPos( plotted_markers[ 0 ], f_qs[ wheel_file ][ pos_s ], 0e0 );
-            plot_dist->setMarkerPos( plotted_markers[ 1 ], f_qs[ wheel_file ][ pos_s ], 0e0 );
-#else
             plotted_markers[ 0 ]->setXValue(  f_qs[ wheel_file ][ pos_s ] );
             plotted_markers[ 1 ]->setXValue(  f_qs[ wheel_file ][ pos_s ] );
-#endif
          } else {
             if ( pos_s < pos_e - baseline_max_window_size + 1 ) {
                pos_s = pos_e - baseline_max_window_size + 1;
                disconnect( le_baseline_end_s, SIGNAL( textChanged( const QString & ) ), 0, 0 );
                le_baseline_end_s->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ pos_s ] ) );
                connect( le_baseline_end_s, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_s_text( const QString & ) ) );
-#if QT_VERSION < 0x040000
-               plot_dist->setMarkerPos( plotted_markers[ 0 ], f_qs[ wheel_file ][ pos_s ], 0e0 );
-               plot_dist->setMarkerPos( plotted_markers[ 1 ], f_qs[ wheel_file ][ pos_s ], 0e0 );
-#else
                plotted_markers[ 0 ]->setXValue(  f_qs[ wheel_file ][ pos_s ] );
                plotted_markers[ 1 ]->setXValue(  f_qs[ wheel_file ][ pos_s ] );
-#endif
             }
          }
             
@@ -2953,22 +2802,13 @@ void US_Hydrodyn_Mals_Saxs::baseline_width_text( const QString & text )
          disconnect( le_baseline_end_e, SIGNAL( textChanged( const QString & ) ), 0, 0 );
          le_baseline_end_e->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ new_pos_e ] ) );
          connect( le_baseline_end_e, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_e_text( const QString & ) ) );
-#if QT_VERSION < 0x040000
-         plot_dist->setMarkerPos( plotted_markers[ 3 ], f_qs[ wheel_file ][ new_pos_e ], 0e0 );
-#else
          plotted_markers[ 3 ]->setXValue(  f_qs[ wheel_file ][ new_pos_e ] );
-#endif
          if ( new_pos_s != pos_s ) {
             disconnect( le_baseline_end_s, SIGNAL( textChanged( const QString & ) ), 0, 0 );
             le_baseline_end_s->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ new_pos_s ] ) );
             connect( le_baseline_end_s, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_s_text( const QString & ) ) );
-#if QT_VERSION < 0x040000
-            plot_dist->setMarkerPos( plotted_markers[ 0 ], f_qs[ wheel_file ][ new_pos_s ], 0e0 );
-            plot_dist->setMarkerPos( plotted_markers[ 1 ], f_qs[ wheel_file ][ new_pos_s ], 0e0 );
-#else
             plotted_markers[ 0 ]->setXValue(  f_qs[ wheel_file ][ new_pos_s ] );
             plotted_markers[ 1 ]->setXValue(  f_qs[ wheel_file ][ new_pos_s ] );
-#endif
          }
       }
    }

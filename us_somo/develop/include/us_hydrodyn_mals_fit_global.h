@@ -33,9 +33,6 @@
 #include "../include/us_saxs_util.h"
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
 #endif
 
 using namespace std;
@@ -125,12 +122,8 @@ class US_EXTERN US_Hydrodyn_Mals_Fit_Global : public QDialog
 
    private:
       ScrollZoomer  * plot_test_zoomer;
-#if QT_VERSION >= 0x040000
       QwtPlotGrid   * grid_test;
       QwtPlotCurve  * test_curve;
-#else
-      long            test_curve;
-#endif
 
       QProgressBar  *progress;
       QPushButton   *pb_stop;
@@ -272,9 +265,6 @@ namespace MFIT_GLOBAL
 };
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
 #endif
 
 #endif

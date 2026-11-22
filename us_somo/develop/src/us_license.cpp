@@ -627,9 +627,6 @@ void US_License::import()
 void US_License::request()
 {
    proc = new QProcess(this);
-#if QT_VERSION < 0x040000
-   proc->clearArguments();
-#endif
    connect(proc, SIGNAL(readyReadStandardOutput()), this, SLOT(captureStdout()));
    connect(proc, SIGNAL(readyReadStandardError()), this, SLOT(captureStderr()));
    connect(proc, SIGNAL(finished( int, QProcess::ExitStatus ))  , this, SLOT(endProcess()));
@@ -709,18 +706,6 @@ void US_License::request()
 bool US_License::start_browser( const QString& browser, 
                                 const QString& remote, const QString& url )
 {
-#if QT_VERSION < 0x040000
-   proc->clearArguments();
-# ifdef Q_OS_MAC
-   proc->addArgument( "open" );
-   proc->addArgument( "-a" );
-# endif
-   proc->addArgument( browser );
-   if ( remote != "" ) proc->addArgument( remote );
-   proc->addArgument( url );
-
-   return ( proc->start() );
-#else
    QStringList args;
    QString prog = browser;
    
@@ -741,26 +726,17 @@ bool US_License::start_browser( const QString& browser,
       ;
    proc->start( prog, args );
    return ( proc->waitForStarted() );
-#endif
 }
 
 
 void US_License::captureStdout()
 {
-#if QT_VERSION < 0x040000
-   cout << proc->readLineStdout() << endl;
-#else
    cout << QString( proc->readAllStandardOutput() ) << endl;
-#endif
 }
 
 void US_License::captureStderr()
 {
-#if QT_VERSION < 0x040000
-   QByteArray list = proc->readStderr();
-#else
    QByteArray list = proc->readAllStandardError();
-#endif
    
    stderrSize = list.size();
    cout << "The following error occured while attempting to run Mozilla:\n" 
@@ -774,22 +750,6 @@ void US_License::endProcess()
    // error attaching to already running process, start new$
    if ( trials == 1 && stderrSize > 0 )
    {
-#if QT_VERSION < 0x040000
-      proc->clearArguments();
-      proc->addArgument( "mozilla" );
-      proc->addArgument( "http://www.ultrascan.uthscsa.edu/register.html" );
-    
-      if ( ! proc->start() ) //error
-      {
-         cout << "Error: Can't start browser window\n";
-
-         US_Static::us_message(
-                              us_tr( "UltraScan Error:" ), 
-                              us_tr( "Can't start browser window..." ) );
-      
-         return;
-      }
-#else
       cout << "Error: Can't start browser window\n";
 
       US_Static::us_message(
@@ -797,7 +757,6 @@ void US_License::endProcess()
                            us_tr( "Can't start browser window..." ) );
       
       return;
-#endif
    }
    else
    {

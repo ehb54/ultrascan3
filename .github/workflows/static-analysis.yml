@@ -66,15 +66,21 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ehb1/us3comp:latest
+    permissions:
+      contents: read
+      pull-requests: write   # lets the suggester post fix suggestions (not available for fork PRs)
 
     env:
       CHANGED_FILES: ${{ needs.changed-files.outputs.cpp_files }}
+      # Security findings (clang-analyzer-*, bugprone-*) on changed lines are always shown as errors and
+      # reported first. Set to 'true' to make them fail the job; style findings never fail it.
+      TIDY_SECURITY_BLOCKING: 'false'
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
-          fetch-depth: 1
+          fetch-depth: 0   # clang-tidy runs on the lines changed against the base branch
 
       - name: Allow CI to access repo directory
         run: git config --global --add safe.directory /__w/ultrascan3/ultrascan3
@@ -127,7 +133,8 @@ jobs:
           apt-get install -y clang-tidy cppcheck clang-format libxml2-utils jq || true
           # Install all development libraries that CMake expects
           apt-get install -y libqwt-qt5-dev libarchive-dev libgl2ps-dev libssl-dev || true
-          apt-get install -y iwyu ninja-build || true
+          apt-get install -y iwyu ninja-build python3 || true
+          apt-get install -y libqt5svg5-dev libqt5datavisualization5-dev qtmultimedia5-dev libqt5opengl5-dev libmysqlclient-dev libqt5sql5-mysql || true
           # Install comprehensive Qt5 development environment
           apt-get install -y qtbase5-dev qt5-qmake qt5-default || true
           apt-get install -y qttools5-dev qttools5-dev-tools || true
@@ -254,6 +261,41 @@ jobs:
             echo "Clang-tidy not available"
             echo '{"files": [], "summary": {"total_issues": 0, "files_with_issues": 0}}' > clang-tidy-results.json
           fi
+
+      - name: clang-tidy on changed lines (annotations and auto-fixes)
+        if: env.SKIP_ANALYSIS != 'true' && github.event_name == 'pull_request'
+        continue-on-error: ${{ env.TIDY_SECURITY_BLOCKING != 'true' }}
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch origin "${{ github.base_ref }}"
+          BASE=$(git merge-base HEAD "origin/${{ github.base_ref }}")
+          # applies the auto-fixable style fixes (modernize-*) to the worktree, annotates everything
+          scripts/run-clang-tidy-diff.sh --fix "$BASE" .
+          git diff > clang-tidy-fixes.patch
+          echo "Auto-fixable findings: $(grep -c '^@@' clang-tidy-fixes.patch || true) hunk(s)"
+
+      - name: Suggest clang-tidy fixes on the pull request
+        if: env.SKIP_ANALYSIS != 'true' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        continue-on-error: true
+        uses: reviewdog/action-suggester@v1
+        with:
+          tool_name: clang-tidy
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          fail_level: none
+
+      - name: Upload clang-tidy fix patch
+        if: env.SKIP_ANALYSIS != 'true' && github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: clang-tidy-fixes
+          path: clang-tidy-fixes.patch
+          if-no-files-found: ignore
+
+      - name: Restore worktree after fixes
+        if: env.SKIP_ANALYSIS != 'true' && github.event_name == 'pull_request'
+        continue-on-error: true
+        run: git checkout -- .
 
       - name: Run Cppcheck Analysis
         if: env.SKIP_ANALYSIS != 'true'

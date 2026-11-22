@@ -12,9 +12,7 @@
 #include <qdatetime.h>
 //Added by qt3to4:
 #include <QCloseEvent>
-#if QT_VERSION >= 0x040000
 # include <QHeaderView>
-#endif
 
 #include "us_util.h"
 
@@ -32,9 +30,6 @@ using namespace std;
 
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
 #endif
 
 class US_EXTERN US_Dirhist : public QDialog
@@ -98,9 +93,6 @@ class US_EXTERN US_Dirhist : public QDialog
 };
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
 #endif
 
 #endif

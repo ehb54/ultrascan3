@@ -1,100 +1,142 @@
 // test_us_math2_unit.cpp - Unit tests for US_Math2 class
 #include "qt_test_base.h"
-#include "us_math2.h"
 #include "us_dataIO.h"
+#include "us_math2.h"
 #include "us_solution.h"
+#include <QRandomGenerator>
 #include <QString>
-#include <QVector>
 #include <QTime>
+#include <QVector>
 #include <cmath>
 #include <limits>
+#include <random>
+#include <set>
 
 using namespace qt_matchers;
 
-class TestUSMath2Unit : public QtTestBase {
-protected:
-    void SetUp() override {
-        QtTestBase::SetUp();
-        setupTestData();
-    }
+class TestUSMath2Unit : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+         setupTestData();
+      }
 
-    void TearDown() override {
-        QtTestBase::TearDown();
-    }
 
-    void setupTestData() {
-        // Set up test data arrays
-        for (int i = 0; i < 10; i++) {
-            testX.append(i * 1.0);
-            testY.append(i * 2.0 + 1.0); // y = 2x + 1
-        }
+      void setupTestData()
+      {
+         // Set up test data arrays
+         for ( int i = 0; i < 10; i++ )
+         {
+            testX.append( i * 1.0 );
+            testY.append( i * 2.0 + 1.0 ); // y = 2x + 1
+         }
 
-        testXPtr = testX.data();
-        testYPtr = testY.data();
-    }
+         testXPtr = testX.data();
+         testYPtr = testY.data();
+      }
 
-    QVector<double> testX;
-    QVector<double> testY;
-    double* testXPtr;
-    double* testYPtr;
+      QVector<double>         testX;
+      QVector<double>         testY;
+      double*                 testXPtr;
+      double*                 testYPtr;
 
-    static constexpr double TOLERANCE = 1e-6;
+      static constexpr double TOLERANCE = 1e-6;
 };
 
 // ============================================================================
 // RANDOM NUMBER GENERATION TESTS
 // ============================================================================
 
-TEST_F(TestUSMath2Unit, RanfInRange) {
-// Test ranf method returns values in [0, 1)
-for (int i = 0; i < 100; i++) {
-double result = US_Math2::ranf();
-EXPECT_GE(result, 0.0) << "ranf should return values >= 0.0";
-EXPECT_LT(result, 1.0) << "ranf should return values < 1.0";
-}
-}
+// The generator and the cached Box-Muller deviate are process-wide, so every test that draws
+// numbers seeds first; otherwise its samples would depend on which tests ran before it.
 
-TEST_F(TestUSMath2Unit, RanfDistribution) {
-// Test ranf produces different values (basic distribution test)
-std::set<double> values;
-for (int i = 0; i < 50; i++) {
-values.insert(US_Math2::ranf());
-}
-EXPECT_GT(values.size(), 30u) << "ranf should produce diverse values";
+TEST_F( TestUSMath2Unit, RanfInRange )
+{
+   US_Math2::randomize( 20261114u );
+   for ( int i = 0; i < 10000; i++ )
+   {
+      const double result = US_Math2::ranf();
+      ASSERT_GE( result, 0.0 ) << "draw " << i;
+      ASSERT_LT( result, 1.0 ) << "draw " << i;
+   }
 }
 
-TEST_F(TestUSMath2Unit, BoxMullerMeanZero) {
-// Test box_muller with mean=0, std=1
-double sum = 0.0;
-int count = 1000;
+TEST_F( TestUSMath2Unit, RanfRepeatsItsSequenceForTheSameSeed )
+{
+   US_Math2::randomize( 20261114u );
+   QVector<double> first;
+   for ( int i = 0; i < 50; i++ )
+   {
+      first << US_Math2::ranf();
+   }
+   EXPECT_EQ( 50u, std::set<double>( first.begin(), first.end() ).size() );
 
-for (int i = 0; i < count; i++) {
-sum += US_Math2::box_muller(0.0, 1.0);
+   US_Math2::randomize( 20261114u );
+   for ( int i = 0; i < 50; i++ )
+   {
+      EXPECT_DOUBLE_EQ( first[i], US_Math2::ranf() ) << "draw " << i;
+   }
 }
 
-double average = sum / count;
-EXPECT_NEAR(average, 0.0, 0.2) << "Box-Muller should approximate mean=0";
-}
-
-TEST_F(TestUSMath2Unit, BoxMullerNonZeroMean) {
-// Test box_muller with non-zero mean
-double mean = 5.0;
-double sum = 0.0;
-int count = 1000;
-
-for (int i = 0; i < count; i++) {
-sum += US_Math2::box_muller(mean, 1.0);
-}
-
-double average = sum / count;
-EXPECT_NEAR(average, mean, 0.5) << "Box-Muller should approximate specified mean";
+TEST_F( TestUSMath2Unit, BoxMullerMatchesTheRequestedMeanAndDeviation )
+{
+   for ( const auto& requested : { qMakePair( 0.0, 1.0 ), qMakePair( 5.0, 2.0 ) } )
+   {
+      SCOPED_TRACE( requested.first );
+      US_Math2::randomize( 20261114u );
+      const int count = 20000;
+      double    sum   = 0.0;
+      double    sumsq = 0.0;
+      for ( int i = 0; i < count; i++ )
+      {
+         const double value = US_Math2::box_muller( requested.first, requested.second );
+         sum += value;
+         sumsq += value * value;
+      }
+      const double mean = sum / count;
+      const double sd   = sqrt( sumsq / count - mean * mean );
+      // About five standard errors for this sample size.
+      EXPECT_NEAR( mean, requested.first, 5.0 * requested.second / sqrt( double( count ) ) );
+      EXPECT_NEAR( sd, requested.second, 5.0 * requested.second / sqrt( 2.0 * count ) );
+   }
 }
 
 TEST_F(TestUSMath2Unit, BoxMullerZeroStdDev) {
 // Test box_muller with zero standard deviation
+US_Math2::randomize( 20261114u );
 double mean = 3.0;
 double result = US_Math2::box_muller(mean, 0.0);
 EXPECT_DOUBLE_EQ(result, mean) << "Box-Muller with std=0 should return mean";
+}
+
+TEST_F( TestUSMath2Unit, BoxMullerReseedDiscardsCachedDeviate )
+{
+   // After reseeding, the sequence must not depend on how many deviates
+   //  were drawn before (an odd count leaves the second deviate of a pair)
+   US_Math2::randomize( 4711u );
+   QVector<double> fresh;
+   for ( int i = 0; i < 4; i++ )
+   {
+      fresh << US_Math2::box_muller( 0.0, 1.0 );
+   }
+
+   for ( int drawn = 1; drawn <= 3; drawn++ )
+   {
+      US_Math2::randomize( 1234u );
+      for ( int i = 0; i < drawn; i++ )
+      {
+         US_Math2::box_muller( 0.0, 1.0 );
+      }
+
+      US_Math2::randomize( 4711u );
+      for ( int i = 0; i < 4; i++ )
+      {
+         EXPECT_DOUBLE_EQ( US_Math2::box_muller( 0.0, 1.0 ), fresh[i] )
+            << "deviate " << i << " after " << drawn << " earlier draws";
+      }
+   }
 }
 
 // ============================================================================
@@ -144,15 +186,16 @@ EXPECT_NEAR(intercept, 0.0, TOLERANCE) << "Two points should give correct interc
 EXPECT_DOUBLE_EQ(average, 4.0) << "Average should be (2+6)/2 = 4";
 }
 
-TEST_F(TestUSMath2Unit, LinefitZeroArray) {
-// Test linefit with zero array size (edge case)
-double slope, intercept, sigma, correlation;
-
-// This might cause undefined behavior, but we test the boundary
-EXPECT_NO_THROW({
-US_Math2::linefit(&testXPtr, &testYPtr, &slope, &intercept,
-        &sigma, &correlation, 0);
-}) << "Zero array size should not crash";
+TEST_F( TestUSMath2Unit, LinefitWithNoPointsReturnsNaN )
+{
+   // Every statistic divides by the point count; no element is read.
+   double slope = 0.0, intercept = 0.0, sigma = 0.0, correlation = 0.0;
+   double average = US_Math2::linefit( &testXPtr, &testYPtr, &slope, &intercept, &sigma, &correlation, 0 );
+   EXPECT_TRUE( std::isnan( average ) );
+   EXPECT_TRUE( std::isnan( slope ) );
+   EXPECT_TRUE( std::isnan( intercept ) );
+   EXPECT_TRUE( std::isnan( sigma ) );
+   EXPECT_TRUE( std::isnan( correlation ) );
 }
 
 TEST_F(TestUSMath2Unit, LinefitHorizontalLine) {
@@ -180,15 +223,13 @@ double* xvPtr = xv.data();
 double* yvPtr = yv.data();
 double slope, intercept, sigma, correlation;
 
-// This should handle division by zero gracefully or produce inf/nan
-EXPECT_NO_THROW({
-US_Math2::linefit(&xvPtr, &yvPtr, &slope, &intercept,
-        &sigma, &correlation, 4);
-}) << "Vertical data should not crash";
-
-// Results may be inf or nan, but should not crash
-EXPECT_TRUE(std::isfinite(slope) || std::isinf(slope) || std::isnan(slope))
-<< "Slope should be finite, inf, or nan";
+// A vertical line has no least-squares slope: the fit divides 0 by 0.
+const double    average = US_Math2::linefit( &xvPtr, &yvPtr, &slope, &intercept, &sigma, &correlation, 4 );
+EXPECT_DOUBLE_EQ( average, 2.5 );
+EXPECT_TRUE( std::isnan( slope ) );
+EXPECT_TRUE( std::isnan( intercept ) );
+EXPECT_TRUE( std::isnan( correlation ) );
+EXPECT_DOUBLE_EQ( sigma, std::sqrt( 5.0 ) / 4.0 );
 }
 
 // ============================================================================
@@ -293,8 +334,10 @@ int index = US_Math2::nearest_curve_point(xs.data(), ys.data(), 5, false,
                                           xgiven, ygiven, &xnear, &ynear,
                                           nullptr, nullptr);
 
-EXPECT_TRUE(index == 1 || index == 2) << "Should find nearest point";
-EXPECT_TRUE(xnear == 2.0 || xnear == 3.0) << "Should return actual curve point";
+// Normalized by the curve's x and y ranges (4 and 24), (2,4) is nearer than (3,9).
+EXPECT_EQ( index, 1 );
+EXPECT_DOUBLE_EQ( xnear, 2.0 );
+EXPECT_DOUBLE_EQ( ynear, 4.0 );
 }
 
 TEST_F(TestUSMath2Unit, NearestCurvePointInterpolated) {
@@ -367,11 +410,11 @@ double right = US_Math2::normal_distribution(sigma, mean, mean + 1.0);
 EXPECT_NEAR(left, right, TOLERANCE) << "Normal distribution should be symmetric around mean";
 }
 
-TEST_F(TestUSMath2Unit, NormalDistributionZeroSigma) {
-// Test normal distribution with zero sigma (should handle gracefully)
-EXPECT_NO_THROW({
-US_Math2::normal_distribution(0.0, 0.0, 0.0);
-}) << "Zero sigma should not crash";
+TEST_F( TestUSMath2Unit, NormalDistributionWithZeroSigmaIsNaN )
+{
+   // The density divides by sigma, so a zero sigma gives NaN at and away from the mean.
+   EXPECT_TRUE( std::isnan( US_Math2::normal_distribution( 0.0, 0.0, 0.0 ) ) );
+   EXPECT_TRUE( std::isnan( US_Math2::normal_distribution( 0.0, 1.0, 2.0 ) ) );
 }
 
 TEST_F(TestUSMath2Unit, NormalDistributionLargeSigma) {
@@ -386,10 +429,19 @@ EXPECT_NEAR(result, expected, TOLERANCE) << "Large sigma should give small peak 
 // RANDOMIZATION TESTS
 // ============================================================================
 
+// The clock-derived seed itself is unpredictable (and may be any value, including 0), but
+// it must be the seed actually used: a generator seeded with it yields the same values.
+void expectSeedReproducesSequence( uint seed )
+{
+   QRandomGenerator reference( seed );
+   const double     first  = reference.generateDouble();
+   const double     second = reference.generateDouble();
+   EXPECT_EQ( first, US_Math2::ranf() );
+   EXPECT_EQ( second, US_Math2::ranf() );
+}
+
 TEST_F(TestUSMath2Unit, RandomizeReturnsSeed) {
-// Test randomize returns a seed value
-uint seed = US_Math2::randomize();
-EXPECT_GT(seed, 0u) << "randomize() should return a positive seed";
+   expectSeedReproducesSequence( US_Math2::randomize() );
 }
 
 TEST_F(TestUSMath2Unit, RandomizeWithSeed) {
@@ -400,9 +452,8 @@ EXPECT_EQ(returnedSeed, inputSeed) << "randomize(seed) should return the input s
 }
 
 TEST_F(TestUSMath2Unit, RandomizeWithZeroSeed) {
-// Test randomize with zero seed (should generate random seed)
-uint returnedSeed = US_Math2::randomize(0);
-EXPECT_GT(returnedSeed, 0u) << "randomize(0) should generate and return positive seed";
+   // A zero seed asks for a clock-derived seed.
+   expectSeedReproducesSequence( US_Math2::randomize( 0 ) );
 }
 
 TEST_F(TestUSMath2Unit, RandomizeConsistentSequence) {
@@ -553,4 +604,195 @@ int reps = US_Math2::best_grid_reps(ngrid_s, ngrid_k);
 EXPECT_GT(reps, 0) << "Should return valid repetitions for equal values";
 EXPECT_EQ(ngrid_s % reps, 0) << "Final s grid should be divisible by reps";
 EXPECT_EQ(ngrid_k % reps, 0) << "Final k grid should be divisible by reps";
+}
+
+// ============================================================================
+// NNLS TESTS
+// ============================================================================
+
+TEST_F( TestUSMath2Unit, NnlsTiedCoefficientsReturnExactSolution )
+{
+   // Two passive coefficients reach zero in the same step (a tie), which
+   // runs the round-off branch that moves more coefficients to set Z
+   double amat[12] = { 1.0, 0.0, 0.0, 0.0, // Column-major 4 x 3
+                       0.0, 1.0, 0.0, 0.0, 0.25, 0.25, 0.125, 0.0 };
+   double bvec[4]  = { 1.0, 1.0, 1.0, 0.0 };
+   double xvec[3]  = { -1.0, -1.0, -1.0 };
+   double rnorm    = -1.0;
+
+   int    ret = US_Math2::nnls( amat, 4, 4, 3, bvec, xvec, &rnorm );
+
+   EXPECT_EQ( ret, 0 );
+   EXPECT_NEAR( xvec[0], 0.0, 1e-12 );
+   EXPECT_NEAR( xvec[1], 0.0, 1e-12 );
+   EXPECT_NEAR( xvec[2], 40.0 / 9.0, 1e-12 );
+   EXPECT_NEAR( rnorm, sqrt( 2.0 ) / 3.0, 1e-12 );
+}
+
+TEST_F( TestUSMath2Unit, NnlsSatisfiesKuhnTuckerConditions )
+{
+   // Random over- and underdetermined problems:  x >= 0, zero gradient
+   // for positive x, non-positive dual A^T (b - A x) for zero x
+   std::mt19937                           gen( 20260928 );
+   std::uniform_real_distribution<double> uni( -1.0, 1.0 );
+
+   for ( int trial = 0; trial < 300; trial++ )
+   {
+      int             mrows = 2 + trial % 11;
+      int             ncols = 1 + ( trial / 11 ) % 10;
+      QVector<double> amat( mrows * ncols );
+      QVector<double> bvec( mrows );
+      for ( double& val : amat )
+      {
+         val = uni( gen );
+      }
+      for ( double& val : bvec )
+      {
+         val = uni( gen );
+      }
+      QVector<double> awork = amat; // nnls overwrites A and b
+      QVector<double> bwork = bvec;
+      QVector<double> xvec( ncols, -1.0 );
+      double          rnorm = -1.0;
+
+      ASSERT_EQ( US_Math2::nnls( awork.data(), mrows, mrows, ncols, bwork.data(), xvec.data(), &rnorm ), 0 ) << "trial " << trial;
+
+      QVector<double> resid = bvec; // b - A x
+      for ( int jj = 0; jj < ncols; jj++ )
+      {
+         for ( int ii = 0; ii < mrows; ii++ )
+         {
+            resid[ii] -= amat[jj * mrows + ii] * xvec[jj];
+         }
+      }
+
+      double rsumsq = 0.0;
+      for ( const double val : resid )
+      {
+         rsumsq += val * val;
+      }
+      EXPECT_NEAR( rnorm, sqrt( rsumsq ), 1e-10 ) << "trial " << trial;
+
+      for ( int jj = 0; jj < ncols; jj++ )
+      {
+         double dual = 0.0;
+         for ( int ii = 0; ii < mrows; ii++ )
+         {
+            dual += amat[jj * mrows + ii] * resid[ii];
+         }
+
+         EXPECT_GE( xvec[jj], 0.0 ) << "trial " << trial << " col " << jj;
+         if ( xvec[jj] > 0.0 )
+         {
+            EXPECT_NEAR( dual, 0.0, 1e-9 ) << "trial " << trial << " col " << jj;
+         }
+         else
+         {
+            EXPECT_LE( dual, 1e-9 ) << "trial " << trial << " col " << jj;
+         }
+      }
+   }
+}
+
+TEST_F( TestUSMath2Unit, NnlsAbortFlagStopsWithFeasibleSolution )
+{
+   // A raised abort flag stops nnls at the next outer iteration (return 3)
+   // with x >= 0 and the residual norm of that x
+   double            amat[12] = { 1.0, 0.0, 0.0, 0.0, // Column-major 4 x 3
+                                  0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 };
+   double            bvec[4]  = { 1.0, 2.0, 3.0, 4.0 };
+   double            xvec[3]  = { -1.0, -1.0, -1.0 };
+   double            rnorm    = -1.0;
+   std::atomic<bool> abort_flag{ true };
+
+   int               ret = US_Math2::nnls( amat, 4, 4, 3, bvec, xvec, &rnorm, NULL, NULL, NULL, 0, &abort_flag );
+
+   EXPECT_EQ( ret, 3 );
+   for ( int jj = 0; jj < 3; jj++ )
+   {
+      EXPECT_EQ( xvec[jj], 0.0 );
+   }
+   EXPECT_NEAR( rnorm, sqrt( 30.0 ), 1e-12 );
+
+   // A lowered flag does not change the result
+   double amat2[12] = { 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 };
+   double bvec2[4]  = { 1.0, 2.0, 3.0, 4.0 };
+   abort_flag       = false;
+
+   ret = US_Math2::nnls( amat2, 4, 4, 3, bvec2, xvec, &rnorm, NULL, NULL, NULL, 0, &abort_flag );
+
+   EXPECT_EQ( ret, 0 );
+   EXPECT_NEAR( xvec[0], 1.0, 1e-12 );
+   EXPECT_NEAR( xvec[1], 2.0, 1e-12 );
+   EXPECT_NEAR( xvec[2], 3.0, 1e-12 );
+   EXPECT_NEAR( rnorm, 4.0, 1e-12 );
+}
+
+TEST_F( TestUSMath2Unit, NnlsIterationLimitReturnsLastFeasibleSolution )
+{
+   // Stopped by the iteration limit (return 1), nnls must return a
+   // feasible x and the residual norm of that x
+   std::mt19937                           gen( 20260930 );
+   std::uniform_real_distribution<double> uni( -1.0, 1.0 );
+   const int                              mrows  = 40;
+   const int                              ncols  = 15;
+   int                                    nlimit = 0;
+
+   for ( int trial = 0; trial < 50; trial++ )
+   {
+      QVector<double> amat( mrows * ncols );
+      QVector<double> bvec( mrows );
+      for ( double& val : amat )
+      {
+         val = uni( gen );
+      }
+      for ( double& val : bvec )
+      {
+         val = uni( gen );
+      }
+
+      QVector<double> awork = amat; // nnls overwrites A and b
+      QVector<double> bwork = bvec;
+      QVector<double> xopt( ncols );
+      double          ropt = 0.0;
+      ASSERT_EQ( US_Math2::nnls( awork.data(), mrows, mrows, ncols, bwork.data(), xopt.data(), &ropt ), 0 );
+
+      for ( int itmax = 1; itmax <= 3 * ncols; itmax++ )
+      {
+         awork = amat;
+         bwork = bvec;
+         QVector<double> xvec( ncols, -1.0 );
+         double          rnorm = -1.0;
+         int ret = US_Math2::nnls( awork.data(), mrows, mrows, ncols, bwork.data(), xvec.data(), &rnorm, NULL, NULL, NULL, itmax );
+         ASSERT_TRUE( ret == 0 || ret == 1 ) << "trial " << trial;
+
+         QVector<double> resid = bvec; // b - A x
+         for ( int jj = 0; jj < ncols; jj++ )
+         {
+            EXPECT_GE( xvec[jj], 0.0 ) << "trial " << trial << " itmax " << itmax;
+            for ( int ii = 0; ii < mrows; ii++ )
+            {
+               resid[ii] -= amat[jj * mrows + ii] * xvec[jj];
+            }
+         }
+
+         double rsumsq = 0.0;
+         for ( double val : resid )
+         {
+            rsumsq += val * val;
+         }
+         EXPECT_NEAR( rnorm, sqrt( rsumsq ), 1e-12 ) << "trial " << trial << " itmax " << itmax;
+
+         if ( ret == 0 )
+         { // Limit not reached:  the optimum
+            EXPECT_NEAR( rnorm, ropt, 1e-12 ) << "trial " << trial;
+            break;
+         }
+
+         EXPECT_GE( rnorm, ropt - 1e-12 ) << "trial " << trial << " itmax " << itmax;
+         nlimit++;
+      }
+   }
+
+   EXPECT_GT( nlimit, 0 );
 }

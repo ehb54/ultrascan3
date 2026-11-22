@@ -57,10 +57,13 @@ void WorkerThreadPc::define_work( WorkPacketPc& workin )
    psv_nnls_b  = workin.psv_nnls_b;
 
    solutes_i   = workin.isolutes;
+   simcache    = workin.simcache;
 
-QString phdr = QString( "PC(WT)dw:%1:%2:" ).arg(taskx).arg(thrn);
-if(depth>0) {
-DbgLv(1) << phdr << "depth1 psv_nnlsab" << psv_nnls_a << psv_nnls_b; }
+   QString phdr = QString( "PC(WT)dw:%1:%2:" ).arg( taskx ).arg( thrn );
+   if ( depth > 0 )
+   {
+      DbgLv( 1 ) << phdr << "depth1 psv_nnlsab" << psv_nnls_a << psv_nnls_b;
+   }
 else { 
 DbgLv(1) << phdr << "DefWk: sols size" << solutes_i.size(); }
    dset_wk              = *(workin.dsets[ 0 ]);  // local copy of data set
@@ -149,7 +152,8 @@ DbgLv(1) << phdr << "depth" << depth;
    if ( depth == 0 )
    {  // Fit task:  do full compute of model
       solvesim            = new US_SolveSim( dsets, thrn, true );
-DbgLv(1) << phdr << " A)dsets size" << dsets.size();
+      solvesim->set_sim_cache( simcache.get() );
+      DbgLv( 1 ) << phdr << " A)dsets size" << dsets.size();
 
       sim_vals.zsolutes   = solutes_i;
       sim_vals.noisflag   = noisflag;

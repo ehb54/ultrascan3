@@ -2,6 +2,9 @@
 #include "us_settings.h"
 #include "us_defines.h"
 
+#include <QDir>
+#include <QFileInfo>
+#include <QLibraryInfo>
 #include <QtNumeric>
 
 QSettings::Format US_SettingsStore::format( void )
@@ -147,6 +150,134 @@ QString US_Settings::appBaseDir( void )
    return base;
 }
 
+// Executable names for Qt Assistant within a directory, in preference order
+QStringList US_Settings::assistantNames( void )
+{
+#if defined( Q_OS_MAC )
+   return { "Assistant.app/Contents/MacOS/Assistant", "assistant" };
+#elif defined( Q_OS_WIN )
+   return { "assistant.exe" };
+#else
+   return { "assistant" };
+#endif
+}
+
+// Directories of the linked Qt installation that may hold Assistant
+QStringList US_Settings::assistantQtDirs( void )
+{
+#if QT_VERSION >= QT_VERSION_CHECK( 6, 0, 0 )
+   const QString prefix = QLibraryInfo::path( QLibraryInfo::PrefixPath );
+   QStringList   dirs   = { QLibraryInfo::path( QLibraryInfo::BinariesPath ),
+                            QLibraryInfo::path( QLibraryInfo::LibraryExecutablesPath ) };
+
+   // vcpkg installs Qt 6 tools under the prefix's tools/Qt6/bin.
+   if ( !prefix.isEmpty() )
+   {
+      dirs << prefix + "/tools/Qt6/bin";
+   }
+#else
+   QStringList dirs = { QLibraryInfo::location( QLibraryInfo::BinariesPath ),
+                        QLibraryInfo::location( QLibraryInfo::LibraryExecutablesPath ) };
+#endif
+
+   // A deployed tree's qt.conf gives paths such as bin/bin that do not
+   // exist; only directories that exist are searched or reported.
+   QStringList unique;
+
+   for ( const QString& dir : dirs )
+   {
+      const QString clean = QDir::cleanPath( dir );
+
+      if ( !dir.isEmpty() && QFileInfo( clean ).isDir() && !unique.contains( clean ) )
+      {
+         unique << clean;
+      }
+   }
+
+   return unique;
+}
+
+// Locate Qt Assistant: bundled beside the programs, else the linked Qt
+QString US_Settings::assistantPath( QString* error, QStringList* searched )
+{
+   return resolveAssistant( { appBaseDir() + "/bin" }, assistantQtDirs(), error, searched );
+}
+
+// Resolve Qt Assistant from explicit bundled and Qt directories
+QString US_Settings::resolveAssistant( const QStringList& bundledDirs,
+                                       const QStringList& qtDirs,
+                                       QString*           error,
+                                       QStringList*       searched )
+{
+   const QStringList names = assistantNames();
+
+   if ( error )
+   {
+      error->clear();
+   }
+
+   // A bundled viewer that exists must be usable; never substitute another.
+   for ( const QString& dir : bundledDirs )
+   {
+      for ( const QString& name : names )
+      {
+         const QString   path = QDir::cleanPath( dir + "/" + name );
+         const QFileInfo info( path );
+
+         if ( searched )
+         {
+            *searched << path;
+         }
+
+         // A present Assistant.app with no usable inner binary is broken too.
+         const QString top = QDir::cleanPath( dir + "/" + name.section( '/', 0, 0 ) );
+
+         if ( !QFileInfo::exists( top ) )
+         {
+            continue;
+         }
+
+         if ( info.isFile() && info.isExecutable() )
+         {
+            return info.absoluteFilePath();
+         }
+
+         if ( error )
+         {
+            *error = QObject::tr( "The bundled Qt Assistant is not an "
+                                  "executable file:\n%1" )
+                        .arg( path );
+         }
+         return QString();
+      }
+   }
+
+   for ( const QString& dir : qtDirs )
+   {
+      for ( const QString& name : names )
+      {
+         const QString   path = QDir::cleanPath( dir + "/" + name );
+         const QFileInfo info( path );
+
+         if ( searched )
+         {
+            *searched << path;
+         }
+
+         if ( info.isFile() && info.isExecutable() )
+         {
+            return info.absoluteFilePath();
+         }
+      }
+   }
+
+   if ( error )
+   {
+      *error = QObject::tr( "Qt Assistant, which displays UltraScan help, "
+                            "was not found." );
+   }
+   return QString();
+}
 
 // License
 QStringList US_Settings::license( void )
@@ -178,7 +309,9 @@ void US_Settings::set_UltraScanPW( const QByteArray& hash )
 double US_Settings::tempTolerance( void )
 {
   US_SettingsStore settings;
-  return settings.value( "tempTolerance", 0.5 ).toDouble(); // No default
+  bool             ok    = false;
+  const double     value = settings.value( "tempTolerance", 0.5 ).toDouble( &ok );
+  return ok && qIsFinite( value ) && value >= 0.0 ? value : 0.5;
 }
 
 void US_Settings::set_tempTolerance( double tempTolerance )
@@ -222,10 +355,16 @@ void US_Settings::set_beckmanBug( bool setBug )
 }
 
 // Default data location  1 = DB, 2 = Disk
+static int dataLocationOverride = -1; // -1: no process-only override set
+
 int US_Settings::default_data_location( void )
 {
+   if ( dataLocationOverride >= 0 )
+   {
+      return dataLocationOverride;
+   }
   US_SettingsStore settings;
-  return settings.value( "dataLocation", 2 ).toInt(); 
+  return settings.value( "dataLocation", 2 ).toInt();
 }
 
 void US_Settings::set_default_data_location( int location )
@@ -235,6 +374,21 @@ void US_Settings::set_default_data_location( int location )
     settings.remove( "dataLocation" );
   else
     settings.setValue( "dataLocation", location );
+}
+
+void US_Settings::set_default_data_location_override( int location )
+{
+   dataLocationOverride = location;
+}
+
+int US_Settings::default_data_location_override( void )
+{
+   return dataLocationOverride;
+}
+
+void US_Settings::clear_default_data_location_override( void )
+{
+   dataLocationOverride = -1;
 }
 
 // us_debug
@@ -387,7 +541,9 @@ void US_Settings::set_advanced_level( int level )
 int US_Settings::threads( void )
 {
   US_SettingsStore settings;
-  return settings.value( "threads", 1 ).toInt(); // No default
+  bool             ok    = false;
+  const int        value = settings.value( "threads", 1 ).toInt( &ok );
+  return ok && value > 0 ? value : 1;
 }
 
 void US_Settings::set_threads( int threads )
@@ -536,8 +692,13 @@ void US_Settings::set_DA_status( const QString& status )
 {
   US_SettingsStore settings;
 
-  QStringList status_list = status.split(":");
-  
+  const QStringList status_list = status.split( ":" );
+  // Ignore malformed updates; do not replace an existing valid state.
+  if ( status_list.size() != 2 || ( status_list[1] != "0" && status_list[1] != "1" ) )
+  {
+     return;
+  }
+
   if ( status_list[0] == "COM" ) 
     settings.setValue( "daComOpened", status_list[1] );
   if ( status_list[0] == "ACAD" ) 
@@ -585,5 +746,3 @@ QString US_Settings::status()
      break;
   }
 }
-     
-     

@@ -8,11 +8,9 @@
 #include "../include/us_hydrodyn_saxs_hplc_fit.h"
 #include "../include/us_hydrodyn_saxs_hplc_fit_global.h"
 #include "../include/us_lm.h"
-#if QT_VERSION >= 0x040000
 #include <qwt_scale_engine.h>
 //Added by qt3to4:
 #include <QTextStream>
-#endif
 
 // note: this program uses cout and/or cerr and this should be replaced
 

@@ -781,21 +781,12 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
       qsl_plotted_iq_names << plot_name;
       dup_plotted_iq_name_check[plot_name] = true;
 
-#if QT_VERSION < 0x040000
-      long Iq = plot_saxs->insertCurve( plot_name );
-#else
       QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
-#endif
 
       plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();
 
-#if QT_VERSION < 0x040000
-      plotted_Iq.push_back(Iq);
-      plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
-#else
       plotted_Iq.push_back( curve );
       curve->setStyle( QwtPlotCurve::Lines );
-#endif
       plotted_q.push_back(q);
       {
          vector < double > q2(q.size());
@@ -825,15 +816,6 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
          }
       }
 
-#if QT_VERSION < 0x040000
-      plot_saxs->setCurveData(Iq, 
-                              cb_guinier->isChecked() ?
-                              (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
-                              cb_kratky ->isChecked() ?
-                              (double *)&(q2I[0])           : (double *)&(plotted_I[p][0]),
-                              q_points );
-      plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], pen_width, SolidLine));
-#else
       curve->setSamples(
                      cb_guinier->isChecked() ?
                      (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
@@ -843,7 +825,6 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
                      );
       curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
       curve->attach( plot_saxs );
-#endif
       cb_user_range->setChecked(false);
       cb_guinier->setChecked(true);
       rescale_plot();
@@ -1433,21 +1414,12 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh_bead_model()
       qsl_plotted_iq_names << plot_name;
       dup_plotted_iq_name_check[plot_name] = true;
 
-#if QT_VERSION < 0x040000
-      long Iq = plot_saxs->insertCurve( plot_name );
-#else
       QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
-#endif
 
       plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();
 
-#if QT_VERSION < 0x040000
-      plotted_Iq.push_back(Iq);
-      plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
-#else
       plotted_Iq.push_back( curve );
       curve->setStyle( QwtPlotCurve::Lines );
-#endif
       plotted_q.push_back(q);
       {
          vector < double > q2(q.size());
@@ -1477,15 +1449,6 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh_bead_model()
          }
       }
 
-#if QT_VERSION < 0x040000
-      plot_saxs->setCurveData(Iq, 
-                              cb_guinier->isChecked() ?
-                              (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
-                              cb_kratky ->isChecked() ?
-                              (double *)&(q2I[0])           : (double *)&(plotted_I[p][0]),
-                              q_points );
-      plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], pen_width, SolidLine));
-#else
       curve->setSamples(
                      cb_guinier->isChecked() ?
                      (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
@@ -1495,7 +1458,6 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh_bead_model()
                      );
       curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
       curve->attach( plot_saxs );
-#endif
       cb_user_range->setChecked(false);
       cb_guinier->setChecked(true);
       rescale_plot();

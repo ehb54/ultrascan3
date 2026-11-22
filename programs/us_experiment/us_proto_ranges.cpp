@@ -149,8 +149,10 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
       pbwavln->setObjectName( strow + ": pb_wavln" );
       lbwlrng->setObjectName( strow + ": lb_wlrng" );
       ctradfr->setObjectName( strow + ": ct_radfr" );
+      ctradfr->setAccessibleName( tr( "Radius From (Channel %1)" ).arg( scel ) );
       lablto ->setObjectName( strow + ": lb_to"    );
       ctradto->setObjectName( strow + ": ct_radto" );
+      ctradto->setAccessibleName( tr( "Radius To (Channel %1)" ).arg( scel ) );
 
       bool is_vis      = ( ii < 4 );
 

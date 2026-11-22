@@ -41,10 +41,17 @@ function(us3_add_gui_test target)
 endfunction()
 
 add_subdirectory(utils)
+add_subdirectory(calc)  # US_Calc unit tests, fixtures and legacy characterization
 
 # GUI tests require the DB-enabled GUI library; NO_DB builds run utils tests.
 if(TARGET UltraScan3::Gui_Static)
     add_subdirectory(gui)
+    add_subdirectory(programs)
 else()
     message(STATUS "test: skipping GUI and program tests (no UltraScan3::Gui_Static in this variant)")
+endif()
+
+# us_mpi_analysis regression tests need the MPI program (NO_DB/HPC builds).
+if(TARGET us_mpi_analysis)
+    add_subdirectory(mpi_analysis)
 endif()

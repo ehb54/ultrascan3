@@ -76,40 +76,6 @@ void US_Hydrodyn_Grid::setupGUI()
    AUTFBACK( cnt_cube_side );
    connect(cnt_cube_side, SIGNAL(valueChanged(double)), SLOT(update_cube_side(double)));
 
-#if QT_VERSION < 0x040000
-# if defined( CSI_TEST )
-   bg_center = new QGroupBox(3, Qt::Horizontal, "Computations Relative to:", this);
-# else
-   bg_center = new QGroupBox(2, Qt::Horizontal, "Computations Relative to:", this);
-# endif
-   bg_center->setExclusive(true);
-   connect(bg_center, SIGNAL(clicked(int)), this, SLOT(select_center(int)));
-
-   cb_center_mass = new QCheckBox(bg_center);
-   cb_center_mass->setText(us_tr(" Center of Mass "));
-   cb_center_mass->setEnabled(true);
-   cb_center_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_center_mass->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_center_mass );
-
-   cb_center_cubelet = new QCheckBox(bg_center);
-   cb_center_cubelet->setText(us_tr(" Center of Cubelet "));
-   cb_center_cubelet->setEnabled(true);
-   cb_center_cubelet->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_center_cubelet->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_center_cubelet );
-
-# if defined( CSI_TEST )
-   cb_center_si = new QCheckBox(bg_center);
-   cb_center_si->setText(us_tr(" Center of scattering intensity"));
-   cb_center_si->setEnabled(true);
-   cb_center_si->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_center_si->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_center_si );
-# endif
-
-   bg_center->setButton((*grid).center);
-#else
    bg_center = new QGroupBox( "Computations Relative to:" );
 
    rb_center_mass = new QRadioButton();
@@ -155,7 +121,6 @@ void US_Hydrodyn_Grid::setupGUI()
 # endif
    default : qDebug() << "grid center selection error"; break;
    }
-#endif
 
    cb_cubic = new QCheckBox(this);
    cb_cubic->setText(us_tr(" Apply Cubic Grid "));

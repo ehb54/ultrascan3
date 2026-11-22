@@ -563,52 +563,30 @@ int US_Hydrodyn::run_anaflex( int /* use_mode */, int /* sub_mode */ )
    anaflex = new QProcess( this );
    anaflex->setWorkingDirectory( dir );
 
-#if QT_VERSION < 0x040000
-   anaflex->addArgument( prog );
-#else
    QStringList args;
    args
       << "<"
       << anafile
       ;
-#endif
 
    connect( anaflex, SIGNAL(readyReadStandardOutput()), this, SLOT(anaflex_readFromStdout()) );
    connect( anaflex, SIGNAL(readyReadStandardError()), this, SLOT(anaflex_readFromStderr()) );
    connect( anaflex, SIGNAL(finished( int, QProcess::ExitStatus )), this, SLOT(anaflex_finished( int, QProcess::ExitStatus )) );
    connect( anaflex, SIGNAL(started()), this, SLOT(anaflex_started()) );
 
-#if QT_VERSION < 0x040000
-   anaflex->launch( anafile );
-#else
    anaflex->start( prog, args, QIODevice::ReadOnly );
-#endif
 
    return 0;
 }
 
 void US_Hydrodyn::anaflex_readFromStdout()
 {
-#if QT_VERSION < 0x040000
-   while ( anaflex->canReadLineStdout() )
-   {
-      editor_msg("brown", anaflex->readLineStdout() + "\n");
-   }
-#else
    editor_msg( "brown", QString( anaflex->readAllStandardOutput() ) );
-#endif   
 }
    
 void US_Hydrodyn::anaflex_readFromStderr()
 {
-#if QT_VERSION < 0x040000
-   while ( anaflex->canReadLineStderr() )
-   {
-      editor_msg("red", anaflex->readLineStderr() + "\n");
-   }
-#else
    editor_msg( "red", QString( anaflex->readAllStandardError() ) );
-#endif   
 }
    
 void US_Hydrodyn::anaflex_finished( int, QProcess::ExitStatus )

@@ -703,6 +703,7 @@ US_ProjectGuiGeneral::US_ProjectGuiGeneral( int* invID,
    }
       
    le_investigator = us_lineedit( tr( "Not Selected" ) );
+   le_investigator->setAccessibleName( tr( "Investigator" ) );
    le_investigator->setReadOnly( true );
    general->addWidget( le_investigator, row++, 1, 1, 2 );
 
@@ -718,6 +719,7 @@ US_ProjectGuiGeneral::US_ProjectGuiGeneral( int* invID,
 
    // Row 3
    lw_projects = us_listwidget();
+   lw_projects->setAccessibleName( tr( "Projects" ) );
    lw_projects-> setSortingEnabled( true );
    connect( lw_projects, &QListWidget::itemClicked,
                          this, &US_ProjectGuiGeneral::selectProject );
@@ -750,6 +752,8 @@ US_ProjectGuiGeneral::US_ProjectGuiGeneral( int* invID,
 
    // Row 7
    le_projectDesc = us_lineedit( "", 1 );
+   le_projectDesc->setAccessibleName( tr( "Project Name" ) );
+   lb_projectDesc->setBuddy( le_projectDesc );
    connect( le_projectDesc, &QLineEdit::textEdited,
                             this, &US_ProjectGuiGeneral::saveDescription );
    general->addWidget( le_projectDesc, row++, 1, 1, 2 );
@@ -760,6 +764,8 @@ US_ProjectGuiGeneral::US_ProjectGuiGeneral( int* invID,
 
    // Row 9
    le_lastupd = us_lineedit( "" );
+   le_lastupd->setAccessibleName( tr( "Last Updated" ) );
+   lbl_lastupd->setBuddy( le_lastupd );
    le_lastupd->setPalette ( gray );
    le_lastupd->setReadOnly( true );
    general->addWidget( le_lastupd, row++, 1, 1, 2 );
@@ -769,7 +775,9 @@ US_ProjectGuiGeneral::US_ProjectGuiGeneral( int* invID,
    general->addWidget( lb_guid, row++, 1, 1, 2 );
 
    // Row 9
-   le_guid = us_lineedit( "" ); 
+   le_guid = us_lineedit( "" );
+   le_guid->setAccessibleName( tr( "Global Identifier" ) );
+   lb_guid->setBuddy( le_guid );
    le_guid->setPalette ( gray );
    le_guid->setReadOnly( true );
    general->addWidget( le_guid, row++, 1, 1, 2 );
@@ -857,6 +865,7 @@ US_ProjectGuiGoals::US_ProjectGuiGoals( void ) : US_Widgets()
    goals->addWidget( lb_goals );
 
    te_goals = us_textedit();
+   te_goals->setAccessibleName( tr( "Project Goals" ) );
    connect( te_goals, &QTextEdit::textChanged, 
                       this, &US_ProjectGuiGoals::goalsTabChanged );
    goals->addWidget( te_goals );
@@ -891,6 +900,7 @@ US_ProjectGuiMolecules::US_ProjectGuiMolecules( void ) : US_Widgets()
    molecules->addWidget( lb_molecules );
 
    te_molecules = us_textedit();
+   te_molecules->setAccessibleName( tr( "Analytes to be Measured" ) );
    connect( te_molecules, &QTextEdit::textChanged, 
                           this, &US_ProjectGuiMolecules::moleculesTabChanged );
    molecules->addWidget( te_molecules );
@@ -919,6 +929,7 @@ US_ProjectGuiPurity::US_ProjectGuiPurity( void ) : US_Widgets()
    purity->addWidget( lb_purity );
 
    le_purity = us_lineedit();
+   le_purity->setAccessibleName( tr( "Sample Purity" ) );
    connect( le_purity, &QLineEdit::textChanged, 
                        this, &US_ProjectGuiPurity::purityTabChanged );
    purity->addWidget( le_purity );
@@ -953,6 +964,7 @@ US_ProjectGuiExpense::US_ProjectGuiExpense( void ) : US_Widgets()
    expense->addWidget( lb_expense );
 
    te_expense = us_textedit();
+   te_expense->setAccessibleName( tr( "Sample Amount" ) );
    connect( te_expense, &QTextEdit::textChanged, 
                         this, &US_ProjectGuiExpense::expenseTabChanged );
    expense->addWidget( te_expense );
@@ -990,6 +1002,7 @@ US_ProjectGuiBufferComponents::US_ProjectGuiBufferComponents( void ) : US_Widget
    bufferComponents->addWidget( lb_bufferComponents );
 
    te_bufferComponents = us_textedit();
+   te_bufferComponents->setAccessibleName( tr( "Buffer Components" ) );
    connect( te_bufferComponents, &QTextEdit::textChanged, 
                                  this, &US_ProjectGuiBufferComponents::bufferComponentsTabChanged );
    bufferComponents->addWidget( te_bufferComponents );
@@ -1029,6 +1042,7 @@ US_ProjectGuiSaltInformation::US_ProjectGuiSaltInformation( void ) : US_Widgets(
    saltInformation->addWidget( lb_saltInformation );
 
    te_saltInformation = us_textedit();
+   te_saltInformation->setAccessibleName( tr( "Storage Conditions" ) );
    connect( te_saltInformation, &QTextEdit::textChanged, 
                                 this, &US_ProjectGuiSaltInformation::saltInformationTabChanged );
    saltInformation->addWidget( te_saltInformation );
@@ -1057,6 +1071,7 @@ US_ProjectGuiAUC_questions::US_ProjectGuiAUC_questions( void ) : US_Widgets()
    auc_questions->addWidget( lb_auc_questions );
 
    te_auc_questions = us_textedit();
+   te_auc_questions->setAccessibleName( tr( "AUC Questions" ) );
    connect( te_auc_questions, &QTextEdit::textChanged, 
                               this, &US_ProjectGuiAUC_questions::AUC_questionsTabChanged );
    auc_questions->addWidget( te_auc_questions );
@@ -1083,6 +1098,7 @@ US_ProjectGuiExpDesign::US_ProjectGuiExpDesign( void ) : US_Widgets()
    exp_design->addWidget( lb_exp_design );
 
    te_exp_design = us_textedit();
+   te_exp_design->setAccessibleName( tr( "AUC Experimental Design" ) );
    connect( te_exp_design, &QTextEdit::textChanged, 
                            this, &US_ProjectGuiExpDesign::expDesignTabChanged );
    exp_design->addWidget( te_exp_design );
@@ -1109,6 +1125,8 @@ US_ProjectGuiNotes::US_ProjectGuiNotes( void ) : US_Widgets()
    notes->addWidget( lb_notes );
 
    te_notes = us_textedit();
+   te_notes->setAccessibleName( tr( "Notes" ) );
+   lb_notes->setBuddy( te_notes );
    connect( te_notes, &QTextEdit::textChanged, 
                       this, &US_ProjectGuiNotes::notesTabChanged );
    notes->addWidget( te_notes );

@@ -1,14 +1,16 @@
 //! \file us_worker_2d.h
-#ifndef US_THREAD_WORKER_H
-#define US_THREAD_WORKER_H
+#ifndef US_THREAD_WORKER_2D_H
+#define US_THREAD_WORKER_2D_H
 
 #include <QtCore>
+#include <memory>
 
-#include "us_extern.h"
 #include "us_dataIO.h"
-#include "us_simparms.h"
+#include "us_extern.h"
 #include "us_model.h"
 #include "us_noise.h"
+#include "us_sim_cache.h"
+#include "us_simparms.h"
 #include "us_solute.h"
 #include "us_solve_sim.h"
 
@@ -41,6 +43,7 @@ typedef struct work_packet_2d_s
    QList< US_SolveSim::DataSet* > dsets; //!< list of data set object pointers
    US_SolveSim::Simulation  sim_vals;  //!< simulation values
 
+   std::shared_ptr<US_SimCache>   simcache; //!< simulation cache (or none)
 
 } WorkPacket2D;
 
@@ -115,6 +118,7 @@ class WorkerThread2D : public QThread
       QList< US_SolveSim::DataSet* > dsets;     // list of data set obj. ptrs.
       US_SolveSim::Simulation        sim_vals;  // simulation values
       US_SolveSim*                   solvesim;  // object for calc_residuals()
+      std::shared_ptr<US_SimCache>   simcache;  // simulation cache (or none)
       US_SolveSim::DataSet           dset_wk;   // local copy of data set
 
       QVector< US_Solute >    solutes_i;   // solutes input

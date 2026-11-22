@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Native git hook; enable with: git config core.hooksPath .githooks
+exec "$(git rev-parse --show-toplevel)/scripts/check-format.sh" --staged

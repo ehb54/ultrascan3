@@ -146,7 +146,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::reset_csv_commands()
 void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
 {
    int minHeight1 = 22;
-#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
+#if !defined(Q_OS_MAC)
    int minHeight3 = 30;
 #endif
 
@@ -340,35 +340,6 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    AUTFBACK( editor );
    editor->setReadOnly(true);
 
-#if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
-   {
- //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-
-      QMenuBar *menu = new QMenuBar( this );
-      AUTFBACK( menu );
-
-      menu->insertItem(us_tr("&Messages"), file );
-   }
-# else
-   QFrame *frame;
-   frame = new QFrame(this);
-   frame->setMinimumHeight(minHeight3);
-
-   m = new QMenuBar( frame );    m->setObjectName( "menu" );
-   m->setMinimumHeight(minHeight1 - 5);
-   m->setPalette( PALET_NORMAL );
-   AUTFBACK( m );
- //   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-# endif
-#else
 # if defined(Q_OS_MAC)
    m = new QMenuBar( this );
    m->setObjectName( "menu" );
@@ -399,7 +370,6 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
       qa3->setShortcut( Qt::ALT+Qt::Key_X );
       connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
    }
-#endif
 
 
    editor->setWordWrapMode (QTextOption::WordWrap);
@@ -472,7 +442,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    hbl_bottom->addSpacing( 2 );
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
-#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
+#if !defined(Q_OS_MAC)
    vbl_editor_group->addWidget( frame );
 #endif
    vbl_editor_group->addWidget( editor );
@@ -1590,11 +1560,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::update_enables()
 
    pb_extra_chains     ->setEnabled( !running && extra_chains_list.size() && !extra_chains_done );
    pb_only_closest     ->setEnabled( !running && extra_chains_list.size() && !extra_chains_done );
-#if QT_VERSION < 0x040000
-   pb_delete_row       ->setEnabled( !running && t_csv->numSelections() );
-#else
    pb_delete_row       ->setEnabled( !running && t_csv->selectedRanges().count() );
-#endif
    pb_start            ->setEnabled( !running && from_exists && to_exists && t_csv->rowCount() && target_set );
    pb_trial            ->setEnabled( !running && from_exists && to_exists && t_csv->rowCount() );
    pb_stop             ->setEnabled( running );

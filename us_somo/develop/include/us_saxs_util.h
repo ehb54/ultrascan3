@@ -84,9 +84,6 @@ typedef unsigned _int32 uint32_t;
 #endif
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
 #endif
 
 using namespace std;
@@ -1985,21 +1982,16 @@ class US_EXTERN US_Saxs_Util
 
 };
 
-#if QT_VERSION >= 0x040000
 extern QString us_tr( QString );
 extern const char * us_trp( QString );
 extern void us_qdebug( QString );
 FILE * us_fopen( QString f, const char *mode );
-#endif
 
 # if defined( USE_MPI )
    extern void debug_mpi( QString );
 # endif
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
 #endif
 
 #endif

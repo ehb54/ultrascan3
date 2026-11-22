@@ -1,9 +1,7 @@
 #include "us3i_editor.h"
 #include "us3i_settings.h"
 #include "us3i_gui_settings.h"
-#if QT_VERSION > 0x050000
 #include <QtPrintSupport>
-#endif
 
 US3i_Editor::US3i_Editor( int menu, bool readonly, const QString& extension, 
       QWidget* parent ) : QMainWindow( parent )
@@ -34,11 +32,7 @@ US3i_Editor::US3i_Editor( int menu, bool readonly, const QString& extension,
 #ifndef Q_OS_MAC
    edMenuBar       = menuBar();
 #else
-#if QT_VERSION > 0x050000
    edMenuBar       = menuBar();
-#else
-   edMenuBar       = new QMenuBar( 0 );
-#endif
 #endif
    QMenu* fileMenu = edMenuBar->addMenu( tr( "&File" ) );
    fileMenu->setFont  ( QFont( US3i_GuiSettings::fontFamily(),

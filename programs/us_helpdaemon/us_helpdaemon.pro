@@ -1,7 +1,4 @@
 include( ../../gui.pri )
-lessThan( QT_VERSION, 5.00 ) {
-include( $${SINGLEDIR}/qtsingleapplication.pri )
-}
 
 # Not a gui program
 

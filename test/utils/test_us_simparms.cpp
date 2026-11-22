@@ -1,118 +1,108 @@
-#include "qt_test_base.h"
-#include <gmock/gmock-matchers.h>
-#include "us_simparms.h"
 #include "mock_us_db2.h"
-#include <QTemporaryDir>
-#include <QXmlStreamWriter>
-#include <QXmlStreamReader>
-#include <QFile>
+#include "qt_test_base.h"
+#include "us3_test_io.h"
+#include "us_simparms.h"
 #include <QDir>
+#include <QFile>
+#include <QTemporaryDir>
+#include <QXmlStreamReader>
+#include <QXmlStreamWriter>
+#include <gmock/gmock-matchers.h>
 
 using ::testing::_;
 using ::testing::An;
+using ::testing::DoAll;
 using ::testing::Return;
 using ::testing::SetArgReferee;
-using ::testing::DoAll;
-using ::testing::NiceMock;
 using ::testing::StrictMock;
 
-class US_SimulationParametersTest : public QtTestBase {
-protected:
-    void SetUp() override {
-        QtTestBase::SetUp();
-        simparms = std::make_unique<US_SimulationParameters>();
-        mockDb = std::make_unique<NiceMock<US_DB2_Mock>>();
-        tempDir = std::make_unique<QTemporaryDir>();
-        ASSERT_TRUE(tempDir->isValid());
-    }
+class US_SimulationParametersTest : public QtTestBase
+{
+   protected:
+      void SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+         simparms = std::make_unique<US_SimulationParameters>();
+         tempDir  = std::make_unique<QTemporaryDir>();
+         ASSERT_TRUE( tempDir->isValid() );
+      }
 
-    void TearDown() override {
-        simparms.reset();
-        mockDb.reset();
-        tempDir.reset();
-        QtTestBase::TearDown();
-    }
+      void TearDown() override
+      {
+         simparms.reset();
+         tempDir.reset();
+         QtTestBase::TearDown();
+      }
 
-    std::unique_ptr<US_SimulationParameters> simparms;
-    std::unique_ptr<NiceMock<US_DB2_Mock>> mockDb;
-    std::unique_ptr<QTemporaryDir> tempDir;
+      std::unique_ptr<US_SimulationParameters> simparms;
+      std::unique_ptr<QTemporaryDir>           tempDir;
 
-    // Helper to create test RawData
-    US_DataIO::RawData createTestRawData() {
-        US_DataIO::RawData rawData;
-        rawData.type[0] = '\0';  // Clear the type array by setting first char to null terminator
-        rawData.channel = 'A';
-        rawData.cell = 1;
-        rawData.description = "Test data";
+      // Helper to create test RawData
+      US_DataIO::RawData                       createTestRawData()
+      {
+         US_DataIO::RawData rawData;
+         rawData.type[0]     = '\0'; // Clear the type array by setting first char to null terminator
+         rawData.channel     = 'A';
+         rawData.cell        = 1;
+         rawData.description = "Test data";
 
-        // Add some test scans
-        US_DataIO::Scan scan;
-        scan.seconds = 0.0;
-        scan.omega2t = 0.0;
-        scan.rpm = 3000.0;
-        scan.temperature = 20.0;
-        rawData.scanData << scan;
+         // Add some test scans
+         US_DataIO::Scan scan;
+         scan.seconds     = 0.0;
+         scan.omega2t     = 0.0;
+         scan.rpm         = 3000.0;
+         scan.temperature = 20.0;
+         rawData.scanData << scan;
 
-        scan.seconds = 3600.0;
-        scan.omega2t = 3600.0 * 3000.0 * 3000.0 * 4.0 * M_PI * M_PI / (60.0 * 60.0);
-        rawData.scanData << scan;
+         scan.seconds = 3600.0;
+         scan.omega2t = 3600.0 * 3000.0 * 3000.0 * 4.0 * M_PI * M_PI / ( 60.0 * 60.0 );
+         rawData.scanData << scan;
 
-        return rawData;
-    }
+         return rawData;
+      }
 
-    // Helper to create test EditedData
-    US_DataIO::EditedData createTestEditedData() {
-        US_DataIO::EditedData editData;
-        editData.runID = "test_run";
-        editData.dataType = "RA";
-        editData.channel = "A";
-        editData.cell = "1";
-        editData.meniscus = 5.8;
-        editData.bottom = 7.2;
+      // Helper to create test EditedData
+      US_DataIO::EditedData createTestEditedData()
+      {
+         US_DataIO::EditedData editData;
+         editData.runID    = "test_run";
+         editData.dataType = "RA";
+         editData.channel  = "A";
+         editData.cell     = "1";
+         editData.meniscus = 5.8;
+         editData.bottom   = 7.2;
 
-        // Add test scans
-        US_DataIO::Scan scan;
-        scan.seconds = 0.0;
-        scan.omega2t = 0.0;
-        scan.rpm = 3000.0;
-        editData.scanData << scan;
+         // Add test scans
+         US_DataIO::Scan scan;
+         scan.seconds = 0.0;
+         scan.omega2t = 0.0;
+         scan.rpm     = 3000.0;
+         editData.scanData << scan;
 
-        scan.seconds = 3600.0;
-        scan.omega2t = 3600.0 * 3000.0 * 3000.0 * 4.0 * M_PI * M_PI / (60.0 * 60.0);
-        editData.scanData << scan;
+         scan.seconds = 3600.0;
+         scan.omega2t = 3600.0 * 3000.0 * 3000.0 * 4.0 * M_PI * M_PI / ( 60.0 * 60.0 );
+         editData.scanData << scan;
 
-        return editData;
-    }
+         return editData;
+      }
 
-    // Helper to create test XML content
-    QString createTestSimParmsXml() {
-        return QString(
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                "<!DOCTYPE US_SimParams>\n"
-                "<SimParams version=\"1.0\">\n"
-                "<params meshType=\"ASTFEM\" gridType=\"Moving\" simpoints=\"200\" "
-                "radialres=\"0.001\" meniscus=\"5.8\" bottom=\"7.2\" "
-                "rnoise=\"0.0\" lrnoise=\"0.0\" tinoise=\"0.0\" rinoise=\"0.0\" "
-                "temperature=\"20.0\" bandform=\"0\" "
-                "sector=\"0\" pathlength=\"1.2\" angle=\"2.5\" width=\"0.0\">\n"
-                "<speedstep rotorspeed=\"3000\" scans=\"50\" timefirst=\"0\" timelast=\"3600\" "
-                "w2tfirst=\"0.0\" w2tlast=\"3600000.0\" duration_hrs=\"1\" duration_mins=\"0\" "
-                "delay_hrs=\"0\" delay_mins=\"0\" acceleration=\"400\" accelerflag=\"1\" />\n"
-                "</params>\n"
-                "</SimParams>\n"
-        );
-    }
-
-    // Helper to write test file
-    QString writeTestFile(const QString& content, const QString& filename = "test_simparms.xml") {
-        QString fullPath = tempDir->path() + "/" + filename;
-        QFile file(fullPath);
-        if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            file.write(content.toUtf8());
-            file.close();
-        }
-        return fullPath;
-    }
+      // Helper to create test XML content
+      QString createTestSimParmsXml()
+      {
+         return QString( "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                         "<!DOCTYPE US_SimParams>\n"
+                         "<SimParams version=\"1.0\">\n"
+                         "<params meshType=\"ASTFEM\" gridType=\"Moving\" simpoints=\"200\" "
+                         "radialres=\"0.001\" meniscus=\"5.8\" bottom=\"7.2\" "
+                         "rnoise=\"0.0\" lrnoise=\"0.0\" tinoise=\"0.0\" rinoise=\"0.0\" "
+                         "temperature=\"20.0\" bandform=\"0\" "
+                         "sector=\"0\" pathlength=\"1.2\" angle=\"2.5\" width=\"0.0\">\n"
+                         "<speedstep rotorspeed=\"3000\" scans=\"50\" timefirst=\"0\" timelast=\"3600\" "
+                         "w2tfirst=\"0.0\" w2tlast=\"3600000.0\" duration_hrs=\"1\" duration_mins=\"0\" "
+                         "delay_hrs=\"0\" delay_mins=\"0\" acceleration=\"400\" accelerflag=\"1\" />\n"
+                         "</params>\n"
+                         "</SimParams>\n" );
+      }
 };
 
 // Constructor Tests
@@ -186,15 +176,6 @@ TEST_F(US_SimulationParametersTest, SimSpeedProf_Constructor_InitializesCorrectl
     EXPECT_EQ(ssp.time_l_scan, 0);
 }
 
-// Debug Method Tests
-TEST_F(US_SimulationParametersTest, Debug_DoesNotCrash) {
-    // Add some test data
-    simparms->simpoints = 100;
-    simparms->temperature = 25.0;
-
-    EXPECT_NO_THROW(simparms->debug());
-}
-
 // SetHardware Tests
 TEST_F(US_SimulationParametersTest, SetHardware_WithoutDatabase_SetsDefaults) {
     QString testCalID = "test_cal_123";
@@ -206,26 +187,43 @@ TEST_F(US_SimulationParametersTest, SetHardware_WithoutDatabase_SetsDefaults) {
     EXPECT_EQ(simparms->rotorCalID, testCalID);
 }
 
-TEST_F(US_SimulationParametersTest, SetHardware_WithDatabase_CallsCorrectly) {
-    QString testCalID = "test_cal_456";
-    int testCp = 2;
+TEST_F( US_SimulationParametersTest, SetHardware_DisconnectedDatabaseUsesLocalHardwareFiles )
+{
+   US_SimulationParameters local;
+   ASSERT_TRUE( local.setHardware( "0", 3, 1 ) );
 
-    EXPECT_NO_THROW(simparms->setHardware(mockDb.get(), testCalID, testCp));
-    EXPECT_EQ(simparms->rotorCalID, testCalID);
+   StrictMock<US_DB2_Mock> db;
+   EXPECT_CALL( db, isConnected() ).Times( ::testing::AtLeast( 1 ) ).WillRepeatedly( Return( false ) );
+   EXPECT_TRUE( simparms->setHardware( &db, "0", 3, 1 ) );
+   EXPECT_EQ( QString( "0" ), simparms->rotorCalID );
+   EXPECT_DOUBLE_EQ( local.bottom_position, simparms->bottom_position );
+   EXPECT_DOUBLE_EQ( local.cp_pathlen, simparms->cp_pathlen );
+   EXPECT_DOUBLE_EQ( local.cp_width, simparms->cp_width );
+   EXPECT_EQ( local.cp_sector, simparms->cp_sector );
 }
 
-TEST_F(US_SimulationParametersTest, SetHardware_NegativeCp_HandlesSerialNumber) {
-    QString testCalID = "test_cal_789";
-    int testSerialNumber = -12345;  // Negative indicates serial number
-    int testCh = 0;
+TEST_F( US_SimulationParametersTest, SetHardware_NegativeCpSelectsTheCenterpieceBySerialNumber )
+{
+   // Serial number 4 is the fourth entry in etc/abstractCenterpieces.xml: Epon 6-channel rectangular.
+   ASSERT_TRUE( simparms->setHardware( "0", -4, 1 ) );
+   EXPECT_DOUBLE_EQ( 6.613, simparms->bottom_position );
+   EXPECT_DOUBLE_EQ( 0.3, simparms->cp_pathlen );
+   EXPECT_DOUBLE_EQ( 0.323, simparms->cp_width );
+   EXPECT_EQ( 2, simparms->cp_sector ); // rectangular
+   EXPECT_FALSE( simparms->band_forming );
+}
 
-    EXPECT_NO_THROW(simparms->setHardware(testCalID, testSerialNumber, testCh));
+TEST_F( US_SimulationParametersTest, SetHardware_RejectsOutOfRangeIndexes )
+{
+   EXPECT_FALSE( simparms->setHardware( "0", 9999, 0 ) );
+   EXPECT_FALSE( simparms->setHardware( "0", 0, 9999 ) );
 }
 
 // Load SimParms Tests
 TEST_F(US_SimulationParametersTest, LoadSimparms_ValidFile_LoadsCorrectly) {
     QString xmlContent = createTestSimParmsXml();
-    QString filename = writeTestFile(xmlContent);
+    const QString filename   = tempDir->filePath( "test_simparms.xml" );
+    ASSERT_TRUE( us3WriteTestFile( filename, xmlContent.toUtf8() ) );
 
     int result = simparms->load_simparms(filename);
 
@@ -307,7 +305,7 @@ TEST_F(US_SimulationParametersTest, InitFromData_RawData_SetsBasicParameters) {
     QString runID = "test_run";
     QString dataType = "RA";
 
-    EXPECT_NO_THROW(simparms->initFromData(nullptr, rawData, true, runID, dataType));
+    simparms->initFromData( nullptr, rawData, true, runID, dataType );
 
     // Basic parameters should be set
     EXPECT_EQ(simparms->rotorCalID, "0");
@@ -317,8 +315,64 @@ TEST_F(US_SimulationParametersTest, InitFromData_RawData_SetsBasicParameters) {
 TEST_F(US_SimulationParametersTest, InitFromData_EditedData_SetsBasicParameters) {
     US_DataIO::EditedData editData = createTestEditedData();
 
-    EXPECT_NO_THROW(simparms->initFromData(nullptr, editData, true));
+    simparms->initFromData( nullptr, editData, true );
 
     EXPECT_EQ(simparms->meniscus, 5.8);
     EXPECT_EQ(simparms->bottom_position, 7.2);
+}
+TEST_F( US_SimulationParametersTest, EditRadiiSpanTheWholeColumn )
+{
+   US_DataIO::EditValues ev;
+   US_SimulationParameters::editRadiiFromCell( ev, 5.8, 7.2, 0.001 );
+
+   EXPECT_DOUBLE_EQ( ev.meniscus, 5.8 );
+   EXPECT_DOUBLE_EQ( ev.bottom, 7.2 );
+   EXPECT_DOUBLE_EQ( ev.rangeLeft, 5.8 + 0.001 );
+   EXPECT_DOUBLE_EQ( ev.baseline, 5.8 + 0.0055 );
+   EXPECT_DOUBLE_EQ( ev.rangeRight, 7.2 );
+   EXPECT_DOUBLE_EQ( ev.plateau, 7.2 - 0.3 );
+}
+
+TEST_F( US_SimulationParametersTest, EditRangeExcludesTheMeniscusSpike )
+{
+   // The simulators put a spike at the meniscus reading of their grid.
+   const double    meniscus   = 5.8;
+   const double    resolution = 0.001;
+   QVector<double> xvalues;
+   for ( int jj = 0; jj < 100; jj++ )
+   {
+      xvalues << meniscus + jj * resolution;
+   }
+
+   US_DataIO::EditValues ev;
+   US_SimulationParameters::editRadiiFromCell( ev, meniscus, 5.9, resolution );
+
+   EXPECT_EQ( US_DataIO::index( xvalues, ev.rangeLeft ), 1 );
+}
+
+TEST_F( US_SimulationParametersTest, EditRadiiHoldMeniscusInsetsFixedOnAShortColumn )
+{
+   US_DataIO::EditValues ev;
+   US_SimulationParameters::editRadiiFromCell( ev, 5.8, 6.111, 0.001 );
+
+   EXPECT_DOUBLE_EQ( ev.rangeLeft, 5.8 + 0.001 );
+   EXPECT_DOUBLE_EQ( ev.baseline, 5.8 + 0.0055 );
+}
+
+TEST_F( US_SimulationParametersTest, EditRadiiScaleThePlateauInsetOnAShortColumn )
+{
+   // A 0.311 cm column cannot use the standard 0.3 cm plateau inset.
+   const double          meniscus = 5.8;
+   const double          bottom   = 6.111;
+
+   US_DataIO::EditValues ev;
+   US_SimulationParameters::editRadiiFromCell( ev, meniscus, bottom, 0.001 );
+
+   EXPECT_GT( ev.plateau, ev.baseline );
+   EXPECT_LT( ev.plateau, ev.rangeRight );
+   EXPECT_DOUBLE_EQ( ev.rangeRight, bottom );
+
+   double frac = ( ev.plateau - meniscus ) / ( bottom - meniscus );
+   EXPECT_GT( frac, 0.5 );
+   EXPECT_LT( frac, 1.0 );
 }

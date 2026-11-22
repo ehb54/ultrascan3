@@ -35,11 +35,14 @@ class US_UTIL_EXTERN US_RunProtocol
 	    QString     opername; 
 	    QString     instrname;
 
-	    //data form Disk
-	    QString     importDataDisk;
-	    bool        importData;
-	    bool        importData_absorbance_t;
-	    bool        importData_absorbance_pa;
+       // vel-mwl
+       bool             vel_mwl_prot;
+
+       //data form Disk
+       QString          importDataDisk;
+       bool             importData;
+       bool             importData_absorbance_t;
+       bool        importData_absorbance_pa;
 
             QString     labGUID;       //!< Laboratory GUID
             QString     rotGUID;       //!< Rotor GUID
@@ -425,6 +428,12 @@ class US_UTIL_EXTERN US_RunProtocol
       int          scanCount_int;
 
       QString      framework;
+
+      //! \brief Sanitize a name for use in file/path names.
+      //!        strict=false: replace / \\ : * ? " < > | and control chars with
+      //!        '_' strict=true : replace everything except A-Z a-z 0-9 _ -
+      //!        with '_' (same rule as the Run Name). Result is trimmed.
+      static QString     sanitize_name( const QString&, bool strict = false );
 
    private:
 };

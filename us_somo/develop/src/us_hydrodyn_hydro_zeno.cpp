@@ -443,7 +443,7 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
       
    }
 
-#if !defined(USE_OLD_ZENO) && QT_VERSION >= 0x040000
+#if !defined(USE_OLD_ZENO)
    cb_zeno_interior->hide();
    lbl_zeno_interior_steps->hide();
    le_zeno_interior_steps->hide();

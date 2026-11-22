@@ -5,6 +5,12 @@ local.pri
 # newly added workflow, composite action and issue template untracked until
 # someone noticed and force-added it. Re-include the directory explicitly.
 !/.github/
+!/.clang-format
+!/.gitattributes
+!/.clang-tidy
+!/.pre-commit-config.yaml
+!/.githooks/
+!/buildsys/vcpkg/.gitattributes
 *.o
 tmp/
 moc/
@@ -20,6 +26,9 @@ gui/qrc_images.cpp
 /programs/us/us_revision.h
 /us_somo/develop/include/us_revision.h
 /us_somo/develop/include/us_version.h
+/us_somo/develop/build-docker/
+/us_somo/develop/build/
+/us_somo/develop/CMakeUserPresets.json
 *~
 *.pro.user
 *object_script*
@@ -28,6 +37,7 @@ gui/qrc_images.cpp
 /build-docker/
 /build-docker-nodb/
 /build-docker-coverage/
+/build-docker-programs/
 /cmake-build-debug/
 doc/manual/build
 /vcpkg/
@@ -38,6 +48,7 @@ vcpkg_installed/
 configure-arm64.log
 programs/us/us.rc
 CMakeUserPresets.json
+compile_commands.json
 __pycache__
 *.pyc
 /build-mac/

@@ -172,34 +172,6 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    AUTFBACK( editor );
    editor->setReadOnly(true);
 
-#if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
-   {
- //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-
-      QMenuBar *menu = new QMenuBar( this );
-      AUTFBACK( menu );
-
-      menu->insertItem(us_tr("&Messages"), file );
-   }
-# else
-   QFrame *frame = new QFrame(this);
-   frame->setMinimumHeight(minHeight1);
-
-   m = new QMenuBar( frame );    m->setObjectName( "menu" );
-   m->setMinimumHeight(minHeight1 - 5);
-   m->setPalette( PALET_NORMAL );
-   AUTFBACK( m );
- //   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-# endif
-#else
    QFrame *frame;
    frame = new QFrame(this);
    frame->setMinimumHeight(minHeight1);
@@ -224,7 +196,6 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
       qa3->setShortcut( Qt::ALT+Qt::Key_X );
       connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
    }
-#endif
 
    editor->setWordWrapMode (QTextOption::WordWrap);
    editor->setMinimumHeight(300);
@@ -297,14 +268,6 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    lv_csv->setEnabled(true);
    lv_csv->setMinimumWidth( 175 );
 
-#if QT_VERSION < 0x040000
-   lv_csv->addColumn( "Models" );
-   for ( unsigned int i = 6; i < (unsigned int)csv1.header.size() - 2; i++ )
-   {
-      lv_csv->addColumn( csv1.header[i] );
-   }
-   lv_csv->addColumn( csv1.header.back() );
-#else
    {
       QStringList qsl;
       qsl << "Models";
@@ -315,7 +278,6 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
       lv_csv->setColumnCount( qsl.size() );
       lv_csv->setHeaderLabels( qsl );
    }
-#endif
 
    lv_csv->setSortingEnabled        ( false );
    lv_csv->setRootIsDecorated( true );
@@ -517,11 +479,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv_sel_invert->setPalette( PALET_PUSHB );
    connect(pb_csv_sel_invert, SIGNAL(clicked()), SLOT(csv_sel_invert()));
 
-#if QT_VERSION >= 0x050000
    pb_csv_sel_invert->hide();
-#else
-   panel1_widgets.push_back( pb_csv_sel_invert );
-#endif
 
    pb_csv_sel_chain = new QPushButton(us_tr("Chain"), this);
    pb_csv_sel_chain->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -575,13 +533,6 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    lv_csv2->setEnabled(true);
    lv_csv2->setMinimumWidth( 175 );
 
-#if QT_VERSION < 0x040000
-   lv_csv2->addColumn( "Models" );
-   for ( unsigned int i = 6; i < (unsigned int)csv1.header.size(); i++ )
-   {
-      lv_csv2->addColumn( csv1.header[i] );
-   }
-#else
    {
       QStringList qsl;
       qsl << "Models";
@@ -591,7 +542,6 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
       lv_csv2->setColumnCount( qsl.size() );
       lv_csv2->setHeaderLabels( qsl );
    }
-#endif
 
    lv_csv2->setSortingEnabled        ( false );
    lv_csv2->setRootIsDecorated( true );
@@ -799,11 +749,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_sel_invert->setPalette( PALET_PUSHB );
    connect(pb_csv2_sel_invert, SIGNAL(clicked()), SLOT(csv2_sel_invert()));
 
-#if QT_VERSION >= 0x050000
    pb_csv2_sel_invert->hide();
-#else
-   panel2_widgets.push_back( pb_csv2_sel_invert );
-#endif
 
    pb_csv2_sel_chain = new QPushButton(us_tr("Chain"), this);
    pb_csv2_sel_chain->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -861,7 +807,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
 
    // left pane
    QBoxLayout * vbl_editor_group = new QVBoxLayout; vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
-#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
+#if !defined(Q_OS_MAC)
    vbl_editor_group->addWidget(frame);
 #endif
    vbl_editor_group->addWidget(editor);
@@ -1746,9 +1692,6 @@ csv US_Hydrodyn_Pdb_Tool::to_csv( QTreeWidget *lv, csv &ref_csv, bool only_selec
                editor_msg("red", QString( us_tr("Error: Can not find reference key %1 in %2\n") ).arg( key( item ) ).arg( ref_csv.name ) );
             } else {
                csv1.data.push_back( ref_csv.data[ ref_csv.key[ key( item ) ] ] );
-#if QT_VERSION < 0x040000
-               csv1.visible.push_back( item->isVisible() );
-#endif
                csv1.selected.push_back( item->isSelected() );
                csv1.open.push_back( item->isExpanded() );
                if ( item == lv->currentItem() )
@@ -1758,9 +1701,6 @@ csv US_Hydrodyn_Pdb_Tool::to_csv( QTreeWidget *lv, csv &ref_csv, bool only_selec
             }
          } else {
             csv1.nd_key[ key( item ) ] = csv1.nd_selected.size();
-#if QT_VERSION < 0x040000
-            csv1.nd_visible.push_back( item->isVisible() );
-#endif
             csv1.nd_selected.push_back( item->isSelected() );
             csv1.nd_open.push_back( item->isExpanded() );
             if ( item == lv->currentItem() )
@@ -1800,21 +1740,6 @@ bool US_Hydrodyn_Pdb_Tool::child_selected( QTreeWidgetItem *lvi )
       return true;
    }
 
-#if QT_VERSION < 0x040000
-   if ( lvi->childCount() )
-   {
-      QTreeWidgetItem *myChild = lvi->firstChild();
-      while( myChild ) 
-      {
-         if ( myChild->isSelected() ||
-              child_selected( myChild ) )
-         {
-            return true;
-         }
-         myChild = myChild->nextSibling();
-      }
-   }
-#else
    int children = lvi->childCount();
    if ( children ) { 
       for ( int i = 0; i < children; ++i ) {
@@ -1828,37 +1753,12 @@ bool US_Hydrodyn_Pdb_Tool::child_selected( QTreeWidgetItem *lvi )
          }
       }
    }
-#endif
 
    return false;
 }
 
 bool US_Hydrodyn_Pdb_Tool::all_children_selected( QTreeWidgetItem *lvi )
 {
-#if QT_VERSION < 0x040000
-   if ( lvi->childCount() )
-   {
-      QTreeWidgetItem *myChild = lvi->firstChild();
-      while( myChild ) 
-      {
-         if ( myChild->childCount() )
-         {
-            if ( !all_children_selected( myChild ) )
-            {
-               return false;
-            }
-         } else {
-            if ( !is_selected( myChild ) )
-            {
-               return false;
-            }
-         }
-         myChild = myChild->nextSibling();
-      }
-   } else {
-      return lvi->isSelected();
-   }
-#else
    int children = lvi->childCount();
    if ( children ) { 
       for ( int i = 0; i < children; ++i ) {
@@ -1881,7 +1781,6 @@ bool US_Hydrodyn_Pdb_Tool::all_children_selected( QTreeWidgetItem *lvi )
    } else {
       return lvi->isSelected();
    }
-#endif
 
    return true;
 }
@@ -1941,7 +1840,6 @@ void US_Hydrodyn_Pdb_Tool::csv_to_lv( csv &csv1, QTreeWidget *lv )
 
    lv->clear( );
 
-#if QT_VERSION >= 0x040000
    vector < QString > to_select;
    for ( map < QString, unsigned int >::iterator it = csv1.nd_key.begin();
          it != csv1.nd_key.end();
@@ -1954,7 +1852,6 @@ void US_Hydrodyn_Pdb_Tool::csv_to_lv( csv &csv1, QTreeWidget *lv )
          to_select.push_back( it->first );
       }
    }         
-#endif
 
    map < QString, QTreeWidgetItem * >   models;
    map < QString, QTreeWidgetItem * >   model_chains;
@@ -1998,24 +1895,17 @@ void US_Hydrodyn_Pdb_Tool::csv_to_lv( csv &csv1, QTreeWidget *lv )
                         .arg( model ) );
             continue;
          }
-#if QT_VERSION < 0x040000
-         models[ model ] = new QTreeWidgetItem( lv, model );
-#else
          {
             QTreeWidgetItem *lvi = new QTreeWidgetItem( QStringList() << model );
             models[ model ] = lvi;
             lv->insertTopLevelItem( 0, lvi );
          }
-#endif
          if ( csv1.current_item_key == model )
          {
             current = models[ model ];
          }
          if ( csv1.nd_key.count( model ) )
          {
-#if QT_VERSION < 0x040000
-            models[ model ]->setVisible ( csv1.nd_visible [ csv1.nd_key[ model ] ] );
-#endif
             models[ model ]->setSelected( csv1.nd_selected[ csv1.nd_key[ model ] ] );
             models[ model ]->setExpanded    ( csv1.nd_open    [ csv1.nd_key[ model ] ] );
          } else {
@@ -2044,21 +1934,14 @@ void US_Hydrodyn_Pdb_Tool::csv_to_lv( csv &csv1, QTreeWidget *lv )
             continue;
          }
             
-#if QT_VERSION < 0x040000
-         model_chains[ model_chain ] = new QTreeWidgetItem( models[ model ], chain );
-#else
          model_chains[ model_chain ] = new QTreeWidgetItem( QStringList() << chain );
          models[ model ]->insertChild( 0, model_chains[ model_chain ] );
-#endif
          if ( csv1.current_item_key == model_chain )
          {
             current = model_chains[ model_chain ];
          }
          if ( csv1.nd_key.count( model_chain ) )
          {
-#if QT_VERSION < 0x040000
-            model_chains[ model_chain ]->setVisible ( csv1.nd_visible [ csv1.nd_key[ model_chain ] ] );
-#endif
             model_chains[ model_chain ]->setSelected( csv1.nd_selected[ csv1.nd_key[ model_chain ] ] );
             model_chains[ model_chain ]->setExpanded    ( csv1.nd_open    [ csv1.nd_key[ model_chain ] ] );
          } else {
@@ -2086,21 +1969,14 @@ void US_Hydrodyn_Pdb_Tool::csv_to_lv( csv &csv1, QTreeWidget *lv )
                         .arg( model_chain ) );
             continue;
          }
-#if QT_VERSION < 0x040000
-         model_chain_residues[ model_chain_residue ] = new QTreeWidgetItem( model_chains[ model_chain ], residue );
-#else
          model_chain_residues[ model_chain_residue ] = new QTreeWidgetItem( QStringList() << residue );
          model_chains[ model_chain ]->insertChild( 0, model_chain_residues[ model_chain_residue ] );
-#endif
          if ( csv1.current_item_key == model_chain_residue )
          {
             current = model_chain_residues[ model_chain_residue ];
          }
          if ( csv1.nd_key.count( model_chain_residue ) )
          {
-#if QT_VERSION < 0x040000
-            model_chain_residues[ model_chain_residue ]->setVisible ( csv1.nd_visible [ csv1.nd_key[ model_chain_residue ] ] );
-#endif
             model_chain_residues[ model_chain_residue ]->setSelected( csv1.nd_selected[ csv1.nd_key[ model_chain_residue ] ] );
             model_chain_residues[ model_chain_residue ]->setExpanded    ( csv1.nd_open    [ csv1.nd_key[ model_chain_residue ] ] );
          } else {
@@ -2115,20 +1991,6 @@ void US_Hydrodyn_Pdb_Tool::csv_to_lv( csv &csv1, QTreeWidget *lv )
                      .arg( model_chain_residue ) );
          continue;
       }
-#if QT_VERSION < 0x040000
-      model_chain_residue_atoms[ model_chain_residue_atom ] = 
-         new QTreeWidgetItem( model_chain_residues[ model_chain_residue ], 
-                            atom,
-                            csv1.data[ i ][ 6 ],
-                            csv1.data[ i ][ 7 ],
-                            csv1.data[ i ][ 8 ],
-                            csv1.data[ i ][ 9 ],
-                            csv1.data[ i ][ 10 ],
-                            csv1.data[ i ][ 11 ],
-                            // csv1.data[ i ][ 12 ],
-                            csv1.data[ i ][ 13 ]
-                            );
-#else
       model_chain_residue_atoms[ model_chain_residue_atom ] =
                  new QTreeWidgetItem( QStringList()
                                       << atom
@@ -2142,19 +2004,12 @@ void US_Hydrodyn_Pdb_Tool::csv_to_lv( csv &csv1, QTreeWidget *lv )
                                       << csv1.data[ i ][ 13 ]
                                       );
       model_chain_residues[ model_chain_residue ]->insertChild( 0, model_chain_residue_atoms[ model_chain_residue_atom ] );
-#endif      
       if ( csv1.current_item_key == model_chain_residue_atom )
       {
          current = model_chain_residue_atoms[ model_chain_residue_atom ];
       }
       if ( csv1.key.count( model_chain_residue_atom ) )
       {
-#if QT_VERSION < 0x040000
-         model_chain_residue_atoms[ model_chain_residue_atom ]->setVisible ( 
-                                                                            (unsigned int)csv1.visible.size() > csv1.key[ model_chain_residue_atom ]  ?
-                                                                            csv1.visible [ csv1.key[ model_chain_residue_atom ] ] : false 
-                                                                             );
-#endif
          model_chain_residue_atoms[ model_chain_residue_atom ]->setSelected( 
                                                                             (unsigned int)csv1.selected.size() > csv1.key[ model_chain_residue_atom ] ?
                                                                             csv1.selected[ csv1.key[ model_chain_residue_atom ] ] : false
@@ -2172,16 +2027,12 @@ void US_Hydrodyn_Pdb_Tool::csv_to_lv( csv &csv1, QTreeWidget *lv )
    // qDebug() << "csv_to_lv end";
    if ( lv_is_csv )
    {
-#if QT_VERSION >= 0x040000
       select_these( lv_csv, to_select );
-#endif
       connect(lv_csv, SIGNAL(itemSelectionChanged()), SLOT(csv_selection_changed()));
       lbl_csv->setText( csv1.name.isEmpty() ? us_tr( "Panel 1" ) : csv1.name );
       selection_since_count_csv1 = true;
    } else {
-#if QT_VERSION >= 0x040000
       select_these( lv_csv2, to_select );
-#endif
       connect(lv_csv2, SIGNAL(itemSelectionChanged()), SLOT(csv2_selection_changed()));
       lbl_csv2->setText( (unsigned int)csv2.size() > csv2_pos ? csv2[ csv2_pos ].name : us_tr( "Panel 2" ) );
       selection_since_count_csv2 = true;
@@ -5525,9 +5376,6 @@ csv US_Hydrodyn_Pdb_Tool::merge_csvs( csv &csv1, csv &csv2 )
       {
          merged.nd_key[ it->first ] = (unsigned int)merged.nd_selected.size();
          
-#if QT_VERSION < 0x040000
-         merged.nd_visible .push_back( csv2.nd_visible [ it->second ] );
-#endif
          merged.nd_selected.push_back( csv2.nd_selected[ it->second ] );
          merged.nd_open    .push_back( csv2.nd_open    [ it->second ] );
       }
@@ -7300,9 +7148,6 @@ void US_Hydrodyn_Pdb_Tool::select_these( QTreeWidget *lv, vector < QString > &er
          {
             // cout << QString( "selecting <%1>\n" ).arg( item->text( 0 ) );
             item->setSelected( true  );
-#if QT_VERSION < 0x040000
-            item->setVisible ( true  );
-#endif
             item->setExpanded    ( false );
             // open parents
             {
@@ -7530,17 +7375,6 @@ void US_Hydrodyn_Pdb_Tool::replace_selected_residues( QTreeWidget *lv, csv &csv_
       {
          map < QTreeWidgetItem *, QString > previous_keys;
 
-#if QT_VERSION < 0x040000
-         if ( item->childCount() )
-         {
-            QTreeWidgetItem *myChild = item->firstChild();
-            while ( myChild )
-            {
-               previous_keys[ myChild ] = key( myChild );
-               myChild = myChild->nextSibling();
-            }
-         }
-#else
          {
             int children = item->childCount();
             if ( children ) { 
@@ -7552,7 +7386,6 @@ void US_Hydrodyn_Pdb_Tool::replace_selected_residues( QTreeWidget *lv, csv &csv_
                }
             }
          }
-#endif
 
          QString org_key = key( item );
          item->setText( 0,
@@ -7567,32 +7400,6 @@ void US_Hydrodyn_Pdb_Tool::replace_selected_residues( QTreeWidget *lv, csv &csv_
          } 
 
 
-#if QT_VERSION < 0x040000
-         if ( item->childCount() )
-         {
-            QTreeWidgetItem *myChild = item->firstChild();
-            while ( myChild )
-            {
-               if ( csv_use.key.count( previous_keys[ myChild ] ) )
-               {
-                  if ( csv_use.data[ csv_use.key[ previous_keys[ myChild ] ] ].size() < 3 )
-                  {
-                     editor_msg( "red", QString( us_tr( "Internal error: insufficient data for %1" ) )
-                                 .arg( previous_keys[ myChild ] ) );
-                  } else {
-                     csv_use.data[ csv_use.key[ previous_keys[ myChild ] ] ][ 2 ] = to;
-                  }
-                  csv_use.key[ key( myChild ) ] = csv_use.key[ previous_keys[ myChild ] ];
-                  csv_use.key.erase( previous_keys[ myChild ] );
-               } else {
-                  cout << QString( "child org key:<%1> new_key:<%2>\n" ).arg( previous_keys[ myChild ] )
-                     .arg( key( myChild ) );
-                  editor_msg( "red", us_tr( "Internal error: expected key match 2" ) );
-               }
-               myChild = myChild->nextSibling();
-            }
-         }
-#else
          {
             int children = item->childCount();
             if ( children ) { 
@@ -7619,7 +7426,6 @@ void US_Hydrodyn_Pdb_Tool::replace_selected_residues( QTreeWidget *lv, csv &csv_
                }
             }
          }
-#endif
 
       }
       ++it;

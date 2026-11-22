@@ -4,6 +4,7 @@
 #define US_EXPERIMENT_H
 
 #include <QApplication>
+#include <functional>
 #if !(defined(_WIN32) || defined(_WIN64) || defined(Q_OS_WIN))
 #include <unistd.h>
 #endif
@@ -11,25 +12,26 @@
 #include <QtSql>
 #include <QSslSocket>
 
-#include "us_run_protocol.h"
-#include "us_protocol_util.h"
 #include "../us_analysis_profile/us_analysis_profile.h"
-#include "us_project_gui.h"
-#include "us_editor.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_investigator.h"
-#include "us_util.h"
-#include "us_rotor.h"
-#include "us_solution.h"
-#include "us_passwd.h"
-#include "us_db2.h"
-#include "us_hardware.h"
-#include "us_select_runs.h"
-#include "us_link_ssl.h"
 #include "us_dataIO.h"
-#include "us_simparms.h"
+#include "us_db2.h"
+#include "us_editor.h"
+#include "us_gmp_progress.h"
+#include "us_gui_settings.h"
+#include "us_hardware.h"
+#include "us_investigator.h"
+#include "us_link_ssl.h"
 #include "us_mwl_data.h"
+#include "us_passwd.h"
+#include "us_project_gui.h"
+#include "us_protocol_util.h"
+#include "us_rotor.h"
+#include "us_run_protocol.h"
+#include "us_select_runs.h"
+#include "us_settings.h"
+#include "us_simparms.h"
+#include "us_solution.h"
+#include "us_util.h"
 
 #include "us_convert.h"
 #include "us_experiment.h"
@@ -182,6 +184,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       QStringList unique_runTypes;
       bool ra_data_type;
       bool ra_data_sim;
+      bool                               vel_mwl;
       bool isMwl;
       QMap<QString, QString> run_details;
       QStringList channels_for_dataDisk;
@@ -222,6 +225,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       QComboBox*   cb_optima;
       QStringList  sl_optimas;
   QCheckBox* ck_disksource;
+  QCheckBox*                                 ck_velmwl;
   QCheckBox* ck_absorbance_t;
   QCheckBox* ck_absorbance_pa;
   QPushButton* pb_importDisk;
@@ -301,16 +305,17 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       void changeExpType( int );   // Slot for change in exp. type
       void changeOptima ( int );   // Slot for change in exp. type
 
-  void importDisk( void );
-  void importDiskChecked( bool );
-  void dataDiskAbsChecked( bool );
-  void dataDiskPseudoAbsChecked( bool );
-  QMap<QString,QStringList> build_protocol_for_data_import( QMap< QString, QStringList > );
-  void importDisk_cleanProto( void );
-  bool init_output_data  ( void );
-  void runDetails        ( void );
-  bool rotorForUploadedData ( void );
-      
+      void                       velMwlChecked( bool );
+      void                       importDisk( void );
+      void                       importDiskChecked( bool );
+      void                       dataDiskAbsChecked( bool );
+      void                       dataDiskPseudoAbsChecked( bool );
+      QMap<QString, QStringList> build_protocol_for_data_import( QMap<QString, QStringList> );
+      void                       importDisk_cleanProto( void );
+      bool                       init_output_data( void );
+      void                       runDetails( void );
+      bool                       rotorForUploadedData( void );
+
       void advRotor   ( void );    // Function for advanced rotor dialog
       // Rotor dialog value selected and accepted return values
       void advRotorChanged( US_Rotor::Rotor&,
@@ -1108,6 +1113,24 @@ class US_ExperimentMain : public US_Widgets
       QStringList childLValue ( const QString, const QString );
       // \brief Initialize all the panels
       void        initPanels  ( void );
+      // \brief Same, with a progress dialog that follows the (slow) DB reading
+      // of the
+      //         Analysis Profile's reports/reportItems; for use when a protocol
+      //         is loaded. continue_stage: the dialog is already up (caller
+      //         covered earlier load steps): bar 10..95 and left open;
+      //         otherwise it is shown here (0..95) and finished here.
+      void                                            initPanels_with_progress( bool continue_stage = false );
+      // \brief The single protocol-loading progress dialog (US_GmpProgress): a
+      // child of this
+      //         widget's top-level window, window-modal, centered over it, not
+      //         closable.
+      US_GmpProgress*                                 load_progress( void );
+      US_GmpProgress*                                 progress_load = nullptr;
+      // \brief Optional hook ( done, total, detail ) forwarded to the Analysis
+      // Profile reader
+      //         (US_AnalysisProfileGui::progress_cb) by
+      //         US_ExperGuiAProfile::initPanel()
+      std::function<void( int, int, const QString& )> aprof_progress_cb;
       // \brief Get a named abstract centerpiece information object
       bool        centpInfo   ( const QString, US_AbstractCenterpiece& );
       // \brief Get the list of protocol names and summary-data strings
@@ -1143,6 +1166,7 @@ class US_ExperimentMain : public US_Widgets
       bool    us_prot_dev_mode;
       bool    global_reset;
       bool    us_abde_mode;
+      bool                                            us_velmwl_mode;
       bool    expPanelSet;
 
   QMap <QString, QString> protocol_details_passed; 
@@ -1153,6 +1177,7 @@ class US_ExperimentMain : public US_Widgets
       void    unset_abde_mode_aprofile( void );
       void    abde_sv_mode_change_reset_reports( QString  );
       void    enable_disable_prev_next_btns( void );
+      void                                            setUnset_velmwl_mode_aprofile( bool );
 
       QStringList instruments_in_use;
       QStringList instruments_no_permit;
@@ -1231,6 +1256,9 @@ class US_ExperimentMain : public US_Widgets
       void to_editing_data( QMap < QString, QString > & );
       void exp_cleared ( void );
       void close_expsetup_msg( void );
+      //! Analysis Profile read progress while a protocol loads (autoflow path):
+      //! done, total, detail
+      void aprofile_read_progress( int, int, const QString& );
       void back_to_initAutoflow( void );
       
       

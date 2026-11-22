@@ -44,11 +44,7 @@ US_Hydrodyn_BD::US_Hydrodyn_BD(
    global_Xpos += 30;
    global_Ypos += 30;
    setGeometry(global_Xpos, global_Ypos, 0, 0);
-#if QT_VERSION >= 0x040000
    setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint );
-#else
-   setWFlags(getWFlags() | Qt::WStyle_StaysOnTop);
-#endif
    stopFlag = false;
    //   pb_stop->setEnabled(false);
 }

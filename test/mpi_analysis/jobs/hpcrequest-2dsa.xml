@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE US_JobSubmit>
+<US_JobSubmit method="2DSA" version="1.0">
+ <job>
+  <gateway id="lims.example.org_00000000-0000-4000-8000-000000000000"/>
+  <cluster name="lims.example.org" shortname="node0" queue="batch"/>
+  <udp port="12233" server="127.0.0.1"/>
+  <directory name="/srv/lims/data/00000000-0000-4000-8000-000000000001/"/>
+  <datasetCount value="1"/>
+  <global_fit value="0"/>
+  <request id="4711" guid="00000000-0000-4000-8000-000000000001"/>
+  <database>
+   <name value="uslims3_TEST"/>
+   <host value="localhost"/>
+   <user email="user@example.org" user_id="Test_User_00000000-0000-4000-8000-000000000002"/>
+   <submitter email="user@example.org"/>
+  </database>
+  <jobParameters>
+   <s_min value="1"/>
+   <s_max value="20"/>
+   <s_resolution value="20"/>
+   <s_grid_points value="200"/>
+   <ff0_min value="1"/>
+   <ff0_max value="4"/>
+   <ff0_resolution value="10"/>
+   <ff0_grid_points value="100"/>
+   <uniform_grid value="10"/>
+   <mc_iterations value="1"/>
+   <req_mgroupcount value="1"/>
+   <tinoise_option value="1"/>
+   <rinoise_option value="1"/>
+   <fit_mb_select value="0"/>
+   <meniscus_range value="0"/>
+   <meniscus_points value="1"/>
+   <max_iterations value="10"/>
+   <debug_timings value="0"/>
+   <debug_level value="0"/>
+   <debug_text value=""/>
+  </jobParameters>
+  <analysis_type value="2DSA-IT"/>
+ </job>
+ <!--the dataset section is repeated for each dataset-->
+ <dataset>
+  <files>
+   <auc filename="demo-2dsa.RA.1.A.590.auc"/>
+   <edit filename="demo-2dsa.2610061116.RA.1.A.590.xml"/>
+   <noise filename="clEgOh.ti_noise"/>
+   <noise filename="zuJEFc.ri_noise"/>
+   <timestate filename="demo-2dsa.time_state.tmst"/>
+  </files>
+  <parameters>
+   <simpoints value="200"/>
+   <band_volume value="0"/>
+   <radial_grid value="0"/>
+   <time_grid value="1"/>
+   <rotor_stretch value="2.01959E-7 5.56967E-12"/>
+   <centerpiece_shape value="standard"/>
+   <centerpiece_bottom value="7.2"/>
+   <centerpiece_angle value="2.5"/>
+   <centerpiece_pathlength value="1.2"/>
+   <centerpiece_width value="0"/>
+   <total_concentration value="-1"/>
+   <speedstep stepID="1" rotorspeed="42000" scans="1200" timefirst="110" timelast="30037" w2tfirst="773777000" w2tlast="579704000000" duration_hrs="8" duration_mins="20.6167" delay_hrs="0" delay_mins="1.83333" acceleration="400" accelerflag="1" expID="1"/>
+   <solution>
+    <buffer density="1.0042" viscosity="1.03809" manual="0"/>
+    <analyte vbar20="0.7261" amount="1" mw="81211" type="Protein"/>
+    <analyte vbar20="0.55" amount="1" mw="15613.5" type="RNA"/>
+   </solution>
+  </parameters>
+ </dataset>
+</US_JobSubmit>

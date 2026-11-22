@@ -367,31 +367,30 @@ use_db=false;
 	  //if ref_report was not replaced yet, substitute all channels' reports witht the ref. one...
 	  if ( !triple_reports_ref.isEmpty() )
 	    {
-	      //but before, remeber exp. duraiton:
-	      double exp_dur_ = currProf->ch_reports[ chan_desc ] [ c_wvl ].experiment_duration;
-	      currProf->ch_reports[ chan_desc ] [ c_wvl ] = triple_reports_ref[ wvl_ref ];
-	      currProf->ch_reports[ chan_desc ] [ c_wvl ].experiment_duration = exp_dur_;
-		  
-	    }
-	  else //check if some channel's report still contain 's'/'2DSA' etc. (caused by adding/removing wvl(s)/channels)
-	    {
-	      if ( mainw->abde_mode_aprofile )
-		{
-		  for(int ii=0; ii< currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems.size(); ++ii)
-		    {
-		      US_ReportGMP::ReportItem initItem = currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems[ ii ];
-		      if ( initItem.type == 's' && initItem.method.contains("2DSA") )
-			{
-			  //if attempts to insert reportItem from Velocity-type, replace with ABDE-type
-			  currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems[ ii ].type        = QString("Radius");
-			  currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems[ ii ].method      = QString("raw");
-			  currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems[ ii ].range_low   = 5.8;
-			  currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems[ ii ].range_high  = 7.0;
-			}
-		    }
-		}
-	    }
-	  //&& debug 
+          // but before, remember exp. duraiton:
+          double exp_dur_                                            = currProf->ch_reports[chan_desc][c_wvl].experiment_duration;
+          currProf->ch_reports[chan_desc][c_wvl]                     = triple_reports_ref[wvl_ref];
+          currProf->ch_reports[chan_desc][c_wvl].experiment_duration = exp_dur_;
+       }
+       else //check if some channel's report still contain 's'/'2DSA' etc. (caused by adding/removing wvl(s)/channels)
+       {
+          if ( mainw->abde_mode_aprofile )
+          {
+             for ( int ii = 0; ii < currProf->ch_reports[chan_desc][c_wvl].reportItems.size(); ++ii )
+             {
+                US_ReportGMP::ReportItem initItem = currProf->ch_reports[chan_desc][c_wvl].reportItems[ii];
+                if ( initItem.type == 's' && initItem.method.contains( "2DSA" ) )
+                {
+                   //if attempts to insert reportItem from Velocity-type, replace with ABDE-type
+                   currProf->ch_reports[chan_desc][c_wvl].reportItems[ii].type       = QString( "Radius" );
+                   currProf->ch_reports[chan_desc][c_wvl].reportItems[ii].method     = QString( "raw" );
+                   currProf->ch_reports[chan_desc][c_wvl].reportItems[ii].range_low  = 5.8;
+                   currProf->ch_reports[chan_desc][c_wvl].reportItems[ii].range_high = 7.0;
+                }
+             }
+          }
+       }
+     //&& debug 
 	  for(int ii=0; ii< currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems.size(); ++ii)
 	    {
 	      
@@ -1514,6 +1513,17 @@ DbgLv(1) << "AP2d:inP:  parms_to_gui complete";
 
    bool was_changed     = changed;       // Save changed state
    changed              = was_changed;   // Restore changed state
+
+   // for VELOCITY-MWL: 2DSA-MC is not run and cannot be selected.
+   // Otherwise leave the checkbox as restored from the profile above
+   // (do NOT force it back to checked), and just make sure it is editable.
+   bool vel_mwl_mode = mainw->velmwl_mode_aprofile;
+   if ( vel_mwl_mode )
+   {
+      ck_j5run->setChecked( false );
+   }
+   ck_j5run->setEnabled( !vel_mwl_mode );
+   le_j5iter->setEnabled( !vel_mwl_mode );
 }
 
 // Save panel controls when about to leave the panel
@@ -1821,6 +1831,16 @@ DbgLv(1) << "APpc:inP:     set-parm ii" << ii << "channel" << parm1.channel;
    cchx               = first_avail;
    parms_to_gui( first_avail );   
 DbgLv(1) << "APpc:inP:   parms_to_gui complete";
+
+// for VELOCITY-MWL: PCSA is not included and cannot be selected.
+// Otherwise leave the checkbox as restored from the profile above
+// (do NOT force it back to unchecked), and just make sure it is editable.
+bool vel_mwl_mode = mainw->velmwl_mode_aprofile;
+if ( vel_mwl_mode )
+{
+   ck_nopcsa->setChecked( true );
+}
+ck_nopcsa->setEnabled( !vel_mwl_mode );
 }
 
 // Save PCSA panel controls when about to leave the panel

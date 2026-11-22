@@ -3,15 +3,17 @@
 #define US_2DSA_PROCESS_H
 
 #include <QtCore>
+#include <memory>
 
-#include "us_extern.h"
-#include "us_widgets.h"
 #include "us_dataIO.h"
-#include "us_simparms.h"
+#include "us_db2.h"
+#include "us_extern.h"
 #include "us_model.h"
 #include "us_noise.h"
-#include "us_db2.h"
+#include "us_sim_cache.h"
+#include "us_simparms.h"
 #include "us_solute.h"
+#include "us_widgets.h"
 #include "us_worker_2d.h"
 
 #ifndef DbgLv
@@ -187,6 +189,8 @@ private:
       int        fit_type;     // fit type flag: 0-3 => none,meni,bott,menbot
 
       bool       abort;        // flag used with stop_fit clicked
+
+      std::shared_ptr<US_SimCache>  simcache;     // simulation cache of the fit
       bool       fnoionly;     // flag to use noise flag on final call only
       bool       ff_none;      // fit flag: no fits
       bool       ff_omeni;     // fit flag: only fit-meniscus

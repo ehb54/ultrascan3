@@ -343,7 +343,6 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
       {
          QPen use_pen = QPen( Qt::green, use_line_width, Qt::DotLine );
 
-#if QT_VERSION >= 0x040000
          QwtPlotCurve * curve = new QwtPlotCurve( "ggqfit" );
          curve->setStyle( QwtPlotCurve::Lines );
          curve->setSamples(
@@ -352,15 +351,6 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
                         unified_ggaussian_qvals.size() );
          curve->setPen( use_pen );
          curve->attach( ggqfit_plot  );
-#else
-         long curve = ggqfit_plot->insertCurve( "ggqfit" );
-         ggqfit_plot->setCurveStyle( curve, QwtCurve::Lines );
-         ggqfit_plot->setCurveData( curve,
-                                    (double *)&(unified_ggaussian_qvals[0]),
-                                    (double *)&(fit[0]),
-                                    unified_ggaussian_qvals.size() );
-         ggqfit_plot->setCurvePen( curve, use_pen );
-#endif
       }
 
       // as markers
@@ -375,16 +365,10 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
             sym.setPen  ( qc );
             sym.setBrush( qc );
 
-#if QT_VERSION >= 0x040000
             QwtPlotMarker* marker = new QwtPlotMarker;
             marker->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
             marker->setValue( unified_ggaussian_qvals[ i ], fit[ i ] );
             marker->attach( ggqfit_plot );
-#else
-            long marker = ggqfit_plot->insertMarker();
-            ggqfit_plot->setMarkerSymbol( marker, sym );
-            ggqfit_plot->setMarkerPos   ( marker, unified_ggaussian_qvals[ i ], fit[ i ] );
-#endif
             ggaussian_pts_chi2.push_back( marker );
          }
       }
@@ -437,7 +421,6 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
          
             QPen use_pen = QPen( Qt::green, use_line_width, Qt::DashDotLine );
 
-#if QT_VERSION >= 0x040000
             QwtPlotCurve * curve = new QwtPlotCurve( "ggqfit_p_alpha_green" );
             curve->setStyle( QwtPlotCurve::Lines );
             curve->setSamples(
@@ -447,15 +430,6 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
             curve->setPen( use_pen );
             curve->setAxes( QwtPlot::xBottom , QwtPlot::yRight );
             curve->attach( ggqfit_plot  );
-#else
-            long curve = ggqfit_plot->insertCurve( "ggqfit_p_alpha_green", QwtPlot::xBottom, QwtPlot::yRight );
-            ggqfit_plot->setCurveStyle( curve, QwtCurve::Lines );
-            ggqfit_plot->setCurveData( curve,
-                                       (double *)&(x[0]),
-                                       (double *)&(y[0]),
-                                       2 );
-            ggqfit_plot->setCurvePen( curve, use_pen );
-#endif
          }
 
          {
@@ -464,7 +438,6 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
          
             QPen use_pen = QPen( Qt::yellow, use_line_width, Qt::DashDotLine );
 
-#if QT_VERSION >= 0x040000
             QwtPlotCurve * curve = new QwtPlotCurve( "ggqfit_p_alpha_green" );
             curve->setStyle( QwtPlotCurve::Lines );
             curve->setSamples(
@@ -474,15 +447,6 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
             curve->setPen( use_pen );
             curve->setAxes( QwtPlot::xBottom , QwtPlot::yRight );
             curve->attach( ggqfit_plot  );
-#else
-            long curve = ggqfit_plot->insertCurve( "ggqfit_p_alpha_green", QwtPlot::xBottom, QwtPlot::yRight );
-            ggqfit_plot->setCurveStyle( curve, QwtCurve::Lines );
-            ggqfit_plot->setCurveData( curve,
-               (double *)&(x[0]),
-               (double *)&(y[0]),
-               2 );
-            ggqfit_plot->setCurvePen( curve, use_pen );
-#endif
          }
       }
 
@@ -503,17 +467,11 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
                P = 1e-10;
             }
 
-#if QT_VERSION >= 0x040000
             QwtPlotMarker* marker = new QwtPlotMarker;
             marker->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
             marker->setValue( unified_ggaussian_qvals[ i ], P );
             marker->setAxes( QwtPlot::xBottom , QwtPlot::yRight );
             marker->attach( ggqfit_plot );
-#else
-            long marker = ggqfit_plot->insertMarker( "", QwtPlot::xBottom , QwtPlot::yRight );
-            ggqfit_plot->setMarkerSymbol( marker, sym );
-            ggqfit_plot->setMarkerPos   ( marker, unified_ggaussian_qvals[ i ], P );
-#endif
             ggaussian_pts_pfit.push_back( marker );
          }
       }

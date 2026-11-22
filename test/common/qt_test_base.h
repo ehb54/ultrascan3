@@ -1,18 +1,29 @@
 // test/common/qt_test_base.h
-#pragma once
+#ifndef QT_TEST_BASE_H
+#define QT_TEST_BASE_H
 
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
-#include <QCoreApplication>
 #include <QApplication>
-#include <QTest>
-#include <QSignalSpy>
-#include <QTimer>
+#include <QCoreApplication>
 #include <QEventLoop>
-#include <QPushButton>
 #include <QLineEdit>
+#include <QPushButton>
+#include <QSignalSpy>
+#include <QTest>
+#include <QTimer>
 #include <QWidget>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <memory>
+#include <ostream>
+
+//! Print a QString as text, not bytes, when a gtest assertion fails.
+//! Every gtest source must include this header, directly or through another
+//! test base: the linker keeps one PrintToString<QString> for the whole test
+//! binary, and a copy compiled without this overload prints bytes.
+inline void PrintTo( const QString& text, std::ostream* os )
+{
+   *os << '"' << text.toStdString() << '"';
+}
 
 /**
  * Base class for all Qt-related tests
@@ -128,3 +139,5 @@ namespace qt_matchers {
         action; \
         EXPECT_EQ(spy.count(), 0) << "Expected no " #signal " signal"; \
     } while(0)
+
+#endif // QT_TEST_BASE_H

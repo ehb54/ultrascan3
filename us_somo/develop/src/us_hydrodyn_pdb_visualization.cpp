@@ -39,37 +39,6 @@ void US_Hydrodyn_PDB_Visualization::setupGUI()
    AUTFBACK( lbl_info );
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-#if QT_VERSION < 0x040000
-   bg_visualization = new QGroupBox(3, Qt::Vertical, "Visualization Options", this);
-   bg_visualization->setExclusive(true);
-   connect(bg_visualization, SIGNAL(clicked(int)), this, SLOT(select_option(int)));
-
-   cb_default = new QCheckBox(bg_visualization);
-   cb_default->setText(us_tr(" Default RasMol Settings"));
-   cb_default->setEnabled(true);
-   cb_default->setMinimumHeight(minHeight1);
-   cb_default->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_default->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_default );
-
-   cb_spacefilling = new QCheckBox(bg_visualization);
-   cb_spacefilling->setText(us_tr(" Space-filling, colors as bead colors"));
-   cb_spacefilling->setEnabled(false);
-   cb_spacefilling->setMinimumHeight(minHeight1);
-   cb_spacefilling->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_spacefilling->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_spacefilling );
-
-   cb_custom = new QCheckBox(bg_visualization);
-   cb_custom->setText(us_tr(" Custom script file"));
-   cb_custom->setEnabled(false);
-   cb_custom->setMinimumHeight(minHeight1);
-   cb_custom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_custom->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_custom );
-
-   bg_visualization->setButton((*pdb).visualization);
-#else
    bg_visualization = new QGroupBox( "Visualization Options" );
 
    rb_default = new QRadioButton();
@@ -113,7 +82,6 @@ void US_Hydrodyn_PDB_Visualization::setupGUI()
    case 2 : rb_custom->setChecked( true ); break;
    default : qDebug() << "pdb visual switch error"; break;
    }
-#endif
 
    pb_filename = new QPushButton(us_tr("Custom File:"), this);
    Q_CHECK_PTR(pb_filename);

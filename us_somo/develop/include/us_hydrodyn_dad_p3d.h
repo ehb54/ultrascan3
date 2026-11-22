@@ -34,15 +34,9 @@ class US_EXTERN US_Hydrodyn_Dad_P3d : public QDialog
       QPushButton *                           pb_plot_all;
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
 #endif
       vector < QCheckBox * >                  cb_plot_curves;
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
 #endif
       QPushButton *                           pb_help;
       QPushButton *                           pb_quit;

@@ -465,15 +465,6 @@ void US_Hydrodyn_Results::load_asa()
 
 void US_Hydrodyn_Results::view_file(const QString &filename)
 {
-#if QT_VERSION < 0x040000
-   e = new TextEdit();
-   e->setFont(QFont("Courier"));
-   e->setPalette( PALET_NORMAL );
-   AUTFBACK( e );
-   e->setGeometry(global_Xpos + 30, global_Ypos + 30, 685, 600);
-   e->load(filename);
-   e->show();
-#else
    {
       QFile f( filename );
       if ( f.open( QIODevice::ReadOnly ) ) {
@@ -491,7 +482,6 @@ void US_Hydrodyn_Results::view_file(const QString &filename)
          edit->show();
       }
    }
-#endif
 }
 
 void US_Hydrodyn_Results::closeEvent(QCloseEvent *e)

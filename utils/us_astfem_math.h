@@ -35,9 +35,31 @@ class US_UTIL_EXTERN US_AstfemMath
       //! \param tmst_fpath  Full path to timestate file to examine
       //! \param simparams   Simulation parameters, including speed steps info
       //! \param sim_data    Raw data with scans to examine
-      //! \returns Flag:  0 if the file write succeeded
+      //! \returns The number of time entries written, or -1 if the file could
+      //!          not be opened for writing. Note that 0 means a successful
+      //!          write of an empty time state, not a failure.
       static int  writetimestate( const QString& tmst_fpath, US_SimulationParameters& simparams,
                                   US_DataIO::RawData& sim_data );
+
+      //! \brief Load into simparams the simulation speed profile implied by
+      //!        its speed steps and the scans of sim_data, for a solve that
+      //!        has no timestate loaded.  The timestate goes through a file
+      //!        in a temporary directory of its own, which is removed again:
+      //!        the speed profile is never shared with another call, thread,
+      //!        process or experiment.
+      //! \param simparams   Simulation parameters, including speed steps info;
+      //!                    gets the TimeState object and the speed profile
+      //! \param sim_data    Raw data with scans to examine
+      //! \returns The number of speed profile steps loaded, or -1 if no
+      //!          timestate could be written
+      static int         timestate_from_speedsteps( US_SimulationParameters& simparams, US_DataIO::RawData& sim_data );
+
+      //! \brief Templates for the per-call timestate directory, in the order tried
+      //! \param base     The configured temporary directory
+      //! \param fallback The system temporary directory
+      //! \returns One template per non-empty, distinct directory; an empty
+      //!          directory never yields a template at the filesystem root
+      static QStringList timestate_dir_templates( const QString& base, const QString& fallback );
 
       //! \brief Determine if first time step's acceleration is too low
       //! \param speedsteps  Vector of speed steps

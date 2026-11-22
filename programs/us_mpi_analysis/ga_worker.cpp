@@ -1,5 +1,6 @@
-#include "us_mpi_analysis.h"
 #include "us_math2.h"
+#include "us_mpi_analysis.h"
+#include "us_mpi_memlimit.h"
 
 QDateTime elapsed = QDateTime::currentDateTime();
 #define ELAPSEDNOW (elapsed.msecsTo(QDateTime::currentDateTime()))
@@ -21,34 +22,20 @@ void US_MPI_Analysis::ga_worker( void )
    count_datasets      = data_sets.size();
    datasets_to_process = count_datasets;
 
-   // Initialize grid values
-   QStringList keys = parameters.keys();
+   // All ranks share one seed (deme_seed), which would make all demes
+   //  evolve identically:  offset it by rank
+   seed_deme_random();
 
-   s_grid = ( keys.contains( "s_grid" ) )
-      ? parameters[ "s_grid" ].toInt() : 100;
-   k_grid = ( keys.contains( "k_grid" ) )
-      ? parameters[ "k_grid" ].toInt() : 100;
-
-   static const double extn_s  = (double)( s_grid - 1 );
-   static const double extn_k  = (double)( k_grid - 1 );
-
-   for ( int b = 0; b < buckets.size(); b++ )
-   {
-      double x_min   = buckets[ b ].x_min;
-      double x_max   = buckets[ b ].x_max;
-      double y_min   = buckets[ b ].y_min;
-      double y_max   = buckets[ b ].y_max;
-      
-      buckets[ b ].ds = ( x_max - x_min ) / extn_s;
-      buckets[ b ].dk = ( y_max - y_min ) / extn_k;
-   }
+   // Initialize grid values, soft-bucket limits and the simulation cache
+   setup_bucket_grid();
+   setup_ga_simcache();
 
    MPI_GA_MSG msg;
    MPI_Status status;
    MPI_Job    job;
    bool       finished = false;
-   int        grp_nbr  = ( my_rank / gcores_count );
-   int        deme_nbr = my_rank - grp_nbr * gcores_count;
+   const int  grp_nbr  = ( my_rank / gcores_count );
+   const int  deme_nbr = my_rank - grp_nbr * gcores_count;
 
    while ( ! finished )
    {
@@ -73,8 +60,8 @@ void US_MPI_Analysis::ga_worker( void )
                 my_communicator,
                 &status );
 
-      int dataset = job.dataset_offset;
-      int count   = job.dataset_count;
+      const int dataset = job.dataset_offset;
+      const int count   = job.dataset_count;
       int length  = job.length;
       int index   = 0;
 
@@ -85,6 +72,19 @@ void US_MPI_Analysis::ga_worker( void )
             DbgLv(0) << "    Deme" << grp_nbr << deme_nbr << ":"
                << fitness_hits << "fitness hits of" << fitness_count
                << " fitness checks   maxrss" << maxrss;
+            DbgLv( 0 ) << "    Deme" << grp_nbr << deme_nbr << ": fitness time" << fitness_secs << "s for" << fitness_count
+                       << "checks," << ( fitness_count - fitness_hits ) << "computed";
+            if ( solver_cache() != nullptr )
+            { // This rank's use of the cache (of the node's shared cache, too)
+               DbgLv( 0 ) << "    Deme" << grp_nbr << deme_nbr << ":" << solver_cache()->stats_text();
+            }
+            DbgLv( 0 ) << "    Deme" << grp_nbr << deme_nbr << ":" << ga_normal_count << "fitness values from the normal equations,"
+                       << ga_qr_count << "from QR";
+            if ( ga_normal_check != 0 )
+            {
+               DbgLv( 0 ) << "    Deme" << grp_nbr << deme_nbr << ":" << "normal-equation check:  max rel. variance diff."
+                          << ga_normal_dvar << " max conc. diff. / total" << ga_normal_dc;
+            }
             break;
 
          case UPDATE:   
@@ -93,7 +93,7 @@ void US_MPI_Analysis::ga_worker( void )
             // Monte Carlo always comes as a sequence of all datasets
 
             mc_data.resize( length );
-DbgLv(1) << "Deme" << deme_nbr << "UPD ds cnt len" << dataset << count << length;
+            DbgLv( 1 ) << "Deme" << deme_nbr << "UPD ds cnt len" << dataset << count << length;
 
             MPI_Barrier( my_communicator );
 
@@ -114,22 +114,22 @@ DbgLv(1) << "Deme" << deme_nbr << "UPD ds cnt len" << dataset << count << length
             {
                US_DataIO::EditedData* edata = &data_sets[ ee ]->run_data;
 
-               int scan_count    = edata->scanCount();
-               int radius_points = edata->pointCount();
-DbgLv(1) << "Deme" << deme_nbr << "  ee" << ee << "scnt rcnt" << scan_count << radius_points;
-double dsumi=0.0;
-double dsumo=0.0;
+               const int              scan_count    = edata->scanCount();
+               const int              radius_points = edata->pointCount();
+               DbgLv( 1 ) << "Deme" << deme_nbr << "  ee" << ee << "scnt rcnt" << scan_count << radius_points;
+               double dsumi = 0.0;
+               double dsumo = 0.0;
 
                for ( int ss = 0; ss < scan_count; ss++ )
                {
                   for ( int rr = 0; rr < radius_points; rr++, index++ )
                   {
-dsumi+=edata->value(ss,rr);
+                     dsumi += edata->value( ss, rr );
                      edata->setValue( ss, rr, mc_data[ index ] );
-dsumo+=mc_data[index];
+                     dsumo += mc_data[index];
                   }
                }
-DbgLv(1) << "Deme" << deme_nbr << "  dsumi" << dsumi << "dsumo" << dsumo;
+               DbgLv( 1 ) << "Deme" << deme_nbr << "  dsumi" << dsumi << "dsumo" << dsumo;
             }
 
             if ( count == data_sets.size() ) // Next iteration will be global
@@ -160,13 +160,13 @@ void US_MPI_Analysis::ga_worker_loop( void )
 {
    // Initialize genes
    genes.clear();
-   population = parameters[ "population" ].toInt();
+   population = job_config.params.ga.population;
 
    for ( int i = 0; i < population; i++ ) genes << new_gene();
 
-//   // Let calc_residuals get the meniscus directly from the edited data for
-//   // each data set
-//   meniscus_value = -1.0;
+   //   // Let calc_residuals get the meniscus directly from the edited data for
+   //   // each data set
+   //   meniscus_value = -1.0;
 
    fitness.reserve( population );
 
@@ -179,66 +179,51 @@ void US_MPI_Analysis::ga_worker_loop( void )
       fitness << empty_fitness;
    }
 
-   int generations = parameters[ "generations" ].toInt();
-   int crossover   = parameters[ "crossover"   ].toInt();
-   int mutation    = parameters[ "mutation"    ].toInt();
-   int plague      = parameters[ "plague"      ].toInt();
-   int elitism     = parameters[ "elitism"     ].toInt();
-
-   int p_mutate    = mutation;
-   int p_crossover = p_mutate + crossover;
-   int p_plague    = p_crossover + plague;
-   int grp_nbr     = ( my_rank / gcores_count );
-   int deme_nbr    = my_rank - grp_nbr * gcores_count;
+   const int p_mutate    = mutation;
+   const int p_crossover = p_mutate + crossover;
+   const int p_plague    = p_crossover + plague;
+   const int grp_nbr     = ( my_rank / gcores_count );
+   const int deme_nbr    = my_rank - grp_nbr * gcores_count;
 
    fitness_map.clear();
    fitness_hits    = 0;
    fitness_count   = 0;
+   fitness_secs    = 0.0;
 
    max_rss();
 
-   QDateTime  start = QDateTime::currentDateTime();
+   const QDateTime start = QDateTime::currentDateTime();
    MPI_GA_MSG msg;
 
    for ( generation = 0; generation < generations; generation++ )
    {
       max_rss();
 
-DbTimMsg("Worker start rank/generation/elapsed-secs");
+      DbTimMsg( "Worker start rank/generation/elapsed-secs" );
       // Calculate fitness
+      QElapsedTimer fit_timer;
+      fit_timer.start();
+
       for ( int i = 0; i < population; i++ )
       {
          fitness[ i ].index   = i;
          fitness[ i ].fitness = get_fitness( genes[ i ] );
       }
 
+      fitness_secs += fit_timer.nsecsElapsed() * 1.0e-9;
+
       // Sort fitness
       std::sort( fitness.begin(), fitness.end() );
-DbTimMsg("Worker after get_fitness loop + sort");
+      DbTimMsg( "Worker after get_fitness loop + sort" );
 
-      // Refine with gradient search method (gsm) on last generation
-      if ( generation == generations - 1 )
-      {
-DbgLv(DL) << "Deme" << grp_nbr << deme_nbr
-         << ": At last generation minimize.";
-DbTimMsg("Worker before gsm rank/generation/elapsed");
-
-         fitness[ 0 ].fitness = minimize( genes[ fitness[ 0 ].index ], 
-                                          fitness[ 0 ].fitness );
-DbgLv(DL) << "Deme" << grp_nbr << deme_nbr
-         << ":   last generation minimize fitness=" << fitness[0].fitness;
-DbTimMsg("Worker after gsm rank/generation/elapsed");
-      }
+      // The gradient search refinement is done by the master on the
+      //  overall best gene (ga_master), after the generations end
 
       max_rss();
 
-      // Ensure gene is on grid
-      align_gene( genes[ fitness[ 0 ].index ] );
-DbTimMsg("Worker after align_gene");
-
       // Send best gene to master
-DbgLv(1) << "Best gene to master: gen" << generation << "worker" << deme_nbr;
-dump_fitness( fitness );
+      DbgLv( 1 ) << "Best gene to master: gen" << generation << "worker" << deme_nbr;
+      dump_fitness( fitness );
       msg.generation = generation;
       msg.size       = genes[ fitness[ 0 ].index ].size();
       msg.fitness    = fitness[ 0 ].fitness;
@@ -257,7 +242,7 @@ dump_fitness( fitness );
                 GENE,
                 my_communicator );
 
-DbTimMsg("Worker after send fitness,genes");
+      DbTimMsg( "Worker after send fitness,genes" );
       // Receive instructions from master (continue or finish)
       MPI_Status status;
 
@@ -268,7 +253,7 @@ DbTimMsg("Worker after send fitness,genes");
                 MPI_ANY_TAG,
                 my_communicator,
                 &status );
-DbTimMsg("Worker after receive instructions");
+      DbTimMsg( "Worker after receive instructions" );
 
       max_rss();
 
@@ -293,31 +278,30 @@ DbTimMsg("Worker after receive instructions");
       // The value of 1.0e-8 for close fitness is arbitrary. Parameterize?
       const double NEAR_MATCH = 1.0e-8;
       const double EPSF_SCALE = 1.0e-3;
-      double fitpwr      = (double)qRound( log10( fitness[ 0 ].fitness ) );
-      double epsilon_f   = pow( 10.0, fitpwr ) * EPSF_SCALE;
-DbgLv(1) << "gw:" << my_rank << ": Dup best-gene clean: fitness0 fitpwr epsilon_f"
- << fitness[0].fitness << fitpwr << epsilon_f;
+      const double fitpwr     = (double) qRound( log10( fitness[0].fitness ) );
+      const double epsilon_f  = pow( 10.0, fitpwr ) * EPSF_SCALE;
+      DbgLv( 1 ) << "gw:" << my_rank << ": Dup best-gene clean: fitness0 fitpwr epsilon_f" << fitness[0].fitness << fitpwr
+                 << epsilon_f;
 
       while ( f1 < population )
       {
-         double fitdiff = qAbs( fitness[ f0 ].fitness - fitness[ f1 ].fitness );
+         const double fitdiff = qAbs( fitness[f0].fitness - fitness[f1].fitness );
 
          if ( fitdiff < epsilon_f )
          {
             bool match   = true;
-            int  g0      = fitness[ f0 ].index;
-            int  g1      = fitness[ f1 ].index;
+            const int g0      = fitness[f0].index;
+            const int g1      = fitness[f1].index;
 
             for ( int ii = 0; ii < buckets.size(); ii++ )
             {
-               double sdif = qAbs( genes[ g0 ][ ii ].s -  genes[ g1 ][ ii ].s );
-               double kdif = qAbs( genes[ g0 ][ ii ].k -  genes[ g1 ][ ii ].k );
+               const double sdif = qAbs( genes[g0][ii].s - genes[g1][ii].s );
+               const double kdif = qAbs( genes[g0][ii].k - genes[g1][ii].k );
 
                if ( sdif > NEAR_MATCH  ||  kdif > NEAR_MATCH )
                {
-DbgLv(1) << "gw:" << my_rank << ":  Dup NOT cleaned: f0 f1 fit0 fit1"
- << f0 << f1 << fitness[f0].fitness << fitness[f1].fitness << "ii g0 g1 g0s g1s"
- << ii << g0 << g1 << genes[g0][ii].s << genes[f1][ii].s;
+                  DbgLv( 1 ) << "gw:" << my_rank << ":  Dup NOT cleaned: f0 f1 fit0 fit1" << f0 << f1 << fitness[f0].fitness
+                             << fitness[f1].fitness << "ii g0 g1 g0s g1s" << ii << g0 << g1 << genes[g0][ii].s << genes[f1][ii].s;
                   match        = false;
                   f0           = f1;
                   break;
@@ -326,8 +310,8 @@ DbgLv(1) << "gw:" << my_rank << ":  Dup NOT cleaned: f0 f1 fit0 fit1"
 
             if ( match )
             {
-DbgLv(1) << "gw:" << my_rank << ":  Dup cleaned: f0 f1 fit0 fit1"
- << f0 << f1 << fitness[f0].fitness << fitness[f1].fitness;
+               DbgLv( 1 ) << "gw:" << my_rank << ":  Dup cleaned: f0 f1 fit0 fit1" << f0 << f1 << fitness[f0].fitness
+                          << fitness[f1].fitness;
                fitness[ f1 ].fitness = LARGE;  // Invalidate gene/sim_values 
             }
          }
@@ -342,22 +326,24 @@ DbgLv(1) << "gw:" << my_rank << ":  Dup cleaned: f0 f1 fit0 fit1"
       
       QList< Gene > old_genes = genes;
 
+      // Exchange emigrants first, while genes[] still matches the fitness
+      //  ranking (immigrants go to the slots after the elites)
+      const int     immigrants = migrate_genes();
+
       // Create new generation from old
       // First copy elite genes
       for ( int g = 0; g < elitism; g++ )
          genes[ g ] = old_genes[ fitness[ g ].index ];
 
-      int immigrants = migrate_genes();
-
-DbTimMsg("Worker before elitism loop");
+      DbTimMsg( "Worker before elitism loop" );
 
       for ( int g = elitism + immigrants; g < population; g++ )
       {
          // Select a random gene from old population using exponential 
          //  distribution
-         int  gene_index  = e_random();
-         Gene gene        = old_genes[ gene_index ];
-         int  probability = u_random( p_plague );
+         const int gene_index  = e_random();
+         Gene      gene        = old_genes[fitness[gene_index].index];
+         const int probability = u_random( p_plague );
 
          if      ( probability < p_mutate    ) mutate_gene( gene );
          else if ( probability < p_crossover ) cross_gene ( gene, old_genes );
@@ -365,69 +351,45 @@ DbTimMsg("Worker before elitism loop");
 
          genes[ g ] = gene;
       }
-DbTimMsg("Worker after elitism loop");
+      DbTimMsg( "Worker after elitism loop" );
 
       max_rss();
 
    }  // End of generation loop
-DbTimMsg("  +++Worker after generation loop");
+   DbTimMsg( "  +++Worker after generation loop" );
 }
 
 void US_MPI_Analysis::align_gene( Gene& gene )
 {
-   int grid_es = s_grid - 1;
-   int grid_ek = k_grid - 1;
-
    for ( int i = 0; i < gene.size(); i++ )
    {
+      // Nearest grid point within the allowed grid range of the bucket
+      //  (the bucket itself, or beyond it for soft buckets)
+      const Bucket& bk    = buckets[i];
       double s     = gene[ i ].s;
-      double s_min = buckets[ i ].x_min;
-      double ds    = s - s_min;
-
-      if ( ds < 0 )
-         s = s_min;
-      else
-      {
-         int gridpoint = qRound( ds / buckets[ i ].ds );
-         gridpoint     = qMin( grid_es, gridpoint );
-         s             = s_min + gridpoint * buckets[ i ].ds;
-      }
+      int           gs    = qRound( ( s - bk.x_min ) / bk.ds );
+      gs                  = qBound( bk.s_glo, gs, bk.s_ghi );
+      s                   = bk.x_min + gs * bk.ds;
 
       double k     = gene[ i ].k;
-      double k_min = buckets[ i ].y_min;
-      double dk    = k - k_min;
-
-      if ( dk < 0 )
-         k = k_min;
-      else
-      {
-         int gridpoint = qRound( dk / buckets[ i ].dk );
-         gridpoint     = qMin( grid_ek, gridpoint );
-         k             = k_min + gridpoint * buckets[ i ].dk;
-      }
+      int    gk    = qRound( ( k - bk.y_min ) / bk.dk );
+      gk           = qBound( bk.k_glo, gk, bk.k_ghi );
+      k            = bk.y_min + gk * bk.dk;
 
       gene[ i ].s = s;
-      gene[ i ].k = k;
-//*DEBUG*
-//if(gene[i].s<0.0) {
-//int grp_nbr  = ( my_rank / gcores_count );
-//int deme_nbr = my_rank - grp_nbr * gcores_count;
-//DbgLv(0) << "Dem :" << grp_nbr << deme_nbr << "gene.s" << gene[i].s << "ALIGN"
-// << "ds s_min gridpt" << ds << s_min << qRound( ds / buckets[i].ds );
-//}
-//*DEBUG*
+      gene[i].k   = k;
    }
 }
 
 double US_MPI_Analysis::get_fitness( const Gene& gene )
 {
    US_SolveSim::Simulation sim = simulation_values;
-sim.dbg_level = qMax(0,dbg_level-1);
+   sim.dbg_level               = qMax( 0, dbg_level - 1 );
    sim.solutes = gene;
    std::sort( sim.solutes.begin(), sim.solutes.end() );
 
    fitness_count++;
-   int     nisols = gene.size();
+   const int nisols = gene.size();
    QString key    = "";
 
    for ( int cc = 0; cc < nisols; cc++ )
@@ -436,23 +398,23 @@ sim.dbg_level = qMax(0,dbg_level-1);
                                 sim.solutes[ cc ].k );
    }
 
-DbgLv(2) << "get_fitness: nisols" << nisols << "key" << key;
+   DbgLv( 2 ) << "get_fitness: nisols" << nisols << "key" << key;
    if ( fitness_map.contains( key ) )
    {  // We already have a match to this key, so use its fitness value
       fitness_hits++;
-DbgLv(2) << "get_fitness: HIT!  new hits" << fitness_hits;
+      DbgLv( 2 ) << "get_fitness: HIT!  new hits" << fitness_hits;
       return fitness_map.value( key );
    }
 
    solutes_from_gene( sim.solutes, nisols );
 
-//DbTimMsg("  ++ call gf calc_residuals");
-   calc_residuals( current_dataset, datasets_to_process, sim );
-//DbTimMsg("  ++  return calc_residuals");
+   //DbTimMsg("  ++ call gf calc_residuals");
+   calc_fitness_residuals( current_dataset, datasets_to_process, sim );
+   //DbTimMsg("  ++  return calc_residuals");
 
-   double fitness      = sim.variance;
+   double    sfitness     = sim.variance;
    int    solute_count = 0;
-   int    nosols       = sim.solutes.size();
+   const int nosols       = sim.solutes.size();
 
    if ( data_sets.size() == 1 )
    {  // Count solutes whose concentration is at least the threshold
@@ -460,25 +422,25 @@ DbgLv(2) << "get_fitness: HIT!  new hits" << fitness_hits;
       {
          if ( sim.solutes[ cc ].c >= concentration_threshold ) solute_count++;
       }
-DbgLv(2) << "get_fitness: sol_count conc_thresh" << solute_count << concentration_threshold;
+      DbgLv( 2 ) << "get_fitness: sol_count conc_thresh" << solute_count << concentration_threshold;
    }
 
    else
    {  // For multiple datasets, use a weighted average fitness
       double concen    = 0.0;
-      fitness          = 0.0;
+      sfitness         = 0.0;
 
       for ( int ee = 0; ee < datasets_to_process; ee++ )
       {
-         fitness         += ( sim.variances[ ee ] / maxods[ ee ] );
+         sfitness += ( sim.variances[ee] / maxods[ee] );
       }
 
-      fitness         /= (double)datasets_to_process;
+      sfitness /= (double) datasets_to_process;
 
       for ( int cc = 0; cc < nosols; cc++ )
          concen          += sim.solutes[ cc ].c;
 
-      double cthresh   = concentration_threshold * concen;
+      const double cthresh = concentration_threshold * concen;
 
       for ( int cc = 0; cc < nosols; cc++ )
       {
@@ -486,36 +448,43 @@ DbgLv(2) << "get_fitness: sol_count conc_thresh" << solute_count << concentratio
       }
    }
 
-   fitness *= ( 1.0 + sq( regularization * solute_count ) );
-   fitness_map.insert( key, fitness ); 
-DbgLv(2) << "get_fitness:  out fitness" << fitness;
-//*DEBUG*
-if(dbg_level>0 && fitness_map.size()==20 )
-{
- int n=nosols-1;
- DbgLv(1) << "w:" << my_rank << generation << ": fmapsize fitness nsols"
-  << fitness_map.size() << fitness << nisols << nosols
-  << "s0 s,k,v" << sim.solutes[0].s << sim.solutes[0].k << sim.solutes[0].v
-  << "sn s,k,v" << sim.solutes[n].s << sim.solutes[n].k << sim.solutes[n].v;
-}
-//*DEBUG*
+   // Parsimony penalty (1 + (rf n)^2) on the variance; BD07 eq. 4 applies
+   //  it to the RMSD, which equals rf scaled by about sqrt(2) here.
+   //  Kept on the variance so that existing rf settings are unchanged.
+   sfitness *= ( 1.0 + sq( regularization * solute_count ) );
 
-//*DEBUG*
-//if(datasets_to_process>1 && generation<11 )
-if(dbg_level>1 && datasets_to_process>1 && generation<11 )
-{
- DbgLv(0) << "rank generation" << my_rank << generation << "fitness" << fitness
-  << "vari0 vari1" << sim.variances[0] << sim.variances[1];
-}
-//*DEBUG*
-   return fitness;
+   if ( bucket_soft != 0 )
+   { // Soft-bucket prior, relative to the number of data points
+      int npoints = 0;
+      for ( int ee = current_dataset; ee < current_dataset + datasets_to_process; ee++ )
+      {
+         npoints += data_sets[ee]->run_data.scanCount() * data_sets[ee]->run_data.pointCount();
+      }
+      sfitness *= ( 1.0 + bucket_penalty( gene, npoints ) );
+   }
+   fitness_map.insert( key, sfitness );
+   DbgLv( 2 ) << "get_fitness:  out fitness" << sfitness;
+   if ( dbg_level > 0 && fitness_map.size() == 20 )
+   {
+      const int n = nosols - 1;
+      DbgLv( 1 ) << "w:" << my_rank << generation << ": fmapsize fitness nsols" << fitness_map.size() << sfitness << nisols
+                 << nosols << "s0 s,k,v" << sim.solutes[0].s << sim.solutes[0].k << sim.solutes[0].v << "sn s,k,v"
+                 << sim.solutes[n].s << sim.solutes[n].k << sim.solutes[n].v;
+   }
+
+   if ( dbg_level > 1 && datasets_to_process > 1 && generation < 11 )
+   {
+      DbgLv( 0 ) << "rank generation" << my_rank << generation << "fitness" << sfitness << "vari0 vari1" << sim.variances[0]
+                 << sim.variances[1];
+   }
+   return sfitness;
 }
 
 // Compute the fitness of a gene represented as a vector of doubles
 double US_MPI_Analysis::get_fitness_v( const US_Vector& vv )
 {
    // Convert from US_Vector to Gene
-   int  size  = vv.size() / 2;
+   const int size  = vv.size() / 2;
    int  index = 0;
    Gene gene( size );
    
@@ -525,17 +494,15 @@ double US_MPI_Analysis::get_fitness_v( const US_Vector& vv )
       gene[ ii ].k = vv[ index++ ];
    }
 
-//*DEBUG*
-if(gene[0].s<0.0) {
-int grp_nbr  = ( my_rank / gcores_count );
-int deme_nbr = my_rank - grp_nbr * gcores_count;
-DbgLv(DL) << "Dem :" << grp_nbr << deme_nbr << "gene.s" << gene[0].s << "FIT_V";
-}
-//*DEBUG*
-//   return get_fitness( gene );
-   int dbgsv = dbg_level;
-//   dbg_level = 2;
-   double fitn = get_fitness( gene );
+   if ( gene[0].s < 0.0 )
+   {
+      const int grp_nbr  = ( my_rank / gcores_count );
+      const int deme_nbr = my_rank - grp_nbr * gcores_count;
+      DbgLv( DL ) << "Dem :" << grp_nbr << deme_nbr << "gene.s" << gene[0].s << "FIT_V";
+   }
+   //   return get_fitness( gene );
+   const int    dbgsv = dbg_level;
+   const double fitn  = get_fitness( gene );
    dbg_level = dbgsv;
    return fitn;
 }
@@ -550,11 +517,11 @@ int US_MPI_Analysis::u_random( int modulo )
 int US_MPI_Analysis::e_random( void )
 {
    // Exponential distribution
-   double       randx   = US_Math2::ranf();
+   const double randx   = US_Math2::ranf();
    const double divisor = 8.0;  // Parameterize?
    static const double
                 beta    = population / divisor;
-   int          gnsize  = ( buckets.size() > 0 ) ? genes.size() : dgenes.size();
+   const int    gnsize  = ( buckets.size() > 0 ) ? genes.size() : dgenes.size();
 
    int gene_index = (int)( -log( 1.0 - randx ) * beta );
        gene_index = qMin( ( gnsize - 1 ), qMax( 0, gene_index ) );
@@ -564,18 +531,20 @@ int US_MPI_Analysis::e_random( void )
 
 void US_MPI_Analysis::mutate_gene( Gene& gene )
 {
-   static const int p_mutate_s  = parameters[ "p_mutate_s"  ].toInt();
-   static const int p_mutate_k  = parameters[ "p_mutate_k"  ].toInt();
-   static const int p_mutate_sk = parameters[ "p_mutate_sk" ].toInt();
+   static const int pmut_s  = job_config.params.ga.p_mutate_s;
+   static const int pmut_k  = job_config.params.ga.p_mutate_k;
+   static const int pmut_sk = job_config.params.ga.p_mutate_sk;
 
-   static const int p_k         = p_mutate_s + p_mutate_k;   // e.g., 40
-   static const int p_total     = p_k + p_mutate_sk;         // e.g., 60
+   static const int p_k     = pmut_s + pmut_k; // e.g., 40
+   static const int p_total = p_k + pmut_sk;   // e.g., 60
 
-   int solute = u_random( gene.size() );
-   int rand   = u_random( p_total );
+   const int        solute = u_random( gene.size() );
+   const int        rand   = u_random( p_total );
 
-   if      ( rand < p_mutate_s )
-      mutate_s( gene[ solute ], solute );
+   if ( rand < pmut_s )
+   {
+      mutate_s( gene[solute], solute );
+   }
    else if ( rand < p_k )      
       mutate_k( gene[ solute ], solute );
    else
@@ -583,68 +552,48 @@ void US_MPI_Analysis::mutate_gene( Gene& gene )
       mutate_s( gene[ solute ], solute );
       mutate_k( gene[ solute ], solute );
    }
-//*DEBUG*
-//if(gene[0].s<0.0) {
-//int grp_nbr  = ( my_rank / gcores_count );
-//int deme_nbr = my_rank - grp_nbr * gcores_count;
-//DbgLv(0) << "Dem :" << grp_nbr << deme_nbr << "gene.s" << gene[0].s << "MUTATE";
-//}
-//*DEBUG*
 }
 
 void US_MPI_Analysis::mutate_s( US_Solute& solute, int b )
 {
    // Consider paramaterizing the sigma and x calculations
-   double sigma = ( s_grid - 1 ) / ( 6.0 * ( log2( generation + 2 ) ) );
-   double x     = US_Math2::box_muller( 0.0, sigma );
-   double delta = qRound( x );
-//DbgLv(1) << "    MUTATE_S x" << x << "sg sigma delta"
-//   << s_grid << sigma << delta;
+   const double sigma = ( buckets[b].ns - 1 ) / ( 6.0 * ( log2( generation + 2 ) ) );
+   const double x     = US_Math2::box_muller( 0.0, sigma );
+   const double delta = qRound( x );
 
-   // Ensure new value is at a grid point and within bucket
+   // Ensure new value is at a grid point and within the allowed range
    solute.s += delta * buckets[ b ].ds;
-   solute.s  = qMax( solute.s, buckets[ b ].x_min );
-   solute.s  = qMin( solute.s, buckets[ b ].x_max );
-//*DEBUG*
-//if(solute.s<0.0) {
-//int grp_nbr  = ( my_rank / gcores_count );
-//int deme_nbr = my_rank - grp_nbr * gcores_count;
-//DbgLv(0) << "Dem :" << grp_nbr << deme_nbr << "  solute.s" << solute.s << "MUTATE_S";
-//}
-//*DEBUG*
+   bound_solute( solute, b );
 }
 
 void US_MPI_Analysis::mutate_k( US_Solute& solute, int b )
 {
-   //static const double mutate_sigma = parameters[ "mutate_sigma" ].toDouble();
+   //static const double mutate_sigma = job_config.params.ga.mutate_sigma;
 
-   double sigma   = ( k_grid - 1 ) / ( 6.0 * ( log2( generation + 2 ) ) );
-   double x       = US_Math2::box_muller( 0.0, sigma );
-   double delta   = qRound( x );
-//DbgLv(1) << "     MUTATE_K x" << x << "kg sigma delta"
-//   << k_grid << sigma << delta;
+   const double sigma = ( buckets[b].nk - 1 ) / ( 6.0 * ( log2( generation + 2 ) ) );
+   const double x     = US_Math2::box_muller( 0.0, sigma );
+   const double delta = qRound( x );
 
-   // Ensure new value is at a grid point and within bucket
+   // Ensure new value is at a grid point and within the allowed range
    solute.k += delta * buckets[ b ].dk;
-   solute.k  = qMax( solute.k, buckets[ b ].y_min );
-   solute.k  = qMin( solute.k, buckets[ b ].y_max );
+   bound_solute( solute, b );
 }
 
 void US_MPI_Analysis::cross_gene( Gene& gene, QList< Gene > old_genes )
 {
    // Get the crossing gene according to an exponential distribution
-   int  gene_index = e_random();
+   const int gene_index = e_random();
    Gene cross_from = old_genes[ fitness[ gene_index ].index ]; 
 
    // Select a random solute.  The number will always be between
    // 1 and size - 1.
-   int solute_index = u_random( gene.size() - 1 ) + 1;
-   
+   const int solute_index = u_random( gene.size() - 1 ) + 1;
+
    // Swap the genes half the time before cross so if we have
    // (abcde, ABCDE) the crossed gene will be either abCDE or ABcde
    if ( u_random() < 50 ) 
    {
-      Gene temp  = gene;
+      const Gene temp = gene;
       gene       = cross_from;
       cross_from = temp;
    }
@@ -653,42 +602,28 @@ void US_MPI_Analysis::cross_gene( Gene& gene, QList< Gene > old_genes )
    {
       gene[ i ] = cross_from[ i ];
    }
-//*DEBUG*
-//if(gene[0].s<0.0) {
-//int grp_nbr  = ( my_rank / gcores_count );
-//int deme_nbr = my_rank - grp_nbr * gcores_count;
-//DbgLv(0) << "Dem :" << grp_nbr << deme_nbr << "gene.s" << gene[0].s << "CROSS";
-//}
-//*DEBUG*
 }
 
 int US_MPI_Analysis::migrate_genes( void )
 {
-   static const int migrate_pcent = parameters[ "migration" ].toInt();
-   static const int elitism_count = parameters[ "elitism"   ].toInt();
+   static const int     migrate_pcent = job_config.params.ga.migration;
+   static const int     elitism_count = job_config.params.ga.elitism;
 
    QVector< US_Solute > emmigres;
-   int migrate_count = ( migrate_pcent * population + 50 ) / 100;
+   const int            n_migrate = ( migrate_pcent * population + 50 ) / 100;
 
    // Send genes to master
-   for ( int i = 0; i < migrate_count; i++ )
+   for ( int i = 0; i < n_migrate; i++ )
    {
-      int  gene_index = e_random();
+      const int gene_index = e_random();
       emmigres += genes[ fitness[ gene_index ].index ];
    }
-//*DEBUG*
-//if(emmigres[0].s<0.0) {
-//int grp_nbr  = ( my_rank / gcores_count );
-//int deme_nbr = my_rank - grp_nbr * gcores_count;
-//DbgLv(0) << "Dem :" << grp_nbr << deme_nbr << "gene.s" << emmigres[0].s << "EMMIGRES";
-//}
-//*DEBUG*
 
    // MPI send msg type
    MPI_GA_MSG msg;
-   msg.size = migrate_count;
-   int bucket_sols  = buckets.size();
-   int migrate_sols = migrate_count * bucket_sols;
+   msg.size               = n_migrate;
+   const int bucket_sols  = buckets.size();
+   const int migrate_sols = n_migrate * bucket_sols;
 
    MPI_Send( &msg,               // to MPI #1
              sizeof( msg ),
@@ -720,27 +655,20 @@ int US_MPI_Analysis::migrate_genes( void )
    int solutes_sent;
    MPI_Get_count( &status, MPI_DOUBLE, &solutes_sent );
    solutes_sent    /= solute_doubles;
-   int mgenes_count = solutes_sent / bucket_sols;
+   const int mgenes_count = solutes_sent / bucket_sols;
 
    // The number returned equals the number sent or zero.
    if ( mgenes_count > 0 )
    {
-      int grp_nbr  = ( my_rank / gcores_count );
-      int deme_nbr = my_rank - grp_nbr * gcores_count;
-DbgLv(1) << "MG:Deme" << deme_nbr << ": solsent mg_count" << solutes_sent
-   << mgenes_count << " elit" << elitism_count << "sol_dbls" << solute_doubles;
+      const int grp_nbr  = ( my_rank / gcores_count );
+      const int deme_nbr = my_rank - grp_nbr * gcores_count;
+      DbgLv( 1 ) << "MG:Deme" << deme_nbr << ": solsent mg_count" << solutes_sent << mgenes_count << " elit" << elitism_count
+                 << "sol_dbls" << solute_doubles;
       for ( int i = 0; i < mgenes_count; i++ )
       {
-         Gene gene = immigres.mid( static_cast<qsizetype>( i ) * bucket_sols, bucket_sols );
+         const Gene gene            = immigres.mid( static_cast<qsizetype>( i ) * bucket_sols, bucket_sols );
          genes[ elitism_count + i ] = gene;
       }
-//*DEBUG*
-//if(genes[elitism_count][0].s<0.0) {
-//int grp_nbr  = ( my_rank / gcores_count );
-//int deme_nbr = my_rank - grp_nbr * gcores_count;
-//DbgLv(0) << "Dem :" << grp_nbr << deme_nbr << "gene.s" << genes[elitism_count][0].s << "IMMIGRANT";
-//}
-//*DEBUG*
    }
 
    return mgenes_count;
@@ -754,46 +682,39 @@ US_MPI_Analysis::Gene US_MPI_Analysis::new_gene( void )
    {
       US_Solute solute;
 
-      double x_min   = buckets[ b ].x_min;
-      double y_min   = buckets[ b ].y_min;
-      
-      solute.s = x_min + u_random( s_grid ) * buckets[ b ].ds;
-      solute.k = y_min + u_random( k_grid ) * buckets[ b ].dk;
+      const double x_min = buckets[b].x_min;
+      const double y_min = buckets[b].y_min;
+
+      solute.s = x_min + u_random( buckets[b].ns ) * buckets[b].ds;
+      solute.k = y_min + u_random( buckets[b].nk ) * buckets[b].dk;
 
       gene << solute;
    }
-//*DEBUG*
-//if(gene[0].s<0.0) {
-//int grp_nbr  = ( my_rank / gcores_count );
-//int deme_nbr = my_rank - grp_nbr * gcores_count;
-//DbgLv(0) << "Dem :" << grp_nbr << deme_nbr << "gene.s" << gene[0].s << "NEW";
-//}
-//*DEBUG*
 
    return gene;
 }
 
 // Find the minimum fitness value close to a gene using
-// inverse hessian minimization 
-double  US_MPI_Analysis::minimize( Gene& gene, double fitness )
+// inverse hessian minimization
+double US_MPI_Analysis::minimize( Gene& gene, double gfitness )
 {
 #if 0
 #define TIMING_MZ
 #endif
 #ifdef TIMING_MZ
-static int  ncalls=0;
-static long totms=0L;
-static long totT1=0L;
-static long totT2=0L;
-static long totT3=0L;
-static long totT4=0L;
-static long totT5=0L;
-static long totT6=0L;
-long insms;
-QDateTime clcSt0=QDateTime::currentDateTime();
+   static int  ncalls = 0;
+   static long totms  = 0L;
+   static long totT1  = 0L;
+   static long totT2  = 0L;
+   static long totT3  = 0L;
+   static long totT4  = 0L;
+   static long totT5  = 0L;
+   static long totT6  = 0L;
+   long        insms;
+   QDateTime   clcSt0 = QDateTime::currentDateTime();
 #endif
-   int       gsize = gene.size();
-   int       vsize = gsize * 2;
+   const int                    gsize = gene.size();
+   const int                    vsize = gsize * 2;
    US_Vector vv( vsize );  // Input values
    US_Vector uu( vsize );  // Vector of derivatives
 
@@ -806,11 +727,10 @@ QDateTime clcSt0=QDateTime::currentDateTime();
       hessian[ ii ][ ii ] = 1.0;
    }
 
-int grp_nbr  = ( my_rank / gcores_count );
-int deme_nbr = my_rank - grp_nbr * gcores_count;
-QString Phd = "MIN:" + QString::asprintf( "%d:%d",grp_nbr,deme_nbr ) + ":";
-DbgLv(DL) << Phd << "vsize" << vsize << "fitness" << fitness
- << "gene0.s" << gene[0].s;
+   const int     grp_nbr  = ( my_rank / gcores_count );
+   const int     deme_nbr = my_rank - grp_nbr * gcores_count;
+   const QString Phd      = "MIN:" + QString::asprintf( "%d:%d", grp_nbr, deme_nbr ) + ":";
+   DbgLv( DL ) << Phd << "vsize" << vsize << "fitness" << gfitness << "gene0.s" << gene[0].s;
    int index = 0;
 
    // Convert gene to array of doubles
@@ -820,32 +740,35 @@ DbgLv(DL) << Phd << "vsize" << vsize << "fitness" << fitness
       vv.assign( index++, gene[ ii ].k );
    }
 
-DbgLv(DL) << Phd << "   (0)call lamm_gsm_df";
+   DbgLv( DL ) << Phd << "   (0)call lamm_gsm_df";
    lamm_gsm_df( vv, uu );   // uu is vector of derivatives
-DbgLv(DL) << Phd << "    (0) rtn fr lamm_gsm_df u0" << uu[0];
+   DbgLv( DL ) << Phd << "    (0) rtn fr lamm_gsm_df u0" << uu[0];
 #ifdef TIMING_MZ
-QDateTime clcSt1=QDateTime::currentDateTime();
-totT1+=clcSt0.msecsTo(clcSt1);
+   QDateTime clcSt1 = QDateTime::currentDateTime();
+   totT1 += clcSt0.msecsTo( clcSt1 );
 #endif
 
    static const double epsilon_f      = 1.0e-7;
-   static const int    max_iterations = 20;
+   static const int    max_gsm_iters  = 20;
    int                 iteration      = 0;
-   double              epsilon        = epsilon_f * fitness * 4.0;
-DbgLv(DL) << Phd << "epsilon" << epsilon << "uL2norm" << uu.L2norm();
-   bool                neg_cnstr      = ( vv[ 0 ] < 0.1 );  // Negative constraint?
+   const double        epsilon        = epsilon_f * gfitness * 4.0;
+   DbgLv( DL ) << Phd << "epsilon" << epsilon << "uL2norm" << uu.L2norm();
+   const bool neg_cnstr = ( vv[0] < 0.1 ); // Negative constraint?
 
-   while ( uu.L2norm() >= epsilon_f  && iteration < max_iterations )
+   while ( uu.L2norm() >= epsilon_f && iteration < max_gsm_iters )
    {
 #ifdef TIMING_MZ
-clcSt1=QDateTime::currentDateTime();
+      clcSt1 = QDateTime::currentDateTime();
 #endif
       iteration++;
-DbgLv(DL) << Phd << " iter" << iteration << "fitness" << fitness;
-      if ( fitness == 0.0 ) break;
+      DbgLv( DL ) << Phd << " iter" << iteration << "fitness" << gfitness;
+      if ( gfitness == 0.0 )
+      {
+         break;
+      }
 
       US_Vector v_s1 = vv;
-      double g_s1    = fitness;
+      double    g_s1    = gfitness;
       double s1      = 0.0;
       double s2      = 0.5;
       double s3      = 1.0;
@@ -856,13 +779,13 @@ DbgLv(DL) << Phd << " iter" << iteration << "fitness" << fitness;
 
       if ( neg_cnstr  &&  v_s2[ 0 ] < 0.1 )
       {
-DbgLv(DL) << Phd << " NEG-CNSTR:01: v_s2[0]" << v_s2[0];
+         DbgLv( DL ) << Phd << " NEG-CNSTR:01: v_s2[0]" << v_s2[0];
          v_s2.assign( 0, 0.1 + u_random( 100 ) * 0.001 );
       }
 
-DbgLv(DL) << Phd << "  iter" << iteration << "v_s2[0]" << v_s2[0];
+      DbgLv( DL ) << Phd << "  iter" << iteration << "v_s2[0]" << v_s2[0];
       double g_s2 = get_fitness_v( v_s2 );
-DbgLv(DL) << Phd << "   iter" << iteration << "g_s2" << g_s2;
+      DbgLv( DL ) << Phd << "   iter" << iteration << "g_s2" << g_s2;
 
       // Cut down until we have a decrease
       while ( s2 > epsilon  &&  g_s2 > g_s1 )
@@ -871,20 +794,20 @@ DbgLv(DL) << Phd << "   iter" << iteration << "g_s2" << g_s2;
          s2 *= 0.5;
          // v_s2 = vv - uu * s2
          vector_scaled_sum( v_s2, uu, -s2, vv );
-DbgLv(DL) << Phd << "  s2 g_s2 g_s1" << s2 << g_s2 << g_s1;
+         DbgLv( DL ) << Phd << "  s2 g_s2 g_s1" << s2 << g_s2 << g_s1;
          if ( neg_cnstr  &&  v_s2[ 0 ] < 0.1 )
          {
-DbgLv(DL) << Phd << " NEG-CNSTR:02: v_s2[0]" << v_s2[0];
+            DbgLv( DL ) << Phd << " NEG-CNSTR:02: v_s2[0]" << v_s2[0];
             v_s2.assign( 0, 0.1 + u_random( 100 ) * 0.001 );
          }
 
          g_s2 = get_fitness_v( v_s2 );
       }
 #ifdef TIMING_MZ
-QDateTime clcSt2=QDateTime::currentDateTime();
-totT2+=clcSt1.msecsTo(clcSt2);
+      QDateTime clcSt2 = QDateTime::currentDateTime();
+      totT2 += clcSt1.msecsTo( clcSt2 );
 #endif
-DbgLv(DL) << Phd << "  g_s2" << g_s2 << "s2 s3" << s2 << s3;
+      DbgLv( DL ) << Phd << "  g_s2" << g_s2 << "s2 s3" << s2 << s3;
 
       // Test for initial decrease
       if ( s2 <= epsilon  ||  ( s3 - s2 ) < epsilon ) break;
@@ -896,16 +819,16 @@ DbgLv(DL) << Phd << "  g_s2" << g_s2 << "s2 s3" << s2 << s3;
 
       if ( neg_cnstr  &&  v_s3[ 0 ] < 0.1 )
       {
-DbgLv(DL) << Phd << " NEG-CNSTR:03: v_s3[0]" << v_s3[0];
+         DbgLv( DL ) << Phd << " NEG-CNSTR:03: v_s3[0]" << v_s3[0];
          v_s3.assign( 0, 0.1 + u_random( 100 ) * 0.001 );
       }
 
       double g_s3 = get_fitness_v( v_s3 );
 #ifdef TIMING_MZ
-QDateTime clcSt3=QDateTime::currentDateTime();
-totT3+=clcSt2.msecsTo(clcSt3);
+      QDateTime clcSt3 = QDateTime::currentDateTime();
+      totT3 += clcSt2.msecsTo( clcSt3 );
 #endif
-DbgLv(DL) << Phd << "  g_s3" << g_s3 << "s1 s2 s3" << s1 << s2 << s3;
+      DbgLv( DL ) << Phd << "  g_s3" << g_s3 << "s1 s2 s3" << s1 << s2 << s3;
 
       int              reps     = 0;
       static const int max_reps = 100;
@@ -914,27 +837,28 @@ DbgLv(DL) << Phd << "  g_s3" << g_s3 << "s1 s2 s3" << s1 << s2 << s3;
               ( ( s3 - s2 ) > epsilon )  &&
               ( reps++ < max_reps ) )
       {
-         double s1_s2 = 1.0 / ( s1 - s2 );
-         double s1_s3 = 1.0 / ( s1 - s3 );
-         double s2_s3 = 1.0 / ( s2 - s3 );
+         const double s1_s2 = 1.0 / ( s1 - s2 );
+         const double s1_s3 = 1.0 / ( s1 - s3 );
+         const double s2_s3 = 1.0 / ( s2 - s3 );
 
-         double s1_2 = sq( s1 );
-         double s2_2 = sq( s2 );
-         double s3_2 = sq( s3 );
+         const double s1_2 = sq( s1 );
+         const double s2_2 = sq( s2 );
+         const double s3_2 = sq( s3 );
 
-         double aa = ( ( g_s1 - g_s3 ) * s1_s3 -
-                       ( g_s2 - g_s3 ) * s2_s3
-                     ) * s1_s2;
+         const double aa = ( ( g_s1 - g_s3 ) * s1_s3 - ( g_s2 - g_s3 ) * s2_s3 ) * s1_s2;
 
-         double bb = ( g_s3 * ( s2_2 - s1_2 ) +
-                       g_s2 * ( s1_2 - s3_2 ) +
-                       g_s1 * ( s3_2 - s2_2 )
-                     ) *
-                     s1_s2 * s1_s3 * s2_s3;
+         const double bb = ( g_s3 * ( s2_2 - s1_2 ) + g_s2 * ( s1_2 - s3_2 ) + g_s1 * ( s3_2 - s2_2 ) ) * s1_s2 * s1_s3 * s2_s3;
 
          static const double max_a = 1.0e-25;
 
-DbgLv(DL) << Phd << "   reps" << reps << "aa" << aa;
+         // The parabola through the three points has no minimum:
+         //  keep the best of them
+         if ( aa <= -max_a )
+         {
+            break;
+         }
+
+         DbgLv( DL ) << Phd << "   reps" << reps << "aa" << aa;
          if ( qAbs( aa ) < max_a )
          {
             index = 0;
@@ -947,20 +871,19 @@ DbgLv(DL) << Phd << "   reps" << reps << "aa" << aa;
             }
 
 #ifdef TIMING_MZ
-QDateTime clcSt4=QDateTime::currentDateTime();
-totT4+=clcSt3.msecsTo(clcSt4);
-insms=(long)clcSt0.msecsTo(clcSt4);
-totms+=insms;
-ncalls++;
-DRTiming << "MINIMIZE: msecs" << insms << "totmsecs calls" << totms << ncalls;
-DRTiming << "   MMIZE:  t1 t2 t3 t4 t5 t6"
- << totT1 << totT2 << totT3 << totT4 << totT5 << totT6;
+            QDateTime clcSt4 = QDateTime::currentDateTime();
+            totT4 += clcSt3.msecsTo( clcSt4 );
+            insms = (long) clcSt0.msecsTo( clcSt4 );
+            totms += insms;
+            ncalls++;
+            DRTiming << "MINIMIZE: msecs" << insms << "totmsecs calls" << totms << ncalls;
+            DRTiming << "   MMIZE:  t1 t2 t3 t4 t5 t6" << totT1 << totT2 << totT3 << totT4 << totT5 << totT6;
 #endif
-            return fitness;
+            return gfitness;
          }
 
          double xx        = -bb / ( 2.0 * aa );
-         double prev_g_s2 = g_s2;
+         const double prev_g_s2 = g_s2;
 
          if ( xx < s1 )
          {
@@ -990,11 +913,11 @@ DRTiming << "   MMIZE:  t1 t2 t3 t4 t5 t6"
  
             if ( neg_cnstr  &&  v_s1[ 0 ] < 0.1 )
             {
-DbgLv(DL) << Phd << " NEG-CNSTR:04: v_s1[0]" << v_s1[0];
+               DbgLv( DL ) << Phd << " NEG-CNSTR:04: v_s1[0]" << v_s1[0];
                v_s1.assign( 0, 0.1 + u_random( 100 ) * 0.001 );
             }
 
-DbgLv(DL) << Phd << "  x<s1 get_fitness";
+            DbgLv( DL ) << Phd << "  x<s1 get_fitness";
             g_s1 = get_fitness_v( v_s1 ); 
          }
          else if ( xx < s2 ) // Take s1, xx, s2
@@ -1009,11 +932,11 @@ DbgLv(DL) << Phd << "  x<s1 get_fitness";
 
             if ( neg_cnstr  &&  v_s2[ 0 ] < 0.1 )
             {
-DbgLv(DL) << Phd << " NEG-CNSTR:05: v_s2[0]" << v_s2[0];
+               DbgLv( DL ) << Phd << " NEG-CNSTR:05: v_s2[0]" << v_s2[0];
                v_s2.assign( 0, 0.1 + u_random( 100 ) * 0.001 );
             }
 
-DbgLv(DL) << Phd << "  xx<s2 get_fitness";
+            DbgLv( DL ) << Phd << "  xx<s2 get_fitness";
             g_s2 = get_fitness_v( v_s2 );
          }
          else if ( xx < s3 )  // Take s2, xx, s3
@@ -1028,11 +951,11 @@ DbgLv(DL) << Phd << "  xx<s2 get_fitness";
 
             if ( neg_cnstr  &&  v_s2[ 0 ] < 0.1 )
             {
-DbgLv(DL) << Phd << " NEG-CNSTR:06: v_s2[0]" << v_s2[0];
+               DbgLv( DL ) << Phd << " NEG-CNSTR:06: v_s2[0]" << v_s2[0];
                v_s2.assign( 0, 0.1 + u_random( 100 ) * 0.001 );
             }
 
-DbgLv(DL) << Phd << "  xx<s3 get_fitness";
+            DbgLv( DL ) << Phd << "  xx<s3 get_fitness";
             g_s2 = get_fitness_v( v_s2 );
          }
          else  // xx >= s3
@@ -1045,12 +968,12 @@ DbgLv(DL) << Phd << "  xx<s3 get_fitness";
 
                if ( neg_cnstr  &&  v_s4[ 0 ] < 0.1 )
                {
-DbgLv(DL) << Phd << " NEG-CNSTR:07: v_s4[0]" << v_s4[0];
+                  DbgLv( DL ) << Phd << " NEG-CNSTR:07: v_s4[0]" << v_s4[0];
                   v_s4.assign( 0, 0.1 + u_random( 100 ) * 0.001 );
                }
 
-DbgLv(DL) << Phd << "  xx>=s3 get_fitness (A)";
-               double g_s4 = get_fitness_v( v_s4 );
+               DbgLv( DL ) << Phd << "  xx>=s3 get_fitness (A)";
+               const double g_s4 = get_fitness_v( v_s4 );
 
                if ( g_s4 > g_s2  &&  g_s4 > g_s3  &&  g_s4 > g_s1 ) 
                {
@@ -1072,15 +995,15 @@ DbgLv(DL) << Phd << "  xx>=s3 get_fitness (A)";
 
             if ( neg_cnstr  &&  v_s3[ 0 ] < 0.1 )
             {
-DbgLv(DL) << Phd << " NEG-CNSTR:01: v_s2[0]" << v_s2[0];
+               DbgLv( DL ) << Phd << " NEG-CNSTR:01: v_s2[0]" << v_s2[0];
                v_s3.assign( 0, 0.1 + u_random( 100 ) * 0.001 );
             }
 
-DbgLv(DL) << Phd << "  xx>=s3 get_fitness";
+            DbgLv( DL ) << Phd << "  xx>=s3 get_fitness";
             g_s3 = get_fitness_v( v_s3 );
          }
 
-DbgLv(DL) << Phd << "  p_g_s2 g_s2" << prev_g_s2 << g_s2;
+         DbgLv( DL ) << Phd << "  p_g_s2 g_s2" << prev_g_s2 << g_s2;
          if ( qAbs( prev_g_s2 - g_s2 ) < epsilon ) break;
       }  // end of inner loop
 
@@ -1089,31 +1012,31 @@ DbgLv(DL) << Phd << "  p_g_s2 g_s2" << prev_g_s2 << g_s2;
       if ( g_s2 < g_s3  &&  g_s2 < g_s1 )
       {
          v_p     = v_s2;
-         fitness = g_s2;
+         gfitness = g_s2;
       }
       else if ( g_s1 < g_s3 )
       {
          v_p     = v_s1;
-         fitness = g_s1;
+         gfitness = g_s1;
       }
       else
       {
          v_p     = v_s3;
-         fitness = g_s3;
+         gfitness = g_s3;
       }
-DbgLv(DL) << Phd << "   g_s? fitness" << fitness;
-      
+      DbgLv( DL ) << Phd << "   g_s? fitness" << gfitness;
+
 #ifdef TIMING_MZ
-QDateTime clcSt4=QDateTime::currentDateTime();
-totT4+=clcSt3.msecsTo(clcSt4);
+      QDateTime clcSt4 = QDateTime::currentDateTime();
+      totT4 += clcSt3.msecsTo( clcSt4 );
 #endif
-DbgLv(DL) << Phd << "   call lamm_gsm_df";
+      DbgLv( DL ) << Phd << "   call lamm_gsm_df";
       US_Vector v_g( vsize );        // Vector of derivatives
-      lamm_gsm_df( v_p, v_g );       // New gradient in v_g (old in uu) 
-DbgLv(DL) << Phd << "    retn fr lamm_gsm_df";
+      lamm_gsm_df( v_p, v_g );       // New gradient in v_g (old in uu)
+      DbgLv( DL ) << Phd << "    retn fr lamm_gsm_df";
 #ifdef TIMING_MZ
-QDateTime clcSt5=QDateTime::currentDateTime();
-totT5+=clcSt4.msecsTo(clcSt5);
+      QDateTime clcSt5 = QDateTime::currentDateTime();
+      totT5 += clcSt4.msecsTo( clcSt5 );
 #endif
 
       US_Vector v_dx( vsize );
@@ -1141,15 +1064,15 @@ totT5+=clcSt4.msecsTo(clcSt5);
       }
 
       double fac   = v_dg.dot( v_dx  );
-      double fae   = v_dg.dot( v_hdg );
-      double sumdg = v_dg.dot( v_dg  );
-      double sumxi = v_dx.dot( v_dx  );
-DbgLv(DL) << Phd << "  fac sumdg sumxi" << fac << sumdg << sumxi;
+      const double fae   = v_dg.dot( v_hdg );
+      const double sumdg = v_dg.dot( v_dg );
+      const double sumxi = v_dx.dot( v_dx );
+      DbgLv( DL ) << Phd << "  fac sumdg sumxi" << fac << sumdg << sumxi;
 
       if ( fac > sqrt( epsilon * sumdg * sumxi ) )
       {
          fac        = 1.0 / fac;
-         double fad = 1.0 / fae;
+         const double fad = 1.0 / fae;
 
          for ( int ii = 0; ii < vsize; ii++ )
          {
@@ -1183,8 +1106,8 @@ DbgLv(DL) << Phd << "  fac sumdg sumxi" << fac << sumdg << sumxi;
       }
 
 #ifdef TIMING_MZ
-QDateTime clcSt6=QDateTime::currentDateTime();
-totT6+=clcSt5.msecsTo(clcSt6);
+      QDateTime clcSt6 = QDateTime::currentDateTime();
+      totT6 += clcSt5.msecsTo( clcSt6 );
 #endif
    }  // end while ( uu.L2norm() > epsilon )
 
@@ -1196,24 +1119,22 @@ totT6+=clcSt5.msecsTo(clcSt6);
       gene[ ii ].s = vv[ index++ ];
       gene[ ii ].k = vv[ index++ ];
    }
-DbgLv(DL) << Phd << "OUT:fitness" << fitness << "gene0.s" << gene[0].s;
+   DbgLv( DL ) << Phd << "OUT:fitness" << gfitness << "gene0.s" << gene[0].s;
 
 #ifdef TIMING_MZ
-insms=(long)clcSt0.msecsTo(QDateTime::currentDateTime());
-totms+=insms;
-ncalls++;
-DRTiming << "MINIMIZE: msecs" << insms << "totmsecs calls" << totms << ncalls;
-DRTiming << "   MMIZE:  t1 t2 t3 t4 t5 t6"
- << totT1 << totT2 << totT3 << totT4 << totT5 << totT6;
+   insms = (long) clcSt0.msecsTo( QDateTime::currentDateTime() );
+   totms += insms;
+   ncalls++;
+   DRTiming << "MINIMIZE: msecs" << insms << "totmsecs calls" << totms << ncalls;
+   DRTiming << "   MMIZE:  t1 t2 t3 t4 t5 t6" << totT1 << totT2 << totT3 << totT4 << totT5 << totT6;
 #endif
-   return fitness;
+   return gfitness;
 }
 
 // Set vector values to the scaled sums of two vectors
-void US_MPI_Analysis::vector_scaled_sum( US_Vector& cc,
-      US_Vector& aa, double sa, US_Vector& bb, double sb )
+void US_MPI_Analysis::vector_scaled_sum( US_Vector& cc, const US_Vector& aa, double sa, const US_Vector& bb, double sb )
 {
-   int sizec = qMin( cc.size(), qMin( aa.size(), bb.size() ) );
+   const int sizec = qMin( cc.size(), qMin( aa.size(), bb.size() ) );
 
    if ( sb == 1.0 )
       for ( int ii = 0; ii < sizec; ii++ )
@@ -1231,7 +1152,7 @@ void US_MPI_Analysis::vector_scaled_sum( US_Vector& cc,
 // and recalculates the x vector, with fitness update.
 double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
 {
-   double fitness = 0.0;
+   double                   ufitness = 0.0;
    static QVector< double > nnls_a;
    static QVector< double > nnls_b;
           QVector< double > nnls_x;
@@ -1241,15 +1162,14 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
    US_SolveSim::DataSet*   dset  = data_sets[ 0 ];
    US_DataIO::EditedData*  edata = &dset->run_data;
    US_DataIO::RawData      simdat;
-   int    nscans  = edata->scanCount();
-   int    npoints = edata->pointCount();
-   int    ntotal  = nscans * npoints;
-   int    vsize   = v.size();
-   int    nsols   = vsize / 2;
-   int    navals  = nsols * ntotal;
-   double fixval  = parameters[ "bucket_fixed" ].toDouble();
-   fixval         = ( attr_z == ATTR_V ) ? dset->vbar20 : fixval;
-//qDebug() << "UF: vsize nsols ntotal navals" << vsize << nsols << ntotal << navals;
+   const int                nscans  = edata->scanCount();
+   const int                npoints = edata->pointCount();
+   const int                ntotal  = nscans * npoints;
+   const int                vsize   = v.size();
+   const int                nsols   = vsize / 2;
+   const int                navals  = nsols * ntotal;
+   double                   fixval  = job_config.params.ga.bucket_fixed;
+   fixval                           = ( attr_z == ATTR_V ) ? dset->vbar20 : fixval;
 
    US_Math2::SolutionData sd;
    sd.density     = dset->density;
@@ -1268,7 +1188,6 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
    zcomponent.f      = 0.0;
 
    set_comp_attrib( zcomponent, fixval, attr_z );
-//DbgLv(1) << "UF: xyz" << attr_x << attr_y << attr_z << "fixval" << fixval;
 
    if ( index < 0 )
    {  // Do the initial population of A and B matrices
@@ -1280,8 +1199,8 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
 
       for ( int vv = 0; vv < vsize; vv += 2 )
       {  // Fit each solute and populate the A matrix with simulations
-         double xval   = v[ vv ];
-         double yval   = v[ vv + 1 ];
+         const double xval = v[vv];
+         const double yval = v[vv + 1];
          US_Model model;
          model.components.resize( 1 );
          model.components[ 0 ]      = zcomponent;
@@ -1314,13 +1233,10 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
       US_Model model;
       model.components.resize( 1 );
 
-      int vv = index * 2;
+      const int vv               = index * 2;
       model.components[ 0 ]      = zcomponent;
 
       build_component( model.components[ 0 ], sd, v[ vv ], v[ vv + 1 ] );
-
-//qDebug() << "UF: index vv" << index << vv << "s,D"
-// << model.components[0].s << model.components[0].D;
 
       US_AstfemMath::initSimData( simdat, *edata, 0.0 );
       US_Astfem_RSA astfem_rsa( model, dset->simparams );
@@ -1338,7 +1254,6 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
             nnls_a[ kk++ ] = simdat.value( ss, rr );
          }
       }
-//qDebug() << "UF:  kk jj" << kk << jj;
 
       // Put A and B in work vectors since NNLS corrupts them
       w_nnls_a = nnls_a;
@@ -1362,14 +1277,14 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
 
       for ( int cc = 0; cc < nsols; cc++ )
       {  // Build a model using solutes where the concentration is positive
-         double soluval = nnls_x[ cc ];
+         const double soluval = nnls_x[cc];
 
          if ( soluval > 0.0 )
          {
             model.components << zcomponent;
-            int vv = cc * 2;
+            const int vx = cc * 2;
 
-            build_component( model.components[ kk ], sd, v[ vv ], v[ vv + 1 ] );
+            build_component( model.components[kk], sd, v[vx], v[vx + 1] );
 
             model.components[ kk++ ].signal_concentration = soluval;
 
@@ -1384,26 +1299,33 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
       astfem_rsa2.calculate( simdat );
 
       // Calculate the fitness (variance) == average of residuals-squared
-      fitness   = 0.0;
+      ufitness = 0.0;
 
       for ( int ss = 0; ss < nscans; ss++ )
       {
          for ( int rr = 0; rr < npoints; rr++ )
          {
-            double resid = edata->value( ss, rr ) - simdat.value( ss, rr );
-            fitness     += sq( resid );
-//int ms=nscans/2;int mr=npoints/2;
-//if((ss>ms-3)&&(ss<ms+3)&&(rr>mr-3)&&(rr<mr+3))
-// qDebug() << "UF: index" << index << "ss rr edat sdat resd"
-//  << ss << rr << edata->value(ss,rr) << simdat.value(ss,rr) << resid;
+            const double resid = edata->value( ss, rr ) - simdat.value( ss, rr );
+            ufitness += sq( resid );
          }
       }
 
-      fitness  /= (double)( ntotal );
-      fitness  *= ( 1.0 + sq( regularization * ksol ) );
+      ufitness /= (double) ( ntotal );
+      ufitness *= ( 1.0 + sq( regularization * ksol ) );
+
+      if ( bucket_soft != 0 )
+      { // Soft-bucket prior, as in get_fitness
+         Gene vgene( nsols );
+         for ( int cc = 0; cc < nsols; cc++ )
+         {
+            vgene[cc].s = v[cc * 2];
+            vgene[cc].k = v[cc * 2 + 1];
+         }
+         ufitness *= ( 1.0 + bucket_penalty( vgene, ntotal ) );
+      }
    }
 
-   return fitness;
+   return ufitness;
 }
 
 void US_MPI_Analysis::lamm_gsm_df( const US_Vector& vv, US_Vector& vd )
@@ -1415,20 +1337,24 @@ void US_MPI_Analysis::lamm_gsm_df( const US_Vector& vv, US_Vector& vd )
    US_Vector tt = vv;
 
 #ifdef UPDATE_FIT
-   if ( current_dataset == 0  &&  data_sets.size() == 1 )
+   // (With the normal-equation fitness and the simulation cache, a
+   //  perturbed gene costs one new simulation and a small NNLS through
+   //  get_fitness_v;  update_fitness re-solves the full QR NNLS and
+   //  simulates the whole multi-component model for every evaluation)
+   if ( current_dataset == 0 && data_sets.size() == 1 && ( ga_normal == 0 || solver_cache() == nullptr ) )
    {
       update_fitness( -1, tt );
 
       for ( int ii = 0; ii < tt.size(); ii++ )
       {
-         double save = tt[ ii ];
-         int    cc   = ii / 2;
+         const double save = tt[ii];
+         const int    cc   = ii / 2;
 
          tt.assign( ii, save - hh );
-         double y0   = update_fitness( cc, tt );  // Calc fitness value -h
+         const double y0 = update_fitness( cc, tt ); // Calc fitness value -h
 
          tt.assign( ii, save + hh );
-         double y2   = update_fitness( cc, tt );  // Calc fitness value +h
+         const double y2 = update_fitness( cc, tt ); // Calc fitness value +h
 
          vd.assign( ii, ( y2 - y0 ) * h2_recip ); // The derivative
          tt.assign( ii, save );
@@ -1440,22 +1366,21 @@ void US_MPI_Analysis::lamm_gsm_df( const US_Vector& vv, US_Vector& vd )
    {
       for ( int ii = 0; ii < tt.size(); ii++ )
       {
-         double save = tt[ ii ];
+         const double save = tt[ii];
 
          tt.assign( ii, save - hh );
-         double y0   = get_fitness_v( tt );       // Calc fitness value -h
+         const double y0 = get_fitness_v( tt ); // Calc fitness value -h
 
          tt.assign( ii, save + hh );
-         double y2   = get_fitness_v( tt );       // Calc fitness value +h
+         const double y2 = get_fitness_v( tt ); // Calc fitness value +h
 
          vd.assign( ii, ( y2 - y0 ) * h2_recip ); // The derivative
          tt.assign( ii, save );
       }
    }
-int nn=tt.size()-1;
-DbgLv(DL) << "GDF: vd0..." << vd[0] << vd[1] << vd[2] << vd[3];
-DbgLv(DL) << "GDF: ...vdn" << vd[nn-3] << vd[nn-2] << vd[nn-1] << vd[nn];
-
+   const int nn = tt.size() - 1;
+   DbgLv( DL ) << "GDF: vd0..." << vd[0] << vd[1] << vd[2] << vd[3];
+   DbgLv( DL ) << "GDF: ...vdn" << vd[nn - 3] << vd[nn - 2] << vd[nn - 1] << vd[nn];
 }
 
 /////////////   Debug routines
@@ -1513,17 +1438,15 @@ void US_MPI_Analysis::dump_genes( int gene )
    }
 }
 
-void US_MPI_Analysis::dump_fitness( const QList< Fitness >& fitness )
+void US_MPI_Analysis::dump_fitness( const QList<Fitness>& fits ) const
 {
    if ( my_rank != 1 ) return;
    
    QString s = "Fitness:\n";
 
-   for ( int f = 0; f < fitness.size(); f++ )
+   for ( int f = 0; f < fits.size(); f++ )
    {
-
-      s += QString::asprintf( "i, index, fitness: %3i, %3i, %.6e\n",
-f, fitness[ f ].index, fitness[ f ].fitness );
+      s += QString::asprintf( "i, index, fitness: %3i, %3i, %.6e\n", f, fits[f].index, fits[f].fitness );
    }
 
    DbgLv(1) << s;
@@ -1586,14 +1509,12 @@ void US_MPI_Analysis::build_component( US_Model::SimulationComponent& mcomp,
 
 void US_MPI_Analysis::solutes_from_gene( Gene& solutes, int nsols )
 {
-   double fixval    = ( attr_z == ATTR_V )
-                    ? data_sets[ 0 ]->vbar20
-                    : parameters[ "bucket_fixed" ].toDouble();
+   const double fixval = ( attr_z == ATTR_V ) ? data_sets[0]->vbar20 : job_config.params.ga.bucket_fixed;
 
    for ( int cc = 0; cc < nsols; cc++ )
    {
-      double sval      = solutes[ cc ].s;
-      double kval      = solutes[ cc ].k;
+      const double sval = solutes[cc].s;
+      const double kval = solutes[cc].k;
       solutes[ cc ].s  = ( attr_z == ATTR_S ) ? fixval : 0.0;
       solutes[ cc ].k  = ( attr_z == ATTR_K ) ? fixval : 0.0;
       solutes[ cc ].v  = ( attr_z == ATTR_V ) ? fixval : 0.0;
@@ -1639,3 +1560,171 @@ void US_MPI_Analysis::solutes_from_gene( Gene& solutes, int nsols )
    }
 }
 
+
+// Grid of each bucket and, for soft buckets, the range beyond it.
+//  s_step, k_step (job parameters, > 0):  absolute grid step in s and f/f0,
+//   rounded so that the grid ends on the bucket edges;  otherwise s_grid,
+//   k_grid points per bucket (default 100).
+//  bucket_soft:  0 hard buckets (default);  1 soft walls (no penalty inside
+//   the bucket, quadratic outside);  2 Gaussian prior around the bucket
+//   centre (sd = half width).  Penalty weight bucket_lambda (default 1);
+//   soft buckets extend by bucket_margin (default 0.5) bucket widths.
+void US_MPI_Analysis::setup_bucket_grid( void )
+{
+   const US_MPI_JobConfig::Parameters::Ga& ga = job_config.params.ga;
+
+   // Fitness path (also used by the master)
+   ga_normal       = ga.ga_normal;
+   ga_normal_check = ga.ga_normal_check;
+
+   s_grid = ga.s_grid;
+   k_grid = ga.k_grid;
+
+   const double s_step = ga.s_step;
+   const double k_step = ga.k_step;
+   bucket_soft         = ga.bucket_soft;
+   bucket_lambda       = ga.bucket_lambda;
+   const double margin = ( bucket_soft != 0 ) ? ga.bucket_margin : 0.0;
+
+   // Outer limits of a soft bucket in one attribute, kept physical:  s
+   //  keeps its sign, f/f0 stays at least 1, and MW, vbar, D and f stay
+   //  positive (at least half the lower bucket edge, or the edge itself
+   //  for a bucket that does not start above 0)
+   auto         outer_limits = [margin]( int attr, double vmin, double vmax, double& lo, double& hi )
+   {
+      const double width = vmax - vmin;
+      lo                 = vmin - margin * width;
+      hi                 = vmax + margin * width;
+
+      if ( attr == ATTR_K )
+      {
+         lo = qMax( lo, qMin( 1.0, vmin ) );
+      }
+      else if ( vmin > 0.0 )
+      {
+         lo = qMax( lo, 0.5 * vmin );
+      }
+      else if ( attr == ATTR_S )
+      {
+         if ( vmax < 0.0 )
+         {
+            hi = qMin( hi, 0.5 * vmax );
+         }
+      }
+      else
+      {
+         lo = vmin;
+      }
+   };
+
+   for ( int b = 0; b < buckets.size(); b++ )
+   {
+      Bucket& bk = buckets[b];
+      double  ws = bk.x_max - bk.x_min;
+      double  wk = bk.y_max - bk.y_min;
+
+      bk.ns = ( s_step > 0.0 ) ? qMax( 2, qRound( ws / s_step ) + 1 ) : s_grid;
+      bk.nk = ( k_step > 0.0 ) ? qMax( 2, qRound( wk / k_step ) + 1 ) : k_grid;
+      bk.ds = ws / (double) ( bk.ns - 1 );
+      bk.dk = wk / (double) ( bk.nk - 1 );
+
+      double xlo, xhi, ylo, yhi;
+      outer_limits( attr_x, bk.x_min, bk.x_max, xlo, xhi );
+      outer_limits( attr_y, bk.y_min, bk.y_max, ylo, yhi );
+
+      bk.s_glo = -(int) qFloor( ( bk.x_min - xlo ) / bk.ds + 1e-9 );
+      bk.s_ghi = bk.ns - 1 + (int) qFloor( ( xhi - bk.x_max ) / bk.ds + 1e-9 );
+      bk.k_glo = -(int) qFloor( ( bk.y_min - ylo ) / bk.dk + 1e-9 );
+      bk.k_ghi = bk.nk - 1 + (int) qFloor( ( yhi - bk.y_max ) / bk.dk + 1e-9 );
+   }
+
+   if ( my_rank < 2 )
+   {
+      DbgLv( 0 ) << "GA grid: s_step" << s_step << "k_step" << k_step << "bucket_soft" << bucket_soft << "lambda" << bucket_lambda
+                 << "margin" << margin << "rank" << my_rank;
+      for ( int b = 0; b < buckets.size(); b++ )
+      {
+         DbgLv( 1 ) << "  bucket" << b << "ns nk" << buckets[b].ns << buckets[b].nk << "ds dk" << buckets[b].ds << buckets[b].dk
+                    << "s range" << buckets[b].s_glo << buckets[b].s_ghi << "k range" << buckets[b].k_glo << buckets[b].k_ghi;
+      }
+   }
+}
+
+// Clamp a solute to the allowed range of its bucket:  the bucket itself
+//  (exact edges) for hard buckets, the extended grid range for soft ones
+void US_MPI_Analysis::bound_solute( US_Solute& solute, int b )
+{
+   const Bucket& bk   = buckets[b];
+   double        s_lo = ( bk.s_glo == 0 ) ? bk.x_min : bk.x_min + bk.s_glo * bk.ds;
+   double        s_hi = ( bk.s_ghi == bk.ns - 1 ) ? bk.x_max : bk.x_min + bk.s_ghi * bk.ds;
+   double        k_lo = ( bk.k_glo == 0 ) ? bk.y_min : bk.y_min + bk.k_glo * bk.dk;
+   double        k_hi = ( bk.k_ghi == bk.nk - 1 ) ? bk.y_max : bk.y_min + bk.k_ghi * bk.dk;
+   solute.s           = qBound( s_lo, solute.s, s_hi );
+   solute.k           = qBound( k_lo, solute.k, k_hi );
+}
+
+// Soft-bucket penalty, used as fitness *= ( 1 + penalty ).  With the fitness
+//  a variance (SSR / N), this adds sigma^2 * lambda * sum(z^2) to SSR, i.e. a
+//  Gaussian prior for each solute in units of the noise:
+//   soft walls:  z = distance outside the bucket / bucket width
+//   Gaussian:    z = distance from the bucket centre / half width
+double US_MPI_Analysis::bucket_penalty( const Gene& gene, int npoints )
+{
+   if ( bucket_soft == 0 || npoints < 1 )
+   {
+      return 0.0;
+   }
+
+   double pen = 0.0;
+   int    nb  = qMin( gene.size(), buckets.size() );
+
+   for ( int b = 0; b < nb; b++ )
+   {
+      const Bucket& bk = buckets[b];
+      double        ws = bk.x_max - bk.x_min;
+      double        wk = bk.y_max - bk.y_min;
+      double        s  = gene[b].s;
+      double        k  = gene[b].k;
+      double        zs, zk;
+
+      if ( bucket_soft == 1 )
+      {
+         zs = qMax( 0.0, qMax( bk.x_min - s, s - bk.x_max ) ) / ws;
+         zk = qMax( 0.0, qMax( bk.y_min - k, k - bk.y_max ) ) / wk;
+      }
+      else
+      {
+         zs = ( s - 0.5 * ( bk.x_min + bk.x_max ) ) / ( 0.5 * ws );
+         zk = ( k - 0.5 * ( bk.y_min + bk.y_max ) ) / ( 0.5 * wk );
+      }
+
+      pen += zs * zs + zk * zk;
+   }
+
+   return bucket_lambda * pen / (double) npoints;
+}
+
+// Per-solute simulation cache of a GA rank, kept over generations and Monte
+//  Carlo iterations (the key does not depend on the data readings).  Only a
+//  fallback:  a GA uses the cache shared by the node's ranks, sized by the
+//  job parameters sim_cache_mb and sim_cache_lru (create_sim_cache).  Made
+//  here only if that cache was wanted but its shared window could not be
+//  allocated, with the same size per rank.
+void US_MPI_Analysis::setup_ga_simcache( void )
+{
+   if ( ga_simcache != nullptr || sim_cache != nullptr || rank_cache_bytes <= 0 )
+   {
+      return;
+   }
+
+   // Data sets live for the whole job:  their keys can be memorized
+   ga_simcache = new US_SimCache( rank_cache_bytes );
+   ga_simcache->set_key_memo( true );
+   // Nearly every GA solute survives some NNLS:  evict by recent use
+   ga_simcache->set_lru( job_config.params.ga.sim_cache_lru != 0 );
+
+   if ( my_rank == 1 )
+   {
+      DbgLv( 0 ) << "GA simulation cache in each rank instead (MB):" << rank_cache_bytes / ( 1024 * 1024 );
+   }
+}

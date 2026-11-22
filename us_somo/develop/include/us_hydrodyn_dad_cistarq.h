@@ -69,17 +69,11 @@ class US_EXTERN US_Hydrodyn_Dad_Cistarq : public QDialog
       QLabel *                                lbl_psv;
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
 #endif
       vector < QLabel * >                     lbl_gaussian_id;
       vector < QLineEdit * >                  le_conv;
       vector < QLineEdit * >                  le_psv;
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
 #endif
 
       QPushButton *                           pb_global;
@@ -95,17 +89,11 @@ class US_EXTERN US_Hydrodyn_Dad_Cistarq : public QDialog
       void                                    setupGUI();
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
 #endif
       void                                    ws_hide( vector < QWidget * >, bool hide = true );
       vector < QWidget * >                    ws_zeros;
       vector < QWidget * >                    ws_sd_zeros;
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
 #endif
 
 

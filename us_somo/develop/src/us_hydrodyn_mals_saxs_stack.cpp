@@ -7,9 +7,7 @@
 #include "../include/us_hydrodyn_mals_saxs_fit.h"
 #include "../include/us_hydrodyn_mals_saxs_fit_global.h"
 #include "../include/us_lm.h"
-#if QT_VERSION >= 0x040000
 #include <qwt_scale_engine.h>
-#endif
 
 #define SLASH QDir::separator()
 #define Q_VAL_TOL 5e-6

@@ -163,11 +163,7 @@ void US_Hydrodyn_Mals_Saxs_Conc::setupGUI()
    t_csv->setColumnWidth(1, 150);
    
     t_csv->horizontalHeader()->setSectionsClickable( true );
-#if QT_VERSION < 0x040000   
-   connect(t_csv->horizontalHeader(), SIGNAL(clicked(int)), SLOT(sort_column(int)));
-#else
    connect(t_csv->horizontalHeader(), SIGNAL(sectionClicked(int)), SLOT(sort_column(int)));
-#endif
    
    // probably I'm not understanding something, but these next two lines don't seem to do anything
    // t_csv->horizontalHeader()->adjustHeaderSize();

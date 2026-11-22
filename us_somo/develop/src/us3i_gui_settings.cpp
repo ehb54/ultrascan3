@@ -47,11 +47,7 @@ void US3i_GuiSettings::set_fontSize( int fontSize )
 QString US3i_GuiSettings::guiStyle( void )
 {
 #ifdef Q_OS_LINUX
-#if QT_VERSION < 0x050000
-  const QString defaultStyle( "Plastique" );
-#else
   const QString defaultStyle( "Fusion" );
-#endif
 #endif
 #ifdef Q_OS_MAC
   const QString defaultStyle( "Macintosh" );
@@ -67,11 +63,7 @@ QString US3i_GuiSettings::guiStyle( void )
 void US3i_GuiSettings::set_guiStyle( const QString& style )
 {
 #ifdef Q_OS_LINUX
-#if QT_VERSION < 0x050000
-  const QString defaultStyle( "Plastique" );
-#else
   const QString defaultStyle( "Fusion" );
-#endif
 #endif
 #ifdef Q_OS_MAC
   const QString defaultStyle( "Macintosh" );

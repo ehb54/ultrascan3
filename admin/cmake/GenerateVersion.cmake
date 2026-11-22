@@ -90,7 +90,7 @@ endif()
 
 # Get commit date (last commit date) instead of current build timestamp
 execute_process(
-        COMMAND env TZ=UTC0 git log -1
+        COMMAND env TZ=UTC0 git log -1 --no-show-signature
         --date=format-local:%Y-%m-%d\ %H:%M:%S\ UTC
         --format=%cd
         WORKING_DIRECTORY ${US3_SOURCE_DIR}

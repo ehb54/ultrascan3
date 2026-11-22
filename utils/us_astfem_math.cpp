@@ -4,6 +4,11 @@
 #include "us_hardware.h"
 #include "us_settings.h"
 
+#include <QDir>
+#include <QTemporaryDir>
+#include <memory>
+#include <vector>
+
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
 #endif
@@ -14,6 +19,79 @@
 #include <mpi.h>
 #endif
 #endif
+
+//----------------------------------------------------------------------
+// Load a speed profile from the speed steps, through a private timestate
+//----------------------------------------------------------------------
+QStringList US_AstfemMath::timestate_dir_templates( const QString& base, const QString& fallback )
+{
+   const QString pattern = QStringLiteral( "/us3-tmst-XXXXXX" );
+   QStringList   templates;
+   if ( !base.isEmpty() )
+   {
+      templates << base + pattern;
+   }
+   if ( !fallback.isEmpty() && fallback != base )
+   {
+      templates << fallback + pattern;
+   }
+   return templates;
+}
+
+//----------------------------------------------------------------------
+int US_AstfemMath::timestate_from_speedsteps( US_SimulationParameters& simparams, US_DataIO::RawData& sim_data )
+{
+   int dbg_level = US_Settings::us_debug();
+   // A directory per call:  a name made of process and time is not unique
+   //  for threads, nor for experiments simulated within the same second.
+#ifdef NO_DB
+   const QString base = QDir::tempPath();
+#else
+   const QString base = US_Settings::tmpDir();
+   QDir().mkpath( base );
+#endif
+   std::unique_ptr<QTemporaryDir> tdir;
+   for ( const QString& path_template : timestate_dir_templates( base, QDir::tempPath() ) )
+   {
+      tdir.reset( new QTemporaryDir( path_template ) );
+      if ( tdir->isValid() )
+      {
+         break;
+      }
+   }
+
+   if ( !tdir || !tdir->isValid() )
+   {
+      DbgLv( 0 ) << "US_AstfemMath::timestate_from_speedsteps: could not create"
+                    " a temporary directory in"
+                 << base << ( tdir ? tdir->errorString() : QString( "No temporary path" ) );
+      simparams.sim_speed_prof.clear();
+      return -1;
+   }
+
+   const QString tmst_fpath = tdir->path() + "/speedsteps.time_state.tmst";
+
+   // The TimeState is read with prefetch, so the files are no longer
+   //  needed once loaded;  tdir removes them when it goes out of scope.
+   int           nsteps = -1;
+
+   if ( writetimestate( tmst_fpath, simparams, sim_data ) >= 0 )
+   {
+      nsteps = simparams.simSpeedsFromTimeState( tmst_fpath );
+   }
+
+   if ( nsteps < 1 )
+   { // Leave no partial or stale profile behind:  a caller that checks
+      //  only the profile size must see that there is none.
+      DbgLv( 0 ) << "US_AstfemMath::timestate_from_speedsteps: no speed profile"
+                    " from the timestate in"
+                 << tdir->path();
+      simparams.sim_speed_prof.clear();
+      return -1;
+   }
+
+   return nsteps;
+}
 
 //----------------------------------------------------------------------
 // Write time state
@@ -28,14 +106,19 @@ int US_AstfemMath::writetimestate( const QString&           tmst_fpath,
 //DbgLv(1) << "AMATH:wrts::writetimestate : tmst_fpath=" << tmst_fpath;
 
    if ( timestate.open_write_data( tmst_fpath, 1.0, 0.0 ) != 0 )
-   {
-DbgLv(1) << "AMATH: wrts: Unable to open" << tmst_fpath;
-      return 0;
+   { // Return an error when the time-state file cannot be opened.
+      DbgLv( 0 ) << "US_AstfemMath::writetimestate: could not open time state "
+                    "for writing:"
+                 << tmst_fpath << "-- check that its directory exists and is writable";
+      return -1;
    }
 
 DbgLv(1)<< "AMATH:wrts: number of speeds=" << nspeed
  << "Time state file path=" << tmst_fpath;
-simparams.debug();
+if ( dbg_level > 0 )
+{
+   simparams.debug();
+}
    timestate.set_key( "Time",        "I4" );
    timestate.set_key( "RawSpeed",    "F4" );
    timestate.set_key( "SetSpeed",    "I4" );
@@ -212,7 +295,13 @@ if((scan_nbr>0)||(ii<(d1+2))||((ii>(tacc-2))&&(ii<(tacc+2)))||((ii+3)>d2))
    timestate.close_write_data();
    timestate.setTimeStateType( US_TimeState::TIMESTATE_TYPE::CALCULATED );
    timestate.setImportType( US_TimeState::IMPORT_TYPE::XLA );
-   timestate.write_defs( 1.0 );
+   if ( timestate.write_defs( 1.0 ) != 0 )
+   { // Without its definitions file, the timestate cannot be read back
+      DbgLv( 0 ) << "US_AstfemMath::writetimestate: could not write the time"
+                    " state definitions for"
+                 << tmst_fpath;
+      return -1;
+   }
 
    return timestate.time_count();
 }
@@ -636,37 +725,37 @@ double US_AstfemMath::maxval( const QVector< US_Model::SimulationComponent >& va
    return maximum;
 }
 
+// Allocate a zeroed val1 x val2 x val3 array as one block of values and one
+//  block of row pointers (three allocations instead of val1*(val2+1)+1)
 void US_AstfemMath::initialize_3d(
       int val1, int val2, int val3, double**** matrix )
 {
    *matrix = new double** [ val1 ];
 
+   if ( val1 < 1 || val2 < 1 )
+   {
+      return;
+   }
+
+   double** rows   = new double*[(size_t) val1 * val2];
+   double*  values = new double[(size_t) val1 * val2 * val3]();
+
    for ( int i = 0; i < val1; i++ )
    {
-      (*matrix)[ i ] = new double *[ val2 ];
+      ( *matrix )[i] = rows + (size_t) i * val2;
 
       for ( int j = 0; j < val2; j++ )
-      {
-         (*matrix)[ i ][ j ] = new double [ val3 ];
-
-         for ( int k = 0; k < val3; k++ )
-         {
-            (*matrix)[ i ][ j ][ k ] = 0.0;
-         }
-      }
+         ( *matrix )[i][j] = values + ( (size_t) i * val2 + j ) * val3;
    }
 }
 
+// Free an array allocated by initialize_3d
 void US_AstfemMath::clear_3d( int val1, int val2, double*** matrix )
 {
-   for ( int i = 0; i < val1; i++ )
+   if ( val1 > 0 && val2 > 0 )
    {
-      for ( int j = 0; j < val2; j++ )
-      {
-         delete [] matrix[ i ][ j ];
-      }
-
-      delete [] matrix[ i ];
+      delete[] matrix[0][0]; // values
+      delete[] matrix[0];    // row pointers
    }
 
    delete [] matrix;
@@ -676,22 +765,14 @@ void US_AstfemMath::tridiag( double* a, double* b, double* c,
                              double* r, double* u, int N )
 {
    double bet = b[ 0 ];
-#ifdef NO_DB
-   // If used within mpi_analysis, avoid reallocating gamvec at each
-   //  call. Just reallocate if N has grown larger.
-   static QVector< double > gamvec;
-   static int Nsave = 0;
-
-   if ( N > Nsave )
+   // tridiag runs once per time step, so its scratch is kept between calls,
+   //  one buffer per thread (solves may run in threads).  It only grows, is
+   //  freed at thread exit, and every element read is written first.
+   static thread_local std::vector<double> gamvec;
+   if ( (int) gamvec.size() < N )
    {
-      Nsave = ( N * 3 ) / 2;
-      gamvec.resize( Nsave );
+      gamvec.resize( N );
    }
-#else
-   // If used by a desktop application, simply reallocate gamvec
-   //  at each call.
-   QVector< double > gamvec( N );
-#endif
    double* gam = gamvec.data();
 
    if ( bet == 0.0 )  { qDebug() << "Error 1 in tridiag"; return; }
@@ -1026,7 +1107,7 @@ DbgLv(2) << "MATHi: l_time e_time" << l_time << e_time << "expscan" << expscan;
 int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
                                 bool      use_time, int fscan, int lscan )
 {
-   static int rrdk      = 0;
+   static thread_local int rrdk             = 0; // Debug message count, per thread
    int dbg_level        = US_Settings::us_debug();
 //*TIMING*
 //static int ncall=0;
