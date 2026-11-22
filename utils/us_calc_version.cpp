@@ -7,7 +7,7 @@ namespace US_Calc
 {
 QString library_version()
 {
-   return "0.3.0";
+   return "1.0.0";
 }
 
 QVector<AlgorithmVersion> algorithms()
