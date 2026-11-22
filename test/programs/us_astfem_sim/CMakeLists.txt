@@ -51,9 +51,27 @@ if(TARGET us_astfem_sim AND TARGET us_sim_inputs_gen
 
     # It runs two real simulations in child processes.
     set_tests_properties(test_us_astfem_reproducibility_gui PROPERTIES TIMEOUT 600)
+
+    us3_add_gui_test(test_us_astfem_optics_gui
+            SOURCES
+                test_us_astfem_optics_gui.cpp
+            LIBRARIES
+                UltraScan3::Gui_Static
+            LABELS
+                programs;simulation;headless
+            )
+
+    add_dependencies(test_us_astfem_optics_gui us_astfem_sim us_sim_inputs_gen)
+
+    target_compile_definitions(test_us_astfem_optics_gui PRIVATE
+            US_ASTFEM_SIM_EXE="$<TARGET_FILE:us_astfem_sim>"
+            US_SIM_INPUTS_GEN_EXE="$<TARGET_FILE:us_sim_inputs_gen>")
+
+    # It runs several real simulations in child processes.
+    set_tests_properties(test_us_astfem_optics_gui PROPERTIES TIMEOUT 900)
 else()
     message(STATUS
-        "test: skipping test_us_astfem_persist_gui and "
-        "test_us_astfem_reproducibility_gui (simulator programs are not built, or "
+        "test: skipping test_us_astfem_persist_gui, test_us_astfem_reproducibility_gui "
+        "and test_us_astfem_optics_gui (simulator programs are not built, or "
         "test/common/us3_dev_license.h is not present)")
 endif()

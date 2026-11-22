@@ -13,8 +13,9 @@
 //   US3_TEST_DB_USER      needs CREATE ROUTINE on that database
 //   US3_TEST_DB_PASSWORD
 //
-// US_DB2 always connects over TLS with the client certificates in etc/mysql,
-// so the server must trust etc/mysql/ca-cert.pem.
+// US_DB2 always connects over TLS, with etc/mysql/ca-cert.pem as its CA and
+// no client certificate, so the server must have TLS on.  Some client
+// libraries also check that the server certificate chains to that CA.
 
 #include <gtest/gtest.h>
 

@@ -399,8 +399,6 @@ public:
     QString    userPW;
     QString    guid;
 
-    QString    certFile;
-    QString    keyFile;
     QString    caFile;
     QString    error;
     int        db_errno;

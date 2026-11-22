@@ -10,6 +10,7 @@
 
 #include "disk_run_fixture.h"
 #include "us_dataIO.h"
+#include "us_time_state.h"
 
 class US_ImportRunCliTest : public QObject
 {
@@ -167,7 +168,97 @@ class US_ImportRunCliTest : public QObject
          QString err;
          QString out;
          QCOMPARE( run( { "--dir", fixture.dir, "--dry-run", "--work-dir", workParent() }, err, &out ), 0 );
-         QVERIFY2( out.contains( "1 triples, 1 edits" ), qPrintable( out + err ) );
+         QVERIFY2( out.contains( "1 triples, 1 edits, TimeState: absent" ), qPrintable( out + err ) );
+      }
+
+      void timeStatePairValidation_data()
+      {
+         QTest::addColumn<QString>( "damage" );
+         for ( const QString& damage : { "valid", "magic", "truncated", "xml", "count", "layout" } )
+         {
+            QTest::newRow( qPrintable( damage ) ) << damage;
+         }
+      }
+
+      void timeStatePairValidation()
+      {
+         QFETCH( QString, damage );
+         const QString name    = "history-" + damage;
+         const auto    fixture = us3test::writeDiskRun( scratch.path(), name, "RA", { us3test::DatasetSpec{ 1, 'A', "280" } } );
+         QVERIFY( !fixture.dir.isEmpty() );
+         QVERIFY( us3test::writeRunRecords( fixture ) );
+         const QString binary      = fixture.dir + name + ".time_state.tmst";
+         const QString definitions = fixture.dir + name + ".time_state.xml";
+         US_TimeState  history;
+         QCOMPARE( history.open_write_data( binary, 1.0, 0.0 ), 0 );
+         QCOMPARE( history.set_key( "Time", "I4" ), 0 );
+         QCOMPARE( history.set_value( "Time", 0 ), 0 );
+         QCOMPARE( history.flush_record(), 0 );
+         QCOMPARE( history.close_write_data(), 0 );
+         QCOMPARE( history.write_defs(), 0 );
+         if ( damage != "valid" )
+         {
+            QFile file( damage == "magic" || damage == "truncated" ? binary : definitions );
+            QVERIFY( file.open( QIODevice::ReadOnly ) );
+            QByteArray bytes = file.readAll();
+            file.close();
+            if ( damage == "magic" )
+            {
+               bytes[0] = 'X';
+            }
+            if ( damage == "truncated" )
+            {
+               bytes.chop( 1 );
+            }
+            if ( damage == "xml" )
+            {
+               bytes = "<TimeState>";
+            }
+            if ( damage == "count" )
+            {
+               bytes.replace( "time_count=\"1\"", "time_count=\"2\"" );
+            }
+            if ( damage == "layout" )
+            {
+               bytes.replace( "I4", "F8" );
+            }
+            QVERIFY( file.open( QIODevice::WriteOnly | QIODevice::Truncate ) );
+            QCOMPARE( file.write( bytes ), qint64( bytes.size() ) );
+         }
+         QString err, out;
+         QCOMPARE( run( { "--dir", fixture.dir, "--dry-run", "--work-dir", workParent() }, err, &out ), damage == "valid" ? 0 : 2 );
+         if ( damage == "valid" )
+         {
+            QVERIFY2( out.contains( "TimeState: 1 records" ), qPrintable( out + err ) );
+         }
+         else
+         {
+            QVERIFY2( err.contains( "TimeState binary/definitions pair" ), qPrintable( err ) );
+         }
+      }
+
+      void incompleteTimeStateIsRefused_data()
+      {
+         QTest::addColumn<QString>( "suffix" );
+         QTest::newRow( "missing definitions" ) << ".time_state.tmst";
+         QTest::newRow( "missing binary" ) << ".time_state.xml";
+      }
+
+      void incompleteTimeStateIsRefused()
+      {
+         QFETCH( QString, suffix );
+         const QString          name = suffix.endsWith( "tmst" ) ? "run-tmst" : "run-defs";
+         const us3test::DiskRun fixture =
+            us3test::writeDiskRun( scratch.path(), name, "RA", { us3test::DatasetSpec{ 1, 'A', "280" } } );
+         QVERIFY( !fixture.dir.isEmpty() );
+         QVERIFY( us3test::writeRunRecords( fixture ) );
+         QFile file( fixture.dir + name + suffix );
+         QVERIFY( file.open( QIODevice::WriteOnly ) );
+         file.write( "incomplete pair" );
+         file.close();
+         QString err;
+         QCOMPARE( run( { "--dir", fixture.dir, "--dry-run", "--work-dir", workParent() }, err ), 2 );
+         QVERIFY2( err.contains( "TimeState binary/definitions pair" ), qPrintable( err ) );
       }
 
       void anEditForAnotherWavelengthIsRefused()

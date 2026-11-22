@@ -16,8 +16,9 @@
 // Its checks are one test case because they share those procedures, and ctest
 // runs test cases in parallel.
 //
-// US_DB2 always connects over TLS with the client certificates in etc/mysql,
-// so both servers must trust etc/mysql/ca-cert.pem.
+// US_DB2 always connects over TLS, with etc/mysql/ca-cert.pem as its CA and
+// no client certificate, so both servers must have TLS on.  Some client
+// libraries also check that each server certificate chains to that CA.
 
 #include <gtest/gtest.h>
 

@@ -1,0 +1,50 @@
+# The APP inventory is registered by programs/ after platform exclusions.
+include_guard(GLOBAL)
+
+function(us3_register_app_program_directory directory)
+    get_property(_targets DIRECTORY "${directory}" PROPERTY BUILDSYSTEM_TARGETS)
+    foreach(_target IN LISTS _targets)
+        get_target_property(_type "${_target}" TYPE)
+        if(_type STREQUAL "EXECUTABLE")
+            set_property(GLOBAL APPEND PROPERTY US3_APP_TARGETS "${_target}")
+        endif()
+    endforeach()
+endfunction()
+
+function(us3_configure_app_package)
+    get_property(_targets GLOBAL PROPERTY US3_APP_TARGETS)
+    foreach(_required IN ITEMS us us_helpdaemon)
+        if(NOT _required IN_LIST _targets)
+            message(FATAL_ERROR "APP package inventory is missing target ${_required}")
+        endif()
+    endforeach()
+    list(REMOVE_DUPLICATES _targets)
+    set(_content "# Generated APP outputs for $<CONFIG>; do not edit.\n")
+    string(APPEND _content "set(US3_APP_PROGRAMS)\nset(US3_APP_EXECUTABLES)\n")
+    foreach(_target IN LISTS _targets)
+        get_target_property(_bundle "${_target}" MACOSX_BUNDLE)
+        if(APPLE AND _bundle)
+            set(_item "$<TARGET_BUNDLE_DIR:${_target}>")
+        else()
+            set(_item "$<TARGET_FILE:${_target}>")
+        endif()
+        string(APPEND _content "list(APPEND US3_APP_PROGRAMS [==[${_item}]==])\n")
+        string(APPEND _content "list(APPEND US3_APP_EXECUTABLES [==[$<TARGET_FILE:${_target}>]==])\n")
+    endforeach()
+    set(_manifest "${CMAKE_BINARY_DIR}/app-package-$<CONFIG>.cmake")
+    file(GENERATE OUTPUT "${_manifest}" CONTENT "${_content}")
+    set(US3_APP_MANIFEST "${_manifest}" PARENT_SCOPE)
+
+    # Developer builds may omit documentation; distribution targets may not.
+    if(TARGET documentation AND QHELPGENERATOR_EXECUTABLE)
+        add_custom_target(us3_app_package_inputs DEPENDS ${_targets} documentation)
+    else()
+        add_custom_target(us3_app_package_inputs
+            COMMAND ${CMAKE_COMMAND} -E echo
+                "APP packaging requires BUILD_DOCUMENTATION, Sphinx and qhelpgenerator. Reconfigure with these available."
+            COMMAND ${CMAKE_COMMAND} -E false
+            VERBATIM)
+    endif()
+    list(LENGTH _targets _count)
+    message(STATUS "APP package inventory: ${_count} executable targets")
+endfunction()

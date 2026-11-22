@@ -213,6 +213,7 @@ US_Density_Match::US_Density_Match() : US_Widgets()
    ct_boundaryPct->setValue( 90 );
    ct_boundaryPos->setValue(  5 );
    ct_smoothing  ->setValue(  1 );
+   limit_smoothing(); // the initial maximum must fit the initial divisions
 
    connect( ct_division,    &QwtCounter::valueChanged,
             this,           &US_Density_Match::update_divis );
@@ -1357,13 +1358,18 @@ DbgLv(1) << "UpdDiv:" << dval;
    ct_boundaryPct->setMaximum( mx_bpct );
 DbgLv(1) << "UpdDiv:  mx_bpct" << mx_bpct;
 
-   // Limit smoothing so upper limit half of divisions and odd
-   double mx_smoo    = ct_division->value() * 0.5;
-   int nsmoo         = (int)mx_smoo;
-   nsmoo            += ( ( nsmoo & 1 ) == 0 ) ? 1 : 0;
-   mx_smoo           = nsmoo;
-DbgLv(1) << "UpdDiv:  mx_smoo" << mx_smoo;
-   ct_smoothing  ->setMaximum( mx_smoo );
+limit_smoothing();
+}
+
+// Limit the smoothing width to what the division count supports:  half the
+// divisions, made odd, keeps division count + 1 >= 2 * width - 1.
+void US_Density_Match::limit_smoothing()
+{
+   double mx_smoo = ct_division->value() * 0.5;
+   int    nsmoo   = (int) mx_smoo;
+   nsmoo += ( ( nsmoo & 1 ) == 0 ) ? 1 : 0;
+   DbgLv( 1 ) << "LimSmoo:  mx_smoo" << nsmoo;
+   ct_smoothing->setMaximum( qMax( nsmoo, 1 ) );
 }
 
 // Write a CSV file from given vectors
