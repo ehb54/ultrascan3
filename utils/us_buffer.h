@@ -103,7 +103,10 @@ class US_UTIL_EXTERN US_Buffer
 
       //! \brief Read a buffer from a disk file
       //! \param filename  The full path, including filename.
-      //! \return A boolean success or failure
+      //! \return A boolean success or failure. The file's extinction, refraction
+      //!         and fluorescence values replace the ones the buffer held. On
+      //!         failure (an unreadable file, malformed or truncated XML, or no
+      //!         buffer element) the buffer is unchanged.
       bool readFromDisk( const QString& );
 
       //! \brief Write a new buffer to the DB.

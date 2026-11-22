@@ -411,6 +411,11 @@ int US_Analyte::parse_xml( QIODevice& device, const QString& guid )
             selected = true;
             a = xml.attributes();
 
+            // The file's spectra replace the ones the analyte held.
+            extinction.clear();
+            refraction.clear();
+            fluorescence.clear();
+
             type_string = a.value( "type" ).toString();
 
             // Set description and guid
@@ -522,6 +527,11 @@ int US_Analyte::parse_xml( QIODevice& device, const QString& guid )
    {
       message = QObject::tr( "Could not find analyte guid" );
       return IUS_DB2::NO_ANALYTE;
+   }
+   if ( !finished )
+   {
+      message = QObject::tr( "Could not read analyte XML: the analyte element is incomplete" );
+      return IUS_DB2::DBERROR;
    }
    return IUS_DB2::OK;
 }

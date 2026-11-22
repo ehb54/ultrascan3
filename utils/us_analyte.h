@@ -82,7 +82,8 @@ class US_UTIL_EXTERN US_Analyte
       //! Consume from the current position; never open, close or flush the device.
       //! Read the requested GUID, or the first analyte when guid is empty.
       //! Unknown fields/wrappers remain accepted. Invalid XML/I/O returns DBERROR;
-      //! no matching analyte returns NO_ANALYTE. Failed reads preserve data and
+      //! no matching analyte returns NO_ANALYTE. A successful read replaces the
+      //! extinction, refraction and fluorescence values. Failed reads preserve data and
       //! update message. Failed writes may leave partial output; the filename
       //! wrapper checks flush, but neither API guarantees atomic/durable writes.
       int                    read_xml( QIODevice&, const QString& guid = QString() );

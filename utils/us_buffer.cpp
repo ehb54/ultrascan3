@@ -773,19 +773,35 @@ bool US_Buffer::readFromDisk( const QString& filename )
    }
 
    QXmlStreamReader xml( &file );
-   
+
+   // Load into a copy; this buffer changes only when the file holds a complete,
+   // well-formed buffer. The file's spectra replace the ones already held.
+   US_Buffer        loaded = *this;
+   loaded.extinction.clear();
+   loaded.refraction.clear();
+   loaded.fluorescence.clear();
+   bool found = false;
+
    while ( ! xml.atEnd() )
    {
       xml.readNext();
 
-      if ( xml.isStartElement() )
+      if ( xml.isStartElement() && xml.name() == "buffer" && !found )
       {
-         if ( xml.name() == "buffer" )
-            readBuffer( xml );
+         loaded.readBuffer( xml );
+         found = true;
       }
    }
 
    file.close();
+
+   if ( xml.hasError() || !found )
+   {
+      qDebug() << "Cannot read buffer from file: " << filename << ( found ? xml.errorString() : QString( "no buffer element" ) );
+      return false;
+   }
+
+   *this = loaded;
    return true;
 }
 
