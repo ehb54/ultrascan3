@@ -1,7 +1,7 @@
 name: Dependency Layers
 on:
   pull_request:
-    branches: [ main, calc-library-extraction ]
+    branches: [ main ]
     paths:
       - '**.c'
       - '**.cc'
