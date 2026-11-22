@@ -3,6 +3,10 @@
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_saxs_buffer.h"
 #include "../include/us_hydrodyn_saxs_buffer_nth.h"
+#include "../include/us_hydrodyn_saxs_buffer_frames.h"
+#include "../include/us_plot_util.h"
+#include <qwt_plot_intervalcurve.h>
+#include <qwt_interval_symbol.h>
 #include "../include/us_hydrodyn_saxs_buffer_dilutions.h"
 #include "../include/us_hydrodyn_saxs_buffer_upturn.h"
 #if QT_VERSION >= 0x040000
@@ -1230,6 +1234,7 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
    pb_similar_files      ->setEnabled( files_selected_count == 1 );
    pb_conc               ->setEnabled( lb_files->count() > 0 );
    pb_clear_files        ->setEnabled( files_selected_count > 0 );
+   pb_frames             ->setEnabled( files_selected_count >= 3 );
    pb_subtract_buffer    ->setEnabled( !lbl_buffer->text().isEmpty() && f_qs.count( lbl_buffer->text() ) &&
                                        non_buffer_non_empty_files_selected_count > 0 );
    pb_avg                ->setEnabled( files_selected_count > 1 );
@@ -1948,6 +1953,7 @@ void US_Hydrodyn_Saxs_Buffer::add_files( QStringList filenames )
 void US_Hydrodyn_Saxs_Buffer::plot_files()
 {
    plot_dist->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_dist->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+   plot_dist->detachItems( QwtPlotItem::Rtti_PlotIntervalCurve );
    //bool any_selected = false;
    double minx = 0e0;
    double maxx = 1e0;
@@ -2143,6 +2149,7 @@ bool US_Hydrodyn_Saxs_Buffer::plot_file( QString file,
       curve->attach( plot_dist );
 #endif
    }
+   plot_eb( file );
    return true;
 }
 
@@ -2396,7 +2403,9 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
 
    QRegularExpression rx_ok_line("^(\\s+(-|)|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
    rx_ok_line.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
-   for ( int i = 1; i < (int) qv.size(); i++ )
+   // a file without a header line starts with its first point (the SAS window's loader reads it so too)
+   int first_line = US_Saxs_Util::first_line_is_data( qv, offset, 2 + offset ) ? 0 : 1;
+   for ( int i = first_line; i < (int) qv.size(); i++ )
    {
       QRegularExpressionMatch rx_ok_line_m = rx_ok_line.match( qv[i] );
       if ( qv[i].contains(QRegularExpression( QStringLiteral( "^#" ) )) ||
@@ -2838,13 +2847,18 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
    {
       editor_msg( "dark red", us_tr( "Average: " ) + spikes_note( files, n_out, total_out ) );
    }
+   // the header says which sd the average has; the name's code too: avgp propagated, avgs from the scatter,
+   // a trailing d when spikes were left out
+   bool sd_propagated = all_nonzero_errors && !avg_sd_scatter;
    QString sd_note =
       all_nonzero_errors ?
       QString( ", weighted by 1/sd^2" ) +
-      ( avg_sd_scatter ? QString( ", sd from their scatter" ) : QString( "" ) ) +
-      ( total_out ? QString( ", %1 point%2 left out as spikes (more than %3 sd from the other curves)" )
-        .arg( total_out ).arg( total_out == 1 ? "" : "s" ).arg( avg_spike_sd ) : QString( "" ) ) :
-      QString( ", sd from their scatter" );
+      ( sd_propagated ? QString( ", sd of the mean propagated from their sd" ) : QString( ", sd of the mean from their scatter" ) ) +
+      ( total_out ? QString( ", %1 point%2 left out as spikes (more than %3 sd from the other curves): %4" )
+        .arg( total_out ).arg( total_out == 1 ? "" : "s" ).arg( avg_spike_sd ).arg( spikes_list( files, n_out ) ) : QString( "" ) ) :
+      QString( ", sd of the mean from their scatter" );
+   QString code   = QString( "avg" ) + ( sd_propagated ? "p" : "s" ) + ( total_out ? "d" : "" );
+   QString frames = frame_list( selected_files );
 
    avg_conc /= files.size();
 
@@ -2873,7 +2887,7 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
       tail = "_" + range + tail;
    }
 
-   QString avg_name = head + "avg" + tail;
+   QString avg_name = head + code + tail;
 
    map < QString, bool > current_files;
    for ( int i = 0; i < (int)lb_files->count(); i++ )
@@ -2883,7 +2897,7 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
 
    while ( current_files.count( avg_name ) )
    {
-      avg_name = head + QString( "avg-%1" ).arg( ++ext ) + tail;
+      avg_name = head + QString( "%1-%2" ).arg( code ).arg( ++ext ) + tail;
    }
 
    lb_created_files->addItem( avg_name );
@@ -2897,12 +2911,13 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
    f_qs        [ avg_name ] = avg_qs;
    f_Is        [ avg_name ] = avg_Is;
    f_errors    [ avg_name ] = avg_sd;
-   f_header    [ avg_name ] = QString( " Average of %1 files%2%3%4: %5" )
+   // numbered frames are given as ranges, other curves by name
+   f_header    [ avg_name ] = QString( " Average of %1 files%2%3%4%5" )
       .arg( selected_files.size() )
-      .arg( range.isEmpty() ? QString( "" ) : QString( " (frames %1)" ).arg( range ) )
+      .arg( frames.isEmpty() ? QString( "" ) : QString( " (frames %1)" ).arg( frames ) )
       .arg( sd_note )
       .arg( crop ? QString( ", cropped to %1 points" ).arg( min_q_len ) : QString( "" ) )
-      .arg( selected_files.join( "," ) );
+      .arg( frames.isEmpty() ? ": " + selected_files.join( "," ) : QString( "" ) );
    
    mean_psv_I0se( avg_name, selected_files );
 
@@ -3013,7 +3028,90 @@ QString US_Hydrodyn_Saxs_Buffer::frame_range( QStringList qsl )
    }
    return first + "-" + last;
 }
-      
+
+// the frame number of each name, as written in it ( name = common head + digits + common tail ); false when the
+// names are not numbered frames
+bool US_Hydrodyn_Saxs_Buffer::frame_numbers( const QStringList & qsl, QStringList & numbers )
+{
+   numbers.clear();
+   if ( qsl.size() < 2 )
+   {
+      return false;
+   }
+
+   int head_len = (int) qstring_common_head( qsl, true ).length();
+   int tail_len = (int) qstring_common_tail( qsl, true ).length();
+
+   QRegularExpression rx_number( QStringLiteral( "^\\d+$" ) );
+
+   for ( int i = 0; i < (int) qsl.size(); i++ )
+   {
+      if ( head_len + tail_len >= (int) qsl[ i ].length() )
+      {
+         numbers.clear();
+         return false;
+      }
+      QString number = qsl[ i ].mid( head_len, qsl[ i ].length() - head_len - tail_len );
+      if ( !rx_number.match( number ).hasMatch() )
+      {
+         numbers.clear();
+         return false;
+      }
+      numbers << number;
+   }
+   return true;
+}
+
+// numbered frames as ranges in increasing order, e.g. "00104-00110,00115,00120-00125"; empty when the names are
+// not numbered frames
+QString US_Hydrodyn_Saxs_Buffer::frame_list( const QStringList & qsl )
+{
+   QStringList numbers;
+   if ( !frame_numbers( qsl, numbers ) )
+   {
+      return "";
+   }
+   map < unsigned long long, QString > sorted;
+   for ( int i = 0; i < (int) numbers.size(); i++ )
+   {
+      sorted[ numbers[ i ].toULongLong() ] = numbers[ i ];
+   }
+   QStringList ranges;
+   auto it = sorted.begin();
+   while ( it != sorted.end() )
+   {
+      auto first = it;
+      auto last  = it;
+      ++it;
+      while ( it != sorted.end() && it->first == last->first + 1 )
+      {
+         last = it;
+         ++it;
+      }
+      ranges << ( first == last ? first->second : first->second + "-" + last->second );
+   }
+   return ranges.join( "," );
+}
+
+// the curves with points left out as spikes and how many, by frame number when the names are numbered frames
+QString US_Hydrodyn_Saxs_Buffer::spikes_list( const QStringList & files, const vector < int > & n_out )
+{
+   QStringList numbers;
+   bool numbered = frame_numbers( files, numbers );
+   QStringList per;
+   for ( int j = 0; j < (int) files.size() && j < (int) n_out.size(); ++j )
+   {
+      if ( n_out[ j ] )
+      {
+         per << QString( "%1 %2 %3" )
+            .arg( numbered ? us_tr( "frame" ) : us_tr( "curve" ) )
+            .arg( numbered ? numbers[ j ] : files[ j ] )
+            .arg( n_out[ j ] );
+      }
+   }
+   return per.join( ", " );
+}
+
 QString US_Hydrodyn_Saxs_Buffer::qstring_common_head( QString s1, 
                                                       QString s2 )
 {
@@ -3904,13 +4002,17 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
    {
       editor_msg( "dark red", us_tr( "Concentration normalized average: " ) + spikes_note( files, n_out, total_out ) );
    }
+   // the header says which sd the average has; the name's code too (see avg())
+   bool sd_propagated = all_nonzero_errors && !avg_sd_scatter;
    QString sd_note =
       all_nonzero_errors ?
       QString( ", weighted by 1/sd^2 of the normalized curves" ) +
-      ( avg_sd_scatter ? QString( ", sd from their scatter" ) : QString( "" ) ) +
-      ( total_out ? QString( ", %1 point%2 left out as spikes (more than %3 sd from the other curves)" )
-        .arg( total_out ).arg( total_out == 1 ? "" : "s" ).arg( avg_spike_sd ) : QString( "" ) ) :
-      QString( ", sd from their scatter" );
+      ( sd_propagated ? QString( ", sd of the mean propagated from their sd" ) : QString( ", sd of the mean from their scatter" ) ) +
+      ( total_out ? QString( ", %1 point%2 left out as spikes (more than %3 sd from the other curves): %4" )
+        .arg( total_out ).arg( total_out == 1 ? "" : "s" ).arg( avg_spike_sd ).arg( spikes_list( files, n_out ) ) : QString( "" ) ) :
+      QString( ", sd of the mean from their scatter" );
+   QString code   = QString( "cnavg" ) + ( sd_propagated ? "p" : "s" ) + ( total_out ? "d" : "" );
+   QString frames = frame_list( selected_files );
    // determine name
    // find common header & tail substrings
 
@@ -3936,7 +4038,7 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
       tail = "_" + range + tail;
    }
 
-   QString avg_name = head + "cnavg" + tail;
+   QString avg_name = head + code + tail;
 
    map < QString, bool > current_files;
    for ( int i = 0; i < lb_files->count(); i++ )
@@ -3946,7 +4048,7 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
 
    while ( current_files.count( avg_name ) )
    {
-      avg_name = head + QString( "cnavg-%1" ).arg( ++ext ) + tail;
+      avg_name = head + QString( "%1-%2" ).arg( code ).arg( ++ext ) + tail;
    }
 
    lb_created_files->addItem( avg_name );
@@ -3966,13 +4068,13 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
       {
          used_concs << QString( "%1" ).arg( concs.count( selected_files[ i ] ) ? concs[ selected_files[ i ] ] : 0e0 );
       }
-      f_header [ avg_name ] = QString( " Concentration normalized average of %1 files%2%3%4: %5,"
+      f_header [ avg_name ] = QString( " Concentration normalized average of %1 files%2%3%4%5,"
                                        " each divided by its concentration (%6 mg/ml), then multiplied by their mean %7 mg/ml" )
          .arg( selected_files.size() )
-         .arg( range.isEmpty() ? QString( "" ) : QString( " (frames %1)" ).arg( range ) )
+         .arg( frames.isEmpty() ? QString( "" ) : QString( " (frames %1)" ).arg( frames ) )
          .arg( sd_note )
          .arg( crop ? QString( ", cropped to %1 points" ).arg( min_q_len ) : QString( "" ) )
-         .arg( selected_files.join( "," ) )
+         .arg( frames.isEmpty() ? ": " + selected_files.join( "," ) : QString( "" ) )
          .arg( used_concs.join( "," ) )
          .arg( avg_conc );
    }
@@ -4526,6 +4628,71 @@ void US_Hydrodyn_Saxs_Buffer::join()
                .arg( selected[ 0 ] )
                .arg( selected[ 1 ] )
                .arg( q_join ) );
+}
+
+// Err: the sd of a plotted curve as bars, one interval curve per curve (cheap with many curves), not listed in the
+// legend; on a log intensity axis only the bars that stay positive, as in HPLC/KIN
+void US_Hydrodyn_Saxs_Buffer::plot_eb( const QString & file )
+{
+   if ( !cb_eb->isChecked() ||
+        !f_errors.count( file ) ||
+        f_errors[ file ].size() != f_qs[ file ].size() ||
+        f_Is[ file ].size() != f_qs[ file ].size() )
+   {
+      return;
+   }
+   QVector < QwtIntervalSample > bars;
+   for ( int i = 0; i < (int) f_qs[ file ].size(); i++ )
+   {
+      double I = f_Is    [ file ][ i ];
+      double e = f_errors[ file ][ i ];
+      if ( !( e > 0e0 ) || ( axis_y_log && !( I - e > 0e0 ) ) )
+      {
+         continue;
+      }
+      bars.push_back( QwtIntervalSample( f_qs[ file ][ i ], I - e, I + e ) );
+   }
+   if ( !bars.size() )
+   {
+      return;
+   }
+   QColor color = plot_colors[ f_pos[ file ] % plot_colors.size() ];
+   QwtPlotIntervalCurve * eb = new QwtPlotIntervalCurve( UPU_EB_PREFIX + file );
+   eb->setStyle( QwtPlotIntervalCurve::NoCurve );
+   QwtIntervalSymbol * symbol = new QwtIntervalSymbol( QwtIntervalSymbol::Bar );
+   symbol->setWidth( 0 );
+   symbol->setPen( QPen( color, 1, Qt::SolidLine ) );
+   eb->setSymbol( symbol );
+   eb->setSamples( bars );
+   eb->setItemAttribute( QwtPlotItem::Legend, false );
+   eb->attach( plot_dist );
+}
+
+void US_Hydrodyn_Saxs_Buffer::set_eb()
+{
+   plot_files();
+}
+
+// SEC-SAXS buffer frames: I(t) of the selected curves and the choice of stable buffer frames
+void US_Hydrodyn_Saxs_Buffer::frames()
+{
+   QStringList files;
+   for ( int i = 0; i < lb_files->count(); i++ )
+   {
+      if ( lb_files->item( i )->isSelected() &&
+           f_qs.count( lb_files->item( i )->text() ) &&
+           f_qs[ lb_files->item( i )->text() ].size() )
+      {
+         files << lb_files->item( i )->text();
+      }
+   }
+   if ( files.size() < 3 )
+   {
+      editor_msg( "red", us_tr( "Buffer frames: select at least 3 frames" ) );
+      return;
+   }
+   US_Hydrodyn_Saxs_Buffer_Frames * w = new US_Hydrodyn_Saxs_Buffer_Frames( this, files, this );
+   w->show();
 }
 
 void US_Hydrodyn_Saxs_Buffer::to_saxs()
@@ -7327,6 +7494,7 @@ void US_Hydrodyn_Saxs_Buffer::disable_all()
    pb_conc               ->setEnabled( false );
    pb_clear_files        ->setEnabled( false );
    pb_subtract_buffer    ->setEnabled( false );
+   pb_frames             ->setEnabled( false );
    pb_asum               ->setEnabled( false );
    pb_avg                ->setEnabled( false );
    pb_normalize          ->setEnabled( false );

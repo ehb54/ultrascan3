@@ -569,6 +569,11 @@ class US_EXTERN US_Saxs_Util
                                    );
 
 
+      // true when the first of a data file's lines holds data rather than a header: it is numeric, has at least
+      // min_cols columns, and the next numeric line has a larger value in column q_col (it continues an increasing
+      // grid; a line of counts does not). Lines starting with # are never data.
+      static bool first_line_is_data( const vector < QString > & lines, int q_col, int min_cols );
+
       bool setup_saxs_maps( QString atom_file, QString hybrid_file, QString saxs_file );
 
       atom current_atom;

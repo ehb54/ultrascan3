@@ -56,6 +56,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 {
    Q_OBJECT
 
+      friend class US_Hydrodyn_Saxs_Buffer_Frames;
       friend class US_Hydrodyn_Batch;
       friend class US_Hydrodyn_Saxs;
       friend class US_Hydrodyn_Saxs_Buffer_Conc;
@@ -120,6 +121,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QPushButton   *pb_join;
       QPushButton   *pb_to_saxs;
       QPushButton   *pb_view;
+      QPushButton   *pb_frames;
       QPushButton   *pb_rescale;
 
       QListWidget      *lb_files;
@@ -226,6 +228,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QPushButton   *pb_legend;
       QPushButton   *pb_axis_x;
       QPushButton   *pb_axis_y;
+      QCheckBox     *cb_eb;
 
       QCheckBox     *cb_guinier;
       QLabel        *lbl_guinier;
@@ -363,6 +366,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QString qstring_common_head( QStringList qsl, bool strip_digits = false );
       QString qstring_common_tail( QStringList qsl, bool strip_digits = false );
       QString frame_range        ( QStringList qsl );
+      bool    frame_numbers      ( const QStringList & qsl, QStringList & numbers );
+      QString frame_list         ( const QStringList & qsl );
+      QString spikes_list        ( const QStringList & files, const vector < int > & n_out );
+      void    plot_eb            ( const QString & file );
 
       QString last_load_dir;
       bool    save_files( QStringList files );
@@ -476,6 +483,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void select_nth();
       void to_saxs();
       void view();
+      void frames();
+      void set_eb();
       void rescale();
       void avg();
       void asum();
