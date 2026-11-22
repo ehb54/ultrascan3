@@ -60,6 +60,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       friend class US_Hydrodyn_Saxs;
       friend class US_Hydrodyn_Saxs_Buffer_Conc;
       friend class US_Hydrodyn_Saxs_Buffer_Nth;
+      friend class US_Hydrodyn_Saxs_Buffer_Dilutions;
+      friend class US_Hydrodyn_Saxs_Buffer_Upturn;
 
    public:
       US_Hydrodyn_Saxs_Buffer(
@@ -128,6 +130,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QPushButton   *pb_normalize;
       QPushButton   *pb_conc_avg;
       QPushButton   *pb_fit;
+      QPushButton   *pb_check_dilutions;
+      QPushButton   *pb_upturn;
+      QPushButton   *pb_subtraction;
 
       QPushButton   *pb_set_buffer;
       QLabel        *lbl_buffer;
@@ -477,6 +482,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void normalize();
       void conc_avg();
       void fit();
+      void check_dilutions();
+      void upturn();
+      void show_subtraction();
       void set_buffer();
       void set_empty();
       void set_signal();

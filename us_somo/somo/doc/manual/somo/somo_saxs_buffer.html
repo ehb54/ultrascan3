@@ -23,7 +23,7 @@
 <h2>
 SOMO - SAXS/SANS (SAS) Module: Data Utility (Buffer subtraction, joining and averaging)</h2>
 <p>
-<h3><center>Last updated: October 2026</center></h3><p>
+<h3><center>Last updated: November 2026</center></h3><p>
 </center>
 
 <hr>
@@ -46,6 +46,8 @@ and the buffer <b>division</b>, which shows how well a buffer matches a solution
 into a single curve, with interactive scaling and an automatic scaling fit;<p>
 <li><b>Averaging</b>, <b>concentration-normalized averaging</b>, <b>concentration normalization</b> and
 <b>weighted summation</b> of sets of curves;<p>
+<li><b>Checking dilutions</b>: the concentrations a series' intensities imply, compared with the stated ones;<p>
+<li><b>Upturn correction</b>: fitting and subtracting a low-<i>q</i> upturn from large scatterers;<p>
 <li><b>Cropping and trimming</b> tools to bring curves onto a common <i>q</i> grid, remove
 unreliable low- or high-<i>q</i> points, or drop non-positive intensities;<p>
 <li><b>Bookkeeping</b> of concentrations, of the curves produced, and of what has and has not been written to disk.<p>
@@ -63,10 +65,11 @@ for those it does not have. Conversely, any curve held in the
 <b><i>Data Utility</i></b> can be sent to the <i>I(q)</i> panel with the <b><i>S</i></b> button.
 <p>
 
-Opening the module brings up <i>two</i> windows: the main window described below, and a small
-companion window titled <i>US-SOMO: SAXS: Data Utility : Fitting</i> that holds the
-<a href="#Subtraction">buffer subtraction</a> controls. The companion window opens in front of the main window
-and stays above it. Closing the main window closes both.
+Opening the module brings up the main window described below. The
+<a href="#Subtraction">buffer subtraction</a> controls are in a small companion window titled
+<i>US-SOMO: SAXS: Data Utility : Fitting</i>, opened with the <b><i>Buffer subtraction</i></b> button (it is
+no longer opened together with the main window). The companion window stays above the main window, and
+closing the main window closes both.
 <p>
 
 <b>Contents</b>
@@ -74,6 +77,8 @@ and stays above it. Closing the main window closes both.
 <li><a href="#Loading">Loading data</a>
 <li><a href="#Selecting">Selecting and displaying curves</a>
 <li><a href="#Arithmetic">Averaging, summing and normalizing</a>
+<li><a href="#Dilutions">Checking dilutions</a>
+<li><a href="#Upturn">Upturn correction</a>
 <li><a href="#Roles">Assigning the buffer, blank and solution</a>
 <li><a href="#Subtraction">Buffer subtraction</a>
 <li><a href="#Join">Joining two curves</a>
@@ -253,6 +258,113 @@ The buffer and the blank, if assigned, are excluded from
 <b><i>Concentration normalized average</i></b> and <b><i>N</i></b>.
 <p>
 
+The row below holds <a href="#Dilutions"><b><i>Check dilutions</i></b></a>,
+<a href="#Upturn"><b><i>Upturn corr</i></b></a> and <b><i>Buffer subtraction</i></b>, which opens the
+<a href="#Subtraction">buffer subtraction</a> window (or brings it to the front).
+<p>
+
+<hr>
+
+<a name="Dilutions"></a>
+<h3>Checking dilutions</h3>
+
+<b><i>Check dilutions</i></b> (active with two or more curves selected, other than the buffer and the blank)
+checks a dilution series against its stated concentrations, before any further processing. Where
+interparticle interactions play no role, the curves of a series should scale with their concentrations; an
+error in a concentration (or in the intensity normalization) shows up as a ratio between two curves that
+differs from the ratio of their concentrations by the same factor at every <i>q</i>. If the concentrations
+were measured independently (e.g. by UV absorbance) and still disagree with the intensities, something other
+than the dilution is wrong.
+<p>
+The window lists the selected curves, most concentrated first, with their stated concentration: the value in
+the <a href="#Conc">Concentrations</a> table or, when that is blank, the <i>Conc</i> found in the file header
+(the <i>Stated from</i> column says which). Where there is none the cell is red: double-click it and type the
+theoretical value, which is then shown next to the revised one. Any stated value can be changed the same
+way. Each curve's intensity is fitted over the chosen <i>q</i> range as
+<i>ratio</i> &times; <i>reference</i> + <i>offset</i>, the curve being interpolated onto the reference's
+<i>q</i> points. With standard deviations on both curves, the line is fitted with the errors of both taken
+into account (York <i>et al.</i>, <i>Am. J. Phys.</i> <b>72</b>, 367 (2004)), each point weighted by
+1/(&sigma;<sub>curve</sub><sup>2</sup> + <i>ratio</i><sup>2</sup> &sigma;<sub>reference</sub><sup>2</sup>):
+a noisy reference, such as a dilute curve, does not bias the ratios, and fitting the reference to a curve
+gives the inverse of fitting the curve to the reference.
+The table gives the ratio with its standard error (enlarged by the square root of the reduced
+&chi;<sup>2</sup> when that is above 1), the revised concentration (<i>ratio</i> &times; the reference's
+concentration) and its difference from the stated one, the offset and the reduced &chi;<sup>2</sup>.
+<ul>
+<li><b><i>Reference</i></b>: the curve whose concentration is taken as correct; by default the most
+concentrated. The intensities fix only the ratios between the curves: all the revised concentrations, and
+so any molecular weight computed from them, scale with the reference's concentration. Choose the curve whose
+concentration is best known (e.g. measured by UV absorbance); any curve of the series can be the
+reference.<p>
+<li><b><i>Fit over q from ... to</i></b>: by default from 0.15 A<sup>-1</sup> (or the upper half of the
+common <i>q</i> range when it ends below 0.2 A<sup>-1</sup>) to the end of the <i>q</i> range all the curves
+cover. Choose a range where interactions play no role and the curves are above the noise.<p>
+<li><b><i>Check range</i></b>: the same fit over a second range, by default from 0.03 A<sup>-1</sup> to the
+start of the fit range (leave it empty for none). When a curve's ratio over the check range differs from its
+ratio over the fit range by more than 2% plus three standard errors, the two cells are shown in red: the
+difference between that curve and the reference depends on <i>q</i>, so over the check range it is not just
+the concentration (interactions, aggregation, a subtraction problem). The revised value, from the fit range,
+is still offered. When most curves are flagged, the reference itself probably shows interactions over the
+check range: a concentrated reference often does, without affecting the high-<i>q</i> ratios.<p>
+<li><b><i>Offset</i></b>: also fit a constant offset (on by default), e.g. for a small error in the buffer
+subtraction.<p>
+</ul>
+<b><i>Use revised</i></b> chooses, for each curve, which concentration goes with it: checked, the revised one;
+unchecked, the stated one. <b><i>Make the new series</i></b> lists the choices, asks for confirmation, and adds
+a copy <i>name</i><tt>_dc</tt> of each curve to the <a href="#Produced">Produced Data</a>: its intensities
+unchanged, its concentration the chosen one (in the Concentrations table, and in the file header once saved
+with <b><i>Save</i></b>), and a header line saying where the concentration came from. The original curves are
+not changed. After changing a concentration, the reference or the ranges, press <b><i>Fit</i></b> again.
+<p>
+
+<hr>
+
+<a name="Upturn"></a>
+<h3>Upturn correction</h3>
+
+<b><i>Upturn corr</i></b> (active with one or more curves selected, other than the buffer and the blank)
+removes from each selected curve a low-<i>q</i> upturn caused by a small amount of large scatterers
+(aggregates, or a contribution of the measurement).
+<p>
+Each curve is fitted on its own, from its first point (or the <i>q</i> set in <b><i>Fit from q</i></b>) up to
+the end of the solute's Guinier range, with
+<p>
+<center>
+<i>I</i>(<i>q</i>) = <i>G</i> exp(&minus;<i>q</i><sup>2</sup><i>R<sub>g</sub></i><sup>2</sup>/3)
++ <i>G<sub>a</sub></i> exp(&minus;<i>q</i><sup>2</sup><i>R<sub>a</sub></i><sup>2</sup>/3)
++ <i>B<sub>a</sub></i> exp(&minus;<i>q</i><sup>2</sup><i>R<sub>g</sub></i><sup>2</sup>/3)
+[erf(<i>q R<sub>a</sub></i>/&radic;6)<sup>3</sup>/<i>q</i>]<sup><i>P</i></sup>
+</center>
+<p>
+a Guinier term for the solute (<i>I</i>(0) <i>G</i>, radius of gyration <i>R<sub>g</sub></i>) plus a
+Beaucage unified level for the large scatterer (radius of gyration <i>R<sub>a</sub></i>, power-law slope
+<i>P</i> between 1 and 4.5, the power law cut off at the solute's size). The fit ends at
+<i>q</i> = 1.3/<i>R<sub>g</sub></i> (the factor can be changed), iterated as <i>R<sub>g</sub></i> is refitted;
+it is a Levenberg-Marquardt least squares weighted by the curve's standard deviations, started from several
+large-scatterer sizes and slopes.
+<p>
+A curve has an upturn when the large-scatterer term at its first point is above three standard deviations of
+the data and above 5% of the solute term; a curve without one is left unchanged. For a curve with an upturn:
+<ul>
+<li>the term is subtracted below the <i>q</i> from which it stays under 0.5 standard deviations of the data
+(the factor can be changed), and at least up to the end of the fit; above that point, the splice, the curve
+is unchanged;<p>
+<li>the standard deviations of the corrected points include the uncertainty of the subtracted term,
+propagated from the fit;<p>
+<li>where the term is more than 0.25 times the solute's fitted intensity (the factor can be changed), the
+corrected intensity depends too much on the assumed shape of the term to be trusted (orange in the plot).
+When the copies are made, a question lists these points for each curve and offers to cut them from the
+corrected copies or keep them, corrected and noted in the header.<p>
+</ul>
+The table lists, for each curve, the fit range, the solute's <i>I</i>(0) and <i>R<sub>g</sub></i>, the large
+scatterer's <i>R<sub>g</sub></i> and slope, the reduced &chi;<sup>2</sup>, the <i>q</i> from which the
+correction is reliable and the <i>q</i> below which the term is subtracted. The plot shows the curve chosen
+above it (or clicked in the table) with the fit, its two terms and the corrected curve, and marks the end of
+the fit, the reliable limit and the splice. <b><i>Make corrected copies</i></b> adds a copy
+<i>name</i><tt>_upc</tt> of each curve with an upturn to the <a href="#Produced">Produced Data</a>, with the
+curve's concentration, PSV and <i>I</i>(0) standard error, and a header line saying what was subtracted.
+<p>
+
 <hr>
 
 <a name="Roles"></a>
@@ -283,7 +395,8 @@ concentration table and from the normalization operations above.
 <a name="Subtraction"></a>
 <h3>Buffer subtraction</h3>
 
-The subtraction itself is driven from the companion <i>: Fitting</i> window. Its table holds three
+The subtraction itself is driven from the companion <i>: Fitting</i> window, opened with the
+<b><i>Buffer subtraction</i></b> button. Its table holds three
 parameters and the radio buttons and checkboxes below it control what happens to the result.
 <p>
 
@@ -664,6 +777,8 @@ frame number, <tt>_</tt><i>first</i><tt>-</tt><i>last</i> follows <tt>avg</tt> (
 frame range as for the average</td></tr>
 <tr><td>Weighted sum</td><td>common prefix + <tt>wsum</tt> + common suffix</td></tr>
 <tr><td>Normalize</td><td><i>name</i><tt>_n</tt></td></tr>
+<tr><td>Check dilutions</td><td><i>name</i><tt>_dc</tt></td></tr>
+<tr><td>Upturn correction</td><td><i>name</i><tt>_upc</tt></td></tr>
 </table>
 </center>
 <p>
@@ -717,7 +832,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on October 29, 2026
+Last modified on November 19, 2026
 </font>
 </body>
 </html>
