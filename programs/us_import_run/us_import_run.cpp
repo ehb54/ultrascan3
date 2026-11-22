@@ -900,8 +900,9 @@ int main( int argc, char* argv[] )
       return 3;
    }
 
-   // saveToDB() does not report a failed speed-step insert, so count the rows
-   // it left rather than commit a run without its speed profile.
+   // saveToDB() returns the status of a failed speed-step insert, which the
+   // check above reports.  Reading the rows back confirms the stored speed
+   // profile has every step before the raw data is written.
    QVector<SP_SPEEDPROFILE> stored_steps;
    const int                stored = US_SimulationParameters::speedstepsFromDB( &db, run.disk.experiment.expID, stored_steps );
 
