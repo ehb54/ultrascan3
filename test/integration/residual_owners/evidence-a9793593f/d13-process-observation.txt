@@ -1,2 +1,0 @@
-    PID     ELAPSED COMMAND
- 125271       17:31 /tmp/us3-residual-2ddf75d6e/build/bin/us_fematch

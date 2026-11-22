@@ -1,8 +1,0 @@
-{
-  "cycle": 2,
-  "started": 1794711234.8837957,
-  "loads": 0,
-  "status": "STOPPED",
-  "error": "Command '['xdotool', 'windowactivate', '--sync', '10485766']' timed out after 15 seconds",
-  "elapsed_seconds": 23.4
-}

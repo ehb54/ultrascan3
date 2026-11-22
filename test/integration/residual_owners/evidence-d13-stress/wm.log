@@ -1,4 +1,0 @@
-
-(xfwm4:127891): xfwm4-WARNING **: 21:52:38.010: Unsupported GL renderer (llvmpipe (LLVM 17.0.6, 128 bits)).
-
-(xfwm4:127891): xfwm4-WARNING **: 21:52:38.018: Failed to connect to session manager: Failed to connect to the session manager: SESSION_MANAGER environment variable not defined

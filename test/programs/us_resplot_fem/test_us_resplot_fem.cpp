@@ -221,7 +221,7 @@ class ResidualDialogTest : public QObject
       {
          QFETCH( QString, mode );
          QFETCH( QString, scenario );
-         // D04: every scenario must complete. The child process keeps a regression
+         // Every scenario must complete. The child process keeps a regression
          // that reads out of bounds from taking down the whole suite.
          QProcess process;
          auto     environment = QProcessEnvironment::systemEnvironment();
@@ -238,7 +238,7 @@ class ResidualDialogTest : public QObject
          {
             process.kill();
             process.waitForFinished();
-            QFAIL( "Invalid-input child timed out; a hang is not an accepted baseline result." );
+            QFAIL( "Invalid-input child timed out; the dialog must not hang on invalid input." );
          }
          const QByteArray output = process.readAll();
          const QString    logDir = qEnvironmentVariable( "US_RESIDUAL_PROBE_LOG_DIR" );
@@ -342,7 +342,7 @@ class ResidualDialogTest : public QObject
          const bool malformed = scenario.startsWith( "empty-" ) || scenario.startsWith( "short-" );
          if ( malformed )
          {
-            // D04: nothing is plotted and the dialog says why.
+            // Nothing is plotted and the dialog says why.
             QCOMPARE( curves( plot.rp_data_plot1() ).size(), 0 );
             QCOMPARE( cs.size(), 0 );
             // Both plots carry the reason, since a report may include either alone.
@@ -457,7 +457,7 @@ class ResidualDialogTest : public QObject
          QCOMPARE( box( plot, "Subtract Time Invariant Noise" )->isChecked(), bool( noise & 1 ) );
          QCOMPARE( box( plot, "Subtract Radially Invariant Noise" )->isChecked(), bool( noise & 2 ) );
          QCOMPARE( plot.isVisible(), mode != "REPORT" );
-         QCOMPARE( plot.parentWidget(), caller.get() ); // D01: the caller owns the dialog.
+         QCOMPARE( plot.parentWidget(), caller.get() ); // The caller owns the dialog.
          const QString suffix = mode == "ANALYSIS" ? " " + in.triple : mode == "REPORT" ? " " : "";
          QCOMPARE( plot.rp_data_plot1()->title().text(), "Experimental and Simulated Data" + suffix );
          QCOMPARE( plot.rp_data_plot1()->axisTitle( QwtPlot::yLeft ).text(), QString( "Absorbance at 280 nm" ) );
@@ -537,7 +537,7 @@ class ResidualDialogTest : public QObject
             QCOMPARE( cs[1]->sample( p ), QPointF( in.edited.xvalues[p], tiValues[p] ) );
          }
          plot.set_plot( 2 );
-         // D03: exporting the lower plot must preserve its scan-number axis.
+         // Exporting the lower plot must preserve its scan-number axis.
          QwtPlot* lower = nullptr;
          for ( auto* candidate : plot.findChildren<QwtPlot*>() )
          {
@@ -586,12 +586,12 @@ class ResidualDialogTest : public QObject
          QPointer<US_ResidPlotFem> plot( new US_ResidPlotFem( inputs( in ), toMode( mode ), caller.get() ) );
          QSignalSpy                closed( plot.data(), &US_ResidPlotFem::on_close );
          QSignalSpy                destroyed( plot.data(), &QObject::destroyed );
-         // D01: the caller is the Qt parent and closing the dialog destroys it.
+         // The caller is the Qt parent and closing the dialog destroys it.
          QCOMPARE( plot->parentWidget(), caller.get() );
          QVERIFY( plot->testAttribute( Qt::WA_DeleteOnClose ) );
          auto bm = bitmap( *plot );
          QVERIFY( bm );
-         QCOMPARE( bm->parentWidget(), plot.data() ); // D02: in every mode.
+         QCOMPARE( bm->parentWidget(), plot.data() ); // In every mode.
          QVERIFY( bm->testAttribute( Qt::WA_DeleteOnClose ) );
          QVERIFY( !in.bitmap ); // Newly created bitmap is not published back to caller.
          bm->close();
@@ -606,7 +606,7 @@ class ResidualDialogTest : public QObject
          QCOMPARE( closed.count(), 1 );
          QCOMPARE( destroyed.count(), 1 );
          QVERIFY( !plot );
-         // D02: window close does not run close_all, but the child bitmap goes with the dialog.
+         // Window close does not run close_all, but the child bitmap goes with the dialog.
          QVERIFY( !bm );
       }
 
@@ -687,7 +687,7 @@ class ResidualDialogTest : public QObject
          populate( in );
          auto            caller = owner( in, mode );
          US_ResidPlotFem plot( inputs( in ), toMode( mode ), caller.get() );
-         // C09/C10: later changes by the caller must not reach the open dialog.
+         // Later changes by the caller must not reach the open dialog.
          in.edited.scanData[0].rvalues[0] += .5;
          in.simulated.scanData[0].rvalues[0] += .25;
          in.excluded << 1;
@@ -754,7 +754,7 @@ class ResidualDialogTest : public QObject
          bad.ti.values = QVector<double>{ .125 };
          plot.set_inputs( inputs( bad ) );
          deferredDeletes();
-         // D04: no bitmap may keep showing residuals of data that is no longer plotted.
+         // No bitmap may keep showing residuals of data that is no longer plotted.
          QVERIFY( !bm );
          QVERIFY( !box( plot, "Show Residuals Bitmap" )->isChecked() );
          QVERIFY( plot.rp_data_plot2()->title().text().startsWith( "Cannot plot:" ) );
@@ -848,7 +848,7 @@ class ResidualDialogTest : public QObject
          auto                             caller    = owner( in, mode );
          int                              destroyed = 0;
          QList<QPointer<US_ResidPlotFem>> observed;
-         // D01: each closed dialog is destroyed, so replacing it does not accumulate.
+         // Each closed dialog is destroyed, so replacing it does not accumulate.
          for ( int i = 0; i < 100; ++i )
          {
             auto* dialog = new US_ResidPlotFem( inputs( in ), toMode( mode ), caller.get() );

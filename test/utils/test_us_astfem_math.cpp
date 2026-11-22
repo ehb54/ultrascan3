@@ -158,7 +158,7 @@ bool result = US_AstfemMath::low_acceleration(speedsteps, 250.0, rate);
 EXPECT_GE(rate, 0.0);
 EXPECT_FALSE(std::isnan(rate));
 }
-// D06: a simulated scan has no standard deviations, so its nz_stddev must be
+// A simulated scan has no standard deviations, so its nz_stddev must be
 // false, even when the experimental scans have them.
 TEST_F( US_AstfemMathTest, InitSimDataScansHaveNoStdDevs )
 {
