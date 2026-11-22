@@ -336,8 +336,8 @@ class US_GUI_EXTERN US_AnalyteMgrNew : public US_Widgets
       void spectrum        ( void );
       void newAccepted     ( void );
       void newCanceled     ( void );
-      void write_db        ( void );
-      void write_disk      ( void );
+      bool write_db( void );
+      bool write_disk( void );
       void help( void ) { showHelp.show_help( "analyte/analyte_new.html" ); };
 
       void manage_sequence ( void );
@@ -414,9 +414,9 @@ class US_GUI_EXTERN US_AnalyteMgrEdit : public US_Widgets
      void spectrum_class    ( void );
       void editAccepted( void );
       void editCanceled( void );
-      void write_db    ( void );
-      void write_disk  ( void );
-     
+      bool write_db( void );
+      bool write_disk( void );
+
       void help( void ) { showHelp.show_help( "analyte/analyte_edit.html" ); };
       void change_spectrum( void ); 
       void accept_enable  ( void ); 
