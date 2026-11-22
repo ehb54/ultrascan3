@@ -566,40 +566,6 @@ bool prepareRun( const QString& run_dir, const QString& wanted_run, const QStrin
    return collectEdits( run.disk, run.edits, error );
 }
 
-//! Roll back an open transaction unless the load reaches its commit.
-class TransactionGuard
-{
-   public:
-      explicit TransactionGuard( US_DB2& connection ) : db( connection )
-      {
-      }
-
-      ~TransactionGuard()
-      {
-         if ( !armed )
-         {
-            return;
-         }
-
-         QString error;
-
-         if ( !db.rollbackTransaction( error ) )
-         {
-            err() << "Rollback also failed: " << error << Qt::endl;
-         }
-      }
-
-      //! Called once the commit has succeeded.
-      void disarm()
-      {
-         armed = false;
-      }
-
-   private:
-      US_DB2& db;
-      bool    armed = true;
-};
-
 } // namespace
 
 int main( int argc, char* argv[] )
@@ -856,17 +822,17 @@ int main( int argc, char* argv[] )
 
    out() << "investigator : " << investigator << " (" << investigator_guid << ")" << Qt::endl;
 
-   QString transaction_error;
-   if ( !db.beginTransaction( transaction_error ) )
+   // Everything from here to the commit is one run's experiment, raw and edit
+   // rows.  The transaction is rolled back on any path out before the commit,
+   // so a failure part way through cannot leave the run half loaded for the
+   // seed dump to pick up.
+   US_DB2Transaction transaction( &db );
+   QString           transaction_error;
+   if ( !transaction.begin( transaction_error ) )
    {
       err() << "Could not begin database transaction: " << transaction_error << Qt::endl;
       return 3;
    }
-
-   // Everything from here to the commit is one run's experiment, raw and edit
-   // rows.  The guard rolls back on any path out, so a failure part way through
-   // cannot leave the run half loaded for the seed dump to pick up.
-   TransactionGuard transaction( db );
 
    // New chemistry records are owned by the active investigator.
    run.disk.experiment.invID = investigator;
@@ -941,13 +907,11 @@ int main( int argc, char* argv[] )
       }
    }
 
-   if ( !db.commitTransaction( transaction_error ) )
+   if ( !transaction.commit( transaction_error ) )
    {
       err() << "Could not commit database transaction: " << transaction_error << Qt::endl;
       return 3;
    }
-
-   transaction.disarm();
 
    out() << "loaded       : " << run.disk.runID << ", experimentID " << run.disk.experiment.expID << ", " << run.disk.triples.size()
          << " triples, " << run.edits.size() << " edits into " << database

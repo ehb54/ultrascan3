@@ -579,9 +579,9 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer, QString* err
       idBuffer = db->value( 0 ).toInt();
    }
 
-   const bool ownsTransaction = !db->transactionActive();
-   QString    transactionError;
-   if ( ownsTransaction && !db->beginTransaction( transactionError ) )
+   US_DB2Transaction transaction( db );
+   QString           transactionError;
+   if ( !transaction.begin( transactionError ) )
    {
       if ( error != nullptr )
       {
@@ -590,8 +590,9 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer, QString* err
       qWarning() << "buffer transaction begin failed:" << transactionError;
       return -7;
    }
-   const QString previousID = bufferID;
-   const auto    fail       = [&]( int code )
+   const bool    ownsTransaction = transaction.owns();
+   const QString previousID      = bufferID;
+   const auto    fail            = [&]( int code )
    {
       bufferID = previousID;
       if ( error != nullptr && error->isEmpty() )
@@ -599,7 +600,7 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer, QString* err
          *error = db->lastError();
       }
       QString rollbackError;
-      if ( ownsTransaction && !db->rollbackTransaction( rollbackError ) )
+      if ( !transaction.rollback( rollbackError ) )
       {
          if ( error != nullptr )
          {
@@ -724,7 +725,7 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer, QString* err
       return bufferID.toInt();
    }
 
-   if ( !db->commitTransaction( transactionError ) )
+   if ( !transaction.commit( transactionError ) )
    {
       if ( error != nullptr )
       {
