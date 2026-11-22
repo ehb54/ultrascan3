@@ -131,10 +131,11 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    // pb_adjacent->setPalette( PALET_PUSHB );
    // connect(pb_adjacent, SIGNAL(clicked()), SLOT(adjacent()));
 
-   pb_to_saxs = new QPushButton(us_tr("S"), this);
+   pb_to_saxs = new QPushButton(us_tr("To SAS"), this);
    pb_to_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_to_saxs->setMinimumHeight( minHeight1 );
-   pb_to_saxs->setMaximumWidth ( minHeight1 * 2 );
+   pb_to_saxs->setMaximumWidth ( minHeight1 * 4 );
+   pb_to_saxs->setToolTip( us_tr( "Copy the selected curves to the SAS window's I(q) plot" ) );
    pb_to_saxs->setPalette( PALET_PUSHB );
    connect(pb_to_saxs, SIGNAL(clicked()), SLOT(to_saxs()));
 
@@ -201,12 +202,20 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_upturn->setToolTip( us_tr( "Fit and subtract a low-q upturn from large scatterers in the selected curves" ) );
    connect( pb_upturn, SIGNAL( clicked() ), SLOT( upturn() ) );
 
-   pb_subtraction = new QPushButton( us_tr( "Buffer subtraction" ), this );
+   pb_subtraction = new QPushButton( us_tr( "Adv. buffer subtraction" ), this );
    pb_subtraction->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    pb_subtraction->setMinimumHeight( minHeight1 );
    pb_subtraction->setPalette( PALET_PUSHB );
    pb_subtraction->setToolTip( us_tr( "Open the buffer subtraction window (subtraction over a range, current value, best)" ) );
    connect( pb_subtraction, SIGNAL( clicked() ), SLOT( show_subtraction() ) );
+
+   pb_frames = new QPushButton( us_tr( "Buffer frames" ), this );
+   pb_frames->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   pb_frames->setMinimumHeight( minHeight1 );
+   pb_frames->setPalette( PALET_PUSHB );
+   pb_frames->setToolTip( us_tr( "SEC-SAXS: make I(t) of the selected frames and choose stable buffer frames before the elution\n"
+                                 "(and after it), to select them for Average, Set buffer and Subtract" ) );
+   connect( pb_frames, SIGNAL( clicked() ), SLOT( frames() ) );
 
    pb_set_buffer = new QPushButton(us_tr("Set buffer"), this);
    pb_set_buffer->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -226,7 +235,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_subtract_buffer->setMinimumHeight( minHeight1 );
    pb_subtract_buffer->setPalette( PALET_PUSHB );
    pb_subtract_buffer->setToolTip( us_tr( "Subtract the buffer from every selected curve, point by point (alpha 1), with the sd added\n"
-                                          "in quadrature; the Buffer subtraction window has the scaling, blank and range options" ) );
+                                          "in quadrature; the Adv. buffer subtraction window has the scaling, blank and range options" ) );
    connect( pb_subtract_buffer, SIGNAL( clicked() ), SLOT( subtract_buffer() ) );
 
    pb_set_empty = new QPushButton(us_tr("Set blank"), this);
@@ -774,6 +783,15 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_axis_y->setPalette( PALET_PUSHB );
    connect(pb_axis_y, SIGNAL(clicked()), SLOT(axis_y()));
 
+   cb_eb = new QCheckBox( this );
+   cb_eb->setText( us_tr( " Err" ) );
+   cb_eb->setChecked( false );
+   cb_eb->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_eb->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_eb );
+   cb_eb->setToolTip( us_tr( "Show the sd of the plotted curves as bars" ) );
+   connect( cb_eb, SIGNAL( clicked() ), SLOT( set_eb() ) );
+
    cb_guinier = new QCheckBox(this);
    cb_guinier->setText(us_tr(" Guinier"));
    cb_guinier->setChecked(false);
@@ -910,6 +928,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_file_buttons_4->addWidget ( pb_subtraction );
 
    QBoxLayout * hbl_buffer = new QHBoxLayout(); hbl_buffer->setContentsMargins( 0, 0, 0, 0 ); hbl_buffer->setSpacing( 0 );
+   hbl_buffer->addWidget ( pb_frames );
    hbl_buffer->addWidget ( pb_set_buffer );
    hbl_buffer->addWidget ( lbl_buffer );
    hbl_buffer->addWidget ( pb_subtract_buffer );
@@ -999,6 +1018,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_plot_buttons->addWidget( pb_legend );
 
    QBoxLayout * hbl_plot_buttons_2 = new QHBoxLayout(); hbl_plot_buttons_2->setContentsMargins( 0, 0, 0, 0 ); hbl_plot_buttons_2->setSpacing( 0 );
+   hbl_plot_buttons_2->addWidget( cb_eb );
    hbl_plot_buttons_2->addWidget( cb_guinier );
    hbl_plot_buttons_2->addWidget( lbl_guinier );
 
