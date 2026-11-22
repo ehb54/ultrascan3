@@ -142,6 +142,11 @@ class US_GUI_EXTERN US_ModelLoader : public US_WidgetsDialog
       QStringList          mdescrs;
       QStringList          wrunIDs;
 
+      //! \brief Load the selected models into the output arguments
+      //! \return True when every selected model loaded; otherwise
+      //!         the failures are reported and no models are returned
+      bool                 load_selected( void );
+
    private slots:
       /*! \brief Load model at a given index
           \param model Model to load from given index

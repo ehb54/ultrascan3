@@ -27,14 +27,21 @@ int US_DmgaMcStats::build_imodels( US_Model& model,
                        .section( '"', 1, 1 );
 
       US_Model imodel;
-      imodel.load_string( mxml );
-      kcomp          = imodel.components.size();
-      kasso          = imodel.associations.size();;
-qDebug() << "DmS:AdjMd:  ii" << ii << "xml.desc" << mdesc;
-qDebug() << "DmS:AdjMd:     ncomp" << kcomp << "nassoc" << kasso;
+      const int rc = imodel.load_string( mxml );
+      qDebug() << "DmS:AdjMd:  ii" << ii << "xml.desc" << mdesc;
 
-      if ( ii == 0 )
-      {
+      if ( rc != IUS_DB2::OK )
+      { // An iteration that does not load is left out of the statistics
+         qWarning() << "DMGA-MC iteration" << ii << mdesc << "could not be loaded; status" << rc;
+         continue;
+      }
+
+      kcomp = imodel.components.size();
+      kasso = imodel.associations.size();
+      qDebug() << "DmS:AdjMd:     ncomp" << kcomp << "nassoc" << kasso;
+
+      if ( niters == 0 )
+      { // The first loaded iteration sets the expected counts
          ncomp          = kcomp;
          nasso          = kasso;
       }
