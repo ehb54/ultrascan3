@@ -6,6 +6,7 @@
 #include "us_solution.h"
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 
 using ::testing::_;
 using ::testing::AnyNumber;
@@ -17,7 +18,7 @@ using ::testing::Matcher;
 using ::testing::Return;
 using ::testing::StrictMock;
 
-// Not covered: saveToDB's disk copy (saveToDisk) and the disk branch of countInProtocols.
+// Not covered: the disk branch of countInProtocols, and a failed analyte file in saveToDisk.
 
 namespace
 {
@@ -659,7 +660,7 @@ TEST_F( SolutionDb, SolutionFileWithAMissingBufferClearsTheSolution )
    stored.solutionDesc    = "Stored on disk";
    stored.buffer.GUID     = "99999999-8888-7777-6666-333333333333";
    stored.buffer.bufferID = "5";
-   stored.saveToDisk();
+   ASSERT_TRUE( stored.saveToDisk() );
    // saveToDisk also writes the buffer file; remove it.
    ASSERT_TRUE( QDir( US_Settings::dataDir() + "/buffers" ).removeRecursively() );
    QString guid = stored.solutionGUID;
@@ -667,6 +668,85 @@ TEST_F( SolutionDb, SolutionFileWithAMissingBufferClearsTheSolution )
    prepareLoaded();
    EXPECT_EQ( IUS_DB2::NO_BUFFER, solution.readFromDisk( guid ) );
    expectCleared();
+}
+
+// Disk writes, which report failure and then leave saveStatus unchanged.
+
+class SolutionDisk : public QtTestBase
+{
+   protected:
+      US_Solution solution;
+
+      void        SetUp() override
+      {
+         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
+         ASSERT_TRUE( QDir().mkpath( US_Settings::dataDir() ) );
+         removeAll();
+         solution.solutionGUID    = "99999999-8888-7777-6666-222222222222";
+         solution.solutionDesc    = "Written to disk";
+         solution.buffer.GUID     = "99999999-8888-7777-6666-111111111111";
+         solution.buffer.bufferID = "5";
+      }
+
+      void TearDown() override
+      {
+         removeAll();
+         QtTestBase::TearDown();
+      }
+
+      // Removes the solution and buffer directories, or a file standing in for one.
+      static void removeAll()
+      {
+         for ( const QString& name : { QString( "/solutions" ), QString( "/buffers" ) } )
+         {
+            const QString path = US_Settings::dataDir() + name;
+            if ( QFileInfo( path ).isFile() )
+            {
+               QFile::remove( path );
+            }
+            QDir( path ).removeRecursively();
+         }
+      }
+
+      // A file where a data directory goes makes writes under it fail.
+      static ::testing::AssertionResult block( const QString& name )
+      {
+         QFile blocker( US_Settings::dataDir() + name );
+         if ( !blocker.open( QIODevice::WriteOnly ) )
+         {
+            return ::testing::AssertionFailure() << "cannot create " << blocker.fileName().toStdString();
+         }
+         return ::testing::AssertionSuccess();
+      }
+};
+
+TEST_F( SolutionDisk, SaveToDiskReportsSuccess )
+{
+   EXPECT_TRUE( solution.saveToDisk() );
+   EXPECT_EQ( US_Solution::HD_ONLY, solution.saveStatus );
+   QString filename;
+   EXPECT_TRUE( solution.diskFilename( solution.solutionGUID, filename ) );
+}
+
+TEST_F( SolutionDisk, SaveToDiskRejectsASolutionWithoutADescription )
+{
+   solution.solutionDesc.clear();
+   EXPECT_FALSE( solution.saveToDisk() );
+   EXPECT_EQ( US_Solution::NOT_SAVED, solution.saveStatus );
+}
+
+TEST_F( SolutionDisk, SaveToDiskReportsAnUnwritableSolutionFile )
+{
+   ASSERT_TRUE( block( "/solutions" ) );
+   EXPECT_FALSE( solution.saveToDisk() );
+   EXPECT_EQ( US_Solution::NOT_SAVED, solution.saveStatus );
+}
+
+TEST_F( SolutionDisk, SaveToDiskReportsAFailedBufferCopy )
+{
+   ASSERT_TRUE( block( "/buffers" ) );
+   EXPECT_FALSE( solution.saveToDisk() );
+   EXPECT_EQ( US_Solution::NOT_SAVED, solution.saveStatus );
 }
 
 TEST( SolutionReadErrorText, NamesTheMissingPartOrUsesTheDbError )
