@@ -204,7 +204,10 @@ bool US_BufferGuiSelect::load_buffer(const QString& load_init, US_Buffer& buffer
             }
             buffer = *(this->buffer);
          } else {
-            buffer.readFromDisk(filenames[i]);
+            if ( !buffer.readFromDisk( filenames[i] ) )
+            {
+               return false;
+            }
             buffer.component.clear();
 
             for (const auto& index : buffer.componentIDs)
@@ -244,7 +247,11 @@ DbgLv(1) << "BufS:  selbuf: ROW" << lw_buffer_list->currentRow();
          return;
       }
    }
-   else           read_from_disk( item );
+   else if ( !read_from_disk( item ) )
+   {
+      reset();
+      return;
+   }
 
    // Write values to screen
    le_density   ->setText( QString::number( buffer->density,    'f', 6 ) );
@@ -297,7 +304,11 @@ void US_BufferGuiSelect::select_buffer( QListWidgetItem *tmp_item )
          return;
       }
    }
-   else            read_from_disk( item );
+   else if ( !read_from_disk( item ) )
+   {
+      reset();
+      return;
+   }
 
    // Write values to screen
    le_density   ->setText( QString::number( buffer->density,    'f', 6 ) );
@@ -332,28 +343,36 @@ DbgLv(1) << "shco: name conc unit" << name << sconc << unit
    lw_buffer_comps->addItem( name + " (" + sconc + " " + unit + ")" );
 }
 
-// Read buffer information from the local disk
-void US_BufferGuiSelect::read_from_disk( QListWidgetItem* item )
+// Read buffer information from the local disk. On failure the user is told
+// and the buffer is unchanged.
+bool US_BufferGuiSelect::read_from_disk( QListWidgetItem* item )
 {
    int row = lw_buffer_list->row( item );
    if ( row < 0 || row >= buffer_metadata.size() || buffer_metadata[row].index >= filenames.size() )
    { // Not a listed record; leave the loaded buffer unchanged
-      return;
+      return false;
    }
    int buf = buffer_metadata[ row ].index;
-DbgLv(1) << "row: " << row << " buf: "  << buf;
-   buffer->extinction.clear();
+   DbgLv( 1 ) << "row: " << row << " buf: " << buf;
+   // Read into a copy so a failed read leaves the current buffer as it is
+   US_Buffer loaded = *buffer;
+   loaded.extinction.clear();
 
-   if ( ! buffer->readFromDisk( filenames[ buf ] ) )
-      qDebug() << "read failed";
-
-   buffer->component.clear();
-
-   for ( int ii = 0; ii < buffer->componentIDs.size(); ii++ )
+   if ( !loaded.readFromDisk( filenames[buf] ) )
    {
-      QString index = buffer->componentIDs[ ii ];
-      buffer->component << component_list[ index ];
+      QMessageBox::warning( this, tr( "Buffer Not Loaded" ), tr( "The buffer file could not be read:\n%1" ).arg( filenames[buf] ) );
+      return false;
    }
+
+   loaded.component.clear();
+
+   for ( int ii = 0; ii < loaded.componentIDs.size(); ii++ )
+   {
+      QString index = loaded.componentIDs[ii];
+      loaded.component << component_list[index];
+   }
+   *buffer = loaded;
+   return true;
 }
 
 // Read buffer information from the database (by buffer list item)
@@ -1227,8 +1246,19 @@ void US_BufferGuiNew::init_buffer( void )
       QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
       US_Passwd pw;
       QString p = pw.getPasswd();
-      US_BufferComponent::getAllFromDB( p, component_list );
+      QString    error;
+      const bool read = US_BufferComponent::getAllFromDB( p, component_list, &error );
       QApplication::restoreOverrideCursor();
+      if ( !read )
+      {
+         // The list stays empty, so the next visit to this panel reads it again
+         component_list.clear();
+         QMessageBox::warning( this,
+                               tr( "Buffer Components Not Loaded" ),
+                               tr( "The buffer components could not be read from the database, so only water "
+                                   "is listed:\n%1" )
+                                  .arg( error ) );
+      }
    } else {
       // Read all buffer components from the
       //  $ULTRASCAN3/etc/bufferComponents xml file:
@@ -1441,7 +1471,15 @@ void US_BufferGuiNew::create_new_buffer_component() {
 
    QStringList q( "get_user_info" );
    db.query( q );
-   db.next();
+   if ( db.lastErrno() != IUS_DB2::OK || !db.next() )
+   {
+      QMessageBox::warning( this,
+                            tr( "User Level Unknown" ),
+                            tr( "Your user level could not be read from the database, so new buffer "
+                                "components cannot be created:\n%1" )
+                               .arg( db.lastError() ) );
+      return;
+   }
 
    int ID        = db.value( 0 ).toInt();
    QString fname = db.value( 1 ).toString();
