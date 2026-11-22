@@ -1707,7 +1707,7 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
                 US_DB2*   dbP = ( sibSValue( "general", "dbdisk" ) == "DB" ) ? new US_DB2( pw.getPasswd() ) : NULL;
                 if ( dbP != NULL )
                 {
-                   US_Rotor::readLabsDB( labs, dbP );
+                   US_Rotor::readLabsDB( labs, dbP, true );  // active operators only
                 }
                 else
                 {
@@ -2930,7 +2930,7 @@ DbgLv(1) << "EGR: chgLab   rot_ent" << rot_ent << "rndx" << rndx;
 
    //ALEXEY identify instruments & operators, fill Gui elements
    US_Rotor::Lab lab_selected;
-   lab_selected.readDB( labID, dbP );
+   lab_selected.readDB( labID, dbP, true );  // active operators only
    instruments = lab_selected.instruments;   //ALEXEY: operators (per instrument) are read here
 
    //Instruments
