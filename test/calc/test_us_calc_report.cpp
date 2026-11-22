@@ -497,19 +497,19 @@ TEST( UsCalcRunChecks, RunDetails )
 // to minutes.
 TEST( UsReporterGmpDuration, HoursAndMinutes )
 {
-   EXPECT_EQ( gmp_duration_hours_minutes( 0.0 ), "0 h 00 m" );
-   EXPECT_EQ( gmp_duration_hours_minutes( 59.0 ), "0 h 01 m" );
-   EXPECT_EQ( gmp_duration_hours_minutes( 89.0 ), "0 h 01 m" );
-   EXPECT_EQ( gmp_duration_hours_minutes( 90.0 ), "0 h 02 m" ); // qRound rounds half up
-   EXPECT_EQ( gmp_duration_hours_minutes( 3600.0 ), "1 h 00 m" );
-   EXPECT_EQ( gmp_duration_hours_minutes( 19800.0 ), "5 h 30 m" );
+   EXPECT_EQ( US_ReporterGmp::duration_hours_minutes( 0.0 ), "0 h 00 m" );
+   EXPECT_EQ( US_ReporterGmp::duration_hours_minutes( 59.0 ), "0 h 01 m" );
+   EXPECT_EQ( US_ReporterGmp::duration_hours_minutes( 89.0 ), "0 h 01 m" );
+   EXPECT_EQ( US_ReporterGmp::duration_hours_minutes( 90.0 ), "0 h 02 m" ); // qRound rounds half up
+   EXPECT_EQ( US_ReporterGmp::duration_hours_minutes( 3600.0 ), "1 h 00 m" );
+   EXPECT_EQ( US_ReporterGmp::duration_hours_minutes( 19800.0 ), "5 h 30 m" );
    // A rest of 59.5 minutes or more rounds to 60:  the report shows "60 m"
    // rather than the next hour.
-   EXPECT_EQ( gmp_duration_hours_minutes( 3599.9 ), "0 h 60 m" );
-   EXPECT_EQ( gmp_duration_hours_minutes( 7170.0 ), "1 h 60 m" );
-   EXPECT_EQ( gmp_duration_hours_minutes( 7169.9 ), "1 h 59 m" );
+   EXPECT_EQ( US_ReporterGmp::duration_hours_minutes( 3599.9 ), "0 h 60 m" );
+   EXPECT_EQ( US_ReporterGmp::duration_hours_minutes( 7170.0 ), "1 h 60 m" );
+   EXPECT_EQ( US_ReporterGmp::duration_hours_minutes( 7169.9 ), "1 h 59 m" );
    // A negative duration floors to -1 hour.
-   EXPECT_EQ( gmp_duration_hours_minutes( -30.0 ), "-1 h 60 m" );
+   EXPECT_EQ( US_ReporterGmp::duration_hours_minutes( -30.0 ), "-1 h 60 m" );
 }
 
 // 5c.  The parts of a model description, by position.

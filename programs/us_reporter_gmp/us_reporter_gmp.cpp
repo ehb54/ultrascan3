@@ -7614,7 +7614,7 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 	    {
           val_target = US_Calc::run_duration_target(
              currProto.rpSpeed.ssteps[0].duration, currProto.rpSpeed.ssteps[0].speed, currProto.rpSpeed.ssteps[0].accel );
-          QString      val_target_hh_mm = gmp_duration_hours_minutes( val_target );
+          QString      val_target_hh_mm = US_ReporterGmp::duration_hours_minutes( val_target );
 
           //tol: based on 1st AProfile->ReportGMP
           QString      channel_desc_alt = chndescs_alt[0];
@@ -7624,7 +7624,7 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 
           val_measured                                     = dmaxs[dkeys[i]] - dmins[dkeys[i]]; //in mins
           const US_Calc::RunCheckResult duration_check     = US_Calc::check_run_duration( val_measured, val_target, val_tol );
-          QString                       val_measured_hh_mm = gmp_duration_hours_minutes( duration_check.value );
+          QString                       val_measured_hh_mm = US_ReporterGmp::duration_hours_minutes( duration_check.value );
           val_passed                                       = duration_check.passed ? "YES" : "NO";
 
           html_assembled +=
@@ -10466,7 +10466,7 @@ model_used.components[ ii ].vbar20 ),
 
    //length of run (based on rdata - for current triple )
    double        last_f = rdata->scanData.last().seconds;
-   QString       wks    = gmp_duration_hours_minutes( last_f );
+   QString       wks    = US_ReporterGmp::duration_hours_minutes( last_f );
 
    const QString channel_desc_alt = chndescs_alt[channel_index];
    US_ReportGMP* reportGMP        = &( ch_reports[channel_desc_alt][wvl] );
@@ -10476,15 +10476,14 @@ model_used.components[ ii ].vbar20 ),
    double        av_int_r         = reportGMP->av_intensity;
    double        exp_dur_r        = reportGMP->experiment_duration;
    double        exp_dur_tol_r    = reportGMP->experiment_duration_tol;
+   QString       exp_dur_r_hh_mm  = US_ReporterGmp::duration_hours_minutes( exp_dur_r );
 
    double        tot_conc_r_factor    = currAProf.lc_ratios[channel_index];
    double        loading_volume_r     = currAProf.l_volumes[channel_index];
    double        loading_volume_tol_r = currAProf.lv_tolers[channel_index];
 
    // autoflowIntensity (for the triple's wavelength); NaN when none applies
-   double  av_int_exp = US_Calc::triple_intensity( intensityRIMap, US_Calc::intensity_triple( t_name, simulated_absorbance ) );
-
-   QString exp_dur_r_hh_mm = gmp_duration_hours_minutes( exp_dur_r );
+   double av_int_exp = US_Calc::triple_intensity( intensityRIMap, US_Calc::intensity_triple( t_name, simulated_absorbance ) );
 
    // The triple as the intensity and the report mask name it
    t_name = US_Calc::intensity_triple( t_name, simulated_absorbance );
