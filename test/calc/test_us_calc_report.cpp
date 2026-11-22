@@ -10,6 +10,7 @@
 #include <QStringList>
 #include <QtNumeric>
 
+#include "us_calc_matching.h"
 #include "us_calc_replicate_group.h"
 #include "us_calc_report_item.h"
 #include "us_calc_report_lookup.h"
@@ -619,4 +620,44 @@ TEST( UsCalcLoadingVolume, SectorVolume )
    // zero pathlength or angle:  no volume
    EXPECT_EQ( loading_volume( 7.2, 0.0, 5.9, 0.0, 2.5 ), 0.0 );
    EXPECT_EQ( loading_volume( 7.2, 0.0, 5.9, 1.2, 0.0 ), 0.0 );
+}
+
+// 1d.  Custom-grid (-CG) models:  an item applies when every part of its
+// method is in the analysis label, so a 2DSA-IT item also applies to a
+// 2DSA-CG-IT model.
+TEST( UsCalcReportItem, CustomGridModels )
+{
+   const QString cg    = "fixA.1A260.ee1_a2611090000_2DSA-CG_000001_i01.model";
+   const QString cg_it = "fixA.1A260.ee1_a2611090000_2DSA-CG-IT_000001_i01.model";
+   const QString cg_mc = "fixA.1A260.ee1_a2611090000_2DSA-CG-MC_000001_mcN003.model";
+   const QString it    = "fixA.1A260.ee1_a2611090000_2DSA-IT_000001_i01.model";
+
+   EXPECT_TRUE( method_matches( "2DSA-CG-IT", cg_it ) );
+   EXPECT_TRUE( method_matches( "2DSA-IT", cg_it ) );
+   EXPECT_TRUE( method_matches( "2DSA", cg ) );
+   EXPECT_TRUE( method_matches( "2DSA-CG", cg_mc ) );
+   EXPECT_FALSE( method_matches( "2DSA-IT", cg ) );    // no IT part
+   EXPECT_FALSE( method_matches( "2DSA-MC", cg_it ) ); // no MC part
+   EXPECT_FALSE( method_matches( "2DSA-CG", it ) );    // no CG part
+   EXPECT_TRUE( any_method_matches( { "2DSA-MC", "2DSA-IT" }, cg_it ) );
+   EXPECT_FALSE( any_method_matches( { "2DSA-MC", "2DSA-CG-MC" }, cg_it ) );
+}
+
+// 3a, 5a.  Channel lookups match by substring, and the first channel listed
+// wins, even when another channel's name contains it.  Rotors have at most
+// 8 cells, so names like "11A" do not occur; this records the rule.
+TEST( UsCalcReportLookup, NestedChannelNames )
+{
+   // A triple matches the first listed channel whose name it contains.
+   const QStringList short_first = { "1A:UV/vis.:x", "11A:UV/vis.:y" };
+   EXPECT_EQ( report_channel_index( short_first, "11A260", false, false ), 0 ); // "1A" is in "11A260"
+   EXPECT_EQ( report_channel_index( short_first, "1A260", false, false ), 0 );
+   const QStringList long_first = { "11A:UV/vis.:y", "1A:UV/vis.:x" };
+   EXPECT_EQ( report_channel_index( long_first, "11A260", false, false ), 0 );
+   EXPECT_EQ( report_channel_index( long_first, "1A260", false, false ), 1 );
+
+   // A replicate member's channel matches the first description containing it.
+   EXPECT_EQ( replicate_channel_index( long_first, "1A:UV/vis." ), 0 ); // "1A:UV/vis." is in "11A:UV/vis.:y"
+   EXPECT_EQ( replicate_channel_index( short_first, "1A:UV/vis." ), 0 );
+   EXPECT_EQ( replicate_channel_index( short_first, "11A:UV/vis." ), 1 );
 }
