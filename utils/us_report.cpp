@@ -734,7 +734,13 @@ US_Report::Status US_Report::addTriple(
 
    // Easier to delete/add the triple if it exists
    if ( ndx != -1 )
-      this->removeTriple( ndx, db );
+   {
+      const US_Report::Status removed = this->removeTriple( ndx, db );
+      if ( removed != REPORT_OK )
+      {
+         return removed; // Adding would leave two copies
+      }
+   }
 
    this->triples << t;
 
