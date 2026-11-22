@@ -7,9 +7,7 @@
 #include "us_calc_units.h"
 #include "us_calc_version.h"
 
-namespace US_Calc
-{
-namespace Gmp
+namespace US_Calc::Gmp
 {
 ReportItemResult evaluate_report_item( const Model& model, const ReportItem& item )
 {
@@ -66,5 +64,4 @@ bool any_method_matches( const QStringList& item_methods, const QString& model_d
    }
    return false;
 }
-} // namespace Gmp
-} // namespace US_Calc
+} // namespace US_Calc::Gmp

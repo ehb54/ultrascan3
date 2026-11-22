@@ -15,10 +15,8 @@
 #include <QStringList>
 #include <QtNumeric>
 
-namespace US_Calc
-{
 //! GMP report rules
-namespace Gmp
+namespace US_Calc::Gmp
 {
 //! \brief A report item as autoflowReportItem stores it.
 struct ReportItem
@@ -78,7 +76,6 @@ US_UTIL_EXTERN VelMwlItemResult evaluate_velmwl_item( const Model& model, const 
 //! \brief True when any of the methods applies to the model (method_matches):
 //! the reporter shows a model's Integration Results table only then.
 US_UTIL_EXTERN bool             any_method_matches( const QStringList& item_methods, const QString& model_description );
-} // namespace Gmp
-} // namespace US_Calc
+} // namespace US_Calc::Gmp
 
 #endif

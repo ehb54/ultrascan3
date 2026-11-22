@@ -6,9 +6,7 @@
 
 #include <QtNumeric>
 
-namespace US_Calc
-{
-namespace Gmp
+namespace US_Calc::Gmp
 {
 ModelDescriptionParts parse_model_description( const QString& description )
 {
@@ -118,5 +116,4 @@ MaskRows mask_rows( const QMap<QString, QString>& model_parts )
    }
    return rows;
 }
-} // namespace Gmp
-} // namespace US_Calc
+} // namespace US_Calc::Gmp

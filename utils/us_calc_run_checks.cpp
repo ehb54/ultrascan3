@@ -2,9 +2,7 @@
 #include "us_calc_run_checks.h"
 #include "us_calc_fp.h" // floating-point policy
 
-namespace US_Calc
-{
-namespace Gmp
+namespace US_Calc::Gmp
 {
 namespace
 {
@@ -68,5 +66,4 @@ RunCheckResult check_speed( double measured, double target )
 {
    return run_check( measured, ToleranceRule::AbsoluteUnits, target, 4.0 );
 }
-} // namespace Gmp
-} // namespace US_Calc
+} // namespace US_Calc::Gmp

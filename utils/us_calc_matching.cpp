@@ -4,9 +4,7 @@
 
 #include <QStringList>
 
-namespace US_Calc
-{
-namespace Gmp
+namespace US_Calc::Gmp
 {
 QString analysis_label( const QString& description )
 {
@@ -31,5 +29,4 @@ bool method_matches( const QString& item_method, const QString& model_descriptio
    }
    return true;
 }
-} // namespace Gmp
-} // namespace US_Calc
+} // namespace US_Calc::Gmp

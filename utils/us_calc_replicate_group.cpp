@@ -7,9 +7,7 @@
 
 #include <QMap>
 
-namespace US_Calc
-{
-namespace Gmp
+namespace US_Calc::Gmp
 {
 bool same_replicate_item( const ReplicateItem& reference, const ReplicateItem& item )
 {
@@ -96,5 +94,4 @@ ReplicateGroupResult evaluate_replicate_group( const ReplicateItem&             
                             { ToleranceRule::RelativePercentOfTarget, reference.target_percent, reference.tolerance } );
    return result;
 }
-} // namespace Gmp
-} // namespace US_Calc
+} // namespace US_Calc::Gmp
