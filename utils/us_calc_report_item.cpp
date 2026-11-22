@@ -9,6 +9,8 @@
 
 namespace US_Calc
 {
+namespace Gmp
+{
 ReportItemResult evaluate_report_item( const Model& model, const ReportItem& item )
 {
    ReportItemResult result;
@@ -64,4 +66,5 @@ bool any_method_matches( const QStringList& item_methods, const QString& model_d
    }
    return false;
 }
+} // namespace Gmp
 } // namespace US_Calc

@@ -19,6 +19,9 @@
 
 namespace US_Calc
 {
+//! GMP report rules
+namespace Gmp
+{
 //! \brief A report item of one triple, as a replicate group compares it.
 struct ReplicateItem
 {
@@ -102,6 +105,7 @@ struct ReplicateGroupResult
 US_UTIL_EXTERN ReplicateGroupResult evaluate_replicate_group( const ReplicateItem&                   reference,
                                                               const QVector<QVector<ReplicateItem>>& channel_items,
                                                               int                                    listed_triples );
+} // namespace Gmp
 } // namespace US_Calc
 
 #endif

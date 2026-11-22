@@ -618,10 +618,10 @@ class US_ReporterGMP : public US_Widgets
   
         QString calc_replicates_averages(void); //!< Calculate replicates averages
         QString get_replicate_group_number(QString); //!< Get replicate group number
-        US_Calc::ReplicateGroupResult get_replicate_group_results( US_ReportGMP::ReportItem,
-                                                                   QString,
-                                                                   QStringList,
-                                                                   int );           //!< Get replicate group results
+        US_Calc::Gmp::ReplicateGroupResult get_replicate_group_results( US_ReportGMP::ReportItem,
+                                                                        QString,
+                                                                        QStringList,
+                                                                        int ); //!< Get replicate group results
         void assemble_replicate_av_integration_html(void); //!< Assemble replicate average integration HTML
         bool triple_exist_inMWL( QString );
         

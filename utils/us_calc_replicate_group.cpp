@@ -9,6 +9,8 @@
 
 namespace US_Calc
 {
+namespace Gmp
+{
 bool same_replicate_item( const ReplicateItem& reference, const ReplicateItem& item )
 {
    return reference.type == item.type && reference.method == item.method && reference.low == item.low &&
@@ -94,4 +96,5 @@ ReplicateGroupResult evaluate_replicate_group( const ReplicateItem&             
                             { ToleranceRule::RelativePercentOfTarget, reference.target_percent, reference.tolerance } );
    return result;
 }
+} // namespace Gmp
 } // namespace US_Calc

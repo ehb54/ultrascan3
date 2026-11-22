@@ -33,6 +33,7 @@
 #include "us_calc_units.h"
 
 using namespace US_Calc;
+using namespace US_Calc::Gmp;
 
 namespace
 {

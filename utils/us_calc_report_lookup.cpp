@@ -8,6 +8,8 @@
 
 namespace US_Calc
 {
+namespace Gmp
+{
 ModelDescriptionParts parse_model_description( const QString& description )
 {
    ModelDescriptionParts parts;
@@ -116,4 +118,5 @@ MaskRows mask_rows( const QMap<QString, QString>& model_parts )
    }
    return rows;
 }
+} // namespace Gmp
 } // namespace US_Calc

@@ -15,6 +15,9 @@
 
 namespace US_Calc
 {
+//! GMP report rules
+namespace Gmp
+{
 //! \brief A run check:  the value checked, the check (whose target and
 //! tolerance the report shows) and its result.
 struct RunCheckResult
@@ -62,6 +65,7 @@ US_UTIL_EXTERN RunCheckResult check_temperature( double measured, double target 
 //! \brief Average speed of the first scan within 4 rpm of the first speed
 //! step's speed.
 US_UTIL_EXTERN RunCheckResult check_speed( double measured, double target );
+} // namespace Gmp
 } // namespace US_Calc
 
 #endif

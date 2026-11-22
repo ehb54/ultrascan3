@@ -4,6 +4,8 @@
 
 namespace US_Calc
 {
+namespace Gmp
+{
 namespace
 {
 RunCheckResult run_check( double value, ToleranceRule rule, double target, double tolerance )
@@ -66,4 +68,5 @@ RunCheckResult check_speed( double measured, double target )
 {
    return run_check( measured, ToleranceRule::AbsoluteUnits, target, 4.0 );
 }
+} // namespace Gmp
 } // namespace US_Calc

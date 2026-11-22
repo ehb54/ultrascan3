@@ -18,6 +18,9 @@
 
 namespace US_Calc
 {
+//! GMP report rules
+namespace Gmp
+{
 //! \brief The parts of a model description the report uses, e.g. for
 //! "fixA.2A660.ee1_a2611090000_2DSA-IT_000001_i01.model":  triple "2A660",
 //! cell "2", wavelength "660", model name "2DSA-IT".
@@ -87,6 +90,7 @@ struct MaskRows
 //! "RMSD", "Duration", "Intensity", "Loading", "Integration") has a nonzero
 //! integer value.  A missing triple or model has no entries and shows none.
 US_UTIL_EXTERN MaskRows mask_rows( const QMap<QString, QString>& model_parts );
+} // namespace Gmp
 } // namespace US_Calc
 
 #endif

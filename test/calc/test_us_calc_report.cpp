@@ -20,6 +20,7 @@
 #include "us_reporter_gmp_duration.h"
 
 using namespace US_Calc;
+using namespace US_Calc::Gmp;
 
 namespace
 {
