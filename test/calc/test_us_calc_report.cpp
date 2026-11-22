@@ -1,6 +1,7 @@
 //! \file test_us_calc_report.cpp
 // The GMP reporter's rules in US_Calc, with hand-checked values at their
-// edges:  report items on a model and replicate groups.
+// edges:  report items on a model, replicate groups, run checks and the
+// report's duration format.
 
 #include <gtest/gtest.h>
 
@@ -11,9 +12,11 @@
 
 #include "us_calc_replicate_group.h"
 #include "us_calc_report_item.h"
+#include "us_calc_run_checks.h"
 #include "us_calc_test_print.h"
 #include "us_calc_tolerance.h"
 #include "us_calc_units.h"
+#include "us_reporter_gmp_duration.h"
 
 using namespace US_Calc;
 
@@ -408,4 +411,102 @@ TEST( UsCalcReplicateGroup, RelativeTolerance )
       ref, one_item_each( { replicate_item( 0.3, 30.0 ), replicate_item( 0.3, 30.0 ), replicate_item( 0.3, 30.0 ) } ), 3 );
    EXPECT_EQ( three.mean_fraction_percent, 30.0 );
    EXPECT_FALSE( three.passed );
+}
+
+// 4a.  Total concentration:  the target times the channel's factor, within
+// tolerance percent of it.
+TEST( UsCalcRunChecks, TotalConcentration )
+{
+   const RunCheckResult r = check_total_concentration( 0.6, 0.5, 1.2, 10.0 );
+   EXPECT_EQ( r.check.rule, ToleranceRule::RelativePercentOfTarget );
+   EXPECT_EQ( r.check.target, 0.5 * 1.2 );
+   EXPECT_TRUE( r.passed );
+   EXPECT_EQ( check_total_concentration( 0.6, 0.6, 1.0, 10.0 ).check.target, 0.6 );
+   EXPECT_FALSE( check_total_concentration( 0.6, 0.5, 0.0, 10.0 ).passed ); // factor 0:  target 0
+   EXPECT_TRUE( check_total_concentration( 0.0, 0.5, 0.0, 10.0 ).passed );
+   const double lower = 0.6 * ( 1 - 10.0 / 100.0 );
+   EXPECT_TRUE( check_total_concentration( lower, 0.6, 1.0, 10.0 ).passed );
+   EXPECT_FALSE( check_total_concentration( std::nextafter( lower, 0.0 ), 0.6, 1.0, 10.0 ).passed );
+}
+
+// 4a.  The other checks of the model section, each at its edge.
+TEST( UsCalcRunChecks, ModelSectionEdges )
+{
+   // Experiment duration:  19800 s +/- 10 %
+   EXPECT_TRUE( check_experiment_duration( 19800.0 * ( 1 - 10.0 / 100.0 ), 19800.0, 10.0 ).passed );
+   EXPECT_TRUE( check_experiment_duration( 19800.0 * ( 1 + 10.0 / 100.0 ), 19800.0, 10.0 ).passed );
+   EXPECT_FALSE( check_experiment_duration( std::nextafter( 19800.0 * ( 1 + 10.0 / 100.0 ), 1e9 ), 19800.0, 10.0 ).passed );
+
+   // RMSD:  equal to the limit passes
+   EXPECT_TRUE( check_rmsd( 0.002, 0.002 ).passed );
+   EXPECT_FALSE( check_rmsd( std::nextafter( 0.002, 1.0 ), 0.002 ).passed );
+   EXPECT_EQ( check_rmsd( 0.001, 0.002 ).check.rule, ToleranceRule::UpperLimit );
+
+   // Intensity:  equal to the minimum fails
+   EXPECT_FALSE( check_minimum_intensity( 10000.0, 10000.0 ).passed );
+   EXPECT_TRUE( check_minimum_intensity( std::nextafter( 10000.0, 1e9 ), 10000.0 ).passed );
+   EXPECT_EQ( check_minimum_intensity( 1.0, 0.0 ).check.rule, ToleranceRule::ExclusiveMinimum );
+
+   // Loading volume:  450 uL +/- 5 %
+   EXPECT_TRUE( check_loading_volume( 450.0 * ( 1 - 5.0 / 100.0 ), 450.0, 5.0 ).passed );
+   EXPECT_FALSE( check_loading_volume( std::nextafter( 450.0 * ( 1 - 5.0 / 100.0 ), 0.0 ), 450.0, 5.0 ).passed );
+   EXPECT_FALSE( check_loading_volume( qQNaN(), 450.0, 5.0 ).passed );
+}
+
+// 4a.  The Minimum Intensity row is shown only for intensity data of a
+// triple that is not an interference triple.
+TEST( UsCalcRunChecks, MinimumIntensityShown )
+{
+   EXPECT_FALSE( minimum_intensity_shown( "DiskAUC:Absorbance", false ) );
+   EXPECT_FALSE( minimum_intensity_shown( "DiskAUC:PseudoAbsorbance", false ) );
+   EXPECT_TRUE( minimum_intensity_shown( "INSTRUMENT", false ) );
+   EXPECT_TRUE( minimum_intensity_shown( "DiskAUC:Intensity", false ) );
+   EXPECT_FALSE( minimum_intensity_shown( "INSTRUMENT", true ) );
+}
+
+// 4b.  The run-details table:  duration, temperature and speed.
+TEST( UsCalcRunChecks, RunDetails )
+{
+   EXPECT_EQ( run_duration_target( 3600.0, 60000.0, 400.0 ), 3750.0 );
+   // Acceleration 0:  an infinite target, which every duration fails.
+   EXPECT_TRUE( std::isinf( run_duration_target( 3600.0, 60000.0, 0.0 ) ) );
+   EXPECT_FALSE( check_run_duration( 62.5, run_duration_target( 3600.0, 60000.0, 0.0 ), 10.0 ).passed );
+
+   // Measured in minutes, checked in seconds
+   const RunCheckResult d = check_run_duration( 62.5, 3750.0, 0.0 );
+   EXPECT_EQ( d.value, 3750.0 );
+   EXPECT_TRUE( d.passed );
+   EXPECT_FALSE( check_run_duration( 62.4, 3750.0, 0.0 ).passed );
+
+   // Temperature:  +/- 0.5 C
+   EXPECT_EQ( check_temperature( 20.0, 20.0 ).check.tolerance, 0.5 );
+   EXPECT_TRUE( check_temperature( 19.5, 20.0 ).passed );
+   EXPECT_TRUE( check_temperature( 20.5, 20.0 ).passed );
+   EXPECT_FALSE( check_temperature( 20.51, 20.0 ).passed );
+   EXPECT_FALSE( check_temperature( 19.49, 20.0 ).passed );
+
+   // Speed:  +/- 4 rpm
+   EXPECT_EQ( check_speed( 60000.0, 60000.0 ).check.tolerance, 4.0 );
+   EXPECT_TRUE( check_speed( 59996.0, 60000.0 ).passed );
+   EXPECT_TRUE( check_speed( 60004.0, 60000.0 ).passed );
+   EXPECT_FALSE( check_speed( 60004.01, 60000.0 ).passed );
+}
+
+// 4c.  Durations as the report shows them:  hours floored, the rest rounded
+// to minutes.
+TEST( UsReporterGmpDuration, HoursAndMinutes )
+{
+   EXPECT_EQ( gmp_duration_hours_minutes( 0.0 ), "0 h 00 m" );
+   EXPECT_EQ( gmp_duration_hours_minutes( 59.0 ), "0 h 01 m" );
+   EXPECT_EQ( gmp_duration_hours_minutes( 89.0 ), "0 h 01 m" );
+   EXPECT_EQ( gmp_duration_hours_minutes( 90.0 ), "0 h 02 m" ); // qRound rounds half up
+   EXPECT_EQ( gmp_duration_hours_minutes( 3600.0 ), "1 h 00 m" );
+   EXPECT_EQ( gmp_duration_hours_minutes( 19800.0 ), "5 h 30 m" );
+   // A rest of 59.5 minutes or more rounds to 60:  the report shows "60 m"
+   // rather than the next hour.
+   EXPECT_EQ( gmp_duration_hours_minutes( 3599.9 ), "0 h 60 m" );
+   EXPECT_EQ( gmp_duration_hours_minutes( 7170.0 ), "1 h 60 m" );
+   EXPECT_EQ( gmp_duration_hours_minutes( 7169.9 ), "1 h 59 m" );
+   // A negative duration floors to -1 hour.
+   EXPECT_EQ( gmp_duration_hours_minutes( -30.0 ), "-1 h 60 m" );
 }

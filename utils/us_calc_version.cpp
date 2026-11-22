@@ -62,6 +62,12 @@ QVector<AlgorithmVersion> algorithms()
         "evaluated items equal to the first channel's item in type, method, bounds and QString::number of the "
         "integration value; replicate_summary of the members (0 when none); SD shown when more than one triple is "
         "listed; passed when the mean is within tolerance percent of the target (relative)" },
+      { "report_run_checks",
+        1,
+        "The GMP reporter's run checks:  total concentration (target times the loading-concentration factor), "
+        "experiment duration, loading volume and run duration within tolerance percent of the target (relative); "
+        "RMSD at most the limit; intensity above the minimum; temperature within 0.5 C and speed within 4 rpm; "
+        "run duration target = step duration + speed / accel" },
    };
 }
 

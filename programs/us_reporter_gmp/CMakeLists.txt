@@ -9,6 +9,7 @@ set(REPORTER_GMP_SOURCES
 
 set(REPORTER_GMP_HEADERS
         us_reporter_gmp.h
+        us_reporter_gmp_duration.h
         ../us_edited_data_loaders.h
         )
 

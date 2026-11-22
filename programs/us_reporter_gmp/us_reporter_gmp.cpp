@@ -16,6 +16,7 @@
 #include "us_calc_replicate.h"
 #include "us_calc_replicate_group.h"
 #include "us_calc_report_item.h"
+#include "us_calc_run_checks.h"
 #include "us_calc_tolerance.h"
 #include "us_calc_units.h"
 #include "us_constants.h"
@@ -28,6 +29,7 @@
 #include "us_math2.h"
 #include "us_protocol_util.h"
 #include "us_reporter_gmp.h"
+#include "us_reporter_gmp_duration.h"
 
 #include "us_settings.h"
 #include "us_solution_vals.h"
@@ -7609,45 +7611,34 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 	  //Exp. Duration
 	  if ( dkeys[ i ] == "Time" )
 	    {
-	      val_target       = currProto. rpSpeed. ssteps[0].duration +  (double) ( currProto. rpSpeed. ssteps[0].speed / currProto. rpSpeed. ssteps[0].accel );
-	      qDebug() << "Assembling Run Details: exp. duration, speed, accel -- "
-		       << currProto. rpSpeed. ssteps[0].duration
-		       << currProto. rpSpeed. ssteps[0].speed
-		       << currProto. rpSpeed. ssteps[0].accel;
-	      int  hours_r     = (int)qFloor( val_target / 3600.0 );
-	      int  mins_r      = (int)qRound( ( val_target - hours_r * 3600.0 ) / 60.0 );
-	      QString hh_r     = "h";
-	      QString val_target_hh_mm    = QString::asprintf( "%d %s %02d m", hours_r, hh_r.toLatin1( ).data(), mins_r );
+          val_target = US_Calc::run_duration_target(
+             currProto.rpSpeed.ssteps[0].duration, currProto.rpSpeed.ssteps[0].speed, currProto.rpSpeed.ssteps[0].accel );
+          QString      val_target_hh_mm = gmp_duration_hours_minutes( val_target );
 
-	      //tol: based on 1st AProfile->ReportGMP
-	      QString channel_desc_alt = chndescs_alt[ 0 ];
-	      QString channel_desc     = chndescs[ 0 ];
-	      QString wvl              = QString::number( ch_wvls[ channel_desc_alt ][ 0 ] );
-	      US_ReportGMP reportGMP   = ch_reports[ channel_desc_alt ][ wvl ];
-	      val_tol = reportGMP. experiment_duration_tol;
-	      
-	      val_measured = dmaxs[ dkeys[ i ] ] - dmins[ dkeys[ i ] ]; //in mins
-	      double val_measured_sec = val_measured * 60.0;
-	      hours_r     = (int)qFloor( val_measured_sec / 3600.0 );
-	      mins_r      = (int)qRound( ( val_measured_sec - hours_r * 3600.0 ) / 60.0 );
-	      QString val_measured_hh_mm   = QString::asprintf( "%d %s %02d m", hours_r, hh_r.toLatin1( ).data(), mins_r );
+          //tol: based on 1st AProfile->ReportGMP
+          QString      channel_desc_alt = chndescs_alt[0];
+          QString      wvl              = QString::number( ch_wvls[channel_desc_alt][0] );
+          US_ReportGMP reportGMP        = ch_reports[channel_desc_alt][wvl];
+          val_tol                       = reportGMP.experiment_duration_tol;
 
-         val_passed = US_Calc::passes( val_measured_sec, { US_Calc::ToleranceRule::RelativePercentOfTarget, val_target, val_tol } )
-                         ? "YES"
-                         : "NO";
+          val_measured                                     = dmaxs[dkeys[i]] - dmins[dkeys[i]]; //in mins
+          const US_Calc::RunCheckResult duration_check     = US_Calc::check_run_duration( val_measured, val_target, val_tol );
+          QString                       val_measured_hh_mm = gmp_duration_hours_minutes( duration_check.value );
+          val_passed                                       = duration_check.passed ? "YES" : "NO";
 
-         html_assembled +=
-            table_row( tr( "Duration" ), val_target_hh_mm, QString::number( val_tol ) + "%", val_measured_hh_mm, "", val_passed );
+          html_assembled +=
+             table_row( tr( "Duration" ), val_target_hh_mm, QString::number( val_tol ) + "%", val_measured_hh_mm, "", val_passed );
        }
 
        //Temperature
        if ( dkeys[i].contains( "Temperature" ) )
        {
-          val_tol      = 0.5; //plus-minus 0.5 C
-          val_target   = currProto.temperature;
-          val_measured = davgs_stdd_first_scan[dkeys[i]]["Avg"];
-          val_passed =
-             US_Calc::passes( val_measured, { US_Calc::ToleranceRule::AbsoluteUnits, val_target, val_tol } ) ? "YES" : "NO";
+          const US_Calc::RunCheckResult check =
+             US_Calc::check_temperature( davgs_stdd_first_scan[dkeys[i]]["Avg"], currProto.temperature );
+          val_tol      = check.check.tolerance; // plus-minus, degrees C
+          val_target   = check.check.target;
+          val_measured = check.value;
+          val_passed   = check.passed ? "YES" : "NO";
 
           val_measured_stdd = davgs_stdd_first_scan[dkeys[i]]["Stdd"];
 
@@ -7668,11 +7659,12 @@ void  US_ReporterGMP::assemble_run_details_html( void )
        //RawSpeed
        if ( dkeys[i].contains( "RawSpeed" ) )
        {
-          val_tol      = 4; //plus-minus 4 RPM
-          val_target   = currProto.rpSpeed.ssteps[0].speed;
-          val_measured = davgs_stdd_first_scan[dkeys[i]]["Avg"];
-          val_passed =
-             US_Calc::passes( val_measured, { US_Calc::ToleranceRule::AbsoluteUnits, val_target, val_tol } ) ? "YES" : "NO";
+          const US_Calc::RunCheckResult check =
+             US_Calc::check_speed( davgs_stdd_first_scan[dkeys[i]]["Avg"], currProto.rpSpeed.ssteps[0].speed );
+          val_tol      = check.check.tolerance; // plus-minus, rpm
+          val_target   = check.check.target;
+          val_measured = check.value;
+          val_passed   = check.passed ? "YES" : "NO";
 
           html_assembled += table_row( "Speed (RPM)",
                                        QString::number( val_target ),
@@ -10466,19 +10458,9 @@ model_used.components[ ii ].vbar20 ),
    double loading_volume_r, loading_volume_tol_r ;
 
    //length of run (based on rdata - for current triple )
-   double last_f  = rdata ->scanData.last().seconds;
-   double first_f = rdata ->scanData.first().seconds;
-   int  hours     = (int)qFloor( last_f / 3600.0 );
-   int  mins      = (int)qRound( ( last_f - hours * 3600.0 ) / 60.0 );
-   QString hh     = ( hours == 1 ) ? tr( "hr" ) : tr( "hrs" );
-   hh    = "h";
-   QString wks    = QString::asprintf( "%d %s %02d m", hours, hh.toLatin1( ).data(), mins );
-   int fmins     = (int)qFloor( first_f / 60.0 );
-   int fsecs     = first_f - fmins * 60.0;
-   QString mm    = ( fmins == 1 ) ? tr( "min" ) : tr( "mins" );
-   QString scan1time = QString::asprintf( "%d m %02d s", fmins, fsecs );
-   //end of length
-   
+   double        last_f = rdata->scanData.last().seconds;
+   QString       wks    = gmp_duration_hours_minutes( last_f );
+
    US_ReportGMP* reportGMP;  //reference
    int nchna   = currAProf.pchans.count();
    for ( int i = 0; i < nchna; i++ )
@@ -10517,22 +10499,18 @@ model_used.components[ ii ].vbar20 ),
 	   break;
 	 }
      }
-   //transform exp_duration_report into hh mm format
-   int  hours_r     = (int)qFloor( exp_dur_r / 3600.0 );
-   int  mins_r      = (int)qRound( ( exp_dur_r - hours_r * 3600.0 ) / 60.0 );
-   QString hh_r     = ( hours_r == 1 ) ? tr( "hr" ) : tr( "hrs" );
-   hh_r    = "h";
-   QString exp_dur_r_hh_mm    = QString::asprintf( "%d %s %02d m", hours_r, hh_r.toLatin1( ).data(), mins_r );
-   //end of exp_dur_r transformation
+     QString exp_dur_r_hh_mm = gmp_duration_hours_minutes( exp_dur_r );
 
-   //'S' data
-   if ( dataSource .contains("DiskAUC:Absorbance") && simulatedData )
-     t_name = t_name. replace("S","A");
-   
-   //autoflowIntensity (for specific wvl)
-   double av_int_exp;
-   QList< QString > intensity_keys = intensityRIMap.keys();
-   if ( intensity_keys.size() ==  1 ) //single wvl
+     //'S' data
+     if ( dataSource.contains( "DiskAUC:Absorbance" ) && simulatedData )
+     {
+        t_name = t_name.replace( "S", "A" );
+     }
+
+     //autoflowIntensity (for specific wvl)
+     double         av_int_exp;
+     QList<QString> intensity_keys = intensityRIMap.keys();
+     if ( intensity_keys.size() == 1 ) //single wvl
      {
        av_int_exp = intensityRIMap.first().toDouble();
        qDebug() << "single wvl: key, value -- " << intensityRIMap.firstKey() << intensityRIMap.first();
@@ -10555,19 +10533,17 @@ model_used.components[ ii ].vbar20 ),
    //double loading_volume_measured = 451;
    double loading_volume_measured = get_loading_volume( cellID.toInt() );
 
-   //passes
-   tot_conc_r *= tot_conc_r_factor;
-   using US_Calc::ToleranceRule;
-   auto    yes_no = []( bool pass ) { return pass ? QString( "YES" ) : QString( "NO" ); };
-   QString tot_conc_passed =
-      yes_no( US_Calc::passes( sum_c, { ToleranceRule::RelativePercentOfTarget, tot_conc_r, tot_conc_tol_r } ) );
-   QString exp_dur_passed =
-      yes_no( US_Calc::passes( last_f, { ToleranceRule::RelativePercentOfTarget, exp_dur_r, exp_dur_tol_r } ) );
-   QString rmsd_passed           = yes_no( US_Calc::passes( rmsd_global.toDouble(), { ToleranceRule::UpperLimit, rmsd_r, 0.0 } ) );
-   QString av_int_passed         = yes_no( US_Calc::passes( av_int_exp, { ToleranceRule::ExclusiveMinimum, av_int_r, 0.0 } ) );
-   QString loading_volume_passed = yes_no( US_Calc::passes(
-      loading_volume_measured, { ToleranceRule::RelativePercentOfTarget, loading_volume_r, loading_volume_tol_r } ) );
-   //end passes
+   // The checks and their rules (US_Calc "report_run_checks")
+   auto   yes_no = []( const US_Calc::RunCheckResult& r ) { return r.passed ? QString( "YES" ) : QString( "NO" ); };
+   const US_Calc::RunCheckResult tot_conc_check =
+      US_Calc::check_total_concentration( sum_c, tot_conc_r, tot_conc_r_factor, tot_conc_tol_r );
+   tot_conc_r              = tot_conc_check.check.target;
+   QString tot_conc_passed = yes_no( tot_conc_check );
+   QString exp_dur_passed  = yes_no( US_Calc::check_experiment_duration( last_f, exp_dur_r, exp_dur_tol_r ) );
+   QString rmsd_passed     = yes_no( US_Calc::check_rmsd( rmsd_global.toDouble(), rmsd_r ) );
+   QString av_int_passed   = yes_no( US_Calc::check_minimum_intensity( av_int_exp, av_int_r ) );
+   QString loading_volume_passed =
+      yes_no( US_Calc::check_loading_volume( loading_volume_measured, loading_volume_r, loading_volume_tol_r ) );
 
    //check what to show on the report
    if ( tripleInfo[ "triple_name" ].contains("Interference") )
@@ -10653,10 +10629,7 @@ model_used.components[ ii ].vbar20 ),
        // Show only if not Absorbance || not Interference
        qDebug() << "Show_INTENSITY: dataSource -- " << dataSource;
        qDebug() << "Show_INTENSITY: tripleInfo[ \"triple_name\" ] -- " << tripleInfo[ "triple_name" ];
-       bool RIdata = ( dataSource. contains( "DiskAUC:Absorbance" ) ||
-		       dataSource. contains( "DiskAUC:PseudoAbsorbance" ) ||
-		       tripleInfo[ "triple_name" ].contains("Interference") ) ?
-	 false : true;
+       bool RIdata = US_Calc::minimum_intensity_shown( dataSource, tripleInfo["triple_name"].contains( "Interference" ) );
        qDebug() << "Show_INTENSITY: RIdata ? " << RIdata;
        if ( show_min_int && RIdata )  
 	 {
