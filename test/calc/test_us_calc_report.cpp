@@ -596,3 +596,27 @@ TEST( UsCalcReportLookup, MaskRows )
    EXPECT_FALSE( mask_rows( {} ).integration_results );
    EXPECT_FALSE( mask_rows( { { "RMSD", "true" } } ).rmsd );
 }
+
+// 6.  Rotor stretch:  c0 * speed + c1 * speed^2, the speed not rounded.
+TEST( UsCalcLoadingVolume, RotorStretch )
+{
+   EXPECT_EQ( rotor_stretch( 0.5, 0.25, 0.0 ), 0.0 );
+   EXPECT_EQ( rotor_stretch( 0.5, 0.25, 2.0 ), 2.0 );
+   EXPECT_EQ( rotor_stretch( 0.5, 0.25, 1.5 ), 1.3125 ); // 1 rpm rounded down would give 0.75
+}
+
+// 6.  Loading volume of a sector:  expected values computed independently
+// in exact arithmetic.
+TEST( UsCalcLoadingVolume, SectorVolume )
+{
+   // bottom 7.2 cm, meniscus 5.9 cm, pathlength 1.2 cm, angle 2.5 degrees
+   EXPECT_NEAR( loading_volume( 7.2, 0.0, 5.9, 1.2, 2.5 ), 445.84435742195149, 1e-12 * 446.0 );
+   // the bottom stretched by 0.05 cm
+   EXPECT_NEAR( loading_volume( 7.2, 0.05, 5.9, 1.2, 2.5 ), 464.75936319044004, 1e-12 * 465.0 );
+   // meniscus at the stretched bottom:  no volume; beyond it:  negative
+   EXPECT_EQ( loading_volume( 7.2, 0.05, 7.25, 1.2, 2.5 ), 0.0 );
+   EXPECT_LT( loading_volume( 7.2, 0.0, 7.3, 1.2, 2.5 ), 0.0 );
+   // zero pathlength or angle:  no volume
+   EXPECT_EQ( loading_volume( 7.2, 0.0, 5.9, 0.0, 2.5 ), 0.0 );
+   EXPECT_EQ( loading_volume( 7.2, 0.0, 5.9, 1.2, 0.0 ), 0.0 );
+}

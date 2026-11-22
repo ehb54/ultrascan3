@@ -67,7 +67,9 @@ QVector<AlgorithmVersion> algorithms()
         "The GMP reporter's run checks:  total concentration (target times the loading-concentration factor), "
         "experiment duration, loading volume and run duration within tolerance percent of the target (relative); "
         "RMSD at most the limit; intensity above the minimum; temperature within 0.5 C and speed within 4 rpm; "
-        "run duration target = step duration + speed / accel" },
+        "run duration target = step duration + speed / accel; loading volume "
+        "((bottom + stretch)^2 - meniscus^2) * (1000 * pathlength * angle * pi) / 360 with stretch "
+        "c0 * speed + c1 * speed^2" },
       { "report_lookup",
         1,
         "The GMP reporter's inputs for a triple's model:  triple, cell, wavelength and model name by position in the "

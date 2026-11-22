@@ -2,6 +2,8 @@
 #include "us_calc_run_checks.h"
 #include "us_calc_fp.h" // floating-point policy
 
+#include <QtMath>
+
 namespace US_Calc::Gmp
 {
 namespace
@@ -65,5 +67,15 @@ RunCheckResult check_temperature( double measured, double target )
 RunCheckResult check_speed( double measured, double target )
 {
    return run_check( measured, ToleranceRule::AbsoluteUnits, target, 4.0 );
+}
+double rotor_stretch( double c0, double c1, double speed )
+{
+   return c0 * speed + c1 * ( speed * speed );
+}
+
+double loading_volume( double bottom, double stretch, double meniscus, double pathlength, double angle )
+{
+   const double b = bottom + stretch;
+   return ( b * b - meniscus * meniscus ) * ( 1000 * pathlength * angle * M_PI ) / 360.0;
 }
 } // namespace US_Calc::Gmp

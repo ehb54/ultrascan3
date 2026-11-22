@@ -10912,7 +10912,7 @@ double  US_ReporterGMP::get_loading_volume( int cellID )
   double vol = 0;
   
   double speed   =  currProto. rpSpeed. ssteps[0].speed ;
-  double stretch = simparams.rotorcoeffs[ 0 ] * speed + simparams.rotorcoeffs[ 1 ] * sq( speed ) ;
+  double stretch = US_Calc::Gmp::rotor_stretch( simparams.rotorcoeffs[0], simparams.rotorcoeffs[1], speed );
 
   qDebug() << "Centerpeice: stretch: " << stretch;
 
@@ -10984,16 +10984,14 @@ double  US_ReporterGMP::get_loading_volume( int cellID )
   qDebug() << "In get_loading_volume(): c_name, c_bottom, c_pathlength, c_angle -- "
 	   << c_name << c_bottom << c_pathlength << c_angle;
 
-  //add stretching
-  c_bottom += stretch;
-
   //meniscus position
   double meniscus = model_used. meniscus;
   qDebug() << "In get_loading_volume(): meniscus -- " << meniscus;
-  
-  //calulate loading volume
-  vol = ( c_bottom*c_bottom - meniscus*meniscus ) * ( 1000*c_pathlength*c_angle*M_PI ) / 360.0;
-  
+
+  // Loading volume from the centerpiece geometry, the bottom stretched for the
+  // first speed step and the fitted meniscus (US_Calc "report_run_checks")
+  vol = US_Calc::Gmp::loading_volume( c_bottom, stretch, meniscus, c_pathlength, c_angle );
+
   return vol;
 }
 

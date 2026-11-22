@@ -63,6 +63,18 @@ US_UTIL_EXTERN RunCheckResult check_temperature( double measured, double target 
 //! \brief Average speed of the first scan within 4 rpm of the first speed
 //! step's speed.
 US_UTIL_EXTERN RunCheckResult check_speed( double measured, double target );
+//! \brief Rotor stretch (cm) at a speed (rpm) from the rotor's two
+//! stretch coefficients:  c0 * speed + c1 * speed^2.  The speed is not
+//! rounded to whole rpm.
+US_UTIL_EXTERN double         rotor_stretch( double c0, double c1, double speed );
+
+//! \brief Loading volume (uL) of a sector-shaped centerpiece channel:  the
+//! area between the fitted meniscus and the bottom stretched for the first
+//! speed step, times the pathlength,
+//! ( (bottom + stretch)^2 - meniscus^2 ) * ( 1000 * pathlength * angle * pi ) / 360,
+//! radii and pathlength in cm, angle in degrees.  A meniscus at or beyond
+//! the stretched bottom gives 0 or a negative volume.
+US_UTIL_EXTERN double         loading_volume( double bottom, double stretch, double meniscus, double pathlength, double angle );
 } // namespace US_Calc::Gmp
 
 #endif
