@@ -77,14 +77,42 @@ TEST( UsCalcValidation, NegativeConcentrationIsAWarning )
    EXPECT_EQ( d.size(), 1 ); // reported once per model
 }
 
+// The legacy calculations accepted these ranges and selected nothing (or,
+// for an infinite bound, left that side open), so they are warnings.
 TEST( UsCalcValidation, Ranges )
 {
+   const double nan = std::numeric_limits<double>::quiet_NaN();
+   const double inf = std::numeric_limits<double>::infinity();
    EXPECT_TRUE( validate_range( { Quantity::Sedimentation, 4.0, 5.0 } ).empty() );
    EXPECT_TRUE( validate_range( { Quantity::Sedimentation, 4.5, 4.5 } ).empty() );
-   EXPECT_TRUE( has_issue( validate_range( { Quantity::Sedimentation, 5.0, 4.0 } ), Issue::InvalidRange, Severity::Error ) );
-   EXPECT_TRUE( has_issue( validate_range( { Quantity::Diffusion, std::numeric_limits<double>::quiet_NaN(), 1.0 } ),
-                           Issue::InvalidRange,
-                           Severity::Error ) );
+   for ( const Range& r : { Range{ Quantity::Sedimentation, 5.0, 4.0 },
+                            Range{ Quantity::Diffusion, nan, 1.0 },
+                            Range{ Quantity::Diffusion, 1.0, inf } } )
+   {
+      const auto d = validate_range( r );
+      EXPECT_TRUE( has_issue( d, Issue::InvalidRange, Severity::Warning ) );
+      EXPECT_FALSE( has_error( d ) );
+   }
+}
+
+// validate_values checks only the concentration and the named quantities.
+TEST( UsCalcValidation, ValuesChecksOnlyTheFieldsUsed )
+{
+   const double nan = std::numeric_limits<double>::quiet_NaN();
+   Model        m;
+   m.components      = { component( 4.5e-13, 0.4 ), component( 6.0e-13, 0.6 ) };
+   m.components[1].f = nan; // used by no range calculation
+   EXPECT_TRUE( validate_values( m, { Quantity::Sedimentation } ).empty() );
+
+   m.components[1].D = nan;
+   EXPECT_TRUE( validate_values( m, { Quantity::Sedimentation } ).empty() );
+   auto d = validate_values( m, { Quantity::Diffusion } );
+   EXPECT_TRUE( has_issue( d, Issue::NonFiniteValue, Severity::Warning ) );
+   EXPECT_FALSE( has_error( d ) );
+
+   m.components[0].signal_concentration = nan;
+   EXPECT_TRUE( has_issue( validate_values( m, {} ), Issue::NonFiniteValue, Severity::Error ) );
+   EXPECT_TRUE( has_issue( validate_values( Model(), {} ), Issue::EmptyModel, Severity::Error ) );
 }
 
 TEST( UsCalcValidation, HasErrorIgnoresWarnings )

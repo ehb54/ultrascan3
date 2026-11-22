@@ -5,7 +5,8 @@
   {"high": 6.0, "low": 4.0, "method": "2DSA", "target": 50.0, "tolerance": 10.0, "type": "D"},
   {"high": 100.0, "low": 50.0, "method": "2DSA", "target": 50.0, "tolerance": 10.0, "type": "MW"},
   {"high": 2.0, "low": 1.5, "method": "2DSA", "target": 50.0, "tolerance": 10.0, "type": "f/f0"},
-  {"high": 0.75, "low": 0.7, "method": "2DSA", "target": 50.0, "tolerance": 10.0, "type": "vbar"}
+  {"high": 0.75, "low": 0.7, "method": "2DSA", "target": 50.0, "tolerance": 10.0, "type": "vbar"},
+  {"high": 4.0, "low": 7.0, "method": "2DSA", "target": 0.0, "tolerance": 1.0, "type": "s"}
  ],
  "replicate_groups": [
   {"cases": ["A_2dsa_it", "A_rep2_2dsa_it", "A_rep3_2dsa_it"], "item": {"high": 3.001, "integration": 0.25, "low": 2.001, "method": "2DSA-IT", "target": 26, "tolerance": 10.0, "type": "s"}},

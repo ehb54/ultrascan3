@@ -1,9 +1,6 @@
 # US_Nnls
 include(../../local.pri)
 
-# us_mpi_analysis is built only on Linux
-!linux: error("us_mpi_analysis is built only on Linux")
-
 # Not a gui program
 
 CONFIG      += $${DEBUGORRELEASE} qt thread warn

@@ -35,6 +35,8 @@
 #include "us_model.h"
 #include "us_solutedata.h"
 
+#include <limits>
+
 namespace
 {
 // US_Integral x axes (US_Integral::attr_type) used by the reporter's
@@ -514,6 +516,80 @@ class US_CalcLegacyTest : public QObject
                     }
                     return QString();
                  } );
+      }
+
+      // A model whose distribution fails (a zero total, or a non-finite
+      // concentration) is listed in the legend without a line, wherever it
+      // stands in the overlay, and the other models are drawn exactly as
+      // they are alone.  No curve holds more points than its own series.
+      void integralSkipsFailedModels()
+      {
+         QList<US_Model> good;
+         for ( const QString& file : modelFiles() )
+         {
+            if ( file.startsWith( "models/" ) && good.size() < 2 )
+            {
+               good << loadModel( file );
+            }
+         }
+         QCOMPARE( good.size(), 2 );
+         US_Model zero_total = loadModel( "edge/edge_zero_total.model.xml" );
+         QVERIFY( !zero_total.components.isEmpty() );
+         QCOMPARE( totalConcentration( zero_total ), 0.0 );
+         US_Model non_finite                           = good[0];
+         non_finite.components[0].signal_concentration = std::numeric_limits<double>::quiet_NaN();
+
+         auto curves_of = []( US_Integral& integral )
+         {
+            QList<QwtPlotCurve*> curves;
+            for ( QwtPlotItem* item : integral.rp_data_plot()->itemList( QwtPlotItem::Rtti_PlotCurve ) )
+            {
+               curves << static_cast<QwtPlotCurve*>( item );
+            }
+            return curves;
+         };
+
+         for ( const US_Model& bad : { zero_total, non_finite } )
+         {
+            for ( int bad_index : { 0, 1 } )
+            {
+               const QList<US_Model> set =
+                  bad_index == 0 ? QList<US_Model>{ bad, good[0], good[1] } : QList<US_Model>{ good[0], bad, good[1] };
+               US_Integral integral;
+               QCOMPARE( integral.load_distro_models_auto( set ), set.size() );
+               for ( const auto& axis : kIntegralAxes )
+               {
+                  integral.select_x_axis_auto( axis.second );
+                  const QList<QwtPlotCurve*> curves = curves_of( integral );
+                  QCOMPARE( curves.size(), set.size() );
+                  int drawn = 0;
+                  for ( int c = 0; c < curves.size(); ++c )
+                  {
+                     if ( c == bad_index )
+                     {
+                        QVERIFY( curves[c]->title().text().contains( "not drawn" ) );
+                        QCOMPARE( curves[c]->dataSize(), size_t( 0 ) );
+                        continue;
+                     }
+                     QVERIFY( !curves[c]->title().text().contains( "not drawn" ) );
+                     // Equal to the model drawn alone
+                     US_Integral alone;
+                     QCOMPARE( alone.load_distro_models_auto( { set[c] } ), 1 );
+                     alone.select_x_axis_auto( axis.second );
+                     const QwtPlotCurve* ref = curves_of( alone ).value( 0 );
+                     QVERIFY( ref != nullptr );
+                     QVERIFY( ref->dataSize() > 0 );
+                     QCOMPARE( curves[c]->dataSize(), ref->dataSize() );
+                     for ( size_t i = 0; i < ref->dataSize(); ++i )
+                     {
+                        QCOMPARE( curves[c]->sample( i ), ref->sample( i ) );
+                     }
+                     ++drawn;
+                  }
+                  QCOMPARE( drawn, 2 );
+               }
+            }
+         }
       }
 
       // Gaussian smoothing of fixed series, including the shortest series

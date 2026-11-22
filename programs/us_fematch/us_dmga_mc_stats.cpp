@@ -192,7 +192,8 @@ bool US_DmgaMcStats::compute_statistics( const int nvals,
       QVector< double >& vals, QVector< double >& concs,
       QVector< double >& stats )
 {
-   // The statistics come from US_Calc; undefined ones are nan.
+   // The statistics come from US_Calc, with nan and inf where the
+   // arithmetic gives them.
    const US_Calc::WeightedStatistics st = US_Calc::weighted_statistics(
       vals.mid( 0, nvals ), concs.mid( 0, nvals ), US_Calc::StatisticsConvention::MonteCarloIterations );
    const double mode_cen = st.mode_center;

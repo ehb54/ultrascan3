@@ -64,6 +64,25 @@ double axis_value( const Solute& x, DistributionAxis axis )
 }
 } // namespace
 
+QVector<double> boundary_levels( const IntegralSettings& settings )
+{
+   QVector<double> levels;
+   if ( settings.divisions < 1 )
+   {
+      return levels;
+   }
+   // As US_Integral::build_bf_distro:  the start, then repeated additions.
+   double       bfrac  = settings.boundary_start_percent * 0.01;
+   const double bfextn = settings.boundary_extent_percent * 0.01;
+   const double bfincr = bfextn / (double) settings.divisions;
+   for ( int kk = 0; kk <= settings.divisions; kk++ )
+   {
+      levels.push_back( bfrac );
+      bfrac += bfincr;
+   }
+   return levels;
+}
+
 IntegralDistribution integral_distribution( const Model& model, DistributionAxis axis, const IntegralSettings& settings )
 {
    IntegralDistribution out;
@@ -162,14 +181,10 @@ IntegralDistribution integral_distribution( const Model& model, DistributionAxis
    }
 
    // Select the solute at each level, as US_Integral::build_bf_distro.
-   double    bfrac  = settings.boundary_start_percent * 0.01;
-   double    bfextn = settings.boundary_extent_percent * 0.01;
-   const int ksolbf = settings.divisions;
-   const int nsolbf = ksolbf + 1;
-   double    bfincr = bfextn / (double) ksolbf;
-   const int nsolbo = static_cast<int>( merged.size() );
-   int       j2     = 0;
-   for ( int kk = 0; kk < nsolbf; kk++ )
+   const QVector<double> levels = boundary_levels( settings );
+   const int             nsolbo = static_cast<int>( merged.size() );
+   int                   j2     = 0;
+   for ( const double bfrac : levels )
    {
       while ( j2 < nsolbo )
       {
@@ -187,7 +202,6 @@ IntegralDistribution integral_distribution( const Model& model, DistributionAxis
       out.f_f0.push_back( x.k );
       out.vbar20.push_back( x.v );
       out.rh.push_back( x.r );
-      bfrac += bfincr;
    }
 
    if ( settings.smoothing > 1 )

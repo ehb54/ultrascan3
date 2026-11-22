@@ -406,6 +406,9 @@ def edge_items():
         {"type": "MW", "method": "2DSA", "low": 50.0, "high": 100.0, "target": 50.0, "tolerance": 10.0},
         {"type": "f/f0", "method": "2DSA", "low": 1.5, "high": 2.0, "target": 50.0, "tolerance": 10.0},
         {"type": "vbar", "method": "2DSA", "low": 0.7, "high": 0.75, "target": 50.0, "tolerance": 10.0},
+        # Typed the wrong way round:  the reporter selects nothing, so the
+        # fraction is 0 and a 0 % target passes.
+        {"type": "s", "method": "2DSA", "low": 7.0, "high": 4.0, "target": 0.0, "tolerance": 1.0},
     ]
 
 

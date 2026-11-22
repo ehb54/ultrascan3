@@ -123,12 +123,16 @@ ehb54/ultrascan-tickets#1214.
    normalizes by the total; `outputStats` divides by the total weight;
    `US_Model::constant_vbar` and `constant_ff0` read the first component of
    an empty model.  US_Calc reports an empty model or a zero total as an
-   error and leaves the value NaN; the desktop output is unchanged.  Empty and
-   zero-total models are excluded from the captured outputs.
+   error, with the value the legacy division gives (NaN or infinity), so
+   the desktop output is unchanged.  US_Integral leaves a model with a zero
+   total out of its plot and CSV files and says so in the legend; the other
+   models are drawn as before (the desktop drew a vertical line for it).
+   Empty and zero-total models are excluded from the captured outputs.
 6. **Unsupported types.**  An item type outside s, D, MW and f/f0 selects
    nothing in `distrib_info` (fraction 0) but is reported unsupported by
-   `velmwl_range_fraction`.  US_Calc reports it unsupported; the reporter
-   still shows 0 %.
+   `velmwl_range_fraction`, except on a model without components, where it
+   gives 0.  US_Calc reports it unsupported; the reporter still shows
+   0 / C * 100 and the VELOCITY-MWL table 0 % on an empty model.
 7. **Gaussian smoothing past the array.**  `gaussian_smoothing` needs at
    least `2*smooth-1` points; with fewer, its border loops read and write
    past the array, and a Qt build with bounds assertions aborts.  US_Integral
@@ -136,15 +140,21 @@ ehb54/ultrascan-tickets#1214.
    while the division count started at 100.  US_Calc rejects such a
    series and leaves it unchanged, `US_Math2::gaussian_smoothing` leaves it
    unchanged, and US_Integral limits the smoothing to what the division
-   count supports from the start.  The captured cases stay within the
-   precondition.
+   count supports from the start, as does us_density_match, which had the
+   same starting values.  us_mwl_spectra, whose point count depends on the
+   wavelength range, says in its status line when a width is too large.
+   The captured cases stay within the precondition.
 8. **Floating-point contraction.**  Compilers may fuse a multiply and an
    add (FMA), which changes the last bits and, where a value sits on a bin
    edge or a difference cancels exactly, the result itself.  Legacy results
    therefore differed between builds (arm64, GCC defaults, -march=native).
-   US_Calc is compiled without contraction (`us_calc_fp.h`), so it gives the
-   same doubles everywhere, and equals the legacy code compiled without
-   contraction bit for bit.  The captures are made without contraction; the
+   US_Calc is compiled without contraction (`-ffp-contract=off` in CMake and
+   the `us_calc_fp.h` pragmas, which are all a qmake build has), and equals
+   the legacy code compiled without contraction bit for bit.  This was shown
+   on macOS arm64, Linux x86_64 (GCC) and Windows x64 (MSVC), not on builds
+   that contract by default (GCC on aarch64, -march=native).  `pow`, `exp`,
+   `log` and `sqrt` come from each platform's math library, so results that
+   use them can still differ between platforms in the last bits.  The captures are made without contraction; the
    smoothing captures differ from an FMA build of the legacy code by at most
    3.6e-16 relative.
 9. **Histogram area missed the maximum.**  `outputStats` tested each of its
@@ -187,3 +197,25 @@ ehb54/ultrascan-tickets#1214.
    for a sign mismatch; D or f with f/f0 still give s = 0.  Every other
    input gives the same doubles as before (checked over 2 000 000
    components).  No fixture has zero buoyancy.
+13. **Inverted ranges and non-finite values.**  The reporter accepts a range
+   item with low > high (`us_report_gui` checks only the number syntax) and
+   selects nothing, so the fraction is 0 and a 0 % target passes.  A
+   non-finite value enters only the sums that use it:  a NaN s is never in
+   an s range and makes only the s mean NaN.  US_Calc calculates these the
+   same way and reports them as warnings (`validate_range`,
+   `validate_values`); the `edge` items include an inverted range.
+14. **Coefficients in US_Integral.**  `US_Model::update_coefficients`
+   stops at the first component it cannot complete and leaves the later
+   ones as stored, so the plotted D, MW, f/f0 and radius of those
+   components depended on the order.  `integral_distribution` completes
+   every component.
+15. **Empty Monte Carlo iterations.**  `US_Model::constant_vbar` and
+   `constant_ff0` read the first component of each iteration, past the end
+   of an iteration without components.  `mc_composite` reports such an
+   iteration as an error, and `US_Model::load` returns `NO_MODEL` for the
+   whole model.
+16. **Undefined statistics.**  `weighted_statistics` returns every value as
+   the legacy arithmetic gives it, infinities included (us_ga_init printed
+   `inf` for the standard deviation of a bin with one nonzero
+   concentration), and names each value that is not finite in a
+   diagnostic.

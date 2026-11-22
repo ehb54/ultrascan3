@@ -1141,7 +1141,8 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
    QString str1;
    QString                           str2;
 
-   // The statistics come from US_Calc; undefined ones print as nan.
+   // The statistics come from US_Calc; values the arithmetic leaves
+   // undefined print as nan or inf.
    const US_Calc::WeightedStatistics st =
       US_Calc::weighted_statistics( vals.toVector(), concs.toVector(), US_Calc::StatisticsConvention::ConcentrationDistribution );
    const qreal vlo         = st.minimum;

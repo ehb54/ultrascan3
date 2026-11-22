@@ -47,9 +47,9 @@ enum class StatisticsConvention
 //! \brief Weighted statistics of one attribute (algorithm
 //! "weighted_statistics").
 //!
-//! Values that the calculation leaves undefined (division by zero, or a
-//! confidence index before the first value) are NaN and explained by
-//! diagnostics.
+//! Every value is what the legacy arithmetic gives, NaN or infinity
+//! included; a confidence index before the first value gives NaN.  Each
+//! value that is not finite is named in a diagnostic.
 struct WeightedStatistics
 {
       StatisticsConvention convention         = StatisticsConvention::ConcentrationDistribution;
