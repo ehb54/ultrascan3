@@ -39,7 +39,8 @@ TEST( UsCalcVersion, AlgorithmsAreNamedVersionedAndDescribed )
                               "report_item",
                               "velmwl_report_item",
                               "report_replicate_group",
-                              "report_run_checks" } )
+                              "report_run_checks",
+                              "report_lookup" } )
    {
       EXPECT_TRUE( names.contains( name ) ) << name;
    }

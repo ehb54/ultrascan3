@@ -16,6 +16,7 @@
 #include "us_calc_replicate.h"
 #include "us_calc_replicate_group.h"
 #include "us_calc_report_item.h"
+#include "us_calc_report_lookup.h"
 #include "us_calc_run_checks.h"
 #include "us_calc_tolerance.h"
 #include "us_calc_units.h"
@@ -10441,93 +10442,52 @@ model_used.components[ ii ].vbar20 ),
    mstr += indent( 2 ) + "</table>\n";
 
 
-   //Now add Basic Report params comparison to actual Run Details
-   QString t_name = model_used.description.split(".")[1];
-   QString wvl    = t_name.mid(2,3);
-   QString cellID = t_name.mid(0,1);
-   qDebug() << "In DISTRIB: triple, cellID, wvl -- " << t_name << cellID << wvl;
-
-   qDebug() << "Model description, mdla, msim -- " << model_used.description <<  mdla << msim;
-   QString model_name = mdla.split("_")[1];
-   if ( model_name.contains("PCSA") )
-     model_name = "PCSA";
-   if ( model_name.contains("-CG") )
-     model_name = model_name.replace("-CG", "");
-   
-   double tot_conc_r, tot_conc_r_factor, tot_conc_tol_r, rmsd_r, av_int_r, exp_dur_r, exp_dur_tol_r;
-   double loading_volume_r, loading_volume_tol_r ;
+   //Now add Basic Report params comparison to actual Run Details:  the
+   // triple's inputs are chosen by US_Calc ("report_lookup").
+   const US_Calc::ModelDescriptionParts parts                = US_Calc::parse_model_description( model_used.description );
+   const bool                           interference_triple  = tripleInfo["triple_name"].contains( "Interference" );
+   const bool                           simulated_absorbance = dataSource.contains( "DiskAUC:Absorbance" ) && simulatedData;
+   const int                            nchna                = currAProf.pchans.count();
+   const int                            channel_index =
+      parts.ok
+                                    ? US_Calc::report_channel_index( chndescs_alt.mid( 0, nchna ), parts.triple, interference_triple, simulated_absorbance )
+                                    : -1;
+   if ( channel_index < 0 )
+   {
+      // Without the triple's report there is nothing to compare with.
+      qDebug() << "distrib_info: no report applies to model" << model_used.description
+               << "- comparison and integration results left out";
+      return mstr;
+   }
+   QString       t_name     = parts.triple;
+   QString       wvl        = parts.wavelength;
+   QString       cellID     = parts.cell;
+   QString       model_name = parts.model_name;
 
    //length of run (based on rdata - for current triple )
    double        last_f = rdata->scanData.last().seconds;
    QString       wks    = gmp_duration_hours_minutes( last_f );
 
-   US_ReportGMP* reportGMP;  //reference
-   int nchna   = currAProf.pchans.count();
-   for ( int i = 0; i < nchna; i++ )
-     {
-       QString channel_desc_alt = chndescs_alt[ i ];
+   const QString channel_desc_alt = chndescs_alt[channel_index];
+   US_ReportGMP* reportGMP        = &( ch_reports[channel_desc_alt][wvl] );
+   double        tot_conc_r       = reportGMP->tot_conc;
+   double        tot_conc_tol_r   = reportGMP->tot_conc_tol;
+   double        rmsd_r           = reportGMP->rmsd_limit;
+   double        av_int_r         = reportGMP->av_intensity;
+   double        exp_dur_r        = reportGMP->experiment_duration;
+   double        exp_dur_tol_r    = reportGMP->experiment_duration_tol;
 
-       qDebug() << "Identifying report for triple -- " << t_name   // 2A660
-		<< ", tripleInfo:  "                   << tripleInfo[ "triple_name" ]                     // 2AInterference
-		<< ", channel_desc_alt: "              << channel_desc_alt;
+   double        tot_conc_r_factor    = currAProf.lc_ratios[channel_index];
+   double        loading_volume_r     = currAProf.l_volumes[channel_index];
+   double        loading_volume_tol_r = currAProf.lv_tolers[channel_index];
 
-       if ( tripleInfo[ "triple_name" ].contains("Interference") && !channel_desc_alt.contains("Interf") )
-	 continue;
+   // autoflowIntensity (for the triple's wavelength); NaN when none applies
+   double  av_int_exp = US_Calc::triple_intensity( intensityRIMap, US_Calc::intensity_triple( t_name, simulated_absorbance ) );
 
-       //'S' data
-       QString channelNameProt = channel_desc_alt.split(":")[0];
-       if ( dataSource .contains("DiskAUC:Absorbance") && simulatedData )
-	 channelNameProt = channelNameProt. replace( "A", "S" );
-       
-       if ( t_name. contains( channelNameProt ) )  
-	 {
-	   qDebug() << "So, what are channel_desc_alt, wvl ? " << channel_desc_alt << wvl;
-	     
-	   reportGMP = &( ch_reports[ channel_desc_alt ][ wvl ] );
+   QString exp_dur_r_hh_mm = gmp_duration_hours_minutes( exp_dur_r );
 
-	   tot_conc_r     = reportGMP-> tot_conc ;
-	   tot_conc_tol_r = reportGMP-> tot_conc_tol ;
-	   rmsd_r         = reportGMP-> rmsd_limit ;
-	   av_int_r       = reportGMP-> av_intensity ;
-	   exp_dur_r      = reportGMP-> experiment_duration ;
-	   exp_dur_tol_r  = reportGMP-> experiment_duration_tol ;
-
-	   tot_conc_r_factor    = currAProf. lc_ratios [ i ] ;
-	   loading_volume_r     = currAProf. l_volumes [ i ] ;
-	   loading_volume_tol_r = currAProf. lv_tolers [ i ] ;
-	   
-	   break;
-	 }
-     }
-     QString exp_dur_r_hh_mm = gmp_duration_hours_minutes( exp_dur_r );
-
-     //'S' data
-     if ( dataSource.contains( "DiskAUC:Absorbance" ) && simulatedData )
-     {
-        t_name = t_name.replace( "S", "A" );
-     }
-
-     //autoflowIntensity (for specific wvl)
-     double         av_int_exp;
-     QList<QString> intensity_keys = intensityRIMap.keys();
-     if ( intensity_keys.size() == 1 ) //single wvl
-     {
-       av_int_exp = intensityRIMap.first().toDouble();
-       qDebug() << "single wvl: key, value -- " << intensityRIMap.firstKey() << intensityRIMap.first();
-     }
-   else //MWL
-     {
-       QMap<QString, QString >::iterator jj;
-       for ( jj = intensityRIMap.begin(); jj != intensityRIMap.end(); ++jj )
-	 {
-	   if ( t_name.contains( jj.key() ) )
-	     {
-	       av_int_exp = jj.value().toDouble();
-	       break;
-	     }
-	 }
-     }
-   //
+   // The triple as the intensity and the report mask name it
+   t_name = US_Calc::intensity_triple( t_name, simulated_absorbance );
 
    //Caclulate loading volume based on centerpiece geomentry && fitted meniscus
    //double loading_volume_measured = 451;
@@ -10546,45 +10506,15 @@ model_used.components[ ii ].vbar20 ),
       yes_no( US_Calc::check_loading_volume( loading_volume_measured, loading_volume_r, loading_volume_tol_r ) );
 
    //check what to show on the report
-   if ( tripleInfo[ "triple_name" ].contains("Interference") )
-     t_name.replace("660", "Interference");
-
-   qDebug() << "[XXXXXX] t_name, model_name: " << t_name <<  model_name;
-   
-   QMap < QString, QString > Model_parms_to_compare = perChanMask_edited.ShowTripleModelParts[ t_name ][ model_name ]; //2A660 => 2AInterference, 
-   bool show_tot_conc = false;
-   bool show_rmsd     = false;
-   bool show_exp_dur  = false;
-   bool show_min_int  = false;
-   bool show_integration = false;
-   bool show_loading_vol = false;
-
-   QMap< QString, QString >::iterator sh;
-   for ( sh = Model_parms_to_compare.begin(); sh != Model_parms_to_compare.end(); ++sh )
-     {
-       if ( sh.key().contains( "Concentration" ) && sh.value().toInt() )
-	 show_tot_conc = true;
-
-       if ( sh.key().contains( "RMSD" ) && sh.value().toInt() )
-	 show_rmsd = true;
-
-       if ( sh.key().contains( "Duration" ) && sh.value().toInt() )
-	 show_exp_dur = true;
-
-       if ( sh.key().contains( "Intensity" ) && sh.value().toInt() )
-	 show_min_int = true;
-       
-       if ( sh.key().contains( "Loading" ) && sh.value().toInt() )
-	 show_loading_vol = true;
-       
-       if ( sh.key().contains( "Integration" ) && sh.value().toInt() )
-	 show_integration = true;
-     }
-
-   bool show_comparison_section = false;
-   if ( show_tot_conc || show_rmsd || show_exp_dur || show_min_int || show_loading_vol )
-     show_comparison_section = true;
-   //////////////////////////////////////
+   t_name                                   = US_Calc::mask_triple( t_name, interference_triple );
+   const US_Calc::MaskRows rows             = US_Calc::mask_rows( perChanMask_edited.ShowTripleModelParts[t_name][model_name] );
+   bool                    show_tot_conc    = rows.total_concentration;
+   bool                    show_rmsd        = rows.rmsd;
+   bool                    show_exp_dur     = rows.experiment_duration;
+   bool                    show_min_int     = rows.minimum_intensity;
+   bool                    show_integration = rows.integration_results;
+   bool                    show_loading_vol = rows.loading_volume;
+   bool                    show_comparison_section = rows.comparison_section();
 
    qDebug() << "XXXXX: show_comparison_section -- " << show_comparison_section;
    

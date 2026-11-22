@@ -1,7 +1,7 @@
 //! \file test_us_calc_report.cpp
 // The GMP reporter's rules in US_Calc, with hand-checked values at their
-// edges:  report items on a model, replicate groups, run checks and the
-// report's duration format.
+// edges:  report items on a model, replicate groups, run checks, the
+// report's duration format and the lookups that choose a triple's inputs.
 
 #include <gtest/gtest.h>
 
@@ -12,6 +12,7 @@
 
 #include "us_calc_replicate_group.h"
 #include "us_calc_report_item.h"
+#include "us_calc_report_lookup.h"
 #include "us_calc_run_checks.h"
 #include "us_calc_test_print.h"
 #include "us_calc_tolerance.h"
@@ -509,4 +510,88 @@ TEST( UsReporterGmpDuration, HoursAndMinutes )
    EXPECT_EQ( gmp_duration_hours_minutes( 7169.9 ), "1 h 59 m" );
    // A negative duration floors to -1 hour.
    EXPECT_EQ( gmp_duration_hours_minutes( -30.0 ), "-1 h 60 m" );
+}
+
+// 5c.  The parts of a model description, by position.
+TEST( UsCalcReportLookup, ModelDescription )
+{
+   const ModelDescriptionParts p = parse_model_description( "fixA.2A660.ee1_a2611090000_2DSA-IT_000001_i01.model" );
+   EXPECT_TRUE( p.ok );
+   EXPECT_EQ( p.triple, "2A660" );
+   EXPECT_EQ( p.cell, "2" );
+   EXPECT_EQ( p.wavelength, "660" );
+   EXPECT_EQ( p.analysis, "a2611090000_2DSA-IT_000001_i01" );
+   EXPECT_EQ( p.model_name, "2DSA-IT" );
+
+   EXPECT_EQ( parse_model_description( "fixA.1A260.ee1_a2611090000_PCSA-SL_000001_i01.model" ).model_name, "PCSA" );
+   EXPECT_EQ( parse_model_description( "fixA.1A260.ee1_a2611090000_2DSA-CG-IT_000001_i01.model" ).model_name, "2DSA-IT" );
+   EXPECT_EQ( parse_model_description( "fixA.1A260.ee1_a2611090000_2DSA-CG_000001_i01.model" ).model_name, "2DSA" );
+
+   // Too few fields:  no triple, or no model name in the analysis label
+   EXPECT_FALSE( parse_model_description( "fixA" ).ok );
+   EXPECT_FALSE( parse_model_description( "run.model" ).ok );
+   EXPECT_TRUE( parse_model_description( "run.model" ).triple.isEmpty() );
+}
+
+// 5a.  The channel whose report applies to a triple.
+TEST( UsCalcReportLookup, ReportChannel )
+{
+   const QStringList descs = { "1A:UV/vis.:(unspecified)", "2A:UV/vis.:buffer", "2A:Interf.:buffer" };
+   EXPECT_EQ( report_channel_index( descs, "2A660", false, false ), 1 );
+   EXPECT_EQ( report_channel_index( descs, "2A660", true, false ), 2 ); // interference triple:  Interf channels only
+   EXPECT_EQ( report_channel_index( descs, "1A260", false, false ), 0 );
+   EXPECT_EQ( report_channel_index( descs, "3A260", false, false ), -1 );
+   EXPECT_EQ( report_channel_index( descs, "1A660", true, false ), -1 ); // no interference channel for cell 1
+   EXPECT_EQ( report_channel_index( descs, "2S260", false, true ), 1 );  // simulated absorbance:  "2A" read as "2S"
+   EXPECT_EQ( report_channel_index( descs, "2S260", false, false ), -1 );
+   // The first channel that matches wins.
+   EXPECT_EQ( report_channel_index( { "2A:UV/vis.:first", "2A:UV/vis.:second" }, "2A280", false, false ), 0 );
+   EXPECT_EQ( report_channel_index( {}, "2A280", false, false ), -1 );
+}
+
+// 5b.  The intensity that applies to a triple.
+TEST( UsCalcReportLookup, Intensity )
+{
+   EXPECT_EQ( intensity_triple( "2S260", true ), "2A260" );
+   EXPECT_EQ( intensity_triple( "2S260", false ), "2S260" );
+
+   // One wavelength:  its value whatever the key
+   EXPECT_EQ( triple_intensity( { { "260", "1000" } }, "2A280" ), 1000.0 );
+   // Several:  the first key, in key order, that the triple contains
+   const QMap<QString, QString> mwl = { { "260", "1000" }, { "280", "2000" } };
+   EXPECT_EQ( triple_intensity( mwl, "2A280" ), 2000.0 );
+   EXPECT_TRUE( qIsNaN( triple_intensity( mwl, "2A230" ) ) );
+   EXPECT_EQ( triple_intensity( { { "26", "5" }, { "260", "1000" } }, "2A260" ), 5.0 );
+   EXPECT_TRUE( qIsNaN( triple_intensity( {}, "2A260" ) ) );
+}
+
+// 5d.  The rows the report mask shows.
+TEST( UsCalcReportLookup, MaskRows )
+{
+   EXPECT_EQ( mask_triple( "2A660", true ), "2AInterference" );
+   EXPECT_EQ( mask_triple( "2A660", false ), "2A660" );
+
+   const MaskRows some = mask_rows( { { "Total Concentration", "1" }, { "RMSD", "0" }, { "Experiment Duration", "1" } } );
+   EXPECT_TRUE( some.total_concentration );
+   EXPECT_FALSE( some.rmsd );
+   EXPECT_TRUE( some.experiment_duration );
+   EXPECT_FALSE( some.minimum_intensity );
+   EXPECT_FALSE( some.loading_volume );
+   EXPECT_FALSE( some.integration_results );
+   EXPECT_TRUE( some.comparison_section() );
+
+   const MaskRows integration = mask_rows( { { "Integration Results", "1" } } );
+   EXPECT_TRUE( integration.integration_results );
+   EXPECT_FALSE( integration.comparison_section() );
+
+   const MaskRows each = mask_rows( { { "Minimum Intensity", "1" }, { "Loading Volume", "2" } } );
+   EXPECT_TRUE( each.minimum_intensity );
+   EXPECT_TRUE( each.loading_volume ); // any nonzero integer
+   EXPECT_TRUE( each.comparison_section() );
+
+   // A missing triple or model has no entries; a value that is not an
+   // integer counts as 0.
+   EXPECT_FALSE( mask_rows( {} ).comparison_section() );
+   EXPECT_FALSE( mask_rows( {} ).integration_results );
+   EXPECT_FALSE( mask_rows( { { "RMSD", "true" } } ).rmsd );
 }

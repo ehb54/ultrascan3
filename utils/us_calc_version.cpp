@@ -68,6 +68,11 @@ QVector<AlgorithmVersion> algorithms()
         "experiment duration, loading volume and run duration within tolerance percent of the target (relative); "
         "RMSD at most the limit; intensity above the minimum; temperature within 0.5 C and speed within 4 rpm; "
         "run duration target = step duration + speed / accel" },
+      { "report_lookup",
+        1,
+        "The GMP reporter's inputs for a triple's model:  triple, cell, wavelength and model name by position in the "
+        "description; the first channel whose name the triple contains (interference channels only for interference "
+        "triples); the single intensity, or the first key the triple contains (NaN when none); mask rows by keyword" },
    };
 }
 
