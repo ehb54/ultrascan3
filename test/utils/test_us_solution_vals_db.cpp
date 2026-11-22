@@ -11,8 +11,6 @@ using ::testing::Matcher;
 using ::testing::Return;
 using ::testing::StrictMock;
 
-// Missing-solution policy remains compatible pending the decision in #1247.
-
 namespace
 {
 const QString               kRawGuid    = "ffffffff-1111-2222-3333-444444444444";
@@ -260,6 +258,8 @@ TEST_F( SolutionValsDb, UnmatchedDescriptionReadsNoBuffer )
    expectBufferValuesUnchanged();
 }
 
+// The buffer is known, so the call succeeds with the caller's vbar; the callers
+// read the solution themselves and warn when it is missing.
 TEST_F( SolutionValsDb, MissingVbarStillLoadsAvailableBufferAndPreservesCallerDefault )
 {
    InSequence sequence;
@@ -272,5 +272,31 @@ TEST_F( SolutionValsDb, MissingVbarStillLoadsAvailableBufferAndPreservesCallerDe
    EXPECT_EQ( QString( "1.00512" ), density );
    EXPECT_EQ( QString( "1.0213" ), viscosity );
    EXPECT_FALSE( errmsg.isEmpty() );
+}
+
+// With no solution in the database or on disk there is no buffer to look up,
+// so no buffer query is sent and the call fails with the buffer values kept.
+TEST_F( SolutionValsDb, MissingSolutionFailsWithoutLookingUpABuffer )
+{
+   edata.runID    = "us3-test-no-such-run";
+   edata.dataType = "RA";
+   {
+      InSequence sequence;
+      expectQuery( { "get_rawDataID_from_GUID", kRawGuid }, IUS_DB2::OK, false );
+   }
+   EXPECT_FALSE( US_SolutionVals::values( &db, &edata, soluID, cvbar20, density, viscosity, compress, manual, errmsg ) );
+   EXPECT_EQ( QString( "0.70" ), cvbar20 );
+   expectBufferValuesUnchanged();
+   EXPECT_TRUE( errmsg.contains( "No solution or buffer for this data set was found" ) ) << errmsg.toStdString();
+}
+
+TEST_F( SolutionValsDb, MissingSolutionOnDiskFailsWithItsReason )
+{
+   edata.runID    = "us3-test-no-such-run";
+   edata.dataType = "RA";
+   EXPECT_FALSE( US_SolutionVals::values( nullptr, &edata, soluID, cvbar20, density, viscosity, compress, manual, errmsg ) );
+   EXPECT_EQ( QString( "0.70" ), cvbar20 );
+   expectBufferValuesUnchanged();
+   EXPECT_TRUE( errmsg.contains( "No solution or buffer for this data set was found" ) ) << errmsg.toStdString();
 }
 } // namespace

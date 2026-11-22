@@ -35,7 +35,10 @@ class US_UTIL_EXTERN US_SolutionVals
       //! \param  compress  Reference for returned compressibility string
       //! \param  manual    Reference for returned manual string ("0"/"1")
       //! \param  errmsg    Reference for returned error message string
-      //! \return           Flag for successful fetch of all values
+      //! \return           True when the data set's buffer and its values
+      //!                   were found.  A missing solution vbar leaves the
+      //!                   caller's cvbar20 and still returns true; with no
+      //!                   solution or buffer found the call fails.
       static bool values( IUS_DB2* dbP, US_DataIO::EditedData*, QString&,
             QString&, QString&, QString&, QString&, QString&, QString& );
 
