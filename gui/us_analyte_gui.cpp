@@ -267,8 +267,6 @@ DbgLv(1) << "AnaS:  aAcc : nsel" << nsel;
    }
    else if ( nsel > 1 )
    {
-      bool all_loaded = true;
-
       for ( int ii = 0; ii < nsel; ii++ )
       {
 DbgLv(1) << "AnaS:  aAcc :   ii" << ii;
@@ -279,15 +277,12 @@ DbgLv(1) << "AnaS:  aAcc :   ii" << ii;
             ms_analytes << *analyte;
          }
          else
-         {
-            all_loaded = false;
+         { // Never accept part of a multiple selection. Stop at the failure so
+            // a later analyte that loads cannot replace its message or turn
+            // the actions back on.
+            ms_analytes.clear();
+            break;
          }
-      }
-
-      if ( !all_loaded )
-      { // Never accept part of a multiple selection
-         ms_analytes.clear();
-         pb_accept->setEnabled( false );
       }
    }
 }
@@ -2741,10 +2736,9 @@ DbgLv(1) << "AnaN:SL: write_db()  anaID" << analyte->analyteID;
    if ( status != IUS_DB2::OK )
    {
       QString msg = tr( "(Return Code = %1 ) " ).arg( status ) + analyte->message + "\n" + db.lastError();
-      QMessageBox::critical( this,
-          tr( "DB Analyte Write Error" ),
-          tr( "Error updating analyte in the database:\n" )
-          + msg );
+      // The message says whether the DB kept the analyte and only its
+      //  local copy failed, or what part of the DB save failed
+      QMessageBox::critical( this, tr( "Analyte Save Error" ), tr( "The analyte save did not finish:\n" ) + msg );
       return false;
    }
 
@@ -3065,10 +3059,9 @@ DbgLv(1) << "AnaE:SL: write_db()  bufID" << analyte->analyteID;
    if ( status != IUS_DB2::OK )
    {
       QString msg = tr( "(Return Code = %1 ) " ).arg( status ) + analyte->message + "\n" + db.lastError();
-      QMessageBox::critical( this,
-          tr( "DB Analyte Write Error" ),
-          tr( "Error updating analyte in the database:\n" )
-          + msg );
+      // The message says whether the DB kept the analyte and only its
+      //  local copy failed, or what part of the DB save failed
+      QMessageBox::critical( this, tr( "Analyte Save Error" ), tr( "The analyte save did not finish:\n" ) + msg );
       return false;
    }
 

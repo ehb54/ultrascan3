@@ -1827,9 +1827,8 @@ void US_BufferGuiNew::spectrum_class( void )
 // Slot to cancel edited buffer
 void US_BufferGuiNew::newCanceled()
 {
-
-  
-DbgLv(1) << "BufN:SL: newCanceled()";
+   DbgLv( 1 ) << "BufN:SL: newCanceled()";
+   pendingGUID.clear();
    buffer->person       = "";
    buffer->bufferID     = "-1";
    buffer->GUID         = "";
@@ -1850,15 +1849,22 @@ DbgLv(1) << "BufN:SL: newCanceled()";
 void US_BufferGuiNew::newAccepted()
 {
    DbgLv( 1 ) << "BufN:SL: newAccepted()";
-   const QString previousGUID = buffer->GUID;
-   buffer->GUID         = US_Util::new_guid();
+   // The shared buffer may still hold the identity of the buffer selected on
+   //  the Select panel. A new buffer never takes it over: it gets its own GUID,
+   //  kept across failed saves, and no ID until a save stores it.
+   if ( pendingGUID.isEmpty() )
+   {
+      pendingGUID = US_Util::new_guid();
+   }
+   buffer->GUID     = pendingGUID;
+   buffer->bufferID = "-1";
 
-   
+   // A failed save shows its error and keeps the entered buffer on New for
+   //  retry or Cancel
    if ( from_db )
    { // Add buffer to database
       if ( !write_db() )
-      { // The error is shown; keep the entered buffer on New for retry or Cancel
-         buffer->GUID = previousGUID;
+      {
          return;
       }
       DbgLv(1) << "BufN:SL:  newAcc: DB  id" << buffer->bufferID;
@@ -1867,10 +1873,14 @@ void US_BufferGuiNew::newAccepted()
 
    else
    { // Add buffer to local disk
-DbgLv(1) << "BufN:SL:  newAcc: Disk";
-      write_disk();
+      DbgLv( 1 ) << "BufN:SL:  newAcc: Disk";
+      if ( !write_disk() )
+      {
+         return;
+      }
    }
 
+   pendingGUID.clear();
    buffer->person       = "";
    buffer->bufferID     = "-1";
    buffer->GUID         = "";
@@ -1905,8 +1915,8 @@ DbgLv(1) << "BufN:SL: write_db()  bufID" << buffer->bufferID;
    return idBuf >= 0 || idBuf == -6;
 }
 
-// Write new buffer to local disk file
-void US_BufferGuiNew::write_disk()
+// Write new buffer to local disk file; true when the file was written
+bool US_BufferGuiNew::write_disk()
 {
 DbgLv(1) << "BufN:SL: write_disk()  bufID" << buffer->GUID;
    QString path     = US_Settings::dataDir() + "/buffers";
@@ -1914,8 +1924,14 @@ DbgLv(1) << "BufN:SL: write_disk()  bufID" << buffer->GUID;
    bool    newFile;
    QString filename = US_Buffer::get_filename( path, buffer->GUID, newFile );
 
-   buffer->writeToDisk( filename );
-DbgLv(1) << "BufN:SL: write_disk()    newFile" << newFile;
+   if ( !buffer->writeToDisk( filename ) )
+   {
+      QMessageBox::critical(
+         this, tr( "Buffer Write Error" ), tr( "The buffer could not be saved to the local file:\n%1" ).arg( filename ) );
+      return false;
+   }
+   DbgLv( 1 ) << "BufN:SL: write_disk()    newFile" << newFile;
+   return true;
 }
 
 

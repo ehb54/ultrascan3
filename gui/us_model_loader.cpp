@@ -1766,6 +1766,18 @@ void US_ModelLoader::show_model_info( QPoint pos )
 
    bool    frDisk = ( model_descriptions[ 0 ].filename.length() > 0 );
 
+   // A model that fails to load is shown without values, never with the
+   //  values of the model loaded before it
+   int                    load_rc         = IUS_DB2::OK;
+   auto                   load_info_model = [this, &load_rc]( const int index )
+   {
+      model   = US_Model();
+      load_rc = load_model( model, index );
+      return load_rc == IUS_DB2::OK;
+   };
+   auto load_status = [this, &load_rc]()
+   { return load_rc == IUS_DB2::OK ? tr( "loaded" ) : tr( "could not be loaded (status %1)" ).arg( load_rc ); };
+
    if ( frDisk )
    {  // ID is filename
       lblid    = tr( "\n  Model File Name:       " );
@@ -1801,7 +1813,7 @@ void US_ModelLoader::show_model_info( QPoint pos )
 //qDebug() << "shmi:   mdx" << mdx << "mdesc" << mdesc;
       if ( mdx < 0 )  return;
 
-      load_model( model, mdx );                            // load model
+      load_info_model( mdx ); // load model
 
       mtype    = model.analysis;                           // model info
       mdesc    = mdesc.length() < 50 ? mdesc :
@@ -1840,6 +1852,7 @@ void US_ModelLoader::show_model_info( QPoint pos )
          + tr( "\n  List Row:              " ) + QString::number( row )
          + tr( "\n  Analysis Run ID:       " ) + anlid
          + "";
+      dtext += tr( "\n  Load Status:           " ) + load_status();
    }
 
    else
@@ -1854,7 +1867,7 @@ void US_ModelLoader::show_model_info( QPoint pos )
       mdesc    = alt_description( lmdesc, false );
       mdx      = modelIndex( mdesc, model_descriptions ); // 1st model index
 
-      load_model( model, mdx );                           // load model
+      const bool first_loaded = load_info_model( mdx ); // load model
 
       runid    = mdesc.section( ".", 0, -4 );             // model info
       mtype    = model.analysis;
@@ -1867,6 +1880,13 @@ void US_ModelLoader::show_model_info( QPoint pos )
       aegid    = model.editGUID;
       anlid    = model_descriptions[ mdx ].reqGUID;
 
+      if ( !first_loaded )
+      { // Nothing is known to be common
+         aruni.clear();
+         atype.clear();
+         aegid.clear();
+      }
+
       // make a pass to see if runID and type are common
 
       for ( int jj = 1; jj < modelsCount; jj++ )
@@ -1876,7 +1896,13 @@ void US_ModelLoader::show_model_info( QPoint pos )
          mdesc    = alt_description( lmdesc, false );
          mdx      = modelIndex( mdesc, model_descriptions ); // model index
 
-         load_model( model, mdx );                           // load model
+         if ( !load_info_model( mdx ) ) // load model
+         {                              // Nothing is known to be common
+            aruni.clear();
+            atype.clear();
+            aegid.clear();
+            break;
+         }
 
          runid    = mdesc.section( ".", 0, -4 );
          tdesc    = model.typeText();
@@ -1918,7 +1944,7 @@ void US_ModelLoader::show_model_info( QPoint pos )
          mdesc    = alt_description( lmdesc, false );
          mdx      = modelIndex( mdesc, model_descriptions );  // model index
 
-         load_model( model, mdx );                            // load model
+         load_info_model( mdx ); // load model
 
          mtype    = model.analysis;                           // model info
          mdesc    = mdesc.length() < 50 ? mdesc :
@@ -1958,6 +1984,7 @@ void US_ModelLoader::show_model_info( QPoint pos )
             + tr( "\n  List Row:              " ) + QString::number( row )
             + tr( "\n  Analysis Run ID:       " ) + anlid
             + "";
+         dtext += tr( "\n  Load Status:           " ) + load_status();
       }
    }
 

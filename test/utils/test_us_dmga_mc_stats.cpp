@@ -69,3 +69,33 @@ TEST_F( DmgaMcStatsBuild, NoLoadableIterationGivesNoModels )
    EXPECT_EQ( 0, US_DmgaMcStats::build_imodels( model, imodels ) );
    EXPECT_TRUE( imodels.isEmpty() );
 }
+
+TEST_F( DmgaMcStatsBuild, UsedModelIsUnchangedWithoutIterationModels )
+{
+   US_Model umodel;
+   umodel.description = "kept";
+   QVector<US_Model> imodels;
+
+   EXPECT_EQ( -1, US_DmgaMcStats::build_used_model( "mean", 0, imodels, umodel ) );
+   EXPECT_EQ( -1, US_DmgaMcStats::build_used_model( "model", 1, imodels, umodel ) );
+   EXPECT_EQ( QString( "kept" ), umodel.description );
+}
+
+TEST_F( DmgaMcStatsBuild, UsedModelIsUnchangedForAnIterationOutOfRange )
+{
+   US_Model model;
+   model.monteCarlo = true;
+   model.mcixmls    = QStringList{ iterationXml( "4e-13" ), iterationXml( "5e-13" ) };
+   QVector<US_Model> imodels;
+   ASSERT_EQ( 2, US_DmgaMcStats::build_imodels( model, imodels ) );
+
+   US_Model umodel;
+   umodel.description = "kept";
+   EXPECT_EQ( -1, US_DmgaMcStats::build_used_model( "model", 3, imodels, umodel ) );
+   EXPECT_EQ( -1, US_DmgaMcStats::build_used_model( "model", 0, imodels, umodel ) );
+   EXPECT_EQ( QString( "kept" ), umodel.description );
+
+   EXPECT_EQ( -2, US_DmgaMcStats::build_used_model( "model", 2, imodels, umodel ) );
+   ASSERT_EQ( 1, umodel.components.size() );
+   EXPECT_DOUBLE_EQ( 5e-13, umodel.components[0].s );
+}

@@ -28,11 +28,17 @@ int US_ExperimentRa::checkRunID( IUS_DB2* db )
    q << runID
      << QString::number( US_Settings::us_inv_ID() );
    db->query( q );
-   if ( db->lastErrno() == IUS_DB2::NOROWS )
+   const int status = db->lastErrno();
+   if ( status != IUS_DB2::OK )
+   {
+      return status; // NOROWS: the run is not stored yet
+   }
+   if ( !db->next() )
+   {
       return IUS_DB2::NOROWS;
-   
+   }
+
    // Ok, let's update the experiment ID
-   db->next();
    expID = db->value( 1 ).toString().toInt();
    return IUS_DB2::OK;
 }
@@ -105,6 +111,12 @@ int US_ExperimentRa::saveToDB( bool update, IUS_DB2* db )
 
       saveStatus = db->statusQuery( q );
       expID = db->lastInsertID();
+   }
+
+   else
+   {
+      // Whether the run is stored could not be determined
+      return status;
    }
 
    if ( expID == 0 )      // double check

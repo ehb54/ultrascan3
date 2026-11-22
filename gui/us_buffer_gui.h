@@ -168,6 +168,9 @@ class US_GUI_EXTERN US_BufferGuiNew : public US_Widgets
       bool          from_db;
       int           dbg_level;
       US_Buffer*    buffer;
+      //! GUID of the buffer being created; kept across failed saves so a
+      //!   retry updates anything already stored instead of adding a second buffer
+      QString                             pendingGUID;
 
       QPushButton*  pb_accept;
       QPushButton*  pb_spectrum;
@@ -216,7 +219,7 @@ class US_GUI_EXTERN US_BufferGuiNew : public US_Widgets
       void newAccepted     ( void );
       void newCanceled     ( void );
       bool write_db( void );
-      void write_disk      ( void );
+      bool write_disk( void );
       void update_db_disk  ( bool );
       void calc_visc_dent_temp ( void );
       void set_temp20 ( void );

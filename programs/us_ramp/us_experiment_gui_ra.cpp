@@ -16,6 +16,8 @@ US_ExperimentGuiRa::US_ExperimentGuiRa(
    US_WidgetsDialog( nullptr, Qt::WindowFlags() ), expInfo( dataIn )
 {
    signal = signal_wanted;
+   currentLab        = 0;
+   currentInstrument = 0;
 
    setPalette( US_GuiSettings::frameColor() );
    setWindowTitle( tr( "Experiment Information" ) );
@@ -221,6 +223,9 @@ void US_ExperimentGuiRa::reset( void )
 
    pb_accept       ->setEnabled( false );
 
+   // A rotor's lab, instruments and operators come from the lab list
+   pb_rotor->setEnabled( !labList.isEmpty() );
+
    // Update controls to represent selected experiment
    cb_instrument   ->setLogicalIndex( expInfo.instrumentID );
    cb_operator     ->setLogicalIndex( expInfo.operatorID   );
@@ -295,8 +300,8 @@ void US_ExperimentGuiRa::reset( void )
       if ( expInfo.label.isEmpty() )
          pb_accept       ->setEnabled( false );
 
-      // Nor can the lab list when the labs come from the db
-      if ( disk_controls->db() && labList.isEmpty() )
+      // Nor can the lab list, from the db or from disk
+      if ( labList.isEmpty() )
       {
          pb_accept->setEnabled( false );
       }
@@ -343,7 +348,8 @@ bool US_ExperimentGuiRa::load( void )
       US_DB2           db( masterPW );
 
       // When the labs cannot be read, the dialog opens with an empty
-      //  lab list, Accept stays disabled, and the user can only cancel
+      //  lab list, Accept and rotor selection stay disabled in either
+      //  data source, and the user can only cancel
       US_Rotor::Status labStatus = US_Rotor::NOT_FOUND;
       if ( db.lastErrno() != IUS_DB2::OK )
       {
@@ -585,6 +591,11 @@ void US_ExperimentGuiRa::setInstrumentList( void )
 qDebug() << "ExpG: setInstrL: IN labList size" << labList.size()
  << "currentLab" << currentLab;
    QList< listInfo > options;
+   if ( currentLab < 0 || currentLab >= labList.size() )
+   {
+      cb_instrument->clear();
+      return;
+   }
    QList< US_Rotor::Instrument > instruments = labList[ currentLab ].instruments;
 qDebug() << "ExpG: setInstrL:  instruments size" << instruments.size();
 
@@ -623,6 +634,12 @@ qDebug() << "ExpG: setInstrL:  ins ID Ser" << expInfo.instrumentID
 void US_ExperimentGuiRa::setOperatorList( void )
 {
    QList< listInfo > options;
+   if ( currentLab < 0 || currentLab >= labList.size() || currentInstrument < 0 ||
+        currentInstrument >= labList[currentLab].instruments.size() )
+   {
+      cb_operator->clear();
+      return;
+   }
    QList< US_Rotor::Instrument > instruments = labList[ currentLab ].instruments;
    QList< US_Rotor::Operator > operators = instruments[ currentInstrument ].operators;
 

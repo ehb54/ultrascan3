@@ -4628,15 +4628,6 @@ DbgLv(1) << "CGui: gExpInf: IN";
       //int recStatus = ExpData.checkRunID( &db );
       int recStatus = ExpData.checkRunID_auto( ExpData.invID, &db );
 
-      if ( recStatus != US_DB2::OK && recStatus != US_DB2::NOROWS )
-      {
-         QMessageBox::warning( this,
-                tr( "Database Problem" ),
-                tr( "Could not check whether the current runID is in"
-                    " the database:\n" ) + db.lastError() );
-         return;
-      }
-
       qDebug() << "IN getExpInfo_auto( void ) !";
       // if saveStatus == BOTH, then we are editing the record from the database
       if ( ( recStatus == US_DB2::OK ) && ( saveStatus != BOTH ) )
@@ -7933,9 +7924,20 @@ void US_ConvertGui::saveUS3( void )
    int kotrips  = nitrips * nspeeds;
    bool is_buoy = ExpData.expType.contains( "buoyancy", Qt::CaseInsensitive );
    bool is_cali = ExpData.expType.contains( "calibrat", Qt::CaseInsensitive );
-DbgLv(1) << "SV: ExpData.expType" << ExpData.expType << "is_buoy" << is_buoy
- << "is_cali" << is_cali;
-DbgLv(1) << "SV: nspeeds,itrips,otrips" << nspeeds << nitrips << notrips;
+   DbgLv( 1 ) << "SV: ExpData.expType" << ExpData.expType << "is_buoy" << is_buoy << "is_cali" << is_cali;
+   DbgLv( 1 ) << "SV: nspeeds,itrips,otrips" << nspeeds << nitrips << notrips;
+
+   // After a failed database save (already reported by saveUS3DB), leave the
+   //  autoflow import stage as it was found so the import can be redone, and
+   //  allow another save only when the loaded data is unchanged
+   auto stop_failed_save = [this]( const bool can_retry )
+   {
+      if ( us_convert_auto_mode )
+      {
+         revert_autoflow_stages_record( autoflowID_passed );
+      }
+      pb_saveUS3->setEnabled( can_retry );
+   };
 
    if ( nspeeds < 2  ||  notrips != kotrips  ||  is_buoy  ||  is_cali )
    {  // For single-speed data, save current triples
@@ -7944,7 +7946,8 @@ DbgLv(1) << "SV: nspeeds,itrips,otrips" << nspeeds << nitrips << notrips;
       {
          qDebug() << "SINGLE_SPEED DATA SAVE: ExpData.invID = " << ExpData.invID;
          if ( !saveUS3DB() ) // Save AUCs to disk then DB
-         {                   // The failure was reported; nothing later may run or report success
+         {                   // Nothing later may run or report success
+            stop_failed_save( true );
             return;
          }
          writeTimeStateDisk(); // Get TimeState in results
@@ -7975,7 +7978,8 @@ DbgLv(1) << "SV: nspeeds,itrips,otrips" << nspeeds << nitrips << notrips;
 DbgLv(1) << "nspeeds=" << nspeeds << "nripro=" << nripro;
 //if(nripro>(-2)) return;
       uchar uuid[ 16 ];
-//      saveStatus        = NOT_SAVED;
+      QStringList storedRunIDs;
+      //      saveStatus        = NOT_SAVED;
 
       for ( int spx = 0; spx < nspeeds; spx++ )
       {
@@ -8025,9 +8029,25 @@ DbgLv(1) << "SV:    trx" << trx << "scans" << allData[ trx ].scanData.count();
          {
             qDebug() << "MULTI_SPEED DATA SAVE: ExpData.invID = " << ExpData.invID;
             if ( !saveUS3DB() ) // Save AUCs to disk then DB
-            {                   // The failure was reported; stop before later speeds and success
+            {                   // Stop before later speeds and success
+               QStringList unstoredRunIDs;
+               for ( int ux = spx; ux < nspeeds; ux++ )
+               {
+                  unstoredRunIDs << runIDbase + QString::asprintf( "%05d", speeds[ux] );
+               }
+
+               QMessageBox::warning( this,
+                                     tr( "Multi-Speed Save Incomplete" ),
+                                     tr( "The speed runs were not all saved.\n\n"
+                                         "Stored in the database:\n   %1\n\n"
+                                         "Not stored:\n   %2\n\n"
+                                         "The data shown is now split by speed; reload the run to save it again." )
+                                        .arg( storedRunIDs.isEmpty() ? tr( "(none)" ) : storedRunIDs.join( "\n   " ),
+                                              unstoredRunIDs.join( "\n   " ) ) );
+               stop_failed_save( false );
                return;
             }
+            storedRunIDs << runID;
             writeTimeStateDisk(); // Get TimeState in results
             writeTimeStateDB();   // Save TimeState to database
 DbgLv(1) << "Writing to database";
