@@ -64,6 +64,8 @@ HEADERS      = \
                us_project_gui.h         \
                us_properties.h          \
                us_resids_bitmap.h       \
+               us_resplot_fem.h         \
+               us_plot_control_fem.h    \
                us_report_gui.h          \
                us_report_general_gui.h  \
                us_rotor_gui.h           \
@@ -128,6 +130,8 @@ SOURCES      = \
                us_project_gui.cpp         \
                us_properties.cpp          \
                us_resids_bitmap.cpp       \
+               us_resplot_fem.cpp         \
+               us_plot_control_fem.cpp    \
                us_report_gui.cpp          \
                us_report_general_gui.cpp  \
                us_rotor_gui.cpp           \

@@ -40,6 +40,7 @@ function(us3_add_gui_test target)
             )
 endfunction()
 
+add_subdirectory(dependency_layers)  # No upward or circular dependencies between utils, gui and programs
 add_subdirectory(utils)
 add_subdirectory(calc)  # US_Calc unit tests, fixtures and legacy characterization
 

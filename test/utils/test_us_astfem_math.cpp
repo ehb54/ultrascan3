@@ -3,11 +3,29 @@
 #include "us_astfem_math.h"
 #include "us_model.h"
 #include "us_simparms.h"
+#include <cstring>
 #include <vector>
 
 using ::testing::DoubleEq;
 using ::testing::DoubleNear;
 using ::testing::Eq;
+
+#if defined( _MSC_VER )
+#define TEST_NOINLINE __declspec( noinline )
+#else
+#define TEST_NOINLINE __attribute__( ( noinline ) )
+#endif
+
+// Leaves a byte pattern on the stack where the next call's locals will be, so a
+// scalar that call forgets to set reads as the pattern rather than 0 by luck.
+TEST_NOINLINE static void dirtyStack()
+{
+   volatile unsigned char junk[65536];
+   for ( size_t ii = 0; ii < sizeof( junk ); ii++ )
+   {
+      junk[ii] = 0xAA;
+   }
+}
 
 using US_AstfemMathTest = QtTestBase;
 
@@ -139,4 +157,36 @@ bool result = US_AstfemMath::low_acceleration(speedsteps, 250.0, rate);
 // Just verify function completes and sets rate
 EXPECT_GE(rate, 0.0);
 EXPECT_FALSE(std::isnan(rate));
+}
+// A simulated scan has no standard deviations, so its nz_stddev must be
+// false, even when the experimental scans have them.
+TEST_F( US_AstfemMathTest, InitSimDataScansHaveNoStdDevs )
+{
+   US_DataIO::EditedData edata{};
+   edata.cell    = "1";
+   edata.channel = "A";
+   edata.xvalues = { 5.8, 5.9, 6.0 };
+   for ( int ii = 0; ii < 3; ii++ )
+   {
+      US_DataIO::Scan scan{};
+      scan.rvalues   = { 0.1, 0.2, 0.3 };
+      scan.stddevs   = { 0.01, 0.01, 0.01 };
+      scan.nz_stddev = true;
+      edata.scanData << scan;
+   }
+
+   for ( int round = 0; round < 3; round++ )
+   {
+      dirtyStack();
+      US_DataIO::RawData sdata{};
+      US_AstfemMath::initSimData( sdata, edata, 0.5 );
+      ASSERT_EQ( sdata.scanData.size(), 3 );
+      for ( const US_DataIO::Scan& scan : sdata.scanData )
+      {
+         unsigned char flag; // the raw byte: an unset bool may hold any value
+         std::memcpy( &flag, &scan.nz_stddev, 1 );
+         EXPECT_EQ( flag, 0 );
+         EXPECT_TRUE( scan.stddevs.isEmpty() );
+      }
+   }
 }

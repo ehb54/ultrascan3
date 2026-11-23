@@ -3,6 +3,7 @@
 #include "qt_test_base.h"
 #include "us3_test_io.h"
 #include "us_convertio.h"
+#include "us_experiment.h"
 #include "us_settings.h"
 #include <QDir>
 #include <QFile>
@@ -58,6 +59,7 @@ class RunReadDb : public StrictMock<US_DB2_Mock>
                                                "get_project_info",
                                                "get_instrument_info",
                                                "get_rotor_info",
+                                               "get_rotor_calibration_profiles",
                                                "get_rotor_calibration_info",
                                                "all_speedsteps",
                                                "get_rawDataIDs",
@@ -77,7 +79,10 @@ class RunReadDb : public StrictMock<US_DB2_Mock>
                   {
                      EXPECT_EQ( query, ( QStringList{ procedure, "17" } ) );
                   }
-                  status  = queryErrors.value( procedure, IUS_DB2::OK );
+                  const QPair<QString, int> call( procedure, ++callCounts[procedure] );
+                  status          = nthQueryErrors.value( call, queryErrors.value( procedure, IUS_DB2::OK ) );
+                  hasCursorStatus = nthCursorErrors.contains( call ) || cursorErrors.contains( procedure );
+                  cursorStatus    = nthCursorErrors.value( call, cursorErrors.value( procedure ) );
                   pending = status == IUS_DB2::OK ? rows.value( procedure ) : QList<QVariantList>();
                   current.clear();
                } ) );
@@ -91,7 +96,7 @@ class RunReadDb : public StrictMock<US_DB2_Mock>
                   current.clear();
                   if ( pending.isEmpty() )
                   {
-                     status = cursorErrors.value( procedure, status );
+                     status = hasCursorStatus ? cursorStatus : status;
                      return false;
                   }
                   current = pending.takeFirst();
@@ -120,6 +125,8 @@ class RunReadDb : public StrictMock<US_DB2_Mock>
       }
       QMap<QString, QList<QVariantList>> rows;
       QMap<QString, int>                 queryErrors, cursorErrors;
+      // Errors for the n-th call (1-based) of a procedure only.
+      QMap<QPair<QString, int>, int>     nthQueryErrors, nthCursorErrors;
       QStringList                        calls;
       QString                            errorText = "synthetic database failure";
 
@@ -127,7 +134,10 @@ class RunReadDb : public StrictMock<US_DB2_Mock>
       QString             procedure;
       QList<QVariantList> pending;
       QVariantList        current;
-      int                 status = IUS_DB2::OK;
+      QMap<QString, int>  callCounts;
+      int                 status          = IUS_DB2::OK;
+      int                 cursorStatus    = IUS_DB2::OK;
+      bool                hasCursorStatus = false;
 };
 
 class ReadDbRunFailure : public QtTestBase
@@ -244,6 +254,80 @@ TEST_F( ReadDbRunFailure, MissingOptionalRiProfileStillLoadsSpeedStepsAndContinu
    EXPECT_EQ( read( db ), QString( "There were no auc files found in the database." ) );
    EXPECT_EQ( db.calls.last(), QString( "get_rawDataIDs" ) );
    ASSERT_NO_FATAL_FAILURE( expectOriginalFiles() );
+}
+
+// Every lookup after the experiment row:  a query error or a cursor error
+// ends the read with that status, and nothing after it is queried
+// (ultrascan-tickets#1252).
+TEST_F( ReadDbRunFailure, EveryLaterLookupErrorEndsTheExperimentRead )
+{
+   const QList<QPair<QString, int>> lookups = { { "get_person_info", 1 }, // investigator
+                                                { "get_project_info", 1 },
+                                                { "get_person_info", 2 }, // operator
+                                                { "get_instrument_info", 1 },
+                                                { "get_rotor_info", 1 },
+                                                { "get_rotor_calibration_profiles", 1 },
+                                                { "get_rotor_calibration_info", 1 },
+                                                { "all_speedsteps", 1 } };
+   for ( const auto& lookup : lookups )
+   {
+      for ( bool cursorFailure : { false, true } )
+      {
+         SCOPED_TRACE( lookup.first.toStdString() + " call " + std::to_string( lookup.second ) +
+                       ( cursorFailure ? " cursor" : " query" ) );
+         RunReadDb db;
+         if ( lookup.first == "get_rotor_calibration_profiles" )
+         {
+            db.rows["get_experiment_info_by_runID"][0][7] = 0; // no calibration ID:  the first profile is looked up
+         }
+         ( cursorFailure ? db.nthCursorErrors : db.nthQueryErrors )[lookup] = IUS_DB2::DBERROR;
+         US_Experiment experiment;
+         EXPECT_EQ( experiment.readFromDB( "run", &db, steps, "19" ), IUS_DB2::DBERROR );
+         EXPECT_EQ( db.calls.last(), lookup.first );
+         EXPECT_EQ( db.calls.count( lookup.first ), lookup.second );
+      }
+   }
+}
+
+TEST_F( ReadDbRunFailure, LaterLookupErrorPreservesFilesAndStopsBeforeDownload )
+{
+   RunReadDb db;
+   db.addRawRecord();
+   db.nthQueryErrors[{ "get_rotor_info", 1 }] = IUS_DB2::DBERROR;
+   EXPECT_CALL( db, readBlobFromDB( _, _, _ ) ).Times( 0 );
+   EXPECT_EQ( read( db ), db.errorText );
+   EXPECT_EQ( db.calls.last(), QString( "get_rotor_info" ) );
+   EXPECT_FALSE( db.calls.contains( "get_rawDataIDs" ) );
+   ASSERT_NO_FATAL_FAILURE( expectOriginalFiles() );
+}
+
+// A lookup that finds no row is not an error:  its fields stay empty and the
+// read goes on to the speed steps.
+TEST_F( ReadDbRunFailure, LookupsThatFindNoRowLeaveTheirFieldsAndContinue )
+{
+   for ( int status : { IUS_DB2::OK, IUS_DB2::NOROWS } )
+   {
+      SCOPED_TRACE( status );
+      RunReadDb db;
+      db.rows["get_experiment_info_by_runID"][0][7] = 0;
+      for ( const char* procedure : { "get_person_info",
+                                      "get_project_info",
+                                      "get_instrument_info",
+                                      "get_rotor_info",
+                                      "get_rotor_calibration_profiles",
+                                      "get_rotor_calibration_info" } )
+      {
+         db.queryErrors[procedure] = status;
+      }
+      US_Experiment experiment;
+      EXPECT_EQ( experiment.readFromDB( "run", &db, steps, "19" ), IUS_DB2::OK );
+      EXPECT_TRUE( experiment.invGUID.isEmpty() );
+      EXPECT_TRUE( experiment.operatorGUID.isEmpty() );
+      EXPECT_TRUE( experiment.instrumentSerial.isEmpty() );
+      EXPECT_TRUE( experiment.rotorGUID.isEmpty() );
+      EXPECT_EQ( db.calls.last(), QString( "all_speedsteps" ) );
+      ASSERT_EQ( steps.size(), 1 );
+   }
 }
 
 TEST_F( ReadDbRunFailure, SuccessfulReadRemovesOnlyStaleAucsAfterDownload )
