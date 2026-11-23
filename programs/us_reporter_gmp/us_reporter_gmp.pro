@@ -8,6 +8,7 @@ QT           += printsupport
 QT           += datavisualization
 
 HEADERS       = us_reporter_gmp.h                            \
+                us_reporter_gmp_duration.h                   \
                 ../us_edited_data_loaders.h                  \
                 ../us_abde/us_norm_profile.h                 \
                 ../us_analysis_profile/us_analysis_profile.h \

@@ -9,6 +9,7 @@
 #include "../us_ddist_combine/us_ddist_combine.h"
 #include "../us_integral/us_integral.h"
 #include "../us_pseudo3d_combine/us_pseudo3d_combine.h"
+#include "us_calc_replicate_group.h"
 #include "us_db2.h"
 #include "us_extern.h"
 #include "us_gmp_progress.h"
@@ -613,7 +614,10 @@ class US_ReporterGMP : public US_Widgets
   
         QString calc_replicates_averages(void); //!< Calculate replicates averages
         QString get_replicate_group_number(QString); //!< Get replicate group number
-        QMap<QString, double> get_replicate_group_results(US_ReportGMP::ReportItem, QString, QStringList); //!< Get replicate group results
+        US_Calc::Gmp::ReplicateGroupResult get_replicate_group_results( US_ReportGMP::ReportItem,
+                                                                        QString,
+                                                                        QStringList,
+                                                                        int ); //!< Get replicate group results
         void assemble_replicate_av_integration_html(void); //!< Assemble replicate average integration HTML
         bool triple_exist_inMWL( QString );
         

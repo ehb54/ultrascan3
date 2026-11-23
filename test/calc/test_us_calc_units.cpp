@@ -11,7 +11,7 @@
 using namespace US_Calc;
 
 // The GMP reporter scales range bounds with pow(10,-13), pow(10,-7) and
-// pow(10,3) (distrib_info) and with literals (velmwl_range_fraction).  The
+// pow(10,3) (distrib_info) and with literals (distrib_info_velmwl).  The
 // library must give the same doubles, or components on a bound would be
 // counted differently.
 TEST( UsCalcUnits, ScalingMatchesTheReporterExactly )

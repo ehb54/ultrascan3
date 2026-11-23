@@ -12,7 +12,8 @@
 
 #include <QString>
 
-namespace US_Calc
+//! GMP report rules
+namespace US_Calc::Gmp
 {
 //! \brief The analysis label of a model description:
 //! description.section('.', -2, -2).section('_', 1, -1), or
@@ -21,6 +22,6 @@ US_UTIL_EXTERN QString analysis_label( const QString& description );
 
 //! \brief True when a report item's method applies to a model.
 US_UTIL_EXTERN bool    method_matches( const QString& item_method, const QString& model_description );
-} // namespace US_Calc
+} // namespace US_Calc::Gmp
 
 #endif
