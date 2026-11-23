@@ -1047,6 +1047,30 @@ int US_DB2::writeBlobToDB( const QString& filename,
 }
 #endif
 
+int US_DB2::writeBlobFile( const QString& filename, const QByteArray& data, QString& error )
+{
+   QFile fout( filename );
+   if ( !fout.open( QIODevice::WriteOnly ) )
+   {
+      error = QString( "readBlob: could not write file " ) + filename;
+      return DBERROR;
+   }
+
+   const qint64  written = fout.write( data );
+   const bool    flushed = fout.flush();
+   const bool    failed  = written != data.size() || !flushed || fout.error() != QFileDevice::NoError;
+   const QString reason  = fout.errorString();
+   fout.close();
+
+   if ( failed )
+   {
+      error = QString( "readBlob: could not write all %1 bytes to %2: %3" ).arg( data.size() ).arg( filename, reason );
+      QFile::remove( filename );
+      return DBERROR;
+   }
+   return OK;
+}
+
 #ifdef NO_DB
 int US_DB2::readBlobFromDB( const QString& , const QString& , const int ) { return 0; }
 #else
@@ -1102,7 +1126,6 @@ int US_DB2::readBlobFromDB( const QString& filename,
       result = NULL;
 
       // Since we got data, let's write it out
-      QFile fout( filename );
       if ( checksum != calculated )
       {
          error = QString( "readBlob: data transmission error (MD5 checksum)" ) ;
@@ -1110,17 +1133,13 @@ int US_DB2::readBlobFromDB( const QString& filename,
          db_errno = BAD_CHECKSUM;
       }
 
-      else if ( ! fout.open( QIODevice::WriteOnly ) )
-      {
-         error = QString( "readBlob: could not write file " ) + filename;
-
-         db_errno = DBERROR;
-      }
-
       else
       {
-         fout.write( aucData );
-         fout.close();
+         const int written = writeBlobFile( filename, aucData, error );
+         if ( written != OK )
+         {
+            db_errno = written;
+         }
       }
 if(!error.isEmpty()) qDebug() << error;
    }
