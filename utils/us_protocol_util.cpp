@@ -11,8 +11,7 @@
 // protdata  Output list of QStringLists for each protocol.
 // dbP       Pointer to DB connector or NULL to read from disk.
 // returns   The count of records listed.
-int US_ProtocolUtil::list_all( QList< QStringList >& protdata,
-                               US_DB2* dbP )
+int US_ProtocolUtil::list_all( QList<QStringList>& protdata, IUS_DB2* dbP )
 {
    int nrecs        = 0;    // Count of records found
    protdata.clear();        // Initialize list of entries
@@ -27,10 +26,12 @@ qDebug() << "PU:l_all: dbP" << dbP;
       
       qDebug() << "PU:l_all: qry" << qry;
       qDebug() << "PU:l_all:  qry stat" << dbP->lastError();
-      qDebug() << "PU:l_all:  qry errno, US_DB2::OK" << dbP->lastErrno() << US_DB2::OK;
- 
-      if ( dbP->lastErrno() != US_DB2::OK )
+      qDebug() << "PU:l_all:  qry errno, IUS_DB2::OK" << dbP->lastErrno() << IUS_DB2::OK;
+
+      if ( dbP->lastErrno() != IUS_DB2::OK )
+      {
          return nrecs;
+      }
 
       while ( dbP->next() )
       {
@@ -106,8 +107,7 @@ qDebug() << "PU:l_all: nrecs" << nrecs;
    return nrecs;
 }
 
-int US_ProtocolUtil::list_all_auto( QList< QStringList >& protdata,
-				    US_DB2* dbP )
+int US_ProtocolUtil::list_all_auto( QList<QStringList>& protdata, IUS_DB2* dbP )
 {
   int nrecs        = 0;    // Count of records found
   protdata.clear();        // Initialize list of entries
@@ -122,11 +122,13 @@ qDebug() << "[AUTO] PU:l_all: dbP" << dbP;
      
      qDebug() << "[AUTO] PU:l_all: qry" << qry;
      qDebug() << "[AUTO] PU:l_all:  qry stat" << dbP->lastError();
-     qDebug() << "[AUTO] PU:l_all:  qry errno, US_DB2::OK" << dbP->lastErrno() << US_DB2::OK;
-     
-     if ( dbP->lastErrno() != US_DB2::OK )
-       return nrecs;
-     
+     qDebug() << "[AUTO] PU:l_all:  qry errno, IUS_DB2::OK" << dbP->lastErrno() << IUS_DB2::OK;
+
+     if ( dbP->lastErrno() != IUS_DB2::OK )
+     {
+        return nrecs;
+     }
+
      while ( dbP->next() )
        {
          QStringList protentry;
@@ -192,8 +194,7 @@ int US_ProtocolUtil::update_list( const QStringList protentry,
 // xml       XML string comprising protocol record information.
 // dbP       Pointer to DB connector or NULL to write to disk.
 // returns   The db_id or filename numeric of the new record.
-int US_ProtocolUtil::write_record( const QString xml,
-                                   US_DB2* dbP )
+int US_ProtocolUtil::write_record( const QString xml, IUS_DB2* dbP )
 {
    int newpx        = -1;   // Default new protocol record index
 
@@ -297,11 +298,13 @@ qDebug() << "PU:wrrec:  personID" << personID << "protguid" << protguid;
           << QString::number( nwvlens );
 
       dbP->query( qry );
-qDebug() << "PU:wrrec:  qry" << qry;
-qDebug() << "PU:wrrec:   stat" << dbP->lastErrno() << dbP->lastError();
+      qDebug() << "PU:wrrec:  qry" << qry;
+      qDebug() << "PU:wrrec:   stat" << dbP->lastErrno() << dbP->lastError();
 
-      if ( dbP->lastErrno() != US_DB2::OK )
+      if ( dbP->lastErrno() != IUS_DB2::OK )
+      {
          return newpx;
+      }
 
       newpx            = dbP->lastInsertID();
 qDebug() << "PU:wrrec:    newpx" << newpx;
@@ -343,8 +346,7 @@ qDebug() << "PU:wrrec:    rtn newpx" << newpx;
 // protentry  Pointer to summary protocol created.
 // dbP        Pointer to DB connector or NULL to write to disk.
 // returns    Database Id of record or filename numeric (-ve. -> error).
-int US_ProtocolUtil::read_record( const QString protname, QString* xml,
-                                  QStringList* protentry, US_DB2* dbP )
+int US_ProtocolUtil::read_record( const QString protname, QString* xml, QStringList* protentry, IUS_DB2* dbP )
 {
    int idprot       = -1;
 
@@ -359,8 +361,10 @@ int US_ProtocolUtil::read_record( const QString protname, QString* xml,
       qry << "get_protocol_desc" << QString::number( US_Settings::us_inv_ID() );
       dbP->query( qry );
 
-      if ( dbP->lastErrno() != US_DB2::OK )
-         return idprot;    // Error exit:  unable to read DB record
+      if ( dbP->lastErrno() != IUS_DB2::OK )
+      {
+         return idprot; // Error exit:  unable to read DB record
+      }
 
       while ( dbP->next() )
       {
@@ -447,9 +451,12 @@ int US_ProtocolUtil::read_record( const QString protname, QString* xml,
    return idprot;
 }
 
-// Copy of the read_record for autoflow when inv_ID is propagated 
-int US_ProtocolUtil::read_record_auto( const QString protname, int invID_passed, QString* xml,
-				       QStringList* protentry, US_DB2* dbP )
+// Copy of the read_record for autoflow when inv_ID is propagated
+int US_ProtocolUtil::read_record_auto( const QString protname,
+                                       int           invID_passed,
+                                       QString*      xml,
+                                       QStringList*  protentry,
+                                       IUS_DB2*      dbP )
 {
    int idprot       = -1;
 
@@ -466,8 +473,10 @@ int US_ProtocolUtil::read_record_auto( const QString protname, int invID_passed,
 
       qDebug() << "In US_ProtocolUtil::read_record_auto: DB NOT NULL; query -- " << qry;
 
-      if ( dbP->lastErrno() != US_DB2::OK )
-         return idprot;    // Error exit:  unable to read DB record
+      if ( dbP->lastErrno() != IUS_DB2::OK )
+      {
+         return idprot; // Error exit:  unable to read DB record
+      }
 
       while ( dbP->next() )
       {
@@ -572,7 +581,7 @@ int US_ProtocolUtil::read_record_auto( const QString protname, int invID_passed,
 // protid     Protocol db ID or file GUID
 // dbP        Pointer to DB connector or NULL to delete from disk.
 // returns    Flag if delete was successful.
-bool US_ProtocolUtil::delete_record( const QString protid, US_DB2* dbP )
+bool US_ProtocolUtil::delete_record( const QString protid, IUS_DB2* dbP )
 {
    bool deleted     = false;
 
@@ -584,8 +593,10 @@ bool US_ProtocolUtil::delete_record( const QString protid, US_DB2* dbP )
 
       dbP->query( qry );
 
-      if ( dbP->lastErrno() == US_DB2::OK )
-         deleted          = true;
+      if ( dbP->lastErrno() == IUS_DB2::OK )
+      {
+         deleted = true;
+      }
    }
 
    else

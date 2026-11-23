@@ -237,14 +237,27 @@ DbgLv(1) << "Selected runIDs[0]" << runids[0] << "count" << nruns;
       US_DB2       db( pw.getPasswd() );
 
       QString      tmpdir = US_Settings::tmpDir();
-      US_Report    freport;
+      QStringList  failed;
+      QStringList  failedRuns;
       le_runid->setText( tr( "starting data load ..." ) );
       qApp->processEvents();
 
       for ( int ii = 0; ii < nruns; ii++ )
       {
          runid          = runids[ ii ];
-         freport.readDB( runid, &db );
+         US_Report         freport; // Each run's report starts empty
+         US_Report::Status rstat = freport.readDB( runid, &db );
+
+         if ( rstat != US_Report::REPORT_OK )
+         { // Skip a run whose report cannot be read
+            failed << tr( "%1  (%2)" )
+                         .arg( runid )
+                         .arg( rstat == US_Report::NOT_FOUND ? tr( "no report found" )
+                                                             : tr( "database error: %1" ).arg( db.lastError() ) );
+            failedRuns << runid;
+            continue;
+         }
+
          int ntripl     = freport.triples.count();
          int distx      = distros.size();
 DbgLv(1) << " ii,runid,ntrip,dists" << ii << runid << ntripl << distx;
@@ -352,6 +365,27 @@ DbgLv(1) << "  epath" << epath;
             }
          } // END: triples loop
       } // END: runids loop
+
+      if ( !failed.isEmpty() )
+      {
+         QMessageBox::warning( this,
+                               tr( "Report Read Error" ),
+                               tr( "The reports of these runs could not be read,"
+                                   " so their distributions were not loaded:\n\n" ) +
+                                  failed.join( "\n" ) );
+      }
+
+      // Only runs whose reports were read are listed
+      for ( const QString& frun : failedRuns )
+      {
+         runids.removeAll( frun );
+      }
+
+      if ( runids.isEmpty() )
+      {
+         le_runid->clear();
+         return;
+      }
    }
 
    else
