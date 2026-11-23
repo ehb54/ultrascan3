@@ -287,6 +287,29 @@ TEST_F( ReportDb, ReplacingADocumentStopsWhenTheOldOneCannotBeDeleted )
    EXPECT_EQ( 30, t.docs[0].documentID );
 }
 
+TEST_F( ReportDb, ReplacingATripleStopsWhenTheOldOneCannotBeDeleted )
+{
+   US_Report report;
+   report.ID = 9;
+
+   US_Report::ReportTriple stored;
+   stored.tripleID        = 21;
+   stored.tripleGUID      = kTripleGuid;
+   stored.triple          = "1/A/280";
+   stored.dataDescription = "stored";
+   report.triples << stored;
+
+   US_Report::ReportTriple replacement = stored;
+   replacement.tripleID                = -1;
+   replacement.dataDescription         = "replacement";
+
+   expectWrite( { "delete_reportTriple", "21" }, IUS_DB2::DBERROR );
+   EXPECT_EQ( US_Report::DB_ERROR, report.addTriple( replacement, &db ) );
+   ASSERT_EQ( 1, report.triples.size() );
+   EXPECT_EQ( 21, report.triples[0].tripleID );
+   EXPECT_EQ( QString( "stored" ), report.triples[0].dataDescription );
+}
+
 // Whole report
 
 class ReportLoad : public ReportDb

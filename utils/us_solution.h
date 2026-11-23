@@ -97,8 +97,15 @@ class US_UTIL_EXTERN US_Solution
       //! \brief    Quick method to zero out the solution attributes
       void clear             ( void );
 
-      //! \brief    Method to save the current solution to disk
-      void saveToDisk        ( void );
+      /*! \brief    Method to save the current solution to disk, with its buffer
+                    and analyte files
+
+          \return   True when the solution file, the buffer file (when the buffer
+                    has a GUID and no file yet) and every analyte file are written.
+                    False when the solution lacks a description or a valid buffer,
+                    or any of those writes fails; saveStatus then is unchanged.
+      */
+      bool                   saveToDisk( void );
 
       /*! \brief    Function to save the solution information to db
 
@@ -138,6 +145,9 @@ class US_UTIL_EXTERN US_Solution
       //!                protocols could not be read
       int countInProtocols   ( IUS_DB2* = 0 );
 
+      //! \brief Copy constructor; copies every member
+      US_Solution( const US_Solution& ) = default;
+
       //! \brief An overloaded assignment operator
       US_Solution&           operator=( const US_Solution& );
 
@@ -149,8 +159,8 @@ class US_UTIL_EXTERN US_Solution
       void readSolutionInfo  ( QXmlStreamReader& xml );
       int     loadFromDisk( QString& );
       int readBufferDiskGUID ( US_Buffer& , QString& );
-      void saveBufferDisk    ( void ) const;
-      void saveAnalytesDisk  ( void );
+      bool    saveBufferDisk( void ) const;
+      bool    saveAnalytesDisk( void );
       QString get_filename   ( const QString&, bool& ) const;
       int analyte_type       (const QString& antype);
       QString analyte_typetext( int );

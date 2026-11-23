@@ -76,6 +76,13 @@ public:
                          const QString& user, const QString& password,
                          QString& err) = 0;
 
+    /*! \brief Whether this adapter owns an unfinished transaction.
+        This reports client ownership, not server health. A failed commit still
+        requires rollback. A participating writer must leave commit/rollback to
+        the owner, which must roll back if any participating write fails.
+    */
+    virtual bool                 transactionActive() const = 0;
+
     /*! \brief Begin a transaction on the connection.
 
         Transactions do not nest: a second begin before the commit or rollback
@@ -185,6 +192,93 @@ public:
     virtual int numRows() = 0;
     virtual QString lastDebug() = 0;
     virtual unsigned long mysqlEscapeString(QByteArray& to, QByteArray& from, unsigned long length) = 0;
+};
+
+/*! \brief One write's part in a transaction on an IUS_DB2 connection.
+
+    begin() opens a transaction, or joins the one the caller already has open
+    (IUS_DB2::transactionActive()).  In a joined transaction commit() and
+    rollback() do nothing and return true: the caller that opened it commits
+    it, and must roll it back when any write in it fails.
+
+    An owned transaction that is neither committed nor rolled back is rolled
+    back when this object is destroyed, so an early return cannot leave it
+    open.  Call rollback() directly where its result is reported.
+*/
+class US_DB2Transaction
+{
+   public:
+      explicit US_DB2Transaction( IUS_DB2* db ) : db( db )
+      {
+      }
+
+      US_DB2Transaction( const US_DB2Transaction& )            = delete;
+      US_DB2Transaction& operator=( const US_DB2Transaction& ) = delete;
+
+      ~US_DB2Transaction()
+      {
+         if ( open )
+         {
+            QString error;
+            if ( !db->rollbackTransaction( error ) )
+            {
+               qWarning() << "transaction rollback could not be confirmed:" << error;
+            }
+         }
+      }
+
+      //! Open a transaction, or join the caller's.  \return false if it could not be opened.
+      bool begin( QString& error )
+      {
+         error.clear();
+         owned = !db->transactionActive();
+         if ( owned && !db->beginTransaction( error ) )
+         {
+            owned = false;
+            return false;
+         }
+         open = owned;
+         return true;
+      }
+
+      //! Whether this object opened the transaction, rather than joining one.
+      bool owns() const
+      {
+         return owned;
+      }
+
+      //! Commit an owned transaction.  On false it is still open: roll it back.
+      bool commit( QString& error )
+      {
+         error.clear();
+         if ( !open )
+         {
+            return true;
+         }
+         if ( !db->commitTransaction( error ) )
+         {
+            return false;
+         }
+         open = false;
+         return true;
+      }
+
+      //! Roll back an owned transaction.  \return false if the rollback was not confirmed.
+      bool rollback( QString& error )
+      {
+         error.clear();
+         if ( !open )
+         {
+            return true;
+         }
+         open = false;
+         return db->rollbackTransaction( error );
+      }
+
+   private:
+      IUS_DB2* db;
+      bool     owned = false;
+      bool     open  = false;
 };
 
 #endif // IUS_DB2_H

@@ -24,6 +24,29 @@ bool US_SolutionVals::values( IUS_DB2* dbP, US_DataIO::EditedData* edata,
       got_ok = got_ok ? got_ok :
                solinfo_disk( edata, cvbar20, soluID, bufID, bguid, bdesc,
                              errmsg );
+   }
+
+   else
+   {
+      got_ok = solinfo_disk( edata, cvbar20, soluID, bufID, bguid, bdesc, errmsg );
+   }
+
+   // Without the data set's solution there is no buffer to look up; a search
+   // by its empty description could only match some unrelated buffer.  The
+   // buffer values are left as the caller gave them.
+   if ( !got_ok )
+   {
+      errmsg += dbP != 0 ? QObject::tr( "  No solution or buffer for this data set was found\n"
+                                        "   in the database or on local disk\n" )
+                         : QObject::tr( "  No solution or buffer for this data set was found\n"
+                                        "   on local disk\n" );
+      return false;
+   }
+
+   // A buffer found while the solution row is missing still counts: the
+   // caller keeps its own vbar, and reads the solution itself.
+   if ( dbP != 0 )
+   {
       got_ok = bufvals_db( dbP, bufID, bguid, bdesc, density, viscosity,
                            compress, manual, errmsg );
       got_ok = got_ok ? got_ok :
@@ -33,8 +56,6 @@ bool US_SolutionVals::values( IUS_DB2* dbP, US_DataIO::EditedData* edata,
 
    else
    {
-      got_ok = solinfo_disk( edata, cvbar20, soluID, bufID, bguid, bdesc,
-                             errmsg );
       got_ok = bufvals_disk( bufID, bguid, bdesc, density, viscosity,
                              compress, manual, errmsg );
    }

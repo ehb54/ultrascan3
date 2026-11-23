@@ -10,15 +10,18 @@
 using ::testing::_;
 using ::testing::AnyNumber;
 using ::testing::AtLeast;
+using ::testing::DoAll;
 using ::testing::Eq;
 using ::testing::InSequence;
 using ::testing::Invoke;
 using ::testing::Matcher;
 using ::testing::Return;
+using ::testing::SetArgReferee;
 using ::testing::StrictMock;
 
 // Load lookups and their failures are covered in test_us_experiment_db_failures.cpp; this suite
-// covers the loaded column mapping and the write path.
+// covers the loaded column mapping and the write path. A DB write owns a transaction unless the
+// caller already has one open.
 
 namespace
 {
@@ -83,6 +86,23 @@ class AnalyteDb : public QtTestBase
             EXPECT_CALL( db, next() ).WillOnce( Return( true ) );
             EXPECT_CALL( db, value( 0 ) ).WillOnce( Return( QVariant( "17" ) ) );
          }
+      }
+
+      // The write owns its transaction: none is open, and it begins one.
+      void expectBegin()
+      {
+         EXPECT_CALL( db, transactionActive() ).WillOnce( Return( false ) );
+         EXPECT_CALL( db, beginTransaction( _ ) ).WillOnce( Return( true ) );
+      }
+
+      void expectCommit()
+      {
+         EXPECT_CALL( db, commitTransaction( _ ) ).WillOnce( Return( true ) );
+      }
+
+      void expectRollback()
+      {
+         EXPECT_CALL( db, rollbackTransaction( _ ) ).WillOnce( Return( true ) );
       }
 
       void prepareProtein()
@@ -226,12 +246,14 @@ TEST_F( AnalyteDb, WriteInsertsWhenTheLookupFindsNoRow )
       // DEBUG_QUERY also reads the status.
       EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::OK ) );
       EXPECT_CALL( db, next() ).WillOnce( Return( false ) );
+      expectBegin();
       EXPECT_CALL(
          db,
          statusQuery( args( { "new_analyte", kGuid, "Protein", "MKV", "0.7125", "Salt & <buffer>", "", "45000.5", "0", "23" } ) ) )
          .WillOnce( Return( IUS_DB2::OK ) );
       EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::OK ) );
       EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 456 ) );
+      expectCommit();
    }
    EXPECT_CALL( db, value( _ ) ).Times( 0 );
 
@@ -258,7 +280,7 @@ TEST_F( AnalyteDb, FailedLookupWritesNothing )
    }
 }
 
-TEST_F( AnalyteDb, FailedNucleotideWriteIsReportedBeforeTheProfileAndDisk )
+TEST_F( AnalyteDb, FailedNucleotideWriteRollsBackBeforeTheProfileAndDisk )
 {
    prepareProtein();
    analyte.type                    = US_Analyte::DNA;
@@ -267,14 +289,18 @@ TEST_F( AnalyteDb, FailedNucleotideWriteIsReportedBeforeTheProfileAndDisk )
    {
       InSequence sequence;
       expectLookup( true );
+      expectBegin();
       EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::OK ) );
       EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::OK ) );
       EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::DBERROR ) );
       EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::DBERROR ) );
+      expectRollback();
    }
 
    EXPECT_EQ( IUS_DB2::DBERROR, analyte.write( true, QString(), &db ) );
    EXPECT_EQ( QString( "Could not update nucleotide info" ), analyte.message );
+   // The stored analyte still exists, so it keeps the ID the lookup found.
+   EXPECT_EQ( QString( "17" ), analyte.analyteID );
    EXPECT_TRUE( analyte.new_or_changed_spectrum );
    EXPECT_TRUE( diskDescription().isEmpty() );
 }
@@ -293,13 +319,15 @@ TEST_F( AnalyteDb, FailedDiskCopyIsReported )
    {
       InSequence sequence;
       expectLookup( true );
+      expectBegin();
       EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::OK ) );
       EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::OK ) );
+      // The disk copy follows the commit, so its failure leaves the DB write in place.
+      expectCommit();
    }
 
    EXPECT_NE( IUS_DB2::OK, analyte.write( true, QString(), &db ) );
-   EXPECT_FALSE( analyte.message.isEmpty() );
-   EXPECT_NE( QString( "updated in" ), analyte.message );
+   EXPECT_TRUE( analyte.message.startsWith( "The analyte was saved to the DB, but" ) ) << analyte.message.toStdString();
    ASSERT_TRUE( QFile::remove( path ) );
 }
 
@@ -311,6 +339,7 @@ TEST_F( AnalyteDb, WriteInsertsNewAnalyteWithInvestigatorAndSavesToDisk )
    {
       InSequence sequence;
       expectLookup( false );
+      expectBegin();
       EXPECT_CALL(
          db,
          statusQuery(
@@ -318,6 +347,7 @@ TEST_F( AnalyteDb, WriteInsertsNewAnalyteWithInvestigatorAndSavesToDisk )
          .WillOnce( Return( IUS_DB2::OK ) );
       EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::OK ) );
       EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 456 ) );
+      expectCommit();
    }
 
    EXPECT_EQ( IUS_DB2::OK, analyte.write( true, QString(), &db ) );
@@ -334,10 +364,12 @@ TEST_F( AnalyteDb, WriteUpdatesExistingAnalyteWithoutInvestigatorOrInsertId )
    {
       InSequence sequence;
       expectLookup( true );
+      expectBegin();
       EXPECT_CALL(
          db, statusQuery( args( { "update_analyte", "17", "Other", "MKV", "0.7125", "Salt & <buffer>", "", "45000.5", "1" } ) ) )
          .WillOnce( Return( IUS_DB2::OK ) );
       EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::OK ) );
+      expectCommit();
    }
 
    EXPECT_EQ( IUS_DB2::OK, analyte.write( true, QString(), &db ) );
@@ -366,11 +398,13 @@ TEST_F( AnalyteDb, WriteSpectrumFieldUsesTheFirstNonEmptyMapAndOmitsAZeroValue )
       {
          InSequence sequence;
          expectLookup( true );
+         expectBegin();
          EXPECT_CALL( db,
                       statusQuery( args(
                          { "update_analyte", "17", "Protein", "MKV", "0.7125", "Salt & <buffer>", c.spectrum, "45000.5", "0" } ) ) )
             .WillOnce( Return( IUS_DB2::OK ) );
          EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::OK ) );
+         expectCommit();
       }
       EXPECT_EQ( IUS_DB2::OK, analyte.write( true, QString(), &db ) );
       ASSERT_TRUE( ::testing::Mock::VerifyAndClearExpectations( &db ) );
@@ -398,6 +432,7 @@ TEST_F( AnalyteDb, WriteSendsNucleotideInfoForNucleicAcids )
       {
          InSequence sequence;
          expectLookup( true );
+         expectBegin();
          EXPECT_CALL(
             db,
             statusQuery( args( { "update_analyte", "17", type.second, "MKV", "0.7125", "Salt & <buffer>", "", "45000.5", "0" } ) ) )
@@ -407,6 +442,7 @@ TEST_F( AnalyteDb, WriteSendsNucleotideInfoForNucleicAcids )
             db, statusQuery( args( { "set_nucleotide_info", "17", "0", "1", "1", "0", "0.1", "0.2", "0.3", "0.4", "0.5" } ) ) )
             .WillOnce( Return( IUS_DB2::OK ) );
          EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );
+         expectCommit();
       }
       EXPECT_EQ( IUS_DB2::OK, analyte.write( true, QString(), &db ) );
       ASSERT_TRUE( ::testing::Mock::VerifyAndClearExpectations( &db ) );
@@ -423,6 +459,7 @@ TEST_F( AnalyteDb, WriteCreatesExtinctionProfileForANewSpectrum )
    {
       InSequence sequence;
       expectLookup( true );
+      expectBegin();
       EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::OK ) );
       EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::OK ) );
       EXPECT_CALL( db, query( args( { "get_eprofile", "17", "Analyte" } ) ) );
@@ -436,6 +473,7 @@ TEST_F( AnalyteDb, WriteCreatesExtinctionProfileForANewSpectrum )
                return IUS_DB2::OK;
             } ) );
       EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 9 ) );
+      expectCommit();
    }
 
    EXPECT_EQ( IUS_DB2::OK, analyte.write( true, QString(), &db ) );
@@ -443,7 +481,7 @@ TEST_F( AnalyteDb, WriteCreatesExtinctionProfileForANewSpectrum )
    EXPECT_FALSE( analyte.new_or_changed_spectrum );
 }
 
-TEST_F( AnalyteDb, FailedProfileWriteIsReportedAndStaysPendingWithTheDiskCopy )
+TEST_F( AnalyteDb, FailedProfileWriteRollsBackKeepsTheSpectrumPendingAndWritesNoDiskCopy )
 {
    prepareProtein();
    analyte.extinction[280.0]       = 43824.0;
@@ -451,18 +489,20 @@ TEST_F( AnalyteDb, FailedProfileWriteIsReportedAndStaysPendingWithTheDiskCopy )
    {
       InSequence sequence;
       expectLookup( true );
+      expectBegin();
       EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::OK ) );
       EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::OK ) );
       EXPECT_CALL( db, query( args( { "get_eprofile", "17", "Analyte" } ) ) );
       EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOROWS ) );
       EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::DBERROR ) );
+      expectRollback();
    }
 
    EXPECT_EQ( IUS_DB2::DBERROR, analyte.write( true, QString(), &db ) );
    EXPECT_EQ( QString( "The extinction profile could not be saved to the DB" ), analyte.message );
-   // The spectrum is retried by the next save; the disk copy is written regardless.
+   // The spectrum is retried by the next save.
    EXPECT_TRUE( analyte.new_or_changed_spectrum );
-   EXPECT_FALSE( diskDescription().isEmpty() );
+   EXPECT_TRUE( diskDescription().isEmpty() );
 }
 
 TEST_F( AnalyteDb, WriteReplacesTheStoredProfileAndKeepsTheNewValues )
@@ -476,6 +516,7 @@ TEST_F( AnalyteDb, WriteReplacesTheStoredProfileAndKeepsTheNewValues )
    {
       InSequence sequence;
       expectLookup( true );
+      expectBegin();
       EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::OK ) );
       EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::OK ) );
       EXPECT_CALL( db, query( args( { "get_eprofile", "17", "Analyte" } ) ) );
@@ -496,6 +537,7 @@ TEST_F( AnalyteDb, WriteReplacesTheStoredProfileAndKeepsTheNewValues )
                return IUS_DB2::OK;
             } ) );
       EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );
+      expectCommit();
    }
 
    EXPECT_EQ( IUS_DB2::OK, analyte.write( true, QString(), &db ) );
@@ -515,8 +557,10 @@ TEST_F( AnalyteDb, WriteSkipsProfileWhenTheSpectrumIsUnchanged )
    {
       InSequence sequence;
       expectLookup( true );
+      expectBegin();
       EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::OK ) );
       EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::OK ) );
+      expectCommit();
    }
    EXPECT_EQ( IUS_DB2::OK, analyte.write( true, QString(), &db ) );
 }
@@ -543,8 +587,10 @@ TEST_F( AnalyteDb, FailedWriteStopsBeforeInsertIdNucleotidesProfileAndDisk )
    {
       InSequence sequence;
       expectLookup( false );
+      expectBegin();
       EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::DBERROR ) );
       EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::DBERROR ) );
+      expectRollback();
    }
 
    EXPECT_EQ( IUS_DB2::DBERROR, analyte.write( true, QString(), &db ) );
@@ -552,6 +598,113 @@ TEST_F( AnalyteDb, FailedWriteStopsBeforeInsertIdNucleotidesProfileAndDisk )
    EXPECT_EQ( QString( "previous" ), analyte.analyteID );
    EXPECT_TRUE( analyte.new_or_changed_spectrum );
    EXPECT_EQ( before, analyteFiles() );
+}
+
+TEST_F( AnalyteDb, FailedBeginWritesNothing )
+{
+   prepareProtein();
+   analyte.new_or_changed_spectrum = true;
+   analyte.extinction[280.0]       = 43824.0;
+   {
+      InSequence sequence;
+      expectLookup( false );
+      EXPECT_CALL( db, transactionActive() ).WillOnce( Return( false ) );
+      EXPECT_CALL( db, beginTransaction( _ ) ).WillOnce( DoAll( SetArgReferee<0>( QString( "no connection" ) ), Return( false ) ) );
+   }
+
+   EXPECT_EQ( IUS_DB2::DBERROR, analyte.write( true, QString(), &db ) );
+   EXPECT_EQ( QString( "Could not start a DB transaction: no connection" ), analyte.message );
+   EXPECT_TRUE( analyte.new_or_changed_spectrum );
+   EXPECT_TRUE( diskDescription().isEmpty() );
+}
+
+TEST_F( AnalyteDb, FailedCommitRollsBackAndWritesNoDiskCopy )
+{
+   prepareProtein();
+   analyte.analyteID               = "previous";
+   analyte.extinction[280.0]       = 43824.0;
+   analyte.new_or_changed_spectrum = true;
+   {
+      InSequence sequence;
+      expectLookup( false );
+      expectBegin();
+      EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 456 ) );
+      EXPECT_CALL( db, query( args( { "get_eprofile", "456", "Analyte" } ) ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOROWS ) );
+      EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 9 ) );
+      EXPECT_CALL( db, commitTransaction( _ ) )
+         .WillOnce( DoAll( SetArgReferee<0>( QString( "lost connection" ) ), Return( false ) ) );
+      expectRollback();
+   }
+
+   EXPECT_EQ( IUS_DB2::DBERROR, analyte.write( true, QString(), &db ) );
+   EXPECT_EQ( QString( "Could not commit the analyte to the DB: lost connection" ), analyte.message );
+   // The rolled-back insert's ID is not kept, and the spectrum is retried by the next save.
+   EXPECT_EQ( QString( "previous" ), analyte.analyteID );
+   EXPECT_TRUE( analyte.new_or_changed_spectrum );
+   EXPECT_TRUE( diskDescription().isEmpty() );
+}
+
+TEST_F( AnalyteDb, UnconfirmedRollbackIsReported )
+{
+   prepareProtein();
+   {
+      InSequence sequence;
+      expectLookup( true );
+      expectBegin();
+      EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::DBERROR ) );
+      EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::DBERROR ) );
+      EXPECT_CALL( db, rollbackTransaction( _ ) )
+         .WillOnce( DoAll( SetArgReferee<0>( QString( "server gone" ) ), Return( false ) ) );
+   }
+
+   EXPECT_EQ( IUS_DB2::DBERROR, analyte.write( true, QString(), &db ) );
+   EXPECT_EQ( QString( "Could not update the DB\nThe rollback could not be confirmed: server gone" ), analyte.message );
+}
+
+TEST_F( AnalyteDb, JoinedTransactionIsLeftToTheCallerWithTheSpectrumPendingAndNoDiskCopy )
+{
+   prepareProtein();
+   analyte.extinction[280.0]       = 43824.0;
+   analyte.new_or_changed_spectrum = true;
+   {
+      InSequence sequence;
+      expectLookup( false );
+      EXPECT_CALL( db, transactionActive() ).WillOnce( Return( true ) );
+      EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 456 ) );
+      EXPECT_CALL( db, query( args( { "get_eprofile", "456", "Analyte" } ) ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOROWS ) );
+      EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 9 ) );
+   }
+   // The strict mock fails the test on any begin, commit or rollback.
+
+   EXPECT_EQ( IUS_DB2::OK, analyte.write( true, QString(), &db ) );
+   EXPECT_EQ( QString( "456" ), analyte.analyteID );
+   // The caller may still roll back, so nothing is published as saved.
+   EXPECT_TRUE( analyte.new_or_changed_spectrum );
+   EXPECT_TRUE( diskDescription().isEmpty() );
+}
+
+TEST_F( AnalyteDb, FailureInAJoinedTransactionLeavesTheRollbackToTheCaller )
+{
+   prepareProtein();
+   analyte.analyteID = "previous";
+   {
+      InSequence sequence;
+      expectLookup( false );
+      EXPECT_CALL( db, transactionActive() ).WillOnce( Return( true ) );
+      EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::DBERROR ) );
+      EXPECT_CALL( db, lastErrno() ).Times( AtLeast( 1 ) ).WillRepeatedly( Return( IUS_DB2::DBERROR ) );
+   }
+
+   EXPECT_EQ( IUS_DB2::DBERROR, analyte.write( true, QString(), &db ) );
+   EXPECT_EQ( QString( "previous" ), analyte.analyteID );
 }
 
 TEST_F( AnalyteDb, InvalidGuidIsRejectedWithoutDatabaseAccess )
