@@ -121,10 +121,16 @@ IntegralDistribution integral_distribution( const Model& model, DistributionAxis
    }
 
    // Merge solutes with equal s, D, mw and f/f0 wherever they appear:
-   // concentrations add; vbar and radius are averaged.  First appearance
-   // keeps its position for the stable sort below.
+   // concentrations add; vbar and radius are averaged.  A vbar or radius
+   // that every duplicate shares is kept as it is, so the average does not
+   // move it by rounding.  First appearance keeps its position for the
+   // stable sort below.
    QVector<Solute>       merged;
    QVector<int>          count;
+   QVector<double>       sum_v;
+   QVector<double>       sum_r;
+   QVector<bool>         same_v;
+   QVector<bool>         same_r;
    std::map<Solute, int> index; // position in merged of each solute
    for ( const Solute& x : in )
    {
@@ -134,20 +140,32 @@ IntegralDistribution integral_distribution( const Model& model, DistributionAxis
          index[x] = static_cast<int>( merged.size() );
          merged.push_back( x );
          count.push_back( 1 );
+         sum_v.push_back( x.v );
+         sum_r.push_back( x.r );
+         same_v.push_back( true );
+         same_r.push_back( true );
       }
       else
       {
-         Solute& m = merged[it->second];
-         m.c += x.c;
-         m.v += x.v;
-         m.r += x.r;
-         ++count[it->second];
+         const int ii = it->second;
+         merged[ii].c += x.c;
+         sum_v[ii] += x.v;
+         sum_r[ii] += x.r;
+         same_v[ii] = same_v[ii] && x.v == merged[ii].v;
+         same_r[ii] = same_r[ii] && x.r == merged[ii].r;
+         ++count[ii];
       }
    }
    for ( int ii = 0; ii < merged.size(); ii++ )
    {
-      merged[ii].v /= count[ii];
-      merged[ii].r /= count[ii];
+      if ( !same_v[ii] )
+      {
+         merged[ii].v = sum_v[ii] / count[ii];
+      }
+      if ( !same_r[ii] )
+      {
+         merged[ii].r = sum_r[ii] / count[ii];
+      }
    }
 
    // A total order:  the axis value, then the remaining quantities.

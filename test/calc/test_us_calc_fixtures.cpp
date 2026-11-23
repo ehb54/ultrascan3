@@ -488,6 +488,46 @@ TEST_F( UsCalcFixtures, IntegralDistributionMergesDuplicates )
    const auto a = integral_distribution( model, DistributionAxis::Diffusion );
    const auto b = integral_distribution( reversed, DistributionAxis::Diffusion );
    EXPECT_EQ( a.D, b.D );
+   // Every solute has vbar 0.72; averaging three of them would give
+   // 0.7200000000000001.
+   for ( const double v : a.vbar20 )
+   {
+      EXPECT_EQ( v, 0.72 );
+   }
+}
+
+// Duplicates with different vbar get the average; a shared vbar or radius
+// is kept exactly.  Completing the coefficients from vbar would make the
+// first two components different solutes, so they give s alone, which has
+// no pair to complete from and keeps the values as given.
+TEST( UsCalcIntegral, DuplicatesAverageOnlyDifferingValues )
+{
+   Model model;
+   model.components = { Component{ 4.5e-13, 0, 0, 0, 0, 0.70, 0.5 }, Component{ 4.5e-13, 0, 0, 0, 0, 0.74, 0.5 } };
+   const auto d     = integral_distribution( model, DistributionAxis::Sedimentation );
+   ASSERT_FALSE( has_error( d.diagnostics ) );
+   ASSERT_FALSE( d.vbar20.isEmpty() );
+   for ( int i = 0; i < d.vbar20.size(); ++i )
+   {
+      EXPECT_EQ( d.vbar20[i], ( 0.70 + 0.74 ) / 2 ) << i;
+   }
+
+   Model same;
+   same.components = { Component{ 4.5e-13, 5e-7, 75000.0, 0, 1.6, 0.72, 0.4 },
+                       Component{ 4.5e-13, 5e-7, 75000.0, 0, 1.6, 0.72, 0.3 },
+                       Component{ 4.5e-13, 5e-7, 75000.0, 0, 1.6, 0.72, 0.3 } };
+   Model one;
+   one.components    = { Component{ 4.5e-13, 5e-7, 75000.0, 0, 1.6, 0.72, 1.0 } };
+   const auto merged = integral_distribution( same, DistributionAxis::Sedimentation );
+   const auto single = integral_distribution( one, DistributionAxis::Sedimentation );
+   ASSERT_FALSE( has_error( merged.diagnostics ) );
+   ASSERT_FALSE( has_error( single.diagnostics ) );
+   EXPECT_EQ( merged.vbar20, single.vbar20 );
+   EXPECT_EQ( merged.rh, single.rh );
+   for ( const double v : merged.vbar20 )
+   {
+      EXPECT_EQ( v, 0.72 );
+   }
 }
 
 TEST( UsCalcIntegral, InvalidInputs )
