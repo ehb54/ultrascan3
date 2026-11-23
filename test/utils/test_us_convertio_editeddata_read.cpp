@@ -31,7 +31,7 @@ const QString      kRawName  = "demo.RA.1.A.280.auc";
 
 US_DataIO::RawData sampleRawData()
 {
-   US_DataIO::RawData raw;
+   US_DataIO::RawData raw{};
    memcpy( raw.type, "RA", 2 );
    memcpy( raw.rawGUID, "0123456789abcdef", 16 );
    raw.cell        = 1;
@@ -39,7 +39,7 @@ US_DataIO::RawData sampleRawData()
    raw.description = "edited-data DB read fixture";
    raw.xvalues << 5.8 << 5.9 << 6.0;
 
-   US_DataIO::Scan scan;
+   US_DataIO::Scan scan{};
    scan.temperature = 20.0;
    scan.rpm         = 50000.0;
    scan.seconds     = 300;

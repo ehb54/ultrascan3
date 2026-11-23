@@ -47,6 +47,12 @@ jobs:
               - utils/**.hpp
               - utils/CMakeLists.txt
               - programs/us_sim_inputs_gen/**
+              - programs/us_fematch/**
+              - programs/us_autoflow_analysis/**
+              - programs/us_reporter_gmp/**
+              - gui/us_resids_bitmap.*
+              - gui/us_resplot_fem.*
+              - gui/us_widgets_dialog.*
               - test/**
               - scripts/check-gtest-filter.sh
               - '**/*.json'

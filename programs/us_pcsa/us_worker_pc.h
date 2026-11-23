@@ -1,6 +1,6 @@
 //! \file us_worker_pc.h
-#ifndef US_THREAD_WORKER_H
-#define US_THREAD_WORKER_H
+#ifndef US_WORKER_PC_H
+#define US_WORKER_PC_H
 
 #include <QtCore>
 #include <memory>

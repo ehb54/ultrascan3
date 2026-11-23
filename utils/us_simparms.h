@@ -99,6 +99,24 @@ class US_UTIL_EXTERN US_SimulationParameters
    //! \param speedsteps Returned vector of speed step profiles
    static void computeSpeedSteps( QVector< US_DataIO::Scan >*, QVector< SpeedProfile >& );
 
+   //! \brief Replace experiment speed steps with those from a TimeState, keeping
+   //!        the experiment's scan counts
+   //! \param speedsteps Experiment speed steps (from the database); replaced by
+   //!                   the TimeState steps, each given the scan count of the
+   //!                   experiment step it replaces (extra steps get the last one's)
+   //! \param tssteps    Speed steps from the TimeState; given the same scan counts.
+   //!                   When there are no experiment steps, both keep the
+   //!                   TimeState's own scan counts.
+   static void             mergeTimeStateSteps( QVector<SpeedProfile>&, QVector<SpeedProfile>& );
+
+   //! \brief Whether experiment speed steps cover a data set's scan times
+   //! \param speedsteps Speed steps recorded for the experiment
+   //! \param editdata   Edited data whose first and last scan times are checked
+   //! \returns          True if there is at least one step and the first and last
+   //!                    scans lie within every step's time range; false means the
+   //!                    speed steps should be derived from the data instead
+   static bool             speedStepsCoverData( const QVector<SpeedProfile>&, const US_DataIO::EditedData& );
+
    //! \brief A function to compute speed steps from all data scans
    //! \param allrData   Pointer to vector of raw datas
    //! \param speedsteps Returned vector of speed step profiles
