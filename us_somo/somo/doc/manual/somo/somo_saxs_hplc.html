@@ -398,7 +398,7 @@ On pressing <i><b>Options</i></b>, a pop-up panel will be shown:<p>
 <td align=justify>
 <p>
 
-See <a href=saxs_hplc_options.html>here</a> for a description of this module.<p>
+See <a href=saxs_hplc_options.html>here</a> for a description of this module. The panel opens as tall as its options when the screen allows it; otherwise its options scroll, with <i><b>Help</i></b>, <i><b>Quit</i></b> and <i><b>Ok</i></b> always shown below them.<p>
 <br>
 <hr>
 
@@ -776,6 +776,7 @@ Selecting instead the <i>By percent</i> checkbox the residuals will be plotted a
 <td align=justify>
 <p>
 The residuals plot can be toggled off by pressing again <b><i>Residuals</i></b>.<p>
+The residuals plot shares a splitter with the main plot: it starts with a fifth of their height, which can be changed by dragging the handle between them. The left axes of the two plots are kept the same width, so that their <i>x</i> axes line up.<p>
 
 <li>
 <b><i>PVP</i></b> (Previously named <b><i>CorMap Analysis</i></b>) will launch a pairwise similarity comparison between all currently selected datasets, according to our implementation of <i>P</i>-value pair computations and comparisons derived from the Correlation Map method developed by Franke </span><span lang="en-US"><i>et al.</i></span><span lang="en-US"> (Franke D, Jeffries CM, Svergun DI. Correlation Map, a goodness-of-fit test for one-dimensional X-ray scattering spectra. Nature Methods, 12, 419-422, 2015). A in depth <i><b>PVP</i></b> module description with examples can be found <a href=cormap.html>here</a>.<p>
@@ -970,6 +971,13 @@ When just a few problematic points are found for each chromatogram, the <i>Drop 
 In the image above, the <b><i>Global Gaussians</i></b> results on the <b><i>Nth</i></b> selected files are shown, together with the grouped fit residuals. The common centers and widhts, <span style="color:#CC0000">not optimized but just based on the initial chromatogram fit</span>, are displayed in the graph as vertical and horizontal bars, respectively. Note that the <i>x</i>-axis scale and the <i>Residuals</i> <i>y</i>-axis scales were manually optimized (right-click on the scale to access the plot options menu). The global <i>P-value</i> analysis for this initial Gaussian propagation is also shown in the <b><i>Messages</i></b> panel. Both the residuals and the <i>P-value</i> analysis indicate a poor fitting of the initial Gaussian when just propagated to the other selected chromatograms.<p>
 <li>
 <b><i>Save</i></b> will save the resulting Gaussians to the current selected directory, with extension -gauss.dat for symmetrical Gaussians of single files and -mgauss.dat for Gaussians of multiple files. For distorted Gaussians, the extensions will be -mgmg.dat, -memg.dat, and -memggmg.dat for the GMG, EMG and EMG+GMG Gaussians, respectively.<p>
+Saved Gaussians are loaded with <b><i>Add files</i></b>, which also sets the <i>Fit start</i> and <i>Fit end</i> saved with them. A file of one set (-gauss.dat) is loaded as the current Gaussians, whatever the files loaded. A file of Gaussians of multiple files (-mgauss.dat) gives each set to the loaded file of the same name. When some of its sets are for files that are not loaded, <i>e.g.</i> because the same data were reprocessed with a different buffer subtraction or a baseline correction, which changes the files' names, a pop-up panel says how many, and offers:
+<ul>
+<li><i>Import for the files of the same q</i> (when there are such files): each such set is given to the selected file (or, with none selected, the loaded file) whose name has the same <i>q</i> (the <tt>_It_q</tt> part of the names of <i>I(t)</i> chromatograms, which reprocessing keeps), with its own centers, widths, distortions and amplitudes. A <i>q</i> that two of these files, or two sets, have in common is not matched.
+<li><i>Import one set as the starting Gaussians</i>: the first of those sets becomes the current Gaussians (centers, widths, distortions and amplitudes), as if a file of one set had been loaded.
+<li><i>Skip them</i>, as before: each set skipped is listed in the messages.
+</ul>
+The Gaussians imported were fitted to differently processed data, so check them carefully against the current <i>I(t)</i> before using them. <b><i>Global Gaussians</i></b> can then re-optimize them, or use them as they are.<p>
 <li>
 Pressing <b><i>Keep</i></b> will accept the current Gaussians for further work.<p>
 <li>

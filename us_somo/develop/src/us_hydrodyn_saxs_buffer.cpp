@@ -2055,6 +2055,7 @@ void US_Hydrodyn_Saxs_Buffer::plot_files()
       plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
       plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
       plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+      plot_dist_zoomer->setTrackerPen(QPen(Qt::red));
 #if QT_VERSION < 0x040000
       plot_dist_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #endif
@@ -4247,6 +4248,7 @@ void US_Hydrodyn_Saxs_Buffer::rescale()
    plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
    plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
    plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+   plot_dist_zoomer->setTrackerPen(QPen(Qt::red));
 #if QT_VERSION < 0x040000
    plot_dist_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #endif

@@ -109,10 +109,11 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_invert->setPalette( PALET_PUSHB );
    connect(pb_invert, SIGNAL(clicked()), SLOT(invert()));
 
-   pb_color_rotate = new QPushButton(us_tr("C"), this);
+   pb_color_rotate = new QPushButton(us_tr("Color"), this);
    pb_color_rotate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_color_rotate->setMinimumHeight(minHeight1);
-   pb_color_rotate->setMaximumWidth ( minHeight1 * 2 );
+   pb_color_rotate->setMaximumWidth ( minHeight1 * 3 );
+   pb_color_rotate->setToolTip( us_tr( "Rotate the colors of the plotted curves" ) );
    pb_color_rotate->setPalette( PALET_PUSHB );
    connect(pb_color_rotate, SIGNAL(clicked()), SLOT(color_rotate()));
 
@@ -917,11 +918,11 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_file_buttons_2->addWidget ( pb_invert );
    // hbl_file_buttons_2->addWidget ( pb_adjacent );
    hbl_file_buttons_2->addWidget ( pb_select_nth );
-   hbl_file_buttons_2->addWidget ( pb_color_rotate );
    hbl_file_buttons_2->addWidget ( pb_to_saxs );
    hbl_file_buttons_2->addWidget ( pb_view );
    hbl_file_buttons_2->addWidget ( pb_axis_x );
    hbl_file_buttons_2->addWidget ( pb_axis_y );
+   hbl_file_buttons_2->addWidget ( pb_color_rotate );
    hbl_file_buttons_2->addWidget ( pb_rescale );
 
    QBoxLayout * hbl_file_buttons_3 = new QHBoxLayout(); hbl_file_buttons_3->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons_3->setSpacing( 0 );
