@@ -8,9 +8,18 @@
 #include <QPainter>
 #include <QPdfWriter>
 #include <QPrinter>
+#include <QTimer>
 
 #include "../us/us_revision.h"
-#include "../us_fematch/us_thread_worker.h"
+#include "us_calc_matching.h"
+#include "us_calc_range.h"
+#include "us_calc_replicate.h"
+#include "us_calc_replicate_group.h"
+#include "us_calc_report_item.h"
+#include "us_calc_report_lookup.h"
+#include "us_calc_run_checks.h"
+#include "us_calc_tolerance.h"
+#include "us_calc_units.h"
 #include "us_constants.h"
 #include "us_convertio.h"
 #include "us_defines.h"
@@ -21,6 +30,9 @@
 #include "us_math2.h"
 #include "us_protocol_util.h"
 #include "us_reporter_gmp.h"
+#include "us_reporter_gmp_duration.h"
+#include "us_thread_worker.h"
+
 #include "us_settings.h"
 #include "us_solution_vals.h"
 #include "us_tar.h"
@@ -1026,8 +1038,7 @@ QMap< QString, QString>  US_ReporterGMP::read_autoflowAnalysis_record( US_DB2* d
 	}
     }
 
-  //qDebug() << "In reading autoflwoAnalysis record: json: " << analysis_details[ "status_json" ] ;
-  
+
   return analysis_details;
 }
 
@@ -1069,8 +1080,7 @@ QMap< QString, QString>  US_ReporterGMP::read_autoflowAnalysisHistory_record( US
 	}
     }
 
-  //qDebug() << "In reading autoflwoAnalysis record: json: " << analysis_details[ "status_json" ] ;
-  
+
   return analysis_details;
 }
 
@@ -1437,30 +1447,28 @@ QMap< QString, QString > US_ReporterGMP::parse_models_desc_json( QString modelDe
 //load GMP Rpeort from DB (.PDF)
 void US_ReporterGMP::load_gmp_report_db ( void )
 {
-  // //TESTING *************
-  // QFile fin( "/home/alexey/ultrascan/reports/SBird-DNA-EcoRI-101322-PD9-run1843_GMP_DB_bySysTar.tar.gz" );
-  // if ( ! fin.open( QIODevice::ReadOnly ) )
-  //  {
-  //    qDebug() << "cannot open file ";;
-  //    return;
-  //  }
-  // QByteArray blobData = fin.readAll();
-  // fin.close();
+   // //TESTING *************
+   // QFile fin( "/home/alexey/ultrascan/reports/SBird-DNA-EcoRI-101322-PD9-run1843_GMP_DB_bySysTar.tar.gz" );
+   // if ( ! fin.open( QIODevice::ReadOnly ) )
+   //  {
+   //    return;
+   //  }
+   // QByteArray blobData = fin.readAll();
+   // fin.close();
 
-  // qDebug() << "BlobData size -- " << blobData.size();
-  // return;
-  // //END TESTING *********
-  
-  US_Passwd pw;
-  US_DB2 db( pw.getPasswd() );
-  
-  if ( db.lastErrno() != US_DB2::OK )
-    {
+   // return;
+   // //END TESTING *********
+
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
       QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
 			    tr( "Could not connect to database \n" ) + db.lastError() );
       return;
-    }
-  
+   }
+
   list_all_gmp_reports_db( gmpReportsDBdata, &db );
 
   QString pdtitle( tr( "Select GMP Report" ) );
@@ -2429,14 +2437,12 @@ void US_ReporterGMP::build_miscTree ( void )
   miscTree->resizeColumnToContents( 0 );
   miscTree->resizeColumnToContents( 1 );
 
-  // qDebug() << "misc Tree first time build ? " << first_time_misc_tree_build;
   // if ( first_time_misc_tree_build )
   //   {
-  //     qDebug() << "Resizing misc Tree: ";
   //     miscTree->setMinimumHeight( (miscTree->height())*0.6 );
   //     first_time_misc_tree_build = false;
   //   }
-  
+
   connect( miscTree, &QTreeWidget::itemChanged,
   	   this,    &US_ReporterGMP::changedItem );
 
@@ -2656,7 +2662,6 @@ void US_ReporterGMP::build_genTree ( void )
   genTree->resizeColumnToContents( 0 );
   genTree->resizeColumnToContents( 1 );
 
-  //qDebug() << "Build gen Tree: height -- " << genTree->height();
   qDebug() << "gen Tree first time build ? " << first_time_gen_tree_build;
   if ( first_time_gen_tree_build )
     {
@@ -3010,7 +3015,6 @@ void US_ReporterGMP::build_perChanTree_abde ( void )
   perChanTree->resizeColumnToContents( 0 );
   perChanTree->resizeColumnToContents( 1 );
 
-  //qDebug() << "Build perChan Tree: height -- " << perChanTree->height();
   qDebug() << "perChan Tree first time build ? " << first_time_perChan_tree_build;
   if ( first_time_perChan_tree_build )
     {
@@ -3240,7 +3244,7 @@ void US_ReporterGMP::build_perChanTree ( void )
               if ( tripleMaskItemName.contains( "Plots" ) )
               {
                  tripleReportMasksPlotList.clear();
-                 tripleReportMasksPlotList << "Experiment-Simulation Velocity Data (noise corrected) "
+                 tripleReportMasksPlotList << "Experiment-Simulation Velocity Data (noise corrected)"
                                            << "Experiment-Simulation Residuals";
 
                  // << "Sedimentation Coefficient Distribution"
@@ -3472,7 +3476,6 @@ void US_ReporterGMP::build_perChanTree ( void )
   perChanTree->resizeColumnToContents( 0 );
   perChanTree->resizeColumnToContents( 1 );
 
-  //qDebug() << "Build perChan Tree: height -- " << perChanTree->height();
   qDebug() << "perChan Tree first time build ? " << first_time_perChan_tree_build;
   if ( first_time_perChan_tree_build )
     {
@@ -3938,6 +3941,8 @@ void US_ReporterGMP::generate_report( void )
   remove_files_by_mask( dirName, f_exts );
   ///////////////////////////////////////////////////
 
+  report_aborted = false;
+
   int msg_range = currProto.rpSolut.nschan + 5;
 
   qDebug() << "Generate report: msg_range -- " << msg_range;
@@ -4031,6 +4036,11 @@ void US_ReporterGMP::generate_report( void )
                 // Without its data, this triple's plots would show the last one's.
                 if ( !simulate_triple( currentTripleName, models_to_do[j] ) )
                 {
+                   if ( report_aborted )
+                   {
+                      report_generation_aborted();
+                      return;
+                   }
                    continue;
                 }
 
@@ -4143,6 +4153,11 @@ void US_ReporterGMP::generate_report( void )
                    // Without its data, this triple's plots would show the last one's.
                    if ( !simulate_triple( currentTripleName, models_to_do[j] ) )
                    {
+                      if ( report_aborted )
+                      {
+                         report_generation_aborted();
+                         return;
+                      }
                       continue;
                    }
 
@@ -4473,61 +4488,6 @@ QString US_ReporterGMP::html_header_velmwl( QString title, QString runName, QStr
    return s;
 }
 
-// Fraction (%) of a model's total signal concentration whose component values
-// of given type lie within [low,high] -- the same integration (and range units)
-// as used for the VELOCITY report; supported = false for unknown types
-static double velmwl_range_fraction( const US_Model& mdl, const QString& type, double low, double high, bool& supported )
-{
-   supported    = true;
-   double sum_c = 0.0;
-   double int_c = 0.0;
-
-   for ( int ii = 0; ii < mdl.components.size(); ++ii )
-   {
-      const US_Model::SimulationComponent& sc   = mdl.components[ii];
-      double                               conc = sc.signal_concentration;
-      sum_c += conc;
-
-      double v, lo, hi;
-      if ( type == "s" )
-      {
-         v  = sc.s;
-         lo = low * 1.0e-13;
-         hi = high * 1.0e-13;
-      }
-      else if ( type == "D" )
-      {
-         v  = sc.D;
-         lo = low * 1.0e-7;
-         hi = high * 1.0e-7;
-      }
-      else if ( type == "f/f0" )
-      {
-         v  = sc.f_f0;
-         lo = low;
-         hi = high;
-      }
-      else if ( type == "MW" )
-      {
-         v  = sc.mw;
-         lo = low * 1.0e3;
-         hi = high * 1.0e3;
-      } // kDa -> Da
-      else
-      {
-         supported = false;
-         return 0.0;
-      }
-
-      if ( v >= lo && v <= hi )
-      {
-         int_c += conc;
-      }
-   }
-
-   return ( sum_c > 0.0 ) ? ( int_c / sum_c ) * 100.0 : 0.0;
-}
-
 // VELOCITY-MWL: timestamps, species (models) used, analysis settings,
 // distribution info (separate .pdf), and Integration Results: for each species
 // model, the fraction of total concentration within each report item's range
@@ -4654,17 +4614,19 @@ QString US_ReporterGMP::distrib_info_velmwl( const QString&         chan_tag,
             double                   high       = curr_item.range_high;
             QString                  range      = "[" + QString::number( low ) + " - " + QString::number( high ) + "]";
 
-            bool                     supported;
-            double                   frac_tot_m = velmwl_range_fraction( models[im], type, low, high, supported );
+            // The fraction and pass/fail (US_Calc "velmwl_report_item")
+            const US_Calc::Gmp::VelMwlItemResult item_result = US_Calc::Gmp::evaluate_velmwl_item(
+               models[im].calc_model(), { type, curr_item.method, low, high, frac_tot_r, tol_r } );
 
-            if ( !supported )
+            if ( !item_result.supported )
             {
                mstr_sp += table_row(
                   type, range, tr( "n/a" ) + " (" + QString::number( frac_tot_r ) + "%)", QString::number( tol_r ), tr( "n/a" ) );
                continue;
             }
 
-            QString passed = ( qAbs( frac_tot_m - frac_tot_r ) <= tol_r ) ? "YES" : "NO";
+            double  frac_tot_m = item_result.fraction_percent;
+            QString passed     = item_result.passed ? "YES" : "NO";
 
             mstr_sp += table_row( type,
                                   range,
@@ -4915,11 +4877,7 @@ void US_ReporterGMP::get_abde_percents( QMap< QString, QMap < QString, QMap < QS
 
 void US_ReporterGMP::get_abde_data_per_channel(QMap< QString, QMap < QString, QVector<QVector<double>> > >& data_per_chan)
 {
-  abde_data_per_channel = data_per_chan;
-
-  // qDebug() << "Passed data_for_chan 2A: xvalues -- "   << abde_data_per_channel["2A"]["xvalues"];
-  // qDebug() << "Passed data_for_chan 2A: yvaluesN -- "  << abde_data_per_channel["2A"]["yvaluesN"];
-  // qDebug() << "Passed data_for_chan 2A: integralN -- " << abde_data_per_channel["2A"]["integralN"];
+   abde_data_per_channel = data_per_chan;
 }
 
 void US_ReporterGMP::get_abde_selected_signals( QMap< QString, QStringList >& selected_signals_p )
@@ -5186,6 +5144,40 @@ DbgLv(1) << "ScMd:scan time(3)" << timer.elapsed();
 }
 
 //simulate triple
+// Tell the user an aborted simulation stopped the report, and let them generate it
+// again. In AUTO mode the Generate Report button is hidden, so the message offers
+// the retry itself.
+void US_ReporterGMP::report_generation_aborted()
+{
+   gmp_progress_hide();
+   QApplication::restoreOverrideCursor();
+   pb_gen_report->setEnabled( true );
+
+   QMessageBox msgBox( this );
+   msgBox.setIcon( QMessageBox::Information );
+   msgBox.setWindowTitle( tr( "Report Generation Aborted" ) );
+   msgBox.setText( tr( "The simulation was aborted, so no report was written." ) );
+   QPushButton* bRetry = nullptr;
+   if ( auto_mode )
+   {
+      msgBox.setInformativeText( tr( "Select Generate Again to start the report over." ) );
+      bRetry = msgBox.addButton( tr( "Generate Again" ), QMessageBox::AcceptRole );
+      msgBox.addButton( tr( "Close" ), QMessageBox::RejectRole );
+   }
+   else
+   {
+      msgBox.setInformativeText( tr( "Select Generate Report to start the report over." ) );
+      msgBox.addButton( QMessageBox::Ok );
+   }
+   msgBox.exec();
+
+   if ( bRetry != nullptr && msgBox.clickedButton() == bRetry )
+   {
+      // After generate_report has returned, so the retry does not run inside it.
+      QTimer::singleShot( 0, this, &US_ReporterGMP::generate_report );
+   }
+}
+
 bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_model )
 {
    // Show msg while data downloaded and simulated
@@ -5322,27 +5314,7 @@ bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
 	}
       //*DEBUG*
 
-      int kstep      = speed_steps.count();
-      int kscan      = speed_steps[ 0 ].scans;
-      for ( int jj = 0; jj < simparams.speed_step.count(); jj++ )
-	{
-	  if ( jj < kstep )
-	    {
-	      kscan          = speed_steps[ jj ].scans;
-	      speed_steps[ jj ] = simparams.speed_step[ jj ];
-	    }
-	  else
-            speed_steps << simparams.speed_step[ jj ];
-	  
-	  speed_steps[ jj ].scans = kscan;
-	  simparams.speed_step[ jj ].scans = kscan;
-	  qDebug() << "LD:    (s) tf tl wf wl scns"
-		   << speed_steps[jj].time_first
-		   << speed_steps[jj].time_last
-		   << speed_steps[jj].w2t_first
-		   << speed_steps[jj].w2t_last
-		   << speed_steps[jj].scans;
-	}
+   US_SimulationParameters::mergeTimeStateSteps( speed_steps, simparams.speed_step );
     }
   progress_msg->setValue( 2 );
   qApp->processEvents();
@@ -5372,6 +5344,23 @@ bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   
   bufvl = US_SolutionVals::values( dbP, edata, solID, svbar, bdens,
 				   bvisc, bcomp, bmanu, errmsg );
+  // Read the solution; when that fails, use the default vbar, which later vbar calculations
+  // also use for the cleared solution, since it has no analytes
+  const auto read_solution = [&]( bool fromDb )
+  {
+     const int     solstat = fromDb ? solution_rec.readFromDB( solID.toInt(), dbP ) : solution_rec.readFromDisk( solID );
+     const QString solerr  = fromDb ? dbP->lastError() : tr( "the solution file could not be read" );
+     if ( solstat != IUS_DB2::OK )
+     {
+        QMessageBox::warning( this,
+                              tr( "Solution/Buffer Fetch" ),
+                              tr( "Solution %1 could not be read:\n%2\n"
+                                  "The default vbar, %3, is used." )
+                                 .arg( solID, US_Solution::readErrorText( solstat, solerr ) )
+                                 .arg( TYPICAL_VBAR ) );
+        solution_rec.commonVbar20 = TYPICAL_VBAR;
+     }
+  };
   progress_msg->setValue( 3 );
 
   //Hardwire compressibility to zero, for now
@@ -5391,15 +5380,15 @@ bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
 	}
       
       else if ( solID.length() < 36  &&  dbP != NULL )
-	{
-	  solution_rec.readFromDB( solID.toInt(), dbP );
-	}
-      
+      {
+         read_solution( true );
+      }
+
       else
-	{
-	  solution_rec.readFromDisk( solID );
-	}
-      
+      {
+         read_solution( false );
+      }
+
       vbar          = solution_rec.commonVbar20;
       svbar         = QString::number( vbar );
       
@@ -5432,7 +5421,7 @@ bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
 
   //Load Model (latest ) && noise(s)
   loadModel( triple_info_map  );
-  
+
   // triple_info_map[ "stage_name" ] = QString("2DSA-IT");
   // if ( !loadModel( triple_info_map  ) && !model_exists )
   //   {
@@ -5442,7 +5431,6 @@ bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   // 	  triple_info_map[ "stage_name" ] = QString("2DSA");
   // 	  if ( !loadModel( triple_info_map  ) && !model_exists )
   // 	    {
-  // 	      qDebug() << "In loadModel(): No models (2DSA-IT, 2DSA-FM, 2DSA) found for triple -- " << triple_info_map[ "triple_name" ];
 
   // 	      QMessageBox::critical( this, tr( "No Model Found" ),
   // 				     QString( tr( "In loadModel(): No models (2DSA-IT, 2DSA-FM, 2DSA) found for triple %1" ))
@@ -5457,44 +5445,17 @@ bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   qApp->processEvents();
 
   //Simulate Model
-  simulateModel( triple_info_map );
+  if ( !simulateModel( triple_info_map ) )
+  {
+     report_aborted = true;
+     return false;
+  }
 
   // Dialog stays up (next triple/model, combined plots, PDF...)
   qApp->processEvents();
 
   return true;
-
-  /*
-  // Show plot
-  resplotd = new US_ResidPlotFem( this, true );
-  //resplotd->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
-  resplotd->setWindowModality(Qt::ApplicationModal);
-  resplotd->show();
-  */
 }
-
-// public function to get pointer to edit data
-US_DataIO::EditedData*      US_ReporterGMP::rg_editdata() { return edata;     }
-
-// public function to get pointer to list of excluded scans
-QList< int >*               US_ReporterGMP::rg_excllist() { return &excludedScans;}
-
-// public function to get pointer to sim data
-US_DataIO::RawData*         US_ReporterGMP::rg_simdata()  { return sdata;     }
-
-// public function to get pointer to load model
-US_Model*                   US_ReporterGMP::rg_model()    { return &model;    }
-
-// public function to get pointer to TI noise
-US_Noise*                   US_ReporterGMP::rg_ti_noise() { return &ti_noise; }
-
-// public function to get pointer to RI noise
-US_Noise*                   US_ReporterGMP::rg_ri_noise() { return &ri_noise; }
-
-// public function to get pointer to resid bitmap diag
-QPointer< US_ResidsBitmap > US_ReporterGMP::rg_resbmap()  { return rbmapd;    }
-
-QString  US_ReporterGMP::rg_tripleInfo()  { return tripleInfo;    }
 
 
 //Load rawData/editedData
@@ -5572,9 +5533,8 @@ bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
   // QStringList query;
   // query << "get_modelDescsIDs" << triple_information[ "eID" ];
   // db->query( query );
-  
-  // qDebug() << "In loadModel() Query: " << query;
-  
+
+
   // int latest_update_time = 1e100;
   // int mID=0;
 
@@ -5604,8 +5564,7 @@ bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
   // 		      latest_update_time = time_to_now;
   // 		      //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
 
-  // 		      qDebug() << "Model 2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
-		  		      
+
   // 		      mID       = modelID;
   // 		    }
   // 		}
@@ -5617,9 +5576,8 @@ bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
   // 		{
   // 		  latest_update_time = time_to_now;
   // 		  //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
-		  
-  // 		  qDebug() << "Model NON-2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
-		  
+
+
   // 		  mID       = modelID;
   // 		}
   // 	    }
@@ -6234,7 +6192,7 @@ DbgLv(2) << "LaNoi:idlDB: ii jj moGUID" << ii << jj << moGUID;
 }
 
 //Simulate Model
-void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
+bool US_ReporterGMP::simulateModel( QMap<QString, QString>& tripleInfo )
 {
   progress_msg->setLabelText( QString("Simulating model %1 for triple %2...")
 			      .arg( tripleInfo[ "stage_name" ])
@@ -6266,7 +6224,10 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
   // Initialize simulation parameters using edited data information
   US_Passwd pw;
   US_DB2* dbP = new US_DB2( pw.getPasswd() );
-  
+
+  // Use the experiment speed steps if they cover the data; otherwise derive steps from the scans
+  exp_steps = US_SimulationParameters::speedStepsCoverData( speed_steps, *edata );
+  dat_steps = !exp_steps;
   simparams.initFromData( dbP, *edata, dat_steps );
   simparams.simpoints         = adv_vals[ "simpoints" ].toInt();
   simparams.meshType          = US_SimulationParameters::ASTFEM;
@@ -6405,7 +6366,7 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
       if ( msgBox.clickedButton() == bAbort ) {
           QApplication::restoreOverrideCursor();
           qApp->processEvents();
-          return;
+          return false;
       }
   }
 
@@ -6511,9 +6472,9 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
       tsimdats.clear();
       tmodels .clear();
       kcomps  .clear();
-      QList< ThreadWorker* >         tworkers;
-      QList< QThreadEx* >            wthreads;
-      
+      QList<US_ThreadWorker*> tworkers;
+      QList<US_ThreadEx*>     wthreads;
+
       // Build models for each thread
       for ( int ii = 0; ii < ncomp; ii++ )
 	{
@@ -6537,26 +6498,24 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
       // Build worker threads and begin running
       for ( int ii = 0; ii < nthread; ii++ )
 	{
-	  ThreadWorker* tworker = new ThreadWorker( tmodels[ ii ], simparams,
-						    tsimdats[ ii ], solution_rec.buffer, ii );
-	  QThreadEx*    wthread = new QThreadEx();
-	  
-	  tworker->moveToThread( wthread );
-	  
-	  tworkers << tworker;
-	  wthreads << wthread;
-	  
-	  connect( wthread, &QThread::started,
-		   tworker, &ThreadWorker::calc_simulation );
-	  
-	  connect( tworker, &ThreadWorker::work_progress,
-	   	   this,    &US_ReporterGMP::thread_progress );
-	  connect( tworker, &ThreadWorker::work_complete,
-		   this,    &US_ReporterGMP::thread_complete );
-	  
-	  wthread->start();
-	}
+      US_ThreadWorker* tworker = new US_ThreadWorker( tmodels[ii], simparams, tsimdats[ii], solution_rec.buffer, ii );
+      US_ThreadEx*     wthread = new US_ThreadEx();
+
+      tworker->moveToThread( wthread );
+
+      tworkers << tworker;
+      wthreads << wthread;
+
+      connect( wthread, &QThread::started, tworker, &US_ThreadWorker::calc_simulation );
+
+      connect( tworker, &US_ThreadWorker::work_progress, this, &US_ReporterGMP::thread_progress );
+      connect( tworker, &US_ThreadWorker::work_complete, this, &US_ReporterGMP::thread_complete );
+
+      wthread->start();
+   }
     }
+
+    return true;
 }
 
 // Update progress bar as each component is completed
@@ -6580,12 +6539,6 @@ void US_ReporterGMP::show_results( QMap <QString, QString> & tripleInfo )
    //distrib_plot_resids();        // plot residuals
 
    // data_plot();                  // re-plot data+simulation
-
-   // if ( rbmapd != 0 )
-   // {
-   //    bmd_pos  = rbmapd->pos();
-   //    rbmapd->close();
-   // }
 
    assemble_distrib_html( tripleInfo );
 
@@ -6724,10 +6677,9 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
       // //DEBUG
       // bool b_1 = modelDescModified[ ii ].contains( triplesname_mod );
       // bool b_2 =  modelDescModified[ ii ].contains( re_sm );
-      // qDebug() << "b_1, b_2 -- " << b_1 << b_2;
       // modelGuidExistsForStage_ind( triplesname, stage_model, modelDescModifiedGuid[ ii ] );
       // //DEBUG
-      
+
       //fiter by type|model
       if ( modelDescModified[ ii ].contains( triplesname_mod ) &&
 	   //modelDescModified[ ii ].contains( stage_model ) &&
@@ -6816,108 +6768,107 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 			       << sim_ranges["s_ranges"];
 		    }
 		  //add c_parms["CG_model"] = QString("YES"); //OR "NO"
-		  c_parms["CG_model"] = isCGM; 
-		  
-		  //qDebug() << "over models: c_params -- " << c_params;
-		  
-		  //ALEXEY: here it plots s20 combPlot (xtype == 0)	  
-		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 0, c_parms );
-		 		  
-		  write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );                //<-- rp_data_plot1() gives combined plot
-		  imgComb02File.replace( svgext, pngext ); 
-		  CombPlotsFileNames << imgComb02File;
-		  
-		  CombPlotsParmsMap       [ imgComb02File ] = plotted_ids_colors_map_s_type. firstKey();
-		  CombPlotsParmsMap_Colors[ imgComb02File ] = plotted_ids_colors_map_s_type[ plotted_ids_colors_map_s_type. firstKey() ];
-		}
-	      //type: 1:MW
-	      else if ( type == "MW" )
-		{
-		  imgComb02File += ".MW" + svgext;
-		  
-		  t_m = "MW," + stage_model;
-		  c_parms = comboPlotsMap[ t_m ];
-		  qDebug() << "[MW-INDCOMB] c_parms [BEFORE]-- " << c_parms;
-		  convert_ranges_global( c_parms, pow(10,3) );
-		  qDebug() << "[MW-INDCOMB] c_parms [AFTER]-- " << c_parms;
-		  //put ranges into c_parms:
-		  QString c_ranges = convert_ranges( ranges, pow(10,3) );
-		  qDebug() << "MW ranges [before, after] -- "
-			   << ranges.join(",") << ", " << c_ranges;
-		  c_parms[ "Ranges" ] = c_ranges;
-		  //c_parms[ "Ranges" ] = ranges.join(",");
+          c_parms["CG_model"] = isCGM;
 
-		  //add c_parms["CG_model"] = QString("YES"); //OR "NO"
-		  c_parms["CG_model"] = isCGM; 
-		  
-		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 1, c_parms );
-		  
-		  write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );              //<-- rp_data_plot1() gives combined plot
-		  imgComb02File.replace( svgext, pngext );
-		  CombPlotsFileNames << imgComb02File;
-		  
-		  CombPlotsParmsMap       [ imgComb02File ] = plotted_ids_colors_map_s_type. firstKey();
-		  CombPlotsParmsMap_Colors[ imgComb02File ] = plotted_ids_colors_map_s_type[ plotted_ids_colors_map_s_type. firstKey() ];
-		}
-	      //type 2:D
-	      else if ( type == "D" )
-		{
-		  imgComb02File += ".D20" + svgext;
-		  
-		  t_m = "D," + stage_model;
-		  c_parms = comboPlotsMap[ t_m ];
-		  qDebug() << "[D-INDCOMB] c_parms [BEFORE]-- " << c_parms;
-		  convert_ranges_global( c_parms, pow(10,-7) );
-		  qDebug() << "[D-INDCOMB] c_parms [AFTER]-- " << c_parms;
-		  //put ranges into c_parms:
-		  QString c_ranges = convert_ranges( ranges, pow(10,-7) );
-		  qDebug() << "D ranges [before, after] -- "
-			   << ranges.join(",") << ", " << c_ranges;
-		  c_parms[ "Ranges" ] = c_ranges;
-		  //c_parms[ "Ranges" ] = ranges.join(",");
 
-		  //add c_parms["CG_model"] = QString("YES"); //OR "NO"
-		  c_parms["CG_model"] = isCGM; 
-		  
-		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 2, c_parms );
-		  
-		  write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );              //<-- rp_data_plot1() gives combined plot
-		  imgComb02File.replace( svgext, pngext );
-		  CombPlotsFileNames << imgComb02File;
-		  
-		  CombPlotsParmsMap       [ imgComb02File ] = plotted_ids_colors_map_s_type. firstKey();
-		  CombPlotsParmsMap_Colors[ imgComb02File ] = plotted_ids_colors_map_s_type[ plotted_ids_colors_map_s_type. firstKey() ];
-		}
-	      //type 3:f/f0
-	      else if ( type == "f/f0" )
-		{
-		  imgComb02File += ".f_f0" + svgext;
-		  
-		  t_m = "f/f0," + stage_model;
-		  c_parms = comboPlotsMap[ t_m ];
-		  //put ranges into c_parms:
-		  c_parms[ "Ranges" ] = ranges.join(",");
+          //ALEXEY: here it plots s20 combPlot (xtype == 0)
+          plotted_ids_colors_map_s_type = sdiag_combplot->changedPlotX_auto( 0, c_parms );
 
-		  if ( sim_ranges. contains("k_ranges") )
-		    c_parms[ "k_ranges" ] = sim_ranges["k_ranges"].join(",");
+          write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() ); //<-- rp_data_plot1() gives combined plot
+          imgComb02File.replace( svgext, pngext );
+          CombPlotsFileNames << imgComb02File;
 
-		  //add c_parms["CG_model"] = QString("YES"); //OR "NO"
-		  c_parms["CG_model"] = isCGM; 
-		  
-		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 3, c_parms );
-		  
-		  write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );              //<-- rp_data_plot1() gives combined plot
-		  imgComb02File.replace( svgext, pngext );
-		  CombPlotsFileNames << imgComb02File;
-		  
-		  CombPlotsParmsMap       [ imgComb02File ] = plotted_ids_colors_map_s_type. firstKey();
-		  CombPlotsParmsMap_Colors[ imgComb02File ] = plotted_ids_colors_map_s_type[ plotted_ids_colors_map_s_type. firstKey() ];
-		}
-	      
-	      // reset plot after processign certain type {s,D,MW...}
-	      //sdiag_combplot->reset_data_plot1();
-	    }
-	}
+          CombPlotsParmsMap[imgComb02File]        = plotted_ids_colors_map_s_type.firstKey();
+          CombPlotsParmsMap_Colors[imgComb02File] = plotted_ids_colors_map_s_type[plotted_ids_colors_map_s_type.firstKey()];
+      }
+      //type: 1:MW
+      else if ( type == "MW" )
+      {
+         imgComb02File += ".MW" + svgext;
+
+         t_m     = "MW," + stage_model;
+         c_parms = comboPlotsMap[t_m];
+         qDebug() << "[MW-INDCOMB] c_parms [BEFORE]-- " << c_parms;
+         convert_ranges_global( c_parms, pow( 10, 3 ) );
+         qDebug() << "[MW-INDCOMB] c_parms [AFTER]-- " << c_parms;
+         //put ranges into c_parms:
+         QString c_ranges = convert_ranges( ranges, pow( 10, 3 ) );
+         qDebug() << "MW ranges [before, after] -- " << ranges.join( "," ) << ", " << c_ranges;
+         c_parms["Ranges"] = c_ranges;
+         //c_parms[ "Ranges" ] = ranges.join(",");
+
+         //add c_parms["CG_model"] = QString("YES"); //OR "NO"
+         c_parms["CG_model"] = isCGM;
+
+         plotted_ids_colors_map_s_type = sdiag_combplot->changedPlotX_auto( 1, c_parms );
+
+         write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() ); //<-- rp_data_plot1() gives combined plot
+         imgComb02File.replace( svgext, pngext );
+         CombPlotsFileNames << imgComb02File;
+
+         CombPlotsParmsMap[imgComb02File]        = plotted_ids_colors_map_s_type.firstKey();
+         CombPlotsParmsMap_Colors[imgComb02File] = plotted_ids_colors_map_s_type[plotted_ids_colors_map_s_type.firstKey()];
+      }
+      //type 2:D
+      else if ( type == "D" )
+      {
+         imgComb02File += ".D20" + svgext;
+
+         t_m     = "D," + stage_model;
+         c_parms = comboPlotsMap[t_m];
+         qDebug() << "[D-INDCOMB] c_parms [BEFORE]-- " << c_parms;
+         convert_ranges_global( c_parms, pow( 10, -7 ) );
+         qDebug() << "[D-INDCOMB] c_parms [AFTER]-- " << c_parms;
+         //put ranges into c_parms:
+         QString c_ranges = convert_ranges( ranges, pow( 10, -7 ) );
+         qDebug() << "D ranges [before, after] -- " << ranges.join( "," ) << ", " << c_ranges;
+         c_parms["Ranges"] = c_ranges;
+         //c_parms[ "Ranges" ] = ranges.join(",");
+
+         //add c_parms["CG_model"] = QString("YES"); //OR "NO"
+         c_parms["CG_model"] = isCGM;
+
+         plotted_ids_colors_map_s_type = sdiag_combplot->changedPlotX_auto( 2, c_parms );
+
+         write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() ); //<-- rp_data_plot1() gives combined plot
+         imgComb02File.replace( svgext, pngext );
+         CombPlotsFileNames << imgComb02File;
+
+         CombPlotsParmsMap[imgComb02File]        = plotted_ids_colors_map_s_type.firstKey();
+         CombPlotsParmsMap_Colors[imgComb02File] = plotted_ids_colors_map_s_type[plotted_ids_colors_map_s_type.firstKey()];
+      }
+      //type 3:f/f0
+      else if ( type == "f/f0" )
+      {
+         imgComb02File += ".f_f0" + svgext;
+
+         t_m               = "f/f0," + stage_model;
+         c_parms           = comboPlotsMap[t_m];
+         //put ranges into c_parms:
+         c_parms["Ranges"] = ranges.join( "," );
+
+         if ( sim_ranges.contains( "k_ranges" ) )
+         {
+            c_parms["k_ranges"] = sim_ranges["k_ranges"].join( "," );
+         }
+
+         //add c_parms["CG_model"] = QString("YES"); //OR "NO"
+         c_parms["CG_model"] = isCGM;
+
+         plotted_ids_colors_map_s_type = sdiag_combplot->changedPlotX_auto( 3, c_parms );
+
+         write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() ); //<-- rp_data_plot1() gives combined plot
+         imgComb02File.replace( svgext, pngext );
+         CombPlotsFileNames << imgComb02File;
+
+         CombPlotsParmsMap[imgComb02File]        = plotted_ids_colors_map_s_type.firstKey();
+         CombPlotsParmsMap_Colors[imgComb02File] = plotted_ids_colors_map_s_type[plotted_ids_colors_map_s_type.firstKey()];
+      }
+
+      // reset plot after processign certain type {s,D,MW...}
+      //sdiag_combplot->reset_data_plot1();
+       }
+   }
     }
   
   //assemble IND combined plots into html
@@ -7088,27 +7039,24 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 	  QRegularExpression re_sm(reg_exp_sm);
 	  /**/
 
-	  // //DEBUG
-	  // bool b_1 = modelDescModified[ ii ].contains( re_sm );
-	  // qDebug() << "b_1, modelDescModified[ ii ], reg_exp_sm  -- " << b_1 << modelDescModified[ ii ] << reg_exp_sm;
-	  // modelGuidExistsForStage( modelNames[ m ], modelDescModifiedGuid[ ii ] );
-	  // //
-	  
-	  if ( //modelDescModified[ ii ].contains( modelNames[ m ] )
-	       modelDescModified[ ii ].contains( re_sm ) &&
-	       modelGuidExistsForStage( modelNames[ m ], modelDescModifiedGuid[ ii ] ) )
-	    {
-	      isModel = true;
+     // //DEBUG
+     // bool b_1 = modelDescModified[ ii ].contains( re_sm );
+     // modelGuidExistsForStage( modelNames[ m ], modelDescModifiedGuid[ ii ] );
+     // //
 
-	      //retrieve s,Model combPlot params:
-	      QString t_m = "s," + modelNames[ m ];
-	      QMap < QString, QString > c_params = comboPlotsMap[ t_m ];
-	      //qDebug() << "over models: c_params -- " << c_params;
-	      plotted_ids_colors_map_s_type = sdiag_combplot-> model_select_auto ( modelDescModified[ ii ], c_params ); //ALEXEY: here it plots s20 combPlot (xtype == 0)
+     if ( //modelDescModified[ ii ].contains( modelNames[ m ] )
+        modelDescModified[ii].contains( re_sm ) && modelGuidExistsForStage( modelNames[m], modelDescModifiedGuid[ii] ) )
+     {
+        isModel = true;
 
-	    }
-	}
-      
+        //retrieve s,Model combPlot params:
+        QString                t_m      = "s," + modelNames[m];
+        QMap<QString, QString> c_params = comboPlotsMap[t_m];
+        plotted_ids_colors_map_s_type =
+           sdiag_combplot->model_select_auto( modelDescModified[ii], c_params ); //ALEXEY: here it plots s20 combPlot (xtype == 0)
+     }
+   }
+
       ++pr_cp_val;
       progress_msg->setValue( pr_cp_val );
       
@@ -7537,20 +7485,20 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 	edir.mkpath( dirname );
       
       QString tfpath = dirname + "/" +  tfname;
-      
-      US_TimeState::dbDownload( dbP, tmstID, tfpath );
-      // And write the xdefs sibling file
+
+      const bool tmstOK = ( US_TimeState::dbDownload( dbP, tmstID, tfpath ) == US_DB2::OK );
+      // And write the xdefs sibling file, only next to a downloaded .tmst
       QString xfpath = QString( tfpath ).replace( ".tmst", ".xml" );
-      qDebug() << "Assembling Run Details:   xfpath" << xfpath;
+      qDebug() << "Assembling Run Details:   xfpath" << xfpath << "downloaded" << tmstOK;
       QFile fileo( xfpath );
-      if ( fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
-	{
-	  QTextStream tso( &fileo );
-	  tso << xdefs;
-	  tso.flush();
-	  fileo.close();
-	  qDebug() << "Assembling Run Details:    xdefs WRITTEN";
-	}
+      if ( tmstOK && fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
+      {
+         QTextStream tso( &fileo );
+         tso << xdefs;
+         tso.flush();
+         fileo.close();
+         qDebug() << "Assembling Run Details:    xdefs WRITTEN";
+      }
 
 
       //6. Get access to Timestamp info, possibly plots also...
@@ -7637,96 +7585,86 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 	  //Exp. Duration
 	  if ( dkeys[ i ] == "Time" )
 	    {
-	      val_target       = currProto. rpSpeed. ssteps[0].duration +  (double) ( currProto. rpSpeed. ssteps[0].speed / currProto. rpSpeed. ssteps[0].accel );
-	      qDebug() << "Assembling Run Details: exp. duration, speed, accel -- "
-		       << currProto. rpSpeed. ssteps[0].duration
-		       << currProto. rpSpeed. ssteps[0].speed
-		       << currProto. rpSpeed. ssteps[0].accel;
-	      int  hours_r     = (int)qFloor( val_target / 3600.0 );
-	      int  mins_r      = (int)qRound( ( val_target - hours_r * 3600.0 ) / 60.0 );
-	      QString hh_r     = "h";
-	      QString val_target_hh_mm    = QString::asprintf( "%d %s %02d m", hours_r, hh_r.toLatin1( ).data(), mins_r );
+          val_target = US_Calc::Gmp::run_duration_target(
+             currProto.rpSpeed.ssteps[0].duration, currProto.rpSpeed.ssteps[0].speed, currProto.rpSpeed.ssteps[0].accel );
+          QString      val_target_hh_mm = US_ReporterGmp::duration_hours_minutes( val_target );
 
-	      //tol: based on 1st AProfile->ReportGMP
-	      QString channel_desc_alt = chndescs_alt[ 0 ];
-	      QString channel_desc     = chndescs[ 0 ];
-	      QString wvl              = QString::number( ch_wvls[ channel_desc_alt ][ 0 ] );
-	      US_ReportGMP reportGMP   = ch_reports[ channel_desc_alt ][ wvl ];
-	      val_tol = reportGMP. experiment_duration_tol;
-	      
-	      val_measured = dmaxs[ dkeys[ i ] ] - dmins[ dkeys[ i ] ]; //in mins
-	      double val_measured_sec = val_measured * 60.0;
-	      hours_r     = (int)qFloor( val_measured_sec / 3600.0 );
-	      mins_r      = (int)qRound( ( val_measured_sec - hours_r * 3600.0 ) / 60.0 );
-	      QString val_measured_hh_mm   = QString::asprintf( "%d %s %02d m", hours_r, hh_r.toLatin1( ).data(), mins_r );
+          //tol: based on 1st AProfile->ReportGMP
+          QString      channel_desc_alt = chndescs_alt[0];
+          QString      wvl              = QString::number( ch_wvls[channel_desc_alt][0] );
+          US_ReportGMP reportGMP        = ch_reports[channel_desc_alt][wvl];
+          val_tol                       = reportGMP.experiment_duration_tol;
 
-	      val_passed  = ( val_measured_sec >= ( val_target * (1 - val_tol/100.0)  ) && val_measured_sec <= ( val_target * (1 + val_tol/100.0) ) ) ? "YES" : "NO";
-	      
-	      html_assembled += table_row( tr( "Duration" ),
-					   val_target_hh_mm,
-					   QString::number( val_tol ) + "%",
-					   val_measured_hh_mm,
-					   "",
-					   val_passed ) ;
-	    }
+          val_measured                                      = dmaxs[dkeys[i]] - dmins[dkeys[i]]; //in mins
+          const US_Calc::Gmp::RunCheckResult duration_check = US_Calc::Gmp::check_run_duration( val_measured, val_target, val_tol );
+          QString                            val_measured_hh_mm = US_ReporterGmp::duration_hours_minutes( duration_check.value );
+          val_passed                                            = duration_check.passed ? "YES" : "NO";
 
-	  //Temperature
-	  if ( dkeys[ i ] .contains("Temperature") )
-	    {
-	      val_tol    = 0.5;   //plus-minus 0.5 C
-	      val_target = currProto.temperature; 
-	      val_measured = davgs_stdd_first_scan [ dkeys[ i ] ][ "Avg" ];
-	      val_passed  = ( val_measured  >= ( val_target - val_tol ) && val_measured  <= ( val_target + val_tol ) ) ? "YES" : "NO";
+          html_assembled +=
+             table_row( tr( "Duration" ), val_target_hh_mm, QString::number( val_tol ) + "%", val_measured_hh_mm, "", val_passed );
+       }
 
-	      val_measured_stdd = davgs_stdd_first_scan [ dkeys[ i ] ][ "Stdd" ];
-	  
-	      html_assembled += table_row( dkeys[ i ] + " (&#8451;)",
-					   QString::number( val_target ),
-					   "&#177;" + QString::number( val_tol ),
-					   QString::number( val_measured ),
-					   QString::number( val_measured_stdd ),
-					   val_passed );
+       //Temperature
+       if ( dkeys[i].contains( "Temperature" ) )
+       {
+          const US_Calc::Gmp::RunCheckResult check =
+             US_Calc::Gmp::check_temperature( davgs_stdd_first_scan[dkeys[i]]["Avg"], currProto.temperature );
+          val_tol      = check.check.tolerance; // plus-minus, degrees C
+          val_target   = check.check.target;
+          val_measured = check.value;
+          val_passed   = check.passed ? "YES" : "NO";
 
-	      //Plot Temp. plot
-	      QString img01File = dirName + "/" + "RunDetails_Temperature" + svgext;
-	      write_plot( img01File, tsdiag->rp_data_plot1( "Temperature" ) );
-	      img01File.replace( svgext, pngext ); 
-	      RunDetailsPlotsFileNames << img01File;
-	    }
+          val_measured_stdd = davgs_stdd_first_scan[dkeys[i]]["Stdd"];
 
-	  //RawSpeed
-	  if ( dkeys[ i ] .contains("RawSpeed") )
-	    {
-	      val_tol    = 4; //plus-minus 4 RPM
-	      val_target = currProto. rpSpeed. ssteps[0].speed; 
-	      val_measured = davgs_stdd_first_scan [ dkeys[ i ] ][ "Avg" ];
-	      val_passed  = ( val_measured  >= ( val_target - val_tol ) && val_measured  <= ( val_target + val_tol ) ) ? "YES" : "NO"; 
-	  	  
-	      html_assembled += table_row( "Speed (RPM)",
-					   QString::number( val_target ),
-					   "&#177;" + QString::number( val_tol ),
-					   QString::number( val_measured ),
-					   "",
-					   val_passed );
+          html_assembled += table_row( dkeys[i] + " (&#8451;)",
+                                       QString::number( val_target ),
+                                       "&#177;" + QString::number( val_tol ),
+                                       QString::number( val_measured ),
+                                       QString::number( val_measured_stdd ),
+                                       val_passed );
 
-	      //Plot Raw Speed plot
-	      QString img01File = dirName + "/" + "RunDetails_Speed" + svgext;
-	      write_plot( img01File, tsdiag->rp_data_plot1( "RawSpeed" ) );
-	      img01File.replace( svgext, pngext ); 
-	      RunDetailsPlotsFileNames << img01File;
-	    }
-	   
-	  
-	  // html_assembled += tr(
-	  // 		       "<tr><td>%1: </td> <td>%2 to %3</td> <td>Avg.: %4</td></tr>"
-	  // 		       )
-	  //   .arg( dkeys[ i ] )                 //1
-	  //   .arg( dmins[ dkeys[ i ] ] )        //2
-	  //   .arg( dmaxs[ dkeys[ i ] ] )        //3
-	  //   .arg( davgs [ dkeys[ i ] ] )       //4
-	  //   ;
-	}
-      
+          //Plot Temp. plot
+          QString img01File = dirName + "/" + "RunDetails_Temperature" + svgext;
+          write_plot( img01File, tsdiag->rp_data_plot1( "Temperature" ) );
+          img01File.replace( svgext, pngext );
+          RunDetailsPlotsFileNames << img01File;
+       }
+
+       //RawSpeed
+       if ( dkeys[i].contains( "RawSpeed" ) )
+       {
+          const US_Calc::Gmp::RunCheckResult check =
+             US_Calc::Gmp::check_speed( davgs_stdd_first_scan[dkeys[i]]["Avg"], currProto.rpSpeed.ssteps[0].speed );
+          val_tol      = check.check.tolerance; // plus-minus, rpm
+          val_target   = check.check.target;
+          val_measured = check.value;
+          val_passed   = check.passed ? "YES" : "NO";
+
+          html_assembled += table_row( "Speed (RPM)",
+                                       QString::number( val_target ),
+                                       "&#177;" + QString::number( val_tol ),
+                                       QString::number( val_measured ),
+                                       "",
+                                       val_passed );
+
+          //Plot Raw Speed plot
+          QString img01File = dirName + "/" + "RunDetails_Speed" + svgext;
+          write_plot( img01File, tsdiag->rp_data_plot1( "RawSpeed" ) );
+          img01File.replace( svgext, pngext );
+          RunDetailsPlotsFileNames << img01File;
+       }
+
+
+       // html_assembled += tr(
+       // 		       "<tr><td>%1: </td> <td>%2 to %3</td> <td>Avg.: %4</td></tr>"
+       // 		       )
+       //   .arg( dkeys[ i ] )                 //1
+       //   .arg( dmins[ dkeys[ i ] ] )        //2
+       //   .arg( dmaxs[ dkeys[ i ] ] )        //3
+       //   .arg( davgs [ dkeys[ i ] ] )       //4
+       //   ;
+   }
+
       html_assembled += tr(
 			   "</table>"
 			   );
@@ -9443,9 +9381,8 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
 	     QString::asprintf( "%10.4e", x_val ) + ", " + 
 	     QString::asprintf( "%10.4e", y_dna_val ) + ", " +
 	     QString::asprintf( "%10.4e", yp_int_dna_val );
-	 }
-       //qDebug() << abde_dist_info; 
-       
+    }
+
        html_abde_s += abde_dist_info + "<br>";
      }
   
@@ -10030,177 +9967,131 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 
   if ( !channdesc_to_overlapping_wvls.isEmpty() ) 
     html_str_replicate_av += tr( "<h2>Replicate Groups Averaging Results:</h2>\n" );
-  
-  QMap< QString, QStringList>::iterator chw;
+
+  QMap<QString, QStringList>::iterator chw;
   for ( chw = channdesc_to_overlapping_wvls.begin(); chw != channdesc_to_overlapping_wvls.end(); ++chw )
-    {
-      QString ch_alt_desc  = chw.key();
-      QStringList all_wvls = chw.value();
-      QString o_type       = ch_alt_desc.split(":")[1];
+  {
+     QString       ch_alt_desc = chw.key();
+     QStringList   all_wvls    = chw.value();
+     QString       o_type      = ch_alt_desc.split( ":" )[1];
 
-      QStringList unique_wvls;
-      QStringList unique_channels;
-      QMap < QString, QStringList > same_wvls_chann_map; // wvl: channel list
-      
-      for( int i=0; i<all_wvls.size(); ++i )
-	{
-	  QString curr_triple = all_wvls[ i ];
-	  QString curr_chann  = all_wvls[ i ].split(".")[0];  
-	  QString curr_wvl    = all_wvls[ i ].split(".")[1];
+     // The triples that take part in averaging, split into one subgroup per
+     // wavelength (US_Calc "report_replicate_group")
+     QVector<bool> included;
+     for ( const QString& triple : all_wvls )
+     {
+        included << triple_exist_inMWL( triple );
+     }
+     const US_Calc::Gmp::ReplicateLayout layout = US_Calc::Gmp::replicate_layout( all_wvls, included );
 
-	  //check if actual triple is considered in MWL settings
-	  if ( !triple_exist_inMWL( curr_triple ) )
-	    continue;
+     QString                             replicate_group_number = get_replicate_group_number( ch_alt_desc );
 
-	  unique_wvls               << curr_wvl;
-	  unique_channels           << curr_chann;
+     html_str_replicate_av += "\n" + indent( 2 ) +
+                              tr( "<h3>Replicate Group #%1: [Channels: %2 (%3)] </h3>\n" )
+                                 .arg( replicate_group_number )
+                                 .arg( layout.channels.join( "," ) )
+                                 .arg( o_type );
 
-	  //here, add to list FULL channel desc, e.g. "1A:Iterf.", or "1A:UV/vis."
-	  //same_wvls_chann_map[ curr_wvl ] << curr_chann; //BEFORE
-	  same_wvls_chann_map[ curr_wvl ] << curr_chann + ":" + o_type; //Will this work?
-	}
-      
-      unique_wvls.     removeDuplicates();
-      unique_channels. removeDuplicates();
+     for ( int j = 0; j < layout.subgroups.size(); ++j )
+     {
+        const US_Calc::Gmp::ReplicateSubgroup& subgroup = layout.subgroups[j];
+        QString                                u_wvl    = subgroup.wavelength;
 
-      QString replicate_group_number = get_replicate_group_number( ch_alt_desc );
-      
-      html_str_replicate_av += "\n" + indent( 2 ) + tr( "<h3>Replicate Group #%1: [Channels: %2 (%3)] </h3>\n" )
-	.arg( replicate_group_number )
-	.arg( unique_channels.join(",") )
-	.arg( o_type );
-      
-      
-      //iterate over unique wvls
-      for ( int j=0; j < unique_wvls.size(); ++j )
-	{
-	  QString u_wvl = unique_wvls[j];
+        // Full channel descriptions, e.g. "1A:Interf." or "1A:UV/vis."
+        QStringList                            channs_for_wvl;
+        QString                                replicate_subgroup_triples;
+        for ( const QString& channel : subgroup.channels )
+        {
+           channs_for_wvl << channel + ":" + o_type;
+           replicate_subgroup_triples += channel + "." + u_wvl + ",";
+        }
+        replicate_subgroup_triples.chop( 1 );
 
-	  QString replicate_subgroup_triples;
-	  for ( int jj=0; jj < same_wvls_chann_map[ u_wvl ].size(); ++jj )
-	    replicate_subgroup_triples += same_wvls_chann_map[ u_wvl ][ jj ].split(":")[0] + "." + u_wvl + ",";
+        html_str_replicate_av +=
+           "\n" + indent( 2 ) +
+           tr( "<h3>Subgroup #%1: [Triples: %2] </h3>\n" ).arg( QString::number( j + 1 ) ).arg( replicate_subgroup_triples );
 
-	  replicate_subgroup_triples.chop(1);
-	  
-	  html_str_replicate_av += "\n" + indent( 2 ) + tr( "<h3>Subgroup #%1: [Triples: %2] </h3>\n" )
-	    .arg( QString::number( j+1 ) )
-	    .arg( replicate_subgroup_triples );
+        html_str_replicate_av += indent( 2 ) + "<table style=\"font-size:80%\">\n";
+        html_str_replicate_av += table_row( tr( "Type:" ),
+                                            tr( "Method:" ),
+                                            tr( "Range:" ),
+                                            tr( "Av. Integration, Model (target):" ),
+                                            tr( "St. Dev.:" ),
+                                            tr( "Av. Fraction %, Model (target):" ),
+                                            tr( "St. Dev.:" ),
+                                            tr( "Tol.%:" ),
+                                            tr( "PASSED?" ) );
 
-	  html_str_replicate_av += indent( 2 ) + "<table style=\"font-size:80%\">\n";
-	  html_str_replicate_av += table_row( tr( "Type:" ),
-					      tr( "Method:" ),
-					      tr( "Range:"),
-					      tr( "Av. Integration, Model (target):" ),
-					      tr( "St. Dev.:"),
-					      tr( "Av. Fraction %, Model (target):"),
-					      tr( "St. Dev.:" ),
-					      tr( "Tol.%:"),
-					      tr( "PASSED?")
-					      );
-	  	  
-	  //Reference GMP Report, ReportItems for 1st channel in a replicate group && over each wavelength:
-	  US_ReportGMP ref_group_report = ch_reports[ ch_alt_desc ][ u_wvl ];
-	  int report_items_number = ref_group_report.reportItems.size();
-	  for ( int kk = 0; kk < report_items_number; ++kk )
-	    {
-	      US_ReportGMP::ReportItem ref_group_item = ref_group_report.reportItems[ kk ];
+        // The reference items:  those of the group's first channel at this wavelength
+        US_ReportGMP ref_group_report    = ch_reports[ch_alt_desc][u_wvl];
+        int          report_items_number = ref_group_report.reportItems.size();
+        for ( int kk = 0; kk < report_items_number; ++kk )
+        {
+           US_ReportGMP::ReportItem ref_group_item = ref_group_report.reportItems[kk];
 
-	      QString type           = ref_group_item.type;
-	      QString method         = ref_group_item.method;
-	      if( method.contains ("PCSA") )
-		method = "PCSA";
-	      QString int_val_r      = QString::number( ref_group_item.integration_val );
-	      double  frac_tot_r     = ref_group_item.total_percent;
-	      double  frac_tot_tol_r = ref_group_item.tolerance ;
-	      double  low            = ref_group_item.range_low;
-	      double  high           = ref_group_item.range_high;
+           QString                  type   = ref_group_item.type;
+           QString                  method = ref_group_item.method;
+           if ( method.contains( "PCSA" ) )
+           {
+              method = "PCSA";
+           }
+           QString                                  int_val_r      = QString::number( ref_group_item.integration_val );
+           double                                   frac_tot_r     = ref_group_item.total_percent;
+           double                                   frac_tot_tol_r = ref_group_item.tolerance;
+           double                                   low            = ref_group_item.range_low;
+           double                                   high           = ref_group_item.range_high;
 
-	      QString range          = "[" + QString::number(low) + " - " + QString::number(high) + "]";
-	   
-	      QMap<QString, double> replicate_g_results = get_replicate_group_results( ref_group_item, u_wvl, same_wvls_chann_map[ u_wvl ] );
+           QString                                  range = "[" + QString::number( low ) + " - " + QString::number( high ) + "]";
 
-	      //print results into HTML report:
-	      /* 
-		 Replicate Group #: [channles: 1A, 2A, 5A]
-		    Sub-Group #: [wvl: 280]
-		      type,  method,   range,    integration_AV (target),   St.Dev.   Fraction of Total AV. (target)   PASSED?
-		      s      2DSA-MC   3.2-3.7   integration_sim_av         st_dev      XXX                             YES/NO 
-	      */
+           const US_Calc::Gmp::ReplicateGroupResult group =
+              get_replicate_group_results( ref_group_item, u_wvl, channs_for_wvl, subgroup.channels.size() );
 
-	      double frac_tot_m_av = replicate_g_results["tot_percent_av"];
-	      QString tot_av_frac_passed = ( frac_tot_m_av >= ( frac_tot_r * (1 - frac_tot_tol_r/100.0)  )
-					     && frac_tot_m_av <= ( frac_tot_r * (1 + frac_tot_tol_r/100.0)  ) ) ? "YES" : "NO";
+           QString int_std_dev     = "N/A";
+           QString percent_std_dev = "N/A";
+           if ( group.show_sd )
+           {
+              int_std_dev     = QString( "%1" ).arg( group.sd_range_concentration, 10, 'e', 2 );
+              percent_std_dev = QString( "%1%" ).arg( group.sd_fraction_percent, 0, 'f', 2 );
+           }
 
-	      //descide if we show std deviations
-	      int num_triples_in_subgroup = replicate_subgroup_triples.split(",").size();
-	      qDebug() << "triples_list, num_triples_in_subgroup, replicate_g_results[\"int_st_dev\"], "
-	      	       << "replicate_g_results[\"tot_percent_st_dev\"] -- "
-	      	       << replicate_subgroup_triples << num_triples_in_subgroup << replicate_g_results["int_st_dev"]
-	      	       << replicate_g_results["tot_percent_st_dev"];
-	      
-	      QString int_std_dev     = "N/A";
-	      QString percent_std_dev = "N/A";
-	      if ( num_triples_in_subgroup > 1 )
-		{
-		  int_std_dev     = QString("%1").arg(replicate_g_results["int_st_dev"], 10, 'e', 2);
-		  percent_std_dev = QString("%1%").arg(replicate_g_results["tot_percent_st_dev"], 0, 'f', 2);
-		}
-	      qDebug() << "int_std_dev, percent_std_dev -- " << int_std_dev << percent_std_dev;
-	      
-	      html_str_replicate_av += table_row( type,
-						  method,
-						  range,
-						  QString::asprintf( "%10.4e",  replicate_g_results["int_av"] ) + " (" + int_val_r + ")",
-						  //QString::asprintf( "%10.2e",  int_std_dev ),
-						  int_std_dev,
-						  QString::asprintf( "%5.2f%%", replicate_g_results["tot_percent_av"] ) +
-						                                   " (" + QString::asprintf( "%5.2f%%", frac_tot_r ) + ")",
-						  //QString::asprintf( "%5.2f%%",  percent_std_dev ),
-						  percent_std_dev,
-						  QString::number( frac_tot_tol_r ),
-						  tot_av_frac_passed
-						  );
-	    }
-	  
-	  html_str_replicate_av += indent( 3 ) + "</table>\n";
-	}
-    }
-  
+           html_str_replicate_av += table_row(
+              type,
+              method,
+              range,
+              QString::asprintf( "%10.4e", group.mean_range_concentration ) + " (" + int_val_r + ")",
+              int_std_dev,
+              QString::asprintf( "%5.2f%%", group.mean_fraction_percent ) + " (" + QString::asprintf( "%5.2f%%", frac_tot_r ) + ")",
+              percent_std_dev,
+              QString::number( frac_tot_tol_r ),
+              group.passed ? "YES" : "NO" );
+        }
+
+        html_str_replicate_av += indent( 3 ) + "</table>\n";
+     }
+  }
+
   return html_str_replicate_av;
 }
 
+// Whether a triple takes part in replicate averaging:  the triple's channel
+// settings and report are looked up here, the rule is US_Calc's.
 bool US_ReporterGMP::triple_exist_inMWL( QString curr_triple )
 {
-  bool ex = true;
-  QString curr_chann  = curr_triple.split(".")[0];  
-  QString curr_wvl    = curr_triple.split(".")[1];
-  QString chann_desc_full;
-  QStringList wvls_not;
-  for( int i=0; i < chndescs_alt.size(); ++i)
-    {
-      QString chan_from_desc = chndescs_alt[i].split(":")[0];
-      if ( chan_from_desc == curr_chann )
-	{
-	  wvls_not = currAProf.wvl_not_run[i].split(":");
-	  chann_desc_full = chndescs_alt[i];
-	  break;
-	}
-    }
-  if ( wvls_not.contains(curr_wvl) )
-    {
-      ex = false;
-      qDebug() << "Triple: " << curr_triple << " will not be considered in replicas averaging! [MWL settings]"; 
-    }
-
-  //now, check if ReportGMP has 'Integration Results' checked (even for triple that is included)
-  US_ReportGMP report_for_triple = ch_reports[ chann_desc_full ][ curr_wvl ];
-  if ( !report_for_triple. integration_results_mask )
-    {
-      ex = false;
-      qDebug() << "Triple: " << curr_triple << " will not be considered in replicas averaging! [ReportGMP settings]"; 
-    }
-  
-  return ex;
+   QString curr_chann = curr_triple.split( "." )[0];
+   QString curr_wvl   = curr_triple.split( "." )[1];
+   QString chann_desc_full;
+   QString wvls_not;
+   for ( int i = 0; i < chndescs_alt.size(); ++i )
+   {
+      if ( chndescs_alt[i].split( ":" )[0] == curr_chann )
+      {
+         wvls_not        = currAProf.wvl_not_run[i];
+         chann_desc_full = chndescs_alt[i];
+         break;
+      }
+   }
+   US_ReportGMP report_for_triple = ch_reports[chann_desc_full][curr_wvl];
+   return US_Calc::Gmp::replicate_triple_included( curr_wvl, wvls_not, report_for_triple.integration_results_mask );
 }
 
 
@@ -10222,126 +10113,45 @@ QString US_ReporterGMP::get_replicate_group_number( QString ch_alt_desc )
   return replicate_gn;
 }
 
-//Get Integration Results from same Replicate subGroup | same-wvl | same-report-items: 
-QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP::ReportItem ref_report_item, QString u_wvl, QStringList channs_for_wvl )
+// A reference item's result over a replicate subgroup:  the report items of
+// each channel are looked up here (filled in by distrib_info), the members,
+// averages and pass/fail come from US_Calc.
+US_Calc::Gmp::ReplicateGroupResult US_ReporterGMP::get_replicate_group_results( US_ReportGMP::ReportItem ref_report_item,
+                                                                                QString                  u_wvl,
+                                                                                QStringList              channs_for_wvl,
+                                                                                int                      listed_triples )
 {
-  double int_res_sim = 0;
-  double int_res_sim_av = 0;
-  double tot_percent_sim = 0;
-  double tot_percent_sim_av = 0;
-  
-  int    same_item_counter = 0;
-  double st_dev_int_1 = 0;
-  double st_dev_int_final = 0;
-  double st_dev_tot_percent_1 = 0;
-  double st_dev_tot_percent_final = 0;
-  QVector< double > int_res_sim_vector;
-  QVector< double > tot_percent_sim_vector;
+   auto as_replicate_item = []( const US_ReportGMP::ReportItem& item )
+   {
+      US_Calc::Gmp::ReplicateItem r;
+      r.type                = item.type;
+      r.method              = item.method;
+      r.low                 = item.range_low;
+      r.high                = item.range_high;
+      r.integration_value   = item.integration_val;
+      r.target_percent      = item.total_percent;
+      r.tolerance           = item.tolerance;
+      r.range_concentration = item.integration_val_sim;
+      r.fraction_percent    = item.total_percent_sim;
+      return r;
+   };
 
-  QMap< QString, double > results;
-  
-  //iterate over UR_ReportsGMPs && pick ones correspondning to 'chan_desc_alt.contains("ch_wvls[i]")' && wavelength == u_wvl;
-  int nchna   = currAProf.pchans.count();
-  for ( int i = 0; i < channs_for_wvl.size(); ++i )   //over channels for a given wvl in Replicate group:
-    {
-      US_ReportGMP reportGMP;
-      for ( int j = 0; j < nchna; j++ )       //over all channels
-	{
-	  QString channel_desc_alt = chndescs_alt[ j ];
-
-	  // //For now, do not consider IP type!!!
-	  // if ( channel_desc_alt.contains("Interf") ) 
-	  //   continue;
-	  
-	  //if ( channel_desc_alt.split(":")[0].contains( channs_for_wvl[ i ] ) )  
-	  if ( channel_desc_alt .contains( channs_for_wvl[ i ] ) )  
-	    {
-	      qDebug() << "In get_replicate_group_results(): channel_desc_alt, channs_for_wvl[ i ], wvl -- "
-		       << channel_desc_alt
-		       << channs_for_wvl[ i ]
-		       << u_wvl;
-
-	      //Select US_ReportGMP for channel in a Replicate group && representative wvl!
-	      reportGMP = ch_reports[ channel_desc_alt ][ u_wvl ];
-
-	      break;
-	    }
-	}
-            
-      //then pick report's ReportItem corresponding to the passed ref_report_item:
-      int report_items_number = reportGMP. reportItems.size();
-      for ( int kk = 0; kk < report_items_number; ++kk )
-	{
-	   US_ReportGMP::ReportItem curr_item = reportGMP. reportItems[ kk ];
-
-	   //Compare ref_report_item with curr_item:
-	   QString ref_type           = ref_report_item.type;
-	   QString ref_method         = ref_report_item.method;
-	   QString ref_int_val        = QString::number( ref_report_item.integration_val );
-	   double  ref_frac_tot       = ref_report_item.total_percent;
-	   double  ref_frac_tot_tol   = ref_report_item.tolerance ;
-	   double  ref_low            = ref_report_item.range_low;
-	   double  ref_high           = ref_report_item.range_high;
-
-	   QString _type           = curr_item.type;
-	   QString _method         = curr_item.method;
-	   QString _int_val        = QString::number( curr_item.integration_val );
-	   double  _frac_tot       = curr_item.total_percent;
-	   double  _frac_tot_tol   = curr_item.tolerance ;
-	   double  _low            = curr_item.range_low;
-	   double  _high           = curr_item.range_high;
-
-	   //Comparison nased on: type/method [s-2DSA-IT], ranges [3.2 - 3.7] && integration value: CAN BE EXTENDED if needed 
-	   if ( ref_type    == _type      &&
-		ref_method  == _method    &&
-		ref_low     == _low       &&
-		ref_high    == _high      &&
-		ref_int_val == _int_val      )
-	     {
-	       
-	       //can add an average fraction percent from model (if needed)
-
-	       qDebug() << "For Triple: " << channs_for_wvl[ i ] << "." << u_wvl
-			<< ", Type/Method: " << _type << ": " << _method
-			<< ", Range: " << "[" << _low << " - " << _high << "]" 
-			<< ", Simulated Integr. Val: " << curr_item. integration_val_sim
-			<< ", Fraction %: " << curr_item. total_percent_sim;
-
-	       if ( curr_item. integration_val_sim >= 0 )
-		 {
-		   int_res_sim            += curr_item. integration_val_sim;
-		   tot_percent_sim        += curr_item. total_percent_sim;
-		   int_res_sim_vector     .push_back( curr_item. integration_val_sim );
-		   tot_percent_sim_vector .push_back( curr_item. total_percent_sim );
-
-		   ++same_item_counter;
-		 }
-	     }
-	}
-    }
-
-  if ( same_item_counter )
-    {
-      int_res_sim_av     = double( int_res_sim / same_item_counter );
-      tot_percent_sim_av = double( tot_percent_sim / same_item_counter ); 
-
-      for( int i=0; i<int_res_sim_vector.size(); ++i )
-	{
-	  st_dev_int_1         += ( int_res_sim_av - int_res_sim_vector[i] ) * ( int_res_sim_av - int_res_sim_vector[i] );
-	  st_dev_tot_percent_1 += ( tot_percent_sim_av - tot_percent_sim_vector[i] ) * ( tot_percent_sim_av - tot_percent_sim_vector[i] );
-	}
-      
-      st_dev_int_final         = sqrt( st_dev_int_1 ) / (sqrt( int_res_sim_vector.size() ));  
-      st_dev_tot_percent_final = sqrt( st_dev_tot_percent_1 ) / (sqrt( tot_percent_sim_vector.size() ));  
-    }
-
-  results[ "int_av" ]             = int_res_sim_av;
-  results[ "tot_percent_av" ]     = tot_percent_sim_av;
-  results[ "int_st_dev" ]         = st_dev_int_final;
-  results[ "tot_percent_st_dev" ] = st_dev_tot_percent_final;
-
-    
-  return results;
+   const QStringList                             channel_descs = chndescs_alt.mid( 0, currAProf.pchans.count() );
+   QVector<QVector<US_Calc::Gmp::ReplicateItem>> channel_items;
+   for ( const QString& channel : channs_for_wvl )
+   {
+      QVector<US_Calc::Gmp::ReplicateItem> items;
+      const int                            index = US_Calc::Gmp::replicate_channel_index( channel_descs, channel );
+      if ( index >= 0 )
+      {
+         for ( const US_ReportGMP::ReportItem& item : ch_reports[channel_descs[index]][u_wvl].reportItems )
+         {
+            items << as_replicate_item( item );
+         }
+      }
+      channel_items << items;
+   }
+   return US_Calc::Gmp::evaluate_replicate_group( as_replicate_item( ref_report_item ), channel_items, listed_triples );
 }
 
 // Distribution information HTML string
@@ -10407,13 +10217,7 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 		      rmsd_global  );
    mstr += table_row( tr( "Model-reported RMSD:"    ),
 		      ( rmsd_m > 0.0 ) ? QString::number( rmsd_m ) : "(none)" );
-   
-   double sum_mw  = 0.0;
-   double sum_s   = 0.0;
-   double sum_D   = 0.0;
-   double sum_c   = 0.0;
-   double sum_v   = 0.0;
-   double sum_k   = 0.0;
+
    double mink    = 1e+99;
    double maxk    = -1e+99;
    double minv    = 1e+99;
@@ -10421,33 +10225,26 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 
    for ( int ii = 0; ii < ncomp; ii++ )
    {
-      double conc = model_used.components[ ii ].signal_concentration;
       double kval = model_used.components[ ii ].f_f0;
-      double vval = model_used.components[ ii ].vbar20;
-      sum_c      += conc;
-      sum_mw     += ( model_used.components[ ii ].mw * conc );
-      sum_s      += ( model_used.components[ ii ].s  * conc );
-      sum_D      += ( model_used.components[ ii ].D  * conc );
-      sum_v      += ( vval * conc );
-      sum_k      += ( kval * conc );
+      double vval = model_used.components[ii].vbar20;
       mink        = qMin( kval, mink );
       maxk        = qMax( kval, maxk );
       minv        = qMin( vval, minv );
       maxv        = qMax( vval, maxv );
    }
 
-   mstr += table_row( tr( "Weight Average s20,W:" ),
-                      QString::asprintf( "%6.4e", ( sum_s  / sum_c ) ) );
-   mstr += table_row( tr( "Weight Average D20,W:" ),
-                      QString::asprintf( "%6.4e", ( sum_D  / sum_c ) ) );
-   mstr += table_row( tr( "W.A. Molecular Weight:" ),
-                      QString::asprintf( "%6.4e", ( sum_mw / sum_c ) ) );
+   // Weight averages and total concentration from US_Calc, divided as
+   // before, so a zero total still prints nan or inf.
+   const US_Calc::ModelMeans means = US_Calc::model_means( model_used.calc_model() );
+   const double              sum_c = means.total_concentration;
+
+   mstr += table_row( tr( "Weight Average s20,W:" ), QString::asprintf( "%6.4e", means.s ) );
+   mstr += table_row( tr( "Weight Average D20,W:" ), QString::asprintf( "%6.4e", means.D ) );
+   mstr += table_row( tr( "W.A. Molecular Weight:" ), QString::asprintf( "%6.4e", means.mw ) );
    if ( ! cnstff )
-      mstr += table_row( tr( "Weight Average f/f0:" ),
-                         QString::number( ( sum_k / sum_c ) ) );
+      mstr += table_row( tr( "Weight Average f/f0:" ), QString::number( means.f_f0 ) );
    if ( ! cnstvb )
-      mstr += table_row( tr( "Weight Average vbar20:" ),
-                         QString::number( ( sum_v / sum_c ) ) );
+      mstr += table_row( tr( "Weight Average vbar20:" ), QString::number( means.vbar20 ) );
    mstr += table_row( tr( "Total Concentration:" ),
                       QString::asprintf( "%6.4e", sum_c ) );
 
@@ -10703,162 +10500,78 @@ model_used.components[ ii ].vbar20 ),
    mstr += indent( 2 ) + "</table>\n";
 
 
-   //Now add Basic Report params comparison to actual Run Details
-   QString t_name = model_used.description.split(".")[1];
-   QString wvl    = t_name.mid(2,3);
-   QString cellID = t_name.mid(0,1);
-   qDebug() << "In DISTRIB: triple, cellID, wvl -- " << t_name << cellID << wvl;
-
-   qDebug() << "Model description, mdla, msim -- " << model_used.description <<  mdla << msim;
-   QString model_name = mdla.split("_")[1];
-   if ( model_name.contains("PCSA") )
-     model_name = "PCSA";
-   if ( model_name.contains("-CG") )
-     model_name = model_name.replace("-CG", "");
-   
-   double tot_conc_r, tot_conc_r_factor, tot_conc_tol_r, rmsd_r, av_int_r, exp_dur_r, exp_dur_tol_r;
-   double loading_volume_r, loading_volume_tol_r ;
+   //Now add Basic Report params comparison to actual Run Details:  the
+   // triple's inputs are chosen by US_Calc ("report_lookup").
+   const US_Calc::Gmp::ModelDescriptionParts parts                = US_Calc::Gmp::parse_model_description( model_used.description );
+   const bool                                interference_triple  = tripleInfo["triple_name"].contains( "Interference" );
+   const bool                                simulated_absorbance = dataSource.contains( "DiskAUC:Absorbance" ) && simulatedData;
+   const int                                 nchna                = currAProf.pchans.count();
+   const int                                 channel_index        = parts.ok ? US_Calc::Gmp::report_channel_index(
+                                           chndescs_alt.mid( 0, nchna ), parts.triple, interference_triple, simulated_absorbance )
+                                                                             : -1;
+   if ( channel_index < 0 )
+   {
+      // Without the triple's report there is nothing to compare with.
+      qDebug() << "distrib_info: no report applies to model" << model_used.description
+               << "- comparison and integration results left out";
+      return mstr;
+   }
+   QString       t_name     = parts.triple;
+   QString       wvl        = parts.wavelength;
+   QString       cellID     = parts.cell;
+   QString       model_name = parts.model_name;
 
    //length of run (based on rdata - for current triple )
-   double last_f  = rdata ->scanData.last().seconds;
-   double first_f = rdata ->scanData.first().seconds;
-   int  hours     = (int)qFloor( last_f / 3600.0 );
-   int  mins      = (int)qRound( ( last_f - hours * 3600.0 ) / 60.0 );
-   QString hh     = ( hours == 1 ) ? tr( "hr" ) : tr( "hrs" );
-   hh    = "h";
-   QString wks    = QString::asprintf( "%d %s %02d m", hours, hh.toLatin1( ).data(), mins );
-   int fmins     = (int)qFloor( first_f / 60.0 );
-   int fsecs     = first_f - fmins * 60.0;
-   QString mm    = ( fmins == 1 ) ? tr( "min" ) : tr( "mins" );
-   QString scan1time = QString::asprintf( "%d m %02d s", fmins, fsecs );
-   //end of length
-   
-   US_ReportGMP* reportGMP;  //reference
-   int nchna   = currAProf.pchans.count();
-   for ( int i = 0; i < nchna; i++ )
-     {
-       QString channel_desc_alt = chndescs_alt[ i ];
+   double        last_f = rdata->scanData.last().seconds;
+   QString       wks    = US_ReporterGmp::duration_hours_minutes( last_f );
 
-       qDebug() << "Identifying report for triple -- " << t_name   // 2A660
-		<< ", tripleInfo:  "                   << tripleInfo[ "triple_name" ]                     // 2AInterference
-		<< ", channel_desc_alt: "              << channel_desc_alt;
+   const QString channel_desc_alt = chndescs_alt[channel_index];
+   US_ReportGMP* reportGMP        = &( ch_reports[channel_desc_alt][wvl] );
+   double        tot_conc_r       = reportGMP->tot_conc;
+   double        tot_conc_tol_r   = reportGMP->tot_conc_tol;
+   double        rmsd_r           = reportGMP->rmsd_limit;
+   double        av_int_r         = reportGMP->av_intensity;
+   double        exp_dur_r        = reportGMP->experiment_duration;
+   double        exp_dur_tol_r    = reportGMP->experiment_duration_tol;
+   QString       exp_dur_r_hh_mm  = US_ReporterGmp::duration_hours_minutes( exp_dur_r );
 
-       if ( tripleInfo[ "triple_name" ].contains("Interference") && !channel_desc_alt.contains("Interf") )
-	 continue;
+   double        tot_conc_r_factor    = currAProf.lc_ratios[channel_index];
+   double        loading_volume_r     = currAProf.l_volumes[channel_index];
+   double        loading_volume_tol_r = currAProf.lv_tolers[channel_index];
 
-       //'S' data
-       QString channelNameProt = channel_desc_alt.split(":")[0];
-       if ( dataSource .contains("DiskAUC:Absorbance") && simulatedData )
-	 channelNameProt = channelNameProt. replace( "A", "S" );
-       
-       if ( t_name. contains( channelNameProt ) )  
-	 {
-	   qDebug() << "So, what are channel_desc_alt, wvl ? " << channel_desc_alt << wvl;
-	     
-	   reportGMP = &( ch_reports[ channel_desc_alt ][ wvl ] );
+   // autoflowIntensity (for the triple's wavelength); NaN when none applies
+   double        av_int_exp =
+      US_Calc::Gmp::triple_intensity( intensityRIMap, US_Calc::Gmp::intensity_triple( t_name, simulated_absorbance ) );
 
-	   tot_conc_r     = reportGMP-> tot_conc ;
-	   tot_conc_tol_r = reportGMP-> tot_conc_tol ;
-	   rmsd_r         = reportGMP-> rmsd_limit ;
-	   av_int_r       = reportGMP-> av_intensity ;
-	   exp_dur_r      = reportGMP-> experiment_duration ;
-	   exp_dur_tol_r  = reportGMP-> experiment_duration_tol ;
-
-	   tot_conc_r_factor    = currAProf. lc_ratios [ i ] ;
-	   loading_volume_r     = currAProf. l_volumes [ i ] ;
-	   loading_volume_tol_r = currAProf. lv_tolers [ i ] ;
-	   
-	   break;
-	 }
-     }
-   //transform exp_duration_report into hh mm format
-   int  hours_r     = (int)qFloor( exp_dur_r / 3600.0 );
-   int  mins_r      = (int)qRound( ( exp_dur_r - hours_r * 3600.0 ) / 60.0 );
-   QString hh_r     = ( hours_r == 1 ) ? tr( "hr" ) : tr( "hrs" );
-   hh_r    = "h";
-   QString exp_dur_r_hh_mm    = QString::asprintf( "%d %s %02d m", hours_r, hh_r.toLatin1( ).data(), mins_r );
-   //end of exp_dur_r transformation
-
-   //'S' data
-   if ( dataSource .contains("DiskAUC:Absorbance") && simulatedData )
-     t_name = t_name. replace("S","A");
-   
-   //autoflowIntensity (for specific wvl)
-   double av_int_exp;
-   QList< QString > intensity_keys = intensityRIMap.keys();
-   if ( intensity_keys.size() ==  1 ) //single wvl
-     {
-       av_int_exp = intensityRIMap.first().toDouble();
-       qDebug() << "single wvl: key, value -- " << intensityRIMap.firstKey() << intensityRIMap.first();
-     }
-   else //MWL
-     {
-       QMap<QString, QString >::iterator jj;
-       for ( jj = intensityRIMap.begin(); jj != intensityRIMap.end(); ++jj )
-	 {
-	   if ( t_name.contains( jj.key() ) )
-	     {
-	       av_int_exp = jj.value().toDouble();
-	       break;
-	     }
-	 }
-     }
-   //
+   // The triple as the intensity and the report mask name it
+   t_name = US_Calc::Gmp::intensity_triple( t_name, simulated_absorbance );
 
    //Caclulate loading volume based on centerpiece geomentry && fitted meniscus
    //double loading_volume_measured = 451;
    double loading_volume_measured = get_loading_volume( cellID.toInt() );
 
-   //passes
-   tot_conc_r *= tot_conc_r_factor;
-   QString tot_conc_passed = ( sum_c  >= ( tot_conc_r * (1 - tot_conc_tol_r/100.0)  ) && sum_c  <= ( tot_conc_r * (1 + tot_conc_tol_r/100.0) ) ) ? "YES" : "NO";
-   QString exp_dur_passed  = ( last_f >= ( exp_dur_r * (1 - exp_dur_tol_r/100.0)  )   && last_f <= ( exp_dur_r * (1 + exp_dur_tol_r/100.0) ) ) ? "YES" : "NO";
-   QString rmsd_passed = ( rmsd_global.toDouble() <= rmsd_r ) ? "YES" : "NO";
-   QString av_int_passed = ( av_int_exp > av_int_r ) ? "YES" : "NO";
-   QString loading_volume_passed  = ( loading_volume_measured >= ( loading_volume_r * (1 - loading_volume_tol_r/100.0)  )
-				      && loading_volume_measured <= ( loading_volume_r * (1 + loading_volume_tol_r/100.0) ) ) ? "YES" : "NO";
-   //end passes
+   // The checks and their rules (US_Calc "report_run_checks")
+   auto   yes_no = []( const US_Calc::Gmp::RunCheckResult& r ) { return r.passed ? QString( "YES" ) : QString( "NO" ); };
+   const US_Calc::Gmp::RunCheckResult tot_conc_check =
+      US_Calc::Gmp::check_total_concentration( sum_c, tot_conc_r, tot_conc_r_factor, tot_conc_tol_r );
+   tot_conc_r              = tot_conc_check.check.target;
+   QString tot_conc_passed = yes_no( tot_conc_check );
+   QString exp_dur_passed  = yes_no( US_Calc::Gmp::check_experiment_duration( last_f, exp_dur_r, exp_dur_tol_r ) );
+   QString rmsd_passed     = yes_no( US_Calc::Gmp::check_rmsd( rmsd_global.toDouble(), rmsd_r ) );
+   QString av_int_passed   = yes_no( US_Calc::Gmp::check_minimum_intensity( av_int_exp, av_int_r ) );
+   QString loading_volume_passed =
+      yes_no( US_Calc::Gmp::check_loading_volume( loading_volume_measured, loading_volume_r, loading_volume_tol_r ) );
 
    //check what to show on the report
-   if ( tripleInfo[ "triple_name" ].contains("Interference") )
-     t_name.replace("660", "Interference");
-
-   qDebug() << "[XXXXXX] t_name, model_name: " << t_name <<  model_name;
-   
-   QMap < QString, QString > Model_parms_to_compare = perChanMask_edited.ShowTripleModelParts[ t_name ][ model_name ]; //2A660 => 2AInterference, 
-   bool show_tot_conc = false;
-   bool show_rmsd     = false;
-   bool show_exp_dur  = false;
-   bool show_min_int  = false;
-   bool show_integration = false;
-   bool show_loading_vol = false;
-
-   QMap< QString, QString >::iterator sh;
-   for ( sh = Model_parms_to_compare.begin(); sh != Model_parms_to_compare.end(); ++sh )
-     {
-       if ( sh.key().contains( "Concentration" ) && sh.value().toInt() )
-	 show_tot_conc = true;
-
-       if ( sh.key().contains( "RMSD" ) && sh.value().toInt() )
-	 show_rmsd = true;
-
-       if ( sh.key().contains( "Duration" ) && sh.value().toInt() )
-	 show_exp_dur = true;
-
-       if ( sh.key().contains( "Intensity" ) && sh.value().toInt() )
-	 show_min_int = true;
-       
-       if ( sh.key().contains( "Loading" ) && sh.value().toInt() )
-	 show_loading_vol = true;
-       
-       if ( sh.key().contains( "Integration" ) && sh.value().toInt() )
-	 show_integration = true;
-     }
-
-   bool show_comparison_section = false;
-   if ( show_tot_conc || show_rmsd || show_exp_dur || show_min_int || show_loading_vol )
-     show_comparison_section = true;
-   //////////////////////////////////////
+   t_name                            = US_Calc::Gmp::mask_triple( t_name, interference_triple );
+   const US_Calc::Gmp::MaskRows rows = US_Calc::Gmp::mask_rows( perChanMask_edited.ShowTripleModelParts[t_name][model_name] );
+   bool                         show_tot_conc           = rows.total_concentration;
+   bool                         show_rmsd               = rows.rmsd;
+   bool                         show_exp_dur            = rows.experiment_duration;
+   bool                         show_min_int            = rows.minimum_intensity;
+   bool                         show_integration        = rows.integration_results;
+   bool                         show_loading_vol        = rows.loading_volume;
+   bool                         show_comparison_section = rows.comparison_section();
 
    qDebug() << "XXXXX: show_comparison_section -- " << show_comparison_section;
    
@@ -10903,10 +10616,7 @@ model_used.components[ ii ].vbar20 ),
        // Show only if not Absorbance || not Interference
        qDebug() << "Show_INTENSITY: dataSource -- " << dataSource;
        qDebug() << "Show_INTENSITY: tripleInfo[ \"triple_name\" ] -- " << tripleInfo[ "triple_name" ];
-       bool RIdata = ( dataSource. contains( "DiskAUC:Absorbance" ) ||
-		       dataSource. contains( "DiskAUC:PseudoAbsorbance" ) ||
-		       tripleInfo[ "triple_name" ].contains("Interference") ) ?
-	 false : true;
+       bool RIdata = US_Calc::Gmp::minimum_intensity_shown( dataSource, tripleInfo["triple_name"].contains( "Interference" ) );
        qDebug() << "Show_INTENSITY: RIdata ? " << RIdata;
        if ( show_min_int && RIdata )  
 	 {
@@ -10929,31 +10639,16 @@ model_used.components[ ii ].vbar20 ),
        mstr += indent( 2 ) + "</table>\n";
      }
 
-   //Now, integration results
-   //1st, check if for a given model (method) there are reportItems:
-   bool method_type_combo_exists = false;
-   int report_items_number = reportGMP-> reportItems.size();
-   for ( int kk = 0; kk < report_items_number; ++kk )
+     //Now, integration results:  shown when a report item applies to this model
+     int         report_items_number = reportGMP->reportItems.size();
+     QStringList item_methods;
+     for ( int kk = 0; kk < report_items_number; ++kk )
      {
-       US_ReportGMP::ReportItem curr_item = reportGMP-> reportItems[ kk ];
-       QString method         = curr_item.method;
-       if( method.contains ("PCSA") )
-	 method = "PCSA";
-       /* */
-       QStringList a_method_types = method.split("-");
-       bool method_identity = true;
-       for (const QString& sub : a_method_types )
-	 {
-	  if (!mdla.contains(sub) )
-	    method_identity = false; 
-	 }
-	/* */
-	 
-       if ( mdla.contains ( method ) || method_identity )
-	 method_type_combo_exists = true;
+        item_methods << reportGMP->reportItems[kk].method;
      }
-   
-   if ( show_integration && method_type_combo_exists )
+     const bool method_type_combo_exists = US_Calc::Gmp::any_method_matches( item_methods, model_used.description );
+
+     if ( show_integration && method_type_combo_exists )
      {
        mstr += "\n" + indent( 2 ) + tr( "<h3>Integration Results: Fraction of Total Concentration:</h3>\n" );
        mstr += indent( 2 ) + "<table>\n";
@@ -10964,115 +10659,53 @@ model_used.components[ ii ].vbar20 ),
 			  tr( "Fraction % from Model (target):" ),
 			  tr( "Tolerance, %:"),
 			  tr( "PASSED ?" ));
+       const US_Calc::Model range_model = model_used.calc_model();
        for ( int kk = 0; kk < report_items_number; ++kk )
 	 {
-	   US_ReportGMP::ReportItem curr_item = reportGMP-> reportItems[ kk ];
-	   QString type           = curr_item.type;
-	   QString method         = curr_item.method;
-	   if( method.contains ("PCSA") )
-	     method = "PCSA";
-	   
-	   QString int_val_r      = QString::number( curr_item.integration_val );
-	   double  frac_tot_r     = curr_item.total_percent;
-	   double  frac_tot_tol_r = curr_item.tolerance ;
-	   double  low            = curr_item.range_low;
-	   double  high           = curr_item.range_high;
-	   
-	   QString range = "[" + QString::number(low) + " - " + QString::number(high) + "]";
-	   
-	   //integrate over model_used
-	   double int_val_m = 0;
-	   double variable_val_within_range = 0;
-	   for ( int ii = 0; ii < ncomp; ii++ )
-	     {
-	       double conc = model_used.components[ ii ].signal_concentration;
-	       double s_20 = model_used.components[ ii ].s;
-	       double D_20 = model_used.components[ ii ].D;
-	       double f_f0 = model_used.components[ ii ].f_f0;
-	       double mw   = model_used.components[ ii ].mw;
-	       
-	       if ( type == "s" )
-		 {
-		   if ( s_20 >= low*pow(10,-13) && s_20 <= high*pow(10,-13) )
-		     {
-		       int_val_m += conc;
-		       variable_val_within_range += s_20*conc;
-		     }
-		 }
-	       else if ( type == "D" )
-		 {
-		   if ( D_20 >= low*pow(10,-7) && D_20 <= high*pow(10,-7) )
-		     {
-		       int_val_m += conc;
-		       variable_val_within_range += D_20*conc;
-		     }
-		 }
-	       else if ( type == "f/f0")
-		 {
-		   if ( f_f0 >= low && f_f0 <= high )
-		     {
-		       int_val_m += conc;
-		       variable_val_within_range += f_f0*conc;
-		     }
-		 }
-	       else if ( type == "MW")
-		 {
-		   if ( mw >= low*pow(10,3) && mw <= high*pow(10,3) )
-		     {
-		       int_val_m += conc;
-		       variable_val_within_range += mw*conc;
-		     }
-		 }
-	     }
-	   
-	   double frac_tot_m = double( int_val_m / sum_c ) * 100.0;
-	   // QString tot_frac_passed = ( frac_tot_m >= ( frac_tot_r * (1 - frac_tot_tol_r/100.0)  )
-	   // 			       && frac_tot_m <= ( frac_tot_r * (1 + frac_tot_tol_r/100.0)  ) ) ? "YES" : "NO";
+       US_ReportGMP::ReportItem             curr_item      = reportGMP->reportItems[kk];
+       QString                              type           = curr_item.type;
+       QString                              int_val_r      = QString::number( curr_item.integration_val );
+       double                               frac_tot_r     = curr_item.total_percent;
+       double                               frac_tot_tol_r = curr_item.tolerance;
+       double                               low            = curr_item.range_low;
+       double                               high           = curr_item.range_high;
 
-	   QString tot_frac_passed = ( qAbs( frac_tot_m - frac_tot_r ) <= frac_tot_tol_r ) ? "YES" : "NO";
+       QString                              range = "[" + QString::number( low ) + " - " + QString::number( high ) + "]";
 
-	   double wav_variable_within_range = double( variable_val_within_range / int_val_m );
+       // The item's range result, fraction and pass/fail (US_Calc "report_item")
+       const US_Calc::Gmp::ReportItemResult item_result =
+          US_Calc::Gmp::evaluate_report_item( range_model, { type, curr_item.method, low, high, frac_tot_r, frac_tot_tol_r } );
+       double     int_val_m                 = item_result.range_concentration;
+       double     frac_tot_m                = item_result.fraction_percent;
+       double     wav_variable_within_range = item_result.within_range_mean;
+       QString    tot_frac_passed           = item_result.passed ? "YES" : "NO";
 
-	   /* */
-	   QStringList a_method_types = method.split("-");
-	   bool method_identity = true;
-	   for (const QString& sub : a_method_types )
-	     {
-	       if (!mdla.contains(sub) )
-		 method_identity = false; 
-	     }
-	   /* */
-	   
-	   //if ( mdla.contains ( method ) )
-	   if ( method_identity )
-	     {
-	       // curr_item. integration_val_sim = int_val_m;
-	       // curr_item. total_percent_sim   = frac_tot_m;
-	       // curr_item. passed              = tot_frac_passed;
+       const bool method_identity = US_Calc::Gmp::method_matches( curr_item.method, model_used.description );
 
-	       reportGMP-> reportItems[ kk ]. integration_val_sim = int_val_m;
-	       reportGMP-> reportItems[ kk ]. total_percent_sim   = frac_tot_m;
-	       reportGMP-> reportItems[ kk ]. passed              = tot_frac_passed;
+       //if ( mdla.contains ( method ) )
+       if ( method_identity )
+       {
+          // curr_item. integration_val_sim = int_val_m;
+          // curr_item. total_percent_sim   = frac_tot_m;
+          // curr_item. passed              = tot_frac_passed;
 
-	       qDebug() << "In distrib_info(), fill simulated integration vals: for chann/wvl/type/method/low/high, "
-			<< "Inter. val. Sim -- "
-			<< wvl
-			<< curr_item.type
-			<< curr_item.method
-			<< curr_item.range_low
-			<< curr_item.range_high
-			<< int_val_m;
-	       
-	       mstr += table_row( type,
-				  range,
-				  QString::asprintf( "%10.4e", wav_variable_within_range ),
-				  QString::asprintf( "%10.4e", int_val_m ) + " (" + int_val_r + ")",
-				  QString::asprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
-				  QString::number( frac_tot_tol_r ),
-				  tot_frac_passed );
-	     }
+          reportGMP->reportItems[kk].integration_val_sim = int_val_m;
+          reportGMP->reportItems[kk].total_percent_sim   = frac_tot_m;
+          reportGMP->reportItems[kk].passed              = tot_frac_passed;
 
-	 }
+          qDebug() << "In distrib_info(), fill simulated integration vals: for chann/wvl/type/method/low/high, "
+                   << "Inter. val. Sim -- " << wvl << curr_item.type << curr_item.method << curr_item.range_low
+                   << curr_item.range_high << int_val_m;
+
+          mstr += table_row( type,
+                             range,
+                             QString::asprintf( "%10.4e", wav_variable_within_range ),
+                             QString::asprintf( "%10.4e", int_val_m ) + " (" + int_val_r + ")",
+                             QString::asprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
+                             QString::number( frac_tot_tol_r ),
+                             tot_frac_passed );
+       }
+    }
        mstr += indent( 2 ) + "</table>\n";
      }
    //End of integration results
@@ -11337,7 +10970,7 @@ double  US_ReporterGMP::get_loading_volume( int cellID )
   double vol = 0;
   
   double speed   =  currProto. rpSpeed. ssteps[0].speed ;
-  double stretch = simparams.rotorcoeffs[ 0 ] * speed + simparams.rotorcoeffs[ 1 ] * sq( speed ) ;
+  double stretch = US_Calc::Gmp::rotor_stretch( simparams.rotorcoeffs[0], simparams.rotorcoeffs[1], speed );
 
   qDebug() << "Centerpeice: stretch: " << stretch;
 
@@ -11409,16 +11042,14 @@ double  US_ReporterGMP::get_loading_volume( int cellID )
   qDebug() << "In get_loading_volume(): c_name, c_bottom, c_pathlength, c_angle -- "
 	   << c_name << c_bottom << c_pathlength << c_angle;
 
-  //add stretching
-  c_bottom += stretch;
-
   //meniscus position
   double meniscus = model_used. meniscus;
   qDebug() << "In get_loading_volume(): meniscus -- " << meniscus;
-  
-  //calulate loading volume
-  vol = ( c_bottom*c_bottom - meniscus*meniscus ) * ( 1000*c_pathlength*c_angle*M_PI ) / 360.0;
-  
+
+  // Loading volume from the centerpiece geometry, the bottom stretched for the
+  // first speed step and the fitted meniscus (US_Calc "report_run_checks")
+  vol = US_Calc::Gmp::loading_volume( c_bottom, stretch, meniscus, c_pathlength, c_angle );
+
   return vol;
 }
 
@@ -11589,7 +11220,14 @@ void US_ReporterGMP::plotres( QMap < QString, QString> & tripleInfo )
   QString img10File = basename + "3dplot"      + pngext;
 
   // Plots for Exp-Sim ovelray (with noises rmoved && residual plot)
-  resplotd = new US_ResidPlotFem( this, "REPORT" );
+  US_ResidPlotInputs inputs;
+  inputs.edited      = *edata;
+  inputs.simulated   = *sdata;
+  inputs.excluded    = excludedScans;
+  inputs.ti_noise    = ti_noise;
+  inputs.ri_noise    = ri_noise;
+  inputs.triple_info = this->tripleInfo; // the member, not the QMap parameter of the same name
+  resplotd           = new US_ResidPlotFem( inputs, US_ResidPlotFem::Report, this );
 
   if ( show_vel )
     {
@@ -11602,24 +11240,21 @@ void US_ReporterGMP::plotres( QMap < QString, QString> & tripleInfo )
       write_plot( img02File, resplotd->rp_data_plot2() );  //<-- rp_data_plot2() gives residuals plot
       PlotsFileNames << img02File;
     }
-      
-  //Stick Plots for S-, MW-, D- distributions
-  plotLayout1 = new US_Plot( data_plot1,
-			     tr( "Residuals" ),
-			     tr( "Radius (cm)" ),
-			     tr( "OD Difference" ),
-			     true, "^resids [0-9].*", "rainbow" );
-  
-  plotLayout2 = new US_Plot( data_plot2,
-			     tr( "Velocity Data" ),
-			     tr( "Radius (cm)" ),
-			     tr( "Absorbance" ),
-			     true, ".*in range", "rainbow" );
-  
-  data_plot1->setMinimumSize( 560, 240 );
-  data_plot2->setMinimumSize( 560, 240 );
 
-  if ( show_sd )
+    // The dialog only renders the two images and is never shown, so it is not closed.
+    delete resplotd;
+
+    //Stick Plots for S-, MW-, D- distributions
+    plotLayout1 =
+       new US_Plot( data_plot1, tr( "Residuals" ), tr( "Radius (cm)" ), tr( "OD Difference" ), true, "^resids [0-9].*", "rainbow" );
+
+    plotLayout2 =
+       new US_Plot( data_plot2, tr( "Velocity Data" ), tr( "Radius (cm)" ), tr( "Absorbance" ), true, ".*in range", "rainbow" );
+
+    data_plot1->setMinimumSize( 560, 240 );
+    data_plot2->setMinimumSize( 560, 240 );
+
+    if ( show_sd )
     {
       distrib_plot_stick( 0 );               // s-distr.
       write_plot( img03File, data_plot1 );
@@ -11925,35 +11560,7 @@ void US_ReporterGMP::write_plot( const QString& filename, const QwtPlot* plot )
          QMessageBox::warning( this, tr( "File Write Error" ),
             tr( "Unable to write file" ) + filename );
    }
-   
-//    else if ( filename.endsWith( "rbitmap.png" ) )
-//    {  // Special case of rbitmap PNG
-//       if ( rbmapd == 0 )
-//       {  // if it is not currently displayed, display it
-//          rbmapd = new US_ResidsBitmap( resids );
-//          rbmapd->move( bmd_pos );
-//          rbmapd->show();
-//          rbmapd->raise();
-//       }
 
-//       else
-//       {  // if already displayed,  replot and re-activate
-//          rbmapd->replot( resids );
-//          rbmapd->raise();
-//          rbmapd->activateWindow();
-//       }
-
-// #if QT_VERSION > 0x050000
-//       QPixmap pixmap = ((QWidget*)rbmapd)->grab();
-// #else
-//       QPixmap pixmap = QPixmap::grabWidget( rbmapd, 0, 0,
-//                                             rbmapd->width(), rbmapd->height() );
-// #endif
-
-//       if ( ! pixmap.save( filename ) )
-//          QMessageBox::warning( this, tr( "File Write Error" ),
-//             tr( "Unable to write file" ) + filename );
-//    }
 
     else if ( filename.endsWith( "3dplot.png" ) )
     {  // Special case of 3dplot PNG
@@ -13630,89 +13237,85 @@ void US_ReporterGMP::write_pdf_report( void )
    //        return;
    //      }
 
-   //    //Write HTML strign to file & later save to DB withing general archive
-   //    QString html_filePath = dirName + "/" + "html_string.html";
-   //    QFile file_html_str( html_filePath );
-   //    qDebug() << "HTML to be written: filepath -- " << html_filePath;
-   //    if(!file_html_str.open(QIODevice::WriteOnly))
-   //      file_html_str.close();
-   //    else
-   //      {
-   //        file_html_str.write( html_assembled.toUtf8() );
-   //        //QTextStream out(&file_html_str); out << html_assembled;
-   //        file_html_str.close();
-   //      }
+  //    //Write HTML strign to file & later save to DB withing general archive
+  //    QString html_filePath = dirName + "/" + "html_string.html";
+  //    QFile file_html_str( html_filePath );
+  //    if(!file_html_str.open(QIODevice::WriteOnly))
+  //      file_html_str.close();
+  //    else
+  //      {
+  //        file_html_str.write( html_assembled.toUtf8() );
+  //        //QTextStream out(&file_html_str); out << html_assembled;
+  //        file_html_str.close();
+  //      }
 
-   //    qDebug() << "html_filePath: " << html_filePath;
-   //    int writeStatus_html = db.writeBlobToDB(html_filePath,
-   //    					  QString( "upload_gmpReportData_html" ),
-   //    					  r_ID );
+  //    int writeStatus_html = db.writeBlobToDB(html_filePath,
+  //    					  QString( "upload_gmpReportData_html" ),
+  //    					  r_ID );
 
-   //    qApp->processEvents();
-   //    if ( writeStatus_html == US_DB2::DBERROR )
-   //      {
-   //        QMessageBox::warning(this, "Error", "Error processing html file:\n"
-   //    			   + html_filePath + "\n" + db.lastError() +
-   //    			   "\n" + "Could not open file or no data \n");
-   //      }
-  
-   //    else if ( writeStatus_html != US_DB2::OK )
-   //      {
-   //        QMessageBox::warning(this, "Error", "returned processing html file:\n" +
-   //    			   html_filePath + "\n" + db.lastError() + "\n");
-  
-   //      }
+  //    qApp->processEvents();
+  //    if ( writeStatus_html == US_DB2::DBERROR )
+  //      {
+  //        QMessageBox::warning(this, "Error", "Error processing html file:\n"
+  //    			   + html_filePath + "\n" + db.lastError() +
+  //    			   "\n" + "Could not open file or no data \n");
+  //      }
 
-   //    //
-  
-   //    QStringList file_exts;
-   //    //file_exts << "*.png" << "*.svgz";
-   //    file_exts << "*.svgz" << "*.html";                // retain *pngs (BUT remove *html) for further assembly at e-Signing
-   //    remove_files_by_mask( dirName, file_exts );
+  //    else if ( writeStatus_html != US_DB2::OK )
+  //      {
+  //        QMessageBox::warning(this, "Error", "returned processing html file:\n" +
+  //    			   html_filePath + "\n" + db.lastError() + "\n");
 
-   //    QString tarFilename_t = subDirName + "_GMP_DB.tar";
-   //    //QString tarFilename_t = subDirName + "_GMP_DB.rar";
-  
-   //    QProcess *process = new QProcess(this);
-   //    process->setWorkingDirectory( US_Settings::reportDir() );
-   //    process->start("tar", QStringList() << "-cvf" << tarFilename_t << subDirName );
-   //    //process->start("rar", QStringList() << "a" << tarFilename_t << subDirName );
-   //    //sleep( 5 );                     //Maybe implement something like a timer to check on completion!!!
-   //    process -> waitForFinished();
-   //    process -> close();
-  
-   //    qDebug() << "tar command: " << "tar " << "-cvf " << tarFilename_t << ", " << subDirName;
+  //      }
 
-   //    QString r_filepath = US_Settings::reportDir() + "/" + tarFilename_t;
-   //    qDebug() << "r_filepath: " << r_filepath;
+  //    //
 
-  
-   //    qApp->processEvents();
-  
-   //    //Like process -> returned signal??
-  
-   //    int writeStatus= db.writeBlobToDB(r_filepath,
-   //    				    QString( "upload_gmpReportData" ),
-   //    				    r_ID );
-   //    qApp->processEvents();
-  
-   //    if ( writeStatus == US_DB2::DBERROR )
-   //      {
-   //        QMessageBox::warning(this, "Error", "Error processing file:\n"
-   //    			   + r_filepath + "\n" + db.lastError() +
-   //    			   "\n" + "Could not open file or no data \n");
-   //      }
-  
-   //    else if ( writeStatus != US_DB2::OK )
-   //      {
-   //        QMessageBox::warning(this, "Error", "returned processing file:\n" +
-   //    			   r_filepath + "\n" + db.lastError() + "\n");
-  
-   //      }
+  //    QStringList file_exts;
+  //    //file_exts << "*.png" << "*.svgz";
+  //    file_exts << "*.svgz" << "*.html";                // retain *pngs (BUT remove *html) for further assembly at e-Signing
+  //    remove_files_by_mask( dirName, file_exts );
 
-   //  /****** END TEST *************************************************************/
+  //    QString tarFilename_t = subDirName + "_GMP_DB.tar";
+  //    //QString tarFilename_t = subDirName + "_GMP_DB.rar";
 
-  
+  //    QProcess *process = new QProcess(this);
+  //    process->setWorkingDirectory( US_Settings::reportDir() );
+  //    process->start("tar", QStringList() << "-cvf" << tarFilename_t << subDirName );
+  //    //process->start("rar", QStringList() << "a" << tarFilename_t << subDirName );
+  //    //sleep( 5 );                     //Maybe implement something like a timer to check on completion!!!
+  //    process -> waitForFinished();
+  //    process -> close();
+
+
+  //    QString r_filepath = US_Settings::reportDir() + "/" + tarFilename_t;
+
+
+  //    qApp->processEvents();
+
+  //    //Like process -> returned signal??
+
+  //    int writeStatus= db.writeBlobToDB(r_filepath,
+  //    				    QString( "upload_gmpReportData" ),
+  //    				    r_ID );
+  //    qApp->processEvents();
+
+  //    if ( writeStatus == US_DB2::DBERROR )
+  //      {
+  //        QMessageBox::warning(this, "Error", "Error processing file:\n"
+  //    			   + r_filepath + "\n" + db.lastError() +
+  //    			   "\n" + "Could not open file or no data \n");
+  //      }
+
+  //    else if ( writeStatus != US_DB2::OK )
+  //      {
+  //        QMessageBox::warning(this, "Error", "returned processing file:\n" +
+  //    			   r_filepath + "\n" + db.lastError() + "\n");
+
+  //      }
+
+  //  /****** END TEST *************************************************************/
+
+
   //Now delete all .png && .svgz && tar entire directory
   if ( auto_mode )
     {
@@ -13925,10 +13528,6 @@ void US_ReporterGMP::paintPage(QPrinter& printer, int pageNumber, int pageCount,
   // Translate so that 0,0 is the text rect corner
   painter->translate(textRect.left(), textRect.top());
 
-  // qDebug() << "Painter's settings: font, metrics -- "
-  // 	   << painter->fontMetrics()
-  // 	   << painter->fontInfo()
-  // 	   << painter->font();
 
   qDebug() << "Painter's settings: font, metrics -- "
 	   << painter->fontInfo().family()
@@ -14860,14 +14459,24 @@ void US_ReporterGMP::assemble_parts( QString & html_str )
     	{
 	  if ( genMask_edited.has_anagen_items ) 
 	    html_str += html_analysis_profile;
-	  if ( expType == "VELOCITY")
-	    {
-	      if ( genMask_edited.has_ana2dsa_items ) 
-		html_str += html_analysis_profile_2dsa;
-	      if ( genMask_edited.has_anapcsa_items ) 
-		html_str += html_analysis_profile_pcsa ;
-	    }
-	}
+     // 2DSA Controls: VELOCITY and VELOCITY-MWL (MWL runs use the same
+     // 2DSA Analysis Profile controls)
+     if ( expType == "VELOCITY" || expType == "VELOCITY-MWL" )
+     {
+        if ( genMask_edited.has_ana2dsa_items )
+        {
+           html_str += html_analysis_profile_2dsa;
+        }
+     }
+     // PCSA Controls: VELOCITY only
+     if ( expType == "VELOCITY" )
+     {
+        if ( genMask_edited.has_anapcsa_items )
+        {
+           html_str += html_analysis_profile_pcsa;
+        }
+     }
+      }
     }
 }
 

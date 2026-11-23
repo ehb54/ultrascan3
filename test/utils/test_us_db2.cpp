@@ -1,14 +1,22 @@
 //! \file test_us_db2.cpp
 // US_DB2::composeQuery(): stored-procedure invocation and credential placement,
 // and how a refused procedure name fails the query and the blob transfers.  The escaping itself is in
-// test_us_db2_escaping.cpp; the rest of US_DB2 needs a live server.
+// test_us_db2_escaping.cpp.  US_DB2::writeBlobFile(): how a downloaded blob is written to its file.
+// The rest of US_DB2 needs a live server.
 
 #include "qt_test_base.h"
 #include "us_db2.h"
 
+#include <QFile>
 #include <QString>
 #include <QStringList>
+#include <QTemporaryDir>
 #include <QTemporaryFile>
+
+#ifdef Q_OS_UNIX
+#include <csignal>
+#include <sys/resource.h>
+#endif
 
 namespace
 {
@@ -103,6 +111,8 @@ TEST( UsDb2Query, ARefusedProcedureNameFailsTheQueryWithItsOwnError )
    EXPECT_FALSE( db.next() );
 }
 
+// NO_DB compiles blob transfers as no-op stubs; this validates the DB adapter.
+#ifndef NO_DB
 TEST( UsDb2Query, TheBlobTransfersRefuseAnInvalidProcedureName )
 {
    // A readable, non-empty file, so only the procedure name can be refused.
@@ -121,7 +131,71 @@ TEST( UsDb2Query, TheBlobTransfersRefuseAnInvalidProcedureName )
    EXPECT_EQ( db.lastError(), QObject::tr( US_DB2::invalidProcedureMessage ).arg( "od'd" ) );
 }
 
+#endif
+
 TEST( UsDb2Query, AnEmptyArgumentIsStillPassedAsAnEmptyLiteral )
 {
    EXPECT_EQ( call( QStringList() << "p" << "" << "z" ), QString( "CALL p('%1', '%2', '', 'z')" ).arg( kGuid ).arg( kPw ) );
 }
+
+TEST( UsDb2Query, DisconnectedAdapterDoesNotOwnATransaction )
+{
+   US_DB2 db;
+   EXPECT_FALSE( db.transactionActive() );
+   QString error;
+   EXPECT_FALSE( db.beginTransaction( error ) );
+   EXPECT_FALSE( db.transactionActive() );
+}
+
+// writeBlobFile():  how readBlobFromDB() writes a download (ultrascan-tickets#1251).
+TEST( UsDb2BlobFile, WritesEveryByte )
+{
+   QTemporaryDir dir;
+   ASSERT_TRUE( dir.isValid() );
+   const QString    path = dir.filePath( "run.auc" );
+   const QByteArray data( 1 << 20, 'x' );
+   QString          error;
+   EXPECT_EQ( US_DB2::writeBlobFile( path, data, error ), IUS_DB2::OK );
+   EXPECT_TRUE( error.isEmpty() );
+   QFile file( path );
+   ASSERT_TRUE( file.open( QIODevice::ReadOnly ) );
+   EXPECT_EQ( file.readAll(), data );
+}
+
+TEST( UsDb2BlobFile, AFileThatCannotBeOpenedIsAnError )
+{
+   QTemporaryDir dir;
+   ASSERT_TRUE( dir.isValid() );
+   const QString path = dir.filePath( "missing-folder/run.auc" );
+   QString       error;
+   EXPECT_EQ( US_DB2::writeBlobFile( path, QByteArray( "data" ), error ), IUS_DB2::DBERROR );
+   EXPECT_TRUE( error.contains( path ) );
+   EXPECT_FALSE( QFile::exists( path ) );
+}
+
+#ifdef Q_OS_UNIX
+// A short write, as on a full disk:  the process's file size limit stops the
+// write partway.  The error is reported and the partial file removed.
+TEST( UsDb2BlobFile, AShortWriteIsAnErrorAndLeavesNoPartialFile )
+{
+   QTemporaryDir dir;
+   ASSERT_TRUE( dir.isValid() );
+   const QString path = dir.filePath( "run.auc" );
+   QString       error;
+   int           status = IUS_DB2::OK;
+
+   struct rlimit saved;
+   ASSERT_EQ( getrlimit( RLIMIT_FSIZE, &saved ), 0 );
+   void ( *savedHandler )( int ) = signal( SIGXFSZ, SIG_IGN ); // EFBIG instead of the signal
+   struct rlimit limited         = saved;
+   limited.rlim_cur              = 4096;
+   ASSERT_EQ( setrlimit( RLIMIT_FSIZE, &limited ), 0 );
+   status = US_DB2::writeBlobFile( path, QByteArray( 1 << 16, 'x' ), error );
+   setrlimit( RLIMIT_FSIZE, &saved );
+   signal( SIGXFSZ, savedHandler );
+
+   EXPECT_EQ( status, IUS_DB2::DBERROR );
+   EXPECT_TRUE( error.contains( "65536" ) ) << error.toStdString();
+   EXPECT_FALSE( QFile::exists( path ) );
+}
+#endif

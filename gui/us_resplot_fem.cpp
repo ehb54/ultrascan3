@@ -1,0 +1,1130 @@
+//! \file us_resplot_fem.cpp
+
+#include "us_resplot_fem.h"
+#include "us_constants.h"
+#include "us_gui_settings.h"
+#include "us_gui_util.h"
+#include "us_math2.h"
+#include "us_settings.h"
+#include <qwt_legend.h>
+
+#ifndef DbgLv
+#define DbgLv( a )                                                                                                                 \
+   if ( dbg_level >= a )                                                                                                           \
+   qDebug()
+#endif
+
+// constructor:  residuals plot widget
+US_ResidPlotFem::US_ResidPlotFem( const US_ResidPlotInputs& inputs, Mode mode, QWidget* parent ) :
+    US_WidgetsDialog( parent, Qt::WindowFlags() ),
+    mode( mode )
+{
+   setAttribute( Qt::WA_DeleteOnClose );
+
+   // lay out the GUI
+   setWindowTitle( tr( "Finite Element Data/Residuals Viewer" ) );
+   setPalette( US_GuiSettings::frameColor() );
+
+   QSize p1size( 560, 360 );
+   QSize p2size( 560, 240 );
+
+   QSize p11size( 670, 360 );
+   QSize p21size( 670, 240 );
+
+   dbg_level = US_Settings::us_debug();
+
+   mainLayout     = new QHBoxLayout( this );
+   leftLayout     = new QVBoxLayout();
+   rightLayout    = new QVBoxLayout();
+   datctrlsLayout = new QGridLayout();
+   resctrlsLayout = new QGridLayout();
+   buttonsLayout  = new QVBoxLayout();
+
+   mainLayout->setSpacing( 2 );
+   mainLayout->setContentsMargins( 2, 2, 2, 2 );
+
+   QLabel*      lb_datctrls = us_banner( tr( "FE Analysis Data Viewer" ) );
+   QLabel*      lb_resctrls = us_banner( tr( "FE Analysis Residuals Viewer" ) );
+   QLabel*      lb_vari     = us_label( tr( "Variance:" ) );
+   QLabel*      lb_rmsd     = us_label( tr( "RMSD:" ) );
+
+   QPushButton* pb_close = us_pushbutton( tr( "Close" ) );
+
+   QLayout*     lo_plteda = us_checkbox( tr( "Plot Experimental Data" ), ck_plteda, true );
+   QLayout*     lo_subtin = us_checkbox( tr( "Subtract Time Invariant Noise" ), ck_subtin );
+   QLayout*     lo_subrin = us_checkbox( tr( "Subtract Radially Invariant Noise" ), ck_subrin );
+   QLayout*     lo_pltsda = us_checkbox( tr( "Plot Simulated/Modeled Data" ), ck_pltsda, true );
+   QLayout*     lo_addtin = us_checkbox( tr( "Add Time Invariant Noise" ), ck_addtin );
+   QLayout*     lo_addrin = us_checkbox( tr( "Add Radially Invariant Noise" ), ck_addrin );
+   QLayout*     lo_pltres = us_checkbox( tr( "Plot Residuals" ), ck_pltres, true );
+   QLayout*     lo_plttin = us_checkbox( tr( "Plot Time Invariant Noise" ), ck_plttin );
+   QLayout*     lo_pltrin = us_checkbox( tr( "Plot Radially Invariant Noise" ), ck_pltrin );
+   QLayout*     lo_pltran = us_checkbox( tr( "Plot Random Noise" ), ck_pltran );
+   QLayout*     lo_shorbm = us_checkbox( tr( "Show Residuals Bitmap" ), ck_shorbm );
+
+   le_vari = us_lineedit( "0.0", -1, true );
+   le_vari->setAccessibleName( tr( "Variance" ) );
+   lb_vari->setBuddy( le_vari );
+   le_rmsd = us_lineedit( "0.0", -1, true );
+   le_rmsd->setAccessibleName( tr( "RMSD" ) );
+   lb_rmsd->setBuddy( le_rmsd );
+
+   datctrlsLayout->addWidget( lb_datctrls, 0, 0, 1, 8 );
+   datctrlsLayout->addLayout( lo_plteda, 1, 0, 1, 8 );
+   datctrlsLayout->addLayout( lo_subtin, 2, 1, 1, 7 );
+   datctrlsLayout->addLayout( lo_subrin, 3, 1, 1, 7 );
+   datctrlsLayout->addLayout( lo_pltsda, 4, 0, 1, 8 );
+   datctrlsLayout->addLayout( lo_addtin, 5, 1, 1, 7 );
+   datctrlsLayout->addLayout( lo_addrin, 6, 1, 1, 7 );
+
+   resctrlsLayout->addWidget( lb_resctrls, 0, 0, 1, 8 );
+   resctrlsLayout->addLayout( lo_pltres, 1, 0, 1, 8 );
+   resctrlsLayout->addLayout( lo_plttin, 2, 0, 1, 8 );
+   resctrlsLayout->addLayout( lo_pltrin, 3, 0, 1, 8 );
+   resctrlsLayout->addLayout( lo_pltran, 4, 0, 1, 8 );
+   resctrlsLayout->addLayout( lo_shorbm, 5, 0, 1, 8 );
+   resctrlsLayout->addWidget( lb_vari, 6, 0, 1, 3 );
+   resctrlsLayout->addWidget( le_vari, 6, 3, 1, 5 );
+   resctrlsLayout->addWidget( lb_rmsd, 7, 0, 1, 3 );
+   resctrlsLayout->addWidget( le_rmsd, 7, 3, 1, 5 );
+
+   buttonsLayout->addWidget( pb_close );
+
+   plotLayout1 = new US_Plot( data_plot1, tr( "Experimental Data" ), tr( "Radius (cm)" ), tr( "Absorbance" ), true, "^Curve" );
+
+   plotLayout2 = new US_Plot( data_plot2, tr( "Residuals" ), tr( "Radius (cm)" ), tr( "OD Difference" ) );
+
+   data_plot1->setMinimumSize( p1size );
+   data_plot1->setAccessibleName( tr( "Experimental Data Plot" ) );
+   data_plot2->setMinimumSize( p2size );
+   data_plot2->setAccessibleName( tr( "Residuals Plot" ) );
+
+   if ( mode == Analysis )
+   {
+      data_plot1->setMinimumSize( p11size );
+      data_plot2->setMinimumSize( p21size );
+   }
+
+
+   rightLayout->addLayout( plotLayout1 );
+   rightLayout->addLayout( plotLayout2 );
+
+   leftLayout->addLayout( datctrlsLayout );
+   leftLayout->addLayout( resctrlsLayout );
+   leftLayout->addStretch();
+   leftLayout->addLayout( buttonsLayout );
+
+   mainLayout->addLayout( leftLayout );
+   mainLayout->addLayout( rightLayout );
+
+   connect( ck_plteda, &QAbstractButton::toggled, this, &US_ResidPlotFem::pedaCheck );
+   connect( ck_subtin, &QAbstractButton::toggled, this, &US_ResidPlotFem::stinCheck );
+   connect( ck_subrin, &QAbstractButton::toggled, this, &US_ResidPlotFem::srinCheck );
+   connect( ck_pltsda, &QAbstractButton::toggled, this, &US_ResidPlotFem::psdaCheck );
+   connect( ck_addtin, &QAbstractButton::toggled, this, &US_ResidPlotFem::atinCheck );
+   connect( ck_addrin, &QAbstractButton::toggled, this, &US_ResidPlotFem::arinCheck );
+   connect( ck_pltres, &QAbstractButton::toggled, this, &US_ResidPlotFem::presCheck );
+   connect( ck_plttin, &QAbstractButton::toggled, this, &US_ResidPlotFem::ptinCheck );
+   connect( ck_pltrin, &QAbstractButton::toggled, this, &US_ResidPlotFem::prinCheck );
+   connect( ck_pltran, &QAbstractButton::toggled, this, &US_ResidPlotFem::pranCheck );
+   connect( ck_shorbm, &QAbstractButton::toggled, this, &US_ResidPlotFem::srbmCheck );
+
+   connect( pb_close, &QAbstractButton::clicked, this, &US_ResidPlotFem::close_all );
+
+   have_ed   = false;
+   have_sd   = false;
+   have_ti   = false;
+   have_ri   = false;
+   have_bm   = false;
+   skip_plot = true;
+
+   data_in    = inputs;
+   edata      = &data_in.edited;
+   sdata      = &data_in.simulated;
+   excllist   = &data_in.excluded;
+   ti_noise   = &data_in.ti_noise;
+   ri_noise   = &data_in.ri_noise;
+   resbmap    = inputs.bitmap;
+   tripleInfo = inputs.triple_info;
+   have_ed    = true;
+   have_sd    = true;
+   have_ti    = ( ti_noise != 0 && ti_noise->count > 0 );
+   have_ri    = ( ri_noise != 0 && ri_noise->count > 0 );
+   have_bm    = ( resbmap != 0 );
+
+   if ( have_bm )
+   {
+      connect( resbmap, &QObject::destroyed, this, &US_ResidPlotFem::resids_closed );
+   }
+
+   DbgLv( 1 ) << "RP:edata  " << have_ed;
+   DbgLv( 1 ) << "RP:sdata  " << have_sd;
+   DbgLv( 1 ) << "RP:ti_noise count" << ( have_ti ? ti_noise->count : 0 );
+   DbgLv( 1 ) << "RP:ri_noise count" << ( have_ri ? ri_noise->count : 0 );
+   DbgLv( 1 ) << "RP:resbmap" << have_bm;
+
+   ck_subtin->setEnabled( have_ti );
+   ck_subrin->setEnabled( have_ri );
+   ck_addtin->setEnabled( have_ti );
+   ck_addrin->setEnabled( have_ri );
+   ck_plttin->setEnabled( have_ti );
+   ck_pltrin->setEnabled( have_ri );
+
+   ck_plteda->setChecked( true );
+   ck_subtin->setChecked( have_ti );
+   ck_subrin->setChecked( have_ri );
+
+   skip_plot = false;
+   data_plot1->resize( p1size );
+   data_plot2->resize( p2size );
+
+
+   plot_data();
+
+
+   if ( mode == Report )
+   {
+      setVisible( false );
+   }
+   else
+   {
+      setVisible( true );
+   }
+
+   resize( p2size );
+}
+
+// A child bitmap is deleted after this destructor; its destroyed signal must not
+// reach resids_closed on a partly destroyed dialog.
+US_ResidPlotFem::~US_ResidPlotFem()
+{
+   if ( resbmap )
+   {
+      disconnect( resbmap, nullptr, this, nullptr );
+   }
+}
+
+// Replace the plotted data. Noise controls follow the new noise as they would in
+// a new dialog; other options are kept.
+void US_ResidPlotFem::set_inputs( const US_ResidPlotInputs& inputs )
+{
+   const bool had_ti = have_ti;
+   const bool had_ri = have_ri;
+
+   data_in    = inputs;
+   tripleInfo = inputs.triple_info;
+   have_ti    = ( ti_noise->count > 0 );
+   have_ri    = ( ri_noise->count > 0 );
+
+   QList<QCheckBox*> boxes = { ck_subtin, ck_subrin, ck_addtin, ck_addrin, ck_pltres, ck_plttin, ck_pltrin, ck_pltran };
+   for ( QCheckBox* box : boxes )
+   {
+      box->blockSignals( true );
+   }
+
+   ck_subtin->setEnabled( have_ti && ck_plteda->isChecked() );
+   ck_subrin->setEnabled( have_ri && ck_plteda->isChecked() );
+   ck_addtin->setEnabled( have_ti && ck_pltsda->isChecked() );
+   ck_addrin->setEnabled( have_ri && ck_pltsda->isChecked() );
+   ck_plttin->setEnabled( have_ti );
+   ck_pltrin->setEnabled( have_ri );
+
+   if ( have_ti != had_ti )
+   {
+      ck_subtin->setChecked( have_ti );
+      ck_addtin->setChecked( false );
+   }
+
+   if ( have_ri != had_ri )
+   {
+      ck_subrin->setChecked( have_ri );
+      ck_addrin->setChecked( false );
+   }
+
+   if ( ( ck_plttin->isChecked() && !have_ti ) || ( ck_pltrin->isChecked() && !have_ri ) )
+   { // the noise being viewed is gone:  view residuals
+      ck_plttin->setChecked( false );
+      ck_pltrin->setChecked( false );
+      ck_pltran->setChecked( false );
+      ck_pltres->setChecked( true );
+   }
+
+   for ( QCheckBox* box : boxes )
+   {
+      box->blockSignals( false );
+   }
+
+   plot_data();
+}
+
+// externally force a specific plot for lower plot
+void US_ResidPlotFem::set_plot( int plotf )
+{
+   if ( plotf == 1 )
+   { // ti_noise plot
+      ck_plttin->setChecked( true );
+   }
+
+   else if ( plotf == 2 )
+   { // ri_noise plot
+      ck_pltrin->setChecked( true );
+   }
+
+   else if ( plotf == 0 )
+   { // residuals plot
+      ck_pltres->setChecked( true );
+   }
+}
+
+// Return a pointer to the QwtPlot for the upper plot
+QwtPlot* US_ResidPlotFem::rp_data_plot1()
+{
+   //reset fonts for title, axis titles
+   setStyleSheet( "QWidget {font-size: 10pt};" );
+   QFont   font_c( "Arial", 12 );
+   QwtText p_title = data_plot1->title();
+   p_title.setFont( font_c );
+   data_plot1->setTitle( p_title );
+
+   QwtText xTitle = data_plot1->axisTitle( QwtPlot::xBottom );
+   xTitle.setFont( font_c );
+   data_plot1->setAxisTitle( QwtPlot::xBottom, xTitle );
+
+   QwtText yTitle = data_plot1->axisTitle( QwtPlot::yLeft );
+   yTitle.setFont( font_c );
+   data_plot1->setAxisTitle( QwtPlot::yLeft, yTitle );
+
+   QwtText zTitle = data_plot1->axisTitle( QwtPlot::yRight );
+   zTitle.setFont( font_c );
+   data_plot1->setAxisTitle( QwtPlot::yRight, zTitle );
+
+   data_plot1->replot();
+
+   return data_plot1;
+}
+
+// Return a pointer to the QwtPlot for the lower plot
+QwtPlot* US_ResidPlotFem::rp_data_plot2()
+{
+   //reset fonts for title, axis titles
+   setStyleSheet( "QWidget {font-size: 10pt};" );
+   QFont   font_c( "Arial", 12 );
+   QwtText p_title = data_plot2->title();
+   p_title.setFont( font_c );
+   data_plot2->setTitle( p_title );
+
+   QwtText xTitle = data_plot2->axisTitle( QwtPlot::xBottom );
+   xTitle.setFont( font_c );
+   data_plot2->setAxisTitle( QwtPlot::xBottom, xTitle );
+
+   QwtText yTitle = data_plot2->axisTitle( QwtPlot::yLeft );
+   yTitle.setFont( font_c );
+   data_plot2->setAxisTitle( QwtPlot::yLeft, yTitle );
+
+   QwtText zTitle = data_plot2->axisTitle( QwtPlot::yRight );
+   zTitle.setFont( font_c );
+   data_plot2->setAxisTitle( QwtPlot::yRight, zTitle );
+
+   data_plot2->replot();
+
+   return data_plot2;
+}
+
+// plot-experimental-data box [un]checked
+void US_ResidPlotFem::pedaCheck( bool chkd )
+{
+   if ( chkd )
+   { // box is being checked:  sub boxes enabled if data present
+      ck_subtin->setEnabled( have_ti );
+      ck_subrin->setEnabled( have_ri );
+   }
+
+   else
+   { // box is being unchecked:  sub boxes disabled
+      ck_subtin->setEnabled( false );
+      ck_subrin->setEnabled( false );
+   }
+
+   plot_data();
+}
+
+// subtract-ti-noise box [un]checked
+void US_ResidPlotFem::stinCheck( bool )
+{
+   plot_data();
+}
+
+// subtract-ri-noise box [un]checked
+void US_ResidPlotFem::srinCheck( bool )
+{
+   plot_data();
+}
+
+// plot-simulation-data box [un]checked
+void US_ResidPlotFem::psdaCheck( bool chkd )
+{
+   if ( chkd )
+   { // box is being checked:  sub boxes enabled if data present
+      ck_addtin->setEnabled( have_ti );
+      ck_addrin->setEnabled( have_ri );
+   }
+
+   else
+   { // box is being unchecked:  sub boxes disabled
+      ck_addtin->setEnabled( false );
+      ck_addrin->setEnabled( false );
+   }
+
+   plot_data();
+}
+
+// add-ti-noise box [un]checked
+void US_ResidPlotFem::atinCheck( bool )
+{
+   plot_data();
+}
+
+// add-ri-noise box [un]checked
+void US_ResidPlotFem::arinCheck( bool )
+{
+   plot_data();
+}
+
+// plot-residuals  box [un]checked
+void US_ResidPlotFem::presCheck( bool chkd )
+{
+   skip_plot = true;
+
+   if ( chkd )
+   { // alternate residual plots unchecked
+      connect_pboxes( false );
+      ck_plttin->setChecked( false );
+      ck_pltrin->setChecked( false );
+      ck_pltran->setChecked( false );
+      connect_pboxes( true );
+   }
+
+   skip_plot = false;
+
+   plot_data();
+}
+
+// plot-ti-noise box [un]checked
+void US_ResidPlotFem::ptinCheck( bool chkd )
+{
+   skip_plot = true;
+
+   if ( chkd )
+   { // alternate residual plots unchecked
+      connect_pboxes( false );
+      ck_pltres->setChecked( false );
+      ck_pltrin->setChecked( false );
+      ck_pltran->setChecked( false );
+      connect_pboxes( true );
+   }
+
+   skip_plot = false;
+
+   plot_data();
+}
+
+// plot-ri-noise box [un]checked
+void US_ResidPlotFem::prinCheck( bool chkd )
+{
+   skip_plot = true;
+
+   if ( chkd )
+   { // alternate residual plots unchecked
+      connect_pboxes( false );
+      ck_pltres->setChecked( false );
+      ck_plttin->setChecked( false );
+      ck_pltran->setChecked( false );
+      connect_pboxes( true );
+   }
+
+   skip_plot = false;
+
+   plot_data();
+}
+
+// plot-random-noise box [un]checked
+void US_ResidPlotFem::pranCheck( bool chkd )
+{
+   skip_plot = true;
+
+   if ( chkd )
+   { // alternate residual plots unchecked
+      connect_pboxes( false );
+      ck_pltres->setChecked( false );
+      ck_plttin->setChecked( false );
+      ck_pltrin->setChecked( false );
+      connect_pboxes( true );
+   }
+
+   skip_plot = false;
+
+   plot_data();
+}
+
+// show-residual-bitmap box [un]checked:  show or refresh the bitmap, or close it
+void US_ResidPlotFem::srbmCheck( bool chkd )
+{
+   if ( chkd )
+   {
+      plot_data();
+
+      if ( resbmap )
+      {
+         resbmap->raise();
+         resbmap->activateWindow();
+      }
+   }
+
+   else if ( resbmap )
+   {
+      resbmap->close();
+   }
+}
+
+// close button clicked
+void US_ResidPlotFem::close_all()
+{
+   if ( resbmap != 0 )
+   {
+      resbmap->close();
+   }
+
+   close();
+}
+
+// plot the data
+void US_ResidPlotFem::plot_data()
+{
+   if ( skip_plot ) // avoid redundant successive calls
+   {
+      return;
+   }
+
+   const QString problem = input_problem();
+
+   if ( !problem.isEmpty() )
+   { // never read buffers that do not match:  say why instead, on both
+      // plots since either may be exported alone, and close a bitmap this
+      // dialog created, whose residuals are no longer shown (a bitmap passed
+      // in by the caller stays the caller's)
+      dataPlotClear( data_plot1 );
+      dataPlotClear( data_plot2 );
+      data_plot1->setTitle( tr( "Cannot plot: %1" ).arg( problem ) );
+      data_plot2->setTitle( tr( "Cannot plot: %1" ).arg( problem ) );
+
+      if ( resbmap && resbmap->parent() == this )
+      {
+         resbmap->close();
+      }
+
+      le_vari->setText( "" );
+      le_rmsd->setText( "" );
+      data_plot1->replot();
+      data_plot2->replot();
+      return;
+   }
+
+   plot_edata(); // plot experimental
+
+   plot_rdata(); // plot residuals
+}
+
+// Why the inputs cannot be plotted, or an empty string when they can. The plots
+// read every scan at every point of both data sets, and each noise value.
+QString US_ResidPlotFem::input_problem() const
+{
+   const int scans  = edata->scanCount();
+   const int points = edata->pointCount();
+
+   if ( scans < 1 || points < 1 )
+   {
+      return tr( "there is no experimental data" );
+   }
+
+   if ( sdata->scanCount() != scans || sdata->pointCount() != points )
+   {
+      return tr( "the simulation has %1 scans of %2 points, the data %3 of %4" )
+         .arg( sdata->scanCount() )
+         .arg( sdata->pointCount() )
+         .arg( scans )
+         .arg( points );
+   }
+
+   for ( int ii = 0; ii < scans; ii++ )
+   {
+      if ( edata->scanData[ii].rvalues.size() != points || sdata->scanData[ii].rvalues.size() != points )
+      {
+         return tr( "scan %1 does not have %2 points" ).arg( ii + 1 ).arg( points );
+      }
+   }
+
+   if ( have_ti && ti_noise->values.size() < points )
+   {
+      return tr( "time-invariant noise has %1 values for %2 points" ).arg( ti_noise->values.size() ).arg( points );
+   }
+
+   if ( have_ri && ri_noise->values.size() < scans )
+   {
+      return tr( "radially-invariant noise has %1 values for %2 scans" ).arg( ri_noise->values.size() ).arg( scans );
+   }
+
+   return QString();
+}
+
+// plot the experimental data
+void US_ResidPlotFem::plot_edata()
+{
+   // Get any previous map colors set up
+   QList<QColor> mcolors;
+   int           nmcols = plotLayout1->map_colors( mcolors );
+   // Clear the upper plot for re-do
+   dataPlotClear( data_plot1 );
+
+
+   bool   do_plteda = have_ed && ck_plteda->isChecked();
+   bool   do_pltsda = have_sd && ck_pltsda->isChecked();
+   bool   do_addtin = have_ti && ck_addtin->isChecked();
+   bool   do_subtin = have_ti && ck_subtin->isChecked();
+   bool   do_addrin = have_ri && ck_addrin->isChecked();
+   bool   do_subrin = have_ri && ck_subrin->isChecked();
+
+   int    points = 0;
+   int    count  = 0;
+   double tinoi  = 0.0;
+   double rinoi  = 0.0;
+   double rl     = 0.0;
+   double vh     = 9999.0;
+   double sval;
+
+
+   if ( have_ed )
+   {
+      points = edata->pointCount();
+      rl     = edata->radius( 0 );
+   }
+
+   if ( !do_plteda && !do_pltsda )
+   { // no real experimental plot specified:  re-do plot and return
+      data_plot1->replot();
+      return;
+   }
+
+
+   // Analysis titles name the triple; Report titles keep a trailing space
+   const QString suffix = mode == Analysis ? " " + tripleInfo : mode == Report ? QString( " " ) : QString();
+
+   if ( do_plteda && !do_pltsda )
+   {
+      data_plot1->setTitle( tr( "Experimental Data" ) + suffix );
+   }
+
+   else if ( do_plteda && do_pltsda )
+   {
+      data_plot1->setTitle( tr( "Experimental and Simulated Data" ) + suffix );
+   }
+
+   else if ( do_pltsda )
+   {
+      data_plot1->setTitle( tr( "Simulated Data" ) + suffix );
+   }
+
+
+   us_grid( data_plot1 );
+
+   if ( do_plteda )
+   { // set title and values count for experimental data
+      data_plot1->setAxisTitle( QwtPlot::yLeft, tr( "Absorbance at " ) + edata->wavelength + tr( " nm" ) );
+      points = edata->pointCount();
+   }
+
+
+   if ( do_pltsda )
+   { // set title and values count for simulation data
+      if ( have_ed )
+      {
+         data_plot1->setAxisTitle( QwtPlot::yLeft, tr( "Absorbance at " ) + edata->wavelength + tr( " nm" ) );
+      }
+      else
+      {
+         data_plot1->setAxisTitle( QwtPlot::yLeft, tr( "Absorbance" ) );
+      }
+
+      count = sdata->pointCount();
+   }
+
+   count = ( points > count ) ? points : count; // maximum array count
+
+
+   QVector<double> rvec( count, 0.0 );
+   QVector<double> vvec( count, 0.0 );
+   double*         rr = rvec.data();
+   double*         vv = vvec.data();
+
+   QString         title;
+   QwtPlotCurve*   curv;
+   QPen            pen_red( Qt::red );
+   QPen            pen_plot( US_GuiSettings::plotCurve() );
+
+
+   if ( do_plteda )
+   { // plot experimental curves
+      points = edata->pointCount();
+      count  = edata->scanCount();
+      rinoi  = 0.0;
+      tinoi  = 0.0;
+      if ( nmcols == 1 )
+      {
+         pen_plot = QPen( mcolors[0] );
+      }
+
+
+      for ( int jj = 0; jj < points; jj++ )
+      { // get radii (x) just once
+         rr[jj] = edata->radius( jj );
+      }
+
+      for ( int ii = 0; ii < count; ii++ )
+      { // get readings (y) for each scan
+         if ( excllist->contains( ii ) )
+         {
+            continue;
+         }
+
+         if ( do_subrin )
+         {
+            rinoi = ri_noise->values[ii];
+         }
+
+         for ( int jj = 0; jj < points; jj++ )
+         { // each y is reading, optionally minus some noise
+            if ( do_subtin )
+            {
+               tinoi = ti_noise->values[jj];
+            }
+
+            vv[jj] = edata->value( ii, jj ) - rinoi - tinoi;
+         }
+
+         title = tr( "Curve " ) + QString::number( ii );
+         curv  = us_curve( data_plot1, title );
+
+         if ( nmcols > 1 )
+         { // Get pen plot color from gradient
+            int colx = ii % nmcols;
+            pen_plot = QPen( mcolors[colx] );
+         }
+
+         curv->setPen( pen_plot );
+         curv->setSamples( rr, vv, points );
+      }
+   }
+
+
+   if ( do_pltsda )
+   { // plot simulation curves
+      points = sdata->pointCount();
+      count  = sdata->scanCount();
+      rinoi  = 0.0;
+      tinoi  = 0.0;
+
+      for ( int jj = 0; jj < points; jj++ )
+      { // get radii (x) just once
+         rr[jj] = sdata->radius( jj );
+      }
+
+      for ( int ii = 0; ii < count; ii++ )
+      { // get readings (y) for each scan
+         if ( excllist->contains( ii ) )
+         {
+            continue;
+         }
+
+         if ( do_addrin )
+         {
+            rinoi = ri_noise->values[ii];
+         }
+
+         for ( int jj = 0; jj < points; jj++ )
+         { // each y is reading, optionally plus some noise
+            if ( do_addtin )
+            {
+               tinoi = ti_noise->values[jj];
+            }
+
+            if ( rr[jj] >= rl )
+            {
+               sval = sdata->value( ii, jj ) + rinoi + tinoi;
+            }
+
+            else
+            {
+               sval = edata->value( ii, jj ) - rinoi - tinoi;
+            }
+
+            if ( sval > vh )
+            {
+               sval = vv[jj - 1];
+            }
+
+            vv[jj] = sval;
+         }
+
+         title = tr( "S-Curve " ) + QString::number( ii );
+         curv  = us_curve( data_plot1, title );
+
+         curv->setPen( pen_red );
+         curv->setSamples( rr, vv, points );
+      }
+   }
+
+
+   data_plot1->replot();
+}
+
+// plot the residual data
+void US_ResidPlotFem::plot_rdata()
+{
+   dataPlotClear( data_plot2 );
+
+   bool do_pltres = have_ed && ck_pltres->isChecked() && have_sd;
+   bool do_plttin = have_ti && ck_plttin->isChecked();
+   bool do_pltrin = have_ri && ck_pltrin->isChecked();
+   bool do_pltran = have_ed && ck_pltran->isChecked() && have_sd;
+   bool do_shorbm = have_ed && ck_shorbm->isChecked() && have_sd;
+
+   qDebug() << "do_shorbm -- " << do_shorbm;
+
+   bool   do_addtin = have_ti && ck_addtin->isChecked();
+   bool   do_subtin = have_ti && ck_subtin->isChecked();
+   bool   do_addrin = have_ri && ck_addrin->isChecked();
+   bool   do_subrin = have_ri && ck_subrin->isChecked();
+
+   int    points = edata->pointCount();
+   int    count  = edata->scanCount();
+   double tinoi  = 0.0;
+   double rinoi  = 0.0;
+   double rvalu  = 0.0;
+   double rmsd   = 0.0;
+
+   if ( !do_pltres && !do_plttin && !do_pltrin && !do_pltran && !do_shorbm )
+   { // if no plots specified, just clean up plot and return
+      data_plot2->replot();
+      return;
+   }
+
+   us_grid( data_plot2 );
+   data_plot2->setAxisTitle( QwtPlot::xBottom, tr( "Radius (cm)" ) );
+
+   // At least two elements: the zero line has two ends even for one point.
+   int             vsize = qMax( 2, qMax( sdata->pointCount(), qMax( points, count ) ) );
+
+   QVector<double> rvec( vsize, 0.0 );
+   QVector<double> vvec( vsize, 0.0 );
+   double*         rr = rvec.data();
+   double*         vv = vvec.data();
+
+   QString         title;
+   QwtPlotCurve*   curv;
+   QPen            pen_plot( Qt::green );
+
+   // plot a zero line in red
+   double          rmin = sdata->radius( 0 ) - 0.02;
+   double          rmax = sdata->radius( points - 1 ) + 0.02;
+   rr[0]                = !do_pltrin ? rmin : 0.0;
+   rr[1]                = !do_pltrin ? rmax : double( count );
+   vv[0]                = 0.0;
+   vv[1]                = 0.0;
+   curv                 = us_curve( data_plot2, "zero-line" );
+   curv->setPen( QPen( QBrush( Qt::red ), 2 ) );
+   curv->setSamples( rr, vv, 2 );
+
+   if ( do_pltres )
+   { // plot residuals
+      data_plot2->setTitle( tr( "Residuals" ) );
+
+      for ( int jj = 0; jj < points; jj++ )
+      { // get radii (x) just once
+         rr[jj] = sdata->radius( jj );
+      }
+
+      int kpts = 0;
+
+      for ( int ii = 0; ii < count; ii++ )
+      { // get readings (y) for each scan
+         if ( excllist->contains( ii ) )
+         {
+            continue;
+         }
+
+         rinoi = 0.0;
+         if ( do_subrin )
+         {
+            rinoi = ri_noise->values[ii];
+         }
+         if ( do_addrin )
+         {
+            rinoi += ri_noise->values[ii];
+         }
+
+         for ( int jj = 0; jj < points; jj++ )
+         { // each residual is e-value minus s-value
+            tinoi = 0.0;
+            if ( do_subtin )
+            {
+               tinoi = ti_noise->values[jj];
+            }
+            if ( do_addtin )
+            {
+               tinoi += ti_noise->values[jj];
+            }
+
+            rvalu = edata->value( ii, jj ) - sdata->value( ii, jj ) - rinoi - tinoi;
+
+            rmsd += sq( rvalu );
+            kpts++;
+
+            vv[jj] = rvalu;
+         }
+
+         title = tr( "resids " ) + QString::number( ii );
+         curv  = us_curve( data_plot2, title );
+
+         curv->setPen( pen_plot );
+         curv->setStyle( QwtPlotCurve::Dots );
+         curv->setSamples( rr, vv, points );
+      }
+
+      // display variance and RMSD
+      rmsd /= (double) ( kpts );
+      le_vari->setText( QString::number( rmsd ) );
+      rmsd = sqrt( rmsd );
+      le_rmsd->setText( QString::number( rmsd ) );
+      //*Debug
+      //ti_noise->apply_to_data(*edata);
+      //ti_noise->apply_to_data(*edata,false);
+      //ri_noise->apply_to_data(*edata);
+      //ri_noise->apply_to_data(*edata,false);
+      //US_Noise::apply_noise(*edata,ti_noise);
+      //US_Noise::apply_noise(*edata,ti_noise,false);
+      //US_Noise::apply_noise(*edata,ri_noise);
+      //US_Noise::apply_noise(*edata,ri_noise,false);
+   }
+
+   else if ( do_plttin )
+   { // plot time-invariant noise
+      data_plot2->setTitle( tr( "Time-Invariant Noise" ) );
+
+      for ( int jj = 0; jj < points; jj++ )
+      { // accumulate radii and noise values
+         rr[jj] = edata->radius( jj );
+         vv[jj] = ti_noise->values[jj];
+      }
+
+      title = tr( "ti_noise" );
+      curv  = us_curve( data_plot2, title );
+
+      curv->setPen( pen_plot );
+      curv->setSamples( rr, vv, points );
+   }
+
+   else if ( do_pltrin )
+   { // plot radially-invariant noise
+      data_plot2->setTitle( tr( "Radially-Invariant Noise" ) );
+
+      for ( int ii = 0; ii < count; ii++ )
+      { // accumulate scan numbers and noise values
+         rr[ii] = (double) ( ii + 1 );
+         vv[ii] = ri_noise->values[ii];
+      }
+
+      title = tr( "ri_noise" );
+      curv  = us_curve( data_plot2, title );
+      rmin  = 1.0;
+      rmax  = (double) count;
+
+      data_plot2->setAxisTitle( QwtPlot::xBottom, tr( "Scan Number" ) );
+      curv->setPen( pen_plot );
+      curv->setSamples( rr, vv, count );
+   }
+
+   else if ( do_pltran )
+   { // plot random noise
+      data_plot2->setTitle( tr( "Random Noise" ) );
+      points = sdata->pointCount();
+      count  = sdata->scanCount();
+
+      for ( int jj = 0; jj < points; jj++ )
+      { // get radii (x) just once
+         rr[jj] = sdata->radius( jj );
+      }
+
+      int kpts = 0;
+
+      for ( int ii = 0; ii < count; ii++ )
+      { // get random noise (y) for each scan
+         if ( excllist->contains( ii ) )
+         {
+            continue;
+         }
+
+         rinoi = have_ri ? ri_noise->values[ii] : 0.0;
+
+         for ( int jj = 0; jj < points; jj++ )
+         { // each random value is e-value minus s-value with optional noise
+            tinoi = have_ti ? ti_noise->values[jj] : 0.0;
+            rvalu = edata->value( ii, jj ) - sdata->value( ii, jj ) - rinoi - tinoi;
+
+            rmsd += sq( rvalu );
+            kpts++;
+
+            vv[jj] = rvalu;
+         }
+
+         title = tr( "random noise " ) + QString::number( ii );
+         curv  = us_curve( data_plot2, title );
+
+         curv->setPen( pen_plot );
+         curv->setStyle( QwtPlotCurve::Dots );
+         curv->setSamples( rr, vv, points );
+      }
+
+      // display variance and RMSD
+      rmsd /= (double) ( kpts );
+      le_vari->setText( QString::number( rmsd ) );
+      rmsd = sqrt( rmsd );
+      le_rmsd->setText( QString::number( rmsd ) );
+   }
+
+
+   if ( do_shorbm )
+   { // show residuals bitmap (if not already shown)
+
+      QVector<QVector<double>> resids;
+      QVector<double>          resscan;
+
+      resids.resize( count );
+      resscan.resize( points );
+      rmsd     = 0.0;
+      int kpts = 0;
+
+      for ( int ii = 0; ii < count; ii++ )
+      { // build a vector for each scan
+         if ( excllist->contains( ii ) )
+         {
+            resscan.fill( 0.0 );
+            resids[ii] = resscan;
+            continue;
+         }
+
+         rinoi = 0.0;
+         if ( do_subrin )
+         {
+            rinoi = ri_noise->values[ii];
+         }
+         if ( do_addrin )
+         {
+            rinoi += ri_noise->values[ii];
+         }
+
+         for ( int jj = 0; jj < points; jj++ )
+         { // build residual values within a scan
+            tinoi = 0.0;
+            if ( do_subtin )
+            {
+               tinoi = ti_noise->values[jj];
+            }
+            if ( do_addtin )
+            {
+               tinoi += ti_noise->values[jj];
+            }
+
+            rvalu = edata->value( ii, jj ) - sdata->value( ii, jj ) - rinoi - tinoi;
+
+            rmsd += sq( rvalu );
+            kpts++;
+
+            resscan[jj] = rvalu;
+         }
+
+         resids[ii] = resscan;
+      }
+
+      rmsd /= (double) ( kpts );
+      le_vari->setText( QString::number( rmsd ) );
+      rmsd = sqrt( rmsd );
+      le_rmsd->setText( QString::number( rmsd ) );
+
+      if ( resbmap )
+      { // already have resbmap:  just replot residuals bitmap, leaving the
+         // window order alone so new data does not take focus from the caller
+         resbmap->replot( resids );
+
+         qDebug() << "ResBitMap: have window already";
+      }
+
+      else
+      { // pop up a little dialog with residuals bitmap
+
+         qDebug() << "ResBitMap: NO window yet";
+
+         resbmap = new US_ResidsBitmap( resids );
+         connect( resbmap, &QObject::destroyed, this, &US_ResidPlotFem::resids_closed );
+         // A bitmap this dialog creates is its own window but is destroyed with it.
+         resbmap->setParent( this, Qt::Dialog );
+         resbmap->move( this->pos() + QPoint( 100, 100 ) );
+         resbmap->show();
+         resbmap->raise();
+      }
+
+      qApp->processEvents();
+   }
+
+   // display curves we have created; then clean up
+
+   data_plot2->setAxisScale( QwtPlot::xBottom, rmin, rmax );
+   data_plot2->replot();
+}
+
+// react to residual bitmap having been closed:  uncheck without reopening it
+void US_ResidPlotFem::resids_closed()
+{
+   DbgLv( 1 ) << "Resids BitMap Closed!!!";
+   resbmap = 0;
+   have_bm = false;
+
+   const QSignalBlocker blocker( ck_shorbm );
+   ck_shorbm->setChecked( false );
+}
+
+// Connect/Disconnect plot type boxes
+void US_ResidPlotFem::connect_pboxes( bool conn )
+{
+   if ( conn )
+   { // Connect slots for plot boxes
+      connect( ck_pltres, &QAbstractButton::toggled, this, &US_ResidPlotFem::presCheck );
+      connect( ck_plttin, &QAbstractButton::toggled, this, &US_ResidPlotFem::ptinCheck );
+      connect( ck_pltrin, &QAbstractButton::toggled, this, &US_ResidPlotFem::prinCheck );
+      connect( ck_pltran, &QAbstractButton::toggled, this, &US_ResidPlotFem::pranCheck );
+   }
+
+   else
+   { // Disconnect slots for plot boxes
+      ck_pltres->disconnect();
+      ck_plttin->disconnect();
+      ck_pltrin->disconnect();
+      ck_pltran->disconnect();
+   }
+}
+
+void US_ResidPlotFem::closeEvent( QCloseEvent* event )
+{
+   qDebug() << "US_ResidPlotFem CLOSED -- ";
+
+   emit on_close();
+   event->accept();
+}

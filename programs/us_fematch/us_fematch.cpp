@@ -404,27 +404,6 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    data_plot2->replot();
 }
 
-// public function to get pointer to edit data
-US_DataIO::EditedData*      US_FeMatch::fem_editdata() { return edata;     }
-
-// public function to get pointer to list of excluded scans
-QList< int >*               US_FeMatch::fem_excllist() { return &excludedScans;}
-
-// public function to get pointer to sim data
-US_DataIO::RawData*         US_FeMatch::fem_simdata()  { return sdata;     }
-
-// public function to get pointer to load model
-US_Model*                   US_FeMatch::fem_model()    { return &model;    }
-
-// public function to get pointer to TI noise
-US_Noise*                   US_FeMatch::fem_ti_noise() { return &ti_noise; }
-
-// public function to get pointer to RI noise
-US_Noise*                   US_FeMatch::fem_ri_noise() { return &ri_noise; }
-
-// public function to get pointer to resid bitmap diag
-QPointer< US_ResidsBitmap > US_FeMatch::fem_resbmap()  { return rbmapd;    }
-
 // Load data
 void US_FeMatch::load( void )
 {
@@ -532,51 +511,21 @@ DbgLv(0) << "LD: newfile" << newfile << "idExp" << idExp
    {  // Get speed_steps from an existing timestate file
       simparams.simSpeedsFromTimeState( tmst_fpath );
       simparams.speedstepsFromSSprof();
-//*DEBUG*
-int essknt=speed_steps.count();
-int tssknt=simparams.speed_step.count();
-DbgLv(1) << "LD: (e)ss knt" << essknt << "(t)ss knt" << tssknt;
-for ( int jj = 0; jj < qMin( essknt, tssknt ); jj++ )
-{
-  DbgLv(1) << "LD:  jj" << jj << "(e) tf tl wf wl scns"
-	   << speed_steps[jj].time_first
-	   << speed_steps[jj].time_last
-	   << speed_steps[jj].w2t_first
-	   << speed_steps[jj].w2t_last
-	   << speed_steps[jj].scans;
-  DbgLv(1) << "LD:    (t) tf tl wf wl scns"
-	   << simparams.speed_step[jj].time_first
-	   << simparams.speed_step[jj].time_last
-	   << simparams.speed_step[jj].w2t_first
-	   << simparams.speed_step[jj].w2t_last
-	   << simparams.speed_step[jj].scans;
- }
-//*DEBUG*
-      int kstep      = speed_steps.count();
-      int kscan      = speed_steps[ 0 ].scans;
-
-      //ALEXEY: #speed steps from TimeStamp can be bigger than what's read from DB?? 
-      for ( int jj = 0; jj < simparams.speed_step.count(); jj++ ) 
+      //*DEBUG*
+      int essknt = speed_steps.count();
+      int tssknt = simparams.speed_step.count();
+      DbgLv( 1 ) << "LD: (e)ss knt" << essknt << "(t)ss knt" << tssknt;
+      for ( int jj = 0; jj < qMin( essknt, tssknt ); jj++ )
       {
-         if ( jj < kstep )
-         {
-            kscan          = speed_steps[ jj ].scans;
-            speed_steps[ jj ] = simparams.speed_step[ jj ];
-         }
-         else
-            speed_steps << simparams.speed_step[ jj ];
-         
-         speed_steps[ jj ].scans = kscan;
-         simparams.speed_step[ jj ].scans = kscan;
-	 DbgLv(1) << "LD:    (s) tf tl wf wl scns"
-		  << speed_steps[jj].time_first
-		  << speed_steps[jj].time_last
-		  << speed_steps[jj].w2t_first
-		  << speed_steps[jj].w2t_last
-		  << speed_steps[jj].scans;
+         DbgLv( 1 ) << "LD:  jj" << jj << "(e) tf tl wf wl scns" << speed_steps[jj].time_first << speed_steps[jj].time_last
+                    << speed_steps[jj].w2t_first << speed_steps[jj].w2t_last << speed_steps[jj].scans;
+         DbgLv( 1 ) << "LD:    (t) tf tl wf wl scns" << simparams.speed_step[jj].time_first << simparams.speed_step[jj].time_last
+                    << simparams.speed_step[jj].w2t_first << simparams.speed_step[jj].w2t_last << simparams.speed_step[jj].scans;
       }
+      //*DEBUG*
+      US_SimulationParameters::mergeTimeStateSteps( speed_steps, simparams.speed_step );
    }
-   
+
    int nssp       = speed_steps.count();
    int ntriples   = triples.size();
    DbgLv(1) << "LD: Load: no of speed steps" << nssp;
@@ -726,6 +675,8 @@ DbgLv(1) << "Fem:Upd: (0)svbar" << svbar;
       viscosity   = bvisc.toDouble();
       compress    = bcomp.toDouble();
       manual      = ( !bmanu.isEmpty()  &&  bmanu == "1" );
+      int     solstat = IUS_DB2::OK;
+      QString solerr; // Used when the status alone does not say why the read failed
       if ( solID.isEmpty() )
       {
          QMessageBox::warning( this, tr( "Solution/Buffer Fetch" ),
@@ -734,12 +685,26 @@ DbgLv(1) << "Fem:Upd: (0)svbar" << svbar;
 
       else if ( solID.length() < 36  &&  dbP != NULL )
       {
-         solution_rec.readFromDB( solID.toInt(), dbP );
+         solstat = solution_rec.readFromDB( solID.toInt(), dbP );
+         solerr  = dbP->lastError();
       }
 
       else
       {
-         solution_rec.readFromDisk( solID );
+         solstat = solution_rec.readFromDisk( solID );
+         solerr  = tr( "the solution file could not be read" );
+      }
+
+      if ( solstat != IUS_DB2::OK )
+      { // The cleared solution has no analytes, so later vbar calculations use the default
+         QMessageBox::warning( this,
+                               tr( "Solution/Buffer Fetch" ),
+                               tr( "Solution %1 could not be read:\n%2\n"
+                                   "The default vbar, %3, is used." )
+                                  .arg( solID, US_Solution::readErrorText( solstat, solerr ) )
+                                  .arg( TYPICAL_VBAR ) );
+         solution_rec.commonVbar20 = TYPICAL_VBAR;
+         solution_rec.solutionDesc = tr( "( ***Undefined*** )" );
       }
 
       le_solution ->setText( solution_rec.solutionDesc );
@@ -1191,10 +1156,9 @@ DbgLv(1) << "cnstvb" << cnstvb << "img06File" << img06File;
    // Save the upper experiment-simulation overlay plot
    if ( resplotd == 0 )
    {
-      resplotd = new US_ResidPlotFem( this );
+      resplotd = new US_ResidPlotFem( resplot_inputs(), US_ResidPlotFem::Standalone, this );
       resplotd->move( rpd_pos );
       resplotd->show();
-      connect( resplotd, &QObject::destroyed, this, &US_FeMatch::resplot_done );
    }
 
    write_plot( img14File, resplotd->rp_data_plot1() );
@@ -1328,6 +1292,11 @@ void US_FeMatch::exclude( void )
    allExcls[ drow ]     = excludedScans;
 
    data_plot();
+
+   if ( resplotd )
+   {
+      resplotd->set_inputs( resplot_inputs() );
+   }
 
    pb_reset_exclude->setEnabled( true );
 }
@@ -1758,10 +1727,22 @@ void US_FeMatch::plotres( )
       resplotd->close();
    }
 
-   resplotd = new US_ResidPlotFem( this );
+   resplotd = new US_ResidPlotFem( resplot_inputs(), US_ResidPlotFem::Standalone, this );
    resplotd->move( rpd_pos );
    resplotd->show();
-   connect( resplotd, &QObject::destroyed, this, &US_FeMatch::resplot_done );
+}
+
+// The data the residual plot shows: the current data, its simulation and noise
+US_ResidPlotInputs US_FeMatch::resplot_inputs()
+{
+   US_ResidPlotInputs inputs;
+   inputs.edited    = *edata;
+   inputs.simulated = *sdata;
+   inputs.excluded  = excludedScans;
+   inputs.ti_noise  = ti_noise;
+   inputs.ri_noise  = ri_noise;
+   inputs.bitmap    = rbmapd;
+   return inputs;
 }
 
 // Load the model data and detect if it is RA
@@ -1829,9 +1810,18 @@ DbgLv(1) << "post-Load mC" << model.monteCarlo << "is_dmga_mc" << is_dmga_mc
 
    if ( is_dmga_mc )
    {  // For DMGA-MC loaded model, build the vector of iteration models
-      US_DmgaMcStats::build_imodels( model_loaded, imodels );
-      // Default the used model to a "Mean" model
-      US_DmgaMcStats::build_used_model( "mean", 0, imodels, model_used );
+      if ( US_DmgaMcStats::build_imodels( model_loaded, imodels ) > 0 )
+      { // Default the used model to a "Mean" model
+         US_DmgaMcStats::build_used_model( "mean", 0, imodels, model_used );
+      }
+      else
+      { // No iteration loaded: keep the used model and offer no iteration choices
+         pb_adv_dmga->setEnabled( false );
+         QMessageBox::warning( this,
+                               tr( "DMGA-MC Iterations" ),
+                               tr( "None of the model's Monte Carlo iterations could be read, so the "
+                                   "loaded model is used as it is." ) );
+      }
    }
 }
 
@@ -2321,8 +2311,8 @@ DbgLv(1) << "SimMdl: (fematch:)Finite Volume Solver is called";
       tsimdats.clear();
       tmodels .clear();
       kcomps  .clear();
-      QList< ThreadWorker* >         tworkers;
-      QList< QThreadEx* >            wthreads;
+      QList<US_ThreadWorker*> tworkers;
+      QList<US_ThreadEx*>     wthreads;
 
       // Build models for each thread
       for ( int ii = 0; ii < ncomp; ii++ )
@@ -2347,22 +2337,18 @@ DbgLv(1) << "SimMdl: (fematch:)Finite Volume Solver is called";
       // Build worker threads and begin running
       for ( int ii = 0; ii < nthread; ii++ )
       {
-         ThreadWorker* tworker = new ThreadWorker( tmodels[ ii ], simparams,
-               tsimdats[ ii ], solution_rec.buffer, ii );
-         QThreadEx*    wthread = new QThreadEx();
+         US_ThreadWorker* tworker = new US_ThreadWorker( tmodels[ii], simparams, tsimdats[ii], solution_rec.buffer, ii );
+         US_ThreadEx*     wthread = new US_ThreadEx();
 
          tworker->moveToThread( wthread );
 
          tworkers << tworker;
          wthreads << wthread;
 
-         connect( wthread, &QThread::started,
-                  tworker, &ThreadWorker::calc_simulation );
+         connect( wthread, &QThread::started, tworker, &US_ThreadWorker::calc_simulation );
 
-         connect( tworker, &ThreadWorker::work_progress,
-                  this,    &US_FeMatch::thread_progress );
-         connect( tworker, &ThreadWorker::work_complete,
-                  this,    &US_FeMatch::thread_complete );
+         connect( tworker, &US_ThreadWorker::work_progress, this, &US_FeMatch::thread_progress );
+         connect( tworker, &US_ThreadWorker::work_complete, this, &US_FeMatch::thread_complete );
 
          wthread->start();
       }
@@ -3674,6 +3660,11 @@ void US_FeMatch::reset_excludes( void )
 
    pb_reset_exclude->setEnabled( false );
    allExcls[ index ] = excludedScans;
+
+   if ( resplotd )
+   {
+      resplotd->set_inputs( resplot_inputs() );
+   }
 }
 
 // Reset data set
@@ -3989,12 +3980,6 @@ void US_FeMatch::simulate()
    simulate_model();
 }
 
-// Public slot to mark residuals plot dialog closed
-void US_FeMatch::resplot_done()
-{
-   resplotd   = 0;
-}
-
 // Determine if a run has an intensity profile
 bool US_FeMatch::has_intensity_profile( const QString& runID, const bool in_db )
 {
@@ -4101,29 +4086,7 @@ void US_FeMatch::auto_load_simulate( US_DataIO::RawData i_rdata,
                   << simparams.speed_step[jj].scans;
       }
       //*DEBUG*
-      int kstep      = speed_steps.count();
-      int kscan      = speed_steps[ 0 ].scans;
-
-      //ALEXEY: #speed steps from TimeStamp can be bigger than what's read from DB??
-      for ( int jj = 0; jj < simparams.speed_step.count(); jj++ )
-      {
-         if ( jj < kstep )
-         {
-            kscan          = speed_steps[ jj ].scans;
-            speed_steps[ jj ] = simparams.speed_step[ jj ];
-         }
-         else
-            speed_steps << simparams.speed_step[ jj ];
-
-         speed_steps[ jj ].scans = kscan;
-         simparams.speed_step[ jj ].scans = kscan;
-         DbgLv(1) << "LD:    (s) tf tl wf wl scns"
-                  << speed_steps[jj].time_first
-                  << speed_steps[jj].time_last
-                  << speed_steps[jj].w2t_first
-                  << speed_steps[jj].w2t_last
-                  << speed_steps[jj].scans;
-      }
+      US_SimulationParameters::mergeTimeStateSteps( speed_steps, simparams.speed_step );
    }
 
    int nssp       = speed_steps.count();
@@ -4224,9 +4187,18 @@ void US_FeMatch::auto_load_simulate( US_DataIO::RawData i_rdata,
 
    if ( is_dmga_mc )
    {  // For DMGA-MC loaded model, build the vector of iteration models
-      US_DmgaMcStats::build_imodels( model_loaded, imodels );
-      // Default the used model to a "Mean" model
-      US_DmgaMcStats::build_used_model( "mean", 0, imodels, model_used );
+      if ( US_DmgaMcStats::build_imodels( model_loaded, imodels ) > 0 )
+      { // Default the used model to a "Mean" model
+         US_DmgaMcStats::build_used_model( "mean", 0, imodels, model_used );
+      }
+      else
+      { // No iteration loaded: keep the used model and offer no iteration choices
+         pb_adv_dmga->setEnabled( false );
+         QMessageBox::warning( this,
+                               tr( "DMGA-MC Iterations" ),
+                               tr( "None of the model's Monte Carlo iterations could be read, so the "
+                                   "loaded model is used as it is." ) );
+      }
    }
    else {
       if ( US_Settings::advanced_level() > 0)

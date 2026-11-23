@@ -88,6 +88,7 @@ class US_GUI_EXTERN US_ModelGui : public US_WidgetsDialog
       bool    ignore_changes ( void );
       void    show_model_desc( void );
       void    connect_error  ( const QString& );
+      void                 load_error( const QString&, const QString& );
 
 
    private slots:

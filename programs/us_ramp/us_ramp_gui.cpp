@@ -817,8 +817,21 @@ DbgLv(1) << " enabCtl: tLx infsz" << cellchan << all_chaninfo.count();
    
       // Information is there, but we need to see if the runID exists in the 
       // DB. If we didn't load it from there, then we shouldn't be able to sync
+      const bool connected = ( db.lastErrno() == IUS_DB2::OK );
       int recStatus = ExpData.checkRunID( &db );
-   
+
+      // A failed lookup on a working connection leaves it unknown
+      //  whether the runID is stored, so saving waits for a retry
+      if ( connected && recStatus != IUS_DB2::OK && recStatus != IUS_DB2::NOROWS )
+      {
+         count++;
+         lw_todoinfo->addItem( QString::number( count ) +
+                               tr( ": Retry; the database could not be"
+                                   " checked for this runID: " ) +
+                               db.lastError() );
+         completed = false;
+      }
+
       // if a record is found but saveStatus==BOTH,
       //  then we are editing that record
       if ( ( recStatus == IUS_DB2::OK ) && ( saveStatus != BOTH ) ) // ||

@@ -13,7 +13,6 @@
 #include <QXmlStreamReader>
 #include <QtNumeric>
 
-#include "../us_fematch/us_thread_worker.h"
 #include "us_autoflow_analysis.h"
 #include "us_constants.h"
 #include "us_convertio.h"
@@ -24,6 +23,7 @@
 #include "us_run_protocol.h"
 #include "us_settings.h"
 #include "us_solution_vals.h"
+#include "us_thread_worker.h"
 
 #define MIN_NTC   25
 
@@ -674,15 +674,15 @@ QString US_Analysis_auto::get_filename( QString triple_name )
 //Gui update: timer's slot
 void US_Analysis_auto::gui_update( )
 {
-  //qDebug() << "in_gui_update: " << in_gui_update;
-    
-  if ( in_gui_update )            // If already doing a reload,
-    return;                            //  skip starting a new one
-  
-  in_gui_update  = true;          // Flag in the midst of a reload
+   if ( in_gui_update ) // If already doing a reload,
+   {
+      return; //  skip starting a new one
+   }
 
-  /**** JSON structure ****************************************************************/
-  /*
+   in_gui_update = true; // Flag in the midst of a reload
+
+   /**** JSON structure ****************************************************************/
+   /*
   
     {
      "to_process":["2DSA_MC",".."],
@@ -696,19 +696,18 @@ void US_Analysis_auto::gui_update( )
   
   */
 
-  US_Passwd pw;
-  US_DB2    db( pw.getPasswd() );
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
 
-  // Get the buffer data from the database
-  if ( db.lastErrno() != US_DB2::OK )
-    {
+   // Get the buffer data from the database
+   if ( db.lastErrno() != US_DB2::OK )
+   {
       QMessageBox::warning( this, tr( "Connection Problem" ),
 			    tr( "Could not connect to database \n" ) +  db.lastError() );
       return;
-    }
-  
+   }
 
-      
+
   /*************** GUI UPDATE *************************************************************/ 
   QMap<QString, QMap <QString, QString> >::iterator jj;
   for ( jj = Array_of_analysis.begin(); jj != Array_of_analysis.end(); ++jj )
@@ -750,9 +749,8 @@ void US_Analysis_auto::gui_update( )
       QString nextWaitStatusMsg = current_analysis_details[ "nextWaitStatusMsg" ] ;
             
       /********************* deal with JSON *****************************************/
-      
-      //qDebug() << "JSON: " << status_json;
-      
+
+
       QJsonDocument jsonDoc = QJsonDocument::fromJson( status_json.toUtf8() );
       if (!jsonDoc.isObject())
 	{
@@ -2600,6 +2598,23 @@ void US_Analysis_auto::start_next_2dsa_channel( void )
       // protocol_details_at_analysis_2dsa[ "k_max" ]   = QString::number( 1.5 );
       // protocol_details_at_analysis_2dsa[ "k_grpts" ] = QString::number( 28 );
 
+      // Custom grid is a per-channel Analysis Profile setting: when chosen, the
+      // grid to fit is the custom-grid MODEL (DB id / GUID), not s/k limits above.
+      if ( ap.have_custg )
+      {
+         protocol_details_at_analysis_2dsa["custom_grid_id"]   = QString::number( ap.cust_id );
+         protocol_details_at_analysis_2dsa["custom_grid_guid"] = ap.cust_grid;
+         protocol_details_at_analysis_2dsa["custom_grid_name"] = ap.cgrid_name;
+      }
+      else
+      {  // map is reused across channels: drop a previous channel's custom grid
+         protocol_details_at_analysis_2dsa.remove( "custom_grid_id" );
+         protocol_details_at_analysis_2dsa.remove( "custom_grid_guid" );
+         protocol_details_at_analysis_2dsa.remove( "custom_grid_name" );
+      }
+
+      qDebug() << "[US_Autoflow_analysis] 2DSA-IT: channel" << chan_norm << "have_custg" << ap.have_custg << "cust_id" << ap.cust_id
+               << "cgrid_name" << ap.cgrid_name;
       qDebug() << "[US_Autoflow_analysis] 2DSA-IT: channel" << chan_norm << "Analysis Profile grid: s[" << ap.s_min << ","
                << ap.s_max << "] x" << ap.s_grpts << "  f/f0[" << ap.k_min << "," << ap.k_max << "] x" << ap.k_grpts;
    }
@@ -2617,6 +2632,9 @@ void US_Analysis_auto::start_next_2dsa_channel( void )
       protocol_details_at_analysis_2dsa.remove( "k_min" );
       protocol_details_at_analysis_2dsa.remove( "k_max" );
       protocol_details_at_analysis_2dsa.remove( "k_grpts" );
+      protocol_details_at_analysis_2dsa.remove( "custom_grid_id" );
+      protocol_details_at_analysis_2dsa.remove( "custom_grid_guid" );
+      protocol_details_at_analysis_2dsa.remove( "custom_grid_name" );
 
       qDebug() << "[US_Autoflow_analysis] 2DSA-IT: channel" << chan_norm
                << "not found in 2DSA Analysis Profile -- falling back to "
@@ -3294,29 +3312,6 @@ void US_Analysis_auto::update_autoflow_record_atAnalysis( void )
 
 }
 
-// public function to get pointer to edit data
-US_DataIO::EditedData*      US_Analysis_auto::aa_editdata() { return edata;     }
-
-// public function to get pointer to list of excluded scans
-QList< int >*               US_Analysis_auto::aa_excllist() { return &excludedScans;}
-
-// public function to get pointer to sim data
-US_DataIO::RawData*         US_Analysis_auto::aa_simdata()  { return sdata;     }
-
-// public function to get pointer to load model
-US_Model*                   US_Analysis_auto::aa_model()    { return &model;    }
-
-// public function to get pointer to TI noise
-US_Noise*                   US_Analysis_auto::aa_ti_noise() { return &ti_noise; }
-
-// public function to get pointer to RI noise
-US_Noise*                   US_Analysis_auto::aa_ri_noise() { return &ri_noise; }
-
-// public function to get pointer to resid bitmap diag
-QPointer< US_ResidsBitmap > US_Analysis_auto::aa_resbmap()  { return rbmapd;    }
-
-QString  US_Analysis_auto::aa_tripleInfo()  { return tripleInfo;    }
-
 //Load rawData/editedData
 bool US_Analysis_auto::loadData( QMap < QString, QString > & triple_information )
 {
@@ -3411,29 +3406,27 @@ bool US_Analysis_auto::loadModel( QMap < QString, QString > & triple_information
 		  int time_to_now = date.secsTo(now);
 		  if ( time_to_now < latest_update_time )
 		    {
-		      latest_update_time = time_to_now;
-		      //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
+             latest_update_time = time_to_now;
 
-		      qDebug() << "Model 2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
-		  		      
-		      mID       = modelID;
-		    }
-		}
-	    }
-	  else
-	    {
-	      int time_to_now = date.secsTo(now);
-	      if ( time_to_now < latest_update_time )
-		{
-		  latest_update_time = time_to_now;
-		  //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
-		  
-		  qDebug() << "Model NON-2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
-		  
-		  mID       = modelID;
-		}
-	    }
-	}
+             qDebug() << "Model 2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
+
+             mID = modelID;
+          }
+      }
+       }
+       else
+       {
+          int time_to_now = date.secsTo( now );
+          if ( time_to_now < latest_update_time )
+          {
+             latest_update_time = time_to_now;
+
+             qDebug() << "Model NON-2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
+
+             mID = modelID;
+          }
+       }
+   }
     }
   
   int  rc      = 0;
@@ -4046,7 +4039,10 @@ void US_Analysis_auto::simulateModel( )
   // Initialize simulation parameters using edited data information
   US_Passwd pw;
   US_DB2* dbP = new US_DB2( pw.getPasswd() );
-  
+
+  // Use the experiment speed steps if they cover the data; otherwise derive steps from the scans
+  exp_steps = US_SimulationParameters::speedStepsCoverData( speed_steps, *edata );
+  dat_steps = !exp_steps;
   simparams.initFromData( dbP, *edata, dat_steps );
   simparams.simpoints         = adv_vals[ "simpoints" ].toInt();
   simparams.meshType          = US_SimulationParameters::ASTFEM;
@@ -4285,9 +4281,9 @@ void US_Analysis_auto::simulateModel( )
       tsimdats.clear();
       tmodels .clear();
       kcomps  .clear();
-      QList< ThreadWorker* >         tworkers;
-      QList< QThreadEx* >            wthreads;
-      
+      QList<US_ThreadWorker*> tworkers;
+      QList<US_ThreadEx*>     wthreads;
+
       // Build models for each thread
       for ( int ii = 0; ii < ncomp; ii++ )
 	{
@@ -4311,25 +4307,21 @@ void US_Analysis_auto::simulateModel( )
       // Build worker threads and begin running
       for ( int ii = 0; ii < nthread; ii++ )
 	{
-	  ThreadWorker* tworker = new ThreadWorker( tmodels[ ii ], simparams,
-						    tsimdats[ ii ], solution_rec.buffer, ii );
-	  QThreadEx*    wthread = new QThreadEx();
-	  
-	  tworker->moveToThread( wthread );
-	  
-	  tworkers << tworker;
-	  wthreads << wthread;
-	  
-	  connect( wthread, &QThread::started,
-		   tworker, &ThreadWorker::calc_simulation );
-	  
-	  connect( tworker, &ThreadWorker::work_progress,
-	   	   this,    &US_Analysis_auto::thread_progress );
-	  connect( tworker, &ThreadWorker::work_complete,
-		   this,    &US_Analysis_auto::thread_complete );
-	  
-	  wthread->start();
-	}
+      US_ThreadWorker* tworker = new US_ThreadWorker( tmodels[ii], simparams, tsimdats[ii], solution_rec.buffer, ii );
+      US_ThreadEx*     wthread = new US_ThreadEx();
+
+      tworker->moveToThread( wthread );
+
+      tworkers << tworker;
+      wthreads << wthread;
+
+      connect( wthread, &QThread::started, tworker, &US_ThreadWorker::calc_simulation );
+
+      connect( tworker, &US_ThreadWorker::work_progress, this, &US_Analysis_auto::thread_progress );
+      connect( tworker, &US_ThreadWorker::work_complete, this, &US_Analysis_auto::thread_complete );
+
+      wthread->start();
+   }
     }
  
 }
@@ -4366,21 +4358,6 @@ void US_Analysis_auto::show_results( )
    // plot3d();
 
 
-   // //ResBitMap
-   // if ( rbmapd != 0 )
-   //   {
-   //     // bmd_pos  = rbmapd->pos();
-   //     rbmapd->close();
-   //   }
-   
-   // rbmapd = new US_ResidsBitmap( resids );
-   // //rbmapd->move( bmd_pos );
-   // rbmapd->show();
-   // rbmapd->raise();
-   // //rbmapd->activateWindow();
-   // //////////////////////////////////////////
-
-   
    plotres();
    QApplication::restoreOverrideCursor();
 }
@@ -4502,8 +4479,14 @@ void US_Analysis_auto::plotres( )
    //    resplotd->close();
    // }
 
-   //resplotd = new US_ResidPlotFem( this, true );
-   resplotd = new US_ResidPlotFem( this, QString("ANALYSIS") );
+   US_ResidPlotInputs inputs;
+   inputs.edited      = *edata;
+   inputs.simulated   = *sdata;
+   inputs.excluded    = excludedScans;
+   inputs.ti_noise    = ti_noise;
+   inputs.ri_noise    = ri_noise;
+   inputs.triple_info = tripleInfo;
+   resplotd           = new US_ResidPlotFem( inputs, US_ResidPlotFem::Analysis, this );
 
    //resplotd->move( rpd_pos );
    //resplotd->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
@@ -4679,7 +4662,6 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
     // simulating... \nPlease wait...") ) );
     // msg_sim->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
 
-    // qDebug() << "Msg POSITION: -- " << sim_msg_pos_x << sim_msg_pos_y;
 
     // msg_sim->move( sim_msg_pos_x, sim_msg_pos_y );
 
@@ -4803,27 +4785,7 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
 	}
       //*DEBUG*
 
-      int kstep      = speed_steps.count();
-      int kscan      = speed_steps[ 0 ].scans;
-      for ( int jj = 0; jj < simparams.speed_step.count(); jj++ )
-	{
-	  if ( jj < kstep )
-	    {
-	      kscan          = speed_steps[ jj ].scans;
-	      speed_steps[ jj ] = simparams.speed_step[ jj ];
-	    }
-	  else
-            speed_steps << simparams.speed_step[ jj ];
-	  
-	  speed_steps[ jj ].scans = kscan;
-	  simparams.speed_step[ jj ].scans = kscan;
-	  qDebug() << "LD:    (s) tf tl wf wl scns"
-		   << speed_steps[jj].time_first
-		   << speed_steps[jj].time_last
-		   << speed_steps[jj].w2t_first
-		   << speed_steps[jj].w2t_last
-		   << speed_steps[jj].scans;
-	}
+   US_SimulationParameters::mergeTimeStateSteps( speed_steps, simparams.speed_step );
     }
   progress_msg->setValue( 2 );
   qApp->processEvents();
@@ -4853,6 +4815,23 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
   
   bufvl = US_SolutionVals::values( dbP, edata, solID, svbar, bdens,
 				   bvisc, bcomp, bmanu, errmsg );
+  // Read the solution; when that fails, use the default vbar, which later vbar calculations
+  // also use for the cleared solution, since it has no analytes
+  const auto read_solution = [&]( bool fromDb )
+  {
+     const int     solstat = fromDb ? solution_rec.readFromDB( solID.toInt(), dbP ) : solution_rec.readFromDisk( solID );
+     const QString solerr  = fromDb ? dbP->lastError() : tr( "the solution file could not be read" );
+     if ( solstat != IUS_DB2::OK )
+     {
+        QMessageBox::warning( this,
+                              tr( "Solution/Buffer Fetch" ),
+                              tr( "Solution %1 could not be read:\n%2\n"
+                                  "The default vbar, %3, is used." )
+                                 .arg( solID, US_Solution::readErrorText( solstat, solerr ) )
+                                 .arg( TYPICAL_VBAR ) );
+        solution_rec.commonVbar20 = TYPICAL_VBAR;
+     }
+  };
   progress_msg->setValue( 3 );
   qApp->processEvents();
   
@@ -4873,15 +4852,15 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
 	}
       
       else if ( solID.length() < 36  &&  dbP != NULL )
-	{
-	  solution_rec.readFromDB( solID.toInt(), dbP );
-	}
-      
+      {
+         read_solution( true );
+      }
+
       else
-	{
-	  solution_rec.readFromDisk( solID );
-	}
-      
+      {
+         read_solution( false );
+      }
+
       vbar          = solution_rec.commonVbar20;
       svbar         = QString::number( vbar );
       
@@ -4921,14 +4900,6 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
   //msg_sim->accept();
   progress_msg->finish();
   qApp->processEvents();
-  
-  /*
-  // Show plot
-  resplotd = new US_ResidPlotFem( this, true );
-  //resplotd->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
-  resplotd->setWindowModality(Qt::ApplicationModal);
-  resplotd->show();
-  */
 }
 
 
@@ -5211,8 +5182,6 @@ void US_Analysis_auto::delete_job( const QString& triple_stage )
     
   QStringList triple_stage_parts = tr_st.split("(");
 
-  // qDebug() << "In DELETE: triple_stage: " << triple_stage;
-  // qDebug() << "Parts: " << triple_stage_parts;
 
   QString stage_n = triple_stage_parts[0];
   QString triple_n  = triple_stage_parts[1];
@@ -5305,9 +5274,7 @@ void US_Analysis_auto::delete_job( const QString& triple_stage )
       /** DEBUG **/
       // QMap <QString, QString > current_analysis;
       // current_analysis = read_autoflowAnalysis_record( &db, requestID );
-      
-      // qDebug() << "GUID to DETETE! -- " << current_analysis[ "CurrentGfacID" ];
-      // qDebug() << "Status && statusMsg to DETETE! -- " << current_analysis[ "status" ] << current_analysis[ "status_msg" ];
+
       /* **********/
 
       update_autoflowAnalysis_uponDeletion( &db, requestID );
@@ -5976,8 +5943,7 @@ QMap< QString, QString> US_Analysis_auto::read_autoflowAnalysis_record( US_DB2* 
 	}
     }
 
-  //qDebug() << "In reading autoflwoAnalysis record: json: " << analysis_details[ "status_json" ] ;
-  
+
   return analysis_details;
 }
 
@@ -6024,8 +5990,7 @@ QMap< QString, QString> US_Analysis_auto::read_autoflowAnalysisHistory_record( U
 	}
     }
 
-  //qDebug() << "In reading autoflwoAnalysis record: json: " << analysis_details[ "status_json" ] ;
-  
+
   return analysis_details;
 }
 
@@ -6344,12 +6309,9 @@ DbgLv(1) << "DbSc: tmodels size" << tmodels.size() << "ted sizes"
       QString descript1  = db.value( 1 ).toString();
       QString contents   = db.value( 2 ).toString();
       int     jdx        = contents.indexOf( "description=" );
-//DbgLv(1) << "DbSc:    ii jdtx" << ii << jdtx << "modelID" << modelID
-//   << "  dsc1" << descript1 << " cont" << contents.left( 20 );
 
       if ( jdx < 1 )  continue;
 
-//DbgLv(1) << "DbSc:      jdx lend" << jdx << lend;
       QString descript   = contents.mid( jdx ).section( '"', 1, 1 );
       double  variance   = db.value( 3 ).toString().toDouble();
       double  meniscus   = db.value( 4 ).toString().toDouble();
@@ -6359,8 +6321,7 @@ DbgLv(1) << "DbSc: tmodels size" << tmodels.size() << "ted sizes"
       QDateTime lmtime   = db.value( 6 ).toDateTime();
       lmtime.setTimeZone( QTimeZone::utc() );
       QString ansysID    = descript.section( '.', -2, -2 );
-      QString iterID     = ansysID .section( '_', -1, -1 );
-//DbgLv(1) << "DbSc:   dscr1" << descript1 << "dcs" << descript;
+      QString iterID     = ansysID.section( '_', -1, -1 );
 
       if ( ansysID.contains( "2DSA-F" )  ||  iterID.contains( fmIter ) )
       {  // Model from meniscus fit, so save information
@@ -7251,13 +7212,11 @@ int US_Analysis_auto::read_autoflowAnalysisStages( const QString& requestID )
     }
 
 
-  //qDebug() << "BEFORE query ";
   QStringList qry;
   qry << "fitmen_autoflow_analysis_status"
       << requestID;
 
   status = db->statusQuery( qry );
-  //qDebug() << "AFTER query ";
 
   return status;
 }
@@ -7277,14 +7236,12 @@ void US_Analysis_auto::revert_autoflow_analysis_stages_record( const QString& re
 			     tr( "FitMen revert: Could not connect to database \n" ) + db->lastError() );
        return;
      }
-   
-   //qDebug() << "BEFORE query ";
+
    QStringList qry;
    qry << "fitmen_autoflow_analysis_status_revert"
        << requestID;
-   
+
    db->query( qry );
-   //qDebug() << "AFTER query ";
 }
 
 
@@ -7947,11 +7904,11 @@ DbgLv(1) << "RmvMod:  *LOAD ERR*" << modfname;
       QString anRunID    = descript.section( '.', -2, -2 );
       QString editLabl   = anRunID .section( '_',  0, -5 );
       QString iterID     = anRunID .section( '_', -1, -1 );
-      QString itNum      = iterID  .section( '-',  0,  0 );
-//DbgLv(1) << "RmvMod:    iterID" << iterID;
-if(ii<3 || (ii+4)>modfiles.size() || ii==(modfiles.size()/2))
- DbgLv(1) << "RmvMod:  scn1 ii runID editLabl tripID"
-  << ii << runID << editLabl << tripID;
+      QString itNum      = iterID.section( '-', 0, 0 );
+      if ( ii < 3 || ( ii + 4 ) > modfiles.size() || ii == ( modfiles.size() / 2 ) )
+      {
+         DbgLv( 1 ) << "RmvMod:  scn1 ii runID editLabl tripID" << ii << runID << editLabl << tripID;
+      }
 
       if ( runID != srchRun  ||  editLabl != srchEdit  ||  tripID != srchTrip )
          continue;    // Can't use if from a different runID or edit or triple
@@ -8099,16 +8056,13 @@ DbgLv(1) << "RmvMod:  descript" << descript << "msetBase" << msetBase << "ii" <<
          QString runID      = descript.section( '.',  0, -4 );
          QString tripID     = descript.section( '.', -3, -3 );
          QString anRunID    = descript.section( '.', -2, -2 );
-         QString editLabl   = anRunID .section( '_',  0, -5 );
-//DbgLv(1) << "RmvMod:  scn1 ii runID editLabl tripID"
-// << ii << runID << editLabl << tripID;
+         QString editLabl   = anRunID.section( '_', 0, -5 );
 
          if ( runID != srchRun  ||  editLabl != srchEdit  ||
               tripID != srchTrip )
          continue;    // Can't use if from a different runID or edit or triple
 
-         QString iterID     = anRunID .section( '_', -1, -1 );
-//DbgLv(1) << "RmvMod:    iterID" << iterID;
+         QString iterID = anRunID.section( '_', -1, -1 );
 
          if ( !iterID.contains( "-m" )  &&  !iterID.contains( "-b" ) )
          {
@@ -8298,7 +8252,6 @@ DbgLv(1) << "  ntmods ikModx" << ntmods << ikModx;
             rmodIDs   << mID;
             rmodFnams << fname;
             rmodDescs << mDesc;
-//DbgLv(1) << "RmvMod: jj" << jj << "mID" << mID << "mDesc" << mDesc;
 
             if ( modDesc.isEmpty() )
             {

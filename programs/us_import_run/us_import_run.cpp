@@ -32,6 +32,7 @@
 #include "us_settings.h"
 #include "us_simparms.h"
 #include "us_solution.h"
+#include "us_time_state.h"
 #include "us_util.h"
 
 namespace
@@ -384,6 +385,8 @@ struct PreparedRun
 {
       US_ConvertIO::DiskRun disk;  //!< Raw data, triples, experiment, speed steps
       QList<EditFile>       edits; //!< Found by collectEdits(); readDiskRun() does not read edits
+      int                   timestateRecords = 0;
+      QString               timestate; //!< Optional saved rotor history, preserved without reconstruction
 };
 
 //! Read \p run_dir and validate it, loading its project and solutions from the
@@ -402,6 +405,86 @@ bool prepareRun( const QString& run_dir, const QString& wanted_run, const QStrin
    }
 
    const QString run_id = run.disk.runID;
+
+   const QString tmst = QDir( run.disk.directory ).filePath( run_id + ".time_state.tmst" );
+   const QString defs = QDir( run.disk.directory ).filePath( run_id + ".time_state.xml" );
+   if ( QFile::exists( tmst ) || QFile::exists( defs ) )
+   {
+      QFile binary( tmst ), definitions( defs );
+      if ( !binary.open( QIODevice::ReadOnly ) || !definitions.open( QIODevice::ReadOnly ) || binary.size() == 0 ||
+           definitions.size() == 0 )
+      {
+         error = "Run " + run_id + " requires a readable, nonempty TimeState binary/definitions pair";
+         return false;
+      }
+      // The consumer assumes a valid, nonempty record layout. Validate the
+      // definitions and full byte count before invoking its binary reader.
+      const QByteArray bytes    = binary.readAll();
+      const QByteArray xmlBytes = definitions.readAll();
+      QXmlStreamReader xml( xmlBytes );
+      QStringList      keys;
+      qint64           recordSize    = 0;
+      qint64           declaredCount = 0;
+      bool             valid         = binary.error() == QFile::NoError && definitions.error() == QFile::NoError;
+      bool             rootSeen      = false;
+      while ( !xml.atEnd() )
+      {
+         xml.readNext();
+         if ( !xml.isStartElement() )
+         {
+            continue;
+         }
+         const auto attrs = xml.attributes();
+         if ( !rootSeen )
+         {
+            valid    = valid && xml.name() == QStringLiteral( "TimeState" );
+            rootSeen = true;
+         }
+         if ( xml.name() == QStringLiteral( "file" ) && attrs.hasAttribute( "time_count" ) )
+         {
+            bool ok       = false;
+            declaredCount = attrs.value( "time_count" ).toLongLong( &ok );
+            valid         = valid && ok && declaredCount >= 0;
+         }
+         if ( xml.name() == QStringLiteral( "value" ) )
+         {
+            const QString key    = attrs.value( "key" ).toString();
+            const QString format = attrs.value( "format" ).toString();
+            valid                = valid && !key.isEmpty() && !keys.contains( key ) &&
+                    QRegularExpression( "^(I[124]|F[48]|C[1-9][0-9]*)$" ).match( format ).hasMatch();
+            keys << key;
+            recordSize += format.mid( 1 ).toInt();
+         }
+      }
+      valid = valid && rootSeen && !xml.hasError() && recordSize > 0 && recordSize <= 256 && bytes.size() > 6 &&
+              bytes.left( 4 ) == "USTS";
+      if ( valid )
+      {
+         const qint64 count = ( bytes.size() - 6 ) / recordSize;
+         valid              = ( bytes.size() - 6 ) % recordSize == 0 && ( declaredCount == 0 || declaredCount == count );
+      }
+      if ( !valid )
+      {
+         error = "Run " + run_id + " has an invalid TimeState binary/definitions pair";
+         return false;
+      }
+      US_TimeState history;
+      if ( history.open_read_data( tmst ) != 0 )
+      {
+         error = "Run " + run_id + " has an unreadable TimeState binary/definitions pair";
+         return false;
+      }
+      for ( int record = 0; record < history.time_count(); record++ )
+      {
+         if ( history.read_record() != 0 )
+         {
+            error = "Run " + run_id + " cannot read TimeState record " + QString::number( record );
+            return false;
+         }
+      }
+      run.timestateRecords = history.time_count();
+      run.timestate        = tmst;
+   }
 
    if ( !wanted_run.isEmpty() && wanted_run != run_id )
    {
@@ -482,40 +565,6 @@ bool prepareRun( const QString& run_dir, const QString& wanted_run, const QStrin
 
    return collectEdits( run.disk, run.edits, error );
 }
-
-//! Roll back an open transaction unless the load reaches its commit.
-class TransactionGuard
-{
-   public:
-      explicit TransactionGuard( US_DB2& connection ) : db( connection )
-      {
-      }
-
-      ~TransactionGuard()
-      {
-         if ( !armed )
-         {
-            return;
-         }
-
-         QString error;
-
-         if ( !db.rollbackTransaction( error ) )
-         {
-            err() << "Rollback also failed: " << error << Qt::endl;
-         }
-      }
-
-      //! Called once the commit has succeeded.
-      void disarm()
-      {
-         armed = false;
-      }
-
-   private:
-      US_DB2& db;
-      bool    armed = true;
-};
 
 } // namespace
 
@@ -705,7 +754,9 @@ int main( int argc, char* argv[] )
    }
 
    out() << "run          : " << run.disk.runID << " : " << run.disk.runType << ", " << run.disk.triples.size() << " triples, "
-         << run.edits.size() << " edits" << Qt::endl;
+         << run.edits.size()
+         << " edits, TimeState: " << ( run.timestate.isEmpty() ? "absent" : QString::number( run.timestateRecords ) + " records" )
+         << Qt::endl;
 
    if ( dry_run )
    {
@@ -771,17 +822,17 @@ int main( int argc, char* argv[] )
 
    out() << "investigator : " << investigator << " (" << investigator_guid << ")" << Qt::endl;
 
-   QString transaction_error;
-   if ( !db.beginTransaction( transaction_error ) )
+   // Everything from here to the commit is one run's experiment, raw and edit
+   // rows.  The transaction is rolled back on any path out before the commit,
+   // so a failure part way through cannot leave the run half loaded for the
+   // seed dump to pick up.
+   US_DB2Transaction transaction( &db );
+   QString           transaction_error;
+   if ( !transaction.begin( transaction_error ) )
    {
       err() << "Could not begin database transaction: " << transaction_error << Qt::endl;
       return 3;
    }
-
-   // Everything from here to the commit is one run's experiment, raw and edit
-   // rows.  The guard rolls back on any path out, so a failure part way through
-   // cannot leave the run half loaded for the seed dump to pick up.
-   TransactionGuard transaction( db );
 
    // New chemistry records are owned by the active investigator.
    run.disk.experiment.invID = investigator;
@@ -815,8 +866,9 @@ int main( int argc, char* argv[] )
       return 3;
    }
 
-   // saveToDB() does not report a failed speed-step insert, so count the rows
-   // it left rather than commit a run without its speed profile.
+   // saveToDB() returns the status of a failed speed-step insert, which the
+   // check above reports.  Reading the rows back confirms the stored speed
+   // profile has every step before the raw data is written.
    QVector<SP_SPEEDPROFILE> stored_steps;
    const int                stored = US_SimulationParameters::speedstepsFromDB( &db, run.disk.experiment.expID, stored_steps );
 
@@ -842,15 +894,28 @@ int main( int argc, char* argv[] )
       return 3;
    }
 
-   if ( !db.commitTransaction( transaction_error ) )
+   if ( !run.timestate.isEmpty() )
+   {
+      // The desktop uploads this separately from experiment/raw/edit data.
+      // Preserve the supplied history in this transaction: reconstructing it
+      // from a split speed-step record loses the earlier rotor speeds.
+      const int timestate_id = US_TimeState::dbCreate( &db, run.disk.experiment.expID, run.timestate );
+      if ( timestate_id <= 0 || US_TimeState::dbUpload( &db, timestate_id, run.timestate ) != US_DB2::OK )
+      {
+         err() << "Could not save TimeState for " << run.disk.runID << ": " << db.lastError() << Qt::endl;
+         return 3;
+      }
+   }
+
+   if ( !transaction.commit( transaction_error ) )
    {
       err() << "Could not commit database transaction: " << transaction_error << Qt::endl;
       return 3;
    }
 
-   transaction.disarm();
-
    out() << "loaded       : " << run.disk.runID << ", experimentID " << run.disk.experiment.expID << ", " << run.disk.triples.size()
-         << " triples, " << run.edits.size() << " edits into " << database << Qt::endl;
+         << " triples, " << run.edits.size() << " edits into " << database
+         << ", TimeState: " << ( run.timestate.isEmpty() ? "absent" : QString::number( run.timestateRecords ) + " records" )
+         << Qt::endl;
    return 0;
 }

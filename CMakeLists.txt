@@ -88,10 +88,14 @@ endif()
 # =============================================================================
 # CMAKE CONFIGURATION
 # =============================================================================
-if(USE_QT6)
-    set(CMAKE_CXX_STANDARD 17)
-else()
-    set(CMAKE_CXX_STANDARD 14)
+# Both Qt variants require C++17. Preserve explicit choices of newer standards
+# and use the same default with or without a configure preset.
+set(CMAKE_CXX_STANDARD 17 CACHE STRING "C++ standard (17 or newer)")
+if(CMAKE_CXX_STANDARD LESS 17 OR CMAKE_CXX_STANDARD EQUAL 98)
+    message(FATAL_ERROR
+        "UltraScan3 requires C++17 or newer for both Qt5 and Qt6. "
+        "Configure with -DCMAKE_CXX_STANDARD=17 or a newer standard "
+        "(requested: ${CMAKE_CXX_STANDARD}).")
 endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -287,6 +291,20 @@ include(${CMAKE_SOURCE_DIR}/admin/cmake/platform-config.cmake)
 if(UNIX AND NOT APPLE)
     # Linux: prefer system Qt5
     list(APPEND CMAKE_PREFIX_PATH "/usr/lib/x86_64-linux-gnu/cmake")
+endif()
+
+# Find OpenGL before Qt. Qt's WrapOpenGL reuses the cached result, so this
+# search decides which OpenGL every target links. On macOS, prefer frameworks
+# to get Apple's OpenGL.framework (which includes GLU); with frameworks last,
+# a Mac with XQuartz resolves /usr/X11R6/lib/libGL and the package then
+# depends on XQuartz.
+if(APPLE)
+    set(_save_find_framework ${CMAKE_FIND_FRAMEWORK})
+    set(CMAKE_FIND_FRAMEWORK FIRST)
+endif()
+find_package(OpenGL REQUIRED)
+if(APPLE)
+    set(CMAKE_FIND_FRAMEWORK ${_save_find_framework})
 endif()
 
 # Find Qt
@@ -642,18 +660,6 @@ if(BUILD_TESTING)
     endif()
 endif()
 
-# Find OpenGL
-# On macOS, temporarily prefer frameworks so we get Apple's native
-# OpenGL.framework (which includes GLU)
-if(APPLE)
-    set(_save_find_framework ${CMAKE_FIND_FRAMEWORK})
-    set(CMAKE_FIND_FRAMEWORK FIRST)
-endif()
-find_package(OpenGL REQUIRED)
-if(APPLE)
-    set(CMAKE_FIND_FRAMEWORK ${_save_find_framework})
-endif()
-
 # Find OpenSSL
 find_package(OpenSSL REQUIRED)
 
@@ -975,6 +981,11 @@ elseif(BUILD_TESTING AND NOT US3_NO_DB)
     add_subdirectory(programs/us_sim_inputs_gen)
 endif()
 
+if(US3_BUILD_PROGRAMS AND NOT US3_NO_DB)
+    include(${CMAKE_SOURCE_DIR}/admin/cmake/packaging/AppPackage.cmake)
+    us3_configure_app_package()
+endif()
+
 if(BUILD_TESTING)
     add_compile_definitions(US3_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
     add_subdirectory(test)
@@ -1290,14 +1301,6 @@ if(APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
 
     # Create deploy_macos target — builds the folder tree in _stage/UltraScan3/
     if(MACDEPLOYQT_EXECUTABLE AND TARGET us)
-        # Core deps only — optional targets (us3_somo, us3_config, us_admin, us_saxs_cmds_t)
-        # are NOT listed here; they are staged opportunistically by MacDeploy.cmake
-        # if their output dirs exist, but we don't hard-depend on them.
-        set(_deploy_macos_deps us)
-        if(TARGET documentation)
-            list(APPEND _deploy_macos_deps documentation)
-        endif()
-
         add_custom_target(deploy_macos
             COMMAND ${CMAKE_COMMAND} -E remove_directory "${US3_STAGE_DIR}"
             COMMAND ${CMAKE_COMMAND}
@@ -1305,6 +1308,7 @@ if(APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
                 -DMACDEPLOYQT=${MACDEPLOYQT_EXECUTABLE}
                 -DASSISTANT_APP=${ASSISTANT_APP_PATH}
                 -DQCH_DIR=${CMAKE_BINARY_DIR}/bin
+                -DAPP_PROGRAM_MANIFEST=${US3_APP_MANIFEST}
                 -DBIN_DIR=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
                 -DLIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
                 -DETC_SOURCE_DIR=${CMAKE_SOURCE_DIR}/etc
@@ -1318,7 +1322,7 @@ if(APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
                 -DVCPKG_PLUGIN_DIR_STA=${_VCPKG_PLUGIN_DIR_STA}
                 -DVCPKG_QT6_PLUGIN_DIR=${_VCPKG_QT6_PLUGIN_DIR}
                 -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/macos/MacDeploy.cmake
-            DEPENDS ${_deploy_macos_deps}
+            DEPENDS us3_app_package_inputs
             COMMENT "Staging macOS folder-based deployment into ${US3_STAGE_DIR}"
             VERBATIM
         )
@@ -1491,16 +1495,19 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
     endif()
 
     # -------------------------------------------------------------------------
-    # Derive vcpkg plugin dir for WinDeploy safety-net searches
+    # Derive vcpkg runtime and plugin dirs for Windows deployment.
     # -------------------------------------------------------------------------
     set(_WIN_VCPKG_PLUGIN_DIR "")
+    set(_WIN_VCPKG_BIN_DIR "")
     if(DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET)
+        set(_WIN_VCPKG_BIN_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin")
         set(_WIN_VCPKG_PLUGIN_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/plugins")
         if(NOT EXISTS "${_WIN_VCPKG_PLUGIN_DIR}" AND DEFINED _WIN_STATIC_TRIPLET)
             set(_WIN_VCPKG_PLUGIN_DIR "${VCPKG_INSTALLED_DIR}/${_WIN_STATIC_TRIPLET}/plugins")
         endif()
     endif()
     message(STATUS "vcpkg plugin dir (Windows): ${_WIN_VCPKG_PLUGIN_DIR}")
+    message(STATUS "vcpkg runtime dir (Windows): ${_WIN_VCPKG_BIN_DIR}")
 
     # -------------------------------------------------------------------------
     # Copy MariaDB auth plugins into the dev-build plugins/ dir (Windows)
@@ -1553,14 +1560,6 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
     # so all DLLs land in the same tree that CPack will package.
     # -------------------------------------------------------------------------
     if(WINDEPLOYQT_EXECUTABLE AND TARGET us)
-        # Only depend on 'documentation' if Sphinx was found and the target
-        # actually exists. doc/manual/CMakeLists.txt does an early return()
-        # when sphinx-build is not installed, leaving no documentation target.
-        set(_deploy_windows_deps us)
-        if(TARGET documentation)
-            list(APPEND _deploy_windows_deps documentation)
-        endif()
-
         add_custom_target(deploy_windows
             COMMAND ${CMAKE_COMMAND} -E remove_directory "${US3_WIN_STAGE_DIR}"
             COMMAND ${CMAKE_COMMAND}
@@ -1568,6 +1567,7 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
                 -DWINDEPLOYQT=${WINDEPLOYQT_EXECUTABLE}
                 -DASSISTANT_EXE=${ASSISTANT_EXECUTABLE}
                 -DQCH_DIR=${CMAKE_BINARY_DIR}/bin
+                -DAPP_PROGRAM_MANIFEST=${US3_APP_MANIFEST}
                 -DBIN_DIR=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
                 -DLIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
                 -DETC_SOURCE_DIR=${CMAKE_SOURCE_DIR}/etc
@@ -1577,8 +1577,9 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
                 -DLICENSE_FILE=${CMAKE_SOURCE_DIR}/LICENSE.txt
                 -DVERSION_FILE=${CMAKE_SOURCE_DIR}/VERSION
                 -DVCPKG_PLUGIN_DIR=${_WIN_VCPKG_PLUGIN_DIR}
+                -DVCPKG_BIN_DIR=${_WIN_VCPKG_BIN_DIR}
                 -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/windows/WinDeploy.cmake
-            DEPENDS ${_deploy_windows_deps}
+            DEPENDS us3_app_package_inputs
             COMMENT "Staging Windows deployment into ${US3_WIN_STAGE_DIR}"
             VERBATIM
         )
@@ -1700,11 +1701,31 @@ if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
     message(STATUS "  Qt6: ${_LNX_VCPKG_TOOLS_QT6}")
     message(STATUS "  Qt5: ${_LNX_VCPKG_TOOLS_QT5}")
 
+    # The binary and plugin directories of the Qt this build links. A distro
+    # Qt keeps Assistant there; its /usr/bin/assistant is a qtchooser link.
+    set(_lnx_qt_bin_dir "")
+    set(_lnx_qt_plugin_dir "")
+    if(QT6_INSTALL_PREFIX AND QT6_INSTALL_BINS AND QT6_INSTALL_PLUGINS)
+        set(_lnx_qt_bin_dir "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_BINS}")
+        set(_lnx_qt_plugin_dir "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_PLUGINS}")
+    elseif(TARGET Qt5::qmake)
+        get_target_property(_lnx_qt5_qmake Qt5::qmake IMPORTED_LOCATION)
+        execute_process(COMMAND "${_lnx_qt5_qmake}" -query QT_INSTALL_BINS
+            OUTPUT_VARIABLE _lnx_qt_bin_dir
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_QUIET)
+        execute_process(COMMAND "${_lnx_qt5_qmake}" -query QT_INSTALL_PLUGINS
+            OUTPUT_VARIABLE _lnx_qt_plugin_dir
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_QUIET)
+    endif()
+
     find_program(_LNX_ASSISTANT_EXE assistant
         HINTS
             "${_LNX_VCPKG_TOOLS_QT6}"
             "${_LNX_VCPKG_TOOLS_QT5}"
             "${_LNX_VCPKG_TOOLS_QT5B}"
+            "${_lnx_qt_bin_dir}"
             "${Qt6_DIR}/../../../bin"
             "${Qt5_DIR}/../../../bin"
             "$ENV{QTDIR}/bin"
@@ -1741,6 +1762,13 @@ if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
     message(STATUS "vcpkg lib dir (Linux):        ${_LNX_VCPKG_LIB_DIR}")
     message(STATUS "vcpkg plugin dir (Linux):     ${_LNX_VCPKG_PLUGIN_DIR}")
     message(STATUS "vcpkg Qt6 plugin dir (Linux): ${_LNX_VCPKG_QT6_PLUGIN_DIR}")
+
+    # The plugins of the Qt this build links, staged when Qt is not from vcpkg.
+    set(_LNX_QT_PLUGIN_DIR "")
+    if(_lnx_qt_plugin_dir AND IS_DIRECTORY "${_lnx_qt_plugin_dir}")
+        set(_LNX_QT_PLUGIN_DIR "${_lnx_qt_plugin_dir}")
+    endif()
+    message(STATUS "Qt plugin dir (Linux):        ${_LNX_QT_PLUGIN_DIR}")
 
     # -------------------------------------------------------------------------
     # Copy assistant into the dev-build bin/ so us_helpdaemon can find it.
@@ -1829,16 +1857,14 @@ if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
     # -------------------------------------------------------------------------
     # deploy_linux target
     # -------------------------------------------------------------------------
-    if(TARGET us)
-        set(_deploy_linux_deps us)
-        if(TARGET documentation)
-            list(APPEND _deploy_linux_deps documentation)
-        endif()
+    include(${CMAKE_SOURCE_DIR}/admin/cmake/packaging/linux/LinuxPackageName.cmake)
 
+    if(TARGET us)
         add_custom_target(deploy_linux
             COMMAND ${CMAKE_COMMAND} -E remove_directory "${US3_LNX_STAGE_DIR}"
             COMMAND ${CMAKE_COMMAND}
                 -DSTAGE_DIR=${US3_LNX_STAGE_DIR}
+                -DAPP_PROGRAM_MANIFEST=${US3_APP_MANIFEST}
                 -DBIN_DIR=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
                 -DLIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
                 -DETC_SOURCE_DIR=${CMAKE_SOURCE_DIR}/etc
@@ -1852,9 +1878,11 @@ if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
                 -DVCPKG_LIB_DIR=${_LNX_VCPKG_LIB_DIR}
                 -DVCPKG_PLUGIN_DIR=${_LNX_VCPKG_PLUGIN_DIR}
                 -DVCPKG_QT6_PLUGIN_DIR=${_LNX_VCPKG_QT6_PLUGIN_DIR}
+                -DQT_PLUGIN_DIR=${_LNX_QT_PLUGIN_DIR}
                 -DUS3_VERSION_STRING=${US3_VERSION_STRING}
+                -DUS3_LINUX_ARCHIVE_NAME=${US3_LINUX_ARCHIVE_NAME}
                 -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/linux/LinuxDeploy.cmake
-            DEPENDS ${_deploy_linux_deps}
+            DEPENDS us3_app_package_inputs
             COMMENT "Staging Linux deployment into ${US3_LNX_STAGE_DIR}"
             VERBATIM
         )

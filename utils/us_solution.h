@@ -71,7 +71,8 @@ class US_UTIL_EXTERN US_Solution
       /*! \brief    Function to read an entire solution structure from the disk
 
           \param    guid The GUID of the solution to look for
-          \return   One of the IUS_DB2 error codes
+          \return   One of the IUS_DB2 error codes. On failure the solution is
+                    cleared, never partly loaded.
       */
       int readFromDisk( QString& );
 
@@ -79,15 +80,32 @@ class US_UTIL_EXTERN US_Solution
 
           \param    solutionID The database solutionID of the desired solution
           \param    db For database access, an open database connection
-          \return   One of the IUS_DB2 error codes
+          \return   One of the IUS_DB2 error codes: NO_SOLUTION, NO_BUFFER or
+                    NO_ANALYTE when a required row is missing or unreadable, or a
+                    failed query's status. On failure the solution is cleared, never
+                    partly loaded.
       */
       int readFromDB  ( int, IUS_DB2* = 0 );
+
+      /*! \brief    Describe why readFromDB failed, for a message to the user
+
+          \param    status  The status readFromDB returned
+          \param    dbError The connection's lastError(), used for any other status
+      */
+      static QString         readErrorText( int, const QString& );
 
       //! \brief    Quick method to zero out the solution attributes
       void clear             ( void );
 
-      //! \brief    Method to save the current solution to disk
-      void saveToDisk        ( void );
+      /*! \brief    Method to save the current solution to disk, with its buffer
+                    and analyte files
+
+          \return   True when the solution file, the buffer file (when the buffer
+                    has a GUID and no file yet) and every analyte file are written.
+                    False when the solution lacks a description or a valid buffer,
+                    or any of those writes fails; saveStatus then is unchanged.
+      */
+      bool                   saveToDisk( void );
 
       /*! \brief    Function to save the solution information to db
 
@@ -123,8 +141,12 @@ class US_UTIL_EXTERN US_Solution
 
       //! \brief Function to count occurrences of solution in protocols
       //! \param    dbP  Pointer to database connection or NULL if local test
-      //! \returns       Count of this solution in protocols
+      //! \returns       Count of this solution in protocols, or -1 if the DB
+      //!                protocols could not be read
       int countInProtocols   ( IUS_DB2* = 0 );
+
+      //! \brief Copy constructor; copies every member
+      US_Solution( const US_Solution& ) = default;
 
       //! \brief An overloaded assignment operator
       US_Solution&           operator=( const US_Solution& );
@@ -135,9 +157,10 @@ class US_UTIL_EXTERN US_Solution
    private:
 
       void readSolutionInfo  ( QXmlStreamReader& xml );
+      int     loadFromDisk( QString& );
       int readBufferDiskGUID ( US_Buffer& , QString& );
-      void saveBufferDisk    ( void ) const;
-      void saveAnalytesDisk  ( void );
+      bool    saveBufferDisk( void ) const;
+      bool    saveAnalytesDisk( void );
       QString get_filename   ( const QString&, bool& ) const;
       int analyte_type       (const QString& antype);
       QString analyte_typetext( int );

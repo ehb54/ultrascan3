@@ -407,9 +407,7 @@ int US_ModelLoader::load_model( US_Model& model, int index )
    int  rc      = 0;
    loadDB       = dkdb_cntrls->db();
 
-   model.components.clear();
-   model.associations.clear();
-
+   // A failed load leaves the model unchanged; callers check the status.
    if ( loadDB )
    {
       if ( dbP == NULL )
@@ -441,7 +439,12 @@ qDebug() << "LdM:  model load rc" << rc;
       rc   = model.load( filename );
 qDebug() << "LdM:   Dk filename" << filename;
    }
-qDebug() << "LdM:    description" << model_descriptions[index].description;
+   qDebug() << "LdM:    description" << model_descriptions[index].description;
+
+   if ( rc != IUS_DB2::OK )
+   {
+      return rc;
+   }
 
    if ( do_single )
    {  // If selecting single from MC composite, break it out now
@@ -455,8 +458,8 @@ qDebug() << "LdM:    description" << model_descriptions[index].description;
          const QString& mcont = xmls[ jj ];
          if ( mcont.contains( descMatch ) )
          {  // Found a matching description:  load the single and break
-            model.load_string( mcont );
-qDebug() << "LdM:     match at jj" << jj << "ncomp" << model.components.size();
+            rc = model.load_string( mcont );
+            qDebug() << "LdM:     match at jj" << jj << "rc" << rc << "ncomp" << model.components.size();
             break;
          }
       }
@@ -1373,6 +1376,72 @@ void US_ModelLoader::cancelled()
    close();
 }
 
+// Load the selected models into the output model(s) and description(s).
+// Any model that fails to load is reported and nothing is returned: the
+// single output model is left unchanged and the output lists are left empty.
+bool US_ModelLoader::load_selected( void )
+{
+   QStringList failed;
+
+   if ( !multi )
+   { // in single-select mode, load the model and set the description
+      qDebug() << "ACC: load... (single)";
+      const int rc = load_model( omodel, 0 );
+      qDebug() << "ACC: ...loaded (single) rc" << rc;
+
+      if ( rc != IUS_DB2::OK )
+      {
+         failed << tr( "%1  (status %2)" ).arg( model_descriptions[0].description ).arg( rc );
+      }
+      else
+      {
+         odescr = description( 0 );
+      }
+      qDebug() << "ACC: odescr" << odescr;
+   }
+
+   else
+   { // in multiple-select mode, load all models and descriptions
+      omodels.clear();
+      odescrs.clear();
+
+      QDateTime time1 = QDateTime::currentDateTime();
+      qDebug() << "ACC: load... (multi) mCnt" << modelsCount;
+      for ( int ii = 0; ii < modelsCount; ii++ )
+      {
+         US_Model  lmodel;
+         const int rc = load_model( lmodel, ii );
+
+         if ( rc != IUS_DB2::OK )
+         {
+            failed << tr( "%1  (status %2)" ).arg( model_descriptions[ii].description ).arg( rc );
+            continue;
+         }
+
+         omodels << lmodel;
+         odescrs << description( ii );
+      }
+      qDebug() << "ACC: ...loaded (multi)";
+      QDateTime time2 = QDateTime::currentDateTime();
+      qDebug() << "Timing: accept-load: mcount" << modelsCount << "time(ms)" << time1.msecsTo( time2 );
+   }
+
+   if ( failed.isEmpty() )
+   {
+      return true;
+   }
+
+   omodels.clear();
+   odescrs.clear();
+
+   QMessageBox::warning( this,
+                         tr( "Model Load Error" ),
+                         tr( "The following model(s) could not be loaded,"
+                             " so no models were returned:\n\n" ) +
+                            failed.join( "\n" ) );
+   return false;
+}
+
 // Accept button:  set up to return model information
 void US_ModelLoader::accepted()
 {
@@ -1403,34 +1472,11 @@ void US_ModelLoader::accepted()
       return;
    }
 
-qDebug() << "ACC: multi" << multi;
-   if ( ! multi )
-   {  // in single-select mode, load the model and set the description
-qDebug() << "ACC: load... (single)";
-      load_model( omodel, 0 );
-qDebug() << "ACC: ...loaded (single)";
-      odescr     = description( 0 );
-qDebug() << "ACC: odescr" << odescr;
-   }
-
-   else
-   {  // in multiple-select mode, load all models and descriptions
-      omodels.clear();
-      odescrs.clear();
-
-QDateTime time1=QDateTime::currentDateTime();
-qDebug() << "ACC: load... (multi) mCnt" << modelsCount;
-      for ( int ii = 0; ii < modelsCount; ii++ )
-      {
-         load_model( model, ii );
-
-         omodels << model;
-         odescrs << description( ii );
-      }
-qDebug() << "ACC: ...loaded (multi)";
-QDateTime time2=QDateTime::currentDateTime();
-qDebug() << "Timing: accept-load: mcount" << modelsCount
- << "time(ms)" << time1.msecsTo(time2);
+   qDebug() << "ACC: multi" << multi;
+   if ( !load_selected() )
+   { // Restore the full list so the user can change the selection
+      model_descriptions = allmods;
+      return;
    }
 
    // Return search string that reflects current state
@@ -1513,34 +1559,11 @@ void US_ModelLoader::accepted_auto( QStringList m_t_r_id )
       return;
    }
 
-qDebug() << "ACC: multi" << multi;
-   if ( ! multi )
-   {  // in single-select mode, load the model and set the description
-qDebug() << "ACC: load... (single)";
-      load_model( omodel, 0 );
-qDebug() << "ACC: ...loaded (single)";
-      odescr     = description( 0 );
-qDebug() << "ACC: odescr" << odescr;
-   }
-
-   else
-   {  // in multiple-select mode, load all models and descriptions
-      omodels.clear();
-      odescrs.clear();
-
-QDateTime time1=QDateTime::currentDateTime();
-qDebug() << "ACC: load... (multi) mCnt" << modelsCount;
-      for ( int ii = 0; ii < modelsCount; ii++ )
-      {
-         load_model( model, ii );
-
-         omodels << model;
-         odescrs << description( ii );
-      }
-qDebug() << "ACC: ...loaded (multi)";
-QDateTime time2=QDateTime::currentDateTime();
-qDebug() << "Timing: accept-load: mcount" << modelsCount
- << "time(ms)" << time1.msecsTo(time2);
+   qDebug() << "ACC: multi" << multi;
+   if ( !load_selected() )
+   { // Restore the full list; the caller receives no models
+      model_descriptions = allmods;
+      return;
    }
 
    // Return search string that reflects current state
@@ -1578,28 +1601,48 @@ void US_ModelLoader::accepted_multiple_auto( QStringList m_t_r_id )
    qDebug() << "In accepted_auto() 1: passed vals -- " << model_passed << triple_passed << runid_passed << modelid_passed;
 
    // check for precise name overlapp: must contain model, tripe, run:
+   // NOTE: the list may hold every model of the investigator (no description
+   //       filter), so reject non-matching items BEFORE any alt_description()/
+   //       modelIndex() work, and never index allmods with a failed lookup.
    for ( int i = 0; i < lw_models->count(); ++i )
    {
       QListWidgetItem* item       = lw_models->item( i );
       QString          model_text = item->text();
 
-      QString          triple_from_mtext = item->text().split( "." )[1];
+      // List-form text is "TYPE.TRIP.ETIME_ATIME_HPCID_ITER.RUN"
+      QString          type_from_mtext   = model_text.section( ".", 0, 0 );
+      QString          triple_from_mtext = model_text.section( ".", 1, 1 );
 
-      // get original description of the model
+      bool type_ok;
+      if ( model_passed == "2DSA-IT" )
+      {  // IT models are named 2DSA-IT, or 2DSA-CG-IT when a custom grid was used
+         type_ok = ( type_from_mtext == "2DSA-IT" || type_from_mtext == "2DSA-CG-IT" );
+      }
+      else
+      {  // any other stage keeps the previous behavior
+         type_ok = model_text.contains( model_passed );
+      }
+
+      if ( !( type_ok && triple_from_mtext.contains( triple_passed ) &&
+              model_text.contains( runid_passed ) ) )
+         continue;
+
+      // get original description of the model; skip if it cannot be found
       QString          mdesc   = alt_description( model_text, false );
       int              mdx     = modelIndex( mdesc, allmods );
+
+      if ( mdx < 0 )
+      {
+         qDebug() << "In accepted_auto(): no matching model record for" << model_text << mdesc;
+         continue;
+      }
+
       QString          modelID = allmods.at( mdx ).DB_id;
 
-      qDebug() << "mdesc, mdx, modelID, triple_from_mtext -- " << mdesc << mdx << modelID << triple_from_mtext;
-
-      if ( model_text.contains( model_passed ) && triple_from_mtext.contains( triple_passed ) &&
-           model_text.contains( runid_passed ) )
-      {
-         selmods << item;
-         qDebug() << "In accepted_auto(): model_passed, triple_passed, "
-                     "runid_passed, model_text, modelID -- "
-                  << model_passed << triple_passed << runid_passed << model_text << modelID;
-      }
+      selmods << item;
+      qDebug() << "In accepted_auto(): model_passed, triple_passed, "
+                  "runid_passed, model_text, modelID -- "
+               << model_passed << triple_passed << runid_passed << model_text << modelID;
    }
 
    modelsCount = selmods.size();
@@ -1616,7 +1659,8 @@ void US_ModelLoader::accepted_multiple_auto( QStringList m_t_r_id )
          int     mdx    = modelIndex( mdesc, allmods );
 
          // repopulate descriptions with only selected row(s)
-         model_descriptions.append( allmods.at( mdx ) );
+         if ( mdx >= 0 )
+            model_descriptions.append( allmods.at( mdx ) );
       }
    }
 
@@ -1627,32 +1671,10 @@ void US_ModelLoader::accepted_multiple_auto( QStringList m_t_r_id )
    }
 
    qDebug() << "ACC: multi" << multi;
-   if ( !multi )
-   { // in single-select mode, load the model and set the description
-      qDebug() << "ACC: load... (single)";
-      load_model( omodel, 0 );
-      qDebug() << "ACC: ...loaded (single)";
-      odescr = description( 0 );
-      qDebug() << "ACC: odescr" << odescr;
-   }
-
-   else
-   { // in multiple-select mode, load all models and descriptions
-      omodels.clear();
-      odescrs.clear();
-
-      QDateTime time1 = QDateTime::currentDateTime();
-      qDebug() << "ACC: load... (multi) mCnt" << modelsCount;
-      for ( int ii = 0; ii < modelsCount; ii++ )
-      {
-         load_model( model, ii );
-
-         omodels << model;
-         odescrs << description( ii );
-      }
-      qDebug() << "ACC: ...loaded (multi)";
-      QDateTime time2 = QDateTime::currentDateTime();
-      qDebug() << "Timing: accept-load: mcount" << modelsCount << "time(ms)" << time1.msecsTo( time2 );
+   if ( !load_selected() )
+   { // Restore the full list; the caller receives no models
+      model_descriptions = allmods;
+      return;
    }
 
    // Return search string that reflects current state
@@ -1744,6 +1766,18 @@ void US_ModelLoader::show_model_info( QPoint pos )
 
    bool    frDisk = ( model_descriptions[ 0 ].filename.length() > 0 );
 
+   // A model that fails to load is shown without values, never with the
+   //  values of the model loaded before it
+   int                    load_rc         = IUS_DB2::OK;
+   auto                   load_info_model = [this, &load_rc]( const int index )
+   {
+      model   = US_Model();
+      load_rc = load_model( model, index );
+      return load_rc == IUS_DB2::OK;
+   };
+   auto load_status = [this, &load_rc]()
+   { return load_rc == IUS_DB2::OK ? tr( "loaded" ) : tr( "could not be loaded (status %1)" ).arg( load_rc ); };
+
    if ( frDisk )
    {  // ID is filename
       lblid    = tr( "\n  Model File Name:       " );
@@ -1779,7 +1813,7 @@ void US_ModelLoader::show_model_info( QPoint pos )
 //qDebug() << "shmi:   mdx" << mdx << "mdesc" << mdesc;
       if ( mdx < 0 )  return;
 
-      load_model( model, mdx );                            // load model
+      load_info_model( mdx ); // load model
 
       mtype    = model.analysis;                           // model info
       mdesc    = mdesc.length() < 50 ? mdesc :
@@ -1818,6 +1852,7 @@ void US_ModelLoader::show_model_info( QPoint pos )
          + tr( "\n  List Row:              " ) + QString::number( row )
          + tr( "\n  Analysis Run ID:       " ) + anlid
          + "";
+      dtext += tr( "\n  Load Status:           " ) + load_status();
    }
 
    else
@@ -1832,7 +1867,7 @@ void US_ModelLoader::show_model_info( QPoint pos )
       mdesc    = alt_description( lmdesc, false );
       mdx      = modelIndex( mdesc, model_descriptions ); // 1st model index
 
-      load_model( model, mdx );                           // load model
+      const bool first_loaded = load_info_model( mdx ); // load model
 
       runid    = mdesc.section( ".", 0, -4 );             // model info
       mtype    = model.analysis;
@@ -1845,6 +1880,13 @@ void US_ModelLoader::show_model_info( QPoint pos )
       aegid    = model.editGUID;
       anlid    = model_descriptions[ mdx ].reqGUID;
 
+      if ( !first_loaded )
+      { // Nothing is known to be common
+         aruni.clear();
+         atype.clear();
+         aegid.clear();
+      }
+
       // make a pass to see if runID and type are common
 
       for ( int jj = 1; jj < modelsCount; jj++ )
@@ -1854,7 +1896,13 @@ void US_ModelLoader::show_model_info( QPoint pos )
          mdesc    = alt_description( lmdesc, false );
          mdx      = modelIndex( mdesc, model_descriptions ); // model index
 
-         load_model( model, mdx );                           // load model
+         if ( !load_info_model( mdx ) ) // load model
+         {                              // Nothing is known to be common
+            aruni.clear();
+            atype.clear();
+            aegid.clear();
+            break;
+         }
 
          runid    = mdesc.section( ".", 0, -4 );
          tdesc    = model.typeText();
@@ -1896,7 +1944,7 @@ void US_ModelLoader::show_model_info( QPoint pos )
          mdesc    = alt_description( lmdesc, false );
          mdx      = modelIndex( mdesc, model_descriptions );  // model index
 
-         load_model( model, mdx );                            // load model
+         load_info_model( mdx ); // load model
 
          mtype    = model.analysis;                           // model info
          mdesc    = mdesc.length() < 50 ? mdesc :
@@ -1936,6 +1984,7 @@ void US_ModelLoader::show_model_info( QPoint pos )
             + tr( "\n  List Row:              " ) + QString::number( row )
             + tr( "\n  Analysis Run ID:       " ) + anlid
             + "";
+         dtext += tr( "\n  Load Status:           " ) + load_status();
       }
    }
 

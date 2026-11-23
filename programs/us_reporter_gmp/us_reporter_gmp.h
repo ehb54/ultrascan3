@@ -7,18 +7,22 @@
 #include "../us_abde/us_norm_profile.h"
 #include "../us_analysis_profile/us_analysis_profile.h"
 #include "../us_ddist_combine/us_ddist_combine.h"
-#include "../us_fematch/us_fematch.h"
 #include "../us_integral/us_integral.h"
 #include "../us_pseudo3d_combine/us_pseudo3d_combine.h"
+#include "us_calc_replicate_group.h"
 #include "us_db2.h"
 #include "us_extern.h"
 #include "us_gmp_progress.h"
 #include "us_help.h"
 #include "us_passwd.h"
+#include "us_plot_control_fem.h"
 #include "us_protocol_util.h"
+#include "us_resplot_fem.h"
 #include "us_run_protocol.h"
 #include "us_select_item.h"
+#include "us_simparms.h"
 #include "us_solution.h"
+#include "us_thread_worker.h"
 #include "us_widgets.h"
 
 /**
@@ -108,15 +112,7 @@ class US_ReporterGMP : public US_Widgets
         QMap<QString, QStringList> channdesc_to_overlapping_wvls; //!< Channel descriptions to overlapping wavelengths map
 
         QPointer<US_ResidPlotFem> resplotd;    //!< Residual plot dialog
-        QPointer<US_PlotControlFem> eplotcd;   //!< Plot control dialog
-        US_DataIO::EditedData* rg_editdata();  //!< Edited data
-        US_DataIO::RawData* rg_simdata();      //!< Simulated data
-        QList<int>* rg_excllist();             //!< Exclusion list
-        US_Model* rg_model();                  //!< Model
-        US_Noise* rg_ti_noise();               //!< TI noise
-        US_Noise* rg_ri_noise();               //!< RI noise
-        QPointer<US_ResidsBitmap> rg_resbmap(); //!< Residuals bitmap
-        QString rg_tripleInfo();               //!< Triple information
+        QPointer<US_PlotControlFem> eplotcd;     //!< Plot control dialog
 
         struct GenReportMaskStructure
         {
@@ -446,14 +442,13 @@ class US_ReporterGMP : public US_Widgets
         QVector<US_DataIO::RawData> rawData; //!< Raw data vector
         QVector<US_DataIO::EditedData> editedData; //!< Edited data vector
 
-        QVector<SP_SPEEDPROFILE> speed_steps; //!< Speed steps
+        QVector<US_SimulationParameters::SpeedProfile> speed_steps; //!< Speed steps
 
         US_DataIO::EditedData* edata; //!< Edited data
         US_DataIO::RawData* rdata; //!< Raw data
         US_DataIO::RawData* sdata; //!< Simulation data
         US_DataIO::RawData wsdata; //!< Workspace data
 
-        QPointer<US_ResidsBitmap> rbmapd; //!< Residuals bitmap dialog
 
         /**
          * @class ModelDesc
@@ -577,6 +572,7 @@ class US_ReporterGMP : public US_Widgets
         bool cnstff; //!< Constant f/f0 flag
         bool exp_steps; //!< Experimental steps flag
         bool dat_steps; //!< Data steps flag
+        bool                      report_aborted = false; //!< User aborted a simulation; stop the report
         bool is_dmga_mc; //!< DMGA Monte Carlo flag
 
         QMap<QString, QString> adv_vals; //!< Advanced values map
@@ -590,7 +586,8 @@ class US_ReporterGMP : public US_Widgets
 
         QString rmsd_global; //!< Global RMSD
 
-        bool        simulate_triple( const QString, QString ); //!< Simulate triple; false if its data could not be loaded
+        bool                      simulate_triple( const QString, QString ); //!< Simulate triple; false on load failure or abort
+        void        report_generation_aborted();       //!< Tell the user the report was aborted and offer to generate it again
         bool loadData(QMap<QString, QString>&); //!< Load data
         bool loadModel(QMap<QString, QString>&); //!< Load model
         bool loadNoises(QMap<QString, QString>&); //!< Load noises
@@ -600,7 +597,7 @@ class US_ReporterGMP : public US_Widgets
         int id_list_db_auto(QString); //!< Get ID list from DB automatically
         int models_in_edit_auto(QString, QStringList&); //!< Get models in edit automatically
         int noises_in_model_auto(QString, QStringList&); //!< Get noises in model automatically
-        void simulateModel(QMap<QString, QString>&); //!< Simulate model
+        bool        simulateModel( QMap<QString, QString>& );    //!< Simulate model; false if the user aborts
         void adjustModel(void); //!< Adjust model
 
         QStringList scan_dbase_models(QStringList); //!< Scan database models
@@ -617,7 +614,10 @@ class US_ReporterGMP : public US_Widgets
   
         QString calc_replicates_averages(void); //!< Calculate replicates averages
         QString get_replicate_group_number(QString); //!< Get replicate group number
-        QMap<QString, double> get_replicate_group_results(US_ReportGMP::ReportItem, QString, QStringList); //!< Get replicate group results
+        US_Calc::Gmp::ReplicateGroupResult get_replicate_group_results( US_ReportGMP::ReportItem,
+                                                                        QString,
+                                                                        QStringList,
+                                                                        int ); //!< Get replicate group results
         void assemble_replicate_av_integration_html(void); //!< Assemble replicate average integration HTML
         bool triple_exist_inMWL( QString );
         

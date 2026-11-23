@@ -12,14 +12,17 @@
 #include "us_dataIO.h"
 #include "us_util.h"
 
+#include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QTemporaryDir>
 
 using ::testing::_;
+using ::testing::AnyNumber;
 using ::testing::Eq;
 using ::testing::Invoke;
-using ::testing::NiceMock;
 using ::testing::Return;
+using ::testing::StrictMock;
 
 namespace
 {
@@ -28,7 +31,7 @@ const QString      kRawName  = "demo.RA.1.A.280.auc";
 
 US_DataIO::RawData sampleRawData()
 {
-   US_DataIO::RawData raw;
+   US_DataIO::RawData raw{};
    memcpy( raw.type, "RA", 2 );
    memcpy( raw.rawGUID, "0123456789abcdef", 16 );
    raw.cell        = 1;
@@ -36,7 +39,7 @@ US_DataIO::RawData sampleRawData()
    raw.description = "edited-data DB read fixture";
    raw.xvalues << 5.8 << 5.9 << 6.0;
 
-   US_DataIO::Scan scan;
+   US_DataIO::Scan scan{};
    scan.temperature = 20.0;
    scan.rpm         = 50000.0;
    scan.seconds     = 300;
@@ -85,6 +88,9 @@ class EditedDataReadTest : public ::testing::Test
 
          ON_CALL( db, isConnected() ).WillByDefault( Return( true ) );
          ON_CALL( db, lastError() ).WillByDefault( Return( QString() ) );
+         // Connection checks and diagnostic reads are allowed; any other call fails the test.
+         EXPECT_CALL( db, isConnected() ).Times( AnyNumber() );
+         EXPECT_CALL( db, lastError() ).Times( AnyNumber() );
       }
 
       US_ConvertIO::EditedDataReadRequest request() const
@@ -106,7 +112,7 @@ class EditedDataReadTest : public ::testing::Test
 
       QTemporaryDir                  source;
       QTemporaryDir                  destination;
-      NiceMock<US_DB2_Mock>          db;
+      StrictMock<US_DB2_Mock>        db;
       US_DataIO::RawData             raw;
       QVector<US_DataIO::EditedData> edited;
       QVector<US_DataIO::RawData>    loadedRaw;
@@ -237,4 +243,37 @@ TEST_F( EditedDataReadTest, InvalidNamesAreRejectedBeforeAnyDownload )
          << name.toStdString();
       EXPECT_FALSE( error.isEmpty() ) << name.toStdString();
    }
+}
+
+TEST_F( EditedDataReadTest, DisconnectedDatabaseStopsBeforeAnyDownloadAndClearsOutput )
+{
+   edited << US_DataIO::EditedData();
+   loadedRaw << US_DataIO::RawData();
+   error = "stale error";
+   EXPECT_CALL( db, isConnected() ).WillOnce( Return( false ) );
+   EXPECT_CALL( db, readBlobFromDB( _, _, _ ) ).Times( 0 );
+
+   EXPECT_EQ( US_ConvertIO::readEditedDataFromDB( &db, request(), edited, loadedRaw, error ), (int) IUS_DB2::NOT_CONNECTED );
+   EXPECT_TRUE( edited.isEmpty() );
+   EXPECT_TRUE( loadedRaw.isEmpty() );
+   EXPECT_EQ( error, QString( IUS_DB2::notConnectedMessage ).arg( "edited data download" ) );
+   EXPECT_TRUE( QDir( destination.path() ).entryList( QDir::Files ).isEmpty() );
+}
+
+TEST_F( EditedDataReadTest, MissingCachedEditStopsBeforeRawDownloadAndClearsOutput )
+{
+   edited << US_DataIO::EditedData();
+   loadedRaw << US_DataIO::RawData();
+   error                                          = "stale error";
+   US_ConvertIO::EditedDataReadRequest cachedEdit = request();
+   cachedEdit.downloadEdit                        = false;
+   EXPECT_CALL( db, isConnected() ).Times( 0 );
+   EXPECT_CALL( db, readBlobFromDB( _, _, _ ) ).Times( 0 );
+
+   EXPECT_EQ( US_ConvertIO::readEditedDataFromDB( &db, cachedEdit, edited, loadedRaw, error ),
+              (int) US_ConvertIO::EDITED_DATA_FILE_MISSING );
+   EXPECT_TRUE( edited.isEmpty() );
+   EXPECT_TRUE( loadedRaw.isEmpty() );
+   EXPECT_EQ( error, QString( "Cached edit file does not exist: %1" ).arg( destination.filePath( kEditName ) ) );
+   EXPECT_FALSE( QFileInfo::exists( destination.filePath( kRawName ) ) );
 }

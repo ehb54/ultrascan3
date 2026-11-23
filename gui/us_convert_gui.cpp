@@ -1640,9 +1640,11 @@ void US_ConvertGui::import_ssf_data_auto( QMap < QString, QString > & details_at
      return;
   }
 
-  saveUS3DB();          
-  writeTimeStateDisk(); // do we need timestate?
-  writeTimeStateDB();   // do we need timestate?
+  if ( saveUS3DB() )
+  {
+     writeTimeStateDisk(); // do we need timestate?
+     writeTimeStateDB();   // do we need timestate?
+  }
 
   // saveUS3DB() reports failures only via message boxes and early returns,
   // so confirm the outcome by asking the DB whether the run is there now.
@@ -2179,10 +2181,17 @@ void US_ConvertGui::process_optics()
 // User pressed the import data button
 void US_ConvertGui::import()
 {
-   impType     = getImports();
-DbgLv(1) << "CGui:IMP: impType" << impType;
+   const int selectedType = getImports();
 
- description_changed.clear();
+   if ( selectedType < 0 )
+   { // The directory picker was cancelled: leave the current state untouched
+      return;
+   }
+
+   impType = selectedType;
+   DbgLv( 1 ) << "CGui:IMP: impType" << impType;
+
+   description_changed.clear();
 
    if ( impType == 1 )
    {
@@ -3028,7 +3037,20 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
 
       // Information is there, but we need to see if the runID exists in the
       // DB. If we didn't load it from there, then we shouldn't be able to sync
+      const bool connected = ( db.lastErrno() == US_DB2::OK );
       int recStatus = ExpData.checkRunID( &db );
+
+      // A failed lookup on a working connection leaves it unknown
+      //  whether the runID is stored, so saving waits for a retry
+      if ( connected && recStatus != US_DB2::OK && recStatus != US_DB2::NOROWS )
+      {
+         count++;
+         lw_todoinfo->addItem( QString::number( count ) +
+                               tr( ": Retry; the database could not be"
+                                   " checked for this runID: " ) +
+                               db.lastError() );
+         completed = false;
+      }
 
       // if a record is found but saveStatus==BOTH,
       //  then we are editing that record
@@ -3523,10 +3545,12 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    
    //Lab
    QVector< US_Rotor::Lab > labList_auto;
-   
-   if ( db.lastErrno() == US_DB2::OK )
-     US_Rotor::readLabsDB( labList_auto, &db );
-   
+
+   if ( db.lastErrno() == US_DB2::OK && US_Rotor::readLabsDB( labList_auto, &db ) != US_Rotor::ROTOR_OK )
+   {
+      QMessageBox::warning( this, tr( "Database Problem" ), tr( "Could not read lab information\n" ) + db.lastError() );
+   }
+
    int currentLab_auto = 0;
    for ( int ii = 0; ii < labList_auto.size(); ii++ )
      {
@@ -3571,7 +3595,11 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    qDebug() << "RotorID/CalID  READ!!! ";
    
    // Instrument
-   QList< US_Rotor::Instrument > instruments = labList_auto[ currentLab_auto ].instruments;
+   QList<US_Rotor::Instrument> instruments;
+   if ( currentLab_auto < labList_auto.size() )
+   {
+      instruments = labList_auto[currentLab_auto].instruments;
+   }
    US_Rotor::Instrument currentInstrument_auto; 
    foreach ( US_Rotor::Instrument instrument, instruments )
      {
@@ -3634,7 +3662,24 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    
    //Solutions / Triple / Centerpiece Descriptions
    int solutionID;  // ALEXEY change to protocol's solution IDs
-   US_Solution solution_auto;
+
+   // A solution that records each failed DB read, with its reason, for the warning at the end
+   struct ProtocolSolution : public US_Solution
+   {
+         QStringList* failed;
+         int          readFromDB( int id, IUS_DB2* db )
+         {
+            const int status = US_Solution::readFromDB( id, db );
+            if ( status != IUS_DB2::OK )
+            {
+               *failed << QString( "%1: %2" ).arg( id ).arg( US_Solution::readErrorText( status, db->lastError() ) );
+            }
+            return status;
+         }
+   };
+   QStringList      failedSolutions; // Solutions that could not be read; their channels have none
+   ProtocolSolution solution_auto;
+   solution_auto.failed = &failedSolutions;
 
    int nchans     = out_channels.count();
    int ntrips     = out_triples.count();
@@ -4003,7 +4048,17 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 
    //le_status->setText( tr( "AUC data import IS COMPLETE." ) );
    le_status->setText( tr( "Data Acquision COMPLETE." ) );
-   
+
+   if ( !failedSolutions.isEmpty() )
+   {
+      failedSolutions.removeDuplicates();
+      QMessageBox::warning( this,
+                            tr( "Solutions Not Loaded" ),
+                            tr( "These protocol solutions could not be read from the database, so their "
+                                "channels have no solution:\n" ) +
+                               failedSolutions.join( "\n" ) );
+   }
+
    enableSaveBtn_auto();
 }
 
@@ -4705,6 +4760,16 @@ DbgLv(1) << "CGui: gExpInf: IN";
 
       // Check if the run ID already exists in the DB
       int recStatus = ExpData.checkRunID( &db );
+
+      if ( recStatus != US_DB2::OK && recStatus != US_DB2::NOROWS )
+      {
+         QMessageBox::warning( this,
+                               tr( "Database Problem" ),
+                               tr( "Could not check whether the current runID is in"
+                                   " the database:\n" ) +
+                                  db.lastError() );
+         return;
+      }
 
       // if saveStatus == BOTH, then we are editing the record from the database
       if ( ( recStatus == US_DB2::OK ) && ( saveStatus != BOTH ) )
@@ -7859,17 +7924,32 @@ void US_ConvertGui::saveUS3( void )
    int kotrips  = nitrips * nspeeds;
    bool is_buoy = ExpData.expType.contains( "buoyancy", Qt::CaseInsensitive );
    bool is_cali = ExpData.expType.contains( "calibrat", Qt::CaseInsensitive );
-DbgLv(1) << "SV: ExpData.expType" << ExpData.expType << "is_buoy" << is_buoy
- << "is_cali" << is_cali;
-DbgLv(1) << "SV: nspeeds,itrips,otrips" << nspeeds << nitrips << notrips;
+   DbgLv( 1 ) << "SV: ExpData.expType" << ExpData.expType << "is_buoy" << is_buoy << "is_cali" << is_cali;
+   DbgLv( 1 ) << "SV: nspeeds,itrips,otrips" << nspeeds << nitrips << notrips;
+
+   // After a failed database save (already reported by saveUS3DB), leave the
+   //  autoflow import stage as it was found so the import can be redone, and
+   //  allow another save only when the loaded data is unchanged
+   auto stop_failed_save = [this]( const bool can_retry )
+   {
+      if ( us_convert_auto_mode )
+      {
+         revert_autoflow_stages_record( autoflowID_passed );
+      }
+      pb_saveUS3->setEnabled( can_retry );
+   };
 
    if ( nspeeds < 2  ||  notrips != kotrips  ||  is_buoy  ||  is_cali )
    {  // For single-speed data, save current triples
       //  and also save single run if Buoyancy or Calibration experiment type
       if ( disk_controls->db() )
       {
-	qDebug() << "SINGLE_SPEED DATA SAVE: ExpData.invID = " << ExpData.invID; 
-         saveUS3DB();          // Save AUCs to disk then DB
+         qDebug() << "SINGLE_SPEED DATA SAVE: ExpData.invID = " << ExpData.invID;
+         if ( !saveUS3DB() ) // Save AUCs to disk then DB
+         {                   // Nothing later may run or report success
+            stop_failed_save( true );
+            return;
+         }
          writeTimeStateDisk(); // Get TimeState in results
          writeTimeStateDB();   // Save TimeState to database
       }
@@ -7898,7 +7978,8 @@ DbgLv(1) << "SV: nspeeds,itrips,otrips" << nspeeds << nitrips << notrips;
 DbgLv(1) << "nspeeds=" << nspeeds << "nripro=" << nripro;
 //if(nripro>(-2)) return;
       uchar uuid[ 16 ];
-//      saveStatus        = NOT_SAVED;
+      QStringList storedRunIDs;
+      //      saveStatus        = NOT_SAVED;
 
       for ( int spx = 0; spx < nspeeds; spx++ )
       {
@@ -7946,8 +8027,27 @@ DbgLv(1) << "SV:    trx" << trx << "scans" << allData[ trx ].scanData.count();
          // Save the triples of the current speed-run
          if ( disk_controls->db() )
          {
-	   qDebug() << "MULTI_SPEED DATA SAVE: ExpData.invID = " << ExpData.invID; 
-            saveUS3DB();          // Save AUCs to disk then DB
+            qDebug() << "MULTI_SPEED DATA SAVE: ExpData.invID = " << ExpData.invID;
+            if ( !saveUS3DB() ) // Save AUCs to disk then DB
+            {                   // Stop before later speeds and success
+               QStringList unstoredRunIDs;
+               for ( int ux = spx; ux < nspeeds; ux++ )
+               {
+                  unstoredRunIDs << runIDbase + QString::asprintf( "%05d", speeds[ux] );
+               }
+
+               QMessageBox::warning( this,
+                                     tr( "Multi-Speed Save Incomplete" ),
+                                     tr( "The speed runs were not all saved.\n\n"
+                                         "Stored in the database:\n   %1\n\n"
+                                         "Not stored:\n   %2\n\n"
+                                         "The data shown is now split by speed; reload the run to save it again." )
+                                        .arg( storedRunIDs.isEmpty() ? tr( "(none)" ) : storedRunIDs.join( "\n   " ),
+                                              unstoredRunIDs.join( "\n   " ) ) );
+               stop_failed_save( false );
+               return;
+            }
+            storedRunIDs << runID;
             writeTimeStateDisk(); // Get TimeState in results
             writeTimeStateDB();   // Save TimeState to database
 DbgLv(1) << "Writing to database";
@@ -8785,7 +8885,7 @@ DbgLv(1) << "Unable to remove file" << rmvfiles[ ii ];
 }
 
 // Save to Database
-void US_ConvertGui::saveUS3DB( void )
+bool US_ConvertGui::saveUS3DB( void )
 {
  
    // Verify connectivity
@@ -8799,7 +8899,7 @@ void US_ConvertGui::saveUS3DB( void )
              tr( "Error" ),
              tr( "Database connectivity error" ) );
 
-      return;
+      return false;
    }
 DbgLv(1) << "DBSv:  (1)trip0tripFilename" << out_tripinfo[0].tripleFilename;
 DbgLv(1) << "DBSv:     tripleGUID       "
@@ -8810,13 +8910,17 @@ DbgLv(1) << "DBSv:     tripleGUID       "
    {
      if ( !us_convert_auto_mode )
        {
-	 int status = QMessageBox::information( this,
-						tr( "Warning" ),
-						tr( "This will overwrite the raw data currently in the " ) +
-						tr( "database, and all existing edit profiles, models "  ) +
-						tr( "and noise data will be deleted too. Proceed? "      ),
-						QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel );
-	 if ( status != QMessageBox::Ok ) return;
+          int status = QMessageBox::information( this,
+                                                 tr( "Warning" ),
+                                                 tr( "This will overwrite the raw data currently in the " ) +
+                                                    tr( "database, and all existing edit profiles, models " ) +
+                                                    tr( "and noise data will be deleted too. Proceed? " ),
+                                                 QMessageBox::Ok | QMessageBox::Cancel,
+                                                 QMessageBox::Cancel );
+          if ( status != QMessageBox::Ok )
+          {
+             return false;
+          }
        }
    }
 
@@ -8824,13 +8928,17 @@ DbgLv(1) << "DBSv:     tripleGUID       "
    {
      if ( !us_convert_auto_mode )
        {
-	 int status = QMessageBox::information( this,
-						tr( "Warning" ),
-						tr( "Once this data is written to the DB you will not "  ) +
-						tr( "be able to make changes to it without erasing the " ) +
-						tr( "edit profiles, models and noise files too. Proceed? " ),
-						QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel );
-	 if ( status != QMessageBox::Ok ) return;
+          int status = QMessageBox::information( this,
+                                                 tr( "Warning" ),
+                                                 tr( "Once this data is written to the DB you will not " ) +
+                                                    tr( "be able to make changes to it without erasing the " ) +
+                                                    tr( "edit profiles, models and noise files too. Proceed? " ),
+                                                 QMessageBox::Ok | QMessageBox::Cancel,
+                                                 QMessageBox::Cancel );
+          if ( status != QMessageBox::Ok )
+          {
+             return false;
+          }
        }
      else
        {
@@ -8872,7 +8980,7 @@ DbgLv(1) << "DBSv:     dset tripleID    " << out_tripinfo[0].tripleID;
             tr( "Error" ),
             tr( "This investigator or instrument operator was not found\n"
                 "in the database.\n" ) );
-      return;
+      return false;
    }
 
    if ( status == US_DB2::BADGUID )
@@ -8894,7 +9002,7 @@ DbgLv(1) << "DBSv:     dset tripleID    " << out_tripinfo[0].tripleID;
                 " and re-select hardware.\n" );
       }
       QMessageBox::information( this, tr( "Error" ), errmsg );
-      return;
+      return false;
    }
 
    if ( status == US_DB2::NO_ROTOR )
@@ -8904,7 +9012,7 @@ DbgLv(1) << "DBSv:     dset tripleID    " << out_tripinfo[0].tripleID;
             tr( "Don't recognize the rotor configuration.\n"
                 "Please click on Edit Run Information"
                 " and re-select hardware.\n") );
-      return;
+      return false;
    }
 
    if ( status != US_DB2::OK && status != US_DB2::NO_RAWDATA )
@@ -8913,7 +9021,7 @@ DbgLv(1) << "DBSv:     dset tripleID    " << out_tripinfo[0].tripleID;
       QMessageBox::information( this,
             tr( "Error" ),
             db.lastError() + " (" + QString::number( db.lastErrno() ) + ")\n" );
-      return;
+      return false;
    }
 
    // Save updated files and prepare to transfer to DB
@@ -8932,7 +9040,7 @@ DbgLv(1) << "DBSv:  (2)dset tripleID    " << out_tripinfo[0].tripleID;
    if ( status != US_Convert::OK )
      {
        qDebug() << "Status : " << status;                  //HERE it prematurely quits!!! Cannot write timestamp to DISK
-       return;
+       return false;
      }
 DbgLv(1) << "DBSv:  local files saved";
 
@@ -8947,7 +9055,7 @@ DbgLv(1) << "DBSv:  local files saved";
       QMessageBox::information( this,
             tr( "Error" ),
             tr( "Cannot read from " ) + dir ); // aucDir.absolutePath() );
-      return;
+      return false;
    }
 
    QStringList nameFilters = QStringList( "*.auc" );
@@ -8964,36 +9072,36 @@ DbgLv(1) << "DBSv:  files count" << files.size();
             tr( "No Files Found" ),
             tr( "There were no files of the form *.auc\n"
                 "found in the specified directory." ) );
-      return;
+      return false;
    }
 
    if ( ExpData.checkRunID( &db ) == US_DB2::OK && ( saveStatus != BOTH ) )
    {
      if ( us_convert_auto_mode ) //When in autoflow, return to Manage Optima Runs
        {
-	 QMessageBox::information( this,
-				   tr( "The Program State Updated / Data already saved:" ),
-				   tr( "The program advanced or is advancing to the next stage!\n\n"
-				       "This happened because you or different user "
-				       "has already saved the data into DB using different program "
-				       "session and the program proceeded to the next stage. \n\n"
-				       "The program will return to the autoflow runs dialog where "
-				       "you can re-attach to the actual current stage of the run. " 
-				       "Please allow some time for the status to be updated.") );
-	 
-	 dataSavedOtherwise = true;
-	 resetAll_auto();
-	 emit saving_complete_back_to_initAutoflow();
-	 return;
+          QMessageBox::information( this,
+                                    tr( "The Program State Updated / Data already saved:" ),
+                                    tr( "The program advanced or is advancing to the next stage!\n\n"
+                                        "This happened because you or different user "
+                                        "has already saved the data into DB using different program "
+                                        "session and the program proceeded to the next stage. \n\n"
+                                        "The program will return to the autoflow runs dialog where "
+                                        "you can re-attach to the actual current stage of the run. "
+                                        "Please allow some time for the status to be updated." ) );
+
+          dataSavedOtherwise = true;
+          resetAll_auto();
+          emit saving_complete_back_to_initAutoflow();
+          return false;
        }
      else
        {
-	 // Then the user is trying to overwrite a runID that is already in the DB
-	 QMessageBox::warning( this,
-			       tr( "Duplicate runID" ),
-			       tr( "This runID already exists in the database. To edit that "
-				   "run information, load it from there to begin with.\n" ) );
-	 return;
+          // Then the user is trying to overwrite a runID that is already in the DB
+          QMessageBox::warning( this,
+                                tr( "Duplicate runID" ),
+                                tr( "This runID already exists in the database. To edit that "
+                                    "run information, load it from there to begin with.\n" ) );
+          return false;
        }
    }
 
@@ -9023,7 +9131,7 @@ DbgLv(1) << "DBSv:  files count" << files.size();
             tr( "Project missing" ),
             tr( "The project associated with this experiment could not be "
                 "updated or added to the database.\n" ) );
-      return;
+      return false;
    }
 
    else if ( status == US_DB2::DUPFIELD )
@@ -9031,16 +9139,19 @@ DbgLv(1) << "DBSv:  files count" << files.size();
       QMessageBox::warning( this,
             tr( "Duplicate runID" ),
             tr( "The runID already exists in the database.\n" ) );
-      return;
+      return false;
    }
 
    else if ( status == US_DB2::DBERROR )
    {
-      // This is what happens in the case of RI data, and the xml is bad
+      // The experiment, its details or a speed step could not be written. Do not
+      // write raw data for an experiment that was not saved.
       QMessageBox::warning( this,
-         tr( "Bad RI XML" ),
-         tr( "There was a problem with the xml data"
-             " read from the database.\n" ) );
+                            tr( "Problem saving experiment information" ),
+                            tr( "The experiment could not be saved to the database.\n"
+                                "For RI data, the RI profile XML may be invalid.\n" ) +
+                               db.lastError() );
+      return false;
    }
 
    else if ( status != US_DB2::OK )
@@ -9049,7 +9160,7 @@ DbgLv(1) << "DBSv:  files count" << files.size();
          tr( "Problem saving experiment information" ),
          tr( "MySQL Error : " ) + db.lastError() + " ("
          + QString::number( status ) + ")" );
-      return;
+      return false;
    }
 
    // If the data came from the database in the first place,
@@ -9072,7 +9183,7 @@ DbgLv(1) << "DBSv:  files count" << files.size();
             tr( "Problem saving experiment" ),
             tr( "Unspecified database error: " ) + writeStatus );
       le_status->setText( tr( "*ERROR* Problem saving experiment." ) );
-      return;
+      return false;
    }
 
    if ( repeat_disk )
@@ -9089,9 +9200,11 @@ DbgLv(1) << "DBSv:  REPEAT disk save for raw IDs";
 
    // Insure that we have a TimeState record in the DB for this run
    le_status->setText( tr( "Writing Time State to DB..." ) );
-   writeTimeStateDB();
+   const int tmst_status = writeTimeStateDB();
 
-   le_status->setText( tr( "DB data save complete. Saving reports..." ) );
+   le_status->setText( tmst_status == US_DB2::OK
+                          ? tr( "DB data save complete. Saving reports..." )
+                          : tr( "DB data saved without its Time State (status %1). Saving reports..." ).arg( tmst_status ) );
    qApp->processEvents();
    saveStatus = BOTH;
    enableRunIDControl( false );
@@ -9104,6 +9217,7 @@ DbgLv(1) << "DBSv:  REPEAT disk save for raw IDs";
 
    le_status->setText( tr( "DB data and reports save IS COMPLETE." ) );
    qApp->processEvents();
+   return true;
 }
 
 void US_ConvertGui::saveReportsToDB( void )
@@ -10983,6 +11097,22 @@ DbgLv(1) << "wTSdb:  examine status" << status << "cksum-db" << cksum;
                                                      tmst_fname );
 DbgLv(1) << "wTSdb:   upload status" << status;
       }
+   }
+   else
+   { // No record. -2 means a local file is missing: with neither the .tmst nor its .xml
+      // definitions there is nothing to save, but one without the other is incomplete.
+      const QString defs_fname = QString( tmst_fname ).section( ".", 0, -2 ) + ".xml";
+      const bool    nothing    = ( timestateID == -2 ) && !QFile::exists( tmst_fname ) && !QFile::exists( defs_fname );
+      if ( !nothing )
+      {
+         status = timestateID;
+      }
+   }
+
+   if ( status != US_DB2::OK )
+   {
+      qWarning() << "writeTimeStateDB: time state not saved to the DB, status" << status;
+      le_status->setText( tr( "Time State was not saved to the DB (status %1)." ).arg( status ) );
    }
 DbgLv(1) << "wTSdb:  Timestate from DB is used";
    return status;

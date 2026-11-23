@@ -1,11 +1,46 @@
 //! \file us_analyte.cpp
 #include "us_analyte.h"
 #include "us_constants.h"
-#include "us_settings.h"
-#include "us_math2.h"
 #include "us_datafiles.h"
-#include "us_util.h"
 #include "us_eprofile.h"
+#include "us_math2.h"
+#include "us_settings.h"
+#include "us_util.h"
+#include <limits>
+
+namespace
+{
+// QXmlStreamReader treats a device read error like end-of-input, which can
+// otherwise look successful immediately after a complete XML document.
+class AnalyteXmlInput : public QIODevice
+{
+   public:
+      explicit AnalyteXmlInput( QIODevice& source ) : source_( source )
+      {
+         open( QIODevice::ReadOnly | QIODevice::Unbuffered );
+      }
+      bool isSequential() const override
+      {
+         return true;
+      }
+      bool failed = false;
+
+   protected:
+      qint64 readData( char* data, qint64 size ) override
+      {
+         const qint64 result = source_.read( data, size );
+         failed              = failed || result < 0;
+         return result;
+      }
+      qint64 writeData( const char*, qint64 ) override
+      {
+         return -1;
+      }
+
+   private:
+      QIODevice& source_;
+};
+}
 
 #define DEBUG_QUERY qDebug() << "Q" << q << "Err" << db->lastErrno() << db->lastError(); //!< Debug print showing DB query string and error returns
 
@@ -74,12 +109,34 @@ int US_Analyte::load(
       const QString& guid,
       IUS_DB2*        db )
 {
-   if ( db_access ) return load_db  ( guid, db );
-   else             return load_disk( guid );
+   if ( !db_access )
+   {
+      return load_disk( guid );
+   }
+
+   // Publish a database load only after all required lookups succeed. Keep the
+   // old data on failure, but expose the new diagnostic to the caller.
+   US_Analyte loaded( *this );
+   loaded.message.clear();
+   const int status = loaded.load_db( guid, db );
+   if ( status == IUS_DB2::OK )
+   {
+      *this = loaded;
+   }
+   else
+   {
+      message = loaded.message;
+   }
+   return status;
 }
 
 int US_Analyte::load_db( const QString& load_guid, IUS_DB2* db )
 {
+   if ( db == nullptr )
+   {
+      message = QObject::tr( "Database is not connected" );
+      return IUS_DB2::NOT_CONNECTED;
+   }
    int error = IUS_DB2::OK;
 
    // Get analyteID
@@ -96,7 +153,13 @@ DEBUG_QUERY;
       return error;
    }
 
-   db->next();
+   if ( !db->next() )
+   {
+      message = QObject::tr( "Could not get analyteID" );
+      error   = db->lastErrno();
+      return error == IUS_DB2::OK ? IUS_DB2::NOROWS : error;
+   }
+
    analyteID = db->value( 0 ).toString();
 
    // Get analyte info;
@@ -113,9 +176,15 @@ DEBUG_QUERY;
       return error;
    }
 
-   db->next();
+   if ( !db->next() )
+   {
+      message = QObject::tr( "Could not get analyte info" );
+      error   = db->lastErrno();
+      return error == IUS_DB2::OK ? IUS_DB2::NOROWS : error;
+   }
 
-   analyteGUID = load_guid;;
+
+   analyteGUID    = load_guid;
    QString a_type = db->value( 1 ).toString();
    if ( a_type == "Protein" )    type = PROTEIN;
    else if ( a_type == "DNA" )   type = DNA;
@@ -131,24 +200,43 @@ DEBUG_QUERY;
    grad_form   = ( type == CARBOHYDRATE ) ?
                  US_Util::bool_flag( db->value( 7 ).toString() ) : false;
 
-   q.clear();
-   q << "get_nucleotide_info" << analyteID;
-   db->query( q );
-DEBUG_QUERY;
-   db->next();
-   
-   doubleStranded = US_Util::bool_flag( db->value( 0 ).toString() );
-   complement     = US_Util::bool_flag( db->value( 1 ).toString() );
-   _3prime        = US_Util::bool_flag( db->value( 2 ).toString() );
-   _5prime        = US_Util::bool_flag( db->value( 3 ).toString() );
-   sodium         = db->value( 4 ).toString().toDouble();
-   potassium      = db->value( 5 ).toString().toDouble();
-   lithium        = db->value( 6 ).toString().toDouble();
-   magnesium      = db->value( 7 ).toString().toDouble();
-   calcium        = db->value( 8 ).toString().toDouble();
+   // Nucleotide rows are required only for nucleic-acid analytes.
+   if ( type == DNA || type == RNA )
+   {
+      q.clear();
+      q << "get_nucleotide_info" << analyteID;
+      db->query( q );
+      DEBUG_QUERY;
+      error = db->lastErrno();
+      if ( error != IUS_DB2::OK )
+      {
+         message = QObject::tr( "Could not get nucleotide info" );
+         return error;
+      }
+      if ( !db->next() )
+      {
+         message = QObject::tr( "Could not get nucleotide info" );
+         error   = db->lastErrno();
+         return error == IUS_DB2::OK ? IUS_DB2::NOROWS : error;
+      }
 
-   if ( type == DNA  ||  type == RNA )
-      nucleotide();
+      doubleStranded = US_Util::bool_flag( db->value( 0 ).toString() );
+      complement     = US_Util::bool_flag( db->value( 1 ).toString() );
+      _3prime        = US_Util::bool_flag( db->value( 2 ).toString() );
+      _5prime        = US_Util::bool_flag( db->value( 3 ).toString() );
+      sodium         = db->value( 4 ).toString().toDouble();
+      potassium      = db->value( 5 ).toString().toDouble();
+      lithium        = db->value( 6 ).toString().toDouble();
+      magnesium      = db->value( 7 ).toString().toDouble();
+      calcium        = db->value( 8 ).toString().toDouble();
+
+      // A stored analyte can supply mass without a sequence.
+      // Do not replace that mass with the mass of terminal groups alone.
+      if ( !sequence.trimmed().isEmpty() )
+      {
+         nucleotide();
+      }
+   }
 
    q.clear();
    /*
@@ -184,11 +272,12 @@ DEBUG_QUERY;
       fluorescence[ lambda ] = coeff;
    }
    */
+   // An analyte without a stored profile has no extinction values.
    QString compType("Analyte");
    QString valType("molarExtinction");
+   extinction.clear();
    US_ExtProfile::fetch_eprofile( db, analyteID.toInt(), compType, valType, extinction );
-   
-   
+
    return IUS_DB2::OK;
 }
 
@@ -229,22 +318,29 @@ int US_Analyte::load_disk( const QString& guid )
             {
                QXmlStreamAttributes a = xml.attributes();
 
-               if ( a.value( "analyteGUID" ).toString() == guid ) found = true; 
-               break;
+               if ( a.value( "analyteGUID" ).toString() == guid )
+               {
+                  found = true;
+                  break;
+               }
+               xml.skipCurrentElement();
             }
          }
       }
 
       file.close();
 
-      if ( found ) return read_analyte( filename );
+      if ( found )
+      {
+         return read_analyte( filename, guid );
+      }
    }
 
    message =  QObject::tr ( "Could not find analyte guid" );
    return error;
 }
 
-int US_Analyte::read_analyte( const QString& filename )
+int US_Analyte::read_analyte( const QString& filename, const QString& guid )
 {
    QFile file( filename );
 
@@ -256,21 +352,69 @@ int US_Analyte::read_analyte( const QString& filename )
       return IUS_DB2::DBERROR;
    }
 
+   return read_xml( file, guid );
+}
+
+int US_Analyte::read_xml( QIODevice& device, const QString& guid )
+{
+   if ( !device.isOpen() || !device.isReadable() )
+   {
+      message = QObject::tr( "Could not open analyte file for reading" );
+      return IUS_DB2::DBERROR;
+   }
+
+   // Publish only a complete selected analyte; retain legacy missing-field
+   // behavior by starting with a copy rather than a default-constructed object.
+   US_Analyte candidate( *this );
+   candidate.message.clear();
+   const int result = candidate.parse_xml( device, guid );
+   if ( result == IUS_DB2::OK )
+   {
+      *this = candidate;
+   }
+   else
+   {
+      message = candidate.message;
+   }
+   return result;
+}
+
+int US_Analyte::parse_xml( QIODevice& device, const QString& guid )
+{
+   bool                 selected = false;
+   bool                 finished = false;
    double               freq;
    double               value;
    QString              type_string;
-   QXmlStreamReader     xml( &file );
+   AnalyteXmlInput      input( device );
+   QXmlStreamReader     xml( &input );
    QXmlStreamAttributes a;
 
    while ( ! xml.atEnd() )
    {
       xml.readNext();
 
+      if ( xml.isEndElement() && xml.name() == "analyte" && selected )
+      {
+         finished = true;
+      }
+
       if ( xml.isStartElement() )
       {
          if ( xml.name() == "analyte" )
          {
+            if ( selected || ( !guid.isEmpty() && xml.attributes().value( "analyteGUID" ).toString() != guid ) )
+            {
+               xml.skipCurrentElement();
+               continue;
+            }
+            selected = true;
             a = xml.attributes();
+
+            // The file's spectra replace the ones the analyte held.
+            extinction.clear();
+            refraction.clear();
+            fluorescence.clear();
 
             type_string = a.value( "type" ).toString();
 
@@ -300,6 +444,10 @@ int US_Analyte::read_analyte( const QString& filename )
                           a.value( "gradient_forming" ).toString() );
          }
 
+         else if ( !selected || finished )
+         {
+            continue;
+         }
          else if ( xml.name() == "sequence" )
          {
             sequence = xml.readElementText();
@@ -335,7 +483,12 @@ int US_Analyte::read_analyte( const QString& filename )
                magnesium      = a.value( "magnesium" ).toString().toDouble();
                calcium        = a.value( "calcium"   ).toString().toDouble();
 
-               nucleotide();
+               // Generated and legacy files can supply mass without a sequence.
+               // Do not replace that mass with the mass of terminal groups alone.
+               if ( !sequence.trimmed().isEmpty() )
+               {
+                  nucleotide();
+               }
             }
 
          }
@@ -365,6 +518,21 @@ int US_Analyte::read_analyte( const QString& filename )
       }
    }
 
+   if ( input.failed || xml.hasError() )
+   {
+      message = QObject::tr( "Could not read analyte XML: %1" ).arg( input.failed ? device.errorString() : xml.errorString() );
+      return IUS_DB2::DBERROR;
+   }
+   if ( !selected )
+   {
+      message = QObject::tr( "Could not find analyte guid" );
+      return IUS_DB2::NO_ANALYTE;
+   }
+   if ( !finished )
+   {
+      message = QObject::tr( "Could not read analyte XML: the analyte element is incomplete" );
+      return IUS_DB2::DBERROR;
+   }
    return IUS_DB2::OK;
 }
 
@@ -510,7 +678,25 @@ int US_Analyte::write_disk( const QString& filename )
       return IUS_DB2::DBERROR;
    }
 
-   QXmlStreamWriter xml( &file );
+   int result = write_xml( file );
+   if ( !file.flush() || file.error() != QFileDevice::NoError )
+   {
+      message = QObject::tr( "Could not finish writing analyte file: %1" ).arg( file.errorString() );
+      result  = IUS_DB2::DBERROR;
+   }
+   file.close();
+   return result;
+}
+
+int US_Analyte::write_xml( QIODevice& device )
+{
+   if ( !device.isOpen() || !device.isWritable() )
+   {
+      message = QObject::tr( "Cannot open file for writing" );
+      return IUS_DB2::DBERROR;
+   }
+
+   QXmlStreamWriter xml( &device );
    xml.setAutoFormatting( true );
 
    xml.writeStartDocument();
@@ -599,7 +785,7 @@ int US_Analyte::write_disk( const QString& filename )
       value = extinction[ keys[ i ] ];
 
       xml.writeStartElement( "extinction" );
-      xml.writeAttribute( "frequency",  QString::number( freq , 'f', 1 ) );
+      xml.writeAttribute( "frequency", QString::number( freq, 'g', std::numeric_limits<double>::max_digits10 ) );
       xml.writeAttribute( "value",      QString::number( value ) );
       xml.writeEndElement(); // extinction
    }
@@ -613,7 +799,7 @@ int US_Analyte::write_disk( const QString& filename )
       value = refraction[ keys[ i ] ];
 
       xml.writeStartElement( "refraction" );
-      xml.writeAttribute( "frequency",  QString::number( freq , 'f', 1 ) );
+      xml.writeAttribute( "frequency", QString::number( freq, 'g', std::numeric_limits<double>::max_digits10 ) );
       xml.writeAttribute( "value",      QString::number( value ) );
       xml.writeEndElement(); // refraction
    }
@@ -627,17 +813,19 @@ int US_Analyte::write_disk( const QString& filename )
       value = fluorescence[ keys[ i ] ];
 
       xml.writeStartElement( "fluorescence" );
-      xml.writeAttribute( "frequency",  QString::number( freq , 'f', 1 ) );
+      xml.writeAttribute( "frequency", QString::number( freq, 'g', std::numeric_limits<double>::max_digits10 ) );
       xml.writeAttribute( "value",      QString::number( value ) );
       xml.writeEndElement(); // fluorescence
    }
 
    xml.writeEndElement(); // analyte
    xml.writeEndDocument();
-   file.close();
-
-   file.close();
-
+   if ( xml.hasError() )
+   {
+      message = QObject::tr( "Could not write analyte XML: %1" ).arg( device.errorString() );
+      return IUS_DB2::DBERROR;
+   }
+   message.clear();
    return IUS_DB2::OK;
 }
 
@@ -738,7 +926,7 @@ int US_Analyte::write_db( IUS_DB2* db )
 {
 
    qDebug() << "Extinciton 1 : " << extinction.count();
-   
+
    QStringList q;
    bool        insert = true;
 
@@ -758,18 +946,53 @@ int US_Analyte::write_db( IUS_DB2* db )
    q2 << "get_analyteID" << analyteGUID;
 
    db->query( q2 );
-DEBUG_QUERY;
+   DEBUG_QUERY;
 
-   if ( db->lastErrno() == IUS_DB2::OK )
+   // Update a stored analyte; insert one the lookup did not find.
+   const int lookup = db->lastErrno();
+   if ( lookup != IUS_DB2::OK && lookup != IUS_DB2::NOROWS )
    {
-      db->next();
-      analyteID = db->value( 0 ).toString();
-      q[ 0 ] = "update_analyte";
-      q[ 1 ] = analyteID;
-      message = QObject::tr( "updated in" );
-      insert = false;
+      message = QObject::tr( "Could not look up the analyte in the DB" );
+      return lookup;
    }
-      
+
+   if ( lookup == IUS_DB2::OK && db->next() )
+   {
+      analyteID = db->value( 0 ).toString();
+      q[0]      = "update_analyte";
+      q[1]      = analyteID;
+      message   = QObject::tr( "updated in" );
+      insert    = false;
+   }
+
+   // A rollback undoes an insert's ID; a stored analyte keeps the ID found above.
+   const QString     previousID = analyteID;
+
+   // The analyte row, its nucleotide info and its extinction profile are
+   // written in one transaction. A caller's open transaction is joined; the
+   // caller then commits it, or rolls it back when this write fails.
+   US_DB2Transaction transaction( db );
+   QString           transactionError;
+   if ( !transaction.begin( transactionError ) )
+   {
+      message = QObject::tr( "Could not start a DB transaction: %1" ).arg( transactionError );
+      return IUS_DB2::DBERROR;
+   }
+
+   // Undo this write's DB changes and restore analyteID; the spectrum stays
+   // pending. message already says what failed.
+   const auto fail = [&]( int status )
+   {
+      analyteID = previousID;
+      QString rollbackError;
+      if ( !transaction.rollback( rollbackError ) )
+      {
+         message += QObject::tr( "\nThe rollback could not be confirmed: %1" ).arg( rollbackError );
+         qWarning() << "analyte rollback could not be confirmed:" << rollbackError;
+      }
+      return status;
+   };
+
    // Finish populating the query
    if      ( type == US_Analyte::PROTEIN ) q << "Protein";
    else if ( type == US_Analyte::DNA     ) q << "DNA";
@@ -820,13 +1043,19 @@ DEBUG_QUERY;
    if ( error != IUS_DB2::OK )
    {
       message = QObject::tr ( "Could not update the DB" );
-      return error;
+      return fail( error );
    }
 
    if ( insert ) analyteID = QString::number( db->lastInsertID() );
    
    if ( type == US_Analyte::DNA  || type == US_Analyte::RNA )
-      write_nucleotide( db );
+   {
+      const int nucleotide = write_nucleotide( db );
+      if ( nucleotide != IUS_DB2::OK )
+      {
+         return fail( nucleotide );
+      }
+   }
 
    //set_spectrum( db );
    
@@ -838,49 +1067,64 @@ DEBUG_QUERY;
 
    qDebug() << "new_or_changed_spectrum: " << new_or_changed_spectrum;
    qDebug() << "Extinciton 2 : " << extinction.count();
-   
 
-   if ( !extinction.isEmpty() && new_or_changed_spectrum )
+
+   const bool writeProfile = !extinction.isEmpty() && new_or_changed_spectrum;
+   if ( writeProfile )
    {
-      if ( !replace_spectrum )
-      {
-         qDebug() << "Creating Spectrum!!!";
-         US_ExtProfile::create_eprofile( db, analyteID.toInt(), compType, valType, extinction);
-      }
-      else
-      {
-         qDebug() << "Updating Spectrum!!!";
+      // Create the profile, or replace a stored one (whose old values are discarded).
+      QMap<double, double> stored;
+      int profileID = replace_spectrum ? US_ExtProfile::fetch_eprofile( db, analyteID.toInt(), compType, valType, stored ) : -1;
 
-         QMap<double, double> new_extinction = extinction;
-         int profileID = US_ExtProfile::fetch_eprofile(  db, analyteID.toInt(), compType, valType, extinction);
-	
-	 //qDebug() << "Old Extinction keys: " << extinction.keys().count() << ", ProfileID: " << profileID;
-         //US_ExtProfile::update_eprofile( db, profileID, analyteID.toInt(), compType, valType, new_extinction);
-         //qDebug() << "New Extinction keys: " << new_extinction.keys().count() << ", ProfileID: " << profileID;
-	 
-	 if (profileID == -1)
-	   {
-	     qDebug() << "Creating profile when profileID = -1!!!! "; 
-	     US_ExtProfile::create_eprofile( db, analyteID.toInt(), compType, valType, extinction);
-	   }
-	 else
-	   {
-	     qDebug() << "Old Extinction keys: " << extinction.keys().count() << ", ProfileID: " << profileID;
-	     US_ExtProfile::update_eprofile( db, profileID, analyteID.toInt(), compType, valType, new_extinction);
-	     qDebug() << "New Extinction keys: " << new_extinction.keys().count() << ", ProfileID: " << profileID;
-	   }
-         replace_spectrum = false;
+      // A failed create returns -1; update reports success directly.
+      const bool profileFailed =
+         profileID == -1 ? US_ExtProfile::create_eprofile( db, analyteID.toInt(), compType, valType, extinction ) < 1
+                         : !US_ExtProfile::update_eprofile( db, profileID, analyteID.toInt(), compType, valType, extinction );
+      if ( profileFailed )
+      {
+         message = QObject::tr( "The extinction profile could not be saved to the DB" );
+         return fail( IUS_DB2::DBERROR );
       }
-      new_or_changed_spectrum = false; 
    }
-   
 
-   // Write to disk too
+   // In a joined transaction the caller may still roll this write back, so the
+   // spectrum stays pending and no disk copy is written.
+   if ( !transaction.owns() )
+   {
+      return IUS_DB2::OK;
+   }
+
+   if ( !transaction.commit( transactionError ) )
+   {
+      message = QObject::tr( "Could not commit the analyte to the DB: %1" ).arg( transactionError );
+      return fail( IUS_DB2::DBERROR );
+   }
+
+   if ( writeProfile )
+   {
+      replace_spectrum        = false;
+      new_or_changed_spectrum = false;
+   }
+
+
+   // The disk copy is written only after the commit. If it fails, the DB keeps
+   // the analyte; the error and its message are returned.
    QString path;
-   analyte_path( path );
+   if ( !analyte_path( path ) )
+   {
+      message = QObject::tr( "The analyte was saved to the DB, but the analyte directory could not be created" );
+      return IUS_DB2::DBERROR;
+   }
    QString filename = get_filename( path, analyteGUID );
-   write_disk( filename );
+   const QString saved_message = message;
+   const int     disk          = write_disk( filename );
+   if ( disk != IUS_DB2::OK )
+   {
+      message = QObject::tr( "The analyte was saved to the DB, but its local copy could not be written: %1" ).arg( message );
+      return disk;
+   }
 
+   message = saved_message;
    return IUS_DB2::OK;
 }
 
@@ -890,7 +1134,7 @@ QString US_Analyte::get_filename( const QString& path, const QString& guid )
       US_DataFiles::get_filename( path, guid, "A", "analyte", "analyteGUID" );
 }
 
-void US_Analyte::write_nucleotide( IUS_DB2* db )
+int US_Analyte::write_nucleotide( IUS_DB2* db )
 {
    QStringList q;
    q << "set_nucleotide_info" << analyteID;
@@ -906,8 +1150,12 @@ void US_Analyte::write_nucleotide( IUS_DB2* db )
 
    db->statusQuery( q );
 
-   if ( db->lastErrno() != IUS_DB2::OK )
-      message = QObject::tr ( "Could not update nucleotide info" );
+   const int error = db->lastErrno();
+   if ( error != IUS_DB2::OK )
+   {
+      message = QObject::tr( "Could not update nucleotide info" );
+   }
+   return error;
 }
 
 void US_Analyte::dump( void )

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE US_Model>
+<ModelData version="1.0">
+    <model description="fixB.1A260.ee1_a2611090000_2DSA-IT_000001_i01.model" modelGUID="102c4935-6149-4057-81da-7b2bc1dd7deb" editGUID="00000000-0000-4000-8000-000000000011" wavelength="260" variance="1.59795e-05" meniscus="5.9" coSedSolute="-1" opticsType="0" analysisType="1" globalType="0" requestGUID="00000000-0000-4000-8000-000000000001" dataDescrip="us_mpi_analysis regression data fixB">
+        <analyte name="SC0001" mw="46064.9" s="4.08571e-13" D="7.68552e-07" f="5.26624e-08" f_f0="1.18182" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.0167298"/>
+        <analyte name="SC0002" mw="57094.2" s="4.08571e-13" D="6.20085e-07" f="6.52713e-08" f_f0="1.36364" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.0866525"/>
+        <analyte name="SC0003" mw="186306" s="4.08571e-13" D="1.90028e-07" f="2.12989e-07" f_f0="3" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.010863"/>
+        <analyte name="SC0004" mw="50481.4" s="4.34286e-13" D="7.45451e-07" f="5.42943e-08" f_f0="1.18182" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.493121"/>
+        <analyte name="SC0005" mw="62568.2" s="4.34286e-13" D="6.01447e-07" f="6.7294e-08" f_f0="1.36364" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.196778"/>
+        <analyte name="SC0006" mw="260917" s="5.11429e-13" D="1.69847e-07" f="2.38295e-07" f_f0="3" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.000782528"/>
+        <analyte name="SC0007" mw="105256" s="6.14286e-13" D="5.05708e-07" f="8.00338e-08" f_f0="1.36364" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.00606242"/>
+        <analyte name="SC0008" mw="126994" s="6.14286e-13" D="4.19144e-07" f="9.65629e-08" f_f0="1.54545" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.0896251"/>
+        <analyte name="SC0009" mw="90310.5" s="6.4e-13" D="6.14069e-07" f="6.59108e-08" f_f0="1.18182" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.0352375"/>
+        <analyte name="SC0010" mw="111934" s="6.4e-13" D="4.95445e-07" f="8.16918e-08" f_f0="1.36364" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.0142927"/>
+        <analyte name="SC0011" mw="529718" s="8.2e-13" D="1.34136e-07" f="3.01738e-07" f_f0="3" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.00241823"/>
+        <analyte name="SC0012" mw="264835" s="8.97143e-13" D="2.93536e-07" f="1.37884e-07" f_f0="1.72727" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.0325612"/>
+        <analyte name="SC0013" mw="233845" s="9.22857e-13" D="3.41965e-07" f="1.18357e-07" f_f0="1.54545" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.00880801"/>
+        <analyte name="SC0014" mw="276303" s="9.22857e-13" D="2.89417e-07" f="1.39846e-07" f_f0="1.72727" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.00496154"/>
+        <analyte name="SC0015" mw="137291" s="1e-12" D="6.31151e-07" f="6.41269e-08" f_f0="1" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.000287925"/>
+        <analyte name="SC0016" mw="649525" s="1e-12" D="1.33407e-07" f="3.03385e-07" f_f0="2.81818" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.000720959"/>
+        <analyte name="SC0017" mw="713385" s="1e-12" D="1.21465e-07" f="3.33213e-07" f_f0="3" vbar20="0.72" extinction="0" axial="10" sigma="0" delta="0" oligomer="1" shape="0" type="0" molar="0" signal="0.000167659"/>
+    </model>
+</ModelData>

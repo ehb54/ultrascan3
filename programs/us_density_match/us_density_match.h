@@ -135,6 +135,7 @@ class US_Density_Match : public US_Widgets
       void build_bf_distro( int  );
       void build_bf_dists ( void );
       void build_bf_vects ( void );
+      void    limit_smoothing( void );
       int  plot_x_select  ( void );
       QString anno_title  ( int );
       QString ptype_text  ( int );

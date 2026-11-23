@@ -215,3 +215,6 @@ add_custom_target(package_windows_nsis
     DEPENDS deploy_windows
     VERBATIM
 )
+
+include("${CMAKE_CURRENT_LIST_DIR}/../PackageOutput.cmake")
+us3_record_package_output(package_windows_nsis "${_FINAL_PKG}")

@@ -1,0 +1,36 @@
+name: Dependency Layers
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '**.c'
+      - '**.cc'
+      - '**.cpp'
+      - '**.cxx'
+      - '**.h'
+      - '**.hpp'
+      - '**/CMakeLists.txt'
+      - '**.pro'
+      - '**.pri'
+      - 'scripts/check-dependency-layers.py'
+      - 'test/dependency_layers/**'
+      - '.github/workflows/dependency-layers.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-layers:
+    name: No upward or circular dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check utils, gui and programs
+        run: python3 scripts/check-dependency-layers.py
+      - name: Check that each forbidden dependency is rejected
+        run: python3 test/dependency_layers/test_dependency_layers.py scripts/check-dependency-layers.py

@@ -5,6 +5,8 @@
 #include "us_extern.h"
 #include "ius_db2.h"
 
+#include "us_calc_types.h"
+
 #define SUBT_SL   1
 #define SUBT_IS   2
 #define SUBT_DS   4
@@ -109,7 +111,10 @@ class US_UTIL_EXTERN US_Model
       //!                    should be searched for the model
       //! \param guid      - The guid of the model to be loaded
       //! \param db        - For DB access, pointer to open database connection
-      //! \returns         - The \ref US_DB2 return code for the operation
+      //! \returns         - The \ref US_DB2 return code for the operation:
+      //!                    NOT_CONNECTED for a null DB, NOROWS when no model
+      //!                    matches, DBERROR for truncated or malformed XML. A
+      //!                    failed DB load leaves the model unchanged.
       int load( bool, const QString&, IUS_DB2* = 0 );
 
       //! \brief An overloaded function to read a model from a database
@@ -164,6 +169,13 @@ class US_UTIL_EXTERN US_Model
       //! \returns    - Success if values already existed or were successfully
       //!               filled in by calculations.
       static bool calc_coefficients( SimulationComponent& );
+
+      //! \brief A component as the calculations (US_Calc) take it
+      static US_Calc::Component calc_component( const SimulationComponent& );
+
+      //! \brief The components, description and Monte Carlo flag as the
+      //! calculations (US_Calc) take them
+      US_Calc::Model            calc_model( void ) const;
 
       //! \brief Model directory path existence test and creation
       //! \param path    - A reference to the directory path on the disk

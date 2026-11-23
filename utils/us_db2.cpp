@@ -40,10 +40,7 @@
 US_DB2::US_DB2()
 {
 #ifndef NO_DB
-   QString certPath = US_Settings::appBaseDir() + QString( "/etc/mysql/" );
-   keyFile    = certPath + QString( "server-key.pem" );
-   certFile   = certPath + QString( "server-cert.pem" );
-   caFile     = certPath + QString( "ca-cert.pem" );
+   caFile = US_Settings::appBaseDir() + QString( "/etc/mysql/ca-cert.pem" );
 
    connected  = false;
    result     = NULL;
@@ -56,10 +53,7 @@ US_DB2::US_DB2( const QString& ){}
 #else
 US_DB2::US_DB2( const QString& masterPW )
 {
-   QString certPath = US_Settings::appBaseDir() + QString( "/etc/mysql/" );
-   keyFile    = certPath + QString( "server-key.pem" );
-   certFile   = certPath + QString( "server-cert.pem" );
-   caFile     = certPath + QString( "ca-cert.pem" );
+   caFile = US_Settings::appBaseDir() + QString( "/etc/mysql/ca-cert.pem" );
 
    connected  = false;
    result     = NULL;
@@ -682,6 +676,16 @@ int US_DB2::statusQuery( const QString& sqlQuery )
    db_errno = DBERROR;
 
    this->rawQuery( sqlQuery );
+
+   // A statement the server refused itself -- a duplicate key, a wrong
+   // argument count -- has its reason in the MySQL error rawQuery() kept.
+   // last_error() holds only what a procedure recorded, possibly for an
+   // earlier call, so it is asked only when the statement ran.
+   if ( mysql_errno( db ) != 0 )
+   {
+      return db_errno;
+   }
+
    if ( result )
    {
       row       = mysql_fetch_row( result );
@@ -1053,6 +1057,30 @@ int US_DB2::writeBlobToDB( const QString& filename,
 }
 #endif
 
+int US_DB2::writeBlobFile( const QString& filename, const QByteArray& data, QString& error )
+{
+   QFile fout( filename );
+   if ( !fout.open( QIODevice::WriteOnly ) )
+   {
+      error = QString( "readBlob: could not write file " ) + filename;
+      return DBERROR;
+   }
+
+   const qint64  written = fout.write( data );
+   const bool    flushed = fout.flush();
+   const bool    failed  = written != data.size() || !flushed || fout.error() != QFileDevice::NoError;
+   const QString reason  = fout.errorString();
+   fout.close();
+
+   if ( failed )
+   {
+      error = QString( "readBlob: could not write all %1 bytes to %2: %3" ).arg( data.size() ).arg( filename, reason );
+      QFile::remove( filename );
+      return DBERROR;
+   }
+   return OK;
+}
+
 #ifdef NO_DB
 int US_DB2::readBlobFromDB( const QString& , const QString& , const int ) { return 0; }
 #else
@@ -1108,7 +1136,6 @@ int US_DB2::readBlobFromDB( const QString& filename,
       result = NULL;
 
       // Since we got data, let's write it out
-      QFile fout( filename );
       if ( checksum != calculated )
       {
          error = QString( "readBlob: data transmission error (MD5 checksum)" ) ;
@@ -1116,17 +1143,13 @@ int US_DB2::readBlobFromDB( const QString& filename,
          db_errno = BAD_CHECKSUM;
       }
 
-      else if ( ! fout.open( QIODevice::WriteOnly ) )
-      {
-         error = QString( "readBlob: could not write file " ) + filename;
-
-         db_errno = DBERROR;
-      }
-
       else
       {
-         fout.write( aucData );
-         fout.close();
+         const int written = writeBlobFile( filename, aucData, error );
+         if ( written != OK )
+         {
+            db_errno = written;
+         }
       }
 if(!error.isEmpty()) qDebug() << error;
    }
@@ -1271,19 +1294,12 @@ bool US_DB2::configure_ssl( QString& err )
    int success = -1;
    error = "";
    err = error;
-   // Set connection to use ssl encryption
-   success = mysql_options( db, MYSQL_OPT_SSL_KEY, keyFile.toLatin1().constData() );
-   if ( success != 0 ) {
-      error = QString( "Error setting SSL key file: " ) + keyFile;
-      err = error;
-      return false;
-   }
-   success = mysql_options( db, MYSQL_OPT_SSL_CERT, certFile.toLatin1().constData() );
-   if ( success != 0 ) {
-      error = QString( "Error setting SSL cert file: " ) + certFile;
-      err = error;
-      return false;
-   }
+   // Set connection to use ssl encryption.
+   // No client certificate is sent.  No database account requires one, and a
+   // server whose TLS library refuses SHA-1 certificate signatures rejected the
+   // handshake when the shared one formerly in etc/mysql was sent.  TLS stays
+   // on: libmariadb enables it when a CA file is set, libmysql through
+   // MYSQL_OPT_SSL_MODE below.
    success = mysql_options( db, MYSQL_OPT_SSL_CA, caFile.toLatin1().constData() );
    if ( success != 0 ) {
       error = QString( "Error setting SSL CA file: " ) + caFile;

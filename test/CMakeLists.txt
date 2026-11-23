@@ -40,7 +40,9 @@ function(us3_add_gui_test target)
             )
 endfunction()
 
+add_subdirectory(dependency_layers)  # No upward or circular dependencies between utils, gui and programs
 add_subdirectory(utils)
+add_subdirectory(calc)  # US_Calc unit tests, fixtures and legacy characterization
 
 # GUI tests require the DB-enabled GUI library; NO_DB builds run utils tests.
 if(TARGET UltraScan3::Gui_Static)

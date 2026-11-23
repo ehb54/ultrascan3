@@ -242,7 +242,8 @@ US_AnalyteMgrSelect::US_AnalyteMgrSelect( int *invID, int *select_db_disk,
 
 void US_AnalyteMgrSelect::select_analyte()
 {
-   if ( lw_analyte_list->currentRow() < 0 )
+   // A row without a record (none selected, or the empty-list placeholder)
+   if ( lw_analyte_list->currentRow() < 0 || lw_analyte_list->currentRow() >= analyte_metadata.size() )
    {
 DbgLv(1) << "AnaS:  selana: ROW<0";
       reset();
@@ -259,31 +260,49 @@ DbgLv(1) << "AnaS:  aAcc : nsel" << nsel;
    {
       QListWidgetItem *item = lw_analyte_list->currentItem();
 
-      select_analyte( item );
-
-      ms_analytes << *analyte;
+      if ( select_analyte( item ) )
+      {
+         ms_analytes << *analyte;
+      }
    }
    else if ( nsel > 1 )
    {
-
       for ( int ii = 0; ii < nsel; ii++ )
       {
 DbgLv(1) << "AnaS:  aAcc :   ii" << ii;
          QListWidgetItem* item = selItems[ ii ];
 
-         select_analyte( item );
-
-         ms_analytes << *analyte;
+         if ( select_analyte( item ) )
+         {
+            ms_analytes << *analyte;
+         }
+         else
+         { // Never accept part of a multiple selection. Stop at the failure so
+            // a later analyte that loads cannot replace its message or turn
+            // the actions back on.
+            ms_analytes.clear();
+            break;
+         }
       }
    }
 }
 
 // Select the analyte for the currently selected list item
-void US_AnalyteMgrSelect::select_analyte( QListWidgetItem *tmp_item )
+bool US_AnalyteMgrSelect::select_analyte( QListWidgetItem* tmp_item )
 {
    QListWidgetItem *item = tmp_item;
-   if ( from_db )  read_from_db  ( item );
-   else            read_from_disk( item );
+   const int        row  = lw_analyte_list->row( item );
+   if ( row < 0 || row >= analyte_metadata.size() )
+   {
+      reset();
+      return false;
+   }
+   const bool loaded = from_db ? read_from_db( item ) : read_from_disk( item );
+
+   if ( !loaded )
+   {
+      return false;
+   }
 DbgLv(1) << "AnaS:   ana-descr " << analyte->description;
 DbgLv(1) << "AnaS:   ana-type  " << analyte->type;
 DbgLv(1) << "AnaS:   ana-mw    " << analyte->mw;
@@ -373,34 +392,59 @@ DbgLv(1) << "AnaS:   ana-extsiz" << analyte->extinction.keys().size();
    pb_info    ->setEnabled ( true );
    pb_spectrum->setEnabled ( true );
    pb_sequence->setEnabled ( true );
+   return true;
+}
+
+// A failed load keeps the previously loaded analyte. Its actions are disabled
+// because they would act on that analyte while another list entry is selected.
+void US_AnalyteMgrSelect::show_load_failure( const QString& message )
+{
+   pb_accept->setEnabled( false );
+   pb_delete->setEnabled( false );
+   pb_info->setEnabled( false );
+   pb_spectrum->setEnabled( false );
+   pb_sequence->setEnabled( false );
+
+   te_analyte_smry->setText( tr( "The selected analyte could not be loaded:\n%1" ).arg( message ) );
 }
 
 // Read analyte information from the local disk
-void US_AnalyteMgrSelect::read_from_disk( QListWidgetItem* item )
+bool US_AnalyteMgrSelect::read_from_disk( QListWidgetItem* item )
 {
    int row = lw_analyte_list->row( item );
    int ana = analyte_metadata[ row ].index;
-DbgLv(1) << "row: " << row << " ana: "  << ana;
-   analyte->extinction.clear();
+   DbgLv( 1 ) << "row: " << row << " ana: " << ana;
 
    QString analyGUID = analyte_metadata[ row ].guid;
-DbgLv(1) << "AnaS-rddk-item  row" << row << "anaGUID" << analyGUID;
-   analyte->load( false, analyGUID, NULL );
+   DbgLv( 1 ) << "AnaS-rddk-item  row" << row << "anaGUID" << analyGUID;
+   // The disk reader keeps fields the file omits, so start without a spectrum
+   // and publish only a complete load.
+   US_Analyte candidate( *analyte );
+   candidate.extinction.clear();
+
+   if ( candidate.load( false, analyGUID, NULL ) != US_DB2::OK )
+   {
+      show_load_failure( candidate.message );
+      return false;
+   }
+
+   *analyte = candidate;
+   return true;
 }
 
 // Read analyte information from the database (by analyte list item)
-void US_AnalyteMgrSelect::read_from_db( QListWidgetItem* item )
+bool US_AnalyteMgrSelect::read_from_db( QListWidgetItem* item )
 {
    int row           = lw_analyte_list->row( item );
    QString analyGUID = analyte_metadata[ row ].guid;
-DbgLv(1) << "AnaS-rddb-item  row" << row << "anaGUID" << analyGUID;
-   read_from_db( analyGUID );
+   DbgLv( 1 ) << "AnaS-rddb-item  row" << row << "anaGUID" << analyGUID;
+   return read_from_db( analyGUID );
 }
 
 // Read analyte information from the database (by analyte GUID)
-void US_AnalyteMgrSelect::read_from_db( const QString& analyGUID )
+bool US_AnalyteMgrSelect::read_from_db( const QString& analyGUID )
 {
-DbgLv(1) << "agS: rddb: anaID" << analyGUID;
+   DbgLv( 1 ) << "agS: rddb: anaID" << analyGUID;
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
 
@@ -408,12 +452,22 @@ DbgLv(1) << "agS: rddb: anaID" << analyGUID;
    if ( db.lastErrno() != US_DB2::OK )
    {
       connect_error( db.lastError() );
-      return;
+      show_load_failure( db.lastError() );
+      return false;
    }
 
-   analyte->extinction.clear();
-DbgLv(1) << "AnaS-rddb-anid  anaGUID" << analyGUID;
-   analyte->load( true, analyGUID, &db );
+   DbgLv( 1 ) << "AnaS-rddb-anid  anaGUID" << analyGUID;
+   US_Analyte candidate( *analyte );
+   candidate.extinction.clear();
+
+   if ( candidate.load( true, analyGUID, &db ) != US_DB2::OK )
+   {
+      show_load_failure( candidate.message );
+      return false;
+   }
+
+   *analyte = candidate;
+   return true;
 }
 
 // Accept the currently selected analyte
@@ -547,6 +601,14 @@ DbgLv(1) << "agS-search:  *ERROR* ii" << ii << "jj" << jj
       analyte_metadata << info;
 
       lw_analyte_list->addItem( info.description );
+   }
+
+   // Rebuilding the list drops the selection without a selection signal, so
+   // the accept payload and the actions that need a selection must be reset.
+   if ( lw_analyte_list->currentRow() < 0 )
+   {
+      ms_analytes.clear();
+      reset();
    }
 }
 
@@ -967,6 +1029,12 @@ void US_AnalyteMgrSelect::read_analyte( void )
    atype_set          = rb_rna  ->isChecked() ? "RNA"          : atype_set;
    atype_set          = rb_carbo->isChecked() ? "CARBOHYDRATE" : atype_set;
 
+   // Drop the old list and its records first: clearing a list with a selected
+   // row signals a selection, which must not read the records being replaced
+   analyte_metadata.clear();
+   ms_analytes.clear();
+   lw_analyte_list->clear();
+
    filenames   .clear();
    descriptions.clear();
    GUIDs       .clear();
@@ -1019,12 +1087,23 @@ void US_AnalyteMgrSelect::read_analyte( void )
    lw_analyte_list->clear();
 
    if ( descriptions.isEmpty() )
-      lw_analyte_list->addItem( "No analyte files found." );
+      show_no_analytes();
    else
    {
       le_search->setReadOnly( false );
       search();
    }
+}
+
+// Show an empty list: the placeholder is not a record, and records listed
+// earlier must not be matched or selected any more
+void US_AnalyteMgrSelect::show_no_analytes( void )
+{
+   analyte_metadata.clear();
+   ms_analytes.clear();
+   lw_analyte_list->addItem( tr( "No analyte files found." ) );
+   lw_analyte_list->item( 0 )->setFlags( Qt::NoItemFlags );
+   reset();
 }
 
 // Read analyte information from the database
@@ -1048,10 +1127,16 @@ DbgLv(1) << "agS-rddb: ==A2==";
    atype_set      = rb_rna  ->isChecked() ? US_Analyte::RNA          : atype_set;
 DbgLv(1) << "agS-rddb: ==A3==";
    atype_set      = rb_carbo->isChecked() ? US_Analyte::CARBOHYDRATE : atype_set;
-DbgLv(1) << "agS-rddb: atype_set" << atype_set;
+   DbgLv( 1 ) << "agS-rddb: atype_set" << atype_set;
+
+   // Drop the old list and its records first: clearing a list with a selected
+   // row signals a selection, which must not read the records being replaced
+   analyte_metadata.clear();
+   ms_analytes.clear();
+   lw_analyte_list->clear();
 
    analyteIDs  .clear();
-DbgLv(1) << "agS-rddb: ==A==";
+   DbgLv( 1 ) << "agS-rddb: ==A==";
    descriptions.clear();
 DbgLv(1) << "agS-rddb: ==B==";
    GUIDs       .clear();
@@ -1104,7 +1189,7 @@ DbgLv(1) << "agS-rddb:     aID descr" << anaID << descr;
 
    if ( descriptions.isEmpty() )
    {
-      lw_analyte_list->addItem( "No analyte files found." );
+      show_no_analytes();
    }
    else
    {
@@ -2564,8 +2649,14 @@ DbgLv(1) << "AnaN:SL: newCanceled()";
 // Slot to accept edited analyte
 void US_AnalyteMgrNew::newAccepted()
 {
-DbgLv(1) << "AnaN:SL: newAccepted()";
-   analyte->analyteGUID   = US_Util::new_guid();
+   DbgLv( 1 ) << "AnaN:SL: newAccepted()";
+   // A retry after a failed save keeps the GUID. When the DB save committed
+   // and only the disk copy failed, the retry updates that analyte rather
+   // than storing it a second time.
+   if ( analyte->analyteGUID.isEmpty() )
+   {
+      analyte->analyteGUID = US_Util::new_guid();
+   }
 
 DbgLv(1) << "AnaN: Analyte Type: " << analyte->type;
 
@@ -2608,16 +2699,23 @@ DbgLv(1) << "AnaN: Analyte Type: " << analyte->type;
 
    qDebug() << "In Accept new analyte 2: -- " << analyte->extinction.count();
 
+   // A failed save stays on this panel and does not signal acceptance.
    if ( from_db )
    { // Add analyte to database
-      write_db  ();
+      if ( !write_db() )
+      {
+         return;
+      }
 DbgLv(1) << "AnaN:SL:  newAcc: DB  id" << analyte->analyteID;
    }
 
    else
    { // Add analyte to local disk
-DbgLv(1) << "AnaN:SL:  newAcc: Disk";
-      write_disk();
+      DbgLv( 1 ) << "AnaN:SL:  newAcc: Disk";
+      if ( !write_disk() )
+      {
+         return;
+      }
    }
 
    qDebug() << "In Accept new analyte 3: -- " << analyte->extinction.count();
@@ -2625,30 +2723,30 @@ DbgLv(1) << "AnaN:SL:  newAcc: Disk";
    emit newAnaAccepted();
 }
 
-// Write new analyte to database
-void US_AnalyteMgrNew::write_db()
+// Write new analyte to database; true when the save succeeded.
+// US_Analyte::write sets analyteID itself and returns a status, not an ID.
+bool US_AnalyteMgrNew::write_db()
 {
 DbgLv(1) << "AnaN:SL: write_db()  anaID" << analyte->analyteID;
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
    analyte->new_or_changed_spectrum = true;
-   int idAna    = analyte->write( true, "", &db );
-   analyte->analyteID = QString::number( idAna );
+   int status                       = analyte->write( true, "", &db );
 
-   if ( idAna < 0 )
+   if ( status != IUS_DB2::OK )
    {
-
-      QString msg  = tr( "(Return Code = %1 ) " ).arg( idAna )
-                     + db.lastError();
-      QMessageBox::critical( this,
-          tr( "DB Analyte Write Error" ),
-          tr( "Error updating analyte in the database:\n" )
-          + msg );
+      QString msg = tr( "(Return Code = %1 ) " ).arg( status ) + analyte->message + "\n" + db.lastError();
+      // The message says whether the DB kept the analyte and only its
+      //  local copy failed, or what part of the DB save failed
+      QMessageBox::critical( this, tr( "Analyte Save Error" ), tr( "The analyte save did not finish:\n" ) + msg );
+      return false;
    }
+
+   return true;
 }
 
-// Write new analyte to local disk file
-void US_AnalyteMgrNew::write_disk()
+// Write new analyte to local disk file; true when the save succeeded
+bool US_AnalyteMgrNew::write_disk()
 {
 DbgLv(1) << "AnaN:SL: write_disk()  bufID" << analyte->analyteGUID;
    QString path     = US_Settings::dataDir() + "/analytes";
@@ -2656,7 +2754,14 @@ DbgLv(1) << "AnaN:SL: write_disk()  bufID" << analyte->analyteGUID;
    //bool    newFile;
    QString filename = US_Analyte::get_filename( path, analyte->analyteGUID );
 
-   analyte->write( false, filename );
+   if ( analyte->write( false, filename ) != IUS_DB2::OK )
+   {
+      QMessageBox::critical(
+         this, tr( "Analyte Write Error" ), tr( "Error writing the analyte file:\n" ) + filename + "\n" + analyte->message );
+      return false;
+   }
+
+   return true;
 }
 
 
@@ -2919,46 +3024,52 @@ DbgLv(1) << "AnaE:SL: editCanceled()  origAnaGUID" << orig_analyte.analyteGUID;
 // Slot to accept edited analyte
 void US_AnalyteMgrEdit::editAccepted()
 {
-
-  qDebug() << "In EditSpectrum 1: analyte-extinction -- " << analyte->extinction;
-DbgLv(1) << "AnaE:SL: editAccepted()  anaGUID" << analyte->analyteGUID;
+   qDebug() << "In EditSpectrum 1: analyte-extinction -- " << analyte->extinction;
+   DbgLv( 1 ) << "AnaE:SL: editAccepted()  anaGUID" << analyte->analyteGUID;
+   // A failed save stays on this panel and does not signal acceptance.
    if ( from_db )
    { // Update analyte in database
-      write_db  ();
-DbgLv(1) << "AnaE:SL:  edtAcc: DB  id" << analyte->analyteID;
+      if ( !write_db() )
+      {
+         return;
+      }
+      DbgLv( 1 ) << "AnaE:SL:  edtAcc: DB  id" << analyte->analyteID;
    }
 
    else
    { // Update analyte on local disk
-DbgLv(1) << "AnaE:SL:  edtAcc: Disk";
-      write_disk();
+      DbgLv( 1 ) << "AnaE:SL:  edtAcc: Disk";
+      if ( !write_disk() )
+      {
+         return;
+      }
    }
 
    emit editAnaAccepted();
 }
 
-// Write updated analyte to database
-void US_AnalyteMgrEdit::write_db()
+// Write updated analyte to database; true when the save succeeded
+bool US_AnalyteMgrEdit::write_db()
 {
 DbgLv(1) << "AnaE:SL: write_db()  bufID" << analyte->analyteID;
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
-   int idAna    = analyte->write( true, "", &db );
+   int       status = analyte->write( true, "", &db );
 
-   if ( idAna < 0 )
+   if ( status != IUS_DB2::OK )
    {
-
-      QString msg  = tr( "(Return Code = %1 ) " ).arg( idAna )
-                     + db.lastError();
-      QMessageBox::critical( this,
-          tr( "DB Analyte Write Error" ),
-          tr( "Error updating analyte in the database:\n" )
-          + msg );
+      QString msg = tr( "(Return Code = %1 ) " ).arg( status ) + analyte->message + "\n" + db.lastError();
+      // The message says whether the DB kept the analyte and only its
+      //  local copy failed, or what part of the DB save failed
+      QMessageBox::critical( this, tr( "Analyte Save Error" ), tr( "The analyte save did not finish:\n" ) + msg );
+      return false;
    }
+
+   return true;
 }
 
-// Write updated analyte to local disk file
-void US_AnalyteMgrEdit::write_disk()
+// Write updated analyte to local disk file; true when the save succeeded
+bool US_AnalyteMgrEdit::write_disk()
 {
 DbgLv(1) << "AnaE:SL: write_disk()  GUID" << analyte->analyteGUID;
    QString path     = US_Settings::dataDir() + "/analytes";
@@ -2966,7 +3077,14 @@ DbgLv(1) << "AnaE:SL: write_disk()  GUID" << analyte->analyteGUID;
    //bool    newFile;
    QString filename = US_Analyte::get_filename( path, analyte->analyteGUID );
 
-   analyte->write( false, filename );
+   if ( analyte->write( false, filename ) != IUS_DB2::OK )
+   {
+      QMessageBox::critical(
+         this, tr( "Analyte Write Error" ), tr( "Error writing the analyte file:\n" ) + filename + "\n" + analyte->message );
+      return false;
+   }
+
+   return true;
 }
 
 

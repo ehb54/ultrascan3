@@ -138,6 +138,11 @@ public:
        "the transaction had already ended, by an implicit commit or a rollback by the server, "
        "so some rows written in it may have been kept";
 
+    bool transactionActive() const final
+    {
+       return inTransaction;
+    }
+
     /*! \brief Begin a transaction with START TRANSACTION. See IUS_DB2. */
     bool                         beginTransaction( QString& error ) final;
 
@@ -296,7 +301,8 @@ public:
                with query(), and then use the table ID for that record
                to read the corresponding binary information to a file
                using readBlobFromDB(). ReadBlobFromDB() will return
-               dbStatus.ERROR if the file cannot be opened, or pass through
+               dbStatus.ERROR if the file cannot be opened or not every byte
+               can be written to it (see writeBlobFile()), or pass through
                any error codes returned by the db.
 
         \param filename The complete and absolute pathname of the file to
@@ -380,6 +386,19 @@ public:
     //! Error format when a procedure name is refused; %1 is the name.
     static constexpr const char* invalidProcedureMessage = "not a valid procedure name: '%1'";
 
+    /*! \brief Writes downloaded blob data to a file, as readBlobFromDB() does.
+
+        \param filename The file to write; it is created or truncated.
+        \param data     The bytes to write.
+        \param error    Set to a description when the write fails.
+
+        \return OK when every byte was written and flushed.  DBERROR when the
+                file cannot be opened, or when fewer bytes were written or the
+                flush failed (e.g. a full disk); a partly written file is then
+                removed.
+    */
+    static int                   writeBlobFile( const QString& filename, const QByteArray& data, QString& error );
+
  private:
     bool       connected;
     bool       inTransaction        = false;
@@ -394,8 +413,6 @@ public:
     QString    userPW;
     QString    guid;
 
-    QString    certFile;
-    QString    keyFile;
     QString    caFile;
     QString    error;
     int        db_errno;
