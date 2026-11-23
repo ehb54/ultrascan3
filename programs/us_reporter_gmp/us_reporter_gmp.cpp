@@ -8847,26 +8847,26 @@ void US_ReporterGMP::user_interactions_analysis( QString analysisJson, QString a
                               .arg( when )       //5
             ;
       }
-     else
-	    {
-          html_assembled += tr( "<tr>"
-                                "<td> Jobs Canceled for:  %1, </td>"
-                                "</tr>"
-                                "<tr>"
-                                "<td> Jobs Canceled by:   %2, </td>"
-                                "</tr>"
-                                "<tr>"
-                                "<td> Reason:             %3, </td>"
-                                "</tr>"
-                                "<tr>"
-                                "<td> When:               %4 (UTC) </td>"
-                                "</tr>" )
-                               .arg( cj.key() )     //1
-                               .arg( performed_by ) //2
-                               .arg( reason )       //3
-                               .arg( when )         //4
-             ;
-       }
+      else
+      {
+         html_assembled += tr( "<tr>"
+                               "<td> Jobs Canceled for:  %1, </td>"
+                               "</tr>"
+                               "<tr>"
+                               "<td> Jobs Canceled by:   %2, </td>"
+                               "</tr>"
+                               "<tr>"
+                               "<td> Reason:             %3, </td>"
+                               "</tr>"
+                               "<tr>"
+                               "<td> When:               %4 (UTC) </td>"
+                               "</tr>" )
+                              .arg( cj.key() )     //1
+                              .arg( performed_by ) //2
+                              .arg( reason )       //3
+                              .arg( when )         //4
+            ;
+      }
    }
     }
   else
