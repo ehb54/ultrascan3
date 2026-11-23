@@ -1,6 +1,6 @@
 //! \file us_resplot_pc.h
-#ifndef US_RESID_PLOT_H
-#define US_RESID_PLOT_H
+#ifndef US_RESPLOT_PC_H
+#define US_RESPLOT_PC_H
 
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
