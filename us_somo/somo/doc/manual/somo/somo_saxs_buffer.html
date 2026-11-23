@@ -171,8 +171,6 @@ plotted in the graph on the right. The buttons immediately below the list are:
 positions, select by a substring of the name, or select by total integrated intensity above or below a
 threshold, with a preview plot to help place that threshold. It is described
 <a href=saxs_buffer_nth.html>here</a>.<p>
-<li><b><i>C</i></b> rotates the plot colors, which is useful when many curves are displayed and two
-adjacent ones happen to receive similar colors.<p>
 <li><b><i>To SAS</i></b> copies the selected curves into the <b><i>SAS</i></b> module <i>I(q)</i> panel,
 together with their concentrations, for Guinier analysis, <i>P</i>(<i>r</i>) computation, fitting and so on.<p>
 <li><b><i>View</i></b>, active for up to ten selected curves, opens each of them in a text window
@@ -181,6 +179,8 @@ showing the same columns that would be written to disk.<p>
 corresponding plot axis between linear and logarithmic scaling. Each button names the scale a click switches
 to; the plot starts with a linear <i>q</i> axis and a logarithmic intensity axis, so the buttons first read
 <b><i>Log X</i></b> and <b><i>Lin Y</i></b>.<p>
+<li><b><i>Color</i></b> rotates the plot colors, which is useful when many curves are displayed and two
+adjacent ones happen to receive similar colors.<p>
 <li><b><i>Rescale</i></b> resets the plot limits to the extent of the selected curves and clears any zoom.<p>
 <li><b><i>Legend</i></b>, below the plot, toggles the curve legend; it is disabled when more than
 twenty curves are selected, where a legend would be unreadable.<p>
@@ -392,11 +392,19 @@ often those after the signal has returned to baseline. <b><i>Buffer frames</i></
 against its frame number. The frames are ordered by the number in their names; when the names are not numbered
 frames, by their position in the selection. The <i>I</i>(<i>t</i>) is only shown here: nothing is added to the
 <b><i>Data Utility</i></b>. <b><i>Log Y</i></b> / <b><i>Lin Y</i></b> switches the intensity axis, and the plot
-zooms with the left mouse button.<p>
+zooms with the left mouse button; the cursor's position is shown in red.<p>
 <li>The buffer frames before the elution are set by their first and last frame numbers (green dashed markers).
 With <b><i>After the elution</i></b> checked, a second region can be set (cyan markers). After clicking one of
 the four frame fields, the wheel and the <b><i>&lt;</i></b> and <b><i>&gt;</i></b> buttons move its marker frame
 by frame.<p>
+<li>Next to each region's frame fields, <b><i>Average</i></b>, <b><i>SD</i></b> and <b><i>chi^2</i></b> give, as the
+region changes, the average of its frames' <i>I</i>(<i>t</i>) (weighted by <i>w</i> = 1/&sigma;<sup>2</sup> when the
+frames have standard deviations, as the <b><i>Average</i></b> of the curves is), the standard deviation of their
+<i>I</i>(<i>t</i>) about that average, &radic;(<i>n</i> &Sigma; <i>w</i> (<i>I</i>(<i>t</i>) &minus; average)<sup>2</sup> /
+((<i>n</i> &minus; 1) &Sigma; <i>w</i>)), which is the scatter of one frame's <i>I</i>(<i>t</i>) and the sample standard
+deviation when the &sigma; are equal or absent, and the reduced &chi;<sup>2</sup> of <i>I</i>(<i>t</i>) about the
+average, &Sigma; ((<i>I</i>(<i>t</i>) &minus; average) / &sigma;)<sup>2</sup> / (<i>n</i> &minus; 1), about 1 when
+<i>I</i>(<i>t</i>) is flat within its standard deviations (empty when the frames have none).<p>
 <li><b><i>Suggest</i></b>, also run when the window opens, proposes the regions. The baseline level and noise of
 <i>I</i>(<i>t</i>) are estimated as their median and 1.4826 times their median absolute deviation (at least the
 frames' own <i>I</i>(<i>t</i>) standard deviation), first over the first fifth of the frames and then over the
@@ -417,6 +425,14 @@ are about 1 for frames that agree with the others within their standard deviatio
 of that &chi;<sup>2</sup> (red dashed line) are listed, and marked red on the <i>I</i>(<i>t</i>) plot. With both
 regions set, their average curves are compared in the same way, and the ratio of their mean <i>I</i>(<i>t</i>) is
 given: whether the buffer after the elution matches the one before it.<p>
+<li>With both regions set, a straight line is also fitted to the <i>I</i>(<i>t</i>) of the frames of both regions
+(weighted as above) and drawn red and dashed from the first to the last of them. The text gives its change across
+them, in percent of its value at the first, with its standard deviation, and the reduced &chi;<sup>2</sup> of
+<i>I</i>(<i>t</i>) about it next to those of each region about its own line. When the signal returns to its level
+before the elution, the line is flat. A steady drift tilts it, and each region drifts too, but it still fits both
+regions about as well as their own lines do. When the signal does not return to baseline, the line rises (or falls)
+across the elution while each region's own drift stays small, and its &chi;<sup>2</sup> is larger than the regions'
+own: the more so, the larger the step is compared with the noise of <i>I</i>(<i>t</i>).<p>
 <li><b><i>Select the frames before the elution</i></b> and <b><i>Select the frames of both regions</i></b> select
 those frames, and nothing else, in the <b><i>Data files</i></b> list. Then <b><i>Average</i></b> makes the buffer
 average; select it and press <b><i>Set buffer</i></b>, then select the frames to subtract it from and press

@@ -22,10 +22,11 @@ using namespace std;
 
 // SAS Data Utility "Buffer frames", for a SEC-SAXS run: the I(t) of the selected I(q) frames (each frame's mean
 // intensity over a q range, against its frame number) with one or two regions set by dashed markers, the buffer
-// frames before the elution and, optionally, after it. For each region it gives the drift of I(t) across it and
-// how well each frame agrees with the mean of the region's other frames over its whole curve (reduced chi^2);
-// with both regions, whether their average curves agree. It can suggest the regions, and selects the frames
-// chosen in the Data Utility's file list. Nothing is added to the Data Utility.
+// frames before the elution and, optionally, after it. For each region it gives the average, sd and reduced chi^2
+// of I(t), the drift of I(t) across it and how well each frame agrees with the mean of the region's other frames
+// over its whole curve (reduced chi^2); with both regions, a line fitted to the I(t) of both and whether their
+// average curves agree. It can suggest the regions, and selects the frames chosen in the Data Utility's file
+// list. Nothing is added to the Data Utility.
 
 class US_EXTERN US_Hydrodyn_Saxs_Buffer_Frames : public QFrame
 {
@@ -41,7 +42,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer_Frames : public QFrame
          int               i0          = 0;      // first and last frame, as indices into files
          int               i1          = 0;
          int               n           = 0;
-         double            mean        = 0e0;    // mean of I(t)
+         double            mean        = 0e0;    // mean of I(t) (1/sd^2 weighted when the frames have sd)
+         double            it_sd       = 0e0;    // sd of the frames' I(t) about that mean (the scatter of one frame)
+         double            it_chi2r_m  = 0e0;    // reduced chi^2 of I(t) about that mean (with sd)
          double            drift       = 0e0;    // change of I(t) across the region from its fitted slope
          double            drift_sd    = 0e0;
          double            line_a      = 0e0;    // the fitted line, I(t) = line_a + line_b ( frame - frame[ i0 ] )
@@ -54,6 +57,20 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer_Frames : public QFrame
          vector < int >    outliers;             // indices into files of the frames above the limit
          vector < double > avg;                  // the region's average curve and its variance (1/sd^2 weighted)
          vector < double > avg_var;
+      };
+
+      // a straight line fitted to the I(t) of the frames of both regions, I(t) = a + b ( frame - x0 )
+      struct joint_fit
+      {
+         bool              ok          = false;
+         int               n           = 0;
+         int               k0          = 0;      // its first and last frame, as indices into files
+         int               k1          = 0;
+         double            a           = 0e0;
+         double            b           = 0e0;
+         double            chi2r       = 0e0;    // reduced chi^2 of I(t) about it (with sd)
+         double            change      = 0e0;    // its change from the first frame to the last
+         double            change_sd   = 0e0;
       };
 
    private:
@@ -71,6 +88,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer_Frames : public QFrame
       QString                         note;           // the outcome of the last suggestion
       region_stats                    r1;
       region_stats                    r2;
+      joint_fit                       joint;
 
       QLabel *                        lbl_info;
       QLabel *                        lbl_q;
@@ -83,6 +101,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer_Frames : public QFrame
       QCheckBox *                     cb_r2;
       mQLineEdit *                    le_r2_from;
       mQLineEdit *                    le_r2_to;
+      QLineEdit *                     le_r1_avg;      // read-only: average, sd and chi^2 of each region's I(t)
+      QLineEdit *                     le_r1_sd;
+      QLineEdit *                     le_r1_chi2;
+      QLineEdit *                     le_r2_avg;
+      QLineEdit *                     le_r2_sd;
+      QLineEdit *                     le_r2_chi2;
       QPushButton *                   pb_suggest;
       QPushButton *                   pb_wheel_dec;
       QwtWheel *                      qwtw_wheel;
@@ -108,6 +132,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer_Frames : public QFrame
       int                             frame_index( const QString & text );
       bool                            region_range( QLineEdit * le_from, QLineEdit * le_to, int & i0, int & i1 );
       void                            compute_region( int i0, int i1, region_stats & r );
+      bool                            fit_line( const vector < int > & idx, double x0,
+                                                double & a, double & b, double & chi2r, double & var_b );
+      void                            compute_joint();
+      void                            set_region_boxes( const region_stats & r, QLineEdit * le_avg, QLineEdit * le_sd, QLineEdit * le_chi2 );
       QString                         region_text( const QString & name, const region_stats & r );
       void                            set_region_text( QLineEdit * le_from, QLineEdit * le_to, int i0, int i1 );
       void                            replot_It( bool rescale );

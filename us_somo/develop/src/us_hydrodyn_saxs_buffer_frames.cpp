@@ -4,6 +4,7 @@
 #include "../include/us_hydrodyn_saxs_buffer_frames.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QGridLayout>
 #include <QIntValidator>
 #include <QDoubleValidator>
 #include <QCloseEvent>
@@ -160,9 +161,10 @@ void US_Hydrodyn_Saxs_Buffer_Frames::setupGUI()
    lbl_info = new QLabel( us_tr( "I(t) of the selected frames: each frame's mean intensity over the q range, against its frame number. "
                                  "Set the buffer frames before the elution (green markers) and, if the signal returns to baseline, "
                                  "after it (cyan markers): type the frame numbers, or click a frame field and move its marker with the wheel. "
-                                 "For each region the drift of I(t) is given, and each frame is compared over its whole curve with the "
-                                 "mean of the region's other frames (lower plot). The chosen frames can then be selected in the Data "
-                                 "Utility, for Average, Set buffer and Subtract." ), this );
+                                 "For each region its I(t)'s average, sd and reduced chi^2 and its drift are given, and each frame is "
+                                 "compared over its whole curve with the mean of the region's other frames (lower plot). With both regions, "
+                                 "a line fitted to the I(t) of both (red, dashed) shows whether the signal returns to its level before the "
+                                 "elution. The chosen frames can then be selected in the Data Utility, for Average, Set buffer and Subtract." ), this );
    lbl_info->setWordWrap( true );
    lbl_info->setPalette( PALET_LABEL );
    AUTFBACK( lbl_info );
@@ -200,6 +202,29 @@ void US_Hydrodyn_Saxs_Buffer_Frames::setupGUI()
          } );
       return le;
    };
+
+   auto stat_edit = [ & ]( const QString & tip ) {
+      QLineEdit * le = new QLineEdit( this );
+      le->setPalette( PALET_NORMAL );
+      AUTFBACK( le );
+      le->setFont( font );
+      le->setMinimumHeight( minHeight1 );
+      le->setMaximumWidth( 90 );
+      le->setReadOnly( true );
+      le->setToolTip( tip );
+      return le;
+   };
+   QString tip_avg  = us_tr( "Average I(t) of the region's frames (1/sd^2 weighted when they have sd, as the Data Utility's Average)" );
+   QString tip_sd   = us_tr( "Standard deviation of the region's I(t) values about their average: the scatter of one frame's I(t)\n"
+                             "(with sd, sqrt( n sum w ( I(t) - average )^2 / ( ( n - 1 ) sum w ) ), w = 1/sd^2; without, the sample sd)" );
+   QString tip_chi2 = us_tr( "Reduced chi^2 of the region's I(t) values about their average, with each frame's I(t) sd:\n"
+                             "sum ( ( I(t) - average ) / sd )^2 / ( n - 1 ), about 1 when I(t) is flat within its sd" );
+   le_r1_avg  = stat_edit( tip_avg );
+   le_r1_sd   = stat_edit( tip_sd );
+   le_r1_chi2 = stat_edit( tip_chi2 );
+   le_r2_avg  = stat_edit( tip_avg );
+   le_r2_sd   = stat_edit( tip_sd );
+   le_r2_chi2 = stat_edit( tip_chi2 );
 
    lbl_q = label( us_tr( " I(t): mean intensity from q" ) );
    le_q_from = new QLineEdit( "", this );
@@ -312,20 +337,25 @@ void US_Hydrodyn_Saxs_Buffer_Frames::setupGUI()
    hbl_q->addStretch( 1 );
    hbl_q->addWidget( pb_log_y );
 
-   QHBoxLayout * hbl_r1 = new QHBoxLayout; hbl_r1->setContentsMargins( 0, 0, 0, 0 ); hbl_r1->setSpacing( 2 );
-   hbl_r1->addWidget( lbl_r1 );
-   hbl_r1->addWidget( le_r1_from );
-   hbl_r1->addWidget( label( us_tr( "to" ) ) );
-   hbl_r1->addWidget( le_r1_to );
-   hbl_r1->addStretch( 1 );
-   hbl_r1->addWidget( pb_suggest );
-
-   QHBoxLayout * hbl_r2 = new QHBoxLayout; hbl_r2->setContentsMargins( 0, 0, 0, 0 ); hbl_r2->setSpacing( 2 );
-   hbl_r2->addWidget( cb_r2 );
-   hbl_r2->addWidget( le_r2_from );
-   hbl_r2->addWidget( label( us_tr( "to" ) ) );
-   hbl_r2->addWidget( le_r2_to );
-   hbl_r2->addStretch( 1 );
+   // the two regions, their frame fields and their I(t) statistics in aligned columns
+   QGridLayout * gl_r = new QGridLayout; gl_r->setContentsMargins( 0, 0, 0, 0 ); gl_r->setHorizontalSpacing( 2 ); gl_r->setVerticalSpacing( 1 );
+   {
+      QWidget * row_widgets[ 2 ][ 10 ] = {
+         { lbl_r1, le_r1_from, label( us_tr( "to" ) ), le_r1_to,
+           label( us_tr( "  Average" ) ), le_r1_avg, label( us_tr( " SD" ) ), le_r1_sd, label( us_tr( " chi^2" ) ), le_r1_chi2 },
+         { cb_r2,  le_r2_from, label( us_tr( "to" ) ), le_r2_to,
+           label( us_tr( "  Average" ) ), le_r2_avg, label( us_tr( " SD" ) ), le_r2_sd, label( us_tr( " chi^2" ) ), le_r2_chi2 }
+      };
+      for ( int row = 0; row < 2; row++ )
+      {
+         for ( int col = 0; col < 10; col++ )
+         {
+            gl_r->addWidget( row_widgets[ row ][ col ], row, col );
+         }
+      }
+      gl_r->setColumnStretch( 10, 1 );
+      gl_r->addWidget( pb_suggest, 0, 11 );
+   }
 
    QHBoxLayout * hbl_wheel = new QHBoxLayout; hbl_wheel->setContentsMargins( 0, 0, 0, 0 ); hbl_wheel->setSpacing( 2 );
    hbl_wheel->addWidget( lbl_wheel, 1 );
@@ -342,8 +372,7 @@ void US_Hydrodyn_Saxs_Buffer_Frames::setupGUI()
    QVBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 1 );
    background->addWidget( lbl_info );
    background->addLayout( hbl_q );
-   background->addLayout( hbl_r1 );
-   background->addLayout( hbl_r2 );
+   background->addLayout( gl_r );
    background->addLayout( hbl_wheel );
    background->addWidget( plot, 3 );
    background->addWidget( plot_chi2, 1 );
@@ -441,8 +470,54 @@ void US_Hydrodyn_Saxs_Buffer_Frames::set_region_text( QLineEdit * le_from, QLine
    suppress = was;
 }
 
-// the drift of I(t) across the region from a straight line fitted to it (weighted by 1/sd^2 when the frames have
-// sd); each frame against the (1/sd^2 weighted) mean of the region's other frames, over the whole curve:
+// a straight line I(t) = a + b ( frame - x0 ) fitted to the frames idx (at least 3), weighted by 1/sd^2 when the
+// frames have sd; its reduced chi^2 (n - 2 degrees of freedom) and the variance of b: from the frames' sd, larger
+// when I(t) scatters more than they say, or, without sd, from the scatter
+bool US_Hydrodyn_Saxs_Buffer_Frames::fit_line( const vector < int > & idx, double x0,
+                                               double & a, double & b, double & chi2r, double & var_b )
+{
+   int n = (int) idx.size();
+   if ( n < 3 )
+   {
+      return false;
+   }
+   double S   = 0e0;
+   double Sx  = 0e0;
+   double Sy  = 0e0;
+   double Sxx = 0e0;
+   double Sxy = 0e0;
+   for ( int k : idx )
+   {
+      double w = have_sd && It_sd[ k ] > 0e0 ? 1e0 / ( It_sd[ k ] * It_sd[ k ] ) : 1e0;
+      double x = frame[ k ] - x0;
+      S   += w;
+      Sx  += w * x;
+      Sy  += w * It[ k ];
+      Sxx += w * x * x;
+      Sxy += w * x * It[ k ];
+   }
+   double D = S * Sxx - Sx * Sx;
+   if ( !( D > 0e0 ) )
+   {
+      return false;
+   }
+   b = ( S * Sxy - Sx * Sy ) / D;
+   a = ( Sxx * Sy - Sx * Sxy ) / D;
+   double chi2 = 0e0;
+   for ( int k : idx )
+   {
+      double w   = have_sd && It_sd[ k ] > 0e0 ? 1e0 / ( It_sd[ k ] * It_sd[ k ] ) : 1e0;
+      double res = It[ k ] - a - b * ( frame[ k ] - x0 );
+      chi2 += w * res * res;
+   }
+   chi2r = chi2 / ( n - 2 );
+   var_b = S / D * ( have_sd ? max( 1e0, chi2r ) : chi2r );
+   return true;
+}
+
+// the average of I(t) over the region, its sd and reduced chi^2 about that average, and its drift across the
+// region from a straight line fitted to it (all weighted by 1/sd^2 when the frames have sd); each frame against
+// the (1/sd^2 weighted) mean of the region's other frames, over the whole curve:
 // chi^2 = sum_q ( I_k - mean_others )^2 / ( sd_k^2 + var( mean_others ) ) / points
 void US_Hydrodyn_Saxs_Buffer_Frames::compute_region( int i0, int i1, region_stats & r )
 {
@@ -455,46 +530,41 @@ void US_Hydrodyn_Saxs_Buffer_Frames::compute_region( int i0, int i1, region_stat
       return;
    }
 
-   bool   wsd = have_sd;
-   double S   = 0e0;
-   double Sx  = 0e0;
-   double Sy  = 0e0;
-   double Sxx = 0e0;
-   double Sxy = 0e0;
+   vector < int > idx;
+   double S  = 0e0;
+   double Sy = 0e0;
    for ( int k = i0; k <= i1; k++ )
    {
-      double w = wsd && It_sd[ k ] > 0e0 ? 1e0 / ( It_sd[ k ] * It_sd[ k ] ) : 1e0;
-      double x = frame[ k ] - frame[ i0 ];
-      S   += w;
-      Sx  += w * x;
-      Sy  += w * It[ k ];
-      Sxx += w * x * x;
-      Sxy += w * x * It[ k ];
+      double w = have_sd && It_sd[ k ] > 0e0 ? 1e0 / ( It_sd[ k ] * It_sd[ k ] ) : 1e0;
+      S  += w;
+      Sy += w * It[ k ];
+      idx.push_back( k );
    }
    r.mean   = Sy / S;
    r.line_a = r.mean;
    r.line_b = 0e0;
-   double D = S * Sxx - Sx * Sx;
-   if ( r.n >= 3 && D > 0e0 )
+   if ( r.n >= 2 )
    {
-      r.line_b = ( S * Sxy - Sx * Sy ) / D;
-      r.line_a = ( Sxx * Sy - Sx * Sxy ) / D;
-      double chi2 = 0e0;
+      double ss = 0e0;
       for ( int k = i0; k <= i1; k++ )
       {
-         double w   = wsd && It_sd[ k ] > 0e0 ? 1e0 / ( It_sd[ k ] * It_sd[ k ] ) : 1e0;
-         double res = It[ k ] - r.line_a - r.line_b * ( frame[ k ] - frame[ i0 ] );
-         chi2 += w * res * res;
+         double w = have_sd && It_sd[ k ] > 0e0 ? 1e0 / ( It_sd[ k ] * It_sd[ k ] ) : 1e0;
+         double d = It[ k ] - r.mean;
+         ss += w * d * d;
       }
-      double chi2r = chi2 / ( r.n - 2 );
-      double var_b = S / D;
-      if ( wsd )
+      r.it_sd = sqrt( r.n * ss / ( ( r.n - 1 ) * S ) );
+      if ( have_sd )
       {
-         // the sd of the slope from the frames' sd, larger when I(t) scatters more than they say
+         r.it_chi2r_m = ss / ( r.n - 1 );
+      }
+   }
+   double chi2r;
+   double var_b;
+   if ( fit_line( idx, frame[ i0 ], r.line_a, r.line_b, chi2r, var_b ) )
+   {
+      if ( have_sd )
+      {
          r.it_chi2r = chi2r;
-         var_b     *= max( 1e0, chi2r );
-      } else {
-         var_b     *= chi2r;
       }
       double span = frame[ i1 ] - frame[ i0 ];
       r.drift    = r.line_b * span;
@@ -551,6 +621,45 @@ void US_Hydrodyn_Saxs_Buffer_Frames::compute_region( int i0, int i1, region_stat
       }
    }
    r.have_chi2 = true;
+}
+
+// with both regions: a straight line fitted to the I(t) of all their frames, from the first to the last
+void US_Hydrodyn_Saxs_Buffer_Frames::compute_joint()
+{
+   joint = joint_fit();
+   if ( !It_ok || !cb_r2->isChecked() || !r1.ok || !r2.ok )
+   {
+      return;
+   }
+   set < int > frames_set;
+   for ( int k = r1.i0; k <= r1.i1; k++ )
+   {
+      frames_set.insert( k );
+   }
+   for ( int k = r2.i0; k <= r2.i1; k++ )
+   {
+      frames_set.insert( k );
+   }
+   vector < int > idx( frames_set.begin(), frames_set.end() );
+   joint.n  = (int) idx.size();
+   joint.k0 = idx.front();
+   joint.k1 = idx.back();
+   double var_b;
+   if ( !fit_line( idx, frame[ joint.k0 ], joint.a, joint.b, joint.chi2r, var_b ) )
+   {
+      return;
+   }
+   double span     = frame[ joint.k1 ] - frame[ joint.k0 ];
+   joint.change    = joint.b * span;
+   joint.change_sd = sqrt( var_b ) * span;
+   joint.ok        = true;
+}
+
+void US_Hydrodyn_Saxs_Buffer_Frames::set_region_boxes( const region_stats & r, QLineEdit * le_avg, QLineEdit * le_sd, QLineEdit * le_chi2 )
+{
+   le_avg ->setText( r.ok ? us_frames_num( r.mean ) : QString() );
+   le_sd  ->setText( r.ok && r.n >= 2 ? us_frames_num( r.it_sd ) : QString() );
+   le_chi2->setText( r.ok && r.n >= 2 && have_sd ? us_frames_num( r.it_chi2r_m ) : QString() );
 }
 
 QString US_Hydrodyn_Saxs_Buffer_Frames::region_text( const QString & name, const region_stats & r )
@@ -630,6 +739,12 @@ void US_Hydrodyn_Saxs_Buffer_Frames::regions_changed()
    {
       compute_region( b0, b1, r2 );
    }
+   compute_joint();
+   set_region_boxes( r1, le_r1_avg, le_r1_sd, le_r1_chi2 );
+   set_region_boxes( r2, le_r2_avg, le_r2_sd, le_r2_chi2 );
+   le_r2_avg ->setEnabled( cb_r2->isChecked() );
+   le_r2_sd  ->setEnabled( cb_r2->isChecked() );
+   le_r2_chi2->setEnabled( cb_r2->isChecked() );
 
    QStringList lines;
    if ( !It_ok )
@@ -672,6 +787,27 @@ void US_Hydrodyn_Saxs_Buffer_Frames::regions_changed()
          if ( overlap )
          {
             t += us_tr( "; the regions overlap" );
+         }
+         lines << t + ".";
+      }
+      if ( joint.ok )
+      {
+         QString t = QString( us_tr( "Line fitted to the I(t) of both regions (red, dashed): from frame %1 to frame %2 it changes by %3% +/- %4%" ) )
+            .arg( frame_text[ joint.k0 ] )
+            .arg( frame_text[ joint.k1 ] )
+            .arg( us_frames_num( 100e0 * joint.change / joint.a ) )
+            .arg( us_frames_num( 100e0 * joint.change_sd / fabs( joint.a ) ) );
+         if ( joint.change_sd > 0e0 )
+         {
+            t += QString( us_tr( " (%1 sd)" ) ).arg( QString::number( fabs( joint.change ) / joint.change_sd, 'f', 1 ) );
+         }
+         if ( have_sd )
+         {
+            t += QString( us_tr( ", reduced chi^2 of I(t) about it %1 over %2 frames (each region about its own line: %3, %4)" ) )
+               .arg( us_frames_num( joint.chi2r ) )
+               .arg( joint.n )
+               .arg( r1.n >= 3 ? us_frames_num( r1.it_chi2r ) : QString( "-" ) )
+               .arg( r2.n >= 3 ? us_frames_num( r2.it_chi2r ) : QString( "-" ) );
          }
          lines << t + ".";
       }
@@ -825,12 +961,26 @@ void US_Hydrodyn_Saxs_Buffer_Frames::replot_It( bool rescale )
          add_marker( r.i0, colors[ j ], j ? "2" : "1" );
          add_marker( r.i1, colors[ j ], j ? "2" : "1" );
       }
+      if ( joint.ok )
+      {
+         double x[ 2 ] = { frame[ joint.k0 ], frame[ joint.k1 ] };
+         double y[ 2 ] = { joint.a, joint.a + joint.change };
+         if ( !log_y || ( y[ 0 ] > 0e0 && y[ 1 ] > 0e0 ) )
+         {
+            QwtPlotCurve * c = new QwtPlotCurve( us_tr( "fit to both regions" ) );
+            c->setStyle( QwtPlotCurve::Lines );
+            c->setPen( QPen( Qt::red, 2, Qt::DashLine ) );
+            c->setSamples( x, y, 2 );
+            c->attach( plot );
+         }
+      }
    }
 
    if ( rescale )
    {
       plot_zoomer = new ScrollZoomer( plot->canvas() );
       plot_zoomer->setRubberBandPen( QPen( Qt::yellow, 0, Qt::DotLine ) );
+      plot_zoomer->setTrackerPen( QPen( Qt::red ) );
    }
    plot->replot();
 }

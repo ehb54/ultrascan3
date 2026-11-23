@@ -545,13 +545,47 @@ void US_Hydrodyn_Saxs_Hplc::plot_errors_jump_markers()
 void US_Hydrodyn_Saxs_Hplc::resize_plots() {
    // qDebug() << "hplc::resize_plots()";
    plot_dist->enableAxis( QwtPlot::xBottom, !plot_errors->isVisible() );
-   if ( plot_errors->isVisible() ) {
-      vbl_plot_group->setStretchFactor( qs_plots, 80 );
-      vbl_plot_group->setStretchFactor( l_plot_errors, 20 );
-   } else {
-      vbl_plot_group->setStretchFactor( qs_plots, 0 );
-      vbl_plot_group->setStretchFactor( l_plot_errors, 0 );
+   // the residual plot is in the plots' splitter (its buttons below it): when it is shown, it starts with a fifth
+   // of the main plot's height, which can then be changed with the splitter's handle
+   vbl_plot_group->setStretchFactor( qs_plots, plot_errors->isVisible() ? 80 : 0 );
+   vbl_plot_group->setStretchFactor( l_plot_errors, 0 );
+   if ( plot_errors->isVisible() && !plot_errors_shown ) {
+      QList<int> qs_sizes = qs_plots->sizes();
+      int i_dist   = qs_plots->indexOf( plot_dist );
+      int i_errors = qs_plots->indexOf( plot_errors );
+      if ( i_dist >= 0 && i_errors >= 0 ) {
+         int total = qs_sizes[ i_dist ] + qs_sizes[ i_errors ];
+         qs_sizes[ i_dist   ] = qMax( 1, (int)( 0.8 * total ) );
+         qs_sizes[ i_errors ] = qMax( 1, total - qs_sizes[ i_dist ] );
+         qs_plots->setSizes( qs_sizes );
+      }
    }
+   plot_errors_shown = plot_errors->isVisible();
+   align_plot_errors();
+}
+
+// the left axes of the main plot and of the residual plot get the same width (tick labels and title), so that
+// their canvases, and their x axes, line up
+void US_Hydrodyn_Saxs_Hplc::align_plot_errors() {
+   QwtScaleWidget * sw[ 2 ] = { plot_dist->axisWidget( QwtPlot::yLeft ), plot_errors->axisWidget( QwtPlot::yLeft ) };
+   double extent[ 2 ];
+   int    dim   [ 2 ];
+   int    max_dim = 0;
+   for ( int k = 0; k < 2; ++k ) {
+      sw[ k ]->scaleDraw()->setMinimumExtent( 0e0 );
+      extent[ k ] = sw[ k ]->scaleDraw()->extent( sw[ k ]->font() );
+      dim   [ k ] = sw[ k ]->dimForLength( QWIDGETSIZE_MAX, sw[ k ]->font() );
+      max_dim     = qMax( max_dim, dim[ k ] );
+   }
+   if ( plot_errors->isVisible() ) {
+      for ( int k = 0; k < 2; ++k ) {
+         if ( dim[ k ] < max_dim ) {
+            sw[ k ]->scaleDraw()->setMinimumExtent( extent[ k ] + max_dim - dim[ k ] );
+         }
+      }
+   }
+   plot_dist  ->updateLayout();
+   plot_errors->updateLayout();
 }
 
 void US_Hydrodyn_Saxs_Hplc::resize_guinier_plots() {
@@ -618,7 +652,6 @@ void US_Hydrodyn_Saxs_Hplc::errors()
       // qDebug() << "::errors() plot_errors isVisible(), no further mode checking";
    } else {
 
-      US_Plot_Util::align_plot_extents( { plot_dist, plot_errors } );
       connect(((QObject*)plot_dist  ->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_plot_errors, SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
       connect(((QObject*)plot_errors->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_plot_dist  , SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
       
