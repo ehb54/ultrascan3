@@ -550,7 +550,13 @@ void US_MPI_Analysis::time_mc_iterations()
 
    // Now do bulk of test to see if nearing allowed time
    const QDateTime currTime        = QDateTime::currentDateTime();
-   const int       mins_so_far     = ( startTime.secsTo( currTime ) + 59 ) / 60;
+   const qint64 elapsed_seconds = startTime.secsTo( currTime );
+   // No iteration rate is measurable within the same clock second. A
+   // backward clock step is also unsuitable for estimating remaining time.
+   if ( elapsed_seconds <= 0 )
+      return;
+
+   const int       mins_so_far     = ( elapsed_seconds + 59 ) / 60;
    const int       mins_left_allow = max_walltime - mins_so_far;
    int mc_iters_left   = ( mins_left_allow * mc_iteration ) / mins_so_far;
    mc_iters_left       = ( mc_iters_left / mgroup_count ) * mgroup_count;
