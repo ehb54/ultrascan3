@@ -2613,6 +2613,7 @@ void US_AstfemMath::initSimData( US_DataIO::RawData& simdata,
       sscan.plateau          = escan->plateau;
       sscan.delta_r          = escan->delta_r;
       sscan.interpolated     = escan->interpolated;
+      sscan.nz_stddev        = false; // a simulation has no standard deviations
 
       sscan.rvalues.fill( rvalue, nconc );
 

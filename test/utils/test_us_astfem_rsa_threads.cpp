@@ -372,7 +372,7 @@ TEST_F( TestUSAstfemRsaThreads, TimestateWithoutDefinitionsFailsToLoad )
 }
 
 // Solves in threads that share one simparams with no timestate loaded (as
-//  us_fematch's ThreadWorker does):  one of them builds the timestate, the
+//  US_ThreadWorker does):  one of them builds the timestate, the
 //  others use it, and all give the values of the same solve alone.  Without
 //  the lock around the timestate build this aborts in 3 of 3 runs.
 TEST_F( TestUSAstfemRsaThreads, SharedSimparamsWithoutTimestate )
