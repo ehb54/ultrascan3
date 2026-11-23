@@ -1707,7 +1707,14 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
                 US_DB2*   dbP = ( sibSValue( "general", "dbdisk" ) == "DB" ) ? new US_DB2( pw.getPasswd() ) : NULL;
                 if ( dbP != NULL )
                 {
-                   US_Rotor::readLabsDB( labs, dbP );
+                   // On a failed read the lab list stays empty
+                   const US_Rotor::Status labStatus =
+                      ( dbP->lastErrno() == US_DB2::OK ) ? US_Rotor::readLabsDB( labs, dbP ) : US_Rotor::MISC_ERROR;
+                   if ( labStatus != US_Rotor::ROTOR_OK && labStatus != US_Rotor::NOT_FOUND )
+                   {
+                      QMessageBox::warning(
+                         this, tr( "Database Problem" ), tr( "Could not read the labs from the database:\n" ) + dbP->lastError() );
+                   }
                 }
                 else
                 {
@@ -5598,10 +5605,18 @@ DbgLv(1) << "EGSo:detS:      chanu" << chanuse[sdescr];
    for ( int ii = 0; ii < sdescrs.count(); ii++ )
    {
       US_Solution soludata;
-      QString sdescr     = sdescrs[ ii ];
-      solutionData( sdescr, soludata );
+      QString     sdescr = sdescrs[ii];
 
       dtext   += tr( "  Solution:      " ) + sdescr + "\n";
+
+      if ( !solutionData( sdescr, soludata ) )
+      { // Show the channels, but no buffer or analytes, for an unread solution
+         dtext += tr( "    (solution details could not be read)\n" );
+         dtext += tr( "    Channels used:  " ) + chanuse[sdescr] + "\n";
+         dtext += "\n";
+         continue;
+      }
+
       dtext   += tr( "    Buffer:        " ) + soludata.buffer.description + "\n";
       for ( int jj = 0; jj < soludata.buffer.component.count(); jj++ )
       {
@@ -5662,21 +5677,34 @@ DbgLv(1) << "EGSo:solDat:    OLDfound descr" << soludata.solutionDesc;
       }
 
       else
-      {  // Not fetched before:  do so now and map it
+      { // Not fetched before:  do so now and map it if read
          US_Passwd pw;
          US_DB2* dbP   = ( sibSValue( "general", "dbdisk" ) == "DB" )
                          ? new US_DB2( pw.getPasswd() ) : NULL;
+         QString   error;
          if ( dbP != NULL )
          {
             int stat      = soludata.readFromDB( solID.toInt(), dbP );
             found         = ( stat == US_DB2::OK );
-DbgLv(1) << "EGSo:solDat:    NEWfound descr" << soludata.solutionDesc << stat;
+            error         = dbP->lastError();
+            DbgLv( 1 ) << "EGSo:solDat:    NEWfound descr" << soludata.solutionDesc << stat;
          }
          else
          {
-            found = ( soludata.readFromDisk( solID ) == US_DB2::OK );
+            int stat = soludata.readFromDisk( solID );
+            found    = ( stat == US_DB2::OK );
+            error    = tr( "Disk read status %1" ).arg( stat );
          }
-         solu_data[ sdescr ] = soludata;
+
+         if ( found )
+         {
+            solu_data[sdescr] = soludata;
+         }
+         else
+         { // Not mapped, so the next lookup reads it again
+            QMessageBox::warning(
+               this, tr( "Solution Not Read" ), tr( "Could not read solution \"%1\":\n" ).arg( sdescr ) + error );
+         }
       }
    }
 
@@ -5975,8 +6003,7 @@ void US_ExperGuiSolutions::commentStrings( const QString solname,
                                            QString& comment, QStringList& comstrngs,
                                            const int row )
 {
-   US_Solution soludata;
-   solutionData( solname, soludata );
+   // The comment uses the solution name only, so no solution data is read
    comstrngs.clear();
 
    // Start with solution name/description

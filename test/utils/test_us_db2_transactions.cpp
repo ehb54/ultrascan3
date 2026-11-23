@@ -186,9 +186,9 @@ class US_DB2_LiveTransaction : public ::testing::Test
       bool                    createdStatusFunctions = false;
 };
 
-// The error handling every caller does after a failed query -- statusQuery()
-// asks for last_error() -- refreshes the server status, which no longer shows
-// a transaction.  The rollback must not read that as an implicit commit.
+// Any statement a caller runs after a failed query, such as an error lookup,
+// refreshes the server status, which no longer shows a transaction.  The
+// rollback must not read that as an implicit commit.
 TEST_F( US_DB2_LiveTransaction, RollbackAfterDeadlockNamesTheDeadlock )
 {
    US_DB2* victim = deadlock();
@@ -323,6 +323,21 @@ TEST_F( US_DB2_LiveTransaction, QueryReadsTheStatusOfAProcedureThatReturnsNoSet 
    first->query( QString( "CALL %1( 0 )" ).arg( silentProcedure ) );
    EXPECT_EQ( first->lastErrno(), IUS_DB2::OK );
    EXPECT_TRUE( first->lastError().isEmpty() ) << first->lastError().toStdString();
+}
+
+// A CALL the server refuses itself reports the server's reason, not what
+// last_error() still holds from an earlier procedure.
+TEST_F( US_DB2_LiveTransaction, StatusQueryKeepsTheServersReasonForARefusedCall )
+{
+   const QString earlier = QString( "silent status %1" ).arg( IUS_DB2::EMPTY );
+   first->query( QString( "CALL %1( %2 )" ).arg( silentProcedure ).arg( IUS_DB2::EMPTY ) );
+   ASSERT_EQ( scalar( *first, "SELECT last_error()" ), earlier );
+
+   // The procedure takes one argument.
+   EXPECT_EQ( first->statusQuery( QString( "CALL %1()" ).arg( silentProcedure ) ), IUS_DB2::DBERROR );
+   EXPECT_EQ( first->lastErrno(), IUS_DB2::DBERROR );
+   EXPECT_TRUE( first->lastError().contains( silentProcedure ) ) << first->lastError().toStdString();
+   EXPECT_NE( first->lastError(), earlier );
 }
 #endif
 } // namespace

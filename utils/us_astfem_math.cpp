@@ -21,7 +21,8 @@
 #endif
 
 //----------------------------------------------------------------------
-// Load a speed profile from the speed steps, through a private timestate
+// Templates for the private timestate directory: one under the base
+// directory, then one under the fallback when it differs; empty ones skipped
 //----------------------------------------------------------------------
 QStringList US_AstfemMath::timestate_dir_templates( const QString& base, const QString& fallback )
 {
@@ -38,6 +39,8 @@ QStringList US_AstfemMath::timestate_dir_templates( const QString& base, const Q
    return templates;
 }
 
+//----------------------------------------------------------------------
+// Load a speed profile from the speed steps, through a private timestate
 //----------------------------------------------------------------------
 int US_AstfemMath::timestate_from_speedsteps( US_SimulationParameters& simparams, US_DataIO::RawData& sim_data )
 {

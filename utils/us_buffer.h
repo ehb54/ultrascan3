@@ -103,18 +103,32 @@ class US_UTIL_EXTERN US_Buffer
 
       //! \brief Read a buffer from a disk file
       //! \param filename  The full path, including filename.
-      //! \return A boolean success or failure
+      //! \return A boolean success or failure. The file's extinction, refraction
+      //!         and fluorescence values replace the ones the buffer held. On
+      //!         failure (an unreadable file, malformed or truncated XML, or no
+      //!         buffer element) the buffer is unchanged.
       bool readFromDisk( const QString& );
 
       //! \brief Write a new buffer to the DB.
       //! \param db An open database connection
       //! \param private_buffer An indication to mark the buffer
       //!        public "0" or private "1";
+      //! \param error Optional diagnostic output, cleared on entry. Preserves
+      //!        transaction errors even if rollback changes the DB error state.
       //! \return The bufferID of the new buffer, or a negative error: -9 failed
       //!         lookup, -1 failed insert, -2 failed update, -3 failed component
       //!         delete, -4 failed component write, -5 failed extinction-profile
-      //!         write (the disk copy is still written), -6 failed disk copy.
-      int saveToDB( IUS_DB2* = 0, const QString = "1" );
+      //!         write, -6 failed disk copy (DB already committed), -7 failed begin,
+      //!         -8 failed commit (rolled back, nothing kept), -10 unconfirmed rollback
+      //!         (the error text says whether anything may have been kept).
+      //! Joins an existing transaction, otherwise owns a new one. When joining,
+      //! the owner MUST roll back on failure; success returns a provisional ID,
+      //! leaves spectrum flags pending, and does not write a disk copy.
+      //! Owned DB writes use one transaction; DB failures restore the previous bufferID
+      //! and leave spectrum flags pending. Requires transactional tables and
+      //! procedures without implicit commits (see IUS_DB2::beginTransaction).
+      //! An unconfirmed rollback (-10) requires reconciliation before retrying.
+      int            saveToDB( IUS_DB2* = 0, const QString = "1", QString* error = nullptr );
 
       //! \brief Read a buffer from the DB
       //! \param db  An open database connection

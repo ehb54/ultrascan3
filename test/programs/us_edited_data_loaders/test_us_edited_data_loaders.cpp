@@ -87,6 +87,10 @@ class FakeDB : public IUS_DB2
       {
          return true;
       }
+      bool transactionActive() const override
+      {
+         return false;
+      }
       bool beginTransaction( QString& ) override
       {
          return true;

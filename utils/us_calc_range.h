@@ -2,7 +2,7 @@
 //! \brief Range sums, fractions and weighted means of a model.
 //!
 //! Algorithm "range_summary".  The results equal those of the GMP reporter
-//! (us_reporter_gmp.cpp:  distrib_info and velmwl_range_fraction) for the
+//! (us_reporter_gmp.cpp:  distrib_info and distrib_info_velmwl) for the
 //! same model:  bounds are scaled and compared as there, and every sum runs
 //! in component order with the same double operations.  The divisions are
 //! not guarded either:  where the reporter divides by zero the result is

@@ -16,12 +16,15 @@ endif()
 # Unit tests of the calculations (namespace US_Calc).
 add_executable(test_us_calc
         test_us_calc_preparation.cpp
+        test_us_calc_report.cpp
         test_us_calc_rules.cpp
         test_us_calc_units.cpp
         test_us_calc_validation.cpp
         test_us_calc_version.cpp
         )
 target_link_libraries(test_us_calc PRIVATE ${US_CALC_LINK_TARGET} gtest gtest_main)
+# us_reporter_gmp_duration.h:  the report's duration format (header only)
+target_include_directories(test_us_calc PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../programs/us_reporter_gmp)
 set_target_properties(test_us_calc PROPERTIES AUTOMOC OFF AUTOUIC OFF AUTORCC OFF)
 include(GoogleTest)
 # One label, as in test/utils; ctest -L calc and -L gtest both match it.

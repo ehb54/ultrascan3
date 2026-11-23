@@ -1197,9 +1197,13 @@ void US_SolutionMgrNew::newAccepted()
       }
    }
 
-   else
+   else if ( !solution->saveToDisk() )
    {
-      solution->saveToDisk();
+      QMessageBox::warning( this,
+                            tr( "Solution Disk Save Error" ),
+                            tr( "The solution, its buffer or one of its analytes could not be "
+                                "written to the local disk.\n" ) );
+      return;
    }
 
    emit newSolAccepted();
@@ -1705,8 +1709,14 @@ DbgLv(1) << "Inside editAccepted(): " << "ExpID: " << experimentID << ", cID: " 
 
    }
 
-   else
-      solution->saveToDisk();
+   else if ( !solution->saveToDisk() )
+   {
+      QMessageBox::warning( this,
+                            tr( "Solution Disk Save Error" ),
+                            tr( "The solution, its buffer or one of its analytes could not be "
+                                "written to the local disk.\n" ) );
+      return;
+   }
 
   emit editSolAccepted();
 }

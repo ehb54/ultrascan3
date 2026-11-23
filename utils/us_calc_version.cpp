@@ -7,7 +7,7 @@ namespace US_Calc
 {
 QString library_version()
 {
-   return "0.2.0";
+   return "1.0.0";
 }
 
 QVector<AlgorithmVersion> algorithms()
@@ -47,6 +47,34 @@ QVector<AlgorithmVersion> algorithms()
         1,
         "A report item applies to a model when every '-' part of its method (PCSA methods count as PCSA) "
         "occurs in the model's analysis label, as distrib_info" },
+      { "report_item",
+        1,
+        "A report item on a model as distrib_info:  range_summary for a range type, (0 / C) * 100 for any other "
+        "type, passed when |fraction - target| <= tolerance (percentage points)" },
+      { "velmwl_report_item",
+        1,
+        "A report item on a VELOCITY-MWL species model as distrib_info_velmwl:  0 for a model without components, "
+        "unsupported (n/a) for a type that is not a range type, 0 when the total is not positive, otherwise "
+        "range_summary's fraction; passed when |fraction - target| <= tolerance (percentage points)" },
+      { "report_replicate_group",
+        1,
+        "A replicate subgroup as the GMP reporter:  one subgroup per wavelength of the included triples; members are the "
+        "evaluated items equal to the first channel's item in type, method, bounds and QString::number of the "
+        "integration value; replicate_summary of the members (0 when none); SD shown when more than one triple is "
+        "listed; passed when the mean is within tolerance percent of the target (relative)" },
+      { "report_run_checks",
+        1,
+        "The GMP reporter's run checks:  total concentration (target times the loading-concentration factor), "
+        "experiment duration, loading volume and run duration within tolerance percent of the target (relative); "
+        "RMSD at most the limit; intensity above the minimum; temperature within 0.5 C and speed within 4 rpm; "
+        "run duration target = step duration + speed / accel; loading volume "
+        "((bottom + stretch)^2 - meniscus^2) * (1000 * pathlength * angle * pi) / 360 with stretch "
+        "c0 * speed + c1 * speed^2" },
+      { "report_lookup",
+        1,
+        "The GMP reporter's inputs for a triple's model:  triple, cell, wavelength and model name by position in the "
+        "description; the first channel whose name the triple contains (interference channels only for interference "
+        "triples); the single intensity, or the first key the triple contains (NaN when none); mask rows by keyword" },
    };
 }
 

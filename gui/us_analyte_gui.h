@@ -171,11 +171,13 @@ class US_GUI_EXTERN US_AnalyteMgrSelect: public US_Widgets
       bool analyte_in_use  ( QString& );
       void info_analyte    ( void );
       void accept_analyte  ( void );
-      void select_analyte  ( QListWidgetItem* );
+      bool    select_analyte( QListWidgetItem* );
       void select_analyte  ( );
-      void read_from_disk  ( QListWidgetItem* );
-      void read_from_db    ( QListWidgetItem* );
-      void read_from_db    ( const QString&   );
+      void    show_no_analytes( void );
+      bool    read_from_disk( QListWidgetItem* );
+      bool    read_from_db( QListWidgetItem* );
+      bool    read_from_db( const QString& );
+      void    show_load_failure( const QString& );
       void search          ( const QString& = QString() );
 //      void show_component  ( const QString&, double );
       void reject          ( void );
@@ -334,8 +336,8 @@ class US_GUI_EXTERN US_AnalyteMgrNew : public US_Widgets
       void spectrum        ( void );
       void newAccepted     ( void );
       void newCanceled     ( void );
-      void write_db        ( void );
-      void write_disk      ( void );
+      bool write_db( void );
+      bool write_disk( void );
       void help( void ) { showHelp.show_help( "analyte/analyte_new.html" ); };
 
       void manage_sequence ( void );
@@ -412,9 +414,9 @@ class US_GUI_EXTERN US_AnalyteMgrEdit : public US_Widgets
      void spectrum_class    ( void );
       void editAccepted( void );
       void editCanceled( void );
-      void write_db    ( void );
-      void write_disk  ( void );
-     
+      bool write_db( void );
+      bool write_disk( void );
+
       void help( void ) { showHelp.show_help( "analyte/analyte_edit.html" ); };
       void change_spectrum( void ); 
       void accept_enable  ( void ); 
