@@ -25,7 +25,9 @@ class US_UTIL_EXTERN US_ExtProfile
       //! \param  compType   Component type ("Buffer"|"Analyte"|"Sample")
       //! \param  valType    Reference for returned value type
       //! \param  extinction Reference for returned extinction profile
-      //! \return            Profile ID of fetched profile (-1 if none)
+      //! \return            Profile ID of fetched profile; -1 if the query
+      //!                    fails, finds no row or the XML holds no profile,
+      //!                    in which case valType and extinction are unchanged
       static int fetch_eprofile( IUS_DB2*, const int, QString&, QString&,
                                  QMap< double, double >& );
 
@@ -35,8 +37,8 @@ class US_UTIL_EXTERN US_ExtProfile
       //! \param  compType   Pointer for returned component Type
       //! \param  valType    Pointer for returned value Type
       //! \param  extinction Reference for returned extinction profile
-      //! \return            Count of profiles found (1 or 0)
-      //! \return            Flag of parse success
+      //! \return            True for a well-formed profile or legacy analyte XML.
+      //!                    Failure leaves all outputs unchanged.
       static bool parse_eprofile( QString&, int*, QString*, QString*,
                                   QMap< double, double >& );
 
@@ -47,7 +49,8 @@ class US_UTIL_EXTERN US_ExtProfile
       //! \param  valueType  Value type ("absorbance"|"molarExtinction"|
       //!                    "massExtinction"|(other))
       //! \param  extinction Extinction profile to store
-      //! \return            Profile ID of created profile record (-1 if none)
+      //! \return            Profile ID of the created or updated record; -1 if
+      //!                    the lookup, update or insert fails
       static int create_eprofile( IUS_DB2*, const int, QString&, QString&,
                                   QMap< double, double >& );
 
@@ -57,7 +60,7 @@ class US_UTIL_EXTERN US_ExtProfile
       //! \param  valueType  Value type ("absorbance"|"molarExtinction"|
       //!                    "massExtinction"|(other))
       //! \param  extinction Extinction profile to store
-      //! \param  xmlout     Reference for XML string to create
+      //! \param  xmlout     Reference for XML string to replace (double round-trip precision)
       //! \return            Flag of creation success
       static bool xml_eprofile( const int, QString&, QString&,
                                 QMap< double, double >&, QString& );

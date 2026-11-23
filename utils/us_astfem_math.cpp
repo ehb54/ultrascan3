@@ -23,6 +23,22 @@
 //----------------------------------------------------------------------
 // Load a speed profile from the speed steps, through a private timestate
 //----------------------------------------------------------------------
+QStringList US_AstfemMath::timestate_dir_templates( const QString& base, const QString& fallback )
+{
+   const QString pattern = QStringLiteral( "/us3-tmst-XXXXXX" );
+   QStringList   templates;
+   if ( !base.isEmpty() )
+   {
+      templates << base + pattern;
+   }
+   if ( !fallback.isEmpty() && fallback != base )
+   {
+      templates << fallback + pattern;
+   }
+   return templates;
+}
+
+//----------------------------------------------------------------------
 int US_AstfemMath::timestate_from_speedsteps( US_SimulationParameters& simparams, US_DataIO::RawData& sim_data )
 {
    int dbg_level = US_Settings::us_debug();
@@ -34,20 +50,22 @@ int US_AstfemMath::timestate_from_speedsteps( US_SimulationParameters& simparams
    const QString base = US_Settings::tmpDir();
    QDir().mkpath( base );
 #endif
-   const QString                  pattern = QStringLiteral( "/us3-tmst-XXXXXX" );
-   std::unique_ptr<QTemporaryDir> tdir( new QTemporaryDir( base + pattern ) );
-
-   if ( !tdir->isValid() && base != QDir::tempPath() )
+   std::unique_ptr<QTemporaryDir> tdir;
+   for ( const QString& path_template : timestate_dir_templates( base, QDir::tempPath() ) )
    {
-      tdir.reset( new QTemporaryDir( QDir::tempPath() + pattern ) );
+      tdir.reset( new QTemporaryDir( path_template ) );
+      if ( tdir->isValid() )
+      {
+         break;
+      }
    }
 
-   if ( !tdir->isValid() )
+   if ( !tdir || !tdir->isValid() )
    {
       DbgLv( 0 ) << "US_AstfemMath::timestate_from_speedsteps: could not create"
                     " a temporary directory in"
-                 << base << tdir->errorString();
-      simparams.sim_speed_prof.clear(); // No profile:  not even the default
+                 << base << ( tdir ? tdir->errorString() : QString( "No temporary path" ) );
+      simparams.sim_speed_prof.clear();
       return -1;
    }
 
@@ -97,7 +115,10 @@ int US_AstfemMath::writetimestate( const QString&           tmst_fpath,
 
 DbgLv(1)<< "AMATH:wrts: number of speeds=" << nspeed
  << "Time state file path=" << tmst_fpath;
-simparams.debug();
+if ( dbg_level > 0 )
+{
+   simparams.debug();
+}
    timestate.set_key( "Time",        "I4" );
    timestate.set_key( "RawSpeed",    "F4" );
    timestate.set_key( "SetSpeed",    "I4" );
@@ -2592,6 +2613,7 @@ void US_AstfemMath::initSimData( US_DataIO::RawData& simdata,
       sscan.plateau          = escan->plateau;
       sscan.delta_r          = escan->delta_r;
       sscan.interpolated     = escan->interpolated;
+      sscan.nz_stddev        = false; // a simulation has no standard deviations
 
       sscan.rvalues.fill( rvalue, nconc );
 

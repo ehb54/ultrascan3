@@ -236,9 +236,14 @@ void US_SolutionMgrSelect::delete_solution( void )
          return;
       }
 
-      if ( solution->countInProtocols( &db ) > 0 )
+      const int uses = solution->countInProtocols( &db );
+      if ( uses > 0 )
       {
          status = IUS_DB2::SOLUT_IN_USE;
+      }
+      else if ( uses < 0 )
+      { // The protocols could not be read, so the solution may still be in use
+         status = IUS_DB2::DBERROR;
       }
       else
       {

@@ -3,26 +3,16 @@
 #include "us3_test_io.h"
 #include "us_settings.h"
 #include "us_util.h"
-#include <QCoreApplication>
-#include <QDateTime>
 #include <QDir>
-#include <QFileInfo>
-#include <QStandardPaths>
-#include <QUuid>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-using ::testing::_;
-using ::testing::Return;
-using ::testing::HasSubstr;
-using ::testing::Not;
 using ::qt_matchers::QStringContains;
 using ::qt_matchers::QStringEq;
-using ::qt_matchers::QStringIsEmpty;
+using ::testing::HasSubstr;
+using ::testing::Not;
 
-class US_UtilTest : public QtTestBase
-{
-};
+using US_UtilTest = QtTestBase;
 
 // Test getToken method
 TEST_F(US_UtilTest, GetTokenBasicFunctionality) {
@@ -377,19 +367,7 @@ TEST_F(US_UtilTest, ListlistParseInvalidString) {
 }
 
 // Edge case and error handling tests
-class US_UtilEdgeCaseTest : public QtTestBase
-{
-   protected:
-      void SetUp() override
-      {
-         ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
-      }
-
-      void TearDown() override
-      {
-         QtTestBase::TearDown();
-      }
-};
+using US_UtilEdgeCaseTest = QtTestBase;
 
 TEST_F(US_UtilEdgeCaseTest, CompressedTripleEdgeCases) {
     // Test with longer cell numbers

@@ -25,7 +25,9 @@ class US_UTIL_EXTERN US_Crypto
         \param  ciphertext The string to be decrypted.
         \param  pw         Password used to encrypt the string
         \param  initVector An initialization string used when the string was encrypted.
-        \retval plaintext  The plaintext password.
+        \retval plaintext  The plaintext password, or an empty string on failure. The
+                           ciphertext and initVector must be hex digits only (either case,
+                           even length); any other character, including whitespace, fails.
     */
       static QString     decrypt( const QString& ciphertext, const QString& pw, const QString& initVector );
 
@@ -34,7 +36,8 @@ class US_UTIL_EXTERN US_Crypto
       //! \param  ciphertext The string to be decrypted.
       //! \param  pw         Password used to encrypt the string
       //! \param  initVector An initialization string used when the string was encrypted.
-      //! \retval plaintext  The plaintext password.
+      //! \retval plaintext  The plaintext password, or an empty string on failure; the
+      //!                    inputs must be hex digits only, as for decrypt().
       static QString     decryptLegacy( const QString& ciphertext, const QString& pw, const QString& initVector );
 
       //! \brief Fill a QByteArray with cryptographically secure random bytes.

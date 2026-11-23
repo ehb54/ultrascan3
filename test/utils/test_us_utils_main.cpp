@@ -6,11 +6,12 @@
 #include "unit_resources.h"
 #endif
 #include "us_defines.h"
+#include "us_math2.h"
 #include "us_settings.h"
-#include <QApplication>
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSettings>
@@ -46,7 +47,10 @@ class QtTestEnvironment : public ::testing::Environment
          sandbox_ = std::make_unique<QTemporaryDir>( parent + "/ultrascan3-utils-tests-XXXXXX" );
          ASSERT_TRUE( sandbox_->isValid() ) << "Could not create the process-local test sandbox";
 
-         const QString root          = sandbox_->path();
+         // Canonical, so paths under it match QDir::currentPath() where the
+         // temporary directory is under a symlink, such as /var on macOS.
+         const QString root = QFileInfo( sandbox_->path() ).canonicalFilePath();
+         ASSERT_FALSE( root.isEmpty() ) << "Could not resolve the test sandbox path";
          const QString settingsRoot  = root + "/settings";
          const QString workRoot      = root + "/work";
          const QString importRoot    = workRoot + "/imports";
@@ -82,7 +86,7 @@ class QtTestEnvironment : public ::testing::Environment
          {
             static int   argc   = 1;
             static char* argv[] = { const_cast<char*>( "test" ) };
-            app_                = new QCoreApplication( argc, argv );
+            new QCoreApplication( argc, argv );
          }
          qputenv( "QT_QPA_PLATFORM", "offscreen" );
 
@@ -96,11 +100,6 @@ class QtTestEnvironment : public ::testing::Environment
          US_Settings::set_debug_text( QStringList() );
       }
 
-      void TearDown() override
-      {
-         // Normal cleanup is owned by QTemporaryDir.
-      }
-
       bool removeSandbox()
       {
          const bool cwdRestored = QDir::setCurrent( originalCwd_ );
@@ -111,12 +110,13 @@ class QtTestEnvironment : public ::testing::Environment
    private:
       bool                           deathTestChild_;
       QString                        originalCwd_;
-      QCoreApplication*              app_ = nullptr;
       std::unique_ptr<QTemporaryDir> sandbox_;
 };
 
 class UtilityCaseIsolation : public ::testing::EmptyTestEventListener
 {
+      static constexpr uint kCaseRandomSeed = 20261114u;
+
    public:
       explicit UtilityCaseIsolation( QtTestEnvironment& environment ) : environment_( environment )
       {
@@ -154,6 +154,9 @@ class UtilityCaseIsolation : public ::testing::EmptyTestEventListener
             }
             std::exit( 2 );
          }
+         // Every case starts from the same generator state and an empty Box-Muller cache,
+         // so results that draw random numbers do not depend on test order.
+         US_Math2::randomize( kCaseRandomSeed );
       }
       void OnTestEnd( const ::testing::TestInfo& ) override
       {

@@ -483,6 +483,8 @@ DbgLv(1) << "SV: IN";
                           edata->editID.mid( 2 ) :
                           edata->editID;
    QString dates        = "e" + editID + "_a" + analysisDate;
+   QStringList dbFailed;    // Models whose DB write failed; their disk copies remain
+   QStringList noiseFailed; // Noises whose DB write failed
    int     mciters      = mrecs_mc.size();
    QString analysisType = "PCSA";
 DbgLv(1) << "SV: model_stats size" << model_stats.size();
@@ -527,23 +529,33 @@ DbgLv(1) << "SV: analysisType" << analysisType;
    if ( ! mkdir( reppath, runID ) )
    {
       qDebug() << "*** Unable to create or find the report directory ***";
+      QApplication::restoreOverrideCursor();
+      QMessageBox::warning(
+         this, tr( "Results Not Saved" ), tr( "The report directory could not be found or created; nothing was saved." ) );
       return;
    }
 
    if ( ! US_Model::model_path( mdlpath ) )
    {
       qDebug() << "*** Unable to create or find the model directory ***";
+      QApplication::restoreOverrideCursor();
+      QMessageBox::warning(
+         this, tr( "Results Not Saved" ), tr( "The model directory could not be found or created; nothing was saved." ) );
       return;
    }
 
    if ( knois > 0  && ! US_Noise::noise_path( noipath ) )
    {
       qDebug() << "*** Unable to create or find the noise directory ***";
+      QApplication::restoreOverrideCursor();
+      QMessageBox::warning(
+         this, tr( "Results Not Saved" ), tr( "The noise directory could not be found or created; nothing was saved." ) );
       return;
    }
 
    if ( model.components.size() == 0 )
    {
+      QApplication::restoreOverrideCursor();
       QMessageBox::critical( this, tr( "Zero-Component Model" ),
          tr( "*ERROR* The model you are attempting to save\n"
              "has no components. No data was saved." ) );
@@ -630,10 +642,14 @@ DbgLv(1) << "SV: non-MC model ncomp" << model.components.size();
          model.components[ cc ].name = QString::asprintf( "SC%04d", cc + 1 );
 
       // Output the model
-      if ( dbP != NULL )
-         model.write( dbP );
-      else
+      if ( dbP == NULL )
+      {
          model.write( mname );
+      }
+      else if ( model.write( dbP ) != IUS_DB2::OK )
+      {
+         dbFailed << model.description + ": " + model.message;
+      }
    }
 
    else
@@ -668,8 +684,14 @@ DbgLv(1) << "SV: MC models     write complete  mname" << mname;
          model.description = QString( tname ).section( "/", -1, -1 )
                              .replace( ".model.xml", ".model" )
                              .replace( ".mdl.tmp",   ".model" );
-         model.write( dbP );
-         tfile.remove();
+         if ( model.write( dbP ) == IUS_DB2::OK )
+         {
+            tfile.remove();
+         }
+         else
+         { // Keep the composite file in case the local copy could not be saved either
+            dbFailed << model.description + ": " + model.message + tr( "; the composite file %1 was kept" ).arg( tname );
+         }
 DbgLv(1) << "SV: MC models     write DB from tname" << tname;
       }
 
@@ -705,11 +727,11 @@ DbgLv(1) << "SV:  Post-sum tno" << ti_noise.values[0];
       if ( err != IUS_DB2::OK )
          qDebug() << "*ERROR* writing noise" << nname;
 
-      if ( dbP != NULL )
+      if ( dbP != NULL && ti_noise.write( dbP ) != IUS_DB2::OK )
       {
-         err = ti_noise.write( dbP );
-         if ( err != IUS_DB2::OK )
-            qDebug() << "*ERROR* writing noise to DB" << ti_noise.description;
+         noiseFailed << ti_noise.description + ": " + ti_noise.message +
+                           ( err == IUS_DB2::OK ? tr( "; a local copy was saved" )
+                                                : tr( "; no local copy could be saved either" ) );
       }
 
       if ( nicount > 0 )   // Remove input noise in case re-plotted
@@ -741,11 +763,11 @@ DbgLv(1) << "SV:  Post-sum rno" << ri_noise.values[0];
       if ( err != IUS_DB2::OK )
          qDebug() << "*ERROR* writing noise" << nname;
 
-      if ( dbP != NULL )
+      if ( dbP != NULL && ri_noise.write( dbP ) != IUS_DB2::OK )
       {
-         err = ri_noise.write( dbP );
-         if ( err != IUS_DB2::OK )
-            qDebug() << "*ERROR* writing noise to DB" << ri_noise.description;
+         noiseFailed << ri_noise.description + ": " + ri_noise.message +
+                           ( err == IUS_DB2::OK ? tr( "; a local copy was saved" )
+                                                : tr( "; no local copy could be saved either" ) );
       }
 
       if ( nicount > 0 )   // Remove input noise in case re-plotted
@@ -787,8 +809,28 @@ DbgLv(1) << "mlines ptmp4File" << ptmp4File;
    // Write HTML report file
    QFile rep_f( htmlFile );
 
+   // What could not be written to the database, for the closing message
+   const auto dbFailures = [&]()
+   {
+      QString msg;
+      if ( !dbFailed.isEmpty() )
+      {
+         msg += tr( "\nThese models could not be saved to the database:\n" ) + dbFailed.join( "\n" ) + "\n";
+      }
+      if ( !noiseFailed.isEmpty() )
+      {
+         msg += tr( "\nThese noises could not be saved to the database:\n" ) + noiseFailed.join( "\n" ) + "\n";
+      }
+      return msg;
+   };
+
    if ( ! rep_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
+      QApplication::restoreOverrideCursor();
+      QMessageBox::warning(
+         this, tr( "Results Not Fully Saved" ), tr( "The report file %1 could not be written.\n" ).arg( htmlFile ) + dbFailures() );
       return;
+   }
 
    QTextStream ts( &rep_f );
    write_report( ts );
@@ -854,8 +896,16 @@ DbgLv(1) << "mlines ptmp4File" << ptmp4File;
       wmsg += tr( "\nReport files were also saved to the database." );
    }
 
+   const QString failures = dbFailures();
    QApplication::restoreOverrideCursor();
-   QMessageBox::information( this, tr( "Successfully Written" ), wmsg );
+   if ( failures.isEmpty() )
+   {
+      QMessageBox::information( this, tr( "Successfully Written" ), wmsg );
+   }
+   else
+   {
+      QMessageBox::warning( this, tr( "Results Not Fully Saved" ), wmsg + failures );
+   }
 }
 
 // Return pointer to main window edited data

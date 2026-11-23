@@ -18,6 +18,12 @@ gui.depends = qwtplot3d utils
 gui.file = gui/libus_gui.pro
 gui.makefile = Makefile
 
+## define subdir target doc: the Qt help manual. Its Makefile is generated
+## as Makefile.qmake because doc/manual/Makefile is hand-written.
+SUBDIRS += doc
+doc.file = doc/manual/manual.pro
+doc.makefile = Makefile.qmake
+
 ## define all standalone programs as sub dir target dynamically by looking for *.pro files
 PROGRAMS = $$files(programs/*.pro,true)
 

@@ -25,6 +25,7 @@ HEADERS      = us_ana_profile.h   \
                us_archive.h       \
                us_astfem_math.h   \
                us_astfem_rsa.h    \
+               us_thread_worker.h \
                us_buffer.h        \
                us_cfa_data.h      \
                us_constants.h     \
@@ -63,7 +64,9 @@ HEADERS      = us_ana_profile.h   \
                us_settings.h      \
                us_sim_cli.h       \
                us_sim_inputs.h    \
+               us_sim_optics.h    \
                us_sim_record.h    \
+               us_sim_schedule.h  \
                us_sim_species.h   \
                us_simparms.h      \
                us_sim_cache.h     \
@@ -87,6 +90,7 @@ SOURCES      = us_ana_profile.cpp   \
                us_archive.cpp       \
                us_astfem_math.cpp   \
                us_astfem_rsa.cpp    \
+               us_thread_worker.cpp \
                us_buffer.cpp        \
                us_cfa_data.cpp      \
                us_constants.cpp     \
@@ -125,7 +129,9 @@ SOURCES      = us_ana_profile.cpp   \
                us_settings.cpp      \
                us_sim_cli.cpp       \
                us_sim_inputs.cpp    \
+               us_sim_optics.cpp    \
                us_sim_record.cpp    \
+               us_sim_schedule.cpp  \
                us_sim_species.cpp   \
                us_simparms.cpp      \
                us_sim_cache.cpp     \
@@ -142,6 +148,10 @@ SOURCES      = us_ana_profile.cpp   \
                us_vector.cpp        \
                us_xpn_data.cpp      \
                us_zsolute.cpp
+
+# The calculations shared by the programs (namespace US_Calc, QtCore only)
+HEADERS      += $$files(us_calc_*.h)
+SOURCES      += $$files(us_calc_*.cpp)
 
 # Only include us_crypto when not on a supercomputer
 

@@ -44,34 +44,6 @@ class US_FeMatch : public US_Widgets
         //! \brief Constructor for the US_FeMatch class.
         US_FeMatch();
 
-        //! \brief Get the edited data.
-        //! \return Pointer to the edited data.
-        US_DataIO::EditedData* fem_editdata();
-
-        //! \brief Get the simulated data.
-        //! \return Pointer to the simulated data.
-        US_DataIO::RawData* fem_simdata();
-
-        //! \brief Get the exclusion list.
-        //! \return Pointer to the list of excluded scans.
-        QList<int>* fem_excllist();
-
-        //! \brief Get the model.
-        //! \return Pointer to the model.
-        US_Model* fem_model();
-
-        //! \brief Get the time-invariant noise.
-        //! \return Pointer to the time-invariant noise.
-        US_Noise* fem_ti_noise();
-
-        //! \brief Get the radial-invariant noise.
-        //! \return Pointer to the radial-invariant noise.
-        US_Noise* fem_ri_noise();
-
-        //! \brief Get the residuals bitmap.
-        //! \return QPointer to the residuals bitmap.
-        QPointer<US_ResidsBitmap> fem_resbmap();
-
         //! \brief Auto load and simulate data.
         //! \param rawData The raw data.
         //! \param editedData The edited data.
@@ -98,129 +70,129 @@ class US_FeMatch : public US_Widgets
         //! \brief Slot to start simulation.
         void simulate();
 
-        //! \brief Slot for residual plot completion.
-        void resplot_done();
-
     private:
-        QLabel* lb_tolerance; //!< Label for tolerance.
-        QLabel* lb_division; //!< Label for division.
-        QLabel* lb_rmsd; //!< Label for RMSD.
+       //! \brief The data the residual plot shows.
+       US_ResidPlotInputs          resplot_inputs();
 
-        QLineEdit* le_id; //!< Line edit for ID.
-        QLineEdit* le_temp; //!< Line edit for temperature.
-        QLineEdit* le_solution; //!< Line edit for solution.
-        QLineEdit* le_density; //!< Line edit for density.
-        QLineEdit* le_viscosity; //!< Line edit for viscosity.
-        QLineEdit* le_vbar; //!< Line edit for vbar.
-        QLineEdit* le_compress; //!< Line edit for compressibility.
-        QLineEdit* le_rmsd; //!< Line edit for RMSD.
-        QLineEdit* le_variance; //!< Line edit for variance.
+       QLabel*                     lb_tolerance; //!< Label for tolerance.
+       QLabel*                     lb_division;  //!< Label for division.
+       QLabel*                     lb_rmsd;      //!< Label for RMSD.
 
-        QTextEdit* te_desc; //!< Text edit for description.
+       QLineEdit*                  le_id;        //!< Line edit for ID.
+       QLineEdit*                  le_temp;      //!< Line edit for temperature.
+       QLineEdit*                  le_solution;  //!< Line edit for solution.
+       QLineEdit*                  le_density;   //!< Line edit for density.
+       QLineEdit*                  le_viscosity; //!< Line edit for viscosity.
+       QLineEdit*                  le_vbar;      //!< Line edit for vbar.
+       QLineEdit*                  le_compress;  //!< Line edit for compressibility.
+       QLineEdit*                  le_rmsd;      //!< Line edit for RMSD.
+       QLineEdit*                  le_variance;  //!< Line edit for variance.
 
-        QCheckBox* ck_edit; //!< Checkbox for edit mode.
+       QTextEdit*                  te_desc; //!< Text edit for description.
 
-        QRadioButton* rb_curmod; //!< Radio button for current model.
-        QRadioButton* rb_mean; //!< Radio button for mean model.
-        QRadioButton* rb_median; //!< Radio button for median model.
-        QRadioButton* rb_mode; //!< Radio button for mode model.
+       QCheckBox*                  ck_edit; //!< Checkbox for edit mode.
 
-        QPushButton* pb_nextm; //!< Button for next model.
+       QRadioButton*               rb_curmod; //!< Radio button for current model.
+       QRadioButton*               rb_mean;   //!< Radio button for mean model.
+       QRadioButton*               rb_median; //!< Radio button for median model.
+       QRadioButton*               rb_mode;   //!< Radio button for mode model.
 
-        QwtCounter* ct_model; //!< Counter for model.
-        QwtCounter* ct_from; //!< Counter for from value.
-        QwtCounter* ct_to; //!< Counter for to value.
+       QPushButton*                pb_nextm; //!< Button for next model.
 
-        QwtPlotCurve* curve; //!< Plot curve.
-        QwtPlotCurve* dcurve; //!< Differential plot curve.
-        US_PlotPicker* gpick; //!< Plot picker.
+       QwtCounter*                 ct_model; //!< Counter for model.
+       QwtCounter*                 ct_from;  //!< Counter for from value.
+       QwtCounter*                 ct_to;    //!< Counter for to value.
 
-        US_Disk_DB_Controls* dkdb_cntrls; //!< Disk/DB controls.
+       QwtPlotCurve*               curve;  //!< Plot curve.
+       QwtPlotCurve*               dcurve; //!< Differential plot curve.
+       US_PlotPicker*              gpick;  //!< Plot picker.
 
-        QPushButton* pb_load; //!< Button to load data.
-        QPushButton* pb_details; //!< Button to view details.
-        QPushButton* pb_solution; //!< Button to view solution.
-        QPushButton* pb_view; //!< Button to view data.
-        QPushButton* pb_save; //!< Button to save data.
-        QPushButton* pb_distrib; //!< Button to view distribution.
-        QPushButton* pb_advanced; //!< Button for advanced options.
-        QPushButton* pb_adv_dmga; //!< Button for advanced DMGA.
-        QPushButton* pb_plot3d; //!< Button to plot 3D data.
-        QPushButton* pb_plotres; //!< Button to plot residuals.
-        QPushButton* pb_reset; //!< Button to reset data.
-        QPushButton* pb_help; //!< Button for help.
-        QPushButton* pb_close; //!< Button to close the dialog.
-        QPushButton* pb_rmsd; //!< Button to calculate RMSD.
-        QPushButton* pb_exclude; //!< Button to exclude data.
-        QPushButton* pb_reset_exclude; //!< Button to reset exclusions.
-        QPushButton* pb_loadmodel; //!< Button to load model.
-        QPushButton* pb_simumodel; //!< Button to simulate model.
+       US_Disk_DB_Controls*        dkdb_cntrls; //!< Disk/DB controls.
 
-        QListWidget* lw_triples; //!< List widget for triples.
+       QPushButton*                pb_load;          //!< Button to load data.
+       QPushButton*                pb_details;       //!< Button to view details.
+       QPushButton*                pb_solution;      //!< Button to view solution.
+       QPushButton*                pb_view;          //!< Button to view data.
+       QPushButton*                pb_save;          //!< Button to save data.
+       QPushButton*                pb_distrib;       //!< Button to view distribution.
+       QPushButton*                pb_advanced;      //!< Button for advanced options.
+       QPushButton*                pb_adv_dmga;      //!< Button for advanced DMGA.
+       QPushButton*                pb_plot3d;        //!< Button to plot 3D data.
+       QPushButton*                pb_plotres;       //!< Button to plot residuals.
+       QPushButton*                pb_reset;         //!< Button to reset data.
+       QPushButton*                pb_help;          //!< Button for help.
+       QPushButton*                pb_close;         //!< Button to close the dialog.
+       QPushButton*                pb_rmsd;          //!< Button to calculate RMSD.
+       QPushButton*                pb_exclude;       //!< Button to exclude data.
+       QPushButton*                pb_reset_exclude; //!< Button to reset exclusions.
+       QPushButton*                pb_loadmodel;     //!< Button to load model.
+       QPushButton*                pb_simumodel;     //!< Button to simulate model.
 
-        int scanCount; //!< Scan count.
-        int dbg_level; //!< Debug level.
-        int nthread; //!< Number of threads.
-        int thrdone; //!< Number of threads completed.
-        int mc_iters; //!< Number of MC iterations.
+       QListWidget*                lw_triples; //!< List widget for triples.
 
-        bool dataLoaded; //!< Flag indicating if data is loaded.
-        bool haveSim; //!< Flag indicating if simulation data is available.
-        bool dataLatest; //!< Flag indicating if data is the latest.
-        bool buffLoaded; //!< Flag indicating if buffer is loaded.
-        bool cnstvb; //!< Flag for constant vbar.
-        bool cnstff; //!< Flag for constant ff.
-        bool exp_steps; //!< Flag for experimental steps.
-        bool dat_steps; //!< Flag for data steps.
-        bool is_dmga_mc; //!< Flag for DMGA Monte Carlo.
+       int                         scanCount; //!< Scan count.
+       int                         dbg_level; //!< Debug level.
+       int                         nthread;   //!< Number of threads.
+       int                         thrdone;   //!< Number of threads completed.
+       int                         mc_iters;  //!< Number of MC iterations.
 
-        QString run_name; //!< Run name.
-        QString cell; //!< Cell identifier.
-        QString wavelength; //!< Wavelength value.
-        QString workingDir; //!< Working directory.
-        QString runID; //!< Run ID.
-        QString editID; //!< Edit ID.
-        QString dfilter; //!< Data filter.
-        QString mfilter; //!< Model filter.
+       bool                        dataLoaded; //!< Flag indicating if data is loaded.
+       bool                        haveSim;    //!< Flag indicating if simulation data is available.
+       bool                        dataLatest; //!< Flag indicating if data is the latest.
+       bool                        buffLoaded; //!< Flag indicating if buffer is loaded.
+       bool                        cnstvb;     //!< Flag for constant vbar.
+       bool                        cnstff;     //!< Flag for constant ff.
+       bool                        exp_steps;  //!< Flag for experimental steps.
+       bool                        dat_steps;  //!< Flag for data steps.
+       bool                        is_dmga_mc; //!< Flag for DMGA Monte Carlo.
 
-        QStringList files; //!< List of files.
+       QString                     run_name;   //!< Run name.
+       QString                     cell;       //!< Cell identifier.
+       QString                     wavelength; //!< Wavelength value.
+       QString                     workingDir; //!< Working directory.
+       QString                     runID;      //!< Run ID.
+       QString                     editID;     //!< Edit ID.
+       QString                     dfilter;    //!< Data filter.
+       QString                     mfilter;    //!< Model filter.
 
-        US_DataIO::EditedData* edata; //!< Pointer to edited data.
-        US_DataIO::Scan* dscan; //!< Pointer to scan data.
-        US_DataIO::RawData* rdata; //!< Pointer to raw data.
-        US_DataIO::RawData* sdata; //!< Pointer to simulated data.
+       QStringList                 files; //!< List of files.
 
-        US_DataIO::RawData wsdata; //!< Workspace raw data.
+       US_DataIO::EditedData*      edata; //!< Pointer to edited data.
+       US_DataIO::Scan*            dscan; //!< Pointer to scan data.
+       US_DataIO::RawData*         rdata; //!< Pointer to raw data.
+       US_DataIO::RawData*         sdata; //!< Pointer to simulated data.
 
-        US_Model model; //!< Current model.
-        US_Model model_loaded; //!< Loaded model.
-        US_Model model_used; //!< Used model.
-        US_Noise ri_noise; //!< Radial-invariant noise.
-        US_Noise ti_noise; //!< Time-invariant noise.
-        US_Solution solution_rec; //!< Solution record.
-        QList<US_Model> models; //!< List of models.
+       US_DataIO::RawData          wsdata; //!< Workspace raw data.
 
-        QVector<SP_SPEEDPROFILE> speed_steps; //!< Vector of speed steps.
+       US_Model                    model;        //!< Current model.
+       US_Model                    model_loaded; //!< Loaded model.
+       US_Model                    model_used;   //!< Used model.
+       US_Noise                    ri_noise;     //!< Radial-invariant noise.
+       US_Noise                    ti_noise;     //!< Time-invariant noise.
+       US_Solution                 solution_rec; //!< Solution record.
+       QList<US_Model>             models;       //!< List of models.
 
-        QPointer<US_ResidsBitmap> rbmapd; //!< Pointer to residuals bitmap.
-        QPointer<US_PlotControlFem> eplotcd; //!< Pointer to plot control.
-        QPointer<US_ResidPlotFem> resplotd; //!< Pointer to residual plot.
-        QPointer<US_AdvancedFem> advdiag; //!< Pointer to advanced dialog.
+       QVector<SP_SPEEDPROFILE>    speed_steps; //!< Vector of speed steps.
 
-        QPoint bmd_pos; //!< Bitmap position.
-        QPoint epd_pos; //!< Plot control position.
-        QPoint rpd_pos; //!< Residual plot position.
+       QPointer<US_ResidsBitmap>   rbmapd;   //!< Pointer to residuals bitmap.
+       QPointer<US_PlotControlFem> eplotcd;  //!< Pointer to plot control.
+       QPointer<US_ResidPlotFem>   resplotd; //!< Pointer to residual plot.
+       QPointer<US_AdvancedFem>    advdiag;  //!< Pointer to advanced dialog.
 
-        QDateTime start_time; //!< Start time.
+       QPoint                      bmd_pos; //!< Bitmap position.
+       QPoint                      epd_pos; //!< Plot control position.
+       QPoint                      rpd_pos; //!< Residual plot position.
 
-        QMap<QString, QString> adv_vals; //!< Advanced values map.
+       QDateTime                   start_time; //!< Start time.
 
-        QVector<int> kcomps; //!< Vector of component indices.
+       QMap<QString, QString>      adv_vals; //!< Advanced values map.
 
-        QList<US_DataIO::RawData> tsimdats; //!< List of simulated data.
-        QList<US_Model> tmodels; //!< List of models.
-        US_SimulationParameters simparams; //!< Simulation parameters.
-        QVector<US_Model> imodels; //!< Vector of intermediate models.
+       QVector<int>                kcomps; //!< Vector of component indices.
+
+       QList<US_DataIO::RawData>   tsimdats;  //!< List of simulated data.
+       QList<US_Model>             tmodels;   //!< List of models.
+       US_SimulationParameters     simparams; //!< Simulation parameters.
+       QVector<US_Model>           imodels;   //!< Vector of intermediate models.
 
     private slots:
         //! \brief Slot to load data.

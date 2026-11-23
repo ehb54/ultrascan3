@@ -1,6 +1,7 @@
 //! \file us_eprofile.cpp
 #include "us_eprofile.h"
 #include "us_settings.h"
+#include <QLocale>
 
 // This source contains static utility functions for handling extinctionProfile
 // XML strings and database tables.
@@ -16,27 +17,33 @@
 int US_ExtProfile::fetch_eprofile( IUS_DB2* dbP, const int compID,
       QString& compType, QString& valType, QMap< double, double >& extinction )
 {
-   int profileID    = -1;    // Default (error) profile ID
-   int xCompID;              // Values from XML
-   QString xCompType;
-   QString xValType;
-
    // Get values from a matching extinctionProfile record
    QStringList qry;
    qry << "get_eprofile" << QString::number( compID ) << compType;
    dbP->query( qry );        // DB query to get a profile of given ID,type
 
-   if ( dbP->lastErrno() != IUS_DB2::OK )
-      return profileID;
+   if ( dbP->lastErrno() != IUS_DB2::OK || !dbP->next() )
+   {
+      return -1;
+   }
 
-   dbP->next();              // Read a single record
-   profileID        = dbP->value( 0 ).toInt();     // Profile ID
-   valType          = dbP->value( 1 ).toString();  // Value type
-   QString epxml    = dbP->value( 2 ).toString();  // Extinction profile XML
+   const int            profileID = dbP->value( 0 ).toInt();    // Profile ID
+   const QString        rowType   = dbP->value( 1 ).toString(); // Value type
+   QString              epxml     = dbP->value( 2 ).toString(); // Extinction profile XML
 
-   // Parse the fetched XML and fill the extinction mapping
-   parse_eprofile( epxml, &xCompID, &xCompType, &xValType, extinction );
+   // Parse the fetched XML; publish nothing unless it holds a profile
+   int                  xCompID = 0;
+   QString              xCompType;
+   QString              xValType;
+   QMap<double, double> profile;
 
+   if ( !parse_eprofile( epxml, &xCompID, &xCompType, &xValType, profile ) )
+   {
+      return -1;
+   }
+
+   valType    = rowType;
+   extinction = profile;
    return profileID;
 }
 
@@ -56,7 +63,7 @@ bool US_ExtProfile::parse_eprofile( QString& epxml, int* compID,
    int nptag        = 0;
    int natag        = 0;
    QXmlStreamAttributes attr;
-   extinction.clear();
+   QMap<double, double> parsed;
 
    while( ! xml.atEnd() )
    {
@@ -75,7 +82,7 @@ bool US_ExtProfile::parse_eprofile( QString& epxml, int* compID,
             double wl        = sWln.isEmpty() ? 280.0 : sWln.toDouble();
             wl               = sFrq.isEmpty() ? wl    : sFrq.toDouble();
             double va        = attr.value( "value" ).toString().toDouble();
-            extinction[ wl ] = va;
+            parsed[wl]        = va;
          }
 
          else if ( tname == "extinctionProfile" )
@@ -95,6 +102,12 @@ bool US_ExtProfile::parse_eprofile( QString& epxml, int* compID,
       }
    }
 
+   if ( xml.hasError() || ( natag + nptag ) == 0 )
+   {
+      return false;
+   }
+
+   extinction = parsed;
    if ( compID != NULL )
       *compID          = xCompID;   // Store general profile attribute values
    if ( compType != NULL )
@@ -102,7 +115,7 @@ bool US_ExtProfile::parse_eprofile( QString& epxml, int* compID,
    if ( valType != NULL )
       *valType         = xValType;
 
-    return ( ( natag + nptag ) > 0 );
+   return true;
 }
 
 // Create a new extinction profile in the database
@@ -124,28 +137,31 @@ int US_ExtProfile::create_eprofile( IUS_DB2* dbP, const int compID,
    QStringList qry;
    qry << "get_eprofile" << QString::number( compID ) << compType;
    dbP->query( qry );        // DB query to get a profile of given ID,type
-   int num_prof     = dbP->numRows();
-   
-   qDebug() << "While creating/updating eprofile: num_prof: " << num_prof; 
+   const int status = dbP->lastErrno();
 
-   if ( num_prof > 0 )
+   if ( status == IUS_DB2::OK && dbP->next() )
    {  // Already existing record:  update it
       profileID        = dbP->value( 0 ).toInt();     // Profile ID
       qry.clear();
-      qry << "update_eprofile" << QString::number( profileID )
-          << QString::number( compID ) << compType << valueType << epxml;
-      dbP->statusQuery( qry );
-      qDebug() << "New profileID, num_prof >0: " << profileID;
-   }
+      qry << "update_eprofile" << QString::number( profileID ) << QString::number( compID ) << compType << valueType << epxml;
 
-   else
+      if ( dbP->statusQuery( qry ) != IUS_DB2::OK )
+      {
+         return -1;
+      }
+   }
+   else if ( status == IUS_DB2::OK || status == IUS_DB2::NOROWS )
    {  // No existing record:  create a new one
       qry.clear();
       qry << "new_eprofile" << QString::number( compID ) << compType
           << valueType << epxml;
-      dbP->statusQuery( qry );
-      profileID        = dbP->lastInsertID();         // Profile ID
-      qDebug() << "New profileID, num_prof < 0: " << profileID;
+
+      if ( dbP->statusQuery( qry ) != IUS_DB2::OK )
+      {
+         return -1;
+      }
+
+      profileID = dbP->lastInsertID(); // Profile ID
    }
    qDebug() << "New profileID: " << profileID;
    return profileID;
@@ -159,6 +175,7 @@ bool US_ExtProfile::xml_eprofile( const int compID, QString& compType,
    bool create_ok   = true;
    QList< double > keys = extinction.keys();
 
+   xmlout.clear();
    QXmlStreamWriter xml( &xmlout );
    xml.setAutoFormatting( true );
    xml.writeStartDocument();
@@ -175,9 +192,9 @@ bool US_ExtProfile::xml_eprofile( const int compID, QString& compType,
    {
       double wvln      = keys[ ii ];
       double valu      = extinction[ wvln ];
-      QString sWvln    = QString::number( wvln );
-      QString sValu    = QString::number( valu );
-      
+      QString sWvln     = QLocale::c().toString( wvln, 'g', QLocale::FloatingPointShortest );
+      QString sValu     = QLocale::c().toString( valu, 'g', QLocale::FloatingPointShortest );
+
       qDebug() << "Writing XML: " << wvln << ", " << valu;
       
       xml.writeStartElement( "extinction" );

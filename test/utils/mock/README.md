@@ -1,8 +1,8 @@
 # Utility database mocks
 
 Use `IUS_DB2` and GoogleMock to test a production caller. `MockBuilder` is the
-single implementation of connected success defaults; `US_DB2_MockHelper` delegates
-to it for compatibility. Defaults are not expectations or a database emulator.
+single implementation of connected success defaults. Defaults are not
+expectations or a database emulator.
 Successful connection/transaction defaults clear reference error outputs.
 
 For each behavior, specify the query arguments and expected call count. Script

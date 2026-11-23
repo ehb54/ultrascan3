@@ -7,21 +7,34 @@
 #include "us_util.h"
 #include "us_eprofile.h"
 
-void US_BufferComponent::getAllFromDB( const QString& masterPW, 
-         QMap< QString, US_BufferComponent >& componentList )
+bool US_BufferComponent::getAllFromDB( const QString& masterPW, QMap<QString, US_BufferComponent>& componentList, QString* error )
 {
    US_DB2 db( masterPW );
-   
+
    if ( db.lastErrno() != IUS_DB2::OK )
    {
-      qDebug() << "Database Error" 
+      qDebug() << "Database Error"
                << "US_BufferComponent ::connectDB: Could not open DB\n"
                << db.lastError();
-      return;
+      if ( error != nullptr )
+      {
+         *error = db.lastError();
+      }
+      return false;
    }
 
    QStringList q( "get_buffer_component_desc" );
    db.query( q );
+   const int status = db.lastErrno();
+   if ( status != IUS_DB2::OK && status != IUS_DB2::NOROWS )
+   {
+      if ( error != nullptr )
+      {
+         *error = db.lastError();
+      }
+      return false;
+   }
+
    QStringList cids;
 
    while ( db.next() )
@@ -29,42 +42,87 @@ void US_BufferComponent::getAllFromDB( const QString& masterPW,
       cids << db.value( 0 ).toString();
    }
 
+   int read = 0;
    for ( int ii = 0; ii < cids.size(); ii++ )
    {
       US_BufferComponent c;
       c.componentID = cids.at( ii );
-      c.getInfoFromDB( &db );
-      componentList[ c.componentID ] = c;
+      if ( c.getInfoFromDB( &db ) )
+      {
+         componentList[c.componentID] = c;
+         read++;
+      }
    }
+   if ( !cids.isEmpty() && read == 0 )
+   {
+      if ( error != nullptr )
+      {
+         *error = QObject::tr( "none of the %1 buffer components could be read" ).arg( cids.size() );
+      }
+      return false;
+   }
+   return true;
 }
 
-void US_BufferComponent::getInfoFromDB( IUS_DB2* db )
+namespace
+{
+// Parse the first six whitespace-separated tokens as coefficients.
+bool parseCoefficients( const QStringList& tokens, double* coeff )
+{
+   if ( tokens.size() < 6 )
+   {
+      return false;
+   }
+
+   for ( int i = 0; i < 6; i++ )
+   {
+      bool ok  = false;
+      coeff[i] = tokens[i].toDouble( &ok );
+      if ( !ok )
+      {
+         return false;
+      }
+   }
+   return true;
+}
+}
+
+bool US_BufferComponent::getInfoFromDB( IUS_DB2* db )
 {
    QStringList q( "get_buffer_component_info" );
    q << componentID;
 
    db->query( q );
-   db->next();
+   if ( db->lastErrno() != IUS_DB2::OK || !db->next() )
+   {
+      return false;
+   }
 
-   unit              = db->value( 0 ).toString();
-   name              = db->value( 1 ).toString();
-   QString viscosity = db->value( 2 ).toString();
-   QString density   = db->value( 3 ).toString();
-   range             = db->value( 4 ).toString();
-   grad_form         = US_Util::bool_flag( db->value( 5 ).toString() );
+   const QString     rowUnit   = db->value( 0 ).toString();
+   const QString     rowName   = db->value( 1 ).toString();
+   const QStringList viscosity = db->value( 2 ).toString().split( ' ', Qt::SkipEmptyParts );
+   const QStringList density   = db->value( 3 ).toString().split( ' ', Qt::SkipEmptyParts );
+   const QString     rowRange  = db->value( 4 ).toString();
+   const bool        rowGrad   = US_Util::bool_flag( db->value( 5 ).toString() );
 
-   QStringList sl    = viscosity.split( " " );
+   // Viscosity holds exactly six coefficients; density may carry a legacy range after its six.
+   double            rowVisc[6];
+   double            rowDens[6];
+   if ( viscosity.size() != 6 || !parseCoefficients( viscosity, rowVisc ) || !parseCoefficients( density, rowDens ) )
+   {
+      return false;
+   }
 
-   for ( int i = 0; i < 6 ; i++ )
-      visc_coeff[ i ]   = sl[ i ].toDouble();
-
-   sl = density.split( " " );
-
-   for ( int i = 0; i < 6 ; i++ )
-      dens_coeff[ i ]   = sl[ i ].toDouble();
-
-   sl                = sl.mid( 6 );  // Remove coefficients
-   range             = range.isEmpty() ? sl.join( " " ) : range;
+   unit      = rowUnit;
+   name      = rowName;
+   range     = rowRange.isEmpty() ? density.mid( 6 ).join( " " ) : rowRange;
+   grad_form = rowGrad;
+   for ( int i = 0; i < 6; i++ )
+   {
+      visc_coeff[i] = rowVisc[i];
+      dens_coeff[i] = rowDens[i];
+   }
+   return true;
 }
 
 void US_BufferComponent::getAllFromHD( 
@@ -213,18 +271,20 @@ void US_BufferComponent::putAllToHD(
 int US_BufferComponent::saveToDB(IUS_DB2 * db) {
    QStringList q;
    // construct density and viscosity
-   QString density;
-   for (int i = 0; i < 6; i++) {
-      density += QString(i > 0 ? "" : " ") + QString::number(dens_coeff[i], 'f', 5);
-   }
-   QString viscosity;
-   for (int i = 0; i < 6; i++) {
-      viscosity += QString(i > 0 ? "" : " ") + QString::number(visc_coeff[i], 'f', 5);
+   // Six space-separated coefficients per field, as getInfoFromDB reads them.
+   QStringList density;
+   QStringList viscosity;
+   for ( int i = 0; i < 6; i++ )
+   {
+      density << QString::number( dens_coeff[i], 'f', 5 );
+      viscosity << QString::number( visc_coeff[i], 'f', 5 );
    }
 
+   // The procedure takes a component GUID before the name; the query layer adds the
+   // person GUID and password in front of these arguments.
    q.clear();
-   q << "create_buffer_component" << name << unit << range
-     << US_Util::bool_string(grad_form) << density << viscosity;
+   q << "create_buffer_component" << US_Util::new_guid() << name << unit << range << US_Util::bool_string( grad_form )
+     << density.join( " " ) << viscosity.join( " " );
 
    db->statusQuery(q);
 
@@ -377,44 +437,27 @@ bool US_Buffer::writeToDisk( const QString& filename ) const
 
    xml.writeStartElement( "spectrum" );
 
-   QList< double > keys = extinction.keys();
-
-   for ( int i = 0; i < extinction.size(); i++ )
+   // Each spectrum is written at its own wavelengths.
+   const auto writeSpectrum = [&xml]( const char* name, const QMap<double, double>& values )
    {
-      xml.writeStartElement( "extinction" );
-      double wavelength = keys[ i ];
-      double value      = extinction[ wavelength ];
-      xml.writeAttribute( "wavelength", QString::number( wavelength, 'f', 1 ) );
-      xml.writeAttribute( "value"     , QString::number( value,      'e', 4 ) );
-      xml.writeEndElement(); // extinction
-   }
-
-   for ( int i = 0; i < refraction.size(); i++ )
-   {
-      xml.writeStartElement( "refraction" );
-      double wavelength = keys[ i ];
-      double value      = refraction[ wavelength ];
-      xml.writeAttribute( "wavelength", QString::number( wavelength, 'f', 1 ) );
-      xml.writeAttribute( "value"     , QString::number( value,      'e', 4 ) );
-      xml.writeEndElement(); // refraction
-   }
-
-   for ( int i = 0; i < fluorescence.size(); i++ )
-   {
-      xml.writeStartElement( "fluorescence" );
-      double wavelength = keys[ i ];
-      double value      = fluorescence[ wavelength ];
-      xml.writeAttribute( "wavelength", QString::number( wavelength, 'f', 1 ) );
-      xml.writeAttribute( "value"     , QString::number( value,      'e', 4 ) );
-      xml.writeEndElement(); // fluorescence
-   }
+      for ( auto it = values.constBegin(); it != values.constEnd(); ++it )
+      {
+         xml.writeStartElement( name );
+         xml.writeAttribute( "wavelength", QString::number( it.key(), 'f', 1 ) );
+         xml.writeAttribute( "value", QString::number( it.value(), 'e', 4 ) );
+         xml.writeEndElement();
+      }
+   };
+   writeSpectrum( "extinction", extinction );
+   writeSpectrum( "refraction", refraction );
+   writeSpectrum( "fluorescence", fluorescence );
 
    xml.writeEndElement(); // spectrum
    xml.writeEndElement(); // buffer
    xml.writeEndElement(); // US_Buffer
    xml.writeEndDocument();
 
-   return true;
+   return !xml.hasError() && file.flush() && file.error() == QFileDevice::NoError;
 }
 
 bool US_Buffer::readFromDB( IUS_DB2* db, const QString& bufID )
@@ -425,33 +468,36 @@ bool US_Buffer::readFromDB( IUS_DB2* db, const QString& bufID )
    qDebug() << "Reading from DB, BufferID: " << q;
 
    db->query( q );
-   if ( db->lastErrno() != 0 ) return false;
+   if ( db->lastErrno() != IUS_DB2::OK || !db->next() )
+   {
+      return false;
+   }
 
-   db->next();
-
-   bufferID        = bufID;
-   GUID            = db->value( 0 ).toString();
-   description     = db->value( 1 ).toString();
-   compressibility = db->value( 2 ).toString().toDouble();
-   pH              = db->value( 3 ).toString().toDouble();
-   viscosity       = db->value( 4 ).toString().toDouble();
-   density         = db->value( 5 ).toString().toDouble();
-   person          = db->value( 7 ).toString();
-   int manx        = description.indexOf( "  [M]" );
+   // Load into a copy; this buffer changes only when every query succeeds.
+   US_Buffer loaded       = *this;
+   loaded.bufferID        = bufID;
+   loaded.GUID            = db->value( 0 ).toString();
+   loaded.description     = db->value( 1 ).toString();
+   loaded.compressibility = db->value( 2 ).toString().toDouble();
+   loaded.pH              = db->value( 3 ).toString().toDouble();
+   loaded.viscosity       = db->value( 4 ).toString().toDouble();
+   loaded.density         = db->value( 5 ).toString().toDouble();
+   loaded.person          = db->value( 7 ).toString();
+   int manx               = loaded.description.indexOf( "  [M]" );
    if ( manx > 0 )
    {
-      manual          = true;
-      description     = description.left( manx ).simplified();
+      loaded.manual      = true;
+      loaded.description = loaded.description.left( manx ).simplified();
    }
    else
-      manual          = US_Util::bool_flag( db->value( 6 ).toString() );
+      loaded.manual = US_Util::bool_flag( db->value( 6 ).toString() );
 
-   component    .clear();
-   componentIDs .clear();
-   concentration.clear();
+   loaded.component.clear();
+   loaded.componentIDs.clear();
+   loaded.concentration.clear();
    q                   .clear();
 
-   q << "get_buffer_components" <<  bufferID;
+   q << "get_buffer_components" << bufID;
 
    db->query( q );
    int status = db->lastErrno();
@@ -463,26 +509,29 @@ bool US_Buffer::readFromDB( IUS_DB2* db, const QString& bufID )
 
    while ( db->next() )
    {
-      componentIDs  << db->value( 0 ).toString();
-      concentration << db->value( 4 ).toString().toDouble();
+      loaded.componentIDs << db->value( 0 ).toString();
+      loaded.concentration << db->value( 4 ).toString().toDouble();
    }
 
-   for ( int i = 0; i < componentIDs.size(); i++ )
+   for ( int i = 0; i < loaded.componentIDs.size(); i++ )
    {
       US_BufferComponent bc;
-      bc.componentID = componentIDs[ i ];
-      bc.getInfoFromDB( db );
-       component << bc;
+      bc.componentID = loaded.componentIDs[i];
+      if ( !bc.getInfoFromDB( db ) )
+      {
+         qDebug() << "get_buffer_component_info failed for component" << bc.componentID;
+         return false;
+      }
+      loaded.component << bc;
    }
 
+   // A buffer without a stored profile has no extinction values.
    QString compType("Buffer");
    QString valType("molarExtinction");
-   US_ExtProfile::fetch_eprofile( db, bufferID.toInt(), compType, valType, extinction );
+   loaded.extinction.clear();
+   US_ExtProfile::fetch_eprofile( db, bufID.toInt(), compType, valType, loaded.extinction );
 
-   // // Get spectrum data
-   // getSpectrum( db, "Refraction" );
-   // getSpectrum( db, "Extinction" );
-   // getSpectrum( db, "Fluorescence" );
+   *this = loaded;
    return true;
 }
 
@@ -596,39 +645,49 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
    QString compType("Buffer");
    QString valType("molarExtinction");
    qDebug() << "bufferID for extProfile: " << bufferID;
-   
+
+   bool profileFailed = false;
    if ( !extinction.isEmpty() && new_or_changed_spectrum )
    {
-     if ( !replace_spectrum )
-      {
-	     qDebug() << "Creating Spectrum!!!";
-         US_ExtProfile::create_eprofile( db, bufferID.toInt(), compType, valType, extinction);
+      // Create the profile, or replace a stored one (whose old values are discarded).
+      QMap<double, double> stored;
+      int profileID = replace_spectrum ? US_ExtProfile::fetch_eprofile( db, bufferID.toInt(), compType, valType, stored ) : -1;
+
+      // A failed create returns -1; update reports success directly.
+      profileFailed = profileID == -1
+                         ? US_ExtProfile::create_eprofile( db, bufferID.toInt(), compType, valType, extinction ) < 1
+                         : !US_ExtProfile::update_eprofile( db, profileID, bufferID.toInt(), compType, valType, extinction );
+      if ( profileFailed )
+      { // The spectrum is still new or changed; a later save retries it. The disk copy
+         // below is still written, since the buffer row and components are already stored.
+         qDebug() << "extinction profile write failed for buffer" << bufferID;
       }
       else
       {
-         qDebug() << "Updating Spectrum!!!";
-
-         QMap<double, double> new_extinction = extinction;
-         int profileID = US_ExtProfile::fetch_eprofile(  db, bufferID.toInt(), compType, valType, extinction);
-         
-         qDebug() << "Old Extinction keys: " << extinction.keys().count() << ", ProfileID: " << profileID;
-         US_ExtProfile::update_eprofile( db, profileID, bufferID.toInt(), compType, valType, new_extinction);
-         qDebug() << "New Extinction keys: " << new_extinction.keys().count() << ", ProfileID: " << profileID;
-         
-         replace_spectrum = false;
+         replace_spectrum        = false;
+         new_or_changed_spectrum = false;
       }
-      new_or_changed_spectrum = false; 
    }
    //putSpectrum( db, "Extinction" );
    //putSpectrum( db, "Refraction" );
    //putSpectrum( db, "Fluorescence" );
 
    // Also write to to disk
+   // A missing buffers directory is created; only a real write failure is reported.
    bool    newFile;
    QString path     = US_Settings::dataDir() + "/buffers";
+   QDir().mkpath( path );
    QString filename = get_filename( path, GUID, newFile );
-   writeToDisk( filename );
-   
+   if ( !writeToDisk( filename ) )
+   {
+      qDebug() << "buffer disk copy failed:" << filename;
+      return -6;
+   }
+   if ( profileFailed )
+   {
+      return -5;
+   }
+
    qDebug() << "bufferID upon saveToDB() completion: " << bufferID;
 
    return bufferID.toInt();

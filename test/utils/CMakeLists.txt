@@ -54,6 +54,7 @@ message(STATUS "Auto-discovered ${num_sources} test source files")
 # Non-unit dependencies are kept out of the unit binary as well as its label.
 # This also makes direct --gtest_shuffle/--gtest_repeat runs offline.
 set(DB_TEST_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_us_buffer_component_live.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_us_db2_connect_authenticated.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_us_db2_roundtrip.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_us_db2_transactions.cpp)
@@ -102,7 +103,8 @@ endfunction()
 
 us3_add_utils_suite(test_us_utils gtest-unit-utils
     ${AUTO_TEST_SOURCES} ${AUTO_TEST_HEADERS}
-    support/disk_run_fixture.cpp support/disk_run_fixture.h)
+    support/disk_run_fixture.cpp support/disk_run_fixture.h
+    fixtures/analyte.qrc)
 # Unit resource readers use appBaseDir()/etc. Never point that layout at
 # source/etc: stage only declared inputs next to the isolated unit executable.
 set(US3_UNIT_LAYOUT "${CMAKE_CURRENT_BINARY_DIR}/unit-layout")

@@ -18,10 +18,11 @@
 #include <QTemporaryDir>
 
 using ::testing::_;
+using ::testing::AnyNumber;
 using ::testing::Eq;
 using ::testing::Invoke;
-using ::testing::NiceMock;
 using ::testing::Return;
+using ::testing::StrictMock;
 
 namespace
 {
@@ -30,7 +31,7 @@ const QString      kRawName  = "demo.RA.1.A.280.auc";
 
 US_DataIO::RawData sampleRawData()
 {
-   US_DataIO::RawData raw;
+   US_DataIO::RawData raw{};
    memcpy( raw.type, "RA", 2 );
    memcpy( raw.rawGUID, "0123456789abcdef", 16 );
    raw.cell        = 1;
@@ -38,7 +39,7 @@ US_DataIO::RawData sampleRawData()
    raw.description = "edited-data DB read fixture";
    raw.xvalues << 5.8 << 5.9 << 6.0;
 
-   US_DataIO::Scan scan;
+   US_DataIO::Scan scan{};
    scan.temperature = 20.0;
    scan.rpm         = 50000.0;
    scan.seconds     = 300;
@@ -87,6 +88,9 @@ class EditedDataReadTest : public ::testing::Test
 
          ON_CALL( db, isConnected() ).WillByDefault( Return( true ) );
          ON_CALL( db, lastError() ).WillByDefault( Return( QString() ) );
+         // Connection checks and diagnostic reads are allowed; any other call fails the test.
+         EXPECT_CALL( db, isConnected() ).Times( AnyNumber() );
+         EXPECT_CALL( db, lastError() ).Times( AnyNumber() );
       }
 
       US_ConvertIO::EditedDataReadRequest request() const
@@ -108,7 +112,7 @@ class EditedDataReadTest : public ::testing::Test
 
       QTemporaryDir                  source;
       QTemporaryDir                  destination;
-      NiceMock<US_DB2_Mock>          db;
+      StrictMock<US_DB2_Mock>        db;
       US_DataIO::RawData             raw;
       QVector<US_DataIO::EditedData> edited;
       QVector<US_DataIO::RawData>    loadedRaw;

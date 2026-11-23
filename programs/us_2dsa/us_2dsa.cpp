@@ -157,6 +157,8 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    dsets << &dset;
 
    us_gmp_auto_mode = false;
+   save_failed      = false;
+   auto_save_failed = false;
 }
 
 // ALEXEY: Auto-mode constructor -- runs a headless 2DSA-IT fit+save for a
@@ -272,11 +274,15 @@ DbgLv(1) << "  edat0 sdat0 rdat0 tnoi0"
          emit twodsa_progress_s( "save", auto_triple_idx, dataList.size(), 0, 1 );
       }
 
+      save_failed = false;
       save();
 
       if ( us_gmp_auto_mode )
       {
-         record_2dsa_model_in_velmwl();
+         if ( !save_failed )
+         { // Record only a model that is in the DB
+            record_2dsa_model_in_velmwl();
+         }
          emit twodsa_progress_s( "save", auto_triple_idx, dataList.size(), 1, 1 );
       }
 
@@ -321,7 +327,7 @@ DbgLv(1) << "  edat0 sdat0 rdat0 tnoi0"
          }
          else
          {
-            bool success = true;
+            bool success = !auto_save_failed;
             emit twodsa_complete_s( chann_to_process_2dsa, success, dataList.size() );
          }
       }
@@ -758,6 +764,8 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    bool    fitBott      = ( model.global == US_Model::BOTTOM );
    bool    fitMeBo      = ( model.global == US_Model::MENIBOTT );
    bool    montCar      = model.monteCarlo;
+   QStringList dbFailed;    // Models whose DB write failed; their disk copies remain
+   QStringList noiseFailed; // Noises whose DB write failed
    QString analysisType = QString( cusGrid ? "2DSA-CG" : "2DSA" )
                         + QString( fitMeni ? "-FM" : "" )
                         + QString( fitBott ? "-FB" : "" )
@@ -788,18 +796,30 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    if ( ! mkdir( reppath, runID ) )
    {
       qDebug() << "*** Unable to create or find the report directory ***";
+      QApplication::restoreOverrideCursor();
+      save_failed = true;
+      report_save_failures(
+         tr( "The report directory could not be found or created; nothing was saved.\n" ), QStringList(), QStringList() );
       return;
    }
 
    if ( ! US_Model::model_path( mdlpath ) )
    {
       qDebug() << "*** Unable to create or find the model directory ***";
+      QApplication::restoreOverrideCursor();
+      save_failed = true;
+      report_save_failures(
+         tr( "The model directory could not be found or created; nothing was saved.\n" ), QStringList(), QStringList() );
       return;
    }
 
    if ( knois > 0  && ! US_Noise::noise_path( noipath ) )
    {
       qDebug() << "*** Unable to create or find the noise directory ***";
+      QApplication::restoreOverrideCursor();
+      save_failed = true;
+      report_save_failures(
+         tr( "The noise directory could not be found or created; nothing was saved.\n" ), QStringList(), QStringList() );
       return;
    }
 
@@ -910,9 +930,13 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
 
       // output the model
       if ( dbP == NULL  ||  montCar )
+      {
          model.write( mname );
-      else
-         model.write( dbP );
+      }
+      else if ( model.write( dbP ) != IUS_DB2::OK )
+      {
+         dbFailed << model.description + ": " + model.message;
+      }
 
       if ( montCar )
          tnames << mname;
@@ -932,10 +956,12 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
          if ( nicount > 0 )   // Sum in any input noise
             ti_noise.sum_noise( ti_noise_in, true );
 
-         ti_noise.write( nname );
+         const bool ondisk = ( ti_noise.write( nname ) == IUS_DB2::OK );
 
-         if ( dbP != NULL )
-            ti_noise.write( dbP );
+         if ( dbP != NULL && ti_noise.write( dbP ) != IUS_DB2::OK )
+         {
+            noiseFailed << noise_failure( ti_noise, ondisk );
+         }
 
          if ( nicount > 0 )   // Remove input noise in case re-plotted
          {
@@ -961,10 +987,12 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
          if ( nicount > 0 )   // Sum in any input noise
             ri_noise.sum_noise( ri_noise_in, true );
 
-         ri_noise.write( nname );
+         const bool ondisk = ( ri_noise.write( nname ) == IUS_DB2::OK );
 
-         if ( dbP != NULL )
-            ri_noise.write( dbP );
+         if ( dbP != NULL && ri_noise.write( dbP ) != IUS_DB2::OK )
+         {
+            noiseFailed << noise_failure( ri_noise, ondisk );
+         }
 
          if ( nicount > 0 )   // Remove input noise in case re-plotted
          {
@@ -1040,7 +1068,10 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
          le_vari->setText( QString::number( variance ) );
          le_rmsd->setText( QString::number( sqrt( variance ) ) );
          model.variance = variance;
-         model.write( dbP );
+         if ( model.write( dbP ) != IUS_DB2::OK )
+         {
+            dbFailed << model.description + ": " + model.message;
+         }
       }
    }
 
@@ -1083,7 +1114,11 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    QFile rep_f( htmlFile );
 
    if ( ! rep_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
+      QApplication::restoreOverrideCursor();
+      report_save_failures( tr( "The report file %1 could not be written.\n" ).arg( htmlFile ), dbFailed, noiseFailed );
       return;
+   }
 
    QTextStream ts( &rep_f );
    write_report( ts );
@@ -1215,13 +1250,56 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
 
    QApplication::restoreOverrideCursor();
 
-   if ( !us_gmp_auto_mode )
+   if ( dbFailed.isEmpty() && noiseFailed.isEmpty() )
    {
-      QMessageBox::information( this, tr( "Successfully Written" ), wmsg );
+      if ( !us_gmp_auto_mode )
+      {
+         QMessageBox::information( this, tr( "Successfully Written" ), wmsg );
+      }
+      else
+      {
+         qDebug() << "[US_2dsa] save(): auto-mode write complete:" << wmsg;
+      }
    }
    else
    {
-      qDebug() << "[US_2dsa] save(): auto-mode write complete:" << wmsg;
+      report_save_failures( wmsg, dbFailed, noiseFailed );
+   }
+}
+
+// Describe a noise whose DB write failed, saying whether its local copy was saved.
+QString US_2dsa::noise_failure( const US_Noise& noise, bool ondisk )
+{
+   return noise.description + ": " + noise.message +
+          ( ondisk ? tr( "; a local copy was saved" ) : tr( "; no local copy could be saved either" ) );
+}
+
+// Tell the user why save() did not complete: the head line and which models and noises it
+// could not write to the DB. In GMP auto mode there is no one to tell: log it and make the
+// channel report failure; when a model is not in the DB, mark the save failed so that
+// analysis_done() does not record it.
+void US_2dsa::report_save_failures( const QString& head, const QStringList& models, const QStringList& noises )
+{
+   QString msg = head;
+   if ( !models.isEmpty() )
+   {
+      msg += tr( "\nThese models could not be saved to the database:\n" ) + models.join( "\n" ) + "\n";
+   }
+   if ( !noises.isEmpty() )
+   {
+      msg += tr( "\nThese noises could not be saved to the database:\n" ) + noises.join( "\n" ) + "\n";
+   }
+
+   save_failed      = save_failed || !models.isEmpty();
+   auto_save_failed = true;
+
+   if ( us_gmp_auto_mode )
+   {
+      qWarning() << "[US_2dsa] save(): auto-mode save failed:" << msg;
+   }
+   else
+   {
+      QMessageBox::warning( this, tr( "Results Not Fully Saved" ), msg );
    }
 }
 
@@ -1510,7 +1588,7 @@ void US_2dsa::run_2dsa_auto( void )
       }
       else
       {
-         bool success = true;
+         bool success = !auto_save_failed;
          emit twodsa_complete_s( chann_to_process_2dsa, success, dataList.size() );
       }
       return;

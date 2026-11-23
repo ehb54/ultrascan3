@@ -299,6 +299,59 @@ TEST_F( TestUSAstfemRsaThreads, NoUsableTempDirFailsCleanly )
    US_Settings::set_tmpDir( saved_tmpdir ); // TearDown restores the environment
 }
 
+TEST_F( TestUSAstfemRsaThreads, MissingSystemTempPathNeverFallsBackToFilesystemRoot )
+{
+   const QString missing = US_Settings::workBaseDir() + "/missing/system-temp";
+   ASSERT_FALSE( QFileInfo::exists( missing ) );
+   // A regular file prevents the configured path from being created.
+   const QString blocker = US_Settings::workBaseDir() + "/temp-blocker";
+   ASSERT_TRUE( us3WriteTestFile( blocker, "blocker" ) );
+   US_Settings::set_tmpDir( blocker + "/configured" );
+   for ( const char* name : tmp_env_names )
+   {
+      ASSERT_TRUE( qputenv( name, QFile::encodeName( missing ) ) );
+   }
+   US_SimulationParameters sp;
+   US_DataIO::RawData      rdata;
+   setup( experiments[0], sp, rdata );
+   EXPECT_EQ( US_AstfemMath::timestate_from_speedsteps( sp, rdata ), -1 );
+   EXPECT_TRUE( sp.sim_speed_prof.isEmpty() );
+   EXPECT_FALSE( QFileInfo::exists( missing ) );
+}
+
+// Qt5 reports a missing system temporary directory as an empty path; Qt6
+// reports the path itself. Test the template choice directly so a regression
+// fails with either Qt version, as any user.
+TEST( TimestateDirTemplates, EmptyDirectoriesNeverYieldATemplateAtTheFilesystemRoot )
+{
+   EXPECT_TRUE( US_AstfemMath::timestate_dir_templates( "", "" ).isEmpty() );
+   EXPECT_EQ( US_AstfemMath::timestate_dir_templates( "/configured", "" ), QStringList{ "/configured/us3-tmst-XXXXXX" } );
+   EXPECT_EQ( US_AstfemMath::timestate_dir_templates( "", "/system" ), QStringList{ "/system/us3-tmst-XXXXXX" } );
+}
+
+TEST( TimestateDirTemplates, ConfiguredDirectoryIsTriedBeforeADistinctSystemDirectory )
+{
+   EXPECT_EQ( US_AstfemMath::timestate_dir_templates( "/configured", "/system" ),
+              ( QStringList{ "/configured/us3-tmst-XXXXXX", "/system/us3-tmst-XXXXXX" } ) );
+   EXPECT_EQ( US_AstfemMath::timestate_dir_templates( "/same", "/same" ), QStringList{ "/same/us3-tmst-XXXXXX" } );
+}
+
+TEST_F( TestUSAstfemRsaThreads, InvalidConfiguredTempUsesValidSystemDirectory )
+{
+   const QString systemTemp = QDir::tempPath();
+   ASSERT_TRUE( QDir( systemTemp ).exists() );
+   const QStringList before  = QDir( systemTemp ).entryList( { "us3-tmst-*" }, QDir::Dirs );
+   const QString     blocker = US_Settings::workBaseDir() + "/configured-temp-blocker";
+   ASSERT_TRUE( us3WriteTestFile( blocker, "blocker" ) );
+   US_Settings::set_tmpDir( blocker + "/tmp" );
+   US_SimulationParameters sp;
+   US_DataIO::RawData      rdata;
+   setup( experiments[0], sp, rdata );
+   EXPECT_GT( US_AstfemMath::timestate_from_speedsteps( sp, rdata ), 0 );
+   EXPECT_FALSE( sp.sim_speed_prof.isEmpty() );
+   EXPECT_EQ( QDir( systemTemp ).entryList( { "us3-tmst-*" }, QDir::Dirs ), before );
+}
+
 // A timestate whose definitions file is missing loads no speed profile:
 //  the load reports failure rather than a count of zero steps
 TEST_F( TestUSAstfemRsaThreads, TimestateWithoutDefinitionsFailsToLoad )
@@ -319,7 +372,7 @@ TEST_F( TestUSAstfemRsaThreads, TimestateWithoutDefinitionsFailsToLoad )
 }
 
 // Solves in threads that share one simparams with no timestate loaded (as
-//  us_fematch's ThreadWorker does):  one of them builds the timestate, the
+//  US_ThreadWorker does):  one of them builds the timestate, the
 //  others use it, and all give the values of the same solve alone.  Without
 //  the lock around the timestate build this aborts in 3 of 3 runs.
 TEST_F( TestUSAstfemRsaThreads, SharedSimparamsWithoutTimestate )

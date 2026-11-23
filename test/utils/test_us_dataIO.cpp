@@ -19,10 +19,6 @@ class TestUSDataIOUnit : public QtTestBase
          setupTestData();
       }
 
-      void TearDown() override
-      {
-         QtTestBase::TearDown();
-      }
 
       void setupTestData()
       {
@@ -35,7 +31,7 @@ class TestUSDataIOUnit : public QtTestBase
          // Create test scans
          for ( int i = 0; i < 3; i++ )
          {
-            US_DataIO::Scan scan;
+            US_DataIO::Scan scan{};
             scan.temperature = 20.0 + i;
             scan.rpm         = 3000.0 + i * 100;
             scan.seconds     = i * 60;
@@ -77,8 +73,8 @@ class TestUSDataIOUnit : public QtTestBase
          editedData.scanData = rawData.scanData;
       }
 
-      US_DataIO::RawData    rawData;
-      US_DataIO::EditedData editedData;
+      US_DataIO::RawData    rawData{};
+      US_DataIO::EditedData editedData{};
 };
 
 // ============================================================================
@@ -93,7 +89,7 @@ EXPECT_EQ(count, 8) << "Should return correct number of x-values";
 
 TEST_F(TestUSDataIOUnit, RawDataPointCountEmpty) {
 // Test pointCount with empty data
-US_DataIO::RawData emptyData;
+US_DataIO::RawData emptyData{};
 int count = emptyData.pointCount();
 EXPECT_EQ(count, 0) << "Should return 0 for empty x-values";
 }
@@ -106,7 +102,7 @@ EXPECT_EQ(count, 3) << "Should return correct number of scans";
 
 TEST_F(TestUSDataIOUnit, RawDataScanCountEmpty) {
 // Test scanCount with empty data
-US_DataIO::RawData emptyData;
+US_DataIO::RawData emptyData{};
 int count = emptyData.scanCount();
 EXPECT_EQ(count, 0) << "Should return 0 for empty scan data";
 }
@@ -130,9 +126,10 @@ EXPECT_EQ(index, 7) << "Should return last index for value above range";
 }
 
 TEST_F(TestUSDataIOUnit, RawDataXindexClosestMatch) {
-// Test xindex with value between points (should return closest)
-int index = rawData.xindex(6.05);
-EXPECT_TRUE(index == 2 || index == 3) << "Should return closest index";
+   // Values between radii return the index of the nearer one.
+   EXPECT_EQ( rawData.xindex( 6.02 ), 2 );
+   EXPECT_EQ( rawData.xindex( 6.07 ), 3 );
+   EXPECT_EQ( rawData.xindex( 6.44 ), 6 );
 }
 
 TEST_F(TestUSDataIOUnit, RawDataRadius) {
@@ -208,8 +205,8 @@ EXPECT_DOUBLE_EQ(avgTemp, 21.0) << "Should calculate correct average temperature
 
 TEST_F(TestUSDataIOUnit, RawDataAverageTemperatureSingleScan) {
 // Test average_temperature with single scan
-US_DataIO::RawData singleScanData;
-US_DataIO::Scan scan;
+US_DataIO::RawData singleScanData{};
+US_DataIO::Scan    scan{};
 scan.temperature = 25.5;
 singleScanData.scanData << scan;
 
@@ -225,11 +222,11 @@ EXPECT_DOUBLE_EQ(spread, 2.0) << "Should calculate correct temperature spread";
 
 TEST_F(TestUSDataIOUnit, RawDataTemperatureSpreadSingleValue) {
 // Test temperature_spread with identical temperatures
-US_DataIO::RawData uniformTempData;
+US_DataIO::RawData uniformTempData{};
 for (int i = 0; i < 3; i++) {
-US_DataIO::Scan scan;
-scan.temperature = 20.0; // All same temperature
-uniformTempData.scanData << scan;
+   US_DataIO::Scan scan{};
+   scan.temperature = 20.0; // All same temperature
+   uniformTempData.scanData << scan;
 }
 
 double spread = uniformTempData.temperature_spread();
@@ -358,17 +355,6 @@ int index = US_DataIO::index(xvals, 2.3);
 EXPECT_EQ(index, 1) << "Should return index of closest value";
 }
 
-TEST_F(TestUSDataIOUnit, StaticIndexEmptyVector) {
-// Test static index method with empty vector
-QVector<double> xvals;
-// This would likely cause undefined behavior, but test defensively
-// Note: This is an edge case that might crash, so we document the behavior
-
-// Since the method doesn't check for empty vectors, this is a boundary case
-// that highlights a potential improvement needed in the implementation
-SUCCEED() << "Empty vector test - implementation should handle this case";
-}
-
 TEST_F(TestUSDataIOUnit, StaticIndexSingleElement) {
 // Test static index method with single element
 QVector<double> xvals = {2.5};
@@ -478,16 +464,14 @@ EXPECT_DOUBLE_EQ(editedData.value(lastScanIndex, lastPointIndex), 1.234)
 
 TEST_F(TestUSDataIOUnit, TemperatureCalculationsEdgeCases) {
 // Test temperature calculations with edge case data
-US_DataIO::RawData edgeCaseData;
+US_DataIO::RawData edgeCaseData{};
 
 // Test with zero scans
-double avgTemp = edgeCaseData.average_temperature();
-// This will likely cause division by zero - document this behavior
-// EXPECT_TRUE(std::isnan(avgTemp) || std::isinf(avgTemp))
-//     << "Should handle empty scan data gracefully";
+// The mean of no temperatures is undefined: 0/0.
+EXPECT_TRUE( std::isnan( edgeCaseData.average_temperature() ) );
 
 // Test with extreme temperature values
-US_DataIO::Scan extremeScan1, extremeScan2;
+US_DataIO::Scan extremeScan1{}, extremeScan2{};
 extremeScan1.temperature = -273.15; // Absolute zero
 extremeScan2.temperature = 1000.0;  // Very high
 edgeCaseData.scanData << extremeScan1 << extremeScan2;
