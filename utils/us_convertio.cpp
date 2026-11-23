@@ -852,21 +852,24 @@ else
    for ( const QString& cleanDir : cleanDirs )
    {
       QDir              local( cleanDir );
-      const QStringList files = local.entryList( { "*.auc" }, QDir::Files );
+      const QStringList files       = local.entryList( { "*.auc" }, QDir::Files );
+      const bool        downloadDir = ( cleanDir == QDir::cleanPath( dir ) );
       for ( const QString& file : files )
       {
          if ( downloaded.contains( file ) )
          {
             continue;
          }
-         // A file system that ignores case keeps an existing file's name when a
-         // download overwrites it under another case, and lists only that name.
-         // The file is then the download: a downloaded name it matches is not
-         // listed, yet opens.  Where case matters, that name does not open here.
+         // In the results folder, a file system that ignores case keeps an
+         // existing file's name when a download overwrites it under another
+         // case, and lists only that name.  The file is then the download: a
+         // downloaded name it matches is not listed, yet opens.  Where case
+         // matters, that name does not open here.  Nothing is downloaded into
+         // the caller's folder, so a case variant there is stale.
          bool isDownload = false;
          for ( const QString& name : downloaded )
          {
-            if ( name.compare( file, Qt::CaseInsensitive ) == 0 && !files.contains( name ) && local.exists( name ) )
+            if ( downloadDir && name.compare( file, Qt::CaseInsensitive ) == 0 && !files.contains( name ) && local.exists( name ) )
             {
                isDownload = true;
                break;

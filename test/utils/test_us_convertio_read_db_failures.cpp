@@ -434,6 +434,21 @@ TEST_F( ReadDbRunFailure, SuccessfulReadFromImportsFolderRemovesStaleAucsThereAn
    EXPECT_TRUE( QFile::exists( directory + "/keep.xml" ) );
 }
 
+// Nothing is downloaded into the caller's folder, so a case variant of a
+// downloaded name there is stale and is removed, on any file system.
+TEST_F( ReadDbRunFailure, SuccessfulReadFromImportsFolderRemovesACaseVariantThere )
+{
+   const QString imports = US_Settings::importDir() + "/run";
+   ASSERT_TRUE( us3WriteTestFile( imports + "/RUN.RA.1.A.280.AUC", "older copy, other case" ) );
+   RunReadDb db;
+   db.addRawRecord();
+   EXPECT_CALL( db, readBlobFromDB( directory + "/run.RA.1.A.280.auc", QString( "download_aucData" ), 23 ) )
+      .WillOnce( Invoke( writeDownloadedBlob ) );
+   EXPECT_EQ( US_ConvertIO::readDBExperiment( "run", imports + "/", &db, steps, "19" ), QString() );
+   EXPECT_TRUE( QDir( imports ).entryList( { "*.auc", "*.AUC" }, QDir::Files ).isEmpty() );
+   EXPECT_EQ( QDir( directory ).entryList( { "*.auc" }, QDir::Files ), QStringList{ "run.RA.1.A.280.auc" } );
+}
+
 TEST_F( ReadDbRunFailure, TimeStateDefinitionsAreWrittenOnlyNextToADownloadedTimeState )
 {
    for ( const bool downloaded : { false, true } )

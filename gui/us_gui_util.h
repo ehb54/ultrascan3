@@ -56,5 +56,12 @@ class US_GUI_EXTERN US_GuiUtil
    //! \returns A status flag:  0 if all-ok
    static int save_csv( const QString&, const QwtPlot* );
 
+   //! \brief Digits a counter's width allows for its initial value.
+   //!
+   //! n = int( log10( |value| ) ) + 1, or 4 - n when n is not positive
+   //! (a value below 0.1), plus one for a minus sign, from 1 to 14.  A
+   //! value of 0, or one that is not finite, gets the full 14.  Both
+   //! US_Widgets::us_counter and US_WidgetsDialog::us_counter use it.
+   static int    counter_digits( double value );
 };
 #endif

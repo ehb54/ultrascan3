@@ -514,7 +514,7 @@ TEST_P( AnalyteXml, WriterUsesShortestRoundTripFrequencyText )
 {
    US_Analyte a;
    a.analyteGUID  = "fixture";
-   a.extinction   = { { 280.2, 1.0 }, { 280.24, 2.0 }, { 0.1 + 0.2, 3.0 } };
+   a.extinction   = { { 280.2, 1.0 }, { 280.24, 2.0 }, { 0.1 + 0.2, 3.0 }, { 280.0, 4.0 } };
    a.refraction   = a.extinction;
    a.fluorescence = a.extinction;
    QByteArray bytes;
@@ -533,8 +533,9 @@ TEST_P( AnalyteXml, WriterUsesShortestRoundTripFrequencyText )
    EXPECT_FALSE( xml.hasError() );
    for ( const QString& name : { QString( "extinction" ), QString( "refraction" ), QString( "fluorescence" ) } )
    {
-      // 0.1 + 0.2 is not 0.3, so it needs 17 digits to read back.
-      EXPECT_EQ( ( QStringList{ "0.30000000000000004", "280.2", "280.24" } ), texts.value( name ) );
+      // 0.1 + 0.2 is not 0.3, so it needs 17 digits to read back; a whole
+      // number has no decimal point.
+      EXPECT_EQ( ( QStringList{ "0.30000000000000004", "280", "280.2", "280.24" } ), texts.value( name ) );
    }
 
    // Every frequency reads back to the same key.  The reader also adds the

@@ -319,22 +319,6 @@ QLCDNumber* US_Widgets::us_lcd( int digits, int value )
 }
 
 //QwtCounter
-int US_Widgets::counter_digits( double value )
-{
-   const double magnitude = std::fabs( value );
-   if ( magnitude == 0.0 || !std::isfinite( magnitude ) )
-   {
-      return 14;
-   }
-   int ncv = int( std::log10( magnitude ) ) + 1;
-   ncv     = ( ncv > 0 ) ? ncv : ( 4 - ncv );
-   if ( value < 0.0 )
-   {
-      ++ncv;
-   }
-   return qBound( 1, ncv, 14 );
-}
-
 QwtCounter* US_Widgets::us_counter( int buttons, double low, double high, 
                                     double value )
 {
@@ -378,7 +362,7 @@ QwtCounter* US_Widgets::us_counter( int buttons, double low, double high,
   counter->setAutoFillBackground( true );
 
   // Set min,curr width based on current value and high-value sizes
-  int widv = fm.horizontalAdvance( QString( "12345678901234" ).left( counter_digits( value ) ) );
+  int widv = fm.horizontalAdvance( QString( "12345678901234" ).left( US_GuiUtil::counter_digits( value ) ) );
   counter->adjustSize();
   int mwidth = widv * 2 + totwid;
   counter->setMinimumWidth( mwidth );

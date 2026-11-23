@@ -404,6 +404,18 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    data_plot2->replot();
 }
 
+// Use the experiment's speed steps only if they cover every loaded triple.
+void US_FeMatch::choose_speed_steps( void )
+{
+   exp_steps          = !speed_steps.isEmpty();
+   const int ntriples = triples.size();
+   for ( int ds = 0; ds < ntriples && exp_steps; ds++ )
+   {
+      exp_steps = US_SimulationParameters::speedStepsCoverData( speed_steps, dataList[ds] );
+   }
+   dat_steps = !exp_steps;
+}
+
 // Load data
 void US_FeMatch::load( void )
 {
@@ -529,13 +541,7 @@ DbgLv(0) << "LD: newfile" << newfile << "idExp" << idExp
    int ntriples   = triples.size();
    DbgLv( 1 ) << "LD: Load: no of speed steps" << speed_steps.count();
 
-   // Use the experiment's speed steps only if they cover every loaded triple.
-   exp_steps = !speed_steps.isEmpty();
-   for ( int ds = 0; ds < ntriples && exp_steps; ds++ )
-   {
-      exp_steps = US_SimulationParameters::speedStepsCoverData( speed_steps, dataList[ds] );
-   }
-   dat_steps = !exp_steps;
+   choose_speed_steps();
    DbgLv( 1 ) << "LD: exp_steps" << exp_steps;
 
    qApp->processEvents();
@@ -4071,13 +4077,7 @@ void US_FeMatch::auto_load_simulate( US_DataIO::RawData i_rdata,
    int ntriples   = triples.size();
    DbgLv( 1 ) << "LD: Load: no of speed steps" << speed_steps.count();
 
-   // Use the experiment's speed steps only if they cover every loaded triple.
-   exp_steps = !speed_steps.isEmpty();
-   for ( int ds = 0; ds < ntriples && exp_steps; ds++ )
-   {
-      exp_steps = US_SimulationParameters::speedStepsCoverData( speed_steps, dataList[ds] );
-   }
-   dat_steps = !exp_steps;
+   choose_speed_steps();
    DbgLv( 1 ) << "LD: exp_steps" << exp_steps;
 
    qApp->processEvents();
