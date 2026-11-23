@@ -704,6 +704,7 @@ void US_ProtocolDevMain::call_AutoflowDialogue( void )                          
 US_InitDialogueGui::US_InitDialogueGui( QWidget* topw )
    : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
+   offset              = 20;
    mainw               = (US_ProtocolDevMain*)topw;
 
    initDialogueOpen = false;
@@ -1012,7 +1013,6 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   connect( pdiag_autoflow, &US_SelectItem::accept_autoflow_deletion, this, qOverload<>( &US_InitDialogueGui::update_autoflow_data ));
   pdiag_autoflow->setParent(this, Qt::Widget);
 
-  offset = 20;
   pdiag_autoflow->move(offset, 2*offset);
 
   //mainw->cornerWidget->setFixedWidth( mainw->tabWidget->tabBar()->width() - 20 );

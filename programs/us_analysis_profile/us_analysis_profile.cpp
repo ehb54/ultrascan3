@@ -3108,6 +3108,7 @@ DbgLv(1) << "GP:SL: APPLIED ALL";
 US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
+   changed             = false;
    mainw               = (US_AnalysisProfileGui*)topw;
    dbg_level           = US_Settings::us_debug();
    cchx                = 0;

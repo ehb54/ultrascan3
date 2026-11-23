@@ -47,6 +47,12 @@ jobs:
               - utils/**.hpp
               - utils/CMakeLists.txt
               - programs/us_sim_inputs_gen/**
+              - programs/us_fematch/**
+              - programs/us_autoflow_analysis/**
+              - programs/us_reporter_gmp/**
+              - gui/us_resids_bitmap.*
+              - gui/us_resplot_fem.*
+              - gui/us_widgets_dialog.*
               - test/**
               - scripts/check-gtest-filter.sh
               - '**/*.json'
@@ -54,6 +60,13 @@ jobs:
               - admin/test/**
               - test-docker.sh
               - CMakeLists.txt
+              # test/packaging also reads these.
+              - makeall.sh
+              - doc/manual/Makefile
+              - doc/manual/manual.pro
+              - programs/**/CMakeLists.txt
+              - scripts/report-package.*
+              - .github/actions/build-package/**
 
   unit-testing:
     needs: changed-files
@@ -153,6 +166,12 @@ jobs:
             ctest --rerun-failed -N 2>/dev/null | grep 'Test #' || echo 'Unable to get failed test list'
           fi
           exit $RESULT
+
+      # Fixture tests of the package targets, makeall.sh and the manual
+      # Makefile; they need only CMake, Ninja and Python from this image.
+      - name: Run packaging tests
+        if: ${{ !cancelled() }}
+        run: python3 -m unittest discover -s test/packaging -p 'test_*.py' -v
 
       - name: Upload test results
         if: always()

@@ -25,6 +25,7 @@ HEADERS      = us_ana_profile.h   \
                us_archive.h       \
                us_astfem_math.h   \
                us_astfem_rsa.h    \
+               us_thread_worker.h \
                us_buffer.h        \
                us_cfa_data.h      \
                us_constants.h     \
@@ -89,6 +90,7 @@ SOURCES      = us_ana_profile.cpp   \
                us_archive.cpp       \
                us_astfem_math.cpp   \
                us_astfem_rsa.cpp    \
+               us_thread_worker.cpp \
                us_buffer.cpp        \
                us_cfa_data.cpp      \
                us_constants.cpp     \
@@ -146,6 +148,10 @@ SOURCES      = us_ana_profile.cpp   \
                us_vector.cpp        \
                us_xpn_data.cpp      \
                us_zsolute.cpp
+
+# The calculations shared by the programs (namespace US_Calc, QtCore only)
+HEADERS      += $$files(us_calc_*.h)
+SOURCES      += $$files(us_calc_*.cpp)
 
 # Only include us_crypto when not on a supercomputer
 

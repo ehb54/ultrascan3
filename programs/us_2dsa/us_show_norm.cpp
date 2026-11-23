@@ -29,19 +29,6 @@
 
 #define setPBMaximum(a)   setRange(1,a)
 
-// Function to compare solute points for sorting
-// ALEXEY: internal linkage (static) -- us_pseudo3d_combine.cpp defines an
-// identically-named, identically-signatured free function of its own;
-// both used to link fine only because they were never part of the same
-// executable. Now that us_autoflow_analysis links both us_2dsa (this
-// file) and us_pseudo3d_combine, an externally-linked copy here collides
-// at link time ("multiple definition"). Only used within this file (see
-// the std::sort() call below), so static costs nothing.
-static bool distro_lessthan( const S_Solute& solu1, const S_Solute& solu2 )
-{ // TRUE iff  (s1<s2) || (s1==s2 && k1<k2)
-   return ( solu1.s < solu2.s ) || ( ( solu1.s == solu2.s ) && ( solu1.k < solu2.k ) );
-}
-
 //------------------------------------------------------------------------
 // US_Pseudo3D_Combine class constructor
 
@@ -687,73 +674,6 @@ void US_show_norm::set_limits()
             << plt_kmin << plt_kmax;
 }
 
-
-// Sort distribution solute list by s,k values and optionally reduce
-void US_show_norm::sort_distro( QList< S_Solute >& listsols,
-      bool reduce )
-{
-   int sizi = listsols.size();
-
-   if ( sizi < 2 )
-      return;        // nothing need be done for 1-element list
-
-   // sort distro solute list by s,k values
-
-   std::sort( listsols.begin(), listsols.end(), distro_lessthan );
-
-   // check reduce flag
-
-   if ( reduce )
-   {     // skip any duplicates in sorted list
-      S_Solute sol1;
-      S_Solute sol2;
-      QList< S_Solute > reduced;
-      QList< S_Solute >::iterator jj = listsols.begin();
-      sol1     = *jj;
-      reduced.append( *jj );     // output first entry
-      int kdup = 0;
-      int jdup = 0;
-
-      while ( (++jj) != listsols.end() )
-      {     // loop to compare each entry to previous
-          sol2    = *jj;         // solute entry
-
-          if ( sol1.s != sol2.s  ||  sol1.k != sol2.k )
-          {   // not a duplicate, so output to temporary list
-             reduced.append( sol2 );
-             jdup    = 0;
-          }
-
-          else
-          {  // duplicate, so sum c value;
-             sol2.c += sol1.c;   // sum c value
-             sol2.s  = ( sol1.s + sol2.s ) * 0.5;  // average s,k
-             sol2.k  = ( sol1.k + sol2.k ) * 0.5;
-             reduced.replace( reduced.size() - 1, sol2 );
-             kdup    = qMax( kdup, ++jdup );
-          }
-
-          sol1    = sol2;        // save entry for next iteration
-      }
-
-      if ( kdup > 0 )
-      {   // if some reduction happened, replace list with reduced version
-         double sc = 1.0 / (double)( kdup + 1 );
-DbgLv(1) << "KDUP" << kdup;
-//sc = 1.0;
-
-         for ( int ii = 0; ii < reduced.size(); ii++ )
-         {  // first scale c values by reciprocal of maximum replicate count
-            reduced[ ii ].c *= sc;
-         }
-
-         listsols = reduced;
-DbgLv(1) << " reduced-size" << reduced.size();
-      }
-   }
-DbgLv(1) << " sol-size" << listsols.size();
-   return;
-}
 
 // Select coordinate for horizontal axis
 void US_show_norm::select_x_axis( int ival )

@@ -18,6 +18,7 @@
 #
 # Required variables (passed via -D on cmake -P invocation):
 #   STAGE_DIR           - Root of the staged directory tree
+#   APP_PROGRAM_MANIFEST - Generated manifest of required APP target outputs
 #   BIN_DIR             - Build-tree bin/ containing us and us_* executables
 #   LIB_DIR             - Build-tree lib/ containing libusutils*.so / libusgui*.so
 #   ETC_SOURCE_DIR      - Source etc/ directory
@@ -25,11 +26,14 @@
 #   LICENSE_FILE        - Path to LICENSE.txt
 #
 # Optional variables:
+#   US3_LINUX_ARCHIVE_NAME - Archive filename supplied by the package target
 #   QCH_DIR             - Directory containing manual.qch / manual.qhc
 #   VCPKG_LIB_DIR       - vcpkg installed lib/ (Qt/Qwt/OpenSSL .so files)
 #   VCPKG_PLUGIN_DIR    - vcpkg installed plugins/ dir (Qt5 / legacy layout)
 #   VCPKG_QT6_PLUGIN_DIR - vcpkg Qt6/plugins/ dir (<triplet>/Qt6/plugins);
 #                          preferred over VCPKG_PLUGIN_DIR for Qt6 builds
+#   QT_PLUGIN_DIR       - Plugin dir of the linked Qt; staged when neither
+#                          vcpkg plugin dir exists (a Qt not from vcpkg)
 #   ASSISTANT_EXE       - Path to assistant binary
 #   SOMO_BIN_DIR        - SoMo bin/ directory
 #   SOMO_LIB_DIR        - SoMo lib/ directory
@@ -66,21 +70,19 @@ set(S_PLUG "${STAGE_DIR}/plugins")
 set(S_ETC  "${STAGE_DIR}/etc")
 set(S_SOMO "${STAGE_DIR}/somo")
 
+# Always start with a clean stage, including standalone script invocations.
+if(EXISTS "${STAGE_DIR}")
+    file(REMOVE_RECURSE "${STAGE_DIR}")
+endif()
+
 file(MAKE_DIRECTORY "${S_BIN}")
 file(MAKE_DIRECTORY "${S_LIB}")
 file(MAKE_DIRECTORY "${S_PLUG}")
 
 # =========================================================================
-# 1) Copy us executable into bin/
+# 1) Copy declared core APP executables into bin/
 # =========================================================================
-if(EXISTS "${BIN_DIR}/us")
-    message(STATUS "[LinuxDeploy] Copying us -> ${S_BIN}/")
-    file(COPY "${BIN_DIR}/us" DESTINATION "${S_BIN}"
-         FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
-                          GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-else()
-    message(FATAL_ERROR "[LinuxDeploy] 'us' not found in ${BIN_DIR}")
-endif()
+include("${CMAKE_CURRENT_LIST_DIR}/../StageAppPrograms.cmake")
 
 # =========================================================================
 # 1b) Generate us.sh launcher script
@@ -109,6 +111,11 @@ message(STATUS "[LinuxDeploy] Generated us.sh launcher")
 if(NOT DEFINED US3_VERSION_STRING OR US3_VERSION_STRING STREQUAL "")
     set(US3_VERSION_STRING "(unknown version)")
 endif()
+# Normal builds pass the exact package filename. Keep standalone deployment
+# invocations consistent with the same naming rules as LinuxPkg.cmake.
+if(NOT US3_LINUX_ARCHIVE_NAME)
+    include("${CMAKE_CURRENT_LIST_DIR}/LinuxPackageName.cmake")
+endif()
 file(WRITE "${STAGE_DIR}/README.txt"
 "UltraScan III ${US3_VERSION_STRING} - Linux
 ================================================================================
@@ -120,7 +127,7 @@ INSTALLATION
   Extract this archive to a location of your choice, for example:
 
     cd /usr/local
-    tar Jxf UltraScan3-${US3_VERSION_STRING}-Linux-<arch>.tar.xz
+    tar Jxf ${US3_LINUX_ARCHIVE_NAME}
 
   No further installation steps are required.  The package is self-contained.
 
@@ -151,20 +158,6 @@ LICENSE
   NIH funding: GM120600
 ")
 message(STATUS "[LinuxDeploy] Generated README.txt")
-
-# =========================================================================
-# 2) Copy companion us_* executables into bin/
-# =========================================================================
-file(GLOB _extra_bins "${BIN_DIR}/us_*")
-foreach(_bin ${_extra_bins})
-    if(NOT IS_DIRECTORY "${_bin}")
-        get_filename_component(_n "${_bin}" NAME)
-        message(STATUS "  Copying program: ${_n}")
-        file(COPY "${_bin}" DESTINATION "${S_BIN}"
-             FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
-                              GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-    endif()
-endforeach()
 
 # =========================================================================
 # 3) Copy UltraScan shared libraries into lib/
@@ -276,6 +269,11 @@ if(VCPKG_QT6_PLUGIN_DIR AND EXISTS "${VCPKG_QT6_PLUGIN_DIR}")
 elseif(VCPKG_PLUGIN_DIR AND EXISTS "${VCPKG_PLUGIN_DIR}")
     set(_effective_plugin_dir "${VCPKG_PLUGIN_DIR}")
     message(STATUS "[LinuxDeploy] Using legacy plugin dir: ${VCPKG_PLUGIN_DIR}")
+elseif(QT_PLUGIN_DIR AND EXISTS "${QT_PLUGIN_DIR}")
+    # qt.conf points Qt at plugins/ only, so a Qt not from vcpkg needs its
+    # own plugins staged too.
+    set(_effective_plugin_dir "${QT_PLUGIN_DIR}")
+    message(STATUS "[LinuxDeploy] Using the linked Qt's plugin dir: ${QT_PLUGIN_DIR}")
 endif()
 
 if(_effective_plugin_dir)
@@ -283,7 +281,7 @@ if(_effective_plugin_dir)
     file(COPY "${_effective_plugin_dir}/" DESTINATION "${S_PLUG}")
 else()
     message(STATUS "[LinuxDeploy] No Qt plugin dir found -- platform plugins not bundled")
-    message(STATUS "  Set VCPKG_QT6_PLUGIN_DIR (Qt6) or VCPKG_PLUGIN_DIR (Qt5).")
+    message(STATUS "  Set VCPKG_QT6_PLUGIN_DIR (Qt6), VCPKG_PLUGIN_DIR (Qt5) or QT_PLUGIN_DIR.")
     message(STATUS "  The app requires platform plugins (libqxcb.so / libqwayland*.so) to run.")
 endif()
 
@@ -316,7 +314,7 @@ if(NOT EXISTS "${S_PLUG}/sqldrivers/libqsqlite.so")
         endif()
     endforeach()
     if(NOT _QSQLITE_FOUND)
-        message(WARNING "[LinuxDeploy] sqldrivers/libqsqlite.so not found -- Qt Assistant search may not work")
+        message(WARNING "[LinuxDeploy] sqldrivers/libqsqlite.so not found -- install Qt's SQLite driver; Assistant needs it to open manual.qhc")
     endif()
 endif()
 
@@ -378,15 +376,18 @@ endif()
 #    handled by the sqldrivers safety-net in section 5b above.
 # =========================================================================
 if(ASSISTANT_EXE AND EXISTS "${ASSISTANT_EXE}")
-    message(STATUS "[LinuxDeploy] Copying assistant -> bin/")
-    file(COPY "${ASSISTANT_EXE}" DESTINATION "${S_BIN}"
+    # Copy the binary itself; a symlink would point outside the package.
+    file(REAL_PATH "${ASSISTANT_EXE}" _ASSISTANT_REAL)
+    message(STATUS "[LinuxDeploy] Copying assistant -> bin/: ${_ASSISTANT_REAL}")
+    set(_ASSISTANT_STAGED "${S_BIN}/assistant")
+    file(COPY_FILE "${_ASSISTANT_REAL}" "${_ASSISTANT_STAGED}")
+    file(CHMOD "${_ASSISTANT_STAGED}"
          FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
                           GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 
     # Patch RPATH so assistant finds Qt .so files from the tarball lib/ dir.
     # $ORIGIN resolves to the directory containing the binary (bin/).
     # $ORIGIN/../lib is therefore <tarball-root>/lib/ at runtime.
-    set(_ASSISTANT_STAGED "${S_BIN}/assistant")
     find_program(_PATCHELF patchelf)
     if(_PATCHELF AND EXISTS "${_ASSISTANT_STAGED}")
         execute_process(
@@ -758,3 +759,5 @@ message(STATUS "  somo/    - SOMO data")
 message(STATUS "  bin/us.sh    - Shell launcher (documented entry point)")
 message(STATUS "  README.txt   - Installation and quick-start instructions")
 message(STATUS "  bin64 -> bin, lib64 -> lib (legacy symlinks)")
+
+include("${CMAKE_CURRENT_LIST_DIR}/../ValidateAppHelp.cmake")
