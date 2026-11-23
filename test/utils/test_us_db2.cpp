@@ -138,6 +138,15 @@ TEST( UsDb2Query, AnEmptyArgumentIsStillPassedAsAnEmptyLiteral )
    EXPECT_EQ( call( QStringList() << "p" << "" << "z" ), QString( "CALL p('%1', '%2', '', 'z')" ).arg( kGuid ).arg( kPw ) );
 }
 
+TEST( UsDb2Query, DisconnectedAdapterDoesNotOwnATransaction )
+{
+   US_DB2 db;
+   EXPECT_FALSE( db.transactionActive() );
+   QString error;
+   EXPECT_FALSE( db.beginTransaction( error ) );
+   EXPECT_FALSE( db.transactionActive() );
+}
+
 // writeBlobFile():  how readBlobFromDB() writes a download (ultrascan-tickets#1251).
 TEST( UsDb2BlobFile, WritesEveryByte )
 {

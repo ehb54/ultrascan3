@@ -104,7 +104,8 @@ endfunction()
 us3_add_utils_suite(test_us_utils gtest-unit-utils
     ${AUTO_TEST_SOURCES} ${AUTO_TEST_HEADERS}
     support/disk_run_fixture.cpp support/disk_run_fixture.h
-    fixtures/analyte.qrc)
+    fixtures/analyte.qrc
+    ${CMAKE_SOURCE_DIR}/programs/us_fematch/us_dmga_mc_stats.cpp)
 # Unit resource readers use appBaseDir()/etc. Never point that layout at
 # source/etc: stage only declared inputs next to the isolated unit executable.
 set(US3_UNIT_LAYOUT "${CMAKE_CURRENT_BINARY_DIR}/unit-layout")
@@ -135,6 +136,8 @@ endforeach()
 configure_file(support/unit_resources.h.in
     "${CMAKE_CURRENT_BINARY_DIR}/unit_resources.h" @ONLY)
 target_include_directories(test_us_utils PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+# US_DmgaMcStats is a us_fematch class that needs only utils.
+target_include_directories(test_us_utils PRIVATE ${CMAKE_SOURCE_DIR}/programs/us_fematch)
 target_compile_definitions(test_us_utils PRIVATE US3_CHECK_UNIT_RESOURCES)
 
 us3_add_utils_suite(test_us_utils_db gtest-integration-db-utils ${DB_TEST_SOURCES})

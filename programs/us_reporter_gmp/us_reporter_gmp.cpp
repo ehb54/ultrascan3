@@ -14,6 +14,10 @@
 #include "us_calc_matching.h"
 #include "us_calc_range.h"
 #include "us_calc_replicate.h"
+#include "us_calc_replicate_group.h"
+#include "us_calc_report_item.h"
+#include "us_calc_report_lookup.h"
+#include "us_calc_run_checks.h"
 #include "us_calc_tolerance.h"
 #include "us_calc_units.h"
 #include "us_constants.h"
@@ -26,6 +30,7 @@
 #include "us_math2.h"
 #include "us_protocol_util.h"
 #include "us_reporter_gmp.h"
+#include "us_reporter_gmp_duration.h"
 #include "us_thread_worker.h"
 
 #include "us_settings.h"
@@ -4483,28 +4488,6 @@ QString US_ReporterGMP::html_header_velmwl( QString title, QString runName, QStr
    return s;
 }
 
-// Percent of the model's concentration within a report item's range, from
-// US_Calc.  An item type that is not a range type is unsupported, except on
-// a model without components, where the type is never examined; a total
-// that is not positive gives 0.
-static double velmwl_range_fraction( const US_Model& mdl, const QString& type, double low, double high, bool& supported )
-{
-   supported = true;
-   if ( mdl.components.isEmpty() )
-   {
-      return 0.0;
-   }
-
-   const US_Calc::Quantity quantity = US_Calc::quantity_from_report_type( type, &supported );
-   if ( !supported )
-   {
-      return 0.0;
-   }
-
-   const US_Calc::RangeResult r = US_Calc::range_summary( mdl.calc_model(), { quantity, low, high } );
-   return ( r.total_concentration > 0.0 ) ? r.fraction_percent : 0.0;
-}
-
 // VELOCITY-MWL: timestamps, species (models) used, analysis settings,
 // distribution info (separate .pdf), and Integration Results: for each species
 // model, the fraction of total concentration within each report item's range
@@ -4631,19 +4614,19 @@ QString US_ReporterGMP::distrib_info_velmwl( const QString&         chan_tag,
             double                   high       = curr_item.range_high;
             QString                  range      = "[" + QString::number( low ) + " - " + QString::number( high ) + "]";
 
-            bool                     supported;
-            double                   frac_tot_m = velmwl_range_fraction( models[im], type, low, high, supported );
+            // The fraction and pass/fail (US_Calc "velmwl_report_item")
+            const US_Calc::Gmp::VelMwlItemResult item_result = US_Calc::Gmp::evaluate_velmwl_item(
+               models[im].calc_model(), { type, curr_item.method, low, high, frac_tot_r, tol_r } );
 
-            if ( !supported )
+            if ( !item_result.supported )
             {
                mstr_sp += table_row(
                   type, range, tr( "n/a" ) + " (" + QString::number( frac_tot_r ) + "%)", QString::number( tol_r ), tr( "n/a" ) );
                continue;
             }
 
-            QString passed = US_Calc::passes( frac_tot_m, { US_Calc::ToleranceRule::AbsolutePercentagePoints, frac_tot_r, tol_r } )
-                                ? "YES"
-                                : "NO";
+            double  frac_tot_m = item_result.fraction_percent;
+            QString passed     = item_result.passed ? "YES" : "NO";
 
             mstr_sp += table_row( type,
                                   range,
@@ -7602,45 +7585,34 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 	  //Exp. Duration
 	  if ( dkeys[ i ] == "Time" )
 	    {
-	      val_target       = currProto. rpSpeed. ssteps[0].duration +  (double) ( currProto. rpSpeed. ssteps[0].speed / currProto. rpSpeed. ssteps[0].accel );
-	      qDebug() << "Assembling Run Details: exp. duration, speed, accel -- "
-		       << currProto. rpSpeed. ssteps[0].duration
-		       << currProto. rpSpeed. ssteps[0].speed
-		       << currProto. rpSpeed. ssteps[0].accel;
-	      int  hours_r     = (int)qFloor( val_target / 3600.0 );
-	      int  mins_r      = (int)qRound( ( val_target - hours_r * 3600.0 ) / 60.0 );
-	      QString hh_r     = "h";
-	      QString val_target_hh_mm    = QString::asprintf( "%d %s %02d m", hours_r, hh_r.toLatin1( ).data(), mins_r );
+          val_target = US_Calc::Gmp::run_duration_target(
+             currProto.rpSpeed.ssteps[0].duration, currProto.rpSpeed.ssteps[0].speed, currProto.rpSpeed.ssteps[0].accel );
+          QString      val_target_hh_mm = US_ReporterGmp::duration_hours_minutes( val_target );
 
-	      //tol: based on 1st AProfile->ReportGMP
-	      QString channel_desc_alt = chndescs_alt[ 0 ];
-	      QString channel_desc     = chndescs[ 0 ];
-	      QString wvl              = QString::number( ch_wvls[ channel_desc_alt ][ 0 ] );
-	      US_ReportGMP reportGMP   = ch_reports[ channel_desc_alt ][ wvl ];
-	      val_tol = reportGMP. experiment_duration_tol;
-	      
-	      val_measured = dmaxs[ dkeys[ i ] ] - dmins[ dkeys[ i ] ]; //in mins
-	      double val_measured_sec = val_measured * 60.0;
-	      hours_r     = (int)qFloor( val_measured_sec / 3600.0 );
-	      mins_r      = (int)qRound( ( val_measured_sec - hours_r * 3600.0 ) / 60.0 );
-	      QString val_measured_hh_mm   = QString::asprintf( "%d %s %02d m", hours_r, hh_r.toLatin1( ).data(), mins_r );
+          //tol: based on 1st AProfile->ReportGMP
+          QString      channel_desc_alt = chndescs_alt[0];
+          QString      wvl              = QString::number( ch_wvls[channel_desc_alt][0] );
+          US_ReportGMP reportGMP        = ch_reports[channel_desc_alt][wvl];
+          val_tol                       = reportGMP.experiment_duration_tol;
 
-         val_passed = US_Calc::passes( val_measured_sec, { US_Calc::ToleranceRule::RelativePercentOfTarget, val_target, val_tol } )
-                         ? "YES"
-                         : "NO";
+          val_measured                                      = dmaxs[dkeys[i]] - dmins[dkeys[i]]; //in mins
+          const US_Calc::Gmp::RunCheckResult duration_check = US_Calc::Gmp::check_run_duration( val_measured, val_target, val_tol );
+          QString                            val_measured_hh_mm = US_ReporterGmp::duration_hours_minutes( duration_check.value );
+          val_passed                                            = duration_check.passed ? "YES" : "NO";
 
-         html_assembled +=
-            table_row( tr( "Duration" ), val_target_hh_mm, QString::number( val_tol ) + "%", val_measured_hh_mm, "", val_passed );
+          html_assembled +=
+             table_row( tr( "Duration" ), val_target_hh_mm, QString::number( val_tol ) + "%", val_measured_hh_mm, "", val_passed );
        }
 
        //Temperature
        if ( dkeys[i].contains( "Temperature" ) )
        {
-          val_tol      = 0.5; //plus-minus 0.5 C
-          val_target   = currProto.temperature;
-          val_measured = davgs_stdd_first_scan[dkeys[i]]["Avg"];
-          val_passed =
-             US_Calc::passes( val_measured, { US_Calc::ToleranceRule::AbsoluteUnits, val_target, val_tol } ) ? "YES" : "NO";
+          const US_Calc::Gmp::RunCheckResult check =
+             US_Calc::Gmp::check_temperature( davgs_stdd_first_scan[dkeys[i]]["Avg"], currProto.temperature );
+          val_tol      = check.check.tolerance; // plus-minus, degrees C
+          val_target   = check.check.target;
+          val_measured = check.value;
+          val_passed   = check.passed ? "YES" : "NO";
 
           val_measured_stdd = davgs_stdd_first_scan[dkeys[i]]["Stdd"];
 
@@ -7661,11 +7633,12 @@ void  US_ReporterGMP::assemble_run_details_html( void )
        //RawSpeed
        if ( dkeys[i].contains( "RawSpeed" ) )
        {
-          val_tol      = 4; //plus-minus 4 RPM
-          val_target   = currProto.rpSpeed.ssteps[0].speed;
-          val_measured = davgs_stdd_first_scan[dkeys[i]]["Avg"];
-          val_passed =
-             US_Calc::passes( val_measured, { US_Calc::ToleranceRule::AbsoluteUnits, val_target, val_tol } ) ? "YES" : "NO";
+          const US_Calc::Gmp::RunCheckResult check =
+             US_Calc::Gmp::check_speed( davgs_stdd_first_scan[dkeys[i]]["Avg"], currProto.rpSpeed.ssteps[0].speed );
+          val_tol      = check.check.tolerance; // plus-minus, rpm
+          val_target   = check.check.target;
+          val_measured = check.value;
+          val_passed   = check.passed ? "YES" : "NO";
 
           html_assembled += table_row( "Speed (RPM)",
                                        QString::number( val_target ),
@@ -9908,177 +9881,131 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 
   if ( !channdesc_to_overlapping_wvls.isEmpty() ) 
     html_str_replicate_av += tr( "<h2>Replicate Groups Averaging Results:</h2>\n" );
-  
-  QMap< QString, QStringList>::iterator chw;
+
+  QMap<QString, QStringList>::iterator chw;
   for ( chw = channdesc_to_overlapping_wvls.begin(); chw != channdesc_to_overlapping_wvls.end(); ++chw )
-    {
-      QString ch_alt_desc  = chw.key();
-      QStringList all_wvls = chw.value();
-      QString o_type       = ch_alt_desc.split(":")[1];
+  {
+     QString       ch_alt_desc = chw.key();
+     QStringList   all_wvls    = chw.value();
+     QString       o_type      = ch_alt_desc.split( ":" )[1];
 
-      QStringList unique_wvls;
-      QStringList unique_channels;
-      QMap < QString, QStringList > same_wvls_chann_map; // wvl: channel list
-      
-      for( int i=0; i<all_wvls.size(); ++i )
-	{
-	  QString curr_triple = all_wvls[ i ];
-	  QString curr_chann  = all_wvls[ i ].split(".")[0];  
-	  QString curr_wvl    = all_wvls[ i ].split(".")[1];
+     // The triples that take part in averaging, split into one subgroup per
+     // wavelength (US_Calc "report_replicate_group")
+     QVector<bool> included;
+     for ( const QString& triple : all_wvls )
+     {
+        included << triple_exist_inMWL( triple );
+     }
+     const US_Calc::Gmp::ReplicateLayout layout = US_Calc::Gmp::replicate_layout( all_wvls, included );
 
-	  //check if actual triple is considered in MWL settings
-	  if ( !triple_exist_inMWL( curr_triple ) )
-	    continue;
+     QString                             replicate_group_number = get_replicate_group_number( ch_alt_desc );
 
-	  unique_wvls               << curr_wvl;
-	  unique_channels           << curr_chann;
+     html_str_replicate_av += "\n" + indent( 2 ) +
+                              tr( "<h3>Replicate Group #%1: [Channels: %2 (%3)] </h3>\n" )
+                                 .arg( replicate_group_number )
+                                 .arg( layout.channels.join( "," ) )
+                                 .arg( o_type );
 
-	  //here, add to list FULL channel desc, e.g. "1A:Iterf.", or "1A:UV/vis."
-	  //same_wvls_chann_map[ curr_wvl ] << curr_chann; //BEFORE
-	  same_wvls_chann_map[ curr_wvl ] << curr_chann + ":" + o_type; //Will this work?
-	}
-      
-      unique_wvls.     removeDuplicates();
-      unique_channels. removeDuplicates();
+     for ( int j = 0; j < layout.subgroups.size(); ++j )
+     {
+        const US_Calc::Gmp::ReplicateSubgroup& subgroup = layout.subgroups[j];
+        QString                                u_wvl    = subgroup.wavelength;
 
-      QString replicate_group_number = get_replicate_group_number( ch_alt_desc );
-      
-      html_str_replicate_av += "\n" + indent( 2 ) + tr( "<h3>Replicate Group #%1: [Channels: %2 (%3)] </h3>\n" )
-	.arg( replicate_group_number )
-	.arg( unique_channels.join(",") )
-	.arg( o_type );
-      
-      
-      //iterate over unique wvls
-      for ( int j=0; j < unique_wvls.size(); ++j )
-	{
-	  QString u_wvl = unique_wvls[j];
+        // Full channel descriptions, e.g. "1A:Interf." or "1A:UV/vis."
+        QStringList                            channs_for_wvl;
+        QString                                replicate_subgroup_triples;
+        for ( const QString& channel : subgroup.channels )
+        {
+           channs_for_wvl << channel + ":" + o_type;
+           replicate_subgroup_triples += channel + "." + u_wvl + ",";
+        }
+        replicate_subgroup_triples.chop( 1 );
 
-	  QString replicate_subgroup_triples;
-	  for ( int jj=0; jj < same_wvls_chann_map[ u_wvl ].size(); ++jj )
-	    replicate_subgroup_triples += same_wvls_chann_map[ u_wvl ][ jj ].split(":")[0] + "." + u_wvl + ",";
+        html_str_replicate_av +=
+           "\n" + indent( 2 ) +
+           tr( "<h3>Subgroup #%1: [Triples: %2] </h3>\n" ).arg( QString::number( j + 1 ) ).arg( replicate_subgroup_triples );
 
-	  replicate_subgroup_triples.chop(1);
-	  
-	  html_str_replicate_av += "\n" + indent( 2 ) + tr( "<h3>Subgroup #%1: [Triples: %2] </h3>\n" )
-	    .arg( QString::number( j+1 ) )
-	    .arg( replicate_subgroup_triples );
+        html_str_replicate_av += indent( 2 ) + "<table style=\"font-size:80%\">\n";
+        html_str_replicate_av += table_row( tr( "Type:" ),
+                                            tr( "Method:" ),
+                                            tr( "Range:" ),
+                                            tr( "Av. Integration, Model (target):" ),
+                                            tr( "St. Dev.:" ),
+                                            tr( "Av. Fraction %, Model (target):" ),
+                                            tr( "St. Dev.:" ),
+                                            tr( "Tol.%:" ),
+                                            tr( "PASSED?" ) );
 
-	  html_str_replicate_av += indent( 2 ) + "<table style=\"font-size:80%\">\n";
-	  html_str_replicate_av += table_row( tr( "Type:" ),
-					      tr( "Method:" ),
-					      tr( "Range:"),
-					      tr( "Av. Integration, Model (target):" ),
-					      tr( "St. Dev.:"),
-					      tr( "Av. Fraction %, Model (target):"),
-					      tr( "St. Dev.:" ),
-					      tr( "Tol.%:"),
-					      tr( "PASSED?")
-					      );
-	  	  
-	  //Reference GMP Report, ReportItems for 1st channel in a replicate group && over each wavelength:
-	  US_ReportGMP ref_group_report = ch_reports[ ch_alt_desc ][ u_wvl ];
-	  int report_items_number = ref_group_report.reportItems.size();
-	  for ( int kk = 0; kk < report_items_number; ++kk )
-	    {
-	      US_ReportGMP::ReportItem ref_group_item = ref_group_report.reportItems[ kk ];
+        // The reference items:  those of the group's first channel at this wavelength
+        US_ReportGMP ref_group_report    = ch_reports[ch_alt_desc][u_wvl];
+        int          report_items_number = ref_group_report.reportItems.size();
+        for ( int kk = 0; kk < report_items_number; ++kk )
+        {
+           US_ReportGMP::ReportItem ref_group_item = ref_group_report.reportItems[kk];
 
-	      QString type           = ref_group_item.type;
-	      QString method         = ref_group_item.method;
-	      if( method.contains ("PCSA") )
-		method = "PCSA";
-	      QString int_val_r      = QString::number( ref_group_item.integration_val );
-	      double  frac_tot_r     = ref_group_item.total_percent;
-	      double  frac_tot_tol_r = ref_group_item.tolerance ;
-	      double  low            = ref_group_item.range_low;
-	      double  high           = ref_group_item.range_high;
+           QString                  type   = ref_group_item.type;
+           QString                  method = ref_group_item.method;
+           if ( method.contains( "PCSA" ) )
+           {
+              method = "PCSA";
+           }
+           QString                                  int_val_r      = QString::number( ref_group_item.integration_val );
+           double                                   frac_tot_r     = ref_group_item.total_percent;
+           double                                   frac_tot_tol_r = ref_group_item.tolerance;
+           double                                   low            = ref_group_item.range_low;
+           double                                   high           = ref_group_item.range_high;
 
-	      QString range          = "[" + QString::number(low) + " - " + QString::number(high) + "]";
-	   
-	      QMap<QString, double> replicate_g_results = get_replicate_group_results( ref_group_item, u_wvl, same_wvls_chann_map[ u_wvl ] );
+           QString                                  range = "[" + QString::number( low ) + " - " + QString::number( high ) + "]";
 
-	      //print results into HTML report:
-	      /* 
-		 Replicate Group #: [channles: 1A, 2A, 5A]
-		    Sub-Group #: [wvl: 280]
-		      type,  method,   range,    integration_AV (target),   St.Dev.   Fraction of Total AV. (target)   PASSED?
-		      s      2DSA-MC   3.2-3.7   integration_sim_av         st_dev      XXX                             YES/NO 
-	      */
+           const US_Calc::Gmp::ReplicateGroupResult group =
+              get_replicate_group_results( ref_group_item, u_wvl, channs_for_wvl, subgroup.channels.size() );
 
-	      double frac_tot_m_av = replicate_g_results["tot_percent_av"];
-         QString               tot_av_frac_passed =
-            US_Calc::passes( frac_tot_m_av, { US_Calc::ToleranceRule::RelativePercentOfTarget, frac_tot_r, frac_tot_tol_r } )
-                             ? "YES"
-                             : "NO";
+           QString int_std_dev     = "N/A";
+           QString percent_std_dev = "N/A";
+           if ( group.show_sd )
+           {
+              int_std_dev     = QString( "%1" ).arg( group.sd_range_concentration, 10, 'e', 2 );
+              percent_std_dev = QString( "%1%" ).arg( group.sd_fraction_percent, 0, 'f', 2 );
+           }
 
-         //descide if we show std deviations
-         int num_triples_in_subgroup = replicate_subgroup_triples.split( "," ).size();
-         qDebug() << "triples_list, num_triples_in_subgroup, replicate_g_results[\"int_st_dev\"], "
-                  << "replicate_g_results[\"tot_percent_st_dev\"] -- " << replicate_subgroup_triples << num_triples_in_subgroup
-                  << replicate_g_results["int_st_dev"] << replicate_g_results["tot_percent_st_dev"];
+           html_str_replicate_av += table_row(
+              type,
+              method,
+              range,
+              QString::asprintf( "%10.4e", group.mean_range_concentration ) + " (" + int_val_r + ")",
+              int_std_dev,
+              QString::asprintf( "%5.2f%%", group.mean_fraction_percent ) + " (" + QString::asprintf( "%5.2f%%", frac_tot_r ) + ")",
+              percent_std_dev,
+              QString::number( frac_tot_tol_r ),
+              group.passed ? "YES" : "NO" );
+        }
 
-         QString int_std_dev     = "N/A";
-         QString percent_std_dev = "N/A";
-         if ( num_triples_in_subgroup > 1 )
-         {
-            int_std_dev     = QString( "%1" ).arg( replicate_g_results["int_st_dev"], 10, 'e', 2 );
-            percent_std_dev = QString( "%1%" ).arg( replicate_g_results["tot_percent_st_dev"], 0, 'f', 2 );
-         }
-         qDebug() << "int_std_dev, percent_std_dev -- " << int_std_dev << percent_std_dev;
+        html_str_replicate_av += indent( 3 ) + "</table>\n";
+     }
+  }
 
-         html_str_replicate_av += table_row( type,
-                                             method,
-                                             range,
-                                             QString::asprintf( "%10.4e", replicate_g_results["int_av"] ) + " (" + int_val_r + ")",
-                                             //QString::asprintf( "%10.2e",  int_std_dev ),
-                                             int_std_dev,
-                                             QString::asprintf( "%5.2f%%", replicate_g_results["tot_percent_av"] ) + " (" +
-                                                QString::asprintf( "%5.2f%%", frac_tot_r ) + ")",
-                                             //QString::asprintf( "%5.2f%%",  percent_std_dev ),
-                                             percent_std_dev,
-                                             QString::number( frac_tot_tol_r ),
-                                             tot_av_frac_passed );
-       }
-
-       html_str_replicate_av += indent( 3 ) + "</table>\n";
-   }
-    }
-  
   return html_str_replicate_av;
 }
 
+// Whether a triple takes part in replicate averaging:  the triple's channel
+// settings and report are looked up here, the rule is US_Calc's.
 bool US_ReporterGMP::triple_exist_inMWL( QString curr_triple )
 {
-  bool ex = true;
-  QString curr_chann  = curr_triple.split(".")[0];  
-  QString curr_wvl    = curr_triple.split(".")[1];
-  QString chann_desc_full;
-  QStringList wvls_not;
-  for( int i=0; i < chndescs_alt.size(); ++i)
-    {
-      QString chan_from_desc = chndescs_alt[i].split(":")[0];
-      if ( chan_from_desc == curr_chann )
-	{
-	  wvls_not = currAProf.wvl_not_run[i].split(":");
-	  chann_desc_full = chndescs_alt[i];
-	  break;
-	}
-    }
-  if ( wvls_not.contains(curr_wvl) )
-    {
-      ex = false;
-      qDebug() << "Triple: " << curr_triple << " will not be considered in replicas averaging! [MWL settings]"; 
-    }
-
-  //now, check if ReportGMP has 'Integration Results' checked (even for triple that is included)
-  US_ReportGMP report_for_triple = ch_reports[ chann_desc_full ][ curr_wvl ];
-  if ( !report_for_triple. integration_results_mask )
-    {
-      ex = false;
-      qDebug() << "Triple: " << curr_triple << " will not be considered in replicas averaging! [ReportGMP settings]"; 
-    }
-  
-  return ex;
+   QString curr_chann = curr_triple.split( "." )[0];
+   QString curr_wvl   = curr_triple.split( "." )[1];
+   QString chann_desc_full;
+   QString wvls_not;
+   for ( int i = 0; i < chndescs_alt.size(); ++i )
+   {
+      if ( chndescs_alt[i].split( ":" )[0] == curr_chann )
+      {
+         wvls_not        = currAProf.wvl_not_run[i];
+         chann_desc_full = chndescs_alt[i];
+         break;
+      }
+   }
+   US_ReportGMP report_for_triple = ch_reports[chann_desc_full][curr_wvl];
+   return US_Calc::Gmp::replicate_triple_included( curr_wvl, wvls_not, report_for_triple.integration_results_mask );
 }
 
 
@@ -10100,99 +10027,45 @@ QString US_ReporterGMP::get_replicate_group_number( QString ch_alt_desc )
   return replicate_gn;
 }
 
-//Get Integration Results from same Replicate subGroup | same-wvl | same-report-items: 
-QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP::ReportItem ref_report_item, QString u_wvl, QStringList channs_for_wvl )
+// A reference item's result over a replicate subgroup:  the report items of
+// each channel are looked up here (filled in by distrib_info), the members,
+// averages and pass/fail come from US_Calc.
+US_Calc::Gmp::ReplicateGroupResult US_ReporterGMP::get_replicate_group_results( US_ReportGMP::ReportItem ref_report_item,
+                                                                                QString                  u_wvl,
+                                                                                QStringList              channs_for_wvl,
+                                                                                int                      listed_triples )
 {
-   // Members of the group, as US_Calc range results
-   QVector<US_Calc::RangeResult> members;
-   QMap<QString, double>         results;
-
-   //iterate over UR_ReportsGMPs && pick ones correspondning to 'chan_desc_alt.contains("ch_wvls[i]")' && wavelength == u_wvl;
-   int                           nchna = currAProf.pchans.count();
-   for ( int i = 0; i < channs_for_wvl.size(); ++i ) //over channels for a given wvl in Replicate group:
+   auto as_replicate_item = []( const US_ReportGMP::ReportItem& item )
    {
-      US_ReportGMP reportGMP;
-      for ( int j = 0; j < nchna; j++ )       //over all channels
-	{
-	  QString channel_desc_alt = chndescs_alt[ j ];
+      US_Calc::Gmp::ReplicateItem r;
+      r.type                = item.type;
+      r.method              = item.method;
+      r.low                 = item.range_low;
+      r.high                = item.range_high;
+      r.integration_value   = item.integration_val;
+      r.target_percent      = item.total_percent;
+      r.tolerance           = item.tolerance;
+      r.range_concentration = item.integration_val_sim;
+      r.fraction_percent    = item.total_percent_sim;
+      return r;
+   };
 
-	  // //For now, do not consider IP type!!!
-	  // if ( channel_desc_alt.contains("Interf") ) 
-	  //   continue;
-	  
-	  //if ( channel_desc_alt.split(":")[0].contains( channs_for_wvl[ i ] ) )  
-	  if ( channel_desc_alt .contains( channs_for_wvl[ i ] ) )  
-	    {
-	      qDebug() << "In get_replicate_group_results(): channel_desc_alt, channs_for_wvl[ i ], wvl -- "
-		       << channel_desc_alt
-		       << channs_for_wvl[ i ]
-		       << u_wvl;
-
-	      //Select US_ReportGMP for channel in a Replicate group && representative wvl!
-	      reportGMP = ch_reports[ channel_desc_alt ][ u_wvl ];
-
-	      break;
-	    }
-	}
-            
-      //then pick report's ReportItem corresponding to the passed ref_report_item:
-      int report_items_number = reportGMP. reportItems.size();
-      for ( int kk = 0; kk < report_items_number; ++kk )
-	{
-	   US_ReportGMP::ReportItem curr_item = reportGMP. reportItems[ kk ];
-
-	   //Compare ref_report_item with curr_item:
-	   QString ref_type           = ref_report_item.type;
-	   QString ref_method         = ref_report_item.method;
-	   QString ref_int_val        = QString::number( ref_report_item.integration_val );
-	   double  ref_frac_tot       = ref_report_item.total_percent;
-	   double  ref_frac_tot_tol   = ref_report_item.tolerance ;
-	   double  ref_low            = ref_report_item.range_low;
-	   double  ref_high           = ref_report_item.range_high;
-
-	   QString _type           = curr_item.type;
-	   QString _method         = curr_item.method;
-	   QString _int_val        = QString::number( curr_item.integration_val );
-	   double  _frac_tot       = curr_item.total_percent;
-	   double  _frac_tot_tol   = curr_item.tolerance ;
-	   double  _low            = curr_item.range_low;
-	   double  _high           = curr_item.range_high;
-
-	   //Comparison nased on: type/method [s-2DSA-IT], ranges [3.2 - 3.7] && integration value: CAN BE EXTENDED if needed 
-	   if ( ref_type    == _type      &&
-		ref_method  == _method    &&
-		ref_low     == _low       &&
-		ref_high    == _high      &&
-		ref_int_val == _int_val      )
-	     {
-	       
-	       //can add an average fraction percent from model (if needed)
-
-	       qDebug() << "For Triple: " << channs_for_wvl[ i ] << "." << u_wvl
-			<< ", Type/Method: " << _type << ": " << _method
-			<< ", Range: " << "[" << _low << " - " << _high << "]" 
-			<< ", Simulated Integr. Val: " << curr_item. integration_val_sim
-			<< ", Fraction %: " << curr_item. total_percent_sim;
-
-	       if ( curr_item. integration_val_sim >= 0 )
-		 {
-          US_Calc::RangeResult member;
-          member.range_concentration = curr_item.integration_val_sim;
-          member.fraction_percent    = curr_item.total_percent_sim;
-          members.push_back( member );
-       }
-        }
+   const QStringList                             channel_descs = chndescs_alt.mid( 0, currAProf.pchans.count() );
+   QVector<QVector<US_Calc::Gmp::ReplicateItem>> channel_items;
+   for ( const QString& channel : channs_for_wvl )
+   {
+      QVector<US_Calc::Gmp::ReplicateItem> items;
+      const int                            index = US_Calc::Gmp::replicate_channel_index( channel_descs, channel );
+      if ( index >= 0 )
+      {
+         for ( const US_ReportGMP::ReportItem& item : ch_reports[channel_descs[index]][u_wvl].reportItems )
+         {
+            items << as_replicate_item( item );
+         }
+      }
+      channel_items << items;
    }
-   }
-
-   // Mean and population SD from US_Calc; a group without members gives 0.
-   const US_Calc::ReplicateResult group = US_Calc::replicate_summary( members );
-   const bool                     empty = ( group.used_count == 0 );
-   results["int_av"]                    = empty ? 0.0 : group.mean_range_concentration;
-   results["tot_percent_av"]            = empty ? 0.0 : group.mean_fraction_percent;
-   results["int_st_dev"]                = empty ? 0.0 : group.sd_range_concentration;
-   results["tot_percent_st_dev"]        = empty ? 0.0 : group.sd_fraction_percent;
-   return results;
+   return US_Calc::Gmp::evaluate_replicate_group( as_replicate_item( ref_report_item ), channel_items, listed_triples );
 }
 
 // Distribution information HTML string
@@ -10541,166 +10414,78 @@ model_used.components[ ii ].vbar20 ),
    mstr += indent( 2 ) + "</table>\n";
 
 
-   //Now add Basic Report params comparison to actual Run Details
-   QString t_name = model_used.description.split(".")[1];
-   QString wvl    = t_name.mid(2,3);
-   QString cellID = t_name.mid(0,1);
-   qDebug() << "In DISTRIB: triple, cellID, wvl -- " << t_name << cellID << wvl;
-
-   qDebug() << "Model description, mdla, msim -- " << model_used.description <<  mdla << msim;
-   QString model_name = mdla.split("_")[1];
-   if ( model_name.contains("PCSA") )
-     model_name = "PCSA";
-   if ( model_name.contains("-CG") )
-     model_name = model_name.replace("-CG", "");
-   
-   double tot_conc_r, tot_conc_r_factor, tot_conc_tol_r, rmsd_r, av_int_r, exp_dur_r, exp_dur_tol_r;
-   double loading_volume_r, loading_volume_tol_r ;
+   //Now add Basic Report params comparison to actual Run Details:  the
+   // triple's inputs are chosen by US_Calc ("report_lookup").
+   const US_Calc::Gmp::ModelDescriptionParts parts                = US_Calc::Gmp::parse_model_description( model_used.description );
+   const bool                                interference_triple  = tripleInfo["triple_name"].contains( "Interference" );
+   const bool                                simulated_absorbance = dataSource.contains( "DiskAUC:Absorbance" ) && simulatedData;
+   const int                                 nchna                = currAProf.pchans.count();
+   const int                                 channel_index        = parts.ok ? US_Calc::Gmp::report_channel_index(
+                                           chndescs_alt.mid( 0, nchna ), parts.triple, interference_triple, simulated_absorbance )
+                                                                             : -1;
+   if ( channel_index < 0 )
+   {
+      // Without the triple's report there is nothing to compare with.
+      qDebug() << "distrib_info: no report applies to model" << model_used.description
+               << "- comparison and integration results left out";
+      return mstr;
+   }
+   QString       t_name     = parts.triple;
+   QString       wvl        = parts.wavelength;
+   QString       cellID     = parts.cell;
+   QString       model_name = parts.model_name;
 
    //length of run (based on rdata - for current triple )
-   double last_f  = rdata ->scanData.last().seconds;
-   double first_f = rdata ->scanData.first().seconds;
-   int  hours     = (int)qFloor( last_f / 3600.0 );
-   int  mins      = (int)qRound( ( last_f - hours * 3600.0 ) / 60.0 );
-   QString hh     = ( hours == 1 ) ? tr( "hr" ) : tr( "hrs" );
-   hh    = "h";
-   QString wks    = QString::asprintf( "%d %s %02d m", hours, hh.toLatin1( ).data(), mins );
-   int fmins     = (int)qFloor( first_f / 60.0 );
-   int fsecs     = first_f - fmins * 60.0;
-   QString mm    = ( fmins == 1 ) ? tr( "min" ) : tr( "mins" );
-   QString scan1time = QString::asprintf( "%d m %02d s", fmins, fsecs );
-   //end of length
-   
-   US_ReportGMP* reportGMP;  //reference
-   int nchna   = currAProf.pchans.count();
-   for ( int i = 0; i < nchna; i++ )
-     {
-       QString channel_desc_alt = chndescs_alt[ i ];
+   double        last_f = rdata->scanData.last().seconds;
+   QString       wks    = US_ReporterGmp::duration_hours_minutes( last_f );
 
-       qDebug() << "Identifying report for triple -- " << t_name   // 2A660
-		<< ", tripleInfo:  "                   << tripleInfo[ "triple_name" ]                     // 2AInterference
-		<< ", channel_desc_alt: "              << channel_desc_alt;
+   const QString channel_desc_alt = chndescs_alt[channel_index];
+   US_ReportGMP* reportGMP        = &( ch_reports[channel_desc_alt][wvl] );
+   double        tot_conc_r       = reportGMP->tot_conc;
+   double        tot_conc_tol_r   = reportGMP->tot_conc_tol;
+   double        rmsd_r           = reportGMP->rmsd_limit;
+   double        av_int_r         = reportGMP->av_intensity;
+   double        exp_dur_r        = reportGMP->experiment_duration;
+   double        exp_dur_tol_r    = reportGMP->experiment_duration_tol;
+   QString       exp_dur_r_hh_mm  = US_ReporterGmp::duration_hours_minutes( exp_dur_r );
 
-       if ( tripleInfo[ "triple_name" ].contains("Interference") && !channel_desc_alt.contains("Interf") )
-	 continue;
+   double        tot_conc_r_factor    = currAProf.lc_ratios[channel_index];
+   double        loading_volume_r     = currAProf.l_volumes[channel_index];
+   double        loading_volume_tol_r = currAProf.lv_tolers[channel_index];
 
-       //'S' data
-       QString channelNameProt = channel_desc_alt.split(":")[0];
-       if ( dataSource .contains("DiskAUC:Absorbance") && simulatedData )
-	 channelNameProt = channelNameProt. replace( "A", "S" );
-       
-       if ( t_name. contains( channelNameProt ) )  
-	 {
-	   qDebug() << "So, what are channel_desc_alt, wvl ? " << channel_desc_alt << wvl;
-	     
-	   reportGMP = &( ch_reports[ channel_desc_alt ][ wvl ] );
+   // autoflowIntensity (for the triple's wavelength); NaN when none applies
+   double        av_int_exp =
+      US_Calc::Gmp::triple_intensity( intensityRIMap, US_Calc::Gmp::intensity_triple( t_name, simulated_absorbance ) );
 
-	   tot_conc_r     = reportGMP-> tot_conc ;
-	   tot_conc_tol_r = reportGMP-> tot_conc_tol ;
-	   rmsd_r         = reportGMP-> rmsd_limit ;
-	   av_int_r       = reportGMP-> av_intensity ;
-	   exp_dur_r      = reportGMP-> experiment_duration ;
-	   exp_dur_tol_r  = reportGMP-> experiment_duration_tol ;
-
-	   tot_conc_r_factor    = currAProf. lc_ratios [ i ] ;
-	   loading_volume_r     = currAProf. l_volumes [ i ] ;
-	   loading_volume_tol_r = currAProf. lv_tolers [ i ] ;
-	   
-	   break;
-	 }
-     }
-   //transform exp_duration_report into hh mm format
-   int  hours_r     = (int)qFloor( exp_dur_r / 3600.0 );
-   int  mins_r      = (int)qRound( ( exp_dur_r - hours_r * 3600.0 ) / 60.0 );
-   QString hh_r     = ( hours_r == 1 ) ? tr( "hr" ) : tr( "hrs" );
-   hh_r    = "h";
-   QString exp_dur_r_hh_mm    = QString::asprintf( "%d %s %02d m", hours_r, hh_r.toLatin1( ).data(), mins_r );
-   //end of exp_dur_r transformation
-
-   //'S' data
-   if ( dataSource .contains("DiskAUC:Absorbance") && simulatedData )
-     t_name = t_name. replace("S","A");
-   
-   //autoflowIntensity (for specific wvl)
-   double av_int_exp;
-   QList< QString > intensity_keys = intensityRIMap.keys();
-   if ( intensity_keys.size() ==  1 ) //single wvl
-     {
-       av_int_exp = intensityRIMap.first().toDouble();
-       qDebug() << "single wvl: key, value -- " << intensityRIMap.firstKey() << intensityRIMap.first();
-     }
-   else //MWL
-     {
-       QMap<QString, QString >::iterator jj;
-       for ( jj = intensityRIMap.begin(); jj != intensityRIMap.end(); ++jj )
-	 {
-	   if ( t_name.contains( jj.key() ) )
-	     {
-	       av_int_exp = jj.value().toDouble();
-	       break;
-	     }
-	 }
-     }
-   //
+   // The triple as the intensity and the report mask name it
+   t_name = US_Calc::Gmp::intensity_triple( t_name, simulated_absorbance );
 
    //Caclulate loading volume based on centerpiece geomentry && fitted meniscus
    //double loading_volume_measured = 451;
    double loading_volume_measured = get_loading_volume( cellID.toInt() );
 
-   //passes
-   tot_conc_r *= tot_conc_r_factor;
-   using US_Calc::ToleranceRule;
-   auto    yes_no = []( bool pass ) { return pass ? QString( "YES" ) : QString( "NO" ); };
-   QString tot_conc_passed =
-      yes_no( US_Calc::passes( sum_c, { ToleranceRule::RelativePercentOfTarget, tot_conc_r, tot_conc_tol_r } ) );
-   QString exp_dur_passed =
-      yes_no( US_Calc::passes( last_f, { ToleranceRule::RelativePercentOfTarget, exp_dur_r, exp_dur_tol_r } ) );
-   QString rmsd_passed           = yes_no( US_Calc::passes( rmsd_global.toDouble(), { ToleranceRule::UpperLimit, rmsd_r, 0.0 } ) );
-   QString av_int_passed         = yes_no( US_Calc::passes( av_int_exp, { ToleranceRule::ExclusiveMinimum, av_int_r, 0.0 } ) );
-   QString loading_volume_passed = yes_no( US_Calc::passes(
-      loading_volume_measured, { ToleranceRule::RelativePercentOfTarget, loading_volume_r, loading_volume_tol_r } ) );
-   //end passes
+   // The checks and their rules (US_Calc "report_run_checks")
+   auto   yes_no = []( const US_Calc::Gmp::RunCheckResult& r ) { return r.passed ? QString( "YES" ) : QString( "NO" ); };
+   const US_Calc::Gmp::RunCheckResult tot_conc_check =
+      US_Calc::Gmp::check_total_concentration( sum_c, tot_conc_r, tot_conc_r_factor, tot_conc_tol_r );
+   tot_conc_r              = tot_conc_check.check.target;
+   QString tot_conc_passed = yes_no( tot_conc_check );
+   QString exp_dur_passed  = yes_no( US_Calc::Gmp::check_experiment_duration( last_f, exp_dur_r, exp_dur_tol_r ) );
+   QString rmsd_passed     = yes_no( US_Calc::Gmp::check_rmsd( rmsd_global.toDouble(), rmsd_r ) );
+   QString av_int_passed   = yes_no( US_Calc::Gmp::check_minimum_intensity( av_int_exp, av_int_r ) );
+   QString loading_volume_passed =
+      yes_no( US_Calc::Gmp::check_loading_volume( loading_volume_measured, loading_volume_r, loading_volume_tol_r ) );
 
    //check what to show on the report
-   if ( tripleInfo[ "triple_name" ].contains("Interference") )
-     t_name.replace("660", "Interference");
-
-   qDebug() << "[XXXXXX] t_name, model_name: " << t_name <<  model_name;
-   
-   QMap < QString, QString > Model_parms_to_compare = perChanMask_edited.ShowTripleModelParts[ t_name ][ model_name ]; //2A660 => 2AInterference, 
-   bool show_tot_conc = false;
-   bool show_rmsd     = false;
-   bool show_exp_dur  = false;
-   bool show_min_int  = false;
-   bool show_integration = false;
-   bool show_loading_vol = false;
-
-   QMap< QString, QString >::iterator sh;
-   for ( sh = Model_parms_to_compare.begin(); sh != Model_parms_to_compare.end(); ++sh )
-     {
-       if ( sh.key().contains( "Concentration" ) && sh.value().toInt() )
-	 show_tot_conc = true;
-
-       if ( sh.key().contains( "RMSD" ) && sh.value().toInt() )
-	 show_rmsd = true;
-
-       if ( sh.key().contains( "Duration" ) && sh.value().toInt() )
-	 show_exp_dur = true;
-
-       if ( sh.key().contains( "Intensity" ) && sh.value().toInt() )
-	 show_min_int = true;
-       
-       if ( sh.key().contains( "Loading" ) && sh.value().toInt() )
-	 show_loading_vol = true;
-       
-       if ( sh.key().contains( "Integration" ) && sh.value().toInt() )
-	 show_integration = true;
-     }
-
-   bool show_comparison_section = false;
-   if ( show_tot_conc || show_rmsd || show_exp_dur || show_min_int || show_loading_vol )
-     show_comparison_section = true;
-   //////////////////////////////////////
+   t_name                            = US_Calc::Gmp::mask_triple( t_name, interference_triple );
+   const US_Calc::Gmp::MaskRows rows = US_Calc::Gmp::mask_rows( perChanMask_edited.ShowTripleModelParts[t_name][model_name] );
+   bool                         show_tot_conc           = rows.total_concentration;
+   bool                         show_rmsd               = rows.rmsd;
+   bool                         show_exp_dur            = rows.experiment_duration;
+   bool                         show_min_int            = rows.minimum_intensity;
+   bool                         show_integration        = rows.integration_results;
+   bool                         show_loading_vol        = rows.loading_volume;
+   bool                         show_comparison_section = rows.comparison_section();
 
    qDebug() << "XXXXX: show_comparison_section -- " << show_comparison_section;
    
@@ -10745,10 +10530,7 @@ model_used.components[ ii ].vbar20 ),
        // Show only if not Absorbance || not Interference
        qDebug() << "Show_INTENSITY: dataSource -- " << dataSource;
        qDebug() << "Show_INTENSITY: tripleInfo[ \"triple_name\" ] -- " << tripleInfo[ "triple_name" ];
-       bool RIdata = ( dataSource. contains( "DiskAUC:Absorbance" ) ||
-		       dataSource. contains( "DiskAUC:PseudoAbsorbance" ) ||
-		       tripleInfo[ "triple_name" ].contains("Interference") ) ?
-	 false : true;
+       bool RIdata = US_Calc::Gmp::minimum_intensity_shown( dataSource, tripleInfo["triple_name"].contains( "Interference" ) );
        qDebug() << "Show_INTENSITY: RIdata ? " << RIdata;
        if ( show_min_int && RIdata )  
 	 {
@@ -10771,31 +10553,16 @@ model_used.components[ ii ].vbar20 ),
        mstr += indent( 2 ) + "</table>\n";
      }
 
-   //Now, integration results
-   //1st, check if for a given model (method) there are reportItems:
-   bool method_type_combo_exists = false;
-   int report_items_number = reportGMP-> reportItems.size();
-   for ( int kk = 0; kk < report_items_number; ++kk )
+     //Now, integration results:  shown when a report item applies to this model
+     int         report_items_number = reportGMP->reportItems.size();
+     QStringList item_methods;
+     for ( int kk = 0; kk < report_items_number; ++kk )
      {
-       US_ReportGMP::ReportItem curr_item = reportGMP-> reportItems[ kk ];
-       QString method         = curr_item.method;
-       if( method.contains ("PCSA") )
-	 method = "PCSA";
-       /* */
-       QStringList a_method_types = method.split("-");
-       bool method_identity = true;
-       for (const QString& sub : a_method_types )
-	 {
-	  if (!mdla.contains(sub) )
-	    method_identity = false; 
-	 }
-	/* */
-	 
-       if ( mdla.contains ( method ) || method_identity )
-	 method_type_combo_exists = true;
+        item_methods << reportGMP->reportItems[kk].method;
      }
-   
-   if ( show_integration && method_type_combo_exists )
+     const bool method_type_combo_exists = US_Calc::Gmp::any_method_matches( item_methods, model_used.description );
+
+     if ( show_integration && method_type_combo_exists )
      {
        mstr += "\n" + indent( 2 ) + tr( "<h3>Integration Results: Fraction of Total Concentration:</h3>\n" );
        mstr += indent( 2 ) + "<table>\n";
@@ -10809,62 +10576,49 @@ model_used.components[ ii ].vbar20 ),
        const US_Calc::Model range_model = model_used.calc_model();
        for ( int kk = 0; kk < report_items_number; ++kk )
 	 {
-	   US_ReportGMP::ReportItem curr_item = reportGMP-> reportItems[ kk ];
-	   QString type           = curr_item.type;
-	   QString method         = curr_item.method;
-	   if( method.contains ("PCSA") )
-	     method = "PCSA";
-	   
-	   QString int_val_r      = QString::number( curr_item.integration_val );
-	   double  frac_tot_r     = curr_item.total_percent;
-	   double  frac_tot_tol_r = curr_item.tolerance ;
-	   double  low            = curr_item.range_low;
-      double                     high           = curr_item.range_high;
+       US_ReportGMP::ReportItem             curr_item      = reportGMP->reportItems[kk];
+       QString                              type           = curr_item.type;
+       QString                              int_val_r      = QString::number( curr_item.integration_val );
+       double                               frac_tot_r     = curr_item.total_percent;
+       double                               frac_tot_tol_r = curr_item.tolerance;
+       double                               low            = curr_item.range_low;
+       double                               high           = curr_item.range_high;
 
-      QString                    range = "[" + QString::number( low ) + " - " + QString::number( high ) + "]";
+       QString                              range = "[" + QString::number( low ) + " - " + QString::number( high ) + "]";
 
-      // Integrate over model_used with US_Calc:  inclusive range in report
-      // units, sums in component order, divisions unguarded, so every value
-      // (nan and inf included) and every pass/fail is the one the reporter's
-      // own arithmetic gave.  An inverted range selects nothing.  An item
-      // type that is not a range type also selects nothing:  its fraction is
-      // 0 / C * 100.
-      bool                       range_type                = false;
-      const US_Calc::Quantity    quantity                  = US_Calc::quantity_from_report_type( type, &range_type );
-      const US_Calc::RangeResult range_result              = US_Calc::range_summary( range_model, { quantity, low, high } );
-      double                     int_val_m                 = range_result.range_concentration;
-      double                     frac_tot_m                = range_type ? range_result.fraction_percent : ( 0.0 / sum_c ) * 100.0;
-      double                     wav_variable_within_range = range_result.within_range_mean;
+       // The item's range result, fraction and pass/fail (US_Calc "report_item")
+       const US_Calc::Gmp::ReportItemResult item_result =
+          US_Calc::Gmp::evaluate_report_item( range_model, { type, curr_item.method, low, high, frac_tot_r, frac_tot_tol_r } );
+       double     int_val_m                 = item_result.range_concentration;
+       double     frac_tot_m                = item_result.fraction_percent;
+       double     wav_variable_within_range = item_result.within_range_mean;
+       QString    tot_frac_passed           = item_result.passed ? "YES" : "NO";
 
-      QString                    tot_frac_passed =
-         US_Calc::passes( frac_tot_m, { US_Calc::ToleranceRule::AbsolutePercentagePoints, frac_tot_r, frac_tot_tol_r } ) ? "YES"
-                                                                                                                                            : "NO";
+       const bool method_identity = US_Calc::Gmp::method_matches( curr_item.method, model_used.description );
 
-      const bool method_identity = US_Calc::method_matches( curr_item.method, model_used.description );
+       //if ( mdla.contains ( method ) )
+       if ( method_identity )
+       {
+          // curr_item. integration_val_sim = int_val_m;
+          // curr_item. total_percent_sim   = frac_tot_m;
+          // curr_item. passed              = tot_frac_passed;
 
-      //if ( mdla.contains ( method ) )
-      if ( method_identity )
-      {
-         // curr_item. integration_val_sim = int_val_m;
-         // curr_item. total_percent_sim   = frac_tot_m;
-         // curr_item. passed              = tot_frac_passed;
+          reportGMP->reportItems[kk].integration_val_sim = int_val_m;
+          reportGMP->reportItems[kk].total_percent_sim   = frac_tot_m;
+          reportGMP->reportItems[kk].passed              = tot_frac_passed;
 
-         reportGMP->reportItems[kk].integration_val_sim = int_val_m;
-         reportGMP->reportItems[kk].total_percent_sim   = frac_tot_m;
-         reportGMP->reportItems[kk].passed              = tot_frac_passed;
+          qDebug() << "In distrib_info(), fill simulated integration vals: for chann/wvl/type/method/low/high, "
+                   << "Inter. val. Sim -- " << wvl << curr_item.type << curr_item.method << curr_item.range_low
+                   << curr_item.range_high << int_val_m;
 
-         qDebug() << "In distrib_info(), fill simulated integration vals: for chann/wvl/type/method/low/high, "
-                  << "Inter. val. Sim -- " << wvl << curr_item.type << curr_item.method << curr_item.range_low
-                  << curr_item.range_high << int_val_m;
-
-         mstr += table_row( type,
-                            range,
-                            QString::asprintf( "%10.4e", wav_variable_within_range ),
-                            QString::asprintf( "%10.4e", int_val_m ) + " (" + int_val_r + ")",
-                            QString::asprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
-                            QString::number( frac_tot_tol_r ),
-                            tot_frac_passed );
-      }
+          mstr += table_row( type,
+                             range,
+                             QString::asprintf( "%10.4e", wav_variable_within_range ),
+                             QString::asprintf( "%10.4e", int_val_m ) + " (" + int_val_r + ")",
+                             QString::asprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
+                             QString::number( frac_tot_tol_r ),
+                             tot_frac_passed );
+       }
     }
        mstr += indent( 2 ) + "</table>\n";
      }
@@ -11130,7 +10884,7 @@ double  US_ReporterGMP::get_loading_volume( int cellID )
   double vol = 0;
   
   double speed   =  currProto. rpSpeed. ssteps[0].speed ;
-  double stretch = simparams.rotorcoeffs[ 0 ] * speed + simparams.rotorcoeffs[ 1 ] * sq( speed ) ;
+  double stretch = US_Calc::Gmp::rotor_stretch( simparams.rotorcoeffs[0], simparams.rotorcoeffs[1], speed );
 
   qDebug() << "Centerpeice: stretch: " << stretch;
 
@@ -11202,16 +10956,14 @@ double  US_ReporterGMP::get_loading_volume( int cellID )
   qDebug() << "In get_loading_volume(): c_name, c_bottom, c_pathlength, c_angle -- "
 	   << c_name << c_bottom << c_pathlength << c_angle;
 
-  //add stretching
-  c_bottom += stretch;
-
   //meniscus position
   double meniscus = model_used. meniscus;
   qDebug() << "In get_loading_volume(): meniscus -- " << meniscus;
-  
-  //calulate loading volume
-  vol = ( c_bottom*c_bottom - meniscus*meniscus ) * ( 1000*c_pathlength*c_angle*M_PI ) / 360.0;
-  
+
+  // Loading volume from the centerpiece geometry, the bottom stretched for the
+  // first speed step and the fitted meniscus (US_Calc "report_run_checks")
+  vol = US_Calc::Gmp::loading_volume( c_bottom, stretch, meniscus, c_pathlength, c_angle );
+
   return vol;
 }
 

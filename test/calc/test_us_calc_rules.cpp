@@ -20,6 +20,7 @@
 #include "us_calc_tolerance.h"
 
 using namespace US_Calc;
+using namespace US_Calc::Gmp;
 
 // Extraction plan example:  target 90 %, tolerance 10.
 TEST( UsCalcTolerance, PercentagePointAndRelativeRulesDiffer )

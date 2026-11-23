@@ -138,6 +138,11 @@ public:
        "the transaction had already ended, by an implicit commit or a rollback by the server, "
        "so some rows written in it may have been kept";
 
+    bool transactionActive() const final
+    {
+       return inTransaction;
+    }
+
     /*! \brief Begin a transaction with START TRANSACTION. See IUS_DB2. */
     bool                         beginTransaction( QString& error ) final;
 

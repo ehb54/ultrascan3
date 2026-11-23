@@ -821,63 +821,80 @@ void US_ExperGuiGeneral::check_user_level()
 	     }
 	   
 	   QVector< US_Rotor::Lab > lablist;
-	   US_Rotor::readLabsDB( lablist, &db );
+      if ( db.lastErrno() == US_DB2::OK )
+      {
+         const US_Rotor::Status labStatus = US_Rotor::readLabsDB( lablist, &db );
+         if ( labStatus != US_Rotor::ROTOR_OK && labStatus != US_Rotor::NOT_FOUND )
+         {
+            QMessageBox::warning(
+               this, tr( "Database Problem" ), tr( "Could not read the labs from the database:\n" ) + db.lastError() );
+         }
+      }
 
-	   qDebug() << "check_user_level():  lablist.count() -- " << lablist.count();
-	   
-	   for ( int ii = 0; ii < lablist.count(); ii++ )
-	     {  // Look through lab info
-	       QList< US_Rotor::Instrument > instruments
-		 = lablist[ ii ].instruments;
+      // Without a lab list the user is an operator on no Optima
+      if ( lablist.isEmpty() )
+      {
+         ul2_operator_for_optima.clear();
+      }
 
-	       ul2_operator_for_optima.clear();
+      qDebug() << "check_user_level():  lablist.count() -- " << lablist.count();
 
-	       qDebug() << "check_user_level():  instruments.count() -- " << instruments.count();
-	       
-	       //First, set map of usl2_oper_to_Optimas to default: false
-	       for ( int kk = 0; kk < instruments.count(); kk++ )
-		 {
-		   QString inname = instruments[ kk ].name;
-		   // Skip any non-Optima
-		   if ( ! inname.startsWith( "Optima" ) )
-		     continue;
-		   		   
-		   ul2_operator_for_optima[ inname ] = false;
-		 }
+      for ( int ii = 0; ii < lablist.count(); ii++ )
+      { // Look through lab info
+         QList<US_Rotor::Instrument> instruments = lablist[ii].instruments;
 
-	       //Go over instruments, and determine if the current user an operator: per instrument
-	       for ( int jj = 0; jj < instruments.count(); jj++ )
-		 {  // Look at instruments in the lab
-		   QString inname = instruments[ jj ].name;
-		   
-		   // Skip any non-Optima
-		   if ( ! inname.startsWith( "Optima" ) )
-		     continue;
-		   
-		   QList< US_Rotor::Operator > operators = instruments[ jj ].operators;
-		   
-		   for ( int kk = 0; kk < operators.count(); kk++ )
-		     {  // Look at operators permitted on the instrument
-		       int opr_id     = operators[ kk ].ID;
-		       QString olname = operators[ kk ].lname;
-		       QString ofname = operators[ kk ].fname;
-		       QString oID    = QString::number( opr_id );
+         ul2_operator_for_optima.clear();
 
-		       //QMap
-		       if ( pID == oID )
-			 {
-			   ul2_operator_for_optima[ inname ] = true;
-			   break;
-			 }
-		       
-		       // // Entry is string combining operator and instrument name
-		       // instr_opers << oID + ": " + olname + ", " + ofname
-		       // 	 + "^" + inname;
-		     } 
-		 }
-	     } 
-	 } 
-       
+         qDebug() << "check_user_level():  instruments.count() -- " << instruments.count();
+
+         //First, set map of usl2_oper_to_Optimas to default: false
+         for ( int kk = 0; kk < instruments.count(); kk++ )
+         {
+            QString inname = instruments[kk].name;
+            // Skip any non-Optima
+            if ( !inname.startsWith( "Optima" ) )
+            {
+               continue;
+            }
+
+            ul2_operator_for_optima[inname] = false;
+         }
+
+         //Go over instruments, and determine if the current user an operator: per instrument
+         for ( int jj = 0; jj < instruments.count(); jj++ )
+         { // Look at instruments in the lab
+            QString inname = instruments[jj].name;
+
+            // Skip any non-Optima
+            if ( !inname.startsWith( "Optima" ) )
+            {
+               continue;
+            }
+
+            QList<US_Rotor::Operator> operators = instruments[jj].operators;
+
+            for ( int kk = 0; kk < operators.count(); kk++ )
+            { // Look at operators permitted on the instrument
+               int     opr_id = operators[kk].ID;
+               QString olname = operators[kk].lname;
+               QString ofname = operators[kk].fname;
+               QString oID    = QString::number( opr_id );
+
+               //QMap
+               if ( pID == oID )
+               {
+                  ul2_operator_for_optima[inname] = true;
+                  break;
+               }
+
+               // // Entry is string combining operator and instrument name
+               // instr_opers << oID + ": " + olname + ", " + ofname
+               // 	 + "^" + inname;
+            }
+         }
+      }
+     }
+
        // // See if investigator is in permit list
        // for ( int ii = 0; ii < instr_opers.count(); ii++ )
        // 	 {
@@ -2732,6 +2749,7 @@ void US_ExperGuiSolutions::savePanel()
    nchanf              = 0;
    QString chn_none( "none" );
    QString unspec      = tr( "(unspecified)" );
+   QStringList unread_solus; // Solutions that could not be read
    srchans.clear();
    suchans.clear();
    susolus.clear();
@@ -2817,11 +2835,19 @@ void US_ExperGuiSolutions::savePanel()
 	 }
        
        qDebug() << "sol save 3";
-       
-       US_Solution soludata;
-       solutionData( solution, soludata );
-       solu_ids [ solution ]  = sol_id;
-       solu_data[ solution ]  = soludata;
+
+       // The protocol keeps only the solution name and ID, so it is saved
+       //  even when the solution cannot be read; solutionData has warned,
+       //  and a solution that failed once in this save is not read again
+       if ( !unread_solus.contains( solution ) )
+       {
+          US_Solution soludata;
+          if ( !solutionData( solution, soludata ) )
+          {
+             unread_solus << solution;
+          }
+       }
+       solu_ids[solution]  = sol_id;
        //pro_comms[ solution ]  = ch_comment;
        pro_comms[ iistr ]  = ch_comment;
      }

@@ -88,10 +88,14 @@ endif()
 # =============================================================================
 # CMAKE CONFIGURATION
 # =============================================================================
-if(USE_QT6)
-    set(CMAKE_CXX_STANDARD 17)
-else()
-    set(CMAKE_CXX_STANDARD 14)
+# Both Qt variants require C++17. Preserve explicit choices of newer standards
+# and use the same default with or without a configure preset.
+set(CMAKE_CXX_STANDARD 17 CACHE STRING "C++ standard (17 or newer)")
+if(CMAKE_CXX_STANDARD LESS 17 OR CMAKE_CXX_STANDARD EQUAL 98)
+    message(FATAL_ERROR
+        "UltraScan3 requires C++17 or newer for both Qt5 and Qt6. "
+        "Configure with -DCMAKE_CXX_STANDARD=17 or a newer standard "
+        "(requested: ${CMAKE_CXX_STANDARD}).")
 endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)

@@ -305,7 +305,7 @@ QString US_Solution::readErrorText( int status, const QString& dbError )
 }
 
 // Function to save solution information to disk
-void US_Solution::saveToDisk( void )
+bool US_Solution::saveToDisk( void )
 {
    // Check that we have a solution with valid values
    if ( solutionDesc.isEmpty()     ||
@@ -319,7 +319,7 @@ void US_Solution::saveToDisk( void )
       qDebug() << "  solutionDesc" << solutionDesc;
       qDebug() << "  bufferGUID" << buffer.GUID;
       qDebug() << "  bufferID" << buffer.bufferID;
-      return;
+      return false;
    }
 
    if ( ! US_Util::UUID_REGEX.match( solutionGUID ).hasMatch() )
@@ -327,7 +327,10 @@ void US_Solution::saveToDisk( void )
 
    // Get a path and file name for solution
    QString path;
-   if ( ! diskPath( path ) ) return;
+   if ( !diskPath( path ) )
+   {
+      return false;
+   }
 
    bool    newFile;
    QString filename = US_DataFiles::get_filename( path, solutionGUID,
@@ -338,7 +341,7 @@ void US_Solution::saveToDisk( void )
    {
       qDebug() << "Error: can't open file for writing"
                << filename;
-      return;
+      return false;
    }
 
    // Generate xml
@@ -383,13 +386,24 @@ void US_Solution::saveToDisk( void )
    xml.writeEndElement  ();        // solution
    xml.writeEndDocument ();
 
+   const bool written = !xml.hasError() && file.flush() && file.error() == QFileDevice::NoError;
    file.close();
+   if ( !written )
+   {
+      qDebug() << "Error: can't write solution file" << filename << file.errorString();
+      return false;
+   }
 
    // Save the buffer and analytes to disk
-   saveBufferDisk();
-   saveAnalytesDisk();
+   const bool bufferSaved   = saveBufferDisk();
+   const bool analytesSaved = saveAnalytesDisk();
+   if ( !bufferSaved || !analytesSaved )
+   {
+      return false;
+   }
 
    saveStatus = ( saveStatus == DB_ONLY ) ? BOTH : HD_ONLY;
+   return true;
 }
 
 // Function to save solution information to db
@@ -414,7 +428,10 @@ qDebug() << "SolSvDB: bufID stat" << status;
 
       if ( status == IUS_DB2::NOROWS )
       {
-         if ( buffer.saveToDB( db, QString::number( 1 ) ) < 0 ) // 1 = private
+         // -6: the buffer is committed and only its local disk copy failed,
+         // so the solution can still link to it.
+         const int bufferResult = buffer.saveToDB( db, QString::number( 1 ) ); // 1 = private
+         if ( bufferResult < 0 && bufferResult != -6 )
          {
             return IUS_DB2::NO_BUFFER;
          }
@@ -634,9 +651,12 @@ int US_Solution::readBufferDiskGUID( US_Buffer& buffer, QString& GUID )
    return ( diskStatus ) ? IUS_DB2::OK : IUS_DB2::NO_BUFFER;
 }
 
-void US_Solution::saveBufferDisk( void ) const
+bool US_Solution::saveBufferDisk( void ) const
 {
-   if ( buffer.GUID.isEmpty() )  return;
+   if ( buffer.GUID.isEmpty() )
+   {
+      return true;
+   }
 
    // Find the buffer directory on disk
    QDir dir;
@@ -648,7 +668,7 @@ void US_Solution::saveBufferDisk( void ) const
       {
          qDebug() << "Error: Could not create default directory for buffers\n" 
                   << path;
-         return ;
+         return false;
       }
    }
 
@@ -661,11 +681,15 @@ void US_Solution::saveBufferDisk( void ) const
       bool diskStatus = buffer.writeToDisk( filename );
       
       if ( diskStatus == false )
-        qDebug() << "Buffer write to disk error";
+      {
+         qDebug() << "Buffer write to disk error";
+         return false;
+      }
    }
+   return true;
 }
 
-void US_Solution::saveAnalytesDisk( void )
+bool US_Solution::saveAnalytesDisk( void )
 {
    // Find the analyte directory on disk
    QDir dir;
@@ -677,11 +701,12 @@ void US_Solution::saveAnalytesDisk( void )
       {
          qDebug() << "Error: Could not create default directory for analytes\n" 
                   << path;
-         return;
+         return false;
       }
    }
 
 
+   bool saved = true;
    foreach ( AnalyteInfo ai, analyteInfo )
    {
       // Find the analyte file, or create a new one
@@ -692,8 +717,10 @@ void US_Solution::saveAnalytesDisk( void )
       {
          qDebug() << "Analyte " << ai.analyte.analyteGUID
                   << " write to disk error " << status;
+         saved = false;
       }
    }
+   return saved;
 }
 
 // Function to delete a solution from disk
