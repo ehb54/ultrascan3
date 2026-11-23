@@ -194,6 +194,36 @@ qDebug() << "Exp:svToDB:  ss count" << speedsteps.count() << "expID" << expID;
 }
 
 
+namespace
+{
+// A database status that ends the read:  any error.  No rows is not one;
+// a lookup that finds nothing leaves its fields as they are.
+bool is_db_error( int status )
+{
+   return status != IUS_DB2::OK && status != IUS_DB2::NOROWS;
+}
+
+// Runs a lookup that may find no row.  Returns OK, with found telling
+// whether a row is current, or the database error of the query or cursor.
+int lookup_row( IUS_DB2* db, const QStringList& query, bool& found )
+{
+   found = false;
+   db->query( query );
+   int status = db->lastErrno();
+   if ( is_db_error( status ) )
+   {
+      return status;
+   }
+   if ( status == IUS_DB2::OK && db->next() )
+   {
+      found = true;
+      return IUS_DB2::OK;
+   }
+   status = db->lastErrno();
+   return is_db_error( status ) ? status : IUS_DB2::OK;
+}
+} // namespace
+
 // Function to read an experiment from DB
 int US_Experiment::readFromDB( QString runID, IUS_DB2* db, QVector<SP_SPEEDPROFILE>& speedsteps, const QString invid_p )
 {
@@ -250,39 +280,55 @@ qDebug() << "Exp:rdDB: ExpInfRun: xmlFile size" << xmlFile.size();
       return rowStatus == IUS_DB2::OK || rowStatus == IUS_DB2::NOROWS ? IUS_DB2::NO_EXPERIMENT : rowStatus;
    }
 
-   // Get the rest of the info we need
-   q.clear();
-   q  << QString( "get_person_info" )
-      << QString::number( invID );
-   db->query( q );
-   if ( db->next() )
+   // Get the rest of the info we need.  Each lookup that finds no row leaves
+   // its fields as they are; a database error ends the read with its status.
+   bool found  = false;
+   int  status = lookup_row( db, QStringList{ "get_person_info", QString::number( invID ) }, found );
+   if ( status != IUS_DB2::OK )
+   {
+      return status;
+   }
+   if ( found )
+   {
       invGUID = db->value( 9 ).toString();
+   }
 
-   project.readFromDB( project.projectID, db );
+   status = project.readFromDB( project.projectID, db );
+   if ( status != IUS_DB2::NO_PROJECT && is_db_error( status ) )
+   {
+      return status;
+   }
 
    // Hardware info
    operatorGUID = QString( "" );
-   q.clear();
-   q  << QString( "get_person_info" )
-      << QString::number( operatorID );
-   db->query( q );
-   if ( db->next() )
-      operatorGUID   = db->value( 9 ).toString();
+   status       = lookup_row( db, QStringList{ "get_person_info", QString::number( operatorID ) }, found );
+   if ( status != IUS_DB2::OK )
+   {
+      return status;
+   }
+   if ( found )
+   {
+      operatorGUID = db->value( 9 ).toString();
+   }
 
    instrumentSerial = QString( "" );
-   q.clear();
-   q << QString( "get_instrument_info" )
-     << QString::number( instrumentID );
-   db->query( q );
-   if ( db->next() )
+   status           = lookup_row( db, QStringList{ "get_instrument_info", QString::number( instrumentID ) }, found );
+   if ( status != IUS_DB2::OK )
+   {
+      return status;
+   }
+   if ( found )
+   {
       instrumentSerial = db->value( 1 ).toString();
+   }
 
    rotorGUID = QString( "" );
-   q.clear();
-   q << QString( "get_rotor_info" )
-     << QString::number( rotorID );
-   db->query( q );
-   if ( db->next() )
+   status    = lookup_row( db, QStringList{ "get_rotor_info", QString::number( rotorID ) }, found );
+   if ( status != IUS_DB2::OK )
+   {
+      return status;
+   }
+   if ( found )
    {
       rotorGUID   = db->value( 0 ).toString();
       rotorName   = db->value( 1 ).toString();
@@ -291,20 +337,24 @@ qDebug() << "Exp:rdDB: ExpInfRun: xmlFile size" << xmlFile.size();
 
    if ( calibrationID == 0 )     // In this case, get the first one
    {
-      q.clear();
-      q << QString( "get_rotor_calibration_profiles" )
-        << QString::number( rotorID );
-      db->query( q );
-      if ( db->next() )
+      status = lookup_row( db, QStringList{ "get_rotor_calibration_profiles", QString::number( rotorID ) }, found );
+      if ( status != IUS_DB2::OK )
+      {
+         return status;
+      }
+      if ( found )
+      {
          calibrationID = db->value( 0 ).toInt();
+      }
    }
 
    // Now get more calibration info
-   q.clear();
-   q << QString( "get_rotor_calibration_info" )
-     << QString::number( calibrationID );
-   db->query( q );
-   if ( db->next() )
+   status = lookup_row( db, QStringList{ "get_rotor_calibration_info", QString::number( calibrationID ) }, found );
+   if ( status != IUS_DB2::OK )
+   {
+      return status;
+   }
+   if ( found )
    {
       rotorCoeff1  = db->value( 4 ).toString().toFloat();
       rotorCoeff2  = db->value( 5 ).toString().toFloat();
@@ -340,10 +390,10 @@ qDebug() << "Exp:rdDB: rfo OPENED  xmlFile size" << xmlFile.size();
          }
       }
 
-      int status = importRIxml( xmlFile );
-qDebug() << "Exp:rdDB: importRIxml status" << status;
+      const int riStatus = importRIxml( xmlFile );
+      qDebug() << "Exp:rdDB: importRIxml status" << riStatus;
 
-      if ( status != US_Convert::OK )
+      if ( riStatus != US_Convert::OK )
       {
          // The profile is optional. An empty RIProfile records its absence;
          // reserve DBERROR for database failures and still load speed steps.
@@ -352,10 +402,11 @@ qDebug() << "Exp:rdDB: importRIxml status" << status;
 
    }
 
-   // If this is multi-speed, get speed steps for the experiment
+   // If this is multi-speed, get speed steps for the experiment.  The
+   // database status after it is that of its query and cursor.
    US_SimulationParameters::speedstepsFromDB( db, expID, speedsteps );
-
-   return IUS_DB2::OK;
+   status = db->lastErrno();
+   return is_db_error( status ) ? status : IUS_DB2::OK;
 }
 
 int US_Experiment::saveToDisk(
