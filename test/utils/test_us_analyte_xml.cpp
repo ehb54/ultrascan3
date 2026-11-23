@@ -87,8 +87,7 @@ TEST_P( AnalyteXml, MissingFieldsUnknownTypeAndExistingState )
    EXPECT_DOUBLE_EQ( 0, a.vbar20 );
    EXPECT_DOUBLE_EQ( 0, a.mw );
    EXPECT_EQ( QString( "old" ), a.sequence );
-   EXPECT_DOUBLE_EQ( 12, a.extinction.value( 250 ) );
-   EXPECT_DOUBLE_EQ( 8, a.extinction.value( 280 ) );
+   EXPECT_EQ( ( QMap<double, double>{ { 280, 8 } } ), a.extinction );
 }
 
 TEST_P( AnalyteXml, ProteinSequenceAndExplicitExtinctionAreOrderDependent )
@@ -338,7 +337,7 @@ TEST_P( AnalyteXml, ExternalCorpusEmptySequencesPreserveCurrentMassRules )
    }
 }
 
-TEST_P( AnalyteXml, SpectraMergeAndDuplicateFrequenciesUseLastValue )
+TEST_P( AnalyteXml, SpectraReplaceHeldValuesAndDuplicateFrequenciesUseLastValue )
 {
    US_Analyte a;
    a.extinction[250]   = 5;
@@ -351,9 +350,22 @@ TEST_P( AnalyteXml, SpectraMergeAndDuplicateFrequenciesUseLastValue )
                                   "<fluorescence frequency='400' value='8'/><fluorescence frequency='400' value='9'/>"
                                   "<extinction/><refraction frequency='invalid' value='invalid'/><fluorescence/>"
                                   "</analyte>" ) );
-   EXPECT_EQ( ( QMap<double, double>{ { 0, 0 }, { 250, 5 }, { 280.25, 2 } } ), a.extinction );
-   EXPECT_EQ( ( QMap<double, double>{ { 0, 0 }, { 250, 6 }, { 300, 4 } } ), a.refraction );
-   EXPECT_EQ( ( QMap<double, double>{ { 0, 0 }, { 250, 7 }, { 400, 9 } } ), a.fluorescence );
+   EXPECT_EQ( ( QMap<double, double>{ { 0, 0 }, { 280.25, 2 } } ), a.extinction );
+   EXPECT_EQ( ( QMap<double, double>{ { 0, 0 }, { 300, 4 } } ), a.refraction );
+   EXPECT_EQ( ( QMap<double, double>{ { 0, 0 }, { 400, 9 } } ), a.fluorescence );
+}
+
+TEST_P( AnalyteXml, AnalyteWithoutSpectraClearsHeldSpectra )
+{
+   US_Analyte a;
+   a.extinction[250]   = 5;
+   a.refraction[250]   = 6;
+   a.fluorescence[250] = 7;
+   ASSERT_NO_FATAL_FAILURE( read( a, "<analyte analyteGUID='fixture' type='CARBOHYDRATE' description='bare'/>" ) );
+   EXPECT_EQ( QString( "bare" ), a.description );
+   EXPECT_TRUE( a.extinction.isEmpty() );
+   EXPECT_TRUE( a.refraction.isEmpty() );
+   EXPECT_TRUE( a.fluorescence.isEmpty() );
 }
 
 TEST_P( AnalyteXml, BooleanSpellingsRemainCaseSensitive )
@@ -405,7 +417,9 @@ TEST_P( AnalyteXml, AbsentAndEmptySequencesHaveDifferentStateEffects )
          EXPECT_EQ( present ? QString() : QString( "retained" ), a.sequence );
          const bool nucleotide = type == 1 || type == 2;
          EXPECT_DOUBLE_EQ( 123, a.mw );
-         EXPECT_DOUBLE_EQ( present && type == 0 ? 0 : 99, a.extinction.value( 280 ) );
+         // The held spectrum is replaced; only a protein sequence sets a value.
+         EXPECT_EQ( present && type == 0, a.extinction.contains( 280 ) );
+         EXPECT_DOUBLE_EQ( 0, a.extinction.value( 280 ) );
          EXPECT_EQ( !( present && nucleotide ), a.doubleStranded );
          EXPECT_DOUBLE_EQ( present && nucleotide ? 0 : 0.5, a.sodium );
       }

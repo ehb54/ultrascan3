@@ -6,6 +6,7 @@
 #include "us_settings.h"
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 
 using ::testing::_;
 using ::testing::AtLeast;
@@ -15,9 +16,6 @@ using ::testing::Invoke;
 using ::testing::Matcher;
 using ::testing::Return;
 using ::testing::StrictMock;
-
-// Not covered: a failed component write leaves the buffer row it already created or updated;
-// rolling that back is a policy change tracked in ehb54/ultrascan-tickets#1247.
 
 namespace
 {
@@ -56,14 +54,26 @@ class BufferDb : public QtTestBase
       {
          ASSERT_NO_FATAL_FAILURE( QtTestBase::SetUp() );
          US_Settings::set_us_inv_ID( 23 );
+         removeBlocker();
          ASSERT_TRUE( QDir().mkpath( bufferPath() ) );
          removeDiskCopy();
       }
 
       void TearDown() override
       {
+         removeBlocker();
          removeDiskCopy();
          QtTestBase::TearDown();
+      }
+
+      // SaveReportsAFailedDiskCopy puts a file where the buffers directory goes;
+      // remove it even when that test stops early so later tests can set up.
+      static void removeBlocker()
+      {
+         if ( QFileInfo( bufferPath() ).isFile() )
+         {
+            QFile::remove( bufferPath() );
+         }
       }
 
       static QString bufferPath()
@@ -170,6 +180,12 @@ class BufferDb : public QtTestBase
       {
          EXPECT_CALL( db, query( args( { "get_bufferID", kGuid } ) ) );
          EXPECT_CALL( db, lastErrno() ).WillOnce( Return( found ? IUS_DB2::OK : IUS_DB2::NOROWS ) );
+      }
+
+      void expectOwnedBegin()
+      {
+         EXPECT_CALL( db, transactionActive() ).WillOnce( Return( false ) );
+         EXPECT_CALL( db, beginTransaction( _ ) ).WillOnce( Return( true ) );
       }
 
       void expectStatus( const QStringList& query, int status = IUS_DB2::OK )
@@ -371,6 +387,7 @@ TEST_F( BufferDb, SaveCreatesANewBufferWithComponentsProfileAndDiskCopy )
    {
       InSequence sequence;
       expectLookup( false );
+      expectOwnedBegin();
       expectStatus( newBufferArgs() );
       EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 88 ) );
       expectStatus( { "add_buffer_component", "88", "5", "0.15000" } );
@@ -386,6 +403,13 @@ TEST_F( BufferDb, SaveCreatesANewBufferWithComponentsProfileAndDiskCopy )
                return IUS_DB2::OK;
             } ) );
       EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 9 ) );
+      EXPECT_CALL( db, commitTransaction( _ ) )
+         .WillOnce( Invoke(
+            [&]()
+            {
+               EXPECT_TRUE( diskCopy().isEmpty() );
+               return true;
+            } ) );
    }
 
    EXPECT_EQ( 88, buffer.saveToDB( &db, "1" ) );
@@ -417,17 +441,18 @@ TEST_F( BufferDb, SaveReportsAFailedProfileWriteAndKeepsTheSpectrumPending )
    {
       InSequence sequence;
       expectLookup( false );
+      expectOwnedBegin();
       expectStatus( newBufferArgs() );
       EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 88 ) );
       EXPECT_CALL( db, query( args( { "get_eprofile", "88", "Buffer" } ) ) );
       EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOROWS ) );
       EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) ).WillOnce( Return( IUS_DB2::DBERROR ) );
+      EXPECT_CALL( db, rollbackTransaction( _ ) ).WillOnce( Return( true ) );
    }
 
    EXPECT_EQ( -5, buffer.saveToDB( &db, "1" ) );
    EXPECT_TRUE( buffer.new_or_changed_spectrum );
-   // The buffer row is already stored, so its disk copy is written too.
-   EXPECT_FALSE( diskCopy().isEmpty() );
+   EXPECT_TRUE( diskCopy().isEmpty() );
 }
 
 TEST_F( BufferDb, SaveCreatesAMissingBuffersDirectory )
@@ -440,11 +465,21 @@ TEST_F( BufferDb, SaveCreatesAMissingBuffersDirectory )
    {
       InSequence sequence;
       expectLookup( false );
+      expectOwnedBegin();
       expectStatus( newBufferArgs() );
       EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 88 ) );
+      EXPECT_CALL( db, commitTransaction( _ ) )
+         .WillOnce( Invoke(
+            [&]()
+            {
+               EXPECT_TRUE( diskCopy().isEmpty() );
+               return true;
+            } ) );
    }
 
-   EXPECT_EQ( 88, buffer.saveToDB( &db, "1" ) );
+   QString error = "stale error";
+   EXPECT_EQ( 88, buffer.saveToDB( &db, "1", &error ) );
+   EXPECT_TRUE( error.isEmpty() );
    EXPECT_FALSE( diskCopy().isEmpty() );
 }
 
@@ -463,12 +498,22 @@ TEST_F( BufferDb, SaveReportsAFailedDiskCopy )
    {
       InSequence sequence;
       expectLookup( false );
+      expectOwnedBegin();
       expectStatus( newBufferArgs() );
       EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 88 ) );
+      EXPECT_CALL( db, commitTransaction( _ ) )
+         .WillOnce( Invoke(
+            [&]()
+            {
+               EXPECT_TRUE( diskCopy().isEmpty() );
+               return true;
+            } ) );
    }
 
-   EXPECT_EQ( -6, buffer.saveToDB( &db, "1" ) );
-   ASSERT_TRUE( QFile::remove( bufferPath() ) );
+   QString error;
+   EXPECT_EQ( -6, buffer.saveToDB( &db, "1", &error ) );
+   EXPECT_TRUE( error.contains( bufferPath() ) );
+   EXPECT_EQ( QString( "88" ), buffer.bufferID );
 }
 
 TEST_F( BufferDb, DiskCopyKeepsEachSpectrumAtItsOwnWavelengths )
@@ -500,10 +545,18 @@ TEST_F( BufferDb, SaveUpdatesAnExistingBufferAndReplacesItsComponents )
       EXPECT_CALL( db, next() ).WillOnce( Return( true ) );
       EXPECT_CALL( db, value( 0 ) ).WillOnce( Return( QVariant( "41" ) ) );
       // The manual marker is stripped from the stored description.
+      expectOwnedBegin();
       expectStatus( updateArgs() );
       expectStatus( { "delete_buffer_components", "41" }, IUS_DB2::OK );
       expectStatus( { "add_buffer_component", "41", "5", "0.15000" } );
       expectStatus( { "add_buffer_component", "41", "6", "0.02500" } );
+      EXPECT_CALL( db, commitTransaction( _ ) )
+         .WillOnce( Invoke(
+            [&]()
+            {
+               EXPECT_TRUE( diskCopy().isEmpty() );
+               return true;
+            } ) );
    }
    // An unchanged spectrum is not rewritten.
    EXPECT_CALL( db, lastInsertID() ).Times( 0 );
@@ -525,9 +578,17 @@ TEST_F( BufferDb, SaveTreatsNoComponentsToDeleteAsSuccess )
       expectLookup( true );
       EXPECT_CALL( db, next() ).WillOnce( Return( true ) );
       EXPECT_CALL( db, value( 0 ) ).WillOnce( Return( QVariant( "41" ) ) );
+      expectOwnedBegin();
       expectStatus( updateArgs() );
       EXPECT_CALL( db, statusQuery( args( { "delete_buffer_components", "41" } ) ) ).WillOnce( Return( IUS_DB2::NOROWS ) );
       EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOROWS ) );
+      EXPECT_CALL( db, commitTransaction( _ ) )
+         .WillOnce( Invoke(
+            [&]()
+            {
+               EXPECT_TRUE( diskCopy().isEmpty() );
+               return true;
+            } ) );
    }
 
    EXPECT_EQ( 41, buffer.saveToDB( &db, "1" ) );
@@ -549,6 +610,7 @@ TEST_F( BufferDb, SaveReplacesTheStoredProfileWithTheNewValues )
       expectLookup( true );
       EXPECT_CALL( db, next() ).WillOnce( Return( true ) );
       EXPECT_CALL( db, value( 0 ) ).WillOnce( Return( QVariant( "41" ) ) );
+      expectOwnedBegin();
       expectStatus( updateArgs() );
       expectStatus( { "delete_buffer_components", "41" } );
       expectProfileRead( "41", profileXml( { { 300.0, 9.0 } } ) );
@@ -561,6 +623,13 @@ TEST_F( BufferDb, SaveReplacesTheStoredProfileWithTheNewValues )
                return IUS_DB2::OK;
             } ) );
       EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, commitTransaction( _ ) )
+         .WillOnce( Invoke(
+            [&]()
+            {
+               EXPECT_TRUE( diskCopy().isEmpty() );
+               return true;
+            } ) );
    }
 
    EXPECT_EQ( 41, buffer.saveToDB( &db, "1" ) );
@@ -571,13 +640,15 @@ TEST_F( BufferDb, SaveReplacesTheStoredProfileWithTheNewValues )
    EXPECT_FALSE( buffer.new_or_changed_spectrum );
 }
 
-TEST_F( BufferDb, SaveReplacingAMissingOrUnreadableProfileCreatesIt )
+TEST_F( BufferDb, SaveInsertsMissingProfilesButUpdatesMalformedStoredProfiles )
 {
    const QMap<double, double> replacement{ { 250.0, 0.75 }, { 280.0, 2.5 } };
    // No stored row, or a row whose XML holds no profile: either way the profile is created.
-   for ( const bool unreadable : { false, true } )
+   for ( const QString malformed : { QString(), QString( "corrupt" ), QString( "<extinctionProfile/><!--trailing--><extra/>" ) } )
    {
-      SCOPED_TRACE( unreadable );
+      removeDiskCopy();
+      const bool unreadable = !malformed.isEmpty();
+      SCOPED_TRACE( malformed.toStdString() );
       prepareBuffer();
       buffer.component.clear();
       buffer.componentIDs.clear();
@@ -591,6 +662,7 @@ TEST_F( BufferDb, SaveReplacingAMissingOrUnreadableProfileCreatesIt )
          expectLookup( true );
          EXPECT_CALL( db, next() ).WillOnce( Return( true ) );
          EXPECT_CALL( db, value( 0 ) ).WillOnce( Return( QVariant( "41" ) ) );
+         expectOwnedBegin();
          expectStatus( updateArgs() );
          expectStatus( { "delete_buffer_components", "41" } );
          EXPECT_CALL( db, query( args( { "get_eprofile", "41", "Buffer" } ) ) );
@@ -600,7 +672,7 @@ TEST_F( BufferDb, SaveReplacingAMissingOrUnreadableProfileCreatesIt )
             EXPECT_CALL( db, next() ).WillOnce( Return( true ) );
             EXPECT_CALL( db, value( 0 ) ).WillOnce( Return( QVariant( "9" ) ) );
             EXPECT_CALL( db, value( 1 ) ).WillOnce( Return( QVariant( "molarExtinction" ) ) );
-            EXPECT_CALL( db, value( 2 ) ).WillOnce( Return( QVariant( "corrupt" ) ) );
+            EXPECT_CALL( db, value( 2 ) ).WillOnce( Return( QVariant( malformed ) ) );
             // The create path finds the stored row and updates it in place.
             EXPECT_CALL( db, query( args( { "get_eprofile", "41", "Buffer" } ) ) );
             EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );
@@ -627,6 +699,13 @@ TEST_F( BufferDb, SaveReplacingAMissingOrUnreadableProfileCreatesIt )
          {
             EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 9 ) );
          }
+         EXPECT_CALL( db, commitTransaction( _ ) )
+            .WillOnce( Invoke(
+               [&]()
+               {
+                  EXPECT_TRUE( diskCopy().isEmpty() );
+                  return true;
+               } ) );
       }
 
       EXPECT_EQ( 41, buffer.saveToDB( &db, "1" ) );
@@ -663,11 +742,22 @@ TEST_F( BufferDb, FailedCreateKeepsTheIdAndWritesNothingElse )
    {
       InSequence sequence;
       expectLookup( false );
+      expectOwnedBegin();
       expectStatus( newBufferArgs(), IUS_DB2::DBERROR );
+      EXPECT_CALL( db, lastError() ).WillOnce( Return( QString( "insert permission denied" ) ) );
+      EXPECT_CALL( db, rollbackTransaction( _ ) )
+         .WillOnce( Invoke(
+            []( QString& e )
+            {
+               e.clear();
+               return true;
+            } ) );
    }
    EXPECT_CALL( db, lastInsertID() ).Times( 0 );
 
-   EXPECT_EQ( -1, buffer.saveToDB( &db, "1" ) );
+   QString error;
+   EXPECT_EQ( -1, buffer.saveToDB( &db, "1", &error ) );
+   EXPECT_EQ( QString( "insert permission denied" ), error );
 
    EXPECT_EQ( QString( "7" ), buffer.bufferID );
    EXPECT_TRUE( buffer.new_or_changed_spectrum );
@@ -682,7 +772,9 @@ TEST_F( BufferDb, FailedUpdateStopsBeforeTheComponents )
       expectLookup( true );
       EXPECT_CALL( db, next() ).WillOnce( Return( true ) );
       EXPECT_CALL( db, value( 0 ) ).WillOnce( Return( QVariant( "41" ) ) );
+      expectOwnedBegin();
       expectStatus( updateArgs(), IUS_DB2::DBERROR );
+      EXPECT_CALL( db, rollbackTransaction( _ ) ).WillOnce( Return( true ) );
    }
 
    EXPECT_EQ( -2, buffer.saveToDB( &db, "1" ) );
@@ -697,8 +789,10 @@ TEST_F( BufferDb, FailedComponentDeleteStopsBeforeTheNewComponents )
       expectLookup( true );
       EXPECT_CALL( db, next() ).WillOnce( Return( true ) );
       EXPECT_CALL( db, value( 0 ) ).WillOnce( Return( QVariant( "41" ) ) );
+      expectOwnedBegin();
       expectStatus( updateArgs() );
       expectStatus( { "delete_buffer_components", "41" }, IUS_DB2::DBERROR );
+      EXPECT_CALL( db, rollbackTransaction( _ ) ).WillOnce( Return( true ) );
    }
 
    EXPECT_EQ( -3, buffer.saveToDB( &db, "1" ) );
@@ -713,14 +807,210 @@ TEST_F( BufferDb, FailedComponentStopsBeforeTheNextComponentAndTheProfile )
    {
       InSequence sequence;
       expectLookup( false );
+      expectOwnedBegin();
       expectStatus( newBufferArgs() );
       EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 88 ) );
       expectStatus( { "add_buffer_component", "88", "5", "0.15000" }, IUS_DB2::DBERROR );
+      EXPECT_CALL( db, rollbackTransaction( _ ) ).WillOnce( Return( true ) );
    }
 
    EXPECT_EQ( -4, buffer.saveToDB( &db, "1" ) );
 
    EXPECT_TRUE( buffer.new_or_changed_spectrum );
+   EXPECT_TRUE( diskCopy().isEmpty() );
+}
+
+TEST_F( BufferDb, FailedBeginDoesNotWriteOrRollback )
+{
+   prepareBuffer();
+   InSequence sequence;
+   EXPECT_CALL( db, query( args( { "get_bufferID", kGuid } ) ) );
+   EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOROWS ) );
+   EXPECT_CALL( db, transactionActive() ).WillOnce( Return( false ) );
+   EXPECT_CALL( db, beginTransaction( _ ) )
+      .WillOnce( Invoke(
+         []( QString& e )
+         {
+            e = "cannot begin on disconnected database";
+            return false;
+         } ) );
+   QString error = "stale error";
+   EXPECT_EQ( -7, buffer.saveToDB( &db, "1", &error ) );
+   EXPECT_EQ( QString( "cannot begin on disconnected database" ), error );
+   EXPECT_TRUE( diskCopy().isEmpty() );
+}
+
+TEST_F( BufferDb, FailedSecondComponentRollsBackInsertAndUpdate )
+{
+   for ( bool existing : { false, true } )
+   {
+      SCOPED_TRACE( existing );
+      buffer = US_Buffer();
+      prepareBuffer();
+      buffer.bufferID                = "7";
+      buffer.new_or_changed_spectrum = true;
+      buffer.replace_spectrum        = true;
+      {
+         InSequence sequence;
+         expectLookup( existing );
+         if ( existing )
+         {
+            EXPECT_CALL( db, next() ).WillOnce( Return( true ) );
+            EXPECT_CALL( db, value( 0 ) ).WillOnce( Return( QVariant( "41" ) ) );
+            expectOwnedBegin();
+            expectStatus( updateArgs() );
+            expectStatus( { "delete_buffer_components", "41" } );
+         }
+         else
+         {
+            expectOwnedBegin();
+            expectStatus( newBufferArgs() );
+            EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 41 ) );
+         }
+         expectStatus( { "add_buffer_component", "41", "5", "0.15000" } );
+         expectStatus( { "add_buffer_component", "41", "6", "0.02500" }, IUS_DB2::DBERROR );
+         EXPECT_CALL( db, rollbackTransaction( _ ) ).WillOnce( Return( true ) );
+      }
+      EXPECT_EQ( -4, buffer.saveToDB( &db, "1" ) );
+      EXPECT_EQ( QString( "7" ), buffer.bufferID );
+      EXPECT_TRUE( buffer.new_or_changed_spectrum );
+      EXPECT_TRUE( buffer.replace_spectrum );
+      EXPECT_TRUE( diskCopy().isEmpty() );
+      ASSERT_TRUE( ::testing::Mock::VerifyAndClearExpectations( &db ) );
+   }
+}
+
+TEST_F( BufferDb, FailedCommitOrRollbackDoesNotPublishIdOrDiskCopy )
+{
+   for ( bool rollbackOK : { true, false } )
+   {
+      buffer = US_Buffer();
+      prepareBuffer();
+      buffer.bufferID = "7";
+      buffer.component.clear();
+      {
+         InSequence sequence;
+         expectLookup( false );
+         expectOwnedBegin();
+         expectStatus( newBufferArgs() );
+         EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 88 ) );
+         EXPECT_CALL( db, commitTransaction( _ ) )
+            .WillOnce( Invoke(
+               []( QString& e )
+               {
+                  e = "connection lost during commit";
+                  return false;
+               } ) );
+         EXPECT_CALL( db, rollbackTransaction( _ ) )
+            .WillOnce( Invoke(
+               [&]( QString& e )
+               {
+                  e = rollbackOK ? QString() : QString( "rollback connection lost" );
+                  return rollbackOK;
+               } ) );
+      }
+      QString error;
+      EXPECT_EQ( rollbackOK ? -8 : -10, buffer.saveToDB( &db, "1", &error ) );
+      EXPECT_TRUE( error.contains( "connection lost during commit" ) );
+      EXPECT_EQ( !rollbackOK, error.contains( "rollback connection lost" ) );
+      EXPECT_EQ( QString( "7" ), buffer.bufferID );
+      EXPECT_TRUE( diskCopy().isEmpty() );
+      ASSERT_TRUE( ::testing::Mock::VerifyAndClearExpectations( &db ) );
+   }
+}
+
+TEST_F( BufferDb, FailedCommitKeepsWrittenSpectrumPendingAndPreservesDiskCopy )
+{
+   prepareBuffer();
+   buffer.bufferID        = "7";
+   const QString filename = bufferPath() + "/B0000001.xml";
+   ASSERT_TRUE( buffer.writeToDisk( filename ) );
+   QFile before( filename );
+   ASSERT_TRUE( before.open( QIODevice::ReadOnly ) );
+   const QByteArray previous = before.readAll();
+   before.close();
+
+   buffer.component.clear();
+   buffer.extinction              = { { 280.0, 1.25 } };
+   buffer.new_or_changed_spectrum = true;
+   buffer.replace_spectrum        = false;
+   {
+      InSequence sequence;
+      expectLookup( false );
+      expectOwnedBegin();
+      expectStatus( newBufferArgs() );
+      EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 88 ) );
+      EXPECT_CALL( db, query( args( { "get_eprofile", "88", "Buffer" } ) ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOROWS ) );
+      EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) )
+         .WillOnce( Invoke(
+            []( const QStringList& query )
+            {
+               EXPECT_EQ( ( QStringList{ "new_eprofile", "88", "Buffer", "molarExtinction" } ), query.mid( 0, 4 ) );
+               EXPECT_EQ( ( QMap<double, double>{ { 280.0, 1.25 } } ), profileValues( query.value( 4 ) ) );
+               return IUS_DB2::OK;
+            } ) );
+      EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 9 ) );
+      EXPECT_CALL( db, commitTransaction( _ ) ).WillOnce( Return( false ) );
+      EXPECT_CALL( db, rollbackTransaction( _ ) ).WillOnce( Return( true ) );
+   }
+   EXPECT_EQ( -8, buffer.saveToDB( &db, "1" ) );
+   EXPECT_EQ( QString( "7" ), buffer.bufferID );
+   EXPECT_TRUE( buffer.new_or_changed_spectrum );
+   EXPECT_FALSE( buffer.replace_spectrum );
+   QFile after( filename );
+   ASSERT_TRUE( after.open( QIODevice::ReadOnly ) );
+   EXPECT_EQ( previous, after.readAll() );
+}
+
+TEST_F( BufferDb, ParticipatesInCallerTransactionWithoutCommittingOrWritingDisk )
+{
+   prepareBuffer();
+   buffer.component.clear();
+   buffer.extinction              = { { 280.0, 1.25 } };
+   buffer.new_or_changed_spectrum = true;
+   buffer.replace_spectrum        = false;
+   {
+      InSequence sequence;
+      expectLookup( false );
+      EXPECT_CALL( db, transactionActive() ).WillOnce( Return( true ) );
+      EXPECT_CALL( db, statusQuery( args( newBufferArgs() ) ) ).WillOnce( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 88 ) );
+      EXPECT_CALL( db, query( args( { "get_eprofile", "88", "Buffer" } ) ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::NOROWS ) );
+      EXPECT_CALL( db, statusQuery( Matcher<const QStringList&>( _ ) ) )
+         .WillOnce( Invoke(
+            []( const QStringList& q )
+            {
+               EXPECT_EQ( ( QStringList{ "new_eprofile", "88", "Buffer", "molarExtinction" } ), q.mid( 0, 4 ) );
+               return IUS_DB2::OK;
+            } ) );
+      EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 9 ) );
+   }
+   EXPECT_EQ( 88, buffer.saveToDB( &db, "1" ) );
+   EXPECT_EQ( QString( "88" ), buffer.bufferID );
+   EXPECT_TRUE( buffer.new_or_changed_spectrum );
+   EXPECT_TRUE( diskCopy().isEmpty() );
+   // StrictMock rejects any begin, commit, or rollback by this participant.
+}
+
+TEST_F( BufferDb, ParticipatingFailureLeavesRollbackToCaller )
+{
+   prepareBuffer();
+   buffer.bufferID = "7";
+   {
+      InSequence sequence;
+      expectLookup( false );
+      EXPECT_CALL( db, transactionActive() ).WillOnce( Return( true ) );
+      EXPECT_CALL( db, statusQuery( args( newBufferArgs() ) ) ).WillOnce( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, lastErrno() ).WillOnce( Return( IUS_DB2::OK ) );
+      EXPECT_CALL( db, lastInsertID() ).WillOnce( Return( 88 ) );
+      expectStatus( { "add_buffer_component", "88", "5", "0.15000" } );
+      expectStatus( { "add_buffer_component", "88", "6", "0.02500" }, IUS_DB2::DBERROR );
+   }
+   EXPECT_EQ( -4, buffer.saveToDB( &db, "1" ) );
+   EXPECT_EQ( QString( "7" ), buffer.bufferID );
    EXPECT_TRUE( diskCopy().isEmpty() );
 }
 }

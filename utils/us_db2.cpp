@@ -676,6 +676,16 @@ int US_DB2::statusQuery( const QString& sqlQuery )
    db_errno = DBERROR;
 
    this->rawQuery( sqlQuery );
+
+   // A statement the server refused itself -- a duplicate key, a wrong
+   // argument count -- has its reason in the MySQL error rawQuery() kept.
+   // last_error() holds only what a procedure recorded, possibly for an
+   // earlier call, so it is asked only when the statement ran.
+   if ( mysql_errno( db ) != 0 )
+   {
+      return db_errno;
+   }
+
    if ( result )
    {
       row       = mysql_fetch_row( result );

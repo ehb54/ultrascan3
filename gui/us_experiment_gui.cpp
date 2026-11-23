@@ -17,6 +17,8 @@ US_ExperimentGui::US_ExperimentGui(
    US_WidgetsDialog( nullptr, Qt::WindowFlags() ), expInfo( dataIn )
 {
    signal  = signal_wanted;
+   currentLab        = 0;
+   currentInstrument = 0;
 
    setPalette( US_GuiSettings::frameColor() );
    setWindowTitle( tr( "Experiment Information" ) );
@@ -227,6 +229,9 @@ void US_ExperimentGui::reset( void )
 
    pb_accept       ->setEnabled( false );
 
+   // A rotor's lab, instruments and operators come from the lab list
+   pb_rotor->setEnabled( !labList.isEmpty() );
+
    // Update controls to represent selected experiment
    cb_instrument   ->setLogicalIndex( expInfo.instrumentID );
    cb_operator     ->setLogicalIndex( expInfo.operatorID   );
@@ -264,14 +269,26 @@ void US_ExperimentGui::reset( void )
          QString masterPW = pw.getPasswd();
          US_DB2 db( masterPW );
 
-         int runIDStatus = US_DB2::NO_EXPERIMENT;
-         if ( db.lastErrno() == US_DB2::OK )
+         int       runIDStatus = db.lastErrno();
+         if ( runIDStatus == US_DB2::OK )
+         {
             runIDStatus = expInfo.checkRunID( &db );
+         }
+
+         if ( runIDStatus != US_DB2::OK && runIDStatus != US_DB2::NOROWS )
+         {
+            // Whether the run is stored cannot be determined
+            QMessageBox::warning( this,
+                                  tr( "Database Problem" ),
+                                  tr( "Could not check whether run %1 is in the database:\n" ).arg( expInfo.runID ) +
+                                     db.lastError() );
+            return;
+         }
 
          if ( expInfo.expID > 0 )
             pb_accept       ->setEnabled( true );
 
-         else if ( runIDStatus != US_DB2::OK )
+         else if ( runIDStatus == US_DB2::NOROWS )
          {
             // Then an investigator has been chosen, and
             //  the current runID doesn't exist in the db
@@ -292,6 +309,12 @@ void US_ExperimentGui::reset( void )
       // The label can't be empty either
       if ( expInfo.label.isEmpty() )
          pb_accept       ->setEnabled( false );
+
+      // Nor can the lab list, from the db or from disk
+      if ( labList.isEmpty() )
+      {
+         pb_accept->setEnabled( false );
+      }
    }
 
    else
@@ -336,8 +359,22 @@ bool US_ExperimentGui::load( void )
       QString masterPW = pw.getPasswd();
       US_DB2 db( masterPW );
 
-      if ( db.lastErrno() == US_DB2::OK )
-         US_Rotor::readLabsDB( labList, &db );
+      // When the labs cannot be read, the dialog opens with an empty
+      //  lab list, Accept and rotor selection stay disabled in either
+      //  data source, and the user can only cancel
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         connect_error( db.lastError() );
+         return ( true );
+      }
+
+      const US_Rotor::Status labStatus = US_Rotor::readLabsDB( labList, &db );
+      if ( labStatus != US_Rotor::ROTOR_OK && labStatus != US_Rotor::NOT_FOUND )
+      {
+         QMessageBox::warning(
+            this, tr( "Database Problem" ), tr( "Could not read the labs from the database:\n" ) + db.lastError() );
+         return ( true );
+      }
 
       int linssize       = 0;
       for (auto & ii : labList)
@@ -357,7 +394,10 @@ bool US_ExperimentGui::load( void )
          loperator.lname     = "operator";
          loperator.fname     = "some";
          instrument.operators << loperator;
-         labList[ 0 ].instruments << instrument;
+         if ( !labList.isEmpty() )
+         {
+            labList[0].instruments << instrument;
+         }
 
          QMessageBox::warning( this,
             tr( "No Instruments" ),
@@ -581,6 +621,11 @@ void US_ExperimentGui::setInstrumentList( void )
 qDebug() << "ExpG: setInstrL: IN labList size" << labList.size()
  << "currentLab" << currentLab;
    QList< listInfo > options;
+   if ( currentLab < 0 || currentLab >= labList.size() )
+   {
+      cb_instrument->clear();
+      return;
+   }
    QList< US_Rotor::Instrument > instruments = labList[ currentLab ].instruments;
 qDebug() << "ExpG: setInstrL:  instruments size" << instruments.size();
 
@@ -621,6 +666,12 @@ void US_ExperimentGui::setOperatorList( void )
 qDebug() << "ExpG:sOL:   cLab cInstr" << currentLab << currentInstrument
  << "llsz" << labList.size();
    QList< listInfo > options;
+   if ( currentLab < 0 || currentLab >= labList.size() || currentInstrument < 0 ||
+        currentInstrument >= labList[currentLab].instruments.size() )
+   {
+      cb_operator->clear();
+      return;
+   }
    QList< US_Rotor::Instrument > instruments = labList[ currentLab ].instruments;
 int insz=(currentInstrument<labList[currentLab].instruments.size())?
  labList[currentLab].instruments.size():0;

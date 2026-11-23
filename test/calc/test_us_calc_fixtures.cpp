@@ -25,12 +25,15 @@
 #include "us_calc_matching.h"
 #include "us_calc_range.h"
 #include "us_calc_replicate.h"
+#include "us_calc_replicate_group.h"
+#include "us_calc_report_item.h"
 #include "us_calc_smoothing.h"
 #include "us_calc_test_print.h"
 #include "us_calc_tolerance.h"
 #include "us_calc_units.h"
 
 using namespace US_Calc;
+using namespace US_Calc::Gmp;
 
 namespace
 {
@@ -212,6 +215,61 @@ TEST_F( UsCalcFixtures, RangeSummariesMatchTheOracle )
    EXPECT_EQ( checked, expected["ranges"].toArray().size() );
 }
 
+// Each report item on each fixture model, as the reporter's Integration
+// Results row:  the fraction (0 for a type that is not a range type), the
+// pass/fail in percentage points and whether the item applies to the model.
+TEST_F( UsCalcFixtures, ReportItemsMatchTheOracle )
+{
+   int checked = 0;
+   for ( const QJsonValue& v : expected["ranges"].toArray() )
+   {
+      const QJsonObject e    = v.toObject();
+      const QString     key  = e["model"].toString();
+      const QJsonObject item = itemFor( items, e );
+      SCOPED_TRACE( key + " item " + QString::number( e["item"].toInt() ) + " (" + e["sample"].toString() + ")" );
+      const Model            model = input( key );
+      const ReportItemResult r     = evaluate_report_item( model,
+                                                           { item["type"].toString(),
+                                                             item["method"].toString(),
+                                                             item["low"].toDouble(),
+                                                             item["high"].toDouble(),
+                                                             item["target"].toDouble(),
+                                                             item["tolerance"].toDouble() } );
+      EXPECT_EQ( r.range_type, e["supported"].toBool() );
+      EXPECT_EQ( any_method_matches( { item["method"].toString() }, model.description ), e["matched"].toBool() );
+      if ( e["fraction"].isNull() )
+      {
+         EXPECT_FALSE( std::isfinite( r.fraction_percent ) );
+         EXPECT_FALSE( r.passed );
+      }
+      else
+      {
+         EXPECT_EQ( r.fraction_percent, e["fraction_double"].toDouble() );
+      }
+      if ( e.contains( "pass_pp" ) && !e["pass_pp"].isNull() )
+      {
+         EXPECT_EQ( r.passed, e["pass_pp"].toBool() );
+      }
+
+      // The same item in a VELOCITY-MWL table:  n/a for an unsupported
+      // type, 0 when the total is not positive.
+      const VelMwlItemResult w = evaluate_velmwl_item( model,
+                                                       { item["type"].toString(),
+                                                         item["method"].toString(),
+                                                         item["low"].toDouble(),
+                                                         item["high"].toDouble(),
+                                                         item["target"].toDouble(),
+                                                         item["tolerance"].toDouble() } );
+      EXPECT_EQ( w.supported, e["supported"].toBool() || model.components.isEmpty() );
+      if ( e.contains( "fraction_velmwl" ) )
+      {
+         EXPECT_LE( std::fabs( w.fraction_percent - e["fraction_velmwl"].toDouble() ), tol.fraction_abs );
+      }
+      ++checked;
+   }
+   EXPECT_EQ( checked, 552 );
+}
+
 TEST_F( UsCalcFixtures, WholeModelMeansMatchTheOracle )
 {
    const QJsonObject models = expected["models"].toObject();
@@ -290,6 +348,38 @@ TEST_F( UsCalcFixtures, ReplicateGroupsMatchTheOracle )
                  tol.sd_abs_of_mean * std::fabs( e["fraction_mean"].toDouble() ) );
       const ToleranceCheck check{ ToleranceRule::RelativePercentOfTarget, item["target"].toDouble(), item["tolerance"].toDouble() };
       EXPECT_EQ( passes( r.mean_fraction_percent, check ), e["pass_relative"].toBool() );
+
+      // The reporter's path:  each member channel's item evaluated on its
+      // model (distrib_info), then the subgroup (one channel per member).
+      ReplicateItem reference;
+      reference.type              = item["type"].toString();
+      reference.method            = item["method"].toString();
+      reference.low               = item["low"].toDouble();
+      reference.high              = item["high"].toDouble();
+      reference.integration_value = item["integration"].toDouble();
+      reference.target_percent    = item["target"].toDouble();
+      reference.tolerance         = item["tolerance"].toDouble();
+      QVector<QVector<ReplicateItem>> channels;
+      for ( auto it = models.begin(); it != models.end(); ++it )
+      {
+         if ( cases.contains( it.key().section( '/', 0, 0 ) ) && it.value().toObject()["reporter"].toBool() )
+         {
+            const ReportItemResult evaluated = evaluate_report_item(
+               inputs.value( it.key() ),
+               { reference.type, reference.method, reference.low, reference.high, reference.target_percent, reference.tolerance } );
+            ReplicateItem member       = reference;
+            member.range_concentration = evaluated.range_concentration;
+            member.fraction_percent    = evaluated.fraction_percent;
+            channels.push_back( { member } );
+         }
+      }
+      const ReplicateGroupResult averaged = evaluate_replicate_group( reference, channels, channels.size() );
+      EXPECT_EQ( averaged.summary.used_count, e["n"].toInt() );
+      EXPECT_EQ( averaged.mean_fraction_percent, r.mean_fraction_percent );
+      EXPECT_EQ( averaged.sd_fraction_percent, r.sd_fraction_percent );
+      EXPECT_EQ( averaged.mean_range_concentration, r.mean_range_concentration );
+      EXPECT_TRUE( averaged.show_sd );
+      EXPECT_EQ( averaged.passed, e["pass_relative"].toBool() );
    }
 }
 

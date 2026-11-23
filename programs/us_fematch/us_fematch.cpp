@@ -1804,9 +1804,18 @@ DbgLv(1) << "post-Load mC" << model.monteCarlo << "is_dmga_mc" << is_dmga_mc
 
    if ( is_dmga_mc )
    {  // For DMGA-MC loaded model, build the vector of iteration models
-      US_DmgaMcStats::build_imodels( model_loaded, imodels );
-      // Default the used model to a "Mean" model
-      US_DmgaMcStats::build_used_model( "mean", 0, imodels, model_used );
+      if ( US_DmgaMcStats::build_imodels( model_loaded, imodels ) > 0 )
+      { // Default the used model to a "Mean" model
+         US_DmgaMcStats::build_used_model( "mean", 0, imodels, model_used );
+      }
+      else
+      { // No iteration loaded: keep the used model and offer no iteration choices
+         pb_adv_dmga->setEnabled( false );
+         QMessageBox::warning( this,
+                               tr( "DMGA-MC Iterations" ),
+                               tr( "None of the model's Monte Carlo iterations could be read, so the "
+                                   "loaded model is used as it is." ) );
+      }
    }
 }
 
@@ -4144,9 +4153,18 @@ void US_FeMatch::auto_load_simulate( US_DataIO::RawData i_rdata,
 
    if ( is_dmga_mc )
    {  // For DMGA-MC loaded model, build the vector of iteration models
-      US_DmgaMcStats::build_imodels( model_loaded, imodels );
-      // Default the used model to a "Mean" model
-      US_DmgaMcStats::build_used_model( "mean", 0, imodels, model_used );
+      if ( US_DmgaMcStats::build_imodels( model_loaded, imodels ) > 0 )
+      { // Default the used model to a "Mean" model
+         US_DmgaMcStats::build_used_model( "mean", 0, imodels, model_used );
+      }
+      else
+      { // No iteration loaded: keep the used model and offer no iteration choices
+         pb_adv_dmga->setEnabled( false );
+         QMessageBox::warning( this,
+                               tr( "DMGA-MC Iterations" ),
+                               tr( "None of the model's Monte Carlo iterations could be read, so the "
+                                   "loaded model is used as it is." ) );
+      }
    }
    else {
       if ( US_Settings::advanced_level() > 0)

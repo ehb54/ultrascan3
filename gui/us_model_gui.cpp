@@ -178,7 +178,12 @@ bool US_ModelGui::load_model( const QString& load_init, US_Model& modelIn )
       if (QFile::exists(load_init) && QFileInfo(load_init).isReadable())
       {  // Argument is a file path
          qDebug() << "Loading model from file path: " << load_init;
-         modelIn.load(load_init);
+         const int status = modelIn.load( load_init );
+         if ( status != IUS_DB2::OK )
+         { // The caller reports the failure; modelIn is unchanged
+            qDebug() << "Could not load the model file" << load_init << "status" << status;
+            return false;
+         }
          modelIn.debug(  );
          ModelDesc desc;
          desc.description = modelIn.description;
@@ -304,9 +309,11 @@ bool US_ModelGui::load_model( const QString& load_init, US_Model& modelIn )
 
                      QString modelID = model_description.DB_id;
                      modelID_global = modelID;
-                     modelIn.load( modelID, &db );
-                     result = true;
-                     loaded = true;
+                     if ( modelIn.load( modelID, &db ) == IUS_DB2::OK )
+                     {
+                        result = true;
+                        loaded = true;
+                     }
                   }
 
                   else
@@ -315,9 +322,11 @@ bool US_ModelGui::load_model( const QString& load_init, US_Model& modelIn )
 
                      if ( filename.isEmpty() )
                         return false;
-                     modelIn.load( filename );
-                     result = true;
-                     loaded = true;
+                     if ( modelIn.load( filename ) == IUS_DB2::OK )
+                     {
+                        result = true;
+                        loaded = true;
+                     }
                   }
                }
             }
@@ -496,8 +505,16 @@ qDebug() << "SelMdl:  index modlx" << index << modlx << "mdesc" << mdesc;
       }
 
       QString modelID = model_descriptions[ modlx ].DB_id;
+      const int status  = model.load( modelID, &db );
+
+      if ( status != IUS_DB2::OK )
+      {
+         load_error( mdesc, tr( "Database status %1\n" ).arg( status ) + db.lastError() );
+         item->listWidget()->setCurrentRow( recent_row );
+         return;
+      }
+
       modelID_global = modelID;
-      model.load( modelID, &db );
    }
 
    else
@@ -506,8 +523,15 @@ qDebug() << "SelMdl:  index modlx" << index << modlx << "mdesc" << mdesc;
       
       if ( filename.isEmpty() )
          return;
-      else
-         model.load( filename );
+
+      const int status = model.load( filename );
+
+      if ( status != IUS_DB2::OK )
+      {
+         load_error( mdesc, tr( "Could not read the model file\n" ) + filename );
+         item->listWidget()->setCurrentRow( recent_row );
+         return;
+      }
    }
 
    if ( mdesc != "New Model" )
@@ -723,6 +747,12 @@ void US_ModelGui::connect_error( const QString& error )
    QMessageBox::warning( this, 
       tr( "Connection Problem" ),
       tr( "Could not connect to database\n" ) + error );
+}
+
+// A failed load leaves the previously loaded model shown and selected.
+void US_ModelGui::load_error( const QString& mdesc, const QString& reason )
+{
+   QMessageBox::warning( this, tr( "Model Load Error" ), tr( "Could not load the model\n\"%1\"\n\n%2" ).arg( mdesc, reason ) );
 }
 
 bool US_ModelGui::database_ok( IUS_DB2& db )

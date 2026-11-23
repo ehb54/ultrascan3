@@ -2,10 +2,15 @@
 """Independent expected values for the reporting calculations.
 
 The oracle reads the fixture models and report items and computes what the
-GMP reporter's range and replicate calculations produce for them
-(programs/us_reporter_gmp/us_reporter_gmp.cpp: distrib_info near 10262,
-velmwl_range_fraction at 4479, get_replicate_group_results at 10140, and the
-tolerance checks at 10045, 10728 and 10946).
+GMP reporter's range and replicate calculations produced before extraction.
+All reporter line references below are historical, pinned to commit
+bf920cf093ab82b502f216bc5fc52d69324178fc (the initial oracle and fixtures):
+programs/us_reporter_gmp/us_reporter_gmp.cpp: distrib_info near 10262,
+distrib_info_velmwl, get_replicate_group_results at 10140, and the
+tolerance checks at 10045, 10728 and 10946.
+These references document the original rules, not locations in the current
+reporter. The extracted rules now live in utils/us_calc_matching.cpp,
+us_calc_report_item.cpp and us_calc_replicate_group.cpp, in US_Calc::Gmp.
 
 Model values are read as the C++ code reads them (to IEEE doubles).  Range
 membership is decided in double arithmetic with the reporter's bound scaling,
@@ -162,7 +167,7 @@ def qsection(text, sep, start, end):
 
 
 def analysis_label(description):
-    """mdla in distrib_info (us_reporter_gmp.cpp near 10297)."""
+    """Historical mdla in distrib_info (pinned reporter near 10297; see module docstring)."""
     label = qsection(qsection(description, ".", -2, -2), "_", 1, -1)
     if not label:
         label = qsection(description, ".", 0, -2)
@@ -170,7 +175,7 @@ def analysis_label(description):
 
 
 def method_matches(item_method, description):
-    """method_identity in distrib_info (near 10950):  every '-' part of the
+    """Historical method_identity in distrib_info (pinned reporter near 10950): every '-' part of the
     item method must occur in the analysis label.  Methods containing PCSA
     reduce to PCSA."""
     method = "PCSA" if "PCSA" in item_method else item_method
@@ -202,12 +207,12 @@ def to_float(q):
 
 
 def relative_pass(value, target, tol):
-    """Relative tolerance (10045, 10728):  target*(1-tol/100) <= v <= target*(1+tol/100)."""
+    """Relative tolerance (pinned reporter 10045, 10728): target*(1-tol/100) <= v <= target*(1+tol/100)."""
     return target * (1 - tol / 100.0) <= value <= target * (1 + tol / 100.0)
 
 
 def absolute_pp_pass(value, target, tol):
-    """Percentage-point tolerance (10946, 4667):  |v - target| <= tol."""
+    """Percentage-point tolerance (pinned reporter 10946, 4667): |v - target| <= tol."""
     return abs(value - target) <= tol
 
 
@@ -231,7 +236,7 @@ def range_result(model, item):
     c_total = sum((F(c["signal"]) for c in comps), Fraction(0))
     if attr is None:
         # distrib_info matches no type branch, so nothing is selected and the
-        # fraction is 0/C; velmwl_range_fraction reports the type unsupported.
+        # fraction is 0/C; distrib_info_velmwl reports the type unsupported.
         out = {
             "supported": False,
             "matched": method_matches(item["method"], model["description"]),
@@ -252,7 +257,7 @@ def range_result(model, item):
         "selected": len(selected),
         "R": float(r),
         "C": float(c_total),
-        # distrib_info divides without a guard; velmwl_range_fraction returns 0
+        # distrib_info divides without a guard; distrib_info_velmwl gives 0
         "fraction": to_float(100 * r / c_total) if c_total != 0 else None,
         "fraction_velmwl": to_float(100 * r / c_total) if c_total > 0 else 0.0,
         "within_mean": to_float(num / r) if r != 0 else None,
@@ -264,7 +269,7 @@ def range_result(model, item):
 
 def legacy_fraction(comps, selected):
     """The fraction in the reporter's double arithmetic:  sums in component
-    order, then (R / C) * 100 (distrib_info near 10941)."""
+    order, then (R / C) * 100 (historical distrib_info, pinned reporter near 10941)."""
     c_total = 0.0
     for c in comps:
         c_total += c["signal"]

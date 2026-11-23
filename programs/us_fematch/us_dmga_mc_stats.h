@@ -76,8 +76,10 @@ class US_DmgaMcStats
       //! \param smtype  Used model type ("model","mean","median","mode")
       //! \param iter    Iteration number (1-niters) if "model" (iter.) used
       //! \param imodels Vector of iteration models
-      //! \param umodel  Returned composed used model
-      //! \return        Statistics index used (-iter,2,3,8)
+      //! \param umodel  Returned composed used model; unchanged when there
+      //!                is no iteration model or no such iteration
+      //! \return        Statistics index used (-iter,2,3,8), or -1 when nothing
+      //!                was composed
       static int  build_used_model  ( const QString, const int, QVector< US_Model >&,
                                       US_Model& );
 

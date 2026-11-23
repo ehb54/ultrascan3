@@ -411,6 +411,11 @@ int US_Analyte::parse_xml( QIODevice& device, const QString& guid )
             selected = true;
             a = xml.attributes();
 
+            // The file's spectra replace the ones the analyte held.
+            extinction.clear();
+            refraction.clear();
+            fluorescence.clear();
+
             type_string = a.value( "type" ).toString();
 
             // Set description and guid
@@ -522,6 +527,11 @@ int US_Analyte::parse_xml( QIODevice& device, const QString& guid )
    {
       message = QObject::tr( "Could not find analyte guid" );
       return IUS_DB2::NO_ANALYTE;
+   }
+   if ( !finished )
+   {
+      message = QObject::tr( "Could not read analyte XML: the analyte element is incomplete" );
+      return IUS_DB2::DBERROR;
    }
    return IUS_DB2::OK;
 }
@@ -916,7 +926,7 @@ int US_Analyte::write_db( IUS_DB2* db )
 {
 
    qDebug() << "Extinciton 1 : " << extinction.count();
-   
+
    QStringList q;
    bool        insert = true;
 
@@ -954,6 +964,34 @@ int US_Analyte::write_db( IUS_DB2* db )
       message   = QObject::tr( "updated in" );
       insert    = false;
    }
+
+   // A rollback undoes an insert's ID; a stored analyte keeps the ID found above.
+   const QString     previousID = analyteID;
+
+   // The analyte row, its nucleotide info and its extinction profile are
+   // written in one transaction. A caller's open transaction is joined; the
+   // caller then commits it, or rolls it back when this write fails.
+   US_DB2Transaction transaction( db );
+   QString           transactionError;
+   if ( !transaction.begin( transactionError ) )
+   {
+      message = QObject::tr( "Could not start a DB transaction: %1" ).arg( transactionError );
+      return IUS_DB2::DBERROR;
+   }
+
+   // Undo this write's DB changes and restore analyteID; the spectrum stays
+   // pending. message already says what failed.
+   const auto fail = [&]( int status )
+   {
+      analyteID = previousID;
+      QString rollbackError;
+      if ( !transaction.rollback( rollbackError ) )
+      {
+         message += QObject::tr( "\nThe rollback could not be confirmed: %1" ).arg( rollbackError );
+         qWarning() << "analyte rollback could not be confirmed:" << rollbackError;
+      }
+      return status;
+   };
 
    // Finish populating the query
    if      ( type == US_Analyte::PROTEIN ) q << "Protein";
@@ -1005,7 +1043,7 @@ DEBUG_QUERY;
    if ( error != IUS_DB2::OK )
    {
       message = QObject::tr ( "Could not update the DB" );
-      return error;
+      return fail( error );
    }
 
    if ( insert ) analyteID = QString::number( db->lastInsertID() );
@@ -1015,7 +1053,7 @@ DEBUG_QUERY;
       const int nucleotide = write_nucleotide( db );
       if ( nucleotide != IUS_DB2::OK )
       {
-         return nucleotide;
+         return fail( nucleotide );
       }
    }
 
@@ -1031,30 +1069,50 @@ DEBUG_QUERY;
    qDebug() << "Extinciton 2 : " << extinction.count();
 
 
-   bool profileFailed = false;
-   if ( !extinction.isEmpty() && new_or_changed_spectrum )
+   const bool writeProfile = !extinction.isEmpty() && new_or_changed_spectrum;
+   if ( writeProfile )
    {
       // Create the profile, or replace a stored one (whose old values are discarded).
       QMap<double, double> stored;
       int profileID = replace_spectrum ? US_ExtProfile::fetch_eprofile( db, analyteID.toInt(), compType, valType, stored ) : -1;
 
       // A failed create returns -1; update reports success directly.
-      profileFailed = profileID == -1
-                         ? US_ExtProfile::create_eprofile( db, analyteID.toInt(), compType, valType, extinction ) < 1
+      const bool profileFailed =
+         profileID == -1 ? US_ExtProfile::create_eprofile( db, analyteID.toInt(), compType, valType, extinction ) < 1
                          : !US_ExtProfile::update_eprofile( db, profileID, analyteID.toInt(), compType, valType, extinction );
-      if ( !profileFailed )
-      { // Otherwise the spectrum is still new or changed, and a later save retries it
-         replace_spectrum        = false;
-         new_or_changed_spectrum = false;
+      if ( profileFailed )
+      {
+         message = QObject::tr( "The extinction profile could not be saved to the DB" );
+         return fail( IUS_DB2::DBERROR );
       }
    }
 
+   // In a joined transaction the caller may still roll this write back, so the
+   // spectrum stays pending and no disk copy is written.
+   if ( !transaction.owns() )
+   {
+      return IUS_DB2::OK;
+   }
 
-   // Write to disk too; a failed disk copy is reported, with its message.
+   if ( !transaction.commit( transactionError ) )
+   {
+      message = QObject::tr( "Could not commit the analyte to the DB: %1" ).arg( transactionError );
+      return fail( IUS_DB2::DBERROR );
+   }
+
+   if ( writeProfile )
+   {
+      replace_spectrum        = false;
+      new_or_changed_spectrum = false;
+   }
+
+
+   // The disk copy is written only after the commit. If it fails, the DB keeps
+   // the analyte; the error and its message are returned.
    QString path;
    if ( !analyte_path( path ) )
    {
-      message = QObject::tr( "Could not create the analyte directory" );
+      message = QObject::tr( "The analyte was saved to the DB, but the analyte directory could not be created" );
       return IUS_DB2::DBERROR;
    }
    QString filename = get_filename( path, analyteGUID );
@@ -1062,13 +1120,8 @@ DEBUG_QUERY;
    const int     disk          = write_disk( filename );
    if ( disk != IUS_DB2::OK )
    {
+      message = QObject::tr( "The analyte was saved to the DB, but its local copy could not be written: %1" ).arg( message );
       return disk;
-   }
-
-   if ( profileFailed )
-   {
-      message = QObject::tr( "The extinction profile could not be saved to the DB" );
-      return IUS_DB2::DBERROR;
    }
 
    message = saved_message;

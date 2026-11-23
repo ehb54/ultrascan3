@@ -35,7 +35,12 @@ TEST( UsCalcVersion, AlgorithmsAreNamedVersionedAndDescribed )
                               "integral_distribution",
                               "gaussian_smoothing",
                               "weighted_statistics",
-                              "report_item_matching" } )
+                              "report_item_matching",
+                              "report_item",
+                              "velmwl_report_item",
+                              "report_replicate_group",
+                              "report_run_checks",
+                              "report_lookup" } )
    {
       EXPECT_TRUE( names.contains( name ) ) << name;
    }

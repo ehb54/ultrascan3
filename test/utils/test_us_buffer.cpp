@@ -146,3 +146,60 @@ TEST_F( US_BufferTest, EmptySpectrumDoesNotReadNonexistentColumns )
    buffer.getSpectrum( &db, "Extinction" );
    EXPECT_TRUE( buffer.extinction.isEmpty() );
 }
+
+TEST_F( US_BufferTest, DiskLoadReplacesHeldSpectra )
+{
+   QTemporaryDir dir;
+   ASSERT_TRUE( dir.isValid() );
+   const QString file = dir.filePath( "B0000001.xml" );
+
+   US_Buffer     source;
+   source.GUID         = "disk-guid";
+   source.description  = "From disk";
+   source.extinction   = { { 260.0, 0.3 } };
+   source.fluorescence = { { 400.0, 0.2 } };
+   ASSERT_TRUE( source.writeToDisk( file ) );
+
+   ASSERT_TRUE( buffer.readFromDisk( file ) );
+   EXPECT_EQ( QString( "From disk" ), buffer.description );
+   EXPECT_EQ( source.extinction, buffer.extinction );
+   EXPECT_TRUE( buffer.refraction.isEmpty() );
+   EXPECT_EQ( source.fluorescence, buffer.fluorescence );
+}
+
+TEST_F( US_BufferTest, MalformedOrIncompleteDiskFileFailsAndLeavesBufferUnchanged )
+{
+   QTemporaryDir dir;
+   ASSERT_TRUE( dir.isValid() );
+   const US_Buffer  before = buffer;
+
+   const QByteArray bodies[] = {
+      // Truncated inside the spectrum
+      "<?xml version='1.0'?><BufferData version='1.0'>"
+      "<buffer id='0' guid='partial-guid' description='partial' ph='5.0'>"
+      "<component id='9' concentration='0.5'/><spectrum><extinction wavelength='300.0' value='1.0e+00'/>",
+      // Well-formed, but no buffer element
+      "<?xml version='1.0'?><BufferData version='1.0'/>",
+   };
+
+   for ( const QByteArray& body : bodies )
+   {
+      SCOPED_TRACE( body.constData() );
+      const QString file = dir.filePath( "B0000001.xml" );
+      QFile         out( file );
+      ASSERT_TRUE( out.open( QIODevice::WriteOnly | QIODevice::Truncate ) );
+      ASSERT_EQ( body.size(), out.write( body ) );
+      out.close();
+
+      EXPECT_FALSE( buffer.readFromDisk( file ) );
+      EXPECT_EQ( before.bufferID, buffer.bufferID );
+      EXPECT_EQ( before.GUID, buffer.GUID );
+      EXPECT_EQ( before.description, buffer.description );
+      EXPECT_DOUBLE_EQ( before.pH, buffer.pH );
+      EXPECT_EQ( before.componentIDs, buffer.componentIDs );
+      EXPECT_EQ( before.concentration, buffer.concentration );
+      EXPECT_EQ( before.extinction, buffer.extinction );
+      EXPECT_EQ( before.refraction, buffer.refraction );
+      EXPECT_EQ( before.fluorescence, buffer.fluorescence );
+   }
+}
