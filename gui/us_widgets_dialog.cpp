@@ -322,9 +322,7 @@ QwtCounter* US_WidgetsDialog::us_counter( int buttons, double low, double high,
   counter->setAutoFillBackground( true );
 
   // Set min,curr width based on current value and high-value sizes
-  int ncv    = int( log10( value ) ) + 1;
-  ncv        = ( ncv > 0 ) ? ncv : ( 4 - ncv );
-  int widv   = fm.horizontalAdvance( QString( "12345678901234" ).left( ncv ) );
+  int widv = fm.horizontalAdvance( QString( "12345678901234" ).left( US_Widgets::counter_digits( value ) ) );
   counter->adjustSize();
   int mwidth = widv * 2 + totwid;
   counter->setMinimumWidth( mwidth );

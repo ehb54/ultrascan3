@@ -3934,6 +3934,9 @@ void US_ReporterGMP::generate_report( void )
   mkdir( US_Settings::reportDir(), subDirName );
   QStringList f_exts = QStringList() <<  "*.*"; 
   remove_files_by_mask( dirName, f_exts );
+  // The earlier report is gone; View Generated Report waits for this one.
+  pb_view_report->setEnabled( false );
+  te_fpath_info->clear();
   ///////////////////////////////////////////////////
 
   report_aborted = false;
