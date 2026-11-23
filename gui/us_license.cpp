@@ -383,19 +383,44 @@ void US_License::update_screen( void )
 
 void US_License::update( void )
 {
-  if ( firstname   == ""  ||
-       lastname    == ""  ||
-       institution == ""  ||
-       state       == ""  ||
-       email       == ""  )
-  {
-    QMessageBox::information ( this, 
-      tr( "Request Error" ),
-      tr( "Your request is incomplete.\n"
-          "Please fill out all requested information." ) );
+   // The registration scripts refuse a request with any of these empty
+   QStringList missing;
 
-    return;
-  }
+   if ( firstname.isEmpty() )
+   {
+      missing << tr( "First name" );
+   }
+   if ( lastname.isEmpty() )
+   {
+      missing << tr( "Last name" );
+   }
+   if ( email.isEmpty() )
+   {
+      missing << tr( "E-mail Address" );
+   }
+   if ( institution.isEmpty() )
+   {
+      missing << tr( "Institution" );
+   }
+   if ( city.isEmpty() )
+   {
+      missing << tr( "City" );
+   }
+   if ( state.isEmpty() )
+   {
+      missing << tr( "State" );
+   }
+
+   if ( !missing.isEmpty() )
+   {
+      QMessageBox::information( this,
+                                tr( "Request Error" ),
+                                tr( "Your request is incomplete.\n"
+                                    "Please fill in: %1." )
+                                   .arg( missing.join( ", " ) ) );
+
+      return;
+   }
 
   // If the email address has changed, just do a normal request.
   QStringList license = US_Settings::license();
@@ -428,25 +453,11 @@ void US_License::update( void )
     request();
     return;
   }
-  
-  // Form request
-  QString req     = "firstname="    + firstname 
-                  + "&lastname="    + lastname
-                  + "&institution=" + institution
-                  + "&address="     + address
-                  + "&city="        + city
-                  + "&state="       + state
-                  + "&zip="         + zip
-                  + "&phone="       + phone
-                  + "&email="       + email
-                  + "&os="          + OS
-                  + "&platform="    + PLATFORM
-                  + "&version="     + US_Version
-                  + "&licensetype=" + licensetype;
+
 //qDebug() << "requesting update";
   // Send request
   QString url     = "https://ultrascan.aucsolutions.com/update-license-new.php";
-  US_HttpPost* transmit = new US_HttpPost( url, req );
+  US_HttpPost* transmit = new US_HttpPost( url, form_data() );
   connect( transmit, &US_HttpPost::US_Http_post_response, this, &US_License::update_response );
 }
 
@@ -456,6 +467,21 @@ void US_License::update_response( const QString& response )
   QStringList data = response.split( "-" );
 
   int error = data[ 0 ].toInt();
+
+  // 5: the server has no record of this email.  If the saved registration
+  // is still pending, its request never succeeded (refused, or lost to a
+  // network error), so send the request again.  Otherwise every later
+  // attempt with this address would end here.
+  if ( error == 5 )
+  {
+     QString status_error;
+     if ( US_License_t::isValid( status_error, QStringList() ) == US_License_t::Pending )
+     {
+        request();
+        return;
+     }
+  }
+
   if ( error == 0 )
   {
     validation = data[ 1 ];
@@ -484,37 +510,18 @@ void US_License::update_response( const QString& response )
 void US_License::request( void )
 {
    //qDebug() << "Starting Req";
-  // Form request
-  QString request = "firstname="    + firstname 
-                  + "&lastname="    + lastname
-                  + "&institution=" + institution
-                  + "&address="     + address
-                  + "&city="        + city
-                  + "&state="       + state
-                  + "&zip="         + zip
-                  + "&phone="       + phone
-                  + "&email="       + email
-                  + "&os="          + OS
-                  + "&platform="    + PLATFORM
-                  + "&version="     + US_Version
-                  + "&licensetype=" + licensetype;
+   // Save partial request
+   QStringList license;
+   license << lastname << firstname << institution << address << city << state << zip << phone << email << platform.toLower()
+           << os.toLower() << version;
 
-  // Save partial request
-  QStringList license;
-  license << lastname              << firstname 
-          << institution           << address 
-          << city                  << state                 
-          << zip                   << phone       
-          << email                 << platform.toLower() 
-          << os.toLower()          << version;   
- 
-  US_Settings::set_license( license );
+   US_Settings::set_license( license );
 
-  // Send request
-  //qDebug() << "sending: " << request;
-  QString      url      = "https://ultrascan.aucsolutions.com/request-license.php";
-  US_HttpPost* transmit = new US_HttpPost( url, request );
-  connect( transmit, &US_HttpPost::US_Http_post_response, this, &US_License::request_response );
+   // Send request
+   //qDebug() << "sending: " << form_data();
+   QString      url      = "https://ultrascan.aucsolutions.com/request-license.php";
+   US_HttpPost* transmit = new US_HttpPost( url, form_data() );
+   connect( transmit, &US_HttpPost::US_Http_post_response, this, &US_License::request_response );
 }
 
 void US_License::request_response( const QString& response )
@@ -542,6 +549,26 @@ void US_License::request_response( const QString& response )
      
     return;
   } 
+}
+
+// The body of a registration POST (application/x-www-form-urlencoded).
+// Each value is percent-encoded, so an '&', '=', '+' or '%' in a field
+// reaches the server as typed.  The bytes stay Latin-1, as they were when
+// the values went unencoded, so the server stores what it stored before.
+QString US_License::form_data( void ) const
+{
+   const QStringList names  = { "firstname", "lastname", "institution", "address",  "city",    "state",      "zip",
+                                "phone",     "email",    "os",          "platform", "version", "licensetype" };
+   const QStringList values = { firstname, lastname, institution, address,  city,       state,      zip,
+                                phone,     email,    OS,          PLATFORM, US_Version, licensetype };
+   QStringList       items;
+
+   for ( int i = 0; i < names.size(); i++ )
+   {
+      items << names[i] + "=" + QString::fromLatin1( values[i].toLatin1().toPercentEncoding() );
+   }
+
+   return items.join( "&" );
 }
 
 bool US_License::save( void )

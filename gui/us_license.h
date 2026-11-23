@@ -99,6 +99,7 @@ class US_GUI_EXTERN US_License : public US_Widgets
     void    load_current    ( void );
     QString titleCase       ( const QString& );
     void    request         ( void );
+    QString       form_data( void ) const;
     bool    save            ( void );
 
   private slots:
