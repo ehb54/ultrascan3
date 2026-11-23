@@ -1,5 +1,6 @@
 //! \file us_widgets.cpp
-#include <QtSvg> 
+#include <QtSvg>
+#include <cmath>
 
 #include "qwt_plot_canvas.h"
 
@@ -361,8 +362,18 @@ QwtCounter* US_Widgets::us_counter( int buttons, double low, double high,
   counter->setAutoFillBackground( true );
 
   // Set min,curr width based on current value and high-value sizes
-  int ncv    = int( log10( value ) ) + 1;
-  ncv        = ( ncv > 0 ) ? ncv : ( 4 - ncv );
+  int          ncv       = 1;
+  const double magnitude = std::fabs( value );
+  if ( magnitude > 0.0 && std::isfinite( magnitude ) )
+  {
+     ncv = int( std::log10( magnitude ) ) + 1;
+     ncv = ( ncv > 0 ) ? ncv : ( 4 - ncv );
+  }
+  if ( value < 0.0 )
+  {
+     ++ncv;
+  }
+  ncv        = qBound( 1, ncv, 14 );
   int widv   = fm.horizontalAdvance( QString( "12345678901234" ).left( ncv ) );
   counter->adjustSize();
   int mwidth = widv * 2 + totwid;

@@ -1119,6 +1119,7 @@ US_InitDialogueGui::US_InitDialogueGui( QWidget* topw )
    : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ComProjectMain*)topw;
+   offset              = 20;
 
    initDialogueOpen = false;
    initMsgNorecOpen = false;
@@ -1576,7 +1577,6 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   connect( pdiag_autoflow, &US_SelectItem::accept_refresh_states,    this, &US_InitDialogueGui::refresh_optima_states);
   pdiag_autoflow->setParent(this, Qt::Widget);
 
-  offset = 20;
   pdiag_autoflow->move(offset, 2*offset);
 
   //mainw->cornerWidget->setFixedWidth( mainw->tabWidget->tabBar()->width() - 20 );

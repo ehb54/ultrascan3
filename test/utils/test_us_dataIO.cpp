@@ -31,7 +31,7 @@ class TestUSDataIOUnit : public QtTestBase
          // Create test scans
          for ( int i = 0; i < 3; i++ )
          {
-            US_DataIO::Scan scan;
+            US_DataIO::Scan scan{};
             scan.temperature = 20.0 + i;
             scan.rpm         = 3000.0 + i * 100;
             scan.seconds     = i * 60;
@@ -73,8 +73,8 @@ class TestUSDataIOUnit : public QtTestBase
          editedData.scanData = rawData.scanData;
       }
 
-      US_DataIO::RawData    rawData;
-      US_DataIO::EditedData editedData;
+      US_DataIO::RawData    rawData{};
+      US_DataIO::EditedData editedData{};
 };
 
 // ============================================================================
@@ -89,7 +89,7 @@ EXPECT_EQ(count, 8) << "Should return correct number of x-values";
 
 TEST_F(TestUSDataIOUnit, RawDataPointCountEmpty) {
 // Test pointCount with empty data
-US_DataIO::RawData emptyData;
+US_DataIO::RawData emptyData{};
 int count = emptyData.pointCount();
 EXPECT_EQ(count, 0) << "Should return 0 for empty x-values";
 }
@@ -102,7 +102,7 @@ EXPECT_EQ(count, 3) << "Should return correct number of scans";
 
 TEST_F(TestUSDataIOUnit, RawDataScanCountEmpty) {
 // Test scanCount with empty data
-US_DataIO::RawData emptyData;
+US_DataIO::RawData emptyData{};
 int count = emptyData.scanCount();
 EXPECT_EQ(count, 0) << "Should return 0 for empty scan data";
 }
@@ -205,8 +205,8 @@ EXPECT_DOUBLE_EQ(avgTemp, 21.0) << "Should calculate correct average temperature
 
 TEST_F(TestUSDataIOUnit, RawDataAverageTemperatureSingleScan) {
 // Test average_temperature with single scan
-US_DataIO::RawData singleScanData;
-US_DataIO::Scan scan;
+US_DataIO::RawData singleScanData{};
+US_DataIO::Scan    scan{};
 scan.temperature = 25.5;
 singleScanData.scanData << scan;
 
@@ -222,11 +222,11 @@ EXPECT_DOUBLE_EQ(spread, 2.0) << "Should calculate correct temperature spread";
 
 TEST_F(TestUSDataIOUnit, RawDataTemperatureSpreadSingleValue) {
 // Test temperature_spread with identical temperatures
-US_DataIO::RawData uniformTempData;
+US_DataIO::RawData uniformTempData{};
 for (int i = 0; i < 3; i++) {
-US_DataIO::Scan scan;
-scan.temperature = 20.0; // All same temperature
-uniformTempData.scanData << scan;
+   US_DataIO::Scan scan{};
+   scan.temperature = 20.0; // All same temperature
+   uniformTempData.scanData << scan;
 }
 
 double spread = uniformTempData.temperature_spread();
@@ -464,14 +464,14 @@ EXPECT_DOUBLE_EQ(editedData.value(lastScanIndex, lastPointIndex), 1.234)
 
 TEST_F(TestUSDataIOUnit, TemperatureCalculationsEdgeCases) {
 // Test temperature calculations with edge case data
-US_DataIO::RawData edgeCaseData;
+US_DataIO::RawData edgeCaseData{};
 
 // Test with zero scans
 // The mean of no temperatures is undefined: 0/0.
 EXPECT_TRUE( std::isnan( edgeCaseData.average_temperature() ) );
 
 // Test with extreme temperature values
-US_DataIO::Scan extremeScan1, extremeScan2;
+US_DataIO::Scan extremeScan1{}, extremeScan2{};
 extremeScan1.temperature = -273.15; // Absolute zero
 extremeScan2.temperature = 1000.0;  // Very high
 edgeCaseData.scanData << extremeScan1 << extremeScan2;
