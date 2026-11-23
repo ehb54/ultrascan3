@@ -40,8 +40,8 @@ class US_FitMeniscus : public US_Widgets
         bool auto_mode; //!< Flag for auto mode.
         bool no_fm_data; //!< Flag for no fit meniscus data.
         bool bad_men_vals; //!< Flag for bad meniscus values.
-        QString fail_type; //!< Failure type: "nan", "range" (empty if none).
-        QString fail_reason; //!< Human-readable reason the triple has to be stopped.
+        QString          fail_type;    //!< Failure type: "nan", "range" (empty if none).
+        QString          fail_reason;  //!< Human-readable reason the triple has to be stopped.
 
         QProgressDialog* progress_msg; //!< Progress dialog.
 
@@ -161,9 +161,9 @@ class US_FitMeniscus : public US_Widgets
 
         bool have3val; //!< Flag for having 3 values.
         bool bott_fit; //!< Flag for bottom fit.
-        bool fit_out_of_range; //!< Flag: calculated fit position lies outside the fitted radial range.
-        double fit_range_min; //!< Lower end of the radial range of the 2DSA-FM models.
-        double fit_range_max; //!< Upper end of the radial range of the 2DSA-FM models.
+        bool                   fit_out_of_range; //!< Flag: calculated fit position lies outside the fitted radial range.
+        double                 fit_range_min;    //!< Lower end of the radial range of the 2DSA-FM models.
+        double                 fit_range_max;    //!< Upper end of the radial range of the 2DSA-FM models.
 
         double dy_global; //!< Global Y value.
         double miny_global; //!< Global minimum Y value.
@@ -173,7 +173,7 @@ class US_FitMeniscus : public US_Widgets
   
         QMap<QString, QString> triple_information; //!< Map of triple information.
 
-    private:
+     private:
         //! \brief Flag the current triple as having a bad fit (GMP only; no signal is emitted here).
         //! \param type Failure type ("nan" or "range").
         //! \param reason Human-readable reason.
@@ -183,14 +183,14 @@ class US_FitMeniscus : public US_Widgets
         //! \return True if the selection is acceptable; otherwise a message has been shown.
         bool selection_in_range();
 
-    private slots:
+     private slots:
         //! \brief Evaluate the fit result once the window is up (NaN / out-of-range handling in GMP).
-        void check_fit_result();
+        void                   check_fit_result();
 
         //! \brief Stop processing this triple: close window and emit bad_meniscus_values().
         //! \param type Failure type ("nan" or "range").
         //! \param reason Human-readable reason.
-        void stop_triple( const QString& type, const QString& reason );
+        void                   stop_triple( const QString& type, const QString& reason );
 
         //! \brief Slot to reset data.
         void reset();

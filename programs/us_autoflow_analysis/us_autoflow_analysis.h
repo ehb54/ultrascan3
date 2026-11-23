@@ -931,7 +931,7 @@ class US_Analysis_auto : public US_Widgets
          *        to stop an out-of-range triple). Marks the failure and cancels the triple's jobs.
          * @param triple_info Triple information; "failed" and "failed_type" hold the reason.
          */
-        void fitmen_failed ( QMap< QString, QString > & triple_info );
+        void   fitmen_failed( QMap<QString, QString>& triple_info );
 
         /**
          * @brief Shows the overlay for the given analysis.
