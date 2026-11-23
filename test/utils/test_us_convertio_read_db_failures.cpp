@@ -351,6 +351,43 @@ TEST_F( ReadDbRunFailure, SuccessfulReadRemovesOnlyStaleAucsAfterDownload )
    EXPECT_EQ( keep.readAll(), QByteArray( "previous XML bytes" ) );
 }
 
+// The folder holds a case variant of the downloaded name.  On a file system
+// that ignores case the download overwrites it and keeps the old name, which
+// is then the downloaded file and stays.  Where case matters both files are
+// listed and the variant is removed.  Either way the download is readable
+// under its own name and is the only AUC left.
+TEST_F( ReadDbRunFailure, SuccessfulReadKeepsADownloadThatKeptACaseVariantName )
+{
+   ASSERT_TRUE( us3WriteTestFile( directory + "/RUN.RA.1.A.280.AUC", "previous copy, other case" ) );
+   RunReadDb db;
+   db.addRawRecord();
+   EXPECT_CALL( db, readBlobFromDB( directory + "/run.RA.1.A.280.auc", QString( "download_aucData" ), 23 ) )
+      .WillOnce( Invoke( []( const QString& path, const QString&, int )
+                         { return us3WriteTestFile( path, "downloaded blob" ) ? IUS_DB2::OK : IUS_DB2::DBERROR; } ) );
+   EXPECT_EQ( read( db ), QString() );
+   QFile downloaded( directory + "/run.RA.1.A.280.auc" );
+   ASSERT_TRUE( downloaded.open( QIODevice::ReadOnly ) );
+   EXPECT_EQ( downloaded.readAll(), QByteArray( "downloaded blob" ) );
+   EXPECT_EQ( QDir( directory ).entryList( { "*.auc", "*.AUC" }, QDir::Files ).size(), 1 );
+}
+
+// A download that fails with an error the database layer describes, such as a
+// short write on a full disk, reports that description.
+TEST_F( ReadDbRunFailure, FailedBlobReadReportsTheDatabaseError )
+{
+   RunReadDb db;
+   db.addRawRecord();
+   EXPECT_CALL( db, readBlobFromDB( _, QString( "download_aucData" ), 23 ) )
+      .WillOnce( Invoke(
+         [&db]( const QString&, const QString&, int )
+         {
+            ON_CALL( db, lastError() ).WillByDefault( Return( QString( "Short write: 10 of 23 bytes" ) ) );
+            return IUS_DB2::DBERROR;
+         } ) );
+   const QString error = read( db );
+   EXPECT_TRUE( error.contains( "Short write: 10 of 23 bytes" ) ) << error.toStdString();
+}
+
 TEST_F( ReadDbRunFailure, FailedBlobReadDoesNotTriggerStaleFileCleanup )
 {
    RunReadDb db;
