@@ -190,6 +190,10 @@ DbgLv(1) << "2P:SF:    kgref kgrefsq kksubg" << kgref << kgrefsq << kksubg;
    int nnstep  = ( noisflag > 0 ? ( sq( ktcsol ) / 10 + 2 ) : 2 ) * nsubgrid;
    nctotal     = kksubg + nnstep + estimate_steps( ( kksubg / 8 ) );
 
+   // The first iteration of every later meniscus, bottom or Monte Carlo
+   //  model runs the same subgrids and noise fits (see requeue_tasks())
+   ncfirst = nctotal;
+
    if ( mmtype == 1 )
       set_meniscus();
 
@@ -1661,10 +1665,31 @@ DbgLv(1) << "MCARLO: mm_iter" << mm_iter << " sigma0 c0 v0 cn vn"
 // Re-queue all the original subgrid tasks
 void US_2dsaProcess::requeue_tasks()
 {
-   kcsteps   = 0;
+   // A new model starts at refinement iteration 0 with nothing left of the
+   //  last one, as iterate() starts an iteration:  queue_task() labels the
+   //  tasks with r_iter, and the stop test in process_final() reads the
+   //  refinement records by r_iter
+   r_iter   = 0;
+   kctask   = 0;
+   maxdepth = 0;
+   ntisols  = 0;
+   ntcsols  = 0;
+   itvaris.clear();
+   ical_sols.clear();
+   tkdepths.clear();
+   job_queue.clear();
+
+   // Its first iteration runs the subgrids of start_fit(), noise included,
+   //  so its progress estimate is the one start_fit() made
+   kcsteps = 0;
+   nctotal = ncfirst;
    emit stage_complete( kcsteps, nctotal );
+
+   // Subgrids fit the noise as in start_fit() and iterate(), and the task
+   //  size limit restarts from this model's subgrids, as in iterate()
+   maxtsols  = mintsols;
    int jdpth = 0;
-   int jnois = 0;
+   int jnois = fnoionly ? 0 : noisflag;
 
    for ( int ktask = 0; ktask < nsubgrid; ktask++ )
    {
@@ -1674,6 +1699,7 @@ void US_2dsaProcess::requeue_tasks()
       QVector< US_Solute > isolutes = orig_sols[ ktask ];
       WorkPacket2D wtask;
       queue_task( wtask, llss, llsk, ktask, jdpth, jnois, isolutes );
+      maxtsols = qMax( maxtsols, (int) isolutes.size() );
    }
 
    // Make sure calculated solutes are cleared out for new iteration
@@ -1687,12 +1713,7 @@ void US_2dsaProcess::requeue_tasks()
       submit_job( wtask, ii );
    }
 
-   kstask    = nthreads;
-   kctask    = 0;
-   maxdepth  = 0;
-   ntisols   = 0;
-   ntcsols   = 0;
-   r_iter    = 0;
+   kstask = nthreads;
 
    emit message_update(
       tr( "Starting iteration %1 computations of %2 subgrids\n"

@@ -50,6 +50,7 @@ jobs:
               - programs/us_fematch/**
               - programs/us_autoflow_analysis/**
               - programs/us_reporter_gmp/**
+              - programs/us_2dsa/**
               - gui/us_resids_bitmap.*
               - gui/us_resplot_fem.*
               - gui/us_widgets_dialog.*
