@@ -34,9 +34,9 @@ Every simulated dataset uses the experiment of `us_mpi_testdata` (30 scans,
 ## Where expected values come from
 
 - **Reporter range and replicate calculations** (`distrib_info`,
-  `velmwl_range_fraction`, `get_replicate_group_results` and the tolerance
-  checks in `programs/us_reporter_gmp/us_reporter_gmp.cpp`) cannot be called
-  outside the reporter widget.  `calc_oracle.py` computes them independently:
+  `distrib_info_velmwl`, `get_replicate_group_results` and the tolerance
+  checks in `programs/us_reporter_gmp/us_reporter_gmp.cpp`, which call
+  US_Calc).  `calc_oracle.py` computes them independently of US_Calc:
   model values are read as doubles, range membership is decided in double
   arithmetic with the reporter's bound scaling, and every sum, fraction and
   mean is computed exactly and rounded once.  Pass/fail is decided on the
@@ -119,7 +119,7 @@ ehb54/ultrascan-tickets#1214.
    `edge_duplicates_ties` curves in `legacy_integral.json` are the corrected
    ones; every other curve equals the desktop code before the change.
 5. **Zero totals.**  `distrib_info` divides by a zero total without a guard
-   (NaN or infinity); `velmwl_range_fraction` returns 0; `US_Integral`
+   (NaN or infinity); `distrib_info_velmwl` shows 0; `US_Integral`
    normalizes by the total; `outputStats` divides by the total weight;
    `US_Model::constant_vbar` and `constant_ff0` read the first component of
    an empty model.  US_Calc reports an empty model or a zero total as an
@@ -130,7 +130,7 @@ ehb54/ultrascan-tickets#1214.
    Empty and zero-total models are excluded from the captured outputs.
 6. **Unsupported types.**  An item type outside s, D, MW and f/f0 selects
    nothing in `distrib_info` (fraction 0) but is reported unsupported by
-   `velmwl_range_fraction`, except on a model without components, where it
+   `distrib_info_velmwl`, except on a model without components, where it
    gives 0.  US_Calc reports it unsupported; the reporter still shows
    0 / C * 100 and the VELOCITY-MWL table 0 % on an empty model.
 7. **Gaussian smoothing past the array.**  `gaussian_smoothing` needs at
