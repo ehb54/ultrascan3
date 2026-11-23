@@ -8778,75 +8778,76 @@ void US_ReporterGMP::user_interactions_analysis( QString analysisJson, QString a
       QMap < QString, QString >::iterator cj;
       for ( cj = analysisCancel_status_map.begin(); cj != analysisCancel_status_map.end(); ++cj )
 	{
-     QString performed_by, reason, when;
-     split_cancel_value( cj.value(), performed_by, reason, when );
+      QString performed_by, reason, when;
+      split_cancel_value( cj.value(), performed_by, reason, when );
 
-     if ( reason.startsWith( "FITMEN FAILURE [" ) )
-     {
-        // Job cancellation caused by a failure at the FITMEN stage: report failure type and details
-        int     ib      = reason.indexOf( ']' );
-        QString ftype   = reason.mid( QString( "FITMEN FAILURE [" ).length(), ib - QString( "FITMEN FAILURE [" ).length() );
-        QString details = ( ib >= 0 && reason.mid( ib + 1 ).startsWith( ":" ) ) ? reason.mid( ib + 2 ).trimmed() : QString( "N/A" );
+      if ( reason.startsWith( "FITMEN FAILURE [" ) )
+      {
+         // Job cancellation caused by a failure at the FITMEN stage: report failure type and details
+         int     ib    = reason.indexOf( ']' );
+         QString ftype = reason.mid( QString( "FITMEN FAILURE [" ).length(), ib - QString( "FITMEN FAILURE [" ).length() );
+         QString details =
+            ( ib >= 0 && reason.mid( ib + 1 ).startsWith( ":" ) ) ? reason.mid( ib + 2 ).trimmed() : QString( "N/A" );
 
-        QString type_descr;
-        if ( ftype == "NAN" )
-        {
-           type_descr = "NaN meniscus/bottom position: bad fit";
-        }
-        else if ( ftype == "OUT_OF_RANGE" )
-        {
-           type_descr = cAP2.job3auto ? "Extrapolated position outside of the original radial fitting range"
-                                      : "Best-fit position outside of the allowed range of the 2DSA-FM models";
-        }
-        else if ( ftype == "NO_FM_MODELS" )
-        {
-           type_descr = "No 2DSA-FM models found";
-        }
-        else if ( ftype == "DATA_RANGE" )
-        {
-           type_descr = "Meniscus position extends into the data range";
-        }
-        else if ( ftype == "BAD_VALUES" )
-        {
-           type_descr = "Unreasonable meniscus/bottom value";
-        }
-        else
-        {
-           type_descr = ftype;
-        }
+         QString type_descr;
+         if ( ftype == "NAN" )
+         {
+            type_descr = "NaN meniscus/bottom position: bad fit";
+         }
+         else if ( ftype == "OUT_OF_RANGE" )
+         {
+            type_descr = cAP2.job3auto ? "Extrapolated position outside of the original radial fitting range"
+                                       : "Best-fit position outside of the allowed range of the 2DSA-FM models";
+         }
+         else if ( ftype == "NO_FM_MODELS" )
+         {
+            type_descr = "No 2DSA-FM models found";
+         }
+         else if ( ftype == "DATA_RANGE" )
+         {
+            type_descr = "Meniscus position extends into the data range";
+         }
+         else if ( ftype == "BAD_VALUES" )
+         {
+            type_descr = "Unreasonable meniscus/bottom value";
+         }
+         else
+         {
+            type_descr = ftype;
+         }
 
-        QString stage_descr = cAP2.job3auto ? "FITMEN_AUTO" : "FITMEN (manual)";
-        QString by_descr    = QString( "triple FAILED at %1 stage; jobs canceled automatically (session of: %2)" )
-                              .arg( stage_descr )
-                              .arg( performed_by );
-        if ( ftype == "OUT_OF_RANGE" && !cAP2.job3auto )
-        {
-           by_descr = QString( "user, who chose to stop processing this triple (session of: %1)" ).arg( performed_by );
-        }
+         QString stage_descr = cAP2.job3auto ? "FITMEN_AUTO" : "FITMEN (manual)";
+         QString by_descr    = QString( "triple FAILED at %1 stage; jobs canceled automatically (session of: %2)" )
+                               .arg( stage_descr )
+                               .arg( performed_by );
+         if ( ftype == "OUT_OF_RANGE" && !cAP2.job3auto )
+         {
+            by_descr = QString( "user, who chose to stop processing this triple (session of: %1)" ).arg( performed_by );
+         }
 
-        html_assembled += tr( "<tr>"
-                              "<td> Jobs Canceled for:  %1, </td>"
-                              "</tr>"
-                              "<tr>"
-                              "<td> Jobs Canceled by:   %2, </td>"
-                              "</tr>"
-                              "<tr>"
-                              "<td> Failure Type:       <span style=\"color:red;\">%3</span>, </td>"
-                              "</tr>"
-                              "<tr>"
-                              "<td> Reason:             %4, </td>"
-                              "</tr>"
-                              "<tr>"
-                              "<td> When:               %5 (UTC) </td>"
-                              "</tr>" )
-                             .arg( cj.key() )   //1
-                             .arg( by_descr )   //2
-                             .arg( type_descr ) //3
-                             .arg( details )    //4
-                             .arg( when )       //5
-           ;
-       }
-	  else
+         html_assembled += tr( "<tr>"
+                               "<td> Jobs Canceled for:  %1, </td>"
+                               "</tr>"
+                               "<tr>"
+                               "<td> Jobs Canceled by:   %2, </td>"
+                               "</tr>"
+                               "<tr>"
+                               "<td> Failure Type:       <span style=\"color:red;\">%3</span>, </td>"
+                               "</tr>"
+                               "<tr>"
+                               "<td> Reason:             %4, </td>"
+                               "</tr>"
+                               "<tr>"
+                               "<td> When:               %5 (UTC) </td>"
+                               "</tr>" )
+                              .arg( cj.key() )   //1
+                              .arg( by_descr )   //2
+                              .arg( type_descr ) //3
+                              .arg( details )    //4
+                              .arg( when )       //5
+            ;
+      }
+     else
 	    {
           html_assembled += tr( "<tr>"
                                 "<td> Jobs Canceled for:  %1, </td>"

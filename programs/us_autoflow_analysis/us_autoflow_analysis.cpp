@@ -7526,8 +7526,8 @@ DbgLv(1) << " eupd:   ixmlin ixblin" << ixmlin << ixblin << "ncmlin ncblin" << n
 	triple_information[ "failed" ] = reason_for_failure;
    triple_information["failed_type"] = "data_range";
    delete_jobs_at_fitmen( triple_information );
-	
-	return;
+
+   return;
       }
 
       demval        = s_meni.length() - ncmval;  // Deltas old,new values

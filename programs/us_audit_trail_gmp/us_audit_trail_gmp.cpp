@@ -467,25 +467,25 @@ int US_auditTrailGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsD
 //          again on return) for every single record.
 QMap<QString, QString> US_auditTrailGMP::read_autoflowGMPReportEsign_record( QString aID, US_DB2* db_in )
 {
-  QMap< QString, QString> eSign_record;
+   QMap<QString, QString> eSign_record;
 
-  QScopedPointer<US_DB2>  db_own; // only used when no connection was passed in
-  US_DB2*                 db = db_in;
+   QScopedPointer<US_DB2> db_own; // only used when no connection was passed in
+   US_DB2*                db = db_in;
 
-  if ( !db )
-  {
-     US_Passwd pw( this );
-     db_own.reset( new US_DB2( pw.getPasswd() ) );
-     db = db_own.data();
+   if ( !db )
+   {
+      US_Passwd pw( this );
+      db_own.reset( new US_DB2( pw.getPasswd() ) );
+      db = db_own.data();
 
-     if ( db->lastErrno() != US_DB2::OK )
-     {
-        QMessageBox::warning(
-           this, tr( "LIMS DB Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
+      if ( db->lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::warning(
+            this, tr( "LIMS DB Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
 
-        return eSign_record;
-     }
-    }
+         return eSign_record;
+      }
+   }
 
   QStringList qry;
   qry << "get_gmp_review_info_by_autoflowID" << aID;
@@ -2527,7 +2527,7 @@ void US_auditTrailGMP::user_interactions_analysis( QString name, QString analysi
 
      te_fitmen->setText( auto_msg );
 
-     genL1 -> addWidget( te_fitmen,     row++,    1,  1,  21  );
+     genL1->addWidget( te_fitmen, row++, 1, 1, 21 );
 
      html_assembled += tr( "%1" ).arg( auto_msg );
    }
@@ -2542,52 +2542,52 @@ void US_auditTrailGMP::user_interactions_analysis( QString name, QString analysi
 	  QMap < QString, QString >::iterator cj;
 	  for ( cj = analysisCancel_status_map.begin(); cj != analysisCancel_status_map.end(); ++cj )
 	    {
-         QString performed_by, reason, when;
-         split_cancel_value( cj.value(), performed_by, reason, when );
+          QString performed_by, reason, when;
+          split_cancel_value( cj.value(), performed_by, reason, when );
 
-         QString    f_type, f_details, f_by;
-         bool       is_fitmen_failure = parse_fitmen_failure( reason, p_2dsa_auto_fitmen, performed_by, f_type, f_details, f_by );
+          QString    f_type, f_details, f_by;
+          bool       is_fitmen_failure = parse_fitmen_failure( reason, p_2dsa_auto_fitmen, performed_by, f_type, f_details, f_by );
 
-         QLabel* lb_canc1        = us_label( tr("Jobs Canceled for:") );
-	      QLineEdit* le_canc1     = us_lineedit( cj.key(), 0, true );
-	      QLabel* lb_canc2        = us_label( tr("Canceled by:") );
-         QLineEdit* le_canc2        = us_lineedit( is_fitmen_failure ? f_by : performed_by, 0, true );
-         QLabel* lb_canc3        = us_label( tr("Reason:") );
-         QLineEdit* le_canc3        = us_lineedit( is_fitmen_failure ? f_details : reason, 0, true );
-         QLabel* lb_canc4        = us_label( tr("TimeStamp:") );
-	      QLineEdit* le_canc4     = us_lineedit( when + " (UTC)", 0, true );
+          QLabel*    lb_canc1 = us_label( tr( "Jobs Canceled for:" ) );
+          QLineEdit* le_canc1 = us_lineedit( cj.key(), 0, true );
+          QLabel*    lb_canc2 = us_label( tr( "Canceled by:" ) );
+          QLineEdit* le_canc2 = us_lineedit( is_fitmen_failure ? f_by : performed_by, 0, true );
+          QLabel*    lb_canc3 = us_label( tr( "Reason:" ) );
+          QLineEdit* le_canc3 = us_lineedit( is_fitmen_failure ? f_details : reason, 0, true );
+          QLabel*    lb_canc4 = us_label( tr( "TimeStamp:" ) );
+          QLineEdit* le_canc4 = us_lineedit( when + " (UTC)", 0, true );
 
-         if ( is_fitmen_failure )
-         {
-            // Failure caused at the FITMEN stage: failure type shown on its own row
-            QLabel*    lb_canc5 = us_label( tr( "Failure Type:" ) );
-            QLineEdit* le_canc5 = us_lineedit( f_type, 0, true );
-            le_canc5->setStyleSheet( "color: red;" );
+          if ( is_fitmen_failure )
+          {
+             // Failure caused at the FITMEN stage: failure type shown on its own row
+             QLabel*    lb_canc5 = us_label( tr( "Failure Type:" ) );
+             QLineEdit* le_canc5 = us_lineedit( f_type, 0, true );
+             le_canc5->setStyleSheet( "color: red;" );
 
-            genL1->addWidget( lb_canc1, row, 1, 1, 2 );
-            genL1->addWidget( le_canc1, row, 3, 1, 3 );
-            genL1->addWidget( lb_canc2, row, 6, 1, 2 );
-            genL1->addWidget( le_canc2, row, 8, 1, 8 );
-            genL1->addWidget( lb_canc4, row, 16, 1, 2 );
-            genL1->addWidget( le_canc4, row++, 18, 1, 3 );
-            genL1->addWidget( lb_canc5, row, 1, 1, 2 );
-            genL1->addWidget( le_canc5, row, 3, 1, 5 );
-            genL1->addWidget( lb_canc3, row, 8, 1, 2 );
-            genL1->addWidget( le_canc3, row++, 10, 1, 11 );
-         }
-         else
-         {
-            genL1->addWidget( lb_canc1, row, 1, 1, 2 );
-            genL1->addWidget( le_canc1, row, 3, 1, 3 );
-            genL1->addWidget( lb_canc2, row, 6, 1, 2 );
-            genL1->addWidget( le_canc2, row, 8, 1, 3 );
-            genL1->addWidget( lb_canc3, row, 11, 1, 2 );
-            genL1->addWidget( le_canc3, row, 13, 1, 3 );
-            genL1->addWidget( lb_canc4, row, 16, 1, 2 );
-            genL1->addWidget( le_canc4, row++, 18, 1, 3 );
-         }
+             genL1->addWidget( lb_canc1, row, 1, 1, 2 );
+             genL1->addWidget( le_canc1, row, 3, 1, 3 );
+             genL1->addWidget( lb_canc2, row, 6, 1, 2 );
+             genL1->addWidget( le_canc2, row, 8, 1, 8 );
+             genL1->addWidget( lb_canc4, row, 16, 1, 2 );
+             genL1->addWidget( le_canc4, row++, 18, 1, 3 );
+             genL1->addWidget( lb_canc5, row, 1, 1, 2 );
+             genL1->addWidget( le_canc5, row, 3, 1, 5 );
+             genL1->addWidget( lb_canc3, row, 8, 1, 2 );
+             genL1->addWidget( le_canc3, row++, 10, 1, 11 );
+          }
+          else
+          {
+             genL1->addWidget( lb_canc1, row, 1, 1, 2 );
+             genL1->addWidget( le_canc1, row, 3, 1, 3 );
+             genL1->addWidget( lb_canc2, row, 6, 1, 2 );
+             genL1->addWidget( le_canc2, row, 8, 1, 3 );
+             genL1->addWidget( lb_canc3, row, 11, 1, 2 );
+             genL1->addWidget( le_canc3, row, 13, 1, 3 );
+             genL1->addWidget( lb_canc4, row, 16, 1, 2 );
+             genL1->addWidget( le_canc4, row++, 18, 1, 3 );
+          }
        }
-	}
+   }
       else //no cancelled jobs
 	{
 	  QTextEdit* te_canceled    = us_textedit();
@@ -3751,35 +3751,35 @@ void US_auditTrailGMP::assemble_GMP_analysis_cancelled( QMap < QString, QString 
       QMap < QString, QString >::iterator cj;
       for ( cj = analysisCancel_status_map.begin(); cj != analysisCancel_status_map.end(); ++cj )
 	{
-     QString performed_by, reason, when;
-     split_cancel_value( cj.value(), performed_by, reason, when );
+      QString performed_by, reason, when;
+      split_cancel_value( cj.value(), performed_by, reason, when );
 
-     QString f_type, f_details, f_by;
-     if ( parse_fitmen_failure( reason, p_2dsa_auto_fitmen, performed_by, f_type, f_details, f_by ) )
-     {
-        html_assembled += tr( "<tr>"
-                              "<td> Jobs Canceled for:  %1, </td>"
-                              "</tr>"
-                              "<tr>"
-                              "<td> Jobs Canceled by:   %2, </td>"
-                              "</tr>"
-                              "<tr>"
-                              "<td> Failure Type:       <span style=\"color:red;\">%3</span>, </td>"
-                              "</tr>"
-                              "<tr>"
-                              "<td> Reason:             %4, </td>"
-                              "</tr>"
-                              "<tr>"
-                              "<td> When:               %5  (UTC)</td>"
-                              "</tr>" )
-                             .arg( cj.key() )  //1
-                             .arg( f_by )      //2
-                             .arg( f_type )    //3
-                             .arg( f_details ) //4
-                             .arg( when )      //5
-           ;
-       }
-	  else
+      QString f_type, f_details, f_by;
+      if ( parse_fitmen_failure( reason, p_2dsa_auto_fitmen, performed_by, f_type, f_details, f_by ) )
+      {
+         html_assembled += tr( "<tr>"
+                               "<td> Jobs Canceled for:  %1, </td>"
+                               "</tr>"
+                               "<tr>"
+                               "<td> Jobs Canceled by:   %2, </td>"
+                               "</tr>"
+                               "<tr>"
+                               "<td> Failure Type:       <span style=\"color:red;\">%3</span>, </td>"
+                               "</tr>"
+                               "<tr>"
+                               "<td> Reason:             %4, </td>"
+                               "</tr>"
+                               "<tr>"
+                               "<td> When:               %5  (UTC)</td>"
+                               "</tr>" )
+                              .arg( cj.key() )  //1
+                              .arg( f_by )      //2
+                              .arg( f_type )    //3
+                              .arg( f_details ) //4
+                              .arg( when )      //5
+            ;
+      }
+     else
 	    {
           html_assembled += tr( "<tr>"
                                 "<td> Jobs Canceled for:  %1, </td>"
