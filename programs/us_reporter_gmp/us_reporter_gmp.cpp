@@ -14626,15 +14626,19 @@ void US_ReporterGMP::assemble_parts( QString & html_str )
      if ( expType == "VELOCITY" || expType == "VELOCITY-MWL" )
      {
         if ( genMask_edited.has_ana2dsa_items )
+        {
            html_str += html_analysis_profile_2dsa;
+        }
      }
      // PCSA Controls: VELOCITY only
      if ( expType == "VELOCITY" )
      {
         if ( genMask_edited.has_anapcsa_items )
+        {
            html_str += html_analysis_profile_pcsa;
+        }
      }
-   }
+      }
     }
 }
 
