@@ -362,8 +362,9 @@ void US_AnalysisControl2D::checkUniGrid(  bool checked )
    ct_uplimitk->setEnabled( checked );
    ct_nstepsk ->setEnabled( checked );
    ct_thrdcnt ->setEnabled( checked );
-   ck_tinoise ->setEnabled( checked );
-   ck_rinoise ->setEnabled( checked );
+   // Monte Carlo fits no noise (see optimize_options())
+   ck_tinoise->setEnabled( checked && !ck_mcarlo->isChecked() );
+   ck_rinoise->setEnabled( checked && !ck_mcarlo->isChecked() );
    if ( checked )
    {
       int nthr     = US_Settings::threads();
@@ -390,8 +391,8 @@ void US_AnalysisControl2D::checkCusGrid(  bool checked )
    if ( checked )
    {
       ct_thrdcnt ->setEnabled( true  );
-      ck_tinoise ->setEnabled( true );
-      ck_rinoise ->setEnabled( true );
+      ck_tinoise->setEnabled( !ck_mcarlo->isChecked() );
+      ck_rinoise->setEnabled( !ck_mcarlo->isChecked() );
       ct_constff0->setEnabled( false );
    }
 }
