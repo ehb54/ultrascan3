@@ -26,10 +26,16 @@ US_HttpPost::US_HttpPost( const QString& url, const QString& request ) : QObject
 
 void US_HttpPost::postFinished( void )
 {
-  int error = reply->error();
+   int error = reply->error();
 
-  if ( error == QNetworkReply::NoError )
-    emit US_Http_post_response( reply->readAll() );
+   if ( error == QNetworkReply::NoError )
+   {
+      emit US_Http_post_response( reply->readAll() );
+   }
+
+   // The request is done (postError() has sent any error): this object, with
+   // its manager and reply, is deleted once control is back in the event loop
+   deleteLater();
 }
 
 void US_HttpPost::postError( QNetworkReply::NetworkError error )
