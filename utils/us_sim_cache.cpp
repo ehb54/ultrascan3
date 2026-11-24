@@ -618,6 +618,102 @@ bool US_SimCache::unpack( const char* data, qint64 size, US_DataIO::RawData& sim
    return in.ok && in.ptr == in.end;
 }
 
+// Mark of a serialized float-form simulation (a pack() of a double-form one
+//  starts with the data type, two letters, and the raw GUID)
+static const char FLOAT_SIM_MARK[8] = { 'U', 'S', 'S', 'I', 'M', 'F', '0', '1' };
+
+// Serialize a simulation:  the float form as its mark, the pack() of the
+//  scans without readings, the scans' reading offsets and the floats;  the
+//  double form as pack()
+QByteArray        US_SimCache::Sim::pack_bytes() const
+{
+   if ( !floats )
+   {
+      return US_SimCache::pack( simdat );
+   }
+
+   const QByteArray scans = US_SimCache::pack( simdat );
+   QByteArray       data;
+   data.reserve( sizeof( FLOAT_SIM_MARK ) + scans.size() + ( offsets.size() + 3 ) * 8 + nfloats * (qsizetype) sizeof( float ) );
+   data.append( FLOAT_SIM_MARK, sizeof( FLOAT_SIM_MARK ) );
+   add_bytes( data, (qint64) scans.size() );
+   data.append( scans );
+   add_bytes( data, (qint64) offsets.size() );
+
+   for ( const qsizetype offs : offsets )
+   {
+      add_bytes( data, (qint64) offs );
+   }
+
+   add_bytes( data, (qint64) nfloats );
+   data.append( reinterpret_cast<const char*>( fvalues.get() ), nfloats * (qsizetype) sizeof( float ) );
+   return data;
+}
+
+// Restore a simulation serialized by pack_bytes() or pack()
+bool US_SimCache::Sim::unpack( const char* data, qint64 size, Sim& sim )
+{
+   sim = Sim();
+
+   if ( size < (qint64) sizeof( FLOAT_SIM_MARK ) || memcmp( data, FLOAT_SIM_MARK, sizeof( FLOAT_SIM_MARK ) ) != 0 )
+   { // Double form
+      return US_SimCache::unpack( data, size, sim.simdat );
+   }
+
+   Unpacker in( data + sizeof( FLOAT_SIM_MARK ), size - (qint64) sizeof( FLOAT_SIM_MARK ) );
+   qint64   nscan_bytes = 0;
+   in.get( nscan_bytes );
+
+   if ( !in.ok || nscan_bytes < 0 || in.end - in.ptr < nscan_bytes || !US_SimCache::unpack( in.ptr, nscan_bytes, sim.simdat ) )
+   {
+      return false;
+   }
+
+   in.ptr += nscan_bytes;
+   qint64 noffsets = 0;
+   in.get( noffsets );
+
+   if ( !in.ok || noffsets != sim.simdat.scanData.size() || ( in.end - in.ptr ) / 8 < noffsets )
+   {
+      return false;
+   }
+
+   sim.offsets.resize( noffsets );
+
+   for ( qint64 ss = 0; ss < noffsets; ss++ )
+   {
+      qint64 offs = 0;
+      in.get( offs );
+      sim.offsets[ss] = offs;
+   }
+
+   qint64 nvals = 0;
+   in.get( nvals );
+
+   if ( !in.ok || nvals < 0 || ( in.end - in.ptr ) / (qint64) sizeof( float ) != nvals ||
+        ( in.end - in.ptr ) % (qint64) sizeof( float ) != 0 )
+   {
+      return false;
+   }
+
+   for ( qint64 ss = 0; ss < noffsets; ss++ )
+   { // Offsets ascending within the readings
+      const qint64 next = ( ss + 1 < noffsets ) ? sim.offsets[ss + 1] : nvals;
+
+      if ( sim.offsets[ss] < 0 || sim.offsets[ss] > next )
+      {
+         return false;
+      }
+   }
+
+   std::shared_ptr<float> block = alloc_floats( nvals );
+   memcpy( block.get(), in.ptr, nvals * sizeof( float ) );
+   sim.fvalues = block;
+   sim.nfloats = nvals;
+   sim.floats  = true;
+   return true;
+}
+
 // Get a simulation
 bool US_SimCache::fetch( const QByteArray& key, US_DataIO::RawData& simdat )
 {

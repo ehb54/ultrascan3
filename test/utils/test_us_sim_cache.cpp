@@ -423,6 +423,65 @@ TEST_F( TestUSSimCache, SimFormsHoldTheSameReadings )
    EXPECT_EQ( dsim.bytes(), US_SimCache::sim_bytes( simdat, false ) );
 }
 
+TEST_F( TestUSSimCache, SimPackRestoresBothFormsExactly )
+{
+   // pack_bytes/unpack (the format of the MPI node cache's window):  each
+   //  form comes back in its own form with the same readings and scans;  the
+   //  float form takes about half the bytes;  a pack() of a RawData is read
+   //  as the double form
+   const US_DataIO::RawData simdat  = makeSim( 0.9 );
+   US_DataIO::RawData       rounded = simdat;
+   US_SimCache::round_to_float( rounded );
+
+   const US_SimCache::Sim fsim   = US_SimCache::Sim::from_raw( simdat, true );
+   const US_SimCache::Sim dsim   = US_SimCache::Sim::from_raw( simdat, false );
+   const QByteArray       fbytes = fsim.pack_bytes();
+   const QByteArray       dbytes = dsim.pack_bytes();
+   EXPECT_EQ( dbytes, US_SimCache::pack( simdat ) );
+
+   US_SimCache::Sim   back;
+   US_DataIO::RawData raw;
+   ASSERT_TRUE( US_SimCache::Sim::unpack( fbytes.constData(), fbytes.size(), back ) );
+   EXPECT_TRUE( back.is_float() );
+   back.to_raw( raw );
+   EXPECT_TRUE( sameValues( raw, rounded ) );
+   EXPECT_EQ( raw.scanData[3].seconds, simdat.scanData[3].seconds );
+   EXPECT_EQ( back.bytes(), fsim.bytes() );
+
+   ASSERT_TRUE( US_SimCache::Sim::unpack( dbytes.constData(), dbytes.size(), back ) );
+   EXPECT_FALSE( back.is_float() );
+   back.to_raw( raw );
+   EXPECT_TRUE( sameValues( raw, simdat ) );
+
+   // Larger readings:  the float form near half the bytes
+   US_DataIO::RawData big = makeSim( 0.1 );
+   for ( US_DataIO::Scan& scan : big.scanData )
+   {
+      scan.rvalues.fill( 0.25, 2000 );
+   }
+   big.xvalues.fill( 6.0, 2000 );
+   const qsizetype nf = US_SimCache::Sim::from_raw( big, true ).pack_bytes().size();
+   const qsizetype nd = US_SimCache::Sim::from_raw( big, false ).pack_bytes().size();
+   EXPECT_LT( nf, nd * 3 / 4 );
+}
+
+TEST_F( TestUSSimCache, SimUnpackRejectsDamagedBytes )
+{
+   // Truncated or padded float-form bytes are refused (never read past the
+   //  end):  a window slot holds exactly one serialized simulation
+   const QByteArray bytes = US_SimCache::Sim::from_raw( makeSim( 0.4 ), true ).pack_bytes();
+   US_SimCache::Sim sim;
+
+   for ( qsizetype len : { (qsizetype) 0, (qsizetype) 4, (qsizetype) 8, (qsizetype) 20, bytes.size() / 2, bytes.size() - 1 } )
+   {
+      EXPECT_FALSE( US_SimCache::Sim::unpack( bytes.constData(), len, sim ) ) << len;
+   }
+
+   const QByteArray padded = bytes + QByteArray( 4, '\0' );
+   EXPECT_FALSE( US_SimCache::Sim::unpack( padded.constData(), padded.size(), sim ) );
+   EXPECT_TRUE( US_SimCache::Sim::unpack( bytes.constData(), bytes.size(), sim ) );
+}
+
 TEST_F( TestUSSimCache, FloatModeSharesSimsWithoutCopies )
 {
    // In float mode a stored float-form simulation is kept as it is, and

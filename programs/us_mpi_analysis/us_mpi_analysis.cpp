@@ -1417,7 +1417,11 @@ void US_MPI_Analysis::create_sim_cache( void )
    //  its own sizing, as with a cache of each rank)
    const qint64      predicted = is_ga ? 0 : predicted_node_bytes();
 
-   // Expected bytes of one simulation:  the smallest data set grid
+   // Expected bytes of one simulation:  the smallest data set grid (in float
+   //  mode, "SimFloat=on", the readings are floats:  the slot table must
+   //  hold about twice as many simulations)
+   const bool        floats    = US_SimCache::float_sims();
+   const qint64      rbytes    = floats ? 4 : 8;
    qint64            sim_bytes = 0;
 
    for ( int ee = 0; ee < data_sets.size(); ee++ )
@@ -1425,7 +1429,7 @@ void US_MPI_Analysis::create_sim_cache( void )
       US_DataIO::EditedData& edata   = data_sets[ee]->run_data;
       qint64                 nscans  = edata.scanCount();
       qint64                 npoints = edata.pointCount();
-      qint64                 nbytes  = nscans * ( npoints * 8 + 128 ) + npoints * 8 + 256;
+      qint64                 nbytes  = nscans * ( npoints * rbytes + 128 ) + npoints * 8 + 256;
       sim_bytes                      = ( ee == 0 ) ? nbytes : qMin( sim_bytes, nbytes );
    }
 
@@ -1484,7 +1488,7 @@ void US_MPI_Analysis::create_sim_cache( void )
       return;
    }
 
-   sim_cache = new US_MPI_NodeSimCache( node_comm, cap, sim_bytes, policy, room, shm_bytes );
+   sim_cache = new US_MPI_NodeSimCache( node_comm, cap, sim_bytes, policy, room, shm_bytes, floats );
 
    if ( !sim_cache->valid() )
    { // A GA falls back to a cache in each rank (setup_ga_simcache)
@@ -1733,7 +1737,7 @@ void US_MPI_Analysis::free_node_comm( void )
          MPI_Get_processor_name( hostname, &hlen );
          QString text = QString( "Simulation cache (%1): %2 of %3 simulations reused (%4%);"
                                  " %5 stored in %6 of %7 MB (%12 MB of memory held); %8 not stored for lack of room;"
-                                 " %9 evicted; emptied %10 times for lack of memory, freeing %11 MB" )
+                                 " %9 evicted; emptied %10 times for lack of memory, freeing %11 MB%13" )
                            .arg( QString::fromLatin1( hostname, hlen ) )
                            .arg( st.hits )
                            .arg( nfetch )
@@ -1745,7 +1749,8 @@ void US_MPI_Analysis::free_node_comm( void )
                            .arg( st.evicted )
                            .arg( sim_cache->releases() )
                            .arg( sim_cache->released_bytes() / 1048576 )
-                           .arg( sim_cache->resident_bytes() / 1048576.0, 0, 'f', 1 );
+                           .arg( sim_cache->resident_bytes() / 1048576.0, 0, 'f', 1 )
+                           .arg( st.floats ? QString( "; readings stored as floats" ) : QString() );
          qDebug().noquote() << text;
       }
 

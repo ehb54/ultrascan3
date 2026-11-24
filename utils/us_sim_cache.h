@@ -118,6 +118,17 @@ class US_UTIL_EXTERN US_SimCache
             //! \brief Approximate bytes the simulation takes in the cache
             qint64 bytes() const;
 
+            //! \brief Serialize the simulation (bit-exact), e.g. for a cache
+            //!        in memory shared between processes:  the float form
+            //!        with its readings as floats (half the bytes), the
+            //!        double form as US_SimCache::pack
+            QByteArray  pack_bytes() const;
+
+            //! \brief Restore a simulation serialized by pack_bytes (either
+            //!        form) or by US_SimCache::pack (double form)
+            //! \returns Flag whether the bytes were a complete simulation
+            static bool unpack( const char* data, qint64 size, Sim& sim );
+
          private:
             US_DataIO::RawData           simdat; // All, or (float form) without readings
             // Readings of all scans (float form), in a block of their own
@@ -237,12 +248,16 @@ class US_UTIL_EXTERN US_SimCache
       //! \param key  Simulation key
       //! \param sim  Returned simulation, if found
       //! \returns    Flag whether found
-      bool                fetch_sim( const QByteArray& key, Sim& sim );
+      //!
+      //! A subclass with its own storage (e.g. a cache shared between
+      //! processes) overrides fetch_sim and store_sim together with fetch and
+      //! store;  in float mode it returns float-form simulations.
+      virtual bool        fetch_sim( const QByteArray& key, Sim& sim );
 
       //! \brief Store a simulation (in either form), or mark a stored one as a
       //!        survivor, as store() does.  In float mode a float-form
       //!        simulation is kept shared (no copy).
-      bool                store_sim( const QByteArray& key, const Sim& sim, bool survivor );
+      virtual bool        store_sim( const QByteArray& key, const Sim& sim, bool survivor );
 
       //! \brief Remove all simulations (the counts are kept)
       virtual void        clear();
