@@ -979,6 +979,60 @@ TEST_F( TestUSSolveSimCalcResiduals, ConstantOffsetIsAbsorbedByFittedNoise )
    }
 }
 
+TEST_F( TestUSSolveSimCalcResiduals, FloatNnlsMatchesDoubleFit )
+{
+   // "SimFloatNNLS=on":  A, B and the NNLS in float precision.  The fit of
+   //  noisy data (no noise fitted, TI+RI noise, and with regularization)
+   //  matches the double fit to float precision:  the variance, the fitted
+   //  concentrations and the noise
+   US_SolveSim::Simulation input;
+   for ( double sval : { 2.0, 4.0, 6.0 } )
+   {
+      for ( double kval : { 1.2, 2.0 } )
+      {
+         input.solutes << US_Solute( sval * 1.0e-13, kval );
+      }
+   }
+   std::sort( input.solutes.begin(), input.solutes.end() );
+
+   QVector<double> amatrix = basis( input );
+   ASSERT_EQ( amatrix.size(), input.solutes.size() * NTOTAL );
+   QVector<double> conc = { 0.3, 0.0, 0.5, 0.0, 0.0, 0.2 };
+   QVector<double> tinoi, rinoi;
+   makeNoise( tinoi, rinoi );
+   setData( amatrix, conc, tinoi, rinoi );
+   std::mt19937                     gen( 29 );
+   std::normal_distribution<double> gauss( 0.0, 0.003 );
+   for ( int ss = 0; ss < NSCANS; ss++ )
+   {
+      for ( int rr = 0; rr < NPOINTS; rr++ )
+      {
+         dset.run_data.scanData[ss].rvalues[rr] += gauss( gen );
+      }
+   }
+
+   const QStringList saved = US_Settings::debug_text();
+   for ( int noisflag : { 0, 3 } )
+   {
+      for ( double alpha : { 0.0, 0.1 } )
+      {
+         SCOPED_TRACE( QString( "noisflag %1 alpha %2" ).arg( noisflag ).arg( alpha ).toStdString() );
+         US_Settings::set_debug_text( QStringList() );
+         US_SolveSim::Simulation dsim = fit( input, noisflag, alpha );
+         US_Settings::set_debug_text( QStringList() << "SimFloatNNLS=on" );
+         US_SolveSim::Simulation fsim = fit( input, noisflag, alpha );
+         US_Settings::set_debug_text( saved );
+
+         EXPECT_NE( fsim.variance, dsim.variance ); // (The float NNLS ran)
+         EXPECT_NEAR( fsim.variance, dsim.variance, 1e-5 * dsim.variance );
+         EXPECT_LT( maxDiff( fittedConc( input.solutes, fsim.solutes ), fittedConc( input.solutes, dsim.solutes ) ), 1e-4 );
+         EXPECT_LT( maxDiff( fsim.ti_noise, dsim.ti_noise ), 1e-5 );
+         EXPECT_LT( maxDiff( fsim.ri_noise, dsim.ri_noise ), 1e-5 );
+         ASSERT_EQ( fsim.residuals.scanData.size(), dsim.residuals.scanData.size() );
+      }
+   }
+}
+
 TEST_F( TestUSSolveSimCalcResiduals, TikhonovWithNoiseKeepsColumnsAligned )
 {
    // Regularization rows lengthen each A column; the noise removal must
@@ -1326,6 +1380,19 @@ TEST_F( TestUSSolveSimCache, FloatFitIsUnchangedByDoubleCache )
    US_Settings::set_debug_text( saved );
 
    EXPECT_FALSE( floats );
+}
+
+TEST_F( TestUSSolveSimCache, FloatNnlsFitIsUnchangedByCache )
+{
+   // "SimFloatNNLS=on", with double simulations and with float ones (and a
+   //  float cache):  the same fit with and without a cache, bitwise
+   const QStringList saved = US_Settings::debug_text();
+   noisflag                = 3;
+   US_Settings::set_debug_text( QStringList() << "SimFloatNNLS=on" );
+   expectSameFit( 1024LL * 1024 * 1024, true, false );
+   US_Settings::set_debug_text( QStringList() << "SimFloatNNLS=on" << "SimFloat=on" );
+   expectSameFit( 1024LL * 1024 * 1024, true, true );
+   US_Settings::set_debug_text( saved );
 }
 
 TEST_F( TestUSSolveSimCache, FloatCacheRoundsWithoutDebugText )

@@ -34,6 +34,7 @@ US_SolveSim::US_SolveSim( QList< DataSet* >& data_sets, int thrnrank,
    dbg_timing   = false;     // Default: no debug timing prints
    simcache     = nullptr;   // Default: no simulation cache
    simfloat     = US_SimCache::float_sims(); // Debug text "SimFloat=on"
+   nnlsfloat    = float_nnls();              // Debug text "SimFloatNNLS=on"
    banddthr     = false;     // Default: no bandform data_threshold
 
    // If band-forming, possibly read in threshold control values
@@ -98,16 +99,10 @@ US_SolveSim::Simulation::Simulation()
 //  (OD limit substitutions in B), a point whose B value (from index bx on)
 //  is a substituted zero gets zero in A, and bx is advanced too.  The squares
 //  of the values go to norm_a and, if given, to norm_e.  The readings of a
-//  scan are doubles or (float form) floats, which convert exactly.
-template <class T>
-static void fill_a_scan( const T*      sv,
-                         const double* pb,
-                         int&          bx,
-                         double*       pa,
-                         int&          ka,
-                         const int     npoints,
-                         double&       norm_a,
-                         double*       norm_e )
+//  scan are doubles or (float form) floats, which convert exactly;  A and B
+//  hold doubles or (float NNLS) floats.
+template <class T, class TA>
+static void fill_a_scan( const T* sv, const TA* pb, int& bx, TA* pa, int& ka, const int npoints, double& norm_a, double* norm_e )
 {
    // (The sums keep the order of the points:  the same bits as before)
    if ( pb == nullptr && norm_e == nullptr )
@@ -115,7 +110,7 @@ static void fill_a_scan( const T*      sv,
       for ( int rr = 0; rr < npoints; rr++ )
       {
          const double sval = sv[rr];
-         pa[ka++]          = sval;
+         pa[ka++]          = (TA) sval;
          norm_a += sq( sval );
       }
       return;
@@ -125,12 +120,12 @@ static void fill_a_scan( const T*      sv,
    {
       if ( pb != nullptr && pb[bx++] == 0.0 )
       {
-         pa[ka++] = 0.0;
+         pa[ka++] = TA( 0 );
          continue;
       }
 
       const double sval = sv[rr];
-      pa[ka++]          = sval;
+      pa[ka++]          = (TA) sval;
       norm_a += sq( sval );
 
       if ( norm_e != nullptr )
@@ -140,17 +135,23 @@ static void fill_a_scan( const T*      sv,
    }
 }
 
-static void fill_a_column( const US_SimCache::Sim& sim,
-                           const double*           pb,
-                           int&                    bx,
-                           QVector<double>&        nnls_a,
-                           int&                    ka,
-                           const int               nscans,
-                           const int               npoints,
-                           double&                 norm_a,
-                           double*                 norm_e )
+template <class X> struct NoDeduce
 {
-   double* pa = nnls_a.data();
+      using type = X;
+};
+
+template <class TA>
+static void fill_a_column( const US_SimCache::Sim&            sim,
+                           const typename NoDeduce<TA>::type* pb, // (TA from nnls_a)
+                           int&                               bx,
+                           QVector<TA>&                       nnls_a,
+                           int&                               ka,
+                           const int                          nscans,
+                           const int                          npoints,
+                           double&                            norm_a,
+                           double*                            norm_e )
+{
+   TA* pa = nnls_a.data();
 
    for ( int ss = 0; ss < nscans; ss++ )
    {
@@ -168,12 +169,50 @@ static void fill_a_column( const US_SimCache::Sim& sim,
 // Append the Tikhonov rows of one A column: ksolutes values, the alpha
 //  diagonal element at row colx.  The column length is ksolutes (the solutes
 //  count before any norm cut), as the rebuild after norm cuts assumes.
-static void append_tikhonov_rows( QVector<double>& nnls_a, int& ka, const int colx, const int ksolutes, const double alphad )
+template <class TA>
+static void append_tikhonov_rows( QVector<TA>& nnls_a, int& ka, const int colx, const int ksolutes, const double alphad )
 {
    for ( int aa = 0; aa < ksolutes; aa++ )
    {
-      nnls_a[ka++] = ( aa == colx ) ? alphad : 0.0;
+      nnls_a[ka++] = (TA) ( ( aa == colx ) ? alphad : 0.0 );
    }
+}
+
+// The A or B values as doubles (shared if they are)
+static QVector<double> as_doubles( const QVector<double>& vals )
+{
+   return vals;
+}
+
+static QVector<double> as_doubles( const QVector<float>& vals )
+{
+   QVector<double> dvals( vals.size() );
+
+   for ( int ii = 0; ii < vals.size(); ii++ )
+   {
+      dvals[ii] = vals[ii];
+   }
+
+   return dvals;
+}
+
+// Flag from debug text that the NNLS of calc_residuals is in float precision
+bool US_SolveSim::float_nnls()
+{
+   const QStringList dbgtxt = US_Settings::debug_text();
+
+   for ( const QString& dtext : dbgtxt )
+   {
+      QString name  = dtext.section( "=", 0, 0 ).trimmed();
+      QString value = dtext.section( "=", 1, 1 ).trimmed();
+
+      if ( name.compare( "SimFloatNNLS", Qt::CaseInsensitive ) == 0 )
+      {
+         return QStringList( { "on", "1", "true", "yes" } ).contains( value, Qt::CaseInsensitive );
+      }
+   }
+
+   return false;
 }
 
 // Static function to check the grid size implied by data and model
@@ -245,9 +284,30 @@ bool US_SolveSim::check_grid_size( double s_max, QString& smsg )
 }
 
 // Do the real work of a 2dsa/ga thread/processor:  simulation from solutes set
+//  (A, B and the NNLS in double, or in float with "SimFloatNNLS=on")
 void US_SolveSim::calc_residuals( int offset, int dataset_count, Simulation& sim_vals,
    bool padAB, QVector< double >* ASave, QVector< double >* BSave,
    QVector< double >* NSave )
+{
+   if ( nnlsfloat )
+   {
+      calc_residuals_t<float>( offset, dataset_count, sim_vals, padAB, ASave, BSave, NSave );
+   }
+   else
+   {
+      calc_residuals_t<double>( offset, dataset_count, sim_vals, padAB, ASave, BSave, NSave );
+   }
+}
+
+// calc_residuals with A, B and the concentrations of type T
+template <class T>
+void US_SolveSim::calc_residuals_t( int              offset,
+                                    int              dataset_count,
+                                    Simulation&      sim_vals,
+                                    bool             padAB,
+                                    QVector<double>* ASave,
+                                    QVector<double>* BSave,
+                                    QVector<double>* NSave )
 {
    QVector< double > sv_nnls_a;
    QVector< double > sv_nnls_b;
@@ -325,12 +385,11 @@ if(thrnrank<2) DbgLv(1) << "CR:zthr lthr mxod mfac"
 
    // Set up and clear work vectors
    int  navals   = narows * nsolutes;   // Size of "A" matrix
-DbgLv(1) << "   CR:na nb nx" << navals << narows << nsolutes
- << "  nt ns" << ntotal << nsolutes;
+   QVector<T> nnls_a( navals, T( 0 ) );
+   QVector<T> nnls_b( narows, T( 0 ) );
+   QVector<T> nnls_x( nsolutes, T( 0 ) );
+   DbgLv( 1 ) << "   CR:na nb nx" << navals << narows << nsolutes << "  nt ns" << ntotal << nsolutes;
 
-   QVector< double > nnls_a( navals,   0.0 );
-   QVector< double > nnls_b( narows,   0.0 );
-   QVector< double > nnls_x( nsolutes, 0.0 );
    QVector< double > tinvec( ntinois,  0.0 );
    QVector< double > rinvec( nrinois,  0.0 );
 
@@ -371,7 +430,7 @@ DebugTime("BEG:calcres");
       nscans         = edata->scanCount();
       double odlim   = edata->ODlimit;
 
-      double* pb = nnls_b.data();
+      T*     pb = nnls_b.data();
 
       for ( int ss = 0; ss < nscans; ss++ )
       {
@@ -396,7 +455,7 @@ DbgLv(1)<<"subha_OD limit exceeded for scan no " << ss << rr << odlim << kodl;
 #endif
 
             // Store the B value in a row for a dataset
-            pb[kb++] = evalue;
+            pb[kb++] = (T) evalue;
             norm_b        += sq( evalue );
 
          }  //"rr"-based for loop
@@ -1188,7 +1247,7 @@ DbgLv(1)<< " norm cuts for #solutes=" << ksolutes << ":  count_cut" << count_cut
          // Rebuild alpha-diagonal part of row
          for ( int aa = 0; aa < nsolutes; aa++ )
          {
-            nnls_a[ ka++ ] = ( aa == cc ) ? alphad : 0.0;
+            nnls_a[ka++] = (T) ( ( aa == cc ) ? alphad : 0.0 );
          }
 
          // Bump past old alpha-diagonal rows of input
@@ -1313,9 +1372,9 @@ DbgLv(2) << "   CR:210  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
          narows    = tikreg ? ( ntotal + nsolutes ) : ntotal;
          navals    = narows * nsolutes;
          nnls_a.resize( navals );
-         sv_nnls_a = nnls_a;
-         sv_nnls_b = nnls_b;
-DbgLv(1) << "no_ti_or_ri: CR: sv_nnls_a size" << sv_nnls_a.size() << nnls_a.size();
+         sv_nnls_a = as_doubles( nnls_a );
+         sv_nnls_b = as_doubles( nnls_b );
+         DbgLv( 1 ) << "no_ti_or_ri: CR: sv_nnls_a size" << sv_nnls_a.size() << nnls_a.size();
       }
 
 //DebugTime("BEG:clcr-nl");
@@ -1768,8 +1827,11 @@ void US_SolveSim::abort_work()
 
 // Remove noise means from the data rows of one vector (B or an A column):
 //  subtract the per-scan means (RI), then the per-radius means of the
-//  result (TI); return the removed means in v_tilde and v_bar
-static void remove_noise_means( double*    vals,
+//  result (TI); return the removed means in v_tilde and v_bar.  The values
+//  are doubles or (float NNLS) floats;  the means are double, and each
+//  value is computed in double and rounded once.
+template <class T>
+static void remove_noise_means( T*         vals,
                                 const int  nscans,
                                 const int  npoints,
                                 const bool calc_ti,
@@ -1783,8 +1845,8 @@ static void remove_noise_means( double*    vals,
 
       for ( int ss = 0; ss < nscans; ss++ )
       {
-         double* svals = vals + static_cast<size_t>( ss ) * npoints;
-         double  sum   = 0.0;
+         T*     svals = vals + static_cast<size_t>( ss ) * npoints;
+         double sum   = 0.0;
 
          for ( int rr = 0; rr < npoints; rr++ )
          {
@@ -1795,7 +1857,7 @@ static void remove_noise_means( double*    vals,
 
          for ( int rr = 0; rr < npoints; rr++ )
          {
-            svals[rr] -= v_tilde[ss];
+            svals[rr] = (T) ( svals[rr] - v_tilde[ss] );
          }
       }
    }
@@ -1811,7 +1873,7 @@ static void remove_noise_means( double*    vals,
 
       for ( int ss = 0; ss < nscans; ss++ )
       {
-         const double* svals = vals + static_cast<size_t>( ss ) * npoints;
+         const T* svals = vals + static_cast<size_t>( ss ) * npoints;
 
          for ( int rr = 0; rr < npoints; rr++ )
          {
@@ -1826,28 +1888,29 @@ static void remove_noise_means( double*    vals,
 
       for ( int ss = 0; ss < nscans; ss++ )
       {
-         double* svals = vals + static_cast<size_t>( ss ) * npoints;
+         T* svals = vals + static_cast<size_t>( ss ) * npoints;
 
          for ( int rr = 0; rr < npoints; rr++ )
          {
-            svals[rr] -= v_bar[rr];
+            svals[rr] = (T) ( svals[rr] - v_bar[rr] );
          }
       }
    }
 }
 
 // Compute concentrations by NNLS with TI and/or RI noise algebraically removed
-int US_SolveSim::nnls_noise( const int                noisflag,
-                             const QVector<int>&      nscans,
-                             const QVector<int>&      npoints,
-                             const int                nsolutes,
-                             const int                narows,
-                             QVector<double>&         nnls_a,
-                             QVector<double>&         nnls_b,
-                             QVector<double>&         nnls_x,
-                             QVector<double>&         tinvec,
-                             QVector<double>&         rinvec,
-                             const std::atomic<bool>* abort_flag )
+template <class T>
+static int nnls_noise_t( const int                noisflag,
+                         const QVector<int>&      nscans,
+                         const QVector<int>&      npoints,
+                         const int                nsolutes,
+                         const int                narows,
+                         QVector<T>&              nnls_a,
+                         QVector<T>&              nnls_b,
+                         QVector<T>&              nnls_x,
+                         QVector<double>&         tinvec,
+                         QVector<double>&         rinvec,
+                         const std::atomic<bool>* abort_flag )
 {
    const bool calc_ti = ( ( noisflag & 1 ) != 0 );
    const bool calc_ri = ( ( noisflag & 2 ) != 0 );
@@ -1954,6 +2017,37 @@ int US_SolveSim::nnls_noise( const int                noisflag,
    }
 
    return rc;
+}
+
+int US_SolveSim::nnls_noise( const int                noisflag,
+                             const QVector<int>&      nscans,
+                             const QVector<int>&      npoints,
+                             const int                nsolutes,
+                             const int                narows,
+                             QVector<double>&         nnls_a,
+                             QVector<double>&         nnls_b,
+                             QVector<double>&         nnls_x,
+                             QVector<double>&         tinvec,
+                             QVector<double>&         rinvec,
+                             const std::atomic<bool>* abort_flag )
+{
+   return nnls_noise_t( noisflag, nscans, npoints, nsolutes, narows, nnls_a, nnls_b, nnls_x, tinvec, rinvec, abort_flag );
+}
+
+// (A, B and the concentrations in float precision)
+int US_SolveSim::nnls_noise( const int                noisflag,
+                             const QVector<int>&      nscans,
+                             const QVector<int>&      npoints,
+                             const int                nsolutes,
+                             const int                narows,
+                             QVector<float>&          nnls_a,
+                             QVector<float>&          nnls_b,
+                             QVector<float>&          nnls_x,
+                             QVector<double>&         tinvec,
+                             QVector<double>&         rinvec,
+                             const std::atomic<bool>* abort_flag )
+{
+   return nnls_noise_t( noisflag, nscans, npoints, nsolutes, narows, nnls_a, nnls_b, nnls_x, tinvec, rinvec, abort_flag );
 }
 
 // Variance and concentrations of a few solutes from the normal equations

@@ -261,6 +261,8 @@ Adv. Config. Functions
       - Memory cap of the solute simulation cache in MB. Default: 25% of the available memory, from 256 MB to 4096 MB.
     * - SimFloat
       - `SimFloat=on` rounds the solute simulations of us_2dsa and us_pcsa fits to float precision, and the simulation cache stores them as floats (half the cache memory). Results differ slightly from the default double-precision fit. In us_mpi_analysis (job `debug_text`) the simulations are rounded as well, but its simulation caches keep them as doubles. Off by default.
+    * - SimFloatNNLS
+      - `SimFloatNNLS=on` builds the A matrix and data vector of the us_2dsa, us_pcsa and us_mpi_analysis fits in float precision and solves the NNLS (with any TI/RI noise) in float precision, halving the memory of the A matrix, the largest memory use of a fit. Sums and products are computed in double; the fitted noise, residuals and variance are computed in double. Results differ slightly from the default double-precision fit. Independent of `SimFloat`. The fast normal-equation path of us_mpi_analysis (few solutes, no noise) stays in double. Off by default.
     * - DB_ENFORCE_DEFAULT_SSL_SECURITY
       - Flag to enforce the use of the OS configured default SSL security level for database connections, instead of lowering it to for UltraScan database connections to zero.
     * - auto_positioning
