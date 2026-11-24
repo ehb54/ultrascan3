@@ -95,6 +95,7 @@ class US_GUI_EXTERN US_License : public US_Widgets
     bool          updating_email;
     QPushButton*  pb_update;
 
+    bool          server_reachable( void );
     void    update_screen   ( void );
     void    load_current    ( void );
     QString titleCase       ( const QString& );
