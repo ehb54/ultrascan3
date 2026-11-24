@@ -383,18 +383,51 @@ void US_License::update_screen( void )
 
 void US_License::update( void )
 {
-  if ( firstname   == ""  ||
-       lastname    == ""  ||
-       institution == ""  ||
-       state       == ""  ||
-       email       == ""  )
-  {
-    QMessageBox::information ( this, 
-      tr( "Request Error" ),
-      tr( "Your request is incomplete.\n"
-          "Please fill out all requested information." ) );
+   // The registration scripts refuse a request with any of these empty
+   QStringList missing;
 
-    return;
+   if ( firstname.isEmpty() )
+   {
+      missing << tr( "First name" );
+   }
+   if ( lastname.isEmpty() )
+   {
+      missing << tr( "Last name" );
+   }
+   if ( email.isEmpty() )
+   {
+      missing << tr( "E-mail Address" );
+   }
+   if ( institution.isEmpty() )
+   {
+      missing << tr( "Institution" );
+   }
+   if ( city.isEmpty() )
+   {
+      missing << tr( "City" );
+   }
+   if ( state.isEmpty() )
+   {
+      missing << tr( "State" );
+   }
+
+   if ( !missing.isEmpty() )
+   {
+      QMessageBox::information( this,
+                                tr( "Request Error" ),
+                                tr( "Your request is incomplete.\n"
+                                    "Please fill in: %1." )
+                                   .arg( missing.join( ", " ) ) );
+
+      return;
+   }
+
+  // Nothing is sent or saved unless the registration server can be reached.
+  // This comes before the e-mail-change question, so nobody is asked to
+  // confirm a change that cannot be sent.
+  if ( !server_reachable() )
+  {
+     return;
   }
 
   // If the email address has changed, just do a normal request.
@@ -428,25 +461,11 @@ void US_License::update( void )
     request();
     return;
   }
-  
-  // Form request
-  QString req     = "firstname="    + firstname 
-                  + "&lastname="    + lastname
-                  + "&institution=" + institution
-                  + "&address="     + address
-                  + "&city="        + city
-                  + "&state="       + state
-                  + "&zip="         + zip
-                  + "&phone="       + phone
-                  + "&email="       + email
-                  + "&os="          + OS
-                  + "&platform="    + PLATFORM
-                  + "&version="     + US_Version
-                  + "&licensetype=" + licensetype;
+
 //qDebug() << "requesting update";
   // Send request
   QString url     = "https://ultrascan.aucsolutions.com/update-license-new.php";
-  US_HttpPost* transmit = new US_HttpPost( url, req );
+  US_HttpPost* transmit = new US_HttpPost( url, form_data() );
   connect( transmit, &US_HttpPost::US_Http_post_response, this, &US_License::update_response );
 }
 
@@ -456,7 +475,21 @@ void US_License::update_response( const QString& response )
   QStringList data = response.split( "-" );
 
   int error = data[ 0 ].toInt();
-  if ( error == 0 )
+
+  // 5: the server has no record of this email.  If the saved registration
+  // is still pending (12 entries: saved by request(), no key yet), its
+  // request never succeeded (refused, or lost to a network error), so send
+  // the request again.  Otherwise every later attempt with this address
+  // would end here.  The size is tested directly, because isValid() reports
+  // a pending record from another platform or OS as BadPlatform or BadOS.
+  if ( error == 5 && US_Settings::license().size() == 12 )
+  {
+     request();
+     return;
+  }
+
+  // 0 comes with a key and an expiration; a shorter reply is an error
+  if ( error == 0 && data.size() >= 3 )
   {
     validation = data[ 1 ];
     expiration = data[ 2 ];
@@ -484,37 +517,23 @@ void US_License::update_response( const QString& response )
 void US_License::request( void )
 {
    //qDebug() << "Starting Req";
-  // Form request
-  QString request = "firstname="    + firstname 
-                  + "&lastname="    + lastname
-                  + "&institution=" + institution
-                  + "&address="     + address
-                  + "&city="        + city
-                  + "&state="       + state
-                  + "&zip="         + zip
-                  + "&phone="       + phone
-                  + "&email="       + email
-                  + "&os="          + OS
-                  + "&platform="    + PLATFORM
-                  + "&version="     + US_Version
-                  + "&licensetype=" + licensetype;
+   // A new request is for this computer (form_data() sends PLATFORM and OS),
+   // whatever a saved record from another one says
+   platform = titleCase( PLATFORM );
+   os       = titleCase( OS );
 
-  // Save partial request
-  QStringList license;
-  license << lastname              << firstname 
-          << institution           << address 
-          << city                  << state                 
-          << zip                   << phone       
-          << email                 << platform.toLower() 
-          << os.toLower()          << version;   
- 
-  US_Settings::set_license( license );
+   // Save partial request
+   QStringList license;
+   license << lastname << firstname << institution << address << city << state << zip << phone << email << platform.toLower()
+           << os.toLower() << version;
 
-  // Send request
-  //qDebug() << "sending: " << request;
-  QString      url      = "https://ultrascan.aucsolutions.com/request-license.php";
-  US_HttpPost* transmit = new US_HttpPost( url, request );
-  connect( transmit, &US_HttpPost::US_Http_post_response, this, &US_License::request_response );
+   US_Settings::set_license( license );
+
+   // Send request
+   //qDebug() << "sending: " << form_data();
+   QString      url      = "https://ultrascan.aucsolutions.com/request-license.php";
+   US_HttpPost* transmit = new US_HttpPost( url, form_data() );
+   connect( transmit, &US_HttpPost::US_Http_post_response, this, &US_License::request_response );
 }
 
 void US_License::request_response( const QString& response )
@@ -542,6 +561,27 @@ void US_License::request_response( const QString& response )
      
     return;
   } 
+}
+
+// The body of a registration POST (application/x-www-form-urlencoded).
+// Each value is percent-encoded, so an '&', '=', '+' or '%' in a field
+// reaches the server as typed.  The bytes stay Latin-1, as they were when
+// the values went unencoded, so the server stores what it stored before.
+QString US_License::form_data( void ) const
+{
+   const QStringList names  = { "firstname", "lastname", "institution", "address",  "city",    "state",      "zip",
+                                "phone",     "email",    "os",          "platform", "version", "licensetype" };
+   const QStringList values = { firstname, lastname, institution, address,  city,       state,      zip,
+                                phone,     email,    OS,          PLATFORM, US_Version, licensetype };
+   QStringList       items;
+
+   Q_ASSERT( names.size() == values.size() );
+   for ( int i = 0; i < names.size(); i++ )
+   {
+      items << names[i] + "=" + QString::fromLatin1( values[i].toLatin1().toPercentEncoding() );
+   }
+
+   return items.join( "&" );
 }
 
 bool US_License::save( void )
@@ -607,4 +647,73 @@ QString US_License::trim( const QString& st )
    return s;
 }
 
+// Can the registration server be reached on port 443 (HTTPS)?  This asks for
+// the small static file the main window reads its notices from, the same way
+// US_HttpPost sends a registration: through the same proxy, with the same TLS
+// settings.  Any HTTP answer means the port is open, a redirect included.
+// Otherwise the user is told why, and update() stops before anything is sent
+// or saved.  It also stops, without a message, if the dialog was closed
+// during the check.
+bool US_License::server_reachable( void )
+{
+   const int         timeout_s = 15;
+   const QUrl        url( "https://ultrascan.aucsolutions.com/notices.json" );
+   QNetworkRequest   request( url );
+   QSslConfiguration conf = request.sslConfiguration();
 
+   conf.setPeerVerifyMode( QSslSocket::VerifyNone ); // as in US_HttpPost
+   request.setSslConfiguration( conf );
+   // Qt 6 follows redirects by default; the server's own answer is enough
+   request.setAttribute( QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::ManualRedirectPolicy );
+
+   QNetworkAccessManager manager;
+   QEventLoop            loop;
+   QTimer                timer;
+   QNetworkReply*        reply   = manager.head( request );
+   const bool            visible = isVisible();
+
+   timer.setSingleShot( true );
+   connect( &timer, &QTimer::timeout, reply, &QNetworkReply::abort );
+   connect( reply, &QNetworkReply::finished, &loop, &QEventLoop::quit );
+   timer.start( timeout_s * 1000 );
+
+   // The loop holds back clicks and key presses and delivers them when it
+   // ends.  They then reach a disabled dialog, which drops them, so another
+   // click on Register cannot start a second request.
+   setEnabled( false );
+   QApplication::setOverrideCursor( Qt::WaitCursor );
+   if ( !reply->isFinished() )
+   {
+      loop.exec( QEventLoop::ExcludeUserInputEvents );
+   }
+   QCoreApplication::processEvents();
+   QApplication::restoreOverrideCursor();
+   setEnabled( true );
+
+   const bool closed    = visible && !isVisible();
+   const bool reachable = !closed && reply->attribute( QNetworkRequest::HttpStatusCodeAttribute ).isValid();
+
+   if ( !reachable && !closed )
+   {
+      // Only the timer aborts the request
+      const QString why = reply->error() == QNetworkReply::OperationCanceledError
+                             ? tr( "No answer within %1 seconds." ).arg( timeout_s )
+                             : reply->errorString();
+
+      QMessageBox::warning( this,
+                            tr( "Connection Error" ),
+                            tr( "UltraScan cannot reach the registration server\n"
+                                "%1 on port %2 (HTTPS):\n"
+                                "%3\n\n"
+                                "Nothing has been sent or saved.\n\n"
+                                "Please check your network connection and try again.  "
+                                "If this keeps happening, a firewall or proxy may be "
+                                "blocking outgoing HTTPS to %1; your network "
+                                "administrator must allow it, at least temporarily, "
+                                "to obtain or renew the license." )
+                               .arg( url.host(), QString::number( url.port( 443 ) ), why ) );
+   }
+
+   delete reply;
+   return reachable;
+}

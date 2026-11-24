@@ -95,13 +95,15 @@ class US_GUI_EXTERN US_License : public US_Widgets
     bool          updating_email;
     QPushButton*  pb_update;
 
-    void    update_screen   ( void );
-    void    load_current    ( void );
-    QString titleCase       ( const QString& );
-    void    request         ( void );
-    bool    save            ( void );
+    bool          server_reachable( void );
+    void          update_screen( void );
+    void          load_current( void );
+    QString       titleCase( const QString& );
+    void          request( void );
+    QString       form_data( void ) const;
+    bool          save( void );
 
-  private slots:
+ private slots:
     void help              ( void );
     void update            ( void );
     void update_response   ( const QString& );

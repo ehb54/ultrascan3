@@ -109,7 +109,7 @@ Fitting Analysis Process:
   * - **Grid Points:**
     - Select the total number of meniscus/bottom points (iterations) to sample.
   * - **Monte Carlo Iterations:**
-    - Check this box if you wish to wrap the refinement iterations in an outer set of monte carlo iterations. The second and subsequent iterations use as "experiment" data input the previous iteration's simulated data with gaussian determined random variations. Note that as mentioned above, this choice and Meniscus are mutually exclusive. Monte Carlo iterations do not allow noise calculations.
+    - Check this box if you wish to wrap the refinement iterations in an outer set of monte carlo iterations. The second and subsequent iterations use as "experiment" data input the first iteration's simulated data with gaussian determined random variations, whose standard deviations are the magnitudes of the first iteration's residuals. Note that as mentioned above, this choice and Meniscus are mutually exclusive. Monte Carlo iterations do not allow noise calculations.
   * - **Monte Carlo Iterations:**
     - Select a number of Monte Carlo iterations to perform. A separate model is produced from each each iteration. 
   * - **Advanced Analysis Controls**
