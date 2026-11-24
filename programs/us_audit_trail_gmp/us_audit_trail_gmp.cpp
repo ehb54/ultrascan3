@@ -6,7 +6,6 @@
 #include <QPrinter>
 #include <QProgressDialog>
 #include <algorithm>
-//#include <QThread>
 
 
 #include "us_audit_trail_gmp.h"

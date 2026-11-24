@@ -3453,8 +3453,9 @@ void US_FeMatch::write_plot( const QString& filename, const QwtPlot* plot )
    if ( filename.contains( ".svg" ) )
    {  // Save an SVG file and a PNG copy
       if ( US_GuiUtil::save_plot( filename, plot ) != 0 )
-         QMessageBox::warning( this, tr( "File Write Error" ),
-            tr( "Unable to write file" ) + filename );
+      {
+         QMessageBox::warning( this, tr( "File Write Error" ), tr( "Unable to write file:\n%1" ).arg( filename ) );
+      }
    }
 
    else if ( filename.endsWith( "rbitmap.png" ) )
@@ -3482,8 +3483,9 @@ void US_FeMatch::write_plot( const QString& filename, const QwtPlot* plot )
 #endif
 
       if ( ! pixmap.save( filename ) )
-         QMessageBox::warning( this, tr( "File Write Error" ),
-            tr( "Unable to write file" ) + filename );
+      {
+         QMessageBox::warning( this, tr( "File Write Error" ), tr( "Unable to write file:\n%1" ).arg( filename ) );
+      }
    }
 
    else if ( filename.endsWith( "3dplot.png" ) )
@@ -3506,15 +3508,17 @@ void US_FeMatch::write_plot( const QString& filename, const QwtPlot* plot )
 #endif
 
       if ( ! ok )
-         QMessageBox::warning( this, tr( "File Write Error" ),
-            tr( "Unable to write file" ) + filename );
+      {
+         QMessageBox::warning( this, tr( "File Write Error" ), tr( "Unable to write file:\n%1" ).arg( filename ) );
+      }
    }
 
    else if ( filename.endsWith( ".png" ) )
    {  // General case of PNG
       if ( US_GuiUtil::save_png( filename, plot ) != 0 )
-         QMessageBox::warning( this, tr( "File Write Error" ),
-            tr( "Unable to write file" ) + filename );
+      {
+         QMessageBox::warning( this, tr( "File Write Error" ), tr( "Unable to write file:\n%1" ).arg( filename ) );
+      }
    }
 }
 

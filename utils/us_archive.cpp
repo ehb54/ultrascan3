@@ -93,7 +93,11 @@ bool US_Archive::extract(const QString& filename, const QString& path, QStringLi
             }
 
             QFile file(target.absoluteFilePath());
-            file.setPermissions(QFileDevice::WriteOwner);
+            // An existing file must be writable to be replaced, and readable afterwards
+            if ( file.exists() )
+            {
+               file.setPermissions( file.permissions() | QFileDevice::ReadOwner | QFileDevice::WriteOwner );
+            }
             if (file.open(QIODevice::WriteOnly)) {
                 QDataStream dstream(&file);
                 const void *buff;
@@ -269,7 +273,7 @@ bool US_Archive::compress(const QStringList& list, QString& filename) {
     return true;
 }
 
-bool US_Archive::gzip( const QString& source, const QString& target )
+bool US_Archive::gzip( const QString& source, const QString& target, int level )
 {
    error.clear();
 
@@ -293,18 +297,26 @@ bool US_Archive::gzip( const QString& source, const QString& target )
    archive_entry_set_filetype( entry, AE_IFREG );
 
    // The raw format has no container.  A last-block size of 1 stops libarchive
-   // from padding the output with zeros after the gzip trailer.
+   // from padding the output with zeros after the gzip trailer.  Without a
+   // timestamp, the same input always gives the same bytes.  libarchive must be
+   // built with zlib: otherwise add_filter_gzip returns ARCHIVE_WARN and this fails.
+   const QByteArray level_text = QByteArray::number( level );
    bool ok = archive_write_set_format_raw( archive ) == ARCHIVE_OK && archive_write_add_filter_gzip( archive ) == ARCHIVE_OK &&
-             archive_write_set_filter_option( archive, "gzip", "compression-level", "9" ) == ARCHIVE_OK &&
+             archive_write_set_filter_option( archive, "gzip", "compression-level", level_text.constData() ) == ARCHIVE_OK &&
+             archive_write_set_filter_option( archive, "gzip", "timestamp", nullptr ) == ARCHIVE_OK &&
              archive_write_set_bytes_in_last_block( archive, 1 ) == ARCHIVE_OK &&
              archive_write_open( archive, &output, nullptr, write_to_file, nullptr ) == ARCHIVE_OK &&
              archive_write_header( archive, entry ) == ARCHIVE_OK;
 
    QByteArray buffer( 65536, Qt::Uninitialized );
-   qint64     count = 0;
-   while ( ok && ( count = input.read( buffer.data(), buffer.size() ) ) > 0 )
+   qint64     count = ok ? input.read( buffer.data(), buffer.size() ) : 0;
+   while ( ok && count > 0 )
    {
       ok = archive_write_data( archive, buffer.constData(), static_cast<size_t>( count ) ) == count;
+      if ( ok )
+      {
+         count = input.read( buffer.data(), buffer.size() );
+      }
    }
    const bool read_failed = ok && count < 0;
 

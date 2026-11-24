@@ -5,7 +5,6 @@
 #include <QPrinter>
 #include <QProgressDialog>
 #include <QScopedPointer>
-//#include <QThread>
 
 
 #include "us_constants.h"

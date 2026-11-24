@@ -573,6 +573,7 @@ class US_ReporterGMP : public US_Widgets
         bool exp_steps; //!< Experimental steps flag
         bool dat_steps; //!< Data steps flag
         bool                      report_aborted = false; //!< User aborted a simulation; stop the report
+        QStringList               unsaved_plots;          //!< Plot files an autoflow report could not write
         bool is_dmga_mc; //!< DMGA Monte Carlo flag
 
         QMap<QString, QString> adv_vals; //!< Advanced values map
@@ -748,6 +749,15 @@ class US_ReporterGMP : public US_Widgets
          * @return The resolved, guaranteed-available font family name.
          */
         static QString reportFontFamily(bool monospace = false);
+
+        /**
+         * @brief Report a plot file that could not be written.
+         *
+         * Interactive reports show a warning; autoflow reports log it and list the
+         * file in the message shown when the report is complete.
+         * @param filename The file name
+         */
+        void           plot_not_saved( const QString& filename );
 
         /**
          * @brief Write plot to file.

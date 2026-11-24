@@ -3941,6 +3941,7 @@ void US_ReporterGMP::generate_report( void )
   ///////////////////////////////////////////////////
 
   report_aborted = false;
+  unsaved_plots.clear();
 
   int msg_range = currProto.rpSolut.nschan + 5;
 
@@ -4380,11 +4381,18 @@ void US_ReporterGMP::generate_report( void )
           "Reviwer(s) of the current GMP report will be notified." )
          .arg( filePath ) );
 
+   if ( !unsaved_plots.isEmpty() )
+   {
+      msgBox_a.setInformativeText( msgBox_a.informativeText() + "\n\n" +
+                                   tr( "%n plot file(s) could not be written:", "", static_cast<int>( unsaved_plots.size() ) ) +
+                                   "\n" + unsaved_plots.mid( 0, 10 ).join( "\n" ) + ( unsaved_plots.size() > 10 ? "\n..." : "" ) );
+   }
+
    msgBox_a.setWindowTitle( tr( "Report Generation Complete" ) );
    QPushButton* Open = msgBox_a.addButton( tr( "View Report" ), QMessageBox::YesRole );
    //QPushButton *Cancel  = msgBox_a.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
 
-   msgBox_a.setIcon( QMessageBox::Information );
+   msgBox_a.setIcon( unsaved_plots.isEmpty() ? QMessageBox::Information : QMessageBox::Warning );
    msgBox_a.exec();
 
    if ( msgBox_a.clickedButton() == Open )
@@ -11457,11 +11465,26 @@ bool US_ReporterGMP::mkdir( const QString& baseDir, const QString& subdir )
 
    if ( folder.mkdir( subdir ) ) return true;
 
+   // Shown in autoflow too: without its folder the report cannot be written
    QMessageBox::warning( this,
       tr( "File error" ),
       tr( "Could not create the directory:\n" ) + baseDir + "/" + subdir );
 
    return false;
+}
+
+// An autoflow report is generated unattended, so the failure is logged and shown in
+// the message at the end instead of stopping the report with a dialog.
+void US_ReporterGMP::plot_not_saved( const QString& filename )
+{
+   if ( auto_mode )
+   {
+      qWarning() << "Unable to write file" << filename;
+      unsaved_plots << QFileInfo( filename ).fileName();
+      return;
+   }
+
+   QMessageBox::warning( this, tr( "File Write Error" ), tr( "Unable to write file:\n%1" ).arg( filename ) );
 }
 
 // Write out a plot
@@ -11470,8 +11493,9 @@ void US_ReporterGMP::write_plot( const QString& filename, const QwtPlot* plot )
    if ( filename.contains( ".svg" ) )
    {  // Save an SVG file and a PNG copy
       if ( US_GuiUtil::save_plot( filename, plot ) != 0 )
-         QMessageBox::warning( this, tr( "File Write Error" ),
-            tr( "Unable to write file" ) + filename );
+      {
+         plot_not_saved( filename );
+      }
    }
 
 
@@ -11497,16 +11521,18 @@ void US_ReporterGMP::write_plot( const QString& filename, const QwtPlot* plot )
  #endif
 
        if ( ! ok )
-          QMessageBox::warning( this, tr( "File Write Error" ),
-             tr( "Unable to write file" ) + filename );
+       {
+          plot_not_saved( filename );
+       }
     }
 
    else if ( filename.endsWith( ".png" ) )
    {  // General case of PNG
      qDebug() << "SAVING PNGs!!!!";
       if ( US_GuiUtil::save_png( filename, plot ) != 0 )
-         QMessageBox::warning( this, tr( "File Write Error" ),
-            tr( "Unable to write file" ) + filename );
+      {
+         plot_not_saved( filename );
+      }
    }
 }
 

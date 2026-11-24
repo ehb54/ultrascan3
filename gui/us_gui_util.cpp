@@ -61,12 +61,17 @@ int US_GuiUtil::save_svg( const QString& filename, const QwtPlot* plot )
       US_Archive archive;
       if ( archive.gzip( fnsvg, fnsvg + "z" ) )
       {
-         QFile::remove( fnsvg );
+         // The .svgz is complete, so a leftover .svg is not a failure
+         QFile svg_file( fnsvg );
+         if ( !svg_file.remove() )
+         {
+            qWarning() << "Could not remove" << fnsvg << svg_file.errorString();
+         }
       }
       else
       {
          qWarning() << archive.getError();
-         status = 2;
+         status = 3;
       }
    }
 
@@ -103,6 +108,23 @@ int US_GuiUtil::save_png( const QString& filename, const QwtPlot* plot )
    }
 
    return status;
+}
+
+bool US_GuiUtil::warn_unsaved( QWidget* parent, const QStringList& unsaved )
+{
+   if ( unsaved.isEmpty() )
+   {
+      return false;
+   }
+
+   QString text = QObject::tr( "Unable to write %n file(s):", "", static_cast<int>( unsaved.size() ) ) + "\n" +
+                  unsaved.mid( 0, 10 ).join( "\n" );
+   if ( unsaved.size() > 10 )
+   {
+      text += "\n...";
+   }
+   QMessageBox::warning( parent, QObject::tr( "File Write Error" ), text );
+   return true;
 }
 
 int US_GuiUtil::save_csv( const QString& filename, const QwtPlot* plot )

@@ -1,6 +1,7 @@
 //! \file test_us_archive.cpp
-// US_Archive::gzip() writes one complete gzip member and nothing after it.
-// The output is decoded here without libarchive.
+// US_Archive::gzip() writes one complete gzip member and nothing after it;
+// the output is decoded here without libarchive.
+// US_Archive::extract() leaves the files it writes readable.
 
 #include "qt_test_base.h"
 #include "us_archive.h"
@@ -12,6 +13,7 @@
 
 namespace
 {
+// CRC-32 of the gzip trailer (RFC 1952)
 quint32 crc32( const QByteArray& data )
 {
    quint32 crc = 0xFFFFFFFFu;
@@ -26,6 +28,7 @@ quint32 crc32( const QByteArray& data )
    return ~crc;
 }
 
+// Adler-32 of the zlib trailer (RFC 1950)
 quint32 adler32( const QByteArray& data )
 {
    quint32 low  = 1;
@@ -57,6 +60,7 @@ void expectGzipOf( const QByteArray& gz, const QByteArray& expected )
    ASSERT_GE( gz.size(), 18 );
    EXPECT_EQ( gz.left( 3 ).toHex().toStdString(), "1f8b08" );
    ASSERT_EQ( gz.at( 3 ), '\0' ) << "header has optional fields";
+   EXPECT_EQ( littleEndianAt( gz, 4 ), 0u ) << "header has a timestamp";
 
    const int trailer = static_cast<int>( gz.size() ) - 8;
    EXPECT_EQ( littleEndianAt( gz, trailer ), crc32( expected ) );
@@ -71,6 +75,7 @@ void expectGzipOf( const QByteArray& gz, const QByteArray& expected )
 
 QByteArray svgLike( int lines )
 {
+   // The SVG namespace is an identifier defined with http
    QByteArray data( "<svg xmlns=\"http://www.w3.org/2000/svg\">\n" );
    for ( int ii = 0; ii < lines; ++ii )
    {
@@ -80,7 +85,7 @@ QByteArray svgLike( int lines )
 }
 } // namespace
 
-class TestUSArchiveGzip : public QtTestBase
+class TestUSArchive : public QtTestBase
 {
    protected:
       void SetUp() override
@@ -108,6 +113,30 @@ class TestUSArchiveGzip : public QtTestBase
 
       QTemporaryDir dir;
       US_Archive    archive;
+};
+
+class TestUSArchiveGzip : public TestUSArchive
+{
+};
+
+class TestUSArchiveExtract : public TestUSArchive
+{
+   protected:
+      //! Archives job.xml holding data and returns the archive's path
+      QString archiveOf( const QByteArray& data )
+      {
+         QDir().mkpath( path( "source" ) );
+         write( path( "source/job.xml" ), data );
+         QString tar = path( "job.tar" );
+         EXPECT_TRUE( archive.compress( { path( "source/job.xml" ) }, tar ) ) << qPrintable( archive.getError() );
+         return tar;
+      }
+
+      static bool ownerCanReadAndWrite( const QString& name )
+      {
+         const QFileDevice::Permissions needed = QFileDevice::ReadOwner | QFileDevice::WriteOwner;
+         return ( QFile::permissions( name ) & needed ) == needed;
+      }
 };
 
 TEST_F( TestUSArchiveGzip, CompressesAndKeepsTheSource )
@@ -196,4 +225,76 @@ TEST_F( TestUSArchiveGzip, ErrorIsClearedByTheNextSuccess )
    ASSERT_TRUE( archive.gzip( path( "plot.svg" ), path( "plot.svgz" ) ) );
 
    EXPECT_TRUE( archive.getError().isEmpty() );
+}
+
+TEST_F( TestUSArchiveGzip, LevelSetsTheCompression )
+{
+   const QByteArray data = svgLike( 2000 );
+   write( path( "plot.svg" ), data );
+
+   ASSERT_TRUE( archive.gzip( path( "plot.svg" ), path( "stored.svgz" ), 0 ) ) << qPrintable( archive.getError() );
+   ASSERT_TRUE( archive.gzip( path( "plot.svg" ), path( "fast.svgz" ), 1 ) ) << qPrintable( archive.getError() );
+   ASSERT_TRUE( archive.gzip( path( "plot.svg" ), path( "best.svgz" ), 9 ) ) << qPrintable( archive.getError() );
+   ASSERT_TRUE( archive.gzip( path( "plot.svg" ), path( "plot.svgz" ) ) ) << qPrintable( archive.getError() );
+
+   const QByteArray stored = read( path( "stored.svgz" ) );
+   const QByteArray best   = read( path( "best.svgz" ) );
+   expectGzipOf( stored, data );
+   expectGzipOf( read( path( "fast.svgz" ) ), data );
+   expectGzipOf( best, data );
+   EXPECT_GT( stored.size(), data.size() );
+   EXPECT_LT( best.size(), read( path( "fast.svgz" ) ).size() );
+   EXPECT_EQ( read( path( "plot.svgz" ) ), best );
+}
+
+TEST_F( TestUSArchiveGzip, LevelOutOfRangeFails )
+{
+   write( path( "plot.svg" ), svgLike( 5 ) );
+
+   for ( const int level : { -1, 10 } )
+   {
+      EXPECT_FALSE( archive.gzip( path( "plot.svg" ), path( "plot.svgz" ), level ) ) << level;
+      EXPECT_FALSE( archive.getError().isEmpty() ) << level;
+      EXPECT_FALSE( QFile::exists( path( "plot.svgz" ) ) ) << level;
+   }
+}
+
+TEST_F( TestUSArchiveExtract, FirstExtractionIsReadable )
+{
+   const QString tar = archiveOf( "new" );
+
+   ASSERT_TRUE( archive.extract( tar, path( "out" ) ) ) << qPrintable( archive.getError() );
+
+   EXPECT_EQ( read( path( "out/job.xml" ) ), QByteArray( "new" ) );
+   EXPECT_TRUE( ownerCanReadAndWrite( path( "out/job.xml" ) ) );
+}
+
+TEST_F( TestUSArchiveExtract, RepeatedExtractionIsReadable )
+{
+   const QString tar = archiveOf( "new" );
+   ASSERT_TRUE( archive.extract( tar, path( "out" ) ) ) << qPrintable( archive.getError() );
+   const QFileDevice::Permissions first = QFile::permissions( path( "out/job.xml" ) );
+
+   ASSERT_TRUE( archive.extract( tar, path( "out" ) ) ) << qPrintable( archive.getError() );
+
+   EXPECT_EQ( read( path( "out/job.xml" ) ), QByteArray( "new" ) );
+   EXPECT_EQ( QFile::permissions( path( "out/job.xml" ) ), first );
+}
+
+TEST_F( TestUSArchiveExtract, ReplacesFilesTheOwnerCannotReadOrWrite )
+{
+   const QString tar = archiveOf( "new" );
+   QDir().mkpath( path( "out" ) );
+
+   for ( const QFileDevice::Permission only : { QFileDevice::ReadOwner, QFileDevice::WriteOwner } )
+   {
+      const QString name = path( "out/job.xml" );
+      write( name, "something longer" );
+      ASSERT_TRUE( QFile::setPermissions( name, only ) );
+
+      ASSERT_TRUE( archive.extract( tar, path( "out" ) ) ) << qPrintable( archive.getError() );
+
+      EXPECT_TRUE( ownerCanReadAndWrite( name ) ) << only;
+      EXPECT_EQ( read( name ), QByteArray( "new" ) ) << only;
+   }
 }
