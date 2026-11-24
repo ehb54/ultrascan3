@@ -4,10 +4,9 @@
 
 #include <QtCore>
 
+#include "us_db2.h"
 #include "us_widgets.h"
 #include "us_widgets_dialog.h"
-#include "us_db2.h"
-#include "us_xpnhost_db.h"
 
 /*! \brief A class to allow the user to set, modify or delete
     parameters for database access.

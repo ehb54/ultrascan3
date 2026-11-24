@@ -1,11 +1,12 @@
 //! \file us_extinction_gui.cpp
 //
 #include "us_extinction_gui.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_settings.h"
+#include "us_analyte_gui.h"
 #include "us_buffer_gui.h"
 #include "us_gui_util.h"
+#include "us_license.h"
+#include "us_license_t.h"
+#include "us_settings.h"
 
 // Constructor
 US_Extinction::US_Extinction(QString buffer, const QString& text, const QString& text_e280, QWidget* parent)
