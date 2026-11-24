@@ -169,6 +169,7 @@ private:
       int        ngrefine;     // number of grid refinements
       int        jgrefine;     // grid refinement type flag (+ve., -1, -2)
       int        nctotal;      // number of total compute-progress steps
+      int                           ncfirst;      // compute-progress steps of a model's first iteration
       int        kcsteps;      // count of completed progress steps
       int        noisflag;     // noise out flag: 0(none), 1(ti), 2(ri), 3(both)
       int        nscans;       // number of experiment scans
