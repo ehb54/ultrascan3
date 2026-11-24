@@ -2601,56 +2601,23 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
       {
          // cout << "multiple gaussians\n";
 
-         QString           this_gaussian;
+         // the file's Gaussians, file by file
          QRegularExpression           rx_gname( "^(?:Gauss|EMG\\+GMG|EMG|GMG) (.*)$" ); 
-         vector < double > g;
-         unsigned int      loaded  = 0;
-         unsigned int      skipped = 0;
-
-         vector < map < int, set < double > > > check_common;
+         QStringList                  set_names;
+         vector < vector < double > > set_gaussians;
 
          for ( i = 2; i < (int) qv.size(); i++ )
          {
             QRegularExpressionMatch rx_gname_m = rx_gname.match( qv[ i ] );
             if ( rx_gname_m.hasMatch() )
             {
-               // cout << QString( "mg: found %1\n" ).arg( rx_gname_m.captured( 1 ) );
-               // new file specific gaussian
-               if ( g.size() && !this_gaussian.isEmpty() )
-               {
-                  f_gaussians[ this_gaussian ] = g;
-                  gaussians = g;
-
-                  int this_gn_count = (int)( g.size() / gaussian_type_size );
-                  if ( (int) check_common.size() < this_gn_count )
-                  {
-                     check_common.resize( this_gn_count );
-                  }
-                  for ( int gn = 0; gn < this_gn_count; ++gn )
-                  {
-                     int pos = gn * gaussian_type_size;
-                     for ( int k = 0; k < gaussian_type_size; ++k )
-                     {
-                        check_common[ gn ][ k ].insert( g[ pos + k ] );
-                     }
-                  }
-
-                  loaded++;
-               }
-               g.clear( );
-               this_gaussian = rx_gname_m.captured( 1 );
-               if ( !f_qs.count( this_gaussian ) )
-               {
-                  skipped++;
-                  editor_msg( "red", QString( us_tr( "%1 for file %2 present but the file is not loaded, please load the file first" ) ).arg( gaussian_type_tag ).arg( this_gaussian ) );
-                  this_gaussian = "";
-               }
+               set_names << rx_gname_m.captured( 1 );
+               set_gaussians.push_back( vector < double >() );
                continue;
             }
 
-            if ( !this_gaussian.isEmpty() )
+            if ( set_names.size() )
             {
-               // tokens = (qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ),""));
                {
                   QString qs = qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
                   tokens = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
@@ -2664,14 +2631,117 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
 
                for ( int k = 0; k < gaussian_type_size; k++ )
                {
-                  g.push_back( tokens[ k ].toDouble() );
+                  set_gaussians.back().push_back( tokens[ k ].toDouble() );
                }
             }
          }
-         if ( g.size() && !this_gaussian.isEmpty() )
+
+         // the sets of loaded files are used for them; the others, e.g. after the data were reprocessed and their
+         // names changed, can be imported for the files of the same I(t) q, or one of them as the starting Gaussians
+         vector < int > matched;
+         vector < int > unmatched;
+         for ( int s = 0; s < (int) set_names.size(); ++s )
          {
-            f_gaussians[ this_gaussian ] = g;
-            gaussians = g;
+            if ( !set_gaussians[ s ].size() )
+            {
+               continue;
+            }
+            if ( f_qs.count( set_names[ s ] ) )
+            {
+               matched.push_back( s );
+            } else {
+               unmatched.push_back( s );
+            }
+         }
+
+         map < int, QString > q_match;   // unmatched set -> the file of the same I(t) q
+         bool from_selected = false;
+         if ( unmatched.size() )
+         {
+            // the candidates are the selected files, if any, else the loaded ones, without a set of their own; a q
+            // that two candidates, or two sets, have in common is not matched
+            QRegularExpression rx_q( "_It_q(\\d+_\\d+)" );
+            QStringList candidates = all_selected_files();
+            from_selected = candidates.size() > 0;
+            if ( !from_selected )
+            {
+               for ( map < QString, vector < double > >::iterator it = f_qs.begin(); it != f_qs.end(); ++it )
+               {
+                  candidates << it->first;
+               }
+            }
+            map < QString, QStringList > files_by_q;
+            for ( int k = 0; k < (int) candidates.size(); ++k )
+            {
+               QRegularExpressionMatch m = rx_q.match( candidates[ k ] );
+               if ( m.hasMatch() && !set_names.contains( candidates[ k ] ) )
+               {
+                  files_by_q[ m.captured( 1 ) ] << candidates[ k ];
+               }
+            }
+            map < QString, int > sets_by_q;
+            for ( int s : unmatched )
+            {
+               QRegularExpressionMatch m = rx_q.match( set_names[ s ] );
+               if ( m.hasMatch() )
+               {
+                  sets_by_q[ m.captured( 1 ) ]++;
+               }
+            }
+            for ( int s : unmatched )
+            {
+               QRegularExpressionMatch m = rx_q.match( set_names[ s ] );
+               if ( m.hasMatch() &&
+                    sets_by_q[ m.captured( 1 ) ] == 1 &&
+                    files_by_q.count( m.captured( 1 ) ) &&
+                    files_by_q[ m.captured( 1 ) ].size() == 1 )
+               {
+                  q_match[ s ] = files_by_q[ m.captured( 1 ) ][ 0 ];
+               }
+            }
+         }
+
+         enum { IMPORT_SKIP, IMPORT_SAME_Q, IMPORT_START } import_choice = IMPORT_SKIP;
+         if ( unmatched.size() )
+         {
+            QString msg =
+               QString( us_tr( "%1 of the %2 %3 sets in %4 are for files that are not loaded.\n"
+                               "After the data are reprocessed (e.g. a different buffer subtraction or a baseline correction), "
+                               "the files' names differ.\n\n" ) )
+               .arg( unmatched.size() )
+               .arg( matched.size() + unmatched.size() )
+               .arg( gaussian_type_tag )
+               .arg( QFileInfo( filename ).fileName() );
+            if ( q_match.size() )
+            {
+               msg += QString( us_tr( "%1 of them are for an I(t) of the same q as one of the %2 files.\n\n" ) )
+                  .arg( q_match.size() )
+                  .arg( from_selected ? us_tr( "selected" ) : us_tr( "loaded" ) );
+            } else {
+               msg += QString( us_tr( "None of them is for an I(t) of the same q as one of the %1 files.\n\n" ) )
+                  .arg( from_selected ? us_tr( "selected" ) : us_tr( "loaded" ) );
+            }
+            msg += us_tr( "Their centers, widths, skewness and amplitudes can be imported anyway. They were fitted to differently "
+                          "processed data: check them carefully against the current I(t) before using them. "
+                          "Global Gaussians can then re-optimize them, or use them as they are." );
+
+            QMessageBox mb( QMessageBox::Warning, windowTitle(), msg, QMessageBox::NoButton, this );
+            QPushButton * pb_same_q = q_match.size() ? mb.addButton( us_tr( "Import for the files of the same q" ), QMessageBox::AcceptRole ) : (QPushButton *) 0;
+            QPushButton * pb_start  = mb.addButton( us_tr( "Import one set as the starting Gaussians" ), QMessageBox::AcceptRole );
+            QPushButton * pb_skip   = mb.addButton( us_tr( "Skip them" ), QMessageBox::RejectRole );
+            mb.setDefaultButton( pb_same_q ? pb_same_q : pb_start );
+            mb.setEscapeButton( pb_skip );
+            mb.exec();
+            if ( pb_same_q && mb.clickedButton() == pb_same_q )
+            {
+               import_choice = IMPORT_SAME_Q;
+            } else if ( mb.clickedButton() == pb_start ) {
+               import_choice = IMPORT_START;
+            }
+         }
+
+         vector < map < int, set < double > > > check_common;
+         auto add_common = [ & ]( const vector < double > & g ) {
             int this_gn_count = (int)( g.size() / gaussian_type_size );
             if ( (int) check_common.size() < this_gn_count )
             {
@@ -2685,11 +2755,62 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
                   check_common[ gn ][ k ].insert( g[ pos + k ] );
                }
             }
-            loaded++;
-            g.clear( );
+         };
+
+         unsigned int loaded   = 0;
+         unsigned int skipped  = 0;
+         unsigned int imported = 0;
+         for ( int s = 0; s < (int) set_names.size(); ++s )
+         {
+            const vector < double > & g = set_gaussians[ s ];
+            if ( !g.size() )
+            {
+               continue;
+            }
+            if ( f_qs.count( set_names[ s ] ) )
+            {
+               f_gaussians[ set_names[ s ] ] = g;
+               gaussians = g;
+               add_common( g );
+               loaded++;
+               continue;
+            }
+            if ( import_choice == IMPORT_SAME_Q && q_match.count( s ) )
+            {
+               f_gaussians[ q_match[ s ] ] = g;
+               gaussians = g;
+               add_common( g );
+               imported++;
+               editor_msg( "dark blue", QString( us_tr( "%1 of %2 imported for %3 (the same q)" ) ).arg( gaussian_type_tag ).arg( set_names[ s ] ).arg( q_match[ s ] ) );
+               continue;
+            }
+            if ( import_choice == IMPORT_START )
+            {
+               continue;
+            }
+            skipped++;
+            editor_msg( "red", QString( us_tr( "%1 for file %2 present but the file is not loaded, please load the file first" ) ).arg( gaussian_type_tag ).arg( set_names[ s ] ) );
+         }
+         if ( import_choice == IMPORT_START )
+         {
+            gaussians = set_gaussians[ unmatched[ 0 ] ];
+            editor_msg( "dark blue", QString( us_tr( "%1 %2 of %3 imported as the starting %4; the other %5 sets for files that are not loaded were not used" ) )
+                        .arg( gaussians.size() / gaussian_type_size )
+                        .arg( gaussian_type_tag )
+                        .arg( set_names[ unmatched[ 0 ] ] )
+                        .arg( gaussian_type_tag )
+                        .arg( unmatched.size() - 1 ) );
          }
          ggauss_msg_common( check_common );
          editor_msg( "black", QString( "%1 for %2 files loaded from %3" ).arg( gaussian_type_tag ).arg( loaded ).arg( filename ) );
+         if ( imported )
+         {
+            editor_msg( "dark red", QString( us_tr( "%1 for %2 files of the same q imported from %3: check them against the current I(t)" ) ).arg( gaussian_type_tag ).arg( imported ).arg( filename ) );
+         }
+         if ( import_choice == IMPORT_START )
+         {
+            editor_msg( "dark red", QString( us_tr( "The starting %1 were imported from %2: check them against the current I(t)" ) ).arg( gaussian_type_tag ).arg( filename ) );
+         }
          if ( skipped )
          {
             editor_msg( "red" , QString( "WARNING: %1 for %2 files SKIPPED from %3" ).arg( gaussian_type_tag ).arg( skipped ).arg( filename ) );
@@ -2752,6 +2873,11 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
 
    QRegularExpression rx_ok_line("^(\\s+(-|)|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
    rx_ok_line.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
+   // a file without a header line starts with its first point (the SAS window's loader reads it so too)
+   if ( row_offset == 1 && US_Saxs_Util::first_line_is_data( qv, q_offset, I_offset + 1 ) )
+   {
+      row_offset = 0;
+   }
    for ( int i = row_offset; i < (int) qv.size(); i++ )
    {
       QRegularExpressionMatch rx_ok_line_m = rx_ok_line.match( qv[i] );

@@ -1267,6 +1267,8 @@ bool US_Hydrodyn_Mals::plot_file( QString file,
                              );
 
             curveeb->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
+            // the bars are not listed in the legend
+            curveeb->setItemAttribute( QwtPlotItem::Legend, false );
             curveeb->attach( plot_dist );
 #endif
          }            
@@ -1319,7 +1321,7 @@ bool US_Hydrodyn_Mals::plot_file( QString file,
             long Iqeb = plot_dist->insertCurve( file );
             plot_dist->setCurveStyle( Iqeb, QwtCurve::Lines );
 #else
-            QwtPlotCurve *curveeb = new QwtPlotCurve( file );
+            QwtPlotCurve *curveeb = new QwtPlotCurve( UPU_EB_PREFIX + file );
             curveeb->setStyle( QwtPlotCurve::Lines );
 #endif
 
@@ -1343,6 +1345,8 @@ bool US_Hydrodyn_Mals::plot_file( QString file,
                            );
 
             curveeb->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
+            // the bars are not listed in the legend
+            curveeb->setItemAttribute( QwtPlotItem::Legend, false );
             curveeb->attach( plot_dist );
 #endif
          }            

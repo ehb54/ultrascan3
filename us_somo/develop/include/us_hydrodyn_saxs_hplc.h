@@ -451,6 +451,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QCheckBox     *cb_plot_errors_group;
 
       QBoxLayout    *l_plot_errors;
+      bool           plot_errors_shown;   // the residual plot was visible at the last resize_plots()
 
       QPushButton   *pb_timeshift;
       QPushButton   *pb_timescale;
@@ -1741,6 +1742,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       void resize_plots();
       void resize_guinier_plots();
+      void align_plot_errors();
 
       void color_rotate();
       void line_width();
