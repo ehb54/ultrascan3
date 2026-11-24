@@ -116,7 +116,7 @@ class US_UTIL_EXTERN US_SimCache
             }
 
             //! \brief Approximate bytes the simulation takes in the cache
-            qint64 bytes() const;
+            qint64      bytes() const;
 
             //! \brief Serialize the simulation (bit-exact), e.g. for a cache
             //!        in memory shared between processes:  the float form
