@@ -14,43 +14,18 @@ set(AUTOFLOW_HEADERS
 
 # Cross-directory sources exactly as specified in .pro file
 set(CROSS_DIR_SOURCES
-        ../us_2dsa/us_2dsa.cpp
-        ../us_2dsa/us_2dsa_process.cpp
-        ../us_2dsa/us_adv_analysis_2d.cpp
-        ../us_2dsa/us_analysis_control_2d.cpp
-        ../us_2dsa/us_plot_control_2d.cpp
-        ../us_2dsa/us_resplot_2d.cpp
-        ../us_2dsa/us_show_norm.cpp
-        ../us_2dsa/us_worker_2d.cpp
-        ../us_2dsa/us_worker_calcnorm.cpp
         ../us_abde/us_norm_profile.cpp
-        ../us_analysis_profile/us_analysis_profile.cpp
-        ../us_fit_meniscus/us_fit_meniscus.cpp
         ../us_mwl_species_fit/us_load_run_noise.cpp
         ../us_mwl_species_fit/us_mwl_sf_plot3d.cpp
         ../us_mwl_species_fit/us_mwl_species_fit.cpp
-        ../us_mwl_species_sim/us_mwl_species_sim.cpp
-        ../us_analysis_profile/us_anapro_utils.cpp
         )
 
 # Cross-directory headers from .pro file
 set(CROSS_DIR_HEADERS
-        ../us_2dsa/us_2dsa.h
-        ../us_2dsa/us_2dsa_process.h
-        ../us_2dsa/us_adv_analysis_2d.h
-        ../us_2dsa/us_analysis_control_2d.h
-        ../us_2dsa/us_plot_control_2d.h
-        ../us_2dsa/us_resplot_2d.h
-        ../us_2dsa/us_show_norm.h
-        ../us_2dsa/us_worker_2d.h
-        ../us_2dsa/us_worker_calcnorm.h
         ../us_abde/us_norm_profile.h
-        ../us_analysis_profile/us_analysis_profile.h
-        ../us_fit_meniscus/us_fit_meniscus.h
         ../us_mwl_species_fit/us_load_run_noise.h
         ../us_mwl_species_fit/us_mwl_sf_plot3d.h
         ../us_mwl_species_fit/us_mwl_species_fit.h
-        ../us_mwl_species_sim/us_mwl_species_sim.h
         )
 
 # Find UI and resource files
@@ -80,18 +55,18 @@ set_target_properties(us_autoflow_analysis PROPERTIES
 # Include directories for all the cross-directory headers
 target_include_directories(us_autoflow_analysis PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_2dsa
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_abde
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_analysis_profile
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_fit_meniscus
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_mwl_species_fit
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_mwl_species_sim
         )
 
 # Link libraries
 target_link_libraries(us_autoflow_analysis PRIVATE
         us_program_common
+        us_2dsa_objects
+        us_analysis_profile_objects
         us_edit_objects
+        us_fit_meniscus_objects
+        us_mwl_species_sim_objects
         Qt::DataVisualization
         )
 

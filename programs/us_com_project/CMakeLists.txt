@@ -17,10 +17,6 @@ set(CROSS_DIR_SOURCES
         ../us_experiment/us_exp_utils.cpp
         ../us_experiment/us_proto_ranges.cpp
 
-        # us_analysis_profile
-        ../us_analysis_profile/us_analysis_profile.cpp
-        ../us_analysis_profile/us_anapro_utils.cpp
-
         # us_xpn_viewer
         ../us_xpn_viewer/us_xpn_viewer_gui.cpp
         ../us_xpn_viewer/us_xpn_run_raw.cpp
@@ -28,9 +24,6 @@ set(CROSS_DIR_SOURCES
 
         # us_autoflow_analysis
         ../us_autoflow_analysis/us_autoflow_analysis.cpp
-
-        # us_fit_meniscus
-        ../us_fit_meniscus/us_fit_meniscus.cpp
 
         # shared edited-data loaders
         ../us_edited_data_loaders.cpp
@@ -57,20 +50,6 @@ set(CROSS_DIR_SOURCES
         # us_abde
         ../us_abde/us_norm_profile.cpp
 
-        # us_mwl_species_sim
-        ../us_mwl_species_sim/us_mwl_species_sim.cpp
-
-        # us_2dsa
-        ../us_2dsa/us_2dsa.cpp
-        ../us_2dsa/us_worker_calcnorm.cpp
-        ../us_2dsa/us_worker_2d.cpp
-        ../us_2dsa/us_show_norm.cpp
-        ../us_2dsa/us_resplot_2d.cpp
-        ../us_2dsa/us_plot_control_2d.cpp
-        ../us_2dsa/us_adv_analysis_2d.cpp
-        ../us_2dsa/us_2dsa_process.cpp
-        ../us_2dsa/us_analysis_control_2d.cpp
-
         # us_integral
         ../us_integral/us_integral.cpp
         ../us_integral/us_delete_models.cpp
@@ -79,12 +58,10 @@ set(CROSS_DIR_SOURCES
 # Cross-directory headers from .pro file
 set(CROSS_DIR_HEADERS
         ../us_experiment/us_experiment_gui_optima.h
-        ../us_analysis_profile/us_analysis_profile.h
         ../us_xpn_viewer/us_xpn_viewer_gui.h
         ../us_xpn_viewer/us_xpn_run_raw.h
         ../us_xpn_viewer/us_xpn_run_auc.h
         ../us_autoflow_analysis/us_autoflow_analysis.h
-        ../us_fit_meniscus/us_fit_meniscus.h
         ../us_reporter_gmp/us_reporter_gmp.h
         ../us_edited_data_loaders.h
         ../us_ddist_combine/us_ddist_combine.h
@@ -96,16 +73,6 @@ set(CROSS_DIR_HEADERS
         ../us_mwl_species_fit/us_mwl_sf_plot3d.h
         ../us_mwl_species_fit/us_load_run_noise.h
         ../us_abde/us_norm_profile.h
-        ../us_mwl_species_sim/us_mwl_species_sim.h
-        ../us_2dsa/us_2dsa.h
-        ../us_2dsa/us_worker_calcnorm.h
-        ../us_2dsa/us_worker_2d.h
-        ../us_2dsa/us_show_norm.h
-        ../us_2dsa/us_resplot_2d.h
-        ../us_2dsa/us_plot_control_2d.h
-        ../us_2dsa/us_adv_analysis_2d.h
-        ../us_2dsa/us_2dsa_process.h
-        ../us_2dsa/us_analysis_control_2d.h
         ../us_integral/us_integral.h
         ../us_integral/us_delete_models.h
         )
@@ -138,25 +105,25 @@ set_target_properties(us_com_project PROPERTIES
 target_include_directories(us_com_project PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_experiment
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_analysis_profile
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_xpn_viewer
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_autoflow_analysis
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_fit_meniscus
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_reporter_gmp
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_ddist_combine
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_pseudo3d_combine
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_esigner_gmp
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_mwl_species_fit
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_abde
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_mwl_species_sim
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_2dsa
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_integral
         )
 
 # Link libraries
 target_link_libraries(us_com_project PRIVATE
         us_program_common
+        us_2dsa_objects
+        us_analysis_profile_objects
         us_edit_objects
+        us_fit_meniscus_objects
+        us_mwl_species_sim_objects
         Qt::DataVisualization  # Required by .pro file
         )
 

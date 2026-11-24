@@ -16,8 +16,6 @@ set(REPORTER_GMP_HEADERS
 # Cross-directory sources as specified in .pro file
 set(CROSS_DIR_SOURCES
         ../us_abde/us_norm_profile.cpp
-        ../us_analysis_profile/us_analysis_profile.cpp
-        ../us_analysis_profile/us_anapro_utils.cpp
         ../us_ddist_combine/us_ddist_combine.cpp
         ../us_ddist_combine/us_select_rundd.cpp
         ../us_integral/us_delete_models.cpp
@@ -29,7 +27,6 @@ set(CROSS_DIR_SOURCES
 # Cross-directory headers from .pro file
 set(CROSS_DIR_HEADERS
         ../us_abde/us_norm_profile.h
-        ../us_analysis_profile/us_analysis_profile.h
         ../us_ddist_combine/us_ddist_combine.h
         ../us_ddist_combine/us_select_rundd.h
         ../us_integral/us_delete_models.h
@@ -69,7 +66,6 @@ set_target_properties(us_reporter_gmp PROPERTIES
 target_include_directories(us_reporter_gmp PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_abde
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_analysis_profile
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_ddist_combine
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_integral
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_pseudo3d_combine
@@ -78,6 +74,7 @@ target_include_directories(us_reporter_gmp PRIVATE
 # Link libraries
 target_link_libraries(us_reporter_gmp PRIVATE
         us_program_common
+        us_analysis_profile_objects
         Qt::DataVisualization
         )
 

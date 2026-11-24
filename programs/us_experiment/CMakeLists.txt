@@ -14,17 +14,12 @@ set(EXPERIMENT_HEADERS
 
 # Cross-directory sources as specified in .pro file
 set(CROSS_DIR_SOURCES
-        # us_analysis_profile
-        ../us_analysis_profile/us_analysis_profile.cpp
-        ../us_analysis_profile/us_anapro_utils.cpp
-
         # us_esigner_gmp
         ../us_esigner_gmp/us_esigner_gmp.cpp
         )
 
 # Cross-directory headers from .pro file
 set(CROSS_DIR_HEADERS
-        ../us_analysis_profile/us_analysis_profile.h
         ../us_esigner_gmp/us_esigner_gmp.h
         )
 
@@ -55,13 +50,13 @@ set_target_properties(us_experiment PROPERTIES
 # Include directories for all the cross-directory headers
 target_include_directories(us_experiment PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_analysis_profile
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_esigner_gmp
         )
 
 # Link libraries
 target_link_libraries(us_experiment PRIVATE
         us_program_common
+        us_analysis_profile_objects
         )
 
 # Install

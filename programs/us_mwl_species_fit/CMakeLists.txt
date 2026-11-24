@@ -6,22 +6,10 @@ file(GLOB MWL_HEADERS "*.h")
 file(GLOB MWL_FORMS "*.ui")
 file(GLOB MWL_RESOURCES "*.qrc")
 
-# This program needs US_AnalysisProfileGui class
-set(CROSS_DIR_SOURCES
-        ../us_analysis_profile/us_analysis_profile.cpp
-        ../us_analysis_profile/us_anapro_utils.cpp
-        )
-
-set(CROSS_DIR_HEADERS
-        ../us_analysis_profile/us_analysis_profile.h
-        )
-
 # Create the executable
 add_executable(us_mwl_species_fit
         ${MWL_SOURCES}
         ${MWL_HEADERS}
-        ${CROSS_DIR_SOURCES}
-        ${CROSS_DIR_HEADERS}
         ${MWL_FORMS}
         ${MWL_RESOURCES}
         )
@@ -39,12 +27,12 @@ set_target_properties(us_mwl_species_fit PROPERTIES
 # Include directories
 target_include_directories(us_mwl_species_fit PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_analysis_profile
         )
 
 # Link libraries - Qt DataVisualization is critical for this program
 target_link_libraries(us_mwl_species_fit PRIVATE
         us_program_common
+        us_analysis_profile_objects
         Qt::DataVisualization
         )
 
