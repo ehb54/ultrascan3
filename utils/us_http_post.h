@@ -5,6 +5,9 @@
 #include "us_extern.h"
 
 //! \brief A text only class to manage HTTP requests
+//!
+//! Create it with new and keep no pointer to it: it emits US_Http_post_response()
+//! once and deletes itself when the request has finished.
 
 class US_UTIL_EXTERN US_HttpPost : public QObject
 {
