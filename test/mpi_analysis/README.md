@@ -76,6 +76,7 @@ leave the job's input files in the work directory.
 
 | Case | Input | Expected |
 |---|---|---|
+| `input_pcsa_mc_shutdown`, `input_pcsa_mc_shutdown_uneven`, `input_pcsa_mc_shutdown_idle` | PCSA Monte Carlo on 2, 3 and 4 ranks, including idle workers | clean MPI exit, finite fits and every requested MC model retained |
 | `input_hpcxml_missing` | no hpcrequest XML in the archive | abort "Could not find unique hpc input file" |
 | `input_hpcxml_two` | two hpcrequest files in the archive | abort "Could not find unique hpc input file" |
 | `input_hpcxml_named` | the same, `-hpcrequest <file>` | result as `2dsa_basic` |

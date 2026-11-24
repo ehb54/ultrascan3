@@ -350,6 +350,7 @@ def input_case(base, **changes):
 #   within      boxes (s_min, s_max, f/f0_min, f/f0_max; s in S): every solute
 #               must lie inside one of them
 #   leaves      boxes:  at least one solute must lie outside all of them
+#   mc_models   number of models in the single Monte Carlo model file
 #   has_noise   the result must hold noise vectors
 #   log_distinct  (regex, n): at least n matches, all different
 #   log_agree   (regex, regex, rel. tol.): the first numbers each matches
@@ -358,6 +359,16 @@ def input_case(base, **changes):
 # reported as XFAIL while it fails and as an error once it passes, so that
 # the marker gets removed.
 INPUT_CASES = {
+    # #1316: RESULTS_MC must not leave a final READY queued at shutdown.
+    "input_pcsa_mc_shutdown": input_case(
+        "pcsa_sl", params=lambda p: dict(p, mc_iterations="3"),
+        expect={"finite": True, "mc_models": 3}),
+    "input_pcsa_mc_shutdown_uneven": input_case(
+        "pcsa_sl", np=3, params=lambda p: dict(p, mc_iterations="5"),
+        expect={"finite": True, "mc_models": 5}),
+    "input_pcsa_mc_shutdown_idle": input_case(
+        "pcsa_sl", np=4, params=lambda p: dict(p, mc_iterations="2"),
+        expect={"finite": True, "mc_models": 2}),
     # A9: an abort before the inputs are read archives and removes the
     #     files of the work directory (the job's input files)
     "input_hpcxml_missing": input_case(
@@ -1048,6 +1059,12 @@ def check_input_case(name, case, args, reference):
         got = job_statistics(results).get(key)
         if got != value:
             errors.append("job_statistics %s=%s, expected %s" % (key, got, value))
+    if "mc_models" in expect:
+        counts = [len(models) for filename, models in summary["models"].items()
+                  if ".mcN" in filename]
+        if counts != [expect["mc_models"]]:
+            errors.append("Monte Carlo model counts %s, expected [%s]"
+                          % (counts, expect["mc_models"]))
     errors += check_fit(summary, expect)
     if expect.get("has_noise") and not summary["noises"]:
         errors.append("result holds no noise")

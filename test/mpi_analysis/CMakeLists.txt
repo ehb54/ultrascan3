@@ -94,6 +94,9 @@ set(US_MPI_CASES
 
 # Input-handling cases: defective or unusual job input (see INPUT_CASES)
 set(US_MPI_INPUT_CASES
+    input_pcsa_mc_shutdown
+    input_pcsa_mc_shutdown_uneven
+    input_pcsa_mc_shutdown_idle
     input_hpcxml_missing
     input_hpcxml_two
     input_hpcxml_named
