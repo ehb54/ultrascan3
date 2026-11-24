@@ -37,6 +37,13 @@ class US_GUI_EXTERN US_GuiUtil
       //!          not stop the PNG, but hides a PNG failure.
       static int save_plot( const QString&, const QwtPlot* );
 
+      //! \brief Show a warning that names the plot files that could not be written
+      //!
+      //! \param parent   Parent widget of the warning
+      //! \param unsaved  Files that could not be written; the first 10 are named
+      //! \returns true if a warning was shown, false if unsaved is empty
+      static bool warn_unsaved( QWidget* parent, const QStringList& unsaved );
+
       //! \brief Save a plot to a gzip-compressed SVG (.svgz) file
       //!
       //! \param filename Full path name of the file to produce. Its extension is replaced by ".svgz".
@@ -53,18 +60,12 @@ class US_GUI_EXTERN US_GuiUtil
       //!          2 if the file could not be written
       static int save_png( const QString&, const QwtPlot* );
 
-      //! \brief Show a warning that names the plot files that could not be written
-      //!
-      //! \param parent   Parent widget of the warning
-      //! \param unsaved  Files that could not be written; the first 10 are named
-      //! \returns true if a warning was shown, false if unsaved is empty
-      static bool warn_unsaved( QWidget* parent, const QStringList& unsaved );
+   //! \brief Save a plot to a CSV file
+   //!
+   //! \param filename Full path name of the file to produce
+   //! \param plot     A pointer to the plot to save
+   //! \returns A status flag:  0 if all-ok
+   static int save_csv( const QString&, const QwtPlot* );
 
-      //! \brief Save a plot to a CSV file
-      //!
-      //! \param filename Full path name of the file to produce
-      //! \param plot     A pointer to the plot to save
-      //! \returns A status flag:  0 if all-ok
-      static int  save_csv( const QString&, const QwtPlot* );
 };
 #endif
