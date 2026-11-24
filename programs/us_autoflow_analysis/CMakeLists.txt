@@ -25,12 +25,6 @@ set(CROSS_DIR_SOURCES
         ../us_2dsa/us_worker_calcnorm.cpp
         ../us_abde/us_norm_profile.cpp
         ../us_analysis_profile/us_analysis_profile.cpp
-        ../us_edit/us_edit.cpp
-        ../us_edit/us_edit_scan.cpp
-        ../us_edit/us_exclude_profile.cpp
-        ../us_edit/us_get_edit.cpp
-        ../us_edit/us_ri_noise.cpp
-        ../us_edit/us_select_lambdas.cpp
         ../us_fit_meniscus/us_fit_meniscus.cpp
         ../us_mwl_species_fit/us_load_run_noise.cpp
         ../us_mwl_species_fit/us_mwl_sf_plot3d.cpp
@@ -52,12 +46,6 @@ set(CROSS_DIR_HEADERS
         ../us_2dsa/us_worker_calcnorm.h
         ../us_abde/us_norm_profile.h
         ../us_analysis_profile/us_analysis_profile.h
-        ../us_edit/us_edit.h
-        ../us_edit/us_edit_scan.h
-        ../us_edit/us_exclude_profile.h
-        ../us_edit/us_get_edit.h
-        ../us_edit/us_ri_noise.h
-        ../us_edit/us_select_lambdas.h
         ../us_fit_meniscus/us_fit_meniscus.h
         ../us_mwl_species_fit/us_load_run_noise.h
         ../us_mwl_species_fit/us_mwl_sf_plot3d.h
@@ -95,7 +83,6 @@ target_include_directories(us_autoflow_analysis PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_2dsa
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_abde
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_analysis_profile
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_edit
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_fit_meniscus
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_mwl_species_fit
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_mwl_species_sim
@@ -104,6 +91,7 @@ target_include_directories(us_autoflow_analysis PRIVATE
 # Link libraries
 target_link_libraries(us_autoflow_analysis PRIVATE
         us_program_common
+        us_edit_objects
         Qt::DataVisualization
         )
 
