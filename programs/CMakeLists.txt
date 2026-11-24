@@ -208,7 +208,16 @@ if(WIN32)
 endif()
 
 # --------------------------------------------------------------------------
-# 4) Add all per-program subdirectories (APP path)
+# 4) Sources in programs/ itself that several programs link
+# --------------------------------------------------------------------------
+add_library(us_edited_data_loaders_objects OBJECT
+        us_edited_data_loaders.cpp
+        us_edited_data_loaders.h
+        )
+target_link_libraries(us_edited_data_loaders_objects PUBLIC us_program_common)
+
+# --------------------------------------------------------------------------
+# 5) Add all per-program subdirectories (APP path)
 # --------------------------------------------------------------------------
 if(NOT ENABLE_MPI)
     set(EXCLUDED_PROGRAMS us_mpi_analysis CMakeFiles generated)
@@ -231,6 +240,10 @@ if(APPLE)
         us_assign_reviewers_gmp
         us_reassign_reviewers_gmp
     )
+
+    # us_experiment links us_esigner_gmp_objects. The us_esigner_gmp program
+    # itself stays out of the default build and the package.
+    add_subdirectory(us_esigner_gmp EXCLUDE_FROM_ALL)
 endif()
 
 file(GLOB program_dirs LIST_DIRECTORIES true RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*")

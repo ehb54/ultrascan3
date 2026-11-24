@@ -12,17 +12,6 @@ set(EXPERIMENT_HEADERS
         us_experiment_gui_optima.h
         )
 
-# Cross-directory sources as specified in .pro file
-set(CROSS_DIR_SOURCES
-        # us_esigner_gmp
-        ../us_esigner_gmp/us_esigner_gmp.cpp
-        )
-
-# Cross-directory headers from .pro file
-set(CROSS_DIR_HEADERS
-        ../us_esigner_gmp/us_esigner_gmp.h
-        )
-
 # Find UI and resource files
 file(GLOB EXPERIMENT_FORMS "*.ui")
 file(GLOB EXPERIMENT_RESOURCES "*.qrc")
@@ -31,8 +20,6 @@ file(GLOB EXPERIMENT_RESOURCES "*.qrc")
 add_executable(us_experiment
         ${EXPERIMENT_SOURCES}
         ${EXPERIMENT_HEADERS}
-        ${CROSS_DIR_SOURCES}
-        ${CROSS_DIR_HEADERS}
         ${EXPERIMENT_FORMS}
         ${EXPERIMENT_RESOURCES}
         )
@@ -50,13 +37,13 @@ set_target_properties(us_experiment PROPERTIES
 # Include directories for all the cross-directory headers
 target_include_directories(us_experiment PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_esigner_gmp
         )
 
 # Link libraries
 target_link_libraries(us_experiment PRIVATE
         us_program_common
         us_analysis_profile_objects
+        us_esigner_gmp_objects
         )
 
 # Install

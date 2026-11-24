@@ -4,35 +4,21 @@
 set(REPORTER_GMP_SOURCES
         us_reporter_gmp_main.cpp
         us_reporter_gmp.cpp
-        ../us_edited_data_loaders.cpp
         )
 
 set(REPORTER_GMP_HEADERS
         us_reporter_gmp.h
         us_reporter_gmp_duration.h
-        ../us_edited_data_loaders.h
         )
 
 # Cross-directory sources as specified in .pro file
 set(CROSS_DIR_SOURCES
         ../us_abde/us_norm_profile.cpp
-        ../us_ddist_combine/us_ddist_combine.cpp
-        ../us_ddist_combine/us_select_rundd.cpp
-        ../us_integral/us_delete_models.cpp
-        ../us_integral/us_integral.cpp
-        ../us_pseudo3d_combine/us_pseudo3d_combine.cpp
-        ../us_pseudo3d_combine/us_remove_distros.cpp
         )
 
 # Cross-directory headers from .pro file
 set(CROSS_DIR_HEADERS
         ../us_abde/us_norm_profile.h
-        ../us_ddist_combine/us_ddist_combine.h
-        ../us_ddist_combine/us_select_rundd.h
-        ../us_integral/us_delete_models.h
-        ../us_integral/us_integral.h
-        ../us_pseudo3d_combine/us_pseudo3d_combine.h
-        ../us_pseudo3d_combine/us_remove_distros.h
         )
 
 # Find UI and resource files
@@ -66,15 +52,16 @@ set_target_properties(us_reporter_gmp PROPERTIES
 target_include_directories(us_reporter_gmp PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_abde
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_ddist_combine
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_integral
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_pseudo3d_combine
         )
 
 # Link libraries
 target_link_libraries(us_reporter_gmp PRIVATE
         us_program_common
         us_analysis_profile_objects
+        us_ddist_combine_objects
+        us_edited_data_loaders_objects
+        us_integral_objects
+        us_pseudo3d_combine_objects
         Qt::DataVisualization
         )
 

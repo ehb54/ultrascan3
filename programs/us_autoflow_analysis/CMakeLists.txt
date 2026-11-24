@@ -4,12 +4,10 @@
 set(AUTOFLOW_SOURCES
         us_autoflow_analysis_main.cpp
         us_autoflow_analysis.cpp
-        ../us_edited_data_loaders.cpp
         )
 
 set(AUTOFLOW_HEADERS
         us_autoflow_analysis.h
-        ../us_edited_data_loaders.h
         )
 
 # Cross-directory sources exactly as specified in .pro file
@@ -65,6 +63,7 @@ target_link_libraries(us_autoflow_analysis PRIVATE
         us_2dsa_objects
         us_analysis_profile_objects
         us_edit_objects
+        us_edited_data_loaders_objects
         us_fit_meniscus_objects
         us_mwl_species_sim_objects
         Qt::DataVisualization

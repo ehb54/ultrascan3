@@ -21,30 +21,11 @@ set(CROSS_DIR_SOURCES
         ../us_experiment/us_exp_utils.cpp
         ../us_experiment/us_proto_ranges.cpp
 
-        # us_xpn_viewer
-        ../us_xpn_viewer/us_xpn_viewer_gui.cpp
-        ../us_xpn_viewer/us_xpn_run_raw.cpp
-        ../us_xpn_viewer/us_xpn_run_auc.cpp
-
         # us_autoflow_analysis
         ../us_autoflow_analysis/us_autoflow_analysis.cpp
 
-        # shared edited-data loaders
-        ../us_edited_data_loaders.cpp
-
         # us_reporter_gmp
         ../us_reporter_gmp/us_reporter_gmp.cpp
-
-        # us_ddist_combine
-        ../us_ddist_combine/us_ddist_combine.cpp
-        ../us_ddist_combine/us_select_rundd.cpp
-
-        # us_pseudo3d_combine
-        ../us_pseudo3d_combine/us_pseudo3d_combine.cpp
-        ../us_pseudo3d_combine/us_remove_distros.cpp
-
-        # us_esigner_gmp
-        ../us_esigner_gmp/us_esigner_gmp.cpp
 
         # us_mwl_species_fit
         ../us_mwl_species_fit/us_mwl_species_fit.cpp
@@ -53,32 +34,17 @@ set(CROSS_DIR_SOURCES
 
         # us_abde
         ../us_abde/us_norm_profile.cpp
-
-        # us_integral
-        ../us_integral/us_integral.cpp
-        ../us_integral/us_delete_models.cpp
         )
 
 # Cross-directory headers from .pro file
 set(CROSS_DIR_HEADERS
         ../us_experiment/us_experiment_gui_optima.h
-        ../us_xpn_viewer/us_xpn_viewer_gui.h
-        ../us_xpn_viewer/us_xpn_run_raw.h
-        ../us_xpn_viewer/us_xpn_run_auc.h
         ../us_autoflow_analysis/us_autoflow_analysis.h
         ../us_reporter_gmp/us_reporter_gmp.h
-        ../us_edited_data_loaders.h
-        ../us_ddist_combine/us_ddist_combine.h
-        ../us_ddist_combine/us_select_rundd.h
-        ../us_pseudo3d_combine/us_pseudo3d_combine.h
-        ../us_pseudo3d_combine/us_remove_distros.h
-        ../us_esigner_gmp/us_esigner_gmp.h
         ../us_mwl_species_fit/us_mwl_species_fit.h
         ../us_mwl_species_fit/us_mwl_sf_plot3d.h
         ../us_mwl_species_fit/us_load_run_noise.h
         ../us_abde/us_norm_profile.h
-        ../us_integral/us_integral.h
-        ../us_integral/us_delete_models.h
         )
 
 # Find UI and resource files
@@ -111,15 +77,10 @@ target_include_directories(us_comproject_academic PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_com_project
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_experiment
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_xpn_viewer
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_autoflow_analysis
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_reporter_gmp
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_ddist_combine
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_pseudo3d_combine
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_esigner_gmp
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_mwl_species_fit
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_abde
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_integral
         )
 
 # Link libraries
@@ -127,9 +88,15 @@ target_link_libraries(us_comproject_academic PRIVATE
         us_program_common
         us_2dsa_objects
         us_analysis_profile_objects
+        us_ddist_combine_objects
         us_edit_objects
+        us_edited_data_loaders_objects
+        us_esigner_gmp_objects
         us_fit_meniscus_objects
+        us_integral_objects
         us_mwl_species_sim_objects
+        us_pseudo3d_combine_objects
+        us_xpn_viewer_objects
         Qt::DataVisualization
         )
 
