@@ -101,6 +101,7 @@ class US_EXTERN US_Hydrodyn_Hydro_Zeno : public QFrame
       QLineEdit *le_zeno_mesh_h;
       QCheckBox *cb_zeno_mesh_clean;
       QCheckBox *cb_zeno_mesh_fill_cavities;
+      QCheckBox *cb_zeno_mesh_view;
 
       QLabel    *lbl_zeno_repeats;
       QLineEdit *le_zeno_repeats;
@@ -148,6 +149,7 @@ class US_EXTERN US_Hydrodyn_Hydro_Zeno : public QFrame
       void update_zeno_mesh_h ( const QString &str );
       void set_zeno_mesh_clean();
       void set_zeno_mesh_fill_cavities();
+      void set_zeno_mesh_view();
 
       void set_zeno_cxx();
 

@@ -8,6 +8,7 @@
 #include <atomic>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -170,13 +171,11 @@ void write_msms( const std::string& base, const std::string& name, const Mesh& m
    close_out( f, pf );
 }
 
-// msroll's .c3p (vertices with normals, edges, triangles with their edges) and .c3v (areas and
-// volume; rcoal reads the area and volume of component 1 from its line 13).
-void write_c3p( const std::string& base, const std::string& name, const Mesh& m, int natoms, double probe,
-                double area, double volume ) {
+namespace {
+
+// The edges of the .c3p file, and each triangle's edge numbers.
+void c3p_edges( const Mesh& m, std::vector<long>& eid, std::vector<std::array<int, 2>>& edges ) {
    const long nt = long( m.tri.size() );
-   std::vector<long> eid;
-   std::vector<std::array<int, 2>> edges;
    if ( !number_edges_closed( m, eid, edges ) ) {
       // Not a closed oriented manifold: number the edges by sorting.
       std::vector<std::pair<uint64_t, long>> key( 3 * nt );
@@ -196,6 +195,18 @@ void write_c3p( const std::string& base, const std::string& name, const Mesh& m,
          eid[key[i].second] = long( edges.size() );
       }
    }
+}
+
+}  // namespace
+
+// msroll's .c3p (vertices with normals, edges, triangles with their edges) and .c3v (areas and
+// volume; rcoal reads the area and volume of component 1 from its line 13).
+void write_c3p( const std::string& base, const std::string& name, const Mesh& m, int natoms, double probe,
+                double area, double volume ) {
+   const long nt = long( m.tri.size() );
+   std::vector<long> eid;
+   std::vector<std::array<int, 2>> edges;
+   c3p_edges( m, eid, edges );
 
    std::string pc = base + ".c3p", pv = base + ".c3v";
    FILE* f = open_out( pc );
@@ -237,6 +248,36 @@ void write_c3p( const std::string& base, const std::string& name, const Mesh& m,
    std::fprintf( f, "\n" );
    std::fprintf( f, "    1  %10.3f %8.3f %8.3f %11.3f %11.3f %11.3f\n", c.x, c.y, c.z, volume, area, 0.0 );
    close_out( f, pv );
+}
+
+rcoal::Surface c3p_surface( const Mesh& m, double area, double volume ) {
+   // a value as write_c3p writes it, read back as rcoal reads it
+   auto written = []( double v, const char* format ) {
+      char buf[64];
+      std::snprintf( buf, sizeof buf, format, v );
+      return std::strtod( buf, nullptr );
+   };
+   std::vector<long> eid;
+   std::vector<std::array<int, 2>> edges;
+   c3p_edges( m, eid, edges );
+   rcoal::Surface s;
+   s.x.resize( m.x.size() + 1 );
+   for ( size_t v = 0; v < m.x.size(); ++v ) {
+      s.x[v + 1] = { written( m.x[v].x, "%15.8f" ), written( m.x[v].y, "%15.8f" ), written( m.x[v].z, "%15.8f" ) };
+   }
+   s.edges.reserve( edges.size() );
+   for ( const auto& e : edges ) {
+      s.edges.push_back( { e[0] + 1, e[1] + 1 } );
+   }
+   s.tri.reserve( m.tri.size() );
+   for ( const auto& t : m.tri ) {
+      s.tri.push_back( { t[0] + 1, t[1] + 1, t[2] + 1 } );
+      s.begin_area = s.begin_area + rcoal::tri_area( s.x[t[0] + 1], s.x[t[1] + 1], s.x[t[2] + 1] );
+   }
+   s.comp.assign( m.tri.size(), 1 );
+   s.true_area = written( area, "%11.3f" );
+   s.true_vol = written( volume, "%11.3f" );
+   return s;
 }
 
 // BEST's triangle format: N, area and volume, then the nine coordinates of each triangle.

@@ -133,6 +133,13 @@ struct Dyn {
 void clean_mesh( const SesModel& model, double h, const CleanOptions& opt, Mesh& m, CleanInfo& info ) {
    double t0 = now();
    info = CleanInfo();
+   // Progress: pass k takes a share 2^-k of the whole (later passes have less to do), and
+   // part( name, a, b ) starts the stage that takes the current pass from a to b.
+   Progress prog( opt.progress );
+   double pass_from = 0, pass_to = 0;
+   auto part = [&]( const char* name, double a, double b ) {
+      prog.stage( name, pass_from + ( pass_to - pass_from ) * a, pass_from + ( pass_to - pass_from ) * b );
+   };
    Dyn d( m );
    const double dmax = model.probe() + 2 * h;
    const double lmax = opt.collapse * h;
@@ -179,10 +186,16 @@ void clean_mesh( const SesModel& model, double h, const CleanOptions& opt, Mesh&
    for ( int pass = 0; pass < opt.passes; ++pass ) {
       long collapsed = 0, flipped = 0;
       ++info.passes;
+      {
+         const double all = 1 - std::ldexp( 1.0, -opt.passes );
+         pass_from = ( 1 - std::ldexp( 1.0, -pass ) ) / all;
+         pass_to = ( 1 - std::ldexp( 1.0, -( pass + 1 ) ) ) / all;
+      }
 
       double ts = now();
       // Edge collapses, shortest first.
       // Short edges, and the two edges at the obtuse corner of a degenerate cap (whatever their length).
+      part( "collapses", 0, 0.1 );
       std::vector<std::pair<double, std::pair<int, int>>> edges;
       {
          std::vector<std::vector<std::pair<double, std::pair<int, int>>>> mine_t( threads() );
@@ -207,7 +220,7 @@ void clean_mesh( const SesModel& model, double h, const CleanOptions& opt, Mesh&
                   mine.push_back( { l, { std::min( a, b ), std::max( a, b ) } } );
                }
             }
-         }, 1024 );
+         }, 1024, &prog );
          for ( const auto& mine : mine_t ) {
             edges.insert( edges.end(), mine.begin(), mine.end() );
          }
@@ -220,6 +233,7 @@ void clean_mesh( const SesModel& model, double h, const CleanOptions& opt, Mesh&
          int atom, feature;
          bool ok;
       };
+      part( "collapses", 0.1, 0.36 );
       std::vector<Mid> mids( edges.size() );
       parallel_for( long( edges.size() ), [&]( long k, int ) {
          Mid& md = mids[k];
@@ -229,7 +243,7 @@ void clean_mesh( const SesModel& model, double h, const CleanOptions& opt, Mesh&
          md.atom = -1;
          md.feature = F_NONE;
          md.ok = project( model, dmax, md.x, md.n, md.atom, md.feature );
-      }, 256 );
+      }, 256, &prog );
       // Collapses run in parallel over spatial cells coloured like a 3-D checkerboard: within one colour
       // the cells are apart, and an edge is collapsed in its cell only if every vertex the collapse
       // reads or writes belongs to that cell.  A triangle that another thread changes has all its
@@ -384,7 +398,8 @@ void clean_mesh( const SesModel& model, double h, const CleanOptions& opt, Mesh&
 
       // Cells: at least 16 h across, and no more than about 4096 over the mesh's box.  in_cells runs
       // fn( item, cell, buf ) for each item in two rounds over the cells, the second on a grid shifted by
-      // half a cell for the items the first deferred (fn returns 2), then serially (cell -1).
+      // half a cell for the items the first deferred (fn returns 2), then serially (cell -1).  It reports
+      // its progress as the stage `name`, from a to b of the pass.
       Vec3 lo = m.x[0], hi = m.x[0];
       for ( size_t v = 0; v < m.x.size(); ++v ) {
          if ( d.valive[v] ) {
@@ -401,7 +416,8 @@ void clean_mesh( const SesModel& model, double h, const CleanOptions& opt, Mesh&
       }
       const int ncells = nc3[0] * nc3[1] * nc3[2];
       long deferred_total = 0;
-      auto in_cells = [&]( std::vector<size_t> todo, auto&& first_vertex, auto&& fn ) {
+      auto in_cells = [&]( std::vector<size_t> todo, auto&& first_vertex, auto&& fn, const char* name, double a,
+                           double b ) {
          Buf total;
          std::vector<size_t> deferred;
          for ( int round = 0; round < 2 && !todo.empty(); ++round ) {
@@ -421,6 +437,10 @@ void clean_mesh( const SesModel& model, double h, const CleanOptions& opt, Mesh&
             }
             deferred.clear();
             for ( int colour = 0; colour < 8; ++colour ) {
+               // The first round takes 90% of the stage, the second 8%, the serial pass the rest.
+               const double r0 = round == 0 ? 0 : 0.9, r1 = round == 0 ? 0.9 : 0.98;
+               part( name, a + ( b - a ) * ( r0 + ( r1 - r0 ) * colour / 8 ),
+                     a + ( b - a ) * ( r0 + ( r1 - r0 ) * ( colour + 1 ) / 8 ) );
                std::vector<int> cells;
                for ( int c = 0; c < ncells; ++c ) {
                   int ix = c % nc3[0], iy = ( c / nc3[0] ) % nc3[1], iz = c / ( nc3[0] * nc3[1] );
@@ -436,7 +456,7 @@ void clean_mesh( const SesModel& model, double h, const CleanOptions& opt, Mesh&
                         defs[thread].push_back( it );
                      }
                   }
-               } );
+               }, 1, &prog );
                for ( size_t th = 0; th < bufs.size(); ++th ) {
                   total.add( bufs[th] );
                   deferred.insert( deferred.end(), defs[th].begin(), defs[th].end() );
@@ -446,8 +466,12 @@ void clean_mesh( const SesModel& model, double h, const CleanOptions& opt, Mesh&
             todo.swap( deferred );
          }
          deferred_total += long( todo.size() );
-         for ( size_t it : todo ) {
-            fn( it, -1, total );
+         part( name, a + ( b - a ) * 0.98, b );
+         for ( size_t k = 0; k < todo.size(); ++k ) {
+            fn( todo[k], -1, total );
+            if ( ( ( k + 1 ) & 255 ) == 0 ) {
+               prog.at( double( k + 1 ) / double( todo.size() ) );
+            }
          }
          return total;
       };
@@ -457,7 +481,8 @@ void clean_mesh( const SesModel& model, double h, const CleanOptions& opt, Mesh&
          for ( size_t ei = 0; ei < edges.size(); ++ei ) {
             todo[ei] = ei;
          }
-         Buf r = in_cells( todo, [&]( size_t ei ) { return edges[ei].second.first; }, collapse_edge );
+         Buf r = in_cells( todo, [&]( size_t ei ) { return edges[ei].second.first; }, collapse_edge, "collapses",
+                           0.36, 0.6 );
          collapsed += r.collapsed;
          info.rejected_link += r.rejected_link;
          info.rejected_shape += r.rejected_shape;
@@ -541,17 +566,18 @@ void clean_mesh( const SesModel& model, double h, const CleanOptions& opt, Mesh&
          return 0;
       };
       {
+         part( "flips", 0.6, 0.62 );
          std::vector<char> poor_t( m.tri.size(), 0 );
          parallel_for( long( m.tri.size() ), [&]( long t, int ) {
             poor_t[t] = d.talive[t] && angle_with( int( t ), -1, Vec3() ) < target;
-         }, 1024 );
+         }, 1024, &prog );
          std::vector<size_t> todo;
          for ( size_t t = 0; t < m.tri.size(); ++t ) {
             if ( poor_t[t] ) {
                todo.push_back( t );
             }
          }
-         Buf r = in_cells( todo, [&]( size_t t ) { return m.tri[t][0]; }, flip_tri );
+         Buf r = in_cells( todo, [&]( size_t t ) { return m.tri[t][0]; }, flip_tri, "flips", 0.62, 0.75 );
          flipped += r.flipped;
       }
       info.seconds_flip += now() - ts;
@@ -565,6 +591,7 @@ void clean_mesh( const SesModel& model, double h, const CleanOptions& opt, Mesh&
          std::vector<int> colour( m.x.size(), -1 );
          std::vector<std::vector<int>> classes;
          std::vector<char> used, poor_v( m.x.size(), 0 );
+         part( "smoothing", 0.75, 0.78 );
          parallel_for( long( m.x.size() ), [&]( long v, int ) {
             if ( !d.valive[v] ) {
                return;
@@ -576,8 +603,12 @@ void clean_mesh( const SesModel& model, double h, const CleanOptions& opt, Mesh&
                   break;
                }
             }
-         }, 1024 );
+         }, 1024, &prog );
+         part( "smoothing", 0.78, 0.83 );
          for ( size_t v = 0; v < m.x.size(); ++v ) {
+            if ( ( ( v + 1 ) & 65535 ) == 0 ) {
+               prog.at( double( v + 1 ) / double( m.x.size() ) );
+            }
             if ( !poor_v[v] ) {
                continue;
             }
@@ -600,8 +631,14 @@ void clean_mesh( const SesModel& model, double h, const CleanOptions& opt, Mesh&
          }
          std::vector<std::vector<int>> nl_t( threads() );
          std::vector<long> moved_t( threads(), 0 );
+         double all = 0, sofar = 0;
+         for ( const std::vector<int>& cls : classes ) {
+            all += double( cls.size() );
+         }
          for ( const std::vector<int>& cls : classes ) {
             {
+               part( "smoothing", 0.83 + 0.17 * sofar / all, 0.83 + 0.17 * ( sofar + double( cls.size() ) ) / all );
+               sofar += double( cls.size() );
                parallel_for( long( cls.size() ), [&]( long i, int thread ) {
                   std::vector<int>& nl = nl_t[thread];
                   int v = cls[i];
@@ -639,7 +676,7 @@ void clean_mesh( const SesModel& model, double h, const CleanOptions& opt, Mesh&
                   m.atom[v] = at;
                   m.feature[v] = fe;
                   ++moved_t[thread];
-               }, 64 );
+               }, 64, &prog );
             }
          }
          for ( long k : moved_t ) {

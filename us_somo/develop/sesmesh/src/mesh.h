@@ -22,6 +22,7 @@
 #include <array>
 #include <vector>
 
+#include "parallel.h"
 #include "ses.h"
 
 namespace sesmesh {
@@ -37,6 +38,7 @@ struct Mesh {
 struct MeshOptions {
    double h = 0.2;              // grid spacing (A)
    bool fill_cavities = true;
+   ProgressFn progress;         // progress reports and stop requests (parallel.h); none if empty
 };
 
 struct BuildInfo {
@@ -48,7 +50,7 @@ struct BuildInfo {
    double seconds_classify = 0, seconds_nodes = 0, seconds_fill = 0, seconds_vertices = 0, seconds_triangles = 0;
 };
 
-// Throws std::runtime_error on failure.
+// Throws std::runtime_error on failure, Cancelled when opt.progress asks it to stop.
 void build_mesh( const SesModel& model, const MeshOptions& opt, Mesh& mesh, BuildInfo& info );
 
 struct ComponentInfo {
@@ -73,7 +75,8 @@ struct MeshCheck {
    }
 };
 
-MeshCheck check_mesh( const Mesh& mesh );
+// With a progress function, throws Cancelled when it asks the check to stop.
+MeshCheck check_mesh( const Mesh& mesh, const ProgressFn& progress = ProgressFn() );
 
 // Area and volume only (the polyhedron's), as check_mesh computes them.
 void mesh_area_volume( const Mesh& mesh, double& area, double& volume );
