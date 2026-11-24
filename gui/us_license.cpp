@@ -397,6 +397,12 @@ void US_License::update( void )
     return;
   }
 
+  // Nothing is sent or saved unless the registration server can be reached
+  if ( !server_reachable() )
+  {
+     return;
+  }
+
   // If the email address has changed, just do a normal request.
   QStringList license = US_Settings::license();
 
@@ -607,4 +613,62 @@ QString US_License::trim( const QString& st )
    return s;
 }
 
+// Can the registration server be reached on port 443 (HTTPS)?  This asks for
+// the small static file the main window reads its notices from, the same way
+// US_HttpPost sends a registration: through the same proxy, with the same TLS
+// settings.  Any HTTP answer means the port is open.  Otherwise the user is
+// told why, and update() stops before anything is sent or saved.
+bool US_License::server_reachable( void )
+{
+   const int         timeout_s = 15;
+   const QUrl        url( "https://ultrascan.aucsolutions.com/notices.json" );
+   QNetworkRequest   request( url );
+   QSslConfiguration conf = request.sslConfiguration();
 
+   conf.setPeerVerifyMode( QSslSocket::VerifyNone ); // as in US_HttpPost
+   request.setSslConfiguration( conf );
+
+   QNetworkAccessManager manager;
+   QEventLoop            loop;
+   QTimer                timer;
+   QNetworkReply*        reply = manager.head( request );
+
+   timer.setSingleShot( true );
+   connect( &timer, &QTimer::timeout, reply, &QNetworkReply::abort );
+   connect( reply, &QNetworkReply::finished, &loop, &QEventLoop::quit );
+   timer.start( timeout_s * 1000 );
+
+   // Clicks and key presses wait until the check is done, so the dialog
+   // cannot be used or closed in the meantime
+   QApplication::setOverrideCursor( Qt::WaitCursor );
+   if ( !reply->isFinished() )
+   {
+      loop.exec( QEventLoop::ExcludeUserInputEvents );
+   }
+   QApplication::restoreOverrideCursor();
+
+   const bool reachable = reply->attribute( QNetworkRequest::HttpStatusCodeAttribute ).isValid();
+
+   if ( !reachable )
+   {
+      // Only the timer aborts the request
+      const QString why = reply->error() == QNetworkReply::OperationCanceledError
+                             ? tr( "No answer within %1 seconds." ).arg( timeout_s )
+                             : reply->errorString();
+
+      QMessageBox::warning( this,
+                            tr( "Connection Error" ),
+                            tr( "UltraScan cannot reach the registration server\n"
+                                "%1 on port %2 (HTTPS):\n"
+                                "%3\n\n"
+                                "Nothing has been sent or saved.\n\n"
+                                "Please check your network connection and try again.  "
+                                "If this keeps happening, a firewall or proxy may be "
+                                "blocking outgoing HTTPS to this server; your network "
+                                "administrator can allow it." )
+                               .arg( url.host(), QString::number( url.port( 443 ) ), why ) );
+   }
+
+   delete reply;
+   return reachable;
+}
