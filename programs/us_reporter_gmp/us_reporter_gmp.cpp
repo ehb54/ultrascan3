@@ -5821,7 +5821,7 @@ void US_ReporterGMP::loadNoises_whenAbsent( )
          qDebug() << "load_noise_whenAbsent(): ri_noise created: ID -- " << noiID;
          qDebug() << "load_noise_whenAbsent(): ri_noise.count: -- " << ri_noise.count;
       }
-	 
+
          descn         = nieGUIDs.at( 1 );
          QString mdlx2 = descn.section( ":", 2, 2 );
          int kenois    = ( mdlx1 == mdlx2 ) ? 2 : 1;
@@ -5841,7 +5841,7 @@ void US_ReporterGMP::loadNoises_whenAbsent( )
             qDebug() << "load_noise_whenAbsent(): Noise 2: noiID, loaded ri--" << noiID;
             qDebug() << "load_noise_whenAbsent(): Noise 2: noiID, loaded ri_noise.count --" << ri_noise.count;
          }
-	 }
+    }
 
       }
       else
