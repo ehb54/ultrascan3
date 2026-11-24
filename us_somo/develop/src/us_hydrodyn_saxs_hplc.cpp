@@ -4013,62 +4013,75 @@ bool US_Hydrodyn_Saxs_Hplc::get_peak( QString file, double &peak, double &pos, b
       return false;
    }
       
-   peak = f_Is[ file ][ 0 ];
-   pos = f_qs[ file ][ 0 ];
-
-   double start_pos = le_gauss_fit_start->text().toDouble();
-   double end_pos   = le_gauss_fit_end  ->text().toDouble();
-   
-   if ( le_gauss_fit_start->text().isEmpty() ||
-        le_gauss_fit_start->text().toDouble() < f_qs[ file ][ 0 ] )
-   {
-      start_pos = f_qs[ file ][ 0 ];
+   int found = get_peak_s( f_qs[ file ], f_Is[ file ],
+                           le_gauss_fit_start->text().isEmpty(), le_gauss_fit_start->text().toDouble(),
+                           le_gauss_fit_end  ->text().isEmpty(), le_gauss_fit_end  ->text().toDouble(),
+                           full, peak, pos );
+   if ( found == 2 ) {
+      editor_msg( "red", QString( us_tr( "Warning: get_peak: file %1 has no points between the fitting start and end range" ) ).arg( file ) );
    }
-   if ( le_gauss_fit_end->text().isEmpty() ||
-        le_gauss_fit_end->text().toDouble() > f_qs[ file ].back() )
+   return found == 0;
+}
+
+int US_Hydrodyn_Saxs_Hplc::get_peak_s( const vector < double > & q, const vector < double > & I,
+                                       bool start_empty, double start, bool end_empty, double end,
+                                       bool full, double &peak, double &pos )
+{
+   peak = I[ 0 ];
+   pos = q[ 0 ];
+
+   double start_pos = start;
+   double end_pos   = end;
+   
+   if ( start_empty ||
+        start < q[ 0 ] )
    {
-      end_pos = f_qs[ file ].back();
+      start_pos = q[ 0 ];
+   }
+   if ( end_empty ||
+        end > q.back() )
+   {
+      end_pos = q.back();
    }
 
    if ( full ) {
-      start_pos = f_qs[ file ][ 0 ];
-      end_pos   = f_qs[ file ].back();
+      start_pos = q[ 0 ];
+      end_pos   = q.back();
    }
 
    if ( end_pos <= start_pos ) {
-      return false;
+      return 1;
    }
 
    // get 1st
    bool found_first = false;
    unsigned int i = 0;
-   for ( ; i < ( unsigned int ) f_Is[ file ].size(); ++i ) {
-      double this_pos = f_qs[ file ][ i ];
+   for ( ; i < ( unsigned int ) I.size(); ++i ) {
+      double this_pos = q[ i ];
       if ( this_pos >= start_pos &&
            this_pos <= end_pos ) {
          found_first = true;
-         peak = f_Is[ file ][ i ];
+         peak = I[ i ];
          pos  = this_pos;
          break;
       }
    }
 
    if ( !found_first ) {
-      editor_msg( "red", QString( us_tr( "Warning: get_peak: file %1 has no points between the fitting start and end range" ) ).arg( file ) );
-      return false;
+      return 2;
    }
 
-   for ( ; i < ( unsigned int ) f_Is[ file ].size(); i++ )
+   for ( ; i < ( unsigned int ) I.size(); i++ )
    {
-      double this_pos = f_qs[ file ][ i ];
+      double this_pos = q[ i ];
       if ( this_pos <= end_pos ) {
-         if ( peak < f_Is[ file ][ i ] ) {
-            peak = f_Is[ file ][ i ];
+         if ( peak < I[ i ] ) {
+            peak = I[ i ];
             pos  = this_pos;
          }
       }
    }
-   return true;
+   return 0;
 }
 
 void US_Hydrodyn_Saxs_Hplc::smooth( QStringList files )
@@ -8197,24 +8210,37 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q()
 
 vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian_sum( vector < double > t, vector < double > g )
 {
+   return compute_gaussian_sum_s( t, g, gaussian_type, gaussian_type_size, dist1_active, dist2_active, &compute_gaussian_sum_partials );
+}
+
+vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian_sum_s( const vector < double > & t, const vector < double > & g,
+                                                                  int gtype, int gtype_size, bool d1_active, bool d2_active,
+                                                                  vector < vector < double > > * partials )
+{
    vector < double > result( t.size() );
    for ( unsigned int i = 0; i < ( unsigned int ) result.size(); i++ )
    {
       result[ i ] = 0e0;
    }
 
-   vector < double > g_use( gaussian_type_size );
+   vector < double > g_use( gtype_size );
    vector < double > result_partial;
-   compute_gaussian_sum_partials.clear( );
-
-   for ( unsigned int j = 0; j < ( unsigned int ) g.size(); j += gaussian_type_size )
+   if ( partials )
    {
-      for ( int i = 0; i < (int) gaussian_type_size; ++i )
+      partials->clear( );
+   }
+
+   for ( unsigned int j = 0; j < ( unsigned int ) g.size(); j += gtype_size )
+   {
+      for ( int i = 0; i < (int) gtype_size; ++i )
       {
          g_use[ i ] = g[ i + j ];
       }
-      result_partial = compute_gaussian( t, g_use );
-      compute_gaussian_sum_partials.push_back( result_partial );
+      result_partial = compute_gaussian_s( t, g_use, gtype, d1_active, d2_active );
+      if ( partials )
+      {
+         partials->push_back( result_partial );
+      }
       for ( unsigned int i = 0; i < ( unsigned int ) t.size(); i++ )
       {
          result[ i ] += result_partial[ i ];
@@ -8227,6 +8253,12 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian_sum( vector < double >
 
 vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian( vector < double > t, vector < double > g )
 {
+   return compute_gaussian_s( t, g, gaussian_type, dist1_active, dist2_active );
+}
+
+vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian_s( const vector < double > & t, const vector < double > & g,
+                                                              int gtype, bool d1_active, bool d2_active )
+{
    vector < double > result( t.size() );
 
    double height = g[ 0 ];
@@ -8238,17 +8270,17 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian( vector < double > t, 
       width = 1e-3;
    }
 
-   gaussian_types use_gt = gaussian_type;
+   gaussian_types use_gt = (gaussian_types) gtype;
 
-   double dist1 = dist1_active ? g[ 3 ] : 0e0;
-   double dist2 = dist2_active ? g[ 4 ] : 0e0;
+   double dist1 = d1_active ? g[ 3 ] : 0e0;
+   double dist2 = d2_active ? g[ 4 ] : 0e0;
 
    /*
    cout << QString( "compute_gaussian use_qt is %1 dist1 %2 %3 dist2 %4 %5\n" )
       .arg( use_gt )
-      .arg( dist1_active ? "active" : "not active" )
+      .arg( d1_active ? "active" : "not active" )
       .arg( dist1 )
-      .arg( dist2_active ? "active" : "not active" )
+      .arg( d2_active ? "active" : "not active" )
       .arg( dist2 )
       ;
    */
@@ -8272,7 +8304,7 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian( vector < double > t, 
    }
 
    unsigned int q_size = ( unsigned int ) t.size();
-   double * q = &( t[ 0 ] );
+   const double * q = &( t[ 0 ] );
 
    switch( use_gt )
    {
@@ -8501,10 +8533,18 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian( vector < double > t, 
 double US_Hydrodyn_Saxs_Hplc::compute_gaussian_peak( QString file, vector < double > g )
 {
    // cout << QString( "gaussian peak file %1 current type %2\n" ).arg( file ).arg( gaussian_type );
-   vector < double > gs = compute_gaussian_sum( f_qs[ file ], g );
+   return compute_gaussian_peak_s( f_qs[ file ], g,
+                                   le_gauss_fit_start->text().toDouble(), le_gauss_fit_end->text().toDouble(),
+                                   gaussian_type, gaussian_type_size, dist1_active, dist2_active,
+                                   &compute_gaussian_sum_partials );
+}
 
-   double start_pos = le_gauss_fit_start->text().toDouble();
-   double end_pos   = le_gauss_fit_end  ->text().toDouble();
+double US_Hydrodyn_Saxs_Hplc::compute_gaussian_peak_s( const vector < double > & q, const vector < double > & g,
+                                                       double start_pos, double end_pos,
+                                                       int gtype, int gtype_size, bool d1_active, bool d2_active,
+                                                       vector < vector < double > > * partials )
+{
+   vector < double > gs = compute_gaussian_sum_s( q, g, gtype, gtype_size, d1_active, d2_active, partials );
 
    double gmax = gs[ 0 ];
 
@@ -8513,7 +8553,7 @@ double US_Hydrodyn_Saxs_Hplc::compute_gaussian_peak( QString file, vector < doub
    unsigned int i = 0;
 
    for ( ; i < ( unsigned int ) gs.size(); i++ ) {
-      double this_pos = f_qs[ file ][ i ];
+      double this_pos = q[ i ];
       if ( this_pos >= start_pos &&
            this_pos <= end_pos ) {
          // found_first = true;
@@ -8525,7 +8565,7 @@ double US_Hydrodyn_Saxs_Hplc::compute_gaussian_peak( QString file, vector < doub
 
    for (; i < ( unsigned int ) gs.size(); i++ )
    {
-      double this_pos = f_qs[ file ][ i ];
+      double this_pos = q[ i ];
       if ( this_pos <= end_pos ) {
          if ( gmax < gs[ i ] ) {
             gmax = gs[ i ];

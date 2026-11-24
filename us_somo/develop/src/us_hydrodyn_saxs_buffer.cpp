@@ -24,6 +24,8 @@
 #include <QMouseEvent>
 #include <QCloseEvent>
 #include <QGridLayout>
+#include <QDialog>
+#include <QDoubleValidator>
 #endif
 #include <QRegularExpression>
 #include <QTimer>
@@ -1233,6 +1235,7 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
 
    pb_similar_files      ->setEnabled( files_selected_count == 1 );
    pb_conc               ->setEnabled( lb_files->count() > 0 );
+   pb_psv_i0             ->setEnabled( files_selected_count > 0 );
    pb_clear_files        ->setEnabled( files_selected_count > 0 );
    pb_frames             ->setEnabled( files_selected_count >= 3 );
    pb_subtract_buffer    ->setEnabled( !lbl_buffer->text().isEmpty() && f_qs.count( lbl_buffer->text() ) &&
@@ -3626,6 +3629,136 @@ void US_Hydrodyn_Saxs_Buffer::conc()
                                                       this );
       conc_window->show();
    }
+}
+
+void US_Hydrodyn_Saxs_Buffer::psv_i0()
+{
+   QStringList files = all_selected_files();
+   if ( !files.size() )
+   {
+      return;
+   }
+
+   // start from the selection's values when all of its curves share them, else from the defaults
+   auto common = [ & ]( map < QString, double > & values, double fallback, bool & mixed )
+   {
+      mixed = false;
+      bool   any = false;
+      double v   = 0e0;
+      for ( int i = 0; i < (int) files.size(); ++i )
+      {
+         double this_v = ( values.count( files[ i ] ) && values[ files[ i ] ] > 0e0 ) ? values[ files[ i ] ] : 0e0;
+         if ( !any )
+         {
+            v   = this_v;
+            any = true;
+         } else if ( this_v != v ) {
+            mixed = true;
+         }
+      }
+      return ( mixed || v <= 0e0 ) ? fallback : v;
+   };
+
+   bool mixed_psv;
+   bool mixed_I0se;
+   double psv  = common( f_psv,  ((US_Hydrodyn *)us_hydrodyn)->saxs_options.psv,    mixed_psv  );
+   double I0se = common( f_I0se, ((US_Hydrodyn *)us_hydrodyn)->saxs_options.I0_exp, mixed_I0se );
+
+   QDialog dialog( this );
+   dialog.setObjectName( "psv_i0_dialog" );
+   dialog.setWindowTitle( title + us_tr( ": PSV and I0 standard" ) );
+   dialog.setPalette( PALET_FRAME );
+
+   QFont font( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 );
+
+   QLabel * lbl_info = new QLabel( QString( us_tr( "PSV and I0 standard (experimental) for the %1 selected curves." ) )
+                                   .arg( files.size() )
+                                   + ( mixed_psv || mixed_I0se ?
+                                       us_tr( "\nThey have different values now: Ok gives all of them the values below." ) : QString( "" ) ),
+                                   &dialog );
+   lbl_info->setWordWrap( true );
+   lbl_info->setFont( font );
+   lbl_info->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_info );
+
+   QLabel * lbl_psv  = new QLabel( us_tr( "PSV [cm^3/g]:" ), &dialog );
+   QLabel * lbl_I0se = new QLabel( us_tr( "I0 standard experimental [a.u.]:" ), &dialog );
+   for ( QLabel * l : { lbl_psv, lbl_I0se } )
+   {
+      l->setFont( font );
+      l->setPalette( PALET_NORMAL );
+      AUTFBACK( l );
+   }
+
+   QLineEdit * le_psv  = new QLineEdit( QString( "%1" ).arg( psv ), &dialog );
+   QLineEdit * le_I0se = new QLineEdit( QString( "%1" ).arg( I0se ), &dialog );
+   le_psv ->setObjectName( "le_psv" );
+   le_I0se->setObjectName( "le_I0se" );
+   for ( QLineEdit * le : { le_psv, le_I0se } )
+   {
+      QDoubleValidator * v = new QDoubleValidator( le );
+      v->setLocale( QLocale::c() );
+      v->setBottom( 0e0 );
+      le->setValidator( v );
+      le->setFont( font );
+      le->setPalette( PALET_NORMAL );
+      AUTFBACK( le );
+   }
+
+   QPushButton * pb_ok     = new QPushButton( us_tr( "Ok" ), &dialog );
+   QPushButton * pb_cancel = new QPushButton( us_tr( "Cancel" ), &dialog );
+   pb_ok->setObjectName( "pb_ok" );
+   for ( QPushButton * pb : { pb_ok, pb_cancel } )
+   {
+      pb->setFont( font );
+      pb->setPalette( PALET_PUSHB );
+   }
+   pb_ok->setDefault( true );
+   connect( pb_ok,     SIGNAL( clicked() ), &dialog, SLOT( accept() ) );
+   connect( pb_cancel, SIGNAL( clicked() ), &dialog, SLOT( reject() ) );
+
+   // both values must be positive numbers
+   auto ok_enable = [ = ]()
+   {
+      pb_ok->setEnabled( le_psv ->text().toDouble() > 0e0 && le_psv ->hasAcceptableInput() &&
+                         le_I0se->text().toDouble() > 0e0 && le_I0se->hasAcceptableInput() );
+   };
+   connect( le_psv,  &QLineEdit::textChanged, &dialog, ok_enable );
+   connect( le_I0se, &QLineEdit::textChanged, &dialog, ok_enable );
+   ok_enable();
+
+   QGridLayout * gl = new QGridLayout;
+   gl->addWidget( lbl_psv,  0, 0 );
+   gl->addWidget( le_psv,   0, 1 );
+   gl->addWidget( lbl_I0se, 1, 0 );
+   gl->addWidget( le_I0se,  1, 1 );
+
+   QHBoxLayout * hbl = new QHBoxLayout;
+   hbl->addWidget( pb_cancel );
+   hbl->addWidget( pb_ok );
+
+   QVBoxLayout * vbl = new QVBoxLayout( &dialog );
+   vbl->addWidget( lbl_info );
+   vbl->addLayout( gl );
+   vbl->addLayout( hbl );
+
+   if ( dialog.exec() != QDialog::Accepted )
+   {
+      return;
+   }
+
+   psv  = le_psv ->text().toDouble();
+   I0se = le_I0se->text().toDouble();
+
+   for ( int i = 0; i < (int) files.size(); ++i )
+   {
+      f_psv [ files[ i ] ] = psv;
+      f_I0se[ files[ i ] ] = I0se;
+   }
+   editor_msg( "dark blue", QString( us_tr( "PSV %1 [cm^3/g] and I0 standard %2 [a.u.] set for %3 curves" ) )
+               .arg( psv )
+               .arg( I0se )
+               .arg( files.size() ) );
 }
 
 map < QString, double > US_Hydrodyn_Saxs_Buffer::current_concs( bool quiet )
@@ -7494,6 +7627,7 @@ void US_Hydrodyn_Saxs_Buffer::disable_all()
 {
    pb_similar_files      ->setEnabled( false );
    pb_conc               ->setEnabled( false );
+   pb_psv_i0             ->setEnabled( false );
    pb_clear_files        ->setEnabled( false );
    pb_subtract_buffer    ->setEnabled( false );
    pb_frames             ->setEnabled( false );

@@ -10,6 +10,8 @@
 #include <QCheckBox>
 #include <QPushButton>
 #include <QCloseEvent>
+#include <QSplitter>
+#include <QScrollArea>
 #include <qwt_plot.h>
 #include <qwt_plot_curve.h>
 #include <qwt_plot_marker.h>
@@ -116,8 +118,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer_Frames : public QFrame
       US_Plot *                       usp_plot;
       ScrollZoomer *                  plot_zoomer;
       mQwtPlot *                      plot_chi2;
+      QSplitter *                     qs_plots;
       US_Plot *                       usp_plot_chi2;
       QLabel *                        lbl_stats;
+      QScrollArea *                   sa_stats;
       QPushButton *                   pb_help;
       QPushButton *                   pb_select_r1;
       QPushButton *                   pb_select_both;

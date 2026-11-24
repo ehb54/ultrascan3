@@ -174,6 +174,33 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
                              const QString     & tag
                              );
 
+      // the computations of compute_gaussian(), compute_gaussian_sum(), compute_gaussian_peak(), get_peak() and
+      // pvalue() on given data and settings (gaussian_type as gaussian_types), without the window's state, so that
+      // they also serve threads fitting curves in parallel; partials (may be 0) gets the single Gaussians
+      static vector < double > compute_gaussian_s( const vector < double > & t, const vector < double > & g,
+                                                   int gtype, bool d1_active, bool d2_active );
+      static vector < double > compute_gaussian_sum_s( const vector < double > & t, const vector < double > & g,
+                                                       int gtype, int gtype_size, bool d1_active, bool d2_active,
+                                                       vector < vector < double > > * partials );
+      static double            compute_gaussian_peak_s( const vector < double > & q, const vector < double > & g,
+                                                        double start_pos, double end_pos,
+                                                        int gtype, int gtype_size, bool d1_active, bool d2_active,
+                                                        vector < vector < double > > * partials );
+      // the largest I in the fitting range (start or end empty or outside the data: the data's first or last q;
+      // full: all of them): 0 found, 1 empty range, 2 no points in the range
+      static int               get_peak_s( const vector < double > & q, const vector < double > & I,
+                                           bool start_empty, double start, bool end_empty, double end,
+                                           bool full, double &peak, double &pos );
+      static bool              pvalue_s( const QString & file,
+                                         const vector < double > & fq,
+                                         const vector < double > & fI,
+                                         const vector < double > & g,
+                                         double q_start, double q_end,
+                                         int gtype, int gtype_size, bool d1_active, bool d2_active,
+                                         US_Saxs_Util * u,
+                                         vector < vector < double > > * partials,
+                                         double &P, QString &errormsg );
+
    private:
 #if QT_VERSION < 0x040000
       Mesh2MainWindow *plot3d_window;
@@ -1564,8 +1591,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       bool                         baseline_test_mode;
       void                         baseline_test_pos( int pos );
 
-      bool                         compute_f_gaussians( QString file, QWidget *hplc_fit_widget );
-      bool                         compute_f_gaussians_trial( QString file, QWidget *hplc_fit_widget );
 
       bool                         ggauss_recompute();
 

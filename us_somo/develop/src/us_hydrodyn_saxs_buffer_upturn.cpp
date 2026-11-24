@@ -17,7 +17,7 @@
 // the norm lmmin uses (defined in us_lm.cpp; set by lmcurve_fit, which is not used here)
 namespace LM
 {
-   extern double ( *lm_use_norm )( int n, const double * x );
+   extern thread_local double ( *lm_use_norm )( int n, const double * x );
 }
 
 // The model, with parameters transformed so that the fit is unconstrained:
