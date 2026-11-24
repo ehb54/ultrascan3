@@ -5841,8 +5841,7 @@ void US_ReporterGMP::loadNoises_whenAbsent( )
             qDebug() << "load_noise_whenAbsent(): Noise 2: noiID, loaded ri--" << noiID;
             qDebug() << "load_noise_whenAbsent(): Noise 2: noiID, loaded ri_noise.count --" << ri_noise.count;
          }
-    }
-
+         }
       }
       else
       {  // only 1:  just load it
