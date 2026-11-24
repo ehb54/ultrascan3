@@ -148,6 +148,26 @@ class DependencyLayersTest(unittest.TestCase):
         files["programs/us_beta/us_beta.pro"] += "SOURCES += ../us_alpha/us_alpha.cpp\n"
         self.assertRejected(files, "depend on each other in a cycle: us_alpha, us_beta")
 
+    def test_program_cycle_through_an_object_library_is_rejected(self):
+        files = dict(VALID)
+        files["programs/us_beta/CMakeLists.txt"] = "target_link_libraries(us_beta PRIVATE us_alpha_objects)\n"
+        self.assertRejected(files, "depend on each other in a cycle: us_alpha, us_beta")
+        files["programs/us_beta/CMakeLists.txt"] = "# target_link_libraries(us_beta PRIVATE us_alpha_objects)\n"
+        code, output = run_checker(files)
+        self.assertEqual(code, 0, output)
+
+    def test_program_cycle_through_an_object_library_in_programs_is_rejected(self):
+        files = dict(VALID)
+        files["programs/CMakeLists.txt"] = "add_library(us_shared_objects OBJECT us_shared.cpp)\n"
+        files["programs/us_shared.cpp"] = '#include "us_shared.h"\n'
+        files["programs/us_beta/CMakeLists.txt"] = "target_link_libraries(us_beta PRIVATE us_shared_objects)\n"
+        code, output = run_checker(files)
+        self.assertEqual(code, 0, output)
+        files["programs/us_shared.cpp"] = '#include "us_shared.h"\n#include "us_gamma.h"\n'
+        files["programs/us_gamma/us_gamma.h"] = ""
+        files["programs/us_gamma/CMakeLists.txt"] = "target_link_libraries(us_gamma PRIVATE us_shared_objects)\n"
+        self.assertRejected(files, "depend on each other in a cycle: ., us_gamma")
+
     def test_three_program_cycle_is_rejected(self):
         files = dict(VALID)
         files["programs/us_gamma/us_gamma.h"] = '#include "../us_alpha/us_alpha.h"\n'

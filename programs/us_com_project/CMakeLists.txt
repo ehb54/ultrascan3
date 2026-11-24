@@ -1,8 +1,7 @@
 # us_com_project
 
-# Main program sources from us_com_project directory
+# Program sources from us_com_project directory, without us_com_project_main.cpp
 set(COM_PROJECT_SOURCES
-        us_com_project_main.cpp
         us_com_project_gui.cpp
         )
 
@@ -10,37 +9,30 @@ set(COM_PROJECT_HEADERS
         us_com_project_gui.h
         )
 
-# Cross-directory sources as specified in .pro file
-set(CROSS_DIR_SOURCES
-        # us_experiment
-        ../us_experiment/us_experiment_gui_optima.cpp
-        ../us_experiment/us_exp_utils.cpp
-        ../us_experiment/us_proto_ranges.cpp
-
-        # us_autoflow_analysis
-        ../us_autoflow_analysis/us_autoflow_analysis.cpp
-
-        # us_reporter_gmp
-        ../us_reporter_gmp/us_reporter_gmp.cpp
-
-        # us_mwl_species_fit
-        ../us_mwl_species_fit/us_mwl_species_fit.cpp
-        ../us_mwl_species_fit/us_mwl_sf_plot3d.cpp
-        ../us_mwl_species_fit/us_load_run_noise.cpp
-
-        # us_abde
-        ../us_abde/us_norm_profile.cpp
+# Everything but main(); other programs link these objects instead of
+# compiling the sources again.
+add_library(us_com_project_objects OBJECT
+        ${COM_PROJECT_SOURCES}
+        ${COM_PROJECT_HEADERS}
         )
 
-# Cross-directory headers from .pro file
-set(CROSS_DIR_HEADERS
-        ../us_experiment/us_experiment_gui_optima.h
-        ../us_autoflow_analysis/us_autoflow_analysis.h
-        ../us_reporter_gmp/us_reporter_gmp.h
-        ../us_mwl_species_fit/us_mwl_species_fit.h
-        ../us_mwl_species_fit/us_mwl_sf_plot3d.h
-        ../us_mwl_species_fit/us_load_run_noise.h
-        ../us_abde/us_norm_profile.h
+set_target_properties(us_com_project_objects PROPERTIES
+        AUTOMOC_MOC_OPTIONS "--no-notes"
+        )
+
+target_include_directories(us_com_project_objects PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        )
+
+target_link_libraries(us_com_project_objects PUBLIC
+        us_program_common
+        us_autoflow_analysis_objects
+        us_edit_objects
+        us_esigner_gmp_objects
+        us_experiment_objects
+        us_reporter_gmp_objects
+        us_xpn_viewer_objects
+        Qt::DataVisualization  # Required by .pro file
         )
 
 # Find UI and resource files
@@ -49,10 +41,7 @@ file(GLOB COM_PROJECT_RESOURCES "*.qrc")
 
 # Create the executable (note: TARGET = us_comproject in .pro file)
 add_executable(us_com_project
-        ${COM_PROJECT_SOURCES}
-        ${COM_PROJECT_HEADERS}
-        ${CROSS_DIR_SOURCES}
-        ${CROSS_DIR_HEADERS}
+        us_com_project_main.cpp
         ${COM_PROJECT_FORMS}
         ${COM_PROJECT_RESOURCES}
         )
@@ -67,31 +56,26 @@ set_target_properties(us_com_project PROPERTIES
         AUTOMOC_MOC_OPTIONS "--no-notes"
         )
 
-# Include directories for all the cross-directory headers
-target_include_directories(us_com_project PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_experiment
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_autoflow_analysis
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_reporter_gmp
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_mwl_species_fit
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_abde
-        )
-
 # Link libraries
 target_link_libraries(us_com_project PRIVATE
         us_program_common
         us_2dsa_objects
+        us_abde_objects
         us_analysis_profile_objects
+        us_autoflow_analysis_objects
+        us_com_project_objects
         us_ddist_combine_objects
         us_edit_objects
         us_edited_data_loaders_objects
         us_esigner_gmp_objects
+        us_experiment_objects
         us_fit_meniscus_objects
         us_integral_objects
+        us_mwl_species_fit_objects
         us_mwl_species_sim_objects
         us_pseudo3d_combine_objects
+        us_reporter_gmp_objects
         us_xpn_viewer_objects
-        Qt::DataVisualization  # Required by .pro file
         )
 
 # Set the binary output name

@@ -1,8 +1,7 @@
 # us_reporter_gmp
 
-# Main program sources from us_reporter_gmp directory
+# Program sources from us_reporter_gmp directory, without us_reporter_gmp_main.cpp
 set(REPORTER_GMP_SOURCES
-        us_reporter_gmp_main.cpp
         us_reporter_gmp.cpp
         )
 
@@ -11,15 +10,34 @@ set(REPORTER_GMP_HEADERS
         us_reporter_gmp_duration.h
         )
 
-# Cross-directory sources as specified in .pro file
-set(CROSS_DIR_SOURCES
-        ../us_abde/us_norm_profile.cpp
+# Everything but main(); other programs link these objects instead of
+# compiling the sources again.
+add_library(us_reporter_gmp_objects OBJECT
+        ${REPORTER_GMP_SOURCES}
+        ${REPORTER_GMP_HEADERS}
         )
 
-# Cross-directory headers from .pro file
-set(CROSS_DIR_HEADERS
-        ../us_abde/us_norm_profile.h
+set_target_properties(us_reporter_gmp_objects PROPERTIES
+        AUTOMOC_MOC_OPTIONS "--no-notes"
         )
+
+target_include_directories(us_reporter_gmp_objects PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        )
+
+target_link_libraries(us_reporter_gmp_objects PUBLIC
+        us_program_common
+        us_abde_objects
+        us_analysis_profile_objects
+        us_ddist_combine_objects
+        us_edited_data_loaders_objects
+        us_integral_objects
+        us_pseudo3d_combine_objects
+        Qt::DataVisualization
+        )
+
+# dependency on revision.h in programs/us
+add_dependencies(us_reporter_gmp_objects us_version_headers)
 
 # Find UI and resource files
 file(GLOB REPORTER_GMP_FORMS "*.ui")
@@ -27,16 +45,10 @@ file(GLOB REPORTER_GMP_RESOURCES "*.qrc")
 
 # Create the executable
 add_executable(us_reporter_gmp
-        ${REPORTER_GMP_SOURCES}
-        ${REPORTER_GMP_HEADERS}
-        ${CROSS_DIR_SOURCES}
-        ${CROSS_DIR_HEADERS}
+        us_reporter_gmp_main.cpp
         ${REPORTER_GMP_FORMS}
         ${REPORTER_GMP_RESOURCES}
         )
-
-# dependency on revision.h in programs/us
-add_dependencies(us_reporter_gmp us_version_headers)
 
 # Set target properties
 set_target_properties(us_reporter_gmp PROPERTIES
@@ -48,21 +60,16 @@ set_target_properties(us_reporter_gmp PROPERTIES
         AUTOMOC_MOC_OPTIONS "--no-notes"
         )
 
-# Include directories for all the cross-directory headers
-target_include_directories(us_reporter_gmp PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_abde
-        )
-
 # Link libraries
 target_link_libraries(us_reporter_gmp PRIVATE
         us_program_common
+        us_abde_objects
         us_analysis_profile_objects
         us_ddist_combine_objects
         us_edited_data_loaders_objects
         us_integral_objects
         us_pseudo3d_combine_objects
-        Qt::DataVisualization
+        us_reporter_gmp_objects
         )
 
 # Install
