@@ -1277,8 +1277,8 @@ void US_ReporterGMP::check_models ( int autoflowID )
     }
       
   US_Passwd   pw;
-  std::unique_ptr< US_DB2 > db( new US_DB2( pw.getPasswd() ) );
-    
+  std::unique_ptr<US_DB2> db( new US_DB2( pw.getPasswd() ) );
+
   if ( db->lastErrno() != US_DB2::OK )
     {
       QApplication::restoreOverrideCursor();
@@ -1372,8 +1372,7 @@ void US_ReporterGMP::check_models ( int autoflowID )
   //DEBUG
 
   //test
-  db.reset();
-  
+    db.reset();
 }
 
 //Create QMap for shorter desctiption of triple's models (2DSA-IT, ...) to modelIDs, OR to modelGUIDs
@@ -1885,8 +1884,8 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
   QStringList qry;
   
   US_Passwd pw;
-  std::unique_ptr< US_DB2 > db( new US_DB2( pw.getPasswd() ) );
-  
+  std::unique_ptr<US_DB2> db( new US_DB2( pw.getPasswd() ) );
+
   if ( db->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
@@ -1998,9 +1997,9 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
     }
 
   //test
-  db.reset();
-  
-  return nrecs;
+    db.reset();
+
+    return nrecs;
 }
 
 
@@ -2010,7 +2009,7 @@ QMap< QString, QString>  US_ReporterGMP::read_autoflow_record( int autoflowID  )
    // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
-   std::unique_ptr< US_DB2 > db( new US_DB2( masterpw ) );
+   std::unique_ptr<US_DB2> db( new US_DB2( masterpw ) );
 
    QMap <QString, QString> protocol_details;
    
@@ -2067,9 +2066,9 @@ QMap< QString, QString>  US_ReporterGMP::read_autoflow_record( int autoflowID  )
 
 
    //test
-   db.reset();
-   
-   return protocol_details;
+     db.reset();
+
+     return protocol_details;
 }
 
 //read protocol's rpeortMask
@@ -4316,8 +4315,8 @@ void US_ReporterGMP::generate_report( void )
 
 
       US_Passwd   pw;
-      std::unique_ptr< US_DB2 > db( new US_DB2( pw.getPasswd() ) );
-      
+      std::unique_ptr<US_DB2> db( new US_DB2( pw.getPasswd() ) );
+
       if ( db->lastErrno() != US_DB2::OK )
 	{
 	  QApplication::restoreOverrideCursor();
@@ -4897,8 +4896,8 @@ QMap< QString, QString> US_ReporterGMP::read_autoflowGMPReportEsign_record( QStr
   QMap< QString, QString> eSign_record;
   
   US_Passwd pw;
-  std::unique_ptr< US_DB2 > db( new US_DB2( pw.getPasswd() ) );
-  
+  std::unique_ptr<US_DB2> db( new US_DB2( pw.getPasswd() ) );
+
   if ( db->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
@@ -4940,9 +4939,9 @@ QMap< QString, QString> US_ReporterGMP::read_autoflowGMPReportEsign_record( QStr
 
 
   //test
-  db.reset();
-  
-  return eSign_record;
+    db.reset();
+
+    return eSign_record;
 }
 
 //form a string of opers/revs out of jsonDoc
@@ -5272,7 +5271,7 @@ bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
     + FileName_parsed + ".time_state.tmst";
 
   US_Passwd   pw;
-  std::unique_ptr< US_DB2 > dbP( new US_DB2( pw.getPasswd() ) );
+  std::unique_ptr<US_DB2> dbP( new US_DB2( pw.getPasswd() ) );
   QStringList query;
   QString     expID;
   int         idExp  = 0;
@@ -5289,11 +5288,11 @@ bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
     }
   
   // Check out whether we need to read TimeState from the DB
-  bool newfile       = US_TimeState::dbSyncToLF( dbP.get(), tmst_fpath, idExp );
+    bool      newfile = US_TimeState::dbSyncToLF( dbP.get(), tmst_fpath, idExp );
 
-  //Get speed info
-  QFileInfo check_file( tmst_fpath );
-  if ( check_file.exists()  &&  check_file.isFile() )
+    //Get speed info
+    QFileInfo check_file( tmst_fpath );
+    if ( check_file.exists() && check_file.isFile() )
     {  // Get speed_steps from an existing timestate file
       simparams.simSpeedsFromTimeState( tmst_fpath );
       simparams.speedstepsFromSSprof();
@@ -5346,9 +5345,8 @@ bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   bool    bufvl = false;
   QString errmsg;
   qDebug() << "Fem:Upd: (0)svbar" << svbar;
-  
-  bufvl = US_SolutionVals::values( dbP.get(), edata, solID, svbar, bdens,
-				   bvisc, bcomp, bmanu, errmsg );
+
+  bufvl                    = US_SolutionVals::values( dbP.get(), edata, solID, svbar, bdens, bvisc, bcomp, bmanu, errmsg );
   // Read the solution; when that fails, use the default vbar, which later vbar calculations
   // also use for the cleared solution, since it has no analytes
   const auto read_solution = [&]( bool fromDb )
@@ -5383,11 +5381,11 @@ bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
 	  QMessageBox::warning( this, tr( "Solution/Buffer Fetch" ),
 				tr( "Empty solution ID value!" ) );
 	}
-      
-      else if ( solID.length() < 36  &&  dbP.get() != NULL )
-      {
-         read_solution( true );
-      }
+
+   else if ( solID.length() < 36 && dbP.get() != NULL )
+   {
+      read_solution( true );
+   }
 
       else
       {
@@ -5521,8 +5519,8 @@ bool US_ReporterGMP::loadData( QMap < QString, QString > & triple_information )
 bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
 {
   US_Passwd   pw;
-  std::unique_ptr< US_DB2 > db( new US_DB2( pw.getPasswd() ) );
-    
+  std::unique_ptr<US_DB2> db( new US_DB2( pw.getPasswd() ) );
+
   if ( db->lastErrno() != US_DB2::OK )
     {
       QApplication::restoreOverrideCursor();
@@ -5613,8 +5611,8 @@ bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
 	   << triple_information[ "triple_name" ]
 	   << triple_information[ "stage_name" ]
 	   << mID;
-  
-  rc   = model.load( QString::number( mID ), db.get() );
+
+  rc = model.load( QString::number( mID ), db.get() );
   qDebug() << "LdM:  model load rc" << rc;
   qApp->processEvents();
 
@@ -5649,7 +5647,7 @@ bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
 
   //test:
   db.reset();
-  
+
   loadNoises( triple_information );
   
   return true;
@@ -5659,8 +5657,8 @@ bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
 bool US_ReporterGMP::loadNoises( QMap < QString, QString > & triple_information )
 {
   US_Passwd   pw;
-  std::unique_ptr< US_DB2 > db( new US_DB2( pw.getPasswd() ) );
-    
+  std::unique_ptr<US_DB2> db( new US_DB2( pw.getPasswd() ) );
+
   if ( db->lastErrno() != US_DB2::OK )
     {
       QApplication::restoreOverrideCursor();
@@ -5728,13 +5726,13 @@ bool US_ReporterGMP::loadNoises( QMap < QString, QString > & triple_information 
   //creare US_noise objects
   if ( nID_ti )
     {
-      ti_noise.load( QString::number( nID_ti ), db.get() );
-      qDebug() << "loadNoises() NORMAL: ti_noise created: ID -- " << nID_ti;
+       ti_noise.load( QString::number( nID_ti ), db.get() );
+       qDebug() << "loadNoises() NORMAL: ti_noise created: ID -- " << nID_ti;
     }
   if ( nID_ri )
     {
-      ri_noise.load( QString::number( nID_ri ), db.get() );
-      qDebug() << "loadNoises() NORMAL: ri_noise created: ID -- " << nID_ri;
+       ri_noise.load( QString::number( nID_ri ), db.get() );
+       qDebug() << "loadNoises() NORMAL: ri_noise created: ID -- " << nID_ri;
     }
   
   // noise loaded:  insure that counts jive with data
@@ -5781,8 +5779,8 @@ bool US_ReporterGMP::loadNoises( QMap < QString, QString > & triple_information 
       }
 
   //test:
-  db.reset();
-  return true;
+      db.reset();
+      return true;
 }
 
 //Load Noises when absent for the model loaded (like -MC models)
@@ -5802,7 +5800,7 @@ void US_ReporterGMP::loadNoises_whenAbsent( )
    if ( nenois > 0 )
    {  // There is/are noise(s):  ask user if she wants to load
       US_Passwd pw;
-      std::unique_ptr< US_DB2 > dbP( new US_DB2( pw.getPasswd() ) );
+      std::unique_ptr<US_DB2> dbP( new US_DB2( pw.getPasswd() ) );
 
       if ( nenois > 1  &&  noisdf == 0 )
       {  // Noise exists and noise-dialog flag set to "Auto-load"
@@ -5813,16 +5811,16 @@ void US_ReporterGMP::loadNoises_whenAbsent( )
 
          if ( typen == "ti" )
 	   {
-	     ti_noise.load( true, noiID, dbP.get() );
-	     qDebug() << "load_noise_whenAbsent(): ti_noise created: ID -- " << noiID;
-	     qDebug() << "load_noise_whenAbsent(): ti_noise.count: -- " << ti_noise.count;
-	   }
+         ti_noise.load( true, noiID, dbP.get() );
+         qDebug() << "load_noise_whenAbsent(): ti_noise created: ID -- " << noiID;
+         qDebug() << "load_noise_whenAbsent(): ti_noise.count: -- " << ti_noise.count;
+      }
          else
 	   {
-	     ri_noise.load( true, noiID, dbP.get() );
-	     qDebug() << "load_noise_whenAbsent(): ri_noise created: ID -- " << noiID;
-	     qDebug() << "load_noise_whenAbsent(): ri_noise.count: -- " << ri_noise.count;
-	   }
+         ri_noise.load( true, noiID, dbP.get() );
+         qDebug() << "load_noise_whenAbsent(): ri_noise created: ID -- " << noiID;
+         qDebug() << "load_noise_whenAbsent(): ri_noise.count: -- " << ri_noise.count;
+      }
 	 
          descn         = nieGUIDs.at( 1 );
          QString mdlx2 = descn.section( ":", 2, 2 );
@@ -5833,16 +5831,16 @@ void US_ReporterGMP::loadNoises_whenAbsent( )
             typen         = descn.section( ":", 1, 1 );
             if ( typen == "ti" )
 	      {
-		ti_noise.load( true, noiID, dbP.get() );
-		qDebug() << "load_noise_whenAbsent(): Noise 2: noiID, loaded ti--" << noiID;
-		qDebug() << "load_noise_whenAbsent(): Noise 2: noiID, loaded ti_noise.count --" << ti_noise.count;
-	      }
+            ti_noise.load( true, noiID, dbP.get() );
+            qDebug() << "load_noise_whenAbsent(): Noise 2: noiID, loaded ti--" << noiID;
+            qDebug() << "load_noise_whenAbsent(): Noise 2: noiID, loaded ti_noise.count --" << ti_noise.count;
+         }
             else
 	      {
-		ri_noise.load( true, noiID, dbP.get() );
-		qDebug() << "load_noise_whenAbsent(): Noise 2: noiID, loaded ri--" << noiID;
-		qDebug() << "load_noise_whenAbsent(): Noise 2: noiID, loaded ri_noise.count --" << ri_noise.count;
-	      }
+            ri_noise.load( true, noiID, dbP.get() );
+            qDebug() << "load_noise_whenAbsent(): Noise 2: noiID, loaded ri--" << noiID;
+            qDebug() << "load_noise_whenAbsent(): Noise 2: noiID, loaded ri_noise.count --" << ri_noise.count;
+         }
 	 }
 
       }
@@ -5853,10 +5851,10 @@ void US_ReporterGMP::loadNoises_whenAbsent( )
          noiID         = noiID.section( ":", 0, 0 );
 
          if ( typen == "ti" )
-	   ti_noise.load( true, noiID, dbP.get() );
-	 
+            ti_noise.load( true, noiID, dbP.get() );
+
          else
-	   ri_noise.load( true, noiID, dbP.get() );
+            ri_noise.load( true, noiID, dbP.get() );
       }
    }
 }
@@ -6228,7 +6226,7 @@ bool US_ReporterGMP::simulateModel( QMap<QString, QString>& tripleInfo )
    
   // Initialize simulation parameters using edited data information
   US_Passwd pw;
-  std::unique_ptr< US_DB2 > dbP( new US_DB2( pw.getPasswd() ) );
+  std::unique_ptr<US_DB2> dbP( new US_DB2( pw.getPasswd() ) );
 
   // Use the experiment speed steps if they cover the data; otherwise derive steps from the scans
   exp_steps = US_SimulationParameters::speedStepsCoverData( speed_steps, *edata );
@@ -6250,7 +6248,7 @@ bool US_ReporterGMP::simulateModel( QMap<QString, QString>& tripleInfo )
 
   //test
   dbP.reset();
-  
+
   if ( exp_steps )
     simparams.speed_step        = speed_steps;
   
@@ -7410,7 +7408,7 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 	   << FileName <<  fileNameList;
   
   US_Passwd pw;
-  std::unique_ptr< US_DB2 > dbP( new US_DB2( pw.getPasswd() ) );
+  std::unique_ptr<US_DB2> dbP( new US_DB2( pw.getPasswd() ) );
   if ( dbP->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this, tr( "Connection Problem, run details" ),
@@ -7450,7 +7448,7 @@ void  US_ReporterGMP::assemble_run_details_html( void )
       //html_assembled += tr("<br>");
       
       //3. get expID based on runID && invID
-      int experimentID = get_expID_by_runID_invID( dbP.get(), fileNameList[ i ] );
+      int experimentID = get_expID_by_runID_invID( dbP.get(), fileNameList[i] );
 
       qDebug() << "[in assemble_run_details_html()], experimentID -- "
 	       << experimentID;
@@ -7468,8 +7466,7 @@ void  US_ReporterGMP::assemble_run_details_html( void )
       QString xdefs;
       QString cksumd;
       QDateTime datedt;
-      US_TimeState::dbExamine( dbP.get(), &tmstID, &experimentID, &tfname,
-			       &xdefs, &cksumd, &datedt );
+      US_TimeState::dbExamine( dbP.get(), &tmstID, &experimentID, &tfname, &xdefs, &cksumd, &datedt );
 
       qDebug() << "Assembling Run Details: expID tmstID tfname cksumd datedt"
 	       << experimentID << tmstID << tfname << cksumd << datedt;

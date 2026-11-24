@@ -503,9 +503,9 @@ void US_ModelLoader::select_diskdb()
    // Disable investigator field if from disk or normal user; Enable otherwise
    loadDB       = dkdb_cntrls->db();
    if ( !loadDB )
-   {  // Switching to disk: close the connection rather than just forgetting it
+   { // Switching to disk: close the connection rather than just forgetting it
       delete dbP;
-      dbP       = NULL;
+      dbP = NULL;
    }
    pb_investigator->setEnabled( loadDB && ( US_Settings::us_inv_level() > 2 ) );
 

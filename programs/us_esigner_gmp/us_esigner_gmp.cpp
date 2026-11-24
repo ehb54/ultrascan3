@@ -3416,7 +3416,7 @@ void US_eSignaturesGMP::assignOperRevs_sa( void )
   US_Passwd pw( this );
   QScopedPointer<US_DB2> db_holder( new US_DB2( pw.getPasswd() ) ); // closed on every return path
   US_DB2*                db = db_holder.data();
-  
+
   if ( db->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
@@ -3688,7 +3688,7 @@ void US_eSignaturesGMP::assignOperRevs( void )
   US_Passwd pw( this );
   QScopedPointer<US_DB2> db_holder( new US_DB2( pw.getPasswd() ) ); // closed on every return path
   US_DB2*                db = db_holder.data();
-  
+
   if ( db->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
