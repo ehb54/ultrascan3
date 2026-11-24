@@ -59,9 +59,9 @@ Curves already plotted in the <b><i>SAS</i></b> module <i>I(q)</i> panel are han
 <b><i>Data files</i></b> and the <a href="#Produced"><b><i>Produced Data</i></b></a> lists, since they do not
 yet exist on disk as far as this module is concerned, and any character that is awkward in a file name
 (whitespace, quotes, slashes, periods) is replaced by an underscore. Each curve keeps the concentration the
-<b><i>SAS</i></b> module holds for it, and its PSV and <i>I</i>(0) standard error when these differ from the
+<b><i>SAS</i></b> module holds for it, and its PSV and <i>I</i>(0) standard when these differ from the
 <b><i>SAS</i></b> defaults (a curve that never had them is not given the defaults as if they were measured).
-A curve sent back keeps its concentration, PSV and <i>I</i>(0) standard error, and takes the defaults only
+A curve sent back keeps its concentration, PSV and <i>I</i>(0) standard, and takes the defaults only
 for those it does not have. Conversely, any curve held in the
 <b><i>Data Utility</i></b> can be sent to the <i>I(q)</i> panel with the <b><i>To SAS</i></b> button.
 <p>
@@ -129,7 +129,8 @@ throughout the module by their base name, without directory or extension.<p>
 <li>
 For <b>.dat</b> files, the first line is additionally scanned for the keywords
 <b><i>Conc:</i></b>, <b><i>PSV:</i></b>, <b><i>I0se:</i></b> and <b><i>Units:</i></b>.
-The concentration (in mg/ml), partial specific volume and <i>I</i>(0) standard error found there are
+The concentration (in mg/ml), partial specific volume and <i>I</i>(0) standard (the experimental <i>I</i>(0)
+of the intensity standard) found there are
 attached to the curve and are carried through the operations below; the concentration also
 pre-fills the <a href="#Conc"><b><i>Concentrations</i></b></a> table.
 <b><i>Units:</i></b> may be <i>1/A</i> (or <i>A^-1</i>) or <i>1/nm</i> (or <i>nm^-1</i>);
@@ -151,6 +152,14 @@ current directory are loaded. For example a pattern of <tt>lysozyme_%1_.*\.dat</
 <tt>001 002 003</tt> loads the three corresponding series.<p>
 <li>
 <b><i>Concentrations</i></b> opens the <a href="#Conc"><b><i>Solution Concentrations</i></b></a> window.<p>
+<li>
+<b><i>PSV/I(0) std</i></b>, active with curves selected, sets the PSV (in cm<sup>3</sup>/g) and the
+<i>I</i>(0) standard (in a.u.) of the selected curves. It shows the values the selected curves share, or the
+<b><i>SAS</i></b> defaults when they have none or different ones (and says so), and both must be positive.
+The curves keep them as if they had been read from their headers: they are written as <b><i>PSV:</i></b> and
+<b><i>I0se:</i></b> into the header of each saved curve, passed on by <b><i>To SAS</i></b>, and kept by the
+curves made from them (see <a href="#Conc">Concentrations</a>). Save the curves to keep the values in their
+files.<p>
 <li>
 <b><i>Remove files</i></b> removes the selected curves from the module. If any of them were produced here
 and not yet written to disk, you are offered the chance to save them first.<p>
@@ -242,7 +251,7 @@ The saved header of an average lists the averaged curves: when their names are n
 frame numbers with any gaps (<i>e.g.</i> <tt>frames 00104-00110,00115</tt>) rather than every name. It also says
 which standard deviation the average has.
 The concentration of the result is the mean of those of the contributing curves;
-its PSV and <i>I</i>(0) standard error are the means over the contributing curves that have one.<p>
+its PSV and <i>I</i>(0) standard are the means over the contributing curves that have one.<p>
 <li>
 <b><i>Concentration normalized average</i></b> divides each curve by its own concentration before
 averaging, and then re-multiplies the result by the mean concentration. This is the correct way to average
@@ -251,18 +260,18 @@ when every selected curve has a non-zero concentration. With standard deviations
 <i>I<sub>i</sub></i>/<i>c<sub>i</sub></i> is weighted by 1/(&sigma;<sub><i>i</i></sub>/<i>c<sub>i</sub></i>)<sup>2</sup>, so that the curves at higher
 concentration, whose normalized curves are less noisy, count more. The standard deviation, the reduced
 &chi;<sup>2</sup> and the right-click options follow those of <b><i>Average</i></b> for the normalized curves, and the standard deviation is
-multiplied by the mean concentration like the curve. The PSV and <i>I</i>(0) standard error of the result
+multiplied by the mean concentration like the curve. The PSV and <i>I</i>(0) standard of the result
 are taken as for <b><i>Average</i></b>.<p>
 <li>
 <b><i>N</i></b> (normalize) produces, for each selected curve, a copy divided by its own concentration; the
 standard deviations are divided by the same factor and the concentration of the result is set to 1; the
-PSV and <i>I</i>(0) standard error are kept. Like the previous button, it requires all the selected curves to have a non-zero concentration.<p>
+PSV and <i>I</i>(0) standard are kept. Like the previous button, it requires all the selected curves to have a non-zero concentration.<p>
 <li>
 <b><i>WS</i></b> (weighted sum) prompts for a multiplier for each selected curve in turn and forms the
 weighted sum. Its standard deviation adds those of the weighted curves in quadrature,
 &radic;(&Sigma; <i>w<sub>i</sub></i><sup>2</sup> &sigma;<sub><i>i</i></sub><sup>2</sup>), as for independent measurements.
 Its concentration is the sum of each curve's multiplier times its concentration, and its PSV
-and <i>I</i>(0) standard error are taken as for <b><i>Average</i></b>. This button is only shown when the
+and <i>I</i>(0) standard are taken as for <b><i>Average</i></b>. This button is only shown when the
 <a href=somo_advanced_config.html>advanced configuration</a> <b><i>expert mode</i></b> is enabled.<p>
 </ul>
 
@@ -374,7 +383,7 @@ correction is reliable and the <i>q</i> below which the term is subtracted. The 
 above it (or clicked in the table) with the fit, its two terms and the corrected curve, and marks the end of
 the fit, the reliable limit and the splice. <b><i>Make corrected copies</i></b> adds a copy
 <i>name</i><tt>_upc</tt> of each curve with an upturn to the <a href="#Produced">Produced Data</a>, with the
-curve's concentration, PSV and <i>I</i>(0) standard error, and a header line saying what was subtracted.
+curve's concentration, PSV and <i>I</i>(0) standard, and a header line saying what was subtracted.
 <p>
 
 <hr>
@@ -385,7 +394,9 @@ curve's concentration, PSV and <i>I</i>(0) standard error, and a header line say
 In a SEC-SAXS run the frames recorded before the void volume, before the first elution, are buffer, and so are
 often those after the signal has returned to baseline. <b><i>Buffer frames</i></b>, to the left of
 <b><i>Set buffer</i></b> and active with three or more curves selected, opens a window
-(<i>US-SOMO: SAXS Data Utility : Buffer frames</i>) that helps choose them among the selected frames:
+(<i>US-SOMO: SAXS Data Utility : Buffer frames</i>) that helps choose them among the selected frames.
+It opens no larger than the screen; its two plots share the height left by the fields and the text, three
+quarters for <i>I</i>(<i>t</i>) to start with, and dragging the handle between them changes how they share it:
 <p>
 <ul>
 <li>The upper plot shows <i>I</i>(<i>t</i>): each frame's mean intensity over the <i>q</i> range set at the top
@@ -452,7 +463,7 @@ Three buttons assign roles to a single selected curve; the assigned name is show
 of its name, subtracts it from every selected curve (other than the buffer and the blank) point by point, with
 &alpha; = 1 and the standard deviations added in quadrature, as &radic;(&sigma;<sup>2</sup><sub>curve</sub> +
 &sigma;<sup>2</sup><sub>buffer</sub>). Each result, named <i>curve</i><tt>_bsub_a1</tt>, keeps the concentration, PSV and
-<i>I</i>(0) standard error of its curve; non-positive results are left as they are and counted in its header. The results share the buffer, so an <b><i>Average</i></b> of them
+<i>I</i>(0) standard of its curve; non-positive results are left as they are and counted in its header. The results share the buffer, so an <b><i>Average</i></b> of them
 understates its contribution, as explained under <i>Processing many samples at once</i> below. For a
 scaled buffer, a blank, or a range of values, use the <a href="#Subtraction">buffer subtraction</a> window.<p>
 <li><b><i>Buffer frames</i></b>, to the left of <b><i>Set buffer</i></b>, helps choose the buffer frames of a
@@ -661,7 +672,7 @@ curves have them, and sets the offset to zero. <b><i>Linear</i></b> would instea
 <b><i>Keep</i></b> commits the join: a new curve is created, made of the low-<i>q</i> curve up to
 <b><i>Cut</i></b> followed by the high-<i>q</i> curve beyond it, with the offset and multiplier applied to
 whichever of the two is being scaled, and with standard deviations carried over when both curves have them.
-It has the concentration, PSV and <i>I</i>(0) standard error of the curve that is not scaled.
+It has the concentration, PSV and <i>I</i>(0) standard of the curve that is not scaled.
 The two source curves are deselected and the new one selected. <b><i>Cancel</i></b> abandons the join and
 restores the original display.
 <p>
@@ -754,7 +765,7 @@ cropped to the common grid are included in the output for compatibility, and a n
 <li><b><i>Show</i></b> adds the selected produced curves to the plot, and <b><i>Show only</i></b>
 displays them and nothing else.<p>
 <li>Right-clicking an entry in the <b><i>Produced Data</i></b> list makes a copy of it under a new name;
-the original stays. The copy keeps the concentration, PSV and <i>I</i>(0) standard error, and the
+the original stays. The copy keeps the concentration, PSV and <i>I</i>(0) standard, and the
 description of how the curve was made (see below).<p>
 </ul>
 
@@ -805,7 +816,7 @@ with the file list as curves are added, removed and created. Concentrations foun
 headers appear there automatically, and curves produced by the module inherit an appropriate value &mdash;
 the concentration of the solution for a subtraction or a division, the mean for an average, 1 for a
 normalized curve, that of the curve that is not scaled for a join, and the sum of each curve's multiplier
-times its concentration for a weighted sum. The PSV and <i>I</i>(0) standard error are carried the same way:
+times its concentration for a weighted sum. The PSV and <i>I</i>(0) standard are carried the same way:
 from the solution for a subtraction or a division, from the source for a normalized curve or a copy, from the
 curve that is not scaled for a join, and as the mean over the curves that have one for an average, a
 concentration normalized average or a weighted sum. They are written into the header of each saved curve.
@@ -912,7 +923,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on November 22, 2026
+Last modified on November 23, 2026
 </font>
 </body>
 </html>

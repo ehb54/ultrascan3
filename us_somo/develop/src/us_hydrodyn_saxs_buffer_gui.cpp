@@ -56,6 +56,14 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_conc->setPalette( PALET_PUSHB );
    connect(pb_conc, SIGNAL(clicked()), SLOT(conc()));
 
+   pb_psv_i0 = new QPushButton(us_tr("PSV/I(0) std"), this);
+   pb_psv_i0->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_psv_i0->setMinimumHeight(minHeight3);
+   pb_psv_i0->setPalette( PALET_PUSHB );
+   pb_psv_i0->setToolTip( us_tr( "Set the PSV and the I0 standard (experimental) of the selected curves. "
+                                 "They are saved with the curves, passed on by To SAS and kept by the curves made from them." ) );
+   connect(pb_psv_i0, SIGNAL(clicked()), SLOT(psv_i0()));
+
    pb_clear_files = new QPushButton(us_tr("Remove files"), this);
    pb_clear_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_clear_files->setMinimumHeight(minHeight3);
@@ -906,6 +914,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_file_buttons->addWidget ( pb_add_files );
    hbl_file_buttons->addWidget ( pb_similar_files );
    hbl_file_buttons->addWidget ( pb_conc);
+   hbl_file_buttons->addWidget ( pb_psv_i0 );
    hbl_file_buttons->addWidget ( pb_clear_files );
 
    QBoxLayout * hbl_file_buttons_1 = new QHBoxLayout(); hbl_file_buttons_1->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons_1->setSpacing( 0 );

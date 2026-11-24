@@ -2064,6 +2064,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
       // try to read Conc:/PSV:/I0se: from the file's header comment line, same
       // convention & regexes as US_Hydrodyn_Saxs_Hplc::load_file()
       bool   has_conc = false;
+      bool   has_psv_I0se = false;
       double this_conc = 0e0;
       double this_psv  = our_saxs_options->psv;
       double this_I0se = our_saxs_options->I0_exp;
@@ -2082,11 +2083,13 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
          QRegularExpressionMatch rx_psv_m = rx_psv.match( qv[ 0 ] );
          if ( rx_psv_m.hasMatch() )
          {
+            has_psv_I0se = true;
             this_psv = rx_psv_m.captured( 1 ).toDouble();
          }
          QRegularExpressionMatch rx_I0se_m = rx_I0se.match( qv[ 0 ] );
          if ( rx_I0se_m.hasMatch() )
          {
+            has_psv_I0se = true;
             this_I0se = rx_I0se_m.captured( 1 ).toDouble();
          }
       }
@@ -2530,9 +2533,10 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
             {
                plotted_iq_names_to_file[ plot_name ] = QFileInfo( filename ).absoluteFilePath();
             }
-            if ( has_conc )
+            // a PSV or I0se without a Conc: is kept too, with the default concentration
+            if ( has_conc || has_psv_I0se )
             {
-               update_conc_csv( plot_name, this_conc, this_psv, this_I0se );
+               update_conc_csv( plot_name, has_conc ? this_conc : our_saxs_options->conc, this_psv, this_I0se );
             }
          }
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear( );
@@ -4712,6 +4716,7 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
       // try to read Conc:/PSV:/I0se: from the file's header comment line, same
       // convention & regexes as US_Hydrodyn_Saxs_Hplc::load_file()
       bool   has_conc = false;
+      bool   has_psv_I0se = false;
       double this_conc = 0e0;
       double this_psv  = our_saxs_options->psv;
       double this_I0se = our_saxs_options->I0_exp;
@@ -4730,11 +4735,13 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
          QRegularExpressionMatch rx_psv_m = rx_psv.match( qv[ 0 ] );
          if ( rx_psv_m.hasMatch() )
          {
+            has_psv_I0se = true;
             this_psv = rx_psv_m.captured( 1 ).toDouble();
          }
          QRegularExpressionMatch rx_I0se_m = rx_I0se.match( qv[ 0 ] );
          if ( rx_I0se_m.hasMatch() )
          {
+            has_psv_I0se = true;
             this_I0se = rx_I0se_m.captured( 1 ).toDouble();
          }
       }
@@ -5044,9 +5051,10 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
             {
                plotted_iq_names_to_file[ plot_name ] = QFileInfo( filename ).absoluteFilePath();
             }
-            if ( has_conc )
+            // a PSV or I0se without a Conc: is kept too, with the default concentration
+            if ( has_conc || has_psv_I0se )
             {
-               update_conc_csv( plot_name, this_conc, this_psv, this_I0se );
+               update_conc_csv( plot_name, has_conc ? this_conc : our_saxs_options->conc, this_psv, this_I0se );
             }
          }
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear( );

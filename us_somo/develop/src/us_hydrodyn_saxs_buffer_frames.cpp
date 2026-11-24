@@ -5,6 +5,11 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QGridLayout>
+#include <QSplitter>
+#include <QScrollArea>
+#include <QFontMetrics>
+#include <QScreen>
+#include <QGuiApplication>
 #include <QIntValidator>
 #include <QDoubleValidator>
 #include <QCloseEvent>
@@ -135,7 +140,29 @@ US_Hydrodyn_Saxs_Buffer_Frames::US_Hydrodyn_Saxs_Buffer_Frames(
 
    global_Xpos += 30;
    global_Ypos += 30;
-   setGeometry( global_Xpos, global_Ypos, 1050, 860 );
+   // no larger than the screen: the plots share the height left by the fields and the text
+   int want_w = 1050;
+   int want_h = 860;
+   int x0     = global_Xpos;
+   int y0     = global_Ypos;
+   QScreen * screen = QGuiApplication::primaryScreen();
+   if ( screen )
+   {
+      QRect avail = screen->availableGeometry();
+      int max_w = avail.width() - 40;
+      int max_h = avail.height() - 60;
+      if ( max_w > 400 && want_w > max_w )
+      {
+         want_w = max_w;
+      }
+      if ( max_h > 200 && want_h > max_h )
+      {
+         want_h = max_h;
+      }
+      x0 = qMax( avail.x(), qMin( x0, avail.x() + avail.width() - want_w - 20 ) );
+      y0 = qMax( avail.y(), qMin( y0, avail.y() + avail.height() - want_h - 40 ) );
+   }
+   setGeometry( x0, y0, want_w, want_h );
 
    suppress = false;
    suggest();
@@ -288,7 +315,7 @@ void US_Hydrodyn_Saxs_Buffer_Frames::setupGUI()
    plot->setAxisTitle( QwtPlot::yLeft, us_tr( "I(t)" ) );
    plot->setAxisFont( QwtPlot::yLeft, font );
    plot->setAxisFont( QwtPlot::xBottom, font );
-   plot->setMinimumHeight( 300 );
+   plot->setMinimumHeight( 120 );
 
    usp_plot_chi2 = new US_Plot( plot_chi2, "", "", "", this );
    connect( (QWidget *) plot_chi2->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_chi2( const QPoint & ) ) );
@@ -298,7 +325,7 @@ void US_Hydrodyn_Saxs_Buffer_Frames::setupGUI()
    plot_chi2->setAxisTitle( QwtPlot::yLeft, us_tr( "Reduced chi^2 vs. the others" ) );
    plot_chi2->setAxisFont( QwtPlot::yLeft, font );
    plot_chi2->setAxisFont( QwtPlot::xBottom, font );
-   plot_chi2->setMinimumHeight( 150 );
+   plot_chi2->setMinimumHeight( 80 );
 
    for ( mQwtPlot * pl : { plot, plot_chi2 } )
    {
@@ -316,6 +343,17 @@ void US_Hydrodyn_Saxs_Buffer_Frames::setupGUI()
    AUTFBACK( lbl_stats );
    lbl_stats->setFont( font );
    lbl_stats->setTextInteractionFlags( Qt::TextSelectableByMouse );
+   // the text scrolls when it is longer than the room left for it, from 3 to 10 lines
+   sa_stats = new QScrollArea( this );
+   sa_stats->setWidget( lbl_stats );
+   sa_stats->setWidgetResizable( true );
+   sa_stats->setFrameShape( QFrame::NoFrame );
+   sa_stats->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
+   {
+      int line = QFontMetrics( font ).lineSpacing();
+      sa_stats->setMinimumHeight( 3 * line + 4 );
+      sa_stats->setMaximumHeight( 10 * line + 4 );
+   }
 
    pb_help        = button( us_tr( "Help" ) );
    pb_select_r1   = button( us_tr( "Select the frames before the elution" ) );
@@ -363,6 +401,15 @@ void US_Hydrodyn_Saxs_Buffer_Frames::setupGUI()
    hbl_wheel->addWidget( qwtw_wheel, 1 );
    hbl_wheel->addWidget( pb_wheel_inc );
 
+   // the I(t) and chi^2 plots share their height, 3 to 1 to start with, by the handle between them
+   qs_plots = new QSplitter( Qt::Vertical, this );
+   qs_plots->addWidget( plot );
+   qs_plots->addWidget( plot_chi2 );
+   qs_plots->setChildrenCollapsible( false );
+   qs_plots->setStretchFactor( 0, 3 );
+   qs_plots->setStretchFactor( 1, 1 );
+   qs_plots->setSizes( QList < int >() << 3000 << 1000 );
+
    QHBoxLayout * hbl_bottom = new QHBoxLayout; hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addWidget( pb_help );
    hbl_bottom->addWidget( pb_select_r1, 1 );
@@ -374,9 +421,8 @@ void US_Hydrodyn_Saxs_Buffer_Frames::setupGUI()
    background->addLayout( hbl_q );
    background->addLayout( gl_r );
    background->addLayout( hbl_wheel );
-   background->addWidget( plot, 3 );
-   background->addWidget( plot_chi2, 1 );
-   background->addWidget( lbl_stats );
+   background->addWidget( qs_plots, 1 );
+   background->addWidget( sa_stats );
    background->addLayout( hbl_bottom );
 }
 

@@ -108,6 +108,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QPushButton   *pb_add_files;
       QPushButton   *pb_similar_files;
       QPushButton   *pb_conc;
+      QPushButton   *pb_psv_i0;
       QPushButton   *pb_clear_files;
 
       QPushButton   *pb_regex_load;
@@ -473,6 +474,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void add_files();
       void similar_files();
       void conc();
+      void psv_i0();
       void clear_files();
       void regex_load();
 

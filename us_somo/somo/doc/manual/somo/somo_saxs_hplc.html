@@ -1115,7 +1115,7 @@ The final smoothed data for each chromatogram appear in the <b><i>Data files</i>
 <p>
 Obviously, while this procedure can resolve some of the local minima problems, it cannot cure poor fitting issues.<p>
 
-The second procedure we developed can be run by choosing the <i>Global Gaussian cyclic fit</i> in the <a href=saxs_hplc_options.html><i><b>HPLC/KIN Options</i></b></a> module. If this checkbox is selected, during the initial <i>Global Gaussian</i> fitting instead of directly fitting the all Gaussian curves simultaneously, each Gaussian first is fit sequentially, keeping the others fixed, followed by fitting all Gaussians simultaneously, and the entire cycle is done twice.<p>
+The second procedure we developed can be run by choosing the <i>Global Gaussian cyclic fit</i> in the <a href=saxs_hplc_options.html><i><b>HPLC/KIN Options</i></b></a> module. If this checkbox is selected, during the initial <i>Global Gaussian</i> fitting instead of directly fitting the all Gaussian curves simultaneously, each Gaussian first is fit sequentially, keeping the others fixed, followed by fitting all Gaussians simultaneously, and the entire cycle is done twice. With smoothing, cyclic fitting, or both, this initial fitting takes longer; the chromatograms are therefore fitted in parallel, each one on its own, on the <i>Number of Threads</i> set in the <i>SOMO</i> configuration, with the same results as fitting them one after the other.<p>
 After selecting this checkbox, to allow a direct comparison of this cyclic procedure versus the "standard" procedure, the <i>Global Gaussian - Enable legacy Gaussian fit display</i> is also checked. We can now return to the <b><i>HPLC/KIN</i></b> module and restart <b><i>Global Gaussians</i></b>. The pop-up asking for re-fitting the Gaussians amplitudes or keeping the actual values will again appear, and we choose <i>Yes</i>, leading to the cyclic fit being launched (as reported in the <b><i>Messages</i></b> section) with these results:
 <p>
 <center>
@@ -1667,7 +1667,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on November 22, 2026.
+Last modified on November 23, 2026.
 </font>
 </body>
 </html>
