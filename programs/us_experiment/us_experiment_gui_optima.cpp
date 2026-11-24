@@ -2937,7 +2937,10 @@ DbgLv(1) << "EGR: chgLab   rot_ent" << rot_ent << "rndx" << rndx;
 
    //ALEXEY identify instruments & operators, fill Gui elements
    US_Rotor::Lab lab_selected;
-   lab_selected.readDB( labID, dbP );
+   if ( dbP != NULL )
+   {
+      lab_selected.readDB( labID, dbP );
+   }
    instruments = lab_selected.instruments;   //ALEXEY: operators (per instrument) are read here
 
    //Instruments
