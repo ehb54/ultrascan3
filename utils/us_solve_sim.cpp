@@ -2488,7 +2488,9 @@ void US_SolveSim::DebugTime( QString mtext )
 
 // Band forming:  hold a simulation within the thresholds, as the double
 //  values the readings give (the simulation as computed stays unchanged,
-//  for the cache);  return flag if all-zero
+//  for the cache);  return flag if all-zero.  The thresholded simulation is
+//  in double form, also with "SimFloat=on":  band-forming fits keep the
+//  task's simulations in double memory (only the cache holds floats).
 bool US_SolveSim::threshold_sim( US_SimCache::Sim& sim )
 {
    US_DataIO::RawData simdat;

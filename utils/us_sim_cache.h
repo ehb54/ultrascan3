@@ -33,7 +33,7 @@
 //!
 //! In float mode (debug text "SimFloat=on") the cache keeps the readings of
 //! each simulation as floats, halving its memory.  US_SolveSim then rounds
-//! every simulation it computes to float precision (see round_to_float), so
+//! every simulation it computes to float precision (Sim::from_raw), so
 //! a fetched simulation is still exactly the one computed and a fit gives the
 //! same result with and without the cache.  US_SolveSim takes simulations
 //! with fetch_sim() and store_sim() in float form (Sim), shared with the
@@ -143,9 +143,9 @@ class US_UTIL_EXTERN US_SimCache
       //! \param max_bytes  Memory cap in bytes
       //! \param floats     Flag to store readings as floats (float mode;
       //!                   simulations stored should be rounded to float
-      //!                   precision, see round_to_float).  Float mode uses
-      //!                   this class's own storage:  a subclass that
-      //!                   overrides fetch() and store() must not turn it on.
+      //!                   precision, see round_to_float).  A subclass with
+      //!                   its own storage that turns float mode on overrides
+      //!                   fetch_sim() and store_sim() as well (see there).
       explicit US_SimCache( qint64 max_bytes, bool floats = false );
 
       //! \brief Destroy the cache (subclasses may hold other storage)

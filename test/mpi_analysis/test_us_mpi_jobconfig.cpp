@@ -463,6 +463,19 @@ TEST( US_MPI_JobConfig, SimulationCacheKnobsAreChecked )
    EXPECT_TRUE( bad.errors.isEmpty() );
 }
 
+TEST( US_MPI_JobConfig, FloatSwitchesAreChecked )
+{
+   Config ok = validated( GRID_2DSA + "<debug_text value=\"SimFloat=on,SimFloatNNLS=off\"/>" );
+   EXPECT_TRUE( ok.warnings.isEmpty() ) << all_of( ok );
+
+   // A misspelt value leaves the fit in double:  warned
+   Config bad = validated( GRID_2DSA + "<debug_text value=\"SimFloat=onn,SimFloatNNLS\"/>" );
+   ASSERT_EQ( bad.warnings.size(), 2 ) << all_of( bad );
+   EXPECT_TRUE( bad.warnings[0].contains( "SimFloat \"onn\"" ) ) << all_of( bad );
+   EXPECT_TRUE( bad.warnings[1].contains( "SimFloatNNLS \"\"" ) ) << all_of( bad );
+   EXPECT_TRUE( bad.errors.isEmpty() );
+}
+
 TEST( US_MPI_JobConfig, UnknownMethod )
 {
    Config config = validated( GRID_2DSA, "2DXA" );

@@ -974,6 +974,19 @@ void US_MPI_JobConfig::validate()
       warnings << QString( "debug_text SimCache \"%1\" is not on or off: the cache stays on" ).arg( sc_value );
    }
 
+   // debug_text SimFloat and SimFloatNNLS turn the float modes on (any value
+   //  but on, 1, true or yes leaves them off)
+   for ( const char* key : { "SimFloat", "SimFloatNNLS" } )
+   {
+      bool          sf_found = false;
+      const QString sf_value = debug_value( key, &sf_found );
+      if ( sf_found &&
+           !QStringList( { "on", "off", "1", "0", "true", "false", "yes", "no" } ).contains( sf_value, Qt::CaseInsensitive ) )
+      {
+         warnings << QString( "debug_text %1 \"%2\" is not on or off: the fit stays in double precision" ).arg( key, sf_value );
+      }
+   }
+
    // debug_text SimCachePolicy chooses what the full cache keeps
    const QString sp_value = debug_value( "SimCachePolicy", &sc_found );
    if ( sc_found && !QStringList( { "first", "recent" } ).contains( sp_value, Qt::CaseInsensitive ) )

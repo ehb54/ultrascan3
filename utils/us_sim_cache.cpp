@@ -3,6 +3,8 @@
 #include "us_memory.h"
 #include "us_settings.h"
 
+#include <atomic>
+#include <cstdio>
 #include <cstring>
 
 #ifdef Q_OS_LINUX
@@ -382,24 +384,79 @@ qint64 US_SimCache::sim_bytes( const US_DataIO::RawData& simdat, bool floats )
    return cache_bytes( simdat, nvals ) - nvals * (qint64) sizeof( double );
 }
 
+#ifdef Q_OS_LINUX
+// Most float blocks mapped at once:  a quarter of the kernel's limit of
+//  mappings of a process (vm.max_map_count, 65530 by default), so the
+//  blocks leave room for the libraries, threads and malloc's own mappings
+//  and a full cache of any size never reaches the limit
+static qint64 max_float_maps()
+{
+   static const qint64 cap = []()
+   {
+      long long limit = 65530;
+      FILE*     file  = fopen( "/proc/sys/vm/max_map_count", "r" );
+
+      if ( file != nullptr )
+      {
+         long long value = 0;
+
+         if ( fscanf( file, "%lld", &value ) == 1 && value > 0 )
+         {
+            limit = value;
+         }
+
+         fclose( file );
+      }
+
+      return (qint64) ( limit / 4 );
+   }();
+
+   return cap;
+}
+
+// Float blocks mapped now
+static std::atomic<qint64> float_maps{ 0 };
+#endif
+
 // A block for n float readings.  On Linux a large block is mapped from the
 //  system, and unmapped when the last copy goes:  glibc's malloc raises its
 //  mmap threshold as large blocks are freed, so it would put later blocks in
 //  its arenas, where freed memory stays resident (measured:  ~1 GB more peak
-//  memory in a us_2dsa fit with float simulations of 500 scans).
+//  memory in a us_2dsa fit with float simulations of 500 scans).  Beyond
+//  max_float_maps() blocks are taken from malloc.
 static std::shared_ptr<float> alloc_floats( qsizetype count )
 {
 #ifdef Q_OS_LINUX
    const size_t bytes = static_cast<size_t>( count ) * sizeof( float );
 
-   if ( bytes >= 128 * 1024 )
+   if ( bytes >= 128 * 1024 && float_maps.fetch_add( 1 ) < max_float_maps() )
    {
       void* block = mmap( nullptr, bytes, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0 );
 
       if ( block != MAP_FAILED )
       {
-         return std::shared_ptr<float>( static_cast<float*>( block ), [bytes]( float* ptr ) { munmap( ptr, bytes ); } );
+         // Should munmap fail (it can need a new mapping, to split one the
+         //  kernel merged with a neighbour), the pages are still freed and
+         //  only the address range stays, counted as mapped
+         auto unmap = [bytes]( float* ptr )
+         {
+            if ( munmap( ptr, bytes ) == 0 )
+            {
+               float_maps.fetch_sub( 1 );
+            }
+            else
+            {
+               madvise( ptr, bytes, MADV_DONTNEED );
+            }
+         };
+
+         return std::shared_ptr<float>( static_cast<float*>( block ), unmap );
       }
+   }
+
+   if ( bytes >= 128 * 1024 )
+   {
+      float_maps.fetch_sub( 1 ); // Not mapped
    }
 #endif
 

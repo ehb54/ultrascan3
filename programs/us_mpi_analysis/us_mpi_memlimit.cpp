@@ -392,7 +392,9 @@ qint64 US_MPI_MemLimit::allowed_capacity( qint64 wanted, qint64 job_limit, qint6
 //  and 2.28 times the bytes of the solutes' simulations, four data vectors
 //  and the noise terms.  Of the factor, 1 is the A matrix of the NNLS, 1 the
 //  simulations and 0.28 the rest;  in float precision ("SimFloatNNLS",
-//  "SimFloat") the first two take half the bytes.
+//  "SimFloat") the first two take half the bytes.  A band-forming fit (with
+//  thresholds) keeps its simulations in double also with "SimFloat", so
+//  for it the estimate with float_sims is low by half the simulations.
 qint64 US_MPI_MemLimit::solve_bytes( qint64 readings, qint64 solutes, int noise_terms, bool float_sims, bool float_nnls )
 {
    const double fixed_mb = 17.20;
