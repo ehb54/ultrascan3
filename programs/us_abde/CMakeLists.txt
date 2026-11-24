@@ -2,21 +2,22 @@
 
 set(src_dir ${CMAKE_CURRENT_SOURCE_DIR})
 
-# The window shared with the analysis and reporting programs, which link these
-# objects instead of compiling the source again.
-add_library(us_abde_objects OBJECT
+# Everything but main(), which other programs use too, goes into us_programs_results.
+add_library(us_abde_lib STATIC
         ${src_dir}/us_norm_profile.cpp
         )
 
-target_link_libraries(us_abde_objects
+target_link_libraries(us_abde_lib
         PUBLIC
         us_program_common
         )
 
-target_include_directories(us_abde_objects
+target_include_directories(us_abde_lib
         PUBLIC
         ${src_dir}
         )
+
+target_link_libraries(us_programs_results INTERFACE us_abde_lib)
 
 add_executable(us_abde
         ${src_dir}/us_abde_main.cpp
@@ -25,6 +26,5 @@ add_executable(us_abde
 target_link_libraries(us_abde
         PRIVATE
         us_program_common
-        us_abde_objects
-        us_buoyancy_objects
+        us_programs_results
         )

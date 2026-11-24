@@ -9,7 +9,7 @@ add_executable(us_reassign_reviewers_gmp
 target_link_libraries(us_reassign_reviewers_gmp
     PRIVATE
         us_program_common
-        us_esigner_gmp_objects
+        us_programs_gmp
 )
 
 target_include_directories(us_reassign_reviewers_gmp

@@ -13,27 +13,28 @@ set(MWL_HEADERS
         us_load_run_noise.h
         )
 
-# Everything but main(); other programs link these objects instead of
-# compiling the sources again.
-add_library(us_mwl_species_fit_objects OBJECT
+# Everything but main(), which other programs use too, goes into us_programs_analysis.
+add_library(us_mwl_species_fit_lib STATIC
         ${MWL_SOURCES}
         ${MWL_HEADERS}
         )
 
-set_target_properties(us_mwl_species_fit_objects PROPERTIES
+set_target_properties(us_mwl_species_fit_lib PROPERTIES
         AUTOMOC_MOC_OPTIONS "--no-notes"
         )
 
-target_include_directories(us_mwl_species_fit_objects PUBLIC
+target_include_directories(us_mwl_species_fit_lib PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         )
 
 # Qt DataVisualization is critical for this program
-target_link_libraries(us_mwl_species_fit_objects PUBLIC
+target_link_libraries(us_mwl_species_fit_lib PUBLIC
         us_program_common
-        us_analysis_profile_objects
+        us_analysis_profile_lib
         Qt::DataVisualization
         )
+
+target_link_libraries(us_programs_analysis INTERFACE us_mwl_species_fit_lib)
 
 # Find UI and resource files
 file(GLOB MWL_FORMS "*.ui")
@@ -59,8 +60,7 @@ set_target_properties(us_mwl_species_fit PROPERTIES
 # Link libraries
 target_link_libraries(us_mwl_species_fit PRIVATE
         us_program_common
-        us_analysis_profile_objects
-        us_mwl_species_fit_objects
+        us_programs_analysis
         )
 
 # Install

@@ -67,6 +67,7 @@ jobs:
               - gui.pri
               - programs/main1.inc
               - make_all.pro
+              - programlibs/**
               - admin/codeql/docker/local.pri.gui
               - library.pri
             programs: &programs
@@ -234,6 +235,19 @@ jobs:
                 grep -r -l "$prog_name" programs/*/*.pro || true | while read dependent_pro; do
                   dirname "$dependent_pro" >> build_targets.txt
                 done
+                # find all programs that link the area library with $prog_name in it
+                grep -l "/$prog_name/" programlibs/*/*.pro | while read lib_pro; do
+                  case $(basename $(dirname "$lib_pro")) in
+                    data|results) libs="gmp|comproject" ;;
+                    analysis)     libs="experiment|gmp|comproject" ;;
+                    experiment)   libs="gmp|comproject" ;;
+                    *)            libs="comproject" ;;
+                  esac
+                  libs="$libs|$(basename $(dirname "$lib_pro"))"
+                  grep -E -l "^PROGRAM_LIBS *=.*\b($libs)\b" programs/*/*.pro | while read dependent_pro; do
+                    dirname "$dependent_pro" >> build_targets.txt
+                  done
+                done
               fi
             done
           fi
@@ -269,6 +283,11 @@ jobs:
           TARGETS: ${{ steps.calc-targets.outputs.build_list }}
         run: |
           (cd programs/us && sh revision.sh)
+          for dir in programlibs/data programlibs/results programlibs/analysis programlibs/experiment programlibs/gmp programlibs/comproject; do
+            echo "::group::Building: $dir"
+            (cd "$dir" && qmake *.pro && make -j$(( $(nproc) + 1 )))
+            echo "::endgroup::"
+          done
           for dir in $TARGETS; do
             if [ -d "$dir" ]; then
               echo "::group::Building: $dir"

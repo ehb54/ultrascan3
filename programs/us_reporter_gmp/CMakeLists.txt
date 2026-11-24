@@ -10,34 +10,35 @@ set(REPORTER_GMP_HEADERS
         us_reporter_gmp_duration.h
         )
 
-# Everything but main(); other programs link these objects instead of
-# compiling the sources again.
-add_library(us_reporter_gmp_objects OBJECT
+# Everything but main(), which other programs use too, goes into us_programs_gmp.
+add_library(us_reporter_gmp_lib STATIC
         ${REPORTER_GMP_SOURCES}
         ${REPORTER_GMP_HEADERS}
         )
 
-set_target_properties(us_reporter_gmp_objects PROPERTIES
+set_target_properties(us_reporter_gmp_lib PROPERTIES
         AUTOMOC_MOC_OPTIONS "--no-notes"
         )
 
-target_include_directories(us_reporter_gmp_objects PUBLIC
+target_include_directories(us_reporter_gmp_lib PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         )
 
-target_link_libraries(us_reporter_gmp_objects PUBLIC
+target_link_libraries(us_reporter_gmp_lib PUBLIC
         us_program_common
-        us_abde_objects
-        us_analysis_profile_objects
-        us_ddist_combine_objects
-        us_edited_data_loaders_objects
-        us_integral_objects
-        us_pseudo3d_combine_objects
+        us_abde_lib
+        us_analysis_profile_lib
+        us_ddist_combine_lib
+        us_edited_data_loaders_lib
+        us_integral_lib
+        us_pseudo3d_combine_lib
         Qt::DataVisualization
         )
 
 # dependency on revision.h in programs/us
-add_dependencies(us_reporter_gmp_objects us_version_headers)
+add_dependencies(us_reporter_gmp_lib us_version_headers)
+
+target_link_libraries(us_programs_gmp INTERFACE us_reporter_gmp_lib)
 
 # Find UI and resource files
 file(GLOB REPORTER_GMP_FORMS "*.ui")
@@ -63,13 +64,7 @@ set_target_properties(us_reporter_gmp PROPERTIES
 # Link libraries
 target_link_libraries(us_reporter_gmp PRIVATE
         us_program_common
-        us_abde_objects
-        us_analysis_profile_objects
-        us_ddist_combine_objects
-        us_edited_data_loaders_objects
-        us_integral_objects
-        us_pseudo3d_combine_objects
-        us_reporter_gmp_objects
+        us_programs_gmp
         )
 
 # Install

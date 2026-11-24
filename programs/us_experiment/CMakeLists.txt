@@ -11,26 +11,26 @@ set(EXPERIMENT_HEADERS
         us_experiment_gui_optima.h
         )
 
-# Everything but main(); other programs link these objects instead of
-# compiling the sources again.
-add_library(us_experiment_objects OBJECT
+# Everything but main(), which other programs use too, goes into us_programs_experiment.
+add_library(us_experiment_lib STATIC
         ${EXPERIMENT_SOURCES}
         ${EXPERIMENT_HEADERS}
         )
 
-set_target_properties(us_experiment_objects PROPERTIES
+set_target_properties(us_experiment_lib PROPERTIES
         AUTOMOC_MOC_OPTIONS "--no-notes"
         )
 
-target_include_directories(us_experiment_objects PUBLIC
+target_include_directories(us_experiment_lib PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         )
 
-target_link_libraries(us_experiment_objects PUBLIC
+target_link_libraries(us_experiment_lib PUBLIC
         us_program_common
-        us_analysis_profile_objects
-        us_esigner_gmp_objects
+        us_analysis_profile_lib
         )
+
+target_link_libraries(us_programs_experiment INTERFACE us_experiment_lib)
 
 # Find UI and resource files
 file(GLOB EXPERIMENT_FORMS "*.ui")
@@ -56,9 +56,7 @@ set_target_properties(us_experiment PROPERTIES
 # Link libraries
 target_link_libraries(us_experiment PRIVATE
         us_program_common
-        us_analysis_profile_objects
-        us_esigner_gmp_objects
-        us_experiment_objects
+        us_programs_experiment
         )
 
 # Install

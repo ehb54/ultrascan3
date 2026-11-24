@@ -40,22 +40,7 @@ target_include_directories(us_protocoldev PRIVATE
 # Link libraries
 target_link_libraries(us_protocoldev PRIVATE
         us_program_common
-        us_2dsa_objects
-        us_abde_objects
-        us_analysis_profile_objects
-        us_autoflow_analysis_objects
-        us_ddist_combine_objects
-        us_edit_objects
-        us_edited_data_loaders_objects
-        us_esigner_gmp_objects
-        us_experiment_objects
-        us_fit_meniscus_objects
-        us_integral_objects
-        us_mwl_species_fit_objects
-        us_mwl_species_sim_objects
-        us_pseudo3d_combine_objects
-        us_reporter_gmp_objects
-        us_xpn_viewer_objects
+        us_programs_gmp
         Qt::DataVisualization
         )
 

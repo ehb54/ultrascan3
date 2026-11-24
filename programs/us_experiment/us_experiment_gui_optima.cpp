@@ -4,7 +4,6 @@
 
 #include "../../utils/us_convert.h"
 #include "../us_analysis_profile/us_analysis_profile.h"
-#include "../us_esigner_gmp/us_esigner_gmp.h"
 #include "us_constants.h"
 #include "us_crypto.h"
 #include "us_datafiles.h"

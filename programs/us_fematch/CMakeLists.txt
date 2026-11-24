@@ -15,25 +15,26 @@ set(FEMATCH_HEADERS
         us_dmga_mc_stats.h
         )
 
-# Everything but main(); other programs link these objects instead of
-# compiling the sources again.
-add_library(us_fematch_objects OBJECT
+# Everything but main(), which other programs use too, goes into us_programs_analysis.
+add_library(us_fematch_lib STATIC
         ${FEMATCH_SOURCES}
         ${FEMATCH_HEADERS}
         )
 
-set_target_properties(us_fematch_objects PROPERTIES
+set_target_properties(us_fematch_lib PROPERTIES
         AUTOMOC_MOC_OPTIONS "--no-notes"
         )
 
-target_include_directories(us_fematch_objects PUBLIC
+target_include_directories(us_fematch_lib PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         )
 
-target_link_libraries(us_fematch_objects PUBLIC
+target_link_libraries(us_fematch_lib PUBLIC
         us_program_common
         Qt::DataVisualization
         )
+
+target_link_libraries(us_programs_analysis INTERFACE us_fematch_lib)
 
 # Find UI and resource files
 file(GLOB FEMATCH_FORMS "*.ui")
@@ -59,7 +60,7 @@ set_target_properties(us_fematch PROPERTIES
 # Link libraries
 target_link_libraries(us_fematch PRIVATE
         us_program_common
-        us_fematch_objects
+        us_programs_analysis
         )
 
 # Install

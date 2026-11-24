@@ -26,29 +26,30 @@ set(TWODSA_HEADERS
         us_worker_calcnorm.h
         )
 
-# Everything but main(); other programs link these objects instead of
-# compiling the sources again.
-add_library(us_2dsa_objects OBJECT
+# Everything but main(), which other programs use too, goes into us_programs_analysis.
+add_library(us_2dsa_lib STATIC
         ${TWODSA_SOURCES}
         ${TWODSA_HEADERS}
         )
 
-set_target_properties(us_2dsa_objects PROPERTIES
+set_target_properties(us_2dsa_lib PROPERTIES
         AUTOMOC_MOC_OPTIONS "--no-notes"
         )
 
-target_include_directories(us_2dsa_objects PUBLIC
+target_include_directories(us_2dsa_lib PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         )
 
-target_link_libraries(us_2dsa_objects PUBLIC
+target_link_libraries(us_2dsa_lib PUBLIC
         us_program_common
         Qt::DataVisualization   # QT += datavisualization
         )
 
+target_link_libraries(us_programs_analysis INTERFACE us_2dsa_lib)
+
 # win32:LIBS += -lpsapi  (from the .pro file)
 if(WIN32)
-  target_link_libraries(us_2dsa_objects PUBLIC psapi)
+  target_link_libraries(us_2dsa_lib PUBLIC psapi)
 endif()
 
 # Find UI and resource files
@@ -77,7 +78,7 @@ endif()
 # Link libraries
 target_link_libraries(us_2dsa PRIVATE
         us_program_common
-        us_2dsa_objects
+        us_programs_analysis
         )
 
 # Install

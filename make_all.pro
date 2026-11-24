@@ -24,6 +24,16 @@ SUBDIRS += doc
 doc.file = doc/manual/manual.pro
 doc.makefile = Makefile.qmake
 
+## define the area libraries, static libraries of sources that several programs use
+PROGRAM_LIBS = data results analysis experiment gmp comproject
+for(area, PROGRAM_LIBS){
+lib_name = programlib_$${area}
+SUBDIRS += $$lib_name
+$$val_escape(lib_name).depends = qwtplot3d utils gui
+$$val_escape(lib_name).subdir = programlibs/$$val_escape(area)
+PROGRAM_LIB_TARGETS += $$lib_name
+}
+
 ## define all standalone programs as sub dir target dynamically by looking for *.pro files
 PROGRAMS = $$files(programs/*.pro,true)
 
@@ -34,6 +44,6 @@ for(tmp, PROGRAMS){
 pro_file_name = $$basename(tmp)
 pro_name = $$section(pro_file_name,.pro,0,0 )
 SUBDIRS += $$pro_name
-$$val_escape(pro_name).depends = qwtplot3d utils gui
+$$val_escape(pro_name).depends = qwtplot3d utils gui $$PROGRAM_LIB_TARGETS
 $$val_escape(pro_name).subdir = programs/$$val_escape(pro_name)
 }

@@ -1,7 +1,8 @@
 #!/bin/bash
 
-for d in utils gui programs/*
+for d in utils gui programlibs/* programs/*
 do
+  if [ ! -d $d ]; then continue; fi
   pushd $d
   make clean
   rm -f *~

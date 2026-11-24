@@ -19,9 +19,8 @@ layer above it, or the programs and libraries become circular again.
     must not name programs/, and utils' must not link the GUI library.
   * The program directories must not depend on each other in a cycle. One
     directory depends on another when it includes a header from it (by a
-    "../dir/" path, or by a name that only that directory has), lists one of
-    its sources in its CMakeLists.txt or .pro file, or links its object
-    library, "<dir>_objects", in its CMakeLists.txt. Files directly in
+    "../dir/" path, or by a name that only that directory has) or lists one of
+    its sources in its CMakeLists.txt or .pro file. Files directly in
     programs/ count as one directory.
 
 Commented-out lines are ignored. <dir> defaults to the repository containing
@@ -102,14 +101,6 @@ def program_graph(root, library_headers):
                 owners.setdefault(os.path.basename(path), set()).add(directory)
 
     listed = re.compile(r"\.\./([A-Za-z0-9_]+)/[A-Za-z0-9_]+\.(?:cpp|h)\b")
-    linked = re.compile(r"\b([A-Za-z0-9_]+)_objects\b")
-    # An object library that programs/CMakeLists.txt defines belongs to programs/
-    # itself, and has no directory of its own name.
-    top = os.path.join("programs", "CMakeLists.txt")
-    shared = set()
-    if os.path.isfile(os.path.join(root, top)):
-        text = "\n".join(strip_build_comments(read(root, top)))
-        shared = set(re.findall(r"add_library\s*\(\s*([A-Za-z0-9_]+)_objects\b", text))
     graph = {directory: set() for directory in directories}
     for directory in directories:
         for path in program_files(root, directory):
@@ -129,13 +120,6 @@ def program_graph(root, library_headers):
                 for line in strip_build_comments(read(root, path)):
                     for match in listed.finditer(line):
                         if match.group(1) in graph:
-                            graph[directory].add(match.group(1))
-                    if name != "CMakeLists.txt" or directory == ".":
-                        continue
-                    for match in linked.finditer(line):
-                        if match.group(1) in shared:
-                            graph[directory].add(".")
-                        elif match.group(1) in graph:
                             graph[directory].add(match.group(1))
         graph[directory].discard(directory)
     return graph

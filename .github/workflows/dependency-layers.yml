@@ -13,7 +13,7 @@ on:
       - '**.pro'
       - '**.pri'
       - 'scripts/check-dependency-layers.py'
-      - 'scripts/check-duplicate-sources.py'
+      - 'scripts/check-program-libraries.py'
       - 'test/dependency_layers/**'
       - '.github/workflows/dependency-layers.yml'
   workflow_dispatch:
@@ -35,7 +35,7 @@ jobs:
         run: python3 scripts/check-dependency-layers.py
       - name: Check that each forbidden dependency is rejected
         run: python3 test/dependency_layers/test_dependency_layers.py scripts/check-dependency-layers.py
-      - name: Check that each program source is compiled by one directory
-        run: python3 scripts/check-duplicate-sources.py
-      - name: Check that a source listed outside its directory is rejected
-        run: python3 test/dependency_layers/test_duplicate_sources.py scripts/check-duplicate-sources.py
+      - name: Check the program area libraries
+        run: python3 scripts/check-program-libraries.py
+      - name: Check that each program library violation is rejected
+        run: python3 test/dependency_layers/test_program_libraries.py scripts/check-program-libraries.py

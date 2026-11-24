@@ -4,24 +4,25 @@
 set(FIT_MENISCUS_SOURCES us_fit_meniscus.cpp)
 set(FIT_MENISCUS_HEADERS us_fit_meniscus.h)
 
-# Everything but main(); other programs link these objects instead of
-# compiling the sources again.
-add_library(us_fit_meniscus_objects OBJECT
+# Everything but main(), which other programs use too, goes into us_programs_analysis.
+add_library(us_fit_meniscus_lib STATIC
         ${FIT_MENISCUS_SOURCES}
         ${FIT_MENISCUS_HEADERS}
         )
 
-set_target_properties(us_fit_meniscus_objects PROPERTIES
+set_target_properties(us_fit_meniscus_lib PROPERTIES
         AUTOMOC_MOC_OPTIONS "--no-notes"
         )
 
-target_include_directories(us_fit_meniscus_objects PUBLIC
+target_include_directories(us_fit_meniscus_lib PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         )
 
-target_link_libraries(us_fit_meniscus_objects PUBLIC
+target_link_libraries(us_fit_meniscus_lib PUBLIC
         us_program_common
         )
+
+target_link_libraries(us_programs_analysis INTERFACE us_fit_meniscus_lib)
 
 add_executable(us_fit_meniscus
        us_fit_meniscus_main.cpp
@@ -39,7 +40,7 @@ set_target_properties(us_fit_meniscus PROPERTIES
 
 target_link_libraries(us_fit_meniscus PRIVATE
         us_program_common
-        us_fit_meniscus_objects
+        us_programs_analysis
         )
 
 # Install executable

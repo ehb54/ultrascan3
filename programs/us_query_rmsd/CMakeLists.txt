@@ -39,7 +39,7 @@ target_include_directories(us_query_rmsd PRIVATE
 # Link libraries
 target_link_libraries(us_query_rmsd PRIVATE
         us_program_common
-        us_fematch_objects
+        us_programs_analysis
         Qt::DataVisualization
         )
 
