@@ -472,7 +472,9 @@ TEST_F( TestUSSimCache, SimUnpackRejectsDamagedBytes )
    const QByteArray bytes = US_SimCache::Sim::from_raw( makeSim( 0.4 ), true ).pack_bytes();
    US_SimCache::Sim sim;
 
-   for ( qsizetype len : { (qsizetype) 0, (qsizetype) 4, (qsizetype) 8, (qsizetype) 20, bytes.size() / 2, bytes.size() - 1 } )
+   const qsizetype  size = bytes.size();
+
+   for ( qsizetype len : { (qsizetype) 0, (qsizetype) 4, (qsizetype) 8, (qsizetype) 20, size / 2, size - 1 } )
    {
       EXPECT_FALSE( US_SimCache::Sim::unpack( bytes.constData(), len, sim ) ) << len;
    }
