@@ -31,6 +31,7 @@ class US_UTIL_EXTERN US_HttpPost : public QObject
 
   private:
     QNetworkReply* reply;
+    bool           error_sent = false; //!< This request's error has been reported
 };
 
 #endif
