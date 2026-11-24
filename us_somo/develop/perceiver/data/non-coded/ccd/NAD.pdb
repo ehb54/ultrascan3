@@ -1,0 +1,48 @@
+REMARK   1 NAD: model coordinates from the wwPDB Chemical Component Dictionary
+REMARK   1 (https://files.rcsb.org/ligands/view/NAD.cif), taken from PDB entry 1C1D,
+REMARK   1 heavy atoms only.
+HETATM    1  PA  NAD A   1      19.222  51.636 -19.186  1.00  0.00           P
+HETATM    2  O1A NAD A   1      18.340  51.797 -20.358  1.00  0.00           O
+HETATM    3  O2A NAD A   1      18.885  52.533 -18.051  1.00  0.00           O
+HETATM    4  O5B NAD A   1      20.682  52.134 -19.596  1.00  0.00           O
+HETATM    5  C5B NAD A   1      21.429  51.543 -20.679  1.00  0.00           C
+HETATM    6  C4B NAD A   1      22.529  52.559 -20.842  1.00  0.00           C
+HETATM    7  O4B NAD A   1      23.479  52.131 -21.867  1.00  0.00           O
+HETATM    8  C3B NAD A   1      22.016  53.911 -21.339  1.00  0.00           C
+HETATM    9  O3B NAD A   1      22.683  54.999 -20.645  1.00  0.00           O
+HETATM   10  C2B NAD A   1      22.391  53.799 -22.811  1.00  0.00           C
+HETATM   11  O2B NAD A   1      22.499  55.103 -23.391  1.00  0.00           O
+HETATM   12  C1B NAD A   1      23.787  53.193 -22.650  1.00  0.00           C
+HETATM   13  N9A NAD A   1      24.232  52.627 -23.888  1.00  0.00           N
+HETATM   14  C8A NAD A   1      23.456  52.062 -24.844  1.00  0.00           C
+HETATM   15  N7A NAD A   1      24.163  51.575 -25.870  1.00  0.00           N
+HETATM   16  C5A NAD A   1      25.468  51.899 -25.524  1.00  0.00           C
+HETATM   17  C6A NAD A   1      26.691  51.648 -26.178  1.00  0.00           C
+HETATM   18  N6A NAD A   1      26.814  51.028 -27.349  1.00  0.00           N
+HETATM   19  N1A NAD A   1      27.815  52.074 -25.559  1.00  0.00           N
+HETATM   20  C2A NAD A   1      27.688  52.687 -24.351  1.00  0.00           C
+HETATM   21  N3A NAD A   1      26.599  52.942 -23.671  1.00  0.00           N
+HETATM   22  C4A NAD A   1      25.520  52.541 -24.314  1.00  0.00           C
+HETATM   23  O3  NAD A   1      19.277  50.088 -18.799  1.00  0.00           O
+HETATM   24  PN  NAD A   1      19.601  49.476 -17.337  1.00  0.00           P
+HETATM   25  O1N NAD A   1      18.411  49.237 -16.475  1.00  0.00           O
+HETATM   26  O2N NAD A   1      20.666  50.302 -16.679  1.00  0.00           O
+HETATM   27  O5D NAD A   1      20.109  48.046 -17.867  1.00  0.00           O
+HETATM   28  C5D NAD A   1      21.466  47.904 -18.399  1.00  0.00           C
+HETATM   29  C4D NAD A   1      21.663  46.439 -18.718  1.00  0.00           C
+HETATM   30  O4D NAD A   1      21.549  45.687 -17.490  1.00  0.00           O
+HETATM   31  C3D NAD A   1      20.666  45.828 -19.706  1.00  0.00           C
+HETATM   32  O3D NAD A   1      21.260  44.692 -20.357  1.00  0.00           O
+HETATM   33  C2D NAD A   1      19.642  45.251 -18.741  1.00  0.00           C
+HETATM   34  O2D NAD A   1      18.884  44.196 -19.362  1.00  0.00           O
+HETATM   35  C1D NAD A   1      20.561  44.689 -17.680  1.00  0.00           C
+HETATM   36  N1N NAD A   1      19.878  44.375 -16.435  1.00  0.00           N
+HETATM   37  C2N NAD A   1      19.056  45.318 -15.824  1.00  0.00           C
+HETATM   38  C3N NAD A   1      18.413  45.064 -14.544  1.00  0.00           C
+HETATM   39  C7N NAD A   1      17.732  46.217 -13.899  1.00  0.00           C
+HETATM   40  O7N NAD A   1      17.237  45.926 -12.798  1.00  0.00           O
+HETATM   41  N7N NAD A   1      17.658  47.471 -14.438  1.00  0.00           N
+HETATM   42  C4N NAD A   1      18.566  43.753 -13.912  1.00  0.00           C
+HETATM   43  C5N NAD A   1      19.471  42.797 -14.637  1.00  0.00           C
+HETATM   44  C6N NAD A   1      20.037  43.127 -15.786  1.00  0.00           C
+END
