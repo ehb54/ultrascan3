@@ -33,6 +33,7 @@ US_SolveSim::US_SolveSim( QList< DataSet* >& data_sets, int thrnrank,
    dbg_level    = 0;         // Default: no debug prints
    dbg_timing   = false;     // Default: no debug timing prints
    simcache     = nullptr;   // Default: no simulation cache
+   simfloat     = US_SimCache::float_sims(); // Debug text "SimFloat=on"
    banddthr     = false;     // Default: no bandform data_threshold
 
    // If band-forming, possibly read in threshold control values
@@ -96,51 +97,70 @@ US_SolveSim::Simulation::Simulation()
 // Fill an A column (from index ka on) with a simulation.  Where pb is given
 //  (OD limit substitutions in B), a point whose B value (from index bx on)
 //  is a substituted zero gets zero in A, and bx is advanced too.  The squares
-//  of the values go to norm_a and, if given, to norm_e.
-static void fill_a_column( const US_DataIO::RawData& simdat,
-                           const double*             pb,
-                           int&                      bx,
-                           QVector<double>&          nnls_a,
-                           int&                      ka,
-                           const int                 nscans,
-                           const int                 npoints,
-                           double&                   norm_a,
-                           double*                   norm_e )
+//  of the values go to norm_a and, if given, to norm_e.  The readings of a
+//  scan are doubles or (float form) floats, which convert exactly.
+template <class T>
+static void fill_a_scan( const T*      sv,
+                         const double* pb,
+                         int&          bx,
+                         double*       pa,
+                         int&          ka,
+                         const int     npoints,
+                         double&       norm_a,
+                         double*       norm_e )
+{
+   // (The sums keep the order of the points:  the same bits as before)
+   if ( pb == nullptr && norm_e == nullptr )
+   { // No substitutions:  the plain copy (the hot path)
+      for ( int rr = 0; rr < npoints; rr++ )
+      {
+         const double sval = sv[rr];
+         pa[ka++]          = sval;
+         norm_a += sq( sval );
+      }
+      return;
+   }
+
+   for ( int rr = 0; rr < npoints; rr++ )
+   {
+      if ( pb != nullptr && pb[bx++] == 0.0 )
+      {
+         pa[ka++] = 0.0;
+         continue;
+      }
+
+      const double sval = sv[rr];
+      pa[ka++]          = sval;
+      norm_a += sq( sval );
+
+      if ( norm_e != nullptr )
+      {
+         *norm_e += sq( sval );
+      }
+   }
+}
+
+static void fill_a_column( const US_SimCache::Sim& sim,
+                           const double*           pb,
+                           int&                    bx,
+                           QVector<double>&        nnls_a,
+                           int&                    ka,
+                           const int               nscans,
+                           const int               npoints,
+                           double&                 norm_a,
+                           double*                 norm_e )
 {
    double* pa = nnls_a.data();
 
    for ( int ss = 0; ss < nscans; ss++ )
    {
-      const double* sv = simdat.scanData.at( ss ).rvalues.constData();
-
-      // (The sums keep the order of the points:  the same bits as before)
-      if ( pb == nullptr && norm_e == nullptr )
-      { // No substitutions:  the plain copy (the hot path)
-         for ( int rr = 0; rr < npoints; rr++ )
-         {
-            const double sval = sv[rr];
-            pa[ka++]          = sval;
-            norm_a += sq( sval );
-         }
-         continue;
-      }
-
-      for ( int rr = 0; rr < npoints; rr++ )
+      if ( sim.is_float() )
       {
-         if ( pb != nullptr && pb[bx++] == 0.0 )
-         {
-            pa[ka++] = 0.0;
-            continue;
-         }
-
-         const double sval = sv[rr];
-         pa[ka++]          = sval;
-         norm_a += sq( sval );
-
-         if ( norm_e != nullptr )
-         {
-            *norm_e += sq( sval );
-         }
+         fill_a_scan( sim.fscan( ss ), pb, bx, pa, ka, npoints, norm_a, norm_e );
+      }
+      else
+      {
+         fill_a_scan( sim.dscan( ss ), pb, bx, pa, ka, npoints, norm_a, norm_e );
       }
    }
 }
@@ -398,10 +418,10 @@ DbgLv(1) << "   CR:B fill kodl" << kodl;
 
    if ( abort ) return;
 
-   QList< US_DataIO::RawData > simulations;       // All simulations, this run
+   QList<US_SimCache::Sim> simulations; // All simulations, this run
    simulations.reserve( static_cast<qsizetype>( nsolutes ) * dataset_count );
    QList<QByteArray>         simkeys; // Their cache keys (if any)
-   QList<US_DataIO::RawData> rawsims; // ... as simulated (shared
+   QList<US_SimCache::Sim>   rawsims; // ... as simulated (shared
                                       //  unless thresholded)
    dskeys.clear();                    // Renew cache data set keys
 
@@ -561,12 +581,9 @@ else
 //DebugTime("BEG: clcr-NA-astfem");
 DbgLv( 2 ) << "solve_sim_2: smeni sbott" << dset->simparams.meniscus << dset->simparams.bottom;
 DbgLv( 2 ) << "   CR:113  rss now" << US_Memory::rss_now() << "cc" << cc;
-QByteArray         simkey = simulate( model, dset, edata, simdat );
-US_DataIO::RawData rawsim; // As simulated, for cache
-if ( simcache != nullptr )
-{
-   rawsim = simdat; //  (shared unless modified)
-}
+US_SimCache::Sim sim;
+QByteArray       simkey = simulate( model, dset, edata, sim );
+US_SimCache::Sim rawsim = sim; // As simulated, for cache (shared)
 //DebugTime("END: clcr-NA-astfem");
 DbgLv( 2 ) << "   CR:114  rss now" << US_Memory::rss_now() << "cc" << cc;
 if ( abort )
@@ -577,7 +594,7 @@ if ( abort )
 
 if ( banddthr )
 { // If band forming, hold data within thresholds; skip if all-zero
-   if ( data_threshold( &simdat, zerothr, linethr, maxod, mfactor ) )
+   if ( threshold_sim( sim ) )
    {
       continue;
    }
@@ -585,13 +602,13 @@ if ( banddthr )
    ksols++;
 }
 
-            simulations << simdat;   // Save simulation (each dataset,solute)
+simulations << sim; // Save simulation (each dataset,solute)
 
-            if ( simcache != nullptr )
-            { // Keep key and simulation, to keep any survivor in the cache
-               simkeys << simkey;
-               rawsims << rawsim;
-            }
+if ( simcache != nullptr )
+{ // Keep key and simulation, to keep any survivor in the cache
+   simkeys << simkey;
+   rawsims << rawsim;
+}
 DbgLv(2) << "   CR:115  rss now" << US_Memory::rss_now() << "cc" << cc;
 
             // Populate the A matrix for the NNLS routine with simulation
@@ -601,7 +618,7 @@ DbgLv(1) << "   CR: A fill kodl" << kodl << "bndthr ksol" << banddthr << ksols
             if ( kodl == 0 )
             {  // Normal case of no ODlimit substitutions
 
-               fill_a_column( simdat, nullptr, bx, nnls_a, ka, nscans, npoints, norm_a, &norm_e );
+               fill_a_column( sim, nullptr, bx, nnls_a, ka, nscans, npoints, norm_a, &norm_e );
                DbgLv( 1 ) << " T0O0:norm_of_the_vector" << norm_a << sim_vals.solutes[cc].s << sim_vals.solutes[cc].k;
                //------------------------------------------------
 
@@ -617,7 +634,7 @@ DbgLv(1) << "   CR: A fill kodl" << kodl << "bndthr ksol" << banddthr << ksols
             {  // Special case where ODlimit substitutions are in B matrix
 DbgLv(1)<<"stype==0 but from else part";
 
-fill_a_column( simdat, nnls_b.constData(), bx, nnls_a, ka, nscans, npoints, norm_a, &norm_e );
+fill_a_column( sim, nnls_b.constData(), bx, nnls_a, ka, nscans, npoints, norm_a, &norm_e );
 DbgLv(1) << " T0O1:norm_of_the_vector" << norm_a << sim_vals.solutes[cc].s << sim_vals.solutes[cc].k;
             }
 
@@ -844,12 +861,9 @@ DbgLv(1) << "solve_sim_2: timestate file does not exist" << tmst_fpath << dset->
                }
             }
 
-            QByteArray         simkey = simulate( model, dset, edata, simdat );
-            US_DataIO::RawData rawsim; // As simulated, for cache
-            if ( simcache != nullptr )
-            {
-               rawsim = simdat; //  (shared unless modified)
-            }
+            US_SimCache::Sim sim;
+            QByteArray       simkey = simulate( model, dset, edata, sim );
+            US_SimCache::Sim rawsim = sim; // As simulated, for cache (shared)
 #if 0
 int nsc=simdat.scanCount();
 int npt=simdat.pointCount();
@@ -874,13 +888,15 @@ DbgLv(1) << "CR: sdat:"
 
             if ( banddthr )
             {  // If band forming, hold data within thresholds; skip if all-zero
-               if ( data_threshold( &simdat, zerothr, linethr, maxod, mfactor ) )
+               if ( threshold_sim( sim ) )
+               {
                   continue;
+               }
 
                ksols++;
             }
 
-            simulations << simdat;   // Save simulation (each datset,solute)
+            simulations << sim; // Save simulation (each datset,solute)
 
             if ( simcache != nullptr )
             { // Keep key and simulation, to keep any survivor in the cache
@@ -894,11 +910,11 @@ DbgLv(1) << "   CR: A-fill  bndthr" << banddthr << "kodl ksols" << kodl << ksols
 
             if ( kodl == 0 )
             {  // Normal case of no ODlimit substitutions
-               fill_a_column( simdat, nullptr, bx, nnls_a, ka, nscans, npoints, norm_a, nullptr );
+               fill_a_column( sim, nullptr, bx, nnls_a, ka, nscans, npoints, norm_a, nullptr );
             }
             else
             {  // Special case where ODlimit substitutions are in B matrix
-               fill_a_column( simdat, nnls_b.constData(), bx, nnls_a, ka, nscans, npoints, norm_a, nullptr );
+               fill_a_column( sim, nnls_b.constData(), bx, nnls_a, ka, nscans, npoints, norm_a, nullptr );
             }
 
 //DbgLv(1) << "CR: ks ka" << ks << ka
@@ -1039,12 +1055,9 @@ DbgLv(1) << "solve_sim_3: timestate file does not exist" << tmst_fpath << dset->
                }
             }
 
-            QByteArray         simkey = simulate( model, dset, edata, simdat );
-            US_DataIO::RawData rawsim; // As simulated, for cache
-            if ( simcache != 0 )
-            {
-               rawsim = simdat; //  (shared unless modified)
-            }
+            US_SimCache::Sim sim;
+            QByteArray       simkey = simulate( model, dset, edata, sim );
+            US_SimCache::Sim rawsim = sim; // As simulated, for cache (shared)
             if ( abort )
             {
                mark_failed_solve( sim_vals, dataset_count );
@@ -1053,13 +1066,15 @@ DbgLv(1) << "solve_sim_3: timestate file does not exist" << tmst_fpath << dset->
 
             if ( banddthr )
             {  // If band forming, hold data within thresholds; skip if all-zero
-               if ( data_threshold(&simdat, zerothr, linethr, maxod, mfactor) )
+               if ( threshold_sim( sim ) )
+               {
                   continue;
+               }
 
                ksols++;
             }
 
-            simulations << simdat;   // Save simulation (each datset,solute)
+            simulations << sim; // Save simulation (each datset,solute)
 
             if ( simcache != 0 )
             { // Keep key and simulation, to keep any survivor in the cache
@@ -1074,11 +1089,11 @@ int ks=ka;
             // Populate the A matrix for the NNLS routine with simulation
             if ( kodl == 0 )
             {  // Normal case of no ODlimit substitutions
-               fill_a_column( simdat, nullptr, bx, nnls_a, ka, nscans, npoints, norm_a, nullptr );
+               fill_a_column( sim, nullptr, bx, nnls_a, ka, nscans, npoints, norm_a, nullptr );
             }
             else
             {  // Special case where ODlimit substitutions are in B matrix
-               fill_a_column( simdat, nnls_b.constData(), bx, nnls_a, ka, nscans, npoints, norm_a, nullptr );
+               fill_a_column( sim, nnls_b.constData(), bx, nnls_a, ka, nscans, npoints, norm_a, nullptr );
             }
 DbgLv(1) << "CR: ks ka" << ks << ka
  << "nnA s...k" << nnls_a[ks] << nnls_a[ks+1]
@@ -1399,7 +1414,7 @@ if( lim_offs>1&&(thrnrank==1||thrnrank==11) )
 
             for ( int jx = sim_ix; jx < sim_lx; jx++ )
             {
-               simcache->store( simkeys[jx], rawsims[jx], true );
+               simcache->store_sim( simkeys[jx], rawsims[jx], true );
             }
          }
 if(soluval>1.0)
@@ -1410,7 +1425,7 @@ if(soluval>1.0)
          {
             // Input sims (ea.dset, ea.solute); out sims (sum.solute, ea.dset)
 //            int sim_ix  = cc * dataset_count + ee - offset;
-            US_DataIO::RawData*     idata = &simulations[ sim_ix ];
+            const US_SimCache::Sim* idata   = &simulations[sim_ix];
             US_DataIO::RawData*     sdata = &sim_vals.sim_data;
             int nscans  = idata->scanCount();
             int npoints = idata->pointCount();
@@ -1422,12 +1437,25 @@ if(soluval>1.0)
 
             for ( int ss = 0; ss < nscans; ss++, scnx++ )
             {
-               double*       sv = sdata->scanData[scnx].rvalues.data();
-               const double* iv = idata->scanData.at( ss ).rvalues.constData();
+               double* sv = sdata->scanData[scnx].rvalues.data();
 
-               for ( int rr = 0; rr < npoints; rr++ )
+               if ( idata->is_float() )
+               { // (Floats convert exactly:  the same sums as from doubles)
+                  const float* iv = idata->fscan( ss );
+
+                  for ( int rr = 0; rr < npoints; rr++ )
+                  {
+                     sv[rr] += ( soluval * (double) iv[rr] );
+                  }
+               }
+               else
                {
-                  sv[rr] += ( soluval * iv[rr] );
+                  const double* iv = idata->dscan( ss );
+
+                  for ( int rr = 0; rr < npoints; rr++ )
+                  {
+                     sv[rr] += ( soluval * iv[rr] );
+                  }
                }
             }
 DbgLv(2) << "   CR:231  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
@@ -1971,9 +1999,10 @@ bool US_SolveSim::calc_variance_normal( int offset, int dataset_count, Simulatio
    QVector<double>             cvec( dataset_count * nsolutes, 0.0 );
    QVector<double>             gram( dataset_count * ngram, 0.0 );
    QVector<int>                npts( dataset_count, 0 );
-   QVector<US_DataIO::RawData> sims( nsolutes * dataset_count );
+   QVector<US_SimCache::Sim>   sims( nsolutes * dataset_count );
    QVector<QByteArray>         simkeys( nsolutes * dataset_count );
    QVector<const double*>      sv( nsolutes );
+   QVector<double>             svrows; // Scan readings of float-form simulations
    US_Model                    model;
    model.components.resize( 1 );
 
@@ -2019,6 +2048,7 @@ bool US_SolveSim::calc_variance_normal( int offset, int dataset_count, Simulatio
       double* gm  = gram.data() + kd * ngram;
       double* cv  = cvec.data() + kd * nsolutes;
       double  bsq = 0.0;
+      svrows.resize( static_cast<qsizetype>( nsolutes ) * npoints );
 
       for ( int ss = 0; ss < nscans; ss++ )
       {
@@ -2026,7 +2056,24 @@ bool US_SolveSim::calc_variance_normal( int offset, int dataset_count, Simulatio
 
          for ( int cc = 0; cc < nsolutes; cc++ )
          {
-            sv[cc] = sims[kd * nsolutes + cc].scanData.at( ss ).rvalues.constData();
+            const US_SimCache::Sim& sim = sims[kd * nsolutes + cc];
+
+            if ( sim.is_float() )
+            { // The scan's readings as doubles (exactly)
+               const float* fv  = sim.fscan( ss );
+               double*      row = svrows.data() + static_cast<qsizetype>( cc ) * npoints;
+
+               for ( int rr = 0; rr < npoints; rr++ )
+               {
+                  row[rr] = fv[rr];
+               }
+
+               sv[cc] = row;
+            }
+            else
+            {
+               sv[cc] = sim.dscan( ss );
+            }
          }
 
          double bsqs = 0.0; // Per scan (pairwise-style summation)
@@ -2226,7 +2273,7 @@ bool US_SolveSim::calc_variance_normal( int offset, int dataset_count, Simulatio
          {
             for ( int kd = 0; kd < dataset_count; kd++ )
             {
-               simcache->store( simkeys[kd * nsolutes + cc], sims[kd * nsolutes + cc], true );
+               simcache->store_sim( simkeys[kd * nsolutes + cc], sims[kd * nsolutes + cc], true );
             }
          }
       }
@@ -2240,7 +2287,9 @@ bool US_SolveSim::calc_variance_normal( int offset, int dataset_count, Simulatio
 //  A cache hit skips US_Astfem_RSA::calculate and so its side effects on
 //  dset->simparams (timestate load, speed_step expansion, the sim flag);
 //  nothing after the simulation in calc_residuals may depend on them.
-QByteArray US_SolveSim::simulate( US_Model& model, DataSet* dset, US_DataIO::EditedData* edata, US_DataIO::RawData& simdat )
+//  With simfloat the simulation is in float form (rounded), shared with any
+//  cache in float mode:  neither a hit nor a store copies its readings.
+QByteArray US_SolveSim::simulate( US_Model& model, DataSet* dset, US_DataIO::EditedData* edata, US_SimCache::Sim& sim )
 {
    QByteArray simkey;
 
@@ -2279,13 +2328,14 @@ QByteArray US_SolveSim::simulate( US_Model& model, DataSet* dset, US_DataIO::Edi
 
       simkey = US_SimCache::sim_key( dskey->key, model.components[0] );
 
-      if ( simcache->fetch( simkey, simdat ) )
+      if ( simcache->fetch_sim( simkey, sim ) )
       {
          return simkey;
       }
    }
 
    // Initialize simulation data with the experiment's grid
+   US_DataIO::RawData simdat;
    US_AstfemMath::initSimData( simdat, *edata, 0.0 );
 
    US_Astfem_RSA astfem_rsa( model, dset->simparams );
@@ -2303,9 +2353,13 @@ QByteArray US_SolveSim::simulate( US_Model& model, DataSet* dset, US_DataIO::Edi
       return QByteArray();
    }
 
+   // Float form (rounded to float precision, as a cache in float mode stores
+   //  it) or double form (shared)
+   sim = US_SimCache::Sim::from_raw( simdat, simfloat );
+
    if ( simcache != 0 && rc == 0 )
    {
-      simcache->store( simkey, simdat, false );
+      simcache->store_sim( simkey, sim, false );
    }
 
    return simkey;
@@ -2336,6 +2390,19 @@ void US_SolveSim::DebugTime( QString mtext )
       qDebug() << "w" << thrnrank << "TM:" << mtext
                << startCalc.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
    }
+}
+
+// Band forming:  hold a simulation within the thresholds, as the double
+//  values the readings give (the simulation as computed stays unchanged,
+//  for the cache);  return flag if all-zero
+bool US_SolveSim::threshold_sim( US_SimCache::Sim& sim )
+{
+   US_DataIO::RawData simdat;
+   sim.to_raw( simdat );
+
+   const bool allzero = data_threshold( &simdat, zerothr, linethr, maxod, mfactor );
+   sim                = US_SimCache::Sim::from_raw( simdat, false );
+   return allzero;
 }
 
 // Modify amplitude of data by thresholds and return flag if all-zero result

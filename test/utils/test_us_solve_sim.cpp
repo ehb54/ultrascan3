@@ -1241,12 +1241,12 @@ class TestUSSolveSimCache : public TestUSSolveSimCalcResiduals
       }
 
       // Expect the outputs with a cache to equal those without, bitwise
-      void expectSameFit( qint64 max_bytes, bool threads )
+      void expectSameFit( qint64 max_bytes, bool threads, bool floats = false )
       {
          const QVector<double> expected = fit2dsa( nullptr, false );
          ASSERT_GT( expected.size(), 0 );
 
-         US_SimCache           cache( max_bytes );
+         US_SimCache           cache( max_bytes, floats );
          const QVector<double> cached = fit2dsa( &cache, threads );
          const int             diffx  = firstDifference( cached, expected );
          EXPECT_EQ( diffx, -1 ) << "sizes " << cached.size() << " " << expected.size() << ";  " << cache.stats_text().toStdString();
@@ -1292,6 +1292,56 @@ TEST_F( TestUSSolveSimCache, FitIsUnchangedByCacheInThreads )
 {
    noisflag = 3;
    expectSameFit( 1024LL * 1024 * 1024, true );
+}
+
+TEST_F( TestUSSolveSimCache, FloatFitIsUnchangedByFloatCache )
+{
+   // Simulations rounded to float precision ("SimFloat=on") and cached as
+   //  floats:  the same fit as without a cache, and not the double fit
+   const QStringList saved = US_Settings::debug_text();
+   US_Settings::set_debug_text( QStringList() );
+   const QVector<double> dblfit = fit2dsa( nullptr, false );
+   US_Settings::set_debug_text( QStringList() << "SimFloat=on" );
+   noisflag = 3;
+   expectSameFit( 1024LL * 1024 * 1024, true, true );
+   const bool floats            = lastStats.floats;
+   noisflag                     = 0;
+   const QVector<double> fltfit = fit2dsa( nullptr, false );
+   US_Settings::set_debug_text( saved );
+
+   EXPECT_TRUE( floats );
+   EXPECT_NE( firstDifference( fltfit, dblfit ), -1 );
+}
+
+TEST_F( TestUSSolveSimCache, FloatFitIsUnchangedByDoubleCache )
+{
+   // "SimFloat=on" with a cache not in float mode (as the MPI caches):  the
+   //  misses are float-form simulations, the hits double-form ones of the
+   //  same (rounded) values;  the fit is bitwise the one without a cache
+   const QStringList saved = US_Settings::debug_text();
+   US_Settings::set_debug_text( QStringList() << "SimFloat=on" );
+   noisflag = 3;
+   expectSameFit( 1024LL * 1024 * 1024, true, false );
+   const bool floats = lastStats.floats;
+   US_Settings::set_debug_text( saved );
+
+   EXPECT_FALSE( floats );
+}
+
+TEST_F( TestUSSolveSimCache, FloatCacheRoundsWithoutDebugText )
+{
+   // A cache in float mode alone makes the solvers round their simulations,
+   //  so the fit is the "SimFloat=on" fit without a cache
+   const QStringList saved = US_Settings::debug_text();
+   US_Settings::set_debug_text( QStringList() << "SimFloat=on" );
+   const QVector<double> expected = fit2dsa( nullptr, false );
+   US_Settings::set_debug_text( QStringList() );
+   US_SimCache           cache( 1024LL * 1024 * 1024, true );
+   const QVector<double> cached = fit2dsa( &cache, false );
+   US_Settings::set_debug_text( saved );
+
+   EXPECT_EQ( firstDifference( cached, expected ), -1 ) << cache.stats_text().toStdString();
+   EXPECT_GT( cache.stats().hits, 0 );
 }
 
 // The same fit in threads without a cache:  solves in threads must not share
@@ -1511,6 +1561,64 @@ TEST_F( TestUSSolveSimNormal, ReusesTheCache )
 
    EXPECT_EQ( first.variance, plain.variance );
    EXPECT_EQ( second.variance, plain.variance );
+}
+
+TEST_F( TestUSSolveSimNormal, ReusesAFloatCacheExactly )
+{
+   // A cache in float mode makes the solver round its simulations (with no
+   //  "SimFloat=on" in the debug text):  a hit gives the variance of a miss
+   const QStringList saved = US_Settings::debug_text();
+   US_Settings::set_debug_text( QStringList() );
+   const QVector<US_Solute> solutes = { US_Solute( 2.4e-13, 1.3 ), US_Solute( 4.6e-13, 1.55 ) };
+   US_SimCache              cache( 1024LL * 1024 * 1024, true );
+   US_SolveSim::Simulation  first, second;
+   first.solutes = second.solutes = solutes;
+
+   US_SolveSim solvesim( dsets, 1, false );
+   solvesim.set_sim_cache( &cache );
+   const bool firstok  = solvesim.calc_variance_normal( 0, 1, first );
+   const bool secondok = solvesim.calc_variance_normal( 0, 1, second );
+   US_Settings::set_debug_text( saved );
+
+   ASSERT_TRUE( firstok );
+   ASSERT_TRUE( secondok );
+   EXPECT_EQ( cache.stats().hits, 2 );
+   EXPECT_EQ( second.variance, first.variance );
+}
+
+TEST_F( TestUSSolveSimNormal, FloatAndDoubleFormsGiveTheSameVariance )
+{
+   // "SimFloat=on":  float-form simulations (a float cache, or misses) and
+   //  double-form ones of the same rounded values (hits of a double cache)
+   //  give bitwise the same variance and concentrations
+   const QStringList saved = US_Settings::debug_text();
+   US_Settings::set_debug_text( QStringList() << "SimFloat=on" );
+   const QVector<US_Solute> solutes = { US_Solute( 2.4e-13, 1.3 ), US_Solute( 4.6e-13, 1.55 ) };
+   US_SimCache              fcache( 1024LL * 1024 * 1024, true );
+   US_SimCache              dcache( 1024LL * 1024 * 1024, false );
+   US_SolveSim::Simulation  plain, floats, dmiss, dhit;
+   plain.solutes = floats.solutes = dmiss.solutes = dhit.solutes = solutes;
+
+   US_SolveSim nocache( dsets, 1, false );
+   US_SolveSim fsolve( dsets, 1, false );
+   fsolve.set_sim_cache( &fcache );
+   US_SolveSim dsolve( dsets, 1, false );
+   dsolve.set_sim_cache( &dcache );
+   const bool ok = nocache.calc_variance_normal( 0, 1, plain ) && fsolve.calc_variance_normal( 0, 1, floats ) &&
+                   dsolve.calc_variance_normal( 0, 1, dmiss ) && dsolve.calc_variance_normal( 0, 1, dhit );
+   US_Settings::set_debug_text( saved );
+
+   ASSERT_TRUE( ok );
+   EXPECT_EQ( dcache.stats().hits, 2 );
+   for ( const US_SolveSim::Simulation* sim : { &floats, &dmiss, &dhit } )
+   {
+      EXPECT_EQ( sim->variance, plain.variance );
+      ASSERT_EQ( sim->solutes.size(), plain.solutes.size() );
+      for ( int cc = 0; cc < plain.solutes.size(); cc++ )
+      {
+         EXPECT_EQ( sim->solutes[cc].c, plain.solutes[cc].c ) << cc;
+      }
+   }
 }
 
 TEST_F( TestUSSolveSimNormal, ZeroDataGiveNoSolutes )

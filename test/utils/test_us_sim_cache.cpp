@@ -336,6 +336,170 @@ TEST_F( TestUSSimCache, DebugTextControlsDefaultCache )
    EXPECT_EQ( cache->stats().max_bytes, 300LL * 1024 * 1024 );
 }
 
+TEST_F( TestUSSimCache, FloatModeReturnsRoundedSimulationExactly )
+{
+   // A simulation rounded to float precision is fetched exactly, and takes
+   //  less room than as doubles
+   for ( bool lru : { false, true } )
+   {
+      SCOPED_TRACE( lru ? "lru" : "default" );
+      US_SimCache cache( 10 * sbytes, true );
+      cache.set_lru( lru );
+      US_DataIO::RawData simdat = makeSim( 0.1 );
+      US_SimCache::round_to_float( simdat );
+      EXPECT_FALSE( sameValues( simdat, makeSim( 0.1 ) ) );
+      EXPECT_TRUE( cache.store( key( 0 ), simdat, false ) );
+
+      US_DataIO::RawData fetched;
+      ASSERT_TRUE( cache.fetch( key( 0 ), fetched ) );
+      EXPECT_TRUE( sameValues( fetched, simdat ) );
+      EXPECT_EQ( fetched.scanData[3].seconds, simdat.scanData[3].seconds );
+
+      // Modifying a fetched copy changes neither the cache nor other copies
+      US_DataIO::RawData again;
+      fetched.scanData[0].rvalues[0] = -1.0;
+      ASSERT_TRUE( cache.fetch( key( 0 ), again ) );
+      EXPECT_TRUE( sameValues( again, simdat ) );
+
+      const US_SimCache::Stats st = cache.stats();
+      EXPECT_TRUE( st.floats );
+      EXPECT_EQ( st.bytes, US_SimCache::sim_bytes( simdat, true ) );
+      EXPECT_LT( st.bytes, sbytes );
+   }
+}
+
+TEST_F( TestUSSimCache, FloatModeRoundsUnroundedSimulation )
+{
+   // An unrounded simulation is stored rounded:  fetched as round_to_float
+   //  gives it
+   US_SimCache        cache( 10 * sbytes, true );
+   US_DataIO::RawData simdat = makeSim( 0.3 );
+   EXPECT_TRUE( cache.store( key( 0 ), simdat, false ) );
+   US_SimCache::round_to_float( simdat );
+
+   US_DataIO::RawData fetched;
+   ASSERT_TRUE( cache.fetch( key( 0 ), fetched ) );
+   EXPECT_TRUE( sameValues( fetched, simdat ) );
+}
+
+TEST_F( TestUSSimCache, SimFormsHoldTheSameReadings )
+{
+   // Float form:  the readings rounded, read back exactly;  double form:
+   //  the simulation itself.  Both give it back whole, and their bytes
+   //  are what sim_bytes estimates.
+   const US_DataIO::RawData simdat  = makeSim( 0.7 );
+   US_DataIO::RawData       rounded = simdat;
+   US_SimCache::round_to_float( rounded );
+
+   const US_SimCache::Sim fsim = US_SimCache::Sim::from_raw( simdat, true );
+   const US_SimCache::Sim dsim = US_SimCache::Sim::from_raw( simdat, false );
+   EXPECT_TRUE( fsim.is_float() );
+   EXPECT_FALSE( dsim.is_float() );
+   ASSERT_EQ( fsim.scanCount(), simdat.scanData.size() );
+   EXPECT_EQ( fsim.pointCount(), simdat.xvalues.size() );
+
+   for ( int ss = 0; ss < fsim.scanCount(); ss++ )
+   {
+      for ( int rr = 0; rr < fsim.pointCount(); rr++ )
+      {
+         EXPECT_EQ( (double) fsim.fscan( ss )[rr], rounded.scanData[ss].rvalues[rr] );
+         EXPECT_EQ( fsim.value( ss, rr ), rounded.scanData[ss].rvalues[rr] );
+         EXPECT_EQ( dsim.value( ss, rr ), simdat.scanData[ss].rvalues[rr] );
+      }
+   }
+
+   US_DataIO::RawData back;
+   fsim.to_raw( back );
+   EXPECT_TRUE( sameValues( back, rounded ) );
+   EXPECT_EQ( back.scanData[2].seconds, simdat.scanData[2].seconds );
+   dsim.to_raw( back );
+   EXPECT_TRUE( sameValues( back, simdat ) );
+   fsim.to_float().to_raw( back );
+   EXPECT_TRUE( sameValues( back, rounded ) );
+   dsim.to_float().to_raw( back );
+   EXPECT_TRUE( sameValues( back, rounded ) );
+
+   EXPECT_EQ( fsim.bytes(), US_SimCache::sim_bytes( simdat, true ) );
+   EXPECT_EQ( dsim.bytes(), US_SimCache::sim_bytes( simdat, false ) );
+}
+
+TEST_F( TestUSSimCache, FloatModeSharesSimsWithoutCopies )
+{
+   // In float mode a stored float-form simulation is kept as it is, and
+   //  every fetch_sim gives the same readings (no copy);  fetch() and
+   //  fetch_sim() see the same values
+   for ( bool lru : { false, true } )
+   {
+      SCOPED_TRACE( lru ? "lru" : "default" );
+      US_SimCache cache( 10 * sbytes, true );
+      cache.set_lru( lru );
+      const US_SimCache::Sim sim = US_SimCache::Sim::from_raw( makeSim( 0.2 ), true );
+      EXPECT_TRUE( cache.store_sim( key( 0 ), sim, false ) );
+
+      US_SimCache::Sim first, second;
+      ASSERT_TRUE( cache.fetch_sim( key( 0 ), first ) );
+      ASSERT_TRUE( cache.fetch_sim( key( 0 ), second ) );
+      EXPECT_TRUE( first.is_float() );
+      EXPECT_EQ( first.fscan( 0 ), sim.fscan( 0 ) );
+      EXPECT_EQ( second.fscan( 3 ), sim.fscan( 3 ) );
+
+      US_DataIO::RawData fetched, expected;
+      ASSERT_TRUE( cache.fetch( key( 0 ), fetched ) );
+      sim.to_raw( expected );
+      EXPECT_TRUE( sameValues( fetched, expected ) );
+
+      // A double-form simulation is stored in float form (rounded)
+      EXPECT_TRUE( cache.store_sim( key( 1 ), US_SimCache::Sim::from_raw( makeSim( 0.4 ), false ), false ) );
+      US_SimCache::Sim stored;
+      ASSERT_TRUE( cache.fetch_sim( key( 1 ), stored ) );
+      EXPECT_TRUE( stored.is_float() );
+      US_DataIO::RawData rounded = makeSim( 0.4 );
+      US_SimCache::round_to_float( rounded );
+      stored.to_raw( fetched );
+      EXPECT_TRUE( sameValues( fetched, rounded ) );
+      EXPECT_EQ( cache.stats().bytes, sim.bytes() + stored.bytes() );
+   }
+}
+
+TEST_F( TestUSSimCache, DoubleModeSimsAreDoubleForm )
+{
+   // Without float mode, fetch_sim gives the stored simulation (double
+   //  form, exactly) and store_sim of a float-form one stores its readings
+   US_SimCache cache( 10 * sbytes );
+   EXPECT_TRUE( cache.store_sim( key( 0 ), US_SimCache::Sim::from_raw( makeSim( 0.5 ), false ), false ) );
+   US_SimCache::Sim sim;
+   ASSERT_TRUE( cache.fetch_sim( key( 0 ), sim ) );
+   EXPECT_FALSE( sim.is_float() );
+   US_DataIO::RawData fetched;
+   sim.to_raw( fetched );
+   EXPECT_TRUE( sameValues( fetched, makeSim( 0.5 ) ) );
+
+   EXPECT_TRUE( cache.store_sim( key( 1 ), US_SimCache::Sim::from_raw( makeSim( 0.6 ), true ), false ) );
+   ASSERT_TRUE( cache.fetch( key( 1 ), fetched ) );
+   US_DataIO::RawData rounded = makeSim( 0.6 );
+   US_SimCache::round_to_float( rounded );
+   EXPECT_TRUE( sameValues( fetched, rounded ) );
+   EXPECT_FALSE( cache.fetch_sim( key( 2 ), sim ) );
+}
+
+TEST_F( TestUSSimCache, DebugTextControlsFloatMode )
+{
+   US_Settings::set_debug_text( QStringList() << "SimCacheMB=300" );
+   EXPECT_FALSE( US_SimCache::float_sims() );
+   std::unique_ptr<US_SimCache> dcache( US_SimCache::create_default() );
+   ASSERT_NE( dcache, nullptr );
+   EXPECT_FALSE( dcache->stats().floats );
+   EXPECT_FALSE( dcache->float_mode() );
+
+   US_Settings::set_debug_text( QStringList() << "SimCacheMB=300" << "SimFloat=on" );
+   EXPECT_TRUE( US_SimCache::float_sims() );
+   std::unique_ptr<US_SimCache> fcache( US_SimCache::create_default() );
+   ASSERT_NE( fcache, nullptr );
+   EXPECT_TRUE( fcache->stats().floats );
+   EXPECT_TRUE( fcache->float_mode() );
+   EXPECT_TRUE( fcache->stats_text().contains( "(floats)" ) );
+}
+
 TEST_F( TestUSSimCache, ConcurrentUseIsSafe )
 {
    // Threads storing and fetching the same keys get the stored values
@@ -511,6 +675,59 @@ TEST_F( TestUSSimCache, LruConcurrentUseIsSafe )
    EXPECT_LE( cache.stats().bytes, cache.stats().max_bytes );
 }
 
+TEST_F( TestUSSimCache, FloatModeConcurrentUseIsSafe )
+{
+   // Threads storing and fetching the same keys in float mode get the
+   //  rounded values, in the default and the LRU mode
+   for ( bool lru : { false, true } )
+   {
+      SCOPED_TRACE( lru ? "lru" : "default" );
+      US_SimCache cache( 20 * US_SimCache::sim_bytes( makeSim( 0.0 ), true ), true );
+      cache.set_lru( lru );
+      std::atomic<int> wrong{ 0 };
+      QList<QThread*>  threads;
+      for ( int tt = 0; tt < 6; tt++ )
+      {
+         threads << QThread::create(
+            [&cache, &wrong, tt]()
+            {
+               for ( int ii = 0; ii < 400; ii++ )
+               {
+                  const int          kk      = ( ii * 7 + tt ) % 60;
+                  US_DataIO::RawData rounded = makeSim( kk );
+                  US_SimCache::round_to_float( rounded );
+                  US_DataIO::RawData simdat;
+                  if ( cache.fetch( key( kk ), simdat ) )
+                  {
+                     if ( !sameValues( simdat, rounded ) )
+                     {
+                        wrong++;
+                     }
+                     simdat.scanData[0].rvalues[0] = -1.0; // Must not reach the cache
+                  }
+                  else
+                  {
+                     cache.store( key( kk ), rounded, ( kk % 5 ) == 0 );
+                  }
+               }
+            } );
+      }
+      for ( QThread* thr : threads )
+      {
+         thr->start();
+      }
+      for ( QThread* thr : threads )
+      {
+         thr->wait();
+         delete thr;
+      }
+
+      EXPECT_EQ( wrong.load(), 0 );
+      EXPECT_GT( cache.stats().hits, 0 );
+      EXPECT_LE( cache.stats().bytes, cache.stats().max_bytes );
+   }
+}
+
 // --- Memo of data set keys -----------------------------------------------------
 
 TEST_F( TestUSSimCache, KeyMemoReturnsTheDatasetKey )
@@ -683,4 +900,12 @@ TEST( SimCacheVirtual, SubclassOverridesFetchAndStore )
    EXPECT_TRUE( cache->store( "k", simdat, false ) );
    EXPECT_EQ( counting->fetches, 1 );
    EXPECT_EQ( counting->stores, 1 );
+
+   // fetch_sim and store_sim (as US_SolveSim uses them) go through the
+   //  overrides too
+   US_SimCache::Sim sim = US_SimCache::Sim::from_raw( simdat, true );
+   EXPECT_FALSE( cache->fetch_sim( "k", sim ) );
+   EXPECT_TRUE( cache->store_sim( "k", sim, true ) );
+   EXPECT_EQ( counting->fetches, 2 );
+   EXPECT_EQ( counting->stores, 2 );
 }

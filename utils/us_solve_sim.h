@@ -194,10 +194,17 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
 
     //! \brief Reuse simulations from a cache, and store new ones in it
     //! \param cache  Cache shared with other threads (or 0, the default,
-    //!               for none); it must outlive the calc_residuals calls
+    //!               for none); it must outlive the calc_residuals calls.
+    //!               A cache in float mode turns on the rounding of
+    //!               simulations to float precision, as it stores them.
     void        set_sim_cache( US_SimCache* cache )
     {
        simcache = cache;
+
+       if ( cache != nullptr && cache->float_mode() )
+       {
+          simfloat = true;
+       }
     }
 
   signals:
@@ -225,6 +232,7 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     QDateTime          startCalc;     // Start calc time for elapsed time prints
 
     US_SimCache*       simcache; // Simulation cache (or 0)
+    bool               simfloat; // Flag to round simulations to float precision
 
     // Data set key of the simulation cache, kept with the parameter values
     // that the simulator may change (so the key is renewed when they do)
@@ -242,8 +250,13 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     QList<DsetKey> dskeys; // Data set keys of a calc_residuals
 
     // Simulate a single-component model for a data set, or get the
-    //  simulation from the cache; returns the cache key (if any)
-    QByteArray     simulate( US_Model&, DataSet*, US_DataIO::EditedData*, US_DataIO::RawData& );
+    //  simulation from the cache (in float form with simfloat);  returns
+    //  the cache key (if any)
+    QByteArray     simulate( US_Model&, DataSet*, US_DataIO::EditedData*, US_SimCache::Sim& );
+
+    // Band forming:  hold a simulation within the thresholds (it becomes a
+    //  simulation of its own, in double form);  returns flag if all-zero
+    bool           threshold_sim( US_SimCache::Sim& );
 
     // Mark the results invalid (NaN variance, one NaN variance per data
     //  set) if a simulation failed

@@ -259,6 +259,8 @@ Adv. Config. Functions
       - `SimCache=off` turns off the cache of solute simulations that us_2dsa and us_pcsa reuse within a fit (on by default).
     * - SimCacheMB
       - Memory cap of the solute simulation cache in MB. Default: 25% of the available memory, from 256 MB to 4096 MB.
+    * - SimFloat
+      - `SimFloat=on` rounds the solute simulations of us_2dsa and us_pcsa fits to float precision, and the simulation cache stores them as floats (half the cache memory). Results differ slightly from the default double-precision fit. In us_mpi_analysis (job `debug_text`) the simulations are rounded as well, but its simulation caches keep them as doubles. Off by default.
     * - DB_ENFORCE_DEFAULT_SSL_SECURITY
       - Flag to enforce the use of the OS configured default SSL security level for database connections, instead of lowering it to for UltraScan database connections to zero.
     * - auto_positioning
