@@ -926,7 +926,7 @@ void US_MPI_Analysis::montecarlo_pcsa()
    {
       worker_depth [ ii ] = ii;
       // NEWDATA is followed by a worker READY; consume it before dispatch.
-      worker_status[ ii ] = INIT;
+      worker_status[ii]   = INIT;
    }
 
    worknext         = 1;
@@ -1130,9 +1130,10 @@ void US_MPI_Analysis::montecarlo_pcsa()
       DbgLv( 1 ) << " masterMC loop-BOTTOM";
       // Drain each worker's final READY before shutdown, including workers
       // that received NEWDATA but no Monte Carlo iteration.
-      if ( job_queue.isEmpty() && kci_send > 0 && kci_recv >= kci_send
-           && worker_status.count( READY ) == my_workers )
+      if ( job_queue.isEmpty() && kci_send > 0 && kci_recv >= kci_send && worker_status.count( READY ) == my_workers )
+      {
          break;
+      }
    }
    DbgLv( 1 ) << " masterMC  loop-FALLTHRU mc_iter mc_iters kci_send kci_recv" << mc_iteration << mc_iterations << kci_send
               << kci_recv;
