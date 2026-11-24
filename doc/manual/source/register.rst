@@ -33,6 +33,13 @@ Fill in your contact information and click on "Register" to submit your registra
 .. note:: 
   Your computer must be connected to the network for the registration to succeed!
 
+  UltraScan reaches the registration server, ultrascan.aucsolutions.com, over HTTPS (port 443).
+  Before anything is sent or saved, it checks that the server answers. If it does not, a
+  "Connection Error" message gives the reason, and you can try again. If the network otherwise
+  works, a firewall or proxy may be blocking outgoing HTTPS to ultrascan.aucsolutions.com;
+  your network administrator must allow it, at least temporarily, to obtain or renew the
+  license.
+
 A 1 year license for the free use of UltraScan will be generated remotely. An email will be sent to the registered email address with an activation link, which must be confirmed:
 
 .. image:: _static/images/register2.png

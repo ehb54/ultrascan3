@@ -26,21 +26,25 @@ US_HttpPost::US_HttpPost( const QString& url, const QString& request ) : QObject
 
 void US_HttpPost::postFinished( void )
 {
-  int error = reply->error();
+   int error = reply->error();
 
-  if ( error == QNetworkReply::NoError )
-    emit US_Http_post_response( reply->readAll() );
+   if ( error == QNetworkReply::NoError )
+   {
+      emit US_Http_post_response( reply->readAll() );
+   }
+
+   // The request is done (postError() has sent any error): this object, with
+   // its manager and reply, is deleted once control is back in the event loop
+   deleteLater();
 }
 
 void US_HttpPost::postError( QNetworkReply::NetworkError error )
 {
-  static int count = 0;  // Just send the first error
-
-  if ( count == 0 )
-  {
-    count++;
-    QString err = QString( "9-Network Error (%1): " ).arg( error ) + reply->errorString();
-    emit US_Http_post_response( err );
-  }
+   // Just send the first error of this request
+   if ( !error_sent )
+   {
+      error_sent = true;
+      emit US_Http_post_response( QString( "9-Network Error (%1): " ).arg( error ) + reply->errorString() );
+   }
 }
 
