@@ -123,7 +123,6 @@ int main (int argc, char **argv)
    }
    hydrodyn = new US_Hydrodyn(batch_file, gui_script_filename, init_configs_silently );
       
-   hydrodyn->setWindowTitle("SOMO Solution Modeler");
    if ( residue_file )
    {
       hydrodyn->residue_filename = residue_filename;

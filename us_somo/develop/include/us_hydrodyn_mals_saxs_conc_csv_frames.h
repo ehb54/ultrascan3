@@ -4,8 +4,8 @@
 // -------------- WARNING: any modifications made to this code will be overwritten -------------
 // ---------------------------------------------------------------------------------------------
 
-#ifndef US_HYDRODYN_SAXS_CONC_CSV_FRAMES_H
-#define US_HYDRODYN_SAXS_CONC_CSV_FRAMES_H
+#ifndef US_HYDRODYN_MALS_SAXS_CONC_CSV_FRAMES_H
+#define US_HYDRODYN_MALS_SAXS_CONC_CSV_FRAMES_H
 
 #include "us_hydrodyn.h"
 //Added by qt3to4:

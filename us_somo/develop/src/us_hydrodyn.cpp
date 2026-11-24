@@ -611,7 +611,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    }
 
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "SOMO Solution Bead Modeler" ) + git_branch_title_suffix() );
+   setWindowTitle( us_tr( "SOMO Solution Modeler" ) + git_branch_title_suffix() );
    advanced_config.auto_view_pdb        = true;
    advanced_config.scroll_editor        = false;
    advanced_config.auto_calc_somo       = false;
