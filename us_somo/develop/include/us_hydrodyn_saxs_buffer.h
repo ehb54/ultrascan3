@@ -56,10 +56,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 {
    Q_OBJECT
 
+      friend class US_Hydrodyn_Saxs_Buffer_Frames;
       friend class US_Hydrodyn_Batch;
       friend class US_Hydrodyn_Saxs;
       friend class US_Hydrodyn_Saxs_Buffer_Conc;
       friend class US_Hydrodyn_Saxs_Buffer_Nth;
+      friend class US_Hydrodyn_Saxs_Buffer_Dilutions;
+      friend class US_Hydrodyn_Saxs_Buffer_Upturn;
 
    public:
       US_Hydrodyn_Saxs_Buffer(
@@ -70,14 +73,21 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
                              );
       ~US_Hydrodyn_Saxs_Buffer();
 
+      // conc < 0: none; psv, I0se <= 0: none
       void add_plot( QString           name,
                      vector < double > q,
-                     vector < double > I );
+                     vector < double > I,
+                     double            conc = -1e0,
+                     double            psv  = -1e0,
+                     double            I0se = -1e0 );
 
       void add_plot( QString           name,
                      vector < double > q,
                      vector < double > I,
-                     vector < double > errors );
+                     vector < double > errors,
+                     double            conc = -1e0,
+                     double            psv  = -1e0,
+                     double            I0se = -1e0 );
 
    private:
       csv           csv1;
@@ -98,6 +108,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QPushButton   *pb_add_files;
       QPushButton   *pb_similar_files;
       QPushButton   *pb_conc;
+      QPushButton   *pb_psv_i0;
       QPushButton   *pb_clear_files;
 
       QPushButton   *pb_regex_load;
@@ -111,6 +122,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QPushButton   *pb_join;
       QPushButton   *pb_to_saxs;
       QPushButton   *pb_view;
+      QPushButton   *pb_frames;
       QPushButton   *pb_rescale;
 
       QListWidget      *lb_files;
@@ -121,9 +133,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QPushButton   *pb_normalize;
       QPushButton   *pb_conc_avg;
       QPushButton   *pb_fit;
+      QPushButton   *pb_check_dilutions;
+      QPushButton   *pb_upturn;
+      QPushButton   *pb_subtraction;
 
       QPushButton   *pb_set_buffer;
       QLabel        *lbl_buffer;
+      QPushButton   *pb_subtract_buffer;
 
       QPushButton   *pb_set_empty;
       QLabel        *lbl_empty;
@@ -213,6 +229,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QPushButton   *pb_legend;
       QPushButton   *pb_axis_x;
       QPushButton   *pb_axis_y;
+      QCheckBox     *cb_eb;
 
       QCheckBox     *cb_guinier;
       QLabel        *lbl_guinier;
@@ -257,6 +274,57 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       // how a created file was made, written into its saved header line
       map < QString, QString >            f_header;
 
+      // the PSV and I0se of a curve made from one curve, or from several (the mean of those that have one)
+      void                                copy_psv_I0se( const QString & to, const QString & from );
+      void                                mean_psv_I0se( const QString & to, const QStringList & from );
+      // the concentration of a created curve: f_conc and its row of the concentration table
+      void                                set_created_conc( const QString & name, double conc );
+
+      // the curves one subtraction or division of every selected file makes (run_current(), run_divide()) share
+      // its buffer and blank, so the Average or Concentration normalized average of them that follows counts their
+      // sd once (shared_mean_var()). For each curve made: the variance of its own part (from the solution) and its
+      // derivatives with respect to the shared curves, whose sd are in shared_sd
+      bool                                                  shared_on;
+      map < QString, vector < double > >                    shared_own_var;
+      map < QString, map < QString, vector < double > > >  shared_d;
+      map < QString, vector < double > >                    shared_sd;
+      void                                                  shared_clear();
+      bool                                                  shared_usable( const QStringList & files, unsigned int points );
+      // the variance at point i of the mean sum_j w[ j ] scale[ j ] I_j / sum_j w[ j ] of these curves
+      double                                                shared_mean_var( const QStringList & files,
+                                                                             unsigned int i,
+                                                                             const vector < double > & w,
+                                                                             const vector < double > & scale,
+                                                                             double * own_part = 0 );
+
+      // the options of Average and the Concentration normalized average (their right-click menu, kept in gparams):
+      // the sd of the mean from the curves' scatter instead of their own sd; leaving out spikes, points more than
+      // avg_spike_sd sd from the mean of the other curves
+      bool                                avg_sd_scatter;
+      bool                                avg_spikes;
+      double                              avg_spike_sd;
+      void                                avg_options_load();
+      void                                avg_options_save();
+      void                                avg_options_tooltips();
+      // one point of an average with sd on every curve: y the (normalized) values, w their weights (1 / variance),
+      // own the variance of each one's own part (its full variance, unless a shared buffer is counted), scale as for
+      // shared_mean_var(); gives the mean and its sd, the chi^2 terms of the curves kept and their degrees of freedom,
+      // and which curves were kept (not left out as spikes)
+      void                                avg_point( const QStringList & files,
+                                                     unsigned int i,
+                                                     const vector < double > & y,
+                                                     const vector < double > & w,
+                                                     const vector < double > & own,
+                                                     const vector < double > & scale,
+                                                     bool use_shared,
+                                                     double & mean,
+                                                     double & sd,
+                                                     double & chi2,
+                                                     int & dof,
+                                                     vector < bool > & kept );
+      // the message and header note on the points left out as spikes
+      QString                             spikes_note( const QStringList & files, const vector < int > & n_out, int total );
+
       map < QString, bool >               created_files_not_saved;
 
       map < QString, double >             current_concs( bool quiet = false );
@@ -299,6 +367,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QString qstring_common_head( QStringList qsl, bool strip_digits = false );
       QString qstring_common_tail( QStringList qsl, bool strip_digits = false );
       QString frame_range        ( QStringList qsl );
+      bool    frame_numbers      ( const QStringList & qsl, QStringList & numbers );
+      QString frame_list         ( const QStringList & qsl );
+      QString spikes_list        ( const QStringList & files, const vector < int > & n_out );
+      void    plot_eb            ( const QString & file );
 
       QString last_load_dir;
       bool    save_files( QStringList files );
@@ -402,6 +474,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void add_files();
       void similar_files();
       void conc();
+      void psv_i0();
       void clear_files();
       void regex_load();
 
@@ -412,17 +485,24 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void select_nth();
       void to_saxs();
       void view();
+      void frames();
+      void set_eb();
       void rescale();
       void avg();
       void asum();
       void normalize();
       void conc_avg();
       void fit();
+      void check_dilutions();
+      void upturn();
+      void show_subtraction();
       void set_buffer();
       void set_empty();
       void set_signal();
       void select_all_created();
       void adjacent_created();
+      void subtract_buffer();
+      void avg_options_menu( const QPoint & pos );
       void save_created_csv();
       void save_created();
       void show_created();

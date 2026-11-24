@@ -430,7 +430,10 @@ SOURCES *= \
         src/us_hydrodyn_saxs_buffer_fit.cpp \
         src/us_hydrodyn_saxs_buffer_conc.cpp \
         src/us_hydrodyn_saxs_buffer_conc_load.cpp \
+        src/us_hydrodyn_saxs_buffer_dilutions.cpp \
         src/us_hydrodyn_saxs_buffer_nth.cpp \
+        src/us_hydrodyn_saxs_buffer_frames.cpp \
+        src/us_hydrodyn_saxs_buffer_upturn.cpp \
         src/us_hydrodyn_saxs_hplc.cpp \
         src/us_hydrodyn_saxs_hplc_baseline_best.cpp \
         src/us_hydrodyn_saxs_hplc_conc_csv_frames.cpp \
@@ -870,7 +873,10 @@ HEADERS *= \
         include/us_hydrodyn_saxs_buffer.h \
         include/us_hydrodyn_saxs_buffer_conc.h \
         include/us_hydrodyn_saxs_buffer_conc_load.h \
+        include/us_hydrodyn_saxs_buffer_dilutions.h \
         include/us_hydrodyn_saxs_buffer_nth.h \
+        include/us_hydrodyn_saxs_buffer_frames.h \
+        include/us_hydrodyn_saxs_buffer_upturn.h \
         include/us_hydrodyn_saxs_hplc.h \
         include/us_hydrodyn_saxs_hplc_ciq.h \
         include/us_hydrodyn_saxs_hplc_conc_csv_frames.h \

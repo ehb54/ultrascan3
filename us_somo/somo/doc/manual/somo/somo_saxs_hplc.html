@@ -22,7 +22,7 @@
 <center>
 <h2>
 SOMO HPLC/KIN Module:</h2></center>
-<h3><center>Last updated: October 2026 </center></h3><p>
+<h3><center>Last updated: November 2026 </center></h3><p>
 
 <center><span style="color:#CC0000">NOTICE: this module is being developed by E. Brookes, J. P&eacute;rez, P. Vachette, and M. Rocco.<br>
 Portions of this help file are taken from the Supplementary Materials of Brookes et al., "Fibrinogen species as resolved by HPLC-SAXS data processing within the UltraScan SOlution MOdeler (US-SOMO) enhanced SAS module", J. Appl. Cryst. 46:1823-1833 (2013), and from Brookes et al. "US-SOMO HPLC-SAXS Module: Dealing with Capillary Fouling, and Extraction of Pure Component Patterns from Poorly Resolved SEC-SAXS Data", J. Appl. Cryst. 49:1827-1841, 2016. Some subsequent improvements are discussed in Brookes and Rocco, "Recent advances in the UltraScan SOlution MOdeller (US-SOMO) hydrodynamic and small-angle scattering data analysis and simulation suite", Eur. Biophys. J. 47:855-864 (2018). The most recent (July 2024) developments will be subsequently published (Brookes and Rocco, in preparation).</span>
@@ -64,7 +64,7 @@ The first button, <b><i>Conc. file load</i></b>, is used to upload any chromatog
 <b><i>View Selected</i></b>, active when up to ten datasets are selected, will show them in text format.<p>
 
 <li>
-The <b><i>Add files</i></b> button is used to load SAXS data into the module. An operating directory can be pre-selected by clicking on the path shown on the top of this section, and navigating in the file system (selecting the <i>Lock</i> checkbox will fix that directory). The file format for SAXS data recognized by the <b>US-SOMO</b> <b><i>HPLC/KIN</i></b> module consist of .dat files with two or three TAB- or space-separated columns containing the <i>q</i>, <i>I(q)</i>, and optionally their associated standard deviation (SD) values, respectively. Each frame number (or time value) must be present somewhere in the filename with a common prefix and suffix. For example, data1saxs.dat, data2saxs.dat, data3saxs.dat will be recognized as frames 1,2,3, where "data" and "saxs" can be replaced by any common sequence of characters. Consequently, 1.dat, 2.dat, 3.dat would be acceptable, but abc1.dat, qrs2.dat, xyz3.dat would not, because the prefix characters are not common. Furthermore, the loader will also arrange the data files sequentially, in increasing frame number (or time value) order.  <i>I(q)</i> vs. <i>q</i> and concentration data frames are automatically recognized and the labels on the <i>x</i>- and <i>y</i>-axes are then properly set in the graphics window.<br>
+The <b><i>Add files</i></b> button is used to load SAXS data into the module. An operating directory can be pre-selected by clicking on the path shown on the top of this section, and navigating in the file system (selecting the <i>Lock</i> checkbox will fix that directory). The file format for SAXS data recognized by the <b>US-SOMO</b> <b><i>HPLC/KIN</i></b> module consist of .dat files with two or three TAB- or space-separated columns containing the <i>q</i>, <i>I(q)</i>, and optionally their associated standard deviation (SD) values, respectively. A first line that holds data rather than a header is read as the first point. Each frame number (or time value) must be present somewhere in the filename with a common prefix and suffix. For example, data1saxs.dat, data2saxs.dat, data3saxs.dat will be recognized as frames 1,2,3, where "data" and "saxs" can be replaced by any common sequence of characters. Consequently, 1.dat, 2.dat, 3.dat would be acceptable, but abc1.dat, qrs2.dat, xyz3.dat would not, because the prefix characters are not common. Furthermore, the loader will also arrange the data files sequentially, in increasing frame number (or time value) order.  <i>I(q)</i> vs. <i>q</i> and concentration data frames are automatically recognized and the labels on the <i>x</i>- and <i>y</i>-axes are then properly set in the graphics window.<br>
 Note that when loading <i>I(q)</i> data files containing <i>q</i> values, they are expected to be in 1/Angstrom or 1/nm units. If the 1st line of the data file contains the text <i>Units:1/A</i> or <i>Units:1/nm</i>, it will be automatically loaded in the proper format.  Otherwise, it is controlled by the setting of the <a href=somo_saxs_options.html#sasmiscellaneous>SAS Miscellanous Options</a>, in particular, the <i><b>I(q) curves in 1/angstrom</b></i> and the <i><b>I(q) curves in 1/nanometer</b></i> mutually exclusive checkboxes.  All 1/nm data will be converted into 1/Angstrom data upon loading. Files saved will be written with the <i>Units:1/A</i> header text automatically.<br>
 Loaded files can be displayed on the graphics panel by individually clicking on them (shift-click will select a contiguous series, ctrl-click allows multiple irregularly spaced selections). Produced data will also show up in this panel with associated putative filenames.<p>
 <li>
@@ -398,7 +398,7 @@ On pressing <i><b>Options</i></b>, a pop-up panel will be shown:<p>
 <td align=justify>
 <p>
 
-See <a href=saxs_hplc_options.html>here</a> for a description of this module.<p>
+See <a href=saxs_hplc_options.html>here</a> for a description of this module. The panel opens as tall as its options when the screen allows it; otherwise its options scroll, with <i><b>Help</i></b>, <i><b>Quit</i></b> and <i><b>Ok</i></b> always shown below them.<p>
 <br>
 <hr>
 
@@ -432,7 +432,7 @@ Each time the <b><i>Width</i></b> button is pressed, it increments the data line
 <li>
 <b><i>Color</i></b> shifts the colors used in the graphics window; the operation can be repeated until a better contrast with the background is achieved. Note that the background color can be changed by right-clicking on the plot borders, which will open up a pop-up dialogue panel where all plot characteristics can be modified.<p>
 <li>
-<b><i>Legend</i></b> will turn on below the graphics window a display of the correspondence between colours and filenames (automatically disabled if the selected files are 20 or more and/or if the <b><i>Err</i></b> checkbox is selected).<p>
+<b><i>Legend</i></b> will turn on below the graphics window a display of the correspondence between colours and filenames (automatically disabled if the selected files are 20 or more; with the <b><i>Err</i></b> checkbox selected, the legend lists the curves but not their SD bars).<p>
 </ul>
 
 In the image below two files were selected, the <b><i>Dots</i></b> checkbox was checked, <b><i>Width</i></b> was pressed twice, and <b><i>Legend</i></b> was pressed:
@@ -776,6 +776,7 @@ Selecting instead the <i>By percent</i> checkbox the residuals will be plotted a
 <td align=justify>
 <p>
 The residuals plot can be toggled off by pressing again <b><i>Residuals</i></b>.<p>
+The residuals plot shares a splitter with the main plot: it starts with a fifth of their height, which can be changed by dragging the handle between them. The left axes of the two plots are kept the same width, so that their <i>x</i> axes line up.<p>
 
 <li>
 <b><i>PVP</i></b> (Previously named <b><i>CorMap Analysis</i></b>) will launch a pairwise similarity comparison between all currently selected datasets, according to our implementation of <i>P</i>-value pair computations and comparisons derived from the Correlation Map method developed by Franke </span><span lang="en-US"><i>et al.</i></span><span lang="en-US"> (Franke D, Jeffries CM, Svergun DI. Correlation Map, a goodness-of-fit test for one-dimensional X-ray scattering spectra. Nature Methods, 12, 419-422, 2015). A in depth <i><b>PVP</i></b> module description with examples can be found <a href=cormap.html>here</a>.<p>
@@ -970,6 +971,13 @@ When just a few problematic points are found for each chromatogram, the <i>Drop 
 In the image above, the <b><i>Global Gaussians</i></b> results on the <b><i>Nth</i></b> selected files are shown, together with the grouped fit residuals. The common centers and widhts, <span style="color:#CC0000">not optimized but just based on the initial chromatogram fit</span>, are displayed in the graph as vertical and horizontal bars, respectively. Note that the <i>x</i>-axis scale and the <i>Residuals</i> <i>y</i>-axis scales were manually optimized (right-click on the scale to access the plot options menu). The global <i>P-value</i> analysis for this initial Gaussian propagation is also shown in the <b><i>Messages</i></b> panel. Both the residuals and the <i>P-value</i> analysis indicate a poor fitting of the initial Gaussian when just propagated to the other selected chromatograms.<p>
 <li>
 <b><i>Save</i></b> will save the resulting Gaussians to the current selected directory, with extension -gauss.dat for symmetrical Gaussians of single files and -mgauss.dat for Gaussians of multiple files. For distorted Gaussians, the extensions will be -mgmg.dat, -memg.dat, and -memggmg.dat for the GMG, EMG and EMG+GMG Gaussians, respectively.<p>
+Saved Gaussians are loaded with <b><i>Add files</i></b>, which also sets the <i>Fit start</i> and <i>Fit end</i> saved with them. A file of one set (-gauss.dat) is loaded as the current Gaussians, whatever the files loaded. A file of Gaussians of multiple files (-mgauss.dat) gives each set to the loaded file of the same name. When some of its sets are for files that are not loaded, <i>e.g.</i> because the same data were reprocessed with a different buffer subtraction or a baseline correction, which changes the files' names, a pop-up panel says how many, and offers:
+<ul>
+<li><i>Import for the files of the same q</i> (when there are such files): each such set is given to the selected file (or, with none selected, the loaded file) whose name has the same <i>q</i> (the <tt>_It_q</tt> part of the names of <i>I(t)</i> chromatograms, which reprocessing keeps), with its own centers, widths, distortions and amplitudes. A <i>q</i> that two of these files, or two sets, have in common is not matched.
+<li><i>Import one set as the starting Gaussians</i>: the first of those sets becomes the current Gaussians (centers, widths, distortions and amplitudes), as if a file of one set had been loaded.
+<li><i>Skip them</i>, as before: each set skipped is listed in the messages.
+</ul>
+The Gaussians imported were fitted to differently processed data, so check them carefully against the current <i>I(t)</i> before using them. <b><i>Global Gaussians</i></b> can then re-optimize them, or use them as they are.<p>
 <li>
 Pressing <b><i>Keep</i></b> will accept the current Gaussians for further work.<p>
 <li>
@@ -1107,7 +1115,7 @@ The final smoothed data for each chromatogram appear in the <b><i>Data files</i>
 <p>
 Obviously, while this procedure can resolve some of the local minima problems, it cannot cure poor fitting issues.<p>
 
-The second procedure we developed can be run by choosing the <i>Global Gaussian cyclic fit</i> in the <a href=saxs_hplc_options.html><i><b>HPLC/KIN Options</i></b></a> module. If this checkbox is selected, during the initial <i>Global Gaussian</i> fitting instead of directly fitting the all Gaussian curves simultaneously, each Gaussian first is fit sequentially, keeping the others fixed, followed by fitting all Gaussians simultaneously, and the entire cycle is done twice.<p>
+The second procedure we developed can be run by choosing the <i>Global Gaussian cyclic fit</i> in the <a href=saxs_hplc_options.html><i><b>HPLC/KIN Options</i></b></a> module. If this checkbox is selected, during the initial <i>Global Gaussian</i> fitting instead of directly fitting the all Gaussian curves simultaneously, each Gaussian first is fit sequentially, keeping the others fixed, followed by fitting all Gaussians simultaneously, and the entire cycle is done twice. With smoothing, cyclic fitting, or both, this initial fitting takes longer; the chromatograms are therefore fitted in parallel, each one on its own, on the <i>Number of Threads</i> set in the <i>SOMO</i> configuration, with the same results as fitting them one after the other.<p>
 After selecting this checkbox, to allow a direct comparison of this cyclic procedure versus the "standard" procedure, the <i>Global Gaussian - Enable legacy Gaussian fit display</i> is also checked. We can now return to the <b><i>HPLC/KIN</i></b> module and restart <b><i>Global Gaussians</i></b>. The pop-up asking for re-fitting the Gaussians amplitudes or keeping the actual values will again appear, and we choose <i>Yes</i>, leading to the cyclic fit being launched (as reported in the <b><i>Messages</i></b> section) with these results:
 <p>
 <center>
@@ -1659,7 +1667,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on October 27, 2026.
+Last modified on November 23, 2026.
 </font>
 </body>
 </html>
