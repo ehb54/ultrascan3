@@ -257,7 +257,7 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     QDateTime          startCalc;     // Start calc time for elapsed time prints
 
     US_SimCache*       simcache; // Simulation cache (or 0)
-    bool               simfloat; // Flag to round simulations to float precision
+    bool                    simfloat; // Flag to round simulations to float precision
     bool                    nnlsfloat; // Flag to solve the NNLS in float precision
 
     // calc_residuals with A, B and the concentrations of type T (double, or
