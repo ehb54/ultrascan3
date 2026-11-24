@@ -3,6 +3,25 @@
 #include "archive_entry.h"
 #include "archive.h"
 
+#include <QSaveFile>
+#include <cerrno>
+
+namespace
+{
+//! libarchive write callback; client_data is the open QSaveFile
+la_ssize_t write_to_file( struct archive* archive, void* client_data, const void* buffer, size_t length )
+{
+   auto*        file    = static_cast<QSaveFile*>( client_data );
+   const qint64 written = file->write( static_cast<const char*>( buffer ), static_cast<qint64>( length ) );
+   if ( written < 0 )
+   {
+      archive_set_error( archive, EIO, "%s", file->errorString().toUtf8().constData() );
+      return -1;
+   }
+   return static_cast<la_ssize_t>( written );
+}
+} // namespace
+
 bool US_Archive::extract(const QString& filename, const QString& path, QStringList* file_list) {
 
     if ( file_list != nullptr ) {
@@ -248,6 +267,68 @@ bool US_Archive::compress(const QStringList& list, QString& filename) {
     archive_write_close(archive);
     archive_write_free(archive);
     return true;
+}
+
+bool US_Archive::gzip( const QString& source, const QString& target )
+{
+   error.clear();
+
+   QFile input( source );
+   if ( !input.open( QIODevice::ReadOnly ) )
+   {
+      error = QObject::tr( "US_Archive: Error: Failed to open file: %1: %2" ).arg( source, input.errorString() );
+      return false;
+   }
+
+   QSaveFile output( target );
+   if ( !output.open( QIODevice::WriteOnly ) )
+   {
+      error = QObject::tr( "US_Archive: Error: Failed to create file: %1: %2" ).arg( target, output.errorString() );
+      return false;
+   }
+
+   struct archive*       archive = archive_write_new();
+   struct archive_entry* entry   = archive_entry_new();
+   archive_entry_set_pathname( entry, "data" );
+   archive_entry_set_filetype( entry, AE_IFREG );
+
+   // The raw format has no container.  A last-block size of 1 stops libarchive
+   // from padding the output with zeros after the gzip trailer.
+   bool ok = archive_write_set_format_raw( archive ) == ARCHIVE_OK && archive_write_add_filter_gzip( archive ) == ARCHIVE_OK &&
+             archive_write_set_filter_option( archive, "gzip", "compression-level", "9" ) == ARCHIVE_OK &&
+             archive_write_set_bytes_in_last_block( archive, 1 ) == ARCHIVE_OK &&
+             archive_write_open( archive, &output, nullptr, write_to_file, nullptr ) == ARCHIVE_OK &&
+             archive_write_header( archive, entry ) == ARCHIVE_OK;
+
+   QByteArray buffer( 65536, Qt::Uninitialized );
+   qint64     count = 0;
+   while ( ok && ( count = input.read( buffer.data(), buffer.size() ) ) > 0 )
+   {
+      ok = archive_write_data( archive, buffer.constData(), static_cast<size_t>( count ) ) == count;
+   }
+   const bool read_failed = ok && count < 0;
+
+   ok = ok && !read_failed && archive_write_close( archive ) == ARCHIVE_OK;
+   if ( read_failed )
+   {
+      error = QObject::tr( "US_Archive: Error: Failed to read file: %1: %2" ).arg( source, input.errorString() );
+   }
+   else if ( !ok )
+   {
+      error = QObject::tr( "US_Archive: Error: Failed to compress file: %1: %2" )
+                 .arg( source, QString::fromUtf8( archive_error_string( archive ) ) );
+   }
+
+   archive_entry_free( entry );
+   archive_write_free( archive );
+
+   // Without a commit, QSaveFile discards what was written
+   if ( ok && !output.commit() )
+   {
+      error = QObject::tr( "US_Archive: Error: Failed to write file: %1: %2" ).arg( target, output.errorString() );
+      ok    = false;
+   }
+   return ok;
 }
 
 void US_Archive::list_files(const QString& abs_path, const QString& base_dir) {

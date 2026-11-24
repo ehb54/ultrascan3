@@ -30,16 +30,18 @@ class US_GUI_EXTERN US_GuiUtil
    public:
       //! \brief Save a plot to an SVG and/or PNG file
       //!
-      //! \param filename Full path name of the file to produce
+      //! \param filename Full path name of the file to produce. A ".svg" name also saves a PNG file.
       //! \param plot     A pointer to the plot to save
-      //! \returns A status flag:  0 if all-ok
+      //! \returns A status flag:  0 if all-ok, 1 if filename is not an SVG or PNG name, otherwise the
+      //!          first failure of save_svg() or save_png(). A failed SVG does not stop the PNG.
       static int save_plot( const QString&, const QwtPlot* );
 
-      //! \brief Save a plot to an SVG file
+      //! \brief Save a plot to a gzip-compressed SVG (.svgz) file
       //!
-      //! \param filename Full path name of the file to produce
+      //! \param filename Full path name of the file to produce. Its extension is replaced by ".svgz".
       //! \param plot     A pointer to the plot to save
-      //! \returns A status flag:  0 if all-ok
+      //! \returns A status flag:  0 if all-ok, 1 if filename does not contain ".svg",
+      //!          2 if the SVG could not be compressed (the uncompressed .svg is kept)
       static int save_svg( const QString&, const QwtPlot* );
 
       //! \brief Save a plot to a PNG file

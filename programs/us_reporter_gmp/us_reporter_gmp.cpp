@@ -35,7 +35,6 @@
 
 #include "us_settings.h"
 #include "us_solution_vals.h"
-#include "us_tar.h"
 #include "us_tmst_plot.h"
 
 #define MIN_NTC   25
@@ -13238,37 +13237,7 @@ void US_ReporterGMP::write_pdf_report( void )
       file_exts << "*.svgz" << "*.html" << "*.txt";                // retain *pngs (BUT remove *html) for further assembly at e-Signing
       remove_files_by_mask( dirName, file_exts );
 
-      
-      //Archive using US_Tar [does NOT work for filename lengths >=100 char]
-      /****************************************************************************
-      QDir odir( dirName );
-      QStringList fileList = odir.entryList( QStringList( "*.pdf" ), QDir::Files );
 
-      QStringList fileList_fullPath;
-      for (int i=0; i<fileList.size(); ++i )
-       	{
-       	  fileList_fullPath << dirName + "/" + fileList[i];
-       	  qDebug() << "Files -- " << dirName + "/" + fileList[i];
-       	}
-      
-      US_Tar tar;
-      int result;
-       QString tarFilename = dirName + "/" + subDirName + ".tar.gz";
-       QStringList list_t;
-       //result = tar.create( tarFilename, dirName, &list_t );
-       result = tar.create( tarFilename, fileList_fullPath, &list_t );
-       
-       if ( result != TAR_OK )
-	 {
-	   QString errormsg = QString("Error: Problem creating tar archive %1").arg( tarFilename );
-	   
-	   QMessageBox::warning( this, tr( "Error with creating .TAR" ),
-				 errormsg );
-	   
-	   return;
-	 }
-      ***************************************************************************/
-      
       //Archive using system TAR: do NOT use gZip (.tgz, .tar.gz)!!! 
       //<------ TESTING!!!! ***************************************************************
       // QString tarFilename_t = subDirName + "_GMP_DB.tgz";

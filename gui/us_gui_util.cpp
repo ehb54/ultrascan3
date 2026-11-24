@@ -1,8 +1,8 @@
 //! \file us_gui_util.cpp
 #include <QtSvg>
 
+#include "us_archive.h"
 #include "us_gui_util.h"
-#include "us_gzip.h"
 #include "us_settings.h"
 #if QT_VERSION > 0x050000
 #include "qwt_plot_renderer.h"
@@ -17,15 +17,19 @@ int US_GuiUtil::save_plot( const QString& filename, const QwtPlot* plot )
 
    if ( filename.contains( ".svg" ) )
    {  // Save the file as SVG, then save a PNG version
-      save_svg( filename, plot );
+      status = save_svg( filename, plot );
 
-      QString fnamepng  = QString( filename ).section( ".", 0, -2 ) + ".png";
-      save_png( fnamepng, plot );
+      QString   fnamepng   = QString( filename ).section( ".", 0, -2 ) + ".png";
+      const int png_status = save_png( fnamepng, plot );
+      if ( status == 0 )
+      {
+         status = png_status;
+      }
    }
 
    else if ( filename.endsWith( ".png" ) )
    {  // Save the file as PNG
-      save_png( filename, plot );
+      status = save_png( filename, plot );
    }
 
    else
@@ -54,8 +58,16 @@ int US_GuiUtil::save_svg( const QString& filename, const QwtPlot* plot )
       pltrend.renderDocument( (QwtPlot*)plot, fnsvg, psize, res );
 
       // Compress it and save SVGZ file
-      US_Gzip gz;
-      gz.gzip( fnsvg );
+      US_Archive archive;
+      if ( archive.gzip( fnsvg, fnsvg + "z" ) )
+      {
+         QFile::remove( fnsvg );
+      }
+      else
+      {
+         qWarning() << archive.getError();
+         status = 2;
+      }
    }
 
    else

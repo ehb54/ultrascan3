@@ -2,15 +2,13 @@
 #ifndef US_LEGACY_CONVERTER
 #define US_LEGACY_CONVERTER
 
-#include <QApplication>
-#include "us_widgets.h"
-#include "us_dataIO.h"
-#include "us_settings.h"
 #include "us_archive.h"
-// #include "us_tar.h"
-// #include "us_gzip.h"
 #include "us_convert.h"
+#include "us_dataIO.h"
 #include "us_help.h"
+#include "us_settings.h"
+#include "us_widgets.h"
+#include <QApplication>
 
 //! \brief Class to converte Beckman legacy data to OpenAUC
 class US_LegacyConverter : public US_Widgets
