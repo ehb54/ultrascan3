@@ -1581,7 +1581,8 @@ qint64 US_MPI_Analysis::predicted_node_bytes( void )
    // This rank's memory now:  private memory where known, else the RSS
    qint64 now       = US_MPI_MemLimit::private_bytes( { (long) QCoreApplication::applicationPid() } );
    now              = ( now > 0 ) ? now : (qint64) US_Memory::rss_now() * 1024;
-   qint64 mine      = now + US_MPI_MemLimit::solve_bytes( readings, solutes, noise_terms );
+   qint64 mine =
+      now + US_MPI_MemLimit::solve_bytes( readings, solutes, noise_terms, US_SimCache::float_sims(), US_SolveSim::float_nnls() );
    qint64 node_peak = 0;
    MPI_Reduce( &mine, &node_peak, 1, MPI_LONG_LONG, MPI_SUM, 0, node_comm );
    return node_peak;

@@ -1395,6 +1395,66 @@ TEST_F( TestUSSolveSimCache, FloatNnlsFitIsUnchangedByCache )
    US_Settings::set_debug_text( saved );
 }
 
+TEST_F( TestUSSolveSimCache, BandFormingFloatFitIsUnchangedByCache )
+{
+   // Band forming with thresholded simulations (etc/bandform.config present):
+   //  US_SolveSim thresholds a copy of each simulation in double form and
+   //  keeps the simulation as computed for the cache.  The fit is the same
+   //  with and without a cache, in double and with both float switches, and
+   //  the float fit stays close to the double one.  The config is written
+   //  into the test layout for this test only.
+   const QString cfgpath = US_Settings::appBaseDir() + "/etc/bandform.config";
+   if ( QFile::exists( cfgpath ) )
+   {
+      GTEST_SKIP() << "a bandform.config exists already: " << cfgpath.toStdString();
+   }
+
+   dset.simparams.band_forming = true;
+   dset.simparams.band_volume  = 0.015;
+   dset.simparams.cp_width     = 1.0; // Sim multiply factor (negative:  thresholds off)
+   base                        = dset.run_data;
+   noisflag                    = 0;
+
+   // Without the config the simulations are not thresholded
+   const QStringList saved = US_Settings::debug_text();
+   US_Settings::set_debug_text( QStringList() );
+   const QVector<double> plainfit = fit2dsa( nullptr, false );
+
+   ASSERT_TRUE( QDir().mkpath( US_Settings::appBaseDir() + "/etc" ) );
+   {
+      QFile cfg( cfgpath );
+      ASSERT_TRUE( cfg.open( QIODevice::WriteOnly | QIODevice::Text ) );
+      cfg.write( "0.002  # zero threshold\n0.01  # linear threshold\n1.5  # maximum OD\n"
+                 "0.005  # minimum non-zero\n1.0  # sim multiply factor\n1.0  # exp multiply factor\n" );
+   }
+   struct RemoveConfig
+   {
+         QString path;
+         ~RemoveConfig()
+         {
+            QFile::remove( path );
+         }
+   } remove_config{ cfgpath };
+
+   expectSameFit( 1024LL * 1024 * 1024, true, false );
+   const QVector<double> dblfit = fit2dsa( nullptr, false );
+   EXPECT_NE( firstDifference( dblfit, plainfit ), -1 ); // The thresholds were applied
+   US_Settings::set_debug_text( QStringList() << "SimFloat=on" << "SimFloatNNLS=on" );
+   expectSameFit( 1024LL * 1024 * 1024, true, true );
+   const QVector<double> fltfit = fit2dsa( nullptr, false );
+   US_Settings::set_debug_text( saved );
+
+   ASSERT_EQ( fltfit.size(), dblfit.size() );
+   double maxrel = 0.0;
+   for ( int ii = 0; ii < dblfit.size(); ii++ )
+   {
+      // (Relative, or absolute to 1e-2 for small values:  residuals, noise)
+      maxrel = qMax( maxrel, fabs( fltfit[ii] - dblfit[ii] ) / qMax( fabs( dblfit[ii] ), 1.0e-2 ) );
+   }
+   EXPECT_GT( maxrel, 0.0 );    // The float path ran
+   EXPECT_LT( maxrel, 1.0e-3 ); // ... and stays close to double
+}
+
 TEST_F( TestUSSolveSimCache, FloatCacheRoundsWithoutDebugText )
 {
    // A cache in float mode alone makes the solvers round their simulations,

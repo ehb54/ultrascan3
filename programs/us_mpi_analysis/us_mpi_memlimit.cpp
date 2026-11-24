@@ -390,11 +390,13 @@ qint64 US_MPI_MemLimit::allowed_capacity( qint64 wanted, qint64 job_limit, qint6
 // Predicted bytes one rank needs to solve a set of solutes:  the estimate of
 //  the 2DSA fit control (US_AnalysisControl2D::grid_change), a fixed 17.2 MB
 //  and 2.28 times the bytes of the solutes' simulations, four data vectors
-//  and the noise terms
-qint64 US_MPI_MemLimit::solve_bytes( qint64 readings, qint64 solutes, int noise_terms )
+//  and the noise terms.  Of the factor, 1 is the A matrix of the NNLS, 1 the
+//  simulations and 0.28 the rest;  in float precision ("SimFloatNNLS",
+//  "SimFloat") the first two take half the bytes.
+qint64 US_MPI_MemLimit::solve_bytes( qint64 readings, qint64 solutes, int noise_terms, bool float_sims, bool float_nnls )
 {
    const double fixed_mb = 17.20;
-   const double factor   = 2.28;
+   const double factor   = 0.28 + ( float_nnls ? 0.5 : 1.0 ) + ( float_sims ? 0.5 : 1.0 );
    const qint64 columns  = qMax( (qint64) 0, solutes ) + 4 + qMax( 0, noise_terms );
    const double data     = (double) qMax( (qint64) 0, readings ) * (double) columns * sizeof( double );
    return (qint64) ( fixed_mb * MB + factor * data );
