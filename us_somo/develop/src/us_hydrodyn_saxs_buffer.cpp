@@ -3,6 +3,8 @@
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_saxs_buffer.h"
 #include "../include/us_hydrodyn_saxs_buffer_nth.h"
+#include "../include/us_hydrodyn_saxs_buffer_dilutions.h"
+#include "../include/us_hydrodyn_saxs_buffer_upturn.h"
 #if QT_VERSION >= 0x040000
 #include <qwt_scale_engine.h>
 //Added by qt3to4:
@@ -415,14 +417,54 @@ void US_Hydrodyn_Saxs_Buffer::closeEvent(QCloseEvent *e)
 
 void US_Hydrodyn_Saxs_Buffer::showEvent( QShowEvent *e )
 {
+   // the subtraction window is no longer opened with this one: the Buffer subtraction button opens it
    QFrame::showEvent( e );
+}
 
-   // show the subtraction window once this one is on screen, so it opens in front
-   if ( !e->spontaneous() )
+// the buffer subtraction window: opened, or brought to the front if it already is
+void US_Hydrodyn_Saxs_Buffer::show_subtraction()
+{
+   fit_widget->show();
+   fit_widget->raise();
+   fit_widget->activateWindow();
+}
+
+// the selected curves other than the buffer and the blank
+static QStringList us_buffer_selected_solutions( QListWidget * lb, const QString & buffer, const QString & empty )
+{
+   QStringList files;
+   for ( int i = 0; i < lb->count(); i++ )
    {
-      QTimer::singleShot( 0, fit_widget, SLOT( show() ) );
-      QTimer::singleShot( 0, fit_widget, SLOT( raise() ) );
+      if ( lb->item( i )->isSelected() &&
+           lb->item( i )->text() != buffer &&
+           lb->item( i )->text() != empty )
+      {
+         files << lb->item( i )->text();
+      }
    }
+   return files;
+}
+
+void US_Hydrodyn_Saxs_Buffer::check_dilutions()
+{
+   QStringList files = us_buffer_selected_solutions( lb_files, lbl_buffer->text(), lbl_empty->text() );
+   if ( files.size() < 2 )
+   {
+      return;
+   }
+   US_Hydrodyn_Saxs_Buffer_Dilutions * w = new US_Hydrodyn_Saxs_Buffer_Dilutions( this, files, this );
+   w->show();
+}
+
+void US_Hydrodyn_Saxs_Buffer::upturn()
+{
+   QStringList files = us_buffer_selected_solutions( lb_files, lbl_buffer->text(), lbl_empty->text() );
+   if ( !files.size() )
+   {
+      return;
+   }
+   US_Hydrodyn_Saxs_Buffer_Upturn * w = new US_Hydrodyn_Saxs_Buffer_Upturn( this, files, this );
+   w->show();
 }
 
 void US_Hydrodyn_Saxs_Buffer::table_value( int row, int col )
@@ -1148,7 +1190,9 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
    pb_asum               ->setEnabled( files_selected_count );
    pb_normalize          ->setEnabled( all_selected_have_nonzero_conc() );
    pb_conc_avg           ->setEnabled( all_selected_have_nonzero_conc() );
-   pb_set_buffer         ->setEnabled( files_selected_count == 1 && 
+   pb_check_dilutions    ->setEnabled( non_buffer_non_empty_files_selected_count > 1 );
+   pb_upturn             ->setEnabled( non_buffer_non_empty_files_selected_count > 0 );
+   pb_set_buffer         ->setEnabled( files_selected_count == 1 &&
                                        lb_files->item( last_selected_pos )->text() != lbl_buffer->text() &&
                                        lb_files->item( last_selected_pos )->text() != lbl_empty ->text() &&
                                        lb_files->item( last_selected_pos )->text() != lbl_signal->text()
@@ -3308,7 +3352,9 @@ void US_Hydrodyn_Saxs_Buffer::update_csv_conc()
          {
             vector < QString > tmp_data;
             tmp_data.push_back( lb_files->item( i )->text() );
-            tmp_data.push_back( "" );
+            // a new row starts from the concentration in the curve's file header, if it had one
+            tmp_data.push_back( ( f_conc.count( tmp_data[ 0 ] ) && f_conc[ tmp_data[ 0 ] ] != 0e0 )
+                                ? QString::number( f_conc[ tmp_data[ 0 ] ], 'g', 10 ) : QString( "" ) );
             
             csv_conc.prepended_names.push_back(tmp_data[0]);
             csv_conc.data.push_back(tmp_data);
@@ -3345,7 +3391,9 @@ void US_Hydrodyn_Saxs_Buffer::update_csv_conc()
          {
             vector < QString > tmp_data;
             tmp_data.push_back( lb_files->item( i )->text() );
-            tmp_data.push_back( "" );
+            // a new row starts from the concentration in the curve's file header, if it had one
+            tmp_data.push_back( ( f_conc.count( tmp_data[ 0 ] ) && f_conc[ tmp_data[ 0 ] ] != 0e0 )
+                                ? QString::number( f_conc[ tmp_data[ 0 ] ], 'g', 10 ) : QString( "" ) );
             
             new_csv.prepended_names.push_back(tmp_data[0]);
             new_csv.data.push_back(tmp_data);
@@ -6582,6 +6630,8 @@ void US_Hydrodyn_Saxs_Buffer::disable_all()
    pb_avg                ->setEnabled( false );
    pb_normalize          ->setEnabled( false );
    pb_conc_avg           ->setEnabled( false );
+   pb_check_dilutions    ->setEnabled( false );
+   pb_upturn             ->setEnabled( false );
    pb_set_buffer         ->setEnabled( false );
    pb_set_signal         ->setEnabled( false );
    pb_set_empty          ->setEnabled( false );
