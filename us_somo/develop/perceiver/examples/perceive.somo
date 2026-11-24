@@ -1,0 +1,18 @@
+# Example gui_script for the perceiver (ehb54/ultrascan-tickets#978).
+#
+#   us3_somo _pad -I -g examples/perceive.somo
+#
+# On macOS the throwaway "_pad" first argument is REQUIRED (the arg parser starts at argv[2]);
+# on Linux it must be OMITTED. "-I" installs configs silently so nothing blocks on a dialog.
+# NOTE: the first run after rebuilding libus_somo only re-installs configs and exits --
+# run it twice, the second run actually executes the script.
+
+# 1. Propose entries for residues somo.residue does NOT code.
+#    Without this, SOMO models each such residue as a generic ABB average bead.
+perceive /path/to/structure.pdb
+
+# 2. Hand-test: run perception over residues somo.residue DOES code and diff the
+#    result against the curated types, using your own installed tables.
+perceive compare /path/to/structure.pdb
+
+exit
