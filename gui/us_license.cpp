@@ -469,20 +469,19 @@ void US_License::update_response( const QString& response )
   int error = data[ 0 ].toInt();
 
   // 5: the server has no record of this email.  If the saved registration
-  // is still pending, its request never succeeded (refused, or lost to a
-  // network error), so send the request again.  Otherwise every later
-  // attempt with this address would end here.
-  if ( error == 5 )
+  // is still pending (12 entries: saved by request(), no key yet), its
+  // request never succeeded (refused, or lost to a network error), so send
+  // the request again.  Otherwise every later attempt with this address
+  // would end here.  The size is tested directly, because isValid() reports
+  // a pending record from another platform or OS as BadPlatform or BadOS.
+  if ( error == 5 && US_Settings::license().size() == 12 )
   {
-     QString status_error;
-     if ( US_License_t::isValid( status_error, QStringList() ) == US_License_t::Pending )
-     {
-        request();
-        return;
-     }
+     request();
+     return;
   }
 
-  if ( error == 0 )
+  // 0 comes with a key and an expiration; a shorter reply is an error
+  if ( error == 0 && data.size() >= 3 )
   {
     validation = data[ 1 ];
     expiration = data[ 2 ];
@@ -510,6 +509,11 @@ void US_License::update_response( const QString& response )
 void US_License::request( void )
 {
    //qDebug() << "Starting Req";
+   // A new request is for this computer (form_data() sends PLATFORM and OS),
+   // whatever a saved record from another one says
+   platform = titleCase( PLATFORM );
+   os       = titleCase( OS );
+
    // Save partial request
    QStringList license;
    license << lastname << firstname << institution << address << city << state << zip << phone << email << platform.toLower()
@@ -563,6 +567,7 @@ QString US_License::form_data( void ) const
                                 phone,     email,    OS,          PLATFORM, US_Version, licensetype };
    QStringList       items;
 
+   Q_ASSERT( names.size() == values.size() );
    for ( int i = 0; i < names.size(); i++ )
    {
       items << names[i] + "=" + QString::fromLatin1( values[i].toLatin1().toPercentEncoding() );
