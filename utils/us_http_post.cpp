@@ -35,9 +35,9 @@ void US_HttpPost::postFinished( void )
 void US_HttpPost::postError( QNetworkReply::NetworkError error )
 {
    // Just send the first error of this request
-   if ( count == 0 )
+   if ( !error_sent )
    {
-      count++;
+      error_sent = true;
       emit US_Http_post_response( QString( "9-Network Error (%1): " ).arg( error ) + reply->errorString() );
    }
 }
