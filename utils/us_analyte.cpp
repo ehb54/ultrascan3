@@ -6,7 +6,7 @@
 #include "us_math2.h"
 #include "us_settings.h"
 #include "us_util.h"
-#include <limits>
+#include <QLocale>
 
 namespace
 {
@@ -785,7 +785,7 @@ int US_Analyte::write_xml( QIODevice& device )
       value = extinction[ keys[ i ] ];
 
       xml.writeStartElement( "extinction" );
-      xml.writeAttribute( "frequency", QString::number( freq, 'g', std::numeric_limits<double>::max_digits10 ) );
+      xml.writeAttribute( "frequency", QString::number( freq, 'g', QLocale::FloatingPointShortest ) );
       xml.writeAttribute( "value",      QString::number( value ) );
       xml.writeEndElement(); // extinction
    }
@@ -799,7 +799,7 @@ int US_Analyte::write_xml( QIODevice& device )
       value = refraction[ keys[ i ] ];
 
       xml.writeStartElement( "refraction" );
-      xml.writeAttribute( "frequency", QString::number( freq, 'g', std::numeric_limits<double>::max_digits10 ) );
+      xml.writeAttribute( "frequency", QString::number( freq, 'g', QLocale::FloatingPointShortest ) );
       xml.writeAttribute( "value",      QString::number( value ) );
       xml.writeEndElement(); // refraction
    }
@@ -813,7 +813,7 @@ int US_Analyte::write_xml( QIODevice& device )
       value = fluorescence[ keys[ i ] ];
 
       xml.writeStartElement( "fluorescence" );
-      xml.writeAttribute( "frequency", QString::number( freq, 'g', std::numeric_limits<double>::max_digits10 ) );
+      xml.writeAttribute( "frequency", QString::number( freq, 'g', QLocale::FloatingPointShortest ) );
       xml.writeAttribute( "value",      QString::number( value ) );
       xml.writeEndElement(); // fluorescence
    }

@@ -404,6 +404,18 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    data_plot2->replot();
 }
 
+// Use the experiment's speed steps only if they cover every loaded triple.
+void US_FeMatch::choose_speed_steps( void )
+{
+   exp_steps          = !speed_steps.isEmpty();
+   const int ntriples = triples.size();
+   for ( int ds = 0; ds < ntriples && exp_steps; ds++ )
+   {
+      exp_steps = US_SimulationParameters::speedStepsCoverData( speed_steps, dataList[ds] );
+   }
+   dat_steps = !exp_steps;
+}
+
 // Load data
 void US_FeMatch::load( void )
 {
@@ -526,39 +538,11 @@ DbgLv(0) << "LD: newfile" << newfile << "idExp" << idExp
       US_SimulationParameters::mergeTimeStateSteps( speed_steps, simparams.speed_step );
    }
 
-   int nssp       = speed_steps.count();
    int ntriples   = triples.size();
-   DbgLv(1) << "LD: Load: no of speed steps" << nssp;
-   
-   if ( nssp > 0 )
-     {
-      for ( int ii = 0; ii < nssp; ii++ )
-      {
-         int stm1   = speed_steps[ ii ].time_first;
-         int stm2   = speed_steps[ ii ].time_last;
-         for ( int ds = 0; ds < ntriples; ds++ )
-         {   // Scan data time ranges and compare to experiment speed steps
-            edata      = &dataList[ ds ];
-            int lesc   = edata->scanCount() - 1;
-            int etm1   = edata->scanData[    0 ].seconds;
-            int etm2   = edata->scanData[ lesc ].seconds;
-DbgLv(1) << "LD:  ds" << ds << "step" << ii << "stimes" << stm1 << stm2
- << "etimes" << etm1 << etm2 << "lesc" << lesc;
+   DbgLv( 1 ) << "LD: Load: no of speed steps" << speed_steps.count();
 
-            if ( etm1 < stm1  ||  etm2 > stm2 )
-            {  // Data times beyond speed step ranges, so flag use of data ranges
-               nssp       = 0;
-               qDebug() << "Data is beyond range ex:" << etm1 << etm2 << "ss:" << stm1 << stm2;
-               //speed_steps.clear();
-               break;
-            }
-         }
-      }
-   }
-
-   exp_steps  = ( nssp > 0 );
-   dat_steps  = !exp_steps;
-DbgLv(1) << "LD: after if block, nssp=" << nssp << "   exp_steps" << exp_steps;
+   choose_speed_steps();
+   DbgLv( 1 ) << "LD: exp_steps" << exp_steps;
 
    qApp->processEvents();
 
@@ -1153,32 +1137,42 @@ DbgLv(1) << "cnstvb" << cnstvb << "img06File" << img06File;
    write_plot( img11File, NULL );
    update_filelist( files, img11File );
 
-   // Save the upper experiment-simulation overlay plot
-   if ( resplotd == 0 )
+   // Save the upper experiment-simulation overlay plot.  Without an open
+   // residual dialog, the plots come from one that is laid out but never
+   // shown on screen, and closed (deleting itself) after the export.
+   QPointer<US_ResidPlotFem> rpexport = resplotd;
+   const bool                rptemp   = rpexport.isNull();
+   if ( rptemp )
    {
-      resplotd = new US_ResidPlotFem( resplot_inputs(), US_ResidPlotFem::Standalone, this );
-      resplotd->move( rpd_pos );
-      resplotd->show();
+      rpexport = new US_ResidPlotFem( resplot_inputs(), US_ResidPlotFem::Standalone, this );
+      rpexport->setAttribute( Qt::WA_DontShowOnScreen );
+      rpexport->move( rpd_pos );
+      rpexport->show();
    }
 
-   write_plot( img14File, resplotd->rp_data_plot1() );
+   write_plot( img14File, rpexport->rp_data_plot1() );
    update_filelist( files, img14File );
 
    // save any noise plots
    if ( ti_noise.count > 0 )
    {
-      resplotd->set_plot( 1 );
-      QwtPlot* nois_plot = resplotd->rp_data_plot2();
+      rpexport->set_plot( 1 );
+      QwtPlot* nois_plot = rpexport->rp_data_plot2();
       write_plot( img12File, nois_plot );
       update_filelist( files, img12File );
    }
 
    if ( ri_noise.count > 0 )
    {
-      resplotd->set_plot( 2 );
-      QwtPlot* nois_plot = resplotd->rp_data_plot2();
+      rpexport->set_plot( 2 );
+      QwtPlot* nois_plot = rpexport->rp_data_plot2();
       write_plot( img13File, nois_plot );
       update_filelist( files, img13File );
+   }
+
+   if ( rptemp && rpexport )
+   {
+      rpexport->close();
    }
 
    // Create the model distributions table CSV
@@ -4093,39 +4087,11 @@ void US_FeMatch::auto_load_simulate( US_DataIO::RawData i_rdata,
       US_SimulationParameters::mergeTimeStateSteps( speed_steps, simparams.speed_step );
    }
 
-   int nssp       = speed_steps.count();
    int ntriples   = triples.size();
-   DbgLv(1) << "LD: Load: no of speed steps" << nssp;
+   DbgLv( 1 ) << "LD: Load: no of speed steps" << speed_steps.count();
 
-   if ( nssp > 0 )
-   {
-      for ( int ii = 0; ii < nssp; ii++ )
-      {
-         int stm1   = speed_steps[ ii ].time_first;
-         int stm2   = speed_steps[ ii ].time_last;
-         for ( int ds = 0; ds < ntriples; ds++ )
-         {   // Scan data time ranges and compare to experiment speed steps
-            edata      = &dataList[ ds ];
-            int lesc   = edata->scanCount() - 1;
-            int etm1   = edata->scanData[    0 ].seconds;
-            int etm2   = edata->scanData[ lesc ].seconds;
-            DbgLv(1) << "LD:  ds" << ds << "step" << ii << "stimes" << stm1 << stm2
-                     << "etimes" << etm1 << etm2 << "lesc" << lesc;
-
-            if ( etm1 < stm1  ||  etm2 > stm2 )
-            {  // Data times beyond speed step ranges, so flag use of data ranges
-               nssp       = 0;
-               qDebug() << "Data is beyond range ex:" << etm1 << etm2 << "ss:" << stm1 << stm2;
-               //speed_steps.clear();
-               break;
-            }
-         }
-      }
-   }
-
-   exp_steps  = ( nssp > 0 );
-   dat_steps  = !exp_steps;
-   DbgLv(1) << "LD: after if block, nssp=" << nssp << "   exp_steps" << exp_steps;
+   choose_speed_steps();
+   DbgLv( 1 ) << "LD: exp_steps" << exp_steps;
 
    qApp->processEvents();
 

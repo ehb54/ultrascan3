@@ -1,5 +1,6 @@
 //! \file us_gui_util.cpp
 #include <QtSvg>
+#include <cmath>
 
 #include "us_archive.h"
 #include "us_gui_util.h"
@@ -297,4 +298,20 @@ int US_GuiUtil::save_csv( const QString& filename, const QwtPlot* plot )
    }
 
    return status;
+}
+
+int US_GuiUtil::counter_digits( double value )
+{
+   const double magnitude = std::fabs( value );
+   if ( magnitude == 0.0 || !std::isfinite( magnitude ) )
+   {
+      return 14;
+   }
+   int ncv = int( std::log10( magnitude ) ) + 1;
+   ncv     = ( ncv > 0 ) ? ncv : ( 4 - ncv );
+   if ( value < 0.0 )
+   {
+      ++ncv;
+   }
+   return qBound( 1, ncv, 14 );
 }

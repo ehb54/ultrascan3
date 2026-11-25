@@ -115,7 +115,8 @@ ehb54/ultrascan-tickets#1214.
    the remaining fractions; the same solutes in two orders gave 70 % and
    about 35 % at one s value.  US_Calc merges solutes with equal s, D,
    MW and f/f0 wherever they appear (concentrations summed, vbar and radius
-   averaged), rescales nothing, and the cumulative sum ends at 1.  The
+   averaged unless every duplicate has the same value, which is then kept
+   exactly), rescales nothing, and the cumulative sum ends at 1.  The
    `edge_duplicates_ties` curves in `legacy_integral.json` are the corrected
    ones; every other curve equals the desktop code before the change.
 5. **Zero totals.**  `distrib_info` divides by a zero total without a guard
