@@ -1194,11 +1194,16 @@ static int nnls_core( T*                       a,
          unorm = sqrt( unorm );
 
          /* The new diagonal element must count beside the column's part in
-            set P at the precision of A (for floats:  a column dependent to
-            within the floats' rounding is rejected) */
-         d1               = a[npp1 + ja_dim1];
-         const T tunorm   = (T) unorm;
-         const T tdiagmax = (T) ( tunorm + (T) ( fabs( d1 ) * 0.01 ) );
+            set P at the precision of A. Doubles use the classic factor 0.01.
+            Floats use 0.1: a column is rejected only when its diagonal is
+            below about 10 float epsilons of that part, i.e. dependent to
+            within the floats' rounding. With 0.01 (100 epsilons) the float
+            solve rejected columns that the double solve accepts, and on fine
+            grids (128 x 128 and more) settled on a different solute set */
+         d1                    = a[npp1 + ja_dim1];
+         const double dfact    = ( sizeof( T ) < sizeof( double ) ) ? 0.1 : 0.01;
+         const T      tunorm   = (T) unorm;
+         const T      tdiagmax = (T) ( tunorm + (T) ( fabs( d1 ) * dfact ) );
 
          if ( ( tdiagmax - tunorm ) > 0.0 )
          {
