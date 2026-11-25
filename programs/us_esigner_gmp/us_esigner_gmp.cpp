@@ -3414,8 +3414,9 @@ void US_eSignaturesGMP::assignOperRevs_sa( void )
   //JSON for logJsonUpdateTime - compose updated;
   //DB 
   US_Passwd pw( this );
-  US_DB2* db = new US_DB2( pw.getPasswd() );
-  
+  QScopedPointer<US_DB2> db_holder( new US_DB2( pw.getPasswd() ) ); // closed on every return path
+  US_DB2*                db = db_holder.data();
+
   if ( db->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
@@ -3685,8 +3686,9 @@ void US_eSignaturesGMP::assignOperRevs( void )
 
   //DB 
   US_Passwd pw( this );
-  US_DB2* db = new US_DB2( pw.getPasswd() );
-  
+  QScopedPointer<US_DB2> db_holder( new US_DB2( pw.getPasswd() ) ); // closed on every return path
+  US_DB2*                db = db_holder.data();
+
   if ( db->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),

@@ -10,6 +10,13 @@
 #include "us_db2.h"
 #include "us_editor.h"
 
+// Destructor: close the database connection that the dialog opened (if any)
+US_ModelLoader::~US_ModelLoader()
+{
+   delete dbP;
+   dbP = NULL;
+}
+
 // Main constructor for loading a single model
 US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
       US_Model& amodel, QString& adescr, const QString eGUID )
@@ -495,7 +502,11 @@ void US_ModelLoader::select_diskdb()
 {
    // Disable investigator field if from disk or normal user; Enable otherwise
    loadDB       = dkdb_cntrls->db();
-   dbP          = loadDB ? dbP : NULL;
+   if ( !loadDB )
+   { // Switching to disk: close the connection rather than just forgetting it
+      delete dbP;
+      dbP = NULL;
+   }
    pb_investigator->setEnabled( loadDB && ( US_Settings::us_inv_level() > 2 ) );
 
    // Signal model-loader caller that Disk/DB source has changed
