@@ -1,4 +1,5 @@
 add_subdirectory(us_2dsa)
+add_subdirectory(us_analysis_profile)
 add_subdirectory(us_astfem_sim)
 add_subdirectory(us_import_run)
 add_subdirectory(us_mwl_species_sim)

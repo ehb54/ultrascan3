@@ -525,7 +525,32 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
    //Clear internal_reports QMap
    internal_reports.clear();
    ref_numbers_list. clear();
- 
+
+   // Set all check boxes before the values below, because their slots use the whole
+   // list and change the reference values of any channel
+   int ref_number_max = 0;
+   for ( int ii = 0; ii < nchan; ii++ )
+   {
+      ref_numbers_list << 0;
+   }
+   for ( int ii = 0; ii < nchan; ii++ )
+   {
+      int kk = qMin( ii, currProf->analysis_run.count() - 1 );
+      ck_runs[ii]->setChecked( currProf->analysis_run[kk] );
+      ck_report_runs[ii]->setChecked( currProf->report_run[kk] );
+      if ( !ck_report_runs[ii]->isChecked() )
+      {
+         ref_number_max = qMax( ref_number_max, currProf->ref_channels[kk] );
+      }
+   }
+   ref_numbers_list.clear();
+
+   // The maximum set when the boxes were built can be lower than the number of references
+   for ( int ii = 0; ii < nchan; ii++ )
+   {
+      sb_use_ref_chs[ii]->setMaximum( qMax( sb_use_ref_chs[ii]->maximum(), ref_number_max ) );
+   }
+
    if ( le_lcrats.count() == nchan )
    { // Reset General channel parameter gui elements
       for ( int ii = 0; ii < nchan; ii++ )
