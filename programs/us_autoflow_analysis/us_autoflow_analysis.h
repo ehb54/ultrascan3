@@ -944,16 +944,6 @@ class US_Analysis_auto : public US_Widgets
         void calc_residuals( void );
 
         /**
-         * @brief Interpolates the S value.
-         * @param x The X value.
-         * @param xVals Pointer to the array of X values.
-         * @param yVals Pointer to the array of Y values.
-         * @param n The number of values.
-         * @return The interpolated S value.
-         */
-        double interp_sval( double, double*, double*, int );
-
-        /**
          * @brief Plots the residuals.
          */
         void plotres( void );

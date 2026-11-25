@@ -5,28 +5,29 @@
 
 #include "us_fematch.h"
 #include "us_adv_dmgamc.h"
-#include "us_thread_worker.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_settings.h"
+#include "us_astfem_math.h"
+#include "us_colorgradIO.h"
+#include "us_constants.h"
+#include "us_data_loader.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
-#include "us_matrix.h"
-#include "us_constants.h"
-#include "us_solution_vals.h"
-#include "us_solution_gui.h"
-#include "us_passwd.h"
-#include "us_data_loader.h"
-#include "us_util.h"
 #include "us_investigator.h"
-#include "us_loadable_noise.h"
 #include "us_lamm_astfvm.h"
+#include "us_license.h"
+#include "us_license_t.h"
+#include "us_loadable_noise.h"
+#include "us_matrix.h"
+#include "us_passwd.h"
 #include "us_report.h"
-#include "us_sleep.h"
-#include "us_astfem_math.h"
-#include "us_time_state.h"
+#include "us_settings.h"
+#include "us_sim_residuals.h"
 #include "us_simparms.h"
-#include "us_colorgradIO.h"
+#include "us_sleep.h"
+#include "us_solution_gui.h"
+#include "us_solution_vals.h"
+#include "us_thread_worker.h"
+#include "us_time_state.h"
+#include "us_util.h"
 #include <QFileInfo>
 
 #define MIN_NTC   25
@@ -1735,13 +1736,8 @@ void US_FeMatch::plotres( )
 // The data the residual plot shows: the current data, its simulation and noise
 US_ResidPlotInputs US_FeMatch::resplot_inputs()
 {
-   US_ResidPlotInputs inputs;
-   inputs.edited    = *edata;
-   inputs.simulated = *sdata;
-   inputs.excluded  = excludedScans;
-   inputs.ti_noise  = ti_noise;
-   inputs.ri_noise  = ri_noise;
-   inputs.bitmap    = rbmapd;
+   US_ResidPlotInputs inputs = US_ResidPlotInputs::of( *edata, *sdata, excludedScans, ti_noise, ri_noise );
+   inputs.bitmap             = rbmapd;
    return inputs;
 }
 
@@ -2464,34 +2460,6 @@ void US_FeMatch::comp_number( double cnbr )
 {
    component_values( (int)cnbr - 1 );
 }
-
-// Interpolate an sdata y (readings) value for a given x (radius)
-double US_FeMatch::interp_sval( double xv, double* sx, double* sy, int ssize )
-{
-   for ( int jj = 1; jj < ssize; jj++ )
-   {
-      if ( xv == sx[ jj ] )
-      {
-         return sy[ jj ];
-      }
-
-      if ( xv < sx[ jj ] )
-      {  // given x lower than array x: interpolate between point and previous
-         int    ii = jj - 1;
-         double dx = sx[ jj ] - sx[ ii ];
-         double dy = sy[ jj ] - sy[ ii ];
-         return ( sy[ ii ] + ( xv - sx[ ii ] ) * dy / dx );
-      }
-   }
-
-   // given x position not found:  interpolate using last two points
-   int    jj = ssize - 1;
-   int    ii = jj - 1;
-   double dx = sx[ jj ] - sx[ ii ];
-   double dy = sy[ jj ] - sy[ ii ];
-   return ( sy[ ii ] + ( xv - sx[ ii ] ) * dy / dx );
-}
-
 // Write the report HTML text stream
 void US_FeMatch::write_report( QTextStream& ts )
 {
@@ -2635,82 +2603,9 @@ QString US_FeMatch::text_model( US_Model model, int width )
 // Calculate residual absorbance values (data - sim - noise)
 void US_FeMatch::calc_residuals()
 {
-   int     dsize  = edata->pointCount();
-   int     ssize  = sdata->pointCount();
-   QVector< double > vecxx( dsize );
-   QVector< double > vecsx( ssize );
-   QVector< double > vecsy( ssize );
-   double* xx     = vecxx.data();
-   double* sx     = vecsx.data();
-   double* sy     = vecsy.data();
-   double  yval;
-   double  sval;
-   double  rmsd   = 0.0;
-   double  tnoi   = 0.0;
-   double  rnoi   = 0.0;
-   bool    ftin   = ti_noise.count > 0;
-   bool    frin   = ri_noise.count > 0;
-   bool    matchd = ( dsize == ssize );
-   int     kpts   = 0;
-DbgLv(1) << "CALC_RESID: matchd" << matchd << "dsize ssize" << dsize << ssize;
-int kexcls=0;
-
-   QVector< double > resscan;
-
-   resids .clear();
-   resscan.resize( dsize );
-
-   for ( int jj = 0; jj < dsize; jj++ )
-   {
-      xx[ jj ] = edata->radius( jj );
-   }
-
-   for ( int jj = 0; jj < ssize; jj++ )
-   {
-      sx[ jj ] = sdata->radius( jj );
-      if ( sx[ jj ] != xx[ jj ] )  matchd = false;
-   }
-
-   for ( int ii = 0; ii < scanCount; ii++ )
-   {
-      bool usescan = !excludedScans.contains( ii );
-if(!usescan) kexcls++;
-
-      rnoi     = frin ? ri_noise.values[ ii ] : 0.0;
-
-      for ( int jj = 0; jj < ssize; jj++ )
-      {
-         sy[ jj ] = sdata->value( ii, jj );
-      }
-
-      for ( int jj = 0; jj < dsize; jj++ )
-      { // Calculate the residuals and the RMSD
-         tnoi          = ftin ? ti_noise.values[ jj ] : 0.0;
-
-         if ( matchd )
-            sval          = sy[ jj ];
-         else
-            sval          = interp_sval( xx[ jj ], sx, sy, ssize );
-
-         yval          = edata->value( ii, jj ) - sval - rnoi - tnoi;
-
-         if ( usescan )
-         {
-            rmsd         += sq( yval );
-            kpts++;
-         }
-
-         resscan[ jj ] = yval;
-      }
-
-      resids << resscan;
-   }
-
-   rmsd  /= (double)( kpts );
-   le_variance->setText( QString::number( rmsd ) );
-   rmsd   = sqrt( rmsd );
-   le_rmsd    ->setText( QString::number( rmsd ) );
-DbgLv(1) << "CALC_RESID: matchd" << matchd << "kexcls" << kexcls << "rmsd" << rmsd;
+   double variance = US_SimResiduals::calculate( *edata, *sdata, ti_noise, ri_noise, excludedScans, scanCount, resids );
+   le_variance->setText( QString::number( variance ) );
+   le_rmsd->setText( QString::number( sqrt( variance ) ) );
 }
 
 // Slot to make sure all windows and dialogs get closed

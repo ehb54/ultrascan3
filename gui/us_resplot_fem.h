@@ -25,6 +25,23 @@ struct US_ResidPlotInputs
       US_Noise                  ri_noise;    //!< Radially-invariant noise
       QPointer<US_ResidsBitmap> bitmap;      //!< Caller's residuals bitmap to reuse, if any
       QString                   triple_info; //!< Title suffix in Analysis mode
+
+      //! \brief Inputs with the data, simulation, excluded scans and noise set;
+      //! the bitmap and title suffix are left empty.
+      static US_ResidPlotInputs of( const US_DataIO::EditedData& edited,
+                                    const US_DataIO::RawData&    simulated,
+                                    const QList<int>&            excluded,
+                                    const US_Noise&              ti_noise,
+                                    const US_Noise&              ri_noise )
+      {
+         US_ResidPlotInputs inputs;
+         inputs.edited    = edited;
+         inputs.simulated = simulated;
+         inputs.excluded  = excluded;
+         inputs.ti_noise  = ti_noise;
+         inputs.ri_noise  = ri_noise;
+         return inputs;
+      }
 };
 
 //! \brief A class to provide a window with experimental/residuals plots

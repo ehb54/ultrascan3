@@ -22,6 +22,7 @@
 #include "us_protocol_util.h"
 #include "us_run_protocol.h"
 #include "us_settings.h"
+#include "us_sim_residuals.h"
 #include "us_solution_vals.h"
 #include "us_thread_worker.h"
 
@@ -4363,111 +4364,8 @@ void US_Analysis_auto::show_results( )
 // Calculate residual absorbance values (data - sim - noise)
 void US_Analysis_auto::calc_residuals()
 {
-   int     dsize  = edata->pointCount();
-   int     ssize  = sdata->pointCount();
-   QVector< double > vecxx( dsize );
-   QVector< double > vecsx( ssize );
-   QVector< double > vecsy( ssize );
-   double* xx     = vecxx.data();
-   double* sx     = vecsx.data();
-   double* sy     = vecsy.data();
-   double  yval;
-   double  sval;
-   double  rmsd   = 0.0;
-   double  tnoi   = 0.0;
-   double  rnoi   = 0.0;
-   bool    ftin   = ti_noise.count > 0;
-   bool    frin   = ri_noise.count > 0;
-   bool    matchd = ( dsize == ssize );
-   int     kpts   = 0;
-   qDebug() << "CALC_RESID: matchd" << matchd << "dsize ssize" << dsize << ssize;
-   int kexcls=0;
- 
-   QVector< double > resscan;
-
-   resids .clear();
-   resscan.resize( dsize );
-
-   for ( int jj = 0; jj < dsize; jj++ )
-   {
-      xx[ jj ] = edata->radius( jj );
-   }
-
-   for ( int jj = 0; jj < ssize; jj++ )
-   {
-      sx[ jj ] = sdata->radius( jj );
-      if ( sx[ jj ] != xx[ jj ] )  matchd = false;
-   }
-
-   for ( int ii = 0; ii < scanCount; ii++ )
-   {
-      bool usescan = !excludedScans.contains( ii );
-if(!usescan) kexcls++;
-
-      rnoi     = frin ? ri_noise.values[ ii ] : 0.0;
-
-      for ( int jj = 0; jj < ssize; jj++ )
-      {
-         sy[ jj ] = sdata->value( ii, jj );
-      }
-
-      for ( int jj = 0; jj < dsize; jj++ )
-      { // Calculate the residuals and the RMSD
-         tnoi          = ftin ? ti_noise.values[ jj ] : 0.0;
-
-         if ( matchd )
-            sval          = sy[ jj ];
-         else
-            sval          = interp_sval( xx[ jj ], sx, sy, ssize );
-
-         yval          = edata->value( ii, jj ) - sval - rnoi - tnoi;
-
-         if ( usescan )
-         {
-            rmsd         += sq( yval );
-            kpts++;
-         }
-
-         resscan[ jj ] = yval;
-      }
-
-      resids << resscan;
-   }
-
-   rmsd  /= (double)( kpts );
-   //le_variance->setText( QString::number( rmsd ) );
-   rmsd   = sqrt( rmsd );
-   //le_rmsd    ->setText( QString::number( rmsd ) );
-   qDebug() << "CALC_RESID: matchd" << matchd << "kexcls" << kexcls << "rmsd" << rmsd;
+   US_SimResiduals::calculate( *edata, *sdata, ti_noise, ri_noise, excludedScans, scanCount, resids );
 }
-
-// Interpolate an sdata y (readings) value for a given x (radius)
-double US_Analysis_auto::interp_sval( double xv, double* sx, double* sy, int ssize )
-{
-   for ( int jj = 1; jj < ssize; jj++ )
-   {
-      if ( xv == sx[ jj ] )
-      {
-         return sy[ jj ];
-      }
-
-      if ( xv < sx[ jj ] )
-      {  // given x lower than array x: interpolate between point and previous
-         int    ii = jj - 1;
-         double dx = sx[ jj ] - sx[ ii ];
-         double dy = sy[ jj ] - sy[ ii ];
-         return ( sy[ ii ] + ( xv - sx[ ii ] ) * dy / dx );
-      }
-   }
-
-   // given x position not found:  interpolate using last two points
-   int    jj = ssize - 1;
-   int    ii = jj - 1;
-   double dx = sx[ jj ] - sx[ ii ];
-   double dy = sy[ jj ] - sy[ ii ];
-   return ( sy[ ii ] + ( xv - sx[ ii ] ) * dy / dx );
-}
-
 // Open a residual plot dialog
 void US_Analysis_auto::plotres( )
 {
@@ -4477,13 +4375,8 @@ void US_Analysis_auto::plotres( )
    //    resplotd->close();
    // }
 
-   US_ResidPlotInputs inputs;
-   inputs.edited      = *edata;
-   inputs.simulated   = *sdata;
-   inputs.excluded    = excludedScans;
-   inputs.ti_noise    = ti_noise;
-   inputs.ri_noise    = ri_noise;
-   inputs.triple_info = tripleInfo;
+   US_ResidPlotInputs inputs = US_ResidPlotInputs::of( *edata, *sdata, excludedScans, ti_noise, ri_noise );
+   inputs.triple_info        = tripleInfo;
    resplotd           = new US_ResidPlotFem( inputs, US_ResidPlotFem::Analysis, this );
 
    //resplotd->move( rpd_pos );

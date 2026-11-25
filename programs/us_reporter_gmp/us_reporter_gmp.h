@@ -657,8 +657,7 @@ class US_ReporterGMP : public US_Widgets
         void calc_residuals(void); //!< Calculate residuals
         void assemble_distrib_html(QMap<QString, QString>&); //!< Assemble distribution HTML
         void assemble_distrib_ABDE_html( QString& ); //!< Assemble distribution HTML
-        void assemble_plots_html(QStringList, QString = QString("")); //!< Assemble plots HTML
-        double interp_sval(double, double*, double*, int); //!< Interpolate s-value
+        void                   assemble_plots_html( QStringList, QString = QString( "" ) ); //!< Assemble plots HTML
         void plotres(QMap<QString, QString>&); //!< Plot residuals
         void plot_pseudo3D(QString, QString); //!< Plot pseudo 3D
         //! VELOCITY-MWL: per-channel "VELOCITY-MWL Analysis" report section

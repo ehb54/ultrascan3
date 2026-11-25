@@ -286,14 +286,6 @@ class US_FeMatch : public US_Widgets
         //! \brief Slot to load noise data.
         void load_noise();
 
-        //! \brief Interpolate a value.
-        //! \param x_value The x value.
-        //! \param x_data The x data array.
-        //! \param y_data The y data array.
-        //! \param size The size of the data arrays.
-        //! \return The interpolated value.
-        double interp_sval(double x_value, double* x_data, double* y_data, int size);
-
         //! \brief Write a report.
         //! \param stream The text stream to write to.
         void write_report(QTextStream& stream);
