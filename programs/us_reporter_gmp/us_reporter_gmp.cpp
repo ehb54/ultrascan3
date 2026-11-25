@@ -8537,7 +8537,8 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
 			  tr( "Tolerance, %:"),
 			  tr( "PASSED ?" ));
 
-       QStringList chann_samples = abde_ranges_percents[abde_channame].keys();
+       const auto  channel_percentages = abde_ranges_percents.value( abde_channame );
+       QStringList chann_samples       = channel_percentages.keys();
        //If the user recorded a signal selection for this channel (via
        //show_signal_selection_dialog() at Save-Profiles time), only include
        //the samples they left checked. A channel absent from the map means
@@ -8547,58 +8548,59 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
        for (int cs=0; cs< chann_samples.size(); ++cs )
 	 {
 	   QString c_sample = chann_samples[cs];
-	   if ( have_selection && !abde_selected_signals[abde_channame].contains( c_sample ) )
-	     continue;
-	   QString c_sample_display = prettify_abde_sample_name( channs_analytes_buffers, c_sample );
-	   
-	   QString mstr_sample = "<h4>" + c_sample_display + " signal</h4>\n";
-	   mstr_sample += indent( 2 ) + "<table>\n";
-	   mstr_sample += header_trftp;
-       
-	   for ( int kk = 0; kk < report_items_number; ++kk )
-	     {
-	       US_ReportGMP::ReportItem curr_item = reportGMP-> reportItems[ kk ];
-	       QString type           = curr_item.type;
-	       QString method         = curr_item.method;
-	       
-	       QString int_val_r      = QString::number( curr_item.integration_val );
-	       double  frac_tot_r     = curr_item.total_percent;
-	       double  frac_tot_tol_r = curr_item.tolerance ;
-	       double  low            = curr_item.range_low;
-	       double  high           = curr_item.range_high;
-	       
-	       QString range     = "[" + QString::number(low) + " - " + QString::number(high) + "]";
-	       QString range_alt = QString::number(low) + "-" + QString::number(high);
-	       
-	       //integrate over model_used
-	       double int_val_m = 0;
-	       
-	       double frac_tot_m     = abde_ranges_percents[abde_channame][ c_sample ][range_alt];
-	       
-	       QString tot_frac_passed = ( qAbs( frac_tot_m - frac_tot_r ) <= frac_tot_tol_r ) ? "YES" : "NO";
-	       
-	       // reportGMP-> reportItems[ kk ]. integration_val_sim = int_val_m;
-	       // reportGMP-> reportItems[ kk ]. total_percent_sim   = frac_tot_m;
-	       // reportGMP-> reportItems[ kk ]. passed              = tot_frac_passed;
-	       
-	       qDebug() << "In distrib_info(), fill simulated integration vals: for chann/wvl/type/method/low/high, "
-			<< "Inter. val. Sim -- "
-			<< wvl_abde
-			<< curr_item.type
-			<< curr_item.method
-			<< curr_item.range_low
-			<< curr_item.range_high
-			<< int_val_m;
-	       
-	       mstr_sample += table_row( type,
-					 range,
-					 QString::asprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
-					 QString::number( frac_tot_tol_r ),
-					 tot_frac_passed );
-	     }
-	    mstr_sample   += indent( 2 ) + "</table>\n";
-	    mstr          += mstr_sample;
-	 }
+      const auto sample_percentages = channel_percentages.value( c_sample );
+      if ( have_selection && !abde_selected_signals[abde_channame].contains( c_sample ) )
+      {
+         continue;
+      }
+      QString c_sample_display = prettify_abde_sample_name( channs_analytes_buffers, c_sample );
+
+      QString mstr_sample = "<h4>" + c_sample_display + " signal</h4>\n";
+      mstr_sample += indent( 2 ) + "<table>\n";
+      mstr_sample += header_trftp;
+
+      for ( int kk = 0; kk < report_items_number; ++kk )
+      {
+         US_ReportGMP::ReportItem curr_item = reportGMP->reportItems[kk];
+         QString                  type      = curr_item.type;
+         QString                  method    = curr_item.method;
+
+         QString                  int_val_r      = QString::number( curr_item.integration_val );
+         double                   frac_tot_r     = curr_item.total_percent;
+         double                   frac_tot_tol_r = curr_item.tolerance;
+         double                   low            = curr_item.range_low;
+         double                   high           = curr_item.range_high;
+
+         QString                  range     = "[" + QString::number( low ) + " - " + QString::number( high ) + "]";
+         QString                  range_alt = QString::number( low ) + "-" + QString::number( high );
+
+         //integrate over model_used
+         double                   int_val_m = 0;
+
+         const auto               fraction      = sample_percentages.constFind( range_alt );
+         const bool               have_fraction = fraction != sample_percentages.constEnd();
+         const double             frac_tot_m    = have_fraction ? fraction.value() : 0.0;
+         const QString            fraction_text = have_fraction ? QString::asprintf( "%5.2f%%", frac_tot_m ) : tr( "missing" );
+
+         QString tot_frac_passed = ( have_fraction && qAbs( frac_tot_m - frac_tot_r ) <= frac_tot_tol_r ) ? "YES" : "NO";
+
+         // reportGMP-> reportItems[ kk ]. integration_val_sim = int_val_m;
+         // reportGMP-> reportItems[ kk ]. total_percent_sim   = frac_tot_m;
+         // reportGMP-> reportItems[ kk ]. passed              = tot_frac_passed;
+
+         qDebug() << "In distrib_info(), fill simulated integration vals: for chann/wvl/type/method/low/high, "
+                  << "Inter. val. Sim -- " << wvl_abde << curr_item.type << curr_item.method << curr_item.range_low
+                  << curr_item.range_high << int_val_m;
+
+         mstr_sample += table_row( type,
+                                   range,
+                                   fraction_text + " (" + QString::number( frac_tot_r ) + "%)",
+                                   QString::number( frac_tot_tol_r ),
+                                   tot_frac_passed );
+      }
+      mstr_sample += indent( 2 ) + "</table>\n";
+      mstr += mstr_sample;
+    }
        //End of integration results
      }
    
