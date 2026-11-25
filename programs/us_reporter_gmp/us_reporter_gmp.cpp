@@ -4841,7 +4841,7 @@ void US_ReporterGMP::process_abde_plots( void )
   //Process all channels & capture plots
   QString subDirName  = runName + "-run" + runID;
   QString dirName     = US_Settings::reportDir() + "/" + subDirName;
-  //mkdir( US_Settings::reportDir(), subDirName );
+  mkdir( US_Settings::reportDir(), subDirName );
   const QString svgext( ".svgz" );
   const QString pngext( ".png" );
   const QString csvext( ".csv" );
