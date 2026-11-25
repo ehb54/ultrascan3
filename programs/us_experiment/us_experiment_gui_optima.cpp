@@ -288,6 +288,11 @@ US_AnaProfile* US_ExperimentMain::get_aprofile( )
   return &(epanAProfile->sdiag->currProf);
 }
 
+bool US_ExperimentMain::aprofile_usable() const
+{
+   return epanAProfile->sdiag->profile_usable;
+}
+
 US_AnaProfile* US_ExperimentMain::get_aprofile_loaded( )
 {
   return &(epanAProfile->sdiag->loadProf);
@@ -7559,10 +7564,30 @@ DbgLv(1) << "EGAp:svAP:  new DB:  ID" << aprof->aprofID
    return;
 }
 
+// The profile shown can be that of another protocol
+bool US_ExperGuiUpload::check_aprofile()
+{
+   if ( !mainw->aprofile_usable() )
+   {
+      QMessageBox::critical( this,
+                             tr( "Analysis Profile" ),
+                             tr( "The protocol cannot be saved or submitted: \n"
+                                 "Its analysis profile could not be loaded." ) );
+      return false;
+   }
+   return true;
+}
+
 // Slot to save the current Run Protocol
 bool US_ExperGuiUpload::saveRunProtocol()
 {
   bool save_aborted = false;
+
+  if ( !check_aprofile() )
+  {
+     save_aborted = true;
+     return save_aborted;
+  }
 
   qDebug() << "in saveRunProtoocl(): proto_svd, rps_differ -- " << proto_svd << rps_differ;
   if ( proto_svd && !rps_differ )
@@ -7841,6 +7866,11 @@ void US_ExperGuiUpload::read_optima_machines( US_DB2* db )
 //Confirm the Data Disk submission
 void US_ExperGuiUpload::submitExperiment_confirm_dataDisk()
 {
+   if ( !check_aprofile() )
+   {
+      return;
+   }
+
   if ( mainw->automode && rps_differ )
     {
       if ( saveRunProtocol() )
@@ -7970,6 +8000,11 @@ void US_ExperGuiUpload::submitExperiment_confirm_dataDisk()
 //Confirm the Optima machine an experiemnt is submitted to.
 void US_ExperGuiUpload::submitExperiment_confirm()
 {
+   if ( !check_aprofile() )
+   {
+      return;
+   }
+
   // //DEBUG
 
   // qDebug() << "InvestigatorID into autolfow -- " << QString::number(US_Settings::us_inv_ID());
@@ -8433,6 +8468,11 @@ bool US_ExperGuiUpload::readAProfileBasicParms( QXmlStreamReader& xmli, QMap<QSt
 //Confirm submission for EDIT & ANALYIS: US_ProtDev
 void US_ExperGuiUpload::submitExperiment_confirm_protDev()
 {
+   if ( !check_aprofile() )
+   {
+      return;
+   }
+
   qDebug() << "IN submitExperiment_confirm_protDev() -- "
 	   << "mainw->automode, have_run, rps_differ "
 	   << mainw->automode <<  have_run <<  rps_differ;

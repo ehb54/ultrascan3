@@ -4,7 +4,10 @@
 #include "us3_gui_test_main.h"
 #include "us_analysis_profile.h"
 #include <QCheckBox>
+#include <QMessageBox>
+#include <QSpinBox>
 #include <QTabWidget>
+#include <QTimer>
 
 namespace
 {
@@ -142,6 +145,10 @@ class US_AnalysisProfileRunReportTest : public QObject
       void clicking_by_hand();
       void clicking_after_load_data();
       void clicking_after_load();
+      void clicks_keep_a_chosen_reference();
+      void panels_have_the_loaded_channels();
+      void report_on_without_a_reference();
+      void unusable_profile_keeps_the_one_shown();
 };
 
 void US_AnalysisProfileRunReportTest::load_keeps_saved_values_data()
@@ -307,6 +314,88 @@ void US_AnalysisProfileRunReportTest::clicking_after_load()
    by_hand.window.findChild<QTabWidget*>()->setCurrentIndex( 1 );
    loaded.window.findChild<QTabWidget*>()->setCurrentIndex( 1 );
    QCOMPARE( text( loaded.values() ), text( by_hand.values() ) );
+}
+
+//! A use-reference that was just chosen is not lost when a box is clicked
+void US_AnalysisProfileRunReportTest::clicks_keep_a_chosen_reference()
+{
+   Window plain( true );
+   plain.load();
+   US_AnaProfile saved    = plain.window.currProf;
+   saved.analysis_run     = { 1, 1, 1 };
+   saved.report_run       = { 1, 0, 0 };
+   saved.ref_channels     = { 0, 1, 2 };
+   saved.ref_use_channels = { 2, 0, 0 };
+
+   Window loaded( true );
+   loaded.load( saved );
+   auto* use = loaded.window.findChild<QSpinBox*>( "0: RefUseChan --chann_name--1A:UV/vis.:Sample" );
+   QVERIFY( use != nullptr );
+   use->setValue( 1 );
+   QVERIFY( loaded.click( "1: Run" ) );
+   loaded.window.findChild<QTabWidget*>()->setCurrentIndex( 1 );
+   QCOMPARE( text( loaded.values() ), QString( "run 1,0,1 report 1,0,0 ref 0,1,2 use 1,0,0" ) );
+}
+
+void US_AnalysisProfileRunReportTest::panels_have_the_loaded_channels()
+{
+   Window            window( false );
+   const QStringList channels = { "1A:UV/vis.:Sample", "1B:UV/vis.:Sample", "2A:UV/vis.:Sample" };
+   window.load();
+   for ( const char* panel : { "general", "2dsa", "pcsa" } )
+   {
+      QCOMPARE( window.window.childLValue( panel, "channels" ), channels );
+   }
+}
+
+//! A channel whose Report is off can have no reference number, as in older profiles
+void US_AnalysisProfileRunReportTest::report_on_without_a_reference()
+{
+   for ( bool abde : { false, true } )
+   {
+      Window plain( abde );
+      plain.load();
+      US_AnaProfile saved    = plain.window.currProf;
+      saved.analysis_run     = { 1, 1, 1 };
+      saved.report_run       = { 0, 1, 1 };
+      saved.ref_channels     = { 0, 0, 0 };
+      saved.ref_use_channels = { 0, 0, 0 };
+
+      Window loaded( abde );
+      loaded.load( saved );
+      QVERIFY( loaded.click( "0: RunReport" ) );
+      loaded.window.findChild<QTabWidget*>()->setCurrentIndex( 1 );
+      QCOMPARE( text( loaded.values() ), QString( "run 1,1,1 report 1,1,1 ref 0,0,0 use 0,0,0" ) );
+   }
+}
+
+void US_AnalysisProfileRunReportTest::unusable_profile_keeps_the_one_shown()
+{
+   Window window( false );
+   window.load();
+   const US_AnaProfile before = window.window.currProf;
+
+   // An optic that is not installed comes before a usable one
+   window.protocol.rpOptic.chopts[0].scan1 = "(not installed)";
+   window.protocol.rpOptic.chopts[0].scan2 = "UV/visible";
+   QStringList shown;
+   QTimer      close;
+   connect( &close,
+            &QTimer::timeout,
+            [&]
+            {
+               auto* message = qobject_cast<QMessageBox*>( QApplication::activeModalWidget() );
+               if ( message != nullptr )
+               {
+                  shown << message->text();
+                  message->accept();
+               }
+            } );
+   close.start( 10 );
+   window.load();
+   QCOMPARE( shown.size(), 1 );
+   QVERIFY( window.window.currProf == before );
+   QCOMPARE( window.window.currProf.chndescs, before.chndescs );
 }
 
 US3_GUI_TEST_MAIN( US_AnalysisProfileRunReportTest )

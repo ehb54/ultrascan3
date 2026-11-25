@@ -8,15 +8,16 @@
 #include <functional>
 
 #include "us_ana_profile.h"
-#include "us_run_protocol.h"
+#include "us_ana_profile_loader.h"
+#include "us_db2.h"
 #include "us_editor.h"
-#include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_investigator.h"
-#include "us_util.h"
 #include "us_passwd.h"
-#include "us_db2.h"
+#include "us_run_protocol.h"
 #include "us_select_runs.h"
+#include "us_settings.h"
+#include "us_util.h"
 
 #include "us_report_gmp.h"
 #include "us_report_gui.h"
@@ -73,8 +74,10 @@ class US_AnaprofPanGen : public US_WidgetsDialog
 
       void set_abde_panel();
 
- 
-            
+      //! \brief Show the profile, with the values of its Run and Report boxes
+      void        showProfile( const US_AnaProfileLoader::Channels& );
+
+
    private:
       US_AnalysisProfileGui* mainw;   // Parent to all panels
       US_AnaProfile*    currProf;     // Current AnaProfile controls
@@ -137,7 +140,7 @@ class US_AnaprofPanGen : public US_WidgetsDialog
   QList< QLineEdit* >    le_MWs;
   //QList< QSpinBox* >     sb_ref_chs;
   QList< QLineEdit* >    le_ref_chs;
-  QList< int > ref_numbers_list;
+  US_AnaProfileLoader::Channels                        values; // Values of the Run and Report boxes
   QList< QSpinBox* >     sb_use_ref_chs;
 
       QList< QCheckBox* >    ck_runs;
@@ -159,14 +162,16 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       
       int          dbg_level;
       bool         use_db;              // Using the LIMS database?
-			 
-  bool AProfIsIntiated;
-		      
+
+
    private slots:
       void  build_general_layout( void );
 
       void  runChecked( bool );
       void  reportRunChecked( bool );
+      //! \brief Show the values of the Run and Report boxes, and what they enable
+      void  showChannels( void );
+      void  showTabs( void );
       void  setReport( void );
       void  mwvChecked( bool );
 
@@ -457,18 +462,12 @@ class US_AnalysisProfileGui : public US_Widgets
       
       bool    automode;
   bool abde_mode_aprofile;
+  bool                                            profile_usable; //!< The profile of the last protocol could be loaded
   bool                                            velmwl_mode_aprofile;
 
   void                                            auto_mode_passed( void );
   void                                            auto_name_passed( QString&, QString& );
   void                                            inherit_protocol( US_RunProtocol* );
-  //! \brief Read one report (and its reportItems) from the DB.
-  //! \param db       Open DB connector to reuse (NULL: connect here)
-  //! \param item_cb  Optional ( items_done, items_total ) progress hook
-  void                                            get_report_by_ID( US_ReportGMP*,
-                                                                    int,
-                                                                    US_DB2*                                db = NULL,
-                                                                    const std::function<void( int, int )>& item_cb = std::function<void( int, int )>() );
 
   //! Optional progress hook for inherit_protocol(): ( done, total, detail ).
   //! Empty by default, so other users of this class are unaffected.

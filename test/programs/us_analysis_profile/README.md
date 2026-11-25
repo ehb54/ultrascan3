@@ -7,6 +7,13 @@ messages shown and the progress calls with `fixtures/<case>.json`.
 `check_snapshots.py` runs each case in its own process. The comparison does not
 use the XML or `US_AnaProfile::operator==`, which leave fields out.
 
+The `edit-` cases also edit the General tab, save it, return to it, and load the
+saved profile in a new window. They record the profile and the value, limit and
+state of each box.
+
+`US_AnaProfileLoader` must match the other cases too
+(`test/utils/test_us_ana_profile_loader.cpp`).
+
 Both tests link `us_analysis_profile_lib`, the library of the program.
 
 `aprofID`, `protoID` and `nchan` are not initialized by the profile's
