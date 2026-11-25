@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check the area libraries of program sources that several programs use.
 
-usage: check-program-libraries.py [--root <dir>]
+usage: check-program-libraries.py [--root <dir>] [--affected-programs <directory> ...]
 
 A source that several programs use is in the library of its area,
 us_programs_<area>, and is compiled once. CMake declares the libraries in
@@ -14,11 +14,15 @@ programlibs/<area>.
   * Each library must have the same sources and need the same libraries in CMake
     and in qmake, and a program directory must link the same libraries in both.
   * A program directory must not include a header of an area whose library it
-    neither belongs to nor links, directly or through another library.
+    neither belongs to nor links, directly or through another library. This
+    checks relative cross-directory includes ("../us_x/header.h") only; bare
+    includes supplied by CMake PUBLIC include paths are not checked.
 
 The build files are read as text, so no configured build is needed. Comments are
 ignored. <dir> defaults to the repository containing this script. Exits 0 when
-the rules hold, 1 with one line per violation otherwise.
+the rules hold, 1 with one line per violation otherwise. --affected-programs
+instead prints program directories that need rebuilding, including transitive
+area dependents, using programlibs/link.pri and the qmake projects.
 """
 import argparse
 import os
@@ -229,6 +233,18 @@ def check_includes(root, directories, build):
     return problems
 
 
+def affected_programs(root, changed):
+    """Programs whose own directory or linked area contains a changed directory."""
+    top = os.path.join(root, "programs")
+    directories = [d for d in sorted(os.listdir(top)) if os.path.isdir(os.path.join(top, d))]
+    build = qmake_build(root, directories)
+    changed = {posixpath.normpath(path).removeprefix("programs/") for path in changed}
+    areas = {area for area, sources in build.sources.items()
+             if any(posixpath.dirname(source) in changed for source in sources)}
+    return ["programs/" + directory for directory in directories
+            if directory in changed or closure(build.needs, build.links.get(directory, ())) & areas]
+
+
 def check(root):
     top = os.path.join(root, "programs")
     directories = [d for d in sorted(os.listdir(top)) if os.path.isdir(os.path.join(top, d))]
@@ -242,11 +258,17 @@ def check(root):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--root", default=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    parser.add_argument("--affected-programs", nargs="+", metavar="DIRECTORY")
     args = parser.parse_args()
 
     if not os.path.isdir(os.path.join(args.root, "programs")):
         print("error: %s has no programs/ directory" % args.root, file=sys.stderr)
         return 2
+
+    if args.affected_programs:
+        for directory in affected_programs(args.root, args.affected_programs):
+            print(directory)
+        return 0
 
     problems = check(args.root)
     for problem in problems:

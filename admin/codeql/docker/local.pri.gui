@@ -3,8 +3,10 @@
 DEBUGORRELEASE  = release 
 
 unix {
-#  QMAKE_CXXFLAGS_RELEASE = -O3
-#  QMAKE_CFLAGS_RELEASE   = -O3
+# CodeQL needs compilation for extraction, not optimized executables.
+# Keep release mode and its defines; disable optimization only for this job.
+  QMAKE_CXXFLAGS_RELEASE = -O0
+  QMAKE_CFLAGS_RELEASE   = -O0
   QMAKE_CXXFLAGS += -Wno-unused-local-typedefs -Werror=deprecated-declarations -Wdeprecated
   QMAKE_CFLAGS   += -Wno-unused-local-typedefs -Werror=deprecated-declarations -Wdeprecated
   DEFINES += QT_DISABLE_DEPRECATED_UP_TO=0x060900

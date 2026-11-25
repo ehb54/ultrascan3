@@ -23,6 +23,7 @@
 
 #include <QCollator>
 #include <algorithm>
+#include <memory>
 
 
 #ifndef DbgLv
@@ -2901,8 +2902,8 @@ DbgLv(1) << "EGR: chgLab labID desc" << labID << descr;
    rotors .clear();
 
    US_Passwd pw;
-   US_DB2* dbP              = ( sibSValue( "general", "dbdisk" ) == "DB" )
-                              ? new US_DB2( pw.getPasswd() ) : NULL;
+   std::unique_ptr<US_DB2> db( sibSValue( "general", "dbdisk" ) == "DB" ? new US_DB2( pw.getPasswd() ) : nullptr );
+   US_DB2*                 dbP = db.get();
    if ( dbP != NULL )
    {
       US_Rotor::readAbstractRotorsDB( arotors, dbP );

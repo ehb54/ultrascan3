@@ -11,7 +11,7 @@ PROGRAM_LIBS_ORDER = data results analysis experiment gmp comproject
 for( area, PROGRAM_LIBS_ORDER ) {
   contains( PROGRAM_LIBS, $$area ) {
     LIBS            = -lus_programs_$${area} $$LIBS
-    PRE_TARGETDEPS += ../../lib/libus_programs_$${area}.a
+    PRE_TARGETDEPS += ../../lib/$${QMAKE_PREFIX_STATICLIB}us_programs_$${area}.$${QMAKE_EXTENSION_STATICLIB}
   }
 }
 LIBS          = -L../../lib $$LIBS
