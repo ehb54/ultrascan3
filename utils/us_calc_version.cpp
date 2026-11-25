@@ -57,11 +57,11 @@ QVector<AlgorithmVersion> algorithms()
         "unsupported (n/a) for a type that is not a range type, 0 when the total is not positive, otherwise "
         "range_summary's fraction; passed when |fraction - target| <= tolerance (percentage points)" },
       { "report_replicate_group",
-        1,
+        2,
         "A replicate subgroup as the GMP reporter:  one subgroup per wavelength of the included triples; members are the "
         "evaluated items equal to the first channel's item in type, method, bounds and QString::number of the "
         "integration value; replicate_summary of the members (0 when none); SD shown when more than one triple is "
-        "listed; passed when the mean is within tolerance percent of the target (relative)" },
+        "listed; passed when |mean - target| <= tolerance (absolute percentage points)" },
       { "report_run_checks",
         1,
         "The GMP reporter's run checks:  total concentration (target times the loading-concentration factor), "
