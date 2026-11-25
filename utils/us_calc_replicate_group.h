@@ -87,8 +87,9 @@ struct ReplicateGroupResult
       //! The standard deviations are shown when the subgroup lists more than
       //! one triple, whether or not every triple gives a member.
       bool             show_sd                  = false;
-      //! The mean fraction is within tolerance percent of the target
-      //! (ToleranceRule::RelativePercentOfTarget).
+      //! The mean fraction is within tolerance percentage points of the
+      //! target, |mean - target| <= tolerance, the rule of the individual
+      //! triples (ToleranceRule::AbsolutePercentagePoints).
       bool             passed                   = false;
       ReplicateResult  summary; //!< The members' summary, with its diagnostics
       AlgorithmVersion algorithm;

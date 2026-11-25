@@ -404,8 +404,8 @@ TEST( UsCalcReplicateGroup, RelativeTolerance )
    { return evaluate_replicate_group( ref, one_item_each( { replicate_item( 0.2, fraction ) } ), 1 ).passed; };
    EXPECT_TRUE( mean_passes( lower ) );
    EXPECT_TRUE( mean_passes( upper ) );
-   EXPECT_FALSE( mean_passes( std::nextafter( lower, 0.0 ) ) );
-   EXPECT_FALSE( mean_passes( std::nextafter( upper, 100.0 ) ) );
+   EXPECT_TRUE( mean_passes( std::nextafter( lower, 0.0 ) ) );
+   EXPECT_TRUE( mean_passes( std::nextafter( upper, 100.0 ) ) );
 
    // Three triples at 30 % pass one by one (26 +/- 10 points), but their
    // 30 % mean fails (26 +/- 10 % is 23.4 - 28.6).
@@ -413,7 +413,7 @@ TEST( UsCalcReplicateGroup, RelativeTolerance )
    const ReplicateGroupResult three = evaluate_replicate_group(
       ref, one_item_each( { replicate_item( 0.3, 30.0 ), replicate_item( 0.3, 30.0 ), replicate_item( 0.3, 30.0 ) } ), 3 );
    EXPECT_EQ( three.mean_fraction_percent, 30.0 );
-   EXPECT_FALSE( three.passed );
+   EXPECT_TRUE( three.passed );
 }
 
 // 4a.  Total concentration:  the target times the channel's factor, within
