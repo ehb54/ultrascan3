@@ -5,10 +5,10 @@
 #include <QPrinter>
 
 #include "../us_abde/us_norm_profile.h"
-#include "../us_analysis_profile/us_analysis_profile.h"
 #include "../us_ddist_combine/us_ddist_combine.h"
 #include "../us_integral/us_integral.h"
 #include "../us_pseudo3d_combine/us_pseudo3d_combine.h"
+#include "us_ana_profile_loader.h"
 #include "us_calc_replicate_group.h"
 #include "us_db2.h"
 #include "us_extern.h"
@@ -91,8 +91,7 @@ class US_ReporterGMP : public US_Widgets
         US_Integral*           sdiag_integral;
 
         US_Pseudo3D_Combine* sdiag_pseudo3d; //!< Pseudo3D combine dialog
-        US_DDistr_Combine* sdiag_combplot;   //!< D distribution combine dialog
-        US_AnalysisProfileGui* sdiag;        //!< Analysis profile GUI dialog
+        US_DDistr_Combine*     sdiag_combplot; //!< D distribution combine dialog
         US_AnaProfile currAProf;            //!< Current analysis profile
         US_AnaProfile::AnaProf2DSA cAP2;    //!< 2DSA analysis profile
         US_AnaProfile::AnaProfPCSA cAPp;    //!< PCSA analysis profile
@@ -409,7 +408,9 @@ class US_ReporterGMP : public US_Widgets
         bool readReportLists(QXmlStreamReader&, QMap<QString, QString>&, QMap<QString, QString>&); //!< Read report lists
         QStringList buildDroppedTriplesList(US_DB2*, QMap<QString, QString>); //!< Build dropped triples list
 
-        void read_protocol_and_reportMasks(void); //!< Read protocol and report masks
+        //! \brief Read protocol and report masks
+        //! \returns false if the analysis profile cannot be used
+        bool        read_protocol_and_reportMasks( void );
         QMap<QString, QString> read_autoflowIntensity(QString, US_DB2*); //!< Read autoflow intensity
         QMap<QString, QString> read_autoflowGMPReportEsign_record(US_DB2*); //!< Read autoflow GMP report electronic signature record
         QString get_assigned_oper_revs(QJsonDocument); //!< Get assigned operator revisions
