@@ -8373,16 +8373,10 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
    mstr += table_row( tr( "Analysed at:" ), analysis_time_abde + " (UTC)");
    mstr += indent( 2 ) + "</table>\n";
 
-   //if MWL-Deconv., add info on which analytes' ext. profiles have been used
-   bool mwl_abde = false;
-   for ( int ii = 0; ii < currProto.rpRange. nranges; ii++ )
-     {
-       if ( currProto.rpRange. chrngs[ii].wvlens.size() > 1 )
-	 {
-	   mwl_abde = true;
-	   break;
-	 }
-     }
+   // A mixed protocol can contain a channel with only one loaded signal.
+   // Use this channel's data, not another channel's wavelength count.
+   QMap<QString, QVector<QVector<double>>> abde_data = abde_data_per_channel.value( abde_channame );
+   const bool                              mwl_abde  = abde_data.value( "yvaluesN" ).size() > 1;
    //Hoisted out of the if(mwl_abde) block below so the Integration Results
    //section further down can reuse it to show human-readable analyte names
    //instead of the sanitized sample keys, without a second DB round-trip.
@@ -8428,7 +8422,6 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
      abde_dist_info = "Radial Pos., Sample Data (Norm.), Sample Integral (Norm.)";
    html_abde_s += abde_dist_info + "<br>";
 
-   QMap < QString, QVector<QVector<double>>> abde_data = abde_data_per_channel[abde_channame];
    const double *xp, *yp_dna, *yp_protein, *yp_int_dna, *yp_int_protein;
    xp = abde_data[ "xvalues" ].at(0).data();
    int xvals_size = abde_data[ "xvalues" ].at(0).size();
@@ -8815,16 +8808,7 @@ QString US_ReporterGMP::html_header_abde( QString title, QString runName,
   qDebug() << "[in html_header_abde()], title, runName, abde_chanName -- "
 	   << title << runName << abde_chanName;
 
-  //check if MWL-Doconv.
-  bool mwl_abde = false;
-  for ( int ii = 0; ii < currProto.rpRange. nranges; ii++ )
-    {
-      if ( currProto.rpRange. chrngs[ii].wvlens.size() > 1 )
-	{
-	  mwl_abde = true;
-	  break;
-	}
-    }
+  const bool mwl_abde   = abde_data_per_channel.value( abde_chanName ).value( "yvaluesN" ).size() > 1;
   QString etype_abde = mwl_abde ? " (MWL-DECONV.)" : "";
   
    QString s = QString( "<?xml version=\"1.0\"?>\n" );
