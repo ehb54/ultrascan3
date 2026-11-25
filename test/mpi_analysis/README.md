@@ -77,6 +77,7 @@ leave the job's input files in the work directory.
 | Case | Input | Expected |
 |---|---|---|
 | `input_pcsa_mc_shutdown`, `input_pcsa_mc_shutdown_uneven`, `input_pcsa_mc_shutdown_idle` | PCSA Monte Carlo on 2, 3 and 4 ranks, including idle workers | clean MPI exit, finite fits and every requested MC model retained |
+| `input_pcsa_mc_shutdown_pmasters` | Composite PCSA Monte Carlo, 2 datasets, 6 ranks and 2 parallel-master groups | clean MPI exit, finite fits and exactly 2 Monte Carlo model files with 3 models each |
 | `input_hpcxml_missing` | no hpcrequest XML in the archive | abort "Could not find unique hpc input file" |
 | `input_hpcxml_two` | two hpcrequest files in the archive | abort "Could not find unique hpc input file" |
 | `input_hpcxml_named` | the same, `-hpcrequest <file>` | result as `2dsa_basic` |
@@ -100,6 +101,15 @@ leave the job's input files in the work directory.
 | `input_bucket_inverted` | GA bucket with s_min > s_max | abort naming the bucket |
 | `input_centerpiece_bottom_default` | `centerpiece_bottom="7.3"` (the invalid default) | abort naming 7.3 |
 | `input_unknown_key` | additional parameter `s_mx` | warning, result as `2dsa_basic` |
+
+The original three PCSA shutdown cases reproduce #1316 under MPICH: the
+unpatched binary fails in `MPI_Finalize` with an unmatched READY message
+(`MPIDI_UCX_mpi_finalize_hook ... Other MPI error`, exit 15). Open MPI 4.1.6
+tolerates those unmatched messages and passes even without the fix. Use
+MPICH to demonstrate the shutdown regression; a green Open MPI run alone
+does not establish that the READY messages were drained. The parallel-master
+case additionally covers composite PCSA Monte Carlo and checks the model
+count in each output file.
 
 A case can carry a *pending* marker while the fix of the defect it
 documents is still to come: it is reported as XFAIL while it fails and as

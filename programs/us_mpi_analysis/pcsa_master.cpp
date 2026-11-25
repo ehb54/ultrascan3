@@ -1130,7 +1130,17 @@ void US_MPI_Analysis::montecarlo_pcsa()
       DbgLv( 1 ) << " masterMC loop-BOTTOM";
       // Drain each worker's final READY before shutdown, including workers
       // that received NEWDATA but no Monte Carlo iteration.
-      if ( job_queue.isEmpty() && kci_send > 0 && kci_recv >= kci_send && worker_status.count( READY ) == my_workers )
+      // Ignore the master's slot and any spare slots in worker_status.
+      bool all_workers_ready = true;
+      for ( int ii = 1; ii <= my_workers; ii++ )
+      {
+         if ( worker_status[ii] != READY )
+         {
+            all_workers_ready = false;
+            break;
+         }
+      }
+      if ( job_queue.isEmpty() && kci_send > 0 && kci_recv >= kci_send && all_workers_ready )
       {
          break;
       }
