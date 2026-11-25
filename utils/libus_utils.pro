@@ -21,6 +21,7 @@ win32 {
 # progressed to a point where us_femglobal can be removed
 
 HEADERS      = us_ana_profile.h   \
+               us_ana_profile_loader.h \
                us_analyte.h       \
                us_archive.h       \
                us_astfem_math.h   \
@@ -86,6 +87,7 @@ HEADERS      = us_ana_profile.h   \
                us_utils_qt.h      
          
 SOURCES      = us_ana_profile.cpp   \
+               us_ana_profile_loader.cpp \
                us_analyte.cpp       \
                us_archive.cpp       \
                us_astfem_math.cpp   \

@@ -1,5 +1,6 @@
 //! \file test_us_analysis_profile_run_report_gui.cpp
 //! Loading profiles whose Run or Report boxes are off, and clicking the boxes by hand.
+#include "run_report_clicks.h"
 #include "us3_gui_test_main.h"
 #include "us_analysis_profile.h"
 #include <QCheckBox>
@@ -230,84 +231,7 @@ void US_AnalysisProfileRunReportTest::clicking_by_hand_data()
    QTest::addColumn<QStringList>( "clicks" );
    QTest::addColumn<QString>( "expected" );
 
-   // Recorded before the load was fixed. In ABDE the load clears the first B channel's Run box.
-   struct Row
-   {
-         bool        abde;
-         QStringList clicks;
-         QString     expected;
-   };
-   const QList<Row> rows = {
-      { false, { "0: Run" }, "run 0,1,1 report 0,1,1 ref 1,0,0 use 0,1,1" },
-      { false, { "0: Run", "0: Run" }, "run 1,1,1 report 0,1,1 ref 1,0,0 use 0,1,1" },
-      { false, { "0: Run", "1: Run" }, "run 0,0,1 report 0,0,1 ref 1,2,0 use 0,0,0" },
-      { false, { "0: Run", "1: RunReport" }, "run 0,1,1 report 0,0,1 ref 1,2,0 use 0,0,0" },
-      { false, { "0: Run", "2: Run" }, "run 0,1,0 report 0,1,0 ref 1,0,2 use 0,0,0" },
-      { false, { "0: Run", "2: RunReport" }, "run 0,1,1 report 0,1,0 ref 1,0,2 use 0,0,0" },
-      { false, { "0: RunReport" }, "run 1,1,1 report 0,1,1 ref 1,0,0 use 0,1,1" },
-      { false, { "0: RunReport", "0: Run" }, "run 0,1,1 report 0,1,1 ref 1,0,0 use 0,1,1" },
-      { false, { "0: RunReport", "0: RunReport" }, "run 1,1,1 report 1,1,1 ref 0,0,0 use 0,0,0" },
-      { false, { "0: RunReport", "1: Run" }, "run 1,0,1 report 0,0,1 ref 1,2,0 use 0,0,0" },
-      { false, { "0: RunReport", "1: RunReport" }, "run 1,1,1 report 0,0,1 ref 1,2,0 use 0,0,0" },
-      { false, { "0: RunReport", "2: Run" }, "run 1,1,0 report 0,1,0 ref 1,0,2 use 0,0,0" },
-      { false, { "0: RunReport", "2: RunReport" }, "run 1,1,1 report 0,1,0 ref 1,0,2 use 0,0,0" },
-      { false, { "1: Run" }, "run 1,0,1 report 1,0,1 ref 0,1,0 use 1,0,1" },
-      { false, { "1: Run", "0: Run" }, "run 0,0,1 report 0,0,1 ref 2,1,0 use 0,0,0" },
-      { false, { "1: Run", "0: RunReport" }, "run 1,0,1 report 0,0,1 ref 2,1,0 use 0,0,0" },
-      { false, { "1: Run", "1: Run" }, "run 1,1,1 report 1,0,1 ref 0,1,0 use 1,0,1" },
-      { false, { "1: Run", "2: Run" }, "run 1,0,0 report 1,0,0 ref 0,1,2 use 0,0,0" },
-      { false, { "1: Run", "2: RunReport" }, "run 1,0,1 report 1,0,0 ref 0,1,2 use 0,0,0" },
-      { false, { "1: RunReport" }, "run 1,1,1 report 1,0,1 ref 0,1,0 use 1,0,1" },
-      { false, { "1: RunReport", "0: Run" }, "run 0,1,1 report 0,0,1 ref 2,1,0 use 0,0,0" },
-      { false, { "1: RunReport", "0: RunReport" }, "run 1,1,1 report 0,0,1 ref 2,1,0 use 0,0,0" },
-      { false, { "1: RunReport", "1: Run" }, "run 1,0,1 report 1,0,1 ref 0,1,0 use 1,0,1" },
-      { false, { "1: RunReport", "1: RunReport" }, "run 1,1,1 report 1,1,1 ref 0,0,0 use 0,0,0" },
-      { false, { "1: RunReport", "2: Run" }, "run 1,1,0 report 1,0,0 ref 0,1,2 use 0,0,0" },
-      { false, { "1: RunReport", "2: RunReport" }, "run 1,1,1 report 1,0,0 ref 0,1,2 use 0,0,0" },
-      { false, { "2: Run" }, "run 1,1,0 report 1,1,0 ref 0,0,1 use 1,1,0" },
-      { false, { "2: Run", "0: Run" }, "run 0,1,0 report 0,1,0 ref 2,0,1 use 0,0,0" },
-      { false, { "2: Run", "0: RunReport" }, "run 1,1,0 report 0,1,0 ref 2,0,1 use 0,0,0" },
-      { false, { "2: Run", "1: Run" }, "run 1,0,0 report 1,0,0 ref 0,2,1 use 0,0,0" },
-      { false, { "2: Run", "1: RunReport" }, "run 1,1,0 report 1,0,0 ref 0,2,1 use 0,0,0" },
-      { false, { "2: Run", "2: Run" }, "run 1,1,1 report 1,1,0 ref 0,0,1 use 1,1,0" },
-      { false, { "2: RunReport" }, "run 1,1,1 report 1,1,0 ref 0,0,1 use 1,1,0" },
-      { false, { "2: RunReport", "0: Run" }, "run 0,1,1 report 0,1,0 ref 2,0,1 use 0,0,0" },
-      { false, { "2: RunReport", "0: RunReport" }, "run 1,1,1 report 0,1,0 ref 2,0,1 use 0,0,0" },
-      { false, { "2: RunReport", "1: Run" }, "run 1,0,1 report 1,0,0 ref 0,2,1 use 0,0,0" },
-      { false, { "2: RunReport", "1: RunReport" }, "run 1,1,1 report 1,0,0 ref 0,2,1 use 0,0,0" },
-      { false, { "2: RunReport", "2: Run" }, "run 1,1,0 report 1,1,0 ref 0,0,1 use 1,1,0" },
-      { false, { "2: RunReport", "2: RunReport" }, "run 1,1,1 report 1,1,1 ref 0,0,0 use 0,0,0" },
-      { true, { "0: Run" }, "run 0,0,1 report 0,0,1 ref 2,1,0 use 0,0,0" },
-      { true, { "0: Run", "0: Run" }, "run 1,0,1 report 1,0,1 ref 0,1,0 use 0,0,1" },
-      { true, { "0: Run", "1: Run" }, "run 0,1,1 report 0,1,1 ref 1,0,0 use 0,0,1" },
-      { true, { "0: Run", "2: Run" }, "run 0,0,0 report 0,0,0 ref 2,1,3 use 0,0,0" },
-      { true, { "0: Run", "2: RunReport" }, "run 0,0,1 report 0,0,0 ref 2,1,3 use 0,0,0" },
-      { true, { "0: RunReport" }, "run 1,0,1 report 0,0,1 ref 2,1,0 use 0,0,0" },
-      { true, { "0: RunReport", "0: Run" }, "run 0,0,1 report 0,0,1 ref 2,1,0 use 0,0,0" },
-      { true, { "0: RunReport", "0: RunReport" }, "run 1,0,1 report 1,0,1 ref 0,1,0 use 0,0,1" },
-      { true, { "0: RunReport", "1: Run" }, "run 1,1,1 report 0,1,1 ref 1,0,0 use 0,0,1" },
-      { true, { "0: RunReport", "2: Run" }, "run 1,0,0 report 0,0,0 ref 2,1,3 use 0,0,0" },
-      { true, { "0: RunReport", "2: RunReport" }, "run 1,0,1 report 0,0,0 ref 2,1,3 use 0,0,0" },
-      { true, { "1: Run" }, "run 1,1,1 report 1,1,1 ref 0,0,0 use 0,0,0" },
-      { true, { "1: Run", "0: Run" }, "run 0,1,1 report 0,1,1 ref 1,0,0 use 0,1,1" },
-      { true, { "1: Run", "0: RunReport" }, "run 1,1,1 report 0,1,1 ref 1,0,0 use 0,1,1" },
-      { true, { "1: Run", "1: Run" }, "run 1,0,1 report 1,0,1 ref 0,1,0 use 1,0,1" },
-      { true, { "1: Run", "1: RunReport" }, "run 1,1,1 report 1,0,1 ref 0,1,0 use 1,0,1" },
-      { true, { "1: Run", "2: Run" }, "run 1,1,0 report 1,1,0 ref 0,0,1 use 1,1,0" },
-      { true, { "1: Run", "2: RunReport" }, "run 1,1,1 report 1,1,0 ref 0,0,1 use 1,1,0" },
-      { true, { "2: Run" }, "run 1,0,0 report 1,0,0 ref 0,1,2 use 0,0,0" },
-      { true, { "2: Run", "0: Run" }, "run 0,0,0 report 0,0,0 ref 3,1,2 use 0,0,0" },
-      { true, { "2: Run", "0: RunReport" }, "run 1,0,0 report 0,0,0 ref 3,1,2 use 0,0,0" },
-      { true, { "2: Run", "1: Run" }, "run 1,1,0 report 1,1,0 ref 0,0,1 use 1,0,0" },
-      { true, { "2: Run", "2: Run" }, "run 1,0,1 report 1,0,1 ref 0,1,0 use 1,0,0" },
-      { true, { "2: RunReport" }, "run 1,0,1 report 1,0,0 ref 0,1,2 use 0,0,0" },
-      { true, { "2: RunReport", "0: Run" }, "run 0,0,1 report 0,0,0 ref 3,1,2 use 0,0,0" },
-      { true, { "2: RunReport", "0: RunReport" }, "run 1,0,1 report 0,0,0 ref 3,1,2 use 0,0,0" },
-      { true, { "2: RunReport", "1: Run" }, "run 1,1,1 report 1,1,0 ref 0,0,1 use 1,0,0" },
-      { true, { "2: RunReport", "2: Run" }, "run 1,0,0 report 1,0,0 ref 0,1,2 use 0,0,0" },
-      { true, { "2: RunReport", "2: RunReport" }, "run 1,0,1 report 1,0,1 ref 0,1,0 use 1,0,0" },
-   };
-   for ( const Row& row : rows )
+   for ( const RunReportClicks& row : run_report_clicks() )
    {
       const QString mode = row.abde ? "abde " : "velocity ";
       QTest::newRow( qPrintable( mode + row.clicks.join( ", " ) ) ) << row.abde << row.clicks << row.expected;
