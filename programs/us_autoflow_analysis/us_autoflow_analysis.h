@@ -46,6 +46,8 @@
 #include "us_simparms.h"
 #include "us_mwl_data.h"
 
+class US_ModelSimulation;
+
 /**
  * @class US_Analysis_auto
  * @brief This class handles the automatic analysis of ultra-sedimentation data.
@@ -129,6 +131,14 @@ class US_Analysis_auto : public US_Widgets
       US_DataIO::EditedData*         edata;       /**< Pointer to the edited data. */
       US_DataIO::RawData*            rdata;       /**< Pointer to the raw data. */
       US_DataIO::RawData*            sdata;       /**< Pointer to the simulated data. */
+
+      US_ModelSimulation*            simrun = nullptr; /**< Simulation runner */
+
+      /**
+       * @brief The simulation runner, made and connected on first use.
+       */
+      US_ModelSimulation*            simulation( void );
+
       US_DataIO::RawData             wsdata;      /**< Raw data for the workspace. */
 
       /**
@@ -310,9 +320,6 @@ class US_Analysis_auto : public US_Widgets
       QVector<QVector<double>>              resids;   /**< Residuals data. */
 
       US_SimulationParameters               simparams; /**< Simulation parameters. */
-      QList<US_DataIO::RawData>             tsimdats;  /**< List of simulated raw data. */
-      QList<US_Model>                       tmodels;   /**< List of models. */
-      QVector<int>                          kcomps;    /**< Vector of components. */
 
       QStringList                           noiIDs;   /**< List of noise IDs. */
       QStringList                           noiEdIDs; /**< List of noise edit IDs. */
@@ -322,7 +329,6 @@ class US_Analysis_auto : public US_Widgets
       QStringList                           modEdIDs; /**< List of model edit IDs. */
       QStringList                           modDescs; /**< List of model descriptions. */
 
-      int                                   thrdone; /**< Thread done flag. */
 
       double                                density;   /**< Density value. */
       double                                viscosity; /**< Viscosity value. */
@@ -651,19 +657,6 @@ class US_Analysis_auto : public US_Widgets
       QString                               job4nois;     /**< 2DSA-IT noise type. */
 
    public slots:
-      /**
-         * @brief Slot to handle thread progress updates.
-         * @param threadID The ID of the thread.
-         * @param progress The progress value.
-         */
-      void thread_progress( int, int );
-
-      /**
-         * @brief Slot to handle thread completion.
-         * @param threadID The ID of the completed thread.
-         */
-      void thread_complete( int );
-
       /**
          * @brief Slot to handle the completion of the residual plot.
          */

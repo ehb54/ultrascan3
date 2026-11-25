@@ -25,6 +25,8 @@
 #include "us_thread_worker.h"
 #include "us_widgets.h"
 
+class US_ModelSimulation;
+
 /**
  * @class US_ReporterGMP
  * @brief The US_ReporterGMP class provides functionality for generating GMP reports.
@@ -447,6 +449,9 @@ class US_ReporterGMP : public US_Widgets
         US_DataIO::EditedData* edata; //!< Edited data
         US_DataIO::RawData* rdata; //!< Raw data
         US_DataIO::RawData* sdata; //!< Simulation data
+
+        US_ModelSimulation*                            simrun = nullptr; //!< Simulation runner
+
         US_DataIO::RawData wsdata; //!< Workspace data
 
 
@@ -541,10 +546,7 @@ class US_ReporterGMP : public US_Widgets
         US_Math2::SolutionData solution; //!< Solution data
         QVector<QVector<double>> resids; //!< Residuals vector
 
-        US_SimulationParameters simparams; //!< Simulation parameters
-        QList<US_DataIO::RawData> tsimdats; //!< Simulation data list
-        QList<US_Model> tmodels; //!< Models list
-        QVector<int> kcomps; //!< Components vector
+        US_SimulationParameters   simparams; //!< Simulation parameters
 
         QStringList noiIDs; //!< Noise GUIDs list
         QStringList noiEdIDs; //!< Noise edit GUIDs list
@@ -554,7 +556,6 @@ class US_ReporterGMP : public US_Widgets
         QStringList modEdIDs; //!< Model edit GUIDs list
         QStringList modDescs; //!< Model descriptions list
 
-        int thrdone; //!< Thread done flag
 
         double density; //!< Density
         double viscosity; //!< Viscosity
@@ -623,9 +624,7 @@ class US_ReporterGMP : public US_Widgets
         
         QString get_filename(QString); //!< Get file name
 
-    public slots:
-        void thread_progress(int, int); //!< Slot for thread progress
-        void thread_complete(int); //!< Slot for thread completion
+     public slots:
         void resplot_done(void); //!< Slot for residuals plot done
         void update_progress(int); //!< Slot for updating progress
 

@@ -34,6 +34,8 @@
 #define SP_SPEEDPROFILE US_SimulationParameters::SpeedProfile
 #endif
 
+class US_ModelSimulation;
+
 //! \class US_FeMatch
 //! \brief A class for managing finite element matches in UltraScan.
 class US_FeMatch : public US_Widgets
@@ -62,15 +64,6 @@ class US_FeMatch : public US_Widgets
       void astfem_cmp( int int_param );
 
    public slots:
-      //! \brief Slot for thread progress.
-      //! \param progress Current progress value.
-      //! \param total Total progress value.
-      void thread_progress( int progress, int total );
-
-      //! \brief Slot for thread completion.
-      //! \param result Result of the thread operation.
-      void thread_complete( int result );
-
       //! \brief Slot to start simulation.
       void simulate();
 
@@ -137,7 +130,6 @@ class US_FeMatch : public US_Widgets
       int                         scanCount; //!< Scan count.
       int                         dbg_level; //!< Debug level.
       int                         nthread;   //!< Number of threads.
-      int                         thrdone;   //!< Number of threads completed.
       int                         mc_iters;  //!< Number of MC iterations.
 
       bool                        dataLoaded; //!< Flag indicating if data is loaded.
@@ -166,6 +158,11 @@ class US_FeMatch : public US_Widgets
       US_DataIO::RawData*         rdata; //!< Pointer to raw data.
       US_DataIO::RawData*         sdata; //!< Pointer to simulated data.
 
+      US_ModelSimulation*         simrun = nullptr; //!< Simulation runner
+
+      //! \brief The simulation runner, made and connected on first use.
+      US_ModelSimulation*         simulation();
+
       US_DataIO::RawData          wsdata; //!< Workspace raw data.
 
       US_Model                    model;        //!< Current model.
@@ -191,10 +188,7 @@ class US_FeMatch : public US_Widgets
 
       QMap<QString, QString>      adv_vals; //!< Advanced values map.
 
-      QVector<int>                kcomps; //!< Vector of component indices.
 
-      QList<US_DataIO::RawData>   tsimdats;  //!< List of simulated data.
-      QList<US_Model>             tmodels;   //!< List of models.
       US_SimulationParameters     simparams; //!< Simulation parameters.
       QVector<US_Model>           imodels;   //!< Vector of intermediate models.
 

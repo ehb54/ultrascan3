@@ -19,6 +19,7 @@
 #include "us_edited_data_loaders.h"
 #include "us_gui_settings.h"
 #include "us_lamm_astfvm.h"
+#include "us_model_simulation.h"
 #include "us_protocol_util.h"
 #include "us_run_protocol.h"
 #include "us_settings.h"
@@ -26,7 +27,6 @@
 #include "us_solution_vals.h"
 #include "us_thread_worker.h"
 
-#define MIN_NTC   25
 
 const QColor colorRed       ( 210, 0, 0 );
 const QColor colorDarkGreen ( 2, 88, 57 );
@@ -4042,143 +4042,39 @@ void US_Analysis_auto::simulateModel( )
   // Use the experiment speed steps if they cover the data; otherwise derive steps from the scans
   exp_steps = US_SimulationParameters::speedStepsCoverData( speed_steps, *edata );
   dat_steps = !exp_steps;
-  simparams.initFromData( dbP, *edata, dat_steps );
-  simparams.simpoints         = adv_vals[ "simpoints" ].toInt();
-  simparams.meshType          = US_SimulationParameters::ASTFEM;
-  simparams.gridType          = US_SimulationParameters::MOVING;
-  simparams.radial_resolution = (double)( radhi - radlo ) / ( nconc - 1 );
-  //   simparams.bottom            = simparams.bottom_position;
-  qDebug() << "SimMdl: simpoints" << simparams.simpoints
-	   << "rreso" << simparams.radial_resolution
-	   << "bottom_sim" << simparams.bottom << "bottom_dat" << edata->bottom;
-  //simparams.meniscus          = 5.8;
-  
-  //sdata.scanData.resize( total_scans );
-  //int terpsize    = ( points + 7 ) / 8;
-  
-  if ( exp_steps )
-    simparams.speed_step        = speed_steps;
-  
-  qDebug() << "SimMdl: speed_steps:" << simparams.speed_step.size();
-  
-  QString mtyp = adv_vals[ "meshtype"   ];
-  QString gtyp = adv_vals[ "gridtype"   ];
-  QString bvol = adv_vals[ "bandvolume" ];
-  
-  
-  if ( gtyp.contains( "Constant" ) )
-    simparams.gridType = US_SimulationParameters::FIXED;
-  
-  if ( model.components[ 0 ].sigma == 0.0  &&
-       model.components[ 0 ].delta == 0.0)
-    simparams.meshType = US_SimulationParameters::ASTFEM;
-  else
-    simparams.meshType = US_SimulationParameters::ASTFVM;
-  
-  simparams.firstScanIsConcentration = false;
-  
-  double concval1      = 0.0;
-  
-  if ( simparams.band_forming )
-    {
-      simparams.band_volume = bvol.toDouble();
-      //concval1              = 1.0;
-      //simparams.firstScanIsConcentration = true;
-    }
-  else
-    simparams.band_volume = 0.0;
-  
-  // Make a simulation copy of the experimental data without actual readings
+  QString     tmst_fpath = US_Settings::resultDir() + "/" + FileName_parsed + "/" + FileName_parsed + ".time_state.tmst";
+  QStringList check_results =
+     US_ModelSimulation::prepare( dbP, *edata, model, adv_vals, exp_steps, speed_steps, tmst_fpath, true, simparams, *sdata );
+  if ( !check_results.isEmpty() )
+  {
+     QMessageBox msgBox( this );
+     msgBox.setWindowTitle( tr( qPrintable( check_results[0] ) ) );
+     if ( check_results.size() > 1 )
+     {
+        msgBox.setTextFormat( Qt::RichText );
+        msgBox.setText( tr( qPrintable( check_results[1] ) ) );
+     }
+     if ( check_results.size() > 2 )
+     {
+        QString info = "";
+        for ( int i = 2; i < check_results.size(); i++ )
+        {
+           info += check_results[i] + "\n";
+        }
+        msgBox.setInformativeText( tr( qPrintable( info ) ) );
+     }
+     msgBox.addButton( tr( "Continue" ), QMessageBox::RejectRole );
+     QPushButton* bAbort = msgBox.addButton( tr( "Abort" ), QMessageBox::YesRole );
+     msgBox.setDefaultButton( bAbort );
+     msgBox.exec();
 
-  qDebug() << "SimulateModel: --- 1";
-  
-  US_AstfemMath::initSimData( *sdata, *edata, concval1 );// Gets experimental time grid set
-
-  qDebug() << "SimulateModel: --- 2";
-  
-  
-  QString tmst_fpath = US_Settings::resultDir() + "/" + FileName_parsed + "/"
-    + FileName_parsed + ".time_state.tmst";
-  QFileInfo check_file( tmst_fpath );
-  simparams.sim      = ( edata->channel == "S" );
-  
-  if ( ( check_file.exists() ) && ( check_file.isFile() ) )
-    {
-      if ( US_AstfemMath::timestate_onesec( tmst_fpath, *sdata ) )
-	{  // Load timestate that is already at 1-second-intervals
-	  simparams.simSpeedsFromTimeState( tmst_fpath );
-	  qDebug() << "SimMdl: timestate file exists" << tmst_fpath << " timestateobject,count = "
-		   << simparams.tsobj << simparams.sim_speed_prof.count();
-	  simparams.speedstepsFromSSprof();
-	}
-      
-      else
-	{  // Replace timestate with a new one that is at 1-second-intervals
-	  // if ( drow == 0 )
-	  //   {
-	  QString tmst_fdefs = QString( tmst_fpath ).replace( ".tmst", ".xml" );
-	  QString tmst_fpsav = tmst_fpath + "-orig";
-	  QString tmst_fdsav = tmst_fdefs + "-orig";
-	  simparams.sim      = ( edata->channel == "S" );
-	  
-	  // Rename existing (non-1sec-intv) files
-	  QFile::rename( tmst_fpath, tmst_fpsav );
-	  QFile::rename( tmst_fdefs, tmst_fdsav );
-	  // Create a new 1-second-interval file set
-	  US_AstfemMath::writetimestate( tmst_fpath, simparams, *sdata );
-	  qDebug() << "SimMdl: 1-sec-intv file created";
-	  // }
-	  
-	  simparams.simSpeedsFromTimeState( tmst_fpath );
-	  simparams.speedstepsFromSSprof();
-	}
-    }
-  else
-    {
-      qDebug() << "SimMdl: timestate file does not exist";
-      if ( ! simparams.sim )
-	{  // Compute acceleration rate for non-astfem_sim data
-	  const double tfac = ( 4.0 / 3.0 );
-	  double t2   = simparams.speed_step[ 0 ].time_first;
-	  double w2t  = simparams.speed_step[ 0 ].w2t_first;
-	  double om1t = simparams.speed_step[ 0 ].rotorspeed * M_PI / 30.0;
-	  double w2   = sq( om1t );
-	  double t1   = tfac * ( t2 - ( w2t / w2 ) );
-	  int t_acc   = (int)qRound( t1 );
-	  double rate = (double)( simparams.speed_step[ 0 ].rotorspeed )
-	    / (double)t_acc;
-	  qDebug() << "SimMdl:  accel-calc:  t1 t2 w2t t_acc speed rate"
-		   << t1 << t2 << w2t << t_acc << simparams.speed_step[0].rotorspeed << rate;
-	  simparams.speed_step[ 0 ].acceleration = (int)qRound( rate );
-	}
-    }
-	QStringList check_results = US_AstfemMath::check_acceleration(simparams.speed_step, edata->scanData);
-	if ( !check_results.isEmpty() ) {
-		QMessageBox msgBox( this );
-		msgBox.setWindowTitle( tr( qPrintable( check_results[0] ) ) );
-		if ( check_results.size() > 1 ) {
-			msgBox.setTextFormat( Qt::RichText );
-			msgBox.setText( tr( qPrintable( check_results[1] ) ) );
-		}
-		if ( check_results.size() > 2 ) {
-			QString info = "";
-			for ( int i = 2; i < check_results.size(); i++ ) {
-				info += check_results[i] + "\n";
-			}
-			msgBox.setInformativeText( tr( qPrintable( info ) ) );
-		}
-		msgBox.addButton( tr( "Continue" ), QMessageBox::RejectRole );
-		QPushButton* bAbort = msgBox.addButton( tr( "Abort" ),
-														QMessageBox::YesRole );
-		msgBox.setDefaultButton( bAbort );
-		msgBox.exec();
-
-		if ( msgBox.clickedButton() == bAbort ) {
-			QApplication::restoreOverrideCursor();
-			qApp->processEvents();
-			return;
-		}
-	}
+     if ( msgBox.clickedButton() == bAbort )
+     {
+        QApplication::restoreOverrideCursor();
+        qApp->processEvents();
+        return;
+     }
+  }
   sdata->cell        = rdata->cell;
   sdata->channel     = rdata->channel;
   sdata->description = rdata->description;
@@ -4191,138 +4087,30 @@ void US_Analysis_auto::simulateModel( )
   //compress   = le_compress->text().toDouble();
   progress_msg->setRange( 0, ncomp );
   // progress_msg->reset();
-  
-  nthread    = US_Settings::threads();
-  int ntc    = ( ncomp + nthread - 1 ) / nthread;
-  nthread    = ( ntc > MIN_NTC ) ? nthread : 1;
 
-  /*
-  //TEST
-  nthread = 10;
-  */
-  
-  qDebug() << "SimMdl: nthread" << nthread << "ncomp" << ncomp
-	   << "ntc" << ntc << "meshtype" << simparams.meshType;
-  
+  nthread = US_ModelSimulation::threadCount( ncomp );
+
   // Do simulation by several possible ways: 1-/Multi-thread, ASTFEM/ASTFVM
   if ( nthread < 2 )
-    {
-      if ( model.components[ 0 ].sigma == 0.0  &&
-	   model.components[ 0 ].delta == 0.0  &&
-	   model.coSedSolute           <  0.0  &&
-	   compress                    == 0.0 )
-	{
-	  qDebug() << "SimMdl: (fematch:)Finite Element Solver is called";
-	  //*DEBUG*
-	  for(int ii=0; ii<model.components.size(); ii++ )
-	    {
-	      qDebug() << "SimMdl:   comp" << ii << "s D v"
-		       << model.components[ii].s
-		       << model.components[ii].D
-		       << model.components[ii].vbar20 << "  c"
-		       << model.components[ii].signal_concentration;
-	    }
-	  qDebug() << "SimMdl: (fematch:)Sim Pars--";
-	  simparams.debug();
-	  //*DEBUG*
-	  US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
-	  
-	  connect( astfem_rsa, &US_Astfem_RSA::current_component,
-	   	   this,       &US_Analysis_auto::update_progress );
-	  astfem_rsa->set_debug_flag( dbg_level );
-	  solution_rec.buffer.compressibility = compress;
-	  solution_rec.buffer.manual          = manual;
-	  //astfem_rsa->set_buffer( solution_rec.buffer );
-	  
-	  astfem_rsa->calculate( *sdata );
-	  //*DEBUG*
-	  int kpts=0;
-	  double trmsd=0.0;
-	  double tnoi=0.0;
-	  double rnoi=0.0;
-	  bool ftin=ti_noise.count > 0;
-	  bool frin=ri_noise.count > 0;
-	  for(int ss=0; ss<sdata->scanCount(); ss++)
-	    {
-	      rnoi = frin ? ri_noise.values[ss] : 0.0;
-	      for (int rr=0; rr<sdata->pointCount(); rr++)
-		{
-		  tnoi = ftin ? ti_noise.values[rr] : 0.0;
-		  double rval=edata->value(ss,rr) - sdata->value(ss,rr) - rnoi - tnoi;
-		  trmsd += sq( rval );
-		  kpts++;
-		}
-	    }
-	  trmsd = sqrt( trmsd / (float)kpts );
-	  qDebug() << "SimMdl: (1)trmsd" << trmsd;
-	  //*DEBUG*
-	}
-      else
-	{
-	  qDebug() << "SimMdl: (fematch:)Finite Volume Solver is called";
-	  US_LammAstfvm *astfvm     = new US_LammAstfvm( model, simparams );
-	  astfvm->calculate(     *sdata );
-	}
-      //-----------------------
-      //Simulation part is over
-      //-----------------------
-      
-      show_results();
-    }
-  
+  {
+     simulation()->simulate( model, simparams, *sdata, solution_rec.buffer, compress, manual, dbg_level );
+     show_results();
+  }
   else
-    {  // Do multi-thread calculations
+     simulation()->start( model, simparams, *sdata, solution_rec.buffer, compress, manual, nthread );
+}
 
-      qDebug() << "Simulate Model: Multi-thread -- ";
-      
-      solution_rec.buffer.compressibility = compress;
-      solution_rec.buffer.manual          = manual;
-      tsimdats.clear();
-      tmodels .clear();
-      kcomps  .clear();
-      QList<US_ThreadWorker*> tworkers;
-      QList<US_ThreadEx*>     wthreads;
-
-      // Build models for each thread
-      for ( int ii = 0; ii < ncomp; ii++ )
-	{
-	  if ( ii < nthread )
-	    {  // First time through per thread:  get initial model and sim data
-	      tmodels << model;
-	      tmodels[ ii ].components.clear();
-	      US_DataIO::RawData sdat = *sdata;
-	      tsimdats << sdat;
-	      kcomps   << 0;
-	    }
-	  
-	  // Partition thread models from round-robin fetch of components
-	  int jj = ii % nthread;
-	  tmodels[ jj ].components << model.components[ ii ];
-	}
-      
-      thrdone   = 0;
-      solution_rec.buffer.manual = manual;
-      
-      // Build worker threads and begin running
-      for ( int ii = 0; ii < nthread; ii++ )
-	{
-      US_ThreadWorker* tworker = new US_ThreadWorker( tmodels[ii], simparams, tsimdats[ii], solution_rec.buffer, ii );
-      US_ThreadEx*     wthread = new US_ThreadEx();
-
-      tworker->moveToThread( wthread );
-
-      tworkers << tworker;
-      wthreads << wthread;
-
-      connect( wthread, &QThread::started, tworker, &US_ThreadWorker::calc_simulation );
-
-      connect( tworker, &US_ThreadWorker::work_progress, this, &US_Analysis_auto::thread_progress );
-      connect( tworker, &US_ThreadWorker::work_complete, this, &US_Analysis_auto::thread_complete );
-
-      wthread->start();
+// The simulation runner, connected to the progress dialog and results
+US_ModelSimulation* US_Analysis_auto::simulation()
+{
+   if ( simrun == nullptr )
+   {
+      simrun = new US_ModelSimulation( this );
+      connect( simrun, &US_ModelSimulation::component, this, &US_Analysis_auto::update_progress );
+      connect( simrun, &US_ModelSimulation::progress, this, [this]( int kcomp ) { progress_msg->setValue( kcomp ); } );
+      connect( simrun, &US_ModelSimulation::finished, this, &US_Analysis_auto::show_results );
    }
-    }
- 
+   return simrun;
 }
 
 // Update progress bar as each component is completed
@@ -4405,46 +4193,6 @@ void US_Analysis_auto::resplot_done()
     }
 }
 
-
-// Update progress when thread reports
-void US_Analysis_auto::thread_progress( int thr, int icomp )
-{
-  qDebug() <<  "Updating progress multiple threads, thr, icomp -- " << thr << icomp;
-   int kcomp     = 0;
-   kcomps[ thr ] = icomp;
-   for ( int ii = 0; ii < nthread; ii++ )
-      kcomp += kcomps[ ii ];
-   progress_msg->setValue( kcomp );
-   qDebug() << "THR PROGR thr icomp" << thr << icomp << "kcomp" << kcomp;
-}
-
-
-// Update count of threads completed and colate simulations when all are done
-void US_Analysis_auto::thread_complete( int thr )
-{
-   thrdone++;
-   qDebug() << "THR COMPL thr" << thr << "thrdone" << thrdone;
-
-   if ( thrdone >= nthread )
-   {  // All threads are done, so sum thread simulation data
-      for ( int ii = 0; ii < sdata->scanData.size(); ii++ )
-      {
-         for ( int jj = 0; jj < sdata->xvalues.size(); jj++ )
-         {
-            //double conc = 0.0;
-            double conc = sdata->value( ii, jj );
-
-            for ( int kk = 0; kk < nthread; kk++ )
-               conc += tsimdats[ kk ].value( ii, jj );
-
-            sdata->setValue( ii, jj, conc );
-         }
-      }
-
-      // Then show the results
-      show_results();
-   }
-}
 
 // Adjust model components based on buffer, vbar, and temperature
 void US_Analysis_auto::adjustModel( )

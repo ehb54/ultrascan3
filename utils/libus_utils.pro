@@ -27,6 +27,7 @@ HEADERS      = us_ana_profile.h   \
                us_astfem_rsa.h    \
                us_thread_worker.h \
                us_sim_residuals.h \
+               us_model_simulation.h \
                us_buffer.h        \
                us_cfa_data.h      \
                us_constants.h     \
@@ -93,6 +94,7 @@ SOURCES      = us_ana_profile.cpp   \
                us_astfem_rsa.cpp    \
                us_thread_worker.cpp \
                us_sim_residuals.cpp \
+               us_model_simulation.cpp \
                us_buffer.cpp        \
                us_cfa_data.cpp      \
                us_constants.cpp     \
