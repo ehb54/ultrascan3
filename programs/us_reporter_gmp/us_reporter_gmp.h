@@ -423,7 +423,7 @@ class US_ReporterGMP : public US_Widgets
         void build_genTree(void); //!< Build general tree
         void build_miscTree(void); //!< Build miscellaneous tree
         void build_perChanTree(void); //!< Build per-channel tree
-        void build_perChanTree_abde(void); //!< Build per-channel tree
+        bool                                  build_perChanTree_abde( void ); //!< Build per-channel tree
         void    build_perChanTree_velmwl( void ); //!< Build per-channel tree: VELOCITY-MWL (Integral plots)
         bool    read_velmwl_channels( void );     //!< Read Approved channels & model
                                                   //!< GUIDs from autoflowAnalysisVelMwl
@@ -565,6 +565,7 @@ class US_ReporterGMP : public US_Widgets
         bool cnstff; //!< Constant f/f0 flag
         bool exp_steps; //!< Experimental steps flag
         bool dat_steps; //!< Data steps flag
+        bool                      abde_report_valid = false;
         bool                      report_aborted = false; //!< User aborted a simulation; stop the report
         bool is_dmga_mc; //!< DMGA Monte Carlo flag
 
@@ -667,7 +668,7 @@ class US_ReporterGMP : public US_Widgets
         bool isCustomGidModel( QString );
         QString convert_ranges( QStringList, double );
         void convert_ranges_global( QMap<QString,QString>&, double );
-        void process_abde_plots( void );
+        bool                         process_abde_plots( void );
         void get_abde_channels( QStringList& );
         void get_abde_rmsds(QMap< QString, double >&);
         void get_abde_menisc(QMap< QString, double >&);

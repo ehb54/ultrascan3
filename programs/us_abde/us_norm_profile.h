@@ -30,7 +30,7 @@ class US_Norm_Profile : public US_Widgets
 
         bool us_auto_mode;
         bool us_auto_mode_report;
-        void load_data_auto_report( QMap<QString,QString>& );
+        bool                            load_data_auto_report( QMap<QString, QString>& );
         QwtPlot* rp_data_plot();
         QString select_channel_public( int index );
         void set_channels_analytes_pretty_names( QMap< QString, QMap< QString, QString > >& );

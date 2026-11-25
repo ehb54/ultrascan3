@@ -8,7 +8,69 @@
 #include "us_solution.h"
 #include <QFileInfo>
 
-//Alt. constr.
+namespace
+{
+bool valid_abde_percentages( const QString& text )
+{
+   QJsonParseError error;
+   const auto      document = QJsonDocument::fromJson( text.toUtf8(), &error );
+   if ( error.error != QJsonParseError::NoError || !document.isObject() || document.object().isEmpty() )
+   {
+      return false;
+   }
+   const auto number = []( const QJsonValue& value )
+   {
+      bool         ok     = false;
+      const double result = value.toString().toDouble( &ok );
+      return ok && qIsFinite( result );
+   };
+   const auto ranges_valid = [&number]( const QJsonObject& ranges )
+   {
+      if ( ranges.isEmpty() )
+      {
+         return false;
+      }
+      for ( auto it = ranges.constBegin(); it != ranges.constEnd(); ++it )
+      {
+         if ( !number( it.value() ) )
+         {
+            return false;
+         }
+      }
+      return true;
+   };
+   const auto channels = document.object();
+   for ( auto it = channels.constBegin(); it != channels.constEnd(); ++it )
+   {
+      const auto channel = it.value().toObject();
+      if ( !number( channel.value( "x_norm" ) ) || !number( channel.value( "meniscus" ) ) )
+      {
+         return false;
+      }
+      const auto percents = channel.value( "percents" ).toObject();
+      if ( percents.isEmpty() )
+      {
+         return false;
+      }
+      if ( percents.constBegin().value().isObject() )
+      {
+         for ( auto sample = percents.constBegin(); sample != percents.constEnd(); ++sample )
+         {
+            if ( !ranges_valid( sample.value().toObject() ) )
+            {
+               return false;
+            }
+         }
+      }
+      else if ( !ranges_valid( percents ) )
+      {
+         return false;
+      }
+   }
+   return true;
+}
+}
+
 US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
 {
     us_auto_mode = true;
@@ -564,7 +626,7 @@ void US_Norm_Profile::load_data_auto( QMap<QString,QString> & protocol_details )
 }
 
 //for use in GMP REPORT
-void US_Norm_Profile::load_data_auto_report( QMap<QString,QString> & protocol_details )
+bool US_Norm_Profile::load_data_auto_report( QMap<QString, QString>& protocol_details )
 {
   us_auto_mode_report = true;
   
@@ -590,6 +652,17 @@ void US_Norm_Profile::load_data_auto_report( QMap<QString,QString> & protocol_de
 	   << abde_analysis_parms["etype"]
 	   << abde_analysis_parms[ "xnorms_percents" ]
 	   << abde_analysis_parms[ "filename_blc" ];
+
+  if ( !valid_abde_percentages( abde_analysis_parms.value( "xnorms_percents" ) ) )
+  {
+     return false;
+  }
+  QJsonParseError filename_error;
+  const auto filename_document = QJsonDocument::fromJson( abde_analysis_parms.value( "filename_blc" ).toUtf8(), &filename_error );
+  if ( filename_error.error != QJsonParseError::NoError || filename_document.object().value( "filename" ).toString().isEmpty() )
+  {
+     return false;
+  }
 
   //parse respective JSONs
   parse_abde_analysis_jsons( abde_analysis_parms[ "xnorms_percents" ],
@@ -621,12 +694,23 @@ void US_Norm_Profile::load_data_auto_report( QMap<QString,QString> & protocol_de
   qDebug() << "[in load_for_REPORT]: us_auto_mode, abde_etype -- "
 	   << us_auto_mode << abde_etype;
 
+  if ( channList.isEmpty() )
+  {
+     return false;
+  }
+  for ( const auto& channel : channList )
+  {
+     if ( data_per_channel_ranges_percents_sample.value( channel ).isEmpty() )
+     {
+        return false;
+     }
+  }
   emit pass_channels_info( channList );
   emit pass_rmsd_info( data_per_channel_rmsd );
   emit pass_menisc_info( data_per_channel_meniscus );
   emit pass_percents_info( data_per_channel_ranges_percents_sample );
   emit pass_selected_signals_info( data_per_channel_selected_signals );
-  
+  return true;
 }
 
 //return pointer to data_plot1
@@ -1786,13 +1870,17 @@ void US_Norm_Profile::plotData(void){
 		  {
 		    xp_intN_protein = data_per_channel[ channame ]["midxval"][i];
 		    yp_intN_protein = data_per_channel[ channame ]["integralN"][i];
-		    legend = tr("(I)_") + channame;
-		    pen.setColor("darkBlue");
-		  }
-	      }
-	    else
-	      legend = tr("(I)_") + selFilenames.at(i);
-	    
+          xp_intN_sample["Sample"] = xp_intN_protein;
+          yp_intN_sample["Sample"] = yp_intN_protein;
+          legend                   = tr( "(I)_" ) + channame;
+          pen.setColor( "darkBlue" );
+        }
+         }
+         else
+         {
+            legend = tr( "(I)_" ) + selFilenames.at( i );
+         }
+
             if (ckb_norm->isChecked())
 	      {
 		if ( us_auto_mode )
@@ -2390,151 +2478,90 @@ void US_Norm_Profile::save_auto( void )
       if ( status != QMessageBox::Ok ) return;
     }
 
-  //Let the user pick, per channel, which analyte signal(s) should appear
-  //in the Report's Integration Results section (defaults to all, so a user
-  //who doesn't touch anything keeps today's "show every signal" behavior).
-  QMap< QString, QStringList > selected_signals;
-  if ( !show_signal_selection_dialog( selected_signals ) )
-    return;   //user cancelled -- abort the save, same as the check above
-  //construct JSON to be saved && passed
-  /***
-      {
-        "2A":{
-               "x_norm":"6.79841",
-	       "percents": {
-	                      "6.2-6.5":"48.6361",
-			      "6.6-6.9":"39.3836"
-			   }
-	    },
-	"4A":{
-	       "x_norm":"6.8476",
-	       "percents":{
-	                      "AAV-DNA": {
-	                                   "6.1-6.5":"68.876",
-					   "6.6-6.94":"27.369"
-					 },
-			      "AAV-protein": {
-	                                   "6.1-6.5":"68.876",
-					   "6.6-6.94":"27.369"
-					  }		 
-			   }
-	      },
-	 "4B":{
-	        "x_norm":"6.86425",
-		"percents":{
-		               "6.25-6.55":"89.7197",
-			       "6.65-7":"6.36435"
-			    }
-	      }
+    QJsonObject channels;
+    for ( const auto& channel : channList )
+    {
+       QJsonObject samples;
+       const auto  percentages = data_per_channel_ranges_percents_sample.value( channel );
+       for ( auto sample = percentages.constBegin(); sample != percentages.constEnd(); ++sample )
+       {
+          QJsonObject ranges;
+          for ( auto range = sample.value().constBegin(); range != sample.value().constEnd(); ++range )
+          {
+             ranges.insert( range.key(), QString::number( range.value() ) );
+          }
+          samples.insert( sample.key(), ranges );
        }
-      
-  ***/
-  
-  QString json_p = "{";
-  for ( int i=0; i< channList.size(); ++i )
-    {
-      QString channame = channList[ i ];
-      QString x_normal = QString::number(data_per_channel_xnorm[ channame ]);
-      qDebug() << "x_norm point for channel "
-	       <<  channame << ", "
-	       <<  x_normal;
-      //x_normalization
-      json_p += "\"" + channame + "\":{\"x_norm\":\"" + x_normal + "\",";
-
-      //meniscus
-      json_p += "\"meniscus\":\"" + QString::number(data_per_channel_meniscus[channame]) + "\",";
-
-      //add rmsds
-      if ( abde_etype=="MWL" )
-	json_p += "\"rmsd\":\"" + QString::number(data_per_channel_rmsd[channame]) + "\",";
-      
-      //now over ranges:percents
-      json_p += "\"percents\":{";
-      QStringList chann_samples = data_per_channel_ranges_percents_sample[ channame ].keys();
-      for ( int cs=0; cs<chann_samples.size(); ++cs )
-	{
-	  QString c_sample = chann_samples[ cs ];
-	  
-	  json_p += "\"" + c_sample  + "\":{";
-	  
-	  QMap < QString, double> ranges_percents = data_per_channel_ranges_percents_sample[ channame ][ c_sample ];
-	  QMap < QString, double >::iterator rp;
-	  for ( rp = ranges_percents.begin(); rp != ranges_percents.end(); ++rp )
-	    {
-	      json_p += "\"" + rp.key() + "\":\"" + QString::number(rp.value()) + "\",";
-	    }
-	  json_p.chop(1);
-	  json_p += "},";
-	}
-      json_p.chop(1);
-      json_p += "},";   //closes "percents":{...}
-
-      //which analyte-signal(s) the user picked (in show_signal_selection_dialog(),
-      //just above) to show in this channel's Integration Results section
-      json_p += "\"selected_signals\":[";
-      QStringList sel_for_chann = selected_signals.value( channame );
-      for ( int ss=0; ss<sel_for_chann.size(); ++ss )
-	json_p += "\"" + sel_for_chann[ss] + "\",";
-      if ( !sel_for_chann.isEmpty() )
-	json_p.chop(1);
-      json_p += "],";
-
-      json_p.chop(1);
-      json_p += "},";   //closes this channel's own object -- this closing brace
-                        //was previously missing here, which left the JSON
-                        //malformed (and silently unparseable on the Report
-                        //side) for any run with more than one ABDE channel;
-                        //the stray-comma compensation below has been adjusted
-                        //to match now that every channel object is properly closed.
+       QJsonObject record;
+       record.insert( "x_norm", QString::number( data_per_channel_xnorm.value( channel ) ) );
+       record.insert( "meniscus", QString::number( data_per_channel_meniscus.value( channel ) ) );
+       if ( abde_etype == "MWL" )
+       {
+          record.insert( "rmsd", QString::number( data_per_channel_rmsd.value( channel ) ) );
+       }
+       record.insert( "percents", samples );
+       channels.insert( channel, record );
     }
-  json_p.chop(1);
-  json_p += "}";
-
-  qDebug() << "JSON: " << json_p;
-
-  // // // TEST 
-  // return;
-
-  //Determine filename (MWL or SWL)
-  QString filename_p;
-  if ( abde_etype == "MWL" )
-    filename_p = prot_details["ssf_dir_name"];
-  else //SWL
-    filename_p = prot_details["directory_for_gmp"];
-
-  QStringList filename_p_list = filename_p.split("/");
-  if ( !filename_p_list.isEmpty() )
-    filename_p = filename_p_list.takeLast();
-  qDebug() << "Passed filename_p -- " << filename_p; 
-
-  //JSON filename_bcl (_blc for SWL only...)
-  QString filename_blc_p = "{";
-  filename_blc_p += "\"filename\":\"" + filename_p + "\"";
-  if ( abde_etype == "SWL" )
+    QString json_p = QString::fromUtf8( QJsonDocument( channels ).toJson( QJsonDocument::Compact ) );
+    if ( !valid_abde_percentages( json_p ) )
     {
-      //For SWL, pass baseline_corrections
-      QString bl_corrs = prot_details[ "baseline_corrections" ];
-      filename_blc_p += ",\"blcorrs\":\"" + bl_corrs + "\"";
+       QMessageBox::warning(
+          this, tr( "ABDE Analysis Incomplete" ), tr( "Analyze all channels and their integration ranges before saving." ) );
+       return;
     }
-  filename_blc_p += "}";
-  qDebug() << "filename_blc_p JSON -- " << filename_blc_p;
-  
+    QMap<QString, QStringList> selected_signals;
+    if ( !show_signal_selection_dialog( selected_signals ) )
+    {
+       return;
+    }
+    for ( const auto& channel : channList )
+    {
+       auto record = channels.value( channel ).toObject();
+       record.insert( "selected_signals", QJsonArray::fromStringList( selected_signals.value( channel ) ) );
+       channels.insert( channel, record );
+    }
+    json_p = QString::fromUtf8( QJsonDocument( channels ).toJson( QJsonDocument::Compact ) );
 
-  // Determine if we are using the database
-   US_DB2* dbP  = NULL;
+    //Determine filename (MWL or SWL)
+    QString filename_p;
+    if ( abde_etype == "MWL" )
+    {
+       filename_p = prot_details["ssf_dir_name"];
+    }
+    else //SWL
+    {
+       filename_p = prot_details["directory_for_gmp"];
+    }
 
-   if ( disk_controls->db() )
-   {
-      US_Passwd pw;
-      dbP            = new US_DB2( pw.getPasswd() );
+    QStringList filename_p_list = filename_p.split( "/" );
+    if ( !filename_p_list.isEmpty() )
+    {
+       filename_p = filename_p_list.takeLast();
+    }
+    qDebug() << "Passed filename_p -- " << filename_p;
 
-      if ( dbP->lastErrno() != US_DB2::OK )
-      {
-         QMessageBox::warning( this, tr( "Connection Problem" ),
-           tr( "Could not connect to database: \n" ) + dbP->lastError() );
-         return;
-      }
-   }
+    QJsonObject filename_record;
+    filename_record.insert( "filename", filename_p );
+    if ( abde_etype == "SWL" )
+    {
+       filename_record.insert( "blcorrs", prot_details.value( "baseline_corrections" ) );
+    }
+    const QString filename_blc_p = QString::fromUtf8( QJsonDocument( filename_record ).toJson( QJsonDocument::Compact ) );
+
+    // Determine if we are using the database
+    US_DB2*       dbP = NULL;
+
+    if ( disk_controls->db() )
+    {
+       US_Passwd pw;
+       dbP = new US_DB2( pw.getPasswd() );
+
+       if ( dbP->lastErrno() != US_DB2::OK )
+       {
+          QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database: \n" ) + dbP->lastError() );
+          return;
+       }
+    }
 
    /*************************************************************************************************************/
    // We need to  insert submission form dialog (with password...)

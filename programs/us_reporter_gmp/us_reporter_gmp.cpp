@@ -743,7 +743,11 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
     }
   else if ( expType == "ABDE" )
      {
-       build_perChanTree_abde();
+        if ( !build_perChanTree_abde() )
+        {
+           gmp_progress_hide();
+           return;
+        }
        progress_msg->setValue( 10 );
        qApp->processEvents();
      }
@@ -1787,7 +1791,11 @@ void US_ReporterGMP::load_gmp_run ( void )
     }
    else if ( expType == "ABDE" )
      {
-       build_perChanTree_abde();
+        if ( !build_perChanTree_abde() )
+        {
+           gmp_progress_hide();
+           return;
+        }
        progress_msg->setValue( 9 );
        qApp->processEvents();
      }
@@ -2926,7 +2934,7 @@ void US_ReporterGMP::build_perChanTree_velmwl( void )
 }
 
 //build perChanTree:ABDE
-void US_ReporterGMP::build_perChanTree_abde ( void )
+bool US_ReporterGMP::build_perChanTree_abde( void )
 {
   //trees
   QStringList chanItemNameList, tripleMaskItemNameList;
@@ -2938,8 +2946,11 @@ void US_ReporterGMP::build_perChanTree_abde ( void )
   QString indent( "  " );
   int wiubase = (int)QTreeWidgetItem::UserType;
 
-  process_abde_plots();
-  
+  if ( !process_abde_plots() )
+  {
+     return false;
+  }
+
   int nchna   = currAProf.pchans.count();
   
   for (int ac=0; ac<abde_channList.size(); ++ac)
@@ -3033,6 +3044,7 @@ void US_ReporterGMP::build_perChanTree_abde ( void )
   
   connect( perChanTree, &QTreeWidget::itemChanged,
   	   this,        &US_ReporterGMP::changedItem );
+  return true;
 }
   
 //build perChanTree
@@ -3927,6 +3939,10 @@ int US_ReporterGMP::count_part2_jobs( void )
 //Generate report
 void US_ReporterGMP::generate_report( void )
 {
+   if ( expType == "ABDE" && !abde_report_valid )
+   {
+      return;
+   }
    // Whatever path leaves this function (incl. early returns), the progress
    // dialog gets hidden
    struct ProgressGuard
@@ -4082,7 +4098,10 @@ void US_ReporterGMP::generate_report( void )
    else if ( expType == "ABDE" )
    {
       gmp_busy( tr( "Processing ABDE plots..." ) );
-      process_abde_plots();
+      if ( !process_abde_plots() )
+      {
+         return;
+      }
 
       for ( int ac = 0; ac < abde_channList.size(); ++ac )
       {
@@ -4218,7 +4237,10 @@ void US_ReporterGMP::generate_report( void )
 
           qDebug() << "Assembling plots ABDE!";
           gmp_busy( tr( "Processing ABDE plots..." ) );
-          process_abde_plots();
+          if ( !process_abde_plots() )
+          {
+             return;
+          }
           for ( int ac = 0; ac < abde_channList.size(); ++ac )
           {
              QString key_m = "Channel " + abde_channList[ac];
@@ -4808,24 +4830,48 @@ void US_ReporterGMP::process_velmwl_analysis( void )
    }
 }
 
-void US_ReporterGMP::process_abde_plots( void )
+bool US_ReporterGMP::process_abde_plots( void )
 {
-  //read, parse
-  sdiag_norm_profile = new US_Norm_Profile("AUTO");
-  connect( sdiag_norm_profile, &US_Norm_Profile::pass_channels_info,
-	   this, &US_ReporterGMP::get_abde_channels );
-  connect( sdiag_norm_profile, &US_Norm_Profile::pass_rmsd_info,
-	   this, &US_ReporterGMP::get_abde_rmsds );
-  connect( sdiag_norm_profile, &US_Norm_Profile::pass_menisc_info,
-	   this, &US_ReporterGMP::get_abde_menisc );
-  connect( sdiag_norm_profile, &US_Norm_Profile::pass_percents_info,
-	   this, &US_ReporterGMP::get_abde_percents );
-  connect( sdiag_norm_profile, &US_Norm_Profile::pass_data_per_channel,
-	   this, &US_ReporterGMP::get_abde_data_per_channel );
-  connect( sdiag_norm_profile, &US_Norm_Profile::pass_selected_signals_info,
-	   this, &US_ReporterGMP::get_abde_selected_signals );
+   abde_report_valid  = false;
+   //read, parse
+   sdiag_norm_profile = new US_Norm_Profile( "AUTO" );
+   connect( sdiag_norm_profile, &US_Norm_Profile::pass_channels_info, this, &US_ReporterGMP::get_abde_channels );
+   connect( sdiag_norm_profile, &US_Norm_Profile::pass_rmsd_info, this, &US_ReporterGMP::get_abde_rmsds );
+   connect( sdiag_norm_profile, &US_Norm_Profile::pass_menisc_info, this, &US_ReporterGMP::get_abde_menisc );
+   connect( sdiag_norm_profile, &US_Norm_Profile::pass_percents_info, this, &US_ReporterGMP::get_abde_percents );
+   connect( sdiag_norm_profile, &US_Norm_Profile::pass_data_per_channel, this, &US_ReporterGMP::get_abde_data_per_channel );
+   connect( sdiag_norm_profile, &US_Norm_Profile::pass_selected_signals_info, this, &US_ReporterGMP::get_abde_selected_signals );
 
-  sdiag_norm_profile->load_data_auto_report( prot_details_at_report );
+   if ( !sdiag_norm_profile->load_data_auto_report( prot_details_at_report ) )
+   {
+      abde_channList.clear();
+      abde_ranges_percents.clear();
+      html_assembled.clear();
+      if ( pb_gen_report )
+      {
+         pb_gen_report->setEnabled( false );
+      }
+      if ( pb_view_report )
+      {
+         pb_view_report->setEnabled( false );
+      }
+      if ( te_fpath_info )
+      {
+         te_fpath_info->clear();
+      }
+      if ( pb_view_report_auto )
+      {
+         pb_view_report_auto->hide();
+      }
+      filePath.clear();
+      report_aborted = true;
+      gmp_progress_hide();
+      QMessageBox::warning(
+         this,
+         tr( "Invalid ABDE Analysis Results" ),
+         tr( "Stored ABDE analysis results are invalid or empty. Analyze this run again before generating a report." ) );
+      return false;
+   }
 
   //Build channel -> {"Analyte #1:":pretty, ...} map so the norm-profile plot
   //legends can show human-readable analyte names instead of the sanitized
@@ -4862,6 +4908,8 @@ void US_ReporterGMP::process_abde_plots( void )
     }
   
   //assemble_plots_html(ABDEPlotsFileNames);
+    abde_report_valid = true;
+    return true;
 }
 
 void US_ReporterGMP::get_abde_channels( QStringList& abde_cl_p)
@@ -8545,6 +8593,10 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
        //no selection was recorded (a run saved before this feature existed)
        //-- keep today's behavior and show every signal in that case.
        bool have_selection = abde_selected_signals.contains( abde_channame );
+       if ( have_selection && abde_selected_signals.value( abde_channame ).isEmpty() )
+       {
+          mstr += "<p>" + tr( "No signals selected for this channel" ) + "</p>\n";
+       }
        for (int cs=0; cs< chann_samples.size(); ++cs )
 	 {
 	   QString c_sample = chann_samples[cs];
