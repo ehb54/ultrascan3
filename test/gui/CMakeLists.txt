@@ -15,3 +15,12 @@ us3_add_gui_test(test_us_gui_test_isolation
         LABELS
             gui
         )
+
+us3_add_gui_test(test_us_widgets_counter
+        SOURCES
+            test_us_widgets_counter.cpp
+        LIBRARIES
+            UltraScan3::Gui_Static
+        LABELS
+            gui
+        )
