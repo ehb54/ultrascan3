@@ -52,59 +52,59 @@
  */
 class US_Analysis_auto : public US_Widgets
 {
-    Q_OBJECT
+      Q_OBJECT
 
-    public:
-        /**
+   public:
+      /**
          * @brief Constructor for the US_Analysis_auto class.
          */
-        US_Analysis_auto();
+      US_Analysis_auto();
 
-        US_MwlSpeciesFit* sdiag;
-        US_ConvertGui*    sdiag_convert;
-        US_Norm_Profile*  sdiag_norm_profile;
-        US_MwlSpeciesSim*                sdiag_mwlsim;
-        US_Edit*                         sdiag_edit;
-        bool                             velmwl_fit_open;
-        US_2dsa*                         sdiag_2dsa;  //!< Current channel's headless 2DSA-IT widget
-                                                      //!< (VEL-MWL post-processing).
-        bool                             twodsa_open; //!< True while sdiag_2dsa is live (mirrors
-                                                      //!< velmwl_fit_open).
+      US_MwlSpeciesFit*               sdiag;
+      US_ConvertGui*                  sdiag_convert;
+      US_Norm_Profile*                sdiag_norm_profile;
+      US_MwlSpeciesSim*               sdiag_mwlsim;
+      US_Edit*                        sdiag_edit;
+      bool                            velmwl_fit_open;
+      US_2dsa*                        sdiag_2dsa;  //!< Current channel's headless 2DSA-IT widget
+                                                   //!< (VEL-MWL post-processing).
+      bool                            twodsa_open; //!< True while sdiag_2dsa is live (mirrors
+                                                   //!< velmwl_fit_open).
 
-        QTreeWidget     *treeWidget;                             /**< Tree widget for displaying analysis data. */
-        QMap<QString, QTreeWidgetItem *> topItem;                /**< Top-level items in the tree widget. */
-        QMap<QString, QTreeWidgetItem *> childItem_2DSA;         /**< Child items for 2DSA analysis. */
-        QMap<QString, QTreeWidgetItem *> childItem_2DSA_FM;      /**< Child items for 2DSA-FM analysis. */
-        QMap<QString, QTreeWidgetItem *> childItem_2DSA_FITMEN;  /**< Child items for 2DSA-FITMEN analysis. */
-        QMap<QString, QTreeWidgetItem *> childItem_2DSA_IT;      /**< Child items for 2DSA-IT analysis. */
-        QMap<QString, QTreeWidgetItem *> childItem_2DSA_MC;      /**< Child items for 2DSA-MC analysis. */
-        QMap<QString, QTreeWidgetItem *> childItem_PCSA;         /**< Child items for PCSA analysis. */
+      QTreeWidget*                    treeWidget;            /**< Tree widget for displaying analysis data. */
+      QMap<QString, QTreeWidgetItem*> topItem;               /**< Top-level items in the tree widget. */
+      QMap<QString, QTreeWidgetItem*> childItem_2DSA;        /**< Child items for 2DSA analysis. */
+      QMap<QString, QTreeWidgetItem*> childItem_2DSA_FM;     /**< Child items for 2DSA-FM analysis. */
+      QMap<QString, QTreeWidgetItem*> childItem_2DSA_FITMEN; /**< Child items for 2DSA-FITMEN analysis. */
+      QMap<QString, QTreeWidgetItem*> childItem_2DSA_IT;     /**< Child items for 2DSA-IT analysis. */
+      QMap<QString, QTreeWidgetItem*> childItem_2DSA_MC;     /**< Child items for 2DSA-MC analysis. */
+      QMap<QString, QTreeWidgetItem*> childItem_PCSA;        /**< Child items for PCSA analysis. */
 
-        QMap<QString, QGroupBox *> groupbox_2DSA;                /**< Group boxes for 2DSA analysis. */
-        QMap<QString, QGroupBox *> groupbox_2DSA_FM;             /**< Group boxes for 2DSA-FM analysis. */
-        QMap<QString, QGroupBox *> groupbox_2DSA_FITMEN;         /**< Group boxes for 2DSA-FITMEN analysis. */
-        QMap<QString, QGroupBox *> groupbox_2DSA_IT;             /**< Group boxes for 2DSA-IT analysis. */
-        QMap<QString, QGroupBox *> groupbox_2DSA_MC;             /**< Group boxes for 2DSA-MC analysis. */
-        QMap<QString, QGroupBox *> groupbox_PCSA;                /**< Group boxes for PCSA analysis. */
+      QMap<QString, QGroupBox*>       groupbox_2DSA;        /**< Group boxes for 2DSA analysis. */
+      QMap<QString, QGroupBox*>       groupbox_2DSA_FM;     /**< Group boxes for 2DSA-FM analysis. */
+      QMap<QString, QGroupBox*>       groupbox_2DSA_FITMEN; /**< Group boxes for 2DSA-FITMEN analysis. */
+      QMap<QString, QGroupBox*>       groupbox_2DSA_IT;     /**< Group boxes for 2DSA-IT analysis. */
+      QMap<QString, QGroupBox*>       groupbox_2DSA_MC;     /**< Group boxes for 2DSA-MC analysis. */
+      QMap<QString, QGroupBox*>       groupbox_PCSA;        /**< Group boxes for PCSA analysis. */
 
-        QTimer * timer_update;                                   /**< Timer for updating the analysis. */
-        QTimer * timer_end_process;                              /**< Timer for ending the process. */
+      QTimer*                         timer_update;      /**< Timer for updating the analysis. */
+      QTimer*                         timer_end_process; /**< Timer for ending the process. */
 
-        bool in_gui_update;                                      /**< Flag indicating if the GUI is being updated. */
-        bool in_reload_end_process;                              /**< Flag indicating if the process is being reloaded. */
+      bool                            in_gui_update;         /**< Flag indicating if the GUI is being updated. */
+      bool                            in_reload_end_process; /**< Flag indicating if the process is being reloaded. */
 
-        /**
+      /**
          * @brief Resets the analysis panel for public use.
          */
-        void reset_analysis_panel_public ( void );
+      void                            reset_analysis_panel_public( void );
 
-        US_FitMeniscus* FitMen;                                  /**< Pointer to the FitMeniscus class. */
-        QPointer< US_ResidPlotFem > resplotd;                    /**< Pointer to the Residual Plot for FEM data. */
+      US_FitMeniscus*                 FitMen;   /**< Pointer to the FitMeniscus class. */
+      QPointer<US_ResidPlotFem>       resplotd; /**< Pointer to the Residual Plot for FEM data. */
 
-        QMessageBox * msg_sim;                                   /**< Message box for simulation messages. */
-        US_GmpProgress*                  progress_msg = nullptr; /**< Progress dialog for showing progress messages. */
+      QMessageBox*                    msg_sim;                /**< Message box for simulation messages. */
+      US_GmpProgress*                 progress_msg = nullptr; /**< Progress dialog for showing progress messages. */
 
-        US_GmpProgress*                  progress_msg_mwlsim = nullptr; /**< Progress dialog shown on a per-channel basis
+      US_GmpProgress*                 progress_msg_mwlsim = nullptr; /**< Progress dialog shown on a per-channel basis
                    (restarted at 0 for each channel) for the full VELOCITY-MWL
                    post-analysis pipeline: species simulation (
                    US_MwlSpeciesSim::select_models_auto(), define_buffer_auto(),
@@ -113,7 +113,7 @@ class US_Analysis_auto : public US_Widgets
                    edit-profile update (US_Edit), and species deconvolution/fit
                    (US_MwlSpeciesFit), driven via update_mwlsim_progress(). */
 
-        US_GmpProgress*                  progress_msg_2dsa = nullptr; /**< Progress dialog shown on a per-channel basis
+      US_GmpProgress*                 progress_msg_2dsa = nullptr; /**< Progress dialog shown on a per-channel basis
                    (restarted at 0 for each Approved VEL-MWL channel) for the
                    headless 2DSA-IT post-processing pipeline driven by US_2dsa's
                    auto constructor: this channel's edited- data load, then each
@@ -122,71 +122,77 @@ class US_Analysis_auto : public US_Widgets
                    to `panel`) on this path -- this dialog is the only visible
                    indication that 2DSA-IT processing is under way. */
 
-     private:
-        QVector< US_DataIO::RawData > rawData;                   /**< Vector of raw data. */
-        QVector< US_DataIO::EditedData > editedData;             /**< Vector of edited data. */
-        QVector< SP_SPEEDPROFILE > speed_steps;                  /**< Vector of speed profiles. */
-        US_DataIO::EditedData* edata;                            /**< Pointer to the edited data. */
-        US_DataIO::RawData* rdata;                               /**< Pointer to the raw data. */
-        US_DataIO::RawData* sdata;                               /**< Pointer to the simulated data. */
-        US_DataIO::RawData               wsdata;                              /**< Raw data for the workspace. */
+   private:
+      QVector<US_DataIO::RawData>    rawData;     /**< Vector of raw data. */
+      QVector<US_DataIO::EditedData> editedData;  /**< Vector of edited data. */
+      QVector<SP_SPEEDPROFILE>       speed_steps; /**< Vector of speed profiles. */
+      US_DataIO::EditedData*         edata;       /**< Pointer to the edited data. */
+      US_DataIO::RawData*            rdata;       /**< Pointer to the raw data. */
+      US_DataIO::RawData*            sdata;       /**< Pointer to the simulated data. */
+      US_DataIO::RawData             wsdata;      /**< Raw data for the workspace. */
 
-        /**
+      /**
          * @class ModelDesc
          * @brief This class holds the description of a model.
          */
-        class ModelDesc
-        {
-            public:
-                QString description;    /**< Full model description. */
-                QString baseDescr;      /**< Base analysis-set description. */
-                QString fitfname;       /**< Associated fit file name. */
-                QString modelID;        /**< Model DB ID. */
-                QString modelGUID;      /**< Model GUID. */
-                QString filepath;       /**< Full path model file name. */
-                QString editID;         /**< Edit parent DB ID. */
-                QString editGUID;       /**< Edit parent GUID. */
-                QString antime;         /**< Analysis date & time (yymmddHHMM). */
-                QDateTime lmtime;       /**< Record last modified date & time. */
-                double variance;        /**< Variance value. */
-                double meniscus;        /**< Meniscus radius value. */
-                double bottom;          /**< Bottom radius value. */
+      class ModelDesc
+      {
+         public:
+            QString   description; /**< Full model description. */
+            QString   baseDescr;   /**< Base analysis-set description. */
+            QString   fitfname;    /**< Associated fit file name. */
+            QString   modelID;     /**< Model DB ID. */
+            QString   modelGUID;   /**< Model GUID. */
+            QString   filepath;    /**< Full path model file name. */
+            QString   editID;      /**< Edit parent DB ID. */
+            QString   editGUID;    /**< Edit parent GUID. */
+            QString   antime;      /**< Analysis date & time (yymmddHHMM). */
+            QDateTime lmtime;      /**< Record last modified date & time. */
+            double    variance;    /**< Variance value. */
+            double    meniscus;    /**< Meniscus radius value. */
+            double    bottom;      /**< Bottom radius value. */
 
-                /**
+            /**
                  * @brief Less than operator to enable sorting.
                  * @param md Another ModelDesc object.
                  * @return True if this object is less than the other.
                  */
-                bool operator< ( const ModelDesc& md ) const { return ( description < md.description ); }
-            };
+            bool      operator<( const ModelDesc& md ) const
+            {
+               return ( description < md.description );
+            }
+      };
 
-            /**
+      /**
              * @class NoiseDesc
              * @brief This class holds the description of a noise.
              */
-            class NoiseDesc
-            {
-                public:
-                    QString description;    /**< Full noise description. */
-                    QString baseDescr;      /**< Base analysis-set description. */
-                    QString noiseID;        /**< Noise DB ID. */
-                    QString noiseGUID;      /**< Noise GUID. */
-                    QString filepath;       /**< Full path noise file name. */
-                    QString modelID;        /**< Model parent DB ID. */
-                    QString modelGUID;      /**< Model parent GUID. */
-                    QString antime;         /**< Analysis date & time (yymmddHHMM). */
+      class NoiseDesc
+      {
+         public:
+            QString description; /**< Full noise description. */
+            QString baseDescr;   /**< Base analysis-set description. */
+            QString noiseID;     /**< Noise DB ID. */
+            QString noiseGUID;   /**< Noise GUID. */
+            QString filepath;    /**< Full path noise file name. */
+            QString modelID;     /**< Model parent DB ID. */
+            QString modelGUID;   /**< Model parent GUID. */
+            QString antime;      /**< Analysis date & time (yymmddHHMM). */
 
-                    /**
+            /**
                      * @brief Less than operator to enable sorting.
                      * @param nd Another NoiseDesc object.
                      * @return True if this object is less than the other.
                      */
-                    bool operator< ( const NoiseDesc& nd ) const { return ( description < nd.description ); }
-            };
+            bool    operator<( const NoiseDesc& nd ) const
+            {
+               return ( description < nd.description );
+            }
+      };
 
-            QMap < QString, QString > protocol_details_at_analysis;  /**< Protocol details at the time of analysis. */
-            QMap<QString, QString>       protocol_details_at_analysis_velmwl;
-            QMap<QString, QString>       protocol_details_at_analysis_2dsa;                  /**< Seeded from
+      QMap<QString, QString>                protocol_details_at_analysis; /**< Protocol details at the time of analysis. */
+      QMap<QString, QString>                protocol_details_at_analysis_velmwl;
+      QMap<QString, QString>                protocol_details_at_analysis_2dsa; /**< Seeded from
                                                       protocol_details_at_analysis_velmwl
                                                       at the start of
                                                       process_velmwl_after_all_channels_decided();
@@ -195,34 +201,34 @@ class US_Analysis_auto : public US_Widgets
                                                       per-channel by
                                                       start_next_2dsa_channel().
                                                     */
-            bool fitmen_bad_vals;                                    /**< Flag for bad FitMeniscus values. */
-            bool no_fm_data_auto;                                    /**< Flag indicating no FitMeniscus data automatically. */
+      bool                                  fitmen_bad_vals;                   /**< Flag for bad FitMeniscus values. */
+      bool                                  no_fm_data_auto; /**< Flag indicating no FitMeniscus data automatically. */
 
-            US_GmpProgress*              progress_msg_fmb = nullptr; /**< Progress dialog for FitMeniscus. */
+      US_GmpProgress*                       progress_msg_fmb = nullptr; /**< Progress dialog for FitMeniscus. */
 
-            int                          mwlsim_nchannels;        /**< Number of channels being processed by the
+      int                                   mwlsim_nchannels;        /**< Number of channels being processed by the
                                      MWL sim/save pipeline
                                      (progress_msg_mwlsim). */
-            int                          mwlsim_chan_idx;         /**< Index (0-based) of the channel currently
+      int                                   mwlsim_chan_idx;         /**< Index (0-based) of the channel currently
                                      being processed by the MWL sim/save
                                      pipeline. */
-            QString                      mwlsim_chan_name;        /**< Name of the channel currently being
+      QString                               mwlsim_chan_name;        /**< Name of the channel currently being
                                          processed, used to label
                                          progress_msg_mwlsim. */
-            int                          velmwl_channels_decided; /**< Count of channels_all resolved
+      int                                   velmwl_channels_decided; /**< Count of channels_all resolved
                                             (already-decided & skipped, or
                                             freshly Accepted/Rejected) this
                                             VEL-MWL Analysis pass; see
                                             finalize_velmwl_analysis_if_complete().
                                           */
 
-            QStringList                  channels_2dsa_approved;  /**< Approved (Accepted) VEL-MWL
+      QStringList                           channels_2dsa_approved;  /**< Approved (Accepted) VEL-MWL
                                                    channels, "N / X" form --
                                                    built once in
                                                    process_velmwl_after_all_channels_decided(),
                                                    consumed one at a time by
                                                    start_next_2dsa_channel(). */
-            QMap<QString, QString>       channels_2dsa_filenames; /**< channel -> deconvolved-edit
+      QMap<QString, QString>                channels_2dsa_filenames; /**< channel -> deconvolved-edit
                                             filename (from
                                             channelDecisions[chan]["filename"],
                                             written atomically with the Accept
@@ -232,15 +238,15 @@ class US_Analysis_auto : public US_Widgets
                                             channels_2dsa_approved. What
                                             US_DataLoader actually needs to load
                                             this channel's data. */
-            int                          twodsa_chan_idx;         /**< Cursor into channels_2dsa_approved -- -1
+      int                                   twodsa_chan_idx;         /**< Cursor into channels_2dsa_approved -- -1
                                      so start_next_2dsa_channel() starts at index
                                      0. */
-            int                          twodsa_nchannels;        /**< channels_2dsa_approved.size(), cached for
+      int                                   twodsa_nchannels;        /**< channels_2dsa_approved.size(), cached for
                                      progress reporting. */
-            QString                      twodsa_chan_name;        /**< Name of the channel currently being
+      QString                               twodsa_chan_name;        /**< Name of the channel currently being
                                           processed, used to label
                                           progress_msg_2dsa. */
-            int                          twodsa_nspecies_total;   /**< Running total of species (models)
+      int                                   twodsa_nspecies_total;   /**< Running total of species (models)
                                           completed across all Approved channels
                                           processed so far this pass --
                                           accumulated in
@@ -252,242 +258,242 @@ class US_Analysis_auto : public US_Widgets
                                           start_next_2dsa_channel()'s "All
                                           Channels Processed" summary. */
 
-            //! \brief This run's 2DSA Analysis-Profile settings (grid
-            //! limits/points per channel) -- loaded once in process_
-            //! velmwl_after_all_channels_decided() via the same
-            //! US_AnalysisProfileGui::inherit_protocol() pattern
-            //! US_ReporterGMP uses (constructed, never shown), and
-            //! consulted per-channel by start_next_2dsa_channel() to
-            //! populate protocol_details_at_analysis_2dsa's s_min/s_max/
-            //! s_grpts/k_min/k_max/k_grpts before each channel's US_2dsa
-            //! is constructed. See US_AnalysisControl2D::
-            //! apply_auto_fit_params() (us_analysis_control_2d.cpp) for
-            //! where those values actually get applied to the fit.
-            US_AnaProfile::AnaProf2DSA   cAP2_2dsa;
+      //! \brief This run's 2DSA Analysis-Profile settings (grid
+      //! limits/points per channel) -- loaded once in process_
+      //! velmwl_after_all_channels_decided() via the same
+      //! US_AnalysisProfileGui::inherit_protocol() pattern
+      //! US_ReporterGMP uses (constructed, never shown), and
+      //! consulted per-channel by start_next_2dsa_channel() to
+      //! populate protocol_details_at_analysis_2dsa's s_min/s_max/
+      //! s_grpts/k_min/k_max/k_grpts before each channel's US_2dsa
+      //! is constructed. See US_AnalysisControl2D::
+      //! apply_auto_fit_params() (us_analysis_control_2d.cpp) for
+      //! where those values actually get applied to the fit.
+      US_AnaProfile::AnaProf2DSA            cAP2_2dsa;
 
-            QVector< double > v_meni;                                /**< Vector of meniscus values. */
-            QVector< double > v_bott;                                /**< Vector of bottom values. */
-            QVector< double > v_rmsd;                                /**< Vector of RMSD values. */
+      QVector<double>                       v_meni; /**< Vector of meniscus values. */
+      QVector<double>                       v_bott; /**< Vector of bottom values. */
+      QVector<double>                       v_rmsd; /**< Vector of RMSD values. */
 
-            QString filedir;                                         /**< Directory of the file. */
-            QString fname_load;                                      /**< File name to load. */
-            QString fname_edit;                                      /**< File name for editing. */
-            QStringList edtfiles;                                    /**< List of edited files. */
-            int nedtfs;                                              /**< Number of edited files. */
-            int ix_best;                                             /**< Index of the best file. */
-            int ix_setfit;                                           /**< Index of the set fit file. */
-            bool have3val;                                           /**< Flag indicating if 3D values are present. */
-            bool bott_fit;                                           /**< Flag indicating if bottom fit is present. */
-            int idEdit;                                              /**< Edit ID. */
+      QString                               filedir;    /**< Directory of the file. */
+      QString                               fname_load; /**< File name to load. */
+      QString                               fname_edit; /**< File name for editing. */
+      QStringList                           edtfiles;   /**< List of edited files. */
+      int                                   nedtfs;     /**< Number of edited files. */
+      int                                   ix_best;    /**< Index of the best file. */
+      int                                   ix_setfit;  /**< Index of the set fit file. */
+      bool                                  have3val;   /**< Flag indicating if 3D values are present. */
+      bool                                  bott_fit;   /**< Flag indicating if bottom fit is present. */
+      int                                   idEdit;     /**< Edit ID. */
 
-            double fit_xvl;                                          /**< Fit X value for 2D data. */
-            double f_meni;                                           /**< Fit meniscus value for 3D data. */
-            double f_bott;                                           /**< Fit bottom value for 3D data. */
+      double                                fit_xvl; /**< Fit X value for 2D data. */
+      double                                f_meni;  /**< Fit meniscus value for 3D data. */
+      double                                f_bott;  /**< Fit bottom value for 3D data. */
 
-            double dy_global;                                        /**< Global Y difference. */
-            double miny_global;                                      /**< Global minimum Y value. */
+      double                                dy_global;   /**< Global Y difference. */
+      double                                miny_global; /**< Global minimum Y value. */
 
-            QString tripleInfo;                                      /**< Information about the triple. */
+      QString                               tripleInfo; /**< Information about the triple. */
 
-            int eID_global;                                          /**< Global Edit ID. */
+      int                                   eID_global; /**< Global Edit ID. */
 
-            US_Model model;                                          /**< Model data. */
-            US_Model model_loaded;                                   /**< Loaded model data. */
-            US_Model model_used;                                     /**< Used model data. */
+      US_Model                              model;        /**< Model data. */
+      US_Model                              model_loaded; /**< Loaded model data. */
+      US_Model                              model_used;   /**< Used model data. */
 
-            US_Noise ri_noise;                                       /**< RI noise data. */
-            US_Noise ti_noise;                                       /**< TI noise data. */
-            QList< int > excludedScans;                              /**< List of excluded scans. */
-            US_Solution solution_rec;                                /**< Solution record. */
+      US_Noise                              ri_noise;      /**< RI noise data. */
+      US_Noise                              ti_noise;      /**< TI noise data. */
+      QList<int>                            excludedScans; /**< List of excluded scans. */
+      US_Solution                           solution_rec;  /**< Solution record. */
 
-            US_Math2::SolutionData solution;                         /**< Solution data. */
-            QVector< QVector< double > > resids;                     /**< Residuals data. */
+      US_Math2::SolutionData                solution; /**< Solution data. */
+      QVector<QVector<double>>              resids;   /**< Residuals data. */
 
-            US_SimulationParameters simparams;                       /**< Simulation parameters. */
-            QList< US_DataIO::RawData > tsimdats;                    /**< List of simulated raw data. */
-            QList< US_Model > tmodels;                               /**< List of models. */
-            QVector< int > kcomps;                                   /**< Vector of components. */
+      US_SimulationParameters               simparams; /**< Simulation parameters. */
+      QList<US_DataIO::RawData>             tsimdats;  /**< List of simulated raw data. */
+      QList<US_Model>                       tmodels;   /**< List of models. */
+      QVector<int>                          kcomps;    /**< Vector of components. */
 
-            QStringList noiIDs;                                      /**< List of noise IDs. */
-            QStringList noiEdIDs;                                    /**< List of noise edit IDs. */
-            QStringList noiMoIDs;                                    /**< List of noise model IDs. */
-            QStringList noiTypes;                                    /**< List of noise types. */
-            QStringList modIDs;                                      /**< List of model IDs. */
-            QStringList modEdIDs;                                    /**< List of model edit IDs. */
-            QStringList modDescs;                                    /**< List of model descriptions. */
+      QStringList                           noiIDs;   /**< List of noise IDs. */
+      QStringList                           noiEdIDs; /**< List of noise edit IDs. */
+      QStringList                           noiMoIDs; /**< List of noise model IDs. */
+      QStringList                           noiTypes; /**< List of noise types. */
+      QStringList                           modIDs;   /**< List of model IDs. */
+      QStringList                           modEdIDs; /**< List of model edit IDs. */
+      QStringList                           modDescs; /**< List of model descriptions. */
 
-            int thrdone;                                             /**< Thread done flag. */
+      int                                   thrdone; /**< Thread done flag. */
 
-            double density;                                          /**< Density value. */
-            double viscosity;                                        /**< Viscosity value. */
-            double vbar;                                             /**< Vbar value. */
-            double compress;                                         /**< Compressibility value. */
+      double                                density;   /**< Density value. */
+      double                                viscosity; /**< Viscosity value. */
+      double                                vbar;      /**< Vbar value. */
+      double                                compress;  /**< Compressibility value. */
 
-            QString svbar_global;                                    /**< Global Vbar value. */
+      QString                               svbar_global; /**< Global Vbar value. */
 
-            bool manual;                                             /**< Manual mode flag. */
-            bool dataLoaded;                                         /**< Data loaded flag. */
-            bool haveSim;                                            /**< Simulation data present flag. */
-            bool dataLatest;                                         /**< Latest data flag. */
-            bool buffLoaded;                                         /**< Buffer loaded flag. */
-            bool cnstvb;                                             /**< Constant Vbar flag. */
-            bool cnstff;                                             /**< Constant FF flag. */
-            bool exp_steps;                                          /**< Experimental steps flag. */
-            bool dat_steps;                                          /**< Data steps flag. */
-            bool is_dmga_mc;                                         /**< DMGA Monte Carlo flag. */
+      bool                                  manual;     /**< Manual mode flag. */
+      bool                                  dataLoaded; /**< Data loaded flag. */
+      bool                                  haveSim;    /**< Simulation data present flag. */
+      bool                                  dataLatest; /**< Latest data flag. */
+      bool                                  buffLoaded; /**< Buffer loaded flag. */
+      bool                                  cnstvb;     /**< Constant Vbar flag. */
+      bool                                  cnstff;     /**< Constant FF flag. */
+      bool                                  exp_steps;  /**< Experimental steps flag. */
+      bool                                  dat_steps;  /**< Data steps flag. */
+      bool                                  is_dmga_mc; /**< DMGA Monte Carlo flag. */
 
-            QMap< QString, QString > adv_vals;                       /**< Advanced values. */
+      QMap<QString, QString>                adv_vals; /**< Advanced values. */
 
-            int dbg_level;                                           /**< Debug level. */
-            int nthread;                                             /**< Number of threads. */
-            int scanCount;                                           /**< Scan count. */
+      int                                   dbg_level; /**< Debug level. */
+      int                                   nthread;   /**< Number of threads. */
+      int                                   scanCount; /**< Scan count. */
 
-            QPoint rpd_pos;                                          /**< Residual plot position. */
+      QPoint                                rpd_pos; /**< Residual plot position. */
 
-            QVBoxLayout*                 panel;
+      QVBoxLayout*                          panel;
 
-            QLabel* lb_hdr1;
-            QPushButton* pb_show_all;                                /**< Show all button. */
-            QPushButton* pb_hide_all;                                /**< Hide all button. */
+      QLabel*                               lb_hdr1;
+      QPushButton*                          pb_show_all; /**< Show all button. */
+      QPushButton*                          pb_hide_all; /**< Hide all button. */
 
-            bool all_processed;                                      /**< All processed flag. */
+      bool                                  all_processed; /**< All processed flag. */
 
-            QString AProfileGUID;                                    /**< Analysis profile GUID. */
-            QString ProtocolName_auto;                               /**< Protocol name for auto analysis. */
-            int invID;                                               /**< Investigator ID. */
-            QString analysisIDs;                                     /**< Analysis IDs. */
-            QMap <QString, QString > investigator_details;           /**< Investigator details. */
-            QString defaultDB;                                       /**< Default database. */
-            int autoflowStatusID;                                    /**< Auto flow status ID. */
-            int autoflowID_passed;                                   /**< Passed auto flow ID. */
-            QString autoflow_expType;
-            QString dataSource;
+      QString                               AProfileGUID;         /**< Analysis profile GUID. */
+      QString                               ProtocolName_auto;    /**< Protocol name for auto analysis. */
+      int                                   invID;                /**< Investigator ID. */
+      QString                               analysisIDs;          /**< Analysis IDs. */
+      QMap<QString, QString>                investigator_details; /**< Investigator details. */
+      QString                               defaultDB;            /**< Default database. */
+      int                                   autoflowStatusID;     /**< Auto flow status ID. */
+      int                                   autoflowID_passed;    /**< Passed auto flow ID. */
+      QString                               autoflow_expType;
+      QString                               dataSource;
 
-            QString                      e_ID_for_velmwl;
+      QString                               e_ID_for_velmwl;
 
-            QString FileName;                                        /**< File name. */
-            QString FileName_parsed;                                 /**< Parsed file name. */
+      QString                               FileName;        /**< File name. */
+      QString                               FileName_parsed; /**< Parsed file name. */
 
-            int sim_msg_pos_x;                                       /**< X position of simulation message. */
-            int sim_msg_pos_y;                                       /**< Y position of simulation message. */
+      int                                   sim_msg_pos_x; /**< X position of simulation message. */
+      int                                   sim_msg_pos_y; /**< Y position of simulation message. */
 
-            QVector< QString > Array_of_triples;                     /**< Array of triples. */
+      QVector<QString>                      Array_of_triples; /**< Array of triples. */
 
-            QMap < QString, QMap< QString, QString > > Array_of_analysis; /**< Array of analysis data. */
-            QMap < QString, QMap< QString, QString > > Array_of_analysis_by_requestID; /**< Array of analysis by request ID. */
-            QMap < QString, QStringList > Channel_to_requestIDs;     /**< Mapping of channels to request IDs. */
+      QMap<QString, QMap<QString, QString>> Array_of_analysis;              /**< Array of analysis data. */
+      QMap<QString, QMap<QString, QString>> Array_of_analysis_by_requestID; /**< Array of analysis by request ID. */
+      QMap<QString, QStringList>            Channel_to_requestIDs;          /**< Mapping of channels to request IDs. */
 
-            QStringList channels_all;                                /**< List of all channels. */
+      QStringList                           channels_all; /**< List of all channels. */
 
-            QStringList                                TriplesArray;
+      QStringList                           TriplesArray;
 
-            QMap < QString, bool > Manual_update;                    /**< Manual update flag. */
-            QMap < QString, bool > History_read;                     /**< History read flag. */
-            QMap < QString, bool > Completed_triples;                /**< Completed triples flag. */
-            QMap < QString, bool > Failed_triples;                   /**< Failed triples flag. */
-            QMap < QString, bool > Canceled_triples;                 /**< Canceled triples flag. */
-            QMap < QString, bool > Process_2dsafm;                   /**< Process 2DSA-FM flag. */
+      QMap<QString, bool>                   Manual_update;     /**< Manual update flag. */
+      QMap<QString, bool>                   History_read;      /**< History read flag. */
+      QMap<QString, bool>                   Completed_triples; /**< Completed triples flag. */
+      QMap<QString, bool>                   Failed_triples;    /**< Failed triples flag. */
+      QMap<QString, bool>                   Canceled_triples;  /**< Canceled triples flag. */
+      QMap<QString, bool>                   Process_2dsafm;    /**< Process 2DSA-FM flag. */
 
-            QMap<QString, QString>                     read_run_params( QString );
+      QMap<QString, QString>                read_run_params( QString );
 
-            /**
+      /**
              * @brief Reads the autoflow analysis record from the database.
              * @param db Pointer to the database.
              * @param analysisID Analysis ID.
              * @return A map of the autoflow analysis record.
              */
-            QMap < QString, QString > read_autoflowAnalysis_record( US_DB2*, const QString& );
+      QMap<QString, QString>                read_autoflowAnalysis_record( US_DB2*, const QString& );
 
-            /**
+      /**
              * @brief Reads the autoflow analysis history record from the database.
              * @param db Pointer to the database.
              * @param analysisID Analysis ID.
              * @return A map of the autoflow analysis history record.
              */
-            QMap < QString, QString > read_autoflowAnalysisHistory_record( US_DB2*, const QString& );
+      QMap<QString, QString>                read_autoflowAnalysisHistory_record( US_DB2*, const QString& );
 
-            /**
+      /**
              * @brief Retrieves investigator information from the database.
              * @param db Pointer to the database.
              * @param invID Investigator ID.
              * @return A map of the investigator information.
              */
-            QMap < QString, QString > get_investigator_info ( US_DB2*, const QString& );
-            QMap < QString, QString > get_abdeAnalysis_info ( US_DB2*, const QString& );
+      QMap<QString, QString>                get_investigator_info( US_DB2*, const QString& );
+      QMap<QString, QString>                get_abdeAnalysis_info( US_DB2*, const QString& );
 
-            /**
+      /**
              * @brief Scans the database for analysis data.
              * @param analysisData A map to hold the analysis data.
              */
-            void scan_dbase_auto( QMap <QString, QString> & );
+      void                                  scan_dbase_auto( QMap<QString, QString>& );
 
-            /**
+      /**
              * @brief Copies the edit profile.
              * @param profile A map to hold the profile data.
              */
-            void get_editProfile_copy( QMap < QString, QString >& );
+      void                                  get_editProfile_copy( QMap<QString, QString>& );
 
-            /**
+      /**
              * @brief Loads the file data automatically.
              * @param fileData A map to hold the file data.
              * @return True if the file was loaded successfully, false otherwise.
              */
-            bool file_loaded_auto( QMap < QString, QString >& );
+      bool                                  file_loaded_auto( QMap<QString, QString>& );
 
-            /**
+      /**
              * @brief Loads the data automatically.
              * @param fileName The name of the file to load.
              */
-            void load_data_auto( const QString& );
+      void                                  load_data_auto( const QString& );
 
-            /**
+      /**
              * @brief Processes the 2D data.
              */
-            void process_2d( void );
+      void                                  process_2d( void );
 
-            /**
+      /**
              * @brief Processes the 3D data.
              */
-            void process_3d( void );
+      void                                  process_3d( void );
 
-            /**
+      /**
              * @brief Updates the edit profile automatically.
              * @param editData A map of the edit data.
              */
-            void edit_update_auto( QMap < QString, QString >& );
+      void                                  edit_update_auto( QMap<QString, QString>& );
 
-            /**
+      /**
              * @brief Reads the autoflow analysis stages from the database.
              * @param analysisID The analysis ID.
              * @return The number of stages read.
              */
-            int read_autoflowAnalysisStages( const QString& );
+      int                                   read_autoflowAnalysisStages( const QString& );
 
-            /**
+      /**
              * @brief Reverts the autoflow analysis stages record in the database.
              * @param analysisID The analysis ID.
              */
-            void revert_autoflow_analysis_stages_record( const QString& );
+      void                                  revert_autoflow_analysis_stages_record( const QString& );
 
-            /**
+      /**
              * @brief Updates the database edit record.
              * @param editID The edit ID.
              * @param editGUID The edit GUID.
              */
-            void update_db_edit( QString, QString );
+      void                                  update_db_edit( QString, QString );
 
-            /**
+      /**
              * @brief Removes the models automatically.
              * @param modelID The model ID.
              */
-            void remove_models_auto( QString );
+      void                                  remove_models_auto( QString );
 
-            /**
+      /**
              * @brief Indexes the model set fit.
              */
-            void index_model_setfit( void );
+      void                                  index_model_setfit( void );
 
-            /**
+      /**
              * @brief Retrieves the noises in the edit profile.
              * @param editID The edit ID.
              * @param noiseIDs A list of noise IDs.
@@ -495,73 +501,73 @@ class US_Analysis_auto : public US_Widgets
              * @param noiseMoIDs A list of noise model IDs.
              * @param modelID The model ID.
              */
-            void noises_in_edit( QString, QStringList&, QStringList&, QStringList&, QString );
+      void                                  noises_in_edit( QString, QStringList&, QStringList&, QStringList&, QString );
 
-            /**
+      /**
              * @brief Updates the autoflow analysis status at fit meniscus stage.
              * @param db Pointer to the database.
              * @param analysisIDs List of analysis IDs.
              */
-            void update_autoflowAnalysis_status_at_fitmen ( US_DB2*, const QStringList& );
+      void                                  update_autoflowAnalysis_status_at_fitmen( US_DB2*, const QStringList& );
 
-            /**
+      /**
              * @brief Records or updates the analysis meniscus status in the database.
              * @param db Pointer to the database.
              * @param analysisID The analysis ID.
              * @param status The status to update.
              */
-            void record_or_update_analysis_meniscus_status ( US_DB2*, QString, QString );
+      void                                  record_or_update_analysis_meniscus_status( US_DB2*, QString, QString );
 
-            /**
+      /**
              * @brief Records or updates the analysis cancel status in the database.
              * @param db Pointer to the database.
              * @param analysisID The analysis ID.
              * @param status The status to update.
              * @param reason The reason for the cancellation.
              */
-            void record_or_update_analysis_cancel_status ( US_DB2*, QString, QString, QString );
+      void                                  record_or_update_analysis_cancel_status( US_DB2*, QString, QString, QString );
 
-            /**
+      /**
              * @brief Updates the autoflow analysis upon deletion of a record.
              * @param db Pointer to the database.
              * @param analysisID The analysis ID.
              */
-            void update_autoflowAnalysis_uponDeletion ( US_DB2*, const QString& );
+      void                                  update_autoflowAnalysis_uponDeletion( US_DB2*, const QString& );
 
-            /**
+      /**
              * @brief Updates the autoflow analysis upon deletion of other wavelengths.
              * @param db Pointer to the database.
              * @param analysisIDs List of analysis IDs.
              */
-            void update_autoflowAnalysis_uponDeletion_other_wvl ( US_DB2*, const QStringList& );
+      void                                  update_autoflowAnalysis_uponDeletion_other_wvl( US_DB2*, const QStringList& );
 
-            /**
+      /**
              * @brief Loads the data from the given map.
              * @param dataMap A map containing the data to load.
              * @return True if the data was loaded successfully, false otherwise.
              */
-            bool loadData( QMap < QString, QString > & );
+      bool                                  loadData( QMap<QString, QString>& );
 
-            /**
+      /**
              * @brief Loads the model data from the given map.
              * @param dataMap A map containing the model data to load.
              * @return True if the model data was loaded successfully, false otherwise.
              */
-            bool loadModel( QMap < QString, QString > & );
+      bool                                  loadModel( QMap<QString, QString>& );
 
-            /**
+      /**
              * @brief Loads the noise data from the given map.
              * @param dataMap A map containing the noise data to load.
              * @return True if the noise data was loaded successfully, false otherwise.
              */
-            bool loadNoises( QMap < QString, QString > & );
+      bool                                  loadNoises( QMap<QString, QString>& );
 
-            /**
+      /**
              * @brief Loads the noises when they are absent.
              */
-            void loadNoises_whenAbsent ( void );
+      void                                  loadNoises_whenAbsent( void );
 
-            /**
+      /**
              * @brief Counts the noise automatically.
              * @param editData Pointer to the edited data.
              * @param modelData Pointer to the model data.
@@ -569,39 +575,39 @@ class US_Analysis_auto : public US_Widgets
              * @param noiseTypes List of noise types.
              * @return The number of noises counted.
              */
-            int count_noise_auto( US_DataIO::EditedData*, US_Model*, QStringList&, QStringList& );
+      int                                   count_noise_auto( US_DataIO::EditedData*, US_Model*, QStringList&, QStringList& );
 
-            /**
+      /**
              * @brief Retrieves the list of IDs from the database automatically.
              * @param idType The type of ID to retrieve.
              * @return The number of IDs retrieved.
              */
-            int id_list_db_auto( QString );
+      int                                   id_list_db_auto( QString );
 
-            /**
+      /**
              * @brief Retrieves the models in the edit profile automatically.
              * @param editID The edit ID.
              * @param modelIDs List of model IDs.
              * @return The number of models retrieved.
              */
-            int models_in_edit_auto( QString, QStringList& );
+      int                                   models_in_edit_auto( QString, QStringList& );
 
-            /**
+      /**
              * @brief Retrieves the noises in the model profile automatically.
              * @param modelID The model ID.
              * @param noiseIDs List of noise IDs.
              * @return The number of noises retrieved.
              */
-            int noises_in_model_auto( QString, QStringList& );
+      int                                   noises_in_model_auto( QString, QStringList& );
 
-            /**
+      /**
              * @brief Retrieves the file name.
              * @param fileID The file ID.
              * @return The file name.
              */
-            QString get_filename( QString );
+      QString                               get_filename( QString );
 
-            /**
+      /**
              * @brief (Re)starts progress_msg_mwlsim for a new channel,
              * resetting the bar back to 0-100 so progress is shown on a
              * per-channel basis. Each channel in VELOCITY-MWL is gated by an
@@ -613,128 +619,128 @@ class US_Analysis_auto : public US_Widgets
              * processed.
              * @param chan_name Name of the channel about to be processed.
              */
-            void                                       start_mwlsim_channel_progress( int chan_idx, const QString& chan_name );
+      void                                  start_mwlsim_channel_progress( int chan_idx, const QString& chan_name );
 
-            /**
+      /**
              * @brief Simulates the model data.
              */
-            void simulateModel( void );
+      void                                  simulateModel( void );
 
-            /**
+      /**
              * @brief Adjusts the model data.
              */
-            void adjustModel( void );
+      void                                  adjustModel( void );
 
-            /**
+      /**
              * @brief Creates a group box with the given title.
              * @param title The title of the group box.
              * @return Pointer to the created group box.
              */
-            QGroupBox *createGroup( QString &);
+      QGroupBox*                            createGroup( QString& );
 
-            // 2DSA
-            bool job1run;                                            /**< Run 1 (2DSA) run flag. */
-            bool job2run;                                            /**< Run 2 (2DSA-FM) run flag. */
-            bool job3run;                                            /**< Run 3 (FitMeniscus) run flag. */
-            bool job4run;                                            /**< Run 4 (2DSA-IT) run flag. */
-            bool job5run;                                            /**< Run 5 (2DSA-MC) run flag. */
-            bool job3auto;                                           /**< FitMeniscus auto-run flag. */
-            bool job6run_pcsa;                                       /**< Run 6 (PCSA) run flag. */
-            QString job1nois;                                        /**< 2DSA noise type. */
-            QString job2nois;                                        /**< 2DSA-FM noise type. */
-            QString job4nois;                                        /**< 2DSA-IT noise type. */
+      // 2DSA
+      bool                                  job1run;      /**< Run 1 (2DSA) run flag. */
+      bool                                  job2run;      /**< Run 2 (2DSA-FM) run flag. */
+      bool                                  job3run;      /**< Run 3 (FitMeniscus) run flag. */
+      bool                                  job4run;      /**< Run 4 (2DSA-IT) run flag. */
+      bool                                  job5run;      /**< Run 5 (2DSA-MC) run flag. */
+      bool                                  job3auto;     /**< FitMeniscus auto-run flag. */
+      bool                                  job6run_pcsa; /**< Run 6 (PCSA) run flag. */
+      QString                               job1nois;     /**< 2DSA noise type. */
+      QString                               job2nois;     /**< 2DSA-FM noise type. */
+      QString                               job4nois;     /**< 2DSA-IT noise type. */
 
-    public slots:
-        /**
+   public slots:
+      /**
          * @brief Slot to handle thread progress updates.
          * @param threadID The ID of the thread.
          * @param progress The progress value.
          */
-        void thread_progress( int, int );
+      void thread_progress( int, int );
 
-        /**
+      /**
          * @brief Slot to handle thread completion.
          * @param threadID The ID of the completed thread.
          */
-        void thread_complete( int );
+      void thread_complete( int );
 
-        /**
+      /**
          * @brief Slot to handle the completion of the residual plot.
          */
-        void resplot_done( void );
+      void resplot_done( void );
 
-        /**
+      /**
          * @brief Slot to update the progress.
          * @param progress The progress value.
          */
-        void update_progress( int );
+      void update_progress( int );
 
-    public slots:
-        void initPanel( QMap < QString, QString > & );
+   public slots:
+      void initPanel( QMap<QString, QString>& );
 
-    private slots:
-        /**
+   private slots:
+      /**
          * @brief Initializes the panel with the given data.
          * @param panelData A map containing the panel data.
          */
 
-        /**
+      /**
          * @brief Shows all elements in the UI.
          */
-        void show_all( void );
+      void show_all( void );
 
-        /**
+      /**
          * @brief Hides all elements in the UI.
          */
-        void hide_all( void );
+      void hide_all( void );
 
-        /**
+      /**
          * @brief Updates the GUI.
          */
-        void gui_update ( void );
+      void gui_update( void );
 
-        /**
+      /**
          * @brief Updates the GUI temporarily.
          */
-        void gui_update_temp ( void );
+      void gui_update_temp( void );
 
-        /**
+      /**
          * @brief Resets the analysis panel.
          */
-        void reset_analysis_panel ( void );
+      void reset_analysis_panel( void );
 
-        /**
+      /**
          * @brief Ends the process.
          */
-        void end_process( void );
+      void end_process( void );
 
-        /**
+      /**
          * @brief Resets the auto analysis.
          */
-        void reset_auto ( void );
+      void reset_auto( void );
 
-        /**
+      /**
          * @brief Updates the autoflow analysis statuses.
          * @param analysisData A map containing the analysis data.
          */
-        void update_autoflowAnalysis_statuses( QMap < QString, QString > & );
+      void update_autoflowAnalysis_statuses( QMap<QString, QString>& );
 
-        /**
+      /**
          * @brief Updates the edit profiles that were updated earlier.
          */
-        void editProfiles_updated_earlier( void );
+      void editProfiles_updated_earlier( void );
 
-        /**
+      /**
          * @brief Processes the triple analysis.
          */
-        void triple_analysis_processed( void );
+      void triple_analysis_processed( void );
 
-        /**
+      /**
          * @brief Updates the autoflow record at the time of analysis.
          */
-        void update_autoflow_record_atAnalysis( void );
+      void update_autoflow_record_atAnalysis( void );
 
-        /**
+      /**
          * @brief VELOCITY-MWL: final ANALYSIS -> REPORT step, run once every
          * Approved channel's 2DSA-IT models are recorded. (1) reads the species
          * (models) recorded per Approved channel, (2) lets the user pick which
@@ -749,9 +755,9 @@ class US_Analysis_auto : public US_Widgets
          * failure after (3) reverts the claim so a re-attach can retry; the run
          * then simply stays in ANALYSIS.
          */
-        void   finalize_velmwl_species_selection( void );
+      void finalize_velmwl_species_selection( void );
 
-        /**
+      /**
          * @brief Modal dialog: per Approved channel, checkboxes for its species
          * (all checked by default; at least one per channel is required).
          * Cannot be cancelled -- re-shown until confirmed, as the Report stage
@@ -760,20 +766,20 @@ class US_Analysis_auto : public US_Widgets
          * @param labels    "channel|species" -> display text.
          * @param selected  [out] channel -> species left checked.
          */
-        bool   show_velmwl_species_selection_dialog( const QMap<QString, QStringList>& available,
-                                                     const QMap<QString, QString>&     labels,
-                                                     QMap<QString, QStringList>&       selected );
+      bool show_velmwl_species_selection_dialog( const QMap<QString, QStringList>& available,
+                                                 const QMap<QString, QString>&     labels,
+                                                 QMap<QString, QStringList>&       selected );
 
-        /**
+      /**
          * @brief Writes analysisVelMwl/analysisVelMwlts into the run's
          * autoflowStatus record (analogue of
          * US_Norm_Profile::record_AnalysisABDE_status()).
          * @param comment the "Comment:" entered in the GMP submission form.
          * @return false if the record could not be identified/updated.
          */
-        bool   record_AnalysisVelMwl_status( const QString& comment );
+      bool record_AnalysisVelMwl_status( const QString& comment );
 
-        /**
+      /**
          * @brief Look up whether a VEL-MWL channel already has a recorded
          * Accept/Reject decision (own or another session) -- checked
          * BEFORE (re-)simulating/saving/opening US_MwlSpeciesFit for a
@@ -784,9 +790,9 @@ class US_Analysis_auto : public US_Widgets
          * @param decision [out] "Accepted" or "Rejected" if found.
          * @return true if a decision was found.
          */
-        bool   load_velmwl_channel_decision( QString autoflowID, QString chann, QString& decision, bool* prep_done = nullptr );
+      bool load_velmwl_channel_decision( QString autoflowID, QString chann, QString& decision, bool* prep_done = nullptr );
 
-        /**
+      /**
          * @brief Marks this channel's post-Accept preparation (Convert import
          * + Edit profile save) as complete in channelDecisions[chann].prepDone.
          * Until this runs, an Accepted channel is NOT considered finished and
@@ -794,18 +800,18 @@ class US_Analysis_auto : public US_Widgets
          * @param chann The channel, in "N / X" canonical form.
          * @return true if the DB write succeeded.
          */
-        bool   mark_velmwl_channel_prep_done( const QString& chann );
+      bool mark_velmwl_channel_prep_done( const QString& chann );
 
-        /**
+      /**
          * @brief Discards an Accepted-but-incomplete (prepDone == 0) decision
          * so the channel can be re-simulated and re-decided. No effect on
          * Rejected or fully prepared channels.
          * @param chann The channel, in "N / X" canonical form.
          * @return true if the DB call succeeded.
          */
-        bool   reset_velmwl_incomplete_channel( const QString& chann );
+      bool reset_velmwl_incomplete_channel( const QString& chann );
 
-        /**
+      /**
          * @brief Once every channel in channels_all has been resolved
          * this pass (see velmwl_channels_decided), hands off to
          * process_velmwl_after_all_channels_decided(). No-op if channels
@@ -816,9 +822,9 @@ class US_Analysis_auto : public US_Widgets
          * there's more processing to do after this point before the run
          * is genuinely complete.
          */
-        void   finalize_velmwl_analysis_if_complete( void );
+      void finalize_velmwl_analysis_if_complete( void );
 
-        /**
+      /**
          * @brief Runs once every VEL-MWL channel in channels_all has a
          * recorded Accept/Reject decision (see finalize_velmwl_analysis_
          * if_complete()), but before switching to the Report stage.
@@ -839,9 +845,9 @@ class US_Analysis_auto : public US_Widgets
          * update_autoflow_record_atAnalysis() and emitting
          * analysis_complete_auto() to switch to Report.
          */
-        void   process_velmwl_after_all_channels_decided( void );
+      void process_velmwl_after_all_channels_decided( void );
 
-        /**
+      /**
          * @brief Drives the 2DSA-IT post-processing pipeline one Approved
          * VEL-MWL channel at a time, exactly as start_next_velmwl_channel()
          * drives the species-fit stage: pulls the next channel from
@@ -852,9 +858,9 @@ class US_Analysis_auto : public US_Widgets
          * approved is exhausted, finishes the VEL-MWL run
          * (update_autoflow_record_atAnalysis() + analysis_complete_auto()).
          */
-        void   start_next_2dsa_channel( void );
+      void start_next_2dsa_channel( void );
 
-        /**
+      /**
          * @brief Slot connected to US_2dsa::twodsa_complete_s() -- retires
          * the current channel's US_2dsa (cleanup_2dsa_widget()) and
          * advances to the next Approved channel via start_next_2dsa_
@@ -867,16 +873,16 @@ class US_Analysis_auto : public US_Widgets
          *        channel -- accumulated into twodsa_nspecies_total for
          *        start_next_2dsa_channel()'s completion summary.
          */
-        void   twodsa_channel_complete( QString& chann, bool success, int nspecies );
+      void twodsa_channel_complete( QString& chann, bool success, int nspecies );
 
-        /**
+      /**
          * @brief Retires the current 2DSA widget (sdiag_2dsa), if any --
          * closes it, removes it from panel, schedules it for deletion.
          * Mirrors cleanup_velmwl_fit_widget() exactly.
          */
-        void   cleanup_2dsa_widget( void );
+      void cleanup_2dsa_widget( void );
 
-        /**
+      /**
          * @brief Drives the VELOCITY-MWL channel pipeline one channel at a
          * time. Scans channels_all forward from mwlsim_chan_idx + 1,
          * silently resolving (counting, not re-processing) any channel
@@ -891,9 +897,9 @@ class US_Analysis_auto : public US_Widgets
          * progress_msg_mwlsim and calls finalize_velmwl_analysis_if_
          * complete() instead.
          */
-        void   start_next_velmwl_channel( void );
+      void start_next_velmwl_channel( void );
 
-        /**
+      /**
          * @brief Retires the current VEL-MWL species-fit widget (sdiag),
          * if any: closes it, removes it from panel, and schedules it for
          * deletion via deleteLater() (safe to call from inside a slot
@@ -903,59 +909,59 @@ class US_Analysis_auto : public US_Widgets
          * don't pile up as a growing stack of hidden QWidgets in panel
          * for the lifetime of the run. No-op if sdiag is already null.
          */
-        void   cleanup_velmwl_fit_widget( void );
+      void cleanup_velmwl_fit_widget( void );
 
-        /**
+      /**
          * @brief Checks the fit meniscus status.
          * @param analysisID The analysis ID.
          * @param status The status to check.
          * @return True if the status is valid, false otherwise.
          */
-        bool check_fitmen_status( const QString&, const QString& );
+      bool check_fitmen_status( const QString&, const QString& );
 
-        /**
+      /**
          * @brief Deletes the job with the given ID.
          * @param jobID The job ID.
          */
-        //void delete_job ( QString );
-        void delete_job ( const QString& text );
+      //void delete_job ( QString );
+      void delete_job( const QString& text );
 
-        /**
+      /**
          * @brief Deletes the jobs at the fit meniscus stage.
          * @param jobData A map containing the job data.
          */
-        void delete_jobs_at_fitmen ( QMap< QString, QString > & );
+      void delete_jobs_at_fitmen( QMap<QString, QString>& );
 
-        /**
+      /**
          * @brief Shows the overlay for the given analysis.
          * @param analysisID The analysis ID.
          */
-        //void show_overlay( QString );
-        void show_overlay( const QString& text );
+      //void show_overlay( QString );
+      void show_overlay( const QString& text );
 
-        /**
+      /**
          * @brief Shows the results.
          */
-        void show_results ( void );
+      void show_results( void );
 
-        /**
+      /**
          * @brief Calculates the residuals.
          */
-        void calc_residuals( void );
+      void calc_residuals( void );
 
-        /**
+      /**
          * @brief Plots the residuals.
          */
-        void plotres( void );
+      void plotres( void );
 
-        void proceed_abde_to_report( QMap< QString, QString > & );
-        void back_to_initAutoflow( void );
-        void   get_editID( QString& );
-        void   get_ssf_dir_and_saveDB( QString& );
-        void   velmwl_deconv_rejected( QString& );
-        void   velmwl_deconv_accepted( QString& );
+      void proceed_abde_to_report( QMap<QString, QString>& );
+      void back_to_initAutoflow( void );
+      void get_editID( QString& );
+      void get_ssf_dir_and_saveDB( QString& );
+      void velmwl_deconv_rejected( QString& );
+      void velmwl_deconv_accepted( QString& );
 
-        /**
+      /**
          * @brief Updates progress_msg_mwlsim as US_MwlSpeciesSim reports
          * progress through its auto-mode pipeline for the channel being
          * processed.
@@ -964,9 +970,9 @@ class US_Analysis_auto : public US_Widgets
          * @param step  Current step within the stage (1-based).
          * @param total Total number of steps within the stage.
          */
-        void   update_mwlsim_progress( const QString& stage, int step, int total );
+      void update_mwlsim_progress( const QString& stage, int step, int total );
 
-        /**
+      /**
          * @brief (Re)starts progress_msg_2dsa for a new Approved VEL-MWL
          *        channel, resetting the bar back to 0-100. Each channel's
          *        2DSA-IT post-processing (this channel's data load, then
@@ -978,9 +984,9 @@ class US_Analysis_auto : public US_Widgets
          * processed.
          * @param chan_name Name of the channel about to be processed.
          */
-        void   start_2dsa_channel_progress( int chan_idx, const QString& chan_name );
+      void start_2dsa_channel_progress( int chan_idx, const QString& chan_name );
 
-        /**
+      /**
          * @brief Updates progress_msg_2dsa as US_2dsa's auto path (via
          *        US_2dsa::twodsa_progress_s(), connected in
          *        start_next_2dsa_channel()) reports progress for the
@@ -1003,31 +1009,31 @@ class US_Analysis_auto : public US_Widgets
          *        to ("fit"/"save" only).
          * @param step, total    Progress within `stage`.
          */
-        void   update_2dsa_progress( const QString& stage, int species_idx, int species_count, int step, int total );
+      void update_2dsa_progress( const QString& stage, int species_idx, int species_count, int step, int total );
 
-     signals:
-        /**
+   signals:
+      /**
          * @brief Signal emitted when the analysis update process is stopped.
          */
-        void analysis_update_process_stopped( void );
+      void analysis_update_process_stopped( void );
 
-        /**
+      /**
          * @brief Signal emitted when the analysis setup message is closed.
          */
-        void close_analysissetup_msg( void );
+      void close_analysissetup_msg( void );
 
-        /**
+      /**
          * @brief Signal emitted when the analysis is returned to the initial autoflow stage.
          */
-        void analysis_back_to_initAutoflow( void );
+      void analysis_back_to_initAutoflow( void );
 
-        /**
+      /**
          * @brief Signal emitted when the automatic analysis is complete.
          * @param analysisData A map containing the analysis data.
          */
-        void analysis_complete_auto( QMap <QString, QString> & );
+      void analysis_complete_auto( QMap<QString, QString>& );
 
-        void process_abde( QMap < QString, QString > & );
+      void process_abde( QMap<QString, QString>& );
 };
 
 #endif
