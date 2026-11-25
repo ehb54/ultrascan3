@@ -62,6 +62,9 @@ class US_GUI_EXTERN US_ModelLoader : public US_WidgetsDialog
       */
       US_ModelLoader( bool, QString&, QList< US_Model >&, QStringList& );
 
+      //! \brief Destructor: closes the database connection, if one was opened
+      ~US_ModelLoader();
+
       void accepted_auto(  QStringList );
       void accepted_multiple_auto( QStringList );
 
