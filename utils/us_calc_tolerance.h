@@ -16,10 +16,11 @@ namespace US_Calc
 //! \brief A tolerance rule of the reporter.
 enum class ToleranceRule
 {
-   //! t*(1 - tol/100) <= v <= t*(1 + tol/100):  replicate fraction, total
-   //! concentration, experiment duration, loading volume (10045, 10728-10732)
+   //! t*(1 - tol/100) <= v <= t*(1 + tol/100):  total concentration,
+   //! experiment duration, loading volume (10728-10732)
    RelativePercentOfTarget,
-   //! |v - t| <= tol:  range fraction against its target (10946, 4667)
+   //! |v - t| <= tol:  range fraction against its target, for individual
+   //! triples and for replicate groups (10946, 4667)
    AbsolutePercentagePoints,
    //! t - tol <= v <= t + tol:  temperature (7679)
    AbsoluteUnits,

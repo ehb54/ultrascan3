@@ -91,7 +91,7 @@ ReplicateGroupResult evaluate_replicate_group( const ReplicateItem&             
    }
    result.show_sd = listed_triples > 1;
    result.passed  = passes( result.mean_fraction_percent,
-                            { ToleranceRule::RelativePercentOfTarget, reference.target_percent, reference.tolerance } );
+                            { ToleranceRule::AbsolutePercentagePoints, reference.target_percent, reference.tolerance } );
    return result;
 }
 } // namespace US_Calc::Gmp

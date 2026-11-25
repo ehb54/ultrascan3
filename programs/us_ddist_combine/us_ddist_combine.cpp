@@ -1,22 +1,23 @@
 //! \file us_ddist_combine.cpp
 
-#include <QApplication>
-#include <qwt_scale_div.h>
 #include "us_ddist_combine.h"
-#include "us_select_rundd.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_settings.h"
+#include "qwt_legend.h"
+#include "us_constants.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
+#include "us_license.h"
+#include "us_license_t.h"
+#include "us_math2.h"
 #include "us_matrix.h"
-#include "us_constants.h"
+#include "us_model.h"
 #include "us_passwd.h"
 #include "us_report.h"
+#include "us_select_rundd.h"
+#include "us_settings.h"
 #include "us_util.h"
-#include "us_model.h"
-#include "us_math2.h"
-#include "qwt_legend.h"
+#include <QApplication>
+#include <QScopedPointer>
+#include <qwt_scale_div.h>
 
 
 const double epsilon = 0.0005;    // Equivalence magnitude ratio radius
@@ -1974,16 +1975,17 @@ void US_DDistr_Combine::fill_in_desc( DistrDesc& ddesc, int distx )
    QString mdescr = ddesc.mdescr;
    ddesc.iters    = mdescr.contains( "-MC_" ) ? 1 : 0;
 DbgLv(1) << "FID: mdescr" << mdescr << "iters" << ddesc.iters;
-   bool    isDB   = dkdb_cntrls->db();
-   US_Passwd pw;
-   US_DB2* db     = isDB ? new US_DB2( pw.getPasswd() ) : 0;
-   int     ncomps = ddesc.model.components.size();
+bool isDB   = dkdb_cntrls->db();
+int  ncomps = ddesc.model.components.size();
 DbgLv(1) << "FID:  ncomps" << ncomps;
 
    // Read in the (first) model
    if ( ncomps == 0 )
-   {  // Model not yet loaded, so load it now
-      ddesc.model.load( isDB, ddesc.mGUID, db );
+   { // Model not yet loaded, so load it now.  This is the only place a
+      //  database connection is needed; it is closed when the block exits.
+      US_Passwd              pw;
+      QScopedPointer<US_DB2> db( isDB ? new US_DB2( pw.getPasswd() ) : nullptr );
+      ddesc.model.load( isDB, ddesc.mGUID, db.data() );
 
       ncomps         = ddesc.model.components.size();   // Composite components
 DbgLv(1) << "FID:  (2)ncomps" << ncomps;
