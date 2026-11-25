@@ -194,6 +194,10 @@ class US_FeMatch : public US_Widgets
        US_SimulationParameters     simparams; //!< Simulation parameters.
        QVector<US_Model>           imodels;   //!< Vector of intermediate models.
 
+       //! \brief Set exp_steps when speed_steps covers every loaded triple,
+       //!        and dat_steps otherwise.
+       void                        choose_speed_steps( void );
+
     private slots:
         //! \brief Slot to load data.
         void load();

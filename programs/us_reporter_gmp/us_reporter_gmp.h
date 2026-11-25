@@ -61,16 +61,16 @@ class US_ReporterGMP : public US_Widgets
          */
         void write_gmp_report_DB_test(QString runID, QString protocolID, int invID, QString protocolName, QString esign);
 
-        QTreeWidget* genTree;               //!< General report tree
-        QTreeWidget* miscTree;              //!< Miscellaneous report tree
-        QTreeWidget* perChanTree;           //!< Per-channel report tree
-        QTreeWidget* combPlotsTree;         //!< Combined plots tree
+        QTreeWidget*           genTree       = nullptr;       //!< General report tree
+        QTreeWidget*           miscTree      = nullptr;       //!< Miscellaneous report tree
+        QTreeWidget*           perChanTree   = nullptr;       //!< Per-channel report tree
+        QTreeWidget*           combPlotsTree = nullptr;       //!< Combined plots tree
         bool first_time_gen_tree_build;     //!< Flag for first time general tree build
         bool first_time_misc_tree_build;    //!< Flag for first time miscellaneous tree build
         bool first_time_perChan_tree_build; //!< Flag for first time per-channel tree build
 
         bool auto_mode;                     //!< Flag for auto mode
-        QLabel* lb_hdr1;                    //!< Header label
+        QLabel*                lb_hdr1 = nullptr;             //!< Header label
 
         US_GmpProgress*        progress_msg = nullptr; //!< The ONE progress dialog (lazily created by
                                                        //!< gmp_progress(); only ever hidden)
@@ -87,12 +87,12 @@ class US_ReporterGMP : public US_Widgets
 
         QString ap_xml;                     //!< XML string for analysis profile
 
-        US_Norm_Profile*  sdiag_norm_profile;
-        US_Integral*           sdiag_integral;
+        US_Norm_Profile*       sdiag_norm_profile = nullptr;
+        US_Integral*           sdiag_integral     = nullptr;
 
-        US_Pseudo3D_Combine* sdiag_pseudo3d; //!< Pseudo3D combine dialog
-        US_DDistr_Combine* sdiag_combplot;   //!< D distribution combine dialog
-        US_AnalysisProfileGui* sdiag;        //!< Analysis profile GUI dialog
+        US_Pseudo3D_Combine*   sdiag_pseudo3d = nullptr; //!< Pseudo3D combine dialog
+        US_DDistr_Combine*     sdiag_combplot = nullptr; //!< D distribution combine dialog
+        US_AnalysisProfileGui* sdiag          = nullptr; //!< Analysis profile GUI dialog
         US_AnaProfile currAProf;            //!< Current analysis profile
         US_AnaProfile::AnaProf2DSA cAP2;    //!< 2DSA analysis profile
         US_AnaProfile::AnaProfPCSA cAPp;    //!< PCSA analysis profile
@@ -187,14 +187,14 @@ class US_ReporterGMP : public US_Widgets
 
         bool GMP_report;                 //!< Flag for GMP report
 
-        US_Plot* plotLayout1; //!< Plot layout 1
-        US_Plot* plotLayout2; //!< Plot layout 2
+        US_Plot*                plotLayout1 = nullptr; //!< Plot layout 1
+        US_Plot*                plotLayout2 = nullptr; //!< Plot layout 2
 
         // Widgets
-        QwtPlot* data_plot1; //!< Data plot 1
-        QwtPlot* data_plot2; //!< Data plot 2
+        QwtPlot*                data_plot1 = nullptr; //!< Data plot 1
+        QwtPlot*                data_plot2 = nullptr; //!< Data plot 2
 
-    private:
+     private:
         QJsonObject json;                         //!< JSON object
         QMap<QString, QTreeWidgetItem*> topItem;  //!< Map of top items
         QMap<QString, QTreeWidgetItem*> solutionItem; //!< Map of solution items
@@ -237,8 +237,8 @@ class US_ReporterGMP : public US_Widgets
 
         QList<QStringList> gmpReportsDBdata; //!< GMP reports DB data
         QList<QStringList> autoflowdata;     //!< Autoflow data
-        US_SelectItem* pdiag_autoflow;       //!< Autoflow select item dialog
-        US_SelectItem* pdiag_autoflow_db;    //!< Autoflow select item dialog for DB
+        US_SelectItem*                  pdiag_autoflow    = nullptr; //!< Autoflow select item dialog
+        US_SelectItem*                  pdiag_autoflow_db = nullptr; //!< Autoflow select item dialog for DB
 
         QString html_assembled;              //!< Assembled HTML string
         QString html_failed;                 //!< Failed HTML string
@@ -257,22 +257,22 @@ class US_ReporterGMP : public US_Widgets
 
         US_Help showHelp;                    //!< Help display object
 
-        QPushButton* pb_download_report;     //!< Download report button
-        QPushButton* pb_gen_report;          //!< Generate report button
-        QPushButton* pb_view_report;         //!< View report button
-        QPushButton* pb_view_report_db;      //!< View report from DB button
-        QPushButton* pb_view_report_auto;    //!< View auto report button
-        QPushButton* pb_select_all;          //!< Select all button
-        QPushButton* pb_unselect_all;        //!< Unselect all button
-        QPushButton* pb_expand_all;          //!< Expand all button
-        QPushButton* pb_collapse_all;        //!< Collapse all button
-        QPushButton* pb_help;                //!< Help button
-        QPushButton* pb_close;               //!< Close button
-        QLineEdit* le_loaded_run;            //!< Loaded run line edit
-        QLineEdit* le_loaded_run_db;         //!< Loaded run DB line edit
+        QPushButton*                    pb_download_report  = nullptr; //!< Download report button
+        QPushButton*                    pb_gen_report       = nullptr; //!< Generate report button
+        QPushButton*                    pb_view_report      = nullptr; //!< View report button
+        QPushButton*                    pb_view_report_db   = nullptr; //!< View report from DB button
+        QPushButton*                    pb_view_report_auto = nullptr; //!< View auto report button
+        QPushButton*                    pb_select_all       = nullptr; //!< Select all button
+        QPushButton*                    pb_unselect_all     = nullptr; //!< Unselect all button
+        QPushButton*                    pb_expand_all       = nullptr; //!< Expand all button
+        QPushButton*                    pb_collapse_all     = nullptr; //!< Collapse all button
+        QPushButton*                    pb_help             = nullptr; //!< Help button
+        QPushButton*                    pb_close            = nullptr; //!< Close button
+        QLineEdit*                      le_loaded_run       = nullptr; //!< Loaded run line edit
+        QLineEdit*                      le_loaded_run_db    = nullptr; //!< Loaded run DB line edit
 
-        QTextEdit* te_fpath_info;            //!< File path info text edit
-        QTextEdit* te_fpath_info_db;         //!< File path info DB text edit
+        QTextEdit*                      te_fpath_info    = nullptr; //!< File path info text edit
+        QTextEdit*                      te_fpath_info_db = nullptr; //!< File path info DB text edit
 
         QString AProfileGUID;                //!< Analysis profile GUID
         QString ProtocolName_auto;           //!< Auto protocol name

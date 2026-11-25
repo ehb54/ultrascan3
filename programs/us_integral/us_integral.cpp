@@ -155,7 +155,7 @@ US_Integral::US_Integral() : US_Widgets()
    lb_division     = us_label( tr( "Divisions:" ) );
    lb_division->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
-   ct_division     = us_counter( 2, 0, 100, 50 );
+   ct_division     = us_counter( 2, 1, 100, 50 );
    ct_boundaryPct  = us_counter( 2, 10, 100, 1 );
    ct_boundaryPos  = us_counter( 2, 0, 100, 1 );
    ct_smoothing    = us_counter( 2, 1, 100, 1 );

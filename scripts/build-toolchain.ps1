@@ -118,6 +118,9 @@ foreach ($ProfileName in $Profiles) {
         # Separate install trees prevent profiles from pruning each other's packages.
         "--x-install-root=$VcpkgRoot\installed-toolchain-$ProfileName"
     )
+    # build.ps1 TEST uses the APP features plus test (GoogleTest), so the APP
+    # install caches GoogleTest too.
+    if ($ProfileName -eq 'APP') { $vcpkgArgs += '--x-feature=test' }
     if (Test-Path $OverlayPorts) { $vcpkgArgs += "--overlay-ports=$OverlayPorts" }
 
     & $VcpkgExe @vcpkgArgs
