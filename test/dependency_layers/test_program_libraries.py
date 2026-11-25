@@ -61,7 +61,7 @@ VALID = {
 }
 
 
-def run_checker(files):
+def run_checker(files, *args):
     """Write the tree and run the checker; return (exit code, output)."""
     with tempfile.TemporaryDirectory() as root:
         for path, text in files.items():
@@ -70,7 +70,7 @@ def run_checker(files):
             with open(full, "w", encoding="utf-8") as handle:
                 handle.write(text)
         result = subprocess.run(
-            [sys.executable, CHECKER, "--root", root], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True
+            [sys.executable, CHECKER, "--root", root, *args], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True
         )
         return result.returncode, result.stdout
 
@@ -93,6 +93,30 @@ class ProgramLibrariesTest(unittest.TestCase):
     def test_valid_tree_passes(self):
         code, output = run_checker(VALID)
         self.assertEqual(code, 0, output)
+
+    def test_affected_programs_include_transitive_dependents(self):
+        code, output = run_checker(VALID, "--affected-programs", "programs/us_alpha")
+        self.assertEqual(code, 0, output)
+        self.assertEqual(output.splitlines(), ["programs/us_alpha", "programs/us_beta", "programs/us_gamma"])
+
+    def test_affected_programs_do_not_include_dependencies(self):
+        code, output = run_checker(VALID, "--affected-programs", "programs/us_beta")
+        self.assertEqual(code, 0, output)
+        self.assertEqual(output.splitlines(), ["programs/us_beta", "programs/us_gamma"])
+
+    def test_affected_programs_follow_new_area_dependencies(self):
+        files = dict(VALID)
+        files["programlibs/top/us_programs_top.pro"] = "SOURCES = ../../programs/us_delta/us_delta.cpp\n"
+        files["programlibs/link.pri"] += "contains( PROGRAM_LIBS, top ) : PROGRAM_LIBS += high\n"
+        files["programs/us_delta/us_delta.pro"] = "PROGRAM_LIBS = top\n"
+        code, output = run_checker(files, "--affected-programs", "programs/us_alpha")
+        self.assertEqual(code, 0, output)
+        self.assertEqual(output.splitlines(), ["programs/us_alpha", "programs/us_beta", "programs/us_delta", "programs/us_gamma"])
+
+    def test_changed_program_without_area_is_still_built(self):
+        code, output = run_checker(VALID, "--affected-programs", "programs/us_delta")
+        self.assertEqual(code, 0, output)
+        self.assertEqual(output.splitlines(), ["programs/us_delta"])
 
     def test_comments_are_ignored(self):
         code, output = self.run_with("programs/us_beta/CMakeLists.txt", "# ../us_alpha/us_alpha.cpp\n#[[\n../us_alpha/us_alpha.cpp\n]]\n")

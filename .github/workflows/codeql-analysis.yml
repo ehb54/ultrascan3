@@ -68,6 +68,7 @@ jobs:
               - programs/main1.inc
               - make_all.pro
               - programlibs/**
+              - scripts/check-program-libraries.py
               - admin/codeql/docker/local.pri.gui
               - library.pri
             programs: &programs
@@ -229,25 +230,8 @@ jobs:
               if [ -d "$dir" ]; then
                 # add the directory itself
                 echo "$dir" >> build_targets.txt
-                # get program name
-                prog_name=$(basename "$dir")
-                # find all programs, which contain $prog_name in the pro file
-                grep -r -l "$prog_name" programs/*/*.pro || true | while read dependent_pro; do
-                  dirname "$dependent_pro" >> build_targets.txt
-                done
-                # find all programs that link the area library with $prog_name in it
-                grep -l "/$prog_name/" programlibs/*/*.pro | while read lib_pro; do
-                  case $(basename $(dirname "$lib_pro")) in
-                    data|results) libs="gmp|comproject" ;;
-                    analysis)     libs="experiment|gmp|comproject" ;;
-                    experiment)   libs="gmp|comproject" ;;
-                    *)            libs="comproject" ;;
-                  esac
-                  libs="$libs|$(basename $(dirname "$lib_pro"))"
-                  grep -E -l "^PROGRAM_LIBS *=.*\b($libs)\b" programs/*/*.pro | while read dependent_pro; do
-                    dirname "$dependent_pro" >> build_targets.txt
-                  done
-                done
+                # Derive transitive dependents from the qmake area graph.
+                python3 scripts/check-program-libraries.py --affected-programs "$dir" >> build_targets.txt
               fi
             done
           fi
