@@ -4,6 +4,7 @@
 #include "us3_gui_test_main.h"
 #include "us_analysis_profile.h"
 #include <QCheckBox>
+#include <QLineEdit>
 #include <QMessageBox>
 #include <QSpinBox>
 #include <QTabWidget>
@@ -147,6 +148,8 @@ class US_AnalysisProfileRunReportTest : public QObject
       void clicking_after_load();
       void clicks_keep_a_chosen_reference();
       void panels_have_the_loaded_channels();
+      void values_stay_with_their_channels_data();
+      void values_stay_with_their_channels();
       void report_on_without_a_reference();
       void unusable_profile_keeps_the_one_shown();
 };
@@ -346,6 +349,70 @@ void US_AnalysisProfileRunReportTest::panels_have_the_loaded_channels()
    {
       QCOMPARE( window.window.childLValue( panel, "channels" ), channels );
    }
+}
+
+void US_AnalysisProfileRunReportTest::values_stay_with_their_channels_data()
+{
+   QTest::addColumn<QStringList>( "first" );
+   QTest::addColumn<QStringList>( "second" );
+   QTest::addColumn<QList<double>>( "expected" );
+
+   // U is UV/vis., I is interference; the B channel of interference is not shown
+   QTest::newRow( "interference removed" ) << QStringList{ "1 / A UI", "1 / B UI", "2 / A U" }
+                                           << QStringList{ "1 / A U", "1 / B U", "2 / A U" } << QList<double>{ 400, 420, 430 };
+   QTest::newRow( "hidden channel removed" ) << QStringList{ "1 / A UI", "1 / B I", "2 / A U" }
+                                             << QStringList{ "1 / A U", "2 / A U" } << QList<double>{ 400, 420 };
+   QTest::newRow( "one channel left" ) << QStringList{ "1 / A UI", "1 / B I", "2 / A UI", "2 / B I", "3 / A UI", "3 / B I" }
+                                       << QStringList{ "1 / A U" } << QList<double>{ 400 };
+   QTest::newRow( "same channels" ) << QStringList{ "1 / A UI", "1 / B UI", "2 / A U" }
+                                    << QStringList{ "1 / A UI", "1 / B UI", "2 / A U" } << QList<double>{ 400, 410, 420, 430 };
+}
+
+void US_AnalysisProfileRunReportTest::values_stay_with_their_channels()
+{
+   QFETCH( QStringList, first );
+   QFETCH( QStringList, second );
+   QFETCH( QList<double>, expected );
+   const auto set_channels = []( US_RunProtocol& protocol, const QStringList& channels )
+   {
+      protocol.rpSolut.chsols.clear();
+      protocol.rpOptic.chopts.clear();
+      protocol.rpRange.chrngs.clear();
+      for ( const QString& channel : channels )
+      {
+         const QString                               scans = channel.section( " ", 3, 3 );
+         US_RunProtocol::RunProtoSolutions::ChanSolu solution;
+         solution.channel  = channel.section( " ", 0, 2 );
+         solution.solution = "Sample";
+         protocol.rpSolut.chsols << solution;
+         US_RunProtocol::RunProtoOptics::OpticSys optics;
+         optics.channel = solution.channel;
+         optics.scan1   = scans.startsWith( "U" ) ? "UV/visible" : "Rayleigh Interference";
+         optics.scan2   = scans == "UI" ? "Rayleigh Interference" : "";
+         optics.scan3   = "";
+         protocol.rpOptic.chopts << optics;
+         US_RunProtocol::RunProtoRanges::Ranges range;
+         range.channel = solution.channel;
+         range.wvlens  = { 280.0 };
+         protocol.rpRange.chrngs << range;
+      }
+   };
+
+   Window window( false );
+   set_channels( window.protocol, first );
+   window.load();
+   const int count = window.window.currProf.l_volumes.size();
+   for ( int ii = 0; ii < count; ii++ )
+   {
+      auto* volume = window.window.findChild<QLineEdit*>( QString::number( ii ) + ": load_volume" );
+      QVERIFY( volume != nullptr );
+      volume->setText( QString::number( 400 + 10 * ii ) );
+   }
+   window.save();
+   set_channels( window.protocol, second );
+   window.load();
+   QCOMPARE( window.window.currProf.l_volumes, expected );
+   QVERIFY( window.window.profile_usable );
 }
 
 //! A channel whose Report is off can have no reference number, as in older profiles

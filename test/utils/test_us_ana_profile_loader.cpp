@@ -281,15 +281,10 @@ TEST_F( AnaProfileLoaderTest, UnusableProfilesGiveAMessage )
    shorter.initial.report_run.clear();
    ProfileFixture::Input no_speed = ProfileFixture::make( "one" );
    no_speed.protocol.rpSpeed.ssteps.clear();
-   // ABDE whose only B channel is interference
-   ProfileFixture::Input abde = ProfileFixture::make( "interference-pair" );
-   abde.abde                  = true;
-
    const QList<QPair<ProfileFixture::Input, QString>> cases = { { hidden, "no wavelengths" },
                                                                 { none, "no channel to analyze" },
                                                                 { shorter, "channels without values" },
-                                                                { no_speed, "protocol has no speed" },
-                                                                { abde, "use as a reference" } };
+                                                                { no_speed, "protocol has no speed" } };
    for ( const QPair<ProfileFixture::Input, QString>& each : cases )
    {
       US_AnaProfileLoader::Options options;
@@ -433,5 +428,303 @@ TEST_F( AnaProfileLoaderTest, ConnectsOnlyWhenNeeded )
    file.close();
    EXPECT_TRUE( US_AnaProfileLoader::load( input.protocol, nullptr, options ).loaded );
    EXPECT_EQ( 2, connects );
+}
+
+//! Channels of a protocol, as in "1A:UI 1B:U": U is UV/vis., I is interference
+US_RunProtocol protocol_of( const QString& text, const QString& solution = "Sample" )
+{
+   US_RunProtocol protocol;
+   protocol.protoname         = "Channels";
+   protocol.protoGUID         = "13290000-0000-0000-0000-000000000002";
+   protocol.rpAprof.aprofname = protocol.protoname;
+   protocol.rpSolut.chsols.clear();
+   protocol.rpOptic.chopts.clear();
+   protocol.rpRange.chrngs.clear();
+   for ( const QString& each : text.split( " " ) )
+   {
+      const QString                               name  = each.left( 1 ) + " / " + each.mid( 1, 1 );
+      const QString                               scans = each.section( ":", 1, 1 );
+      US_RunProtocol::RunProtoSolutions::ChanSolu solute;
+      solute.channel  = name;
+      solute.solution = solution;
+      protocol.rpSolut.chsols << solute;
+      US_RunProtocol::RunProtoOptics::OpticSys optics;
+      optics.channel = name;
+      optics.scan1   = scans.startsWith( "U" ) ? "UV/visible" : "Rayleigh Interference";
+      optics.scan2   = scans == "UI" ? "Rayleigh Interference" : "";
+      optics.scan3   = "";
+      protocol.rpOptic.chopts << optics;
+      US_RunProtocol::RunProtoRanges::Ranges range;
+      range.channel = name;
+      range.wvlens  = { 260, 270, 280, 290, 300 };
+      protocol.rpRange.chrngs << range;
+   }
+   return protocol;
+}
+
+QString text_of( const QList<int>& list )
+{
+   QStringList parts;
+   for ( int value : list )
+   {
+      parts << QString::number( value );
+   }
+   return parts.join( "," );
+}
+
+//! A profile that was loaded for a protocol and edited, loaded for another one
+class ChannelChanges : public AnaProfileLoaderTest
+{
+   protected:
+      void SetUp() override
+      {
+         AnaProfileLoaderTest::SetUp();
+         US_Settings::set_default_data_location( 2 );
+      }
+
+      //! Load, and give each shown channel its own values
+      void first( const QString& channels )
+      {
+         const US_AnaProfileLoader::Result result = US_AnaProfileLoader::load( protocol_of( channels ), nullptr );
+         ASSERT_TRUE( result.loaded );
+         profile         = result.profile;
+         const int count = profile.l_volumes.size();
+         profile.scan_excl_begin.clear();
+         profile.scan_excl_end.clear();
+         profile.scan_excl_nth.clear();
+         for ( int ii = 0; ii < count; ii++ )
+         {
+            profile.lc_ratios[ii]  = 1 + ii;
+            profile.l_volumes[ii]  = 400 + 10 * ii;
+            profile.replicates[ii] = ii % 2;
+            // The exclusions dialog has an entry for each shown channel
+            profile.scan_excl_begin << 11 + ii;
+            profile.scan_excl_end << 21 + ii;
+            profile.scan_excl_nth << 1 + ii;
+         }
+      }
+
+      void set_edit( const QList<int>& wavelengths )
+      {
+         profile.wvl_edit = wavelengths;
+      }
+
+      void set_boxes( const QList<int>& run, const QList<int>& report, const QList<int>& ref, const QList<int>& use )
+      {
+         profile.analysis_run     = run;
+         profile.report_run       = report;
+         profile.ref_channels     = ref;
+         profile.ref_use_channels = use;
+      }
+
+      US_AnaProfileLoader::Result second( const QString& channels, bool abde = false, const QString& solution = "Sample" )
+      {
+         US_AnaProfileLoader::Options options;
+         options.start      = &profile;
+         options.abde       = abde;
+         options.read_saved = false;
+         return US_AnaProfileLoader::load( protocol_of( channels, solution ), nullptr, options );
+      }
+
+      //! Reference numbers, and those used
+      QString references( const US_AnaProfileLoader::Result& result )
+      {
+         return "run " + text_of( result.profile.analysis_run ) + " report " + text_of( result.profile.report_run ) + " ref " +
+                text_of( result.profile.ref_channels ) + " use " + text_of( result.profile.ref_use_channels );
+      }
+
+      US_AnaProfile profile;
+};
+
+TEST_F( ChannelChanges, InterferenceRemovedFromOneCell )
+{
+   first( "1A:UI 1B:UI 2A:U" );
+   ASSERT_EQ( 4, int( profile.l_volumes.size() ) );
+   set_edit( { 260, 660, 270, 300 } );
+   profile.wvl_not_run                      = QStringList() << "270" << "" << "280" << "290:300";
+   profile.analysis_run                     = { 1, 1, 0, 1 };
+   profile.report_run                       = { 1, 1, 0, 1 };
+   const US_AnaProfileLoader::Result result = second( "1A:U 1B:U 2A:U" );
+   ASSERT_TRUE( result.loaded );
+   EXPECT_TRUE( result.messages.isEmpty() );
+   EXPECT_EQ( QList<double>() << 400 << 420 << 430, result.profile.l_volumes );
+   EXPECT_EQ( QList<double>() << 1 << 3 << 4, result.profile.lc_ratios );
+   EXPECT_EQ( "1,0,1", text_of( result.profile.analysis_run ) );
+   EXPECT_EQ( "1,0,1", text_of( result.profile.report_run ) );
+   EXPECT_EQ( "0,0,1", text_of( result.profile.replicates ) );
+   EXPECT_EQ( "260,270,300", text_of( result.profile.wvl_edit ) );
+   EXPECT_EQ( QStringList() << "270" << "280" << "290:300", result.profile.wvl_not_run );
+   EXPECT_EQ( "11,13,14", text_of( result.profile.scan_excl_begin ) );
+   EXPECT_EQ( "21,23,24", text_of( result.profile.scan_excl_end ) );
+   EXPECT_EQ( "1,3,4", text_of( result.profile.scan_excl_nth ) );
+}
+
+TEST_F( ChannelChanges, HiddenChannelRemoved )
+{
+   first( "1A:UI 1B:I 2A:U" );
+   const US_AnaProfileLoader::Result result = second( "1A:U 2A:U" );
+   ASSERT_TRUE( result.loaded );
+   EXPECT_EQ( QList<double>() << 400 << 420, result.profile.l_volumes );
+   EXPECT_EQ( "11,13", text_of( result.profile.scan_excl_begin ) );
+}
+
+TEST_F( ChannelChanges, MostChannelsRemoved )
+{
+   first( "1A:UI 1B:I 2A:UI 2B:I 3A:UI 3B:I" );
+   const US_AnaProfileLoader::Result result = second( "1A:U" );
+   ASSERT_TRUE( result.loaded ) << qPrintable( result.errors.join( "\n" ) );
+   EXPECT_TRUE( result.messages.isEmpty() );
+   EXPECT_EQ( QList<double>() << 400, result.profile.l_volumes );
+   EXPECT_EQ( "11", text_of( result.profile.scan_excl_begin ) );
+}
+
+TEST_F( ChannelChanges, OrderChanged )
+{
+   first( "1A:U 1B:U 2A:U" );
+   const US_AnaProfileLoader::Result result = second( "2A:U 1A:U 1B:U" );
+   EXPECT_EQ( QList<double>() << 420 << 400 << 410, result.profile.l_volumes );
+   EXPECT_EQ( "13,11,12", text_of( result.profile.scan_excl_begin ) );
+}
+
+TEST_F( ChannelChanges, SolutionChanged )
+{
+   first( "1A:U 1B:U 2A:U" );
+   EXPECT_EQ( QList<double>() << 400 << 410 << 420, second( "1A:U 1B:U 2A:U", false, "Other" ).profile.l_volumes );
+   EXPECT_EQ( QList<double>() << 400 << 420, second( "1A:U 2A:U", false, "Other" ).profile.l_volumes );
+}
+
+TEST_F( ChannelChanges, NewChannels )
+{
+   first( "1A:U 1B:U 2A:U" );
+   // In the row of a channel that is gone
+   EXPECT_EQ( QList<double>() << 400 << 410 << 420, second( "1A:U 3B:U 2A:U" ).profile.l_volumes );
+   // Among the channels, and at the end
+   EXPECT_EQ( QList<double>() << 400 << 400 << 410 << 420, second( "1A:U 3A:U 1B:U 2A:U" ).profile.l_volumes );
+   EXPECT_EQ( QList<double>() << 400 << 410 << 420 << 420, second( "1A:U 1B:U 2A:U 3A:U" ).profile.l_volumes );
+   // At the start there is no previous channel
+   EXPECT_EQ( QList<double>() << 400 << 400 << 410 << 420, second( "4A:U 1A:U 1B:U 2A:U" ).profile.l_volumes );
+}
+
+TEST_F( ChannelChanges, SameChannelsKeepEveryListAsItIs )
+{
+   first( "1A:UI 1B:UI 2A:U" );
+   const US_AnaProfileLoader::Result result = second( "1A:UI 1B:UI 2A:U" );
+   EXPECT_EQ( QList<double>() << 400 << 410 << 420 << 430, result.profile.l_volumes );
+   EXPECT_EQ( "11,12,13,14,14", text_of( result.profile.scan_excl_begin ) );
+   // Saved profiles leave out the hidden channel
+   profile.pchans.removeAt( 3 );
+   profile.chndescs.removeAt( 3 );
+   profile.chndescs_alt.removeLast();
+   const US_AnaProfileLoader::Result saved = second( "1A:UI 1B:UI 2A:U" );
+   ASSERT_TRUE( saved.loaded );
+   EXPECT_EQ( QList<double>() << 400 << 410 << 420 << 430, saved.profile.l_volumes );
+   EXPECT_EQ( "11,12,13,14,14", text_of( saved.profile.scan_excl_begin ) );
+}
+
+TEST_F( ChannelChanges, NoValuesStartWithTheDefaults )
+{
+   first( "1A:U 1B:U" );
+   profile.lc_ratios.clear();
+   profile.lc_tolers.clear();
+   profile.l_volumes.clear();
+   profile.lv_tolers.clear();
+   profile.data_ends.clear();
+   profile.ld_dens_0s.clear();
+   profile.gm_vbars.clear();
+   profile.gm_mws.clear();
+   profile.replicates.clear();
+   profile.wvl_edit.clear();
+   profile.wvl_not_run.clear();
+   set_boxes( {}, {}, {}, {} );
+   for ( const QString& channels : QStringList{ "1A:U 1B:U", "1A:U", "2A:U 3A:U" } )
+   {
+      const US_AnaProfileLoader::Result result = second( channels );
+      ASSERT_TRUE( result.loaded ) << qPrintable( channels );
+      EXPECT_TRUE( result.messages.isEmpty() );
+      EXPECT_EQ( 460, result.profile.l_volumes[0] );
+      EXPECT_EQ( 1, result.profile.analysis_run[0] );
+   }
+   // Only some values are missing
+   profile.lc_ratios = { 1, 2 };
+   EXPECT_FALSE( second( "2A:U 3A:U" ).loaded );
+}
+
+TEST_F( ChannelChanges, ReferenceRemoved )
+{
+   for ( bool abde : { true, false } )
+   {
+      // The only one
+      first( "1A:U 1B:U 2A:U" );
+      set_boxes( { 1, 1, 1 }, { 1, 0, 1 }, { 0, 1, 0 }, { 1, 0, 1 } );
+      EXPECT_EQ( "run 1,1 report 1,1 ref 0,0 use 0,0", references( second( "1A:U 2A:U", abde ) ) );
+
+      first( "1A:U 1B:U 2A:U 2B:U" );
+      set_boxes( { 1, 1, 1, 1 }, { 1, 0, 1, 0 }, { 0, 1, 0, 2 }, { 1, 0, 2, 0 } );
+      // The first of two, and the second
+      EXPECT_EQ( "run 1,1,1 report 1,1,0 ref 0,0,1 use 0,1,0", references( second( "1A:U 2A:U 2B:U", abde ) ) );
+      EXPECT_EQ( "run 1,1,1 report 1,0,1 ref 0,1,0 use 1,0,0", references( second( "1A:U 1B:U 2A:U", abde ) ) );
+      // Not a reference
+      EXPECT_EQ( "run 1,1,1 report 0,1,0 ref 1,0,2 use 0,2,0", references( second( "1B:U 2A:U 2B:U", abde ) ) );
+      // Its row goes to another channel
+      EXPECT_EQ( "run 1,1,1,1 report 1,0,1,0 ref 0,1,0,2 use 1,0,2,0", references( second( "1A:U 3B:U 2A:U 2B:U", abde ) ) );
+   }
+}
+
+TEST_F( ChannelChanges, RemovedReferenceLeavesTheFirstBChannelInAbde )
+{
+   first( "1A:U 1B:U 2A:U 2B:U" );
+   set_boxes( { 1, 1, 1, 1 }, { 1, 0, 1, 1 }, { 0, 1, 0, 0 }, { 1, 0, 1, 1 } );
+   EXPECT_EQ( "run 1,1,0 report 1,1,0 ref 0,0,1 use 1,1,0", references( second( "1A:U 2A:U 2B:U", true ) ) );
+   EXPECT_EQ( "run 1,1,1 report 1,1,1 ref 0,0,0 use 0,0,0", references( second( "1A:U 2A:U 2B:U", false ) ) );
+}
+
+TEST_F( ChannelChanges, HiddenInterferenceIsNotAReference )
+{
+   // With every report on, only a shown B channel can be the reference
+   for ( const QString& channels : QStringList{ "1A:UI 1B:I", "1A:U 1B:I 2A:U" } )
+   {
+      US_AnaProfileLoader::Options options;
+      options.abde                             = true;
+      const US_AnaProfileLoader::Result result = US_AnaProfileLoader::load( protocol_of( channels ), nullptr, options );
+      ASSERT_TRUE( result.loaded ) << qPrintable( channels );
+      EXPECT_TRUE( result.messages.isEmpty() );
+      EXPECT_EQ( "run 1,1 report 1,1 ref 0,0 use 0,0", references( result ) );
+   }
+   first( "1A:U 1B:U 2A:U" );
+   set_boxes( { 1, 1, 1 }, { 1, 0, 1 }, { 0, 1, 0 }, { 1, 0, 1 } );
+   const US_AnaProfileLoader::Result result = second( "1A:U 1B:I 2A:U", true );
+   ASSERT_TRUE( result.loaded );
+   EXPECT_TRUE( result.messages.isEmpty() );
+   EXPECT_EQ( "run 1,1 report 1,1 ref 0,0 use 0,0", references( result ) );
+}
+
+TEST_F( ChannelChanges, OnlyAHiddenChannelRemoved )
+{
+   first( "1A:U 1B:I 2A:U" );
+   // As after another load
+   profile.scan_excl_begin << 12;
+   profile.scan_excl_end << 22;
+   profile.scan_excl_nth << 2;
+   const US_AnaProfileLoader::Result result = second( "1A:U 2A:U" );
+   EXPECT_EQ( QList<double>() << 400 << 410, result.profile.l_volumes );
+   EXPECT_EQ( "11,12", text_of( result.profile.scan_excl_begin ) );
+}
+
+TEST_F( ChannelChanges, CopyOfAReferenceIsNotOne )
+{
+   for ( bool abde : { true, false } )
+   {
+      first( "1A:U 1B:U 3A:U" );
+      set_boxes( { 1, 1, 1 }, { 1, 0, 1 }, { 0, 1, 0 }, { 1, 0, 1 } );
+      EXPECT_EQ( "run 1,1,1,1 report 1,0,1,1 ref 0,1,0,0 use 1,0,0,1", references( second( "1A:U 1B:U 2A:U 3A:U", abde ) ) );
+      // With Run off, as ABDE makes references
+      set_boxes( { 1, 0, 1 }, { 1, 0, 1 }, { 0, 1, 0 }, { 1, 0, 1 } );
+      EXPECT_EQ( "run 1,0,1,1 report 1,0,1,1 ref 0,1,0,0 use 1,0,0,1", references( second( "1A:U 1B:U 2A:U 3A:U", abde ) ) );
+      // At the end it is copied as before
+      EXPECT_EQ( "run 1,0,1,1,1 report 1,0,1,1,1", references( second( "1A:U 1B:U 3A:U 4A:U 5A:U", abde ) ).left( 30 ) );
+      first( "1A:U 1B:U" );
+      set_boxes( { 1, 1 }, { 1, 0 }, { 0, 1 }, { 1, 0 } );
+      EXPECT_EQ( "run 1,1,1 report 1,0,0 ref 0,1,1 use 1,0,0", references( second( "1A:U 1B:U 2A:U", abde ) ) );
+   }
 }
 }

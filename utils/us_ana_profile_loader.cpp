@@ -73,14 +73,6 @@ struct AppendCopy
       }
 };
 
-struct RemoveLast
-{
-      template <class L> void operator()( L& list )
-      {
-         list.removeLast();
-      }
-};
-
 int shortest( US_AnaProfile& p )
 {
    Shortest s;
@@ -477,6 +469,240 @@ QString replace_reports( US_AnaProfile& p, bool abde )
    return QString();
 }
 
+//! A channel and optics of a protocol
+struct ProtocolChannel
+{
+      QString       name;
+      QString       optics;
+      QString       description;
+      QString       alternate;
+      QList<double> wavelengths;
+};
+
+QList<ProtocolChannel> protocol_channels( const US_RunProtocol& protocol )
+{
+   QList<ProtocolChannel> result;
+   QStringList            names;
+   QStringList            solutions;
+   for ( int ii = 0; ii < protocol.rpSolut.chsols.size(); ii++ )
+   {
+      names << channel_name( protocol.rpSolut.chsols[ii].channel );
+      solutions << protocol.rpSolut.chsols[ii].solution;
+   }
+
+   for ( int ii = 0; ii < protocol.rpOptic.chopts.size(); ii++ )
+   {
+      const US_RunProtocol::RunProtoOptics::OpticSys& chopt = protocol.rpOptic.chopts[ii];
+      const QStringList                               scans = QStringList() << chopt.scan1 << chopt.scan2 << chopt.scan3;
+      ProtocolChannel                                 channel;
+      channel.name    = channel_name( chopt.channel );
+      const int index = names.indexOf( channel.name );
+      if ( index < 0 )
+      {
+         continue;
+      }
+
+      for ( int jj = 0; jj < protocol.rpRange.chrngs.size(); jj++ )
+      {
+         QString range_channel = protocol.rpRange.chrngs[jj].channel.split( "," )[0];
+         if ( channel.name.contains( range_channel.replace( " / ", "" ) ) )
+         {
+            channel.wavelengths = protocol.rpRange.chrngs[jj].wvlens;
+         }
+      }
+
+      for ( const QString& scan : scans )
+      {
+         if ( scan.isEmpty() )
+         {
+            continue;
+         }
+         channel.optics = scan;
+         channel.optics.replace( "visible", "vis." );
+         channel.optics.replace( "Rayleigh Interference", "Interf." );
+         channel.optics.replace( "Fluorescence", "Fluor." );
+         const QString start = channel.name + ":" + channel.optics + ":";
+         channel.description = start + solutions[index];
+         channel.alternate   = start + channel.description.section( ":", 2, 2 );
+         result << channel;
+      }
+   }
+   return result;
+}
+
+//! Channel and optics of each shown channel
+QStringList shown_keys( const US_AnaProfile& p )
+{
+   QStringList keys;
+   for ( const QString& channel : US_AnaProfileLoader::channels( p ) )
+   {
+      keys << channel.section( ":", 0, 1 );
+   }
+   return keys;
+}
+
+//! Values keep their rows; rows at the end have the values of the one before
+bool keep_rows( US_AnaProfile& p, int old_count, int count )
+{
+   for ( int ii = 0; ii < count; ii++ )
+   {
+      const int from = ii < old_count ? int( p.lc_ratios.size() ) - 1 : ii - 1;
+      if ( ii < old_count && from >= ii )
+      {
+         continue;
+      }
+      if ( from < 0 || shortest( p ) <= from )
+      {
+         return false;
+      }
+      AppendCopy copy( from );
+      each_channel_list( p, copy );
+   }
+   return true;
+}
+
+//! The old row that a channel's values come from
+struct SourceRow
+{
+      int  row;
+      bool copied; //!< The values are also those of another channel
+};
+
+QList<SourceRow> source_rows( const QStringList& old_keys, const QStringList& keys )
+{
+   QList<SourceRow> rows;
+   for ( int ii = 0; ii < keys.size(); ii++ )
+   {
+      SourceRow source;
+      source.row    = old_keys.indexOf( keys[ii] );
+      source.copied = false;
+      if ( source.row < 0 )
+      {
+         // A new channel takes the row of one that is gone, or else the values of the channel before it
+         const bool gone = ii < old_keys.size() && !keys.contains( old_keys[ii] );
+         source.row      = ( gone || ii == 0 ) ? ii : rows.last().row;
+         source.copied   = !gone;
+      }
+      rows << source;
+   }
+   return rows;
+}
+
+//! Numbers of references that are gone are no longer used, and those after them close the gap
+void renumber_references( US_AnaProfile& p, const QList<int>& old_refs )
+{
+   QList<int> gone;
+   for ( int number : old_refs )
+   {
+      if ( number > 0 && !p.ref_channels.contains( number ) && !gone.contains( number ) )
+      {
+         gone << number;
+      }
+   }
+   QList<int>* lists[] = { &p.ref_channels, &p.ref_use_channels };
+   for ( QList<int>* list : lists )
+   {
+      for ( int ii = 0; ii < list->size(); ii++ )
+      {
+         const int number = list->at( ii );
+         int       lower  = 0;
+         for ( int each : gone )
+         {
+            lower += each < number ? 1 : 0;
+         }
+         ( *list )[ii] = gone.contains( number ) ? 0 : number - lower;
+      }
+   }
+}
+
+struct CopyRows
+{
+      QList<int>              rows;
+
+      template <class L> void operator()( L& list )
+      {
+         const L old = list;
+         list.clear();
+         for ( int row : rows )
+         {
+            list << old[qMin( row, int( old.size() ) - 1 )];
+         }
+      }
+};
+
+//! Values keep their channels
+bool keep_channels( US_AnaProfile& p, const QStringList& old_keys, const QStringList& keys )
+{
+   // Without channels to analyze, prepare() says so
+   if ( keys.isEmpty() )
+   {
+      return true;
+   }
+
+   const QList<SourceRow> sources = source_rows( old_keys, keys );
+   CopyRows               copy;
+   for ( const SourceRow& source : sources )
+   {
+      copy.rows << source.row;
+   }
+
+   // Nothing has values: start again
+   if ( p.lc_ratios.isEmpty() && p.analysis_run.isEmpty() && p.report_run.isEmpty() && p.replicates.isEmpty() &&
+        p.l_volumes.isEmpty() && p.wvl_edit.isEmpty() )
+   {
+      const US_AnaProfile start;
+      p.lc_ratios        = start.lc_ratios;
+      p.lc_tolers        = start.lc_tolers;
+      p.l_volumes        = start.l_volumes;
+      p.lv_tolers        = start.lv_tolers;
+      p.data_ends        = start.data_ends;
+      p.ld_dens_0s       = start.ld_dens_0s;
+      p.gm_vbars         = start.gm_vbars;
+      p.gm_mws           = start.gm_mws;
+      p.ref_channels     = start.ref_channels;
+      p.ref_use_channels = start.ref_use_channels;
+      p.analysis_run     = start.analysis_run;
+      p.report_run       = start.report_run;
+      p.wvl_edit         = start.wvl_edit;
+      p.wvl_not_run      = start.wvl_not_run;
+      p.scan_excl_begin  = start.scan_excl_begin;
+      p.scan_excl_end    = start.scan_excl_end;
+      p.scan_excl_nth    = start.scan_excl_nth;
+      p.replicates       = start.replicates;
+   }
+   if ( shortest( p ) < 1 )
+   {
+      return false;
+   }
+   QList<int> old_refs;
+   for ( int ii = 0; ii < old_keys.size(); ii++ )
+   {
+      old_refs << value_at( p.ref_channels, ii );
+   }
+   each_channel_list( p, copy );
+
+   // A copy of a reference is not a reference
+   for ( int ii = 0; ii < sources.size(); ii++ )
+   {
+      if ( sources[ii].copied && p.ref_channels[ii] > 0 )
+      {
+         p.ref_channels[ii] = 0;
+         p.analysis_run[ii] = 1;
+         p.report_run[ii]   = 1;
+      }
+   }
+   renumber_references( p, old_refs );
+
+   // Scan exclusions have an entry for each channel, with the shown ones first
+   while ( p.scan_excl_begin.size() < p.pchans.size() )
+   {
+      p.scan_excl_begin << int( p.scan_excl_begin.last() );
+      p.scan_excl_end << int( p.scan_excl_end.last() );
+      p.scan_excl_nth << int( p.scan_excl_nth.last() );
+   }
+   return true;
+}
+
 //! Channel parameters of 2DSA and PCSA for a profile that was not saved
 QString set_parameters( US_AnaProfile& p, const QStringList& channels )
 {
@@ -573,130 +799,69 @@ QString US_AnaProfileLoader::merge( US_AnaProfile& p, const US_RunProtocol& prot
    {
       return tr_gui( "The protocol has no speed step." );
    }
-   const double duration = protocol.rpSpeed.ssteps[0].duration + protocol.rpSpeed.ssteps[0].delay_stage;
-
-   QStringList  names;
-   QStringList  solutions;
-   for ( int ii = 0; ii < protocol.rpSolut.chsols.size(); ii++ )
-   {
-      names << channel_name( protocol.rpSolut.chsols[ii].channel );
-      solutions << protocol.rpSolut.chsols[ii].solution;
-   }
+   const double      duration  = protocol.rpSpeed.ssteps[0].duration + protocol.rpSpeed.ssteps[0].delay_stage;
+   const int         old_count = p.pchans.size();
+   const QStringList old_shown = shown_keys( p );
+   const auto        channels  = protocol_channels( protocol );
+   const int         count     = channels.size();
 
    p.ch_wvls.clear();
-
-   const int old_count = p.pchans.size();
-   int       count     = 0;
-   if ( p.chndescs.size() != old_count || p.chndescs_alt.size() < old_count )
+   if ( p.chndescs.size() != old_count || p.chndescs_alt.size() < old_count ||
+        ( count > old_count && p.chndescs_alt.size() > old_count ) )
    {
       return short_lists();
    }
 
-   for ( int ii = 0; ii < protocol.rpOptic.chopts.size(); ii++ )
+   for ( int ii = 0; ii < count; ii++ )
    {
-      const US_RunProtocol::RunProtoOptics::OpticSys& chopt     = protocol.rpOptic.chopts[ii];
-      const QStringList                               all_scans = QStringList() << chopt.scan1 << chopt.scan2 << chopt.scan3;
-      QStringList                                     scans;
-      for ( const QString& scan : all_scans )
+      const ProtocolChannel& channel = channels[ii];
+      if ( ii < old_count )
       {
-         if ( !scan.isEmpty() )
-         {
-            scans << scan;
-         }
+         p.ch_wvls[p.chndescs_alt[ii]];
+         p.pchans[ii]       = channel.name;
+         p.chndescs[ii]     = channel.description;
+         p.chndescs_alt[ii] = channel.alternate;
+      }
+      else
+      {
+         p.pchans << channel.name;
+         p.chndescs << channel.description;
+         p.chndescs_alt << channel.alternate;
       }
 
-      const QString name  = channel_name( chopt.channel );
-      const int     index = names.indexOf( name );
-      if ( scans.isEmpty() || index < 0 )
+      QList<double>& wavelengths = p.ch_wvls[channel.alternate];
+      if ( channel.optics.contains( "vis." ) )
       {
-         continue;
+         wavelengths = channel.wavelengths;
       }
-
-      QList<double> wavelengths;
-      for ( int jj = 0; jj < protocol.rpRange.chrngs.size(); jj++ )
+      if ( channel.optics.contains( "Interf." ) )
       {
-         QString range_channel = protocol.rpRange.chrngs[jj].channel.split( "," )[0];
-         if ( name.contains( range_channel.replace( " / ", "" ) ) )
-         {
-            wavelengths = protocol.rpRange.chrngs[jj].wvlens;
-         }
+         wavelengths = QList<double>() << 660;
       }
-
-      for ( QString optics : scans )
+      for ( double wavelength : wavelengths )
       {
-         optics.replace( "visible", "vis." );
-         optics.replace( "Rayleigh Interference", "Interf." );
-         optics.replace( "Fluorescence", "Fluor." );
-         const QString description = name + ":" + optics + ":" + solutions[index];
-         const QString alternate   = name + ":" + optics + ":" + description.section( ":", 2, 2 );
-         const bool    append      = count >= old_count;
-
-         if ( append )
-         {
-            // Values come from the previous channel
-            if ( count == 0 || shortest( p ) < count || p.chndescs_alt.size() > count )
-            {
-               return short_lists();
-            }
-            p.pchans << name;
-            p.chndescs << description;
-            p.chndescs_alt << alternate;
-            AppendCopy copy( count - 1 );
-            each_channel_list( p, copy );
-         }
-         else
-         {
-            p.ch_wvls[p.chndescs_alt[count]];
-            p.pchans[count]       = name;
-            p.chndescs[count]     = description;
-            p.chndescs_alt[count] = alternate;
-            const int last        = p.lc_ratios.size() - 1;
-            if ( last < count )
-            {
-               if ( last < 0 || shortest( p ) <= last )
-               {
-                  return short_lists();
-               }
-               AppendCopy copy( last );
-               each_channel_list( p, copy );
-            }
-         }
-
-         QList<double>& channel_wavelengths = p.ch_wvls[alternate];
-         if ( optics.contains( "vis." ) )
-         {
-            channel_wavelengths = wavelengths;
-         }
-         if ( optics.contains( "Interf." ) )
-         {
-            channel_wavelengths = QList<double>() << 660;
-         }
-         for ( double wavelength : channel_wavelengths )
-         {
-            start_report( p.ch_reports[alternate][QString::number( wavelength )], alternate, duration );
-         }
-         count++;
+         start_report( p.ch_reports[channel.alternate][QString::number( wavelength )], channel.alternate, duration );
       }
    }
-
-   // Drop any channel values left over from before
-   if ( p.pchans.size() > count )
+   for ( int ii = count; ii < old_count; ii++ )
    {
-      const int extra = p.pchans.size() - count;
-      if ( shortest( p ) < extra || p.chndescs_alt.size() < extra )
+      p.pchans.removeLast();
+      p.chndescs.removeLast();
+      p.chndescs_alt.removeLast();
+   }
+
+   // Values keep their rows when no channel is removed and the shown ones are the same, or have more at the end
+   const QStringList shown = shown_keys( p );
+   if ( count >= old_count && shown.mid( 0, old_shown.size() ) == old_shown )
+   {
+      US_AnaProfile rows = p;
+      if ( keep_rows( rows, old_count, count ) )
       {
-         return short_lists();
-      }
-      for ( int ii = 0; ii < extra; ii++ )
-      {
-         p.pchans.removeLast();
-         p.chndescs.removeLast();
-         p.chndescs_alt.removeLast();
-         RemoveLast remove;
-         each_channel_list( p, remove );
+         p = rows;
+         return QString();
       }
    }
-   return QString();
+   return keep_channels( p, old_shown, shown ) ? QString() : short_lists();
 }
 
 QString US_AnaProfileLoader::prepare( US_AnaProfile& p, bool abde, Channels& values )
@@ -814,15 +979,11 @@ QString US_AnaProfileLoader::prepare( US_AnaProfile& p, bool abde, Channels& val
    {
       if ( !p.report_run.contains( 0 ) )
       {
-         // With every report on, the first B channel is the reference
-         for ( int ii = 0; ii < p.chndescs_alt.size(); ii++ )
+         // With every report on, the first B channel that is shown is the reference
+         for ( int ii = 0; ii < count; ii++ )
          {
             if ( p.chndescs_alt[ii].split( ":" )[0].contains( "B" ) )
             {
-               if ( ii >= count )
-               {
-                  return tr_gui( "The analysis profile has no channel to use as a reference." );
-               }
                values.setRun( ii, false, abde );
                break;
             }
