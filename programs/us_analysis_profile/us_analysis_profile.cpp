@@ -614,7 +614,8 @@ DbgLv(1) << "APG: ipro: name GUID" << currProf.aprofname << currProf.aprofGUID;
       bool fromdisk        = US_Settings::debug_match( "protocolFromDisk" );
       bool load_db         = fromdisk ? false : use_db;
       US_Passwd  pw;
-      US_DB2* dbP          = load_db ? new US_DB2( pw.getPasswd() ) : NULL;
+      QScopedPointer<US_DB2> db_holder( load_db ? new US_DB2( pw.getPasswd() ) : NULL );
+      US_DB2*                dbP = db_holder.data();
       load_db              = ( dbP != NULL );
 
       QString reportMask_DB;
@@ -654,7 +655,11 @@ DbgLv(1) << "APG: ipro:  ap ID,name,lnxml" << currProf.aprofID
 	 }
       }
 
-DbgLv(1) << "APG: ipro:  load_db" << load_db;
+      // The profile has been read:  close the connection now, not at scope exit
+      db_holder.reset();
+      dbP = NULL;
+
+      DbgLv( 1 ) << "APG: ipro:  load_db" << load_db;
       if ( !load_db )
       {  // Get AProfile XML from local disk
          bool new_file        = false;
