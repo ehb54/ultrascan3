@@ -357,23 +357,33 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 	  
 	  //Pre-process data (decomposition for MWL); build alt. GUI (to integrate and manually normalize);
 	  sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis );
-	  //sdiag -> show(); //for debug
-	  
-	  qDebug() << "SSF-Dir: " << protocol_details_at_analysis["ssf_dir_name"];
-	  
-	  //now save ssf-produced-data to DB
-	  sdiag_convert = new US_ConvertGui("AUTO");
-	  sdiag_convert->import_ssf_data_auto( protocol_details_at_analysis );
-	  //sdiag_convert -> show(); //for debug
-	}
+     if ( !sdiag->profile_usable )
+     {
+        emit close_analysissetup_msg();
+        return;
+     }
+     //sdiag -> show(); //for debug
+
+     qDebug() << "SSF-Dir: " << protocol_details_at_analysis["ssf_dir_name"];
+
+     //now save ssf-produced-data to DB
+     sdiag_convert = new US_ConvertGui( "AUTO" );
+     sdiag_convert->import_ssf_data_auto( protocol_details_at_analysis );
+     //sdiag_convert -> show(); //for debug
+   }
       else if ( abde_etype == "SWL" )
 	{
 	  protocol_details_at_analysis["abde_etype"] = "SWL";
 	  sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis );
+     if ( !sdiag->profile_usable )
+     {
+        emit close_analysissetup_msg();
+        return;
+     }
 
-	  qDebug() << "Dir for GMP: " << protocol_details_at_analysis["directory_for_gmp"];
-	}
-      
+     qDebug() << "Dir for GMP: " << protocol_details_at_analysis["directory_for_gmp"];
+   }
+
       //Build channel -> {"Analyte #1:":pretty, ...} map (same lookup
       //US_ReporterGMP uses) so this Analysis-stage norm-profile plot's
       //legends show human-readable analyte names instead of the sanitized
@@ -1874,6 +1884,14 @@ void US_Analysis_auto::get_ssf_dir_and_saveDB( QString& ssf_dir )
       }
    };
    sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis_velmwl, aprof_progress );
+   if ( !sdiag->profile_usable )
+   {
+      if ( progress_msg_mwlsim )
+      {
+         progress_msg_mwlsim->hide();
+      }
+      return;
+   }
    update_mwlsim_progress( "fit", 1, 1 );
    connect( sdiag, &US_MwlSpeciesFit::reject_velmwl_s, this, &US_Analysis_auto::velmwl_deconv_rejected );
    connect( sdiag, &US_MwlSpeciesFit::accept_velmwl_s, this, &US_Analysis_auto::velmwl_deconv_accepted );
@@ -2392,10 +2410,8 @@ void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
 
    // ALEXEY: Load this run's 2DSA Analysis-Profile settings (per-channel
    // s_min/s_max/s_grpts/k_min/k_max/k_grpts grid parameters) ONCE here,
-   // via the exact US_AnalysisProfileGui::inherit_protocol() pattern
-   // US_ReporterGMP uses to obtain cAP2 (US_ReporterGMP::currAProf.ap2DSA)
-   // -- the dialog class is constructed purely as a data loader and never
-   // shown/exec'd. Cached in cAP2_2dsa; start_next_2dsa_channel() looks up
+   // as US_ReporterGMP does to obtain cAP2 (US_ReporterGMP::currAProf.ap2DSA).
+   // Cached in cAP2_2dsa; start_next_2dsa_channel() looks up
    // each channel's matching parms[] entry from it below, before that
    // channel's US_2dsa is constructed, so US_AnalysisControl2D::
    // apply_auto_fit_params() has something to apply ahead of Start Fit.
@@ -2411,10 +2427,10 @@ void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
          QXmlStreamReader xmli_ap( xmlstr_ap );
          currProto.fromXml( xmli_ap );
 
-         US_AnalysisProfileGui* aprof_loader = new US_AnalysisProfileGui;
+         US_AnaProfileLoader::Options options;
          // Reading reports/reportItems from the DB is the slow part: drive the
          // step bar (stage range is 0..100) and detail line from it.
-         aprof_loader->progress_cb           = [this]( int done, int total, const QString& detail )
+         options.progress = [this]( int done, int total, const QString& detail )
          {
             if ( !progress_msg_2dsa || total <= 0 )
             {
@@ -2426,10 +2442,17 @@ void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
             }
             progress_msg_2dsa->setValue( qBound( 0, qRound( 100.0 * done / total ), 100 ) );
          };
-         aprof_loader->inherit_protocol( &currProto );
-         aprof_loader->progress_cb = nullptr;
-         cAP2_2dsa                 = aprof_loader->currProf.ap2DSA;
-         delete aprof_loader;
+         const US_AnaProfileLoader::Result loaded = US_AnaProfileLoader::load( currProto, &db_ap, options );
+         for ( const US_AnaProfileLoader::Message& message : loaded.messages )
+         {
+            QMessageBox::warning( this, message.title, message.text );
+         }
+         if ( !loaded.loaded )
+         {
+            progress_msg_2dsa->hide();
+            return;
+         }
+         cAP2_2dsa = loaded.profile.ap2DSA;
          progress_msg_2dsa->setValue( 0 );
 
          qDebug() << "[US_Autoflow_analysis] "

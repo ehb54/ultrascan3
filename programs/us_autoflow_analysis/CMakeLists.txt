@@ -27,7 +27,6 @@ target_link_libraries(us_autoflow_analysis_lib PUBLIC
         us_program_common
         us_2dsa_lib
         us_abde_lib
-        us_analysis_profile_lib
         us_edit_lib
         us_edited_data_loaders_lib
         us_fit_meniscus_lib

@@ -2,13 +2,13 @@
 #ifndef US_MWL_SPECIES_FIT_H
 #define US_MWL_SPECIES_FIT_H
 
+#include "us_ana_profile_loader.h"
 #include "us_analysis_base2.h"
 #include "us_editor.h"
 #include "us_math2.h"
 #include "us_mwl_sf_plot3d.h"
-#include "us_run_protocol.h"
 #include "us_protocol_util.h"
-#include "../us_analysis_profile/us_analysis_profile.h"
+#include "us_run_protocol.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -27,7 +27,7 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
         //! \brief Auto-mode constructor.
         //! \param aprof_progress  Optional hook ( done, total, detail )
         //! forwarded to
-        //!        US_AnalysisProfileGui::progress_cb while read_protocol()
+        //!        US_AnaProfileLoader while read_protocol()
         //!        reads the Analysis Profile (reports/reportItems) from the DB.
         //!        read_protocol() runs inside this constructor, so it has to be
         //!        passed in here.
@@ -36,9 +36,9 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
                              std::function<void( int, int, const QString& )>() );
 
         bool us_gmp_auto_mode;
+        bool                                                     profile_usable = true; //!< The analysis profile could be loaded
         QMap<QString, QString> protocol_details;
-        US_RunProtocol currProto;           //!< Current run protocol
-        US_AnalysisProfileGui* sdiag_aprof; //!< Analysis profile GUI dialog
+        US_RunProtocol                                           currProto;         //!< Current run protocol
         std::function<void( int, int, const QString& )>          aprof_progress_cb; //!< Analysis-profile read progress (optional)
         US_AnaProfile currAProf;            //!< Current analysis profile
         QMap<QString, QMap<QString, US_ReportGMP>> ch_reports; //!< Channel reports

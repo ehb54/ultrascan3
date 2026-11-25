@@ -128,7 +128,12 @@ US_MwlSpeciesFit::US_MwlSpeciesFit( QMap<QString, QString>&                     
 
    // read protocol & check (once more) extinction profiles
    QStringList msg_to_user;
-   if ( !read_protocol( msg_to_user ) )
+   const bool  protocol_read = read_protocol( msg_to_user );
+   if ( !profile_usable )
+   {
+      // Its message was shown
+   }
+   else if ( !protocol_read )
    {
       msg_to_user.removeDuplicates();
       QMessageBox::critical( this,
@@ -1266,11 +1271,19 @@ bool US_MwlSpeciesFit::read_protocol(QStringList& msg_to_user)
   currProto. fromXml( xmli );
 
   //read AProfile to later pass ranges
-  sdiag_aprof = new US_AnalysisProfileGui;
-  sdiag_aprof->progress_cb = aprof_progress_cb; // report DB reading of reports/reportItems
-  sdiag_aprof->inherit_protocol( &currProto );
-  sdiag_aprof->progress_cb = nullptr;
-  currAProf   = sdiag_aprof->currProf;
+  US_AnaProfileLoader::Options options;
+  options.progress                         = aprof_progress_cb; // report DB reading of reports/reportItems
+  const US_AnaProfileLoader::Result loaded = US_AnaProfileLoader::load( currProto, &db, options );
+  for ( const US_AnaProfileLoader::Message& message : loaded.messages )
+  {
+     QMessageBox::warning( this, message.title, message.text );
+  }
+  profile_usable = loaded.loaded;
+  if ( !profile_usable )
+  {
+     return false;
+  }
+  currAProf              = loaded.profile;
   //Channel reports
   ch_reports             = currAProf.ch_reports;
   //Channel descriptions

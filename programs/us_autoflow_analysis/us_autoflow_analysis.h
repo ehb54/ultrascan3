@@ -2,11 +2,11 @@
 #ifndef US_ANALYSIS_AUTO_H
 #define US_ANALYSIS_AUTO_H
 
-#include "../us_analysis_profile/us_analysis_profile.h"
 #include "../us_fit_meniscus/us_fit_meniscus.h"
 #include "../us_mwl_species_fit/us_load_run_noise.h"
 #include "../us_mwl_species_fit/us_mwl_sf_plot3d.h"
 #include "../us_mwl_species_fit/us_mwl_species_fit.h"
+#include "us_ana_profile_loader.h"
 #include "us_convert.h"
 #include "us_convert_gui.h"
 #include "us_convertio.h"
@@ -255,8 +255,7 @@ class US_Analysis_auto : public US_Widgets
             //! \brief This run's 2DSA Analysis-Profile settings (grid
             //! limits/points per channel) -- loaded once in process_
             //! velmwl_after_all_channels_decided() via the same
-            //! US_AnalysisProfileGui::inherit_protocol() pattern
-            //! US_ReporterGMP uses (constructed, never shown), and
+            //! US_AnaProfileLoader US_ReporterGMP uses, and
             //! consulted per-channel by start_next_2dsa_channel() to
             //! populate protocol_details_at_analysis_2dsa's s_min/s_max/
             //! s_grpts/k_min/k_max/k_grpts before each channel's US_2dsa
