@@ -8,6 +8,7 @@
 #include "us_settings.h"
 #include "us_util.h"
 
+#include <QFileInfo>
 #include <QRegularExpression>
 
 #define CIPHER \
@@ -1235,6 +1236,16 @@ bool US_DB2::configure_ssl( QString& err )
    int success = -1;
    error = "";
    err = error;
+#if defined( LIBMARIADB )
+   // Connector/C fails a CA file it cannot load with whatever error OpenSSL
+   // queued first, usually "no cipher match", so name the file here instead.
+   if ( !QFileInfo( caFile ).isReadable() )
+   {
+      error = QString( "TLS CA file not found or unreadable: " ) + caFile;
+      err   = error;
+      return false;
+   }
+#endif
    // Set connection to use ssl encryption.
    // No client certificate is sent.  No database account requires one, and a
    // server whose TLS library refuses SHA-1 certificate signatures rejected the

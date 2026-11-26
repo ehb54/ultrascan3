@@ -2,10 +2,12 @@
 // US_DB2::composeQuery(): stored-procedure invocation and credential placement,
 // and how a refused procedure name fails the query and the blob transfers.  The escaping itself is in
 // test_us_db2_escaping.cpp.  US_DB2::writeBlobFile(): how a downloaded blob is written to its file.
-// The rest of US_DB2 needs a live server.
+// A missing TLS CA file is reported by name. The rest of US_DB2 needs a live
+// server.
 
 #include "qt_test_base.h"
 #include "us_db2.h"
+#include "us_settings.h"
 
 #include <QFile>
 #include <QString>
@@ -197,5 +199,26 @@ TEST( UsDb2BlobFile, AShortWriteIsAnErrorAndLeavesNoPartialFile )
    EXPECT_EQ( status, IUS_DB2::DBERROR );
    EXPECT_TRUE( error.contains( "65536" ) ) << error.toStdString();
    EXPECT_FALSE( QFile::exists( path ) );
+}
+#endif
+
+#if defined( LIBMARIADB ) && !defined( NO_DB )
+// Connector/C fails a CA file it cannot load with an unrelated queued OpenSSL
+// error, usually "no cipher match". The file is named before any connection.
+// The unit layout stages no etc/mysql, so the CA is missing here.
+TEST( UsDb2Tls, AMissingCaFileIsReportedByName )
+{
+   const QString ca = US_Settings::appBaseDir() + "/etc/mysql/ca-cert.pem";
+   if ( QFile::exists( ca ) )
+   {
+      GTEST_SKIP() << "a CA file is present: " << ca.toStdString();
+   }
+
+   US_DB2  db;
+   QString error;
+   EXPECT_FALSE( db.connect( "127.0.0.1:1", "none", "none", "none", error ) );
+   EXPECT_TRUE( error.contains( "TLS CA file not found or unreadable" ) ) << error.toStdString();
+   EXPECT_TRUE( error.contains( ca ) ) << error.toStdString();
+   EXPECT_FALSE( error.contains( "cipher" ) ) << error.toStdString();
 }
 #endif
