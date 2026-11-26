@@ -5427,10 +5427,14 @@ bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
   
   US_Math2::data_correction( avgTemp, solution );
-  
+
 
   //Load Model (latest ) && noise(s)
-  loadModel( triple_info_map  );
+  // A model that cannot be used skips this triple and model, as missing data does
+  if ( !loadModel( triple_info_map ) )
+  {
+     return false;
+  }
 
   // triple_info_map[ "stage_name" ] = QString("2DSA-IT");
   // if ( !loadModel( triple_info_map  ) && !model_exists )

@@ -3966,10 +3966,16 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
   solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
   
   US_Math2::data_correction( avgTemp, solution );
-  
+
 
   //Load Model (latest ) && noise(s)
-  loadModel( triple_info_map  );
+  // A model that cannot be used ends the overlay as a failed data load does
+  if ( !loadModel( triple_info_map ) )
+  {
+     progress_msg->close();
+     resplot_done(); // restart the update timer stopped above
+     return;
+  }
   progress_msg->setValue( 5 );
   qApp->processEvents();
 
