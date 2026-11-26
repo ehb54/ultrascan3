@@ -558,9 +558,15 @@ void US_Investigator::update( void )
          return;
       }
 
-      // Unlocked by the connection above, so this does not ask again.
+      // Unlocked by the connection above, so this does not ask again unless
+      // another program locked it meanwhile. Without it the saved password
+      // cannot be decrypted, and the update would set an empty one.
       US_Passwd   pw;
       QString     masterPW = pw.getPasswd();
+      if ( masterPW.isEmpty() )
+      {
+         return;
+      }
 
       QStringList info = US_Settings::defaultDB();
       

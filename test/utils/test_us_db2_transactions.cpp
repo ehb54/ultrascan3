@@ -251,6 +251,26 @@ TEST_F( US_DB2_LiveTransaction, CommitAfterDeadlockIsRefused )
    EXPECT_EQ( scalar( *winner, QString( "SELECT v FROM %1 WHERE id = 2" ).arg( table ) ), expected );
 }
 
+// The server rolled the victim back, but the status the client holds still
+// shows the transaction open. A write now would commit on its own, so it is
+// refused until the caller rolls back.
+TEST_F( US_DB2_LiveTransaction, AWriteAfterADeadlockIsRefused )
+{
+   US_DB2* victim = deadlock();
+
+   victim->query( QString( "INSERT INTO %1 VALUES ( 3, 9 )" ).arg( table ) );
+   EXPECT_EQ( victim->lastErrno(), IUS_DB2::DBERROR );
+   EXPECT_TRUE( victim->lastError().contains( "deadlock" ) ) << victim->lastError().toStdString();
+
+   QString error;
+   EXPECT_FALSE( victim->rollbackTransaction( error ) );
+   EXPECT_TRUE( error.contains( "deadlock" ) ) << error.toStdString();
+
+   US_DB2* winner = survivor( victim );
+   EXPECT_TRUE( winner->commitTransaction( error ) ) << error.toStdString();
+   EXPECT_EQ( scalar( *winner, QString( "SELECT COUNT(*) FROM %1 WHERE id = 3" ).arg( table ) ), "0" );
+}
+
 // A transaction ended by a statement that commits implicitly, with no error
 // to say so, is reported without guessing which way it ended.
 TEST_F( US_DB2_LiveTransaction, RollbackAfterImplicitCommitDoesNotClaimACause )
@@ -357,6 +377,24 @@ TEST_F( US_DB2_LiveTransaction, AStatementAfterAProcedureThatCommittedLaterIsRef
 
    EXPECT_FALSE( first->rollbackTransaction( error ) );
    EXPECT_EQ( scalar( *second, QString( "SELECT v FROM %1 WHERE id = 2" ).arg( table ) ), "0" );
+}
+
+// The commit itself drains the results rawQuery() left, and names the call.
+TEST_F( US_DB2_LiveTransaction, ACommitAfterARawCallThatCommittedLaterNamesIt )
+{
+   for ( const bool commit : { true, false } )
+   {
+      QString error;
+      ASSERT_TRUE( first->beginTransaction( error ) ) << error.toStdString();
+      first->rawQuery( QString( "CALL %1()" ).arg( committingAfterSetProcedure ) );
+
+      EXPECT_FALSE( commit ? first->commitTransaction( error ) : first->rollbackTransaction( error ) );
+      EXPECT_TRUE( error.contains( QString( "CALL %1" ).arg( committingAfterSetProcedure ) ) ) << error.toStdString();
+      if ( commit )
+      {
+         first->rollbackTransaction( error );
+      }
+   }
 }
 
 // The transaction ends with no error the client could record, so only the

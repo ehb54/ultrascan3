@@ -4,6 +4,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QMap>
 #include <QObject>
 #include <QXmlStreamReader>
 
@@ -216,36 +217,31 @@ bool US_SimInputLoader::buffer( const QString& spec, IUS_DB2* db, int investigat
       return false;
    }
 
-   // A buffer ID among the investigator's buffers, or a buffer GUID.
-   QString id;
-   QString listed_description;
-   bool    listed = false;
+   // A buffer ID or GUID among the investigator's buffers, as the dialog lists them.
+   QMap<QString, QString> listed;
    db->query( QStringList{ "get_buffer_desc", QString::number( investigator ) } );
    while ( db->next() )
    {
-      if ( db->value( 0 ).toString() == spec )
-      {
-         id                 = spec;
-         listed_description = db->value( 1 ).toString();
-         listed             = true;
-         break;
-      }
+      listed.insert( db->value( 0 ).toString(), db->value( 1 ).toString() );
    }
-   if ( id.isEmpty() )
+   QString id = spec;
+   if ( !listed.contains( id ) )
    {
+      id.clear();
       db->query( QStringList{ "get_bufferID", spec } );
       if ( db->lastErrno() == IUS_DB2::OK && db->next() )
       {
          id = db->value( 0 ).toString();
       }
    }
-   if ( id.isEmpty() )
+   if ( !listed.contains( id ) )
    {
       error = QObject::tr( "the investigator has no buffer %1" ).arg( spec );
       return false;
    }
+   const QString listed_description = listed.value( id );
 
-   US_Buffer loaded;
+   US_Buffer     loaded;
    if ( !loaded.readFromDB( db, id ) )
    {
       error =
@@ -254,7 +250,7 @@ bool US_SimInputLoader::buffer( const QString& spec, IUS_DB2* db, int investigat
       return false;
    }
    // As the dialog checks that what it read is the buffer it listed.
-   if ( listed && loaded.description != listed_description )
+   if ( loaded.description != listed_description )
    {
       error =
          QObject::tr( "buffer %1 read back as \"%2\", not the listed \"%3\"" ).arg( id, loaded.description, listed_description );

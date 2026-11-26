@@ -169,6 +169,34 @@ TEST_F( US_SimInputLoaderTest, ADatabaseBufferThatReadsBackAsAnotherIsRefused )
    EXPECT_TRUE( error.contains( "listed buffer" ) ) << error.toStdString();
 }
 
+// The GUID lookup is not limited to the investigator, so its answer is
+// checked against the investigator's list, as the dialog lists them.
+TEST_F( US_SimInputLoaderTest, AnotherInvestigatorsBufferGivenByGuidIsRefused )
+{
+   ScriptedDb db;
+   db.answer( "get_buffer_desc 7", { { "21", "listed buffer" } } );
+   db.answer( "get_bufferID " + kBufferGuid, { { "35" } } );
+   db.answer( "get_buffer_info 35", { { kBufferGuid, "another's buffer", "0", "7.0", "1.002", "0.998", "0", "8" } } );
+
+   US_Buffer loaded;
+   QString   error;
+   EXPECT_FALSE( US_SimInputLoader::buffer( kBufferGuid, &db, 7, loaded, error ) );
+   EXPECT_TRUE( error.contains( "has no buffer" ) ) << error.toStdString();
+}
+
+TEST_F( US_SimInputLoaderTest, ABufferGivenByGuidThatReadsBackAsAnotherIsRefused )
+{
+   ScriptedDb db;
+   db.answer( "get_buffer_desc 7", { { "21", "listed buffer" } } );
+   db.answer( "get_bufferID " + kBufferGuid, { { "21" } } );
+   db.answer( "get_buffer_info 21", { { kBufferGuid, "some other buffer", "0", "7.0", "1.002", "0.998", "0", "7" } } );
+
+   US_Buffer loaded;
+   QString   error;
+   EXPECT_FALSE( US_SimInputLoader::buffer( kBufferGuid, &db, 7, loaded, error ) );
+   EXPECT_TRUE( error.contains( "listed buffer" ) ) << error.toStdString();
+}
+
 TEST_F( US_SimInputLoaderTest, ADatabaseBufferNeedsAnInvestigator )
 {
    ScriptedDb db;

@@ -133,7 +133,7 @@ public:
        "the connection was lost during the commit, so whether it took effect is unknown: %1";
     static constexpr const char* serverRollbackMessage =
        "the server had already rolled the transaction back after a deadlock, so nothing written in it was kept "
-       "and anything run after that ran outside the transaction";
+       "and the statements after it were not run";
     static constexpr const char* transactionEndedByMessage =
        "the transaction ended during \"%1\", so the statements after it were not run; "
        "some rows written in it may have been kept";

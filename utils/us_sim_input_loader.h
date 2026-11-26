@@ -32,7 +32,8 @@ class US_UTIL_EXTERN US_SimInputLoader
       static bool model( const QString& spec, IUS_DB2* db, int investigator, US_Model& model, QString& error );
 
       //! \brief Load a buffer given as a file path, a buffer GUID, or (from
-      //! the database) a buffer ID.
+      //! the database) a buffer ID. A database buffer, by ID or GUID, must be
+      //! one of the investigator's and read back as listed.
       static bool buffer( const QString& spec, IUS_DB2* db, int investigator, US_Buffer& buffer, QString& error );
 
       //! \brief The rotor and calibration a rotor argument names.

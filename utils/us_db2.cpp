@@ -527,7 +527,9 @@ bool US_DB2::commitTransaction( QString& transaction_error )
    // directly rather than through rawQuery(), so without this it is answered
    // with "Commands out of sync" and the whole transaction is lost at the last
    // step -- with the rollback that follows failing for the same reason.
+   // A procedure whose results were left unread is checked as they go.
    drainResults();
+   notePendingStatementEnd();
 
    // A COMMIT after the transaction has ended succeeds as a no-op, so check
    // first or lost writes would be reported as committed.  The client does
@@ -580,6 +582,7 @@ bool US_DB2::rollbackTransaction( QString& transaction_error )
    // Same reason as commitTransaction(), and it matters more here: a rollback
    // that cannot run is a partial load left in place.
    drainResults();
+   notePendingStatementEnd();
 
    inTransaction = false;
 
@@ -627,10 +630,16 @@ void US_DB2::noteStatementError()
    // so that error alone says what ended it.  A lock wait timeout does so only
    // when innodb_rollback_on_timeout is set, and is not recorded.  Remember
    // the error while it is still on the connection; the next statement
-   // replaces it.
+   // replaces it. The transaction is gone, so later statements are refused:
+   // the status still shows it open, and one run now would commit on its own.
    if ( inTransaction && mysql_errno( db ) == ER_LOCK_DEADLOCK )
    {
       rolledBackByDeadlock = true;
+      if ( !transactionLost )
+      {
+         transactionLost     = true;
+         transactionLostText = QObject::tr( serverRollbackMessage );
+      }
    }
 }
 
