@@ -114,8 +114,9 @@ class US_UTIL_EXTERN US_SimulationParameters
    //! \param speedsteps Speed steps recorded for the experiment
    //! \param editdata   Edited data whose first and last scan times are checked
    //! \returns          True if there is at least one step and the first and last
-   //!                    scans lie within every step's time range; false means the
-   //!                    speed steps should be derived from the data instead
+   //!                    scans lie within the run the steps describe, from the
+   //!                    first step's start to the last step's end; false means
+   //!                    the speed steps should be derived from the data instead
    static bool             speedStepsCoverData( const QVector<SpeedProfile>&, const US_DataIO::EditedData& );
 
    //! \brief A function to compute speed steps from all data scans

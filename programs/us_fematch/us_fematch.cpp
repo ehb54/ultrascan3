@@ -535,30 +535,13 @@ DbgLv(0) << "LD: newfile" << newfile << "idExp" << idExp
    int nssp       = speed_steps.count();
    int ntriples   = triples.size();
    DbgLv(1) << "LD: Load: no of speed steps" << nssp;
-   
-   if ( nssp > 0 )
-     {
-      for ( int ii = 0; ii < nssp; ii++ )
-      {
-         int stm1   = speed_steps[ ii ].time_first;
-         int stm2   = speed_steps[ ii ].time_last;
-         for ( int ds = 0; ds < ntriples; ds++ )
-         {   // Scan data time ranges and compare to experiment speed steps
-            edata      = &dataList[ ds ];
-            int lesc   = edata->scanCount() - 1;
-            int etm1   = edata->scanData[    0 ].seconds;
-            int etm2   = edata->scanData[ lesc ].seconds;
-DbgLv(1) << "LD:  ds" << ds << "step" << ii << "stimes" << stm1 << stm2
- << "etimes" << etm1 << etm2 << "lesc" << lesc;
 
-            if ( etm1 < stm1  ||  etm2 > stm2 )
-            {  // Data times beyond speed step ranges, so flag use of data ranges
-               nssp       = 0;
-               qDebug() << "Data is beyond range ex:" << etm1 << etm2 << "ss:" << stm1 << stm2;
-               //speed_steps.clear();
-               break;
-            }
-         }
+   // Data outside the run the experiment's steps describe takes its steps from the data
+   for ( int ds = 0; ds < ntriples && nssp > 0; ds++ )
+   {
+      if ( !US_SimulationParameters::speedStepsCoverData( speed_steps, dataList[ds] ) )
+      {
+         nssp = 0;
       }
    }
 
@@ -3523,29 +3506,12 @@ void US_FeMatch::auto_load_simulate( US_DataIO::RawData i_rdata,
    int ntriples   = triples.size();
    DbgLv(1) << "LD: Load: no of speed steps" << nssp;
 
-   if ( nssp > 0 )
+   // Data outside the run the experiment's steps describe takes its steps from the data
+   for ( int ds = 0; ds < ntriples && nssp > 0; ds++ )
    {
-      for ( int ii = 0; ii < nssp; ii++ )
+      if ( !US_SimulationParameters::speedStepsCoverData( speed_steps, dataList[ds] ) )
       {
-         int stm1   = speed_steps[ ii ].time_first;
-         int stm2   = speed_steps[ ii ].time_last;
-         for ( int ds = 0; ds < ntriples; ds++ )
-         {   // Scan data time ranges and compare to experiment speed steps
-            edata      = &dataList[ ds ];
-            int lesc   = edata->scanCount() - 1;
-            int etm1   = edata->scanData[    0 ].seconds;
-            int etm2   = edata->scanData[ lesc ].seconds;
-            DbgLv(1) << "LD:  ds" << ds << "step" << ii << "stimes" << stm1 << stm2
-                     << "etimes" << etm1 << etm2 << "lesc" << lesc;
-
-            if ( etm1 < stm1  ||  etm2 > stm2 )
-            {  // Data times beyond speed step ranges, so flag use of data ranges
-               nssp       = 0;
-               qDebug() << "Data is beyond range ex:" << etm1 << etm2 << "ss:" << stm1 << stm2;
-               //speed_steps.clear();
-               break;
-            }
-         }
+         nssp = 0;
       }
    }
 

@@ -525,3 +525,16 @@ TEST_F( US_SimulationParametersTest, InitFromEditedDataLooksUpTheGivenInvestigat
               QStringList( { "get_experiment_info_by_runID|" + editData.runID + "|7",
                              "get_experiment_info_by_runID|" + editData.runID + "|3" } ) );
 }
+
+// Experiment speed steps cover the data when the scans lie within the run
+// they describe, from the first step's start to the last step's end, as the
+// cluster analysis that fits the models decides it.
+TEST_F( US_SimulationParametersTest, SpeedStepsCoverData_MultiSpeedRun )
+{
+   const QVector<US_SimulationParameters::SpeedProfile> steps{ stepWithTimes( 100, 3000 ), stepWithTimes( 3100, 8000 ) };
+
+   EXPECT_TRUE( US_SimulationParameters::speedStepsCoverData( steps, editedWithScanTimes( 200, 7900 ) ) );
+   EXPECT_TRUE( US_SimulationParameters::speedStepsCoverData( steps, editedWithScanTimes( 3200, 7000 ) ) );
+   EXPECT_FALSE( US_SimulationParameters::speedStepsCoverData( steps, editedWithScanTimes( 99, 7900 ) ) );
+   EXPECT_FALSE( US_SimulationParameters::speedStepsCoverData( steps, editedWithScanTimes( 200, 8001 ) ) );
+}

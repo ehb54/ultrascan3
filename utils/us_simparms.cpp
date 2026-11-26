@@ -719,15 +719,8 @@ bool US_SimulationParameters::speedStepsCoverData( const QVector<SpeedProfile>& 
    const double first = editdata.scanData.first().seconds;
    const double last  = editdata.scanData.last().seconds;
 
-   for ( const SpeedProfile& step : speedsteps )
-   {
-      if ( first < step.time_first || last > step.time_last )
-      {
-         return false;
-      }
-   }
-
-   return true;
+   // The scans must lie within the run the steps describe
+   return first >= speedsteps.first().time_first && last <= speedsteps.last().time_last;
 }
 
 // Compute the speed steps vector from data scans
