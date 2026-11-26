@@ -42,7 +42,8 @@ class US_UTIL_EXTERN US_CredentialSource
 };
 
 //! \brief Reads the secret from an environment variable, once.
-//! For scripts and unattended runs; a wrong value is not retried.
+//! For scripts and unattended runs; a wrong value is not retried. The
+//! variable is removed once read, so child processes do not inherit it.
 class US_UTIL_EXTERN US_EnvironmentCredentialSource : public US_CredentialSource
 {
    public:
@@ -58,8 +59,12 @@ class US_UTIL_EXTERN US_EnvironmentCredentialSource : public US_CredentialSource
 };
 
 //! \brief Prompts on the terminal with echo turned off.
-//! Unavailable when the input is not a terminal, so a script never blocks on
-//! a prompt nobody will answer.
+//! Unavailable when the input is not a terminal, or (POSIX) when the process
+//! is a background job, so a script never blocks or stops on a prompt nobody
+//! will answer. Ctrl+Z gives the terminal back with echo on and the prompt is
+//! shown again when the job returns to the foreground; an interrupted prompt
+//! is cancelled, never used. On Windows only programs with a console can
+//! prompt: the shipped GUI-subsystem programs take US_MASTER_PASSWORD.
 class US_UTIL_EXTERN US_TerminalCredentialSource : public US_CredentialSource
 {
    public:
