@@ -289,9 +289,19 @@ US_AnaProfile* US_ExperimentMain::get_aprofile( )
   return &(epanAProfile->sdiag->currProf);
 }
 
-bool US_ExperimentMain::aprofile_usable() const
+bool US_ExperimentMain::aprofile_usable()
 {
-   return epanAProfile->sdiag->profile_usable;
+   if ( usmode && !epanAProfile->sdiag->profileUsableFor( currProto ) )
+   {
+      // R&D mode has no analysis profile tab to visit before saving.
+      epanAProfile->initPanel();
+   }
+   return epanAProfile->sdiag->profileUsableFor( currProto );
+}
+
+void US_ExperimentMain::aprofile_saved_as( const US_RunProtocol& previous )
+{
+   epanAProfile->sdiag->profileSavedAs( previous, currProto );
 }
 
 US_AnaProfile* US_ExperimentMain::get_aprofile_loaded( )
@@ -7573,7 +7583,7 @@ bool US_ExperGuiUpload::check_aprofile()
       QMessageBox::critical( this,
                              tr( "Analysis Profile" ),
                              tr( "The protocol cannot be saved or submitted: \n"
-                                 "Its analysis profile could not be loaded." ) );
+                                 "Review the analysis profile for the current protocol and try again." ) );
       return false;
    }
    return true;
@@ -7695,6 +7705,7 @@ DbgLv(1) << "EGUp:svRP:   prnames" << prnames;
 
 
    // Save the new name and compose the XML representing the protocol
+   const US_RunProtocol previous_protocol = *currProto;
    protoname           = newpname;
 DbgLv(1) << "EGUp:svRP:   NEW protoname" << protoname;
 DbgLv(1) << "EGUp:svRP:   currProto previous guid" << currProto->protoGUID;
@@ -7778,7 +7789,8 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
    prentry << protoname << pdate << protid << pguid;
 
    qDebug() << "Updated proto list: " << prentry;
-   
+
+   mainw->aprofile_saved_as( previous_protocol );
    mainw->updateProtos( prentry );            // Update existing protocols list
    proto_svd           = true;
    ck_prot_svd->setChecked( true );

@@ -152,6 +152,7 @@ class US_AnalysisProfileRunReportTest : public QObject
       void values_stay_with_their_channels();
       void report_on_without_a_reference();
       void unusable_profile_keeps_the_one_shown();
+      void saveEligibilityFollowsProtocolInputs();
 };
 
 void US_AnalysisProfileRunReportTest::load_keeps_saved_values_data()
@@ -412,7 +413,7 @@ void US_AnalysisProfileRunReportTest::values_stay_with_their_channels()
    set_channels( window.protocol, second );
    window.load();
    QCOMPARE( window.window.currProf.l_volumes, expected );
-   QVERIFY( window.window.profile_usable );
+   QVERIFY( window.window.profileUsableFor( window.protocol ) );
 }
 
 //! A channel whose Report is off can have no reference number, as in older profiles
@@ -463,6 +464,39 @@ void US_AnalysisProfileRunReportTest::unusable_profile_keeps_the_one_shown()
    QCOMPARE( shown.size(), 1 );
    QVERIFY( window.window.currProf == before );
    QCOMPARE( window.window.currProf.chndescs, before.chndescs );
+}
+
+void US_AnalysisProfileRunReportTest::saveEligibilityFollowsProtocolInputs()
+{
+   Window window( false );
+   QVERIFY( !window.window.profileUsableFor( window.protocol ) );
+   window.load();
+   QVERIFY( window.window.profileUsableFor( window.protocol ) );
+
+   window.protocol.rpRange.chrngs[0].wvlens = { 281.0 };
+   QVERIFY( !window.window.profileUsableFor( window.protocol ) );
+   window.load();
+   QVERIFY( window.window.profileUsableFor( window.protocol ) );
+
+   const US_RunProtocol previous     = window.protocol;
+   window.protocol.protoGUID         = "saved-guid";
+   window.protocol.protoname         = "saved-protocol";
+   window.protocol.rpAprof.aprofGUID = window.protocol.protoGUID;
+   window.protocol.rpAprof.aprofname = window.protocol.protoname;
+   QVERIFY( !window.window.profileUsableFor( window.protocol ) );
+   window.window.profileSavedAs( previous, window.protocol );
+   QVERIFY( window.window.profileUsableFor( window.protocol ) );
+
+   const US_AnaProfile before    = window.window.currProf;
+   const auto          solutions = window.protocol.rpSolut;
+   window.protocol.rpSolut.chsols.clear();
+   window.load();
+   QVERIFY( !window.window.profileUsableFor( window.protocol ) );
+   QCOMPARE( window.window.currProf.chndescs, before.chndescs );
+
+   window.protocol.rpSolut = solutions;
+   window.load();
+   QVERIFY( window.window.profileUsableFor( window.protocol ) );
 }
 
 US3_GUI_TEST_MAIN( US_AnalysisProfileRunReportTest )

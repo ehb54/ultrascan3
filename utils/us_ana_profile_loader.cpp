@@ -1,6 +1,7 @@
 //! \file us_ana_profile_loader.cpp
 #include "us_ana_profile_loader.h"
 #include "us_datafiles.h"
+#include "us_protocol_util.h"
 #include "us_settings.h"
 #include <climits>
 
@@ -1170,6 +1171,24 @@ void US_AnaProfileLoader::Channels::setReport( int channel, bool on )
          ref[ii] = 0;
       }
    }
+}
+
+bool US_AnaProfileLoader::readProtocol( const QString& name, int investigator, IUS_DB2& db, US_RunProtocol& protocol )
+{
+   if ( name.isEmpty() )
+   {
+      return false;
+   }
+   QString xml;
+   US_ProtocolUtil::read_record_auto( name, investigator, &xml, nullptr, &db );
+   QXmlStreamReader reader( xml );
+   US_RunProtocol   loaded;
+   if ( xml.isEmpty() || !loaded.fromXml( reader ) || loaded.protoname != name )
+   {
+      return false;
+   }
+   protocol = loaded;
+   return true;
 }
 
 US_AnaProfileLoader::Result US_AnaProfileLoader::load( const US_RunProtocol& protocol, IUS_DB2* db, const Options& options )

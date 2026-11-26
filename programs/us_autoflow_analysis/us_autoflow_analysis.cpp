@@ -359,7 +359,9 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 	  sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis );
      if ( !sdiag->profile_usable )
      {
+        cleanup_velmwl_fit_widget();
         emit close_analysissetup_msg();
+        emit analysis_back_to_initAutoflow();
         return;
      }
      //sdiag -> show(); //for debug
@@ -377,7 +379,9 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 	  sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis );
      if ( !sdiag->profile_usable )
      {
+        cleanup_velmwl_fit_widget();
         emit close_analysissetup_msg();
+        emit analysis_back_to_initAutoflow();
         return;
      }
 
@@ -1886,10 +1890,12 @@ void US_Analysis_auto::get_ssf_dir_and_saveDB( QString& ssf_dir )
    sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis_velmwl, aprof_progress );
    if ( !sdiag->profile_usable )
    {
+      cleanup_velmwl_fit_widget();
       if ( progress_msg_mwlsim )
       {
          progress_msg_mwlsim->hide();
       }
+      emit analysis_back_to_initAutoflow();
       return;
    }
    update_mwlsim_progress( "fit", 1, 1 );
@@ -2261,6 +2267,8 @@ void US_Analysis_auto::finalize_velmwl_analysis_if_complete( void )
 // analysis_complete_auto() once the list is exhausted.
 void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
 {
+   cAP2_2dsa = US_AnaProfile::AnaProf2DSA();
+
    qDebug() << "[US_Autoflow_analysis] process_velmwl_after_all_channels_decided(): "
                "claiming run-wide VEL-MWL completion, then starting 2DSA-IT "
                "post-processing for Approved channels.";
@@ -2417,56 +2425,49 @@ void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
    // apply_auto_fit_params() has something to apply ahead of Start Fit.
    {
       US_Passwd pw_ap;
-      US_DB2    db_ap( pw_ap.getPasswd() );
-
-      if ( db_ap.lastErrno() == US_DB2::OK )
+      US_DB2         db_ap( pw_ap.getPasswd() );
+      US_RunProtocol protocol;
+      const auto     refuse = [this]()
       {
-         US_RunProtocol currProto;
-         QString        xmlstr_ap( "" );
-         US_ProtocolUtil::read_record_auto( ProtocolName_auto, invID, &xmlstr_ap, NULL, &db_ap );
-         QXmlStreamReader xmli_ap( xmlstr_ap );
-         currProto.fromXml( xmli_ap );
+         progress_msg_2dsa->hide();
+         emit analysis_back_to_initAutoflow();
+      };
+      if ( db_ap.lastErrno() != US_DB2::OK || !US_AnaProfileLoader::readProtocol( ProtocolName_auto, invID, db_ap, protocol ) )
+      {
+         QMessageBox::warning( this, tr( "Analysis Profile" ), tr( "Could not read the run protocol for 2DSA analysis." ) );
+         refuse();
+         return;
+      }
 
-         US_AnaProfileLoader::Options options;
-         // Reading reports/reportItems from the DB is the slow part: drive the
-         // step bar (stage range is 0..100) and detail line from it.
-         options.progress = [this]( int done, int total, const QString& detail )
+      US_AnaProfileLoader::Options options;
+      options.progress = [this]( int done, int total, const QString& detail )
+      {
+         if ( !progress_msg_2dsa || total <= 0 )
          {
-            if ( !progress_msg_2dsa || total <= 0 )
-            {
-               return;
-            }
-            if ( !detail.isEmpty() )
-            {
-               progress_msg_2dsa->setLabelText( detail );
-            }
-            progress_msg_2dsa->setValue( qBound( 0, qRound( 100.0 * done / total ), 100 ) );
-         };
-         const US_AnaProfileLoader::Result loaded = US_AnaProfileLoader::load( currProto, &db_ap, options );
-         for ( const US_AnaProfileLoader::Message& message : loaded.messages )
-         {
-            QMessageBox::warning( this, message.title, message.text );
-         }
-         if ( !loaded.loaded )
-         {
-            progress_msg_2dsa->hide();
             return;
          }
-         cAP2_2dsa = loaded.profile.ap2DSA;
-         progress_msg_2dsa->setValue( 0 );
-
-         qDebug() << "[US_Autoflow_analysis] "
-                     "process_velmwl_after_all_channels_decided(): "
-                     "loaded 2DSA Analysis Profile -- channels in profile:"
-                  << cAP2_2dsa.parms.size();
-      }
-      else
+         if ( !detail.isEmpty() )
+         {
+            progress_msg_2dsa->setLabelText( detail );
+         }
+         progress_msg_2dsa->setValue( qBound( 0, qRound( 100.0 * done / total ), 100 ) );
+      };
+      const US_AnaProfileLoader::Result loaded = US_AnaProfileLoader::load( protocol, &db_ap, options );
+      for ( const US_AnaProfileLoader::Message& message : loaded.messages )
       {
-         qDebug() << "[US_Autoflow_analysis] "
-                     "process_velmwl_after_all_channels_decided(): "
-                     "could not connect to DB to load the 2DSA Analysis Profile -- "
-                     "channels will fall back to US_AnalysisControl2D's own defaults.";
+         QMessageBox::warning( this, message.title, message.text );
       }
+      if ( !loaded.loaded || !loaded.has_channels )
+      {
+         if ( loaded.loaded )
+         {
+            QMessageBox::warning( this, tr( "Analysis Profile" ), tr( "The run protocol has no analysis channels." ) );
+         }
+         refuse();
+         return;
+      }
+      cAP2_2dsa = loaded.profile.ap2DSA;
+      progress_msg_2dsa->setValue( 0 );
    }
 
    // Seed this stage's protocol_details from the VEL-MWL stage's map --

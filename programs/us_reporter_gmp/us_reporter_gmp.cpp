@@ -633,46 +633,47 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
 //Autoflow: loadRun_auto
 void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details )
 {
-  AProfileGUID       = protocol_details[ "aprofileguid" ];
-  ProtocolName_auto  = protocol_details[ "protocolName" ];
-  invID              = protocol_details[ "invID_passed" ].toInt();
-  runID              = protocol_details[ "runID" ];
-  runName            = protocol_details[ "experimentName" ];
-  FileName           = protocol_details[ "filename" ];
-  intensityID        = protocol_details[ "intensityID" ];
-  AutoflowID_auto    = protocol_details[ "autoflowID" ];
-  analysisIDs        = protocol_details[ "analysisIDs" ];
-  autoflowStatusID   = protocol_details[ "statusID" ];
-  optimaName         = protocol_details[ "OptimaName" ] ;
-  dataSource         = protocol_details[ "dataSource" ] ;
-  expType            = protocol_details[ "expType" ] ;
-  simulatedData      = false;
-  abde_channList. clear();
-  abde_ranges_percents. clear();
-  abde_rmsd. clear();
-  abde_menisc. clear();
-  abde_plots_filenames. clear();
-  abde_data_per_channel. clear();
-  velmwl_channList.clear();
-  velmwl_chan_species.clear();
-  velmwl_chan_guids.clear();
-  velmwl_chan_fname.clear();
-  velmwl_chan_selected_species.clear();
-  editing_time_velmwl.clear();
+   reset_report_panel();
+   AProfileGUID      = protocol_details["aprofileguid"];
+   ProtocolName_auto = protocol_details["protocolName"];
+   invID             = protocol_details["invID_passed"].toInt();
+   runID             = protocol_details["runID"];
+   runName           = protocol_details["experimentName"];
+   FileName          = protocol_details["filename"];
+   intensityID       = protocol_details["intensityID"];
+   AutoflowID_auto   = protocol_details["autoflowID"];
+   analysisIDs       = protocol_details["analysisIDs"];
+   autoflowStatusID  = protocol_details["statusID"];
+   optimaName        = protocol_details["OptimaName"];
+   dataSource        = protocol_details["dataSource"];
+   expType           = protocol_details["expType"];
+   simulatedData     = false;
+   abde_channList.clear();
+   abde_ranges_percents.clear();
+   abde_rmsd.clear();
+   abde_menisc.clear();
+   abde_plots_filenames.clear();
+   abde_data_per_channel.clear();
+   velmwl_channList.clear();
+   velmwl_chan_species.clear();
+   velmwl_chan_guids.clear();
+   velmwl_chan_fname.clear();
+   velmwl_chan_selected_species.clear();
+   editing_time_velmwl.clear();
 
-  prot_details_at_report = protocol_details;
-  
-  QString full_runname = protocol_details[ "filename" ];
-  FullRunName_auto = runName + "-run" + runID;
-  if ( full_runname.contains(",") && full_runname.contains("IP") && full_runname.contains("RI") )
-    {
+   prot_details_at_report = protocol_details;
+
+   QString full_runname = protocol_details["filename"];
+   FullRunName_auto     = runName + "-run" + runID;
+   if ( full_runname.contains( "," ) && full_runname.contains( "IP" ) && full_runname.contains( "RI" ) )
+   {
       QString full_runname_edited  = full_runname.split(",")[0];
       full_runname_edited.chop(3);
       full_runname = full_runname_edited + " (combined RI+IP) ";
 
       FullRunName_auto += " (combined RI+IP) ";   //Captures protDev names...
-    }
-  
+   }
+
   //lb_hdr1 ->setText( QString( tr("Report for run: %1") ).arg(FileName) );
   lb_hdr1 ->setText( QString( tr("Report for run: %1") ).arg( FullRunName_auto ) );
   lb_hdr1->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
@@ -2098,10 +2099,13 @@ bool US_ReporterGMP::read_protocol_and_reportMasks( void )
   //read protocol
   progress_msg->setValue( 2 );
   qApp->processEvents();
-  QString xmlstr( "" );
-  US_ProtocolUtil::read_record_auto( ProtocolName_auto, invID,  &xmlstr, NULL, &db );
-  QXmlStreamReader xmli( xmlstr );
-  currProto. fromXml( xmli );
+  US_RunProtocol protocol;
+  if ( !US_AnaProfileLoader::readProtocol( ProtocolName_auto, invID, db, protocol ) )
+  {
+     QMessageBox::warning( this, tr( "Analysis Profile" ), tr( "Could not read the run protocol." ) );
+     return false;
+  }
+  currProto = protocol;
   progress_msg->setValue( 3 );
   qApp->processEvents();
   
@@ -2157,8 +2161,12 @@ bool US_ReporterGMP::read_protocol_and_reportMasks( void )
   progress_msg->setValue( 4 );
   qApp->processEvents();
 
-  if ( !loaded.loaded )
+  if ( !loaded.loaded || !loaded.has_channels )
   {
+     if ( loaded.loaded )
+     {
+        QMessageBox::warning( this, tr( "Analysis Profile" ), tr( "The run protocol has no analysis channels." ) );
+     }
      return false;
   }
 
@@ -3702,9 +3710,11 @@ void US_ReporterGMP::reset_report_panel ( void )
 
   if ( !auto_mode )
     {
-      te_fpath_info    -> setText( "" );
-      le_loaded_run_db -> setText( "" );
-      te_fpath_info_db -> setText( "" );
+       pb_gen_report->setEnabled( false );
+       pb_view_report->setEnabled( false );
+       te_fpath_info->setText( "" );
+       le_loaded_run_db->setText( "" );
+       te_fpath_info_db->setText( "" );
     }
       
   //cleaning genTree && it's objects

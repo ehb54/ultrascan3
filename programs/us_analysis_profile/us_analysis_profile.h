@@ -462,12 +462,13 @@ class US_AnalysisProfileGui : public US_Widgets
       
       bool    automode;
   bool abde_mode_aprofile;
-  bool                                            profile_usable; //!< The profile of the last protocol could be loaded
   bool                                            velmwl_mode_aprofile;
 
   void                                            auto_mode_passed( void );
   void                                            auto_name_passed( QString&, QString& );
   void                                            inherit_protocol( US_RunProtocol* );
+  bool                                            profileUsableFor( const US_RunProtocol& ) const;
+  void                                            profileSavedAs( const US_RunProtocol& previous, const US_RunProtocol& saved );
 
   //! Optional progress hook for inherit_protocol(): ( done, total, detail ).
   //! Empty by default, so other users of this class are unaffected.
@@ -477,15 +478,20 @@ class US_AnalysisProfileGui : public US_Widgets
   int                                             scanCount_int;
 
   private:
-  QTabWidget*        tabWidget; // Tab Widget holding the panels
+     bool               profile_usable        = false;
+     bool               have_profile_snapshot = false;
+     bool               profile_abde          = false;
+     US_RunProtocol     profile_protocol;
 
-  US_AnaprofPanGen*  apanGeneral; // General panel
-  US_AnaprofPan2DSA* apan2DSA;    // 2DSA panel
-  US_AnaprofPanPCSA* apanPCSA;    // PCSA panel
+     QTabWidget*        tabWidget; // Tab Widget holding the panels
 
-  int                statflag;  // Composite panels status flag
-  int                dbg_level; // Debug print flag
-  int                curr_panx; // Current panel index (0-7)
+     US_AnaprofPanGen*  apanGeneral; // General panel
+     US_AnaprofPan2DSA* apan2DSA;    // 2DSA panel
+     US_AnaprofPanPCSA* apanPCSA;    // PCSA panel
+
+     int                statflag;  // Composite panels status flag
+     int                dbg_level; // Debug print flag
+     int                curr_panx; // Current panel index (0-7)
 
   private slots:
 

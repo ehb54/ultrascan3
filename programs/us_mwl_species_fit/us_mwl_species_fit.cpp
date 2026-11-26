@@ -119,13 +119,6 @@ US_MwlSpeciesFit::US_MwlSpeciesFit( QMap<QString, QString>&                     
    data_plot1->setMinimumSize( 600, 300 );
    data_plot2->setMinimumSize( 600, 300 );
 
-   // load
-   load();
-
-   // pass edata BC
-   protocol_details_p["baseline_corrections"] = this->protocol_details["baseline_corrections"];
-   protocol_details_p["meniscus_info"]        = this->protocol_details["meniscus_info"];
-
    // read protocol & check (once more) extinction profiles
    QStringList msg_to_user;
    const bool  protocol_read = read_protocol( msg_to_user );
@@ -135,6 +128,7 @@ US_MwlSpeciesFit::US_MwlSpeciesFit( QMap<QString, QString>&                     
    }
    else if ( !protocol_read )
    {
+      profile_usable = false;
       msg_to_user.removeDuplicates();
       QMessageBox::critical( this,
                              tr( "ATTENTION: Invalid Extinction Profiles (ABDE)" ),
@@ -148,6 +142,15 @@ US_MwlSpeciesFit::US_MwlSpeciesFit( QMap<QString, QString>&                     
    }
    else // continue
    {
+      load();
+      if ( !dataLoaded )
+      {
+         profile_usable = false;
+         return;
+      }
+      protocol_details_p["baseline_corrections"] = this->protocol_details["baseline_corrections"];
+      protocol_details_p["meniscus_info"]        = this->protocol_details["meniscus_info"];
+
       /*
     //debug
     QStringList ext_keys = extinction_profiles_per_channel.keys();
@@ -1049,11 +1052,16 @@ void US_MwlSpeciesFit::load( void )
        // 				   description, protocol_details, "none" );
        dialog = new US_DataLoader( true, dbdisk, rawList, dataList, triples,
 				   description, protocol_details, "none" );
-              
-       QString dir_gmp = description;
-       qDebug() << "[AFTER data_load: description ]: -- " << description;
-       protocol_details[ "directory_for_gmp" ] = US_Settings::resultDir() + "/" + dir_gmp.split(";")[1];
-       
+
+       const QString run_directory = description.section( ';', 1, 1 );
+       if ( dataList.isEmpty() || run_directory.isEmpty() )
+       {
+          delete dialog;
+          QMessageBox::warning( this, tr( "Analysis Data" ), tr( "Could not load edited data for the run." ) );
+          return;
+       }
+       protocol_details["directory_for_gmp"] = US_Settings::resultDir() + "/" + run_directory;
+
        //editedData: chann - to - baseline corr: && meniscus info
        QString triples_bc;
        QMap<QString, QString> chans_meniscus; 
@@ -1264,11 +1272,12 @@ bool US_MwlSpeciesFit::read_protocol(QStringList& msg_to_user)
   int invID_p           = protocol_details[ "invID_passed" ].toInt();
   currProto         = US_RunProtocol();
   currAProf         = US_AnaProfile();
-  
-  QString xmlstr( "" );
-  US_ProtocolUtil::read_record_auto( ProtocolName_auto, invID_p,  &xmlstr, NULL, &db );
-  QXmlStreamReader xmli( xmlstr );
-  currProto. fromXml( xmli );
+
+  if ( !US_AnaProfileLoader::readProtocol( ProtocolName_auto, invID_p, db, currProto ) )
+  {
+     QMessageBox::warning( this, tr( "Analysis Profile" ), tr( "Could not read the run protocol." ) );
+     return false;
+  }
 
   //read AProfile to later pass ranges
   US_AnaProfileLoader::Options options;
@@ -1278,9 +1287,13 @@ bool US_MwlSpeciesFit::read_protocol(QStringList& msg_to_user)
   {
      QMessageBox::warning( this, message.title, message.text );
   }
-  profile_usable = loaded.loaded;
+  profile_usable = loaded.loaded && loaded.has_channels;
   if ( !profile_usable )
   {
+     if ( loaded.loaded )
+     {
+        QMessageBox::warning( this, tr( "Analysis Profile" ), tr( "The run protocol has no analysis channels." ) );
+     }
      return false;
   }
   currAProf              = loaded.profile;

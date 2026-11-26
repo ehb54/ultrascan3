@@ -47,7 +47,9 @@ class US_UTIL_EXTERN US_AnaProfileLoader
             const US_AnaProfile*      start;      //!< Profile to start from; default startProfile()
             Progress                  progress;   //!< Called while reports are read
             QString                   xml;        //!< The saved profile as read before
-            std::function<IUS_DB2*()> connect;    //!< Opens a connection when one is needed and none is passed
+            //! Supplies a borrowed connection if load() needs one and received no DB pointer.
+            //! The caller keeps it alive and available until load() returns, including callbacks.
+            std::function<IUS_DB2*()> connect;
       };
 
       //! An error to show
@@ -72,8 +74,12 @@ class US_UTIL_EXTERN US_AnaProfileLoader
       };
 
       //! \brief Load the profile of a protocol, from the database or disk as the settings say
-      //! \param db  Open connection for the profile and its reports, or NULL to use Options::connect
+      //! \param db Borrowed connection for this synchronous call, or null to use Options::connect.
+      //! The loader neither stores nor closes the connection.
       static Result        load( const US_RunProtocol&, IUS_DB2* db, const Options& = Options() );
+
+      //! Read a named run protocol into \a protocol only if its XML is usable.
+      static bool          readProtocol( const QString& name, int investigator, IUS_DB2& db, US_RunProtocol& protocol );
 
       //! \brief The profile that loading starts from
       static US_AnaProfile startProfile();

@@ -36,7 +36,7 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
                              std::function<void( int, int, const QString& )>() );
 
         bool us_gmp_auto_mode;
-        bool                                                     profile_usable = true; //!< The analysis profile could be loaded
+        bool                                                     profile_usable = false; //!< The analysis profile could be loaded
         QMap<QString, QString> protocol_details;
         US_RunProtocol                                           currProto;         //!< Current run protocol
         std::function<void( int, int, const QString& )>          aprof_progress_cb; //!< Analysis-profile read progress (optional)

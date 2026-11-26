@@ -1241,7 +1241,8 @@ class US_ExperimentMain : public US_Widgets
 
       US_AnaProfile* get_aprofile( void );
       //! \brief Whether the profile belongs to the current protocol
-      bool                    aprofile_usable() const;
+      bool                    aprofile_usable();
+      void                    aprofile_saved_as( const US_RunProtocol& previous );
       US_AnaProfile* get_aprofile_loaded( void );
       void set_loadAProf ( US_AnaProfile );
       QMap< QString, QString> get_all_solution_names( void );

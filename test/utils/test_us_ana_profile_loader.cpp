@@ -44,7 +44,9 @@ class AnaProfileLoaderTest : public Us3FileTestBase
 {
    protected:
       //! Answers as the procedures in fixture_database.sql do
-      void answer( const QStringList& args )
+      QString protocol_xml;
+
+      void    answer( const QStringList& args )
       {
          queries << args.join( " " );
          rows.clear();
@@ -53,6 +55,13 @@ class AnaProfileLoaderTest : public Us3FileTestBase
          if ( args[0] == failing )
          {
             status = IUS_DB2::DBERROR;
+         }
+         else if ( args[0] == "get_protocol_desc" )
+         {
+            if ( !protocol_xml.isEmpty() )
+            {
+               rows << ( QVariantList() << 54 << "test-guid" << "Fixture protocol" << protocol_xml << "unused" << QDateTime() );
+            }
          }
          else if ( args[0] == "get_aprofile_info" )
          {
@@ -251,6 +260,24 @@ TEST_F( AnaProfileLoaderTest, RunAndReportGiveTheRecordedValues )
       }
       EXPECT_EQ( clicks.expected, parts.join( " " ) ) << qPrintable( clicks.clicks.join( ", " ) ) << " abde " << clicks.abde;
    }
+}
+
+TEST_F( AnaProfileLoaderTest, FailedProtocolReadsLeaveThePriorProtocolIntact )
+{
+   US_RunProtocol protocol;
+   protocol.protoname = "Previous";
+   const QString name = "Fixture protocol";
+   EXPECT_FALSE( US_AnaProfileLoader::readProtocol( name, 1, db, protocol ) );
+   EXPECT_EQ( protocol.protoname, QString( "Previous" ) );
+
+   protocol_xml = "<ProtocolData><protocol description='Fixture protocol' guid='new-guid'>";
+   EXPECT_FALSE( US_AnaProfileLoader::readProtocol( name, 1, db, protocol ) );
+   EXPECT_EQ( protocol.protoname, QString( "Previous" ) );
+
+   protocol_xml += "</protocol></ProtocolData>";
+   EXPECT_TRUE( US_AnaProfileLoader::readProtocol( name, 1, db, protocol ) );
+   EXPECT_EQ( protocol.protoname, name );
+   EXPECT_EQ( protocol.protoGUID, QString( "new-guid" ) );
 }
 
 TEST_F( AnaProfileLoaderTest, UsesWhatWasReadOfIncompleteXmlAndDoesNotShowTheError )

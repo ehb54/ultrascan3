@@ -30,7 +30,6 @@ US_AnalysisProfileGui::US_AnalysisProfileGui() : US_Widgets()
    connection_status    = false;
    automode             = false;
    abde_mode_aprofile   = false;
-   profile_usable       = true;
    velmwl_mode_aprofile = false;
 
    // Create tab and panel widgets
@@ -148,7 +147,8 @@ DbgLv(1) << "MAIN:  Resetting internal protocol...";
    initPanels();                      //if commented and nothing else done causes crash
 
    ap_xml.clear();
-   
+   profile_usable        = false;
+   have_profile_snapshot = false;
 }
 
 // Set auto mode (comes from ComProject or Experiment)
@@ -172,6 +172,33 @@ void US_AnalysisProfileGui::auto_name_passed( QString& p_protname, QString& p_ap
 DbgLv(1) << "APG: pass_names" << p_protname << p_aproname;
 }
 
+static bool sameProfileProtocol( const US_RunProtocol& a, const US_RunProtocol& b )
+{
+   return a.protoGUID == b.protoGUID && a.protoID == b.protoID && a.protoname == b.protoname &&
+          a.rpAprof.aprofGUID == b.rpAprof.aprofGUID && a.rpAprof.aprofname == b.rpAprof.aprofname;
+}
+
+static bool sameProfileInputs( const US_RunProtocol& a, const US_RunProtocol& b )
+{
+   return sameProfileProtocol( a, b ) && a.rpSpeed == b.rpSpeed && a.rpSolut == b.rpSolut && a.rpOptic == b.rpOptic &&
+          a.rpRange == b.rpRange;
+}
+
+bool US_AnalysisProfileGui::profileUsableFor( const US_RunProtocol& protocol ) const
+{
+   return profile_usable && profile_abde == abde_mode_aprofile && sameProfileInputs( profile_protocol, protocol );
+}
+
+// A successful Save As gives the already reviewed profile a new identity.
+void US_AnalysisProfileGui::profileSavedAs( const US_RunProtocol& previous, const US_RunProtocol& saved )
+{
+   if ( profileUsableFor( previous ) )
+   {
+      profile_protocol = saved;
+      ap_xml           = saved.rpAprof.ap_xml;
+   }
+}
+
 // Update analysis profile based on inherited protocol
 void US_AnalysisProfileGui::inherit_protocol( US_RunProtocol* iProto )
 {
@@ -181,30 +208,32 @@ void US_AnalysisProfileGui::inherit_protocol( US_RunProtocol* iProto )
       scanCount_int = iProto->rpSpeed.ssteps[0].scancount_int;
    }
 
-   // The saved profile is read once
-   const bool                   read_saved = ap_xml.isEmpty() || currProf.aprofname != iProto->rpAprof.aprofname;
+   // Reuse saved XML only for the same protocol. Keep current edits for reloads of that protocol.
+   profile_usable                             = false;
+   const US_RunProtocol         requested     = *iProto;
+   const bool                   same_protocol = have_profile_snapshot && sameProfileProtocol( profile_protocol, requested );
+   const bool                   read_saved    = ap_xml.isEmpty() || !same_protocol;
    US_Passwd                    pw;
    QScopedPointer<US_DB2>       db;
 
    US_AnaProfileLoader::Options options;
    options.abde       = abde_mode_aprofile;
    options.read_saved = read_saved;
-   options.start      = &currProf;
+   options.start      = same_protocol || !have_profile_snapshot ? &currProf : nullptr;
    options.progress   = progress_cb;
-   options.xml        = ap_xml;
+   options.xml        = same_protocol ? ap_xml : QString();
    options.connect    = [&]() -> IUS_DB2*
    {
       db.reset( new US_DB2( pw.getPasswd() ) );
       return db.data();
    };
 
-   const US_AnaProfileLoader::Result result = US_AnaProfileLoader::load( *iProto, nullptr, options );
+   const US_AnaProfileLoader::Result result = US_AnaProfileLoader::load( requested, nullptr, options );
    for ( const US_AnaProfileLoader::Message& message : result.messages )
    {
       QMessageBox::warning( this, message.title, message.text );
    }
-   profile_usable = result.loaded;
-   if ( !result.loaded || !result.has_channels )
+   if ( !result.loaded || !result.has_channels || !sameProfileInputs( requested, *iProto ) )
    {
       return;
    }
@@ -217,6 +246,10 @@ void US_AnalysisProfileGui::inherit_protocol( US_RunProtocol* iProto )
    }
    currProf = result.profile;
    apanGeneral->showProfile( result.values );
+   profile_protocol      = *iProto;
+   profile_abde          = options.abde;
+   have_profile_snapshot = true;
+   profile_usable        = true;
 
    // A profile that was not saved has its channels from the General panel
    if ( !result.was_saved )
