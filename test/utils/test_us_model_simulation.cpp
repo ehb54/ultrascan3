@@ -853,13 +853,21 @@ US_Model manyComponents( int n )
 
 class TestUSModelSimulation : public QtTestBase
 {
+   protected:
+      void TearDown() override
+      {
+         US_Settings::set_workBaseDir( savedWorkBaseDir );
+         QtTestBase::TearDown();
+      }
+
+   private:
+      const QString savedWorkBaseDir = US_Settings::workBaseDir();
 };
 
 // The parameters, the simulated data's time grid, the acceleration check and
 // the time state files are as each program's old code left them.
 TEST_F( TestUSModelSimulation, PrepareMatchesTheThreeOldCopies )
 {
-   const QString saved = US_Settings::workBaseDir();
    QTemporaryDir root;
    std::mt19937  rng( 1243 );
    int           cases = 0, finiteVolume = 0, checkMessages = 0;
@@ -899,7 +907,6 @@ TEST_F( TestUSModelSimulation, PrepareMatchesTheThreeOldCopies )
       finiteVolume += c.model.components[0].sigma != 0.0 || c.model.components[0].delta != 0.0;
       checkMessages += !auNew.results.isEmpty();
    }
-   US_Settings::set_workBaseDir( saved );
    EXPECT_GT( cases, 60 );
    EXPECT_GT( finiteVolume, 10 );
    RecordProperty( "acceleration_messages", checkMessages );
@@ -924,7 +931,6 @@ TEST_F( TestUSModelSimulation, TemporaryTimeStateUsesEachTriplesSpeedSteps )
    }
    ASSERT_FALSE( US_SimulationParameters::speedStepsCoverData( covered.speed_steps, uncovered.edata ) );
 
-   const QString           saved = US_Settings::workBaseDir();
    const QString           tmst  = freshResults( root, "temporary", covered );
    const QString           files = dumpFiles( US_Settings::resultDir() );
    US_DataIO::RawData      sdata;
@@ -944,13 +950,11 @@ TEST_F( TestUSModelSimulation, TemporaryTimeStateUsesEachTriplesSpeedSteps )
       }
       EXPECT_EQ( dumpFiles( US_Settings::resultDir() ), files );
    }
-   US_Settings::set_workBaseDir( saved );
 }
 
 // Split among threads and added up, the simulation is FEMatch's to the bit.
 TEST_F( TestUSModelSimulation, ThreadsMatchFeMatchsSplitAndSum )
 {
-   const QString saved = US_Settings::workBaseDir();
    QTemporaryDir root;
    US_Settings::set_workBaseDir( root.path() );
    std::mt19937           rng( 7 );
@@ -998,14 +1002,12 @@ TEST_F( TestUSModelSimulation, ThreadsMatchFeMatchsSplitAndSum )
       }
       EXPECT_GT( total, 0.0 );
    }
-   US_Settings::set_workBaseDir( saved );
 }
 
 // In one thread: the finite element solver for an ideal model, otherwise
 // finite volume, as the programs ran them
 TEST_F( TestUSModelSimulation, SimulatesInThisThreadWithTheOldSolvers )
 {
-   const QString saved = US_Settings::workBaseDir();
    QTemporaryDir root;
    US_Settings::set_workBaseDir( root.path() );
    std::mt19937           rng( 11 );
@@ -1050,7 +1052,6 @@ TEST_F( TestUSModelSimulation, SimulatesInThisThreadWithTheOldSolvers )
       EXPECT_FALSE( buffer.manual );
       EXPECT_EQ( components, sigma == 0.0 ? 4 : 0 ); // once per component and once at the end
    }
-   US_Settings::set_workBaseDir( saved );
 }
 
 // The worker threads stop and are deleted once their results are added.
@@ -1060,7 +1061,6 @@ TEST_F( TestUSModelSimulation, WorkerThreadsEndWithTheSimulation )
    {
       GTEST_SKIP() << "no thread count on this platform";
    }
-   const QString saved = US_Settings::workBaseDir();
    QTemporaryDir root;
    US_Settings::set_workBaseDir( root.path() );
    std::mt19937            rng( 13 );
@@ -1094,7 +1094,6 @@ TEST_F( TestUSModelSimulation, WorkerThreadsEndWithTheSimulation )
       QThread::msleep( 20 );
    }
    EXPECT_LE( processThreads(), before ) << "six worker threads were started";
-   US_Settings::set_workBaseDir( saved );
 }
 
 // A co-sedimenting model whose first component also has sigma is refused
@@ -1102,7 +1101,6 @@ TEST_F( TestUSModelSimulation, WorkerThreadsEndWithTheSimulation )
 // data pointer it never set.
 TEST_F( TestUSModelSimulation, RefusedCoSedimentingSolverIsDeletedSafely )
 {
-   const QString saved = US_Settings::workBaseDir();
    QTemporaryDir root;
    US_Settings::set_workBaseDir( root.path() );
    std::mt19937           rng( 17 );
@@ -1128,7 +1126,6 @@ TEST_F( TestUSModelSimulation, RefusedCoSedimentingSolverIsDeletedSafely )
    US_Buffer          buffer;
    US_ModelSimulation sim;
    sim.simulate( model, simparams, data2, buffer, 0.0, false, 0 );
-   US_Settings::set_workBaseDir( saved );
 }
 
 // In one thread, a co-sedimenting model is solved with the buffer's density
@@ -1136,7 +1133,6 @@ TEST_F( TestUSModelSimulation, RefusedCoSedimentingSolverIsDeletedSafely )
 // them; without the buffer the salt gradient would have no effect.
 TEST_F( TestUSModelSimulation, CoSedimentingModelUsesTheBuffer )
 {
-   const QString saved = US_Settings::workBaseDir();
    QTemporaryDir root;
    US_Settings::set_workBaseDir( root.path() );
    std::mt19937           rng( 19 );
@@ -1178,5 +1174,4 @@ TEST_F( TestUSModelSimulation, CoSedimentingModelUsesTheBuffer )
    US_ModelSimulation sim;
    sim.simulate( model, simparams, data, buffer, 0.0, false, 0 );
    EXPECT_EQ( dumpData( data ), dumpData( withBuffer ) );
-   US_Settings::set_workBaseDir( saved );
 }
