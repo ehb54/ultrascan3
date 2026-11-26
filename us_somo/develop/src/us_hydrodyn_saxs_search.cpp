@@ -757,11 +757,9 @@ void US_Hydrodyn_Saxs_Search::run_one()
 #endif
       if ( lbl_current_target->text().isEmpty() )
       {
-         editor_msg_qc(saxs_window->plot_colors
-                       [(saxs_window->plotted_I.size() - 1) % saxs_window->plot_colors.size()], "Run complete\n\n");
+         editor_msg_qc(saxs_window->iq_color( (int) saxs_window->plotted_I.size() - 1 ), "Run complete\n\n");
       } else {
-         editor_msg_qc(saxs_window->plot_colors
-                       [(saxs_window->plotted_I.size() - 1) % saxs_window->plot_colors.size()], "Run complete");
+         editor_msg_qc(saxs_window->iq_color( (int) saxs_window->plotted_I.size() - 1 ), "Run complete");
          QString msg = QString("Fitness %1").arg(saxs_window->last_rescaling_chi2);
          if ( saxs_window->last_rescaling_chi2 < best_fitness )
          {

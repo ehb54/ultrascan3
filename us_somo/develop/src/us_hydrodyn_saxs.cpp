@@ -28,6 +28,7 @@
 #include <QTextStream>
 #include <QCloseEvent>
 #include <QGridLayout>
+#include <QFontMetrics>
 
 #define SLASH "/"
 #if defined(WIN32)
@@ -107,6 +108,12 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    last_used_mw = 0.0;
 
    pen_width = 1;
+
+   // the curves' colors as plotted, and the I(q) plot's axes: linear q, logarithmic intensity
+   iq_color_offset = 0;
+   pr_color_offset = 0;
+   iq_axis_x_log   = false;
+   iq_axis_y_log   = true;
 
    plot_pr_zoomer    = (ScrollZoomer *)0;
    plot_saxs_zoomer  = (ScrollZoomer *)0;
@@ -1037,6 +1044,33 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(pb_width, SIGNAL(clicked()), SLOT(set_width()));
    iq_widgets.push_back( pb_width );
 
+   // the I(q) plot's axes, linear or logarithmic: each button shows the scale it switches to (set_iq_axes())
+   pb_axis_x = new QPushButton( us_tr( "Log X" ), this );
+   pb_axis_x->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   pb_axis_x->setMinimumHeight( minHeight1 );
+   SET_WIDTH_FROM_TEXT_LEN( pb_axis_x );
+   pb_axis_x->setPalette( PALET_PUSHB );
+   connect( pb_axis_x, SIGNAL( clicked() ), SLOT( iq_axis_x() ) );
+   iq_widgets.push_back( pb_axis_x );
+
+   pb_axis_y = new QPushButton( us_tr( "Lin Y" ), this );
+   pb_axis_y->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   pb_axis_y->setMinimumHeight( minHeight1 );
+   SET_WIDTH_FROM_TEXT_LEN( pb_axis_y );
+   pb_axis_y->setPalette( PALET_PUSHB );
+   connect( pb_axis_y, SIGNAL( clicked() ), SLOT( iq_axis_y() ) );
+   iq_widgets.push_back( pb_axis_y );
+
+   pb_color = new QPushButton( us_tr( "Color" ), this );
+   pb_color->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   pb_color->setMinimumHeight( minHeight1 );
+   SET_WIDTH_FROM_TEXT_LEN( pb_color );
+   pb_color->setPalette( PALET_PUSHB );
+   pb_color->setToolTip( us_tr( "Change the colors of the I(q) curves: each takes the next color of the list.\n"
+                                "Their fits and residuals keep their colors." ) );
+   connect( pb_color, SIGNAL( clicked() ), SLOT( iq_color_rotate() ) );
+   iq_widgets.push_back( pb_color );
+
    pb_rescale = new QPushButton(us_tr("Rescale XY"), this);
    pb_rescale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    pb_rescale->setMinimumHeight(minHeight1);
@@ -1070,6 +1104,8 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_pp->setMinimumHeight(minHeight1);
    SET_WIDTH_FROM_TEXT_LEN( pb_pp );
    pb_pp->setPalette( PALET_PUSHB );
+   pb_pp->setToolTip( us_tr( "Save the data of the I(q) plot, of its residuals and of the I(q) residuals windows\n"
+                             "as .csv files, named from a prefix" ) );
    connect(pb_pp, SIGNAL(clicked()), SLOT(pp()));
    iq_widgets.push_back( pb_pp );
 
@@ -1564,6 +1600,24 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(pb_width2, SIGNAL(clicked()), SLOT(set_width()));
    pr_widgets.push_back( pb_width2 );
 
+   pb_pp_pr = new QPushButton( us_tr( "Save plots" ), this );
+   pb_pp_pr->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   pb_pp_pr->setMinimumHeight( minHeight1 );
+   SET_WIDTH_FROM_TEXT_LEN( pb_pp_pr );
+   pb_pp_pr->setPalette( PALET_PUSHB );
+   pb_pp_pr->setToolTip( us_tr( "Save the data of the P(r) plot and of its residuals window as .csv files, named from a prefix" ) );
+   connect( pb_pp_pr, SIGNAL( clicked() ), SLOT( pp_pr() ) );
+   pr_widgets.push_back( pb_pp_pr );
+
+   pb_color_pr = new QPushButton( us_tr( "Color" ), this );
+   pb_color_pr->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   pb_color_pr->setMinimumHeight( minHeight1 );
+   SET_WIDTH_FROM_TEXT_LEN( pb_color_pr );
+   pb_color_pr->setPalette( PALET_PUSHB );
+   pb_color_pr->setToolTip( us_tr( "Change the colors of the P(r) curves: each takes the next color of the list" ) );
+   connect( pb_color_pr, SIGNAL( clicked() ), SLOT( pr_color_rotate() ) );
+   pr_widgets.push_back( pb_color_pr );
+
    pb_pr_info = new QPushButton(us_tr( "info" ), this);
    pb_pr_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_pr_info->setMinimumHeight(minHeight1);
@@ -2054,14 +2108,30 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addLayout( hbl_load_saxs , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
+   // its buttons may be narrower than the style's minimum, down to their labels, so that this row, the longest,
+   // does not make the window wider
    QBoxLayout * hbl_plot_saxs_tools = new QHBoxLayout(); hbl_plot_saxs_tools->setContentsMargins( 0, 0, 0, 0 ); hbl_plot_saxs_tools->setSpacing( 0 );
-   hbl_plot_saxs_tools->addWidget(pb_width);
-   hbl_plot_saxs_tools->addWidget(cb_eb);
-   hbl_plot_saxs_tools->addWidget(pb_rescale);
    hbl_plot_saxs_tools->addWidget(pb_guinier_analysis);
    hbl_plot_saxs_tools->addWidget(pb_guinier_cs);
    hbl_plot_saxs_tools->addWidget(pb_saxs_legend);
    hbl_plot_saxs_tools->addWidget(pb_pp);
+   hbl_plot_saxs_tools->addWidget(pb_axis_x);
+   hbl_plot_saxs_tools->addWidget(pb_axis_y);
+   hbl_plot_saxs_tools->addWidget(pb_color);
+   hbl_plot_saxs_tools->addWidget(pb_width);
+   hbl_plot_saxs_tools->addWidget(cb_eb);
+   hbl_plot_saxs_tools->addWidget(pb_rescale);
+   for ( QPushButton * pb : { pb_guinier_analysis, pb_saxs_legend, pb_pp, pb_axis_x, pb_axis_y, pb_color, pb_width } )
+   {
+      QFontMetrics fm( pb->font() );
+      int text_w = fm.horizontalAdvance( pb->text() );
+      if ( pb == pb_axis_x || pb == pb_axis_y )
+      {
+         text_w = qMax( fm.horizontalAdvance( us_tr( "Log X" ) ), fm.horizontalAdvance( us_tr( "Lin X" ) ) );
+         text_w = qMax( text_w, qMax( fm.horizontalAdvance( us_tr( "Log Y" ) ), fm.horizontalAdvance( us_tr( "Lin Y" ) ) ) );
+      }
+      pb->setMinimumWidth( text_w + 16 );
+   }
    background->addLayout( hbl_plot_saxs_tools , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
@@ -2192,6 +2262,8 @@ void US_Hydrodyn_Saxs::setupGUI()
    j++;
    QBoxLayout * hbl_plot_pr_tools = new QHBoxLayout(); hbl_plot_pr_tools->setContentsMargins( 0, 0, 0, 0 ); hbl_plot_pr_tools->setSpacing( 0 );
    hbl_plot_pr_tools->addWidget(pb_pr_legend);
+   hbl_plot_pr_tools->addWidget(pb_pp_pr);
+   hbl_plot_pr_tools->addWidget(pb_color_pr);
    hbl_plot_pr_tools->addWidget(pb_width2);
    hbl_plot_pr_tools->addWidget(cb_pr_eb);
    hbl_plot_pr_tools->addWidget(pb_pr_info);
@@ -2298,6 +2370,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->setColumnStretch(0, 1);
    background->setColumnStretch(1, 2);
    background->setColumnStretch(2, 10);
+   set_iq_axes();
    update_saxs_sans();
    clear_plot_saxs();
    clear_plot_pr( true );
@@ -4163,7 +4236,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   (double *)&( pr[ 0 ] ),
                   (int)r.size()
                   );
-   curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
+   curve->setPen( QPen( pr_color( p ), pen_width, Qt::SolidLine ) );
    curve->attach( plot_pr );
 
    if ( plot_pr_zoomer )
@@ -4199,7 +4272,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    // pb_plot_saxs_sans->setEnabled(false);
    pb_plot_pr->setEnabled(true);
 
-   editor_msg( plot_colors[p % plot_colors.size()], plot_saxs->canvasBackground().color(), QString("P(r): Bin size: %1 \"%2\"\n").arg(delta).arg(QFileInfo(model_filename).fileName() ) );
+   editor_msg( pr_color( p ), plot_saxs->canvasBackground().color(), QString("P(r): Bin size: %1 \"%2\"\n").arg(delta).arg(QFileInfo(model_filename).fileName() ) );
 }
 
 void US_Hydrodyn_Saxs::load_plot_pr()
@@ -5238,7 +5311,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                               cb_guinier->isChecked() ?
                               (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
                               (double *)&(plotted_I[p][0]), q_points);
-      plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], pen_width, SolidLine));
+      plot_saxs->setCurvePen(Iq, QPen(iq_color( p ), pen_width, SolidLine));
 #else
       curve->setSamples(
                      cb_guinier->isChecked() ?
@@ -5246,7 +5319,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                      (double *)&(plotted_I[p][0]),
                      q_points
                      );
-      curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
+      curve->setPen( QPen( iq_color( p ), pen_width, Qt::SolidLine ) );
       curve->attach( plot_saxs );
 #endif
       plot_saxs->replot();
@@ -7330,19 +7403,8 @@ void US_Hydrodyn_Saxs::set_user_range()
       cb_kratky ->setChecked(false);
       set_guinier();
    } else {
-      plot_saxs->setAxisTitle  ( QwtPlot::yLeft,   
-                                 cb_kratky ->isChecked() ?
-                                 us_tr( " q^2 * I(q)"        ) : 
-                                 ( cb_cs_guinier->isChecked() ?                                 
-                                   us_tr( "q*I(q) (log scale)" ) : 
-                                   ( cb_Rt_guinier->isChecked() ?
-                                     us_tr( "q^2*I(q) (log scale)" ) :
-                                     us_tr( "I(q) (log scale)" ) ) )
-                                 );
-      plot_saxs->setAxisScaleEngine(QwtPlot::yLeft, 
-                                    cb_kratky->isChecked() ?
-                                    new QwtLogScaleEngine(10) :  // fix this
-                                    new QwtLogScaleEngine(10));
+      // the axes' titles and scales, linear or logarithmic as chosen
+      set_iq_axes();
 
       rescale_plot();
    }
@@ -7575,6 +7637,29 @@ void US_Hydrodyn_Saxs::plot_domain(
          le_user_highq->text().toDouble() :
          highq;
    }
+
+   // a logarithmic q axis starts at the smallest positive q
+   if ( iq_axis_x_log && !( lowq > 0e0 ) )
+   {
+      bool   any_positive = false;
+      double low_positive = 0e0;
+      for ( unsigned int i = 0; i < plotted_q.size(); i++ )
+      {
+         for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
+         {
+            if ( plotted_q[ i ][ j ] > 0e0 && ( !any_positive || plotted_q[ i ][ j ] < low_positive ) )
+            {
+               low_positive = plotted_q[ i ][ j ];
+               any_positive = true;
+            }
+         }
+      }
+      lowq = any_positive ? low_positive : 1e-3;
+      if ( !( highq > lowq ) )
+      {
+         highq = lowq * 10e0;
+      }
+   }
    //   cout << "non guinier domain " << lowq << ":" << highq << endl;
 }
 
@@ -7699,7 +7784,7 @@ void US_Hydrodyn_Saxs::plot_range(
          }
       }
    } else { // !guinier
-      // for each plot
+      // for each plot, the points in the q range: on a logarithmic intensity axis, only the positive ones
       for ( unsigned int i = 0; 
             i < plotted_Iq.size();
             i++ )      
@@ -7707,43 +7792,29 @@ void US_Hydrodyn_Saxs::plot_range(
          // scan the q range
          for ( unsigned int j = 0; j < plotted_q[i].size(); j++ )
          {
-            if ( plotted_q[i][j] >= lowq &&
-                 plotted_q[i][j] <= highq &&
-                 ( plotted_I[i][j] > 0e0 || cb_kratky->isChecked() ) )
+            if ( plotted_q[i][j] < lowq ||
+                 plotted_q[i][j] > highq )
             {
-               if ( !any_plots )
+               continue;
+            }
+            double this_I = cb_kratky->isChecked() ? plotted_q2[ i ][ j ] * plotted_I[ i ][ j ] : plotted_I[ i ][ j ];
+            if ( iq_axis_y_log && !( this_I > 0e0 ) )
+            {
+               continue;
+            }
+            if ( !any_plots )
+            {
+               lowI  = this_I;
+               highI = this_I;
+               any_plots = true;
+            } else {
+               if ( lowI > this_I )
                {
-                  if ( cb_kratky->isChecked() )
-                  {
-                     lowI  = plotted_q2[ i ][ j ] * plotted_I[ i ][ j ];
-                     highI = lowI;
-                  } else {
-                     lowI  = plotted_I[i][j];
-                     highI = plotted_I[i][j];
-                  }
-                  any_plots = true;
-               } else {
-                  if ( cb_kratky->isChecked() )
-                  {
-                     double this_I = plotted_q2[ i ][ j ] * plotted_I[ i ][ j ];
-                     if ( lowI > this_I )
-                     {
-                        lowI = this_I;
-                     }
-                     if ( highI < this_I )
-                     {
-                        highI = this_I;
-                     }
-                  } else {
-                     if ( lowI > plotted_I[i][j] )
-                     {
-                        lowI = plotted_I[i][j];
-                     }
-                     if ( highI < plotted_I[i][j] )
-                     {
-                        highI = plotted_I[i][j];
-                     }
-                  }
+                  lowI = this_I;
+               }
+               if ( highI < this_I )
+               {
+                  highI = this_I;
                }
             }
          }
@@ -7763,8 +7834,20 @@ void US_Hydrodyn_Saxs::plot_range(
 
    if ( any_plots )
    {
-      lowI *= .6;
-      highI *= cb_kratky->isChecked() ? 1.2 : 1.7;
+      if ( cb_guinier->isChecked() || iq_axis_y_log )
+      {
+         lowI *= .6;
+         highI *= cb_kratky->isChecked() ? 1.2 : 1.7;
+      } else {
+         // a linear intensity axis: 5% of the range on each side
+         double margin = 0.05 * ( highI - lowI );
+         if ( !( margin > 0e0 ) )
+         {
+            margin = highI != 0e0 ? 0.05 * fabs( highI ) : 1e0;
+         }
+         lowI  -= margin;
+         highI += margin;
+      }
    }
 
    // cout << "plot range " << lowI << ":" << highI << endl;

@@ -92,11 +92,11 @@ void US_Hydrodyn_Saxs::plot_one_pr(
                               (double *)&( pr[ 0 ] ),
                               (int)r.size()
                               );
-            curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], 6 + pen_width * 1, Qt::SolidLine ) );
+            curve->setPen( QPen( pr_color( p ), 6 + pen_width * 1, Qt::SolidLine ) );
             QwtSymbol sym;
             sym.setStyle(QwtSymbol::Diamond);
             sym.setSize( pen_width );
-            sym.setPen(QPen(plot_colors[p % plot_colors.size()]));
+            sym.setPen(QPen(pr_color( p )));
             sym.setBrush(Qt::white);
             curve->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
             curve->attach( plot_pr );
@@ -116,7 +116,7 @@ void US_Hydrodyn_Saxs::plot_one_pr(
                               (double *)&( eb_y[ 0 ] ),
                               2
                               );
-            curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
+            curve->setPen( QPen( pr_color( p ), pen_width, Qt::SolidLine ) );
             curve->setItemAttribute( QwtPlotItem::Legend, false );
             curve->attach( plot_pr );
          }
@@ -129,7 +129,7 @@ void US_Hydrodyn_Saxs::plot_one_pr(
                            (double *)&( pr[ 0 ] ),
                            (int)r.size()
                            );
-         curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
+         curve->setPen( QPen( pr_color( p ), pen_width, Qt::SolidLine ) );
          curve->attach( plot_pr );
       }
    }
@@ -163,7 +163,7 @@ void US_Hydrodyn_Saxs::plot_one_pr(
    }
 
    if ( do_replot ) {
-      editor_msg( plot_colors[p % plot_colors.size()], plot_saxs->canvasBackground().color(), name );
+      editor_msg( pr_color( p ), plot_saxs->canvasBackground().color(), name );
    }
 
    // to save to csv, write just contributing models?, target, model & residual
@@ -762,7 +762,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                      (double *)&(I[0]),
                      q.size() 
                      );
-      curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
+      curve->setPen( QPen( iq_color( p ), pen_width, Qt::SolidLine ) );
       curve->attach( plot_saxs );
    }
 
@@ -782,7 +782,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
       editor->append("I(q) vs q plot legend:\n");
    }
 
-   editor_msg( plot_colors[p % plot_colors.size()], plot_saxs->canvasBackground().color(), name );
+   editor_msg( iq_color( p ), plot_saxs->canvasBackground().color(), name );
 
    saxs_search_update_enables();
 }
@@ -1058,14 +1058,14 @@ void US_Hydrodyn_Saxs::do_plot_resid()
                if ( plotted_cs_guinier_pts_removed.count( i ) &&
                     plotted_cs_guinier_pts_removed[ i ].size() )
                {
-                  do_plot_resid( x, y, e, plotted_cs_guinier_pts_removed[ i ], plot_colors[i % plot_colors.size()] );
+                  do_plot_resid( x, y, e, plotted_cs_guinier_pts_removed[ i ], iq_color( i ) );
                } else {
-                  do_plot_resid( x, y, e, plot_colors[i % plot_colors.size()] );
+                  do_plot_resid( x, y, e, iq_color( i ) );
                }
             }
             if ( x_d.size() )
             {
-               do_plot_resid( x_d, e_d, plot_colors[i % plot_colors.size()] );
+               do_plot_resid( x_d, e_d, iq_color( i ) );
             }
 
             any_plotted = true;
@@ -1215,14 +1215,14 @@ void US_Hydrodyn_Saxs::do_plot_resid()
                   if ( plotted_Rt_guinier_pts_removed.count( i ) &&
                        plotted_Rt_guinier_pts_removed[ i ].size() )
                   {
-                     do_plot_resid( x, y, e, plotted_Rt_guinier_pts_removed[ i ], plot_colors[i % plot_colors.size()] );
+                     do_plot_resid( x, y, e, plotted_Rt_guinier_pts_removed[ i ], iq_color( i ) );
                   } else {
-                     do_plot_resid( x, y, e, plot_colors[i % plot_colors.size()] );
+                     do_plot_resid( x, y, e, iq_color( i ) );
                   }
                }
                if ( x_d.size() )
                {
-                  do_plot_resid( x_d, e_d, plot_colors[i % plot_colors.size()] );
+                  do_plot_resid( x_d, e_d, iq_color( i ) );
                }
 
                any_plotted = true;
@@ -1368,14 +1368,14 @@ void US_Hydrodyn_Saxs::do_plot_resid()
                   if ( plotted_guinier_pts_removed.count( i ) &&
                        plotted_guinier_pts_removed[ i ].size() )
                   {
-                     do_plot_resid( x, y, e, plotted_guinier_pts_removed[ i ], plot_colors[i % plot_colors.size()] );
+                     do_plot_resid( x, y, e, plotted_guinier_pts_removed[ i ], iq_color( i ) );
                   } else {
-                     do_plot_resid( x, y, e, plot_colors[i % plot_colors.size()] );
+                     do_plot_resid( x, y, e, iq_color( i ) );
                   }
                }
                if ( x_d.size() )
                {
-                  do_plot_resid( x_d, e_d, plot_colors[i % plot_colors.size()] );
+                  do_plot_resid( x_d, e_d, iq_color( i ) );
                }
                any_plotted = true;
             }
@@ -1710,7 +1710,9 @@ void US_Hydrodyn_Saxs::pp()
    QString errors;
    QString messages;
 
+   // the I(q) section's plots: the I(q) plot, its residuals and the I(q) residuals windows (P(r): pp_pr())
    map < QString, QwtPlot *>  use_plot_info = plot_info;
+   use_plot_info.erase( "US-SOMO SAXS p(r)" );
 
    for ( map < QString, US_Hydrodyn_Saxs_Iqq_Residuals *>::iterator it = saxs_iqq_residuals_windows.begin();
          it != saxs_iqq_residuals_windows.end();
@@ -1721,10 +1723,6 @@ void US_Hydrodyn_Saxs::pp()
            it->second->plot ) {
          use_plot_info[ "US-SOMO SAXS Residuals " + it->first ] = it->second->plot;
       }
-   }
-
-   if ( saxs_residuals_widget ) {
-      use_plot_info[ "US-SOMO SAXS PRR Residuals" ] = saxs_residuals_window->plot;
    }
 
    // save and restore flags since SD errorbars duplicate Err. Maybe should remove sd errorbars flag or mirror
@@ -1750,6 +1748,138 @@ void US_Hydrodyn_Saxs::pp()
    set_eb();
    set_resid_show_errorbars();
 
+}
+
+QColor US_Hydrodyn_Saxs::iq_color( int i )
+{
+   int n = (int) plot_colors.size();
+   if ( !n )
+   {
+      return QColor( Qt::black );
+   }
+   return plot_colors[ ( ( i + iq_color_offset ) % n + n ) % n ];
+}
+
+QColor US_Hydrodyn_Saxs::pr_color( int p )
+{
+   int n = (int) plot_colors.size();
+   if ( !n )
+   {
+      return QColor( Qt::black );
+   }
+   return plot_colors[ ( ( p + pr_color_offset ) % n + n ) % n ];
+}
+
+void US_Hydrodyn_Saxs::set_iq_axes()
+{
+   // the Guinier plots are linear in q^2 and logarithmic in intensity, whatever is chosen for the others
+   bool guinier = cb_guinier->isChecked();
+   bool x_log   = !guinier && iq_axis_x_log;
+   bool y_log   = guinier || iq_axis_y_log;
+
+   pb_axis_x->setText( iq_axis_x_log ? us_tr( "Lin X" ) : us_tr( "Log X" ) );
+   pb_axis_y->setText( iq_axis_y_log ? us_tr( "Lin Y" ) : us_tr( "Log Y" ) );
+   pb_axis_x->setEnabled( !guinier );
+   pb_axis_y->setEnabled( !guinier );
+   QString not_guinier =
+      guinier ?
+      us_tr( "\nNot available in the Guinier plots, which are linear in q^2 and logarithmic in intensity." ) :
+      QString( "" );
+   pb_axis_x->setToolTip( us_tr( "Switch the q axis of the I(q) plot, and of its residuals, between linear and logarithmic" ) + not_guinier );
+   pb_axis_y->setToolTip( us_tr( "Switch the intensity axis of the I(q) plot between linear and logarithmic" ) + not_guinier );
+
+   QString x_title = guinier ? us_tr( "q^2 (1/Angstrom^2)" ) : us_tr( "q (1/Angstrom)" );
+   if ( x_log )
+   {
+      x_title += us_tr( " (log scale)" );
+   }
+   QString y_title =
+      cb_kratky->isChecked() ?
+      us_tr( " q^2 * I(q)" ) :
+      ( guinier && cb_cs_guinier->isChecked() ?
+        us_tr( "q*I(q)" ) :
+        ( guinier && cb_Rt_guinier->isChecked() ? us_tr( "q^2*I(q)" ) : us_tr( "I(q)" ) ) );
+   if ( y_log )
+   {
+      y_title += us_tr( " (log scale)" );
+   }
+
+   plot_saxs ->setAxisTitle( QwtPlot::xBottom, x_title );
+   plot_resid->setAxisTitle( QwtPlot::xBottom, x_title );
+   plot_saxs ->setAxisTitle( QwtPlot::yLeft,   y_title );
+   plot_saxs ->setAxisScaleEngine( QwtPlot::xBottom,
+                                   x_log ? (QwtScaleEngine *) new QwtLogScaleEngine( 10 ) : (QwtScaleEngine *) new QwtLinearScaleEngine );
+   plot_resid->setAxisScaleEngine( QwtPlot::xBottom,
+                                   x_log ? (QwtScaleEngine *) new QwtLogScaleEngine( 10 ) : (QwtScaleEngine *) new QwtLinearScaleEngine );
+   plot_saxs ->setAxisScaleEngine( QwtPlot::yLeft,
+                                   y_log ? (QwtScaleEngine *) new QwtLogScaleEngine( 10 ) : (QwtScaleEngine *) new QwtLinearScaleEngine );
+}
+
+void US_Hydrodyn_Saxs::iq_axis_x()
+{
+   iq_axis_x_log = !iq_axis_x_log;
+   set_guinier();
+}
+
+void US_Hydrodyn_Saxs::iq_axis_y()
+{
+   iq_axis_y_log = !iq_axis_y_log;
+   set_guinier();
+}
+
+void US_Hydrodyn_Saxs::iq_color_rotate()
+{
+   if ( plot_colors.size() )
+   {
+      iq_color_offset = ( iq_color_offset + 1 ) % (int) plot_colors.size();
+   }
+   set_guinier();
+}
+
+void US_Hydrodyn_Saxs::pr_color_rotate()
+{
+   if ( plot_colors.size() )
+   {
+      pr_color_offset = ( pr_color_offset + 1 ) % (int) plot_colors.size();
+   }
+   // as the P(r) Err checkbox redraws them
+   bool had_legend = pr_legend_vis;
+   pr_replot();
+   pr_legend_vis = had_legend;
+   set_pr_legend();
+}
+
+// Save plots of the P(r) section: the P(r) plot and its residuals window (I(q): pp())
+void US_Hydrodyn_Saxs::pp_pr()
+{
+   QString use_dir = QDir::currentPath();
+   ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   QString fn =
+      QFileDialog::getSaveFileName( this , us_tr( "Select a prefix name to save the P(r) plot data" ) , use_dir , "*.csv" );
+
+   if ( fn.isEmpty() )
+   {
+      return;
+   }
+
+   fn = QFileInfo( fn ).path() + QDir::separator() + QFileInfo( fn ).completeBaseName();
+
+   QString errors;
+   QString messages;
+
+   map < QString, QwtPlot *>  use_plot_info;
+   use_plot_info[ "US-SOMO SAXS p(r)" ] = plot_pr;
+
+   if ( saxs_residuals_widget ) {
+      use_plot_info[ "US-SOMO SAXS PRR Residuals" ] = saxs_residuals_window->plot;
+   }
+
+   if ( !US_Plot_Util::printtofile( fn, use_plot_info, errors, messages ) )
+   {
+      editor_msg( "red", errors );
+   } else {
+      editor_msg( "blue", messages );
+   }
 }
 
 void US_Hydrodyn_Saxs::set_eb() 

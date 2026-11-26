@@ -50,7 +50,7 @@ The <b>SAS module</b> panel is divided in two sections, <b><i>SAS I(q) Functions
 <p>
 
 <b><i>SAS I(q) Functions:</i></b>
-The first series of buttons in the "SAS I(q) Functions" section deals with operations on previously computed or experimental data. The buttons are on three rows: loading and clearing curves (<b><i>Load SAXS Curve</i></b>, <b><i>Load GNOM File</i></b>, <b><i>Load Plotted</i></b>, <b><i>Set Grid</i></b> and <b><i>Clear SAXS Curve</i></b>); the plot and its analysis (<b><i>Width</i></b>, <b><i>Err</i></b>, <b><i>Guinier</i></b>, <b><i>Legend</i></b> and <b><i>Save plots</i></b>); and the other modules opened from here (<b><i>IFT</i></b>, <b><i>Search</i></b>, <b><i>Data</i></b>, <b><i>UV-Vis</i></b>, <b><i>HPLC/KIN</i></b>, <b><i>MALS</i></b> and <b><i>MALS+SAXS</i></b>), with those of expert mode on a fourth row.<br>
+The first series of buttons in the "SAS I(q) Functions" section deals with operations on previously computed or experimental data. The buttons are on three rows: loading and clearing curves (<b><i>Load SAXS Curve</i></b>, <b><i>Load GNOM File</i></b>, <b><i>Load Plotted</i></b>, <b><i>Set Grid</i></b> and <b><i>Clear SAXS Curve</i></b>); the plot and its analysis (<b><i>Guinier</i></b>, <b><i>Legend</i></b>, <b><i>Save plots</i></b>, <b><i>Log X</i></b>, <b><i>Log Y</i></b>, <b><i>Color</i></b>, <b><i>Width</i></b> and <b><i>Err</i></b>); and the other modules opened from here (<b><i>IFT</i></b>, <b><i>Search</i></b>, <b><i>Data</i></b>, <b><i>UV-Vis</i></b>, <b><i>HPLC/KIN</i></b>, <b><i>MALS</i></b> and <b><i>MALS+SAXS</i></b>), with those of expert mode on a fourth row.<br>
 <ul>
 <li>
 Loading is done with the <b><i>Load SAXS (SANS)</i></b> button (the SAXS/SANS label will switch depending on whether SAXS or SANS operations have been chosen, see below). If one or more curves are already present in the graphics window, rescaling of the new entry is possible by selecting the target curve in a pop-up window. Multiple entries can be selected for loading. If no previous file had been uploaded, the multiple selections will not be scaled, otherwise a reference dataset for scaling can be chosen.<br>
@@ -149,7 +149,11 @@ The <b><i>Guinier</i></b> button will allow the manual or semi-automated computa
 <li>
 <b><i>Legend</i></b> will toggle on and off the names of the files plotted and their associated line colours.<p>
 <li>
-<b><i>Save plots</i></b>. Finally, the data shown in any of the plots currently visualized can be saved in csv-formatted files by pressing the <b><i>Save plots</i></b> button. This will open a pop-up dialogue window where the location and the root filename for the cvs files can be set.<p>
+<b><i>Log X</i></b> / <b><i>Lin X</i></b> and <b><i>Log Y</i></b> / <b><i>Lin Y</i></b> switch the <i>q</i> axis and the intensity axis of the plot between linear and logarithmic; each button shows the scale it switches to, and the axis title says "(log scale)" when an axis is logarithmic. The plot starts with a linear <i>q</i> axis and a logarithmic intensity axis. The residuals plot below follows the <i>q</i> axis. On a logarithmic <i>q</i> axis the plot starts at the smallest positive <i>q</i>; on a logarithmic intensity axis its range is set from the positive intensities, and on a linear one from all of them, negative ones included. These buttons apply to the <i>I(q)</i> and Kratky plots: in the Guinier plots (<i>Guinier</i>, <i>CS</i> and <i>TV</i>), which are linear in <i>q<sup>2</sup></i> and logarithmic in intensity, they are not available, and the chosen scales come back when the Guinier plot is left.<p>
+<li>
+<b><i>Color</i></b> changes the colors of the <i>I(q)</i> curves: each curve takes the next color of the list, and its fits and residuals keep its color. The <i>P(r)</i> curves are not changed (their section has its own <b><i>Color</i></b>).<p>
+<li>
+<b><i>Save plots</i></b>. Finally, the data shown in the <i>I(q)</i> plot, in its residuals plot and in the <i>I(q)</i> residuals windows can be saved in csv-formatted files by pressing the <b><i>Save plots</i></b> button. This will open a pop-up dialogue window where the location and the root filename for the cvs files can be set. The <i>P(r)</i> plot is saved by the <b><i>Save plots</i></b> button of its own section.<p>
 </ul>
 Clicking on the <i>Guinier</i> (and, for rod-like or disk-like macromolecules Guinier analysis, on the <i>CS</i> or <i>TV</i> checkboxes), the Guinier plots, ln[<i>I(q)</i>] vs. <i>q<sup>2</sup></i>, ln[<i>q I(q)</i>] vs. <i>q<sup>2</sup></i> (CS), and ln[<i>q<sup>2</sup>I(q)</i>] vs. <i>q<sup>2</sup></i> (TV), respectively, can be shown, and their display <i>q<sup>2</sup></i> ranges can be modified by entering values in the corresponding fields. <p>
 
@@ -275,7 +279,7 @@ The same residuals can by also plotted using a log scale by clicking on the <i>P
 <img SRC="somo-SAXS_SANS_Pr_panel_new.png" ALT="SOMO SAXS P(r) Simulation  Panel">
 </center>
 <p>
-In the <b>P(r) vs. r Plotting Functions</b> section the buttons are on two rows: loading and clearing distributions (<b><i>Load P(r) Distribution</i></b>, <b><i>Load Plotted P(r)</i></b> and <b><i>Clear P(r) Distribution</i></b>), and the plot (<b><i>Legend</i></b>, <b><i>Width</i></b> and <b><i>Err</i></b>). In this section, a previously-generated or experimentally-derived <i>P</i>(<i>r</i>) vs. <i>r</i> curve can be uploaded in the graphics window by pressing the <b><i>Load P(r) Distribution</i></b> button, and the graphics window can be cleared by pressing the <b><i>Clear P(r) Distribution</i></b> button.<br>
+In the <b>P(r) vs. r Plotting Functions</b> section the buttons are on two rows: loading and clearing distributions (<b><i>Load P(r) Distribution</i></b>, <b><i>Load Plotted P(r)</i></b> and <b><i>Clear P(r) Distribution</i></b>), and the plot (<b><i>Legend</i></b>, <b><i>Save plots</i></b>, <b><i>Color</i></b>, <b><i>Width</i></b> and <b><i>Err</i></b>). Its <b><i>Save plots</i></b> saves the data of the <i>P(r)</i> plot, and of its residuals window when it is open, in csv-formatted files named from a root filename, as the one of the <i>I(q)</i> section does for its plots; its <b><i>Color</i></b> changes the colors of the <i>P(r)</i> curves only. In this section, a previously-generated or experimentally-derived <i>P</i>(<i>r</i>) vs. <i>r</i> curve can be uploaded in the graphics window by pressing the <b><i>Load P(r) Distribution</i></b> button, and the graphics window can be cleared by pressing the <b><i>Clear P(r) Distribution</i></b> button.<br>
 As for the <b>I(q) vs. q</b> window, <b><i>Load Plotted</i></b> will open up open a new window allowing several operations to be performed on the data which were currently showed in the graphics window (see <a href=somo_saxs_load_csv.html>here</a>), and <b><i>Legend</i></b> will display the names of the files plotted and their associated line colours. Each time <b><i>Width</i></b> is pressed, it increments the data line size of the plots; after five steps, it goes back to the initial value. Starting from the <span style="color:#CC0000">March 2023 release</span>, SD associated with <i>P</i>(<i>r</i>) vs. <i>r</i> data can now be displayed in this module by selecting the <b><i>Err</b></i> checkbox, and they can be used in NNLS fitting operations (see <a href=somo_saxs_load_csv.html>here</a>).<p>
 For the P(r) vs. r computation from an atomic-level structure or a bead model, two fields control the <b><i>Bin size (Angstrom)</i></b> and a <b><i>Smoothing</i></b> window (optional), respectively. <p>
 
@@ -350,7 +354,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on November 25, 2026
+Last modified on November 26, 2026
 </font>
 </body>
 </html>

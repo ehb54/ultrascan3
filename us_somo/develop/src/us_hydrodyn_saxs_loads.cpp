@@ -4154,7 +4154,7 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
                                           )
 {
    vector < double > I2;
-   QColor plot_color = plot_colors[ plotted_q.size() % plot_colors.size() ];
+   QColor plot_color = iq_color( plotted_q.size() );
    rescale_iqq_curve( scaling_target, q, I, I2, plot_color, do_plot_residuals );
 }
 
@@ -4175,7 +4175,7 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
                                           vector < double > &I2,
                                           bool do_plot_residuals)
 {
-   QColor plot_color = plot_colors[ plotted_q.size() % plot_colors.size() ];
+   QColor plot_color = iq_color( plotted_q.size() );
    rescale_iqq_curve( scaling_target, q, I, I2, plot_color, do_plot_residuals );
 }
 
