@@ -733,7 +733,10 @@ QSpinBox* US_Widgets::us_spinbox( const int fontAdjust )
 
 void US_Widgets::write_plot( const QString& fname, const QwtPlot* plot )
 {
-   US_GuiUtil::save_plot( fname, plot );
+   if ( US_GuiUtil::save_plot( fname, plot ) != 0 )
+   {
+      qWarning() << fname << "plot not saved";
+   }
 }
 
 // Clean up install and work ./etc directories

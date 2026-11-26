@@ -320,35 +320,6 @@ public:
     */
     int readBlobFromDB( const QString& filename, const QString& procedure, const int tableID ) override;
 
-    /*! \brief Reads AUC data from the database and writes it to the
-               specified file.  If the downloaded data is compressed, it
-               is decompressed.
-
-        \param filename The complete and absolute pathname of the destination
-               file name.
-
-        \param tableID The integer primary-key index of the record that
-               contains the raw AUC data.
-
-        \return dbStatus.ERROR if the file cannot be opened, or
-                any error codes returned by the db.
-    */
-    int readAucFromDB( const QString& filename, int tableID ) override;
-
-    /*! \brief Loads AUC data from a file, compresses it, and writes it to the
-               database.
-
-        \param filename The complete and absolute pathname of the file with
-               the binary data.
-
-        \param tableID The integer primary-key index of the record where the
-               raw AUC data will be pplaced.
-
-        \return dbStatus.ERROR if the file cannot be opened, or
-                any error codes returned by the db.
-    */
-    int writeAucToDB( const QString& filename, int tableID ) override;
-
     /*! \brief Inserts escape codes into a string, preparing the string to be inserted
                into a mysql database
 

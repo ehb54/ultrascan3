@@ -5,19 +5,17 @@
 #include <QPrinter>
 #include <QProgressDialog>
 #include <QScopedPointer>
-//#include <QThread>    
 
 
+#include "us_constants.h"
 #include "us_esigner_gmp.h"
-#include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
+#include "us_math2.h"
 #include "us_protocol_util.h"
 #include "us_run_protocol.h"
-#include "us_math2.h"
-#include "us_constants.h"
+#include "us_settings.h"
 #include "us_solution_vals.h"
-#include "us_tar.h"
 
 #define MIN_NTC 25
 

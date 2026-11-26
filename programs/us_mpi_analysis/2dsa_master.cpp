@@ -5,7 +5,6 @@
 #include "us_math2.h"
 #include "us_mpi_analysis.h"
 #include "us_simparms.h"
-#include "us_tar.h"
 #include "us_util.h"
 
 // Drop duplicate solutes from a sorted merge-job solute vector

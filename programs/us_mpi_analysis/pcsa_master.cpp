@@ -4,7 +4,6 @@
 #include "us_mpi_analysis.h"
 #include "us_simparms.h"
 #include "us_sleep.h"
-#include "us_tar.h"
 #include "us_util.h"
 
 #define DbgTime() qDebug() << "TM:" << (startTime.msecsTo(QDateTime::currentDateTime())/1000.0)

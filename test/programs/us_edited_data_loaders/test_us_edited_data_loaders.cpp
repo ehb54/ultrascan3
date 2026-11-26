@@ -175,14 +175,6 @@ class FakeDB : public IUS_DB2
          const QString sourcePath = procedure == "download_editData" ? editFixture : rawFixture;
          return QFile::copy( sourcePath, path ) ? IUS_DB2::OK : IUS_DB2::DBERROR;
       }
-      int writeAucToDB( const QString&, int ) override
-      {
-         return IUS_DB2::OK;
-      }
-      int readAucFromDB( const QString&, int ) override
-      {
-         return IUS_DB2::OK;
-      }
       void rawQuery( const QString& ) override
       {
       }

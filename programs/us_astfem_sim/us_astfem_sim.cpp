@@ -2553,7 +2553,10 @@ void US_Astfem_Sim::update_movie_plot( QVector< double >* x, double* c )
       QPixmap pmap;
       image_count++;
       imageName = imagedir + QString::asprintf( "frame%05d.png", image_count );
-      US_GuiUtil::save_png( imageName, moviePlot );
+      if ( US_GuiUtil::save_png( imageName, moviePlot ) != 0 )
+      {
+         qWarning() << imageName << "plot not saved";
+      }
    }
 
    qApp->processEvents();
