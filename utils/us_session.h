@@ -89,8 +89,10 @@ class US_UTIL_EXTERN US_Session
       void                     lock();
 
       //! \brief The accepted password, or empty when locked.
-      //! A password this process accepted is returned exactly as entered;
-      //! one another process accepted comes from the cache.
+      //! The cache decides: when another process locks or changes the
+      //! password, that reaches this process too. While the cache still holds
+      //! what this process accepted, the password is returned exactly as
+      //! entered (the cache keeps only 64 Latin-1 bytes).
       //! Callers use it to decrypt the stored database credentials.
       QString                  masterKey() const;
 

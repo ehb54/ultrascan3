@@ -25,6 +25,9 @@
 #include <fcntl.h>
 #include <pthread.h>
 #include <stdlib.h>
+#include <string>
+#include <sys/ioctl.h>
+#include <sys/wait.h>
 #include <termios.h>
 #include <thread>
 #include <unistd.h>
@@ -326,6 +329,7 @@ TEST_F( US_CredentialSourceTest, EnvironmentSourceReadsTheVariableOnce )
    EXPECT_EQ( source.maxAttempts(), 1 );
    EXPECT_EQ( source.request( "Master password", 1, secret ), US_CredentialSource::Outcome::Provided );
    EXPECT_EQ( secret, QString( "synthetic-master" ) );
+   EXPECT_FALSE( qEnvironmentVariableIsSet( variable ) ) << "child processes would inherit the password";
 }
 
 TEST_F( US_CredentialSourceTest, EnvironmentSourceIsUnavailableWhenUnsetOrEmpty )
@@ -514,6 +518,45 @@ TEST_F( US_SessionTest, InProcessSessionsStillUseAnotherProcesssUnlock )
    EXPECT_TRUE( source.attempts.isEmpty() );
 }
 
+TEST_F( US_SessionTest, APasswordChangedByAnotherProcessReachesThisOne )
+{
+   QSharedPointer<FieldStore> field( new FieldStore );
+   US_Session                 s( field );
+   ScriptedSource             source( { provided( "synthetic-master" ) } );
+   ASSERT_EQ( s.unlock( source ), US_Session::Result::Ok );
+
+   // us_config in another process changes the password and caches the new one.
+   US_Settings::set_UltraScanPW( QCryptographicHash::hash( QByteArray( "changed-master" ), QCryptographicHash::Sha1 ) );
+   field->save( "changed-master" );
+
+   EXPECT_EQ( s.masterKey(), QString( "changed-master" ) );
+}
+
+TEST_F( US_SessionTest, ALockByAnotherProcessReachesThisOne )
+{
+   QSharedPointer<FieldStore> field( new FieldStore );
+   US_Session                 s( field );
+   ScriptedSource             source( { provided( "synthetic-master" ) } );
+   ASSERT_EQ( s.unlock( source ), US_Session::Result::Ok );
+
+   field->save( QString() );
+
+   EXPECT_FALSE( s.isUnlocked() );
+}
+
+TEST_F( US_SessionTest, ALockHoldsInAnInProcessSessionThatUsedAnotherProcesssUnlock )
+{
+   store->value = "synthetic-master";
+   US_Session s = session();
+   s.keepUnlockInProcess();
+   ASSERT_TRUE( s.isUnlocked() );
+
+   s.lock();
+
+   EXPECT_FALSE( s.isUnlocked() );
+   EXPECT_EQ( store->value, QString( "synthetic-master" ) ) << "the shared cache is not this process's to clear";
+}
+
 TEST_F( US_SessionTest, AnOverrideReplacesTheInstanceForItsLifetime )
 {
    QSharedPointer<MemoryStore> outer_store( new MemoryStore );
@@ -652,6 +695,272 @@ TEST( US_TerminalCredentialSourcePty, AnInterruptRestoresEchoBeforeTheProgramsHa
    EXPECT_EQ( interrupted, 1 ) << "the program's own handler did not run";
    EXPECT_EQ( echo_when_interrupt, 1 ) << "echo was still off when the program's handler ran";
    EXPECT_EQ( outcome, US_CredentialSource::Outcome::Cancelled );
+   EXPECT_TRUE( secret.isEmpty() );
+   EXPECT_TRUE( tty.echoing() );
+}
+namespace
+{
+// Waits for a child to exit (or, with WUNTRACED, to stop), killing it after
+// ten seconds so a broken prompt fails the test instead of hanging it.
+bool waitForChild( pid_t child, int flags, int& status )
+{
+   for ( int ii = 0; ii < 1000; ii++ )
+   {
+      const pid_t done = waitpid( child, &status, flags | WNOHANG );
+      if ( done == child )
+      {
+         return true;
+      }
+      std::this_thread::sleep_for( std::chrono::milliseconds( 10 ) );
+   }
+   kill( child, SIGKILL );
+   waitpid( child, &status, 0 );
+   return false;
+}
+
+// In a forked child: start a session on the terminal and make it the
+// controlling terminal, so job control applies as in a login shell.
+int controllingTerminal( const char* name )
+{
+   setsid();
+   const int fd = open( name, O_RDWR );
+   if ( fd >= 0 )
+   {
+      ioctl( fd, TIOCSCTTY, 0 );
+   }
+   return fd;
+}
+} // namespace
+
+TEST( US_TerminalCredentialSourcePty, ABackgroundJobDoesNotPrompt )
+{
+   PseudoTerminal tty;
+   ASSERT_TRUE( tty.valid() );
+   const std::string name = ptsname( tty.master );
+
+   const pid_t       child = fork();
+   ASSERT_GE( child, 0 );
+   if ( child == 0 )
+   {
+      const int fd = controllingTerminal( name.c_str() );
+      if ( fd < 0 || !US_TerminalCredentialSource( fd ).available() )
+      {
+         _exit( 3 ); // the foreground job could not prompt
+      }
+      const pid_t job = fork();
+      if ( job == 0 )
+      {
+         setpgid( 0, 0 ); // a background job, as "command &" starts it
+         _exit( US_TerminalCredentialSource( fd ).available() ? 1 : 0 );
+      }
+      int status = 0;
+      waitpid( job, &status, 0 );
+      _exit( WIFEXITED( status ) ? WEXITSTATUS( status ) : 4 );
+   }
+
+   int status = 0;
+   ASSERT_TRUE( waitForChild( child, 0, status ) );
+   ASSERT_TRUE( WIFEXITED( status ) );
+   EXPECT_NE( WEXITSTATUS( status ), 3 ) << "the foreground job could not prompt";
+   EXPECT_EQ( WEXITSTATUS( status ), 0 ) << "a background job would be stopped at the prompt";
+}
+
+namespace
+{
+bool echoOn( int fd )
+{
+   termios mode{};
+   return tcgetattr( fd, &mode ) == 0 && ( mode.c_lflag & ECHO ) != 0;
+}
+
+// Polls for up to five seconds.
+template <typename Check> bool within( Check check )
+{
+   for ( int ii = 0; ii < 500; ii++ )
+   {
+      if ( check() )
+      {
+         return true;
+      }
+      std::this_thread::sleep_for( std::chrono::milliseconds( 10 ) );
+   }
+   return false;
+}
+
+// How the job-control test ended, as the shell process's exit code.
+enum JobResult
+{
+   JobPassed = 0,
+   NoTerminal,
+   EchoNeverOff,
+   DidNotStop,
+   EchoOffWhileStopped,
+   EchoNotOffAfterFg,
+   PromptDidNotResume,
+   EchoNotRestored
+};
+} // namespace
+
+// Runs the prompt as a job under a minimal shell, so Ctrl+Z stops it as it
+// would at a login prompt: a stop is only taken by a job whose shell is in
+// the same session.
+TEST( US_TerminalCredentialSourcePty, CtrlZGivesTheTerminalBackAndThePromptResumes )
+{
+   PseudoTerminal tty;
+   ASSERT_TRUE( tty.valid() );
+   const std::string name   = ptsname( tty.master );
+   const int         master = tty.master;
+
+   const pid_t       shell = fork();
+   ASSERT_GE( shell, 0 );
+   if ( shell == 0 )
+   {
+      signal( SIGTTOU, SIG_IGN ); // as a shell does, to hand the terminal over
+      const int fd = controllingTerminal( name.c_str() );
+      if ( fd < 0 )
+      {
+         _exit( NoTerminal );
+      }
+      const pid_t job = fork();
+      if ( job == 0 )
+      {
+         signal( SIGTTOU, SIG_DFL );
+         setpgid( 0, 0 );
+         within( [&] { return tcgetpgrp( fd ) == getpgrp(); } );
+         US_TerminalCredentialSource  source( fd );
+         QString                      secret;
+         US_CredentialSource::Outcome outcome = source.request( "Master password", 1, secret );
+         _exit( outcome == US_CredentialSource::Outcome::Provided && secret == "typed-after-fg" ? 0 : 1 );
+      }
+      setpgid( job, job );
+      tcsetpgrp( fd, job );
+
+      auto finish = [&]( JobResult result )
+      {
+         kill( job, SIGKILL );
+         waitpid( job, nullptr, 0 );
+         _exit( result );
+      };
+      if ( !within( [&] { return !echoOn( fd ); } ) )
+      {
+         finish( EchoNeverOff );
+      }
+      if ( write( master, "half\x1a", 5 ) != 5 ) // Ctrl+Z; the half-typed line is discarded
+      {
+         finish( DidNotStop );
+      }
+      int  status  = 0;
+      bool stopped = within( [&] { return waitpid( job, &status, WUNTRACED | WNOHANG ) == job; } );
+      if ( !stopped || !WIFSTOPPED( status ) )
+      {
+         finish( DidNotStop );
+      }
+      tcsetpgrp( fd, getpgrp() ); // the shell takes the terminal back
+      if ( !echoOn( fd ) )
+      {
+         finish( EchoOffWhileStopped );
+      }
+
+      tcsetpgrp( fd, job ); // fg
+      kill( job, SIGCONT );
+      if ( !within( [&] { return !echoOn( fd ); } ) )
+      {
+         finish( EchoNotOffAfterFg );
+      }
+      const char typed[] = "typed-after-fg\n";
+      if ( write( master, typed, sizeof typed - 1 ) != static_cast<ssize_t>( sizeof typed - 1 ) ||
+           !within( [&] { return waitpid( job, &status, WNOHANG ) == job; } ) || !WIFEXITED( status ) ||
+           WEXITSTATUS( status ) != 0 )
+      {
+         finish( PromptDidNotResume );
+      }
+      _exit( echoOn( fd ) ? JobPassed : EchoNotRestored );
+   }
+
+   int status = 0;
+   ASSERT_TRUE( waitForChild( shell, 0, status ) );
+   ASSERT_TRUE( WIFEXITED( status ) );
+   const char* const results[] = { "passed",
+                                   "the shell could not open the terminal",
+                                   "echo was never turned off",
+                                   "Ctrl+Z did not stop the prompt",
+                                   "the shell got the terminal back with echo off",
+                                   "echo was not turned off again after fg",
+                                   "the prompt did not resume after fg",
+                                   "echo was not restored after the prompt" };
+   const int         code      = WEXITSTATUS( status );
+   EXPECT_EQ( code, JobPassed ) << ( code < 8 ? results[code] : "unexpected exit" );
+}
+
+// On Linux, Ctrl+D hands over a partly typed line and the next read waits,
+// so an interrupt can arrive mid-line; BSD terminals report end of input
+// there instead.
+#ifdef Q_OS_LINUX
+TEST( US_TerminalCredentialSourcePty, AnInterruptedPromptNeverUsesAPartlyTypedLine )
+{
+   PseudoTerminal tty;
+   ASSERT_TRUE( tty.valid() );
+   interrupt_slave = tty.slave;
+   interrupted     = 0;
+
+   struct sigaction record
+   {
+   };
+   struct sigaction saved
+   {
+   };
+   record.sa_handler = recordInterrupt;
+   sigemptyset( &record.sa_mask );
+   sigaction( SIGINT, &record, &saved );
+
+   US_TerminalCredentialSource  source( tty.slave );
+   QString                      secret;
+   US_CredentialSource::Outcome outcome = US_CredentialSource::Outcome::Unavailable;
+   std::thread                  reader( [&] { outcome = source.request( "Master password", 1, secret ); } );
+
+   ASSERT_TRUE( tty.waitForEchoOff() );
+   tty.type( "partial\x04" ); // Ctrl+D hands over the partial line without a newline
+   std::this_thread::sleep_for( std::chrono::milliseconds( 300 ) );
+   pthread_kill( reader.native_handle(), SIGINT );
+   reader.join();
+   sigaction( SIGINT, &saved, nullptr );
+
+   EXPECT_EQ( outcome, US_CredentialSource::Outcome::Cancelled );
+   EXPECT_TRUE( secret.isEmpty() );
+}
+#endif
+
+TEST( US_TerminalCredentialSourcePty, AnInterruptDeliveredToAnotherThreadEndsThePrompt )
+{
+   PseudoTerminal tty;
+   ASSERT_TRUE( tty.valid() );
+   interrupt_slave = tty.slave;
+   interrupted     = 0;
+
+   struct sigaction record
+   {
+   };
+   struct sigaction saved
+   {
+   };
+   record.sa_handler = recordInterrupt;
+   sigemptyset( &record.sa_mask );
+   sigaction( SIGINT, &record, &saved );
+
+   US_TerminalCredentialSource  source( tty.slave );
+   QString                      secret;
+   US_CredentialSource::Outcome outcome = US_CredentialSource::Outcome::Unavailable;
+   std::thread                  reader( [&] { outcome = source.request( "Master password", 1, secret ); } );
+
+   ASSERT_TRUE( tty.waitForEchoOff() );
+   pthread_kill( pthread_self(), SIGINT ); // not the thread that reads
+   std::this_thread::sleep_for( std::chrono::milliseconds( 300 ) );
+   tty.type( "late\n" ); // ends a read the interrupt did not reach
+   reader.join();
+   sigaction( SIGINT, &saved, nullptr );
+
+   EXPECT_EQ( interrupted, 1 ) << "the program's own handler did not run";
+   EXPECT_EQ( outcome, US_CredentialSource::Outcome::Cancelled ) << "the prompt went on reading";
    EXPECT_TRUE( secret.isEmpty() );
    EXPECT_TRUE( tty.echoing() );
 }

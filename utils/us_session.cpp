@@ -2,6 +2,8 @@
 #include "us_session.h"
 
 #include <QCryptographicHash>
+#include <QMutex>
+#include <QMutexLocker>
 #include <QObject>
 
 #include "us_db2.h"
@@ -16,19 +18,23 @@ class SharedMemoryStore : public US_Session::Store
    public:
       QString load() const override
       {
+         QMutexLocker locked( &mutex );
          return global.passwd();
       }
       void save( const QString& password ) override
       {
+         QMutexLocker locked( &mutex );
          global.setPasswd( password );
       }
 
    private:
+      // One US_Global for every thread of the process.
+      mutable QMutex    mutex;
       mutable US_Global global;
 };
 
-// Keeps its own unlock, falling back to another process's cached one;
-// never writes the shared cache.
+// Keeps its own unlock, falling back to another process's cached one until
+// this process locks; never writes the shared cache.
 class InProcessStore : public US_Session::Store
 {
    public:
@@ -38,16 +44,22 @@ class InProcessStore : public US_Session::Store
 
       QString load() const override
       {
+         if ( locked )
+         {
+            return QString();
+         }
          return value.isEmpty() ? shared->load() : value;
       }
       void save( const QString& password ) override
       {
-         value = password;
+         value  = password;
+         locked = password.isEmpty();
       }
 
    private:
       QSharedPointer<US_Session::Store> shared;
       QString                           value;
+      bool                              locked = false;
 };
 } // namespace
 
@@ -171,9 +183,22 @@ void US_Session::lock()
 
 QString US_Session::masterKey() const
 {
-   // The shared cache holds at most 64 Latin-1 bytes, so a password accepted
-   // here is used as entered rather than as read back.
-   return accepted.isEmpty() ? store->load() : accepted;
+   // The cache decides, so a lock or a password change by another process
+   // reaches this one. The shared cache holds at most 64 Latin-1 bytes, so
+   // while it still holds what this process accepted, that password is used
+   // as entered rather than as read back.
+   const QString cached = store->load();
+   if ( accepted.isEmpty() || cached.isEmpty() )
+   {
+      return cached;
+   }
+   char field[US_Global::PasswdBytes];
+   US_Global::encodePasswd( accepted, field );
+   if ( cached == accepted || cached == US_Global::decodePasswd( field ) )
+   {
+      return accepted;
+   }
+   return cached;
 }
 
 US_Session::Result US_Session::confirm( const QString& reason, const QString& candidate ) const
