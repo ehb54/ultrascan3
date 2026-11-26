@@ -1226,6 +1226,8 @@ bool US_Hydrodyn_Dad::plot_file( QString file,
                              );
 
             curveeb->setPen( QPen( PLOT_COLOR( file ), use_line_width, Qt::SolidLine ) );
+            // the bars are not listed in the legend
+            curveeb->setItemAttribute( QwtPlotItem::Legend, false );
             curveeb->attach( plot_dist );
 
             if ( use_q_exclude.count( x[0] ) ) {
@@ -1269,7 +1271,7 @@ bool US_Hydrodyn_Dad::plot_file( QString file,
          curve->attach( plot_dist );
          for ( unsigned int i = 0; i < q_points; i++ )
          {
-            QwtPlotCurve *curveeb = new QwtPlotCurve( file );
+            QwtPlotCurve *curveeb = new QwtPlotCurve( UPU_EB_PREFIX + file );
             curveeb->setStyle( QwtPlotCurve::Lines );
 
             x[ 0 ] = q[ i ];
@@ -1284,6 +1286,8 @@ bool US_Hydrodyn_Dad::plot_file( QString file,
                            );
 
             curveeb->setPen( QPen( PLOT_COLOR( file ), use_line_width, Qt::SolidLine ) );
+            // the bars are not listed in the legend
+            curveeb->setItemAttribute( QwtPlotItem::Legend, false );
             curveeb->attach( plot_dist );
          }            
       }

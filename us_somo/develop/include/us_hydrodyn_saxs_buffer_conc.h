@@ -63,6 +63,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer_Conc : public QFrame
 
       QPushButton   *pb_load;
       QPushButton   *pb_save;
+      QPushButton   *pb_save_into_files;
 
       QPushButton   *pb_copy;
       QPushButton   *pb_paste;
@@ -93,6 +94,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer_Conc : public QFrame
 
       void load();
       void save();
+      void save_into_files();
 
       void copy();
       void paste();
