@@ -37,12 +37,13 @@ class US_UTIL_EXTERN US_SimulationParameters
    void initFromData( IUS_DB2*, US_DataIO::RawData&, int,  bool = true,
 		      QString = "",  QString = "");
 
-   //! \brief A function to update the simulation parameters to match 
+   //! \brief A function to update the simulation parameters to match
    //! an experiment's edited data.
    //! \param db         Pointer to opened database connection or NULL
    //! \param editdata   Data structure of edited data that contains run info.
    //! \param incl_speed Flag to include speed steps in update
-   void initFromData( IUS_DB2*, US_DataIO::EditedData&, bool = true );
+   //! The run is looked up as investigator \a invID; -1 for the current investigator.
+   void                    initFromData( IUS_DB2*, US_DataIO::EditedData&, bool = true, int invID = -1 );
 
    //! \brief Read hardware files to update bottom and rotor coefficients array
    //! \param db     Pointer to opened database connection or NULL

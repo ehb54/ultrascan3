@@ -1987,8 +1987,8 @@ DbgLv(1) << "SimMdl: n) s D c"
 
    // The time state is replaced only from the first triple
    QString     tmst_fpath = US_Settings::resultDir() + "/" + runID + "/" + runID + ".time_state.tmst";
-   QStringList check_results =
-      US_ModelSimulation::prepare( dbP, *edata, model, adv_vals, exp_steps, speed_steps, tmst_fpath, drow == 0, simparams, *sdata );
+   QStringList check_results = US_ModelSimulation::prepare(
+      dbP, -1, *edata, model, adv_vals, exp_steps, speed_steps, tmst_fpath, drow == 0, simparams, *sdata );
    if ( !check_results.isEmpty() ) {
        QMessageBox msgBox( this );
        msgBox.setWindowTitle( tr( qPrintable( check_results[0] ) ) );

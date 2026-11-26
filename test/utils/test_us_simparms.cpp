@@ -1,6 +1,7 @@
 #include "mock_us_db2.h"
 #include "qt_test_base.h"
 #include "us3_test_io.h"
+#include "us_settings.h"
 #include "us_simparms.h"
 #include <QDir>
 #include <QFile>
@@ -492,4 +493,35 @@ TEST_F( US_SimulationParametersTest, SimSpeedProfStartsAtKnownValues )
    EXPECT_EQ( ssp->time_l_scan, 0 );
    EXPECT_EQ( ssp->acceleration, 400.0 );
    ssp->~SimSpeedProf();
+}
+
+// The rotor and centerpiece come from the experiment of the investigator
+// given, so that a report on another investigator's run finds them.
+TEST_F( US_SimulationParametersTest, InitFromEditedDataLooksUpTheGivenInvestigatorsRun )
+{
+   ::testing::NiceMock<US_DB2_Mock> db;
+   QStringList                      lookups;
+   ON_CALL( db, query( ::testing::An<const QStringList&>() ) )
+      .WillByDefault(
+         [&]( const QStringList& q )
+         {
+            if ( q.value( 0 ) == "get_experiment_info_by_runID" )
+            {
+               lookups << q.join( "|" );
+            }
+         } );
+   ON_CALL( db, lastErrno() ).WillByDefault( Return( IUS_DB2::NOROWS ) );
+   ON_CALL( db, isConnected() ).WillByDefault( Return( false ) );
+
+   US_DataIO::EditedData editData = createTestEditedData();
+   const int             saved    = US_Settings::us_inv_ID();
+   US_Settings::set_us_inv_ID( 3 );
+
+   simparms->initFromData( &db, editData, true, 7 );
+   simparms->initFromData( &db, editData, true );
+   US_Settings::set_us_inv_ID( saved );
+
+   EXPECT_EQ( lookups,
+              QStringList( { "get_experiment_info_by_runID|" + editData.runID + "|7",
+                             "get_experiment_info_by_runID|" + editData.runID + "|3" } ) );
 }

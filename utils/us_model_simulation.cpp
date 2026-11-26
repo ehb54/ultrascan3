@@ -15,6 +15,7 @@ US_ModelSimulation::US_ModelSimulation( QObject* parent ) : QObject( parent )
 }
 
 QStringList US_ModelSimulation::prepare( IUS_DB2*                                              db,
+                                         int                                                   invID,
                                          US_DataIO::EditedData&                                edata,
                                          const US_Model&                                       model,
                                          const QMap<QString, QString>&                         adv_vals,
@@ -30,7 +31,7 @@ QStringList US_ModelSimulation::prepare( IUS_DB2*                               
    double radhi = edata.radius( nconc - 1 );
 
    // Initialize simulation parameters using edited data information
-   simparams.initFromData( db, edata, !exp_steps );
+   simparams.initFromData( db, edata, !exp_steps, invID );
    simparams.simpoints         = adv_vals.value( "simpoints" ).toInt();
    simparams.meshType          = US_SimulationParameters::ASTFEM;
    simparams.gridType          = US_SimulationParameters::MOVING;

@@ -787,7 +787,7 @@ Outcome runShared( SetupCase c, bool exp_steps, bool rewrite, const QTemporaryDi
    US_DataIO::RawData      sdata;
    US_SimulationParameters simparams;
    const QStringList       results = US_ModelSimulation::prepare(
-      nullptr, c.edata, c.model, c.adv_vals, exp_steps, c.speed_steps, tmst, rewrite, simparams, sdata );
+      nullptr, -1, c.edata, c.model, c.adv_vals, exp_steps, c.speed_steps, tmst, rewrite, simparams, sdata );
    return { dumpParms( simparams, root.path() ), dumpData( sdata ), results.join( "|" ), dumpFiles( US_Settings::resultDir() ) };
 }
 
@@ -919,7 +919,7 @@ TEST_F( TestUSModelSimulation, ThreadsMatchFeMatchsSplitAndSum )
       const US_Model          model = manyComponents( 26 * nthread + 1 );
       US_SimulationParameters simparams;
       US_DataIO::RawData      grid;
-      US_ModelSimulation::prepare( nullptr, edata, model, adv, false, {}, root.path() + "/none.tmst", true, simparams, grid );
+      US_ModelSimulation::prepare( nullptr, -1, edata, model, adv, false, {}, root.path() + "/none.tmst", true, simparams, grid );
 
       FrozenFeMatchThreads old;
       US_DataIO::RawData   oldData = grid;
@@ -975,7 +975,7 @@ TEST_F( TestUSModelSimulation, SimulatesInThisThreadWithTheOldSolvers )
       model.components[0].sigma = sigma;
       US_SimulationParameters simparams;
       US_DataIO::RawData      grid;
-      US_ModelSimulation::prepare( nullptr, edata, model, adv, false, {}, root.path() + "/none.tmst", true, simparams, grid );
+      US_ModelSimulation::prepare( nullptr, -1, edata, model, adv, false, {}, root.path() + "/none.tmst", true, simparams, grid );
 
       // The old code: a new solver of the same kind, given no buffer
       US_DataIO::RawData oldData = grid;
@@ -1025,7 +1025,7 @@ TEST_F( TestUSModelSimulation, WorkerThreadsEndWithTheSimulation )
    const US_Model          model = manyComponents( 2 * 26 + 1 );
    US_SimulationParameters simparams;
    US_DataIO::RawData      grid;
-   US_ModelSimulation::prepare( nullptr, edata, model, adv, false, {}, root.path() + "/none.tmst", true, simparams, grid );
+   US_ModelSimulation::prepare( nullptr, -1, edata, model, adv, false, {}, root.path() + "/none.tmst", true, simparams, grid );
 
    US_ModelSimulation sim;
    QEventLoop         loop;
@@ -1069,7 +1069,7 @@ TEST_F( TestUSModelSimulation, RefusedCoSedimentingSolverIsDeletedSafely )
    model.components[0].sigma    = 0.01;
    US_SimulationParameters simparams;
    US_DataIO::RawData      grid;
-   US_ModelSimulation::prepare( nullptr, edata, model, adv, false, {}, root.path() + "/none.tmst", true, simparams, grid );
+   US_ModelSimulation::prepare( nullptr, -1, edata, model, adv, false, {}, root.path() + "/none.tmst", true, simparams, grid );
 
    // Build the solver over memory that is not zero, as the stack can be
    alignas( US_LammAstfvm ) unsigned char storage[sizeof( US_LammAstfvm )];

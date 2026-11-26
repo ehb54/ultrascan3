@@ -5704,8 +5704,8 @@ bool US_ReporterGMP::simulateModel( QMap<QString, QString>& tripleInfo )
   exp_steps = US_SimulationParameters::speedStepsCoverData( speed_steps, *edata );
   dat_steps = !exp_steps;
   QString     tmst_fpath = US_Settings::resultDir() + "/" + FileName_parsed + "/" + FileName_parsed + ".time_state.tmst";
-  QStringList check_results =
-     US_ModelSimulation::prepare( dbP.get(), *edata, model, adv_vals, exp_steps, speed_steps, tmst_fpath, true, simparams, *sdata );
+  QStringList check_results = US_ModelSimulation::prepare(
+     dbP.get(), invID, *edata, model, adv_vals, exp_steps, speed_steps, tmst_fpath, true, simparams, *sdata );
   dbP.reset();
   if ( !check_results.isEmpty() ) {
       QMessageBox msgBox( this );

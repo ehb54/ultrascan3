@@ -26,6 +26,7 @@ class US_UTIL_EXTERN US_ModelSimulation : public QObject
       //! \brief Set \a simparams and the time grid of \a sdata for simulating
       //! \a model against \a edata.
       //! \param db          Connection for the rotor and centerpiece, or null
+      //! \param invID       Investigator who owns the run; -1 for the current one
       //! \param edata       Experimental data
       //! \param model       The adjusted model; its first component decides the mesh
       //! \param adv_vals    Advanced settings: simpoints, gridtype, bandvolume
@@ -40,6 +41,7 @@ class US_UTIL_EXTERN US_ModelSimulation : public QObject
       //! \return The acceleration check's title, text and details; empty if
       //! the acceleration is acceptable.
       static QStringList prepare( IUS_DB2*                                              db,
+                                  int                                                   invID,
                                   US_DataIO::EditedData&                                edata,
                                   const US_Model&                                       model,
                                   const QMap<QString, QString>&                         adv_vals,
