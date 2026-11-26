@@ -303,7 +303,7 @@ TEST_F( BufferComponentDb, MalformedCoefficientsKeepTheComponent )
 TEST( BufferComponentListDb, AConnectionThatIsNotOpenFailsWithItsError )
 {
    NiceMock<US_DB2_Mock> db;
-   ON_CALL( db, isConnected() ).WillByDefault( Return( false ) );
+   ON_CALL( db, lastErrno() ).WillByDefault( Return( IUS_DB2::NOT_CONNECTED ) );
    ON_CALL( db, lastError() ).WillByDefault( Return( QString( "Connect open error: refused" ) ) );
    EXPECT_CALL( db, query( Matcher<const QStringList&>( _ ) ) ).Times( 0 );
 
@@ -317,12 +317,12 @@ TEST( BufferComponentListDb, AConnectionThatIsNotOpenFailsWithItsError )
 TEST( BufferComponentListDb, AComponentThatCannotBeReadFailsTheList )
 {
    NiceMock<US_DB2_Mock> db;
-   ON_CALL( db, isConnected() ).WillByDefault( Return( true ) );
-   const QStringList list{ "get_buffer_component_desc" };
-   const QStringList info{ "get_buffer_component_info", "73" };
+   const QStringList     list{ "get_buffer_component_desc" };
+   const QStringList     info{ "get_buffer_component_info", "73" };
    EXPECT_CALL( db, query( Matcher<const QStringList&>( Eq( list ) ) ) );
    EXPECT_CALL( db, query( Matcher<const QStringList&>( Eq( info ) ) ) );
    EXPECT_CALL( db, lastErrno() )
+      .WillOnce( Return( IUS_DB2::OK ) )      // the opened connection
       .WillOnce( Return( IUS_DB2::OK ) )      // the list
       .WillOnce( Return( IUS_DB2::NOROWS ) ); // the component's row
    EXPECT_CALL( db, next() ).WillOnce( Return( true ) ).WillOnce( Return( false ) );

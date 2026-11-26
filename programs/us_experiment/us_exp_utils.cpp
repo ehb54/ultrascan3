@@ -29,20 +29,21 @@
 //       savePanel();        (subclasses)
 //       status();           (subclasses)
 
-#include "us_experiment_gui_optima.h"
-#include "us_run_protocol.h"
-#include "us_rotor_gui.h"
-#include "us_rotor.h"
-#include "us_solution_gui.h"
-#include "us_extinction_gui.h"
-#include "us_table.h"
-#include "us_xpn_data.h"
-#include "us_license.h"
-#include "us_license_t.h"
-#include "us_sleep.h"
-#include "us_util.h"
 #include "us_crypto.h"
 #include "us_db2.h"
+#include "us_db_provider.h"
+#include "us_experiment_gui_optima.h"
+#include "us_extinction_gui.h"
+#include "us_license.h"
+#include "us_license_t.h"
+#include "us_rotor.h"
+#include "us_rotor_gui.h"
+#include "us_run_protocol.h"
+#include "us_sleep.h"
+#include "us_solution_gui.h"
+#include "us_table.h"
+#include "us_util.h"
+#include "us_xpn_data.h"
 
 #define setCbCurrentText(a,b)  a->setCurrentText(b)
 
@@ -752,10 +753,9 @@ void US_ExperGuiGeneral::check_runname()
 
 void US_ExperGuiGeneral::update_inv( void )
 {
-   US_Passwd   pw;
-   US_DB2      db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
 //qDebug() << "USCFG: UpdInv: ERROR connect";
       QMessageBox::information( this,
@@ -766,13 +766,13 @@ void US_ExperGuiGeneral::update_inv( void )
    }
 
    QStringList q( "get_user_info" );
-   db.query( q );
-   db.next();
+   db->query( q );
+   db->next();
 
-   int ID        = db.value( 0 ).toInt();
-   QString fname = db.value( 1 ).toString();
-   QString lname = db.value( 2 ).toString();
-   int     level = db.value( 5 ).toInt();
+   int     ID    = db->value( 0 ).toInt();
+   QString fname = db->value( 1 ).toString();
+   QString lname = db->value( 2 ).toString();
+   int     level = db->value( 5 ).toInt();
 
    qDebug() << "USCFG: UpdInv: ID,name,lev" << ID << fname << lname << level;
 //if(ID<1) return;
@@ -811,25 +811,24 @@ void US_ExperGuiGeneral::check_user_level()
        
        // if ( instr_opers.count() < 1 )
        // 	 {  // Must read lab/instrument/operator info one time
-	   US_Passwd   pw;
-	   US_DB2      db( pw.getPasswd() );
-	   
-	   if ( db.lastErrno() != US_DB2::OK )
-	     {
-	       QMessageBox::information( this, tr( "Error" ),
-					 tr( "Error making the DB connection.\n" ) );
-	     }
-	   
-	   QVector< US_Rotor::Lab > lablist;
-      if ( db.lastErrno() == US_DB2::OK )
-      {
-         const US_Rotor::Status labStatus = US_Rotor::readLabsDB( lablist, &db );
-         if ( labStatus != US_Rotor::ROTOR_OK && labStatus != US_Rotor::NOT_FOUND )
-         {
-            QMessageBox::warning(
-               this, tr( "Database Problem" ), tr( "Could not read the labs from the database:\n" ) + db.lastError() );
-         }
-      }
+       US_Passwd pw;
+       auto      db = US_DBProvider::open();
+
+       if ( db->lastErrno() != US_DB2::OK )
+       {
+          QMessageBox::information( this, tr( "Error" ), tr( "Error making the DB connection.\n" ) );
+       }
+
+       QVector<US_Rotor::Lab> lablist;
+       if ( db->lastErrno() == US_DB2::OK )
+       {
+          const US_Rotor::Status labStatus = US_Rotor::readLabsDB( lablist, db.get() );
+          if ( labStatus != US_Rotor::ROTOR_OK && labStatus != US_Rotor::NOT_FOUND )
+          {
+             QMessageBox::warning(
+                this, tr( "Database Problem" ), tr( "Could not read the labs from the database:\n" ) + db->lastError() );
+          }
+       }
 
       // Without a lab list the user is an operator on no Optima
       if ( lablist.isEmpty() )
@@ -1295,108 +1294,92 @@ void US_ExperGuiRotor::setEnabledDisabledAddToORASME( void )
 
 void US_ExperGuiRotor::init_grevs( void )
 {
-  cb_choose_rev  -> clear();
-  
-  US_Passwd   pw;
-  QString     masterPW  = pw.getPasswd();
-  US_DB2      db( masterPW );  // New constructor
+   cb_choose_rev->clear();
 
-  if ( db.lastErrno() != US_DB2::OK )
-    {
+   auto db = US_DBProvider::open(); // New constructor
+
+   if ( db->lastErrno() != US_DB2::OK )
+   {
       // Error message here
-      QMessageBox::information( this,
-				tr( "DB Connection Problem" ),
-				tr( "There was an error connecting to the database:\n" ) 
-				+ db.lastError() );
+      QMessageBox::information(
+         this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
       return;
-    }
-  
+   }
+
   QStringList query;
   query << "get_people_grev" << "%" + QString("") + "%";
   qDebug() << "init_invs(), query --  " << query;
-  db.query( query );
+  db->query( query );
 
-  while ( db.next() )
-    {
-      int g_invID         = db.value( 0 ).toInt();
-      QString g_lastName  = db.value( 1 ).toString();
-      QString g_firstName = db.value( 2 ).toString();
-      
-      //populate 
-      cb_choose_rev->addItem( QString::number( g_invID ) + ". " + 
-			      g_lastName + ", " + g_firstName );
-      
-    }
+  while ( db->next() )
+  {
+     int     g_invID     = db->value( 0 ).toInt();
+     QString g_lastName  = db->value( 1 ).toString();
+     QString g_firstName = db->value( 2 ).toString();
+
+     //populate
+     cb_choose_rev->addItem( QString::number( g_invID ) + ". " + g_lastName + ", " + g_firstName );
+  }
 }
 
 void US_ExperGuiRotor::init_gapprs( void )
 {
-  cb_choose_appr  -> clear();
-  
-  US_Passwd   pw;
-  QString     masterPW  = pw.getPasswd();
-  US_DB2      db( masterPW );  // New constructor
+   cb_choose_appr->clear();
 
-  if ( db.lastErrno() != US_DB2::OK )
-    {
+   auto db = US_DBProvider::open(); // New constructor
+
+   if ( db->lastErrno() != US_DB2::OK )
+   {
       // Error message here
-      QMessageBox::information( this,
-				tr( "DB Connection Problem" ),
-				tr( "There was an error connecting to the database:\n" ) 
-				+ db.lastError() );
+      QMessageBox::information(
+         this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
       return;
-    }
-  
+   }
+
   QStringList query;
   query << "get_people_gappr" << "%" + QString("") + "%";
   qDebug() << "init_apprs(), query --  " << query;
-  db.query( query );
+  db->query( query );
 
-  while ( db.next() )
-    {
-      int g_invID         = db.value( 0 ).toInt();
-      QString g_lastName  = db.value( 1 ).toString();
-      QString g_firstName = db.value( 2 ).toString();
-      
-      //populate
-      cb_choose_appr->addItem( QString::number( g_invID ) + ". " + 
-			       g_lastName + ", " + g_firstName );
-    }
+  while ( db->next() )
+  {
+     int     g_invID     = db->value( 0 ).toInt();
+     QString g_lastName  = db->value( 1 ).toString();
+     QString g_firstName = db->value( 2 ).toString();
+
+     //populate
+     cb_choose_appr->addItem( QString::number( g_invID ) + ". " + g_lastName + ", " + g_firstName );
+  }
 }
 
 void US_ExperGuiRotor::init_gsmes( void )
 {
-  cb_choose_sme  -> clear();
-  
-  US_Passwd   pw;
-  QString     masterPW  = pw.getPasswd();
-  US_DB2      db( masterPW );  // New constructor
+   cb_choose_sme->clear();
 
-  if ( db.lastErrno() != US_DB2::OK )
-    {
+   auto db = US_DBProvider::open(); // New constructor
+
+   if ( db->lastErrno() != US_DB2::OK )
+   {
       // Error message here
-      QMessageBox::information( this,
-				tr( "DB Connection Problem" ),
-				tr( "There was an error connecting to the database:\n" ) 
-				+ db.lastError() );
+      QMessageBox::information(
+         this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
       return;
-    }
-  
+   }
+
   QStringList query;
   query << "get_people" << "%" + QString("") + "%";
   qDebug() << "init_smes(), query --  " << query;
-  db.query( query );
+  db->query( query );
 
-  while ( db.next() )
-    {
-      int g_invID         = db.value( 0 ).toInt();
-      QString g_lastName  = db.value( 1 ).toString();
-      QString g_firstName = db.value( 2 ).toString();
-      
-      //populate
-      cb_choose_sme->addItem( QString::number( g_invID ) + ". " + 
-			      g_lastName + ", " + g_firstName );
-    }
+  while ( db->next() )
+  {
+     int     g_invID     = db->value( 0 ).toInt();
+     QString g_lastName  = db->value( 1 ).toString();
+     QString g_firstName = db->value( 2 ).toString();
+
+     //populate
+     cb_choose_sme->addItem( QString::number( g_invID ) + ". " + g_lastName + ", " + g_firstName );
+  }
 }
 
 
@@ -4860,17 +4843,14 @@ bool US_ExperGuiUpload::extinctionProfilesExist( QStringList& msg_to_user )
   qDebug() << "ref_channs -- " << ref_channs;
 
   //DB
-  US_Passwd pw;
-  QString masterPW = pw.getPasswd();
-  US_DB2 db( masterPW );
-  
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "Database Problem" ),
-         tr( "Database returned the following error: \n" ) +  db.lastError() );
-      
-      return false;
-    }
+  auto db = US_DBProvider::open();
+
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning( this, tr( "Database Problem" ), tr( "Database returned the following error: \n" ) + db->lastError() );
+
+     return false;
+  }
 
   //over channels
   for ( int ii = 0; ii < rpRange->nranges; ii++ )
@@ -4913,85 +4893,85 @@ bool US_ExperGuiUpload::extinctionProfilesExist( QStringList& msg_to_user )
 	      int solutionID = sol_id.toInt();
 	      
 	      int status = US_DB2::OK;
-	      status = solution->readFromDB  ( solutionID, &db );
-	      // Error reporting
-	      if ( status == US_DB2::NO_BUFFER )
-		{
-		  QMessageBox::information( this,
-					    tr( "Attention" ),
-					    tr( "The buffer this solution refers to was not found.\n"
-						"Please restore and try again.\n" ) );
-		  return false;
-		}
-	      
-	      else if ( status == US_DB2::NO_ANALYTE )
-		{
-		  QMessageBox::information( this,
-					    tr( "Attention" ),
-					    tr( "One of the analytes this solution refers to was not found.\n"
-						"Please restore and try again.\n" ) );
-		  return false;
-		}
-	      
-	      else if ( status != US_DB2::OK )
-		{
-		  QMessageBox::warning( this, tr( "Database Problem" ),
-					tr( "Database returned the following error: \n" ) +  db.lastError() );
-		  return false;
-		}
-	      //End of reading Solution:
-	      
-	      //Reading Analytes
-	      int num_analytes = solution->analyteInfo.size();
-	      for (int i=0; i < num_analytes; ++i )
-		{
-		  US_Analyte analyte = solution->analyteInfo[ i ].analyte;
-		  QString a_name     = analyte.description;
-		  QString a_ID       = analyte.analyteID;
-		  QString a_GUID     = analyte.analyteGUID;
-		  
-		  qDebug() << "Solution "  << solution->solutionDesc
-			   << ", (GUID)Analyte " << "(" << a_GUID << ")" << a_name
-			   << ", (ID)Analyte " << "(" << a_ID << ")" << a_name;
-		  
-		  analyte.extinction.clear();
-		  analyte.load( true, a_GUID, &db );
-		  
-		  //QMap <double, double> extinction[ wavelength ] <=> value
-		  qDebug() << "[Analyte]Extinction Profile wvls: " 
-			   << analyte.extinction.keys();
-		  
-		  //Check if ext. profile: (1) exists; (2) in range of specs channel-wvls.
-		  QString a_desc = "ANALYTE: " + a_name;
-		  if ( !validExtinctionProfile( a_desc, all_wvls, analyte.extinction.keys(), msg_to_user ) )
-		    all_profiles_exist = false;
-		}
-	      //End of reading Analytes
-	      
-	      //Reading Buffers
-	      if ( buff_req ) //only if buffer spectrum required
-		{
-		  US_Buffer buffer = solution->buffer;
-		  QString b_name   = buffer.description;
-		  QString b_ID     = buffer.bufferID;
-		  qDebug() << "Solution "  << solution->solutionDesc
-			   << ", (ID)Buffer " << "(" << b_ID << ")" << b_name;
-		  
-		  buffer.extinction.clear();
-		  buffer.readFromDB( &db, b_ID );
-		  
-		  //QMap <double, double> extinction[ wavelength ] <=> value
-		  qDebug() << "[Buffer]Extinction Profile wvls: " 
-			   << buffer.extinction.keys();
-		  
-		  //Check if ext. profile: (1) exists; (2) in range of specs channel-wvls.
-		  QString b_desc = "BUFFER: " + b_name;
-		  if ( !validExtinctionProfile( b_desc, all_wvls, buffer.extinction.keys(), msg_to_user ) )
-		    all_profiles_exist = false;
-		}
-	      //End of reading Buffers
-	    }
-	}
+         status                = solution->readFromDB( solutionID, db.get() );
+         // Error reporting
+         if ( status == US_DB2::NO_BUFFER )
+         {
+            QMessageBox::information( this,
+                                      tr( "Attention" ),
+                                      tr( "The buffer this solution refers to was not found.\n"
+                                          "Please restore and try again.\n" ) );
+            return false;
+         }
+
+         else if ( status == US_DB2::NO_ANALYTE )
+         {
+            QMessageBox::information( this,
+                                      tr( "Attention" ),
+                                      tr( "One of the analytes this solution refers to was not found.\n"
+                                          "Please restore and try again.\n" ) );
+            return false;
+         }
+
+         else if ( status != US_DB2::OK )
+         {
+            QMessageBox::warning(
+               this, tr( "Database Problem" ), tr( "Database returned the following error: \n" ) + db->lastError() );
+            return false;
+         }
+         //End of reading Solution:
+
+         //Reading Analytes
+         int num_analytes = solution->analyteInfo.size();
+         for ( int i = 0; i < num_analytes; ++i )
+         {
+            US_Analyte analyte = solution->analyteInfo[i].analyte;
+            QString    a_name  = analyte.description;
+            QString    a_ID    = analyte.analyteID;
+            QString    a_GUID  = analyte.analyteGUID;
+
+            qDebug() << "Solution " << solution->solutionDesc << ", (GUID)Analyte " << "(" << a_GUID << ")" << a_name
+                     << ", (ID)Analyte " << "(" << a_ID << ")" << a_name;
+
+            analyte.extinction.clear();
+            analyte.load( true, a_GUID, db.get() );
+
+            //QMap <double, double> extinction[ wavelength ] <=> value
+            qDebug() << "[Analyte]Extinction Profile wvls: " << analyte.extinction.keys();
+
+            //Check if ext. profile: (1) exists; (2) in range of specs channel-wvls.
+            QString a_desc = "ANALYTE: " + a_name;
+            if ( !validExtinctionProfile( a_desc, all_wvls, analyte.extinction.keys(), msg_to_user ) )
+            {
+               all_profiles_exist = false;
+            }
+         }
+         //End of reading Analytes
+
+         //Reading Buffers
+         if ( buff_req ) //only if buffer spectrum required
+         {
+            US_Buffer buffer = solution->buffer;
+            QString   b_name = buffer.description;
+            QString   b_ID   = buffer.bufferID;
+            qDebug() << "Solution " << solution->solutionDesc << ", (ID)Buffer " << "(" << b_ID << ")" << b_name;
+
+            buffer.extinction.clear();
+            buffer.readFromDB( db.get(), b_ID );
+
+            //QMap <double, double> extinction[ wavelength ] <=> value
+            qDebug() << "[Buffer]Extinction Profile wvls: " << buffer.extinction.keys();
+
+            //Check if ext. profile: (1) exists; (2) in range of specs channel-wvls.
+            QString b_desc = "BUFFER: " + b_name;
+            if ( !validExtinctionProfile( b_desc, all_wvls, buffer.extinction.keys(), msg_to_user ) )
+            {
+               all_profiles_exist = false;
+            }
+         }
+         //End of reading Buffers
+       }
+   }
     }
   return all_profiles_exist;
 }

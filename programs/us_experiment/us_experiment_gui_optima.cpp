@@ -1,5 +1,6 @@
 //! \file us_experiment/us_experiment_gui_optima.cpp
 
+#include "us_db_provider.h"
 #include <QSslKey>
 
 #include "us_experiment_gui_optima.h"
@@ -388,16 +389,14 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
   qDebug() << "In US_Exp: filenameProtDev "    << protocol_details[ "filenameProtDevDataDisk" ];
   
   //Now, load passed protocol with enabling ONLY 8. AProfile && 9. Submit tab
-  US_Passwd pw;
-  QString masterPW = pw.getPasswd();
-  US_DB2 db( masterPW );
-  
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
-      return;
-    }
+  auto db = US_DBProvider::open();
+
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning(
+        this, tr( "Connection Problem" ), tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+     return;
+  }
 
     // dataSource: read it straight from the parent run's autoflowHistory record
     //(Instrument | dataDiskAUC | dataDiskAUC:Absorbance |
@@ -405,12 +404,12 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
     {
        QStringList qhist;
        qhist << "read_autoflow_history_record" << protocol_details["autoflowID"];
-       db.query( qhist );
-       if ( db.lastErrno() == US_DB2::OK )
+       db->query( qhist );
+       if ( db->lastErrno() == US_DB2::OK )
        {
-          while ( db.next() )
+          while ( db->next() )
           {
-             QString ds_hist = db.value( 27 ).toString(); // dataSource column
+             QString ds_hist = db->value( 27 ).toString(); // dataSource column
              qDebug() << "PD load: dataSource passed, from autoflowHistory -- " << protocol_details["dataSource"] << ds_hist;
              if ( !ds_hist.isEmpty() )
              {
@@ -424,11 +423,11 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
   //Important: set investigator in US_Settings!!!
   QStringList query;
   query << "get_person_info" << protocol_details[ "invID_passed" ];
-  db.query( query );
-  db.next();
-  
-  QString firstName    = db.value( 0 ).toString();
-  QString lastName     = db.value( 1 ).toString();
+  db->query( query );
+  db->next();
+
+  QString firstName = db->value( 0 ).toString();
+  QString lastName  = db->value( 1 ).toString();
 
   QString s = lastName + ", " + firstName;
   US_Settings::set_us_inv_name( s );
@@ -441,8 +440,8 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
   //re-read protocol list for current investigator
   QList< QStringList >  protocolsdata;
   QStringList new_protlist;
-  US_ProtocolUtil::list_all( protocolsdata, &db );
-  
+  US_ProtocolUtil::list_all( protocolsdata, db.get() );
+
   for ( int ii = 0; ii < protocolsdata.count(); ii++ )
     new_protlist << protocolsdata[ ii ][ 0 ];
 
@@ -450,8 +449,8 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
   ////////////////////////////////////////////////////////////////////
   
   QString xmlstr( "" );
-  int protoID = US_ProtocolUtil::read_record_auto( pname, invID_passed,  &xmlstr, NULL, &db );
-      
+  int     protoID = US_ProtocolUtil::read_record_auto( pname, invID_passed, &xmlstr, NULL, db.get() );
+
   //le_protocol->setText( pname );
   currProto.protoID = protoID;
   loadProto.protoID = protoID;
@@ -852,10 +851,9 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    // Read in summary information on all existing run protocols
    bool fromdisk         = US_Settings::debug_match( "protocolFromDisk" );
    bool load_db          = fromdisk ? false : use_db;
-   US_Passwd  pw;
-   US_DB2* dbP           = load_db ? new US_DB2( pw.getPasswd() ) : NULL;
+   std::unique_ptr<IUS_DB2> dbP              = load_db ? US_DBProvider::open() : nullptr;
 
-   US_ProtocolUtil::list_all( protdata, dbP );
+   US_ProtocolUtil::list_all( protdata, dbP.get() );
 
    for ( int ii = 0; ii < protdata.count(); ii++ )
       pr_names << protdata[ ii ][ 0 ];
@@ -1101,9 +1099,9 @@ void US_ExperGuiGeneral::sel_investigator( void )
       bool fromdisk         = US_Settings::debug_match( "protocolFromDisk" );
       bool load_db          = fromdisk ? false : use_db;
       US_Passwd  pw;
-      US_DB2* dbP           = load_db ? new US_DB2( pw.getPasswd() ) : NULL;
+      std::unique_ptr<IUS_DB2> dbP = load_db ? US_DBProvider::open() : nullptr;
 
-      US_ProtocolUtil::list_all( protdata, dbP );
+      US_ProtocolUtil::list_all( protdata, dbP.get() );
       //US_ProtocolUtil::list_all_auto( protdata, dbP );
       
       for ( int ii = 0; ii < protdata.count(); ii++ )
@@ -1140,8 +1138,7 @@ DbgLv(1) << "EGGe:main: prnames,prdata counts" << pr_names.count() << protdata.c
 
       bool fromdisk         = US_Settings::debug_match( "protocolFromDisk" );
       bool load_db          = fromdisk ? false : use_db;
-      US_Passwd  pw;
-      US_DB2* dbP           = load_db ? new US_DB2( pw.getPasswd() ) : NULL;
+      std::unique_ptr<IUS_DB2> dbP = load_db ? US_DBProvider::open() : nullptr;
 
       US_ProtocolUtil::list_all( protdata, dbP );
 
@@ -1162,8 +1159,7 @@ DbgLv(1) << "EGGe:main: prnames,prdata counts" << pr_names.count() << protdata.c
 void US_ExperGuiGeneral::load_protocol( void )
 {
    bool fromdisk         = US_Settings::debug_match( "protocolFromDisk" );
-   bool load_db          = fromdisk ? false : use_db;
-   US_Passwd            pw;
+   bool                 load_db          = fromdisk ? false : use_db;
    QString xmlstr( "" );
    QStringList          hdrs;
    int                  prx;
@@ -1182,47 +1178,46 @@ QMessageBox::information( this, mtitle, message );
 //*DEBUG: forced input from disk
 DbgLv(1) << "EGGe:ldPro: Disk-B: load_db" << load_db;
    // Get database connection pointer (or NULL as disk flag)
-   US_DB2* dbP           = load_db ? new US_DB2( pw.getPasswd() ) : NULL;
-   int protoID           = 0;
+std::unique_ptr<IUS_DB2> dbP     = load_db ? US_DBProvider::open() : nullptr;
+int                      protoID = 0;
 
-   // Build dialog table widget headers
-   hdrs << "Protocol Name"
-        << "Created"
-        << ( load_db ? "DbID" : "File Name" );
+// Build dialog table widget headers
+hdrs << "Protocol Name"
+     << "Created" << ( load_db ? "DbID" : "File Name" );
 
-   // Select a protocol
-   QString delete_button = "DELETE";
-   //US_SelectItem pdiag( protdata, hdrs, pdtitle, &prx, -2 );
-   US_SelectItem* pdiag = new  US_SelectItem( protdata, hdrs, pdtitle, &prx, delete_button, -2 );  //ALEXEY <-- with Delete button and functionality
+// Select a protocol
+QString        delete_button = "DELETE";
+//US_SelectItem pdiag( protdata, hdrs, pdtitle, &prx, -2 );
+US_SelectItem* pdiag =
+   new US_SelectItem( protdata, hdrs, pdtitle, &prx, delete_button, -2 ); //ALEXEY <-- with Delete button and functionality
 
-   connect( pdiag, &US_SelectItem::accept_deletion, this, &US_ExperGuiGeneral::update_protdata);
+connect( pdiag, &US_SelectItem::accept_deletion, this, &US_ExperGuiGeneral::update_protdata );
 
-   if ( pdiag->exec() == QDialog::Accepted )
-   {  // Accept in dialog:  get selected protocol name and its XML
-      // One progress dialog, attached to the top-level window, for the whole
-      // load
-      mainw->load_progress()->setStage( 1, 0, tr( "Loading Protocol" ), tr( "Resetting experiment panels..." ), 100 );
-      mainw->load_progress()->setValue( 1 );
-      DbgLv( 1 ) << "EGGe:ldPro:  ACCEPT  prx" << prx << "sel proto" << protdata[prx][0] << "protID" << protdata[prx][2];
+if ( pdiag->exec() == QDialog::Accepted )
+{ // Accept in dialog:  get selected protocol name and its XML
+   // One progress dialog, attached to the top-level window, for the whole
+   // load
+   mainw->load_progress()->setStage( 1, 0, tr( "Loading Protocol" ), tr( "Resetting experiment panels..." ), 100 );
+   mainw->load_progress()->setValue( 1 );
+   DbgLv( 1 ) << "EGGe:ldPro:  ACCEPT  prx" << prx << "sel proto" << protdata[prx][0] << "protID" << protdata[prx][2];
 
-      qDebug() << "In load_protocol: before RESET, currProto->investigator: -- " << currProto->investigator;
-      //ALEXEY: need to reset everything:
-      mainw->reset();
-      qDebug() << "In load_protocol: after RESET, currProto->investigator: -- " << currProto->investigator;
+   qDebug() << "In load_protocol: before RESET, currProto->investigator: -- " << currProto->investigator;
+   //ALEXEY: need to reset everything:
+   mainw->reset();
+   qDebug() << "In load_protocol: after RESET, currProto->investigator: -- " << currProto->investigator;
 
-      QString pname         = protdata[ prx ][ 0 ];
+   QString pname = protdata[prx][0];
 
-      // Get the protocol XML that matches the selected protocol name
-      mainw->load_progress()->setLabelText( tr( "Reading protocol..." ) );
-      mainw->load_progress()->setValue( 4 );
-      protoID               = US_ProtocolUtil::read_record( pname, &xmlstr, NULL, dbP );
-DbgLv(1) << "EGGe:ldPro:  ACCEPT   read_record return len(xml)" << xmlstr.length()
-	 << "protoID" << protoID;
+   // Get the protocol XML that matches the selected protocol name
+   mainw->load_progress()->setLabelText( tr( "Reading protocol..." ) );
+   mainw->load_progress()->setValue( 4 );
+   protoID = US_ProtocolUtil::read_record( pname, &xmlstr, NULL, dbP.get() );
+   DbgLv( 1 ) << "EGGe:ldPro:  ACCEPT   read_record return len(xml)" << xmlstr.length() << "protoID" << protoID;
 
-      le_protocol->setText( pname );
-      mainw->currProto.protoID = protoID;
-      mainw->loadProto.protoID = protoID;
-   }
+   le_protocol->setText( pname );
+   mainw->currProto.protoID = protoID;
+   mainw->loadProto.protoID = protoID;
+}
 
    else
    {  // Reject in dialog
@@ -1349,10 +1344,9 @@ void US_ExperGuiGeneral::update_protdata( void )
 {
    bool fromdisk         = US_Settings::debug_match( "protocolFromDisk" );
    bool load_db          = fromdisk ? false : use_db;
-   US_Passwd  pw;
-   US_DB2* dbP           = load_db ? new US_DB2( pw.getPasswd() ) : NULL;
+   std::unique_ptr<IUS_DB2> dbP              = load_db ? US_DBProvider::open() : nullptr;
 
-   US_ProtocolUtil::list_all( protdata, dbP );
+   US_ProtocolUtil::list_all( protdata, dbP.get() );
 
    pr_names.clear();
    for ( int ii = 0; ii < protdata.count(); ii++ )
@@ -1421,11 +1415,10 @@ DbgLv(1) << "projinfo: proj.guid" << project.projectGUID;
 // Get centerpiece information (initially or after DB/Disk change
 void US_ExperGuiGeneral::centerpieceInfo( void )
 {
-   US_Passwd pw;
-   US_DB2* dbP    = use_db ? new US_DB2( pw.getPasswd() ) : NULL;
+   std::unique_ptr<IUS_DB2> dbP = use_db ? US_DBProvider::open() : nullptr;
 
    // Read in the full centerpiece information from DB or Disk
-   US_AbstractCenterpiece::read_centerpieces( dbP, acp_list );
+   US_AbstractCenterpiece::read_centerpieces( dbP.get(), acp_list );
    cp_names.clear();
 
    // Populate the list of centerpiece names
@@ -1703,13 +1696,12 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
                 panel->addLayout( revOperGMPRunGrid );
                 panel->addStretch();
 
-                US_Passwd pw;
-                US_DB2*   dbP = ( sibSValue( "general", "dbdisk" ) == "DB" ) ? new US_DB2( pw.getPasswd() ) : NULL;
+                std::unique_ptr<IUS_DB2> dbP = ( sibSValue( "general", "dbdisk" ) == "DB" ) ? US_DBProvider::open() : nullptr;
                 if ( dbP != NULL )
                 {
                    // On a failed read the lab list stays empty
                    const US_Rotor::Status labStatus =
-                      ( dbP->lastErrno() == US_DB2::OK ) ? US_Rotor::readLabsDB( labs, dbP ) : US_Rotor::MISC_ERROR;
+                      ( dbP->lastErrno() == US_DB2::OK ) ? US_Rotor::readLabsDB( labs, dbP.get() ) : US_Rotor::MISC_ERROR;
                    if ( labStatus != US_Rotor::ROTOR_OK && labStatus != US_Rotor::NOT_FOUND )
                    {
                       QMessageBox::warning(
@@ -2895,13 +2887,11 @@ DbgLv(1) << "EGR: chgLab labID desc" << labID << descr;
    arotors.clear();
    rotors .clear();
 
-   US_Passwd pw;
-   US_DB2* dbP              = ( sibSValue( "general", "dbdisk" ) == "DB" )
-                              ? new US_DB2( pw.getPasswd() ) : NULL;
+   std::unique_ptr<IUS_DB2> dbP = ( sibSValue( "general", "dbdisk" ) == "DB" ) ? US_DBProvider::open() : nullptr;
    if ( dbP != NULL )
    {
-      US_Rotor::readAbstractRotorsDB( arotors, dbP );
-      US_Rotor::readRotorsFromDB( rotors, labID, dbP );
+      US_Rotor::readAbstractRotorsDB( arotors, dbP.get() );
+      US_Rotor::readRotorsFromDB( rotors, labID, dbP.get() );
    }
    else
    {
@@ -2937,7 +2927,7 @@ DbgLv(1) << "EGR: chgLab   rot_ent" << rot_ent << "rndx" << rndx;
 
    //ALEXEY identify instruments & operators, fill Gui elements
    US_Rotor::Lab lab_selected;
-   lab_selected.readDB( labID, dbP );
+   lab_selected.readDB( labID, dbP.get() );
    instruments = lab_selected.instruments;   //ALEXEY: operators (per instrument) are read here
 
    //Instruments
@@ -3141,18 +3131,19 @@ DbgLv(1) << "EGR: chgRotor rotID desc" << rotID << descr;
    sl_calibs .clear();
    cb_calibr->clear();
 
-   US_Passwd pw;
-   US_DB2* dbP         = ( sibSValue( "general", "dbdisk" ) == "DB" )
-                         ? new US_DB2( pw.getPasswd() ) : NULL;
+   std::unique_ptr<IUS_DB2> dbP = ( sibSValue( "general", "dbdisk" ) == "DB" ) ? US_DBProvider::open() : nullptr;
    if ( dbP != NULL )
    {
-      US_Rotor::readCalibrationProfilesDB( calibs, rotID, dbP );
-//*DEBUG*
-DbgLv(1) << "EGR: chgRotor calibs count" << calibs.count();
-for (int ii=0; ii<calibs.count(); ii++) {
- if ( ii < 4 || (ii+4 > calibs.count()) )
-  DbgLv(1) << "EGR:  ii" << ii << "calibs ID,rotID,GUID"
-   << calibs[ii].ID << calibs[ii].rotorID << calibs[ii].GUID; }
+      US_Rotor::readCalibrationProfilesDB( calibs, rotID, dbP.get() );
+      //*DEBUG*
+      DbgLv( 1 ) << "EGR: chgRotor calibs count" << calibs.count();
+      for ( int ii = 0; ii < calibs.count(); ii++ )
+      {
+         if ( ii < 4 || ( ii + 4 > calibs.count() ) )
+         {
+            DbgLv( 1 ) << "EGR:  ii" << ii << "calibs ID,rotID,GUID" << calibs[ii].ID << calibs[ii].rotorID << calibs[ii].GUID;
+         }
+      }
 //*DEBUG*
    }
    else
@@ -5678,13 +5669,11 @@ DbgLv(1) << "EGSo:solDat:    OLDfound descr" << soludata.solutionDesc;
 
       else
       { // Not fetched before:  do so now and map it if read
-         US_Passwd pw;
-         US_DB2* dbP   = ( sibSValue( "general", "dbdisk" ) == "DB" )
-                         ? new US_DB2( pw.getPasswd() ) : NULL;
+         std::unique_ptr<IUS_DB2> dbP = ( sibSValue( "general", "dbdisk" ) == "DB" ) ? US_DBProvider::open() : nullptr;
          QString   error;
          if ( dbP != NULL )
          {
-            int stat      = soludata.readFromDB( solID.toInt(), dbP );
+            int stat      = soludata.readFromDB( solID.toInt(), dbP.get() );
             found         = ( stat == US_DB2::OK );
             error         = dbP->lastError();
             DbgLv( 1 ) << "EGSo:solDat:    NEWfound descr" << soludata.solutionDesc << stat;
@@ -5719,11 +5708,9 @@ int US_ExperGuiSolutions::allSolutions()
    QStringList soids;
 
    qDebug() << "In allSolutions(), currProto->investigator 1 -- " << mainw->currProto.investigator;
-   
-   US_Passwd pw;
-   US_DB2* dbP       = ( sibSValue( "general", "dbdisk" ) == "DB" )
-                       ? new US_DB2( pw.getPasswd() ) : NULL;
-//DbgLv(1) << "EGSo: allSo: dbP" << dbP;
+
+   std::unique_ptr<IUS_DB2> dbP = ( sibSValue( "general", "dbdisk" ) == "DB" ) ? US_DBProvider::open() : nullptr;
+   //DbgLv(1) << "EGSo: allSo: dbP" << dbP;
    if ( dbP != NULL )
    {  // Read all the solutions in the database
       soids << "-1";
@@ -7306,10 +7293,9 @@ int US_ExperGuiUpload::writeReportToDB( QString reportGUID, US_ReportGMP report 
 {
   qDebug() << "Writing Report " << report.channel_name;
   int reportID = 0;
-  
-  US_DB2* dbP  = NULL;
-  US_Passwd pw;
-  dbP            = new US_DB2( pw.getPasswd() );
+
+  std::unique_ptr<IUS_DB2> dbP;
+  dbP = US_DBProvider::open();
   if ( dbP->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this, tr( "Connection Problem" ),
@@ -7411,7 +7397,7 @@ int US_ExperGuiUpload::writeReportToDB( QString reportGUID, US_ReportGMP report 
   for ( int ii = 0; ii < report.reportItems.size(); ii++ )
     {
       US_ReportGMP::ReportItem curr_reportItem = report.reportItems[ ii ];
-      writeReportItemToDB( dbP, reportGUID, reportID, curr_reportItem );
+      writeReportItemToDB( dbP.get(), reportGUID, reportID, curr_reportItem );
     }
   
   
@@ -7419,7 +7405,7 @@ int US_ExperGuiUpload::writeReportToDB( QString reportGUID, US_ReportGMP report 
 }
 
 // Write a singe ReportItem
-int US_ExperGuiUpload::writeReportItemToDB( US_DB2* dbP, QString reportGUID, int reportID, US_ReportGMP::ReportItem reportItem ) 
+int US_ExperGuiUpload::writeReportItemToDB( IUS_DB2* dbP, QString reportGUID, int reportID, US_ReportGMP::ReportItem reportItem )
 {
   int reportItemID = 0;
 
@@ -7530,11 +7516,12 @@ DbgLv(1) << "EGAp:svAP: new_file" << new_file << "xmlopath" <<  xmlopath;
    // exit(1); //TEMP!!!!
    
    // Write an analysis profile entry to the database
-   US_Passwd  pw;
-   US_DB2* dbP         = ( sibSValue( "general", "dbdisk" ) == "DB" )
-                         ? new US_DB2( pw.getPasswd() ) : NULL;
+   std::unique_ptr<IUS_DB2> dbP            = ( sibSValue( "general", "dbdisk" ) == "DB" ) ? US_DBProvider::open() : nullptr;
    bool fromdisk       = US_Settings::debug_match( "protocolFromDisk" );
-   dbP                 = fromdisk ? NULL : dbP;
+   if ( fromdisk )
+   {
+      dbP.reset();
+   }
    if ( dbP != NULL )
    {
       QStringList qry;
@@ -7708,30 +7695,35 @@ DbgLv(1) << "EGUp:svRP:    xml(e)" << QString(rpSubmt->us_xml).mid(xe);
 
 
    // Save the new protocol to database and/or disk
-   US_Passwd  pw;
-   US_DB2* dbP         = ( sibSValue( "general", "dbdisk" ) == "DB" )
-                         ? new US_DB2( pw.getPasswd() ) : NULL;
-   bool fromdisk       = US_Settings::debug_match( "protocolFromDisk" );
-   dbP                 = fromdisk ? NULL : dbP;
+std::unique_ptr<IUS_DB2> dbP      = ( sibSValue( "general", "dbdisk" ) == "DB" ) ? US_DBProvider::open() : nullptr;
+bool                     fromdisk = US_Settings::debug_match( "protocolFromDisk" );
+if ( fromdisk )
+{
+   dbP.reset();
+}
 
-DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
-   // Always save the protocol to a local file
-   int idProt          = US_ProtocolUtil::write_record( rpSubmt->us_xml, NULL );
+DbgLv( 1 ) << "EGUp:svRP:   dbP.get()" << dbP.get();
+// Always save the protocol to a local file
+int idProt = US_ProtocolUtil::write_record( rpSubmt->us_xml, NULL );
 
-   // Usually (database selected), we write an additional record to DB
-   if ( dbP != NULL )
-      idProt              = US_ProtocolUtil::write_record( rpSubmt->us_xml, dbP );
+// Usually (database selected), we write an additional record to DB
+if ( dbP != NULL )
+{
+   idProt = US_ProtocolUtil::write_record( rpSubmt->us_xml, dbP.get() );
+}
 
-   if ( idProt < 0 )
-   {
-      QString errmsg   = ( dbP != NULL ) ? dbP->lastError() : "???";
-      QMessageBox::critical( this,
-         tr( "*ERROR* in Protocol Write" ),
-         tr( "An error occurred in the attempt to save"
-             " new protocol\n  %1\n  %2 ." ).arg( protoname ).arg( errmsg ) );
+if ( idProt < 0 )
+{
+   QString errmsg = ( dbP != NULL ) ? dbP->lastError() : "???";
+   QMessageBox::critical( this,
+                          tr( "*ERROR* in Protocol Write" ),
+                          tr( "An error occurred in the attempt to save"
+                              " new protocol\n  %1\n  %2 ." )
+                             .arg( protoname )
+                             .arg( errmsg ) );
 
-      return save_aborted;
-   }
+   return save_aborted;
+}
 
    // Update the full list of existing protocols
    QStringList prentry;                       // New protocol summary data
@@ -7772,8 +7764,8 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
    return save_aborted;
 }
 
-// Slot to read all Optima machines <------------------------------- // 
-void US_ExperGuiUpload::read_optima_machines( US_DB2* db )
+// Slot to read all Optima machines <------------------------------- //
+void US_ExperGuiUpload::read_optima_machines( IUS_DB2* db )
 {
 
   all_instruments.clear();
@@ -7918,27 +7910,26 @@ void US_ExperGuiUpload::submitExperiment_confirm_dataDisk()
 	    {
 	      //get user info:
 	      //get info on logged in user [submitter]:
-	      US_Passwd   pw;
-	      QString     masterPW  = pw.getPasswd();
-	      US_DB2      db( masterPW );  // New constructor
-	      QStringList qry;
-	      qry <<  QString( "get_user_info" );
-	      db.  query( qry );
-	      db. next();
-	      int u_ID        = db. value( 0 ).toInt();
-	      QString u_fname = db. value( 1 ).toString();
-	      QString u_lname = db. value( 2 ).toString();
-	      int u_lev       = db. value( 5 ).toInt();
-	      
-	      QString user_submitter = u_lname + ", " + u_fname;
-	      
-	      //ask for submitter's credentials: password, comment [for subsequent audit trail]:
-	      qDebug() << "Checking master password...";
-	      gmp_submitter_map.clear();
-	      US_Passwd   pw_at;
-	      gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run Submitter Form", "Please fill out GMP run submitter form:", user_submitter );
-	      
-	      int submit_map_size = gmp_submitter_map.keys().size();
+         auto        db = US_DBProvider::open(); // New constructor
+         QStringList qry;
+         qry << QString( "get_user_info" );
+         db->query( qry );
+         db->next();
+         int     u_ID    = db->value( 0 ).toInt();
+         QString u_fname = db->value( 1 ).toString();
+         QString u_lname = db->value( 2 ).toString();
+         int     u_lev   = db->value( 5 ).toInt();
+
+         QString user_submitter = u_lname + ", " + u_fname;
+
+         //ask for submitter's credentials: password, comment [for subsequent audit trail]:
+         qDebug() << "Checking master password...";
+         gmp_submitter_map.clear();
+         US_Passwd pw_at;
+         gmp_submitter_map =
+            pw_at.getPasswd_auditTrail( "GMP Run Submitter Form", "Please fill out GMP run submitter form:", user_submitter );
+
+         int submit_map_size = gmp_submitter_map.keys().size();
          qDebug() << "Submitter map: " << gmp_submitter_map.keys() << gmp_submitter_map.keys().size() << submit_map_size
                   << gmp_submitter_map.keys().isEmpty() << gmp_submitter_map["User:"] << gmp_submitter_map["Comment:"];
 
@@ -7989,10 +7980,9 @@ void US_ExperGuiUpload::submitExperiment_confirm()
   QString optima_chromoAB;
   
   //ALEXEY: here - check for connection to sys_data server and put error msg if no connection, with suggesting to saveRunProtocol() into LIMS
-  US_Passwd pw;
-  US_DB2*   dbP = new US_DB2( pw.getPasswd() );
+  auto    dbP = US_DBProvider::open();
   if ( dbP != NULL )
-    read_optima_machines( dbP );
+     read_optima_machines( dbP.get() );
 
   for ( int ii = 0; ii < all_instruments.size(); ii++ )
     {
@@ -8343,27 +8333,26 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 	    {
 	      //get user info:
 	      //get info on logged in user [submitter]:
-	      US_Passwd   pw;
-	      QString     masterPW  = pw.getPasswd();
-	      US_DB2      db( masterPW );  // New constructor
-	      QStringList qry;
-	      qry <<  QString( "get_user_info" );
-	      db.  query( qry );
-	      db. next();
-	      int u_ID        = db. value( 0 ).toInt();
-	      QString u_fname = db. value( 1 ).toString();
-	      QString u_lname = db. value( 2 ).toString();
-	      int u_lev       = db. value( 5 ).toInt();
-	      
-	      QString user_submitter = u_lname + ", " + u_fname;
-	      
-	      //ask for submitter's credentials: password, comment [for subsequent audit trail]:
-	      qDebug() << "Checking master password...";
-	      gmp_submitter_map.clear();
-	      US_Passwd   pw_at;
-	      gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run Submitter Form", "Please fill out GMP run submitter form:", user_submitter );
-	      
-	      int submit_map_size = gmp_submitter_map.keys().size();
+         auto        db = US_DBProvider::open(); // New constructor
+         QStringList qry;
+         qry << QString( "get_user_info" );
+         db->query( qry );
+         db->next();
+         int     u_ID    = db->value( 0 ).toInt();
+         QString u_fname = db->value( 1 ).toString();
+         QString u_lname = db->value( 2 ).toString();
+         int     u_lev   = db->value( 5 ).toInt();
+
+         QString user_submitter = u_lname + ", " + u_fname;
+
+         //ask for submitter's credentials: password, comment [for subsequent audit trail]:
+         qDebug() << "Checking master password...";
+         gmp_submitter_map.clear();
+         US_Passwd pw_at;
+         gmp_submitter_map =
+            pw_at.getPasswd_auditTrail( "GMP Run Submitter Form", "Please fill out GMP run submitter form:", user_submitter );
+
+         int submit_map_size = gmp_submitter_map.keys().size();
          qDebug() << "Submitter map: " << gmp_submitter_map.keys() << gmp_submitter_map.keys().size() << submit_map_size
                   << gmp_submitter_map.keys().isEmpty() << gmp_submitter_map["User:"] << gmp_submitter_map["Comment:"];
 
@@ -8517,27 +8506,26 @@ void US_ExperGuiUpload::submitExperiment_confirm_protDev()
 	{
 	  //get user info:
 	  //get info on logged in user [submitter]:
-	  US_Passwd   pw;
-	  QString     masterPW  = pw.getPasswd();
-	  US_DB2      db( masterPW );  // New constructor
-	  QStringList qry;
-	  qry <<  QString( "get_user_info" );
-	  db.  query( qry );
-	  db. next();
-	  int u_ID        = db. value( 0 ).toInt();
-	  QString u_fname = db. value( 1 ).toString();
-	  QString u_lname = db. value( 2 ).toString();
-	  int u_lev       = db. value( 5 ).toInt();
-	  
-	  QString user_submitter = u_lname + ", " + u_fname;
-	  
-	  //ask for submitter's credentials: password, comment [for subsequent audit trail]:
-	  qDebug() << "Checking master password...";
-	  gmp_submitter_map.clear();
-	  US_Passwd   pw_at;
-	  gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run Submitter Form", "Please fill out GMP run submitter form:", user_submitter );
-	  
-	  int submit_map_size = gmp_submitter_map.keys().size();
+     auto        db = US_DBProvider::open(); // New constructor
+     QStringList qry;
+     qry << QString( "get_user_info" );
+     db->query( qry );
+     db->next();
+     int     u_ID    = db->value( 0 ).toInt();
+     QString u_fname = db->value( 1 ).toString();
+     QString u_lname = db->value( 2 ).toString();
+     int     u_lev   = db->value( 5 ).toInt();
+
+     QString user_submitter = u_lname + ", " + u_fname;
+
+     //ask for submitter's credentials: password, comment [for subsequent audit trail]:
+     qDebug() << "Checking master password...";
+     gmp_submitter_map.clear();
+     US_Passwd pw_at;
+     gmp_submitter_map =
+        pw_at.getPasswd_auditTrail( "GMP Run Submitter Form", "Please fill out GMP run submitter form:", user_submitter );
+
+     int submit_map_size = gmp_submitter_map.keys().size();
      qDebug() << "Submitter map: " << gmp_submitter_map.keys() << gmp_submitter_map.keys().size() << submit_map_size
               << gmp_submitter_map.keys().isEmpty() << gmp_submitter_map["User:"] << gmp_submitter_map["Comment:"];
 
@@ -8752,8 +8740,8 @@ void US_ExperGuiUpload::clearData_protDev()
   // Check DB connection
   US_Passwd pw;
   QString masterpw = pw.getPasswd();
-  US_DB2* db = new US_DB2( masterpw );
-  
+  auto      db       = US_DBProvider::open();
+
   if ( db->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this, tr( "Connection Problem: Failed Run Cleanup" ),
@@ -10232,7 +10220,7 @@ void US_ExperGuiUpload::add_autoflow_record_dataDisk( QMap< QString, QString> & 
    // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto      db       = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
    {
@@ -10590,7 +10578,7 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
   // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto      db       = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
    {
@@ -10926,7 +10914,7 @@ void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & p
    // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto      db       = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
    {

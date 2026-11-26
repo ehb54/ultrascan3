@@ -2,19 +2,19 @@
 
 #include <QApplication>
 
-#include "us_vhw_combine.h"
-#include "us_select_runid.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_settings.h"
+#include "qwt_legend.h"
+#include "us_constants.h"
+#include "us_db_provider.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
+#include "us_license.h"
+#include "us_license_t.h"
 #include "us_matrix.h"
-#include "us_constants.h"
-#include "us_passwd.h"
 #include "us_report.h"
+#include "us_select_runid.h"
+#include "us_settings.h"
 #include "us_util.h"
-#include "qwt_legend.h"
+#include "us_vhw_combine.h"
 
 // main program
 int main( int argc, char* argv[] )
@@ -233,8 +233,7 @@ DbgLv(1) << "Selected runIDs[0]" << runids[0] << "count" << nruns;
 
    if ( dkdb_cntrls->db() )
    {  // Plot reports are in the database
-      US_Passwd    pw;
-      US_DB2       db( pw.getPasswd() );
+      auto         db = US_DBProvider::open();
 
       QString      tmpdir = US_Settings::tmpDir();
       QStringList  failed;
@@ -246,14 +245,14 @@ DbgLv(1) << "Selected runIDs[0]" << runids[0] << "count" << nruns;
       {
          runid          = runids[ ii ];
          US_Report         freport; // Each run's report starts empty
-         US_Report::Status rstat = freport.readDB( runid, &db );
+         US_Report::Status rstat = freport.readDB( runid, db.get() );
 
          if ( rstat != US_Report::REPORT_OK )
          { // Skip a run whose report cannot be read
             failed << tr( "%1  (%2)" )
                          .arg( runid )
                          .arg( rstat == US_Report::NOT_FOUND ? tr( "no report found" )
-                                                             : tr( "database error: %1" ).arg( db.lastError() ) );
+                                                             : tr( "database error: %1" ).arg( db->lastError() ) );
             failedRuns << runid;
             continue;
          }
@@ -294,8 +293,7 @@ DbgLv(1) << "     kk,fname" << kk << fname << "edID" << edIDdoc;
                   ddoc     = doc;
                   dpath    = tmpdir + "/" + runid + "." + fname;
 DbgLv(1) << "      dpath" << dpath;
-                  int stat = db.readBlobFromDB( dpath,
-                     QString( "download_reportContents" ), ddoc->documentID );
+int stat = db->readBlobFromDB( dpath, QString( "download_reportContents" ), ddoc->documentID );
 DbgLv(1) << "        readBlob stat" << stat << " edIDdis" << edIDdis;
 
                   if ( stat != US_DB2::OK )
@@ -315,8 +313,7 @@ DbgLv(1) << "        readBlob stat" << stat << " edIDdis" << edIDdis;
                   edoc     = doc;
                   epath    = tmpdir + "/" + runid + "." + fname;
 DbgLv(1) << "      epath" << epath;
-                  int stat = db.readBlobFromDB( epath,
-                     QString( "download_reportContents" ), edoc->documentID );
+int stat = db->readBlobFromDB( epath, QString( "download_reportContents" ), edoc->documentID );
 DbgLv(1) << "        readBlob stat" << stat << " edIDenv" << edIDenv;
 
                   if ( stat != US_DB2::OK )
@@ -714,8 +711,7 @@ void US_vHW_Combine::save( void )
 
       if ( dkdb_cntrls->db() )
       {
-         US_Passwd    pw;
-         US_DB2       db( pw.getPasswd() );
+         auto         db     = US_DBProvider::open();
          int          idEdit = 0;
 
          QString trfirst  = pdistrs[ 0 ].triple;
@@ -732,20 +728,20 @@ void US_vHW_Combine::save( void )
          // Query for the experiment ID matching the run ID
          QStringList  query;
          query << "get_experiment_info_by_runID" << runID << invID;
-         db.query( query );
-         db.next();
-         QString expID = db.value( 1 ).toString();
-DbgLv(1) << "SV:  runID expID" << runID << expID;
+         db->query( query );
+         db->next();
+         QString expID = db->value( 1 ).toString();
+         DbgLv( 1 ) << "SV:  runID expID" << runID << expID;
          // Query for the raw ID in experiment matching a triple
          QString rawID;
          query.clear();
          query << "get_rawDataIDs" << expID;
-         db.query( query );
-         while ( db.next() )
+         db->query( query );
+         while ( db->next() )
          {
-                    rawID  = db.value( 0 ).toString();
-            QString efname = db.value( 2 ).toString();
-DbgLv(1) << "SV:   rawID" << rawID << "efname" << efname << "trip1" << trip1;
+            rawID          = db->value( 0 ).toString();
+            QString efname = db->value( 2 ).toString();
+            DbgLv( 1 ) << "SV:   rawID" << rawID << "efname" << efname << "trip1" << trip1;
             // Save rawID when we have found a triple match
             if ( efname.contains( trip1 ) )
                break;
@@ -753,11 +749,11 @@ DbgLv(1) << "SV:   rawID" << rawID << "efname" << efname << "trip1" << trip1;
          // Query edit IDs for raw ID and look for triple match
          query.clear();
          query << "get_editedDataIDs" << rawID;
-         db.query( query );
-         while ( db.next() )
+         db->query( query );
+         while ( db->next() )
          {
-            QString aeditID = db.value( 0 ).toString();
-            QString efname  = db.value( 2 ).toString();
+            QString aeditID = db->value( 0 ).toString();
+            QString efname  = db->value( 2 ).toString();
             if ( eeditID.isEmpty() )
                eeditID      = aeditID;  // Save 1st valid from experiment
 DbgLv(1) << "SV:     editID" << eeditID << "raw exp trip1 fname"
@@ -782,11 +778,9 @@ DbgLv(1) << "SV: editID idEdit" << editID << idEdit << "  eeditID" << eeditID;
          // Add or update report documents in the database
          QStringList rfiles;
          rfiles << fnamsvg << fnampng << fnamdat << fnamenv << fnamlst;
-         int st = reportDocsFromFiles( runID, fdir, rfiles, &db,
-                                       idEdit, trdesc );
+         int st = reportDocsFromFiles( runID, fdir, rfiles, db.get(), idEdit, trdesc );
 
-DbgLv(1) << "SV:runID" << runID << "idEdit" << idEdit
- << "fnamlst" << fnamlst << "trdesc" << trdesc;
+         DbgLv( 1 ) << "SV:runID" << runID << "idEdit" << idEdit << "fnamlst" << fnamlst << "trdesc" << trdesc;
          if ( iruns == ( nruns - 1 ) )
          {  // Append message line after last run save
             if ( st == 0 )
@@ -1415,8 +1409,12 @@ void US_vHW_Combine::write_denv( QString& denvFile, int& irun )
 }
 
 // Save report documents from files
-int US_vHW_Combine::reportDocsFromFiles( QString& runID, QString& fdir,
-   QStringList& files, US_DB2* db, int& idEdit, QString& trdesc )
+int US_vHW_Combine::reportDocsFromFiles( QString&     runID,
+                                         QString&     fdir,
+                                         QStringList& files,
+                                         IUS_DB2*     db,
+                                         int&         idEdit,
+                                         QString&     trdesc )
 {
    int ostat = 0;
    US_Report    freport;

@@ -1,12 +1,12 @@
 //! \file us_project_gui.cpp
 
-#include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_passwd.h"
+#include "us_project_gui.h"
 #include "us_db2.h"
+#include "us_db_provider.h"
+#include "us_gui_settings.h"
 #include "us_investigator.h"
 #include "us_project.h"
-#include "us_project_gui.h"
+#include "us_settings.h"
 
 US_ProjectGui::US_ProjectGui( 
       bool  signal_wanted,
@@ -391,13 +391,11 @@ qDebug() << "i" << i << "xfn" << xfn << "lastUpd" << lastUpd;
 // Function to load projects from db
 void US_ProjectGui::loadDB( void )
 {
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != IUS_DB2::OK )
+   if ( db->lastErrno() != IUS_DB2::OK )
    {
-      db_error( db.lastError() );
+      db_error( db->lastError() );
       return;
    }
 
@@ -405,9 +403,12 @@ void US_ProjectGui::loadDB( void )
 
    QStringList q( "get_project_desc" );
    q << QString::number( investigatorID );
-   db.query( q );
+   db->query( q );
 
-   if ( db.lastErrno() != IUS_DB2::OK ) return;
+   if ( db->lastErrno() != IUS_DB2::OK )
+   {
+      return;
+   }
 
    IDs.clear();
    descriptions.clear();
@@ -415,14 +416,14 @@ void US_ProjectGui::loadDB( void )
    filenames.clear();
    lastUpds .clear();
 
-   while ( db.next() )
+   while ( db->next() )
    {
-      QString newID = db.value( 0 ).toString();
+      QString newID = db->value( 0 ).toString();
       IDs          << newID;
-      descriptions << db.value( 1 ).toString();
+      descriptions << db->value( 1 ).toString();
       GUIDs        << QString( "" );
       filenames    << QString( "" );
-      lastUpds     << db.value( 13 ).toDateTime();
+      lastUpds << db->value( 13 ).toDateTime();
    }
 
    loadProjects();
@@ -469,17 +470,15 @@ void US_ProjectGui::selectProject( QListWidgetItem* item )
 
    if ( generalTab->disk_controls->db() )
    {
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
-   
-      if ( db.lastErrno() != IUS_DB2::OK )
+      auto db = US_DBProvider::open();
+
+      if ( db->lastErrno() != IUS_DB2::OK )
       {
-         db_error( db.lastError() );
+         db_error( db->lastError() );
          return;
       }
 
-      status = project.readFromDB  ( projectID, &db );
+      status = project.readFromDB( projectID, db.get() );
 
       // Error reporting 
       if ( status == IUS_DB2::NO_PROJECT )
@@ -491,7 +490,7 @@ void US_ProjectGui::selectProject( QListWidgetItem* item )
       } 
       
       else if ( status != IUS_DB2::OK )
-         db_error( db.lastError() );
+         db_error( db->lastError() );
    }
 
    else
@@ -554,17 +553,15 @@ void US_ProjectGui::saveProject( void )
 
    if ( generalTab->disk_controls->db() )
    {
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
-   
-      if ( db.lastErrno() != IUS_DB2::OK )
+      auto db = US_DBProvider::open();
+
+      if ( db->lastErrno() != IUS_DB2::OK )
       {
-         db_error( db.lastError() );
+         db_error( db->lastError() );
          return;
       }
 
-      int status = project.saveToDB( &db );
+      int status = project.saveToDB( db.get() );
 
       if ( status == IUS_DB2::NO_PROJECT )
       {
@@ -576,7 +573,7 @@ void US_ProjectGui::saveProject( void )
 
       else if ( status != IUS_DB2::OK )
       {
-         db_error( db.lastError() );
+         db_error( db->lastError() );
          return;
       }
 
@@ -610,17 +607,15 @@ void US_ProjectGui::deleteProject( void )
 {
    if ( generalTab->disk_controls->db() )
    {
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
-   
-      if ( db.lastErrno() != IUS_DB2::OK )
+      auto db = US_DBProvider::open();
+
+      if ( db->lastErrno() != IUS_DB2::OK )
       {
-         db_error( db.lastError() );
+         db_error( db->lastError() );
          return;
       }
 
-      project.deleteFromDB( &db );
+      project.deleteFromDB( db.get() );
    }
 
    else

@@ -1,12 +1,13 @@
 //! \file us_analysis_profile.cp
 
 #include "us_analysis_profile.h"
-#include "us_table.h"
-#include "us_license.h"
 #include "us_datafiles.h"
-#include "us_sleep.h"
-#include "us_util.h"
+#include "us_db_provider.h"
+#include "us_license.h"
 #include "us_report_gmp.h"
+#include "us_sleep.h"
+#include "us_table.h"
+#include "us_util.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -613,9 +614,8 @@ DbgLv(1) << "APG: ipro: name GUID" << currProf.aprofname << currProf.aprofGUID;
       bool use_db          = ( US_Settings::default_data_location() < 2 );
       bool fromdisk        = US_Settings::debug_match( "protocolFromDisk" );
       bool load_db         = fromdisk ? false : use_db;
-      US_Passwd  pw;
-      QScopedPointer<US_DB2> db_holder( load_db ? new US_DB2( pw.getPasswd() ) : NULL );
-      US_DB2*                dbP = db_holder.data();
+      std::unique_ptr<IUS_DB2> db_holder       = load_db ? US_DBProvider::open() : nullptr;
+      IUS_DB2*                 dbP             = db_holder.get();
       load_db              = ( dbP != NULL );
 
       QString reportMask_DB;
@@ -748,13 +748,12 @@ DbgLv(1) << "APG: ipro:  ap_xml length" << ap_xml.length();
 
         // ONE DB connection for all reports (was: a new connection per
         // report)
-        US_Passwd rpw;
-        US_DB2    rdb( rpw.getPasswd() );
+        auto      rdb   = US_DBProvider::open();
         bool      db_ok = true;
-        if ( rdb.lastErrno() != US_DB2::OK )
+        if ( rdb->lastErrno() != US_DB2::OK )
         {
            QMessageBox::warning(
-              this, tr( "Connection Problem" ), tr( "Reading Report: Could not connect to database: \n" ) + rdb.lastError() );
+              this, tr( "Connection Problem" ), tr( "Reading Report: Could not connect to database: \n" ) + rdb->lastError() );
            db_ok = false;
         }
 
@@ -808,7 +807,7 @@ DbgLv(1) << "APG: ipro:  ap_xml length" << ap_xml.length();
               }
 
               US_ReportGMP* reportFromDB = new US_ReportGMP();
-              get_report_by_ID( reportFromDB, reportID, &rdb, item_cb );
+              get_report_by_ID( reportFromDB, reportID, rdb.get(), item_cb );
 
               // ALEXEY_NEW_REPORT: here the QMap< QString, QMap <
               // QString(wvl), US_ReportGMP > > currProf.ch_reports will be
@@ -995,18 +994,17 @@ DbgLv(1) << "APG: ipro: nchn" << nchn << "call pGen iP";
 //retrieve Report by ID from DB into ReportGMP structure
 void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP*                          reportFromDB,
                                               int                                    reportID,
-                                              US_DB2*                                db_in,
+                                              IUS_DB2*                               db_in,
                                               const std::function<void( int, int )>& item_cb )
 {
    // Use caller's open connection if given; else connect here (and clean up on
    // exit)
-   QScopedPointer<US_DB2> db_own;
-   US_DB2*                db = db_in;
+   std::unique_ptr<IUS_DB2> db_own;
+   IUS_DB2*                 db = db_in;
    if ( !db )
    {
-      US_Passwd pw;
-      db_own.reset( new US_DB2( pw.getPasswd() ) );
-      db = db_own.data();
+      db_own = US_DBProvider::open();
+      db     = db_own.get();
       if ( db->lastErrno() != US_DB2::OK )
       {
          QMessageBox::warning(
@@ -3700,22 +3698,22 @@ void US_AnaprofPan2DSA::cust_grid_clicked( )
   QString m_guid = model.modelGUID;
 
   //also get modelID from GUID
-  US_Passwd pw;
-  US_DB2    db( pw.getPasswd() );
-  
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-			    tr( "Could not connect to database \n" ) +  db.lastError() );
-      return;
-    }
+  auto    db = US_DBProvider::open();
+
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
+     return;
+  }
   QStringList q;
   q << "get_modelID" << m_guid;
-  db.query( q );
-  if ( db.lastErrno() != US_DB2::OK )
-    return;
-  db.next();
-  QString m_id = db.value( 0 ).toString();
+  db->query( q );
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     return;
+  }
+  db->next();
+  QString m_id = db->value( 0 ).toString();
 
   //assign
   QString m_id_name = m_id + ":" + m_desc;  

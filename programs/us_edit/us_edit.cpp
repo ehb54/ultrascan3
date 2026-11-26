@@ -4,6 +4,7 @@
 //#include <QDomDocument>
 #include "us_constants.h"
 #include "us_convertio.h"
+#include "us_db_provider.h"
 #include "us_edit.h"
 #include "us_edit_scan.h"
 #include "us_editor.h"
@@ -3396,8 +3397,8 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
    {  // no experiment type yet and data read from DB:  try for DB exp type
       if ( dbP == NULL )
       {
-         US_Passwd pw;
-         dbP          = new US_DB2( pw.getPasswd() );
+         dbP_owned = US_DBProvider::open();
+         dbP       = dbP_owned.get();
 
          if ( dbP == NULL  ||  dbP->lastErrno() != US_DB2::OK )
          {
@@ -4354,30 +4355,28 @@ void US_Edit::read_aprofile_data_from_aprofile()
   QString aprofile_xml;
 
   // Check DB connection
-  US_Passwd pw;
-  QString masterPW = pw.getPasswd();
-  US_DB2 db( masterPW );
+  auto    db = US_DBProvider::open();
 
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
-      return;
-    }
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning(
+        this, tr( "Connection Problem" ), tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+     return;
+  }
 
   // qDebug() << "AProfGUID: " << AProfileGUID;
 
 
   QStringList qry;
   qry << "get_aprofile_info" << AProfileGUID;
-  db.query( qry );
+  db->query( qry );
 
-  while ( db.next() )
-    {
-      //currProf.aprofID     = db.value( 0 ).toInt();
-      //currProf.aprofname   = db.value( 1 ).toString();
-      aprofile_xml         = db.value( 2 ).toString();
-    }
+  while ( db->next() )
+  {
+     //currProf.aprofID     = db->value( 0 ).toInt();
+     //currProf.aprofname   = db->value( 1 ).toString();
+     aprofile_xml = db->value( 2 ).toString();
+  }
 
   //qDebug() << "aprofile_xml: " <<  aprofile_xml;
 
@@ -4427,20 +4426,18 @@ void US_Edit::read_centerpiece_names_from_protocol()
   cell_to_centerpiece.clear();
 
   // Check DB connection
-  US_Passwd pw;
-  QString masterPW = pw.getPasswd();
-  US_DB2 db( masterPW );
+  auto db = US_DBProvider::open();
 
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
-      return;
-    }
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning(
+        this, tr( "Connection Problem" ), tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+     return;
+  }
 
   QString xmlstr( "" );
 
-  US_ProtocolUtil::read_record_auto( ProtocolName_auto, idInv_auto.toInt(),  &xmlstr, NULL, &db );
+  US_ProtocolUtil::read_record_auto( ProtocolName_auto, idInv_auto.toInt(), &xmlstr, NULL, db.get() );
 
   qDebug() << "Protocol READ !!! ";
 
@@ -4717,45 +4714,43 @@ void US_Edit::read_centerpiece_params( int trx )
    centerpiece_info.clear();
 
    // Check DB connection
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
-     {
-       QMessageBox::warning( this, tr( "Connection Problem" ),
-			     tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
-       return;
-     }
+   if ( db->lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::warning(
+         this, tr( "Connection Problem" ), tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+      return;
+   }
 
    //Establish correspondence btw centerpiece name & ID (centerpieceID)
    query.clear();
    query << "get_abstractCenterpiece_names";
-   db.query( query );
+   db->query( query );
 
-   while ( db.next() )
-     {
-       QString id   =  db.value( 0 ).toString();
-       QString name =  db.value( 1 ).toString();
+   while ( db->next() )
+   {
+      QString id   = db->value( 0 ).toString();
+      QString name = db->value( 1 ).toString();
 
-       if ( centerpiece_names[ trx ] == name )
-	 {
-	   centerpieceID_read = id;
-	   break;
-	 }
-     }
+      if ( centerpiece_names[trx] == name )
+      {
+         centerpieceID_read = id;
+         break;
+      }
+   }
 
    //Get Centerpiece info
    query.clear();
    query << "get_abstractCenterpiece_info" << centerpieceID_read;
-   db.query( query );
-   db.next();
+   db->query( query );
+   db->next();
 
    //Curent
-   centerpiece_info[ "name" ]       = db.value( 1 ).toString();
-   centerpiece_info[ "bottom" ]     = db.value( 3 ).toString();
-   centerpiece_info[ "pathlen" ]    = db.value( 6 ).toString();
-   centerpiece_info[ "angle" ]      = db.value( 7 ).toString();
+   centerpiece_info["name"]    = db->value( 1 ).toString();
+   centerpiece_info["bottom"]  = db->value( 3 ).toString();
+   centerpiece_info["pathlen"] = db->value( 6 ).toString();
+   centerpiece_info["angle"]   = db->value( 7 ).toString();
 
    //Global
    centparms_info.clear();
@@ -5112,13 +5107,11 @@ int US_Edit::scan_db_auto( void )
    QStringList runIDs;
    QStringList infoDs;
 
-   US_Passwd   pw;
-   US_DB2      db( pw.getPasswd() );
+   auto        db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-        tr( "Could not connect to database\n" ) + db.lastError() );
+      QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database\n" ) + db->lastError() );
       return naucf;
    }
 
@@ -5143,16 +5136,16 @@ int US_Edit::scan_db_auto( void )
    qDebug() << "IN scan_db_auto: query: " << query;
 
 
-   db.query( query );
+   db->query( query );
 
-   while ( db.next() )
+   while ( db->next() )
    {  // Accumulate data description objects from database information
-      QString rawDataID = db.value( 0 ).toString();
-      QString label     = db.value( 1 ).toString();
-      QString filename  = db.value( 2 ).toString();
-      QString date      = db.value( 5 ).toString() + " UTC";
-      QString rawPers   = db.value( 6 ).toString();
-      QString rawGUID   = db.value( 7 ).toString();
+      QString rawDataID = db->value( 0 ).toString();
+      QString label     = db->value( 1 ).toString();
+      QString filename  = db->value( 2 ).toString();
+      QString date      = db->value( 5 ).toString() + " UTC";
+      QString rawPers   = db->value( 6 ).toString();
+      QString rawGUID   = db->value( 7 ).toString();
       QString runID     = filename.section( ".",  0, -6 );
 
       QString tripID    = filename.section( ".", -4, -2 );
@@ -5252,13 +5245,11 @@ void US_Edit::load_db_auto( QList< DataDesc_auto >& sdescs )
    work.mkdir( runID );
 
    // Connect to DB
-   US_Passwd pw;
-   US_DB2 db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-         tr( "Could not connect to database\n " ) + db.lastError() );
+      QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database\n " ) + db->lastError() );
       return;
    }
 
@@ -5282,10 +5273,9 @@ void US_Edit::load_db_auto( QList< DataDesc_auto >& sdescs )
          {
             QStringList query;
             query << "get_rawData" << QString::number( idRaw );
-            db.query( query );
-            db.next();
-            ddesc.dcheck       = db.value( 8 ).toString() + " " +
-                                 db.value( 9 ).toString();
+            db->query( query );
+            db->next();
+            ddesc.dcheck       = db->value( 8 ).toString() + " " + db->value( 9 ).toString();
             dcheck             = ddesc.dcheck;
          }
 
@@ -5298,8 +5288,8 @@ void US_Edit::load_db_auto( QList< DataDesc_auto >& sdescs )
       // Download the DB record to a file (if need be)
       if ( dload_auc )
       {
-         db.readBlobFromDB( filename, "download_aucData", idRaw );
-         int stat           = db.lastErrno();
+         db->readBlobFromDB( filename, "download_aucData", idRaw );
+         int stat = db->lastErrno();
 
          if ( stat != US_DB2::OK )
          {
@@ -5472,8 +5462,8 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
    {  // no experiment type yet and data read from DB:  try for DB exp type
       if ( dbP == NULL )
       {
-         US_Passwd pw;
-         dbP          = new US_DB2( pw.getPasswd() );
+         dbP_owned = US_DBProvider::open();
+         dbP       = dbP_owned.get();
 
          if ( dbP == NULL  ||  dbP->lastErrno() != US_DB2::OK )
          {
@@ -6105,8 +6095,8 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
    {  // no experiment type yet and data read from DB:  try for DB exp type
       if ( dbP == NULL )
       {
-         US_Passwd pw;
-         dbP          = new US_DB2( pw.getPasswd() );
+         dbP_owned = US_DBProvider::open();
+         dbP       = dbP_owned.get();
 
          if ( dbP == NULL  ||  dbP->lastErrno() != US_DB2::OK )
          {
@@ -10188,12 +10178,12 @@ void US_Edit::floating( void )
 void US_Edit::write( void )
 {
    // Determine if we are using the database
-   US_DB2* dbP    = NULL;
+   IUS_DB2* dbP = NULL;
 
    if ( disk_controls->db() )
    {
-      US_Passwd pw;
-      dbP            = new US_DB2( pw.getPasswd() );
+      dbP_owned = US_DBProvider::open();
+      dbP       = dbP_owned.get();
 
       if ( dbP->lastErrno() != US_DB2::OK )
       {
@@ -10253,7 +10243,7 @@ bool US_Edit::isSaved_auto( void )
    // Then we're working in DB, so verify connectivity
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto      db       = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -10288,7 +10278,7 @@ int US_Edit::read_autoflow_stages_record( int autoflowID  )
    // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto      db       = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -10315,7 +10305,7 @@ void US_Edit::revert_autoflow_stages_record( int autoflowID )
    // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto      db       = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -10340,7 +10330,7 @@ QMap< QString, QString> US_Edit::read_autoflow_record( int autoflowID  )
    // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto                    db       = US_DBProvider::open();
 
    QMap <QString, QString> protocol_details;
 
@@ -10952,20 +10942,19 @@ void US_Edit::write_auto( void )
   /*******************************************************/
 
    // Determine if we are using the database
-   US_DB2* dbP  = NULL;
+     IUS_DB2* dbP = NULL;
 
-   if ( disk_controls->db() )
-   {
-      US_Passwd pw;
-      dbP            = new US_DB2( pw.getPasswd() );
+     if ( disk_controls->db() )
+     {
+        dbP_owned = US_DBProvider::open();
+        dbP       = dbP_owned.get();
 
-      if ( dbP->lastErrno() != US_DB2::OK )
-      {
-         QMessageBox::warning( this, tr( "Connection Problem" ),
-           tr( "Could not connect to database: \n" ) + dbP->lastError() );
-         return;
-      }
-   }
+        if ( dbP->lastErrno() != US_DB2::OK )
+        {
+           QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database: \n" ) + dbP->lastError() );
+           return;
+        }
+     }
 
 
    /*************************************************************************************************************/
@@ -11333,7 +11322,7 @@ void US_Edit::record_edit_status( QMap< QString, bool> auto_meniscus, QString dt
   // Check DB connection
   US_Passwd pw;
   QString masterpw = pw.getPasswd();
-  US_DB2* db = new US_DB2( masterpw );
+  auto      db       = US_DBProvider::open();
 
   if ( db->lastErrno() != US_DB2::OK )
     {
@@ -11444,14 +11433,14 @@ void US_Edit::delete_autoflow_record( void )
   // Check DB connection
   US_Passwd pw;
   QString masterpw = pw.getPasswd();
-  US_DB2* db = new US_DB2( masterpw );
+  auto      db       = US_DBProvider::open();
 
-   if ( db->lastErrno() != US_DB2::OK )
-     {
-       QMessageBox::warning( this, tr( "Connection Problem" ),
-			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
-       return;
-     }
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning(
+        this, tr( "Connection Problem" ), tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+     return;
+  }
 
    QStringList qry;
    // qry << "delete_autoflow_record"
@@ -11848,15 +11837,14 @@ void US_Edit::write_triple_auto( int trx )
     {
       if ( dbP == NULL )
 	{
-	  US_Passwd pw;
-	  dbP          = new US_DB2( pw.getPasswd() );
-	  if ( dbP == NULL  ||  dbP->lastErrno() != US_DB2::OK )
-	    {
-	      QMessageBox::warning( this, tr( "Connection Problem" ),
-				     tr( "Could not connect to database \n" ) + dbP->lastError() );
-	      return;
-	    }
-	}
+      dbP_owned = US_DBProvider::open();
+      dbP       = dbP_owned.get();
+      if ( dbP == NULL || dbP->lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) + dbP->lastError() );
+         return;
+      }
+   }
     }
 
    triple_index = trx;
@@ -12247,8 +12235,8 @@ DbgLv(1) << "EDT:WrTripl:   triple" << triple;
    {
       if ( dbP == NULL )
       {
-         US_Passwd pw;
-         dbP          = new US_DB2( pw.getPasswd() );
+         dbP_owned = US_DBProvider::open();
+         dbP       = dbP_owned.get();
          if ( dbP == NULL  ||  dbP->lastErrno() != US_DB2::OK )
          {
             QMessageBox::warning( this, tr( "Connection Problem" ),
@@ -12285,13 +12273,13 @@ void US_Edit::apply_prior( void )
    QString filename;
    QString filepath;
    int     index1;
-   US_DB2* dbP    = NULL;
-DbgLv(1) << "AppPri: IN  dkdb" << disk_controls->db();
+   IUS_DB2* dbP = NULL;
+   DbgLv( 1 ) << "AppPri: IN  dkdb" << disk_controls->db();
 
    if ( disk_controls->db() )
    {
-      US_Passwd pw;
-      dbP            = new US_DB2( pw.getPasswd() );
+      dbP_owned = US_DBProvider::open();
+      dbP       = dbP_owned.get();
 
       if ( dbP->lastErrno() != US_DB2::OK )
       {
@@ -12499,20 +12487,18 @@ void US_Edit::prior_equil( void )
 
    if ( disk_controls->db() )
    {  // Get prior equilibrium edits from DB
-      US_Passwd pw;
-      US_DB2 db( pw.getPasswd() );
+      auto db = US_DBProvider::open();
 
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db->lastErrno() != US_DB2::OK )
       {
-         QMessageBox::warning( this, tr( "Connection Problem" ),
-           tr( "Could not connect to database \n" ) + db.lastError() );
+         QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
          return;
       }
 
       int     rawDataIDnum = -1;
       QString opError;
 
-      if ( US_ConvertIO::findRawDataId( &db, US_Util::uuid_unparse( (uchar*) data.rawGUID ), rawDataIDnum, opError ) !=
+      if ( US_ConvertIO::findRawDataId( db.get(), US_Util::uuid_unparse( (uchar*) data.rawGUID ), rawDataIDnum, opError ) !=
            IUS_DB2::OK )
       {
          QMessageBox::warning( this,
@@ -12526,16 +12512,16 @@ void US_Edit::prior_equil( void )
       QStringList q;
       q << "get_editedDataIDs" << rawDataID;
 
-      db.query( q );
+      db->query( q );
 
 
       QStringList editDataIDs;
       QStringList filenames;
 
-      while ( db.next() )
+      while ( db->next() )
       {
-         editDataIDs << db.value( 0 ).toString();
-         filenames   << db.value( 2 ).toString();
+         editDataIDs << db->value( 0 ).toString();
+         filenames << db->value( 2 ).toString();
       }
 
       if ( editDataIDs.size() == 0 )
@@ -12559,7 +12545,7 @@ void US_Edit::prior_equil( void )
 
       editLabel         = filename.section( ".", -6, -6 );
       filename          = workingDir + filename;
-      db.readBlobFromDB( filename, "download_editData", dataID );
+      db->readBlobFromDB( filename, "download_editData", dataID );
 
       cefnames << filename;   // save the first file name
 
@@ -12568,7 +12554,7 @@ void US_Edit::prior_equil( void )
       {
          data    = *outData[ ii ];
 
-         if ( US_ConvertIO::findRawDataId( &db, US_Util::uuid_unparse( (uchar*) data.rawGUID ), rawDataIDnum, opError ) !=
+         if ( US_ConvertIO::findRawDataId( db.get(), US_Util::uuid_unparse( (uchar*) data.rawGUID ), rawDataIDnum, opError ) !=
               IUS_DB2::OK )
          { // Without its raw record, this triple has no matching edit
             cefnames << "";
@@ -12578,21 +12564,21 @@ void US_Edit::prior_equil( void )
 
          q.clear();
          q << "get_editedDataIDs" << rawDataID;
-         db.query( q );
+         db->query( q );
          filename.clear();
          bool found = false;
 
-         while ( db.next() )
+         while ( db->next() )
          {
-            dataID      = db.value( 0 ).toString().toInt();
-            filename    = db.value( 2 ).toString();
+            dataID      = db->value( 0 ).toString().toInt();
+            filename    = db->value( 2 ).toString();
             QString elb = filename.section( ".", -6, -6 );
 
             if ( elb == editLabel )
             {
                found = true;
                filename = workingDir + filename;
-               db.readBlobFromDB( filename, "download_editData", dataID );
+               db->readBlobFromDB( filename, "download_editData", dataID );
                cefnames << filename;
                break;
             }
@@ -13584,7 +13570,7 @@ void US_Edit::write_mwl_auto( int trx )
    mwl_auto_write_ok = false; // every early 'return' below is a failure
 
    US_Passwd pw;
-   US_DB2*   dbP = new US_DB2( pw.getPasswd() );
+   auto      dbP = US_DBProvider::open();
 
    if ( dbP->lastErrno() != US_DB2::OK )
    {
@@ -13659,7 +13645,7 @@ void US_Edit::write_mwl_auto( int trx )
      {
         double bottom_cent = centerpieceParameters[trx][1].toDouble(); // Should be from centerpiece info from protocol
         US_SimulationParameters simparams;
-        simparams.initFromData( dbP, data, idInv_auto.toInt(), false, runID, dataType );
+        simparams.initFromData( dbP.get(), data, idInv_auto.toInt(), false, runID, dataType );
         bottom = simparams.bottom;
         qDebug() << "[in write_mwl_auto()]: bottom_cent, bottom -- " << bottom_cent << ", " << bottom;
      }
@@ -13803,7 +13789,7 @@ void US_Edit::write_mwl_auto( int trx )
       // filename: MartinR_EcoRI_Digest_GMP_Optima1_23OCT23-run1985.23102502280.RI.2.A.260.xml
       QString triplename_qry_wvl = triplename_qry + swavl;
 
-      QString rawGUID = get_rawDataGUID( dbP, filebase_qry, triplename_qry_wvl );
+      QString rawGUID = get_rawDataGUID( dbP.get(), filebase_qry, triplename_qry_wvl );
 
       qDebug() << "rawGUID -- " <<rawGUID;
       // QString rawGUID  = US_Util::uuid_unparse(
@@ -13825,8 +13811,7 @@ void US_Edit::write_mwl_auto( int trx )
       {
          if ( dbP == NULL )
          {
-            US_Passwd pw;
-            dbP          = new US_DB2( pw.getPasswd() );
+            dbP = US_DBProvider::open();
             if ( dbP == NULL  ||  dbP->lastErrno() != US_DB2::OK )
             {
                QMessageBox::warning( this, tr( "Connection Problem" ),
@@ -13838,8 +13823,8 @@ void US_Edit::write_mwl_auto( int trx )
          QString editID   = editIDs[ idax ];
 
          // Output the edit database record
-         wrstat = write_edit_db( dbP, filename, editGUID, editID, rawGUID );
-DbgLv(1) << "EDT:WrMwl:  dax fname" << idax << filename << "wrstat" << wrstat;
+         wrstat = write_edit_db( dbP.get(), filename, editGUID, editID, rawGUID );
+         DbgLv( 1 ) << "EDT:WrMwl:  dax fname" << idax << filename << "wrstat" << wrstat;
 
          if ( wrstat != 0 )
             return;
@@ -14058,8 +14043,8 @@ DbgLv(1) << "EDT:WrMwl:     write_xml_file stat" << wrstat;
       {
          if ( dbP == NULL )
          {
-            US_Passwd pw;
-            dbP          = new US_DB2( pw.getPasswd() );
+            dbP_owned = US_DBProvider::open();
+            dbP       = dbP_owned.get();
             if ( dbP == NULL  ||  dbP->lastErrno() != US_DB2::OK )
             {
                QMessageBox::warning( this, tr( "Connection Problem" ),

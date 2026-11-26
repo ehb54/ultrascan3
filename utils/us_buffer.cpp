@@ -28,7 +28,8 @@ bool US_BufferComponent::getAllFromDB( const QString& masterPW, QMap<QString, US
 
 bool US_BufferComponent::getAllFromDB( IUS_DB2& db, QMap<QString, US_BufferComponent>& componentList, QString* error )
 {
-   if ( !db.isConnected() )
+   // As every connection site checks a newly opened connection.
+   if ( db.lastErrno() != IUS_DB2::OK )
    {
       if ( error != nullptr )
       {

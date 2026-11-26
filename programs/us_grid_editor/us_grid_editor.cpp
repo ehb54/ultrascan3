@@ -1,8 +1,9 @@
 //! \file us_ga_init.cpp
 
 #include "us_grid_editor.h"
-#include "us_matrix.h"
 #include "us_csv_loader.h"
+#include "us_db_provider.h"
+#include "us_matrix.h"
 #include <cmath>
 
 // main program
@@ -2357,13 +2358,15 @@ void US_Grid_Editor::save()
    QString db_error;
    if ( dkdb_cntrls->db() )
    {
-      US_Passwd pw;
-      US_DB2 db( pw.getPasswd() );
-      if ( db.isConnected() ) {
-         code = model.write( &db );
-         db_error = db.lastError();
-      } else {
-         db_error = db.lastError();
+      auto db = US_DBProvider::open();
+      if ( db->isConnected() )
+      {
+         code     = model.write( db.get() );
+         db_error = db->lastError();
+      }
+      else
+      {
+         db_error = db->lastError();
       }
    }
    else

@@ -146,7 +146,7 @@ class US_DataTree : public QObject
         //! \param desc Data description
         //! \param db Pointer to US_DB2 object
         //! \return True if there are significant differences, false otherwise
-        bool significant_diffs( US_DataModel::DataDesc desc, US_DB2* db );
+        bool         significant_diffs( US_DataModel::DataDesc desc, IUS_DB2* db );
 };
 
 #endif // US_DATA_TREE_H

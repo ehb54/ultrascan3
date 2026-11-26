@@ -1,18 +1,18 @@
 //! \file us_vhw_enhanced.cpp
 
+#include "us_db_provider.h"
 #include <QApplication>
 #include <QtSvg>
 
-#include "us_vhw_enhanced.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_settings.h"
+#include "us_astfem_rsa.h"
+#include "us_constants.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
+#include "us_license.h"
+#include "us_license_t.h"
 #include "us_matrix.h"
-#include "us_passwd.h"
-#include "us_constants.h"
-#include "us_astfem_rsa.h"
+#include "us_settings.h"
+#include "us_vhw_enhanced.h"
 
 #define SEDC_NOVAL   -9999.0
 
@@ -2510,13 +2510,12 @@ void US_vHW_Enhanced::create_simulation()
    edata      = simda;
    US_DataIO::RawData      simraw;
    US_SimulationParameters simparams;
-   US_Passwd pw;
-   US_DB2*   dbP = disk_controls->db() ? new US_DB2( pw.getPasswd() ) : 0;
-DbgLv(1) << " cr.sim.: row dbP" << row << dbP;
+   std::unique_ptr<IUS_DB2> dbP = disk_controls->db() ? US_DBProvider::open() : nullptr;
+   DbgLv( 1 ) << " cr.sim.: row dbP.get()" << row << dbP.get();
 
    // Initialize simulation parameters and simulation data
-   simparams.initFromData( dbP, *expda, true );
-simparams.debug();
+   simparams.initFromData( dbP.get(), *expda, true );
+   simparams.debug();
    US_AstfemMath::initSimData( simraw, *expda, 0.0 );
 
    // Insure we have a model for the current triple
@@ -2755,11 +2754,10 @@ DbgLv(1) << "gMo:  MODEL empty/matches  IDln" << modelGUID.length()
       return;
    }
 
-   US_Passwd pw;
    bool    isDB    = disk_controls->db();
-   US_DB2* db      = isDB ? new US_DB2( pw.getPasswd() ) : 0;
+   std::unique_ptr<IUS_DB2> db      = isDB ? US_DBProvider::open() : nullptr;
 
-   model.load( isDB, modelGUID, db );
+   model.load( isDB, modelGUID, db.get() );
 
    mmodlGUID       = model.modelGUID;
    modlList[ row ] = model;

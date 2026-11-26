@@ -1,3 +1,4 @@
+#include "us_db_provider.h"
 #include <QApplication>
 #include <QKeyEvent>
 #include <QPainter>
@@ -995,14 +996,14 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned_separate( void )
   if ( gmpReportsDBdata.isEmpty() )
     {
       US_Passwd pw( this );
-      US_DB2 db( pw.getPasswd() );
+      auto      db = US_DBProvider::open();
 
-      if ( db.lastErrno() != US_DB2::OK )
-	{
-	  QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
-				tr( "Could not connect to database \n" ) + db.lastError() );
-	  return;
-	}
+      if ( db->lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::warning(
+            this, tr( "LIMS DB Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
+         return;
+      }
 
       // Show a busy progress dialog while the (potentially long) DB query runs.
       // Frameless + CustomizeWindowHint removes the title bar entirely, so there
@@ -1023,7 +1024,7 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned_separate( void )
       progress.move( this->frameGeometry().center() - progress.rect().center() );
       qApp->processEvents();
 
-      list_all_gmp_reports_db( gmpReportsDBdata, &db, &progress );
+      list_all_gmp_reports_db( gmpReportsDBdata, db.get(), &progress );
 
       // Make sure the bar visibly reaches 100% before it disappears
       progress.setValue( progress.maximum() );
@@ -1492,56 +1493,55 @@ bool US_eSignaturesGMP::eventFilter( QObject* obj, QEvent* event )
 //init investigators list
 void US_eSignaturesGMP::init_invs( void )
 {
-  investigators. clear();
-  
-  US_Passwd   pw;
-  QString     masterPW  = pw.getPasswd();
-  US_DB2      db( masterPW );  // New constructor
+   investigators.clear();
 
-  if ( db.lastErrno() != US_DB2::OK )
-    {
+   auto db = US_DBProvider::open(); // New constructor
+
+   if ( db->lastErrno() != US_DB2::OK )
+   {
       // Error message here
-      QMessageBox::information( this,
-				tr( "DB Connection Problem" ),
-				tr( "There was an error connecting to the database:\n" ) 
-				+ db.lastError() );
+      QMessageBox::information(
+         this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
       return;
-    }
+   }
 
   lw_inv_list-> clear();
 
   QStringList query;
   query << "get_people_inv" << "%" + le_inv_search->text() + "%";
   qDebug() << "init_invs(), query --  " << query;
-  db.query( query );
+  db->query( query );
 
   US_InvestigatorData data;
   int inv = US_Settings::us_inv_ID();
   int lev = US_Settings::us_inv_level();
 
-  while ( db.next() )
-    {
-      data.invID     = db.value( 0 ).toInt();
-      data.lastName  = db.value( 1 ).toString();
-      data.firstName = db.value( 2 ).toString();
-      data.ulev      = db.value( 4 ).toInt();
+  while ( db->next() )
+  {
+     data.invID     = db->value( 0 ).toInt();
+     data.lastName  = db->value( 1 ).toString();
+     data.firstName = db->value( 2 ).toString();
+     data.ulev      = db->value( 4 ).toInt();
 
-      // qDebug() << "init_invs(): lname, fname, ulev -- "
-      // 	       <<  data.lastName << data.firstName << data.ulev;
-	
-      if ( lev < 3  &&  inv != data.invID )
-	continue;
+     // qDebug() << "init_invs(): lname, fname, ulev -- "
+     // 	       <<  data.lastName << data.firstName << data.ulev;
 
-      //Filter by userlevel: cannot be UL=1
-      if ( data.ulev < 2 )
-	continue;
+     if ( lev < 3 && inv != data.invID )
+     {
+        continue;
+     }
 
-      investigators << data;
-      
-      lw_inv_list-> addItem( new QListWidgetItem( 
-						 "InvID: (" + QString::number( data.invID ) + "), " + 
-						 data.lastName + ", " + data.firstName ) );
-    }
+     //Filter by userlevel: cannot be UL=1
+     if ( data.ulev < 2 )
+     {
+        continue;
+     }
+
+     investigators << data;
+
+     lw_inv_list->addItem(
+        new QListWidgetItem( "InvID: (" + QString::number( data.invID ) + "), " + data.lastName + ", " + data.firstName ) );
+  }
 }
 
 
@@ -1605,39 +1605,35 @@ void US_eSignaturesGMP::get_inv_data( QListWidgetItem* item )
    int     right = entry.indexOf( ')' );
    QString invID = entry.mid( left, right - left );
 
-   US_Passwd   pw;
-   QString     masterPW  = pw.getPasswd();
-   US_DB2      db( masterPW ); 
+   auto    db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      QMessageBox::information( this,
-         tr( "DB Connection Problem" ),
-         tr( "There was an error connecting to the database:\n" ) 
-             + db.lastError() );
+      QMessageBox::information(
+         this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
       return;
    } 
 
    QStringList query;
-   query << "get_person_info" << invID; 
-      
-   db.query( query );
-   db.next();
+   query << "get_person_info" << invID;
+
+   db->query( query );
+   db->next();
 
    info.invID        = invID.toInt();
-   info.firstName    = db.value( 0 ).toString();
-   info.lastName     = db.value( 1 ).toString();
-   info.address      = db.value( 2 ).toString();
-   info.city         = db.value( 3 ).toString();
-   info.state        = db.value( 4 ).toString();
-   info.zip          = db.value( 5 ).toString();
-   info.phone        = db.value( 6 ).toString();
-   info.organization = db.value( 7 ).toString();
-   info.email        = db.value( 8 ).toString();
-   info.invGuid      = db.value( 9 ).toString();
-   info.ulev         = db.value( 10 ).toInt();
-   info.gmpReviewerRole  = db.value( 11 ).toString();
-      
+   info.firstName       = db->value( 0 ).toString();
+   info.lastName        = db->value( 1 ).toString();
+   info.address         = db->value( 2 ).toString();
+   info.city            = db->value( 3 ).toString();
+   info.state           = db->value( 4 ).toString();
+   info.zip             = db->value( 5 ).toString();
+   info.phone           = db->value( 6 ).toString();
+   info.organization    = db->value( 7 ).toString();
+   info.email           = db->value( 8 ).toString();
+   info.invGuid         = db->value( 9 ).toString();
+   info.ulev            = db->value( 10 ).toInt();
+   info.gmpReviewerRole = db->value( 11 ).toString();
+
    te_inv_smry->setText( get_inv_or_grev_smry( info, "Investigator") );
 
 
@@ -1689,21 +1685,17 @@ void US_eSignaturesGMP::init_grevs( void )
     cb_choose_rev  -> clear();
 
   qDebug() << "init_grevs DEB2";
-  
-  US_Passwd   pw;
-  QString     masterPW  = pw.getPasswd();
-  US_DB2      db( masterPW );  // New constructor
 
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      // Error message here
-      QMessageBox::information( this,
-				tr( "DB Connection Problem" ),
-				tr( "There was an error connecting to the database:\n" ) 
-				+ db.lastError() );
-      return;
-    }
-  
+  auto db = US_DBProvider::open(); // New constructor
+
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     // Error message here
+     QMessageBox::information(
+        this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
+     return;
+  }
+
   QStringList query;
   if ( !reassign_revs_sep )
     query << "get_people_grev" << "%" + le_grev_search->text() + "%";
@@ -1711,37 +1703,38 @@ void US_eSignaturesGMP::init_grevs( void )
     query << "get_people_grev" << "%%"; 
 
   qDebug() << "init_grevs(), query --  " << query;
-  db.query( query );
+  db->query( query );
 
   US_InvestigatorData data;
   int inv = US_Settings::us_inv_ID();
-  int lev = US_Settings::us_inv_level();
-  
-  while ( db.next() )
-    {
-      data.invID     = db.value( 0 ).toInt();
-      data.lastName  = db.value( 1 ).toString();
-      data.firstName = db.value( 2 ).toString();
+  int                 lev = US_Settings::us_inv_level();
 
-      //reassign program: level 2 must be able to choose any reviewer/approver for their own runs
-      if ( !reassign_revs_sep && lev < 3 && inv != data.invID )
-      {
-         continue;
-      }
+  while ( db->next() )
+  {
+     data.invID     = db->value( 0 ).toInt();
+     data.lastName  = db->value( 1 ).toString();
+     data.firstName = db->value( 2 ).toString();
 
-      g_reviewers << data;
-      //populate lists
+     //reassign program: level 2 must be able to choose any reviewer/approver for their own runs
+     if ( !reassign_revs_sep && lev < 3 && inv != data.invID )
+     {
+        continue;
+     }
 
-      if (!reassign_revs_sep )
-	lw_grev_list-> addItem( new QListWidgetItem( 
-						    "InvID: (" + QString::number( data.invID ) + "), " + 
-						    data.lastName + ", " + data.firstName ) );
+     g_reviewers << data;
+     //populate lists
 
-      if ( !assign_revs_sep )
-	cb_choose_rev->addItem( QString::number( data.invID ) + ". " + 
-				data.lastName + ", " + data.firstName );
-      
-    }
+     if ( !reassign_revs_sep )
+     {
+        lw_grev_list->addItem(
+           new QListWidgetItem( "InvID: (" + QString::number( data.invID ) + "), " + data.lastName + ", " + data.firstName ) );
+     }
+
+     if ( !assign_revs_sep )
+     {
+        cb_choose_rev->addItem( QString::number( data.invID ) + ". " + data.lastName + ", " + data.firstName );
+     }
+  }
 }
 
 
@@ -1758,21 +1751,17 @@ void US_eSignaturesGMP::init_gapprs( void )
     cb_choose_appr  -> clear();
 
   qDebug() << "init_gapprs DEB2";
-  
-  US_Passwd   pw;
-  QString     masterPW  = pw.getPasswd();
-  US_DB2      db( masterPW );  // New constructor
 
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      // Error message here
-      QMessageBox::information( this,
-				tr( "DB Connection Problem" ),
-				tr( "There was an error connecting to the database:\n" ) 
-				+ db.lastError() );
-      return;
-    }
-  
+  auto db = US_DBProvider::open(); // New constructor
+
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     // Error message here
+     QMessageBox::information(
+        this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
+     return;
+  }
+
   QStringList query;
   if ( !reassign_revs_sep )
     query << "get_people_gappr" << "%" + le_grev_search->text() + "%";
@@ -1780,36 +1769,37 @@ void US_eSignaturesGMP::init_gapprs( void )
     query << "get_people_gappr" << "%%";
   
   qDebug() << "init_appr(), query --  " << query;
-  db.query( query );
+  db->query( query );
 
   US_InvestigatorData data;
   int inv = US_Settings::us_inv_ID();
-  int lev = US_Settings::us_inv_level();
-  
-  while ( db.next() )
-    {
-      data.invID     = db.value( 0 ).toInt();
-      data.lastName  = db.value( 1 ).toString();
-      data.firstName = db.value( 2 ).toString();
+  int                 lev = US_Settings::us_inv_level();
 
-      //reassign program: level 2 must be able to choose any reviewer/approver for their own runs
-      if ( !reassign_revs_sep && lev < 3 && inv != data.invID )
-      {
-         continue;
-      }
+  while ( db->next() )
+  {
+     data.invID     = db->value( 0 ).toInt();
+     data.lastName  = db->value( 1 ).toString();
+     data.firstName = db->value( 2 ).toString();
 
-      g_apprs << data;
-      //populate lists
-      if ( !reassign_revs_sep )
-	lw_gappr_list-> addItem( new QListWidgetItem( 
-						     "InvID: (" + QString::number( data.invID ) + "), " + 
-						     data.lastName + ", " + data.firstName ) );
+     //reassign program: level 2 must be able to choose any reviewer/approver for their own runs
+     if ( !reassign_revs_sep && lev < 3 && inv != data.invID )
+     {
+        continue;
+     }
 
-      if ( !assign_revs_sep )
-	cb_choose_appr->addItem( QString::number( data.invID ) + ". " + 
-				 data.lastName + ", " + data.firstName );
-      
-    }
+     g_apprs << data;
+     //populate lists
+     if ( !reassign_revs_sep )
+     {
+        lw_gappr_list->addItem(
+           new QListWidgetItem( "InvID: (" + QString::number( data.invID ) + "), " + data.lastName + ", " + data.firstName ) );
+     }
+
+     if ( !assign_revs_sep )
+     {
+        cb_choose_appr->addItem( QString::number( data.invID ) + ". " + data.lastName + ", " + data.firstName );
+     }
+  }
 }
 
 
@@ -1822,39 +1812,35 @@ void US_eSignaturesGMP::get_grev_data( QListWidgetItem* item )
    int     right = entry.indexOf( ')' );
    QString invID = entry.mid( left, right - left );
 
-   US_Passwd   pw;
-   QString     masterPW  = pw.getPasswd();
-   US_DB2      db( masterPW ); 
+   auto    db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      QMessageBox::information( this,
-         tr( "DB Connection Problem" ),
-         tr( "There was an error connecting to the database:\n" ) 
-             + db.lastError() );
+      QMessageBox::information(
+         this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
       return;
    } 
 
    QStringList query;
-   query << "get_person_info" << invID; 
-      
-   db.query( query );
-   db.next();
+   query << "get_person_info" << invID;
+
+   db->query( query );
+   db->next();
 
    info_grev.invID        = invID.toInt();
-   info_grev.firstName    = db.value( 0 ).toString();
-   info_grev.lastName     = db.value( 1 ).toString();
-   info_grev.address      = db.value( 2 ).toString();
-   info_grev.city         = db.value( 3 ).toString();
-   info_grev.state        = db.value( 4 ).toString();
-   info_grev.zip          = db.value( 5 ).toString();
-   info_grev.phone        = db.value( 6 ).toString();
-   info_grev.organization = db.value( 7 ).toString();
-   info_grev.email        = db.value( 8 ).toString();
-   info_grev.invGuid      = db.value( 9 ).toString();
-   info_grev.ulev         = db.value( 10 ).toInt();
-   info_grev.gmpReviewerRole   = db.value( 11 ).toString();
- 
+   info_grev.firstName       = db->value( 0 ).toString();
+   info_grev.lastName        = db->value( 1 ).toString();
+   info_grev.address         = db->value( 2 ).toString();
+   info_grev.city            = db->value( 3 ).toString();
+   info_grev.state           = db->value( 4 ).toString();
+   info_grev.zip             = db->value( 5 ).toString();
+   info_grev.phone           = db->value( 6 ).toString();
+   info_grev.organization    = db->value( 7 ).toString();
+   info_grev.email           = db->value( 8 ).toString();
+   info_grev.invGuid         = db->value( 9 ).toString();
+   info_grev.ulev            = db->value( 10 ).toInt();
+   info_grev.gmpReviewerRole = db->value( 11 ).toString();
+
    te_grev_smry->setText( get_inv_or_grev_smry( info_grev, "Reviewer") );
 
    pb_unset_global_rev -> setEnabled( true );
@@ -1869,39 +1855,35 @@ void US_eSignaturesGMP::get_gappr_data( QListWidgetItem* item )
    int     right = entry.indexOf( ')' );
    QString invID = entry.mid( left, right - left );
 
-   US_Passwd   pw;
-   QString     masterPW  = pw.getPasswd();
-   US_DB2      db( masterPW ); 
+   auto    db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      QMessageBox::information( this,
-         tr( "DB Connection Problem" ),
-         tr( "There was an error connecting to the database:\n" ) 
-             + db.lastError() );
+      QMessageBox::information(
+         this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
       return;
    } 
 
    QStringList query;
-   query << "get_person_info" << invID; 
-      
-   db.query( query );
-   db.next();
+   query << "get_person_info" << invID;
+
+   db->query( query );
+   db->next();
 
    info_gappr.invID        = invID.toInt();
-   info_gappr.firstName    = db.value( 0 ).toString();
-   info_gappr.lastName     = db.value( 1 ).toString();
-   info_gappr.address      = db.value( 2 ).toString();
-   info_gappr.city         = db.value( 3 ).toString();
-   info_gappr.state        = db.value( 4 ).toString();
-   info_gappr.zip          = db.value( 5 ).toString();
-   info_gappr.phone        = db.value( 6 ).toString();
-   info_gappr.organization = db.value( 7 ).toString();
-   info_gappr.email        = db.value( 8 ).toString();
-   info_gappr.invGuid      = db.value( 9 ).toString();
-   info_gappr.ulev         = db.value( 10 ).toInt();
-   info_gappr.gmpReviewerRole = db.value( 11 ).toString();
-  
+   info_gappr.firstName       = db->value( 0 ).toString();
+   info_gappr.lastName        = db->value( 1 ).toString();
+   info_gappr.address         = db->value( 2 ).toString();
+   info_gappr.city            = db->value( 3 ).toString();
+   info_gappr.state           = db->value( 4 ).toString();
+   info_gappr.zip             = db->value( 5 ).toString();
+   info_gappr.phone           = db->value( 6 ).toString();
+   info_gappr.organization    = db->value( 7 ).toString();
+   info_gappr.email           = db->value( 8 ).toString();
+   info_gappr.invGuid         = db->value( 9 ).toString();
+   info_gappr.ulev            = db->value( 10 ).toInt();
+   info_gappr.gmpReviewerRole = db->value( 11 ).toString();
+
    te_gappr_smry->setText( get_inv_or_grev_smry( info_gappr, "Approver") );
 
    pb_unset_global_appr -> setEnabled( true );
@@ -1918,24 +1900,20 @@ void US_eSignaturesGMP::set_greviewer()
   int     right = entry.indexOf( ')' );
   QString invID = entry.mid( left, right - left );
 
-  US_Passwd   pw;
-  QString     masterPW  = pw.getPasswd();
-  US_DB2      db( masterPW ); 
-  
-   if ( db.lastErrno() != US_DB2::OK )
-     {
-       QMessageBox::information( this,
-				 tr( "DB Connection Problem" ),
-				 tr( "There was an error connecting to the database:\n" ) 
-				 + db.lastError() );
-       return;
-     }
-   
+  auto    db = US_DBProvider::open();
+
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::information(
+        this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
+     return;
+  }
+
    QStringList query;
    query << "set_person_grev_status" << invID;
 
-   db.query( query );
-   db.next();
+   db->query( query );
+   db->next();
 
    //update both inv && grev lw_lists
    lw_inv_list -> clear();
@@ -1966,26 +1944,22 @@ void US_eSignaturesGMP::unset_greviewer()
   int     left  = entry.indexOf( '(' ) + 1;
   int     right = entry.indexOf( ')' );
   QString invID = entry.mid( left, right - left );
-  
-  US_Passwd   pw;
-  QString     masterPW  = pw.getPasswd();
-  US_DB2      db( masterPW ); 
-  
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::information( this,
-				tr( "DB Connection Problem" ),
-				tr( "There was an error connecting to the database:\n" ) 
-				+ db.lastError() );
-      return;
-    }
-  
+
+  auto    db = US_DBProvider::open();
+
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::information(
+        this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
+     return;
+  }
+
    QStringList query;
    query << "unset_person_grev_status" << invID;
 
-   db.query( query );
-   db.next();
-  
+   db->query( query );
+   db->next();
+
    //update both inv && grev lw_lists
    lw_inv_list -> clear();
    lw_grev_list-> clear();
@@ -2023,24 +1997,20 @@ void US_eSignaturesGMP::set_gappr()
   int     right = entry.indexOf( ')' );
   QString invID = entry.mid( left, right - left );
 
-  US_Passwd   pw;
-  QString     masterPW  = pw.getPasswd();
-  US_DB2      db( masterPW ); 
-  
-   if ( db.lastErrno() != US_DB2::OK )
-     {
-       QMessageBox::information( this,
-				 tr( "DB Connection Problem" ),
-				 tr( "There was an error connecting to the database:\n" ) 
-				 + db.lastError() );
-       return;
-     }
-   
+  auto    db = US_DBProvider::open();
+
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::information(
+        this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
+     return;
+  }
+
    QStringList query;
    query << "set_person_gappr_status" << invID;
 
-   db.query( query );
-   db.next();
+   db->query( query );
+   db->next();
 
    //update both inv && grev lw_lists
    lw_inv_list -> clear();
@@ -2071,26 +2041,22 @@ void US_eSignaturesGMP::unset_gappr()
   int     left  = entry.indexOf( '(' ) + 1;
   int     right = entry.indexOf( ')' );
   QString invID = entry.mid( left, right - left );
-  
-  US_Passwd   pw;
-  QString     masterPW  = pw.getPasswd();
-  US_DB2      db( masterPW ); 
-  
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::information( this,
-				tr( "DB Connection Problem" ),
-				tr( "There was an error connecting to the database:\n" ) 
-				+ db.lastError() );
-      return;
-    }
-  
+
+  auto    db = US_DBProvider::open();
+
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::information(
+        this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
+     return;
+  }
+
    QStringList query;
    query << "unset_person_gappr_status" << invID;
 
-   db.query( query );
-   db.next();
-  
+   db->query( query );
+   db->next();
+
    //update both inv && grev lw_lists
    lw_inv_list -> clear();
    lw_gappr_list-> clear();
@@ -2546,8 +2512,8 @@ int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflow
   QStringList qry;
   
   US_Passwd pw( this );
-  QScopedPointer<US_DB2> db_holder( new US_DB2( pw.getPasswd() ) ); // closed on every return path
-  US_DB2*                db = db_holder.data();
+  std::unique_ptr<IUS_DB2> db_holder = US_DBProvider::open(); // closed on every return path
+  IUS_DB2*                 db        = db_holder.get();
 
   if ( db->lastErrno() != US_DB2::OK )
     {
@@ -2819,8 +2785,8 @@ QMap< QString, QString>  US_eSignaturesGMP::read_autoflow_record( int autoflowID
    // Check DB connection
    US_Passwd pw( this );
    QString masterpw = pw.getPasswd();
-   QScopedPointer<US_DB2>  db_holder( new US_DB2( masterpw ) ); // closed on every return path
-   US_DB2*                 db = db_holder.data();
+   std::unique_ptr<IUS_DB2> db_holder = US_DBProvider::open(); // closed on every return path
+   IUS_DB2*                 db        = db_holder.get();
 
    QMap <QString, QString> run_info;
    
@@ -2903,8 +2869,8 @@ QStringList US_eSignaturesGMP::read_operators( QString optima_id )
   QStringList instr_opers;
   
   US_Passwd pw( this );
-  QScopedPointer<US_DB2> db_holder( new US_DB2( pw.getPasswd() ) ); // closed on every return path
-  US_DB2*                db = db_holder.data();
+  std::unique_ptr<IUS_DB2> db_holder = US_DBProvider::open(); // closed on every return path
+  IUS_DB2*                 db        = db_holder.get();
 
   if ( db->lastErrno() != US_DB2::OK )
     {
@@ -2942,18 +2908,18 @@ QStringList US_eSignaturesGMP::read_operators( QString optima_id )
 //  db_in : optional, already-open connection to reuse.  Callers that read many records in a loop
 //          (list_all_autoflow_records(), list_all_gmp_reports_db()) MUST pass one, otherwise
 //          a connection is opened (and closed again on return) for every single record.
-QMap<QString, QString> US_eSignaturesGMP::read_autoflowGMPReportEsign_record( QString aID, US_DB2* db_in )
+QMap<QString, QString> US_eSignaturesGMP::read_autoflowGMPReportEsign_record( QString aID, IUS_DB2* db_in )
 {
    QMap<QString, QString> eSign_record;
 
-   QScopedPointer<US_DB2> db_own; // only used when no connection was passed in
-   US_DB2*                db = db_in;
+   std::unique_ptr<IUS_DB2> db_own; // only used when no connection was passed in
+   IUS_DB2*                 db = db_in;
 
    if ( !db )
    {
       US_Passwd pw( this );
-      db_own.reset( new US_DB2( pw.getPasswd() ) );
-      db = db_own.data();
+      db_own = US_DBProvider::open();
+      db     = db_own.get();
 
       if ( db->lastErrno() != US_DB2::OK )
       {
@@ -3412,8 +3378,8 @@ void US_eSignaturesGMP::assignOperRevs_sa( void )
   //JSON for logJsonUpdateTime - compose updated;
   //DB 
   US_Passwd pw( this );
-  QScopedPointer<US_DB2> db_holder( new US_DB2( pw.getPasswd() ) ); // closed on every return path
-  US_DB2*                db = db_holder.data();
+  std::unique_ptr<IUS_DB2> db_holder = US_DBProvider::open(); // closed on every return path
+  IUS_DB2*                 db        = db_holder.get();
 
   if ( db->lastErrno() != US_DB2::OK )
     {
@@ -3684,8 +3650,8 @@ void US_eSignaturesGMP::assignOperRevs( void )
 
   //DB 
   US_Passwd pw( this );
-  QScopedPointer<US_DB2> db_holder( new US_DB2( pw.getPasswd() ) ); // closed on every return path
-  US_DB2*                db = db_holder.data();
+  std::unique_ptr<IUS_DB2> db_holder = US_DBProvider::open(); // closed on every return path
+  IUS_DB2*                 db        = db_holder.get();
 
   if ( db->lastErrno() != US_DB2::OK )
     {
@@ -4026,45 +3992,44 @@ QString US_eSignaturesGMP::compare_ora_lists( QString old_ora, QString new_ora )
 void US_eSignaturesGMP::loadGMPReportDB_assigned_auto( QString aID_passed )
 {
   US_Passwd pw( this );
-  US_DB2 db( pw.getPasswd() );
-  
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
-			    tr( "Could not connect to database \n" ) + db.lastError() );
-      return;
-    }
-  
+  auto      db = US_DBProvider::open();
+
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
+     return;
+  }
+
   QStringList qry;
   qry << "get_autoflowGMPReport_desc";
-  db.query( qry );
+  db->query( qry );
 
   QString gmpReport_id_selected("");        //0
   QString gmpReport_runname_selected_c(""); //1 
   QString gmpReport_filename_pdf ("");      //3
   QString gmpRunID_auto("");                //4 / also global identifier gmpRunID_eSign
   QString gmpReport_runname_selected("");
-  
-  while ( db.next() )
-    {
-      QString id                     = db.value( 0 ).toString();
-      QString autoflowHistoryID      = db.value( 1 ).toString();
-      QString autoflowHistoryName    = db.value( 2 ).toString();
-      QString protocolName           = db.value( 3 ).toString();
-      QDateTime time_created         = db.value( 4 ).toDateTime().toUTC();
-      QString filenamePdf            = db.value( 5 ).toString();
 
-      if ( autoflowHistoryID == aID_passed )
-	{
-	  gmpReport_id_selected        = id;
-	  gmpReport_runname_selected_c = autoflowHistoryName;
-	  gmpReport_filename_pdf       = filenamePdf;
-	  gmpRunID_auto                = autoflowHistoryID;
-	  gmpRunID_eSign               = autoflowHistoryID;  //global
-	  
-	  break;
-	}
-    }
+  while ( db->next() )
+  {
+     QString   id                  = db->value( 0 ).toString();
+     QString   autoflowHistoryID   = db->value( 1 ).toString();
+     QString   autoflowHistoryName = db->value( 2 ).toString();
+     QString   protocolName        = db->value( 3 ).toString();
+     QDateTime time_created        = db->value( 4 ).toDateTime().toUTC();
+     QString   filenamePdf         = db->value( 5 ).toString();
+
+     if ( autoflowHistoryID == aID_passed )
+     {
+        gmpReport_id_selected        = id;
+        gmpReport_runname_selected_c = autoflowHistoryName;
+        gmpReport_filename_pdf       = filenamePdf;
+        gmpRunID_auto                = autoflowHistoryID;
+        gmpRunID_eSign               = autoflowHistoryID; //global
+
+        break;
+     }
+  }
 
   //Correct name for 'combined' runs:
   if ( gmpReport_runname_selected_c.  contains("combined") )
@@ -4092,25 +4057,23 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned_auto( QString aID_passed )
   
   QString GMPReportfname = "GMP_Report_from_DB.tar";
   QString GMPReportfpath = dirName + "/" + GMPReportfname;
-  
-  int db_read = db.readBlobFromDB( GMPReportfpath,
-				   "download_gmpReportData",
-				   gmpReport_id_selected.toInt() );
+
+  int     db_read = db->readBlobFromDB( GMPReportfpath, "download_gmpReportData", gmpReport_id_selected.toInt() );
 
   if ( db_read == US_DB2::DBERROR )
     {
-      QMessageBox::warning(this, "Error", "Error processing file:\n"
-			   + GMPReportfpath + "\n" + db.lastError() +
-			   "\n" + "Could not open file or no data \n");
-      
-      return;
+       QMessageBox::warning( this,
+                             "Error",
+                             "Error processing file:\n" + GMPReportfpath + "\n" + db->lastError() + "\n" +
+                                "Could not open file or no data \n" );
+
+       return;
     }
   else if ( db_read != US_DB2::OK )
     {
-      QMessageBox::warning(this, "Error", "returned processing file:\n" +
-			   GMPReportfpath + "\n" + db.lastError() + "\n");
-      
-      return;
+       QMessageBox::warning( this, "Error", "returned processing file:\n" + GMPReportfpath + "\n" + db->lastError() + "\n" );
+
+       return;
     }
 
   // Using .tar (NOT gzip: .tgz or tar.gz !!!)
@@ -4127,25 +4090,23 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned_auto( QString aID_passed )
   //download html to the same directory as .PDF of the GMP report
   QString GMPReportfname_html = "html_string.html";
   filePath_db_html = dirName + "/" + gmpReport_runname_selected + "/" +  GMPReportfname_html;
-  
-  int db_read_html = db.readBlobFromDB( filePath_db_html,
-					"download_gmpReportData_html",
-					gmpReport_id_selected.toInt() );
-  
+
+  int db_read_html = db->readBlobFromDB( filePath_db_html, "download_gmpReportData_html", gmpReport_id_selected.toInt() );
+
   if ( db_read_html == US_DB2::DBERROR )
     {
-      QMessageBox::warning(this, "Error", "Error processing HTML file:\n"
-			   + filePath_db_html + "\n" + db.lastError() +
-			   "\n" + "Could not open file or no data \n");
-      
-      return;
+       QMessageBox::warning( this,
+                             "Error",
+                             "Error processing HTML file:\n" + filePath_db_html + "\n" + db->lastError() + "\n" +
+                                "Could not open file or no data \n" );
+
+       return;
     }
   else if ( db_read_html != US_DB2::OK )
     {
-      QMessageBox::warning(this, "Error", "returned processing HTML file:\n" +
-			   filePath_db_html + "\n" + db.lastError() + "\n");
-      
-      return;
+       QMessageBox::warning( this, "Error", "returned processing HTML file:\n" + filePath_db_html + "\n" + db->lastError() + "\n" );
+
+       return;
     }
 
   
@@ -4169,14 +4130,13 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned_auto( QString aID_passed )
 void US_eSignaturesGMP::loadGMPReportDB_assigned( void )
 {
   US_Passwd pw( this );
-  US_DB2 db( pw.getPasswd() );
+  auto      db = US_DBProvider::open();
 
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
-			    tr( "Could not connect to database \n" ) + db.lastError() );
-      return;
-    }
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
+     return;
+  }
 
   // If the report list was already fetched earlier in this session, reuse
   // it instead of re-running the full scan again.
@@ -4262,25 +4222,23 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned( void )
 
   QString GMPReportfname = "GMP_Report_from_DB.tar";
   QString GMPReportfpath = dirName + "/" + GMPReportfname;
-  
-  int db_read = db.readBlobFromDB( GMPReportfpath,
-				   "download_gmpReportData",
-				   gmpReport_id_selected.toInt() );
+
+  int     db_read = db->readBlobFromDB( GMPReportfpath, "download_gmpReportData", gmpReport_id_selected.toInt() );
 
   if ( db_read == US_DB2::DBERROR )
     {
-      QMessageBox::warning(this, "Error", "Error processing file:\n"
-			   + GMPReportfpath + "\n" + db.lastError() +
-			   "\n" + "Could not open file or no data \n");
+       QMessageBox::warning( this,
+                             "Error",
+                             "Error processing file:\n" + GMPReportfpath + "\n" + db->lastError() + "\n" +
+                                "Could not open file or no data \n" );
 
-      return;
+       return;
     }
   else if ( db_read != US_DB2::OK )
     {
-      QMessageBox::warning(this, "Error", "returned processing file:\n" +
-			   GMPReportfpath + "\n" + db.lastError() + "\n");
+       QMessageBox::warning( this, "Error", "returned processing file:\n" + GMPReportfpath + "\n" + db->lastError() + "\n" );
 
-      return;
+       return;
     }
   
   // <--- TESTING: tried .tar.gz - NOT compatible (even for different Linux distros...) ****
@@ -4304,25 +4262,23 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned( void )
   //download html to the same directory as .PDF of the GMP report
   QString GMPReportfname_html = "html_string.html";
   filePath_db_html = dirName + "/" + gmpReport_runname_selected + "/" +  GMPReportfname_html;
-  
-  int db_read_html = db.readBlobFromDB( filePath_db_html,
-					"download_gmpReportData_html",
-					gmpReport_id_selected.toInt() );
-  
+
+  int db_read_html = db->readBlobFromDB( filePath_db_html, "download_gmpReportData_html", gmpReport_id_selected.toInt() );
+
   if ( db_read_html == US_DB2::DBERROR )
     {
-      QMessageBox::warning(this, "Error", "Error processing HTML file:\n"
-			   + filePath_db_html + "\n" + db.lastError() +
-			   "\n" + "Could not open file or no data \n");
-      
-      return;
+       QMessageBox::warning( this,
+                             "Error",
+                             "Error processing HTML file:\n" + filePath_db_html + "\n" + db->lastError() + "\n" +
+                                "Could not open file or no data \n" );
+
+       return;
     }
   else if ( db_read_html != US_DB2::OK )
     {
-      QMessageBox::warning(this, "Error", "returned processing HTML file:\n" +
-			   filePath_db_html + "\n" + db.lastError() + "\n");
-      
-      return;
+       QMessageBox::warning( this, "Error", "returned processing HTML file:\n" + filePath_db_html + "\n" + db->lastError() + "\n" );
+
+       return;
     }  
 
   //Gui fields
@@ -4362,8 +4318,7 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned( void )
 
 
 // Get .pdf GMP reports with assigned reviewers:
-int US_eSignaturesGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsDBdata, US_DB2* db,
-						 QProgressDialog* progress )
+int US_eSignaturesGMP::list_all_gmp_reports_db( QList<QStringList>& gmpReportsDBdata, IUS_DB2* db, QProgressDialog* progress )
 {
   int nrecs        = 0;   
   gmpReportsDBdata.clear();
@@ -4503,14 +4458,13 @@ int US_eSignaturesGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReports
 void US_eSignaturesGMP::refreshGMPReportsList( void )
 {
   US_Passwd pw( this );
-  US_DB2 db( pw.getPasswd() );
+  auto      db = US_DBProvider::open();
 
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
-			    tr( "Could not connect to database \n" ) + db.lastError() );
-      return;
-    }
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
+     return;
+  }
 
   QString scanText = auto_separate_status ?
     tr( "Scanning for GMP runs where you are an assigned operator, reviewer, or approver..." ) :
@@ -4533,7 +4487,7 @@ void US_eSignaturesGMP::refreshGMPReportsList( void )
   // that cancelling mid-scan can't leave the already-open dialog's data
   // (and the cached list) in a truncated, half-refreshed state.
   QList< QStringList > freshReportsData;
-  list_all_gmp_reports_db( freshReportsData, &db, &progress );
+  list_all_gmp_reports_db( freshReportsData, db.get(), &progress );
 
   bool cancelled = progress.wasCanceled();
 
@@ -4908,25 +4862,24 @@ void US_eSignaturesGMP::esign_report( void )
   
   //first, check if you (as logged in user) are among listed operators && reviewers
   US_Passwd pw( this );
-  US_DB2 db( pw.getPasswd() );
-  
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
-			    tr( "Could not connect to database \n" ) + db.lastError() );
-      return;
-    }
+  auto      db = US_DBProvider::open();
 
-  
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
+     return;
+  }
+
+
   QStringList qry;
   //Check user level && ID
   qry <<  QString( "get_user_info" );
-  db.query( qry );
-  db.next();
-  int u_ID        = db.value( 0 ).toInt();
-  QString u_fname = db.value( 1 ).toString();
-  QString u_lname = db.value( 2 ).toString();
-          
+  db->query( qry );
+  db->next();
+  int     u_ID    = db->value( 0 ).toInt();
+  QString u_fname = db->value( 1 ).toString();
+  QString u_lname = db->value( 2 ).toString();
+
   qDebug() << "eSign: user_id, gmpRunID_eSign -- "
 	   << u_ID << gmpRunID_eSign;
   
@@ -5105,7 +5058,7 @@ void US_eSignaturesGMP::esign_report( void )
       << gmpRunID_eSign;
 
   qDebug() << "Checking eSining autoflowStages -- " << qry;
-  status_esign_unique = db.statusQuery( qry );
+  status_esign_unique = db->statusQuery( qry );
 
   qDebug() << "status_esign_unique -- " << status_esign_unique ;
   
@@ -5134,7 +5087,7 @@ void US_eSignaturesGMP::esign_report( void )
 
   qDebug() << "e-Sign(): qry -- " << qry;
 
-  db.query( qry );
+  db->query( qry );
 
   //generate .PDF with e-Signatires page && write to Db
   QString html_eSignatures = write_pdf_eSignatures( filePath_db, eSignStatusJson_updated, operatorListJson, reviewersListJson, approversListJson );
@@ -5251,22 +5204,20 @@ void US_eSignaturesGMP::esign_report( void )
   process -> close();
   
   qApp->processEvents();
-    
-  int writeStatus= db.writeBlobToDB( tarFilename_t,
-				     QString( "upload_gmpReportData" ),
-				     autoflowGMPReport_id_selected.toInt() );
-  
+
+  int writeStatus = db->writeBlobToDB( tarFilename_t, QString( "upload_gmpReportData" ), autoflowGMPReport_id_selected.toInt() );
+
   if ( writeStatus == US_DB2::DBERROR )
     {
-      QMessageBox::warning(this, "Error", "Error processing file:\n"
-			   + tarFilename_t + "\n" + db.lastError() +
-			   "\n" + "Could not open file or no data \n");
+       QMessageBox::warning( this,
+                             "Error",
+                             "Error processing file:\n" + tarFilename_t + "\n" + db->lastError() + "\n" +
+                                "Could not open file or no data \n" );
     }
   
   else if ( writeStatus != US_DB2::OK )
     {
-      QMessageBox::warning(this, "Error", "returned processing file:\n" +
-			   tarFilename_t + "\n" + db.lastError() + "\n");
+       QMessageBox::warning( this, "Error", "returned processing file:\n" + tarFilename_t + "\n" + db->lastError() + "\n" );
     }
   
   qDebug() << "ESign status, upload updated GMP Report -- " << writeStatus; 
@@ -5279,7 +5230,7 @@ void US_eSignaturesGMP::esign_report( void )
   qry. clear();
   qry << "autoflow_esigning_status_revert"
       << gmpRunID_eSign;
-  db.query( qry );
+  db->query( qry );
   /**********************************************************************************************/
   
   //update esign_status GUI elements:
@@ -5333,13 +5284,13 @@ void US_eSignaturesGMP::esign_report( void )
       qry. clear();
       qry << "new_gmp_review_history_record" << eSignID_global;
       qDebug() << "Query for new_gmp_review_history_record -- " << qry;
-      db. query( qry );
+      db->query( qry );
 
       //delete autoflowGMPRecordEsign record
       qry.clear();
       qry << "delete_gmp_review_record_by_id" << eSignID_global;
       qDebug() << "Query for delete_gmp_review_record_by_id -- " << qry;
-      db. statusQuery( qry );
+      db->statusQuery( qry );
     }
 }
 
@@ -5735,39 +5686,34 @@ void US_eSignaturesGMP::write_download_eSignatures_DB( QString filePath, QString
 	   << final_fpath << eSignID_global.toInt();
   
   US_Passwd pw( this );
-  US_DB2    db( pw.getPasswd() );
-  
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-			    tr( "Could not connect to database \n" ) +  db.lastError() );
-      return;
-    }
+  auto      db = US_DBProvider::open();
+
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
+     return;
+  }
 
   QStringList qry;
   
   int writeStatus;
 
   if ( proc_name. contains("upload") )
-    writeStatus = db.writeBlobToDB( final_fpath,
-				    proc_name,
-				    eSignID_global.toInt() );
+     writeStatus = db->writeBlobToDB( final_fpath, proc_name, eSignID_global.toInt() );
   if ( proc_name. contains("download") )
-    writeStatus = db.readBlobFromDB( final_fpath,
-				     proc_name,
-				     eSignID_global.toInt() );
-  
-  
+     writeStatus = db->readBlobFromDB( final_fpath, proc_name, eSignID_global.toInt() );
+
+
   if ( writeStatus == US_DB2::DBERROR )
     {
-      QMessageBox::warning(this, "Error", "Error processing file:\n"
-			   + filePath_eSign + "\n" + db.lastError() +
-			   "\n" + "Could not open file or no data \n");
+       QMessageBox::warning( this,
+                             "Error",
+                             "Error processing file:\n" + filePath_eSign + "\n" + db->lastError() + "\n" +
+                                "Could not open file or no data \n" );
     }
   
   else if ( writeStatus != US_DB2::OK )
     {
-      QMessageBox::warning(this, "Error", "returned processing file:\n" +
-			   filePath_eSign + "\n" + db.lastError() + "\n");
+       QMessageBox::warning( this, "Error", "returned processing file:\n" + filePath_eSign + "\n" + db->lastError() + "\n" );
     }
 }

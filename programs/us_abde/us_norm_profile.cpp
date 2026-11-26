@@ -1,11 +1,12 @@
-#include <QApplication>
-#include "us_license_t.h"
-#include "us_license.h"
 #include "us_norm_profile.h"
+#include "us_db_provider.h"
+#include "us_license.h"
+#include "us_license_t.h"
 #include "us_load_auc.h"
 #include "us_passwd.h"
 #include "us_run_protocol.h"
 #include "us_solution.h"
+#include <QApplication>
 #include <QFileInfo>
 
 //Alt. constr.
@@ -794,16 +795,13 @@ QMap< QString, QString > US_Norm_Profile::get_channels_analytes_mwl_abde(
 {
   QMap< QString, QString > analytes_buffer_map;
 
-  US_Passwd pw;
-  QString masterPW = pw.getPasswd();
-  US_DB2 db( masterPW );
+  auto                     db = US_DBProvider::open();
 
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      qDebug() << "[get_channels_analytes_mwl_abde] DB connection problem: "
-	       << db.lastError();
-      return analytes_buffer_map;
-    }
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     qDebug() << "[get_channels_analytes_mwl_abde] DB connection problem: " << db->lastError();
+     return analytes_buffer_map;
+  }
 
   for ( int ii = 0; ii < proto.rpRange.nranges; ii++ )
     {
@@ -825,51 +823,50 @@ QMap< QString, QString > US_Norm_Profile::get_channels_analytes_mwl_abde(
 	      int solutionID = sol_id.toInt();
 
 	      int status = US_DB2::OK;
-	      status = solution->readFromDB  ( solutionID, &db );
-	      // Error reporting
-	      if ( status == US_DB2::NO_BUFFER )
-		{
-		  qDebug() << "[get_channels_analytes_mwl_abde] The buffer this "
-			      "solution refers to was not found.";
-		  return analytes_buffer_map;
-		}
+         status                = solution->readFromDB( solutionID, db.get() );
+         // Error reporting
+         if ( status == US_DB2::NO_BUFFER )
+         {
+            qDebug() << "[get_channels_analytes_mwl_abde] The buffer this "
+                        "solution refers to was not found.";
+            return analytes_buffer_map;
+         }
 
-	      else if ( status == US_DB2::NO_ANALYTE )
-		{
-		  qDebug() << "[get_channels_analytes_mwl_abde] One of the analytes "
-			      "this solution refers to was not found.";
-		  return analytes_buffer_map;
-		}
+         else if ( status == US_DB2::NO_ANALYTE )
+         {
+            qDebug() << "[get_channels_analytes_mwl_abde] One of the analytes "
+                        "this solution refers to was not found.";
+            return analytes_buffer_map;
+         }
 
-	      else if ( status != US_DB2::OK )
-		{
-		  qDebug() << "[get_channels_analytes_mwl_abde] DB error: "
-			   << db.lastError();
-		  return analytes_buffer_map;
-		}
-	      //End of reading Solution:
+         else if ( status != US_DB2::OK )
+         {
+            qDebug() << "[get_channels_analytes_mwl_abde] DB error: " << db->lastError();
+            return analytes_buffer_map;
+         }
+         //End of reading Solution:
 
-	      //Reading Analytes
-	      int num_analytes = solution->analyteInfo.size();
-	      for (int i=0; i < num_analytes; ++i )
-		{
-		  US_Analyte analyte = solution->analyteInfo[ i ].analyte;
-		  QString a_name     = analyte.description;
+         //Reading Analytes
+         int num_analytes = solution->analyteInfo.size();
+         for ( int i = 0; i < num_analytes; ++i )
+         {
+            US_Analyte analyte = solution->analyteInfo[i].analyte;
+            QString    a_name  = analyte.description;
 
-		  QString ana_name = "Analyte #" + QString::number(i+1) + ":";
-		  analytes_buffer_map[ ana_name ] = a_name;
-		}
+            QString    ana_name           = "Analyte #" + QString::number( i + 1 ) + ":";
+            analytes_buffer_map[ana_name] = a_name;
+         }
 
-	      //Reading Buffers
-	      if ( buff_req ) //only if buffer spectrum required
-		{
-		  US_Buffer buffer = solution->buffer;
-		  QString b_name   = buffer.description;
+         //Reading Buffers
+         if ( buff_req ) //only if buffer spectrum required
+         {
+            US_Buffer buffer = solution->buffer;
+            QString   b_name = buffer.description;
 
-		  analytes_buffer_map[ "Buffer:" ] = b_name;
-		}
-	    }
-	}
+            analytes_buffer_map["Buffer:"] = b_name;
+         }
+       }
+   }
     }
 
   return analytes_buffer_map;
@@ -2521,20 +2518,18 @@ void US_Norm_Profile::save_auto( void )
   
 
   // Determine if we are using the database
-   US_DB2* dbP  = NULL;
+  std::unique_ptr<IUS_DB2> dbP;
 
-   if ( disk_controls->db() )
-   {
-      US_Passwd pw;
-      dbP            = new US_DB2( pw.getPasswd() );
+  if ( disk_controls->db() )
+  {
+     dbP = US_DBProvider::open();
 
-      if ( dbP->lastErrno() != US_DB2::OK )
-      {
-         QMessageBox::warning( this, tr( "Connection Problem" ),
-           tr( "Could not connect to database: \n" ) + dbP->lastError() );
-         return;
-      }
-   }
+     if ( dbP->lastErrno() != US_DB2::OK )
+     {
+        QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database: \n" ) + dbP->lastError() );
+        return;
+     }
+  }
 
    /*************************************************************************************************************/
    // We need to  insert submission form dialog (with password...)
@@ -2627,8 +2622,8 @@ void US_Norm_Profile::record_AnalysisABDE_status( QMap<QString,QString> gmp_form
   // Check DB connection
   US_Passwd pw;
   QString masterpw = pw.getPasswd();
-  US_DB2* db = new US_DB2( masterpw );
-  
+  auto      db       = US_DBProvider::open();
+
   if ( db->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this, tr( "Connection Problem" ),
@@ -2680,7 +2675,7 @@ void US_Norm_Profile::record_AnalysisABDE_status( QMap<QString,QString> gmp_form
 	  << AnalysisABDE_Json;
       
 	  db->query( qry );
-	  delete db;
+     db.reset();
     }
   else
     {
@@ -2688,7 +2683,7 @@ void US_Norm_Profile::record_AnalysisABDE_status( QMap<QString,QString> gmp_form
 			    tr( "autoflowStatus (analysisABDE): There was a problem with identifying "
 				"a record in autoflowStatus table for a given run! \n" ) );
 
-      delete db;
+      db.reset();
       return;
     }
 
@@ -2703,13 +2698,13 @@ int US_Norm_Profile::read_autoflowAnalyisABDEstages_record( QString autoflowID  
    // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto      db       = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
        QMessageBox::warning( this, tr( "Connection Problem" ),
 			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
-       delete db;
+       db.reset();
        return status;
      }
 
@@ -2722,7 +2717,7 @@ int US_Norm_Profile::read_autoflowAnalyisABDEstages_record( QString autoflowID  
    status = db->statusQuery( qry );
    //qDebug() << "AFTER query ";
 
-   delete db;
+   db.reset();
    return status;
 }
 
@@ -2732,13 +2727,13 @@ void US_Norm_Profile::revert_autoflowAnalysisABDEstages_record( QString autoflow
    // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto      db       = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
        QMessageBox::warning( this, tr( "Connection Problem" ),
 			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
-       delete db;
+       db.reset();
        return;
      }
    
@@ -2751,7 +2746,7 @@ void US_Norm_Profile::revert_autoflowAnalysisABDEstages_record( QString autoflow
    
    db->query( qry );
 
-   delete db;
+   db.reset();
 }
 
 void US_Norm_Profile::update_autoflow_record_atAnalysisABDE( void )
@@ -2759,13 +2754,13 @@ void US_Norm_Profile::update_autoflow_record_atAnalysisABDE( void )
    // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto      db       = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
        QMessageBox::warning( this, tr( "Connection Problem" ),
 			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
-       delete db;
+       db.reset();
        return;
      }
 
@@ -2783,10 +2778,10 @@ void US_Norm_Profile::update_autoflow_record_atAnalysisABDE( void )
 			     tr( "Autoflow Record Not Updated" ),
 			     tr( "No autoflow record\n"
 				 "associated with this experiment." ) );
-       delete db;
+       db.reset();
        return;
      }
-   delete db;
+     db.reset();
 }
 
 
@@ -2797,13 +2792,13 @@ QMap <QString, QString> US_Norm_Profile::read_autoflowAnalysisABDE_record( QStri
    // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto                   db       = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
        QMessageBox::warning( this, tr( "Connection Problem" ),
 			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
-       delete db;
+       db.reset();
        return abde_analysis_parms;
      }
    
@@ -2822,9 +2817,9 @@ QMap <QString, QString> US_Norm_Profile::read_autoflowAnalysisABDE_record( QStri
 	   abde_analysis_parms[ "filename_blc" ]      = db->value( 3 ).toString();
 	 }
      }
-   
-   delete db;
-   return abde_analysis_parms;
+
+     db.reset();
+     return abde_analysis_parms;
 }
 
 void US_Norm_Profile::parse_abde_analysis_jsons( QString abde_analysis_parms_string,

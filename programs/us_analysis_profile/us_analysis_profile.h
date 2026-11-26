@@ -467,7 +467,7 @@ class US_AnalysisProfileGui : public US_Widgets
   //! \param item_cb  Optional ( items_done, items_total ) progress hook
   void                                            get_report_by_ID( US_ReportGMP*,
                                                                     int,
-                                                                    US_DB2*                                db = NULL,
+                                                                    IUS_DB2*                               db = NULL,
                                                                     const std::function<void( int, int )>& item_cb = std::function<void( int, int )>() );
 
   //! Optional progress hook for inherit_protocol(): ( done, total, detail ).

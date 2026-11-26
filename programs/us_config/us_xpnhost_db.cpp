@@ -1,12 +1,13 @@
 //! \file us_xpnhost.cpp
 #include "us_xpnhost_db.h"
-#include "us_xpn_data.h"
-#include "us_gui_settings.h"
-#include "us_settings.h"
-#include "us_passwd.h"
-#include "us_help.h"
 #include "us_crypto.h"
 #include "us_db2.h"
+#include "us_db_provider.h"
+#include "us_gui_settings.h"
+#include "us_help.h"
+#include "us_passwd.h"
+#include "us_settings.h"
+#include "us_xpn_data.h"
 
 #define def_desc QString("place-holder")
 #define def_host QString("192.168.1.1")
@@ -218,10 +219,9 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
 
 
    // Populate instrument list and pull instrument detailed info
-   US_Passwd pw;
-   IUS_DB2* dbP = use_db ? new US_DB2( pw.getPasswd() ) : NULL;
+   std::unique_ptr<IUS_DB2> dbP = use_db ? US_DBProvider::open() : nullptr;
    if ( dbP != NULL )    //fromDB
-     readInstruments( dbP );
+      readInstruments( dbP.get() );
 
    qDebug() << "Read Instr. and NOT updated_lw() ";
    
@@ -254,10 +254,9 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
 
 void US_XpnHostDB::update_inv( void )
 {
-   US_Passwd   pw;
-   US_DB2      db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != IUS_DB2::OK )
+   if ( db->lastErrno() != IUS_DB2::OK )
    {
 //qDebug() << "USCFG: UpdInv: ERROR connect";
       QMessageBox::information( this,
@@ -268,13 +267,13 @@ void US_XpnHostDB::update_inv( void )
    }
 
    QStringList q( "get_user_info" );
-   db.query( q );
-   db.next();
+   db->query( q );
+   db->next();
 
-   int ID        = db.value( 0 ).toInt();
-   QString fname = db.value( 1 ).toString();
-   QString lname = db.value( 2 ).toString();
-   int     level = db.value( 5 ).toInt();
+   int     ID    = db->value( 0 ).toInt();
+   QString fname = db->value( 1 ).toString();
+   QString lname = db->value( 2 ).toString();
+   int     level = db->value( 5 ).toInt();
 
    qDebug() << "USCFG: UpdInv: ID,name,lev" << ID << fname << lname << level;
 //if(ID<1) return;
@@ -662,51 +661,47 @@ void US_XpnHostDB::select_db( QListWidgetItem* entry, const bool showmsg )
 
 
 	//ALEXEY: set in DB selected to '1' for this entry and reset selected to '0' for all others...
-	US_Passwd pw;
-	IUS_DB2* db = use_db ? new US_DB2( pw.getPasswd() ) : NULL;
-	
-	if ( db->lastErrno() != US_DB2::OK )
-	  {
-	    QMessageBox::warning( this,
-				  tr( "Database Connection Problem!" ),
-				  tr( "You are not currently connected to a US3-LIMS DB!\n" ) );
-	    return;
-	  }
-	
-	QStringList q( "" );
-	q.clear();
-	q  << QString( "update_instrument_set_selected" )
-	   << instruments[ii].name;                    
-	
-	db->query( q );
-	
-	//ALEXEY: and in instrument class:
-	instruments[ii].selected = 1;
-	for ( int jj = 0; jj < instruments.size(); jj++)
-	  {
-	    if ( instruments[jj].name == item  )
-	      continue;
-	    
-	    instruments[jj].selected = 0;
-	    q.clear();
-	    q  << QString( "update_instrument_set_unselected" )
-	       << instruments[jj].name;                    
-	    
-	    db->query( q );
-	  }
-	
-	update_lw( );
-	
-	if ( showmsg )
-	  {
-            QMessageBox::information( this,
-				      tr( "Optima Host Selected" ),
-				      tr( "The default database host has been updated." ) );
-	  }
-	//pb_save  ->setEnabled( true );
-	pb_delete->setEnabled( true );
-	
-	break;
+   std::unique_ptr<IUS_DB2> db = use_db ? US_DBProvider::open() : nullptr;
+
+   if ( db->lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::warning(
+         this, tr( "Database Connection Problem!" ), tr( "You are not currently connected to a US3-LIMS DB!\n" ) );
+      return;
+   }
+
+   QStringList q( "" );
+   q.clear();
+   q << QString( "update_instrument_set_selected" ) << instruments[ii].name;
+
+   db->query( q );
+
+   //ALEXEY: and in instrument class:
+   instruments[ii].selected = 1;
+   for ( int jj = 0; jj < instruments.size(); jj++ )
+   {
+      if ( instruments[jj].name == item )
+      {
+         continue;
+      }
+
+      instruments[jj].selected = 0;
+      q.clear();
+      q << QString( "update_instrument_set_unselected" ) << instruments[jj].name;
+
+      db->query( q );
+   }
+
+   update_lw();
+
+   if ( showmsg )
+   {
+      QMessageBox::information( this, tr( "Optima Host Selected" ), tr( "The default database host has been updated." ) );
+   }
+   //pb_save  ->setEnabled( true );
+   pb_delete->setEnabled( true );
+
+   break;
       }
    }
 }
@@ -836,7 +831,7 @@ void US_XpnHostDB::editHost( QMap < QString, QString > & newInstrument  )
 {
   US_Passwd pw;
   QString masterpw = pw.getPasswd();
-  US_DB2* db = use_db ? new US_DB2( masterpw ) : NULL;
+  std::unique_ptr<IUS_DB2> db       = use_db ? US_DBProvider::open() : nullptr;
 
   if ( db->lastErrno() != US_DB2::OK )
     {
@@ -872,9 +867,9 @@ void US_XpnHostDB::editHost( QMap < QString, QString > & newInstrument  )
   QString mtitle_done    = tr( "Success" );
   QString message_done   = tr( "Instrument information has been successfully edited." );
   QMessageBox::information( this, mtitle_done, message_done );
-  
-    
-  readInstruments( db );
+
+
+  readInstruments( db.get() );
   update_lw( );
 
   // fillGui( newInstrument );
@@ -936,7 +931,7 @@ void US_XpnHostDB::newHost( QMap < QString, QString > & newInstrument  )
 
   US_Passwd pw;
   QString masterpw = pw.getPasswd();
-  US_DB2* db = use_db ? new US_DB2( masterpw ) : NULL;
+  std::unique_ptr<IUS_DB2> db       = use_db ? US_DBProvider::open() : nullptr;
 
   if ( db->lastErrno() != US_DB2::OK )
     {
@@ -991,8 +986,8 @@ void US_XpnHostDB::newHost( QMap < QString, QString > & newInstrument  )
   QString mtitle_done    = tr( "Success" );
   QString message_done   = tr( "New instrument has been successfully added to DB." );
   QMessageBox::information( this, mtitle_done, message_done );
-		  
-  readInstruments( db );
+
+  readInstruments( db.get() );
   update_lw( );
 
 }
@@ -1132,7 +1127,7 @@ void US_XpnHostDB::deleteDB( void )
    if ( instID )
      {
        US_Passwd pw;
-       US_DB2* db = use_db ? new US_DB2( pw.getPasswd() ) : NULL;
+       std::unique_ptr<IUS_DB2> db = use_db ? US_DBProvider::open() : nullptr;
        QStringList q( "" );
        q.clear();
        q  << QString( "delete_instrument" )
@@ -1157,35 +1152,34 @@ void US_XpnHostDB::deleteDB( void )
        // ALEXEY: now check if the default DB was removed: if yes, reset default to the first in the item list
        if ( default_to_remove )
 	 {
-	   US_Passwd pw;
-	   US_DB2* db = use_db ? new US_DB2( pw.getPasswd() ) : NULL;
-	   
-	   if ( db->lastErrno() != US_DB2::OK )
-	     {
-	       QMessageBox::warning( this,
-				     tr( "Database Connection Problem!" ),
-				     tr( "You are not currently connected to a US3-LIMS DB! \n" ) );
-	       return;
-	     }
+       std::unique_ptr<IUS_DB2> db = use_db ? US_DBProvider::open() : nullptr;
 
-	   QListWidgetItem* currentItem = lw_entries->currentItem();
-	   	   
-	   QStringList q( "" );
-	   q.clear();
-	   q  << QString( "update_instrument_set_selected" )
-	      << currentItem->text();
-	   
-	   db->query( q );
+       if ( db->lastErrno() != US_DB2::OK )
+       {
+          QMessageBox::warning(
+             this, tr( "Database Connection Problem!" ), tr( "You are not currently connected to a US3-LIMS DB! \n" ) );
+          return;
+       }
 
-	   for ( int jj = 0; jj < instruments.size(); jj++)
-	     {
-	       if ( instruments[jj].name == currentItem->text() )
-		 instruments[jj].selected = 1;
-	     }
+       QListWidgetItem* currentItem = lw_entries->currentItem();
 
-	   update_lw( );
-	   msg += QString("\n NOTE: the default DB was reset to %1").arg("Optima 1");
-	 }
+       QStringList      q( "" );
+       q.clear();
+       q << QString( "update_instrument_set_selected" ) << currentItem->text();
+
+       db->query( q );
+
+       for ( int jj = 0; jj < instruments.size(); jj++ )
+       {
+          if ( instruments[jj].name == currentItem->text() )
+          {
+             instruments[jj].selected = 1;
+          }
+       }
+
+       update_lw();
+       msg += QString( "\n NOTE: the default DB was reset to %1" ).arg( "Optima 1" );
+    }
 
        //reset();
        QMessageBox::information( this,

@@ -396,7 +396,7 @@ class US_Analysis_auto : public US_Widgets
              * @param analysisID Analysis ID.
              * @return A map of the autoflow analysis record.
              */
-            QMap < QString, QString > read_autoflowAnalysis_record( US_DB2*, const QString& );
+            QMap<QString, QString>                     read_autoflowAnalysis_record( IUS_DB2*, const QString& );
 
             /**
              * @brief Reads the autoflow analysis history record from the database.
@@ -404,7 +404,7 @@ class US_Analysis_auto : public US_Widgets
              * @param analysisID Analysis ID.
              * @return A map of the autoflow analysis history record.
              */
-            QMap < QString, QString > read_autoflowAnalysisHistory_record( US_DB2*, const QString& );
+            QMap<QString, QString>                     read_autoflowAnalysisHistory_record( IUS_DB2*, const QString& );
 
             /**
              * @brief Retrieves investigator information from the database.
@@ -412,8 +412,8 @@ class US_Analysis_auto : public US_Widgets
              * @param invID Investigator ID.
              * @return A map of the investigator information.
              */
-            QMap < QString, QString > get_investigator_info ( US_DB2*, const QString& );
-            QMap < QString, QString > get_abdeAnalysis_info ( US_DB2*, const QString& );
+            QMap<QString, QString>                     get_investigator_info( IUS_DB2*, const QString& );
+            QMap<QString, QString>                     get_abdeAnalysis_info( IUS_DB2*, const QString& );
 
             /**
              * @brief Scans the database for analysis data.
@@ -502,7 +502,7 @@ class US_Analysis_auto : public US_Widgets
              * @param db Pointer to the database.
              * @param analysisIDs List of analysis IDs.
              */
-            void update_autoflowAnalysis_status_at_fitmen ( US_DB2*, const QStringList& );
+            void                                       update_autoflowAnalysis_status_at_fitmen( IUS_DB2*, const QStringList& );
 
             /**
              * @brief Records or updates the analysis meniscus status in the database.
@@ -510,7 +510,7 @@ class US_Analysis_auto : public US_Widgets
              * @param analysisID The analysis ID.
              * @param status The status to update.
              */
-            void record_or_update_analysis_meniscus_status ( US_DB2*, QString, QString );
+            void                                       record_or_update_analysis_meniscus_status( IUS_DB2*, QString, QString );
 
             /**
              * @brief Records or updates the analysis cancel status in the database.
@@ -519,21 +519,21 @@ class US_Analysis_auto : public US_Widgets
              * @param status The status to update.
              * @param reason The reason for the cancellation.
              */
-            void record_or_update_analysis_cancel_status ( US_DB2*, QString, QString, QString );
+            void    record_or_update_analysis_cancel_status( IUS_DB2*, QString, QString, QString );
 
             /**
              * @brief Updates the autoflow analysis upon deletion of a record.
              * @param db Pointer to the database.
              * @param analysisID The analysis ID.
              */
-            void update_autoflowAnalysis_uponDeletion ( US_DB2*, const QString& );
+            void    update_autoflowAnalysis_uponDeletion( IUS_DB2*, const QString& );
 
             /**
              * @brief Updates the autoflow analysis upon deletion of other wavelengths.
              * @param db Pointer to the database.
              * @param analysisIDs List of analysis IDs.
              */
-            void update_autoflowAnalysis_uponDeletion_other_wvl ( US_DB2*, const QStringList& );
+            void    update_autoflowAnalysis_uponDeletion_other_wvl( IUS_DB2*, const QStringList& );
 
             /**
              * @brief Loads the data from the given map.

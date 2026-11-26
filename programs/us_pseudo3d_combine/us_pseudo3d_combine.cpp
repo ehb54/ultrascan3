@@ -2,22 +2,22 @@
 
 #include <QApplication>
 
-#include "us_pseudo3d_combine.h"
-#include "us_spectrodata.h"
-#include "us_remove_distros.h"
-#include "us_select_runs.h"
-#include "us_model.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_settings.h"
+#include "us_constants.h"
+#include "us_db_provider.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
+#include "us_license.h"
+#include "us_license_t.h"
 #include "us_math2.h"
 #include "us_matrix.h"
-#include "us_sleep.h"
-#include "us_passwd.h"
+#include "us_model.h"
+#include "us_pseudo3d_combine.h"
+#include "us_remove_distros.h"
 #include "us_report.h"
-#include "us_constants.h"
+#include "us_select_runs.h"
+#include "us_settings.h"
+#include "us_sleep.h"
+#include "us_spectrodata.h"
 
 #define PA_TMDIS_MS 0   // default Plotall time per distro in milliseconds
 
@@ -657,16 +657,15 @@ DbgLv(2) << "(3)   need_save sv_plot" << need_save << sv_plot;
       if ( dkdb_cntrls->db()  &&  !ck_locsave->isChecked() )
       {  // Save a copy to the database
 QDateTime time0=QDateTime::currentDateTime();
-         US_Passwd   pw;
-         US_DB2      db( pw.getPasswd() );
-         QStringList query;
-         query << "get_editID" << tsys->editGUID;
-         db.query( query );
-         db.next();
-         int         idEdit   = db.value( 0 ).toString().toInt();
-         US_Report   freport;
-         freport.runID        = runid;
-         freport.saveDocumentFromFile( ofdir, ofname, &db, idEdit );
+auto        db   = US_DBProvider::open();
+QStringList query;
+query << "get_editID" << tsys->editGUID;
+db->query( query );
+db->next();
+int       idEdit = db->value( 0 ).toString().toInt();
+US_Report freport;
+freport.runID = runid;
+freport.saveDocumentFromFile( ofdir, ofname, db.get(), idEdit );
 QDateTime time1=QDateTime::currentDateTime();
 qDebug() << "DB-save: currdist" << curr_distr
  << "svtime:" << time0.msecsTo(time1);

@@ -26,7 +26,7 @@ US_DataModel::US_DataModel( QWidget* parwidg /*=0*/ )
 }
 
 // Set database related pointers
-void US_DataModel::setDatabase( US_DB2* a_db )
+void US_DataModel::setDatabase( IUS_DB2* a_db )
 {
    db         = a_db;      // pointer to opened db connection
    invID      = QString::number( US_Settings::us_inv_ID() );
@@ -48,7 +48,7 @@ void US_DataModel::setSiblings( QObject* a_proc, QObject* a_tree )
 }
 
 // Get database pointer
-US_DB2* US_DataModel::dbase()
+IUS_DB2* US_DataModel::dbase()
 {
    return db;
 }

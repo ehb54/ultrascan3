@@ -1,13 +1,13 @@
 //! \file us_select_item.cpp
 
 #include "us_select_item.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_passwd.h"
-#include "us_help.h"
 #include "us_crypto.h"
 #include "us_db2.h"
+#include "us_db_provider.h"
 #include "us_failed_gmp_run_gui.h"
+#include "us_gui_settings.h"
+#include "us_help.h"
+#include "us_settings.h"
 
 //! \brief Class for simple table widget display of
 //!        a list of item columns.
@@ -590,25 +590,24 @@ void US_SelectItem::deleted_autoflow()
      return;
    else if (msgBox.clickedButton() == Confirm)
      {
-       US_Passwd pw;
-       US_DB2* db = new US_DB2( pw.getPasswd() );
-       
-       QStringList q( "" );
+        auto        db = US_DBProvider::open();
 
-       //Before deleting, read AnalysisIDs for autoflow record: 
-       q.clear();
-       q << "read_autoflow_record" << AutoflowID;
-       db->query( q );
+        QStringList q( "" );
 
-       QString analysisIDs;
-       
-       if ( db->lastErrno() == US_DB2::OK )      // Autoflow record exists
-	 {
-	   while ( db->next() )
-	     {
-	       analysisIDs  = db->value( 19 ).toString();
-	     }
-	 }
+        //Before deleting, read AnalysisIDs for autoflow record:
+        q.clear();
+        q << "read_autoflow_record" << AutoflowID;
+        db->query( q );
+
+        QString analysisIDs;
+
+        if ( db->lastErrno() == US_DB2::OK ) // Autoflow record exists
+        {
+           while ( db->next() )
+           {
+              analysisIDs = db->value( 19 ).toString();
+           }
+        }
 
        //--------------------------------------------
 
@@ -726,8 +725,7 @@ void US_SelectItem::deleted()
    if ( response != QMessageBox::Yes )
      return;
 
-   US_Passwd pw;
-   US_DB2* db = new US_DB2( pw.getPasswd() );
+   auto        db = US_DBProvider::open();
    QStringList q( "" );
    q.clear();
    q  << QString( "delete_protocol" )
@@ -764,9 +762,8 @@ bool US_SelectItem::check_protocol_for_autoflow( QString pID, QString pName )
 {
   bool isRequired = false;
   int  protNumber = 0;
-  
-  US_Passwd pw;
-  US_DB2* db = new US_DB2( pw.getPasswd() );
+
+  auto        db = US_DBProvider::open();
 
   QStringList q;
   q  << QString( "check_protocol_for_autoflow" ) 
@@ -815,9 +812,8 @@ void US_SelectItem::set_unset_failed_autoflow()
 	    << AutoflowRow << ", " << AutoflowID << ", " << items[ AutoflowRow ][ 1 ] << ", " << items[ AutoflowRow ][ 4 ];
 
    //Check current status:
-   US_Passwd pw;
-   US_DB2* db = new US_DB2( pw.getPasswd() );
-   
+   auto        db = US_DBProvider::open();
+
    QStringList q( "" );
    q.clear();
    q << "read_autoflow_record" << AutoflowID;

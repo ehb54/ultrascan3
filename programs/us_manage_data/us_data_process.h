@@ -61,7 +61,7 @@ class US_DataProcess : public QObject
     private:
         QString                 errMsg;     //!< Message from the last error
         QWidget*                parentw;    //!< Parent widget
-        US_DB2*                 db;         //!< Pointer to database connection
+        IUS_DB2*                db;         //!< Pointer to database connection
         US_DataModel*           da_model;   //!< Data model object
         US_DataModel::DataDesc  cdesc;      //!< Current record description
         US_SyncExperiment*      syncExper;  //!< Experiment synchronizer

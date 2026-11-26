@@ -1,21 +1,21 @@
 //! \file us_manage_data.cpp
 
+#include "us_db_provider.h"
 #include <QApplication>
 
-#include "us_manage_data.h"
+#include "us_constants.h"
 #include "us_data_model.h"
-#include "us_data_tree.h"
 #include "us_data_process.h"
+#include "us_data_tree.h"
+#include "us_editor.h"
+#include "us_gui_settings.h"
+#include "us_investigator.h"
+#include "us_license.h"
+#include "us_license_t.h"
+#include "us_manage_data.h"
+#include "us_matrix.h"
 #include "us_select_item.h"
 #include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_matrix.h"
-#include "us_constants.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_passwd.h"
-#include "us_investigator.h"
-#include "us_editor.h"
 #include "us_util.h"
 
 const QColor colorRed(   240,   0,   0 );
@@ -281,8 +281,8 @@ DbgLv(1) << "te_status size" << te_status->size();
    show();    // display main window before password dialog appears
 
    // insure we can connect to the database
-   US_Passwd pw;
-   db            = new US_DB2( pw.getPasswd() );
+   db_owned = US_DBProvider::open();
+   db       = db_owned.get();
    if ( db->lastErrno() != US_DB2::OK )
    {
       QMessageBox::information( this,

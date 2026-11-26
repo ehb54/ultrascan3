@@ -1,19 +1,18 @@
 //! \file us_tmst_viewer.cpp
 
 #include "us_tmst_viewer.h"
-#include "us_tmst_plot.h"
-#include "us_select_item.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_settings.h"
-#include "us_investigator.h"
-#include "us_passwd.h"
-#include "us_db2.h"
-#include "us_util.h"
 #include "us_constants.h"
-#include "us_util.h"
-#include "us_gui_util.h"
+#include "us_db2.h"
+#include "us_db_provider.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
+#include "us_investigator.h"
+#include "us_license.h"
+#include "us_license_t.h"
+#include "us_select_item.h"
+#include "us_settings.h"
+#include "us_tmst_plot.h"
+#include "us_util.h"
 
 #ifdef WIN32
 #include <float.h>
@@ -218,15 +217,12 @@ void US_TmstViewer::showTimeState( )
       QString fname;
       QString xdefs;
       QString cksumd;
-      US_Passwd pw;
-      US_DB2 db( pw.getPasswd() );
+      auto    db     = US_DBProvider::open();
       QString tsdesc = tmstdata[ selx ][ 0 ];
       tspath         = US_Settings::tmpDir() + "/"
                        + tsdesc + ".time_state.tmst";
-      US_TimeState::dbExamine( &db, &idTmst, 0, &fname,
-                               &xdefs, &cksumd, 0 );
-DbgLv(1) << "sTS: db : fname" << fname << "cksumd" << cksumd
- << "tspath" << tspath << "idTmst" << idTmst;
+      US_TimeState::dbExamine( db.get(), &idTmst, 0, &fname, &xdefs, &cksumd, 0 );
+      DbgLv( 1 ) << "sTS: db : fname" << fname << "cksumd" << cksumd << "tspath" << tspath << "idTmst" << idTmst;
       if ( QFile( tspath ).exists() )
       {  // File exists, so check if it matches DB
          QString cksumf   = US_Util::md5sum_file( tspath );
@@ -248,7 +244,7 @@ DbgLv(1) << "sTS: db :    NEW DOWNLOAD";
       if ( needTmst )
       {
          // Download the .tmst file
-         const bool tmstOK = ( US_TimeState::dbDownload( &db, idTmst, tspath ) == US_DB2::OK );
+         const bool tmstOK = ( US_TimeState::dbDownload( db.get(), idTmst, tspath ) == US_DB2::OK );
          // And write the xdefs sibling file, only next to a downloaded .tmst
          QString xfpath = QString( tspath ).replace( ".tmst", ".xml" );
          QFile fileo( xfpath );
@@ -279,45 +275,42 @@ void US_TmstViewer::tmst_items( const QString source )
 
    if ( source == "database" )
    {  // Read all database "timestate" table rows
-      US_Passwd pw;
-      US_DB2 db( pw.getPasswd() );
+      auto db = US_DBProvider::open();
 
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db->lastErrno() != US_DB2::OK )
       {
-         qDebug() << "DB CONNECT ERROR: " << db.lastError();
+         qDebug() << "DB CONNECT ERROR: " << db->lastError();
          return;
       }
 
       QString invID    = QString::number( US_Settings::us_inv_ID() );
       QStringList qry;
       qry << "get_experiment_desc" << invID;
-      db.query( qry );
-      int numrows      = db.numRows();
-DbgLv(1) << "items:  DB query" << qry << "DB numrows" << numrows
- << "DB err" << db.lastErrno() << db.lastError();
+      db->query( qry );
+      int numrows = db->numRows();
+      DbgLv( 1 ) << "items:  DB query" << qry << "DB numrows" << numrows << "DB err" << db->lastErrno() << db->lastError();
       QStringList expIds;
 
-      while( db.next() )
+      while ( db->next() )
       {  // Accumulate a list of experiment IDs of user's timestates
-         expIds << db.value( 0 ).toString();
+         expIds << db->value( 0 ).toString();
       }
 
       for ( int ii = 0; ii < expIds.count(); ii++ )
       {  // Issue a query for each experiment ID of timestates
          qry.clear();
          qry << "get_experiment_timestate" << expIds[ ii ];
-         db.query( qry );
+         db->query( qry );
 
-         while ( db.next() )
+         while ( db->next() )
          {
-            QString tmstID   = db.value( 0 ).toString();
-            QString fname    = db.value( 1 ).toString();
-            QString cksum    = db.value( 3 ).toString() + " " +
-                               db.value( 4 ).toString();
+            QString tmstID   = db->value( 0 ).toString();
+            QString fname    = db->value( 1 ).toString();
+            QString cksum    = db->value( 3 ).toString() + " " + db->value( 4 ).toString();
             QString descr    = QString( fname ).section( ".", 0, -3 );
-            QString udate    = US_Util::toUTCDatetimeText(
-                               db.value( 5 ).toDateTime().toString( Qt::ISODate )
-                              , true ).section( " ", 0, 0 ).simplified();
+            QString udate    = US_Util::toUTCDatetimeText( db->value( 5 ).toDateTime().toString( Qt::ISODate ), true )
+                               .section( " ", 0, 0 )
+                               .simplified();
 
             // Add a database entry to the list
             tmste.clear();

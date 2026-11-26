@@ -96,7 +96,7 @@ class US_auditTrailGMP : public US_Widgets
         //! \param db The database connection.
         //! \param progress Optional progress dialog to update while the (potentially long) query runs.
         //! \return The number of reports listed.
-        int list_all_gmp_reports_db(QList<QStringList>& data, US_DB2* db, QProgressDialog* progress = NULL);
+        int                    list_all_gmp_reports_db( QList<QStringList>& data, IUS_DB2* db, QProgressDialog* progress = NULL );
 
         //! \brief Read the autoflow GMP report eSign record.
         //! \param id The ID of the eSign record.
@@ -213,7 +213,7 @@ class US_auditTrailGMP : public US_Widgets
   //! \param db The database connection.
   //! \param details The details map.
   //! \return The list of dropped triples.
-  QStringList buildDroppedTriplesList( US_DB2* db, QMap<QString, QString> details );
+  QStringList buildDroppedTriplesList( IUS_DB2* db, QMap<QString, QString> details );
 
   //! \brief Assemble the initial GMP data.
   //! \param statusMap The map of the status.

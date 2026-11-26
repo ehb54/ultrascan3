@@ -1,15 +1,15 @@
 //! \file us_solution_gui.cpp
 
 #include "us_solution_gui.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_theme.h"
-#include "us_passwd.h"
-#include "us_db2.h"
-#include "us_investigator.h"
-#include "us_buffer_gui.h"
 #include "us_analyte_gui.h"
+#include "us_buffer_gui.h"
+#include "us_db2.h"
+#include "us_db_provider.h"
+#include "us_gui_settings.h"
+#include "us_investigator.h"
+#include "us_settings.h"
 #include "us_solution.h"
+#include "us_theme.h"
 
 US_SolutionMgrSelect::US_SolutionMgrSelect( int *invID, int *select_db_disk,
       US_Solution *tmp_solution, int tmp_experimentID, int tmp_channelID ) : US_Widgets()
@@ -226,17 +226,15 @@ void US_SolutionMgrSelect::delete_solution( void )
 
    if ( from_db )
    {
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
+      auto db = US_DBProvider::open();
 
-      if ( db.lastErrno() != IUS_DB2::OK )
+      if ( db->lastErrno() != IUS_DB2::OK )
       {
-         db_error( db.lastError() );
+         db_error( db->lastError() );
          return;
       }
 
-      const int uses = solution->countInProtocols( &db );
+      const int uses = solution->countInProtocols( db.get() );
       if ( uses > 0 )
       {
          status = IUS_DB2::SOLUT_IN_USE;
@@ -247,7 +245,7 @@ void US_SolutionMgrSelect::delete_solution( void )
       }
       else
       {
-         status = solution->deleteFromDB( &db );
+         status = solution->deleteFromDB( db.get() );
 #if 0
  QMessageBox::warning( this,
   tr( "Delete (DB) proceeds" ),
@@ -451,14 +449,12 @@ DbgLv(1) << "load Disk";
 // Function to load solutions from db
 void US_SolutionMgrSelect::loadDB( void )
 {
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-DbgLv(1) << "loadDB: lasterr" << db.lastError();
+   auto db = US_DBProvider::open();
+   DbgLv( 1 ) << "loadDB: lasterr" << db->lastError();
 
-   if ( db.lastErrno() != IUS_DB2::OK )
+   if ( db->lastErrno() != IUS_DB2::OK )
    {
-      db_error( db.lastError() );
+      db_error( db->lastError() );
       return;
    }
 DbgLv(1) << "loadDB: AA";
@@ -466,13 +462,13 @@ DbgLv(1) << "loadDB: AA";
    QString IDperson = QString::number( *personID );
    QStringList q;
    q << "all_solutionIDs" << IDperson;
-   db.query( q );
-DbgLv(1) << "loadDB: BB";
+   db->query( q );
+   DbgLv( 1 ) << "loadDB: BB";
 
    // if ( investigatorID < 1 ) investigatorID = US_Settings::us_inv_ID();
    // QStringList q( "all_solutionIDs" );
    // q << QString::number( investigatorID );
-   // db.query( q );
+   // db->query( q );
 
    IDs          .clear();
    descriptions .clear();
@@ -485,23 +481,23 @@ DbgLv(1) << "loadDB: CC";
    le_search->   setText( "" );
    le_search->   setReadOnly( true );
 
-DbgLv(1) << "loadDB: lastErrno" << db.lastErrno() << IUS_DB2::OK << db.lastError();
-   if ( db.lastErrno() == IUS_DB2::NOROWS )
+   DbgLv( 1 ) << "loadDB: lastErrno" << db->lastErrno() << IUS_DB2::OK << db->lastError();
+   if ( db->lastErrno() == IUS_DB2::NOROWS )
    {
       lw_solutions->setSelectionMode( QAbstractItemView::NoSelection );
       lw_solutions->addItem( "No solution files found." );
    }
-   else if ( db.lastErrno() != IUS_DB2::OK )
+   else if ( db->lastErrno() != IUS_DB2::OK )
    {
-      db_error( db.lastError() );
+      db_error( db->lastError() );
       return;
    }
 
-   while ( db.next() )
+   while ( db->next() )
    {
-      QString newID = db.value( 0 ).toString();
+      QString newID = db->value( 0 ).toString();
       IDs          << newID;
-      descriptions << db.value( 1 ).toString();
+      descriptions << db->value( 1 ).toString();
       GUIDs        << QString( "" );
       filenames    << QString( "" );
    }
@@ -712,17 +708,15 @@ DbgLv(1) << "SolutionID: " << solutionID;
 
    if ( from_db )
    {
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
+      auto db = US_DBProvider::open();
 
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db->lastErrno() != US_DB2::OK )
       {
-         db_error( db.lastError() );
+         db_error( db->lastError() );
          return;
       }
 
-      status = solution->readFromDB  ( solutionID, &db );
+      status = solution->readFromDB( solutionID, db.get() );
 
       // Error reporting
       if ( status == US_DB2::NO_BUFFER )
@@ -742,8 +736,7 @@ DbgLv(1) << "SolutionID: " << solutionID;
       }
 
       else if ( status != US_DB2::OK )
-         db_error( db.lastError() );
-
+         db_error( db->lastError() );
    }
 
    else
@@ -801,24 +794,22 @@ DbgLv(1) << "UplSol: solutionGUID" << solutionGUID;
    }
 
    // Look for a solution in the DB with that GUID
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
+   auto db = US_DBProvider::open();
 
-   status         = db.lastErrno();
+   status = db->lastErrno();
    if ( status != US_DB2::OK )
    {  // Return with no upload if there are DB problems
-      db_error( db.lastError() );
+      db_error( db->lastError() );
       return;
    }
 
    QStringList query( "get_solutionID_from_GUID" );
    query << solutionGUID;
-   db.query( query );
-   db.next();
-   status         = db.lastErrno();
+   db->query( query );
+   db->next();
+   status = db->lastErrno();
 
-   if ( db.lastErrno() != US_DB2::NOROWS )
+   if ( db->lastErrno() != US_DB2::NOROWS )
    {  // Return with no upload if the solution exists in the DB
       QMessageBox::warning( this,
          tr( "Solution Already in DB" ),
@@ -835,7 +826,7 @@ DbgLv(1) << "UplSol: solutionGUID" << solutionGUID;
    US_Solution solution_db  = *solution;
    solution_db.buffer.bufferID = "-1";  // Force skip of disk re-save
 
-   status         = solution_db.saveToDB( experimentID, channelID, &db );
+   status = solution_db.saveToDB( experimentID, channelID, db.get() );
 
    if ( status == US_DB2::OK )
    {  // Report successful upload
@@ -849,9 +840,9 @@ DbgLv(1) << "UplSol: solutionGUID" << solutionGUID;
    else
    {  // Report any problems uploading
       QMessageBox::critical( this,
-         tr( "Solution Upload Error" ),
-         tr( "The solution upload encountered an error:\n" )
-            + db.lastError() + " " + QString::number( status ) );
+                             tr( "Solution Upload Error" ),
+                             tr( "The solution upload encountered an error:\n" ) + db->lastError() + " " +
+                                QString::number( status ) );
    }
 }
 
@@ -1150,19 +1141,17 @@ void US_SolutionMgrNew::newAccepted()
 
    if ( from_db )
    {
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
+      auto db = US_DBProvider::open();
 
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db->lastErrno() != US_DB2::OK )
       {
-         QMessageBox::warning( this, tr( "Database Problem" ),
-         tr( "Database returned the following error: \n" ) + db.lastError() );
-         //db_error( db.lastError() );
+         QMessageBox::warning(
+            this, tr( "Database Problem" ), tr( "Database returned the following error: \n" ) + db->lastError() );
+         //db_error( db->lastError() );
          return;
       }
       DbgLv(1) << "Inside newAccepted(): " << "ExpID: " << experimentID << ", cID: " << channelID;
-      int status = solution->saveToDB( experimentID, channelID, &db );
+      int status = solution->saveToDB( experimentID, channelID, db.get() );
 
       // if ( status != US_DB2::OK && ! display_status )  // then we return but no status msg
       //    return;
@@ -1186,13 +1175,13 @@ void US_SolutionMgrNew::newAccepted()
 
       else if ( status != US_DB2::OK )
       {
-         QString emsg = "solSv2DB: status=" + QString::number(status) + " " + QString::number(db.lastErrno())
-          + " LErr=\"" + db.lastError() + "\"\n"
-          + "expID,chnID " + QString::number(experimentID) + " " + QString::number(channelID);
+         QString emsg = "solSv2DB: status=" + QString::number( status ) + " " + QString::number( db->lastErrno() ) + " LErr=\"" +
+                        db->lastError() + "\"\n" + "expID,chnID " + QString::number( experimentID ) + " " +
+                        QString::number( channelID );
          QMessageBox::warning( this,
-               tr( "Solution DB Save Error" ),
-//               db.lastError() );
-               emsg );
+                               tr( "Solution DB Save Error" ),
+                               //               db->lastError() );
+                               emsg );
          return;
       }
    }
@@ -1317,18 +1306,18 @@ void US_SolutionMgrNew::assignAnalyte( US_Analyte data )
    if ( from_db )
    {
       // Now double-check analyteID from db if we can
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
+      auto db = US_DBProvider::open();
 
-      if ( db.lastErrno() == US_DB2::OK )
+      if ( db->lastErrno() == US_DB2::OK )
       {
          QStringList q( "get_analyteID" );
          q << newInfo.analyte.analyteGUID;
-         db.query( q );
+         db->query( q );
 
-         if ( db.next() )
-            newInfo.analyte.analyteID = db.value( 0 ).toString();
+         if ( db->next() )
+         {
+            newInfo.analyte.analyteID = db->value( 0 ).toString();
+         }
       }
    }
 
@@ -1494,19 +1483,17 @@ void US_SolutionMgrNew::assignBuffer( US_Buffer newBuffer )
    if ( from_db )
    {
       // Now get the corresponding bufferID, if we can
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
+      auto db = US_DBProvider::open();
 
-      if ( db.lastErrno() == US_DB2::OK )
+      if ( db->lastErrno() == US_DB2::OK )
       {
          QStringList q( "get_bufferID" );
          q << newBuffer.GUID;
-         db.query( q );
+         db->query( q );
 
-         if ( db.next() )
+         if ( db->next() )
          {
-            newBuffer.bufferID = db.value( 0 ).toString();
+            newBuffer.bufferID = db->value( 0 ).toString();
          }
 
          else
@@ -1668,27 +1655,23 @@ void US_SolutionMgrEdit::editAccepted( void )
 {
   if ( from_db )
    {
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
+      auto db = US_DBProvider::open();
 
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db->lastErrno() != US_DB2::OK )
       {
-         QMessageBox::warning( this, tr( "Database Problem" ),
-            tr( "Database returned the following error: \n" ) + db.lastError() );
+         QMessageBox::warning(
+            this, tr( "Database Problem" ), tr( "Database returned the following error: \n" ) + db->lastError() );
          return;
       }
 DbgLv(1) << "Inside editAccepted(): " << "ExpID: " << experimentID << ", cID: " << channelID;
-      int status = solution->saveToDB( experimentID, channelID, &db );
+int status = solution->saveToDB( experimentID, channelID, db.get() );
 
 
-      if ( status != US_DB2::OK )
-      {
-         QMessageBox::information( this,
-               tr( "Attention" ) ,
-               db.lastError() );
-         return;
-      }
+if ( status != US_DB2::OK )
+{
+   QMessageBox::information( this, tr( "Attention" ), db->lastError() );
+   return;
+}
 
       else if ( status == US_DB2::NO_BUFFER )
       {

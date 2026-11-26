@@ -1,5 +1,6 @@
 //! \file us_query_rmsd.cpp
 
+#include "us_db_provider.h"
 #include <QApplication>
 
 #include "us_query_rmsd.h"
@@ -32,8 +33,9 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
    setMinimumSize(QSize(600,400));
    
    dbg_level = US_Settings::us_debug();
-   dbCon = new US_DB2();
-   
+   dbCon_owned.reset( new US_DB2() ); // not connected until check_connection()
+   dbCon = dbCon_owned.get();
+
    QLabel *lb_runid = us_label(tr("Run ID"));
    QLabel *lb_edit = us_label(tr("Edit"));
    QLabel *lb_analysis = us_label(tr("Analysis"));
@@ -146,7 +148,11 @@ void US_QueryRmsd::help() {
 bool US_QueryRmsd::check_connection(){
 
    QString error;
-   dbCon->connect(pw.getPasswd(), error);
+   if ( !dbCon->isConnected() )
+   {
+      dbCon_owned = US_DBProvider::open();
+      dbCon       = dbCon_owned.get();
+   }
    if (dbCon->isConnected()){
       QStringList DB   = US_Settings::defaultDB();
       DbgLv(1) << DB;

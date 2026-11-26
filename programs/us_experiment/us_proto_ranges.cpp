@@ -1,11 +1,12 @@
 //! \file us_proto_ranges.cpp
 
+#include "us_db_provider.h"
 #include "us_experiment_gui_optima.h"
 #include "us_extinction_gui.h"
-#include "us_table.h"
 #include "us_license.h"
 #include "us_license_t.h"
 #include "us_sleep.h"
+#include "us_table.h"
 #include "us_util.h"
 
 #ifndef DbgLv
@@ -639,17 +640,14 @@ bool US_ExperGuiRanges::iStwoOrMoreAnalytesSpectra_forChannel( QString channelNa
   msg_to_user. clear();
   
   //DB
-  US_Passwd pw;
-  QString masterPW = pw.getPasswd();
-  US_DB2 db( masterPW );
-  
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "Database Problem" ),
-         tr( "Database returned the following error: \n" ) +  db.lastError() );
-      
-      return false;
-    }
+  auto db = US_DBProvider::open();
+
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning( this, tr( "Database Problem" ), tr( "Database returned the following error: \n" ) + db->lastError() );
+
+     return false;
+  }
 
   //main params
   QString channel;
@@ -695,7 +693,7 @@ bool US_ExperGuiRanges::iStwoOrMoreAnalytesSpectra_forChannel( QString channelNa
   int solutionID = sol_id.toInt();
   
   int status = US_DB2::OK;
-  status = solution->readFromDB  ( solutionID, &db );
+  status                = solution->readFromDB( solutionID, db.get() );
   // Error reporting
   if ( status == US_DB2::NO_BUFFER )
     {
@@ -717,9 +715,8 @@ bool US_ExperGuiRanges::iStwoOrMoreAnalytesSpectra_forChannel( QString channelNa
   
   else if ( status != US_DB2::OK )
     {
-      QMessageBox::warning( this, tr( "Database Problem" ),
-			    tr( "Database returned the following error: \n" ) +  db.lastError() );
-      return false;
+       QMessageBox::warning( this, tr( "Database Problem" ), tr( "Database returned the following error: \n" ) + db->lastError() );
+       return false;
     }
   //End of reading Solution:
   
@@ -743,21 +740,20 @@ bool US_ExperGuiRanges::iStwoOrMoreAnalytesSpectra_forChannel( QString channelNa
 		   << ", (ID)Analyte " << "(" << a_ID << ")" << a_name;
 	  
 	  analyte.extinction.clear();
-	  analyte.load( true, a_GUID, &db );
-	  
-	  //QMap <double, double> extinction[ wavelength ] <=> value
-	  qDebug() << "[Analyte]Extinction Profile wvls: " 
-		   << analyte.extinction.keys();
-	  
-	  //Check if ext. profile: (1) exists; (2) in range of specs channel-wvls.
-	  QString a_desc = "ANALYTE: " + a_name;
-	  if ( !validExtinctionProfile( a_desc, all_wvls, analyte.extinction.keys(), msg_to_user ) )
-	    {
-	      //capture msg on why exactly ext. profile invalid:
-	      abde_ch_msg[ chrow_global ] = msg_to_user.join("\n");
-	      profiles_exist = false;
-	    }
-	}
+     analyte.load( true, a_GUID, db.get() );
+
+     //QMap <double, double> extinction[ wavelength ] <=> value
+     qDebug() << "[Analyte]Extinction Profile wvls: " << analyte.extinction.keys();
+
+     //Check if ext. profile: (1) exists; (2) in range of specs channel-wvls.
+     QString a_desc = "ANALYTE: " + a_name;
+     if ( !validExtinctionProfile( a_desc, all_wvls, analyte.extinction.keys(), msg_to_user ) )
+     {
+        //capture msg on why exactly ext. profile invalid:
+        abde_ch_msg[chrow_global] = msg_to_user.join( "\n" );
+        profiles_exist            = false;
+     }
+   }
     }
   else
     msg_to_user << "1 analyte ONLY!";
@@ -772,10 +768,10 @@ bool US_ExperGuiRanges::iStwoOrMoreAnalytesSpectra_forChannel( QString channelNa
   //       QString b_ID     = buffer.bufferID;
   //       qDebug() << "Solution "  << solution->solutionDesc
   // 	       << ", (ID)Buffer " << "(" << b_ID << ")" << b_name;
-  
+
   //       buffer.extinction.clear();
-  //       buffer.readFromDB( &db, b_ID );
-  
+  //       buffer.readFromDB( db.get(), b_ID );
+
   //       //QMap <double, double> extinction[ wavelength ] <=> value
   //       qDebug() << "[Buffer]Extinction Profile wvls: " 
   // 	       << buffer.extinction.keys();

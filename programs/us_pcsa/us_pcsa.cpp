@@ -1,23 +1,23 @@
 //! \file us_pcsa.cpp
 
+#include "us_db_provider.h"
 #include <QApplication>
 #include <QtSvg>
 
-#include "us_pcsa.h"
-#include "us_resids_bitmap.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_settings.h"
+#include "us_analyte_gui.h"
+#include "us_constants.h"
+#include "us_data_loader.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
-#include "us_matrix.h"
-#include "us_constants.h"
-#include "us_analyte_gui.h"
-#include "us_passwd.h"
-#include "us_data_loader.h"
-#include "us_util.h"
 #include "us_investigator.h"
+#include "us_license.h"
+#include "us_license_t.h"
 #include "us_loadable_noise.h"
+#include "us_matrix.h"
+#include "us_pcsa.h"
+#include "us_resids_bitmap.h"
+#include "us_settings.h"
+#include "us_util.h"
 
 //! \brief Main program for us_pcsa. Loads translators and starts
 //         the class US_pcsa.
@@ -228,10 +228,7 @@ void US_pcsa::load( void )
    edata      = &dataList[ 0 ];    // point to first loaded data
    baserss    = 0;
 
-   US_Passwd pw;
-   US_DB2* dbP             = disk_controls->db()
-                             ? new US_DB2( pw.getPasswd() )
-                             : NULL;
+   std::unique_ptr<IUS_DB2> dbP = disk_controls->db() ? US_DBProvider::open() : nullptr;
 
    // Get speed steps from disk or DB experiment
    if ( dbP != NULL )
@@ -248,12 +245,13 @@ void US_pcsa::load( void )
       {
         dbP->next();
         idExp              = dbP->value( 1 ).toInt();
-        US_SimulationParameters::speedstepsFromDB( dbP, idExp, speed_steps );
-DbgLv(1) << "SS: ss count" << speed_steps.count() << "idExp" << idExp;
-if (speed_steps.count()>0 )
-DbgLv(1) << "SS:  ss0 w2tfirst w2tlast timefirst timelast"
-   << speed_steps[0].w2t_first << speed_steps[0].w2t_last
-   << speed_steps[0].time_first << speed_steps[0].time_last;
+        US_SimulationParameters::speedstepsFromDB( dbP.get(), idExp, speed_steps );
+        DbgLv( 1 ) << "SS: ss count" << speed_steps.count() << "idExp" << idExp;
+        if ( speed_steps.count() > 0 )
+        {
+           DbgLv( 1 ) << "SS:  ss0 w2tfirst w2tlast timefirst timelast" << speed_steps[0].w2t_first << speed_steps[0].w2t_last
+                      << speed_steps[0].time_first << speed_steps[0].time_last;
+        }
       }
    }
 
@@ -564,8 +562,7 @@ DbgLv(1) << "SV: analysisType" << analysisType;
 
    // Save the model and any noise file(s)
 
-   US_Passwd   pw;
-   IUS_DB2*     dbP      = def_local ? NULL : new US_DB2( pw.getPasswd() );
+   std::unique_ptr<IUS_DB2> dbP = def_local ? nullptr : US_DBProvider::open();
    QDir        dirm( mdlpath );
    QDir        dirn( noipath );
    mdlpath             += "/";
@@ -646,7 +643,7 @@ DbgLv(1) << "SV: non-MC model ncomp" << model.components.size();
       {
          model.write( mname );
       }
-      else if ( model.write( dbP ) != IUS_DB2::OK )
+      else if ( model.write( dbP.get() ) != IUS_DB2::OK )
       {
          dbFailed << model.description + ": " + model.message;
       }
@@ -684,7 +681,7 @@ DbgLv(1) << "SV: MC models     write complete  mname" << mname;
          model.description = QString( tname ).section( "/", -1, -1 )
                              .replace( ".model.xml", ".model" )
                              .replace( ".mdl.tmp",   ".model" );
-         if ( model.write( dbP ) == IUS_DB2::OK )
+         if ( model.write( dbP.get() ) == IUS_DB2::OK )
          {
             tfile.remove();
          }
@@ -727,7 +724,7 @@ DbgLv(1) << "SV:  Post-sum tno" << ti_noise.values[0];
       if ( err != IUS_DB2::OK )
          qDebug() << "*ERROR* writing noise" << nname;
 
-      if ( dbP != NULL && ti_noise.write( dbP ) != IUS_DB2::OK )
+      if ( dbP.get() != NULL && ti_noise.write( dbP.get() ) != IUS_DB2::OK )
       {
          noiseFailed << ti_noise.description + ": " + ti_noise.message +
                            ( err == IUS_DB2::OK ? tr( "; a local copy was saved" )
@@ -763,7 +760,7 @@ DbgLv(1) << "SV:  Post-sum rno" << ri_noise.values[0];
       if ( err != IUS_DB2::OK )
          qDebug() << "*ERROR* writing noise" << nname;
 
-      if ( dbP != NULL && ri_noise.write( dbP ) != IUS_DB2::OK )
+      if ( dbP.get() != NULL && ri_noise.write( dbP.get() ) != IUS_DB2::OK )
       {
          noiseFailed << ri_noise.description + ": " + ri_noise.message +
                            ( err == IUS_DB2::OK ? tr( "; a local copy was saved" )
@@ -786,8 +783,8 @@ DbgLv(1) << "SV:  Post-write tno rno" << tino << rino;
  
    if ( dbP != NULL )
    {
-      delete dbP;
-      dbP = NULL;
+      dbP.reset();
+      dbP = nullptr;
    }
 
    reppath           = reppath + "/" + runID + "/";
@@ -998,10 +995,9 @@ void US_pcsa::open_fitcntl()
    sd.manual       = manual;
    US_Math2::data_correction( avTemp, sd );
 
-   US_Passwd pw;
-   IUS_DB2* dbP     = disk_controls->db() ? new US_DB2( pw.getPasswd() ) : NULL;
+   std::unique_ptr<IUS_DB2> dbP = disk_controls->db() ? US_DBProvider::open() : nullptr;
 
-   dset.simparams.initFromData( dbP, dataList[ drow ], dat_steps );
+   dset.simparams.initFromData( dbP.get(), dataList[drow], dat_steps );
 
    if ( exp_steps )
       dset.simparams.speed_step  = speed_steps;
@@ -1025,8 +1021,8 @@ DbgLv(1) << "Bottom" << dset.simparams.bottom << "rotorcoeffs"
 
    if ( dbP != NULL )
    {
-      delete dbP;
-      dbP    = NULL;
+      dbP.reset();
+      dbP = nullptr;
    }
 
    if ( analcd )

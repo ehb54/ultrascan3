@@ -1,6 +1,7 @@
 #include "us_convert_scan.h"
-#include "us_load_auc.h"
 #include "us_csv_loader.h"
+#include "us_db_provider.h"
+#include "us_load_auc.h"
 #include <QGuiApplication>
 #include <qwt_scale_div.h>
 #include <us_passwd.h>
@@ -1875,19 +1876,19 @@ int US_ConvertScan::load_timestate_from_disk(const QString& run_id, const QDir& 
 int US_ConvertScan::load_timestate_from_db(const QString& run_id, const QDir& pabs_dir) {
     // check database for timestate
     const QString pabs_tmst_fbase = pabs_dir.dirName() + ".time_state.tmst";
-    US_Passwd pw;
-    US_DB2 db( pw.getPasswd() );
+    auto          db              = US_DBProvider::open();
     QStringList query;
     query << "get_experiment_info_by_runID" << run_id
           << QString::number( US_Settings::us_inv_ID() );
-    db.query( query );
-    if ( db.lastErrno() == US_DB2::NOROWS )
-        return -1;                      // No DB records means database experiment
-    db.next();
-    const int  experimentID  = db.value( 1 ).toInt();
+    db->query( query );
+    if ( db->lastErrno() == US_DB2::NOROWS )
+    {
+       return -1; // No DB records means database experiment
+    }
+    db->next();
+    const int experimentID = db->value( 1 ).toInt();
     query.clear();
-    const bool newfile       = US_TimeState::dbSyncToLF(
-        &db, pabs_dir.absoluteFilePath(pabs_tmst_fbase), experimentID );
+    const bool newfile = US_TimeState::dbSyncToLF( db.get(), pabs_dir.absoluteFilePath( pabs_tmst_fbase ), experimentID );
     if ( newfile ) {
         return 1;
     }

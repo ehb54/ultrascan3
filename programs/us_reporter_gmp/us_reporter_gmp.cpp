@@ -1,3 +1,4 @@
+#include "us_db_provider.h"
 #include <QCollator>
 #include <QCoreApplication>
 #include <QDir>
@@ -74,63 +75,57 @@ void US_ReporterGMP::write_gmp_report_DB_test( QString report_filepath, QString 
 {
   
   bool clear_GMP_report_record = false;
-  
-  US_Passwd pw;
-  US_DB2    db( pw.getPasswd() );
-  
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-			    tr( "Could not connect to database \n" ) +  db.lastError() );
-      return;
-    }
+
+  auto db = US_DBProvider::open();
+
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
+     return;
+  }
 
 
   //Write HTML strign to file & later save to DB withing general archive
   qDebug() << "[TEST] Writing HTML Blob of filePath -- " << html_filePath;
-  
-  int writeStatus_html = db.writeBlobToDB( html_filePath,
-					   QString( "upload_gmpReportData_html" ),
-					   autolfowGMPReportID );
-  
+
+  int writeStatus_html = db->writeBlobToDB( html_filePath, QString( "upload_gmpReportData_html" ), autolfowGMPReportID );
+
   if ( writeStatus_html == US_DB2::DBERROR )
     {
-      QMessageBox::warning(this, "Error", "Error processing html file:\n"
-			   + html_filePath + "\n" + db.lastError() +
-			   "\n" + "Could not open file or no data \n");
-      clear_GMP_report_record = true;
+       QMessageBox::warning( this,
+                             "Error",
+                             "Error processing html file:\n" + html_filePath + "\n" + db->lastError() + "\n" +
+                                "Could not open file or no data \n" );
+       clear_GMP_report_record = true;
     }
   
   else if ( writeStatus_html != US_DB2::OK )
     {
-      QMessageBox::warning(this, "Error", "returned processing html file:\n" +
-			   html_filePath + "\n" + db.lastError() + "\n");
-      
-      clear_GMP_report_record = true;
+       QMessageBox::warning( this, "Error", "returned processing html file:\n" + html_filePath + "\n" + db->lastError() + "\n" );
+
+       clear_GMP_report_record = true;
     }
   
   /**********************************************************************************/
   //// .Tar Blob
   qDebug() << "[TEST] Writing .TAR Blob of filePath -- " << report_filepath;
-  
-  int writeStatus= db.writeBlobToDB(report_filepath,
-				    QString( "upload_gmpReportData" ),
-				    autolfowGMPReportID );
-  
+
+  int writeStatus = db->writeBlobToDB( report_filepath, QString( "upload_gmpReportData" ), autolfowGMPReportID );
+
   if ( writeStatus == US_DB2::DBERROR )
     {
-      QMessageBox::warning(this, "Error", "Error processing file:\n"
-			   + report_filepath + "\n" + db.lastError() +
-			   "\n" + "Could not open file or no data \n");
-      clear_GMP_report_record = true;
+       QMessageBox::warning( this,
+                             "Error",
+                             "Error processing file:\n" + report_filepath + "\n" + db->lastError() + "\n" +
+                                "Could not open file or no data \n" );
+       clear_GMP_report_record = true;
     }
   
   else if ( writeStatus != US_DB2::OK )
     {
-      QMessageBox::warning(this, "Error", "returned processing file:\n" +
-			   report_filepath + "\n" + db.lastError() + "\n");
-      
-      clear_GMP_report_record = true;
+       QMessageBox::warning( this, "Error", "returned processing file:\n" + report_filepath + "\n" + db->lastError() + "\n" );
+
+       clear_GMP_report_record = true;
     }
   
   /*************************************************************************/
@@ -144,8 +139,8 @@ void US_ReporterGMP::write_gmp_report_DB_test( QString report_filepath, QString 
       qDebug() << "Something went wrong!!";
       // qry.clear();
       // qry << "clear_autoflowGMPReportRecord" << QString::number( autolfowGMPReportID );
-      // db.query( qry );
-      
+      // db->query( qry );
+
       //Maybe revert 'reporting' stage in the autoflowStages??
     }
   else
@@ -156,15 +151,15 @@ void US_ReporterGMP::write_gmp_report_DB_test( QString report_filepath, QString 
       //get user info
       qry.clear();
       qry <<  QString( "get_user_info" );
-      db.query( qry );
-      db.next();
-      
-      int ID        = db.value( 0 ).toInt();
-      QString fname = db.value( 1 ).toString();
-      QString lname = db.value( 2 ).toString();
-      QString email = db.value( 4 ).toString();
-      int     level = db.value( 5 ).toInt();
-      
+      db->query( qry );
+      db->next();
+
+      int     ID    = db->value( 0 ).toInt();
+      QString fname = db->value( 1 ).toString();
+      QString lname = db->value( 2 ).toString();
+      QString email = db->value( 4 ).toString();
+      int     level = db->value( 5 ).toInt();
+
       QString reporting_Json;
       
       reporting_Json. clear();
@@ -183,8 +178,8 @@ void US_ReporterGMP::write_gmp_report_DB_test( QString report_filepath, QString 
 	  << autoStatusID
 	  << autoID
 	  << reporting_Json;
-      
-      db.query( qry );
+
+      db->query( qry );
     }
 }
  
@@ -778,7 +773,7 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
 
 
 //read eSign GMP record for assigned oper(s) && rev(s) && status
-QMap< QString, QString> US_ReporterGMP::read_autoflowGMPReportEsign_record( US_DB2* db )
+QMap<QString, QString> US_ReporterGMP::read_autoflowGMPReportEsign_record( IUS_DB2* db )
 {
   QMap< QString, QString> eSign_record;
   
@@ -899,16 +894,13 @@ void US_ReporterGMP::check_for_dropped_triples( void )
 //check for failed triples
 void US_ReporterGMP::check_failed_triples( void )
 {
+   auto db = US_DBProvider::open();
 
-  US_Passwd pw;
-  US_DB2    db( pw.getPasswd() );
-
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-			    tr( "Could not connect to database \n" ) +  db.lastError() );
+   if ( db->lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
       return;
-    }
+   }
 
   QStringList tripleNames;
   
@@ -919,14 +911,14 @@ void US_ReporterGMP::check_failed_triples( void )
       QString requestID = analysisIDs_list[i];
       
       qDebug() << "GMP Report: RequestID: " << requestID;
-      
-      analysis_details = read_autoflowAnalysis_record( &db, requestID );
+
+      analysis_details = read_autoflowAnalysis_record( db.get(), requestID );
 
       if ( !analysis_details.size() )
 	{
-	  analysis_details = read_autoflowAnalysisHistory_record( &db, requestID );
-	  qDebug() << "GMP Report: analysis_details.size() FROM autoflowAnalysisHistory -- " << analysis_details.size();
-	}
+      analysis_details = read_autoflowAnalysisHistory_record( db.get(), requestID );
+      qDebug() << "GMP Report: analysis_details.size() FROM autoflowAnalysisHistory -- " << analysis_details.size();
+   }
       else
 	qDebug() << "GMP Report: analysis_details.size() FROM autoflowAnalysis -- " << analysis_details.size();
 
@@ -998,7 +990,7 @@ void US_ReporterGMP::check_failed_triples( void )
 }
 
 // Read AutoflowAnalysisRecord
-QMap< QString, QString>  US_ReporterGMP::read_autoflowAnalysis_record( US_DB2* db, const QString& requestID )
+QMap<QString, QString> US_ReporterGMP::read_autoflowAnalysis_record( IUS_DB2* db, const QString& requestID )
 {
   QMap <QString, QString> analysis_details;
   
@@ -1044,7 +1036,7 @@ QMap< QString, QString>  US_ReporterGMP::read_autoflowAnalysis_record( US_DB2* d
 }
 
 // Read AutoflowAnalysisHistory Record
-QMap< QString, QString>  US_ReporterGMP::read_autoflowAnalysisHistory_record( US_DB2* db, const QString& requestID )
+QMap<QString, QString> US_ReporterGMP::read_autoflowAnalysisHistory_record( IUS_DB2* db, const QString& requestID )
 {
   QMap <QString, QString> analysis_details;
   
@@ -1274,11 +1266,10 @@ void US_ReporterGMP::check_models ( int autoflowID )
 	  Array_of_tripleNames.push_back( tripleName );
 	}
     }
-      
-  US_Passwd   pw;
-  std::unique_ptr<US_DB2> db( new US_DB2( pw.getPasswd() ) );
 
-  if ( db->lastErrno() != US_DB2::OK )
+    auto db = US_DBProvider::open();
+
+    if ( db->lastErrno() != US_DB2::OK )
     {
       QApplication::restoreOverrideCursor();
       QMessageBox::information( this,
@@ -1459,46 +1450,44 @@ void US_ReporterGMP::load_gmp_report_db ( void )
    // return;
    // //END TESTING *********
 
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
-			    tr( "Could not connect to database \n" ) + db.lastError() );
+      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
       return;
    }
 
-  list_all_gmp_reports_db( gmpReportsDBdata, &db );
+   list_all_gmp_reports_db( gmpReportsDBdata, db.get() );
 
-  QString pdtitle( tr( "Select GMP Report" ) );
-  QStringList hdrs;
-  int         prx;
-  
-  hdrs << "ID"
-       << "Run Name"
-    //<< "Protocol Name"
-       << "Created"
-       << "Filename (.pdf)";
-         
-  QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
+   QString     pdtitle( tr( "Select GMP Report" ) );
+   QStringList hdrs;
+   int         prx;
 
-  pdiag_autoflow_db = new US_SelectItem( gmpReportsDBdata, hdrs, pdtitle, &prx, autoflow_btn, -3 );
+   hdrs << "ID"
+        << "Run Name"
+        //<< "Protocol Name"
+        << "Created"
+        << "Filename (.pdf)";
 
-  QString gmpReport_id_selected("");
-  QString gmpReport_runname_selected("");
-  QString gmpReport_runname_selected_c("");
-  QString gmpReport_filename_pdf ("");
-  
-  if ( pdiag_autoflow_db->exec() == QDialog::Accepted )
-    {
+   QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
+
+   pdiag_autoflow_db = new US_SelectItem( gmpReportsDBdata, hdrs, pdtitle, &prx, autoflow_btn, -3 );
+
+   QString gmpReport_id_selected( "" );
+   QString gmpReport_runname_selected( "" );
+   QString gmpReport_runname_selected_c( "" );
+   QString gmpReport_filename_pdf( "" );
+
+   if ( pdiag_autoflow_db->exec() == QDialog::Accepted )
+   {
       gmpReport_id_selected        = gmpReportsDBdata[ prx ][ 0 ];
       gmpReport_runname_selected_c = gmpReportsDBdata[ prx ][ 1 ];
       gmpReport_filename_pdf       = gmpReportsDBdata[ prx ][ 3 ];
 
       pb_view_report_db -> setEnabled( false );
       te_fpath_info_db  -> setText( "" );
-    }
+   }
   else
     return;
 
@@ -1527,25 +1516,23 @@ void US_ReporterGMP::load_gmp_report_db ( void )
   QString GMPReportfname = "GMP_Report_from_DB.tar";
   //QString GMPReportfname = "GMP_Report_from_DB.rar";
   QString GMPReportfpath = dirName + "/" + GMPReportfname;
-  
-  int db_read = db.readBlobFromDB( GMPReportfpath,
-				   "download_gmpReportData",
-				   gmpReport_id_selected.toInt() );
+
+  int     db_read = db->readBlobFromDB( GMPReportfpath, "download_gmpReportData", gmpReport_id_selected.toInt() );
 
   if ( db_read == US_DB2::DBERROR )
     {
-      QMessageBox::warning(this, "Error", "Error processing file:\n"
-			   + GMPReportfpath + "\n" + db.lastError() +
-			   "\n" + "Could not open file or no data \n");
+       QMessageBox::warning( this,
+                             "Error",
+                             "Error processing file:\n" + GMPReportfpath + "\n" + db->lastError() + "\n" +
+                                "Could not open file or no data \n" );
 
-      return;
+       return;
     }
   else if ( db_read != US_DB2::OK )
     {
-      QMessageBox::warning(this, "Error", "returned processing file:\n" +
-			   GMPReportfpath + "\n" + db.lastError() + "\n");
+       QMessageBox::warning( this, "Error", "returned processing file:\n" + GMPReportfpath + "\n" + db->lastError() + "\n" );
 
-      return;
+       return;
     }
   
   // <--- TESTING: tried .tar.gz - NOT compatible (even for different Linux distros...) ****
@@ -1593,7 +1580,7 @@ void US_ReporterGMP::load_gmp_report_db ( void )
 
 
 // Query autoflow (history) table for records
-int US_ReporterGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsDBdata, US_DB2* db)
+int US_ReporterGMP::list_all_gmp_reports_db( QList<QStringList>& gmpReportsDBdata, IUS_DB2* db )
 {
   int nrecs        = 0;   
   gmpReportsDBdata.clear();
@@ -1881,9 +1868,8 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
   autoflowdata.clear();
 
   QStringList qry;
-  
-  US_Passwd pw;
-  std::unique_ptr<US_DB2> db( new US_DB2( pw.getPasswd() ) );
+
+  auto        db = US_DBProvider::open();
 
   if ( db->lastErrno() != US_DB2::OK )
     {
@@ -2008,7 +1994,7 @@ QMap< QString, QString>  US_ReporterGMP::read_autoflow_record( int autoflowID  )
    // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
-   std::unique_ptr<US_DB2> db( new US_DB2( masterpw ) );
+   auto                    db       = US_DBProvider::open();
 
    QMap <QString, QString> protocol_details;
    
@@ -2074,23 +2060,21 @@ QMap< QString, QString>  US_ReporterGMP::read_autoflow_record( int autoflowID  )
 void US_ReporterGMP::read_protocol_and_reportMasks( void )
 {
   //read protocol into US_RunProtocol structure:
-  US_Passwd pw;
-  QString masterPW = pw.getPasswd();
-  US_DB2 db( masterPW );
-  
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
-      return;
-    }
+  auto db = US_DBProvider::open();
+
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning(
+        this, tr( "Connection Problem" ), tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+     return;
+  }
 
 
   //read protocol
   progress_msg->setValue( 2 );
   qApp->processEvents();
   QString xmlstr( "" );
-  US_ProtocolUtil::read_record_auto( ProtocolName_auto, invID,  &xmlstr, NULL, &db );
+  US_ProtocolUtil::read_record_auto( ProtocolName_auto, invID, &xmlstr, NULL, db.get() );
   QXmlStreamReader xmli( xmlstr );
   currProto. fromXml( xmli );
   progress_msg->setValue( 3 );
@@ -2224,7 +2208,7 @@ void US_ReporterGMP::read_protocol_and_reportMasks( void )
 	   << reportGMP .pseudo3d_2dsait_mw_d;
 
   //autoflowIntensity
-  intensityRIMap = read_autoflowIntensity( intensityID, &db );
+  intensityRIMap = read_autoflowIntensity( intensityID, db.get() );
   progress_msg->setValue( 5 );
   qApp->processEvents();
   
@@ -2243,8 +2227,7 @@ void US_ReporterGMP::read_protocol_and_reportMasks( void )
 
   //read eSign record for opers, revs, apprs.
   eSign_details. clear();
-  eSign_details = read_autoflowGMPReportEsign_record( &db );
-    
+  eSign_details = read_autoflowGMPReportEsign_record( db.get() );
 }
 
 //combPlots parms
@@ -2284,7 +2267,7 @@ QMap< QString, QMap< QString, QString > > US_ReporterGMP::parse_comb_plots_json(
 }
 
 //read Intensity info
-QMap< QString, QString > US_ReporterGMP::read_autoflowIntensity( QString ID, US_DB2* db )
+QMap<QString, QString> US_ReporterGMP::read_autoflowIntensity( QString ID, IUS_DB2* db )
 {
   QString iJson;
   QMap< QString, QString > iMap;
@@ -2777,10 +2760,9 @@ bool US_ReporterGMP::read_velmwl_channels( void )
    velmwl_chan_fname.clear();
    velmwl_chan_selected_species.clear();
 
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
       qDebug() << "[VEL-MWL] DB connection failed -- no channels read.";
       return false;
@@ -2788,19 +2770,19 @@ bool US_ReporterGMP::read_velmwl_channels( void )
 
    QStringList qry;
    qry << "read_autoflowAnalysisVelMwl_record" << AutoflowID_auto;
-   db.query( qry );
+   db->query( qry );
 
-   if ( db.lastErrno() != US_DB2::OK || !db.next() )
+   if ( db->lastErrno() != US_DB2::OK || !db->next() )
    {
       qDebug() << "[VEL-MWL] no autoflowAnalysisVelMwl record for autoflowID" << AutoflowID_auto;
       return false;
    }
 
-   QJsonObject jobj = QJsonDocument::fromJson( db.value( 0 ).toString().toUtf8() ).object();
+   QJsonObject jobj = QJsonDocument::fromJson( db->value( 0 ).toString().toUtf8() ).object();
 
    // Species the user picked for the Integration Results (column 2): a channel
    // missing here (older run, or nothing recorded) means "show every species".
-   QJsonObject selobj = QJsonDocument::fromJson( db.value( 2 ).toString().toUtf8() ).object();
+   QJsonObject selobj = QJsonDocument::fromJson( db->value( 2 ).toString().toUtf8() ).object();
 
    QCollator   collator;
    collator.setNumericMode( true ); // S2 < S10
@@ -4321,8 +4303,7 @@ void US_ReporterGMP::generate_report( void )
       qDebug() << "operRevToSignJsonObject -- "  << eSignStatusJson;
 
 
-      US_Passwd   pw;
-      std::unique_ptr<US_DB2> db( new US_DB2( pw.getPasswd() ) );
+      auto db = US_DBProvider::open();
 
       if ( db->lastErrno() != US_DB2::OK )
 	{
@@ -4466,12 +4447,11 @@ int US_ReporterGMP::load_velmwl_models( const QString& chan_tag, QList<US_Model>
    models.clear();
    species.clear();
 
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      qDebug() << "[VEL-MWL] load models: DB connection failed:" << db.lastError();
+      qDebug() << "[VEL-MWL] load models: DB connection failed:" << db->lastError();
       return 0;
    }
 
@@ -4482,7 +4462,7 @@ int US_ReporterGMP::load_velmwl_models( const QString& chan_tag, QList<US_Model>
    {
       const QString guid = guids[ii].trimmed();
       US_Model      mdl;
-      int           rc = mdl.load( true, guid, &db );
+      int           rc = mdl.load( true, guid, db.get() );
 
       // load() does not check that the GUID was found: verify what came back
       if ( rc != US_DB2::OK || mdl.components.isEmpty() || mdl.modelGUID.compare( guid, Qt::CaseInsensitive ) != 0 )
@@ -4908,9 +4888,8 @@ void US_ReporterGMP::get_abde_selected_signals( QMap< QString, QStringList >& se
 QMap< QString, QString> US_ReporterGMP::read_autoflowGMPReportEsign_record( QString aID)
 {
   QMap< QString, QString> eSign_record;
-  
-  US_Passwd pw;
-  std::unique_ptr<US_DB2> db( new US_DB2( pw.getPasswd() ) );
+
+  auto                    db = US_DBProvider::open();
 
   if ( db->lastErrno() != US_DB2::OK )
     {
@@ -4976,17 +4955,14 @@ void US_ReporterGMP::get_assigned_oper_revs( QJsonDocument jsonDoc, QStringList&
 // Scan database for models associated with run sets
 QStringList  US_ReporterGMP::scan_dbase_models( QStringList runIDs )
 {
-   QStringList   wDescrs;
-  
-   US_Passwd   pw;
-   US_DB2      db( pw.getPasswd() );
+   QStringList wDescrs;
 
-   if ( db.lastErrno() != US_DB2::OK )
+   auto        db = US_DBProvider::open();
+
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      QMessageBox::information( this,
-         tr( "DB Connection Problem" ),
-         tr( "There was an error connecting to the database:\n" )
-         + db.lastError() );
+      QMessageBox::information(
+         this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
       return wDescrs;
    }
 
@@ -5005,14 +4981,14 @@ DbgLv(1) << "ScMd: UNASSGN: no-UNASSIGNED" << no_una;
    // First accumulate model information for UNASSIGNED models
    query.clear();
    query << "get_model_desc_by_editID" << QString::number( invID ) << "1";
-   db.query( query );
+   db->query( query );
 
-   while ( db.next() )
+   while ( db->next() )
    {
-      QString mdlid    = db.value( 0 ).toString();
-      QString mdlGid   = db.value( 1 ).toString();
-      QString mdesc    = db.value( 2 ).toString();
-      QString edtid    = db.value( 6 ).toString();
+      QString mdlid    = db->value( 0 ).toString();
+      QString mdlGid   = db->value( 1 ).toString();
+      QString mdesc    = db->value( 2 ).toString();
+      QString edtid    = db->value( 6 ).toString();
       int     kk       = mdesc.lastIndexOf( ".model" );
       mdesc            = ( kk < 1 ) ? mdesc : mdesc.left( kk );
       QString mrunid   = mdesc.section( ".", -3, -3 );
@@ -5036,14 +5012,14 @@ DbgLv(1) << "ScMd: runid UNASGN editId 1   nmodel" << nmodel;
       QString runid    = runIDs[ rr ];
       query.clear();
       query << "get_model_desc_by_runID" << QString::number( invID ) << runid;
-      db.query( query );
+      db->query( query );
 
-      while( db.next() )
+      while ( db->next() )
       {
-         QString mdlid    = db.value( 0 ).toString();
-         QString mdlGid   = db.value( 1 ).toString();
-         QString mdesc    = db.value( 2 ).toString();
-         QString edtid    = db.value( 6 ).toString();
+         QString mdlid    = db->value( 0 ).toString();
+         QString mdlGid   = db->value( 1 ).toString();
+         QString mdesc    = db->value( 2 ).toString();
+         QString edtid    = db->value( 6 ).toString();
          int     kk       = mdesc.lastIndexOf( ".model" );
          mdesc            = ( kk < 1 ) ? mdesc : mdesc.left( kk );
          mmIDs   << mdlid;
@@ -5058,14 +5034,14 @@ DbgLv(1) << "ScMd: runid" << runid << "nmodel" << nmodel;
       QString grunid   = "Global-" + runid + "%";
       query.clear();
       query << "get_model_desc_by_runID" << QString::number( invID ) << grunid;
-      db.query( query );
+      db->query( query );
 
-      while( db.next() )
+      while ( db->next() )
       {
-         QString mdlid    = db.value( 0 ).toString();
-         QString mdlGid   = db.value( 1 ).toString();
-         QString mdesc    = db.value( 2 ).toString();
-         QString edtid    = db.value( 6 ).toString();
+         QString mdlid    = db->value( 0 ).toString();
+         QString mdlGid   = db->value( 1 ).toString();
+         QString mdesc    = db->value( 2 ).toString();
+         QString edtid    = db->value( 6 ).toString();
          int     kk       = mdesc.lastIndexOf( ".model" );
          mdesc            = ( kk < 1 ) ? mdesc : mdesc.left( kk );
          mmIDs   << mdlid;
@@ -5081,16 +5057,16 @@ DbgLv(1) << "ScMd:scan time(1)" << timer.elapsed();
    // Accumulate model information for "Global-" UNASSIGNED models
    query.clear();
    query << "get_model_desc_by_runID" << QString::number( invID ) << "Global-%";
-   db.query( query );
+   db->query( query );
 
-   while ( db.next() )
+   while ( db->next() )
    {
-      QString mdlid    = db.value( 0 ).toString();
+      QString mdlid = db->value( 0 ).toString();
       if ( mmIDs.contains( mdlid ) )
          continue;
 
-      QString mdlGid   = db.value( 1 ).toString();
-      QString mdesc    = db.value( 2 ).toString();
+      QString mdlGid   = db->value( 1 ).toString();
+      QString mdesc    = db->value( 2 ).toString();
       int     kk       = mdesc.lastIndexOf( ".model" );
       mdesc            = ( kk < 1 ) ? mdesc : mdesc.left( kk );
       mmIDs   << mdlid;
@@ -5103,13 +5079,15 @@ DbgLv(1) << "ScMd: runid glob% UNASGN editId 1   nmodel" << nmodel;
 
    query.clear();
    query << "count_models" << QString::number( invID );
-   ntmodel  = db.functionQuery( query );
-DbgLv(1) << "ScMd: ntmodel" << ntmodel << "nmodel" << nmodel;
-DbgLv(1) << "ScMd:scan time(2)" << timer.elapsed();
-int m=nmodel-1;
-if ( m>1 ) {
-DbgLv(1) << "ScMd: 0: id,gid,eid,desc" << mmIDs[0] << mmGUIDs[0] << meIDs[0] << mmDescs[0];
-DbgLv(1) << "ScMd: m: id,gid,eid,desc" << mmIDs[m] << mmGUIDs[m] << meIDs[m] << mmDescs[m]; }
+   ntmodel = db->functionQuery( query );
+   DbgLv( 1 ) << "ScMd: ntmodel" << ntmodel << "nmodel" << nmodel;
+   DbgLv( 1 ) << "ScMd:scan time(2)" << timer.elapsed();
+   int m = nmodel - 1;
+   if ( m > 1 )
+   {
+      DbgLv( 1 ) << "ScMd: 0: id,gid,eid,desc" << mmIDs[0] << mmGUIDs[0] << meIDs[0] << mmDescs[0];
+      DbgLv( 1 ) << "ScMd: m: id,gid,eid,desc" << mmIDs[m] << mmGUIDs[m] << meIDs[m] << mmDescs[m];
+   }
 
    // Scan all saved models from the end back, saving any
    //   cell description by edit ID
@@ -5123,9 +5101,9 @@ DbgLv(1) << "ScMd: m: id,gid,eid,desc" << mmIDs[m] << mmGUIDs[m] << meIDs[m] << 
       QString mdlid    = mmIDs[ mm ];
       query.clear();
       query << "get_model_info" << mdlid;
-      db.query( query );
-      db.next();
-      QString mxml     = db.value( 2 ).toString();
+      db->query( query );
+      db->next();
+      QString mxml     = db->value( 2 ).toString();
       int     kk       = mxml.indexOf( "dataDescrip=" );
 DbgLv(1) << "ScMd: mm kk medtid" << mm << kk << medtid;
 
@@ -5284,8 +5262,7 @@ bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   QString tmst_fpath = US_Settings::resultDir() + "/" + FileName_parsed + "/"
     + FileName_parsed + ".time_state.tmst";
 
-  US_Passwd   pw;
-  std::unique_ptr<US_DB2> dbP( new US_DB2( pw.getPasswd() ) );
+  auto        dbP = US_DBProvider::open();
   QStringList query;
   QString     expID;
   int         idExp  = 0;
@@ -5488,12 +5465,11 @@ bool US_ReporterGMP::loadData( QMap < QString, QString > & triple_information )
       return false;
    };
 
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      return fail( tr( "There was an error connecting to the database:\n" ) + db.lastError() );
+      return fail( tr( "There was an error connecting to the database:\n" ) + db->lastError() );
    }
 
    const QString tripleName      = triple_information["triple_name"];
@@ -5506,7 +5482,7 @@ bool US_ReporterGMP::loadData( QMap < QString, QString > & triple_information )
    int       editedDataID = -1;
    QString   editUpdated;
    QString   error;
-   const int status = US_EditedDataLoaders::loadReporter( &db,
+   const int status = US_EditedDataLoaders::loadReporter( db.get(),
                                                           tripleName,
                                                           runID,
                                                           requestedEditID,
@@ -5532,11 +5508,10 @@ bool US_ReporterGMP::loadData( QMap < QString, QString > & triple_information )
 //Load rawData/editedData
 bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
 {
-  US_Passwd   pw;
-  std::unique_ptr<US_DB2> db( new US_DB2( pw.getPasswd() ) );
+   auto db = US_DBProvider::open();
 
-  if ( db->lastErrno() != US_DB2::OK )
-    {
+   if ( db->lastErrno() != US_DB2::OK )
+   {
       QApplication::restoreOverrideCursor();
       QMessageBox::information( this,
 				tr( "DB Connection Problem" ),
@@ -5544,7 +5519,7 @@ bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
 				+ db->lastError() );
       
       return false;
-    }
+   }
 
   // //first, get ModelIDs corresponding to editedDataID AND triple_stage && select latest one
   // QStringList query;
@@ -5670,11 +5645,10 @@ bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
 //Load Noises
 bool US_ReporterGMP::loadNoises( QMap < QString, QString > & triple_information )
 {
-  US_Passwd   pw;
-  std::unique_ptr<US_DB2> db( new US_DB2( pw.getPasswd() ) );
+   auto db = US_DBProvider::open();
 
-  if ( db->lastErrno() != US_DB2::OK )
-    {
+   if ( db->lastErrno() != US_DB2::OK )
+   {
       QApplication::restoreOverrideCursor();
       QMessageBox::information( this,
 				tr( "DB Connection Problem" ),
@@ -5682,7 +5656,7 @@ bool US_ReporterGMP::loadNoises( QMap < QString, QString > & triple_information 
 				+ db->lastError() );
       
       return false;
-    }
+   }
 
   // get noiseIDs, types & lastUpd by modelID
   QStringList query;
@@ -5813,8 +5787,7 @@ void US_ReporterGMP::loadNoises_whenAbsent( )
 
    if ( nenois > 0 )
    {  // There is/are noise(s):  ask user if she wants to load
-      US_Passwd pw;
-      std::unique_ptr<US_DB2> dbP( new US_DB2( pw.getPasswd() ) );
+      auto dbP = US_DBProvider::open();
 
       if ( nenois > 1  &&  noisdf == 0 )
       {  // Noise exists and noise-dialog flag set to "Auto-load"
@@ -5994,10 +5967,9 @@ int US_ReporterGMP::count_noise_auto( US_DataIO::EditedData* edata,
          QString noiID  = nieGUIDs.at( 0 ).section( ":", 0, 0 );
          US_Noise i_noise;
 
-	 US_Passwd pw;
-	 US_DB2 db( pw.getPasswd() );
-	 i_noise.load( true, noiID, &db );
-         
+         auto     db = US_DBProvider::open();
+         i_noise.load( true, noiID, db.get() );
+
          double datmin  = edata->value( 0, 0 );
          double datmax  = datmin;
          double noimin  = 1.0e10;
@@ -6108,19 +6080,20 @@ int US_ReporterGMP::models_in_edit_auto( QString eGUID, QStringList& mGUIDs )
 int US_ReporterGMP::id_list_db_auto( QString daEditGUID )
 {
    QStringList query;
-   
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
 
-   if ( db.lastErrno() != US_DB2::OK )
+   auto        db = US_DBProvider::open();
+
+   if ( db->lastErrno() != US_DB2::OK )
+   {
       return 0;
+   }
 
    query.clear();
    query << "get_editID" << daEditGUID;
-   db.query( query );
-   db.next();
-   QString daEditID = db.value( 0 ).toString();
-DbgLv(1) << "LaNoi:idlDB:  daEdit ID GUID" << daEditID << daEditGUID;
+   db->query( query );
+   db->next();
+   QString daEditID = db->value( 0 ).toString();
+   DbgLv( 1 ) << "LaNoi:idlDB:  daEdit ID GUID" << daEditID << daEditGUID;
 
    noiIDs  .clear();
    noiEdIDs.clear();
@@ -6136,33 +6109,33 @@ DbgLv(1) << "LaNoi:idlDB:  daEdit ID GUID" << daEditID << daEditGUID;
    // Build noise, edit, model ID lists for all noises
    query.clear();
    query << "get_noise_desc_by_editID" << QString::number( invID ) << daEditID;
-   db.query( query );
+   db->query( query );
 
-   while ( db.next() )
+   while ( db->next() )
    {  // Accumulate lists from noise records
-      noiEdID   = db.value( 2 ).toString();
+      noiEdID = db->value( 2 ).toString();
 
-      noiIDs   << db.value( 1 ).toString();
-      noiTypes << db.value( 4 ).toString();
-      noiMoIDs << db.value( 5 ).toString();
+      noiIDs << db->value( 1 ).toString();
+      noiTypes << db->value( 4 ).toString();
+      noiMoIDs << db->value( 5 ).toString();
    }
 
 DbgLv(1) << "LaNoi:idlDB: noiTypes size" << noiTypes.size();
    // Build model, edit ID lists for all models
    query.clear();
    query << "get_model_desc_by_editID" << QString::number( invID ) << daEditID;
-   db.query( query );
+   db->query( query );
 
-   while ( db.next() )
+   while ( db->next() )
    {  // Accumulate from db desc entries matching noise model IDs
-      QString modGUID = db.value( 1 ).toString();
-      QString modEdID = db.value( 6 ).toString();
+      QString modGUID = db->value( 1 ).toString();
+      QString modEdID = db->value( 6 ).toString();
 
       if ( noiMoIDs.contains( modGUID )  &&   modEdID == daEditID )
       {  // Only list models that have associated noise and match edit
          modIDs   << modGUID;
-         modDescs << db.value( 2 ).toString();
-         modEdIDs << db.value( 5 ).toString();
+         modDescs << db->value( 2 ).toString();
+         modEdIDs << db->value( 5 ).toString();
       }
    }
 DbgLv(1) << "LaNoi:idlDB: modDescs size" << modDescs.size();
@@ -6238,8 +6211,7 @@ bool US_ReporterGMP::simulateModel( QMap<QString, QString>& tripleInfo )
 	   << model.components[lc].signal_concentration;
    
   // Initialize simulation parameters using edited data information
-  US_Passwd pw;
-  std::unique_ptr<US_DB2> dbP( new US_DB2( pw.getPasswd() ) );
+  auto dbP = US_DBProvider::open();
 
   // Use the experiment speed steps if they cover the data; otherwise derive steps from the scans
   exp_steps = US_SimulationParameters::speedStepsCoverData( speed_steps, *edata );
@@ -7419,9 +7391,8 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 
   qDebug() << "[in assemble_run_details_html()], FileName,  fileNameList -- "
 	   << FileName <<  fileNameList;
-  
-  US_Passwd pw;
-  std::unique_ptr<US_DB2> dbP( new US_DB2( pw.getPasswd() ) );
+
+  auto dbP = US_DBProvider::open();
   if ( dbP->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this, tr( "Connection Problem, run details" ),
@@ -7698,7 +7669,7 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 }
 
 //get expID
-int US_ReporterGMP::get_expID_by_runID_invID( US_DB2* dbP, QString runID_filename )
+int US_ReporterGMP::get_expID_by_runID_invID( IUS_DB2* dbP, QString runID_filename )
 {
   QStringList query;
   int         idExp  = 0;
@@ -8432,18 +8403,17 @@ void US_ReporterGMP::user_interactions_analysis_abde( QString analysisABDEJson, 
   // channel without "selected_signals" = older run: every signal is shown.
   QString signals_html;
   {
-     US_Passwd pw_sg;
-     US_DB2    db_sg( pw_sg.getPasswd() );
+     auto db_sg = US_DBProvider::open();
 
-     if ( db_sg.lastErrno() == US_DB2::OK )
+     if ( db_sg->lastErrno() == US_DB2::OK )
      {
         QStringList qry_sg;
         qry_sg << "read_autoflowAnalysisABDE_record" << AutoflowID_auto;
-        db_sg.query( qry_sg );
+        db_sg->query( qry_sg );
 
-        if ( db_sg.lastErrno() == US_DB2::OK && db_sg.next() )
+        if ( db_sg->lastErrno() == US_DB2::OK & db_sg->next() )
         {
-           QJsonObject root = QJsonDocument::fromJson( db_sg.value( 2 ).toString().toUtf8() ).object();
+           QJsonObject root = QJsonDocument::fromJson( db_sg->value( 2 ).toString().toUtf8() ).object();
 
            for ( auto it = root.constBegin(); it != root.constEnd(); ++it )
            {
@@ -8568,19 +8538,18 @@ void US_ReporterGMP::user_interactions_analysis_velmwl( QString analysisVelMwlJs
    // (autoflowAnalysisVelMwl.speciesSelections)
    QString species_html;
    {
-      US_Passwd pw_sp;
-      US_DB2    db_sp( pw_sp.getPasswd() );
+      auto db_sp = US_DBProvider::open();
 
-      if ( db_sp.lastErrno() == US_DB2::OK )
+      if ( db_sp->lastErrno() == US_DB2::OK )
       {
          QStringList qry_sp;
          qry_sp << "read_autoflowAnalysisVelMwl_record" << AutoflowID_auto;
-         db_sp.query( qry_sp );
+         db_sp->query( qry_sp );
 
-         if ( db_sp.lastErrno() == US_DB2::OK && db_sp.next() )
+         if ( db_sp->lastErrno() == US_DB2::OK & db_sp->next() )
          {
-            QJsonObject dec = QJsonDocument::fromJson( db_sp.value( 0 ).toString().toUtf8() ).object(); // channels' decisions
-            QJsonObject sel = QJsonDocument::fromJson( db_sp.value( 2 ).toString().toUtf8() ).object(); // species selections
+            QJsonObject dec = QJsonDocument::fromJson( db_sp->value( 0 ).toString().toUtf8() ).object(); // channels' decisions
+            QJsonObject sel = QJsonDocument::fromJson( db_sp->value( 2 ).toString().toUtf8() ).object(); // species selections
 
             // All channels, whether decided (Approved/Rejected) or having a species
             // selection
@@ -8790,27 +8759,25 @@ void US_ReporterGMP::read_reportLists_from_aprofile( QStringList & dropped_tripl
   QString aprofile_xml;
   
   // Check DB connection
-  US_Passwd pw;
-  QString masterPW = pw.getPasswd();
-  US_DB2 db( masterPW );
-  
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
-      return;
-    }
+  auto                    db = US_DBProvider::open();
+
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning(
+        this, tr( "Connection Problem" ), tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+     return;
+  }
 
   qDebug() << "AProfGUID: " << AProfileGUID;
     
   QStringList qry;
   qry << "get_aprofile_info" << AProfileGUID;
-  db.query( qry );
-  
-  while ( db.next() )
-    {
-      aprofile_xml         = db.value( 2 ).toString();
-    }
+  db->query( qry );
+
+  while ( db->next() )
+  {
+     aprofile_xml = db->value( 2 ).toString();
+  }
 
   if ( !aprofile_xml.isEmpty() )
     {
@@ -8819,12 +8786,12 @@ void US_ReporterGMP::read_reportLists_from_aprofile( QStringList & dropped_tripl
     }
 
   //Now, construct list of dropped triples per optical system used:
-  dropped_triples_RI = buildDroppedTriplesList( &db, channame_to_reportIDs_RI );
-  dropped_triples_IP = buildDroppedTriplesList( &db, channame_to_reportIDs_IP );
+    dropped_triples_RI = buildDroppedTriplesList( db.get(), channame_to_reportIDs_RI );
+    dropped_triples_IP = buildDroppedTriplesList( db.get(), channame_to_reportIDs_IP );
 }
 
 //Build list of dropped triples out of channame_to_reportIDs QMap;
-QStringList US_ReporterGMP::buildDroppedTriplesList ( US_DB2* dbP, QMap <QString, QString> channame_to_reportIDs )
+QStringList US_ReporterGMP::buildDroppedTriplesList( IUS_DB2* dbP, QMap<QString, QString> channame_to_reportIDs )
 {
   QStringList dropped_triples_list;
   
@@ -8955,54 +8922,53 @@ void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson,
    analysisVelMwlJson.clear();
    analysisVelMwlts.clear();
 
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      QMessageBox::warning( this, tr( "Connection Problem: Read autoflowStatus" ),
-			    tr( "Could not connect to database \n" ) +  db.lastError() );
+      QMessageBox::warning(
+         this, tr( "Connection Problem: Read autoflowStatus" ), tr( "Could not connect to database \n" ) + db->lastError() );
       return;
    }
 
   QStringList qry;
   qry << "read_autoflow_status_record" << autoflowStatusID;
 
-  db.query( qry );
+  db->query( qry );
 
-  if ( db.lastErrno() == US_DB2::OK )    
-    {
-      while ( db.next() )
-	{
-	  importRIJson  = db.value( 0 ).toString();
-	  importRIts    = db.value( 1 ).toString();
-	  importIPJson  = db.value( 2 ).toString();
-	  importIPts    = db.value( 3 ).toString();
+  if ( db->lastErrno() == US_DB2::OK )
+  {
+     while ( db->next() )
+     {
+        importRIJson = db->value( 0 ).toString();
+        importRIts   = db->value( 1 ).toString();
+        importIPJson = db->value( 2 ).toString();
+        importIPts   = db->value( 3 ).toString();
 
-	  editRIJson    = db.value( 4 ).toString();
-	  editRIts      = db.value( 5 ).toString();
-	  editIPJson    = db.value( 6 ).toString();
-	  editIPts      = db.value( 7 ).toString();
+        editRIJson = db->value( 4 ).toString();
+        editRIts   = db->value( 5 ).toString();
+        editIPJson = db->value( 6 ).toString();
+        editIPts   = db->value( 7 ).toString();
 
-	  analysisJson  = db.value( 8 ).toString();
+        analysisJson = db->value( 8 ).toString();
 
-	  stopOptimaJson = db.value( 9 ).toString();
-	  stopOptimats   = db.value( 10 ).toString();
+        stopOptimaJson = db->value( 9 ).toString();
+        stopOptimats   = db->value( 10 ).toString();
 
-	  skipOptimaJson = db.value( 11 ).toString();
-	  skipOptimats   = db.value( 12 ).toString();
+        skipOptimaJson = db->value( 11 ).toString();
+        skipOptimats   = db->value( 12 ).toString();
 
-	  analysisCancelJson = db.value( 13 ).toString();
+        analysisCancelJson = db->value( 13 ).toString();
 
-	  createdGMPrunJson = db.value( 14 ).toString();
-	  createdGMPrunts   = db.value( 15 ).toString();
-	  
-	  analysisABDEJson = db.value( 16 ).toString();
-	  analysisABDEts   = db.value( 17 ).toString();
-     analysisVelMwlJson = db.value( 18 ).toString();
-     analysisVelMwlts   = db.value( 19 ).toString();
-   }
-    }
+        createdGMPrunJson = db->value( 14 ).toString();
+        createdGMPrunts   = db->value( 15 ).toString();
+
+        analysisABDEJson   = db->value( 16 ).toString();
+        analysisABDEts     = db->value( 17 ).toString();
+        analysisVelMwlJson = db->value( 18 ).toString();
+        analysisVelMwlts   = db->value( 19 ).toString();
+     }
+  }
 
   qDebug() << "Read_autoflow_status: stopOptimaJson, skipOptimaJson, analysisJson -- "
 	   << stopOptimaJson
@@ -10920,15 +10886,13 @@ double  US_ReporterGMP::get_loading_volume( int cellID )
     }
   
   // Check DB connection
-  US_Passwd pw;
-  QString masterPW = pw.getPasswd();
-  US_DB2 db( masterPW );
-  
-  if ( db.lastErrno() != US_DB2::OK )
+    auto db = US_DBProvider::open();
+
+    if ( db->lastErrno() != US_DB2::OK )
     {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
-      return vol;
+       QMessageBox::warning(
+          this, tr( "Connection Problem" ), tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return vol;
     }
   
   //Find centerpieceID on DB based on centerpiece name:
@@ -10936,19 +10900,19 @@ double  US_ReporterGMP::get_loading_volume( int cellID )
   QStringList query;
   query.clear();
   query << "get_abstractCenterpiece_names";
-  db.query( query );
-  
-  while ( db.next() )
-    {
-      QString id   =  db.value( 0 ).toString();
-      QString name =  db.value( 1 ).toString();
-      
-      if ( centerpiece_name == name )
-	{
-	  centerpieceID_read = id;
-	  break;
-	}
-    }
+  db->query( query );
+
+  while ( db->next() )
+  {
+     QString id   = db->value( 0 ).toString();
+     QString name = db->value( 1 ).toString();
+
+     if ( centerpiece_name == name )
+     {
+        centerpieceID_read = id;
+        break;
+     }
+  }
 
   if ( centerpieceID_read.isEmpty() )
     {
@@ -10960,13 +10924,13 @@ double  US_ReporterGMP::get_loading_volume( int cellID )
   //Now, get centerpiece info
   query.clear();
   query << "get_abstractCenterpiece_info" << centerpieceID_read;
-  db.query( query );
-  db.next();
-  
-  QString c_name       = db.value( 1 ).toString();
-  double  c_bottom     = db.value( 3 ).toString().toDouble();
-  double  c_pathlength = db.value( 6 ).toString().toDouble();
-  double  c_angle      = db.value( 7 ).toString().toDouble();
+  db->query( query );
+  db->next();
+
+  QString c_name       = db->value( 1 ).toString();
+  double  c_bottom     = db->value( 3 ).toString().toDouble();
+  double  c_pathlength = db->value( 6 ).toString().toDouble();
+  double  c_angle      = db->value( 7 ).toString().toDouble();
 
   qDebug() << "In get_loading_volume(): c_name, c_bottom, c_pathlength, c_angle -- "
 	   << c_name << c_bottom << c_pathlength << c_angle;
@@ -13498,16 +13462,14 @@ void US_ReporterGMP::write_gmp_report_DB( QString filename, QString filename_pdf
 {
   QString report_filepath = US_Settings::reportDir() + "/" + filename;
   qDebug() << "Writing Blob of filePath -- " << report_filepath;
-  
-  US_Passwd pw;
-  US_DB2    db( pw.getPasswd() );
-  
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-			    tr( "Could not connect to database \n" ) +  db.lastError() );
-      return;
-    }
+
+  auto db = US_DBProvider::open();
+
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
+     return;
+  }
 
   QStringList qry;
   
@@ -13515,8 +13477,8 @@ void US_ReporterGMP::write_gmp_report_DB( QString filename, QString filename_pdf
   int status_report_unique = 0;
   qry << "autoflow_report_status"
       << AutoflowID_auto;
-  
-  status_report_unique = db.statusQuery( qry );
+
+  status_report_unique = db->statusQuery( qry );
 
   qDebug() << "status_report_unique -- " << status_report_unique ;
   
@@ -13541,9 +13503,9 @@ void US_ReporterGMP::write_gmp_report_DB( QString filename, QString filename_pdf
       << filename_pdf;
     
   int autolfowGMPReportID = 0;
-  int state_new_gmpReport = db.statusQuery( qry );
-  autolfowGMPReportID = db.lastInsertID();
-  
+  int state_new_gmpReport = db->statusQuery( qry );
+  autolfowGMPReportID     = db->lastInsertID();
+
   bool clear_GMP_report_record = false;
 
   qDebug() << "state_new_gmpReport, autolfowGMPReportID -- "
@@ -13552,25 +13514,23 @@ void US_ReporterGMP::write_gmp_report_DB( QString filename, QString filename_pdf
   
   if ( state_new_gmpReport == US_DB2::OK  && autolfowGMPReportID > 0 )
     {
-      int writeStatus= db.writeBlobToDB(report_filepath,
-					QString( "upload_gmpReportData" ),
-					autolfowGMPReportID );
+       int writeStatus = db->writeBlobToDB( report_filepath, QString( "upload_gmpReportData" ), autolfowGMPReportID );
 
-      if ( writeStatus == US_DB2::DBERROR )
-	{
-	  QMessageBox::warning(this, "Error", "Error processing file:\n"
-			       + report_filepath + "\n" + db.lastError() +
-			       "\n" + "Could not open file or no data \n");
-	  clear_GMP_report_record = true;
-	}
-      
+       if ( writeStatus == US_DB2::DBERROR )
+       {
+          QMessageBox::warning( this,
+                                "Error",
+                                "Error processing file:\n" + report_filepath + "\n" + db->lastError() + "\n" +
+                                   "Could not open file or no data \n" );
+          clear_GMP_report_record = true;
+       }
+
       else if ( writeStatus != US_DB2::OK )
 	{
-	  QMessageBox::warning(this, "Error", "returned processing file:\n" +
-			       report_filepath + "\n" + db.lastError() + "\n");
-	  
-	  clear_GMP_report_record = true;
-	}
+      QMessageBox::warning( this, "Error", "returned processing file:\n" + report_filepath + "\n" + db->lastError() + "\n" );
+
+      clear_GMP_report_record = true;
+   }
 
       /*************************************************************************/
       //Write HTML strign to file & later save to DB withing general archive
@@ -13587,25 +13547,23 @@ void US_ReporterGMP::write_gmp_report_DB( QString filename, QString filename_pdf
 	  file_html_str.close();
 	}
 
-      int writeStatus_html = db.writeBlobToDB( html_filePath,
-					       QString( "upload_gmpReportData_html" ),
-					       autolfowGMPReportID );
+   int writeStatus_html = db->writeBlobToDB( html_filePath, QString( "upload_gmpReportData_html" ), autolfowGMPReportID );
 
-      if ( writeStatus_html == US_DB2::DBERROR )
-	{
-	  QMessageBox::warning(this, "Error", "Error processing html file:\n"
-			       + html_filePath + "\n" + db.lastError() +
-			       "\n" + "Could not open file or no data \n");
-	  clear_GMP_report_record = true;
-	}
-      
+   if ( writeStatus_html == US_DB2::DBERROR )
+   {
+      QMessageBox::warning( this,
+                            "Error",
+                            "Error processing html file:\n" + html_filePath + "\n" + db->lastError() + "\n" +
+                               "Could not open file or no data \n" );
+      clear_GMP_report_record = true;
+   }
+
       else if ( writeStatus_html != US_DB2::OK )
 	{
-	  QMessageBox::warning(this, "Error", "returned processing html file:\n" +
-			       html_filePath + "\n" + db.lastError() + "\n");
-	  
-	  clear_GMP_report_record = true;
-	}
+      QMessageBox::warning( this, "Error", "returned processing html file:\n" + html_filePath + "\n" + db->lastError() + "\n" );
+
+      clear_GMP_report_record = true;
+   }
 
       /*************************************************************************/
       
@@ -13614,10 +13572,10 @@ void US_ReporterGMP::write_gmp_report_DB( QString filename, QString filename_pdf
 	{
 	  qry.clear();
 	  qry << "clear_autoflowGMPReportRecord" << QString::number( autolfowGMPReportID );
-	  db.query( qry );
+     db->query( qry );
 
-	  //Maybe revert 'reporting' stage in the autoflowStages??
-	}
+     //Maybe revert 'reporting' stage in the autoflowStages??
+   }
       else
 	{
 	  //Report generated && .PDF GMP report saved to autoflowGMPReport:
@@ -13626,40 +13584,37 @@ void US_ReporterGMP::write_gmp_report_DB( QString filename, QString filename_pdf
 	  //get user info
 	  qry.clear();
 	  qry <<  QString( "get_user_info" );
-	  db.query( qry );
-	  db.next();
-	  
-	  int ID        = db.value( 0 ).toInt();
-	  QString fname = db.value( 1 ).toString();
-	  QString lname = db.value( 2 ).toString();
-	  QString email = db.value( 4 ).toString();
-	  int     level = db.value( 5 ).toInt();
+     db->query( qry );
+     db->next();
 
-	  QString reporting_Json;
+     int     ID    = db->value( 0 ).toInt();
+     QString fname = db->value( 1 ).toString();
+     QString lname = db->value( 2 ).toString();
+     QString email = db->value( 4 ).toString();
+     int     level = db->value( 5 ).toInt();
 
-	  reporting_Json. clear();
-	  reporting_Json += "{ \"Person\": ";
-	  
-	  reporting_Json += "[{";
-	  reporting_Json += "\"ID\":\""     + QString::number( ID )     + "\",";
-	  reporting_Json += "\"fname\":\""  + fname                     + "\",";
-	  reporting_Json += "\"lname\":\""  + lname                     + "\",";
-	  reporting_Json += "\"email\":\""  + email                     + "\",";
-	  reporting_Json += "\"level\":\""  + QString::number( level )  + "\"";
-	  reporting_Json += "}]}";
-	  	  
-	  qry.clear();
-	  qry << "update_autoflowStatusReport_record"
-	      << autoflowStatusID
-	      << AutoflowID_auto
-	      << reporting_Json;
-	  
-	  db.query( qry );
-      	}
+     QString reporting_Json;
+
+     reporting_Json.clear();
+     reporting_Json += "{ \"Person\": ";
+
+     reporting_Json += "[{";
+     reporting_Json += "\"ID\":\"" + QString::number( ID ) + "\",";
+     reporting_Json += "\"fname\":\"" + fname + "\",";
+     reporting_Json += "\"lname\":\"" + lname + "\",";
+     reporting_Json += "\"email\":\"" + email + "\",";
+     reporting_Json += "\"level\":\"" + QString::number( level ) + "\"";
+     reporting_Json += "}]}";
+
+     qry.clear();
+     qry << "update_autoflowStatusReport_record" << autoflowStatusID << AutoflowID_auto << reporting_Json;
+
+     db->query( qry );
+   }
     }
   else
     {
-      QMessageBox::warning(this, "Error returned processing file", "File: " + report_filepath + db.lastError());
+       QMessageBox::warning( this, "Error returned processing file", "File: " + report_filepath + db->lastError() );
     }
 }
 
@@ -14402,23 +14357,20 @@ void US_ReporterGMP::assemble_parts( QString & html_str )
 void US_ReporterGMP::add_solution_details( const QString sol_id, const QString sol_comment, QString& html_solutions )
 {
   //get Solution info by ID:
-  US_Passwd pw;
-  QString masterPW = pw.getPasswd();
-  US_DB2 db( masterPW );
-  
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "Database Problem" ),
-         tr( "Database returned the following error: \n" ) +  db.lastError() );
-      
-      return;
-    }
+  auto db = US_DBProvider::open();
+
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning( this, tr( "Database Problem" ), tr( "Database returned the following error: \n" ) + db->lastError() );
+
+     return;
+  }
 
   US_Solution*   solution = new US_Solution;
   int solutionID = sol_id.toInt();
 
   int status = US_DB2::OK;
-  status = solution->readFromDB  ( solutionID, &db );
+  status                = solution->readFromDB( solutionID, db.get() );
 
   // Error reporting
   if ( status == US_DB2::NO_BUFFER )
@@ -14439,8 +14391,7 @@ void US_ReporterGMP::add_solution_details( const QString sol_id, const QString s
   
   else if ( status != US_DB2::OK )
     {
-      QMessageBox::warning( this, tr( "Database Problem" ),
-			    tr( "Database returned the following error: \n" ) +  db.lastError() );
+       QMessageBox::warning( this, tr( "Database Problem" ), tr( "Database returned the following error: \n" ) + db->lastError() );
     }
   //End of reading Solution:
 

@@ -281,7 +281,7 @@ class US_eSignaturesGMP : public US_Widgets
         //! \param db Optional open connection to reuse. Pass one when calling in a loop;
         //!        if NULL a connection is opened for this call only and closed on return.
         //! \return The details of the eSign record.
-        QMap<QString, QString> read_autoflowGMPReportEsign_record( QString reportID, US_DB2* db = NULL );
+        QMap<QString, QString> read_autoflowGMPReportEsign_record( QString reportID, IUS_DB2* db = NULL );
 
         //! \brief Get assigned operators and reviewers from a JSON document.
         //! \param doc The JSON document.
@@ -378,7 +378,7 @@ class US_eSignaturesGMP : public US_Widgets
         //! \param db The database connection.
         //! \param progress Optional progress dialog to update while the (potentially long) query runs.
         //! \return The number of reports found.
-        int list_all_gmp_reports_db(QList<QStringList>& reports, US_DB2* db, QProgressDialog* progress = NULL);
+        int        list_all_gmp_reports_db( QList<QStringList>& reports, IUS_DB2* db, QProgressDialog* progress = NULL );
 
         //! \brief Re-fetch the GMP report list and redraw it in the still-open selection dialog.
         void refreshGMPReportsList(void);

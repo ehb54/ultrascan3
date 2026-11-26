@@ -364,7 +364,7 @@ class US_ReporterGMP : public US_Widgets
         void                                              assemble_pdf( US_GmpProgress* );   //!< Assemble PDF
         void add_solution_details(const QString, const QString, QString&); //!< Add solution details
         void assemble_parts(QString&); //!< Assemble parts
-        int list_all_gmp_reports_db(QList<QStringList>&, US_DB2*); //!< List all GMP reports from DB
+        int                    list_all_gmp_reports_db( QList<QStringList>&, IUS_DB2* ); //!< List all GMP reports from DB
         int list_all_autoflow_records(QList<QStringList>&); //!< List all autoflow records
         QMap<QString, QString> read_autoflow_record(int); //!< Read autoflow record
         void write_pdf_report(void); //!< Write PDF report
@@ -378,7 +378,7 @@ class US_ReporterGMP : public US_Widgets
         void                   user_interactions_analysis_velmwl( QString, QString );
 
         void assemble_run_details_html(void); //!< Assemble run details in HTML
-        int get_expID_by_runID_invID(US_DB2*, QString); //!< Get experiment ID by run ID and investigator ID
+        int                    get_expID_by_runID_invID( IUS_DB2*, QString ); //!< Get experiment ID by run ID and investigator ID
         double get_loading_volume(int); //!< Get loading volume
 
         void                   read_autoflowStatus_record( QString&,
@@ -407,11 +407,12 @@ class US_ReporterGMP : public US_Widgets
 
         void read_reportLists_from_aprofile(QStringList&, QStringList&); //!< Read report lists from analysis profile
         bool readReportLists(QXmlStreamReader&, QMap<QString, QString>&, QMap<QString, QString>&); //!< Read report lists
-        QStringList buildDroppedTriplesList(US_DB2*, QMap<QString, QString>); //!< Build dropped triples list
+        QStringList buildDroppedTriplesList( IUS_DB2*, QMap<QString, QString> ); //!< Build dropped triples list
 
         void read_protocol_and_reportMasks(void); //!< Read protocol and report masks
-        QMap<QString, QString> read_autoflowIntensity(QString, US_DB2*); //!< Read autoflow intensity
-        QMap<QString, QString> read_autoflowGMPReportEsign_record(US_DB2*); //!< Read autoflow GMP report electronic signature record
+        QMap<QString, QString> read_autoflowIntensity( QString, IUS_DB2* ); //!< Read autoflow intensity
+        QMap<QString, QString> read_autoflowGMPReportEsign_record(
+           IUS_DB2* ); //!< Read autoflow GMP report electronic signature record
         QString get_assigned_oper_revs(QJsonDocument); //!< Get assigned operator revisions
         void parse_gen_mask_json(const QString); //!< Parse general mask JSON
         QMap<QString, QMap<QString, QString>> parse_comb_plots_json(const QString); //!< Parse combined plots JSON
@@ -636,8 +637,9 @@ class US_ReporterGMP : public US_Widgets
 
     private slots:
         void check_failed_triples(void); //!< Check failed triples
-        QMap<QString, QString> read_autoflowAnalysis_record(US_DB2*, const QString&); //!< Read autoflow analysis record
-        QMap<QString, QString> read_autoflowAnalysisHistory_record(US_DB2*, const QString&); //!< Read autoflow analysis history record
+        QMap<QString, QString> read_autoflowAnalysis_record( IUS_DB2*, const QString& ); //!< Read autoflow analysis record
+        QMap<QString, QString> read_autoflowAnalysisHistory_record( IUS_DB2*,
+                                                                    const QString& ); //!< Read autoflow analysis history record
         void check_models(int); //!< Check models
         void check_for_missing_models(void); //!< Check for missing models
         void check_for_dropped_triples(void); //!< Check for dropped triples

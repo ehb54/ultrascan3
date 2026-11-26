@@ -1,13 +1,13 @@
 //! \file us_mrecs_loader.cpp
 
 #include "us_mrecs_loader.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_matrix.h"
-#include "us_investigator.h"
-#include "us_passwd.h"
 #include "us_db2.h"
+#include "us_db_provider.h"
 #include "us_editor.h"
+#include "us_gui_settings.h"
+#include "us_investigator.h"
+#include "us_matrix.h"
+#include "us_settings.h"
 #include "us_util.h"
 
 // Main constructor for loading a single model records entry
@@ -120,8 +120,8 @@ int US_MrecsLoader::load_mrecs( VEC_MRECS& mrecs, int index )
    {
       if ( dbP == NULL )
       {
-         US_Passwd pw;
-         dbP         = new US_DB2( pw.getPasswd() );
+         dbP_owned = US_DBProvider::open();
+         dbP       = dbP_owned.get();
 
          if ( ( rc = dbP->lastErrno() ) != IUS_DB2::OK )
          {
@@ -297,8 +297,8 @@ qDebug() << "listall" << listall << "listdesc listedit" << listdesc << listedit;
    {  // Mrecs list from DB
       if ( dbP == NULL )
       {
-         US_Passwd   pw;
-         dbP         = new US_DB2( pw.getPasswd() );
+         dbP_owned = US_DBProvider::open();
+         dbP       = dbP_owned.get();
 
          if ( dbP->lastErrno() != IUS_DB2::OK )
          {
@@ -828,8 +828,8 @@ void US_MrecsLoader::delete_mrecs()
    {  // Delete an entry from the database
       if ( dbP == NULL )
       {
-         US_Passwd pw;
-         dbP         = new US_DB2( pw.getPasswd() );
+         dbP_owned = US_DBProvider::open();
+         dbP       = dbP_owned.get();
 
          if ( dbP->lastErrno() != IUS_DB2::OK )
          {

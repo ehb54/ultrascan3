@@ -2,19 +2,20 @@
 #ifndef US_MANAGE_DATA_H
 #define US_MANAGE_DATA_H
 
-#include "us_extern.h"
+#include "us_analyte.h"
+#include "us_buffer.h"
+#include "us_dataIO.h"
 #include "us_data_model.h"
 #include "us_data_process.h"
 #include "us_data_tree.h"
+#include "us_db2.h"
+#include "us_extern.h"
+#include "us_help.h"
+#include "us_model.h"
+#include "us_settings.h"
 #include "us_sync_exper.h"
 #include "us_widgets.h"
-#include "us_db2.h"
-#include "us_model.h"
-#include "us_buffer.h"
-#include "us_analyte.h"
-#include "us_help.h"
-#include "us_dataIO.h"
-#include "us_settings.h"
+#include <memory>
 
 //! \class US_ManageData
 //! \brief Class to manage data including display, processing, and database interactions.
@@ -50,9 +51,10 @@ class US_ManageData : public US_Widgets
                 QString   lastmodDate;       //!< Last modification date/time
         };
 
-        US_DB2*       db;               //!< Database connection
+        IUS_DB2*                 db;       //!< Database connection
+        std::unique_ptr<IUS_DB2> db_owned; // the connection db points to, when opened here
 
-    private:
+     private:
         QTreeWidget*        tw_recs;    //!< Tree widget
         QTreeWidgetItem*    tw_item;    //!< Current tree widget item
         DataDesc            cdesc;      //!< Current record description

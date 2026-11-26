@@ -2,13 +2,14 @@
 #ifndef US_LOADRUNNOISE_H
 #define US_LOADRUNNOISE_H
 
+#include "us_dataIO.h"
+#include "us_db2.h"
+#include "us_extern.h"
+#include "us_model.h"
+#include "us_noise.h"
 #include <QtCore>
 #include <QtGui>
-#include "us_extern.h"
-#include "us_dataIO.h"
-#include "us_model.h"
-#include "us_db2.h"
-#include "us_noise.h"
+#include <memory>
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
@@ -61,7 +62,8 @@ class US_LoadRunNoise : public QObject
 
     int         dbg_level;
 
-    US_DB2*     dbP;               // Database pointer (or NULL)
+    IUS_DB2*                 dbP;       // Database pointer (or NULL)
+    std::unique_ptr<IUS_DB2> dbP_owned; // the connection dbP points to, when opened here
 
     QStringList edGUIDs;           // Edits-in-run GUIDs
     QStringList noiInfos;          // Noise info strings for each edit

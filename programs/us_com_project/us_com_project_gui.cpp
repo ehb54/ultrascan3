@@ -1,18 +1,19 @@
 //! \file us_experiment_main.cpp
 /////////////////////////////////////////
 #include "us_com_project_gui.h"
-#include "us_rotor_gui.h"
-#include "us_solution_gui.h"
+#include "us_crypto.h"
+#include "us_db_provider.h"
 #include "us_extinction_gui.h"
-#include "us_table.h"
-#include "us_xpn_data.h"
+#include "us_images.h"
 #include "us_license.h"
 #include "us_license_t.h"
-#include "us_sleep.h"
-#include "us_util.h"
-#include "us_crypto.h"
+#include "us_rotor_gui.h"
 #include "us_select_item.h"
-#include "us_images.h"
+#include "us_sleep.h"
+#include "us_solution_gui.h"
+#include "us_table.h"
+#include "us_util.h"
+#include "us_xpn_data.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -255,29 +256,28 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
   //   dbg_level    = US_Settings::us_debug();
 
   //update user-level as set in DB
-  US_Passwd   pw;
-  US_DB2      db( pw.getPasswd() );
-  
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      //qDebug() << "USCFG: UpdInv: ERROR connect";
-      QMessageBox msgBox;
-      msgBox.setWindowTitle ("ERROR");
-      msgBox.setText("Error making the DB connection!");
-      msgBox.setIcon  ( QMessageBox::Critical );
-      msgBox.exec();
-     
-      exit( -1 );
-    }
-  
+  auto db = US_DBProvider::open();
+
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     //qDebug() << "USCFG: UpdInv: ERROR connect";
+     QMessageBox msgBox;
+     msgBox.setWindowTitle( "ERROR" );
+     msgBox.setText( "Error making the DB connection!" );
+     msgBox.setIcon( QMessageBox::Critical );
+     msgBox.exec();
+
+     exit( -1 );
+  }
+
   QStringList q( "get_user_info" );
-  db.query( q );
-  db.next();
-  
-  int ID        = db.value( 0 ).toInt();
-  QString fname = db.value( 1 ).toString();
-  QString lname = db.value( 2 ).toString();
-  int     level = db.value( 5 ).toInt();
+  db->query( q );
+  db->next();
+
+  int     ID    = db->value( 0 ).toInt();
+  QString fname = db->value( 1 ).toString();
+  QString lname = db->value( 2 ).toString();
+  int     level = db->value( 5 ).toInt();
 
   qDebug() << "USCFG: UpdInv: ID,name,lev" << ID << fname << lname << level;
   //if(ID<1) return;
@@ -557,8 +557,8 @@ void US_ComProjectMain::checkDataLocation( void )
       //Check DB connection: exit if no connection..
       US_Passwd pw;
       QString masterpw = pw.getPasswd();
-      US_DB2* db = new US_DB2( masterpw );
-      
+      auto      db       = US_DBProvider::open();
+
       if ( db->lastErrno() != US_DB2::OK )
 	{
 	  QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
@@ -1250,23 +1250,22 @@ void US_InitDialogueGui::initAutoflowPanel( void )
 //Check for certificates
 void US_InitDialogueGui::checkCertificates( void )
 {
-  isDataDiskOnly = false;
-  
-  US_Passwd  pw;
-  US_DB2* dbP  = new US_DB2( pw.getPasswd() );
+   isDataDiskOnly = false;
 
-  
-  //read_optima_machines
-  read_optima_machines( dbP );
+   auto dbP = US_DBProvider::open();
 
-  QMap < QString, QString > Optimas_disconnect_msg;
-  Optimas_disconnect_msg.clear();
 
-  int count_instruments_disconnected = 0;
-  QStringList Optima_names;
+   //read_optima_machines
+   read_optima_machines( dbP.get() );
 
-  for ( int i=0; i < this->instruments.size(); ++i )
-    {
+   QMap<QString, QString> Optimas_disconnect_msg;
+   Optimas_disconnect_msg.clear();
+
+   int         count_instruments_disconnected = 0;
+   QStringList Optima_names;
+
+   for ( int i = 0; i < this->instruments.size(); ++i )
+   {
       QMap< QString, QString > instrument_curr = this->instruments[i];
       
       QString alias          = instrument_curr[ "name" ];
@@ -1388,8 +1387,8 @@ void US_InitDialogueGui::checkCertificates( void )
 	}
       //Disconnect link
       link->disconnectFromServer();
-    }
-  
+   }
+
   // Display message & close the program if all machines are disconnected
   if ( count_instruments_disconnected == this->instruments.size() )
     {
@@ -1462,15 +1461,14 @@ void US_InitDialogueGui::initRecords( void )               // <-- 1st entry poin
   
   
   // Dialog of existing autoflow records
-  US_Passwd  pw;
-  US_DB2* dbP  = new US_DB2( pw.getPasswd() );
-  
+  auto dbP = US_DBProvider::open();
+
   //read_optima_machines
-  read_optima_machines( dbP );
-  
+  read_optima_machines( dbP.get() );
+
   //read autoflow records
-  list_all_autoflow_records( autoflowdata, dbP );
-  
+  list_all_autoflow_records( autoflowdata, dbP.get() );
+
   //count instruments in use
   occupied_instruments.clear();
   for ( int i=0; i < autoflowdata.size(); i++ )
@@ -1868,8 +1866,8 @@ void US_InitDialogueGui::do_run_tables_cleanup( QMap < QString, QString > run_de
   // Check DB connection
   US_Passwd pw;
   QString masterpw = pw.getPasswd();
-  US_DB2* db = new US_DB2( masterpw );
-  
+  auto      db       = US_DBProvider::open();
+
   if ( db->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this, tr( "Connection Problem: Failed Run Cleanup" ),
@@ -1996,8 +1994,8 @@ void US_InitDialogueGui::do_create_autoflowStatus_for_failedRun( QMap < QString,
   // Check DB connection
   US_Passwd pw;
   QString masterpw = pw.getPasswd();
-  US_DB2* db = new US_DB2( masterpw );
-  
+  auto      db       = US_DBProvider::open();
+
   if ( db->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this, tr( "Connection Problem: Failed Run Cleanup" ),
@@ -2139,8 +2137,8 @@ void US_InitDialogueGui::do_run_data_cleanup( QMap < QString, QString > run_deta
   // Check DB connection
   US_Passwd pw;
   QString masterpw = pw.getPasswd();
-  US_DB2* db = new US_DB2( masterpw );
-  
+  auto      db       = US_DBProvider::open();
+
   if ( db->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this, tr( "Connection Problem: Failed Run Cleanup" ),
@@ -2283,12 +2281,11 @@ void US_InitDialogueGui::update_autoflow_data( void )
   qDebug() << "Updating autoflow records!!!";
 
   initMsgNorecDelOpen = false;
-  
-  US_Passwd  pw;
-  US_DB2* dbP  = new US_DB2( pw.getPasswd() );
+
+  auto dbP = US_DBProvider::open();
 
   //Re-read autoflow records
-  list_all_autoflow_records( autoflowdata, dbP );
+  list_all_autoflow_records( autoflowdata, dbP.get() );
 
   if ( autoflowdata.size() < 1 )
     {
@@ -2359,7 +2356,7 @@ void US_InitDialogueGui::update_autoflow_data( void )
 }
 
 // Slot to read all Optima machines <------------------------------- // New
-void US_InitDialogueGui::read_optima_machines( US_DB2* db )
+void US_InitDialogueGui::read_optima_machines( IUS_DB2* db )
 {
   this->instruments.clear();
   
@@ -2422,7 +2419,7 @@ void US_InitDialogueGui::read_optima_machines( US_DB2* db )
 
 
 // Query autoflow for # records
-int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflowdata, US_DB2* dbP )
+int US_InitDialogueGui::list_all_autoflow_records( QList<QStringList>& autoflowdata, IUS_DB2* dbP )
 {
   int nrecs        = 0;   
   autoflowdata.clear();
@@ -2604,7 +2601,7 @@ bool US_InitDialogueGui::isOperRev( int uID, QString autoflow_id )
 
   US_Passwd pw;
   QString masterpw = pw.getPasswd();
-  US_DB2* db = new US_DB2( masterpw );
+  auto      db       = US_DBProvider::open();
 
   if ( db->lastErrno() != US_DB2::OK )
      {
@@ -2709,7 +2706,7 @@ int US_InitDialogueGui::get_autoflow_records( void )
    // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto      db       = US_DBProvider::open();
 
    int record_number = 0;
    
@@ -2735,7 +2732,7 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
    // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto                    db       = US_DBProvider::open();
 
    QMap <QString, QString> protocol_details;
    
@@ -2810,7 +2807,7 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_failed_record( QString
    // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto                    db       = US_DBProvider::open();
 
    QMap <QString, QString> failed_details;
    

@@ -5,7 +5,7 @@
 #include "us_settings.h"
 
 // Check synchronizing of experiment on database and local with raw data
-US_SyncExperiment::US_SyncExperiment( US_DB2* a_db, QWidget* parent /*= 0*/ )
+US_SyncExperiment::US_SyncExperiment( IUS_DB2* a_db, QWidget* parent /*= 0*/ )
 {
    db         = a_db;
    parentw    = parent;

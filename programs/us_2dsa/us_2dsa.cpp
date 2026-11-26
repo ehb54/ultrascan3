@@ -1,29 +1,29 @@
 //! \file us_2dsa.cpp
 
+#include "us_db_provider.h"
 #include <QApplication>
 #include <QTimer>
 #include <QtSvg>
 
 #include "us_2dsa.h"
-#include "us_resids_bitmap.h"
-#include "us_plot_control_2d.h"
 #include "us_analysis_control_2d.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_settings.h"
+#include "us_analyte_gui.h"
+#include "us_constants.h"
+#include "us_data_loader.h"
+#include "us_db2.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
-#include "us_matrix.h"
-#include "us_constants.h"
-#include "us_analyte_gui.h"
-#include "us_passwd.h"
-#include "us_db2.h"
-#include "us_data_loader.h"
-#include "us_util.h"
 #include "us_investigator.h"
-#include "us_noise_loader.h"
+#include "us_license.h"
+#include "us_license_t.h"
 #include "us_loadable_noise.h"
+#include "us_matrix.h"
+#include "us_noise_loader.h"
+#include "us_plot_control_2d.h"
+#include "us_resids_bitmap.h"
+#include "us_settings.h"
 #include "us_show_norm.h"
+#include "us_util.h"
 
 // ALEXEY: main() moved out to us_2dsa_main.cpp, mirroring
 // us_mwl_species_fit.cpp/us_mwl_species_fit_main.cpp's split -- US_2dsa
@@ -480,8 +480,7 @@ void US_2dsa::load( void )
    // Get speed steps from disk or DB experiment
    if ( loadDB )
    { // Fetch the speed steps for the experiment from the database
-      US_Passwd   pw;
-      IUS_DB2*    dbP = new US_DB2( pw.getPasswd() );
+      auto        dbP = US_DBProvider::open();
       QStringList query;
       QString     expID;
       int         idExp = 0;
@@ -493,7 +492,7 @@ void US_2dsa::load( void )
       {
          dbP->next();
          idExp = dbP->value( 1 ).toInt();
-         US_SimulationParameters::speedstepsFromDB( dbP, idExp, speed_steps );
+         US_SimulationParameters::speedstepsFromDB( dbP.get(), idExp, speed_steps );
 
          DbgLv( 1 ) << "2dsa_load: speed step count" << speed_steps.count() << "idExp" << idExp;
          if ( speed_steps.count() > 0 )
@@ -505,7 +504,7 @@ void US_2dsa::load( void )
          // Check out whether we need to read TimeState from the DB
          QString tmst_fpath = US_Settings::resultDir() + "/" + runID + "/" + runID + ".time_state.tmst";
 
-         bool    newfile = US_TimeState::dbSyncToLF( dbP, tmst_fpath, idExp );
+         bool    newfile = US_TimeState::dbSyncToLF( dbP.get(), tmst_fpath, idExp );
          DbgLv( 0 ) << "2DS:LD: newfile" << newfile << "idExp" << idExp << "tmst_fpath" << tmst_fpath;
       }
    }
@@ -825,8 +824,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
 
    // Save the model and any noise file(s)
 
-   US_Passwd   pw;
-   IUS_DB2*    dbP      = loadDB ? new US_DB2( pw.getPasswd() ): NULL;
+   std::unique_ptr<IUS_DB2> dbP = loadDB ? US_DBProvider::open() : nullptr;
    QDir        dirm( mdlpath );
    QDir        dirn( noipath );
    mdlpath             += "/";
@@ -933,7 +931,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
       {
          model.write( mname );
       }
-      else if ( model.write( dbP ) != IUS_DB2::OK )
+      else if ( model.write( dbP.get() ) != IUS_DB2::OK )
       {
          dbFailed << model.description + ": " + model.message;
       }
@@ -958,7 +956,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
 
          const bool ondisk = ( ti_noise.write( nname ) == IUS_DB2::OK );
 
-         if ( dbP != NULL && ti_noise.write( dbP ) != IUS_DB2::OK )
+         if ( dbP.get() != NULL && ti_noise.write( dbP.get() ) != IUS_DB2::OK )
          {
             noiseFailed << noise_failure( ti_noise, ondisk );
          }
@@ -989,7 +987,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
 
          const bool ondisk = ( ri_noise.write( nname ) == IUS_DB2::OK );
 
-         if ( dbP != NULL && ri_noise.write( dbP ) != IUS_DB2::OK )
+         if ( dbP.get() != NULL && ri_noise.write( dbP.get() ) != IUS_DB2::OK )
          {
             noiseFailed << noise_failure( ri_noise, ondisk );
          }
@@ -1068,7 +1066,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
          le_vari->setText( QString::number( variance ) );
          le_rmsd->setText( QString::number( sqrt( variance ) ) );
          model.variance = variance;
-         if ( model.write( dbP ) != IUS_DB2::OK )
+         if ( model.write( dbP.get() ) != IUS_DB2::OK )
          {
             dbFailed << model.description + ": " + model.message;
          }
@@ -1083,8 +1081,8 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
 
    if ( dbP != NULL )
    {
-      delete dbP;
-      dbP = NULL;
+      dbP.reset();
+      dbP = nullptr;
    }
 
    reppath           = reppath + "/" + runID + "/";
@@ -1383,14 +1381,13 @@ bool US_2dsa::prep_fit_dataset( int drow )
    DbgLv( 0 ) << "2DSA s_corr D_corr" << sd.s20w_correction << sd.D20w_correction << "manual" << sd.manual << "vbar20" << vbar20;
    DbgLv( 0 ) << "2DSA d_corr v vW vT d dW dT" << sd.viscosity << sd.viscosity_wt << sd.viscosity_tb << sd.density << sd.density_wt
               << sd.density_tb;
-   US_Passwd pw;
    loadDB      = disk_controls->db();
-   US_DB2* dbP = loadDB ? new US_DB2( pw.getPasswd() ) : NULL;
+   std::unique_ptr<IUS_DB2> dbP = loadDB ? US_DBProvider::open() : nullptr;
 
    // Initialize simulation parameters from data.
    // Skip adding speed steps if this is multi-speed, initially,
    // but set speed steps to the experiment vector.
-   dset.simparams.initFromData( dbP, dataList[drow], !exp_steps );
+   dset.simparams.initFromData( dbP.get(), dataList[drow], !exp_steps );
    edata->bottom = ( edata->bottom > 0.0 ) ? edata->bottom : 0.0;
    //                     dset.simparams.bottom;
    DbgLv( 1 ) << "2DSA:o_fit: ebottom" << edata->bottom;
@@ -1467,8 +1464,8 @@ bool US_2dsa::prep_fit_dataset( int drow )
 
    if ( dbP != NULL )
    {
-      delete dbP;
-      dbP = NULL;
+      dbP.reset();
+      dbP = nullptr;
    }
 
    return true;
@@ -1689,14 +1686,13 @@ bool US_2dsa::species_model_already_recorded( int drow )
 
    QString   species = "S" + dataList[drow].wavelength;
 
-   US_Passwd pw;
-   US_DB2*   dbP = new US_DB2( pw.getPasswd() );
+   auto      dbP = US_DBProvider::open();
 
    if ( dbP->lastErrno() != US_DB2::OK )
    {
       qWarning() << "[US_2dsa] species_model_already_recorded(): DB" << "connection failed -- assuming channel"
                  << chann_to_process_2dsa << "species" << species << "has NOT been fit yet (will fit it now).";
-      delete dbP;
+      dbP.reset();
       return false;
    }
 
@@ -1722,7 +1718,7 @@ bool US_2dsa::species_model_already_recorded( int drow )
    // other error -- either way, nothing this call could confirm as
    // recorded, so `recorded` stays false and the species gets fit.
 
-   delete dbP;
+   dbP.reset();
 
    return recorded;
 }
@@ -1750,15 +1746,14 @@ void US_2dsa::record_2dsa_model_in_velmwl( void )
       return;
    }
 
-   US_Passwd pw;
-   US_DB2*   dbP = new US_DB2( pw.getPasswd() );
+   auto dbP = US_DBProvider::open();
 
    if ( dbP->lastErrno() != US_DB2::OK )
    {
       qWarning() << "[US_2dsa] record_2dsa_model_in_velmwl(): DB connection" << "failed -- channel" << chann_to_process_2dsa
                  << "species" << species << "'s model" << model.modelGUID << "not"
                  << "recorded in autoflowAnalysisVelMwl (its report/model" << "files on disk/DB are unaffected).";
-      delete dbP;
+      dbP.reset();
       return;
    }
 
@@ -1803,7 +1798,7 @@ void US_2dsa::record_2dsa_model_in_velmwl( void )
       }
    }
 
-   delete dbP;
+   dbP.reset();
 }
 
 // ALEXEY: Override of US_AnalysisBase2::update() -- see header comment.

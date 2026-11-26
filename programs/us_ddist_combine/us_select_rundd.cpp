@@ -1,17 +1,17 @@
 //! \file us_select_rundd.cpp
 
 #include "us_select_rundd.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_matrix.h"
-#include "us_investigator.h"
-#include "us_passwd.h"
-#include "us_db2.h"
-#include "us_util.h"
-#include "us_editor.h"
 #include "us_constants.h"
+#include "us_db2.h"
+#include "us_db_provider.h"
+#include "us_editor.h"
+#include "us_gui_settings.h"
+#include "us_investigator.h"
+#include "us_matrix.h"
 #include "us_report.h"
+#include "us_settings.h"
 #include "us_sleep.h"
+#include "us_util.h"
 
 // Main constructor with flags for select-runID dialog
 
@@ -244,8 +244,7 @@ DbgLv(1) << "SE: runID0" << runIDs[0];
 // Scan database for run sets
 void US_SelectRunDD::scan_dbase_runs()
 {
-   US_Passwd   pw;
-   US_DB2      db( pw.getPasswd() );
+   auto db    = US_DBProvider::open();
    count_list = 0;
    count_seld = 0;
    rlabels.clear();
@@ -257,12 +256,10 @@ void US_SelectRunDD::scan_dbase_runs()
    mRDates[ "UNASSIGNED" ] = "all";
    count_allr = 1;
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      QMessageBox::critical( this,
-         tr( "DB Connection Problem" ),
-         tr( "There was an error connecting to the database:\n" )
-         + db.lastError() );
+      QMessageBox::critical(
+         this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
       return;
    }
 
@@ -274,13 +271,13 @@ void US_SelectRunDD::scan_dbase_runs()
    // Scan experiments. getting run and experiment IDs
    query.clear();
    query << "get_experiment_desc" << invID;
-   db.query( query );
+   db->query( query );
 
-   while ( db.next() )
+   while ( db->next() )
    {  // Get a list of all runs in the database
-      QString runid    = db.value( 1 ).toString();
-      QString rdate    = db.value( 5 ).toDateTime().toString( "yyMMddhhmm" );
-DbgLv(1) << "ScDB:     runid" << runid;
+      QString runid = db->value( 1 ).toString();
+      QString rdate = db->value( 5 ).toDateTime().toString( "yyMMddhhmm" );
+      DbgLv( 1 ) << "ScDB:     runid" << runid;
 
       if ( ! runIDs.contains( runid ) )
       {
@@ -528,15 +525,12 @@ DbgLv(1) << "sChg: count_list" << count_list << "kseld" << kseld;
 // Scan database for models associated with run sets
 void US_SelectRunDD::scan_dbase_models()
 {
-   US_Passwd   pw;
-   US_DB2      db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      QMessageBox::information( this,
-         tr( "DB Connection Problem" ),
-         tr( "There was an error connecting to the database:\n" )
-         + db.lastError() );
+      QMessageBox::information(
+         this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
       return;
    }
 
@@ -556,14 +550,14 @@ DbgLv(1) << "ScMd: UNASSGN: no-UNASSIGNED" << no_una;
    // First accumulate model information for UNASSIGNED models
    query.clear();
    query << "get_model_desc_by_editID" << invID << "1";
-   db.query( query );
+   db->query( query );
 
-   while ( db.next() )
+   while ( db->next() )
    {
-      QString mdlid    = db.value( 0 ).toString();
-      QString mdlGid   = db.value( 1 ).toString();
-      QString mdesc    = db.value( 2 ).toString();
-      QString edtid    = db.value( 6 ).toString();
+      QString mdlid    = db->value( 0 ).toString();
+      QString mdlGid   = db->value( 1 ).toString();
+      QString mdesc    = db->value( 2 ).toString();
+      QString edtid    = db->value( 6 ).toString();
       int     kk       = mdesc.lastIndexOf( ".model" );
       mdesc            = ( kk < 1 ) ? mdesc : mdesc.left( kk );
       QString mrunid   = mdesc.section( ".", -3, -3 );
@@ -587,14 +581,14 @@ DbgLv(1) << "ScMd: runid UNASGN editId 1   nmodel" << nmodel;
       QString runid    = runIDs[ rr ];
       query.clear();
       query << "get_model_desc_by_runID" << invID << runid;
-      db.query( query );
+      db->query( query );
 
-      while( db.next() )
+      while ( db->next() )
       {
-         QString mdlid    = db.value( 0 ).toString();
-         QString mdlGid   = db.value( 1 ).toString();
-         QString mdesc    = db.value( 2 ).toString();
-         QString edtid    = db.value( 6 ).toString();
+         QString mdlid    = db->value( 0 ).toString();
+         QString mdlGid   = db->value( 1 ).toString();
+         QString mdesc    = db->value( 2 ).toString();
+         QString edtid    = db->value( 6 ).toString();
          int     kk       = mdesc.lastIndexOf( ".model" );
          mdesc            = ( kk < 1 ) ? mdesc : mdesc.left( kk );
          mmIDs   << mdlid;
@@ -609,14 +603,14 @@ DbgLv(1) << "ScMd: runid" << runid << "nmodel" << nmodel;
       QString grunid   = "Global-" + runid + "%";
       query.clear();
       query << "get_model_desc_by_runID" << invID << grunid;
-      db.query( query );
+      db->query( query );
 
-      while( db.next() )
+      while ( db->next() )
       {
-         QString mdlid    = db.value( 0 ).toString();
-         QString mdlGid   = db.value( 1 ).toString();
-         QString mdesc    = db.value( 2 ).toString();
-         QString edtid    = db.value( 6 ).toString();
+         QString mdlid    = db->value( 0 ).toString();
+         QString mdlGid   = db->value( 1 ).toString();
+         QString mdesc    = db->value( 2 ).toString();
+         QString edtid    = db->value( 6 ).toString();
          int     kk       = mdesc.lastIndexOf( ".model" );
          mdesc            = ( kk < 1 ) ? mdesc : mdesc.left( kk );
          mmIDs   << mdlid;
@@ -632,16 +626,16 @@ DbgLv(1) << "ScMd:scan time(1)" << timer.elapsed();
    // Accumulate model information for "Global-" UNASSIGNED models
    query.clear();
    query << "get_model_desc_by_runID" << invID << "Global-%";
-   db.query( query );
+   db->query( query );
 
-   while ( db.next() )
+   while ( db->next() )
    {
-      QString mdlid    = db.value( 0 ).toString();
+      QString mdlid = db->value( 0 ).toString();
       if ( mmIDs.contains( mdlid ) )
          continue;
 
-      QString mdlGid   = db.value( 1 ).toString();
-      QString mdesc    = db.value( 2 ).toString();
+      QString mdlGid   = db->value( 1 ).toString();
+      QString mdesc    = db->value( 2 ).toString();
       int     kk       = mdesc.lastIndexOf( ".model" );
       mdesc            = ( kk < 1 ) ? mdesc : mdesc.left( kk );
       mmIDs   << mdlid;
@@ -654,13 +648,15 @@ DbgLv(1) << "ScMd: runid glob% UNASGN editId 1   nmodel" << nmodel;
 
    query.clear();
    query << "count_models" << invID;
-   ntmodel  = db.functionQuery( query );
-DbgLv(1) << "ScMd: ntmodel" << ntmodel << "nmodel" << nmodel;
-DbgLv(1) << "ScMd:scan time(2)" << timer.elapsed();
-int m=nmodel-1;
-if ( m>1 ) {
-DbgLv(1) << "ScMd: 0: id,gid,eid,desc" << mmIDs[0] << mmGUIDs[0] << meIDs[0] << mmDescs[0];
-DbgLv(1) << "ScMd: m: id,gid,eid,desc" << mmIDs[m] << mmGUIDs[m] << meIDs[m] << mmDescs[m]; }
+   ntmodel = db->functionQuery( query );
+   DbgLv( 1 ) << "ScMd: ntmodel" << ntmodel << "nmodel" << nmodel;
+   DbgLv( 1 ) << "ScMd:scan time(2)" << timer.elapsed();
+   int m = nmodel - 1;
+   if ( m > 1 )
+   {
+      DbgLv( 1 ) << "ScMd: 0: id,gid,eid,desc" << mmIDs[0] << mmGUIDs[0] << meIDs[0] << mmDescs[0];
+      DbgLv( 1 ) << "ScMd: m: id,gid,eid,desc" << mmIDs[m] << mmGUIDs[m] << meIDs[m] << mmDescs[m];
+   }
 
    // Scan all saved models from the end back, saving any
    //   cell description by edit ID
@@ -674,9 +670,9 @@ DbgLv(1) << "ScMd: m: id,gid,eid,desc" << mmIDs[m] << mmGUIDs[m] << meIDs[m] << 
       QString mdlid    = mmIDs[ mm ];
       query.clear();
       query << "get_model_info" << mdlid;
-      db.query( query );
-      db.next();
-      QString mxml     = db.value( 2 ).toString();
+      db->query( query );
+      db->next();
+      QString mxml     = db->value( 2 ).toString();
       int     kk       = mxml.indexOf( "dataDescrip=" );
 DbgLv(1) << "ScMd: mm kk medtid" << mm << kk << medtid;
 
@@ -735,8 +731,7 @@ void US_SelectRunDD::count_models()
 {
    if ( mcounted  ||  ! sel_db )  return;
 
-   US_Passwd   pw;
-   US_DB2      db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
    rmodKnts.clear();
    QStringList query;
    QString invID    = QString::number( US_Settings::us_inv_ID() );
@@ -756,7 +751,7 @@ void US_SelectRunDD::count_models()
       if ( runid != "UNASSIGNED" )
       {
          query << "count_models_by_runID" << invID << runid;
-         nrmods          += db.functionQuery( query );
+         nrmods += db->functionQuery( query );
          QString grunid   = "Global-" + runid + "%";
          query.clear();
          query << "count_models_by_runID" << invID << grunid;
@@ -765,12 +760,12 @@ void US_SelectRunDD::count_models()
       else
       {
          query << "count_models_by_editID" << invID << "1";
-         nrmods          += db.functionQuery( query );
+         nrmods += db->functionQuery( query );
          query.clear();
          query << "count_models_by_runID" << invID << "global%";
       }
-      nrmods          += db.functionQuery( query );
-//DbgLv(1) << "KntM:   rr" << rr << "nrmods" << nrmods << "runid" << runid;
+      nrmods += db->functionQuery( query );
+      //DbgLv(1) << "KntM:   rr" << rr << "nrmods" << nrmods << "runid" << runid;
 
       rmodKnts << nrmods;
    }

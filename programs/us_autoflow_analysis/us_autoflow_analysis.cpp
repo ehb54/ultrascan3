@@ -1,3 +1,4 @@
+#include "us_db_provider.h"
 #include <QCheckBox>
 #include <QCollator>
 #include <QDialog>
@@ -309,20 +310,19 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
     protocol_details_at_analysis        = protocol_details;
     protocol_details_at_analysis_velmwl = protocol_details;
 
-    US_Passwd pw;
-    US_DB2    db( pw.getPasswd() );
+    auto db = US_DBProvider::open();
 
     // Get the buffer data from the database
-    if ( db.lastErrno() != US_DB2::OK )
+    if ( db->lastErrno() != US_DB2::OK )
     {
-       QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) + db.lastError() );
+       QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
        return;
     }
 
 
   //get investigator e-mail:
   investigator_details.clear();
-  investigator_details = get_investigator_info( &db, QString::number( invID ));
+  investigator_details = get_investigator_info( db.get(), QString::number( invID ) );
 
   //DB name
   QStringList DB = US_Settings::defaultDB();
@@ -347,25 +347,25 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 	}
 
       //check if MWL or SWL
-      QMap<QString, QString> abde_analysis_details = get_abdeAnalysis_info( &db, QString::number(autoflowID_passed));
-      QString abde_etype = abde_analysis_details["etype"];
-      qDebug() << "ABDE_exp_type: " << abde_etype;
+   QMap<QString, QString> abde_analysis_details = get_abdeAnalysis_info( db.get(), QString::number( autoflowID_passed ) );
+   QString                abde_etype            = abde_analysis_details["etype"];
+   qDebug() << "ABDE_exp_type: " << abde_etype;
 
-      if ( abde_etype == "MWL" )
-	{
-	  protocol_details_at_analysis["abde_etype"] = "MWL";
-	  
-	  //Pre-process data (decomposition for MWL); build alt. GUI (to integrate and manually normalize);
-	  sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis );
-	  //sdiag -> show(); //for debug
-	  
-	  qDebug() << "SSF-Dir: " << protocol_details_at_analysis["ssf_dir_name"];
-	  
-	  //now save ssf-produced-data to DB
-	  sdiag_convert = new US_ConvertGui("AUTO");
-	  sdiag_convert->import_ssf_data_auto( protocol_details_at_analysis );
-	  //sdiag_convert -> show(); //for debug
-	}
+   if ( abde_etype == "MWL" )
+   {
+      protocol_details_at_analysis["abde_etype"] = "MWL";
+
+      //Pre-process data (decomposition for MWL); build alt. GUI (to integrate and manually normalize);
+      sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis );
+      //sdiag -> show(); //for debug
+
+      qDebug() << "SSF-Dir: " << protocol_details_at_analysis["ssf_dir_name"];
+
+      //now save ssf-produced-data to DB
+      sdiag_convert = new US_ConvertGui( "AUTO" );
+      sdiag_convert->import_ssf_data_auto( protocol_details_at_analysis );
+      //sdiag_convert -> show(); //for debug
+   }
       else if ( abde_etype == "SWL" )
 	{
 	  protocol_details_at_analysis["abde_etype"] = "SWL";
@@ -381,7 +381,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       //was only done on the GMP-report side, which is why legends looked
       //right there but showed raw tokens here.
       QString abde_proto_xml;
-      US_ProtocolUtil::read_record_auto( ProtocolName_auto, invID, &abde_proto_xml, NULL, &db );
+      US_ProtocolUtil::read_record_auto( ProtocolName_auto, invID, &abde_proto_xml, NULL, db.get() );
       QXmlStreamReader abde_proto_xmli( abde_proto_xml );
       US_RunProtocol currProto_abde;
       currProto_abde.fromXml( abde_proto_xmli );
@@ -416,13 +416,13 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 
       qDebug() << "RequestID: " << requestID;
 
-      analysis_details = read_autoflowAnalysis_record( &db, requestID );
+      analysis_details = read_autoflowAnalysis_record( db.get(), requestID );
 
       if ( !analysis_details.size() )
 	{
-	  analysis_details = read_autoflowAnalysisHistory_record( &db, requestID );
-	  qDebug() << "analysis_details.size() FROM autoflowAnalysisHistory -- " << analysis_details.size();
-	}
+      analysis_details = read_autoflowAnalysisHistory_record( db.get(), requestID );
+      qDebug() << "analysis_details.size() FROM autoflowAnalysisHistory -- " << analysis_details.size();
+   }
       else
 	qDebug() << "analysis_details.size() FROM autoflowAnalysis -- " << analysis_details.size();
       
@@ -696,14 +696,12 @@ void US_Analysis_auto::gui_update( )
   
   */
 
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
    // Get the buffer data from the database
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-			    tr( "Could not connect to database \n" ) +  db.lastError() );
+      QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
       return;
    }
 
@@ -724,18 +722,18 @@ void US_Analysis_auto::gui_update( )
       QString requestID = ana_details["requestID"];
       
       QMap <QString, QString > current_analysis_details;
-      current_analysis_details = read_autoflowAnalysis_record( &db, requestID );
+      current_analysis_details = read_autoflowAnalysis_record( db.get(), requestID );
 
       if ( !current_analysis_details.size() )
 	{
-	  current_analysis_details = read_autoflowAnalysisHistory_record( &db, requestID );
-	  //set this triple as completed && history-read
-	  Completed_triples[ triple_curr_key ] = true;
-	  History_read[ triple_curr_key ]      = true;
-	  qDebug() << "FORM HISTORY: set Completed_triples[ " << triple_curr_key << " ] to " << Completed_triples[ triple_curr_key ];
-	}
+      current_analysis_details           = read_autoflowAnalysisHistory_record( db.get(), requestID );
+      //set this triple as completed && history-read
+      Completed_triples[triple_curr_key] = true;
+      History_read[triple_curr_key]      = true;
+      qDebug() << "FORM HISTORY: set Completed_triples[ " << triple_curr_key << " ] to " << Completed_triples[triple_curr_key];
+   }
 
-      
+
       QString cluster        = current_analysis_details[ "cluster" ]      ;
       QString filename       = current_analysis_details[ "filename" ]     ;
       QString curr_gfacID    = current_analysis_details[ "CurrentGfacID" ];
@@ -2279,8 +2277,7 @@ void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
    progress_msg_2dsa->setLabelText( tr( "Finalizing VEL-MWL completion..." ) );
    qApp->processEvents();
 
-   US_Passwd pw;
-   US_DB2*   db = new US_DB2( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
    {
@@ -2288,7 +2285,7 @@ void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
                   "process_velmwl_after_all_channels_decided(): "
                   "DB connection failed -- aborting, run stays 'unknown' for retry.";
       progress_msg_2dsa->hide();
-      delete db;
+      db.reset();
       return;
    }
 
@@ -2306,7 +2303,7 @@ void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
     {
       qDebug() << "[US_Autoflow_analysis]
   process_velmwl_after_all_channels_decided(): " "completion already claimed
-  elsewhere -- backing off."; delete db; return;
+  elsewhere -- backing off."; db.reset(); return;
     }
   **/
 
@@ -2379,11 +2376,11 @@ void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
       qry_revert << "autoflow_velmwl_analysis_status_revert" << QString::number( autoflowID_passed );
       db->query( qry_revert );
       progress_msg_2dsa->hide();
-      delete db;
+      db.reset();
       return;
    }
 
-   delete db;
+   db.reset();
 
    qDebug() << "[US_Autoflow_analysis] Approved VEL-MWL channels for 2DSA-IT:" << channels_2dsa_approved;
 
@@ -2400,14 +2397,13 @@ void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
    // channel's US_2dsa is constructed, so US_AnalysisControl2D::
    // apply_auto_fit_params() has something to apply ahead of Start Fit.
    {
-      US_Passwd pw_ap;
-      US_DB2    db_ap( pw_ap.getPasswd() );
+      auto db_ap = US_DBProvider::open();
 
-      if ( db_ap.lastErrno() == US_DB2::OK )
+      if ( db_ap->lastErrno() == US_DB2::OK )
       {
          US_RunProtocol currProto;
          QString        xmlstr_ap( "" );
-         US_ProtocolUtil::read_record_auto( ProtocolName_auto, invID, &xmlstr_ap, NULL, &db_ap );
+         US_ProtocolUtil::read_record_auto( ProtocolName_auto, invID, &xmlstr_ap, NULL, db_ap.get() );
          QXmlStreamReader xmli_ap( xmlstr_ap );
          currProto.fromXml( xmli_ap );
 
@@ -2676,14 +2672,13 @@ void US_Analysis_auto::start_next_2dsa_channel( void )
 // stage switch.
 void US_Analysis_auto::finalize_velmwl_species_selection( void )
 {
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
       QMessageBox::warning( this,
                             tr( "Connection Problem" ),
-                            tr( "Could not connect to database: \n" ) + db.lastError() +
+                            tr( "Could not connect to database: \n" ) + db->lastError() +
                                tr( "\n\nThe run stays in the ANALYSIS stage; re-attach to retry." ) );
       return;
    }
@@ -2695,11 +2690,11 @@ void US_Analysis_auto::finalize_velmwl_species_selection( void )
 
    QStringList                qry_read;
    qry_read << "read_autoflowAnalysisVelMwl_record" << QString::number( autoflowID_passed );
-   db.query( qry_read );
+   db->query( qry_read );
 
-   if ( db.lastErrno() == US_DB2::OK && db.next() )
+   if ( db->lastErrno() == US_DB2::OK & db->next() )
    {
-      QJsonObject jobj = QJsonDocument::fromJson( db.value( 0 ).toString().toUtf8() ).object();
+      QJsonObject jobj = QJsonDocument::fromJson( db->value( 0 ).toString().toUtf8() ).object();
 
       QCollator   collator;
       collator.setNumericMode( true ); // S2 < S10
@@ -2717,7 +2712,7 @@ void US_Analysis_auto::finalize_velmwl_species_selection( void )
          {
             QString  label = specs[is];
             US_Model mdl;
-            int      rc = mdl.load( true, mobj.value( specs[is] ).toString(), &db );
+            int      rc = mdl.load( true, mobj.value( specs[is] ).toString(), db.get() );
             if ( rc == US_DB2::OK && !mdl.dataDescrip.isEmpty() )
             {
                label += ": " + mdl.dataDescrip; // same text the Report shows per species
@@ -2746,9 +2741,9 @@ void US_Analysis_auto::finalize_velmwl_species_selection( void )
    // dismissed form leaves autoflowAnalysisVelMwlStages at 'unknown'.
    QStringList qry_user;
    qry_user << "get_user_info";
-   db.query( qry_user );
-   db.next();
-   QString                user_submitter = db.value( 2 ).toString() + ", " + db.value( 1 ).toString(); // lname, fname
+   db->query( qry_user );
+   db->next();
+   QString                user_submitter = db->value( 2 ).toString() + ", " + db->value( 1 ).toString(); // lname, fname
 
    QMap<QString, QString> gmp_submitter_map;
    while ( true )
@@ -2786,7 +2781,7 @@ void US_Analysis_auto::finalize_velmwl_species_selection( void )
    // (3) claim the run-wide ANALYSIS -> REPORT transition (unknown -> STARTED)
    QStringList qry_claim;
    qry_claim << "autoflow_velmwl_analysis_status" << QString::number( autoflowID_passed );
-   int unique_start = db.statusQuery( qry_claim );
+   int unique_start = db->statusQuery( qry_claim );
 
    if ( unique_start != 1 )
    {
@@ -2820,9 +2815,9 @@ void US_Analysis_auto::finalize_velmwl_species_selection( void )
    qry_sel << "update_autoflowAnalysisVelMwl_species_selections" << QString::number( autoflowID_passed )
            << QString::fromUtf8( QJsonDocument( sel_json ).toJson( QJsonDocument::Compact ) );
 
-   if ( db.statusQuery( qry_sel ) != US_DB2::OK )
+   if ( db->statusQuery( qry_sel ) != US_DB2::OK )
    {
-      db.query( qry_revert );
+      db->query( qry_revert );
       QMessageBox::warning( this,
                             tr( "AutoflowAnalysisVelMwl Record Not Updated" ),
                             tr( "The species selection could not be saved.\n\n"
@@ -2833,7 +2828,7 @@ void US_Analysis_auto::finalize_velmwl_species_selection( void )
    // (5) autoflowStatus: analysisVelMwl / analysisVelMwlts
    if ( !record_AnalysisVelMwl_status( gmp_submitter_map["Comment:"] ) )
    {
-      db.query( qry_revert );
+      db->query( qry_revert );
       return;
    }
 
@@ -2933,26 +2928,25 @@ bool US_Analysis_auto::show_velmwl_species_selection_dialog( const QMap<QString,
 
 bool US_Analysis_auto::record_AnalysisVelMwl_status( const QString& comment )
 {
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database: \n" ) + db.lastError() );
+      QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database: \n" ) + db->lastError() );
       return false;
    }
 
    QStringList qry;
    qry << "get_user_info";
-   db.query( qry );
-   db.next();
+   db->query( qry );
+   db->next();
 
    QJsonObject person;
-   person["ID"]    = QString::number( db.value( 0 ).toInt() );
-   person["fname"] = db.value( 1 ).toString();
-   person["lname"] = db.value( 2 ).toString();
-   person["email"] = db.value( 4 ).toString();
-   person["level"] = QString::number( db.value( 5 ).toInt() );
+   person["ID"]    = QString::number( db->value( 0 ).toInt() );
+   person["fname"] = db->value( 1 ).toString();
+   person["lname"] = db->value( 2 ).toString();
+   person["email"] = db->value( 4 ).toString();
+   person["level"] = QString::number( db->value( 5 ).toInt() );
 
    // same shape as analysisABDE: { "Person":[{...}], "Comment":"..." }
    QJsonObject status_json;
@@ -2974,7 +2968,7 @@ bool US_Analysis_auto::record_AnalysisVelMwl_status( const QString& comment )
        << QString::number( autoflowID_passed )
        << QString::fromUtf8( QJsonDocument( status_json ).toJson( QJsonDocument::Compact ) );
 
-   if ( db.statusQuery( qry ) != US_DB2::OK )
+   if ( db->statusQuery( qry ) != US_DB2::OK )
    {
       QMessageBox::warning( this,
                             tr( "AutoflowStatus Record Not Updated" ),
@@ -3058,12 +3052,11 @@ bool US_Analysis_auto::load_velmwl_channel_decision( QString autoflowID, QString
       return false;
    }
 
-   US_Passwd pw;
-   US_DB2*   db = new US_DB2( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
    {
-      delete db;
+      db.reset();
       return false;
    }
 
@@ -3085,16 +3078,15 @@ bool US_Analysis_auto::load_velmwl_channel_decision( QString autoflowID, QString
       }
    }
 
-   delete db;
+   db.reset();
    return found;
 }
 
 // ALEXEY: Flags a channel as fully prepared for 2DSA-IT -- see header doc.
 bool US_Analysis_auto::mark_velmwl_channel_prep_done( const QString& chann )
 {
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
-   if ( db.lastErrno() != US_DB2::OK )
+   auto db = US_DBProvider::open();
+   if ( db->lastErrno() != US_DB2::OK )
    {
       return false;
    }
@@ -3102,15 +3094,14 @@ bool US_Analysis_auto::mark_velmwl_channel_prep_done( const QString& chann )
    QStringList qry;
    qry << "update_autoflowAnalysisVelMwl_channel_prepDone" << QString::number( autoflowID_passed ) << chann;
 
-   return db.statusQuery( qry ) == US_DB2::OK;
+   return db->statusQuery( qry ) == US_DB2::OK;
 }
 
 // ALEXEY: Clears a stale Accepted/prepDone==0 record -- see header doc.
 bool US_Analysis_auto::reset_velmwl_incomplete_channel( const QString& chann )
 {
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
-   if ( db.lastErrno() != US_DB2::OK )
+   auto db = US_DBProvider::open();
+   if ( db->lastErrno() != US_DB2::OK )
    {
       return false;
    }
@@ -3118,7 +3109,7 @@ bool US_Analysis_auto::reset_velmwl_incomplete_channel( const QString& chann )
    QStringList qry;
    qry << "reset_autoflowAnalysisVelMwl_channel_incomplete" << QString::number( autoflowID_passed ) << chann;
 
-   return db.statusQuery( qry ) == US_DB2::OK;
+   return db->statusQuery( qry ) == US_DB2::OK;
 }
 
 // Get editID from selected model
@@ -3132,20 +3123,18 @@ QMap<QString, QString> US_Analysis_auto::read_run_params( QString f_name_c )
 {
    QMap<QString, QString> run_parms;
 
-   US_Passwd              pw;
-   QString                masterPW = pw.getPasswd();
-   US_DB2                 db( masterPW );
+   auto                   db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
       QMessageBox::warning(
-         this, tr( "Connection Problem" ), tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
+         this, tr( "Connection Problem" ), tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
       return run_parms;
    }
 
    US_RunProtocol currProto;
    QString        xmlstr( "" );
-   US_ProtocolUtil::read_record_auto( ProtocolName_auto, invID, &xmlstr, NULL, &db );
+   US_ProtocolUtil::read_record_auto( ProtocolName_auto, invID, &xmlstr, NULL, db.get() );
    QXmlStreamReader xmli( xmlstr );
    currProto.fromXml( xmli );
 
@@ -3176,9 +3165,9 @@ QMap<QString, QString> US_Analysis_auto::read_run_params( QString f_name_c )
    qDebug() << "[VEL-MWL: in read_run_params() ], editGUID -- " << e_ID_for_velmwl;
    QStringList query;
    query << "get_editID" << e_ID_for_velmwl;
-   db.query( query );
-   db.next();
-   QString editID = db.value( 0 ).toString();
+   db->query( query );
+   db->next();
+   QString editID = db->value( 0 ).toString();
 
    QString edirpath = US_Settings::resultDir() + "/" + f_name_c;
    QDir    edir( edirpath );
@@ -3189,12 +3178,12 @@ QMap<QString, QString> US_Analysis_auto::read_run_params( QString f_name_c )
 
    query.clear();
    query << "get_editedData" << editID;
-   db.query( query );
-   db.next();
-   QString efilename = db.value( 3 ).toString();
+   db->query( query );
+   db->next();
+   QString efilename = db->value( 3 ).toString();
 
    QString efilepath = edirpath + "/" + efilename;
-   db.readBlobFromDB( efilepath, "download_editData", editID.toInt() );
+   db->readBlobFromDB( efilepath, "download_editData", editID.toInt() );
 
    // read XML section && extract meniscus value
    double meniscus_p = 0;
@@ -3279,7 +3268,7 @@ void US_Analysis_auto::update_autoflow_record_atAnalysis( void )
    // Check DB connection
    US_Passwd pw;
    QString   masterpw = pw.getPasswd();
-   US_DB2*   db       = new US_DB2( masterpw );
+   auto      db       = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
    {
@@ -3323,12 +3312,11 @@ bool US_Analysis_auto::loadData( QMap < QString, QString > & triple_information 
       return false;
    };
 
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      return fail( tr( "There was an error connecting to the database:\n" ) + db.lastError() );
+      return fail( tr( "There was an error connecting to the database:\n" ) + db->lastError() );
    }
 
    const QString tripleName   = triple_information["triple_name"];
@@ -3336,7 +3324,7 @@ bool US_Analysis_auto::loadData( QMap < QString, QString > & triple_information 
    int           editedDataID = -1;
    QString       error;
    const int     status = US_EditedDataLoaders::loadAutoflow(
-      &db, tripleName, runID, US_Settings::resultDir() + "/" + runID, editedData, rawData, editedDataID, error );
+      db.get(), tripleName, runID, US_Settings::resultDir() + "/" + runID, editedData, rawData, editedDataID, error );
 
    if ( status != IUS_DB2::OK )
    {
@@ -3353,11 +3341,10 @@ bool US_Analysis_auto::loadData( QMap < QString, QString > & triple_information 
 //Load rawData/editedData
 bool US_Analysis_auto::loadModel( QMap < QString, QString > & triple_information )
 {
-  US_Passwd   pw;
-  US_DB2* db = new US_DB2( pw.getPasswd() );
-    
-  if ( db->lastErrno() != US_DB2::OK )
-    {
+   auto db = US_DBProvider::open();
+
+   if ( db->lastErrno() != US_DB2::OK )
+   {
       QApplication::restoreOverrideCursor();
       QMessageBox::information( this,
 				tr( "DB Connection Problem" ),
@@ -3365,7 +3352,7 @@ bool US_Analysis_auto::loadModel( QMap < QString, QString > & triple_information
 				+ db->lastError() );
       
       return false;
-    }
+   }
 
   //first, get ModelIDs corresponding to editedDataID AND triple_stage && select latest one
   QStringList query;
@@ -3429,7 +3416,7 @@ bool US_Analysis_auto::loadModel( QMap < QString, QString > & triple_information
   
   int  rc      = 0;
   qDebug() << "ModelID to retrieve: -- " << mID;
-  rc   = model.load( QString::number( mID ), db );
+  rc = model.load( QString::number( mID ), db.get() );
   qDebug() << "LdM:  model load rc" << rc;
   qApp->processEvents();
 
@@ -3467,11 +3454,10 @@ bool US_Analysis_auto::loadModel( QMap < QString, QString > & triple_information
 //Load Noises
 bool US_Analysis_auto::loadNoises( QMap < QString, QString > & triple_information )
 {
-  US_Passwd   pw;
-  US_DB2* db = new US_DB2( pw.getPasswd() );
-    
-  if ( db->lastErrno() != US_DB2::OK )
-    {
+   auto db = US_DBProvider::open();
+
+   if ( db->lastErrno() != US_DB2::OK )
+   {
       QApplication::restoreOverrideCursor();
       QMessageBox::information( this,
 				tr( "DB Connection Problem" ),
@@ -3479,7 +3465,7 @@ bool US_Analysis_auto::loadNoises( QMap < QString, QString > & triple_informatio
 				+ db->lastError() );
       
       return false;
-    }
+   }
 
   // get noiseIDs, types & lastUpd by modelID
   QStringList query;
@@ -3536,13 +3522,13 @@ bool US_Analysis_auto::loadNoises( QMap < QString, QString > & triple_informatio
   //creare US_noise objects
   if ( nID_ti )
     {
-      ti_noise.load( QString::number( nID_ti ), db );
-      qDebug() << "loadNoises() NORMAL: ti_noise created: ID -- " << nID_ti;
+       ti_noise.load( QString::number( nID_ti ), db.get() );
+       qDebug() << "loadNoises() NORMAL: ti_noise created: ID -- " << nID_ti;
     }
   if ( nID_ri )
     {
-      ri_noise.load( QString::number( nID_ri ), db );
-      qDebug() << "loadNoises() NORMAL: ri_noise created: ID -- " << nID_ri;
+       ri_noise.load( QString::number( nID_ri ), db.get() );
+       qDebug() << "loadNoises() NORMAL: ri_noise created: ID -- " << nID_ri;
     }
   
   // noise loaded:  insure that counts jive with data
@@ -3607,8 +3593,7 @@ void US_Analysis_auto::loadNoises_whenAbsent( )
 
    if ( nenois > 0 )
    {  // There is/are noise(s):  ask user if she wants to load
-      US_Passwd pw;
-      US_DB2* dbP  = new US_DB2( pw.getPasswd() );
+      auto dbP = US_DBProvider::open();
 
       if ( nenois > 1  &&  noisdf == 0 )
       {  // Noise exists and noise-dialog flag set to "Auto-load"
@@ -3619,17 +3604,17 @@ void US_Analysis_auto::loadNoises_whenAbsent( )
 
          if ( typen == "ti" )
 	   {
-	     ti_noise.load( true, noiID, dbP );
-	     qDebug() << "load_noise_whenAbsent(): ti_noise created: ID -- " << noiID;
-	     qDebug() << "load_noise_whenAbsent(): ti_noise.count: -- " << ti_noise.count;
-	   }
+         ti_noise.load( true, noiID, dbP.get() );
+         qDebug() << "load_noise_whenAbsent(): ti_noise created: ID -- " << noiID;
+         qDebug() << "load_noise_whenAbsent(): ti_noise.count: -- " << ti_noise.count;
+      }
          else
 	   {
-	     ri_noise.load( true, noiID, dbP );
-	     qDebug() << "load_noise_whenAbsent(): ri_noise created: ID -- " << noiID;
-	     qDebug() << "load_noise_whenAbsent(): ri_noise.count: -- " << ri_noise.count;
-	   }
-	 
+         ri_noise.load( true, noiID, dbP.get() );
+         qDebug() << "load_noise_whenAbsent(): ri_noise created: ID -- " << noiID;
+         qDebug() << "load_noise_whenAbsent(): ri_noise.count: -- " << ri_noise.count;
+      }
+
          descn         = nieGUIDs.at( 1 );
          QString mdlx2 = descn.section( ":", 2, 2 );
          int kenois    = ( mdlx1 == mdlx2 ) ? 2 : 1;
@@ -3639,18 +3624,17 @@ void US_Analysis_auto::loadNoises_whenAbsent( )
             typen         = descn.section( ":", 1, 1 );
             if ( typen == "ti" )
 	      {
-		ti_noise.load( true, noiID, dbP );
-		qDebug() << "load_noise_whenAbsent(): Noise 2: noiID, loaded ti--" << noiID;
-		qDebug() << "load_noise_whenAbsent(): Noise 2: noiID, loaded ti_noise.count --" << ti_noise.count;
-	      }
+            ti_noise.load( true, noiID, dbP.get() );
+            qDebug() << "load_noise_whenAbsent(): Noise 2: noiID, loaded ti--" << noiID;
+            qDebug() << "load_noise_whenAbsent(): Noise 2: noiID, loaded ti_noise.count --" << ti_noise.count;
+         }
             else
 	      {
-		ri_noise.load( true, noiID, dbP );
-		qDebug() << "load_noise_whenAbsent(): Noise 2: noiID, loaded ri--" << noiID;
-		qDebug() << "load_noise_whenAbsent(): Noise 2: noiID, loaded ri_noise.count --" << ri_noise.count;
-	      }
-	 }
-
+            ri_noise.load( true, noiID, dbP.get() );
+            qDebug() << "load_noise_whenAbsent(): Noise 2: noiID, loaded ri--" << noiID;
+            qDebug() << "load_noise_whenAbsent(): Noise 2: noiID, loaded ri_noise.count --" << ri_noise.count;
+         }
+         }
       }
       else
       {  // only 1:  just load it
@@ -3659,10 +3643,10 @@ void US_Analysis_auto::loadNoises_whenAbsent( )
          noiID         = noiID.section( ":", 0, 0 );
 
          if ( typen == "ti" )
-	   ti_noise.load( true, noiID, dbP );
-	 
+            ti_noise.load( true, noiID, dbP.get() );
+
          else
-	   ri_noise.load( true, noiID, dbP );
+            ri_noise.load( true, noiID, dbP.get() );
       }
      
    }
@@ -3792,10 +3776,9 @@ int US_Analysis_auto::count_noise_auto( US_DataIO::EditedData* edata,
          QString noiID  = nieGUIDs.at( 0 ).section( ":", 0, 0 );
          US_Noise i_noise;
 
-	 US_Passwd pw;
-	 US_DB2 db( pw.getPasswd() );
-	 i_noise.load( true, noiID, &db );
-         
+         auto     db = US_DBProvider::open();
+         i_noise.load( true, noiID, db.get() );
+
          double datmin  = edata->value( 0, 0 );
          double datmax  = datmin;
          double noimin  = 1.0e10;
@@ -3907,19 +3890,20 @@ int US_Analysis_auto::models_in_edit_auto( QString eGUID, QStringList& mGUIDs )
 int US_Analysis_auto::id_list_db_auto( QString daEditGUID )
 {
    QStringList query;
-   
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
 
-   if ( db.lastErrno() != US_DB2::OK )
+   auto        db = US_DBProvider::open();
+
+   if ( db->lastErrno() != US_DB2::OK )
+   {
       return 0;
+   }
 
    query.clear();
    query << "get_editID" << daEditGUID;
-   db.query( query );
-   db.next();
-   QString daEditID = db.value( 0 ).toString();
-DbgLv(1) << "LaNoi:idlDB:  daEdit ID GUID" << daEditID << daEditGUID;
+   db->query( query );
+   db->next();
+   QString daEditID = db->value( 0 ).toString();
+   DbgLv( 1 ) << "LaNoi:idlDB:  daEdit ID GUID" << daEditID << daEditGUID;
 
    noiIDs  .clear();
    noiEdIDs.clear();
@@ -3935,33 +3919,33 @@ DbgLv(1) << "LaNoi:idlDB:  daEdit ID GUID" << daEditID << daEditGUID;
    // Build noise, edit, model ID lists for all noises
    query.clear();
    query << "get_noise_desc_by_editID" << QString::number( invID ) << daEditID;
-   db.query( query );
+   db->query( query );
 
-   while ( db.next() )
+   while ( db->next() )
    {  // Accumulate lists from noise records
-      noiEdID   = db.value( 2 ).toString();
+      noiEdID = db->value( 2 ).toString();
 
-      noiIDs   << db.value( 1 ).toString();
-      noiTypes << db.value( 4 ).toString();
-      noiMoIDs << db.value( 5 ).toString();
+      noiIDs << db->value( 1 ).toString();
+      noiTypes << db->value( 4 ).toString();
+      noiMoIDs << db->value( 5 ).toString();
    }
 
 DbgLv(1) << "LaNoi:idlDB: noiTypes size" << noiTypes.size();
    // Build model, edit ID lists for all models
    query.clear();
    query << "get_model_desc_by_editID" << QString::number( invID ) << daEditID;
-   db.query( query );
+   db->query( query );
 
-   while ( db.next() )
+   while ( db->next() )
    {  // Accumulate from db desc entries matching noise model IDs
-      QString modGUID = db.value( 1 ).toString();
-      QString modEdID = db.value( 6 ).toString();
+      QString modGUID = db->value( 1 ).toString();
+      QString modEdID = db->value( 6 ).toString();
 
       if ( noiMoIDs.contains( modGUID )  &&   modEdID == daEditID )
       {  // Only list models that have associated noise and match edit
          modIDs   << modGUID;
-         modDescs << db.value( 2 ).toString();
-         modEdIDs << db.value( 5 ).toString();
+         modDescs << db->value( 2 ).toString();
+         modEdIDs << db->value( 5 ).toString();
       }
    }
 DbgLv(1) << "LaNoi:idlDB: modDescs size" << modDescs.size();
@@ -4035,13 +4019,12 @@ void US_Analysis_auto::simulateModel( )
 	   << model.components[lc].signal_concentration;
    
   // Initialize simulation parameters using edited data information
-  US_Passwd pw;
-  US_DB2* dbP = new US_DB2( pw.getPasswd() );
+  auto dbP = US_DBProvider::open();
 
   // Use the experiment speed steps if they cover the data; otherwise derive steps from the scans
   exp_steps = US_SimulationParameters::speedStepsCoverData( speed_steps, *edata );
   dat_steps = !exp_steps;
-  simparams.initFromData( dbP, *edata, dat_steps );
+  simparams.initFromData( dbP.get(), *edata, dat_steps );
   simparams.simpoints         = adv_vals[ "simpoints" ].toInt();
   simparams.meshType          = US_SimulationParameters::ASTFEM;
   simparams.gridType          = US_SimulationParameters::MOVING;
@@ -4737,8 +4720,7 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
     // Get speed steps from DB experiment (and maybe timestate)
     QString     tmst_fpath = US_Settings::resultDir() + "/" + FileName_parsed + "/" + FileName_parsed + ".time_state.tmst";
 
-    US_Passwd   pw;
-    US_DB2*     dbP = new US_DB2( pw.getPasswd() );
+    auto        dbP = US_DBProvider::open();
     QStringList query;
     QString     expID;
     int         idExp = 0;
@@ -4749,15 +4731,15 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
     {
        dbP->next();
        idExp = dbP->value( 1 ).toInt();
-       US_SimulationParameters::speedstepsFromDB( dbP, idExp, speed_steps );
+       US_SimulationParameters::speedstepsFromDB( dbP.get(), idExp, speed_steps );
     }
 
   // Check out whether we need to read TimeState from the DB
-  bool newfile       = US_TimeState::dbSyncToLF( dbP, tmst_fpath, idExp );
+    bool      newfile = US_TimeState::dbSyncToLF( dbP.get(), tmst_fpath, idExp );
 
-  //Get speed info
-  QFileInfo check_file( tmst_fpath );
-  if ( check_file.exists()  &&  check_file.isFile() )
+    //Get speed info
+    QFileInfo check_file( tmst_fpath );
+    if ( check_file.exists() && check_file.isFile() )
     {  // Get speed_steps from an existing timestate file
       simparams.simSpeedsFromTimeState( tmst_fpath );
       simparams.speedstepsFromSSprof();
@@ -4810,14 +4792,13 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
   bool    bufvl = false;
   QString errmsg;
   qDebug() << "Fem:Upd: (0)svbar" << svbar;
-  
-  bufvl = US_SolutionVals::values( dbP, edata, solID, svbar, bdens,
-				   bvisc, bcomp, bmanu, errmsg );
+
+  bufvl                    = US_SolutionVals::values( dbP.get(), edata, solID, svbar, bdens, bvisc, bcomp, bmanu, errmsg );
   // Read the solution; when that fails, use the default vbar, which later vbar calculations
   // also use for the cleared solution, since it has no analytes
   const auto read_solution = [&]( bool fromDb )
   {
-     const int     solstat = fromDb ? solution_rec.readFromDB( solID.toInt(), dbP ) : solution_rec.readFromDisk( solID );
+     const int     solstat = fromDb ? solution_rec.readFromDB( solID.toInt(), dbP.get() ) : solution_rec.readFromDisk( solID );
      const QString solerr  = fromDb ? dbP->lastError() : tr( "the solution file could not be read" );
      if ( solstat != IUS_DB2::OK )
      {
@@ -4975,53 +4956,51 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
       
       if (msg_delete.clickedButton() == Accept_sys)
 	{
-	  //Send signal to autoflowAnalysis record ? 
-	  qDebug() << "DELETION chosen !!";
-	  
-	  US_Passwd pw;
-	  US_DB2    db( pw.getPasswd() );
-	  
-	  // Get the buffer data from the database
-	  if ( db.lastErrno() != US_DB2::OK )
-	    {
-	      QMessageBox::warning( this, tr( "Connection Problem" ),
-				    tr( "Could not connect to database \n" ) +  db.lastError() );
-	      return;
-	    }
+      //Send signal to autoflowAnalysis record ?
+      qDebug() << "DELETION chosen !!";
 
-	  //block triple processing again:
-	  int status_fitmen_unique;
-	  status_fitmen_unique = read_autoflowAnalysisStages( requestID );
-  
-	  qDebug() << "[in delete_fitmen_job(no fitmen_bad_vals)] status_fitmen_unique -- " << status_fitmen_unique ;
-  
-	  if ( !status_fitmen_unique )
-	    {
-	      QMessageBox::information( this,
-					tr( "FITMEN | Triple Analysis already processed" ),
-					tr( "It appears that FITMEN stage has already been OR being processed by "
-					    "a different user from different session. \n\n"
-					    "The program will return to the autoflow runs dialog where "
-					    "you can re-attach to the actual current stage of the run. "));
-	      
-	      
-	      emit analysis_back_to_initAutoflow( );
-	      //emit triple_analysis_processed( );
-	      //close();
-	      return;
-	    }
-	  /****/
-	  
-	  
-	  /** DEBUG **/
-	  // QMap <QString, QString > current_analysis;
-	  // current_analysis = read_autoflowAnalysis_record( &db, requestID );
+      auto db = US_DBProvider::open();
 
-       /* **********/
+      // Get the buffer data from the database
+      if ( db->lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
+         return;
+      }
 
-       update_autoflowAnalysis_uponDeletion( &db, requestID );
-       //maybe if mwl_channel=true?
-       update_autoflowAnalysis_uponDeletion_other_wvl( &db, requestID_list );
+      //block triple processing again:
+      int status_fitmen_unique;
+      status_fitmen_unique = read_autoflowAnalysisStages( requestID );
+
+      qDebug() << "[in delete_fitmen_job(no fitmen_bad_vals)] status_fitmen_unique -- " << status_fitmen_unique;
+
+      if ( !status_fitmen_unique )
+      {
+         QMessageBox::information( this,
+                                   tr( "FITMEN | Triple Analysis already processed" ),
+                                   tr( "It appears that FITMEN stage has already been OR being processed by "
+                                       "a different user from different session. \n\n"
+                                       "The program will return to the autoflow runs dialog where "
+                                       "you can re-attach to the actual current stage of the run. " ) );
+
+
+         emit analysis_back_to_initAutoflow();
+         //emit triple_analysis_processed( );
+         //close();
+         return;
+      }
+      /****/
+
+
+      /** DEBUG **/
+      // QMap <QString, QString > current_analysis;
+      // current_analysis = read_autoflowAnalysis_record( db.get(), requestID );
+
+      /* **********/
+
+      update_autoflowAnalysis_uponDeletion( db.get(), requestID );
+      //maybe if mwl_channel=true?
+      update_autoflowAnalysis_uponDeletion_other_wvl( db.get(), requestID_list );
    }
     }
   else
@@ -5062,45 +5041,43 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
       
       if (msg_delete_bad_vals.clickedButton() == Accept_sys)
 	{
-	  US_Passwd pw;
-	  US_DB2    db( pw.getPasswd() );
-	  
-	  // Get the buffer data from the database
-	  if ( db.lastErrno() != US_DB2::OK )
-	    {
-	      QMessageBox::warning( this, tr( "Connection Problem" ),
-				    tr( "Could not connect to database \n" ) +  db.lastError() );
-	      return;
-	    }
+      auto db = US_DBProvider::open();
 
-	  //block triple processing again:
-	  int status_fitmen_unique;
-	  status_fitmen_unique = read_autoflowAnalysisStages( requestID );
-  
-	  qDebug() << "[in delete_fitmen_job(yes fitmen_bad_vals)] status_fitmen_unique -- " << status_fitmen_unique ;
-  
-	  if ( !status_fitmen_unique )
-	    {
-	      QMessageBox::information( this,
-					tr( "FITMEN | Triple Analysis already processed" ),
-					tr( "It appears that FITMEN stage has already been OR being processed by "
-					    "a different user from different session. \n\n"
-					    "The program will return to the autoflow runs dialog where "
-					    "you can re-attach to the actual current stage of the run. "));
-	      
-	      
-	      emit analysis_back_to_initAutoflow( );
-	      //emit triple_analysis_processed( );
-	      //close();
-	      return;
-	    }
-	  /****/
-	  
-	  
-	  update_autoflowAnalysis_uponDeletion( &db, requestID );
-	  //maybe if mwl_channel=true?
-	  update_autoflowAnalysis_uponDeletion_other_wvl( &db, requestID_list );
-	}
+      // Get the buffer data from the database
+      if ( db->lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
+         return;
+      }
+
+      //block triple processing again:
+      int status_fitmen_unique;
+      status_fitmen_unique = read_autoflowAnalysisStages( requestID );
+
+      qDebug() << "[in delete_fitmen_job(yes fitmen_bad_vals)] status_fitmen_unique -- " << status_fitmen_unique;
+
+      if ( !status_fitmen_unique )
+      {
+         QMessageBox::information( this,
+                                   tr( "FITMEN | Triple Analysis already processed" ),
+                                   tr( "It appears that FITMEN stage has already been OR being processed by "
+                                       "a different user from different session. \n\n"
+                                       "The program will return to the autoflow runs dialog where "
+                                       "you can re-attach to the actual current stage of the run. " ) );
+
+
+         emit analysis_back_to_initAutoflow();
+         //emit triple_analysis_processed( );
+         //close();
+         return;
+      }
+      /****/
+
+
+      update_autoflowAnalysis_uponDeletion( db.get(), requestID );
+      //maybe if mwl_channel=true?
+      update_autoflowAnalysis_uponDeletion_other_wvl( db.get(), requestID_list );
+   }
     }
       
   //Restart timer:
@@ -5196,38 +5173,37 @@ void US_Analysis_auto::delete_job( const QString& triple_stage )
 	}
       ////////////////////////////////////////////////////////////////////
 
-      US_Passwd pw;
-      US_DB2    db( pw.getPasswd() );
-      
-      // Get the buffer data from the database
-      if ( db.lastErrno() != US_DB2::OK )
-	{
-	  QMessageBox::warning( this, tr( "Connection Problem" ),
-				tr( "Could not connect to database \n" ) +  db.lastError() );
-	  return;
-	}
+   auto db = US_DBProvider::open();
+
+   // Get the buffer data from the database
+   if ( db->lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
+      return;
+   }
 
       /** DEBUG **/
-      // QMap <QString, QString > current_analysis;
-      // current_analysis = read_autoflowAnalysis_record( &db, requestID );
+   // QMap <QString, QString > current_analysis;
+   // current_analysis = read_autoflowAnalysis_record( db.get(), requestID );
 
-      /* **********/
+   /* **********/
 
-      update_autoflowAnalysis_uponDeletion( &db, requestID );
+   update_autoflowAnalysis_uponDeletion( db.get(), requestID );
 
-      // Now, if 2DSA or 2DSA-FM of the representative wvl in the MWL case: DELETE jobs for all other triples in a channel:
-      QString other_chan_triples;
-      if ( Process_2dsafm [ triple_n ] && ( stage_n == "2DSA" || stage_n == "2DSA-FM" ) && mwl_channel )
-	{
-	  update_autoflowAnalysis_uponDeletion_other_wvl( &db, requestID_list );
+   // Now, if 2DSA or 2DSA-FM of the representative wvl in the MWL case: DELETE jobs for all other triples in a channel:
+   QString other_chan_triples;
+   if ( Process_2dsafm[triple_n] && ( stage_n == "2DSA" || stage_n == "2DSA-FM" ) && mwl_channel )
+   {
+      update_autoflowAnalysis_uponDeletion_other_wvl( db.get(), requestID_list );
 
-	  if ( !triple_list_affected. isEmpty() )
-	    other_chan_triples = triple_list_affected.join(",");
-	}
-      
+      if ( !triple_list_affected.isEmpty() )
+      {
+         other_chan_triples = triple_list_affected.join( "," );
+      }
+   }
+
       //Also update autoflowStatus's "analysisCancel" JSON:
-      record_or_update_analysis_cancel_status( &db, triple_n, other_chan_triples, comment_t );
-           
+   record_or_update_analysis_cancel_status( db.get(), triple_n, other_chan_triples, comment_t );
     }
   else if ( msg_delete.clickedButton() == Cancel_sys )
     return;
@@ -5235,7 +5211,7 @@ void US_Analysis_auto::delete_job( const QString& triple_stage )
 }
 
 // slot to update autoflowAnalysis record when DELETE pressed
-void US_Analysis_auto::update_autoflowAnalysis_uponDeletion ( US_DB2* db, const QString& requestID )
+void US_Analysis_auto::update_autoflowAnalysis_uponDeletion( IUS_DB2* db, const QString& requestID )
 {
   // //Update
   // US_Passwd pw;
@@ -5262,7 +5238,7 @@ void US_Analysis_auto::update_autoflowAnalysis_uponDeletion ( US_DB2* db, const 
 }
 
 // slot to update autoflowAnalysis records when DELETE pressed for all other wvl in a channel
-void US_Analysis_auto::update_autoflowAnalysis_uponDeletion_other_wvl ( US_DB2* db, const QStringList& requestID_list )
+void US_Analysis_auto::update_autoflowAnalysis_uponDeletion_other_wvl( IUS_DB2* db, const QStringList& requestID_list )
 {
   if ( db->lastErrno() != US_DB2::OK )
     {
@@ -5317,12 +5293,11 @@ void US_Analysis_auto::update_autoflowAnalysis_statuses (  QMap < QString, QStri
   **********************************************/
  
   //Update autoflowStatus's 'analysis' field: per-channel (reference triple) basis, by whom:
-  US_Passwd pw;
-  US_DB2* dbP = new US_DB2( pw.getPasswd() );
-    
-  record_or_update_analysis_meniscus_status( dbP, triple_curr_key, FMB_changed );
-   
-  
+  auto dbP = US_DBProvider::open();
+
+  record_or_update_analysis_meniscus_status( dbP.get(), triple_curr_key, FMB_changed );
+
+
   // Now update autoflowAnalysis records:
   QStringList requestID_list; 
 
@@ -5338,7 +5313,7 @@ void US_Analysis_auto::update_autoflowAnalysis_statuses (  QMap < QString, QStri
   // --- Before updating autoflowAnalysis records ---
   // --- MAKE sure that ALL original 2DSA stages for other wavelength in a channel (besides representative wvl) are completed
   // --- i.e. are in WAIT status
-  update_autoflowAnalysis_status_at_fitmen( dbP, requestID_list );
+  update_autoflowAnalysis_status_at_fitmen( dbP.get(), requestID_list );
 
   //Restart timer:
   connect(timer_update, &QTimer::timeout, this, &US_Analysis_auto::gui_update);
@@ -5349,7 +5324,10 @@ void US_Analysis_auto::update_autoflowAnalysis_statuses (  QMap < QString, QStri
 
 
 //Keep track on meniscus (or bottom) deviations in FITMEN from the best fit:
-void US_Analysis_auto::record_or_update_analysis_cancel_status( US_DB2* db, QString triple_name, QString other_chan_triples, QString comment_t )
+void US_Analysis_auto::record_or_update_analysis_cancel_status( IUS_DB2* db,
+                                                                QString  triple_name,
+                                                                QString  other_chan_triples,
+                                                                QString  comment_t )
 {
   // Check DB connection
   if ( db->lastErrno() != US_DB2::OK )
@@ -5405,7 +5383,7 @@ void US_Analysis_auto::record_or_update_analysis_cancel_status( US_DB2* db, QStr
 
 
 //Keep track on meniscus (or bottom) deviations in FITMEN from the best fit:
-void US_Analysis_auto::record_or_update_analysis_meniscus_status( US_DB2* db, QString triple_name, QString FMB_changed )
+void US_Analysis_auto::record_or_update_analysis_meniscus_status( IUS_DB2* db, QString triple_name, QString FMB_changed )
 {
   if ( FMB_changed.isEmpty() )
     {
@@ -5505,21 +5483,19 @@ void US_Analysis_auto::reset_analysis_panel_public( )
 bool US_Analysis_auto::check_fitmen_status( const QString& requestID, const QString& stageName )
 {
   bool status = false;
-  
-  US_Passwd pw;
-  US_DB2    dbP( pw.getPasswd() );
+
+  auto dbP = US_DBProvider::open();
 
   // Get the buffer data from the database
-  if ( dbP.lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-			    tr( "Could not connect to database \n" ) +  dbP.lastError() );
-      return status;
-    }
+  if ( dbP->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) + dbP->lastError() );
+     return status;
+  }
 
   QMap <QString, QString> analysis_details;
-  
-  analysis_details = read_autoflowAnalysis_record(  &dbP, requestID );
+
+  analysis_details = read_autoflowAnalysis_record( dbP.get(), requestID );
 
   qDebug() << "In check_fitmen 1: -- " << requestID << stageName;
   
@@ -5838,7 +5814,7 @@ void US_Analysis_auto::hide_all( )
 
 
 // Read AutoflowAnalysisRecord
-QMap< QString, QString> US_Analysis_auto::read_autoflowAnalysis_record( US_DB2* db, const QString& requestID )
+QMap<QString, QString> US_Analysis_auto::read_autoflowAnalysis_record( IUS_DB2* db, const QString& requestID )
 {
   QMap <QString, QString> analysis_details;
   
@@ -5884,7 +5860,7 @@ QMap< QString, QString> US_Analysis_auto::read_autoflowAnalysis_record( US_DB2* 
 }
 
 // Read AutoflowAnalysisHistory Record
-QMap< QString, QString> US_Analysis_auto::read_autoflowAnalysisHistory_record( US_DB2* db, const QString& requestID )
+QMap<QString, QString> US_Analysis_auto::read_autoflowAnalysisHistory_record( IUS_DB2* db, const QString& requestID )
 {
   QMap <QString, QString> analysis_details;
   
@@ -5931,7 +5907,7 @@ QMap< QString, QString> US_Analysis_auto::read_autoflowAnalysisHistory_record( U
 }
 
 
-QMap< QString, QString> US_Analysis_auto::get_abdeAnalysis_info( US_DB2* db, const QString& ID )
+QMap<QString, QString> US_Analysis_auto::get_abdeAnalysis_info( IUS_DB2* db, const QString& ID )
 {
   QMap<QString, QString> abdeAnalysis_details;
   
@@ -5953,7 +5929,7 @@ QMap< QString, QString> US_Analysis_auto::get_abdeAnalysis_info( US_DB2* db, con
   return abdeAnalysis_details;
 }
 
-QMap< QString, QString> US_Analysis_auto::get_investigator_info( US_DB2* db, const QString& ID )
+QMap<QString, QString> US_Analysis_auto::get_investigator_info( IUS_DB2* db, const QString& ID )
 {
   QMap<QString, QString> inv_details;
   
@@ -5977,7 +5953,7 @@ QMap< QString, QString> US_Analysis_auto::get_investigator_info( US_DB2* db, con
 }
 
 // set status to COMPLETE && msg text
-void US_Analysis_auto::update_autoflowAnalysis_status_at_fitmen( US_DB2* db, const QStringList& requestID_list )
+void US_Analysis_auto::update_autoflowAnalysis_status_at_fitmen( IUS_DB2* db, const QStringList& requestID_list )
 {
   // // Check DB connection
   // US_Passwd pw;
@@ -6119,7 +6095,7 @@ void US_Analysis_auto::scan_dbase_auto( QMap <QString, QString> & triple_informa
 {
    QVector< ModelDesc > mDescrs;   // Vector of model description objects
    US_Passwd pw;                   // DB password
-   US_DB2 db( pw.getPasswd() );    // DB control
+   auto                 db = US_DBProvider::open(); // DB control
    QStringList query;              // DB query string list
    QStringList mfnams;             // List of FM model fit file names
    QStringList ufnams;             // List of unique model fit file names
@@ -6150,16 +6126,16 @@ void US_Analysis_auto::scan_dbase_auto( QMap <QString, QString> & triple_informa
    query << "get_model_desc_auto" << invID << triple_information[ "filename" ];
    // Make use of the description && '2DSA-FM'
    //query << "get_model_desc" << invID;
-   db.query( query );
+   db->query( query );
 
-   while( db.next() )
+   while ( db->next() )
    {
       ModelDesc mdescr;
-      QString modelID    = db.value( 0 ).toString();
-      QString modelGUID  = db.value( 1 ).toString();
-      QString descript   = db.value( 2 ).toString();
-      QString editGUID   = db.value( 5 ).toString();
-      QString editID     = db.value( 6 ).toString();
+      QString   modelID   = db->value( 0 ).toString();
+      QString   modelGUID = db->value( 1 ).toString();
+      QString   descript  = db->value( 2 ).toString();
+      QString   editGUID  = db->value( 5 ).toString();
+      QString   editID    = db->value( 6 ).toString();
 
       if ( descript.length() == 80 )
       {  // Truncated description:  save ID and skip update for now
@@ -6170,10 +6146,10 @@ DbgLv(1) << "DbSc:     TRUNC: modelID" << modelID << "descr" << descript;
          continue;
       }
 
-      double  variance   = db.value( 3 ).toString().toDouble();
-      double  meniscus   = db.value( 4 ).toString().toDouble();
+      double    variance   = db->value( 3 ).toString().toDouble();
+      double    meniscus   = db->value( 4 ).toString().toDouble();
       double  bottom     = 0.0;
-      QDateTime lmtime   = db.value( 7 ).toDateTime();
+      QDateTime lmtime     = db->value( 7 ).toDateTime();
       lmtime.setTimeZone( QTimeZone::utc() );
       QString ansysID    = descript.section( '.', -2, -2 );
       QString iterID     = ansysID .section( '_', -1, -1 );
@@ -6235,26 +6211,29 @@ DbgLv(1) << "DbSc: tmodels size" << tmodels.size() << "ted sizes"
       QString modelID    = tmodels[ ii ];
       query.clear();
       query << "get_model_info" << modelID;
-      db.query( query );
+      db->query( query );
 
-      if ( db.lastErrno() != US_DB2::OK )  continue;
+      if ( db->lastErrno() != US_DB2::OK )
+      {
+         continue;
+      }
 
-      db.next();
+      db->next();
 
-      QString modelGUID  = db.value( 0 ).toString();
-      QString descript1  = db.value( 1 ).toString();
-      QString contents   = db.value( 2 ).toString();
+      QString modelGUID  = db->value( 0 ).toString();
+      QString descript1  = db->value( 1 ).toString();
+      QString contents   = db->value( 2 ).toString();
       int     jdx        = contents.indexOf( "description=" );
 
       if ( jdx < 1 )  continue;
 
       QString descript   = contents.mid( jdx ).section( '"', 1, 1 );
-      double  variance   = db.value( 3 ).toString().toDouble();
-      double  meniscus   = db.value( 4 ).toString().toDouble();
+      double    variance   = db->value( 3 ).toString().toDouble();
+      double    meniscus   = db->value( 4 ).toString().toDouble();
       QString editGUID   = tedGIDs[ ii ];
       QString editID     = tedIDs [ ii ];
 
-      QDateTime lmtime   = db.value( 6 ).toDateTime();
+      QDateTime lmtime = db->value( 6 ).toDateTime();
       lmtime.setTimeZone( QTimeZone::utc() );
       QString ansysID    = descript.section( '.', -2, -2 );
       QString iterID     = ansysID.section( '_', -1, -1 );
@@ -6315,7 +6294,7 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
       ModelDesc mdescr   = mDescrs[ jj ];
       QString modelID    = mdescr.modelID;
       US_Model wmodel;
-      wmodel.load( modelID, &db );
+      wmodel.load( modelID, db.get() );
       double bottom      = wmodel.bottom;
 
       if ( bottom < 1.0 )
@@ -6527,8 +6506,8 @@ void US_Analysis_auto::get_editProfile_copy( QMap < QString, QString > & triple_
   
   US_Passwd pw;
   QString masterpw = pw.getPasswd();
-  US_DB2* db = new US_DB2( masterpw );
-  
+  auto                db       = US_DBProvider::open();
+
   // To be extracted from editedData table ('filename' field)
   // QMap below - establish correspondence btw EditProfile filename && EditDataID
   // select filename, editedDataID from editedData where label='ISSF-KulkarniJ_NP1-pDNA-D2O-0_091020-run822-2A';
@@ -7136,9 +7115,8 @@ int US_Analysis_auto::read_autoflowAnalysisStages( const QString& requestID )
 {
   int status = 0;
 
-  US_Passwd pw;
-  US_DB2* db = new US_DB2( pw.getPasswd() );
-  
+  auto db = US_DBProvider::open();
+
   if ( db->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this, tr( "Connection Problem" ),
@@ -7163,7 +7141,7 @@ void US_Analysis_auto::revert_autoflow_analysis_stages_record( const QString& re
    // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto      db       = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -7686,24 +7664,23 @@ void US_Analysis_auto::update_db_edit( QString edtext, QString efilepath )
    QString edGUID   = edtext.mid( esvx, nvch );
 DbgLv(1) << "updDbEd: edGUID" << edGUID;
 
-   US_Passwd pw;
-   US_DB2 db( pw.getPasswd() );
-   QStringList query;
-   query << "get_editID" << edGUID;
-   db.query( query );
-   db.next();
-   idEdit           = db.value( 0 ).toString().toInt();
-   DbgLv( 1 ) << "updDbEd: idEdit" << idEdit;
-   // How the existing edit is found is unchanged; only the upload is shared.
-   QString upload_error;
+auto        db = US_DBProvider::open();
+QStringList query;
+query << "get_editID" << edGUID;
+db->query( query );
+db->next();
+idEdit = db->value( 0 ).toString().toInt();
+DbgLv( 1 ) << "updDbEd: idEdit" << idEdit;
+// How the existing edit is found is unchanged; only the upload is shared.
+QString upload_error;
 
-   if ( US_ConvertIO::uploadEditedDataBlob( &db, idEdit, efilepath, upload_error ) != IUS_DB2::OK )
-   {
-      qDebug() << tr( "*ERROR* update_db_edit: " ) << upload_error;
-      //msg += tr( "*ERROR* update_db_edit: " );
-      //msg += upload_error;
-      return;
-   }
+if ( US_ConvertIO::uploadEditedDataBlob( db.get(), idEdit, efilepath, upload_error ) != IUS_DB2::OK )
+{
+   qDebug() << tr( "*ERROR* update_db_edit: " ) << upload_error;
+   //msg += tr( "*ERROR* update_db_edit: " );
+   //msg += upload_error;
+   return;
+}
 
 
    return;
@@ -7873,8 +7850,7 @@ DbgLv(1) << "RmvMod:  ix_setfit lkModx" << ix_setfit << lkModx;
       qDebug() << "FITMEN_AUTO: In remove_models(): invID -- " << invID;
       
       QString   edtID = QString::number( idEdit );
-      US_Passwd pw;
-      US_DB2 db( pw.getPasswd() );
+      auto        db    = US_DBProvider::open();
       QStringList query;
       QStringList modIDs;
 
@@ -7885,18 +7861,18 @@ DbgLv(1) << "RmvMod:  ix_setfit lkModx" << ix_setfit << lkModx;
          query << "get_model_desc" << invID;
 
 DbgLv(1) << "RmvMod:  idEdit" << idEdit << "query" << query;
-      db.query( query );
+db->query( query );
 
-      while( db.next() )
-      {
-         QString modelID    = db.value( 0 ).toString();
-         QString descript   = db.value( 2 ).toString();
-         QString runID      = descript.section( '.',  0, -4 );
-         if ( runID == srchRun )
-         {
-            modIDs << modelID;
-         }
-      }
+while ( db->next() )
+{
+   QString modelID  = db->value( 0 ).toString();
+   QString descript = db->value( 2 ).toString();
+   QString runID    = descript.section( '.', 0, -4 );
+   if ( runID == srchRun )
+   {
+      modIDs << modelID;
+   }
+}
 
 DbgLv(1) << "RmvMod:  modIDs size" << modIDs.size();
       for ( int ii = 0; ii < modIDs.size(); ii++ )
@@ -7904,15 +7880,18 @@ DbgLv(1) << "RmvMod:  modIDs size" << modIDs.size();
          QString modelID    = modIDs.at( ii );
          query.clear();
          query << "get_model_info" << modelID;
-         db.query( query );
+         db->query( query );
 
-         if ( db.lastErrno() != US_DB2::OK )  continue;
+         if ( db->lastErrno() != US_DB2::OK )
+         {
+            continue;
+         }
 
-         db.next();
+         db->next();
 
-         QString modelGUID  = db.value( 0 ).toString();
-         QString descript1  = db.value( 1 ).toString();
-         QString contents   = db.value( 2 ).toString();
+         QString modelGUID      = db->value( 0 ).toString();
+         QString descript1      = db->value( 1 ).toString();
+         QString contents       = db->value( 2 ).toString();
          int jdtx           = contents.indexOf( "description=" );
 
          if ( jdtx < 1 )  continue;
@@ -7929,8 +7908,8 @@ DbgLv(1) << "RmvMod:  descript" << descript << "msetBase" << msetBase << "ii" <<
             continue;
          }
 
-         double  variance   = db.value( 3 ).toString().toDouble();
-         double  meniscus   = db.value( 4 ).toString().toDouble();
+         double  variance   = db->value( 3 ).toString().toDouble();
+         double  meniscus   = db->value( 4 ).toString().toDouble();
          QString runID      = descript.section( '.',  0, -4 );
          QString tripID     = descript.section( '.', -3, -3 );
          QString anRunID    = descript.section( '.', -2, -2 );
@@ -8200,8 +8179,7 @@ DbgLv(1) << "RmvMod: nlrmod ndrmod nlrnoi ndrnoi nlnois ndnois"
 
       if ( rmv_mdls )
       {
-         US_Passwd pw;
-         US_DB2* dbP = db_upd ? new US_DB2( pw.getPasswd() ) : NULL;
+         std::unique_ptr<IUS_DB2> dbP = db_upd ? US_DBProvider::open() : nullptr;
 
          QStringList query;
          QString recID;
@@ -8240,8 +8218,8 @@ else DbgLv(1) << "     DB record deleted";
 
          if ( dbP != NULL )
          {
-            delete dbP;
-            dbP   = NULL;
+            dbP.reset();
+            dbP = nullptr;
          }
 
          for ( int ii = 0; ii < rnoiIDs.size(); ii++ )
@@ -8406,8 +8384,7 @@ DbgLv(1) << "NIE:     noiFname" << noiFname;
 
    if ( db_upd )
    {
-      US_Passwd pw;
-      US_DB2 db( pw.getPasswd() );
+      auto        db = US_DBProvider::open();
       QStringList nIDs;
       
       //QString invID = QString::number( US_Settings::us_inv_ID() );
@@ -8417,12 +8394,12 @@ DbgLv(1) << "NIE:     noiFname" << noiFname;
 
       query.clear();
       query << "all_editedDataIDs" << invID;
-      db.query( query );
+      db->query( query );
 
-      while( db.next() )
+      while ( db->next() )
       {
-         QString edtID    = db.value( 0 ).toString();
-         QString edtName  = db.value( 2 ).toString();
+         QString edtID   = db->value( 0 ).toString();
+         QString edtName = db->value( 2 ).toString();
 
          if ( edtName.startsWith( srchRun )  &&
               edtName.endsWith(   srchTrip ) )
@@ -8443,13 +8420,13 @@ if ( edtIDs.size() > 0 ) DbgLv(1) << "NIE: edtName0" << edtNams[0];
       else
          query << "get_noise_desc" << invID;
 
-      db.query( query );
+      db->query( query );
 
-      while( db.next() )
+      while ( db->next() )
       {
-         QString noiID    = db.value( 0 ).toString();
-         QString edtID    = db.value( 2 ).toString();
-DbgLv(1) << "NIE:  noiID edtID" << noiID << edtID;
+         QString noiID = db->value( 0 ).toString();
+         QString edtID = db->value( 2 ).toString();
+         DbgLv( 1 ) << "NIE:  noiID edtID" << noiID << edtID;
 
          if ( edtIDs.contains( edtID ) )
             nIDs << noiID;
@@ -8460,9 +8437,11 @@ DbgLv(1) << "NIE: nIDs-size" << nIDs.size() << "msetBase" << msetBase;
       {
          QString noiID      = nIDs[ ii ];
          US_Noise noise;
-      
-         if ( noise.load( noiID, &db ) != US_DB2::OK )
-            continue;    // Can't use if can't load
+
+         if ( noise.load( noiID, db.get() ) != US_DB2::OK )
+         {
+            continue; // Can't use if can't load
+         }
 
          QString noiDesc    = noise.description;
 DbgLv(1) << "NIE:  ii noiID noiDesc" << ii << noiID << noiDesc;

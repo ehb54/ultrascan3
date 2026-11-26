@@ -1,29 +1,29 @@
 #include <QApplication>
 
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_util.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_run_details2.h"
-#include "us_plot.h"
-#include "us_math2.h"
-#include "us_ramp_gui.h"
-#include "us_experiment_gui_ra.h"
-#include "us_select_triples_ra.h"
-#include "us_solution_gui.h"
-#include "us_db2.h"
-#include "us_passwd.h"
-#include "us_intensity_ra.h"
-#include "us_get_dbrun_ra.h"
-#include "us_investigator.h"
-#include "us_constants.h"
-#include "us_report.h"
-#include "us_gui_util.h"
-#include "us_util.h"
-#include "us_images.h"
-#include "us_rotor_gui.h"
 #include "qwt_scale_engine.h"
+#include "us_constants.h"
+#include "us_db2.h"
+#include "us_db_provider.h"
+#include "us_experiment_gui_ra.h"
+#include "us_get_dbrun_ra.h"
+#include "us_gui_settings.h"
+#include "us_gui_util.h"
+#include "us_images.h"
+#include "us_intensity_ra.h"
+#include "us_investigator.h"
+#include "us_license.h"
+#include "us_license_t.h"
+#include "us_math2.h"
+#include "us_passwd.h"
+#include "us_plot.h"
+#include "us_ramp_gui.h"
+#include "us_report.h"
+#include "us_rotor_gui.h"
+#include "us_run_details2.h"
+#include "us_select_triples_ra.h"
+#include "us_settings.h"
+#include "us_solution_gui.h"
+#include "us_util.h"
 
 #ifdef Q_OS_WIN
 #include <float.h>
@@ -803,11 +803,9 @@ DbgLv(1) << " enabCtl: tLx infsz" << cellchan << all_chaninfo.count();
    if ( disk_controls->db() )
    {
       // Verify connectivity
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
-   
-      if ( db.lastErrno() != IUS_DB2::OK )
+      auto db = US_DBProvider::open();
+
+      if ( db->lastErrno() != IUS_DB2::OK )
       {
          count++;
          lw_todoinfo->addItem( QString::number( count ) +
@@ -817,8 +815,8 @@ DbgLv(1) << " enabCtl: tLx infsz" << cellchan << all_chaninfo.count();
    
       // Information is there, but we need to see if the runID exists in the 
       // DB. If we didn't load it from there, then we shouldn't be able to sync
-      const bool connected = ( db.lastErrno() == IUS_DB2::OK );
-      int recStatus = ExpData.checkRunID( &db );
+      const bool connected = ( db->lastErrno() == IUS_DB2::OK );
+      int        recStatus = ExpData.checkRunID( db.get() );
 
       // A failed lookup on a working connection leaves it unknown
       //  whether the runID is stored, so saving waits for a retry
@@ -828,7 +826,7 @@ DbgLv(1) << " enabCtl: tLx infsz" << cellchan << all_chaninfo.count();
          lw_todoinfo->addItem( QString::number( count ) +
                                tr( ": Retry; the database could not be"
                                    " checked for this runID: " ) +
-                               db.lastError() );
+                               db->lastError() );
          completed = false;
       }
 
@@ -1312,11 +1310,9 @@ DbgLv(1) << "CGui: gExpInf: IN";
    if ( disk_controls->db() )
    {
       // Then we're working in DB, so verify connectivity
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
-     
-      if ( db.lastErrno() != US_DB2::OK )
+      auto db = US_DBProvider::open();
+
+      if ( db->lastErrno() != US_DB2::OK )
       {
          QMessageBox::information( this,
                 tr( "Error" ),
@@ -1325,8 +1321,8 @@ DbgLv(1) << "CGui: gExpInf: IN";
       }
      
       // Check if the run ID already exists in the DB
-      int recStatus = ExpData.checkRunID( &db );
-     
+      int recStatus = ExpData.checkRunID( db.get() );
+
       // if saveStatus == BOTH, then we are editing the record from the database
       if ( ( recStatus == US_DB2::OK ) && ( saveStatus != BOTH ) ) 
       {
@@ -2428,11 +2424,9 @@ DbgLv(1) << "CGui: centpInfo: db" << disk_controls->db();
 bool US_RampGui::centerpieceInfoDB( void )
 {
    // Verify connectivity
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
       QMessageBox::information( this,
              tr( "Error" ),
@@ -2442,14 +2436,14 @@ bool US_RampGui::centerpieceInfoDB( void )
    }
 
    QStringList q( "get_abstractCenterpiece_names" );
-   db.query( q );
+   db->query( q );
 
    QList<listInfo> options;
-   while ( db.next() )
+   while ( db->next() )
    {
       struct listInfo option;
-      option.ID      = db.value( 0 ).toString();
-      option.text    = db.value( 1 ).toString();
+      option.ID   = db->value( 0 ).toString();
+      option.text = db->value( 1 ).toString();
       options << option;
    }
 

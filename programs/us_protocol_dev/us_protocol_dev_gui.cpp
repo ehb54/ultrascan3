@@ -1,17 +1,18 @@
 /////////////////////////////////////////
 #include "us_protocol_dev_gui.h"
-#include "us_rotor_gui.h"
-#include "us_solution_gui.h"
+#include "us_crypto.h"
+#include "us_db_provider.h"
 #include "us_extinction_gui.h"
-#include "us_table.h"
-#include "us_xpn_data.h"
+#include "us_images.h"
 #include "us_license.h"
 #include "us_license_t.h"
-#include "us_sleep.h"
-#include "us_util.h"
-#include "us_crypto.h"
+#include "us_rotor_gui.h"
 #include "us_select_item.h"
-#include "us_images.h"
+#include "us_sleep.h"
+#include "us_solution_gui.h"
+#include "us_table.h"
+#include "us_util.h"
+#include "us_xpn_data.h"
 #include <QTimer>
 
 #ifndef DbgLv
@@ -243,8 +244,8 @@ void US_ProtocolDevMain::checkDataLocation( void )
       //Check DB connection: exit if no connection..
       US_Passwd pw;
       QString masterpw = pw.getPasswd();
-      US_DB2* db = new US_DB2( masterpw );
-      
+      auto      db       = US_DBProvider::open();
+
       if ( db->lastErrno() != US_DB2::OK )
 	{
 	  QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
@@ -827,15 +828,14 @@ void US_InitDialogueGui::initRecords( void )               // <-- 1st entry poin
   
   
   // Dialog of existing autoflow records
-  US_Passwd  pw;
-  US_DB2* dbP  = new US_DB2( pw.getPasswd() );
-  
+  auto dbP = US_DBProvider::open();
+
   //read_optima_machines
-  read_optima_machines( dbP );
-  
+  read_optima_machines( dbP.get() );
+
   //read autoflow records
-  list_all_autoflow_records( autoflowdata, dbP, "DEV" );
-  
+  list_all_autoflow_records( autoflowdata, dbP.get(), "DEV" );
+
   //count instruments in use
   occupied_instruments.clear();
   for ( int i=0; i < autoflowdata.size(); i++ )
@@ -853,31 +853,30 @@ void US_InitDialogueGui::initRecords( void )               // <-- 1st entry poin
 //Dialog to display all autoflowHistory runs && select one, passing protocol name && invID to US_ExpGUI
 void US_InitDialogueGui::load_autoflowHistory_dialog( void )
 {
-  US_Passwd  pw;
-  US_DB2* dbP  = new US_DB2( pw.getPasswd() );
-  
-  list_all_autoflow_records( autoflowdataHistory, dbP, "HISTORY" );
+   auto dbP = US_DBProvider::open();
 
-  QString pdtitle( tr( "Select Completed Autoflow Run" ) );
-  QStringList hdrs;
-  int         prx;
-  hdrs << "ID"
-       << "Run Name"
-       << "Optima Name"
-       << "Created"
-       << "Run Status"
-       << "Stage"
-       << "GMP";
-  
-  QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
+   list_all_autoflow_records( autoflowdataHistory, dbP.get(), "HISTORY" );
 
-  pdiag_autoflowHistory = new US_SelectItem( autoflowdataHistory, hdrs, pdtitle, &prx, autoflow_btn, -4 );
-  
-  QString autoflow_id_selected("");
-  if ( pdiag_autoflowHistory->exec() == QDialog::Accepted )
-    {
+   QString     pdtitle( tr( "Select Completed Autoflow Run" ) );
+   QStringList hdrs;
+   int         prx;
+   hdrs << "ID"
+        << "Run Name"
+        << "Optima Name"
+        << "Created"
+        << "Run Status"
+        << "Stage"
+        << "GMP";
+
+   QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
+
+   pdiag_autoflowHistory = new US_SelectItem( autoflowdataHistory, hdrs, pdtitle, &prx, autoflow_btn, -4 );
+
+   QString autoflow_id_selected( "" );
+   if ( pdiag_autoflowHistory->exec() == QDialog::Accepted )
+   {
       autoflow_id_selected  = autoflowdataHistory[ prx ][ 0 ];
-    }
+   }
   //else if ( pdiag_autoflowHistory->exec() == QDialog::Rejected )
   else
     {
@@ -1308,8 +1307,8 @@ void US_InitDialogueGui::do_run_tables_cleanup( QMap < QString, QString > run_de
   // Check DB connection
   US_Passwd pw;
   QString masterpw = pw.getPasswd();
-  US_DB2* db = new US_DB2( masterpw );
-  
+  auto      db       = US_DBProvider::open();
+
   if ( db->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this, tr( "Connection Problem: Failed Run Cleanup" ),
@@ -1437,8 +1436,8 @@ void US_InitDialogueGui::do_create_autoflowStatus_for_failedRun( QMap < QString,
   // Check DB connection
   US_Passwd pw;
   QString masterpw = pw.getPasswd();
-  US_DB2* db = new US_DB2( masterpw );
-  
+  auto      db       = US_DBProvider::open();
+
   if ( db->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this, tr( "Connection Problem: Failed Run Cleanup" ),
@@ -1553,8 +1552,8 @@ void US_InitDialogueGui::do_run_data_cleanup( QMap < QString, QString > run_deta
   // Check DB connection
   US_Passwd pw;
   QString masterpw = pw.getPasswd();
-  US_DB2* db = new US_DB2( masterpw );
-  
+  auto      db       = US_DBProvider::open();
+
   if ( db->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this, tr( "Connection Problem: Failed Run Cleanup" ),
@@ -1676,12 +1675,11 @@ void US_InitDialogueGui::update_autoflow_data( void )
   qDebug() << "Updating autoflow records!!!";
 
   initMsgNorecDelOpen = false;
-  
-  US_Passwd  pw;
-  US_DB2* dbP  = new US_DB2( pw.getPasswd() );
+
+  auto dbP = US_DBProvider::open();
 
   //Re-read autoflow records
-  list_all_autoflow_records( autoflowdata, dbP, "DEV" );
+  list_all_autoflow_records( autoflowdata, dbP.get(), "DEV" );
 
   if ( autoflowdata.size() < 1 )
     {
@@ -1757,7 +1755,7 @@ void US_InitDialogueGui::update_autoflow_data( void )
 }
 
 // Slot to read all Optima machines <------------------------------- // New
-void US_InitDialogueGui::read_optima_machines( US_DB2* db )
+void US_InitDialogueGui::read_optima_machines( IUS_DB2* db )
 {
   this->instruments.clear();
   
@@ -1818,7 +1816,7 @@ void US_InitDialogueGui::read_optima_machines( US_DB2* db )
 }
 
 // Query autoflow for # records
-int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflowdata, US_DB2* dbP, QString type )
+int US_InitDialogueGui::list_all_autoflow_records( QList<QStringList>& autoflowdata, IUS_DB2* dbP, QString type )
 {
   int nrecs        = 0;   
   autoflowdata.clear();
@@ -1969,7 +1967,7 @@ int US_InitDialogueGui::get_autoflow_records( void )
    // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto      db       = US_DBProvider::open();
 
    int record_number = 0;
    
@@ -1994,7 +1992,7 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
    // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto                    db       = US_DBProvider::open();
 
    QMap <QString, QString> protocol_details;
    
@@ -2078,7 +2076,7 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_failed_record( QString
    // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto                    db       = US_DBProvider::open();
 
    QMap <QString, QString> failed_details;
    

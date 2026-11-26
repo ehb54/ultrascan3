@@ -1,15 +1,15 @@
 //! \file us_load_run_noise.cpp
 
+#include "us_db_provider.h"
 #include <QtGui>
 
-#include "us_load_run_noise.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_settings.h"
 #include "us_gui_settings.h"
-#include "us_passwd.h"
-#include "us_util.h"
 #include "us_investigator.h"
+#include "us_license.h"
+#include "us_license_t.h"
+#include "us_load_run_noise.h"
+#include "us_settings.h"
+#include "us_util.h"
 
 
 // Constructor
@@ -148,9 +148,9 @@ int US_LoadRunNoise::scan_db( const QString runID )
    QVector< QDateTime > vNntimes;
    QVector< QString   > vNdescrs;
 
-   US_Passwd pw;
-   dbP            = new US_DB2( pw.getPasswd() );
-DbgLv(1) << "LRNoi:scdb:  dbP" << dbP << "invID" << invID << "runID" << runID;
+   dbP_owned = US_DBProvider::open();
+   dbP       = dbP_owned.get();
+   DbgLv( 1 ) << "LRNoi:scdb:  dbP" << dbP << "invID" << invID << "runID" << runID;
 
    if ( dbP->lastErrno() != US_DB2::OK )
       return 0;

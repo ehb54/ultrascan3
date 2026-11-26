@@ -1,16 +1,16 @@
 //! \file us_solution_gui.cpp
 
-#include "us_solution_gui.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_passwd.h"
-#include "us_db2.h"
-#include "us_investigator.h"
-#include "us_buffer_gui.h"
-#include "us_analyte_gui.h"
-#include "us_solution.h"
 #include "us_edit_spectrum.h"
+#include "us_analyte_gui.h"
+#include "us_buffer_gui.h"
+#include "us_db2.h"
+#include "us_db_provider.h"
 #include "us_editor_gui.h"
+#include "us_gui_settings.h"
+#include "us_investigator.h"
+#include "us_settings.h"
+#include "us_solution.h"
+#include "us_solution_gui.h"
 #include "us_table.h"
 
 US_EditSpectrum::US_EditSpectrum( QString tmp_type, QString tmp_exists, const QString& tmp_text, const QString &tmp_text_e280, US_Buffer *tmp_buffer ) : US_Widgets()
@@ -260,13 +260,11 @@ void US_EditSpectrum::view_spectrum(void)
 
 void US_EditSpectrum::delete_spectrum(void)
 {
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-     QMessageBox::warning( this, tr( "Connection Problem" ),
-			   tr( "Could not connect to database \n" ) + db.lastError());
+      QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
       return;
    }
 
@@ -279,33 +277,33 @@ void US_EditSpectrum::delete_spectrum(void)
    if ( type == "SOLUTION")
      q<< "get_solutionID_from_GUID" << solution->solutionGUID;
 
-   db.query( q );
+   db->query( q );
 
-   int status = db.lastErrno();
+   int status = db->lastErrno();
 
    if (  status == US_DB2::OK )
    {
-      db.next();
-      
+      db->next();
+
       if ( type == "BUFFER")
 	{
-	  QString bufferID = db.value( 0 ).toString();
-	  QString compType("Buffer");
-	  US_ExtProfile::delete_eprofile( &db, bufferID.toInt(), compType );
-	}
+      QString bufferID = db->value( 0 ).toString();
+      QString compType( "Buffer" );
+      US_ExtProfile::delete_eprofile( db.get(), bufferID.toInt(), compType );
+   }
       if ( type == "ANALYTE")
 	{
-	  QString analyteID = db.value( 0 ).toString();
-	  QString compType("Analyte");
-	  US_ExtProfile::delete_eprofile( &db, analyteID.toInt(), compType );
-	}
+      QString analyteID = db->value( 0 ).toString();
+      QString compType( "Analyte" );
+      US_ExtProfile::delete_eprofile( db.get(), analyteID.toInt(), compType );
+   }
        if ( type == "SOLUTION")
 	{
-	  QString solutionID = db.value( 0 ).toString();
-	  QString compType("Sample");
-	  US_ExtProfile::delete_eprofile( &db, solutionID.toInt(), compType );
-	} 
-       
+      QString solutionID = db->value( 0 ).toString();
+      QString compType( "Sample" );
+      US_ExtProfile::delete_eprofile( db.get(), solutionID.toInt(), compType );
+   }
+
       QMessageBox::information( this,
 				tr( "Deletion: Success" ),
 				tr( "Spectrum was successfully deleted") );
@@ -342,9 +340,7 @@ void US_EditSpectrum::delete_spectrum(void)
    
    if ( status != US_DB2::OK )
    {
-      QMessageBox::warning( this,
-         tr( "Attention" ),
-         tr( "Delete failed.\n\n" ) + db.lastError() );
+      QMessageBox::warning( this, tr( "Attention" ), tr( "Delete failed.\n\n" ) + db->lastError() );
    }
    this->close();
 }

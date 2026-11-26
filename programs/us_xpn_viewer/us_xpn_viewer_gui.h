@@ -350,21 +350,21 @@ class US_XpnDataViewer : public US_Widgets
      //Sys_server
      void   stop_optima( void );
      void   skip_optima_stage( void );
-  void   record_live_update_status( QString, QString);
-  
-     //QMap <QString, QString> returnSelectedInstrument( US_DB2* = 0 );
-     bool   load_xpn_raw_auto   ( void );
-     void   check_for_sysdata ( void );
+     void   record_live_update_status( QString, QString );
 
-     
+     //QMap <QString, QString> returnSelectedInstrument( IUS_DB2* = 0 );
+     bool   load_xpn_raw_auto( void );
+     void   check_for_sysdata( void );
+
+
      //void   retrieve_xpn_raw_auto ( QString & );
-     void   retrieve_xpn_raw_auto ( void );
+     void   retrieve_xpn_raw_auto( void );
 
-     void   end_processes ( void );
-     void   end_process_all_data_avail ( void );
-     
-     void   reloadData_auto     ( void );
-  int    CheckExpComplete_auto( QString &, bool & );
+     void   end_processes( void );
+     void   end_process_all_data_avail( void );
+
+     void   reloadData_auto( void );
+     int    CheckExpComplete_auto( QString&, bool& );
      void   update_autoflow_runId_timeStarted( void );
      int    read_timeElapsed_offset( void );
      void   delete_autoflow_record( void );
@@ -416,7 +416,7 @@ class US_XpnDataViewer : public US_Widgets
      void   help           ( void )
      { showHelp.show_help( "xpn_viewer.html" ); };
 
-     void read_optima_machines( US_DB2* = 0 );         //New 
+     void read_optima_machines( IUS_DB2* = 0 );        //New
      void changeOptima ( int );                        //New
      void selectOptimaByName_auto( QString );          //New
      void test_optima_connection( void );              //New

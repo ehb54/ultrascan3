@@ -1,23 +1,23 @@
 //! file us_globalequil.cpp
-#include <QApplication>
-#include "us_images.h"
-#include "us_license_t.h"
-#include "us_license.h"
+#include "us_globalequil.h"
+#include "us_constants.h"
 #include "us_data_loader.h"
+#include "us_db2.h"
+#include "us_db_provider.h"
+#include "us_editor.h"
+#include "us_eqreporter.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
+#include "us_images.h"
+#include "us_license.h"
+#include "us_license_t.h"
+#include "us_math2.h"
+#include "us_model_select.h"
 #include "us_run_details2.h"
 #include "us_settings.h"
-#include "us_constants.h"
-#include "us_editor.h"
-#include "us_math2.h"
-#include "us_db2.h"
-#include "us_passwd.h"
-#include "us_solution_vals.h"
 #include "us_simparms.h"
-#include "us_globalequil.h"
-#include "us_model_select.h"
-#include "us_eqreporter.h"
+#include "us_solution_vals.h"
+#include <QApplication>
 
 // main program
 int main( int argc, char* argv[] )
@@ -321,12 +321,11 @@ void US_GlobalEquil::load( void )
 
    if ( dialog->exec() != QDialog::Accepted )  return;
 
-   US_DB2* dbP   = NULL;
+   std::unique_ptr<IUS_DB2> dbP;
 
    if ( dkdb_cntrls->db() )
    {
-      US_Passwd pw;
-      dbP        = new US_DB2( pw.getPasswd() );
+      dbP = US_DBProvider::open();
 
       workingDir = tr( "(database)" );
    }
@@ -363,8 +362,7 @@ void US_GlobalEquil::load( void )
       QString s_manu;
       QString s_emsg;
       QString solID;
-      US_SolutionVals::values( dbP, &dataList[ jd ], solID,
-                               s_vbar, s_dens, s_visc, s_comp, s_manu, s_emsg );
+      US_SolutionVals::values( dbP.get(), &dataList[jd], solID, s_vbar, s_dens, s_visc, s_comp, s_manu, s_emsg );
       ds_vbar20s << s_vbar.toDouble();
       ds_densits << s_dens.toDouble();
       ds_viscos  << s_visc.toDouble();
@@ -376,7 +374,7 @@ DbgLv(1) << "  jd vbar20 density" << nn << ds_vbar20s[nn] << ds_densits[nn];
 
    // Get Centerpiece bottom and rotor coefficients for calc_bottom
    US_SimulationParameters simparams;
-   simparams.initFromData( dbP, dataList[ 0 ] );
+   simparams.initFromData( dbP.get(), dataList[0] );
    runfit.bottom_pos   = simparams.bottom_position;
    runfit.rcoeffs[ 0 ] = simparams.rotorcoeffs[ 0 ];
    runfit.rcoeffs[ 1 ] = simparams.rotorcoeffs[ 1 ];

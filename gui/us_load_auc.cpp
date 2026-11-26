@@ -1,12 +1,12 @@
 //! \file us_load_auc.cpp
 
 #include "us_load_auc.h"
-#include "us_settings.h"
+#include "us_db_provider.h"
+#include "us_editor.h"
 #include "us_gui_settings.h"
 #include "us_investigator.h"
-#include "us_passwd.h"
+#include "us_settings.h"
 #include "us_util.h"
-#include "us_editor.h"
 
 
 US_LoadAUC::US_LoadAUC( bool local, QMap<QString,QString>& prot_det, QVector< US_DataIO::RawData >& rData,
@@ -467,45 +467,45 @@ qDebug() << "Ed:Ld: runID_sel" << runID_sel;
 			  << datamap[ datamap.keys()[ i ] ].DB_id;
 
 		 //read editedData IDs for all triples in the selected RUN
-		 US_Passwd pw;
-		 QString masterPW = pw.getPasswd();
-		 US_DB2 db( masterPW );
-		 
-		 if ( db.lastErrno() != IUS_DB2::OK )
-		   {
-		     QMessageBox::warning( this, tr( "Connection Problem" ),
-					   tr( "Assessing EditedData IDs: Could not connect to database \n" ) + db.lastError() );
-		     return;
-		   }
+       auto db = US_DBProvider::open();
 
-		 QStringList qry;
-		 qry.clear();
-		 qry << "get_editedDataIDs" << QString::number( datamap[ datamap.keys()[ i ] ].DB_id );
-		 db.query( qry );
-		 		 
-		 while ( db.next() )
-		   {
-		     editDataIDs << db.value( 0 ).toString();
-		     filenames   << db.value( 2 ).toString();
-		   }
-	       }
-	     
-	     if ( editDataIDs.size() == 0 )
-	       {
-		 QMessageBox::warning( this,
-				       tr( "No Edits Available" ),
-				       tr( "No Edit children exist for selected run"
-					   " '%1'. The run will be hidden." ).arg( runID_sel ) );
-		 
-		 item->setHidden( true );
-		 sel_run = false;
+       if ( db->lastErrno() != IUS_DB2::OK )
+       {
+          QMessageBox::warning( this,
+                                tr( "Connection Problem" ),
+                                tr( "Assessing EditedData IDs: Could not connect to database \n" ) + db->lastError() );
+          return;
+       }
 
-		 QApplication::restoreOverrideCursor();
-		 QApplication::restoreOverrideCursor();
-		 return;
-	       }
-	   }
-	 
+       QStringList qry;
+       qry.clear();
+       qry << "get_editedDataIDs" << QString::number( datamap[datamap.keys()[i]].DB_id );
+       db->query( qry );
+
+       while ( db->next() )
+       {
+          editDataIDs << db->value( 0 ).toString();
+          filenames << db->value( 2 ).toString();
+       }
+          }
+
+          if ( editDataIDs.size() == 0 )
+          {
+             QMessageBox::warning( this,
+                                   tr( "No Edits Available" ),
+                                   tr( "No Edit children exist for selected run"
+                                       " '%1'. The run will be hidden." )
+                                      .arg( runID_sel ) );
+
+             item->setHidden( true );
+             sel_run = false;
+
+             QApplication::restoreOverrideCursor();
+             QApplication::restoreOverrideCursor();
+             return;
+          }
+      }
+
          load_db( sdescs );
       }
 
@@ -899,35 +899,33 @@ int US_LoadAUC::scan_db()
    bool rfilter      = ! runID_sel.isEmpty();
    QStringList runIDs;
    QStringList infoDs;
-   US_Passwd   pw;
-   US_DB2      db( pw.getPasswd() );
+   auto        db = US_DBProvider::open();
 
-   if ( db.lastErrno() != IUS_DB2::OK )
+   if ( db->lastErrno() != IUS_DB2::OK )
    {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-        tr( "Could not connect to database\n" ) + db.lastError() );
+      QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database\n" ) + db->lastError() );
       return naucf;
    }
 
    QStringList query;
    QString idInv     = QString::number( personID );
-   QString label     = db.value( 1 ).toString();
+   QString     label     = db->value( 1 ).toString();
 
    if ( rfilter )
       query << "get_raw_desc_by_runID" << idInv << runID_sel;
    else
       query << "get_rawData_desc" << idInv;
 
-   db.query( query );
+   db->query( query );
 
-   while ( db.next() )
+   while ( db->next() )
    {  // Accumulate data description objects from database information
-      QString rawDataID = db.value( 0 ).toString();
-      QString label     = db.value( 1 ).toString();
-      QString filename  = db.value( 2 ).toString();
-      QString date      = db.value( 5 ).toString() + " UTC";
-      QString rawPers   = db.value( 6 ).toString();
-      QString rawGUID   = db.value( 7 ).toString();
+      QString rawDataID = db->value( 0 ).toString();
+      QString label     = db->value( 1 ).toString();
+      QString filename  = db->value( 2 ).toString();
+      QString date      = db->value( 5 ).toString() + " UTC";
+      QString rawPers   = db->value( 6 ).toString();
+      QString rawGUID   = db->value( 7 ).toString();
       QString runID     = filename.section( ".",  0, -6 );
 
       QString tripID    = filename.section( ".", -4, -2 );
@@ -1070,13 +1068,11 @@ int US_LoadAUC::scan_run_db()
    int nruns         = 0;
    QStringList runIDs;
    QStringList infoDs;
-   US_Passwd   pw;
-   US_DB2      db( pw.getPasswd() );
+   auto        db = US_DBProvider::open();
 
-   if ( db.lastErrno() != IUS_DB2::OK )
+   if ( db->lastErrno() != IUS_DB2::OK )
    {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-        tr( "Could not connect to database\n" ) + db.lastError() );
+      QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database\n" ) + db->lastError() );
       return nruns;
    }
 
@@ -1085,14 +1081,14 @@ int US_LoadAUC::scan_run_db()
    QString filename  = "(unknown)";
    QStringList q( "get_experiment_desc" );
    q << QString::number( personID );
-   db.query( q );
+   db->query( q );
 
-   while ( db.next() )
+   while ( db->next() )
    {  // Accumulate data description objects from database information
-      QString rawDataID = db.value( 0 ).toString();
-      QString runID     = db.value( 1 ).toString();
-      QString label     = db.value( 4 ).toString();
-      QString date      = db.value( 5 ).toString() + " UTC";
+      QString rawDataID = db->value( 0 ).toString();
+      QString runID     = db->value( 1 ).toString();
+      QString label     = db->value( 4 ).toString();
+      QString date      = db->value( 5 ).toString() + " UTC";
 
       QString lkey      = runID + "." + tripID;
       QString idata     = label + "^" +
@@ -1103,8 +1099,8 @@ int US_LoadAUC::scan_run_db()
                           rawDataID + "^" +
                           date;
 
-      //ALEXEY : db.value( 2 ).toString() => type [..., buoyancy,... ]
-      QString etype      = db.value( 2 ).toString();
+      //ALEXEY : db->value( 2 ).toString() => type [..., buoyancy,... ]
+      QString etype         = db->value( 2 ).toString();
       bool expIsBuoyancy = ( etype.compare( "Buoyancy", Qt::CaseInsensitive ) == 0 );
       
       if ( us_auto_mode )
@@ -1319,13 +1315,11 @@ void US_LoadAUC::load_db( QList< DataDesc >& sdescs )
    work.mkdir( runID );
 
    // Connect to DB
-   US_Passwd pw;
-   US_DB2 db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != IUS_DB2::OK )
+   if ( db->lastErrno() != IUS_DB2::OK )
    {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-         tr( "Could not connect to database\n " ) + db.lastError() );
+      QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database\n " ) + db->lastError() );
       return;
    }
 
@@ -1349,10 +1343,9 @@ void US_LoadAUC::load_db( QList< DataDesc >& sdescs )
          {
             QStringList query;
             query << "get_rawData" << QString::number( idRaw );
-            db.query( query );
-            db.next();
-            ddesc.dcheck       = db.value( 8 ).toString() + " " +
-                                 db.value( 9 ).toString();
+            db->query( query );
+            db->next();
+            ddesc.dcheck       = db->value( 8 ).toString() + " " + db->value( 9 ).toString();
             dcheck             = ddesc.dcheck;
          }
 
@@ -1365,8 +1358,8 @@ void US_LoadAUC::load_db( QList< DataDesc >& sdescs )
       // Download the DB record to a file (if need be)
       if ( dload_auc )
       {
-         db.readBlobFromDB( filename, "download_aucData", idRaw );
-         int stat           = db.lastErrno();
+         db->readBlobFromDB( filename, "download_aucData", idRaw );
+         int stat = db->lastErrno();
 
          if ( stat != IUS_DB2::OK )
          {

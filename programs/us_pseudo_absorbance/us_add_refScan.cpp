@@ -1,10 +1,12 @@
 #include "us_add_refScan.h"
+#include "us_db_provider.h"
 #include <QTextStream>
 
 US_AddRefScan::US_AddRefScan() : US_Widgets()
 {
     setPalette( US_GuiSettings::frameColorDefault() );
-    dbCon = new US_DB2();
+    dbCon_owned.reset( new US_DB2() ); // not connected until check_connection()
+    dbCon = dbCon_owned.get();
 
     // Put the Run Info across the entire window
     QLabel* lb_run = us_banner(tr("Load the Run(s)"));
@@ -2310,74 +2312,94 @@ QVector<QVector<QVector<double>>> US_AddRefScan::get_ref_dev(QVector<int> ids, Q
     return output;
 }
 
-bool US_AddRefScan::check_runIDs(US_DB2* db, QVector<int>& experimentIDs,
-                             QVector<QDate>& runIDs_date, int& instrumentID){
-    // Let's see if we can find the run ID
-    QString procedure("get_info_for_referenceScan");
-    QStringList badRunIDs;
-    QStringList badExpType;
-    badRunIDs.clear();
-    experimentIDs.clear();
-    runIDs_date.clear();
-    instrumentID = -1;
-    QString experimentType;
-    for (int i = 0; i < runIDs.size(); ++i){
-        QStringList q;
-        q.clear();
-        q << procedure << runIDs.at(i);
-        db->query( q );
-        qDebug() << db->numRows();
-        if (db->lastErrno() == US_DB2::NOTPERMITTED){
-            QString mess("Only admin could add new reference data!");
-            QMessageBox::information( this, tr( "Error" ), mess);
-            return false;
-        }
-        if ( db->lastErrno() == US_DB2::NOROWS )
-            badRunIDs << runIDs.at(i);
-        else{
-            db->next();
-            experimentIDs << db->value( 0 ).toString().toInt();
+bool US_AddRefScan::check_runIDs( IUS_DB2* db, QVector<int>& experimentIDs, QVector<QDate>& runIDs_date, int& instrumentID )
+{
+   // Let's see if we can find the run ID
+   QString     procedure( "get_info_for_referenceScan" );
+   QStringList badRunIDs;
+   QStringList badExpType;
+   badRunIDs.clear();
+   experimentIDs.clear();
+   runIDs_date.clear();
+   instrumentID = -1;
+   QString experimentType;
+   for ( int i = 0; i < runIDs.size(); ++i )
+   {
+      QStringList q;
+      q.clear();
+      q << procedure << runIDs.at( i );
+      db->query( q );
+      qDebug() << db->numRows();
+      if ( db->lastErrno() == US_DB2::NOTPERMITTED )
+      {
+         QString mess( "Only admin could add new reference data!" );
+         QMessageBox::information( this, tr( "Error" ), mess );
+         return false;
+      }
+      if ( db->lastErrno() == US_DB2::NOROWS )
+      {
+         badRunIDs << runIDs.at( i );
+      }
+      else
+      {
+         db->next();
+         experimentIDs << db->value( 0 ).toString().toInt();
 
-            experimentType = db->value( 5 ).toString();
-            if (experimentType != "calibration") badExpType << runIDs.at(i);
+         experimentType = db->value( 5 ).toString();
+         if ( experimentType != "calibration" )
+         {
+            badExpType << runIDs.at( i );
+         }
 
-            int insId = db->value( 3 ).toString().toInt();
-            if (instrumentID == -1) instrumentID = insId;
-            else{
-                if (instrumentID != insId){
-                    QString mess("The instrument ID of all RunIDs must be same!");
-                    QMessageBox::information( this, tr( "Error" ), mess);
-                    return false;
-                }
+         int insId = db->value( 3 ).toString().toInt();
+         if ( instrumentID == -1 )
+         {
+            instrumentID = insId;
+         }
+         else
+         {
+            if ( instrumentID != insId )
+            {
+               QString mess( "The instrument ID of all RunIDs must be same!" );
+               QMessageBox::information( this, tr( "Error" ), mess );
+               return false;
             }
-            QString dt_str = db->value( 7 ).toString();
-            QDate date_i = str2date(dt_str);
-            runIDs_date << date_i;
-        }
-    }
-    qDebug() << experimentIDs << "\n" << instrumentID << experimentType << "\n" << runIDs_date;
-    if (badRunIDs.size() > 0){
-        QString mess("runID(s) not found in the database:\n");
-        for (int i = 0; i < badRunIDs.size(); ++i){
-            mess.append("'").append(badRunIDs.at(i)).append("'");
-            if (i < badRunIDs.size() - 1)
-                mess.append(";\n");
-        }
-        QMessageBox::information( this, tr( "Error" ), mess);
-        return false;
-    }
-    if (badExpType.size() > 0){
-        QString mess("The type of these runID(s) is not 'calibration':\n");
-        for (int i = 0; i < badExpType.size(); ++i){
-            mess.append("'").append(badExpType.at(i)).append("'");
-            if (i < badExpType.size() - 1)
-                mess.append(";\n");
-        }
-        QMessageBox::information( this, tr( "Error" ), mess);
-        return false;
-    }
-    return true;
-
+         }
+         QString dt_str = db->value( 7 ).toString();
+         QDate   date_i = str2date( dt_str );
+         runIDs_date << date_i;
+      }
+   }
+   qDebug() << experimentIDs << "\n" << instrumentID << experimentType << "\n" << runIDs_date;
+   if ( badRunIDs.size() > 0 )
+   {
+      QString mess( "runID(s) not found in the database:\n" );
+      for ( int i = 0; i < badRunIDs.size(); ++i )
+      {
+         mess.append( "'" ).append( badRunIDs.at( i ) ).append( "'" );
+         if ( i < badRunIDs.size() - 1 )
+         {
+            mess.append( ";\n" );
+         }
+      }
+      QMessageBox::information( this, tr( "Error" ), mess );
+      return false;
+   }
+   if ( badExpType.size() > 0 )
+   {
+      QString mess( "The type of these runID(s) is not 'calibration':\n" );
+      for ( int i = 0; i < badExpType.size(); ++i )
+      {
+         mess.append( "'" ).append( badExpType.at( i ) ).append( "'" );
+         if ( i < badExpType.size() - 1 )
+         {
+            mess.append( ";\n" );
+         }
+      }
+      QMessageBox::information( this, tr( "Error" ), mess );
+      return false;
+   }
+   return true;
 }
 
 void US_AddRefScan::save_local(US_RefScanDataIO::RefData &refScans){
@@ -2542,8 +2564,11 @@ void US_AddRefScan::check_connection(){
 //    if (dbCon->isConnected())
 //        return;
 
-    QString error;
-    dbCon->connect(pw.getPasswd(), error);
+if ( !dbCon->isConnected() )
+{
+   dbCon_owned = US_DBProvider::open();
+   dbCon       = dbCon_owned.get();
+}
     // First row
     if (dbCon->isConnected()){
         QStringList DB   = US_Settings::defaultDB();
@@ -2555,44 +2580,55 @@ void US_AddRefScan::check_connection(){
     return;
 }
 
-void US_AddRefScan::get_refScanDBinfo(US_DB2* db, QVector<refScanTableInfo>& refTable){
-    // Let's see if we can find the run ID
-    refTable.clear();
-    QStringList q;
-    q.clear();
-    q << "get_referenceScan_info";
-    db->query( q );
-    qDebug() << db->numRows();
-    if ( db->lastErrno() == US_DB2::NOROWS ){
-        qDebug() << "reference table is empty!";
-        return;
-    }
-    while (db->next()){
-        refScanTableInfo refScanInfo;
-        refScanInfo.id = db->value(0).toString().toInt();
-        refScanInfo.instrumentID = db->value(1).toString().toInt();
-        refScanInfo.personID = db->value(2).toString().toInt();
-        refScanInfo.type = db->value(3).toString();
-        QStringList expIDs = db->value(4).toString().split(",");
-        QVector<int> expIDs_int;
-        foreach (QString str, expIDs)
-            expIDs_int << str.toInt();
-        refScanInfo.experimentIDs << expIDs_int;
-        refScanInfo.referenceTime = str2date(db->value(5).toString());
-        refScanInfo.nWavelength = db->value(6).toString().toInt();
-        refScanInfo.nPoints = db->value(7).toString().toInt();
-        refScanInfo.startWavelength = db->value(8).toString().toDouble();
-        refScanInfo.stopWavelength = db->value(9).toString().toDouble();
-        int nb = db->value(10).toString().toInt();
-        if (nb == 0)
-            refScanInfo.null_blob = false;
-        else
-            refScanInfo.null_blob = true;
-        refScanInfo.lastUpdated = str2date(db->value(11).toString());
-        if (! refScanInfo.null_blob)
-            refTable << refScanInfo;
-    }
-    return;
+void US_AddRefScan::get_refScanDBinfo( IUS_DB2* db, QVector<refScanTableInfo>& refTable )
+{
+   // Let's see if we can find the run ID
+   refTable.clear();
+   QStringList q;
+   q.clear();
+   q << "get_referenceScan_info";
+   db->query( q );
+   qDebug() << db->numRows();
+   if ( db->lastErrno() == US_DB2::NOROWS )
+   {
+      qDebug() << "reference table is empty!";
+      return;
+   }
+   while ( db->next() )
+   {
+      refScanTableInfo refScanInfo;
+      refScanInfo.id           = db->value( 0 ).toString().toInt();
+      refScanInfo.instrumentID = db->value( 1 ).toString().toInt();
+      refScanInfo.personID     = db->value( 2 ).toString().toInt();
+      refScanInfo.type         = db->value( 3 ).toString();
+      QStringList  expIDs      = db->value( 4 ).toString().split( "," );
+      QVector<int> expIDs_int;
+      foreach ( QString str, expIDs )
+      {
+         expIDs_int << str.toInt();
+      }
+      refScanInfo.experimentIDs << expIDs_int;
+      refScanInfo.referenceTime   = str2date( db->value( 5 ).toString() );
+      refScanInfo.nWavelength     = db->value( 6 ).toString().toInt();
+      refScanInfo.nPoints         = db->value( 7 ).toString().toInt();
+      refScanInfo.startWavelength = db->value( 8 ).toString().toDouble();
+      refScanInfo.stopWavelength  = db->value( 9 ).toString().toDouble();
+      int nb                      = db->value( 10 ).toString().toInt();
+      if ( nb == 0 )
+      {
+         refScanInfo.null_blob = false;
+      }
+      else
+      {
+         refScanInfo.null_blob = true;
+      }
+      refScanInfo.lastUpdated = str2date( db->value( 11 ).toString() );
+      if ( !refScanInfo.null_blob )
+      {
+         refTable << refScanInfo;
+      }
+   }
+   return;
 }
 
 QDate US_AddRefScan::str2date(QString date){

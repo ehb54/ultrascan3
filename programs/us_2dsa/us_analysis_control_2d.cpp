@@ -3,30 +3,27 @@
 #include <QDateTime>
 
 #include "us_2dsa.h"
-#include "us_analysis_control_2d.h"
 #include "us_adv_analysis_2d.h"
-#include "us_worker_calcnorm.h"
-#include "us_settings.h"
-#include "us_passwd.h"
+#include "us_analysis_control_2d.h"
+#include "us_constants.h"
 #include "us_db2.h"
-#include "us_gui_settings.h"
-#include "us_memory.h"
-#include "us_spectrodata.h"
-#include "us_select_runs.h"
-#include "us_model.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_settings.h"
+#include "us_db_provider.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
+#include "us_license.h"
+#include "us_license_t.h"
 #include "us_math2.h"
 #include "us_matrix.h"
+#include "us_memory.h"
+#include "us_model.h"
+#include "us_report.h"
+#include "us_select_runs.h"
+#include "us_settings.h"
+#include "us_show_norm.h"
 #include "us_sleep.h"
 #include "us_solute.h"
-#include "us_passwd.h"
-#include "us_report.h"
-#include "us_constants.h"
-#include "us_show_norm.h"
+#include "us_spectrodata.h"
+#include "us_worker_calcnorm.h"
 #include <qwt_legend.h>
 
 #define setPBMaximum(a)   setRange(1,a)
@@ -748,11 +745,12 @@ void US_AnalysisControl2D::apply_auto_fit_params( const QMap<QString, QString>& 
       const int maxsgsz = 800;
       QString   cgid    = params.value( "custom_grid_id" );
       int       rc      = -1;
-      US_Passwd pw;
-      US_DB2    cgdb( pw.getPasswd() );
+      auto      cgdb    = US_DBProvider::open();
 
-      if ( cgdb.lastErrno() == US_DB2::OK )
-         rc = cusmodel.load( cgid, &cgdb );
+      if ( cgdb->lastErrno() == US_DB2::OK )
+      {
+         rc = cusmodel.load( cgid, cgdb.get() );
+      }
 
       if ( rc != US_DB2::OK || cusmodel.components.isEmpty() )
       {  // headless: cannot ask the user -- say so loudly and keep the uniform grid

@@ -5,28 +5,28 @@
 
 #include "us_fematch.h"
 #include "us_adv_dmgamc.h"
-#include "us_thread_worker.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_settings.h"
+#include "us_astfem_math.h"
+#include "us_colorgradIO.h"
+#include "us_constants.h"
+#include "us_data_loader.h"
+#include "us_db_provider.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
-#include "us_matrix.h"
-#include "us_constants.h"
-#include "us_solution_vals.h"
-#include "us_solution_gui.h"
-#include "us_passwd.h"
-#include "us_data_loader.h"
-#include "us_util.h"
 #include "us_investigator.h"
-#include "us_loadable_noise.h"
 #include "us_lamm_astfvm.h"
+#include "us_license.h"
+#include "us_license_t.h"
+#include "us_loadable_noise.h"
+#include "us_matrix.h"
 #include "us_report.h"
-#include "us_sleep.h"
-#include "us_astfem_math.h"
-#include "us_time_state.h"
+#include "us_settings.h"
 #include "us_simparms.h"
-#include "us_colorgradIO.h"
+#include "us_sleep.h"
+#include "us_solution_gui.h"
+#include "us_solution_vals.h"
+#include "us_thread_worker.h"
+#include "us_time_state.h"
+#include "us_util.h"
 #include <QFileInfo>
 
 #define MIN_NTC   25
@@ -465,8 +465,7 @@ DbgLv(1) << "LD: exec dialog";
    {  // Fetch the speed steps for the experiment from the database
       workingDir = tr( "(database)" );
 
-      US_Passwd   pw;
-      US_DB2*     dbP    = new US_DB2( pw.getPasswd() );
+      auto        dbP = US_DBProvider::open();
       QStringList query;
       QString     expID;
       int         idExp  = 0;
@@ -479,13 +478,13 @@ DbgLv(1) << "LD: exec dialog";
       {
          dbP->next();
          idExp              = dbP->value( 1 ).toInt();
-         US_SimulationParameters::speedstepsFromDB( dbP, idExp, speed_steps );
+         US_SimulationParameters::speedstepsFromDB( dbP.get(), idExp, speed_steps );
       }
 DbgLv(1)<<"LD: from database";
 
       // Check out whether we need to read TimeState from the DB
 
-      bool newfile       = US_TimeState::dbSyncToLF( dbP, tmst_fpath, idExp );
+bool newfile = US_TimeState::dbSyncToLF( dbP.get(), tmst_fpath, idExp );
 DbgLv(0) << "LD: newfile" << newfile << "idExp" << idExp
  << "tmst_fpath" << tmst_fpath;
    }
@@ -640,11 +639,8 @@ void US_FeMatch::update( int drow )
 DbgLv(1) << "Fem:Upd: (0)svbar" << svbar;
 
    QString errmsg;
-   US_Passwd pw;
-   US_DB2* dbP = dkdb_cntrls->db() ?
-                 new US_DB2( pw.getPasswd() ) : 0;
-   bufvl = US_SolutionVals::values( dbP, edata, solID, svbar, bdens,
-                                    bvisc, bcomp, bmanu, errmsg );
+   std::unique_ptr<IUS_DB2> dbP = dkdb_cntrls->db() ? US_DBProvider::open() : nullptr;
+   bufvl                        = US_SolutionVals::values( dbP.get(), edata, solID, svbar, bdens, bvisc, bcomp, bmanu, errmsg );
    //Hardwire compressibility to zero, for now
    bcomp="0.0";
    if ( bufvl )
@@ -669,7 +665,7 @@ DbgLv(1) << "Fem:Upd: (0)svbar" << svbar;
 
       else if ( solID.length() < 36  &&  dbP != NULL )
       {
-         solstat = solution_rec.readFromDB( solID.toInt(), dbP );
+         solstat = solution_rec.readFromDB( solID.toInt(), dbP.get() );
          solerr  = dbP->lastError();
       }
 
@@ -712,8 +708,8 @@ DbgLv(1) << "Fem:Upd: (0)svbar" << svbar;
 
    if ( dbP != NULL )
    {
-      delete dbP;
-      dbP = NULL;
+      dbP.reset();
+      dbP = nullptr;
    }
 
    pb_view     ->setEnabled( false );
@@ -1915,8 +1911,7 @@ void US_FeMatch::load_noise( )
    
    if ( nenois > 0 )
    {  // There is/are noise(s):  ask user if she wants to load
-      US_Passwd pw;
-      US_DB2* dbP  = loadDB ? new US_DB2( pw.getPasswd() ) : NULL;
+      std::unique_ptr<IUS_DB2> dbP = loadDB ? US_DBProvider::open() : nullptr;
 
       if ( nenois > 1  &&  noisdf == 0 )
       {  // Noise exists and noise-dialog flag set to "Auto-load"
@@ -1927,15 +1922,15 @@ void US_FeMatch::load_noise( )
 
          if ( typen == "ti" )
 	   {
-	     ti_noise.load( loadDB, noiID, dbP );
-	     qDebug() << "Noise 1: noiID, loaded ti--" << noiID;
-	   }
+         ti_noise.load( loadDB, noiID, dbP.get() );
+         qDebug() << "Noise 1: noiID, loaded ti--" << noiID;
+      }
          else
 	   {
-	     ri_noise.load( loadDB, noiID, dbP );
-	     qDebug() << "Noise 1: noiID, loaded ri--" << noiID;
-	   }
-	 
+         ri_noise.load( loadDB, noiID, dbP.get() );
+         qDebug() << "Noise 1: noiID, loaded ri--" << noiID;
+      }
+
          descn         = nieGUIDs.at( 1 );
          QString mdlx2 = descn.section( ":", 2, 2 );
          int kenois    = ( mdlx1 == mdlx2 ) ? 2 : 1;
@@ -1945,22 +1940,20 @@ void US_FeMatch::load_noise( )
             typen         = descn.section( ":", 1, 1 );
             if ( typen == "ti" )
 	      {
-		ti_noise.load( loadDB, noiID, dbP );
-		qDebug() << "Noise 2: noiID, loaded ti--" << noiID;
-	      }
+            ti_noise.load( loadDB, noiID, dbP.get() );
+            qDebug() << "Noise 2: noiID, loaded ti--" << noiID;
+         }
             else
 	      {
-		ri_noise.load( loadDB, noiID, dbP );
-		qDebug() << "Noise 2: noiID, loaded ri--" << noiID;
-	      }
-	 }
-
+            ri_noise.load( loadDB, noiID, dbP.get() );
+            qDebug() << "Noise 2: noiID, loaded ri--" << noiID;
+         }
+         }
       }
 
       else if ( nenois > 1  &&  noisdf > 0 )
       {  // more than 1:  get choice from noise loader dialog
-         US_NoiseLoader* nldiag = new US_NoiseLoader( dbP,
-            mieGUIDs, nieGUIDs, ti_noise, ri_noise, edata );
+         US_NoiseLoader* nldiag = new US_NoiseLoader( dbP.get(), mieGUIDs, nieGUIDs, ti_noise, ri_noise, edata );
          //nldiag->move( this->pos() + QPoint( 200, 200 ) );
          nldiag->exec();
          qApp->processEvents();
@@ -1975,10 +1968,10 @@ void US_FeMatch::load_noise( )
          noiID         = noiID.section( ":", 0, 0 );
 
          if ( typen == "ti" )
-            ti_noise.load( loadDB, noiID, dbP );
+            ti_noise.load( loadDB, noiID, dbP.get() );
 
          else
-            ri_noise.load( loadDB, noiID, dbP );
+            ri_noise.load( loadDB, noiID, dbP.get() );
       }
 
       // noise loaded:  insure that counts jive with data
@@ -2022,8 +2015,8 @@ void US_FeMatch::load_noise( )
 
       if ( dbP != NULL )
       {
-         delete dbP;
-         dbP = NULL;
+         dbP.reset();
+         dbP = nullptr;
       }
    }
    te_desc->setText( edata->description );
@@ -2058,14 +2051,13 @@ DbgLv(1) << "SimMdl: n) s D c"
  << model.components[lc].signal_concentration;
 
    // Initialize simulation parameters using edited data information
-   US_Passwd pw;
-   US_DB2* dbP = dkdb_cntrls->db() ? new US_DB2( pw.getPasswd() ) : NULL;
+std::unique_ptr<IUS_DB2> dbP = dkdb_cntrls->db() ? US_DBProvider::open() : nullptr;
 
-   simparams.initFromData( dbP, *edata, dat_steps );
-   simparams.simpoints         = adv_vals[ "simpoints" ].toInt();
-   simparams.meshType          = US_SimulationParameters::ASTFEM;
-   simparams.gridType          = US_SimulationParameters::MOVING;
-   simparams.radial_resolution = (double)( radhi - radlo ) / ( nconc - 1 );
+simparams.initFromData( dbP.get(), *edata, dat_steps );
+simparams.simpoints         = adv_vals["simpoints"].toInt();
+simparams.meshType          = US_SimulationParameters::ASTFEM;
+simparams.gridType          = US_SimulationParameters::MOVING;
+simparams.radial_resolution = (double) ( radhi - radlo ) / ( nconc - 1 );
 //   simparams.bottom            = simparams.bottom_position;
 DbgLv(1) << "SimMdl: simpoints" << simparams.simpoints
  << "rreso" << simparams.radial_resolution
@@ -3568,15 +3560,14 @@ void US_FeMatch::get_solution()
 
    if ( dkdb_cntrls->db() )
    {
-      US_Passwd pw;
-      US_DB2 db( pw.getPasswd() );
+      auto        db = US_DBProvider::open();
       QStringList query( "get_experiment_info_by_runID" );
       query << runID << QString::number( US_Settings::us_inv_ID() );
-      db.query( query );
-      if ( db.lastErrno() != US_DB2::NOROWS )
+      db->query( query );
+      if ( db->lastErrno() != US_DB2::NOROWS )
       {
-         db.next();
-         expID = db.value( 1 ).toString().toInt();
+         db->next();
+         expID = db->value( 1 ).toString().toInt();
       }
    }
 
@@ -3607,10 +3598,8 @@ void US_FeMatch::updateSolution( US_Solution solution_sel )
 
    if ( dkdb_cntrls->db() )
    {
-      US_Passwd pw;
-      US_DB2 db( pw.getPasswd() );
-      US_SolutionVals::bufvals_db( &db, sbufID, bufGUID, bufDesc,
-            bdens, bvisc, bcmpr, bmanu, errmsg );
+      auto db = US_DBProvider::open();
+      US_SolutionVals::bufvals_db( db.get(), sbufID, bufGUID, bufDesc, bdens, bvisc, bcmpr, bmanu, errmsg );
    }
 
    else
@@ -3762,18 +3751,17 @@ int US_FeMatch::type_distrib( )
 // Copy report files to the database
 void US_FeMatch::reportFilesToDB( QStringList& files )
 {
-   US_Passwd   pw;
-   US_DB2      db( pw.getPasswd() );
-   US_DB2*     dbP = &db;
+   auto                    db  = US_DBProvider::open();
+   IUS_DB2*                dbP = db.get();
    QStringList query;
    US_DataIO::EditedData*  edata = &dataList[ lw_triples->currentRow() ];
    QString     tripdesc          = edata->description;
 
    // Get the ID of the EditedData DB record associated with the report
    query << "get_editID" << edata->editGUID;
-   db.query( query );
-   db.next();
-   int     idEdit = db.value( 0 ).toString().toInt();
+   db->query( query );
+   db->next();
+   int       idEdit = db->value( 0 ).toString().toInt();
 
    // Parse the plot files directory and set the runID for the report
    QString pfdir  = files[ 0 ].left( files[ 0 ].lastIndexOf( "/" ) );
@@ -3985,16 +3973,17 @@ bool US_FeMatch::has_intensity_profile( const QString& runID, const bool in_db )
 
    if ( in_db )
    {  // Data from DB:  get any RIProfile from experiment record
-      US_Passwd pw;
-      US_DB2 db( pw.getPasswd() );
+      auto        db = US_DBProvider::open();
       QStringList query;
       query << "get_experiment_info_by_runID" << runID
             << QString::number( US_Settings::us_inv_ID() );
-      db.query( query );
-      if ( db.lastErrno() == US_DB2::NOROWS )
-         return false;                      // No DB records means no profile
-      db.next();
-      ripxml   = db.value( 16 ).toString(); // Otherwise get profile text
+      db->query( query );
+      if ( db->lastErrno() == US_DB2::NOROWS )
+      {
+         return false; // No DB records means no profile
+      }
+      db->next();
+      ripxml = db->value( 16 ).toString(); // Otherwise get profile text
    }
 
    else
@@ -4050,10 +4039,9 @@ void US_FeMatch::auto_load_simulate( US_DataIO::RawData i_rdata,
 
    qDebug() << "RUNID --- " << runID;
    // Get speed steps from disk or DB experiment (and maybe timestate)
-   US_Passwd   pw;
-   US_DB2*     dbP    = new US_DB2( pw.getPasswd() );
-   US_SimulationParameters::speedstepsFromDB( dbP, idExp, speed_steps );
-   bool newfile = US_TimeState::dbSyncToLF( dbP, tmst_fpath, idExp );
+   auto dbP = US_DBProvider::open();
+   US_SimulationParameters::speedstepsFromDB( dbP.get(), idExp, speed_steps );
+   bool newfile = US_TimeState::dbSyncToLF( dbP.get(), tmst_fpath, idExp );
    if (! newfile) {
       return;
    }

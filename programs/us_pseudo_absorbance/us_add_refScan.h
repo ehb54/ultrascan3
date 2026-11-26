@@ -2,16 +2,17 @@
 #ifndef US_ADD_REF_SCAN_H
 #define US_ADD_REF_SCAN_H
 
-#include "us_widgets.h"
-#include "us_plot.h"
+#include "qwt_plot_marker.h"
 #include "us_dataIO.h"
 #include "us_db2.h"
+#include "us_images.h"
 #include "us_passwd.h"
-#include "qwt_plot_marker.h"
+#include "us_plot.h"
 #include "us_refScan_dataIO.h"
 #include "us_settings.h"
 #include "us_util.h"
-#include "us_images.h"
+#include "us_widgets.h"
+#include <memory>
 //#include "us_extern.h"
 //#include "us_help.h"
 
@@ -209,7 +210,8 @@ class US_AddRefScan : public US_Widgets
         QTabWidget* tabs; ///< Tab widget
         // US_Disk_DB_Controls* dkdb_ctrl; ///< Disk/DB controls
         US_Passwd pw; ///< Password object
-        US_DB2* dbCon; ///< Database connection
+        IUS_DB2*                          dbCon;       ///< Database connection
+        std::unique_ptr<IUS_DB2>          dbCon_owned; //!< The connection dbCon points to
 
         QStringList runIDs; ///< List of run IDs
         QString runType; ///< Run type
@@ -274,8 +276,8 @@ class US_AddRefScan : public US_Widgets
         void save_local(US_RefScanDataIO::RefData&);
         void save_db(US_RefScanDataIO::RefData&);
         void check_connection(void);
-        bool check_runIDs(US_DB2*, QVector<int>&, QVector<QDate>&, int&);
-        void get_refScanDBinfo(US_DB2*, QVector<refScanTableInfo>&);
+        bool                              check_runIDs( IUS_DB2*, QVector<int>&, QVector<QDate>&, int& );
+        void                              get_refScanDBinfo( IUS_DB2*, QVector<refScanTableInfo>& );
         QDate str2date(QString);
 };
 

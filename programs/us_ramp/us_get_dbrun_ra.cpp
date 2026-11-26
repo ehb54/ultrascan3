@@ -1,10 +1,10 @@
 //! \file us_get_dbrun_ra.cpp
 
 #include "us_get_dbrun_ra.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
 #include "us_db2.h"
-#include "us_passwd.h"
+#include "us_db_provider.h"
+#include "us_gui_settings.h"
+#include "us_settings.h"
 
 // Primary constructor to establish the dialog
 US_GetDBRunRa::US_GetDBRunRa( QString& r ) 
@@ -100,11 +100,9 @@ US_GetDBRunRa::US_GetDBRunRa( QString& r )
 // Function to load the runInfo structure with all runID's in the DB
 bool US_GetDBRunRa::loadData( void )
 {
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != IUS_DB2::OK )
+   if ( db->lastErrno() != IUS_DB2::OK )
    {
       QMessageBox::information( this,
              tr( "Error" ),
@@ -117,9 +115,11 @@ bool US_GetDBRunRa::loadData( void )
    expIDs.clear();
    QStringList q( "get_experiment_desc" );
    q << QString::number( US_Settings::us_inv_ID() );
-   db.query( q );
-   while( db.next() )
-      expIDs << db.value( 0 ).toString();
+   db->query( q );
+   while ( db->next() )
+   {
+      expIDs << db->value( 0 ).toString();
+   }
 
    // Now get information we want about each experiment
    runInfo.clear();
@@ -128,14 +128,14 @@ bool US_GetDBRunRa::loadData( void )
       q.clear();
       q  << QString( "get_experiment_info" )
          << expID;
-      db.query( q );
-      db.next();
+      db->query( q );
+      db->next();
 
       RunInfo r;
       r.ID     = expID.toInt();
-      r.date   = db.value( 13 ).toString();
-      r.runID  = db.value(  2 ).toString();
-      r.label  = db.value( 10 ).toString();
+      r.date   = db->value( 13 ).toString();
+      r.runID  = db->value( 2 ).toString();
+      r.label  = db->value( 10 ).toString();
 
       runInfo << r;
    }
@@ -169,11 +169,9 @@ void US_GetDBRunRa::select( void )
 // Function to delete the highlighted run when delete button is pressed
 void US_GetDBRunRa::deleteRun( void )
 {
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != IUS_DB2::OK )
+   if ( db->lastErrno() != IUS_DB2::OK )
    {
       QMessageBox::information( this,
              tr( "Error" ),
@@ -194,7 +192,7 @@ void US_GetDBRunRa::deleteRun( void )
    // Let's make sure it's not a calibration experiment in use
    QStringList q( "count_calibration_experiments " );
    q << expID;
-   int count = db.functionQuery( q );
+   int count = db->functionQuery( q );
 
    if ( count < 0 )
    {
@@ -219,25 +217,23 @@ void US_GetDBRunRa::deleteRun( void )
    q.clear();
    q << "delete_experiment_solutions"
      << expID ;
-   status = db.statusQuery( q );
+   status = db->statusQuery( q );
 
    // Same with cell table
    q.clear();
    q  << "delete_cell_experiments"
       << expID ;
-   status = db.statusQuery( q );
+   status = db->statusQuery( q );
 
    // Now delete the experiment and all existing rawData, 
    // because we're starting over 
    q.clear();
    q << "delete_experiment"
      << expID ;
-   status = db.statusQuery( q );
+   status = db->statusQuery( q );
 
    if ( status != IUS_DB2::OK )
    {
-      QMessageBox::information( this,
-            tr( "Error" ),
-            db.lastError() + " (" + QString::number( status )  + ")\n" );
+      QMessageBox::information( this, tr( "Error" ), db->lastError() + " (" + QString::number( status ) + ")\n" );
    }
 }

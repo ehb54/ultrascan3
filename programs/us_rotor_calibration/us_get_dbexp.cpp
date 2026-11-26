@@ -1,10 +1,10 @@
 //! \file us_get_dbexp.cpp
 
 #include "us_get_dbexp.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
 #include "us_db2.h"
-#include "us_passwd.h"
+#include "us_db_provider.h"
+#include "us_gui_settings.h"
+#include "us_settings.h"
 
 // Primary constructor to establish the dialog
 US_GetDBExp::US_GetDBExp( QString& eID ) 
@@ -97,11 +97,9 @@ US_GetDBExp::US_GetDBExp( QString& eID )
 // Function to load the runInfo structure with all runID's in the DB
 bool US_GetDBExp::loadData( void )
 {
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
       QMessageBox::information( this,
              tr( "Error" ),
@@ -114,9 +112,11 @@ bool US_GetDBExp::loadData( void )
    expIDs.clear();
    QStringList q( "get_experiment_desc" );
    q << QString::number( US_Settings::us_inv_ID() );
-   db.query( q );
-   while( db.next() )
-      expIDs << db.value( 0 ).toString();
+   db->query( q );
+   while ( db->next() )
+   {
+      expIDs << db->value( 0 ).toString();
+   }
 
    // Now get information we want about each experiment
    runInfo.clear();
@@ -125,14 +125,14 @@ bool US_GetDBExp::loadData( void )
       q.clear();
       q  << QString( "get_experiment_info" )
          << expID;
-      db.query( q );
-      db.next();
+      db->query( q );
+      db->next();
 
       RunInfo r;
       r.ID     = expID.toInt();
-      r.date   = db.value( 13 ).toString();
-      r.runID  = db.value(  2 ).toString();
-      r.label  = db.value( 10 ).toString();
+      r.date   = db->value( 13 ).toString();
+      r.runID  = db->value( 2 ).toString();
+      r.label  = db->value( 10 ).toString();
 
       runInfo << r;
    }

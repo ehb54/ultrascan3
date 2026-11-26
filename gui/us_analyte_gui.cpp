@@ -1,17 +1,17 @@
 //! \file us_analyte_gui.cpp
 #include "us_analyte_gui.h"
-#include "us_passwd.h"
-#include "us_settings.h"
+#include "us_constants.h"
+#include "us_db2.h"
+#include "us_db_provider.h"
+#include "us_editor.h"
+#include "us_editor_gui.h"
+#include "us_eprofile.h"
 #include "us_gui_settings.h"
 #include "us_investigator.h"
-#include "us_editor_gui.h"
+#include "us_math2.h"
+#include "us_settings.h"
 #include "us_table.h"
 #include "us_util.h"
-#include "us_db2.h"
-#include "us_constants.h"
-#include "us_editor.h"
-#include "us_math2.h"
-#include "us_eprofile.h"
 
 #include "us_new_spectrum.h"
 #include "us_edit_spectrum.h"
@@ -445,14 +445,13 @@ bool US_AnalyteMgrSelect::read_from_db( QListWidgetItem* item )
 bool US_AnalyteMgrSelect::read_from_db( const QString& analyGUID )
 {
    DbgLv( 1 ) << "agS: rddb: anaID" << analyGUID;
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
    // Get the analyte data from the database
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      connect_error( db.lastError() );
-      show_load_failure( db.lastError() );
+      connect_error( db->lastError() );
+      show_load_failure( db->lastError() );
       return false;
    }
 
@@ -460,7 +459,7 @@ bool US_AnalyteMgrSelect::read_from_db( const QString& analyGUID )
    US_Analyte candidate( *analyte );
    candidate.extinction.clear();
 
-   if ( candidate.load( true, analyGUID, &db ) != US_DB2::OK )
+   if ( candidate.load( true, analyGUID, db.get() ) != US_DB2::OK )
    {
       show_load_failure( candidate.message );
       return false;
@@ -961,30 +960,29 @@ bool US_AnalyteMgrSelect::analyte_in_use( QString& analyteGUID )
 // Delete an analyte from the database (if not in use by another table type)
 void US_AnalyteMgrSelect::delete_db( void )
 {
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      connect_error( db.lastError() );
+      connect_error( db->lastError() );
       return;
    }
 
    QStringList q( "get_analyteID" );
    q << analyte->analyteGUID;
 
-   db.query( q );
+   db->query( q );
 
-   int status = db.lastErrno();
+   int status = db->lastErrno();
 
    if (  status == US_DB2::OK )
    {
-      db.next();
-      QString analyteID = db.value( 0 ).toString();
+      db->next();
+      QString analyteID = db->value( 0 ).toString();
 
       q[ 0 ] = "delete_analyte";
       q[ 1 ] = analyteID;
-      status = db.statusQuery( q );
+      status = db->statusQuery( q );
    }
 
    if ( status == US_DB2::ANALY_IN_USE )
@@ -998,9 +996,7 @@ void US_AnalyteMgrSelect::delete_db( void )
 
    if ( status != US_DB2::OK )
    {
-      QMessageBox::warning( this,
-         tr( "Attention" ),
-         tr( "Delete failed.\n\n" ) + db.lastError() );
+      QMessageBox::warning( this, tr( "Attention" ), tr( "Delete failed.\n\n" ) + db->lastError() );
    }
 }
 
@@ -1109,14 +1105,13 @@ void US_AnalyteMgrSelect::show_no_analytes( void )
 // Read analyte information from the database
 void US_AnalyteMgrSelect::read_db( void )
 {
-   US_Passwd pw;
-   US_DB2 db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
-DbgLv(1) << "agS-rddb: lastErr" << db.lastError();
-DbgLv(1) << "agS-rddb: errNo OK" << db.lastErrno() << US_DB2::OK;
-   if ( db.lastErrno() != US_DB2::OK )
+   DbgLv( 1 ) << "agS-rddb: lastErr" << db->lastError();
+   DbgLv( 1 ) << "agS-rddb: errNo OK" << db->lastErrno() << US_DB2::OK;
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      connect_error( db.lastError() );
+      connect_error( db->lastError() );
       return;
    }
 
@@ -1152,12 +1147,12 @@ DbgLv(1) << "agS-rddb: personID" << *personID;
    QString IDperson = QString::number( *personID );
    QStringList q;
    q << "get_analyte_desc" << IDperson;
-   db.query( q );
+   db->query( q );
 
-   while ( db.next() )
+   while ( db->next() )
    {
-      QString a_type   = db.value( 2 ).toString();
-DbgLv(1) << "agS-rddb:   a_type" << a_type;
+      QString a_type = db->value( 2 ).toString();
+      DbgLv( 1 ) << "agS-rddb:   a_type" << a_type;
       US_Analyte::analyte_t current = US_Analyte::PROTEIN;
 
       if      ( a_type == "Protein" )  current = US_Analyte::PROTEIN;
@@ -1168,9 +1163,9 @@ DbgLv(1) << "agS-rddb:    current atype_set" << current << atype_set;
 
       if ( current != atype_set )      continue;
 
-      QString anaID    = db.value( 0 ).toString();
-      QString descr    = db.value( 1 ).toString();
-DbgLv(1) << "agS-rddb:     aID descr" << anaID << descr;
+      QString anaID = db->value( 0 ).toString();
+      QString descr = db->value( 1 ).toString();
+      DbgLv( 1 ) << "agS-rddb:     aID descr" << anaID << descr;
       analyteIDs   << anaID;
       descriptions << descr;
       GUIDs        << "";
@@ -1180,9 +1175,9 @@ DbgLv(1) << "agS-rddb:     aID descr" << anaID << descr;
    {
       q.clear();
       q << "get_analyte_info" << analyteIDs[ ii ];
-      db.query( q );
-      db.next();
-      GUIDs[ ii ]      = db.value( 0 ).toString();
+      db->query( q );
+      db->next();
+      GUIDs[ii] = db->value( 0 ).toString();
    }
 
    lw_analyte_list->clear();
@@ -2728,19 +2723,18 @@ DbgLv(1) << "AnaN:SL:  newAcc: DB  id" << analyte->analyteID;
 bool US_AnalyteMgrNew::write_db()
 {
 DbgLv(1) << "AnaN:SL: write_db()  anaID" << analyte->analyteID;
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
-   analyte->new_or_changed_spectrum = true;
-   int status                       = analyte->write( true, "", &db );
+auto db                          = US_DBProvider::open();
+analyte->new_or_changed_spectrum = true;
+int status                       = analyte->write( true, "", db.get() );
 
-   if ( status != IUS_DB2::OK )
-   {
-      QString msg = tr( "(Return Code = %1 ) " ).arg( status ) + analyte->message + "\n" + db.lastError();
-      // The message says whether the DB kept the analyte and only its
-      //  local copy failed, or what part of the DB save failed
-      QMessageBox::critical( this, tr( "Analyte Save Error" ), tr( "The analyte save did not finish:\n" ) + msg );
-      return false;
-   }
+if ( status != IUS_DB2::OK )
+{
+   QString msg = tr( "(Return Code = %1 ) " ).arg( status ) + analyte->message + "\n" + db->lastError();
+   // The message says whether the DB kept the analyte and only its
+   //  local copy failed, or what part of the DB save failed
+   QMessageBox::critical( this, tr( "Analyte Save Error" ), tr( "The analyte save did not finish:\n" ) + msg );
+   return false;
+}
 
    return true;
 }
@@ -3052,18 +3046,17 @@ void US_AnalyteMgrEdit::editAccepted()
 bool US_AnalyteMgrEdit::write_db()
 {
 DbgLv(1) << "AnaE:SL: write_db()  bufID" << analyte->analyteID;
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
-   int       status = analyte->write( true, "", &db );
+auto db     = US_DBProvider::open();
+int  status = analyte->write( true, "", db.get() );
 
-   if ( status != IUS_DB2::OK )
-   {
-      QString msg = tr( "(Return Code = %1 ) " ).arg( status ) + analyte->message + "\n" + db.lastError();
-      // The message says whether the DB kept the analyte and only its
-      //  local copy failed, or what part of the DB save failed
-      QMessageBox::critical( this, tr( "Analyte Save Error" ), tr( "The analyte save did not finish:\n" ) + msg );
-      return false;
-   }
+if ( status != IUS_DB2::OK )
+{
+   QString msg = tr( "(Return Code = %1 ) " ).arg( status ) + analyte->message + "\n" + db->lastError();
+   // The message says whether the DB kept the analyte and only its
+   //  local copy failed, or what part of the DB save failed
+   QMessageBox::critical( this, tr( "Analyte Save Error" ), tr( "The analyte save did not finish:\n" ) + msg );
+   return false;
+}
 
    return true;
 }
@@ -3179,7 +3172,6 @@ void US_AnalyteMgrSettings::assign_investigator( int invID )
 // Get buffer components from DB and write to */etc/bufferComponents.xml
 void US_AnalyteMgrSettings::synch_components( void )
 {
-   US_Passwd pw;
    qApp->processEvents();
 DbgLv(1) << "setB:synchc read to HD from DB";
 

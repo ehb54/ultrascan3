@@ -183,13 +183,13 @@ class US_InitDialogueGui : public US_WidgetsDialog
          * \param status The status of the records.
          * \return The number of records listed.
          */
-        static int list_all_autoflow_records( QList< QStringList >&, US_DB2*, QString );
+        static int                      list_all_autoflow_records( QList<QStringList>&, IUS_DB2*, QString );
 
         /**
          * \brief Reads the Optima machines.
          * \param db The database connection.
          */
-        void read_optima_machines( US_DB2* db = 0 );
+        void                            read_optima_machines( IUS_DB2* db = 0 );
         QList< QMap<QString, QString> > instruments; //!< List of instruments
 
         /**

@@ -1,13 +1,13 @@
 //! \file us_get_run.cpp
 
 #include "us_get_run.h"
-#include "us_experiment.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
 #include "us_db2.h"
-#include "us_passwd.h"
-#include "us_util.h"
+#include "us_db_provider.h"
+#include "us_experiment.h"
+#include "us_gui_settings.h"
 #include "us_investigator.h"
+#include "us_settings.h"
+#include "us_util.h"
 
 // Primary constructor to establish the dialog
 US_GetRun::US_GetRun( QString& run, bool inDB ) 
@@ -97,35 +97,30 @@ qDebug() << "gDBr: size" << size();
 void US_GetRun::load_db( void )
 {
 qDebug() << "LdDb: IN";
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
+auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      QMessageBox::information( this,
-             tr( "Error" ),
-             tr( "Error making the DB connection.\n" ) );
-      return;
-   }
+if ( db->lastErrno() != US_DB2::OK )
+{
+   QMessageBox::information( this, tr( "Error" ), tr( "Error making the DB connection.\n" ) );
+   return;
+}
 
    // Get information we want about all experiments
    runInfo.clear();
    QStringList q( "get_experiment_desc" );
    q << QString::number( US_Settings::us_inv_ID() );
-   db.query( q );
+   db->query( q );
 
-   while( db.next() )
+   while ( db->next() )
    {
       RunInfo rr;
-      rr.ID     = db.value( 0 ).toString().toInt();
-      rr.runID  = db.value( 1 ).toString();
-      rr.label  = db.value( 4 ).toString();
-      rr.date   = US_Util::toUTCDatetimeText( db.value( 5 )
-                  .toDateTime().toString( Qt::ISODate ), true )
-                  .section( " ", 0, 0 ).simplified();
-//qDebug() << "expID" << expID << "ID date runID label"
-// << rr.ID << rr.date << rr.runID << rr.label;
+      rr.ID    = db->value( 0 ).toString().toInt();
+      rr.runID = db->value( 1 ).toString();
+      rr.label = db->value( 4 ).toString();
+      rr.date =
+         US_Util::toUTCDatetimeText( db->value( 5 ).toDateTime().toString( Qt::ISODate ), true ).section( " ", 0, 0 ).simplified();
+      //qDebug() << "expID" << expID << "ID date runID label"
+      // << rr.ID << rr.date << rr.runID << rr.label;
 
       runInfo << rr;
    }
@@ -261,9 +256,8 @@ bool US_GetRun::check_filename_for_autoflow( QString rFilename )
 {
   bool isRequired = false;
   int  autoflowNumber = 0;
-  
-  US_Passwd pw;
-  US_DB2* db = new US_DB2( pw.getPasswd() );
+
+  auto        db = US_DBProvider::open();
 
   QStringList q;
   q  << QString( "check_filename_for_autoflow" ) //for now, both GMP and R&D
@@ -283,11 +277,9 @@ bool US_GetRun::check_filename_for_autoflow( QString rFilename )
 // Function to delete the highlighted run when delete button is pressed
 void US_GetRun::deleteRun( void )
 {
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
       QMessageBox::information( this,
              tr( "Error" ),
@@ -332,8 +324,8 @@ qDebug() << "GetRun:delRun: ndx" << ndx << "expID" << expID;
    // Let's make sure it's not a calibration experiment in use
    QStringList q( "count_calibration_experiments " );
    q << expID;
-   int count = db.functionQuery( q );
-qDebug() << "GetRun:delRun: calexp count" << count;
+   int count = db->functionQuery( q );
+   qDebug() << "GetRun:delRun: calexp count" << count;
 
    if ( count < 0 )
    {
@@ -356,15 +348,15 @@ qDebug() << "GetRun:delRun: calexp count" << count;
    q.clear();
    q << "delete_experiment_solutions"
      << expID ;
-   status = db.statusQuery( q );
-qDebug() << "GetRun:delRun: del sols status" << status;
+   status = db->statusQuery( q );
+   qDebug() << "GetRun:delRun: del sols status" << status;
 
    // Same with cell table
    q.clear();
    q  << "delete_cell_experiments"
       << expID ;
-   status = db.statusQuery( q );
-qDebug() << "GetRun:delRun: del cells status" << status;
+   status = db->statusQuery( q );
+   qDebug() << "GetRun:delRun: del cells status" << status;
 
    // Let's delete any pcsa_modelrecs records to avoid
    //  constraints problems
@@ -372,22 +364,19 @@ qDebug() << "GetRun:delRun: del cells status" << status;
    QString runID = tw ->item( ndx, 0 )->text();
 qDebug() << "GetRun:delRun:  invID" << invID << "runID" << runID;
 
-   US_Experiment::deleteRunPcsaMrecs( &db, invID, runID );
+US_Experiment::deleteRunPcsaMrecs( db.get(), invID, runID );
 
-   // Now delete the experiment and all existing rawData, 
-   // because we're starting over 
-   q.clear();
-   q << "delete_experiment"
-     << expID ;
-   status = db.statusQuery( q );
+// Now delete the experiment and all existing rawData,
+// because we're starting over
+q.clear();
+q << "delete_experiment" << expID;
+status = db->statusQuery( q );
 qDebug() << "GetRun:delRun: del_exp stat" << status;
 
    if ( status != US_DB2::OK )
    {
-      QMessageBox::information( this,
-            tr( "Error / Warning" ),
-            db.lastError() + tr( " (error=%1, expID=%2)" )
-            .arg( status ).arg( expID ) );
+      QMessageBox::information(
+         this, tr( "Error / Warning" ), db->lastError() + tr( " (error=%1, expID=%2)" ).arg( status ).arg( expID ) );
    }
 
    // Delete table widget row for removed run
