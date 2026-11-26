@@ -770,7 +770,7 @@ bool US_ExperGuiRanges::iStwoOrMoreAnalytesSpectra_forChannel( QString channelNa
   // 	       << ", (ID)Buffer " << "(" << b_ID << ")" << b_name;
 
   //       buffer.extinction.clear();
-  //       buffer.readFromDB( db.get(), b_ID );
+  //       buffer.readFromDB( &db, b_ID );
 
   //       //QMap <double, double> extinction[ wavelength ] <=> value
   //       qDebug() << "[Buffer]Extinction Profile wvls: " 

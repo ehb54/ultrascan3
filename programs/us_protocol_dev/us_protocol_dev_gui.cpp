@@ -242,9 +242,7 @@ void US_ProtocolDevMain::checkDataLocation( void )
       data_location_disk = false;
       
       //Check DB connection: exit if no connection..
-      US_Passwd pw;
-      QString masterpw = pw.getPasswd();
-      auto      db       = US_DBProvider::open();
+      auto db = US_DBProvider::open();
 
       if ( db->lastErrno() != US_DB2::OK )
 	{
@@ -1305,9 +1303,7 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 void US_InitDialogueGui::do_run_tables_cleanup( QMap < QString, QString > run_details )
 {
   // Check DB connection
-  US_Passwd pw;
-  QString masterpw = pw.getPasswd();
-  auto      db       = US_DBProvider::open();
+  auto db = US_DBProvider::open();
 
   if ( db->lastErrno() != US_DB2::OK )
     {
@@ -1434,9 +1430,7 @@ void US_InitDialogueGui::do_run_tables_cleanup( QMap < QString, QString > run_de
 void US_InitDialogueGui::do_create_autoflowStatus_for_failedRun( QMap < QString, QString > run_details )
 {
   // Check DB connection
-  US_Passwd pw;
-  QString masterpw = pw.getPasswd();
-  auto      db       = US_DBProvider::open();
+  auto db = US_DBProvider::open();
 
   if ( db->lastErrno() != US_DB2::OK )
     {
@@ -1550,9 +1544,7 @@ bool US_InitDialogueGui::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 void US_InitDialogueGui::do_run_data_cleanup( QMap < QString, QString > run_details )
 {
   // Check DB connection
-  US_Passwd pw;
-  QString masterpw = pw.getPasswd();
-  auto      db       = US_DBProvider::open();
+  auto db = US_DBProvider::open();
 
   if ( db->lastErrno() != US_DB2::OK )
     {
@@ -1965,9 +1957,7 @@ int US_InitDialogueGui::get_autoflow_records( void )
    //--------------------------------------////
   
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto      db       = US_DBProvider::open();
+   auto db = US_DBProvider::open();
 
    int record_number = 0;
    
@@ -1990,9 +1980,7 @@ int US_InitDialogueGui::get_autoflow_records( void )
 QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID, QString type  )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto                    db       = US_DBProvider::open();
+   auto                    db = US_DBProvider::open();
 
    QMap <QString, QString> protocol_details;
    
@@ -2074,9 +2062,7 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 QMap< QString, QString> US_InitDialogueGui::read_autoflow_failed_record( QString failedID  )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto                    db       = US_DBProvider::open();
+   auto                    db = US_DBProvider::open();
 
    QMap <QString, QString> failed_details;
    

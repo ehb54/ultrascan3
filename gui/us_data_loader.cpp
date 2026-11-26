@@ -947,15 +947,15 @@ void US_DataLoader::accepted()
 // Scan database for edit sets
 void US_DataLoader::scan_dbase_edit()
 {
-qDebug() << "ScDB:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-auto db = US_DBProvider::open();
+   qDebug() << "ScDB:TM:00: " << QTime::currentTime().toString( "hh:mm:ss:zzzz" );
+   auto db = US_DBProvider::open();
 
-if ( db->lastErrno() != US_DB2::OK )
-{
-   QMessageBox::information(
-      this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
-   return;
-}
+   if ( db->lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::information(
+         this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
+      return;
+   }
 
    bool     tfilter  = ( etype_filt != "none" );     // Type filtering?
    bool     rfilter  = ( ! runID_sel.isEmpty() );    // Run filtering?
@@ -1364,15 +1364,15 @@ void US_DataLoader::scan_local_edit( void )
 // Scan database for runs
 void US_DataLoader::scan_dbase_runs()
 {
-qDebug() << "ScDB:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-auto db = US_DBProvider::open();
+   qDebug() << "ScDB:TM:00: " << QTime::currentTime().toString( "hh:mm:ss:zzzz" );
+   auto db = US_DBProvider::open();
 
-if ( db->lastErrno() != US_DB2::OK )
-{
-   QMessageBox::information(
-      this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
-   return;
-}
+   if ( db->lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::information(
+         this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
+      return;
+   }
 
    QStringList query;
    //QString     invID  = QString::number( US_Settings::us_inv_ID() );

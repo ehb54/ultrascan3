@@ -486,9 +486,9 @@ class US_ComProjectMain : public US_Widgets
 
   //int  get_autoflow_records( void );
   //QMap < QString, QString > read_autoflow_record( int );
-  //static int list_all_autoflow_records( QList< QStringList >&, IUS_DB2* );
+  //static int list_all_autoflow_records( QList< QStringList >&, US_DB2* );
 
-  //void read_optima_machines( IUS_DB2* = 0 );
+  //void read_optima_machines( US_DB2* = 0 ); 
   //QList< QMap<QString, QString> > instruments;
   US_Help       showHelp;              //!< Help display object
 			       

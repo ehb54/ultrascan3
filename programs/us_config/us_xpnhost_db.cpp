@@ -829,20 +829,18 @@ void US_XpnHostDB::editDB( void )
 
 void US_XpnHostDB::editHost( QMap < QString, QString > & newInstrument  )
 {
-  US_Passwd pw;
-  QString masterpw = pw.getPasswd();
-  std::unique_ptr<IUS_DB2> db       = use_db ? US_DBProvider::open() : nullptr;
+   std::unique_ptr<IUS_DB2> db = use_db ? US_DBProvider::open() : nullptr;
 
-  if ( db->lastErrno() != US_DB2::OK )
-    {
+   if ( db->lastErrno() != US_DB2::OK )
+   {
       QMessageBox::warning( this,
                             tr( "Database Connection Problem!" ),
                             tr( "You are not currently connected to the DB!\n"
                                 "Error: " ) + QString::number( db->lastErrno() ) + "\n" );
       return;
-    }
+   }
 
-  
+
   QStringList q( "" );
   q.clear();
   q  << QString( "update_instrument_new" )
@@ -929,9 +927,7 @@ void US_XpnHostDB::newHost( QMap < QString, QString > & newInstrument  )
 
   qDebug() << "New Instrument: " << newInstrument["name"] << ", " << newInstrument[ "optimaHost" ];
 
-  US_Passwd pw;
-  QString masterpw = pw.getPasswd();
-  std::unique_ptr<IUS_DB2> db       = use_db ? US_DBProvider::open() : nullptr;
+  std::unique_ptr<IUS_DB2> db = use_db ? US_DBProvider::open() : nullptr;
 
   if ( db->lastErrno() != US_DB2::OK )
     {

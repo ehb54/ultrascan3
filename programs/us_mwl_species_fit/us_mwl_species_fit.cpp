@@ -2,20 +2,22 @@
 
 #include <QApplication>
 
-#include "us_csv_loader.h"
-#include "us_data_loader.h"
-#include "us_db_provider.h"
-#include "us_gui_settings.h"
-#include "us_images.h"
-#include "us_license.h"
-#include "us_license_t.h"
-#include "us_load_run_noise.h"
 #include "us_mwl_species_fit.h"
+#include "us_license_t.h"
+#include "us_license.h"
 #include "us_settings.h"
+#include "us_gui_settings.h"
 #include "us_util.h"
+#include "us_data_loader.h"
+#include "us_load_run_noise.h"
+#include "us_passwd.h"
+#include "us_images.h"
+#include "us_csv_loader.h"
 
 #include "qwt_picker_machine.h"
 #include <qwt_scale_div.h>
+
+#include "us_db_provider.h"
 #define AXISSCALEDIV(a)    (QwtScaleDiv*)&data_plot->axisScaleDiv(a)
 #define dPlotClearAll(a) a->detachItems(QwtPlotItem::Rtti_PlotItem,true)
 

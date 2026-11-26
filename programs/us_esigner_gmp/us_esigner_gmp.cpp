@@ -2783,9 +2783,7 @@ void US_eSignaturesGMP::refreshAutoflowRecordsList( void )
 QMap< QString, QString>  US_eSignaturesGMP::read_autoflow_record( int autoflowID, QString type  )
 {
    // Check DB connection
-   US_Passwd pw( this );
-   QString masterpw = pw.getPasswd();
-   std::unique_ptr<IUS_DB2> db_holder = US_DBProvider::open(); // closed on every return path
+   std::unique_ptr<IUS_DB2> db_holder = US_DBProvider::open( this ); // closed on every return path
    IUS_DB2*                 db        = db_holder.get();
 
    QMap <QString, QString> run_info;

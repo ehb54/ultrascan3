@@ -198,9 +198,7 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
 int US_Database::get_autoflow_records( )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto      db       = US_DBProvider::open();
+   auto db = US_DBProvider::open();
 
    int record_number = 0;
    

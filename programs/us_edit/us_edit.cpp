@@ -4373,8 +4373,8 @@ void US_Edit::read_aprofile_data_from_aprofile()
 
   while ( db->next() )
   {
-     //currProf.aprofID     = db->value( 0 ).toInt();
-     //currProf.aprofname   = db->value( 1 ).toString();
+     //currProf.aprofID     = db.value( 0 ).toInt();
+     //currProf.aprofname   = db.value( 1 ).toString();
      aprofile_xml = db->value( 2 ).toString();
   }
 
@@ -10178,12 +10178,14 @@ void US_Edit::floating( void )
 void US_Edit::write( void )
 {
    // Determine if we are using the database
-   IUS_DB2* dbP = NULL;
+   // A connection for this call only; the member connection is left alone.
+   std::unique_ptr<IUS_DB2> db_owned;
+   IUS_DB2*                 dbP = NULL;
 
    if ( disk_controls->db() )
    {
-      dbP_owned = US_DBProvider::open();
-      dbP       = dbP_owned.get();
+      db_owned = US_DBProvider::open();
+      dbP      = db_owned.get();
 
       if ( dbP->lastErrno() != US_DB2::OK )
       {
@@ -10241,9 +10243,7 @@ bool US_Edit::isSaved_auto( void )
    bool isDataSaved = false;
 
    // Then we're working in DB, so verify connectivity
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto      db       = US_DBProvider::open();
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -10276,9 +10276,7 @@ int US_Edit::read_autoflow_stages_record( int autoflowID  )
    int status = 0;
 
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto      db       = US_DBProvider::open();
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -10303,9 +10301,7 @@ int US_Edit::read_autoflow_stages_record( int autoflowID  )
 void US_Edit::revert_autoflow_stages_record( int autoflowID )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto      db       = US_DBProvider::open();
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -10328,9 +10324,7 @@ void US_Edit::revert_autoflow_stages_record( int autoflowID )
 QMap< QString, QString> US_Edit::read_autoflow_record( int autoflowID  )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto                    db       = US_DBProvider::open();
+   auto                    db = US_DBProvider::open();
 
    QMap <QString, QString> protocol_details;
 
@@ -10941,13 +10935,15 @@ void US_Edit::write_auto( void )
 
   /*******************************************************/
 
-   // Determine if we are using the database
-     IUS_DB2* dbP = NULL;
+     // Determine if we are using the database
+     // A connection for this call only; the member connection is left alone.
+     std::unique_ptr<IUS_DB2> db_owned;
+     IUS_DB2*                 dbP = NULL;
 
      if ( disk_controls->db() )
      {
-        dbP_owned = US_DBProvider::open();
-        dbP       = dbP_owned.get();
+        db_owned = US_DBProvider::open();
+        dbP      = db_owned.get();
 
         if ( dbP->lastErrno() != US_DB2::OK )
         {
@@ -11320,9 +11316,7 @@ void US_Edit::record_edit_status( QMap< QString, bool> auto_meniscus, QString dt
   //END DEBUG
 
   // Check DB connection
-  US_Passwd pw;
-  QString masterpw = pw.getPasswd();
-  auto      db       = US_DBProvider::open();
+  auto db = US_DBProvider::open();
 
   if ( db->lastErrno() != US_DB2::OK )
     {
@@ -11431,9 +11425,7 @@ void US_Edit::delete_autoflow_record( void )
   QString OptimaName        = details_at_editing_local[ "OptimaName" ];
 
   // Check DB connection
-  US_Passwd pw;
-  QString masterpw = pw.getPasswd();
-  auto      db       = US_DBProvider::open();
+  auto    db = US_DBProvider::open();
 
   if ( db->lastErrno() != US_DB2::OK )
   {
@@ -12273,13 +12265,15 @@ void US_Edit::apply_prior( void )
    QString filename;
    QString filepath;
    int     index1;
-   IUS_DB2* dbP = NULL;
+   // A connection for this call only; the member connection is left alone.
+   std::unique_ptr<IUS_DB2> db_owned;
+   IUS_DB2*                 dbP = NULL;
    DbgLv( 1 ) << "AppPri: IN  dkdb" << disk_controls->db();
 
    if ( disk_controls->db() )
    {
-      dbP_owned = US_DBProvider::open();
-      dbP       = dbP_owned.get();
+      db_owned = US_DBProvider::open();
+      dbP      = db_owned.get();
 
       if ( dbP->lastErrno() != US_DB2::OK )
       {

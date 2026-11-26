@@ -139,7 +139,7 @@ void US_ReporterGMP::write_gmp_report_DB_test( QString report_filepath, QString 
       qDebug() << "Something went wrong!!";
       // qry.clear();
       // qry << "clear_autoflowGMPReportRecord" << QString::number( autolfowGMPReportID );
-      // db->query( qry );
+      // db.query( qry );
 
       //Maybe revert 'reporting' stage in the autoflowStages??
     }
@@ -1992,9 +1992,7 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
 QMap< QString, QString>  US_ReporterGMP::read_autoflow_record( int autoflowID  )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto                    db       = US_DBProvider::open();
+   auto                    db = US_DBProvider::open();
 
    QMap <QString, QString> protocol_details;
    
@@ -8411,7 +8409,7 @@ void US_ReporterGMP::user_interactions_analysis_abde( QString analysisABDEJson, 
         qry_sg << "read_autoflowAnalysisABDE_record" << AutoflowID_auto;
         db_sg->query( qry_sg );
 
-        if ( db_sg->lastErrno() == US_DB2::OK & db_sg->next() )
+        if ( db_sg->lastErrno() == US_DB2::OK && db_sg->next() )
         {
            QJsonObject root = QJsonDocument::fromJson( db_sg->value( 2 ).toString().toUtf8() ).object();
 
@@ -8546,7 +8544,7 @@ void US_ReporterGMP::user_interactions_analysis_velmwl( QString analysisVelMwlJs
          qry_sp << "read_autoflowAnalysisVelMwl_record" << AutoflowID_auto;
          db_sp->query( qry_sp );
 
-         if ( db_sp->lastErrno() == US_DB2::OK & db_sp->next() )
+         if ( db_sp->lastErrno() == US_DB2::OK && db_sp->next() )
          {
             QJsonObject dec = QJsonDocument::fromJson( db_sp->value( 0 ).toString().toUtf8() ).object(); // channels' decisions
             QJsonObject sel = QJsonDocument::fromJson( db_sp->value( 2 ).toString().toUtf8() ).object(); // species selections

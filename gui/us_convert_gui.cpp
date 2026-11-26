@@ -1,32 +1,35 @@
-#include "us_convert_gui.h"
-#include "us_astfem_math.h"
-#include "us_constants.h"
-#include "us_convertio.h"
-#include "us_db2.h"
-#include "us_db_provider.h"
-#include "us_experiment_gui.h"
-#include "us_get_run.h"
-#include "us_gui_settings.h"
-#include "us_gui_util.h"
-#include "us_images.h"
-#include "us_intensity.h"
-#include "us_investigator.h"
-#include "us_license.h"
-#include "us_license_t.h"
-#include "us_math2.h"
-#include "us_passwd.h"
-#include "us_plot.h"
-#include "us_protocol_util.h"
-#include "us_report.h"
-#include "us_run_details2.h"
-#include "us_select_triples.h"
-#include "us_settings.h"
-#include "us_solution_gui.h"
-#include "us_time_state.h"
-#include "us_tmst_plot.h"
-#include "us_util.h"
 #include <QApplication>
 #include <qwt_scale_div.h>
+#include "us_license_t.h"
+#include "us_license.h"
+#include "us_util.h"
+#include "us_settings.h"
+#include "us_gui_settings.h"
+#include "us_gui_util.h"
+#include "us_run_details2.h"
+#include "us_plot.h"
+#include "us_math2.h"
+#include "us_convert_gui.h"
+#include "us_convertio.h"
+#include "us_experiment_gui.h"
+#include "us_select_triples.h"
+#include "us_solution_gui.h"
+#include "us_db2.h"
+#include "us_passwd.h"
+#include "us_intensity.h"
+#include "us_get_run.h"
+#include "us_investigator.h"
+#include "us_constants.h"
+#include "us_time_state.h"
+#include "us_report.h"
+#include "us_gui_util.h"
+#include "us_util.h"
+#include "us_images.h"
+#include "us_tmst_plot.h"
+#include "us_astfem_math.h"
+#include "us_protocol_util.h"
+
+#include "us_db_provider.h"
 
 #ifdef Q_OS_WIN
 #include <float.h>
@@ -3171,7 +3174,7 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
       // DB. If we didn't load it from there, then we shouldn't be able to sync
 
       //ALEXEY -- NOT needed for autoflow here
-      // int recStatus = ExpData.checkRunID_auto( ExpData.invID, db.get() );
+      // int recStatus = ExpData.checkRunID_auto( ExpData.invID, &db );
 
       // // if a record is found but saveStatus==BOTH,
       // //  then we are editing that record
@@ -3278,7 +3281,7 @@ void US_ConvertGui::readProtocol_auto( void )
 
    
    QString xmlstr( "" );
-   //US_ProtocolUtil::read_record( ProtocolName_auto, &xmlstr, NULL, db.get() );
+   //US_ProtocolUtil::read_record( ProtocolName_auto, &xmlstr, NULL, &db );
 
    qDebug() << "IN READ PROTOCOL --";
    qDebug() << "ProtocolName_auto, ExpData.invID -- " << ProtocolName_auto << ExpData.invID;
@@ -3553,7 +3556,7 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 
      // US_Rotor::Lab lab_auto;
      // int labID = ProtInfo.ProtRotor.labID;
-     // lab_auto.readDB( labID, db.get() );
+     // lab_auto.readDB( labID, &db );
      // ExpData.labID = lab_auto.ID;
 
      qDebug() << "LabID  READ!!! ";
@@ -3781,7 +3784,7 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    all_tripinfo[i].centerpiece     = cpID;
    all_tripinfo[i].centerpieceName = cpName;
 
-   // For MWL, duplicate solution & centerpices to all triples of the channel
+   //DUPL
    int idax = out_chandatx[i];
    int ldax = i + 1;
 
@@ -4610,7 +4613,7 @@ DbgLv(1) << "CGui: gExpInf: IN";
       }
 
       // Check if the run ID already exists in the DB
-      //int recStatus = ExpData.checkRunID( db.get() );
+      //int recStatus = ExpData.checkRunID( &db );
       int recStatus = ExpData.checkRunID_auto( ExpData.invID, db.get() );
 
       qDebug() << "IN getExpInfo_auto( void ) !";
@@ -6964,8 +6967,8 @@ void US_ConvertGui::read_aprofile_data_from_aprofile()
 
   while ( db->next() )
   {
-     //currProf.aprofID     = db->value( 0 ).toInt();
-     //currProf.aprofname   = db->value( 1 ).toString();
+     //currProf.aprofID     = db.value( 0 ).toInt();
+     //currProf.aprofname   = db.value( 1 ).toString();
      aprofile_xml = db->value( 2 ).toString();
   }
 
@@ -7356,9 +7359,7 @@ int US_ConvertGui::read_autoflow_stages_record( int autoflowID  )
    int status = 0;
   
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto      db       = US_DBProvider::open();
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -7383,9 +7384,7 @@ int US_ConvertGui::read_autoflow_stages_record( int autoflowID  )
 void US_ConvertGui::revert_autoflow_stages_record( int autoflowID )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto      db       = US_DBProvider::open();
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -7408,9 +7407,7 @@ void US_ConvertGui::revert_autoflow_stages_record( int autoflowID )
 QMap< QString, QString> US_ConvertGui::read_autoflow_record( int autoflowID  )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto                    db       = US_DBProvider::open();
+   auto                    db = US_DBProvider::open();
 
    QMap <QString, QString> protocol_details;
    
@@ -7640,9 +7637,7 @@ void US_ConvertGui::saveUS3( void )
   if ( us_convert_auto_mode )
     {
       // Determine if we are using the database
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      auto      dbP      = US_DBProvider::open();
+      auto dbP = US_DBProvider::open();
 
       if ( dbP->lastErrno() != US_DB2::OK )
       {
@@ -8222,9 +8217,7 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
   QString importIP_Json;
   
   // Check DB connection
-  US_Passwd pw;
-  QString masterpw = pw.getPasswd();
-  auto      db       = US_DBProvider::open();
+  auto    db = US_DBProvider::open();
 
   if ( db->lastErrno() != US_DB2::OK )
     {
@@ -8471,9 +8464,7 @@ void US_ConvertGui::update_autoflow_record_atLimsImport( void )
    details_at_editing[ "filename" ] = filename_toDB;
   
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto      db       = US_DBProvider::open();
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -8563,9 +8554,7 @@ void US_ConvertGui::update_autoflow_record_atLimsImport( void )
 void US_ConvertGui::delete_autoflow_record( void )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto      db       = US_DBProvider::open();
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != IUS_DB2::OK )
      {
@@ -11027,7 +11016,7 @@ int US_ConvertGui::writeTimeStateDB()
       DbgLv( 1 ) << "wTSdb: connect" << db->lastErrno() << db->lastError();
       return -99;
    }
-   //DbgLv(1) << "wTSdb: connect" << db->lastErrno() << db->lastError();
+//DbgLv(1) << "wTSdb: connect" << db.lastErrno() << db.lastError();
 
    QDir     writeDir( US_Settings::resultDir() ); // Writes timestate to results directory
    QString  dirname     = writeDir.absolutePath() + "/" + runID + "/";
@@ -11036,23 +11025,23 @@ int US_ConvertGui::writeTimeStateDB()
    QString tmst_fbase   = runID + ".time_state.tmst";
    QString tmst_fname   = tmst_fdir + tmst_fbase;
    QString tmst_cksm    = US_Util::md5sum_file( tmst_fname );
-DbgLv(1) << "wTSdb: fname " << tmst_fname << "cksm" << tmst_cksm<< "fbase" << tmst_fbase;
+   DbgLv( 1 ) << "wTSdb: fname " << tmst_fname << "cksm" << tmst_cksm << "fbase" << tmst_fbase;
 
    // Create a new TimeState DB record, if need be. If one already exists,
    //  it may be updated or it may be deleted and recreated.
-int timestateID = US_TimeState::dbCreate( db.get(), ExpData.expID, tmst_fname );
-DbgLv(1) << "wTSdb: post-create timestateID" << timestateID;
+   int timestateID = US_TimeState::dbCreate( db.get(), ExpData.expID, tmst_fname );
+   DbgLv( 1 ) << "wTSdb: post-create timestateID" << timestateID;
 
    // If a TimeState DB record now exists, check for binary data in it.
    //  If need be, upload binary TMST data
    if ( timestateID > 0 )
-   {  // A record has been created/updated/affirmed, so check for data blob
+   { // A record has been created/updated/affirmed, so check for data blob
       QString cksum;
       status = US_TimeState::dbExamine( db.get(), &timestateID, NULL, NULL, NULL, &cksum, NULL );
       DbgLv( 1 ) << "wTSdb:  examine status" << status << "cksum-db" << cksum;
 
-      if ( status == US_DB2::OK  &&  cksum != tmst_cksm )
-      {  // No or mismatched blob in DB, so upload it
+      if ( status == US_DB2::OK && cksum != tmst_cksm )
+      { // No or mismatched blob in DB, so upload it
          status = US_TimeState::dbUpload( db.get(), timestateID, tmst_fname );
          DbgLv( 1 ) << "wTSdb:   upload status" << status;
       }
@@ -11073,40 +11062,42 @@ DbgLv(1) << "wTSdb: post-create timestateID" << timestateID;
       qWarning() << "writeTimeStateDB: time state not saved to the DB, status" << status;
       le_status->setText( tr( "Time State was not saved to the DB (status %1)." ).arg( status ) );
    }
-DbgLv(1) << "wTSdb:  Timestate from DB is used";
+   DbgLv( 1 ) << "wTSdb:  Timestate from DB is used";
    return status;
 }
 
 // Build lambda controls
 void US_ConvertGui::build_lambda_ctrl()
 {
-   if ( ! isMwl )
+   if ( !isMwl )
+   {
       return;
+   }
 
    // For MWL, rebuild wavelength controls
-   int ntrip    = out_tripinfo.count();
-DbgLv(1) << "BldLCtr: ntrip" << ntrip;
-   int ccx      = out_tripinfo[ 0 ].channelID - 1;
-DbgLv(1) << "BldLCtr:  st ccx" << ccx;
-   int wvx      = 0;
-   int ccxo     = 0;
+   int ntrip = out_tripinfo.count();
+   DbgLv( 1 ) << "BldLCtr: ntrip" << ntrip;
+   int ccx = out_tripinfo[0].channelID - 1;
+   DbgLv( 1 ) << "BldLCtr:  st ccx" << ccx;
+   int wvx  = 0;
+   int ccxo = 0;
    exp_lambdas.clear();
 
    for ( int trx = 0; trx < ntrip; trx++ )
-   {  // Loop to add non-excluded wavelengths
-      int ichan    = out_tripinfo[ trx ].channelID - 1;
-      int iwavl    = out_triples [ trx ].section( " / ", 2, 2 ).toInt();
-DbgLv(1) << "BldLCtr: trx ichan ccx iwavl" << trx << ichan << ccx << iwavl;
+   { // Loop to add non-excluded wavelengths
+      int ichan = out_tripinfo[trx].channelID - 1;
+      int iwavl = out_triples[trx].section( " / ", 2, 2 ).toInt();
+      DbgLv( 1 ) << "BldLCtr: trx ichan ccx iwavl" << trx << ichan << ccx << iwavl;
 
       if ( ichan != ccx )
-      {  // If a new channel, store the previous channel's lambda list
+      { // If a new channel, store the previous channel's lambda list
          mwl_data.set_lambdas( exp_lambdas, ccxo );
-DbgLv(1) << "BldLCtr:   trx ichan ccx ccxo iwavl nlam" << trx << ichan << ccx
- << ccxo << iwavl << exp_lambdas.count() << wvx;
-         wvx       = 0;
+         DbgLv( 1 ) << "BldLCtr:   trx ichan ccx ccxo iwavl nlam" << trx << ichan << ccx << ccxo << iwavl << exp_lambdas.count()
+                    << wvx;
+         wvx = 0;
          exp_lambdas.clear();
 
-         ccx       = ichan;
+         ccx = ichan;
          ccxo++;
       }
 
@@ -11116,21 +11107,20 @@ DbgLv(1) << "BldLCtr:   trx ichan ccx ccxo iwavl nlam" << trx << ichan << ccx
 
    // Store the last channel's lambdas
    mwl_data.set_lambdas( exp_lambdas, ccxo );
-DbgLv(1) << "BldLCtr:    ccxo nlam" << ccxo << exp_lambdas.count();
+   DbgLv( 1 ) << "BldLCtr:    ccxo nlam" << ccxo << exp_lambdas.count();
    mwl_connect( false );
 
    // Set controls for the currently selected cell/channel in the list
-   tripListx    = lw_triple->currentRow();
-   nlambda      = mwl_data.lambdas( exp_lambdas, tripListx );
-   slambda      = exp_lambdas[ 0 ];
-   elambda      = exp_lambdas[ nlambda - 1 ];
+   tripListx = lw_triple->currentRow();
+   nlambda   = mwl_data.lambdas( exp_lambdas, tripListx );
+   slambda   = exp_lambdas[0];
+   elambda   = exp_lambdas[nlambda - 1];
 
-DbgLv(1) << "BldLCtr:     ccx nlam" << 0 << exp_lambdas.count();
+   DbgLv( 1 ) << "BldLCtr:     ccx nlam" << 0 << exp_lambdas.count();
    cb_lambstrt->setCurrentIndex( all_lambdas.indexOf( slambda ) );
    cb_lambstop->setCurrentIndex( all_lambdas.indexOf( elambda ) );
    cb_lambplot->setCurrentIndex( nlambda / 2 );
    mwl_connect( true );
 
-   reset_lambdas();      // Make sure internal MWL lambdas are right
-
+   reset_lambdas(); // Make sure internal MWL lambdas are right
 }

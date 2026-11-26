@@ -2,19 +2,21 @@
 
 #include <QApplication>
 
-#include "qwt_legend.h"
-#include "us_constants.h"
-#include "us_db_provider.h"
+#include "us_vhw_combine.h"
+#include "us_select_runid.h"
+#include "us_license_t.h"
+#include "us_license.h"
+#include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
-#include "us_license.h"
-#include "us_license_t.h"
 #include "us_matrix.h"
+#include "us_constants.h"
+#include "us_passwd.h"
 #include "us_report.h"
-#include "us_select_runid.h"
-#include "us_settings.h"
 #include "us_util.h"
-#include "us_vhw_combine.h"
+#include "qwt_legend.h"
+
+#include "us_db_provider.h"
 
 // main program
 int main( int argc, char* argv[] )

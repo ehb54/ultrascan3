@@ -1099,7 +1099,7 @@ int US_LoadAUC::scan_run_db()
                           rawDataID + "^" +
                           date;
 
-      //ALEXEY : db->value( 2 ).toString() => type [..., buoyancy,... ]
+      //ALEXEY : db.value( 2 ).toString() => type [..., buoyancy,... ]
       QString etype         = db->value( 2 ).toString();
       bool expIsBuoyancy = ( etype.compare( "Buoyancy", Qt::CaseInsensitive ) == 0 );
       

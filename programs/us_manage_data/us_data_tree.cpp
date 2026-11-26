@@ -696,7 +696,8 @@ DbgLv(2) << "DT: i_details row" << irow;
              "                   "   + cont2 + "\n";
 #if 0
 if (cdesc.recType==3 && cont1!=cont2) {
-auto dbP = US_DBProvider::open();
+US_Passwd pw;
+US_DB2* dbP = new US_DB2( pw.getPasswd() );
 US_Model model1;
 US_Model model2;
 QString tmpdir=US_Settings::tmpDir();

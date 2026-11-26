@@ -2722,19 +2722,19 @@ DbgLv(1) << "AnaN:SL:  newAcc: DB  id" << analyte->analyteID;
 // US_Analyte::write sets analyteID itself and returns a status, not an ID.
 bool US_AnalyteMgrNew::write_db()
 {
-DbgLv(1) << "AnaN:SL: write_db()  anaID" << analyte->analyteID;
-auto db                          = US_DBProvider::open();
-analyte->new_or_changed_spectrum = true;
-int status                       = analyte->write( true, "", db.get() );
+   DbgLv( 1 ) << "AnaN:SL: write_db()  anaID" << analyte->analyteID;
+   auto db                          = US_DBProvider::open();
+   analyte->new_or_changed_spectrum = true;
+   int status                       = analyte->write( true, "", db.get() );
 
-if ( status != IUS_DB2::OK )
-{
-   QString msg = tr( "(Return Code = %1 ) " ).arg( status ) + analyte->message + "\n" + db->lastError();
-   // The message says whether the DB kept the analyte and only its
-   //  local copy failed, or what part of the DB save failed
-   QMessageBox::critical( this, tr( "Analyte Save Error" ), tr( "The analyte save did not finish:\n" ) + msg );
-   return false;
-}
+   if ( status != IUS_DB2::OK )
+   {
+      QString msg = tr( "(Return Code = %1 ) " ).arg( status ) + analyte->message + "\n" + db->lastError();
+      // The message says whether the DB kept the analyte and only its
+      //  local copy failed, or what part of the DB save failed
+      QMessageBox::critical( this, tr( "Analyte Save Error" ), tr( "The analyte save did not finish:\n" ) + msg );
+      return false;
+   }
 
    return true;
 }
@@ -3045,18 +3045,18 @@ void US_AnalyteMgrEdit::editAccepted()
 // Write updated analyte to database; true when the save succeeded
 bool US_AnalyteMgrEdit::write_db()
 {
-DbgLv(1) << "AnaE:SL: write_db()  bufID" << analyte->analyteID;
-auto db     = US_DBProvider::open();
-int  status = analyte->write( true, "", db.get() );
+   DbgLv( 1 ) << "AnaE:SL: write_db()  bufID" << analyte->analyteID;
+   auto db     = US_DBProvider::open();
+   int  status = analyte->write( true, "", db.get() );
 
-if ( status != IUS_DB2::OK )
-{
-   QString msg = tr( "(Return Code = %1 ) " ).arg( status ) + analyte->message + "\n" + db->lastError();
-   // The message says whether the DB kept the analyte and only its
-   //  local copy failed, or what part of the DB save failed
-   QMessageBox::critical( this, tr( "Analyte Save Error" ), tr( "The analyte save did not finish:\n" ) + msg );
-   return false;
-}
+   if ( status != IUS_DB2::OK )
+   {
+      QString msg = tr( "(Return Code = %1 ) " ).arg( status ) + analyte->message + "\n" + db->lastError();
+      // The message says whether the DB kept the analyte and only its
+      //  local copy failed, or what part of the DB save failed
+      QMessageBox::critical( this, tr( "Analyte Save Error" ), tr( "The analyte save did not finish:\n" ) + msg );
+      return false;
+   }
 
    return true;
 }
@@ -3172,6 +3172,7 @@ void US_AnalyteMgrSettings::assign_investigator( int invID )
 // Get buffer components from DB and write to */etc/bufferComponents.xml
 void US_AnalyteMgrSettings::synch_components( void )
 {
+   US_Passwd pw;
    qApp->processEvents();
 DbgLv(1) << "setB:synchc read to HD from DB";
 

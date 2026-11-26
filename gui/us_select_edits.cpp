@@ -263,15 +263,15 @@ qDebug() << "Acpt: editIDs" << editIDs;
 // Scan database for edit sets
 void US_SelectEdits::scan_dbase_edit()
 {
-//qDebug() << "ScDB:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-auto db = US_DBProvider::open();
+   //qDebug() << "ScDB:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+   auto db = US_DBProvider::open();
 
-if ( db->lastErrno() != US_DB2::OK )
-{
-   QMessageBox::information(
-      this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
-   return;
-}
+   if ( db->lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::information(
+         this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
+      return;
+   }
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    QStringList query;

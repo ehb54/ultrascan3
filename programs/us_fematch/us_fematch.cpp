@@ -480,13 +480,12 @@ DbgLv(1) << "LD: exec dialog";
          idExp              = dbP->value( 1 ).toInt();
          US_SimulationParameters::speedstepsFromDB( dbP.get(), idExp, speed_steps );
       }
-DbgLv(1)<<"LD: from database";
+      DbgLv( 1 ) << "LD: from database";
 
       // Check out whether we need to read TimeState from the DB
 
-bool newfile = US_TimeState::dbSyncToLF( dbP.get(), tmst_fpath, idExp );
-DbgLv(0) << "LD: newfile" << newfile << "idExp" << idExp
- << "tmst_fpath" << tmst_fpath;
+      bool newfile = US_TimeState::dbSyncToLF( dbP.get(), tmst_fpath, idExp );
+      DbgLv( 0 ) << "LD: newfile" << newfile << "idExp" << idExp << "tmst_fpath" << tmst_fpath;
    }
 
    else
@@ -2043,34 +2042,32 @@ DbgLv(1) << "SimMdl: n) s D c"
  << model_used.components[lc].s << model_used.components[lc].D
  << model_used.components[lc].signal_concentration;
    adjust_model();
-DbgLv(1) << "SimMdl: 0) s D c"
- << model.components[ 0].s << model.components[ 0].D
- << model.components[ 0].signal_concentration;
-DbgLv(1) << "SimMdl: n) s D c"
- << model.components[lc].s << model.components[lc].D
- << model.components[lc].signal_concentration;
+   DbgLv( 1 ) << "SimMdl: 0) s D c" << model.components[0].s << model.components[0].D << model.components[0].signal_concentration;
+   DbgLv( 1 ) << "SimMdl: n) s D c" << model.components[lc].s << model.components[lc].D
+              << model.components[lc].signal_concentration;
 
    // Initialize simulation parameters using edited data information
-std::unique_ptr<IUS_DB2> dbP = dkdb_cntrls->db() ? US_DBProvider::open() : nullptr;
+   std::unique_ptr<IUS_DB2> dbP = dkdb_cntrls->db() ? US_DBProvider::open() : nullptr;
 
-simparams.initFromData( dbP.get(), *edata, dat_steps );
-simparams.simpoints         = adv_vals["simpoints"].toInt();
-simparams.meshType          = US_SimulationParameters::ASTFEM;
-simparams.gridType          = US_SimulationParameters::MOVING;
-simparams.radial_resolution = (double) ( radhi - radlo ) / ( nconc - 1 );
-//   simparams.bottom            = simparams.bottom_position;
-DbgLv(1) << "SimMdl: simpoints" << simparams.simpoints
- << "rreso" << simparams.radial_resolution
- << "bottom_sim" << simparams.bottom << "bottom_dat" << edata->bottom;
+   simparams.initFromData( dbP.get(), *edata, dat_steps );
+   simparams.simpoints         = adv_vals["simpoints"].toInt();
+   simparams.meshType          = US_SimulationParameters::ASTFEM;
+   simparams.gridType          = US_SimulationParameters::MOVING;
+   simparams.radial_resolution = (double) ( radhi - radlo ) / ( nconc - 1 );
+   //   simparams.bottom            = simparams.bottom_position;
+   DbgLv( 1 ) << "SimMdl: simpoints" << simparams.simpoints << "rreso" << simparams.radial_resolution << "bottom_sim"
+              << simparams.bottom << "bottom_dat" << edata->bottom;
    //simparams.meniscus          = 5.8;
 
    //sdata.scanData.resize( total_scans );
    //int terpsize    = ( points + 7 ) / 8;
 
    if ( exp_steps )
-      simparams.speed_step        = speed_steps;
+   {
+      simparams.speed_step = speed_steps;
+   }
 
-DbgLv(1) << "SimMdl: speed_steps:" << simparams.speed_step.size();
+   DbgLv( 1 ) << "SimMdl: speed_steps:" << simparams.speed_step.size();
 
    QString mtyp = adv_vals[ "meshtype"   ];
    QString gtyp = adv_vals[ "gridtype"   ];

@@ -1138,7 +1138,8 @@ DbgLv(1) << "EGGe:main: prnames,prdata counts" << pr_names.count() << protdata.c
 
       bool fromdisk         = US_Settings::debug_match( "protocolFromDisk" );
       bool load_db          = fromdisk ? false : use_db;
-      std::unique_ptr<IUS_DB2> dbP = load_db ? US_DBProvider::open() : nullptr;
+      US_Passwd  pw;
+      US_DB2* dbP           = load_db ? new US_DB2( pw.getPasswd() ) : NULL;
 
       US_ProtocolUtil::list_all( protdata, dbP );
 
@@ -1167,57 +1168,57 @@ void US_ExperGuiGeneral::load_protocol( void )
    pdtitle             += ( ( load_db ) ?
                             tr( " from Database" ) :
                             tr( " from Disk" ) );
-//*DEBUG: forced input from disk
-if(fromdisk) {
-QString mtitle  = tr( "Debug Forced Protocol from Disk" );
-QString message = tr( "The ability to load a protocol from the database\n" )
- + tr( "has been overridden by a debug setting.\n" )
- + tr( "Protocols from local disk will be listed." );
-QMessageBox::information( this, mtitle, message );
-}
-//*DEBUG: forced input from disk
-DbgLv(1) << "EGGe:ldPro: Disk-B: load_db" << load_db;
+   //*DEBUG: forced input from disk
+   if ( fromdisk )
+   {
+      QString mtitle  = tr( "Debug Forced Protocol from Disk" );
+      QString message = tr( "The ability to load a protocol from the database\n" ) +
+                        tr( "has been overridden by a debug setting.\n" ) + tr( "Protocols from local disk will be listed." );
+      QMessageBox::information( this, mtitle, message );
+   }
+   //*DEBUG: forced input from disk
+   DbgLv( 1 ) << "EGGe:ldPro: Disk-B: load_db" << load_db;
    // Get database connection pointer (or NULL as disk flag)
-std::unique_ptr<IUS_DB2> dbP     = load_db ? US_DBProvider::open() : nullptr;
-int                      protoID = 0;
+   std::unique_ptr<IUS_DB2> dbP     = load_db ? US_DBProvider::open() : nullptr;
+   int                      protoID = 0;
 
-// Build dialog table widget headers
-hdrs << "Protocol Name"
-     << "Created" << ( load_db ? "DbID" : "File Name" );
+   // Build dialog table widget headers
+   hdrs << "Protocol Name"
+        << "Created" << ( load_db ? "DbID" : "File Name" );
 
-// Select a protocol
-QString        delete_button = "DELETE";
-//US_SelectItem pdiag( protdata, hdrs, pdtitle, &prx, -2 );
-US_SelectItem* pdiag =
-   new US_SelectItem( protdata, hdrs, pdtitle, &prx, delete_button, -2 ); //ALEXEY <-- with Delete button and functionality
+   // Select a protocol
+   QString        delete_button = "DELETE";
+   //US_SelectItem pdiag( protdata, hdrs, pdtitle, &prx, -2 );
+   US_SelectItem* pdiag =
+      new US_SelectItem( protdata, hdrs, pdtitle, &prx, delete_button, -2 ); //ALEXEY <-- with Delete button and functionality
 
-connect( pdiag, &US_SelectItem::accept_deletion, this, &US_ExperGuiGeneral::update_protdata );
+   connect( pdiag, &US_SelectItem::accept_deletion, this, &US_ExperGuiGeneral::update_protdata );
 
-if ( pdiag->exec() == QDialog::Accepted )
-{ // Accept in dialog:  get selected protocol name and its XML
-   // One progress dialog, attached to the top-level window, for the whole
-   // load
-   mainw->load_progress()->setStage( 1, 0, tr( "Loading Protocol" ), tr( "Resetting experiment panels..." ), 100 );
-   mainw->load_progress()->setValue( 1 );
-   DbgLv( 1 ) << "EGGe:ldPro:  ACCEPT  prx" << prx << "sel proto" << protdata[prx][0] << "protID" << protdata[prx][2];
+   if ( pdiag->exec() == QDialog::Accepted )
+   { // Accept in dialog:  get selected protocol name and its XML
+      // One progress dialog, attached to the top-level window, for the whole
+      // load
+      mainw->load_progress()->setStage( 1, 0, tr( "Loading Protocol" ), tr( "Resetting experiment panels..." ), 100 );
+      mainw->load_progress()->setValue( 1 );
+      DbgLv( 1 ) << "EGGe:ldPro:  ACCEPT  prx" << prx << "sel proto" << protdata[prx][0] << "protID" << protdata[prx][2];
 
-   qDebug() << "In load_protocol: before RESET, currProto->investigator: -- " << currProto->investigator;
-   //ALEXEY: need to reset everything:
-   mainw->reset();
-   qDebug() << "In load_protocol: after RESET, currProto->investigator: -- " << currProto->investigator;
+      qDebug() << "In load_protocol: before RESET, currProto->investigator: -- " << currProto->investigator;
+      //ALEXEY: need to reset everything:
+      mainw->reset();
+      qDebug() << "In load_protocol: after RESET, currProto->investigator: -- " << currProto->investigator;
 
-   QString pname = protdata[prx][0];
+      QString pname = protdata[prx][0];
 
-   // Get the protocol XML that matches the selected protocol name
-   mainw->load_progress()->setLabelText( tr( "Reading protocol..." ) );
-   mainw->load_progress()->setValue( 4 );
-   protoID = US_ProtocolUtil::read_record( pname, &xmlstr, NULL, dbP.get() );
-   DbgLv( 1 ) << "EGGe:ldPro:  ACCEPT   read_record return len(xml)" << xmlstr.length() << "protoID" << protoID;
+      // Get the protocol XML that matches the selected protocol name
+      mainw->load_progress()->setLabelText( tr( "Reading protocol..." ) );
+      mainw->load_progress()->setValue( 4 );
+      protoID = US_ProtocolUtil::read_record( pname, &xmlstr, NULL, dbP.get() );
+      DbgLv( 1 ) << "EGGe:ldPro:  ACCEPT   read_record return len(xml)" << xmlstr.length() << "protoID" << protoID;
 
-   le_protocol->setText( pname );
-   mainw->currProto.protoID = protoID;
-   mainw->loadProto.protoID = protoID;
-}
+      le_protocol->setText( pname );
+      mainw->currProto.protoID = protoID;
+      mainw->loadProto.protoID = protoID;
+   }
 
    else
    {  // Reject in dialog
@@ -7688,42 +7689,42 @@ DbgLv(1) << "EGUp:svRP:   currProto updated  protoname" << currProto->protoname;
    currProto->toXml( xmlo );
 
 
-DbgLv(1) << "EGUp:svRP:    guid" << currProto->protoGUID;
-DbgLv(1) << "EGUp:svRP:    xml(s)" << QString(rpSubmt->us_xml).left(100);
-int xe=rpSubmt->us_xml.length()-101;
-DbgLv(1) << "EGUp:svRP:    xml(e)" << QString(rpSubmt->us_xml).mid(xe);
+   DbgLv( 1 ) << "EGUp:svRP:    guid" << currProto->protoGUID;
+   DbgLv( 1 ) << "EGUp:svRP:    xml(s)" << QString( rpSubmt->us_xml ).left( 100 );
+   int xe = rpSubmt->us_xml.length() - 101;
+   DbgLv( 1 ) << "EGUp:svRP:    xml(e)" << QString( rpSubmt->us_xml ).mid( xe );
 
 
    // Save the new protocol to database and/or disk
-std::unique_ptr<IUS_DB2> dbP      = ( sibSValue( "general", "dbdisk" ) == "DB" ) ? US_DBProvider::open() : nullptr;
-bool                     fromdisk = US_Settings::debug_match( "protocolFromDisk" );
-if ( fromdisk )
-{
-   dbP.reset();
-}
+   std::unique_ptr<IUS_DB2> dbP      = ( sibSValue( "general", "dbdisk" ) == "DB" ) ? US_DBProvider::open() : nullptr;
+   bool                     fromdisk = US_Settings::debug_match( "protocolFromDisk" );
+   if ( fromdisk )
+   {
+      dbP.reset();
+   }
 
-DbgLv( 1 ) << "EGUp:svRP:   dbP.get()" << dbP.get();
-// Always save the protocol to a local file
-int idProt = US_ProtocolUtil::write_record( rpSubmt->us_xml, NULL );
+   DbgLv( 1 ) << "EGUp:svRP:   dbP" << dbP.get();
+   // Always save the protocol to a local file
+   int idProt = US_ProtocolUtil::write_record( rpSubmt->us_xml, NULL );
 
-// Usually (database selected), we write an additional record to DB
-if ( dbP != NULL )
-{
-   idProt = US_ProtocolUtil::write_record( rpSubmt->us_xml, dbP.get() );
-}
+   // Usually (database selected), we write an additional record to DB
+   if ( dbP != NULL )
+   {
+      idProt = US_ProtocolUtil::write_record( rpSubmt->us_xml, dbP.get() );
+   }
 
-if ( idProt < 0 )
-{
-   QString errmsg = ( dbP != NULL ) ? dbP->lastError() : "???";
-   QMessageBox::critical( this,
-                          tr( "*ERROR* in Protocol Write" ),
-                          tr( "An error occurred in the attempt to save"
-                              " new protocol\n  %1\n  %2 ." )
-                             .arg( protoname )
-                             .arg( errmsg ) );
+   if ( idProt < 0 )
+   {
+      QString errmsg = ( dbP != NULL ) ? dbP->lastError() : "???";
+      QMessageBox::critical( this,
+                             tr( "*ERROR* in Protocol Write" ),
+                             tr( "An error occurred in the attempt to save"
+                                 " new protocol\n  %1\n  %2 ." )
+                                .arg( protoname )
+                                .arg( errmsg ) );
 
-   return save_aborted;
-}
+      return save_aborted;
+   }
 
    // Update the full list of existing protocols
    QStringList prentry;                       // New protocol summary data
@@ -8738,9 +8739,7 @@ void US_ExperGuiUpload::clearData_protDev()
   qApp->processEvents();
   
   // Check DB connection
-  US_Passwd pw;
-  QString masterpw = pw.getPasswd();
-  auto      db       = US_DBProvider::open();
+  auto db = US_DBProvider::open();
 
   if ( db->lastErrno() != US_DB2::OK )
     {
@@ -10218,9 +10217,7 @@ void US_ExperGuiUpload::cancel_reviewers( QMap< QString, QString >& protocol_det
 void US_ExperGuiUpload::add_autoflow_record_dataDisk( QMap< QString, QString> & protocol_details )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto      db       = US_DBProvider::open();
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
    {
@@ -10576,17 +10573,14 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
   qDebug() << "GMPRUN FIELD: " << protocol_details[ "gmpRun" ];
 
   // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto      db       = US_DBProvider::open();
+  auto db = US_DBProvider::open();
 
-   if ( db->lastErrno() != US_DB2::OK )
-   {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-                                  tr( "Read protocol: Could not connect to database \n" )
-                                     + db->lastError() );
-      return;
-   }
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning(
+        this, tr( "Connection Problem" ), tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+     return;
+  }
 
    QStringList qry;
    int autoflowID_returned = 0;
@@ -10912,9 +10906,7 @@ void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & p
    QString autoflowHistoryID = protocol_details[ "autoflowID" ];
   
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto      db       = US_DBProvider::open();
+   auto    db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
    {

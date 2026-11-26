@@ -1,11 +1,12 @@
 //! \file us_adv_analysis_pc.cpp
 
-#include "us_adv_analysis_pc.h"
-#include "us_db_provider.h"
-#include "us_gui_settings.h"
-#include "us_mrecs_loader.h"
 #include "us_pcsa.h"
+#include "us_adv_analysis_pc.h"
+#include "us_mrecs_loader.h"
 #include "us_settings.h"
+#include "us_gui_settings.h"
+
+#include "us_db_provider.h"
 
 // constructor:  enhanced plot control widget
 US_AdvAnalysisPc::US_AdvAnalysisPc( QVector< US_ModelRecord >* p_mrs,

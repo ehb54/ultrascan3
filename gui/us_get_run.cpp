@@ -96,14 +96,14 @@ qDebug() << "gDBr: size" << size();
 // Function to load the runInfo structure with all runID's in the DB
 void US_GetRun::load_db( void )
 {
-qDebug() << "LdDb: IN";
-auto db = US_DBProvider::open();
+   qDebug() << "LdDb: IN";
+   auto db = US_DBProvider::open();
 
-if ( db->lastErrno() != US_DB2::OK )
-{
-   QMessageBox::information( this, tr( "Error" ), tr( "Error making the DB connection.\n" ) );
-   return;
-}
+   if ( db->lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::information( this, tr( "Error" ), tr( "Error making the DB connection.\n" ) );
+      return;
+   }
 
    // Get information we want about all experiments
    runInfo.clear();
@@ -362,16 +362,16 @@ qDebug() << "GetRun:delRun: ndx" << ndx << "expID" << expID;
    //  constraints problems
    QString invID = QString::number( personID );
    QString runID = tw ->item( ndx, 0 )->text();
-qDebug() << "GetRun:delRun:  invID" << invID << "runID" << runID;
+   qDebug() << "GetRun:delRun:  invID" << invID << "runID" << runID;
 
-US_Experiment::deleteRunPcsaMrecs( db.get(), invID, runID );
+   US_Experiment::deleteRunPcsaMrecs( db.get(), invID, runID );
 
-// Now delete the experiment and all existing rawData,
-// because we're starting over
-q.clear();
-q << "delete_experiment" << expID;
-status = db->statusQuery( q );
-qDebug() << "GetRun:delRun: del_exp stat" << status;
+   // Now delete the experiment and all existing rawData,
+   // because we're starting over
+   q.clear();
+   q << "delete_experiment" << expID;
+   status = db->statusQuery( q );
+   qDebug() << "GetRun:delRun: del_exp stat" << status;
 
    if ( status != US_DB2::OK )
    {

@@ -503,28 +503,28 @@ void US_Investigator::queryDB( void )
    US_InvestigatorData data;
    int inv = US_Settings::us_inv_ID();
    int lev = US_Settings::us_inv_level();
-qDebug() << "INV:qDB: inv" << inv << "lev" << lev;
+   qDebug() << "INV:qDB: inv" << inv << "lev" << lev;
 
-while ( db->next() )
-{
-   data.invID     = db->value( 0 ).toInt();
-   data.lastName  = db->value( 1 ).toString();
-   data.firstName = db->value( 2 ).toString();
-
-   // Only add to investigator list if admin login or login-inv match
-   // if ( !user_permit  &&  lev < 3  &&  inv != data.invID )
-   //    continue;
-
-   if ( !user_permit && lev < 3 && inv != data.invID && !us_inv_auto_mode )
+   while ( db->next() )
    {
-      continue;
+      data.invID     = db->value( 0 ).toInt();
+      data.lastName  = db->value( 1 ).toString();
+      data.firstName = db->value( 2 ).toString();
+
+      // Only add to investigator list if admin login or login-inv match
+      // if ( !user_permit  &&  lev < 3  &&  inv != data.invID )
+      //    continue;
+
+      if ( !user_permit && lev < 3 && inv != data.invID && !us_inv_auto_mode )
+      {
+         continue;
+      }
+
+      investigators << data;
+
+      lw_names->addItem(
+         new QListWidgetItem( "InvID: (" + QString::number( data.invID ) + "), " + data.lastName + ", " + data.firstName ) );
    }
-
-   investigators << data;
-
-   lw_names->addItem(
-      new QListWidgetItem( "InvID: (" + QString::number( data.invID ) + "), " + data.lastName + ", " + data.firstName ) );
-}
 }
 
 void US_Investigator::update( void )
@@ -549,16 +549,18 @@ void US_Investigator::update( void )
 
    if ( response == QMessageBox::Ok )
    {
-      US_Passwd   pw;
-      QString     masterPW  = pw.getPasswd();
-      auto        db        = US_DBProvider::open(); // New constructor
+      auto db = US_DBProvider::open( this );
 
       if ( db->lastErrno() != US_DB2::OK )
       {
          QMessageBox::warning(
             this, tr( "Database Error" ), tr( "US_Investigator::connectDB: Could not open DB\n" ) + db->lastError() );
          return;
-      } 
+      }
+
+      // Unlocked by the connection above, so this does not ask again.
+      US_Passwd   pw;
+      QString     masterPW = pw.getPasswd();
 
       QStringList info = US_Settings::defaultDB();
       

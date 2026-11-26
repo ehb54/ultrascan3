@@ -310,7 +310,7 @@ void US_auditTrailGMP::loadGMPReport( void )
   // QStringList qry;
   // qry << "get_autoflowStatus_id" << gmpRunID_eSign;
   // qDebug() << "In load(), qry -- " << qry;
-  // autoflowStatusID = db->functionQuery( qry );
+  // autoflowStatusID = db.functionQuery( qry );
 
   autoflowStatusID = p_details[ "statusID" ].toInt();
   qDebug() << "autoflowStatusID: " << autoflowStatusID;
@@ -2150,7 +2150,7 @@ void US_auditTrailGMP::user_interactions_analysis_velmwl( QString              n
          qry_sp << "read_autoflowAnalysisVelMwl_record" << autoflowID_passed;
          db_sp->query( qry_sp );
 
-         if ( db_sp->lastErrno() == US_DB2::OK & db_sp->next() )
+         if ( db_sp->lastErrno() == US_DB2::OK && db_sp->next() )
          {
             QJsonObject dec = QJsonDocument::fromJson( db_sp->value( 0 ).toString().toUtf8() ).object(); // channels' decisions
             QJsonObject sel = QJsonDocument::fromJson( db_sp->value( 2 ).toString().toUtf8() ).object(); // species selections
@@ -2494,9 +2494,7 @@ void US_auditTrailGMP::user_interactions_analysis( QString name, QString analysi
 QMap< QString, QString>  US_auditTrailGMP::read_autoflow_record( int autoflowID  )
 {
    // Check DB connection
-   US_Passwd pw( this );
-   QString masterpw = pw.getPasswd();
-   auto                    db       = US_DBProvider::open();
+   auto                    db = US_DBProvider::open( this );
 
    QMap <QString, QString> protocol_details;
    

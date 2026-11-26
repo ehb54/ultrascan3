@@ -2620,9 +2620,7 @@ void US_Norm_Profile::save_auto( void )
 void US_Norm_Profile::record_AnalysisABDE_status( QMap<QString,QString> gmp_form )
 {
   // Check DB connection
-  US_Passwd pw;
-  QString masterpw = pw.getPasswd();
-  auto      db       = US_DBProvider::open();
+  auto db = US_DBProvider::open();
 
   if ( db->lastErrno() != US_DB2::OK )
     {
@@ -2696,9 +2694,7 @@ int US_Norm_Profile::read_autoflowAnalyisABDEstages_record( QString autoflowID  
    int status = 0;
   
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto      db       = US_DBProvider::open();
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -2725,9 +2721,7 @@ int US_Norm_Profile::read_autoflowAnalyisABDEstages_record( QString autoflowID  
 void US_Norm_Profile::revert_autoflowAnalysisABDEstages_record( QString autoflowID )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto      db       = US_DBProvider::open();
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -2752,9 +2746,7 @@ void US_Norm_Profile::revert_autoflowAnalysisABDEstages_record( QString autoflow
 void US_Norm_Profile::update_autoflow_record_atAnalysisABDE( void )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto      db       = US_DBProvider::open();
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -2790,18 +2782,16 @@ QMap <QString, QString> US_Norm_Profile::read_autoflowAnalysisABDE_record( QStri
   QMap <QString, QString> abde_analysis_parms;
   
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto                   db       = US_DBProvider::open();
+  auto                    db = US_DBProvider::open();
 
-   if ( db->lastErrno() != US_DB2::OK )
-     {
-       QMessageBox::warning( this, tr( "Connection Problem" ),
-			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
-       db.reset();
-       return abde_analysis_parms;
-     }
-   
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning(
+        this, tr( "Connection Problem" ), tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+     db.reset();
+     return abde_analysis_parms;
+  }
+
    QStringList qry;
    qry << "read_autoflowAnalysisABDE_record"
        << aID;

@@ -2692,7 +2692,7 @@ void US_Analysis_auto::finalize_velmwl_species_selection( void )
    qry_read << "read_autoflowAnalysisVelMwl_record" << QString::number( autoflowID_passed );
    db->query( qry_read );
 
-   if ( db->lastErrno() == US_DB2::OK & db->next() )
+   if ( db->lastErrno() == US_DB2::OK && db->next() )
    {
       QJsonObject jobj = QJsonDocument::fromJson( db->value( 0 ).toString().toUtf8() ).object();
 
@@ -3266,9 +3266,7 @@ QMap<QString, QString> US_Analysis_auto::read_run_params( QString f_name_c )
 void US_Analysis_auto::update_autoflow_record_atAnalysis( void )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString   masterpw = pw.getPasswd();
-   auto      db       = US_DBProvider::open();
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
    {
@@ -4994,7 +4992,7 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
 
       /** DEBUG **/
       // QMap <QString, QString > current_analysis;
-      // current_analysis = read_autoflowAnalysis_record( db.get(), requestID );
+      // current_analysis = read_autoflowAnalysis_record( &db, requestID );
 
       /* **********/
 
@@ -5183,10 +5181,10 @@ void US_Analysis_auto::delete_job( const QString& triple_stage )
    }
 
       /** DEBUG **/
-   // QMap <QString, QString > current_analysis;
-   // current_analysis = read_autoflowAnalysis_record( db.get(), requestID );
+      // QMap <QString, QString > current_analysis;
+      // current_analysis = read_autoflowAnalysis_record( &db, requestID );
 
-   /* **********/
+      /* **********/
 
    update_autoflowAnalysis_uponDeletion( db.get(), requestID );
 
@@ -6503,10 +6501,8 @@ void US_Analysis_auto::get_editProfile_copy( QMap < QString, QString > & triple_
   /* ALEXEY: we can use only triple_information[ "filename" ] (the editedData table's 'label' filed) 
      to extract all editProfiles for this runID (which is triple_information[ "filename" ] )
    */
-  
-  US_Passwd pw;
-  QString masterpw = pw.getPasswd();
-  auto                db       = US_DBProvider::open();
+
+  auto                db = US_DBProvider::open();
 
   // To be extracted from editedData table ('filename' field)
   // QMap below - establish correspondence btw EditProfile filename && EditDataID
@@ -7139,9 +7135,7 @@ int US_Analysis_auto::read_autoflowAnalysisStages( const QString& requestID )
 void US_Analysis_auto::revert_autoflow_analysis_stages_record( const QString& requestID )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto      db       = US_DBProvider::open();
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -7662,25 +7656,25 @@ void US_Analysis_auto::update_db_edit( QString edtext, QString efilepath )
    int     esvx     = edtext.indexOf( "\"", elnx ) + 1;
    int     nvch     = edtext.indexOf( "\"", esvx ) - esvx;
    QString edGUID   = edtext.mid( esvx, nvch );
-DbgLv(1) << "updDbEd: edGUID" << edGUID;
+   DbgLv( 1 ) << "updDbEd: edGUID" << edGUID;
 
-auto        db = US_DBProvider::open();
-QStringList query;
-query << "get_editID" << edGUID;
-db->query( query );
-db->next();
-idEdit = db->value( 0 ).toString().toInt();
-DbgLv( 1 ) << "updDbEd: idEdit" << idEdit;
-// How the existing edit is found is unchanged; only the upload is shared.
-QString upload_error;
+   auto        db = US_DBProvider::open();
+   QStringList query;
+   query << "get_editID" << edGUID;
+   db->query( query );
+   db->next();
+   idEdit = db->value( 0 ).toString().toInt();
+   DbgLv( 1 ) << "updDbEd: idEdit" << idEdit;
+   // How the existing edit is found is unchanged; only the upload is shared.
+   QString upload_error;
 
-if ( US_ConvertIO::uploadEditedDataBlob( db.get(), idEdit, efilepath, upload_error ) != IUS_DB2::OK )
-{
-   qDebug() << tr( "*ERROR* update_db_edit: " ) << upload_error;
-   //msg += tr( "*ERROR* update_db_edit: " );
-   //msg += upload_error;
-   return;
-}
+   if ( US_ConvertIO::uploadEditedDataBlob( db.get(), idEdit, efilepath, upload_error ) != IUS_DB2::OK )
+   {
+      qDebug() << tr( "*ERROR* update_db_edit: " ) << upload_error;
+      //msg += tr( "*ERROR* update_db_edit: " );
+      //msg += upload_error;
+      return;
+   }
 
 
    return;
@@ -7860,21 +7854,21 @@ DbgLv(1) << "RmvMod:  ix_setfit lkModx" << ix_setfit << lkModx;
       else
          query << "get_model_desc" << invID;
 
-DbgLv(1) << "RmvMod:  idEdit" << idEdit << "query" << query;
-db->query( query );
+      DbgLv( 1 ) << "RmvMod:  idEdit" << idEdit << "query" << query;
+      db->query( query );
 
-while ( db->next() )
-{
-   QString modelID  = db->value( 0 ).toString();
-   QString descript = db->value( 2 ).toString();
-   QString runID    = descript.section( '.', 0, -4 );
-   if ( runID == srchRun )
-   {
-      modIDs << modelID;
-   }
-}
+      while ( db->next() )
+      {
+         QString modelID  = db->value( 0 ).toString();
+         QString descript = db->value( 2 ).toString();
+         QString runID    = descript.section( '.', 0, -4 );
+         if ( runID == srchRun )
+         {
+            modIDs << modelID;
+         }
+      }
 
-DbgLv(1) << "RmvMod:  modIDs size" << modIDs.size();
+      DbgLv( 1 ) << "RmvMod:  modIDs size" << modIDs.size();
       for ( int ii = 0; ii < modIDs.size(); ii++ )
       {
          QString modelID    = modIDs.at( ii );

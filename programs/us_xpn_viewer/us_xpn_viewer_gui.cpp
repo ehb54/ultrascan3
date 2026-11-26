@@ -1883,9 +1883,7 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
 void US_XpnDataViewer::update_autoflow_runId_timeStarted( void )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto      db       = US_DBProvider::open();
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -1908,9 +1906,7 @@ void US_XpnDataViewer::update_autoflow_runId_timeStarted( void )
 int US_XpnDataViewer::read_timeElapsed_offset( void )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto      db       = US_DBProvider::open();
+   auto db = US_DBProvider::open();
 
    int time_offset = 0;
    
@@ -1938,9 +1934,7 @@ int US_XpnDataViewer::read_timeElapsed_offset( void )
 void US_XpnDataViewer::delete_autoflow_record( void )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto      db       = US_DBProvider::open();
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -2012,9 +2006,7 @@ void US_XpnDataViewer::updateautoflow_record_atLiveUpdate( void )
    details_at_live_update[ "runID" ] = RunID_to_retrieve;
   
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto      db       = US_DBProvider::open();
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -2101,9 +2093,7 @@ int US_XpnDataViewer::read_autoflow_stages_record( int autoflowID  )
    int status = 0;
   
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto      db       = US_DBProvider::open();
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -2128,9 +2118,7 @@ int US_XpnDataViewer::read_autoflow_stages_record( int autoflowID  )
 void US_XpnDataViewer::revert_autoflow_stages_record( int autoflowID )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   auto      db       = US_DBProvider::open();
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -2343,9 +2331,7 @@ void US_XpnDataViewer::record_live_update_status( QString o_type, QString commen
   QString skipOptima_Json;
 
   // Check DB connection
-  US_Passwd pw;
-  QString masterpw = pw.getPasswd();
-  auto      db       = US_DBProvider::open();
+  auto    db = US_DBProvider::open();
 
   if ( db->lastErrno() != US_DB2::OK )
     {

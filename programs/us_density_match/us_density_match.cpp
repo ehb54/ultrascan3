@@ -722,11 +722,10 @@ DbgLv(1) << "LD:  edata: desc run cell chan"
    QString cmprss;
    QString bmanu;
    QString errmsg;
-DbgLv(1) << "LD:  solvals CALL";
-US_SolutionVals::values( dbP.get(), &edata, soluID, cvbar20, bdens, bvisc, cmprss, bmanu, errmsg );
-tsys.bdensity = bdens.toDouble();
-DbgLv(1) << "LD:  solval: bdens soluID bdensity"
- << bdens << soluID << tsys.bdensity;
+   DbgLv( 1 ) << "LD:  solvals CALL";
+   US_SolutionVals::values( dbP.get(), &edata, soluID, cvbar20, bdens, bvisc, cmprss, bmanu, errmsg );
+   tsys.bdensity = bdens.toDouble();
+   DbgLv( 1 ) << "LD:  solval: bdens soluID bdensity" << bdens << soluID << tsys.bdensity;
 
    int nsolmc  = model.components.size();
 

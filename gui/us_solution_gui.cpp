@@ -468,7 +468,7 @@ DbgLv(1) << "loadDB: AA";
    // if ( investigatorID < 1 ) investigatorID = US_Settings::us_inv_ID();
    // QStringList q( "all_solutionIDs" );
    // q << QString::number( investigatorID );
-   // db->query( q );
+   // db.query( q );
 
    IDs          .clear();
    descriptions .clear();
@@ -1147,7 +1147,7 @@ void US_SolutionMgrNew::newAccepted()
       {
          QMessageBox::warning(
             this, tr( "Database Problem" ), tr( "Database returned the following error: \n" ) + db->lastError() );
-         //db_error( db->lastError() );
+         //db_error( db.lastError() );
          return;
       }
       DbgLv(1) << "Inside newAccepted(): " << "ExpID: " << experimentID << ", cID: " << channelID;
@@ -1180,7 +1180,7 @@ void US_SolutionMgrNew::newAccepted()
                         QString::number( channelID );
          QMessageBox::warning( this,
                                tr( "Solution DB Save Error" ),
-                               //               db->lastError() );
+                               //               db.lastError() );
                                emsg );
          return;
       }
@@ -1663,15 +1663,15 @@ void US_SolutionMgrEdit::editAccepted( void )
             this, tr( "Database Problem" ), tr( "Database returned the following error: \n" ) + db->lastError() );
          return;
       }
-DbgLv(1) << "Inside editAccepted(): " << "ExpID: " << experimentID << ", cID: " << channelID;
-int status = solution->saveToDB( experimentID, channelID, db.get() );
+      DbgLv( 1 ) << "Inside editAccepted(): " << "ExpID: " << experimentID << ", cID: " << channelID;
+      int status = solution->saveToDB( experimentID, channelID, db.get() );
 
 
-if ( status != US_DB2::OK )
-{
-   QMessageBox::information( this, tr( "Attention" ), db->lastError() );
-   return;
-}
+      if ( status != US_DB2::OK )
+      {
+         QMessageBox::information( this, tr( "Attention" ), db->lastError() );
+         return;
+      }
 
       else if ( status == US_DB2::NO_BUFFER )
       {
