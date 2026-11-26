@@ -54,7 +54,7 @@ class US_ExperimentDiskTest : public QObject
                         auto* message = qobject_cast<QMessageBox*>( widget );
                         if ( message && message->isVisible() )
                         {
-                           if ( message->windowTitle() == "Analysis Profile" )
+                           if ( message->text().contains( "Review the analysis profile for the current protocol" ) )
                            {
                               ++refusals;
                            }
