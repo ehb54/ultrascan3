@@ -13,17 +13,6 @@ QString US_ReportText::table_row( const QStringList& cells )
    return ( indent( 6 ) + "<tr><td>" + cells.join( "</td><td>" ) + "</td></tr>\n" );
 }
 
-QString US_ReportText::table_row_unclosed( const QString& s1,
-                                           const QString& s2,
-                                           const QString& s3,
-                                           const QString& s4,
-                                           const QString& s5,
-                                           const QString& s6 )
-{
-   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>" + s3 + "</td><td>" + s4 + "</td><td>" + s5 +
-            "</td><td>" + s6 + "</td><td>\n" );
-}
-
 QString US_ReportText::text_model( US_Model model, int width, bool mark_iterative )
 {
    QString stitle = model.typeText();

@@ -23,15 +23,6 @@ template <class... Cells> QString table_row( const QString& first, const Cells&.
    return table_row( QStringList{ first, QString( rest )... } );
 }
 
-//! \brief A six-cell row as the GMP reporter writes it: the row ends with
-//! an opened cell instead of "</tr>".
-US_UTIL_EXTERN QString table_row_unclosed( const QString& s1,
-                                           const QString& s2,
-                                           const QString& s3,
-                                           const QString& s4,
-                                           const QString& s5,
-                                           const QString& s6 );
-
 //! \brief The model's analysis type; with \a width above 0, the long
 //! title with its suffixes, centered in \a width characters if it is
 //! shorter. \a mark_iterative adds " (IT)" to the title of a 2DSA model

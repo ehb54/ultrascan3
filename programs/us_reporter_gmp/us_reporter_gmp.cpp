@@ -6723,12 +6723,12 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 			     "<table style=\"margin-left:10px\">"
 			   );
 
-      html_assembled += US_ReportText::table_row_unclosed( tr( "Parameter: " ),
-                                                           tr( "Target Value:" ),
-                                                           tr( "Tolerance:" ),
-                                                           tr( "Measured Value:" ),
-                                                           tr( "Std. Dev." ),
-                                                           tr( "PASSED ?" ) );
+      html_assembled += table_row( tr( "Parameter: " ),
+                                   tr( "Target Value:" ),
+                                   tr( "Tolerance:" ),
+                                   tr( "Measured Value:" ),
+                                   tr( "Std. Dev." ),
+                                   tr( "PASSED ?" ) );
 
 
       //Iterate over Time Stamp params...
@@ -6763,8 +6763,8 @@ void  US_ReporterGMP::assemble_run_details_html( void )
           QString                            val_measured_hh_mm = US_ReporterGmp::duration_hours_minutes( duration_check.value );
           val_passed                                            = duration_check.passed ? "YES" : "NO";
 
-          html_assembled += US_ReportText::table_row_unclosed(
-             tr( "Duration" ), val_target_hh_mm, QString::number( val_tol ) + "%", val_measured_hh_mm, "", val_passed );
+          html_assembled +=
+             table_row( tr( "Duration" ), val_target_hh_mm, QString::number( val_tol ) + "%", val_measured_hh_mm, "", val_passed );
        }
 
        //Temperature
@@ -6779,12 +6779,12 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 
           val_measured_stdd = davgs_stdd_first_scan[dkeys[i]]["Stdd"];
 
-          html_assembled += US_ReportText::table_row_unclosed( dkeys[i] + " (&#8451;)",
-                                                               QString::number( val_target ),
-                                                               "&#177;" + QString::number( val_tol ),
-                                                               QString::number( val_measured ),
-                                                               QString::number( val_measured_stdd ),
-                                                               val_passed );
+          html_assembled += table_row( dkeys[i] + " (&#8451;)",
+                                       QString::number( val_target ),
+                                       "&#177;" + QString::number( val_tol ),
+                                       QString::number( val_measured ),
+                                       QString::number( val_measured_stdd ),
+                                       val_passed );
 
           //Plot Temp. plot
           QString img01File = dirName + "/" + "RunDetails_Temperature" + svgext;
@@ -6803,12 +6803,12 @@ void  US_ReporterGMP::assemble_run_details_html( void )
           val_measured = check.value;
           val_passed   = check.passed ? "YES" : "NO";
 
-          html_assembled += US_ReportText::table_row_unclosed( "Speed (RPM)",
-                                                               QString::number( val_target ),
-                                                               "&#177;" + QString::number( val_tol ),
-                                                               QString::number( val_measured ),
-                                                               "",
-                                                               val_passed );
+          html_assembled += table_row( "Speed (RPM)",
+                                       QString::number( val_target ),
+                                       "&#177;" + QString::number( val_tol ),
+                                       QString::number( val_measured ),
+                                       "",
+                                       val_passed );
 
           //Plot Raw Speed plot
           QString img01File = dirName + "/" + "RunDetails_Speed" + svgext;

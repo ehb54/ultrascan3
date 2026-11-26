@@ -455,9 +455,10 @@ TEST_F( TestUSReportText, TableRowsMatchEveryOldOverload )
       EXPECT_EQ( table_row( c[0], c[1], c[2] ), re.table_row( c[0], c[1], c[2] ) );
       EXPECT_EQ( table_row( c[0], c[1], c[2], c[3] ), re.table_row( c[0], c[1], c[2], c[3] ) );
       EXPECT_EQ( table_row( c[0], c[1], c[2], c[3], c[4] ), re.table_row( c[0], c[1], c[2], c[3], c[4] ) );
-      // The reporter's six-cell row ends with an opened cell; its callers use table_row_unclosed
-      EXPECT_EQ( US_ReportText::table_row_unclosed( c[0], c[1], c[2], c[3], c[4], c[5] ),
-                 re.table_row( c[0], c[1], c[2], c[3], c[4], c[5] ) );
+      // The reporter's six-cell row ended with an opened cell; it now closes like the others
+      const QString six = table_row( c[0], c[1], c[2], c[3], c[4], c[5] );
+      EXPECT_TRUE( six.endsWith( "</td></tr>\n" ) );
+      EXPECT_EQ( six.chopped( 6 ) + "<td>\n", re.table_row( c[0], c[1], c[2], c[3], c[4], c[5] ) );
       EXPECT_EQ( table_row( c[0], c[1], c[2], c[3], c[4], c[5], c[6] ), re.table_row( c[0], c[1], c[2], c[3], c[4], c[5], c[6] ) );
       EXPECT_EQ( table_row( c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7] ),
                  re.table_row( c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7] ) );
