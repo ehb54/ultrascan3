@@ -46,12 +46,6 @@ struct FrozenReporterText
                          const QString& s3,
                          const QString& s4,
                          const QString& s5,
-                         const QString& s6 ) const;
-      QString table_row( const QString& s1,
-                         const QString& s2,
-                         const QString& s3,
-                         const QString& s4,
-                         const QString& s5,
                          const QString& s6,
                          const QString& s7 ) const;
       QString table_row( const QString& s1,
@@ -254,17 +248,6 @@ QString FrozenReporterText::table_row( const QString& s1,
                                        const QString& s3,
                                        const QString& s4,
                                        const QString& s5,
-                                       const QString& s6 ) const
-{
-   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>" + s3 + "</td><td>" + s4 + "</td><td>" + s5 +
-            "</td><td>" + s6 + "</td><td>\n" );
-}
-
-QString FrozenReporterText::table_row( const QString& s1,
-                                       const QString& s2,
-                                       const QString& s3,
-                                       const QString& s4,
-                                       const QString& s5,
                                        const QString& s6,
                                        const QString& s7 ) const
 {
@@ -436,8 +419,8 @@ TEST_F( TestUSReportText, IndentMatchesBothCopies )
    }
 }
 
-// Every table_row overload of both programs, with random cells
-TEST_F( TestUSReportText, TableRowsMatchEveryOldOverload )
+// Compare the unchanged table rows with the old overloads, using random cells
+TEST_F( TestUSReportText, UnchangedTableRowsMatchTheOldOverloads )
 {
    FrozenFeMatchText  fe;
    FrozenReporterText re;
@@ -455,16 +438,18 @@ TEST_F( TestUSReportText, TableRowsMatchEveryOldOverload )
       EXPECT_EQ( table_row( c[0], c[1], c[2] ), re.table_row( c[0], c[1], c[2] ) );
       EXPECT_EQ( table_row( c[0], c[1], c[2], c[3] ), re.table_row( c[0], c[1], c[2], c[3] ) );
       EXPECT_EQ( table_row( c[0], c[1], c[2], c[3], c[4] ), re.table_row( c[0], c[1], c[2], c[3], c[4] ) );
-      // The reporter's six-cell row ended with an opened cell; it now closes like the others
-      const QString six = table_row( c[0], c[1], c[2], c[3], c[4], c[5] );
-      EXPECT_TRUE( six.endsWith( "</td></tr>\n" ) );
-      EXPECT_EQ( six.chopped( 6 ) + "<td>\n", re.table_row( c[0], c[1], c[2], c[3], c[4], c[5] ) );
       EXPECT_EQ( table_row( c[0], c[1], c[2], c[3], c[4], c[5], c[6] ), re.table_row( c[0], c[1], c[2], c[3], c[4], c[5], c[6] ) );
       EXPECT_EQ( table_row( c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7] ),
                  re.table_row( c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7] ) );
       EXPECT_EQ( table_row( c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7], c[8] ),
                  re.table_row( c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7], c[8] ) );
    }
+}
+
+TEST_F( TestUSReportText, SixCellRowClosesTheLastCellAndRow )
+{
+   EXPECT_EQ( US_ReportText::table_row( "Speed", "60000", "100", "59995", "", "YES" ),
+              QStringLiteral( "      <tr><td>Speed</td><td>60000</td><td>100</td><td>59995</td><td></td><td>YES</td></tr>\n" ) );
 }
 
 // Every analysis type with each suffix, description and width: FEMatch's
