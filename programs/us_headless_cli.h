@@ -10,6 +10,8 @@
 #include <QRandomGenerator>
 #include <QTextStream>
 
+#include "us_credential_source.h"
+#include "us_session.h"
 #include "us_sim_cli.h"
 
 //! \brief Use Qt's offscreen platform when no window will be shown, so
@@ -57,6 +59,22 @@ inline bool parseSimCli( US_SimCli::Tool tool, US_SimCliArgs& args, int& exit_co
    }
    QTextStream( exit_code == 0 ? stdout : stderr ) << output << Qt::endl;
    return true;
+}
+
+//! \brief Let a headless run unlock the database without a dialog.
+//! With --errors-cl, the master password comes from US_MASTER_PASSWORD or,
+//! when that is unset, a no-echo prompt on the terminal. It is asked for only
+//! when a load first needs the database. Never from the command line: it
+//! would show in process listings and shell history.
+inline void useHeadlessPasswordSources( const US_SimCliArgs& args )
+{
+   if ( !args.errors_cl || args.no_db )
+   {
+      return;
+   }
+   US_Session::instance().setPromptSources(
+      { QSharedPointer<US_CredentialSource>( new US_EnvironmentCredentialSource( "US_MASTER_PASSWORD" ) ),
+        QSharedPointer<US_CredentialSource>( new US_TerminalCredentialSource ) } );
 }
 
 //! \brief Give a started run without --noise-seed a fresh seed, and print it.

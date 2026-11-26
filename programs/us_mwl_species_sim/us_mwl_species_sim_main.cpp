@@ -46,6 +46,7 @@ int main( int argc, char* argv[] )
    {
       application.setProperty( "us3_headless", true );
    }
+   useHeadlessPasswordSources( args );
 
    // Constructed after --no-db is applied: the constructor reads dbload
    // from the current default data location.
