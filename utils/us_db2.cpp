@@ -502,6 +502,8 @@ bool US_DB2::beginTransaction( QString& transaction_error )
 
    inTransaction        = true;
    rolledBackByDeadlock = false;
+   transactionLost      = false;
+   transactionLostText.clear();
    transaction_error.clear();
    return true;
 }
@@ -669,9 +671,16 @@ void US_DB2::rawQuery( const QString& )
 #else
 void US_DB2::rawQuery( const QString& sqlQuery )
 {
+   statementEndedTransaction = false;
+
    // Make sure that we clear out any unused
    //   result sets
    drainResults();
+
+   if ( refuseAfterLostTransaction() )
+   {
+      return;
+   }
 
    if ( mysql_query( db, sqlQuery.toLatin1() ) != 0 )
    {
@@ -690,7 +699,49 @@ void US_DB2::rawQuery( const QString& sqlQuery )
          error = QString( "MySQL error: " ) + mysql_error( db );
          noteStatementError();
       }
+      else
+      {
+         noteTransactionEnd( sqlQuery );
+      }
    }
+}
+
+bool US_DB2::refuseAfterLostTransaction()
+{
+   statementRefused = inTransaction && transactionLost;
+   if ( statementRefused )
+   {
+      error = transactionLostText;
+   }
+   return statementRefused;
+}
+
+void US_DB2::noteTransactionEnd( const QString& sqlQuery )
+{
+   // The status comes with the statement's last packet. A procedure that
+   // ends the transaction before returning a result set is caught here; one
+   // that returns a set first is caught by the next statement, or at the
+   // commit, which checks again.
+   if ( !inTransaction || transactionLost || ( db->server_status & SERVER_STATUS_IN_TRANS ) != 0 )
+   {
+      return;
+   }
+
+   transactionLost           = true;
+   statementEndedTransaction = true;
+   if ( rolledBackByDeadlock )
+   {
+      transactionLostText = QObject::tr( serverRollbackMessage );
+      return;
+   }
+
+   // Name the procedure for a CALL, else the start of the statement.
+   QString                         what = sqlQuery.simplified();
+   static const QRegularExpression call( "^CALL\\s+(\\w+)", QRegularExpression::CaseInsensitiveOption );
+   const QRegularExpressionMatch   m = call.match( what );
+   what                              = m.hasMatch() ? "CALL " + m.captured( 1 ) : what.left( 60 );
+   transactionLostText               = QObject::tr( transactionEndedByMessage ).arg( what );
+   error                             = transactionLostText;
 }
 #endif
 
@@ -702,6 +753,11 @@ int US_DB2::statusQuery( const QString& sqlQuery )
    db_errno = DBERROR;
 
    this->rawQuery( sqlQuery );
+   if ( statementRefused )
+   {
+      return db_errno;
+   }
+   const bool ended_transaction = statementEndedTransaction;
 
    // A statement the server refused itself -- a duplicate key, a wrong
    // argument count -- has its reason in the MySQL error rawQuery() kept.
@@ -730,6 +786,12 @@ int US_DB2::statusQuery( const QString& sqlQuery )
          mysql_free_result( result );
          result = NULL;
       }
+   }
+
+   if ( ended_transaction )
+   {
+      db_errno = DBERROR;
+      error    = transactionLostText;
    }
 
    return db_errno;
@@ -773,6 +835,13 @@ void US_DB2::query( const QString& ) {}
 void US_DB2::query( const QString& sqlQuery )
 {
    this->rawQuery( sqlQuery );
+
+   if ( statementRefused )
+   {
+      db_errno = DBERROR;
+      return;
+   }
+   const bool ended_transaction = statementEndedTransaction;
 
    // A statement the server refused outright leaves no result set, and
    // rawQuery() reports that only through `error`.  Without this, db_errno
@@ -854,6 +923,13 @@ void US_DB2::query( const QString& sqlQuery )
 
    else
       error     = "";
+
+   // The call itself ran, but the caller's transaction did not survive it.
+   if ( ended_transaction )
+   {
+      db_errno = DBERROR;
+      error    = transactionLostText;
+   }
 }
 #endif
 
@@ -1048,6 +1124,12 @@ int US_DB2::writeBlobToDB( const QString& filename,
    // We can't use rawQuery() since it takes a QString
    drainResults();
 
+   if ( refuseAfterLostTransaction() )
+   {
+      db_errno = DBERROR;
+      return DBERROR;
+   }
+
    if ( mysql_query( db, sqlQuery.data() ) != 0 )
    {
      error = QString( "MySQL error: " ) + mysql_error( db ); // ALEXEY: writing huge blob, MySql server has gone away...
@@ -1125,6 +1207,12 @@ int US_DB2::readBlobFromDB( const QString& filename,
    // Make sure that we clear out any unused
    //   result sets
    drainResults();
+
+   if ( refuseAfterLostTransaction() )
+   {
+      db_errno = DBERROR;
+      return DBERROR;
+   }
 
    if ( mysql_query( db, sqlQuery.toLatin1() ) != OK )
    {

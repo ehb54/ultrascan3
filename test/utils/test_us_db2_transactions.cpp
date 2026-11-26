@@ -46,6 +46,10 @@ const char* const failingProcedure = "us3_test_txn_fail";
 // as US3 procedures do on an empty GUID or a failed verify_user.
 const char* const silentProcedure = "us3_test_txn_silent";
 
+// Commits on its own, as 16 autoflow procedures do: START TRANSACTION commits
+// whatever the caller had open.
+const char* const committingProcedure = "us3_test_txn_commits";
+
 struct LiveDb
 {
       QString host;
@@ -102,6 +106,8 @@ class US_DB2_LiveTransaction : public ::testing::Test
          first->rawQuery( QString( "DROP PROCEDURE IF EXISTS %1" ).arg( failingProcedure ) );
          first->rawQuery(
             QString( "CREATE PROCEDURE %1() BEGIN SELECT 0; SELECT * FROM us3_test_no_such_table; END" ).arg( failingProcedure ) );
+         first->rawQuery( QString( "DROP PROCEDURE IF EXISTS %1" ).arg( committingProcedure ) );
+         first->rawQuery( QString( "CREATE PROCEDURE %1() BEGIN START TRANSACTION; COMMIT; END" ).arg( committingProcedure ) );
          first->rawQuery( QString( "DROP PROCEDURE IF EXISTS %1" ).arg( silentProcedure ) );
          first->rawQuery( QString( "CREATE PROCEDURE %1( p INT ) BEGIN SET @US3_LAST_ERRNO = p; "
                                    "SET @US3_LAST_ERROR = CONCAT( 'silent status ', p ); END" )
@@ -119,9 +125,9 @@ class US_DB2_LiveTransaction : public ::testing::Test
 
          ASSERT_EQ( scalar( *first,
                             QString( "SELECT COUNT(*) FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = DATABASE() "
-                                     "AND ROUTINE_NAME IN ( '%1', '%2', '%3', 'last_errno', 'last_error' )" )
-                               .arg( rollbackProcedure, failingProcedure, silentProcedure ) ),
-                    "5" )
+                                     "AND ROUTINE_NAME IN ( '%1', '%2', '%3', '%4', 'last_errno', 'last_error' )" )
+                               .arg( rollbackProcedure, failingProcedure, silentProcedure, committingProcedure ) ),
+                    "6" )
             << "the test user needs CREATE ROUTINE";
       }
 
@@ -133,6 +139,7 @@ class US_DB2_LiveTransaction : public ::testing::Test
             first->rawQuery( QString( "DROP PROCEDURE IF EXISTS %1" ).arg( rollbackProcedure ) );
             first->rawQuery( QString( "DROP PROCEDURE IF EXISTS %1" ).arg( failingProcedure ) );
             first->rawQuery( QString( "DROP PROCEDURE IF EXISTS %1" ).arg( silentProcedure ) );
+            first->rawQuery( QString( "DROP PROCEDURE IF EXISTS %1" ).arg( committingProcedure ) );
             if ( createdStatusFunctions )
             {
                first->rawQuery( "DROP FUNCTION IF EXISTS last_errno" );
@@ -238,6 +245,30 @@ TEST_F( US_DB2_LiveTransaction, RollbackAfterImplicitCommitDoesNotClaimACause )
    EXPECT_TRUE( error.contains( "may have been kept" ) ) << error.toStdString();
    EXPECT_FALSE( error.contains( "deadlock" ) ) << error.toStdString();
    EXPECT_EQ( scalar( *first, QString( "SELECT v FROM %1 WHERE id = 1" ).arg( table ) ), "1" );
+}
+
+// A procedure that commits on its own ends the caller's transaction. The call
+// says so by name, nothing after it runs on the connection, and the commit is
+// refused. The write before the call was committed by it and stays.
+TEST_F( US_DB2_LiveTransaction, AProcedureThatCommitsStopsTheTransactionThere )
+{
+   QString error;
+   ASSERT_TRUE( first->beginTransaction( error ) ) << error.toStdString();
+   first->rawQuery( QString( "UPDATE %1 SET v = 1 WHERE id = 1" ).arg( table ) );
+
+   EXPECT_NE( first->statusQuery( QString( "CALL %1()" ).arg( committingProcedure ) ), IUS_DB2::OK );
+   EXPECT_TRUE( first->lastError().contains( QString( "CALL %1" ).arg( committingProcedure ) ) )
+      << first->lastError().toStdString();
+
+   first->query( QString( "UPDATE %1 SET v = 1 WHERE id = 2" ).arg( table ) );
+   EXPECT_EQ( first->lastErrno(), IUS_DB2::DBERROR );
+   EXPECT_TRUE( first->lastError().contains( "were not run" ) ) << first->lastError().toStdString();
+
+   EXPECT_FALSE( first->commitTransaction( error ) );
+   EXPECT_FALSE( first->rollbackTransaction( error ) );
+
+   EXPECT_EQ( scalar( *second, QString( "SELECT v FROM %1 WHERE id = 1" ).arg( table ) ), "1" );
+   EXPECT_EQ( scalar( *second, QString( "SELECT v FROM %1 WHERE id = 2" ).arg( table ) ), "0" );
 }
 
 // The transaction ends with no error the client could record, so only the
