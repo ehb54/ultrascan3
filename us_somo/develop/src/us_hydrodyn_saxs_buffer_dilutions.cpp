@@ -803,7 +803,7 @@ void US_Hydrodyn_Saxs_Buffer_Dilutions::make_series()
 void US_Hydrodyn_Saxs_Buffer_Dilutions::help()
 {
    US_Help * online_help = new US_Help( this );
-   online_help->show_help( "manual/somo/somo_saxs_buffer.html" );
+   online_help->show_help( "manual/somo/somo_SAS_data_utility.html" );
 }
 
 void US_Hydrodyn_Saxs_Buffer_Dilutions::closeEvent( QCloseEvent * e )
