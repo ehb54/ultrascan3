@@ -1046,39 +1046,39 @@ void US_Astfem_Sim::start_simulation( void )
 
       // Update meniscus and bottom
       adjust_limits( (double)simparams.speed_step[ jd ].rotorspeed );
-DbgLv(1) << "start_simulation is called" << af_params.current_meniscus << af_params.current_bottom
- << "step=" << jd << simparams.speed_step[jd].rotorspeed;
+      DbgLv( 1 ) << "start_simulation is called" << af_params.current_meniscus << af_params.current_bottom << "step=" << jd
+                 << simparams.speed_step[jd].rotorspeed;
 
       // Number of radial grid points on the experimental grid; number of scans
-int points = qRound( ( af_params.current_bottom - af_params.current_meniscus ) / simparams.radial_resolution ) + 1;
-int nscans = simparams.speed_step[jd].scans;
+      int points = qRound( ( af_params.current_bottom - af_params.current_meniscus ) / simparams.radial_resolution ) + 1;
+      int nscans = simparams.speed_step[jd].scans;
 
-sim_datas[jd].xvalues.resize( points ); // Sets the size of radial grid points array
+      sim_datas[jd].xvalues.resize( points ); // Sets the size of radial grid points array
 
-for ( int jp = 0; jp < points; jp++ )
-{ // Calculate the radial grid points
-   sim_datas[jd].xvalues[jp] = af_params.current_meniscus + jp * simparams.radial_resolution;
-}
-DbgLv( 1 ) << "astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[jd].xvalues[points - 1] << af_params.current_meniscus
-           << af_params.current_bottom << jd;
+      for ( int jp = 0; jp < points; jp++ )
+      { // Calculate the radial grid points
+         sim_datas[jd].xvalues[jp] = af_params.current_meniscus + jp * simparams.radial_resolution;
+      }
+      DbgLv( 1 ) << "astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[jd].xvalues[points - 1]
+                 << af_params.current_meniscus << af_params.current_bottom << jd;
 
-// Set the total size of scans for simulation
-sim_datas[jd].scanData.resize( nscans );
+      // Set the total size of scans for simulation
+      sim_datas[jd].scanData.resize( nscans );
 
-int terpsize = ( points + 7 ) / 8;
+      int terpsize = ( points + 7 ) / 8;
 
-// For each scan set the informations for each scan on
-// the experimental grid.
-int scan_index = 0;
-for ( int js = 0; js < nscans; js++ )
-{
-   sim_datas[jd].scanData[js]            = sim_data_all.scanData[scan_index++];
-   sim_datas[jd].scanData[js].wavelength = system.wavelength;
-   sim_datas[jd].scanData[js].plateau    = 0.0;
-   sim_datas[jd].scanData[js].delta_r    = simparams.radial_resolution;
-   sim_datas[jd].scanData[js].rvalues.fill( 0.0, points );
-   sim_datas[jd].scanData[js].interpolated.fill( 0, terpsize );
-}
+      // For each scan set the informations for each scan on
+      // the experimental grid.
+      int scan_index = 0;
+      for ( int js = 0; js < nscans; js++ )
+      {
+         sim_datas[jd].scanData[js]            = sim_data_all.scanData[scan_index++];
+         sim_datas[jd].scanData[js].wavelength = system.wavelength;
+         sim_datas[jd].scanData[js].plateau    = 0.0;
+         sim_datas[jd].scanData[js].delta_r    = simparams.radial_resolution;
+         sim_datas[jd].scanData[js].rvalues.fill( 0.0, points );
+         sim_datas[jd].scanData[js].interpolated.fill( 0, terpsize );
+      }
    }
 
 

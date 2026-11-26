@@ -8,6 +8,7 @@
 #include "us_settings.h"
 #include "us_util.h"
 
+#include <QFile>
 #include <QFileInfo>
 #include <QRegularExpression>
 
@@ -1277,7 +1278,9 @@ bool US_DB2::configure_ssl( QString& err )
    // handshake when the shared one formerly in etc/mysql was sent.  TLS stays
    // on: libmariadb enables it when a CA file is set, libmysql through
    // MYSQL_OPT_SSL_MODE below.
-   success = mysql_options( db, MYSQL_OPT_SSL_CA, caFile.toLatin1().constData() );
+   // In the file system's encoding, so a path with non-ASCII characters
+   // reaches the connector intact.
+   success = mysql_options( db, MYSQL_OPT_SSL_CA, QFile::encodeName( caFile ).constData() );
    if ( success != 0 ) {
       error = QString( "Error setting SSL CA file: " ) + caFile;
       err = error;

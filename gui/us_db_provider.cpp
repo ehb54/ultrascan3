@@ -4,7 +4,7 @@
 #include "us_passwd.h"
 #include "us_session.h"
 
-std::unique_ptr<IUS_DB2> US_DBProvider::open()
+std::unique_ptr<IUS_DB2> US_DBProvider::open( QWidget* parent )
 {
    US_Session& session = US_Session::instance();
 
@@ -14,7 +14,7 @@ std::unique_ptr<IUS_DB2> US_DBProvider::open()
    // without contacting the server.
    if ( !session.hasProvider() )
    {
-      US_Passwd pw;
+      US_Passwd pw( parent );
       pw.getPasswd();
    }
    return session.openDatabase();
