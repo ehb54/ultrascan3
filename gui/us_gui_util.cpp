@@ -1,8 +1,9 @@
 //! \file us_gui_util.cpp
 #include <QtSvg>
+#include <cmath>
 
+#include "us_archive.h"
 #include "us_gui_util.h"
-#include "us_gzip.h"
 #include "us_settings.h"
 #if QT_VERSION > 0x050000
 #include "qwt_plot_renderer.h"
@@ -17,15 +18,19 @@ int US_GuiUtil::save_plot( const QString& filename, const QwtPlot* plot )
 
    if ( filename.contains( ".svg" ) )
    {  // Save the file as SVG, then save a PNG version
-      save_svg( filename, plot );
+      status = save_svg( filename, plot );
 
-      QString fnamepng  = QString( filename ).section( ".", 0, -2 ) + ".png";
-      save_png( fnamepng, plot );
+      QString   fnamepng   = QString( filename ).section( ".", 0, -2 ) + ".png";
+      const int png_status = save_png( fnamepng, plot );
+      if ( status == 0 )
+      {
+         status = png_status;
+      }
    }
 
    else if ( filename.endsWith( ".png" ) )
    {  // Save the file as PNG
-      save_png( filename, plot );
+      status = save_png( filename, plot );
    }
 
    else
@@ -54,8 +59,21 @@ int US_GuiUtil::save_svg( const QString& filename, const QwtPlot* plot )
       pltrend.renderDocument( (QwtPlot*)plot, fnsvg, psize, res );
 
       // Compress it and save SVGZ file
-      US_Gzip gz;
-      gz.gzip( fnsvg );
+      US_Archive archive;
+      if ( archive.gzip( fnsvg, fnsvg + "z" ) )
+      {
+         // The .svgz is complete, so a leftover .svg is not a failure
+         QFile svg_file( fnsvg );
+         if ( !svg_file.remove() )
+         {
+            qWarning() << "Could not remove" << fnsvg << svg_file.errorString();
+         }
+      }
+      else
+      {
+         qWarning() << archive.getError();
+         status = 3;
+      }
    }
 
    else
@@ -91,6 +109,23 @@ int US_GuiUtil::save_png( const QString& filename, const QwtPlot* plot )
    }
 
    return status;
+}
+
+bool US_GuiUtil::warn_unsaved( QWidget* parent, const QStringList& unsaved )
+{
+   if ( unsaved.isEmpty() )
+   {
+      return false;
+   }
+
+   QString text = QObject::tr( "Unable to write %n file(s):", "", static_cast<int>( unsaved.size() ) ) + "\n" +
+                  unsaved.mid( 0, 10 ).join( "\n" );
+   if ( unsaved.size() > 10 )
+   {
+      text += "\n...";
+   }
+   QMessageBox::warning( parent, QObject::tr( "File Write Error" ), text );
+   return true;
 }
 
 int US_GuiUtil::save_csv( const QString& filename, const QwtPlot* plot )
@@ -263,4 +298,20 @@ int US_GuiUtil::save_csv( const QString& filename, const QwtPlot* plot )
    }
 
    return status;
+}
+
+int US_GuiUtil::counter_digits( double value )
+{
+   const double magnitude = std::fabs( value );
+   if ( magnitude == 0.0 || !std::isfinite( magnitude ) )
+   {
+      return 14;
+   }
+   int ncv = int( std::log10( magnitude ) ) + 1;
+   ncv     = ( ncv > 0 ) ? ncv : ( 4 - ncv );
+   if ( value < 0.0 )
+   {
+      ++ncv;
+   }
+   return qBound( 1, ncv, 14 );
 }

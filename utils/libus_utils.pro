@@ -40,7 +40,6 @@ HEADERS      = us_ana_profile.h   \
                us_eprofile.h      \
                us_experiment.h  \
                us_global.h        \
-               us_gzip.h          \
                us_hardware.h      \
                us_hydrosim.h      \
                us_http_post.h     \
@@ -75,7 +74,6 @@ HEADERS      = us_ana_profile.h   \
                us_solution_vals.h \
                us_solve_sim.h     \
                us_stiffbase.h     \
-               us_tar.h           \
                us_time_state.h    \
                us_timer.h         \
                us_geturl.h        \
@@ -105,7 +103,6 @@ SOURCES      = us_ana_profile.cpp   \
                us_eprofile.cpp      \
                us_experiment.cpp  \
                us_global.cpp        \
-               us_gzip.cpp          \
                us_hardware.cpp      \
                us_http_post.cpp     \
                us_hydrosim.cpp      \
@@ -140,7 +137,6 @@ SOURCES      = us_ana_profile.cpp   \
                us_solution_vals.cpp \
                us_solve_sim.cpp     \
                us_stiffbase.cpp     \
-               us_tar.cpp           \
                us_time_state.cpp    \
                us_timer.cpp         \
                us_geturl.cpp        \

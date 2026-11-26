@@ -181,10 +181,8 @@ public:
                                         QString& err) = 0;
 
     // Blob operations (used in tests)
-    virtual int writeBlobToDB(const QString& filename, const QString& procedure, const int tableID) = 0;
-    virtual int readBlobFromDB(const QString& filename, const QString& procedure, const int tableID) = 0;
-    virtual int writeAucToDB(const QString& filename, int tableID) = 0;
-    virtual int readAucFromDB(const QString& filename, int tableID) = 0;
+    virtual int           writeBlobToDB( const QString& filename, const QString& procedure, const int tableID )  = 0;
+    virtual int           readBlobFromDB( const QString& filename, const QString& procedure, const int tableID ) = 0;
 
     // Utility methods (used in tests)
     virtual void rawQuery(const QString& sqlQuery) = 0;

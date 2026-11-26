@@ -68,8 +68,7 @@ US_IntensityRa::US_IntensityRa(
 
    int status = US_GuiUtil::save_plot( filename, data_plot );
    if ( status != 0 )
-      qDebug() << filename << "plot not saved";
-
+      qWarning() << filename << "plot not saved";
 }
 
 void US_IntensityRa::draw_plot( const QVector< double >& scanData,

@@ -771,7 +771,10 @@ void US_Plot::svg( void ) const
    {
       if ( fileName.right( 5 ) != ".svgz" ) fileName += ".svgz";
 
-      US_GuiUtil::save_svg( fileName, plot );
+      if ( US_GuiUtil::save_svg( fileName, plot ) != 0 )
+      {
+         QMessageBox::warning( plot, tr( "File Write Error" ), tr( "Unable to write file:\n%1" ).arg( fileName ) );
+      }
    }
 }
 
@@ -792,7 +795,10 @@ void US_Plot::png( void ) const
    {
       if ( fileName.right( 4 ) != ".png" ) fileName += ".png";
 
-      US_GuiUtil::save_png( fileName, plot );
+      if ( US_GuiUtil::save_png( fileName, plot ) != 0 )
+      {
+         QMessageBox::warning( plot, tr( "File Write Error" ), tr( "Unable to write file:\n%1" ).arg( fileName ) );
+      }
    }
 }
 
