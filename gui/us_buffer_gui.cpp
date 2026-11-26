@@ -1,16 +1,17 @@
 //! \file us_buffer_gui.cpp
 #include "us_buffer_gui.h"
-#include "us_gui_settings.h"
-#include "us_settings.h"
-#include "us_db2.h"
-#include "us_passwd.h"
 #include "us_constants.h"
-#include "us_investigator.h"
-#include "us_table.h"
+#include "us_db2.h"
+#include "us_db_provider.h"
 #include "us_editor.h"
-#include "us_util.h"
-#include "us_math2.h"
 #include "us_eprofile.h"
+#include "us_gui_settings.h"
+#include "us_investigator.h"
+#include "us_math2.h"
+#include "us_notify.h"
+#include "us_settings.h"
+#include "us_table.h"
+#include "us_util.h"
 
 namespace
 {
@@ -18,11 +19,11 @@ void showBufferSaveError( QWidget* parent, int result, const QString& error )
 {
    if ( result == -6 )
    {
-      QMessageBox::warning( parent,
-                            QObject::tr( "Local Buffer Copy Error" ),
-                            QObject::tr( "The buffer was saved to the database, but its local disk copy could not be written.\n"
-                                         "You do not need to save it to the database again.\n\n" ) +
-                               error );
+      US_Notify::warning( parent,
+                          QObject::tr( "Local Buffer Copy Error" ),
+                          QObject::tr( "The buffer was saved to the database, but its local disk copy could not be written.\n"
+                                       "You do not need to save it to the database again.\n\n" ) +
+                             error );
    }
    else if ( result < 0 )
    {
@@ -34,7 +35,7 @@ void showBufferSaveError( QWidget* parent, int result, const QString& error )
          : result == -10 ? QObject::tr( "The buffer save failed and its rollback could not be confirmed, so some of it "
                                         "may be stored. Check the stored buffer before retrying.\n" )
                          : QObject::tr( "Error saving the buffer to the database:\n" );
-      QMessageBox::critical(
+      US_Notify::critical(
          parent, QObject::tr( "DB Buffer Write Error" ), message + QObject::tr( "(Return Code = %1) " ).arg( result ) + error );
    }
 }
@@ -360,7 +361,7 @@ bool US_BufferGuiSelect::read_from_disk( QListWidgetItem* item )
 
    if ( !loaded.readFromDisk( filenames[buf] ) )
    {
-      QMessageBox::warning( this, tr( "Buffer Not Loaded" ), tr( "The buffer file could not be read:\n%1" ).arg( filenames[buf] ) );
+      US_Notify::warning( this, tr( "Buffer Not Loaded" ), tr( "The buffer file could not be read:\n%1" ).arg( filenames[buf] ) );
       return false;
    }
 
@@ -388,25 +389,24 @@ bool US_BufferGuiSelect::read_from_db( QListWidgetItem* item )
 // and the buffer is unchanged.
 bool US_BufferGuiSelect::read_from_db( const QString& bufferID )
 {
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
    // Get the buffer data from the database
-   if ( db.lastErrno() != IUS_DB2::OK )
+   if ( db->lastErrno() != IUS_DB2::OK )
    {
-      connect_error( db.lastError() );
+      connect_error( db->lastError() );
       return false;
    }
 
    DbgLv( 1 ) << "BufS-rddb-bfid  bufID" << bufferID;
-   if ( !buffer->readFromDB( &db, bufferID ) )
+   if ( !buffer->readFromDB( db.get(), bufferID ) )
    {
-      QMessageBox::warning(
+      US_Notify::warning(
          this,
          tr( "Buffer Not Loaded" ),
          tr( "Buffer %1 could not be read from the database:\n%2" )
             .arg( bufferID,
-                  db.lastError().isEmpty() ? tr( "the buffer or one of its components was not found" ) : db.lastError() ) );
+                  db->lastError().isEmpty() ? tr( "the buffer or one of its components was not found" ) : db->lastError() ) );
       return false;
    }
    if ( buffer->component.size() > 0 )
@@ -550,9 +550,7 @@ bool US_BufferGuiSelect::buffer_path( QString& path )
    {
       if ( ! dir.mkpath( path ) )
       {
-         QMessageBox::critical( this,
-            tr( "Bad Buffer Path" ),
-            tr( "Could not create default directory for buffers\n" ) + path );
+         US_Notify::critical( this, tr( "Bad Buffer Path" ), tr( "Could not create default directory for buffers\n" ) + path );
          return false;
       }
    }
@@ -636,9 +634,7 @@ DbgLv(1) << "BufS-info values" << buffer->extinction.values();
    {
       double waveln   = keys[ ii ];
       double extinc   = buffer->extinction[ waveln ];
-DbgLv(1) << "BufS-info:  ii" << ii << "waveln extinc" << waveln << extinc;
-//QString spair   = QString::number( waveln ) + " / " +
-//                        QString::number( extinc ) + "  ";
+      DbgLv( 1 ) << "BufS-info:  ii" << ii << "waveln extinc" << waveln << extinc;
 
       QString spair;    
       if (extinc < 0)
@@ -696,9 +692,7 @@ void US_BufferGuiSelect::spectrum( void )
   
   if (buffer->extinction.isEmpty())
     {
-      QMessageBox::information( this,
-      tr( "WARNING" ),
-      tr( "Buffer does not have spectrum data!" ) );
+       US_Notify::information( this, tr( "WARNING" ), tr( "Buffer does not have spectrum data!" ) );
     }
   else
     {
@@ -713,9 +707,7 @@ void US_BufferGuiSelect::delete_buffer( void )
 {
    if ( buffer->GUID.size() == 0 || lw_buffer_list->currentRow() < 0 )
    {
-      QMessageBox::information( this,
-            tr( "Attention" ),
-            tr( "First select the buffer to be deleted." ) );
+      US_Notify::information( this, tr( "Attention" ), tr( "First select the buffer to be deleted." ) );
       return;
    }
 
@@ -748,10 +740,10 @@ void US_BufferGuiSelect::delete_disk( void )
 
    if ( buffer_in_use( bufGUID ) )
    {
-      QMessageBox::warning( this,
-         tr( "Buffer Not Deleted" ),
-         tr( "The buffer could not be deleted,\n"
-             "since it is in use in one or more solutions." ) );
+      US_Notify::warning( this,
+                          tr( "Buffer Not Deleted" ),
+                          tr( "The buffer could not be deleted,\n"
+                              "since it is in use in one or more solutions." ) );
       return;
    }
 
@@ -807,48 +799,45 @@ bool US_BufferGuiSelect::buffer_in_use( QString& bufferGUID )
 // Delete a buffer from the database (if not in use by another table type)
 void US_BufferGuiSelect::delete_db( void )
 {
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != IUS_DB2::OK )
+   if ( db->lastErrno() != IUS_DB2::OK )
    {
-      connect_error( db.lastError() );
+      connect_error( db->lastError() );
       return;
    }
 
    QStringList q( "get_bufferID" );
    q << buffer->GUID;
 
-   db.query( q );
+   db->query( q );
 
-   int status = db.lastErrno();
+   int status = db->lastErrno();
 
    if (  status == IUS_DB2::OK )
    {
-      db.next();
-      QString bufferID = db.value( 0 ).toString();
+      db->next();
+      QString bufferID = db->value( 0 ).toString();
 
       q[ 0 ] = "delete_buffer";
       q[ 1 ] = bufferID;
-      status = db.statusQuery( q );
+      status = db->statusQuery( q );
 
       QString compType("Buffer");
    }
 
    if ( status == IUS_DB2::BUFFR_IN_USE )
    {
-      QMessageBox::warning( this,
-         tr( "Buffer Not Deleted" ),
-         tr( "This buffer could not be deleted since\n"
-             "it is in use in one or more solutions." ) );
+      US_Notify::warning( this,
+                          tr( "Buffer Not Deleted" ),
+                          tr( "This buffer could not be deleted since\n"
+                              "it is in use in one or more solutions." ) );
       return;
    }
 
    if ( status != IUS_DB2::OK )
    {
-      QMessageBox::warning( this,
-         tr( "Attention" ),
-         tr( "Delete failed.\n\n" ) + db.lastError() );
+      US_Notify::warning( this, tr( "Attention" ), tr( "Delete failed.\n\n" ) + db->lastError() );
    }
 }
 
@@ -945,12 +934,11 @@ void US_BufferGuiSelect::read_buffer( void )
 // Read buffer information from the database
 void US_BufferGuiSelect::read_db( void )
 {
-   US_Passwd pw;
-   US_DB2 db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != IUS_DB2::OK )
+   if ( db->lastErrno() != IUS_DB2::OK )
    {
-      connect_error( db.lastError() );
+      connect_error( db->lastError() );
       return;
    }
 
@@ -968,12 +956,12 @@ void US_BufferGuiSelect::read_db( void )
 
    QStringList q;
    q << "get_buffer_desc" << QString::number( *personID );
-   db.query( q );
+   db->query( q );
 
-   while ( db.next() )
+   while ( db->next() )
    {
-      bufferIDs    << db.value( 0 ).toString();
-      descriptions << db.value( 1 ).toString();
+      bufferIDs << db->value( 0 ).toString();
+      descriptions << db->value( 1 ).toString();
       GUIDs        << "";
    }
 
@@ -994,8 +982,7 @@ void US_BufferGuiSelect::read_db( void )
 // Report a database connection error
 void US_BufferGuiSelect::connect_error( const QString& error )
 {
-   QMessageBox::warning( this, tr( "Connection Problem" ),
-                        tr( "Could not connect to database \n" ) + error );
+   US_Notify::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) + error );
 }
 
 // Accept a selected buffer for return to the caller
@@ -1075,8 +1062,7 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
 
    QPushButton* pb_cancel   = us_pushbutton( tr( "Cancel" ) );
    pb_accept                = us_pushbutton( tr( "Accept" ) );
-   pb_spectrum              = us_pushbutton( tr( "Enter Spectrum" ) );
-   //QPushButton* pb_spectrum = us_pushbutton( tr( "Enter Spectrum" ) );
+   pb_spectrum               = us_pushbutton( tr( "Enter Spectrum" ) );
    QPushButton* pb_help     = us_pushbutton( tr( "Help" ) );
    QPushButton *pb_new_bcomp = us_pushbutton("Create new");
    pb_new_bcomp -> hide(); // disabled - see issue # 275
@@ -1209,10 +1195,7 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
             this,        &US_BufferGuiNew::ph );
    connect( le_compress, &QLineEdit::editingFinished, 
             this,        &US_BufferGuiNew::compressibility );
-   connect( ck_manual,   &QAbstractButton::toggled,
-            this,        &US_BufferGuiNew::manual_flag );
-   //connect( pb_spectrum, SIGNAL( clicked()   ),
-   //         this,        SLOT  ( spectrum()  ) );
+   connect( ck_manual, &QAbstractButton::toggled, this, &US_BufferGuiNew::manual_flag );
 
    connect( pb_spectrum, &QAbstractButton::clicked,
             this,        &US_BufferGuiNew::spectrum_class );
@@ -1244,20 +1227,19 @@ void US_BufferGuiNew::init_buffer( void )
    }
    if ( from_db ) {
       QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-      US_Passwd pw;
-      QString p = pw.getPasswd();
+      auto       db = US_DBProvider::open();
       QString    error;
-      const bool read = US_BufferComponent::getAllFromDB( p, component_list, &error );
+      const bool read = US_BufferComponent::getAllFromDB( *db, component_list, &error );
       QApplication::restoreOverrideCursor();
       if ( !read )
       {
          // The list stays empty, so the next visit to this panel reads it again
          component_list.clear();
-         QMessageBox::warning( this,
-                               tr( "Buffer Components Not Loaded" ),
-                               tr( "The buffer components could not be read from the database, so only water "
-                                   "is listed:\n%1" )
-                                  .arg( error ) );
+         US_Notify::warning( this,
+                             tr( "Buffer Components Not Loaded" ),
+                             tr( "The buffer components could not be read from the database, so only water "
+                                 "is listed:\n%1" )
+                                .arg( error ) );
       }
    } else {
       // Read all buffer components from the
@@ -1266,9 +1248,6 @@ void US_BufferGuiNew::init_buffer( void )
 
    }
 
-   // In case we just re-synced in Settings panel,
-   //   reread components and recompose list widget
-   // US_BufferComponent::getAllFromHD( component_list );
 DbgLv(1) << "BufN:SL: init_buffer  comps" << component_list.size();
    QStringList keys = component_list.keys();
    std::sort( keys.begin(), keys.end() );
@@ -1324,15 +1303,14 @@ DbgLv(1) << "BufN:SL: new_desc:" << buffer->description;
 }
 
 // Slot to select water as buffer
-void US_BufferGuiNew::select_water(QListWidgetItem* item){
-   // Get selected component
-   // QListWidgetItem* item    = lw_allcomps->currentItem();
+void US_BufferGuiNew::select_water( QListWidgetItem* item )
+{
    if ( item->type() > 0 ) {
       return;
    }
    if (lw_bufcomps->count() > 0) {
-      QMessageBox::warning(this, tr("Warning!"),
-                           tr("Please remove all the selected buffer components before choosing [ Water (H2O) ]!"));
+      US_Notify::warning(
+         this, tr( "Warning!" ), tr( "Please remove all the selected buffer components before choosing [ Water (H2O) ]!" ) );
       return;
    }
    new QListWidgetItem(item->text(), lw_bufcomps, -1);
@@ -1348,7 +1326,6 @@ void US_BufferGuiNew::select_water(QListWidgetItem* item){
    pb_accept->setEnabled( can_accept );
    pb_spectrum->setEnabled( can_accept );
    calc_visc_dent_temp();
-
 }
 
 // Slot for entry of concentration to complete add-component
@@ -1356,8 +1333,7 @@ void US_BufferGuiNew::add_component()
 {
 DbgLv(1) << "BufN:SL: add_component()";
    if ( lw_bufcomps->count() > 0 && lw_bufcomps->item(0)->type() < 0){
-      QMessageBox::warning(this, tr("Warning!"),
-                        tr("Please remove the water component before choosing any other components!"));
+      US_Notify::warning( this, tr( "Warning!" ), tr( "Please remove the water component before choosing any other components!" ) );
       return;
    }
    double concen   = le_concen->text().toDouble();
@@ -1392,11 +1368,14 @@ DbgLv(1) << "BufN:SL: adco:  runit" << runit << "cunit" << bcomp.unit
 
    if ( concen < rlow  ||  concen > rhigh )
    {
-      QMessageBox::critical( this,
-         tr( "Concentration Out of Range" ),
-         tr( "Entered concentration %1 out of component range:\n"
-             "  %2 - %3 " ).arg( concen ).arg( rlow ).arg(rhigh )
-            + bcomp.unit );
+      US_Notify::critical( this,
+                           tr( "Concentration Out of Range" ),
+                           tr( "Entered concentration %1 out of component range:\n"
+                               "  %2 - %3 " )
+                                 .arg( concen )
+                                 .arg( rlow )
+                                 .arg( rhigh ) +
+                              bcomp.unit );
       return;
    }
 
@@ -1452,43 +1431,40 @@ void US_BufferGuiNew::create_new_buffer_component() {
    DbgLv(1) << "BufN:New BComp";
    // check if connected to database
    if (!from_db) { // if not, exceed
-      QMessageBox::critical(this, tr("No database connection"), tr("Without a database you can create new buffer components."));
+      US_Notify::critical( this, tr( "No database connection" ), tr( "Without a database you can create new buffer components." ) );
       return;
    }
    // check user level against database
-   US_Passwd   pw;
-   US_DB2      db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != IUS_DB2::OK )
+   if ( db->lastErrno() != IUS_DB2::OK )
    {
-//qDebug() << "USCFG: UpdInv: ERROR connect";
-      QMessageBox::information( this,
-                                tr( "Error" ),
-                                tr( "Error making the DB connection.\n" ) );
+      US_Notify::information( this, tr( "Error" ), tr( "Error making the DB connection.\n" ) );
 
       return;
    }
 
    QStringList q( "get_user_info" );
-   db.query( q );
-   if ( db.lastErrno() != IUS_DB2::OK || !db.next() )
+   db->query( q );
+   if ( db->lastErrno() != IUS_DB2::OK || !db->next() )
    {
-      QMessageBox::warning( this,
-                            tr( "User Level Unknown" ),
-                            tr( "Your user level could not be read from the database, so new buffer "
-                                "components cannot be created:\n%1" )
-                               .arg( db.lastError() ) );
+      US_Notify::warning( this,
+                          tr( "User Level Unknown" ),
+                          tr( "Your user level could not be read from the database, so new buffer "
+                              "components cannot be created:\n%1" )
+                             .arg( db->lastError() ) );
       return;
    }
 
-   int ID        = db.value( 0 ).toInt();
-   QString fname = db.value( 1 ).toString();
-   QString lname = db.value( 2 ).toString();
-   int     level = db.value( 5 ).toInt();
+   int     ID    = db->value( 0 ).toInt();
+   QString fname = db->value( 1 ).toString();
+   QString lname = db->value( 2 ).toString();
+   int     level = db->value( 5 ).toInt();
    if (level < 2){
-      QMessageBox::critical(this, tr("Insufficient permissions"),
-                            tr("You have not enough permissions on the currently selected database to create "
-                               "new buffer components.\nYou need to be an admin or superuser."));
+      US_Notify::critical( this,
+                           tr( "Insufficient permissions" ),
+                           tr( "You have not enough permissions on the currently selected database to create "
+                               "new buffer components.\nYou need to be an admin or superuser." ) );
       return;
    }
    // permissions sufficient
@@ -1502,12 +1478,12 @@ void US_BufferGuiNew::create_new_buffer_component() {
    {
       return;
    }
-   if ( bc.saveToDB( &db ) < 0 )
+   if ( bc.saveToDB( db.get() ) < 0 )
    {
-      QMessageBox::warning(
+      US_Notify::warning(
          this,
          tr( "Buffer Component Not Saved" ),
-         tr( "The buffer component \"%1\" could not be saved to the database:\n%2" ).arg( bc.name, db.lastError() ) );
+         tr( "The buffer component \"%1\" could not be saved to the database:\n%2" ).arg( bc.name, db->lastError() ) );
       return;
    }
 
@@ -1515,13 +1491,13 @@ void US_BufferGuiNew::create_new_buffer_component() {
    // as they are when the list cannot be read back.
    QMap<QString, US_BufferComponent> reloaded;
    QString                           error;
-   if ( !US_BufferComponent::getAllFromDB( pw.getPasswd(), reloaded, &error ) )
+   if ( !US_BufferComponent::getAllFromDB( *db, reloaded, &error ) )
    {
-      QMessageBox::warning( this,
-                            tr( "Buffer Components Not Reloaded" ),
-                            tr( "The buffer component \"%1\" was saved, but the component list could not be "
-                                "read back from the database:\n%2" )
-                               .arg( bc.name, error ) );
+      US_Notify::warning( this,
+                          tr( "Buffer Components Not Reloaded" ),
+                          tr( "The buffer component \"%1\" was saved, but the component list could not be "
+                              "read back from the database:\n%2" )
+                             .arg( bc.name, error ) );
       return;
    }
    component_list = reloaded;
@@ -1552,9 +1528,8 @@ void US_BufferGuiNew::select_bcomp( )
    }
    le_concen->setEnabled(true);
    QString compID  = QString::number( item->type() );
-   US_BufferComponent bcomp = component_list[ compID ];
-   //int bcx         = lw_allcomps->currentRow();
-DbgLv(1) << "BufN:SL: select_bcomp()" << item->text();
+   US_BufferComponent bcomp   = component_list[compID];
+   DbgLv( 1 ) << "BufN:SL: select_bcomp()" << item->text();
    QString bctext  = item->text();
 DbgLv(1) << "BufN:SL:  selb:  cname" << bcomp.name << "crange" << bcomp.range
  << "cunit" << bcomp.unit;
@@ -1613,10 +1588,8 @@ DbgLv(1) << "BufN:SL: remove_bcomp()" << item->text();
 	     }
 	 }
        qDebug() << "index: " << index << ", buf_size: " << buffer->component.size();
-       
-       //buffer->component.removeAt( index );
-       
-       
+
+
        qDebug() << "Updated buffer components: ";
        for ( int ii = 0; ii < buffer->component.size(); ii++ )
 	 {
@@ -1901,18 +1874,18 @@ void US_BufferGuiNew::newAccepted()
 bool US_BufferGuiNew::write_db()
 {
 DbgLv(1) << "BufN:SL: write_db()  bufID" << buffer->bufferID;
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
-   QString   error;
-   int       idBuf = buffer->saveToDB( &db, "1", &error );
-   // saveToDB manages bufferID: rollback restores the old ID, while a disk
-   // copy failure (-6) retains the committed ID. Never store an error as an ID.
+auto    db = US_DBProvider::open();
+QString error;
+int     idBuf = buffer->saveToDB( db.get(), "1", &error );
+// saveToDB manages bufferID: rollback restores the old ID, while a disk
+// copy failure (-6) retains the committed ID. Never store an error as an ID.
 
-   showBufferSaveError( this, idBuf, error );
+showBufferSaveError( this, idBuf, error );
 
-   qDebug() << "BufferID: " << buffer->bufferID << ", Description: " << buffer->description << ", Extintcion key #: " << buffer->extinction.keys().count();
-   // -6: the database save committed and only the local copy failed
-   return idBuf >= 0 || idBuf == -6;
+qDebug() << "BufferID: " << buffer->bufferID << ", Description: " << buffer->description
+         << ", Extintcion key #: " << buffer->extinction.keys().count();
+// -6: the database save committed and only the local copy failed
+return idBuf >= 0 || idBuf == -6;
 }
 
 // Write new buffer to local disk file; true when the file was written
@@ -1926,7 +1899,7 @@ DbgLv(1) << "BufN:SL: write_disk()  bufID" << buffer->GUID;
 
    if ( !buffer->writeToDisk( filename ) )
    {
-      QMessageBox::critical(
+      US_Notify::critical(
          this, tr( "Buffer Write Error" ), tr( "The buffer could not be saved to the local file:\n%1" ).arg( filename ) );
       return false;
    }
@@ -1957,18 +1930,15 @@ US_BufferGuiEdit::US_BufferGuiEdit( int *invID, int *select_db_disk,
    QPushButton* pb_help     = us_pushbutton( tr( "Help" ) );
    QLabel* bn_modbuf        = us_banner( tr( "Edit an existing buffer" ) );
    QLabel* lb_descrip       = us_label( tr( "Description:" ) );
-   QLabel* lb_ph            = us_label( tr( "pH:" ) );
-   //QLabel* bn_spacer        = us_banner( "" );
+   QLabel*      lb_ph            = us_label( tr( "pH:" ) );
    le_descrip    = us_lineedit( buffer->description );
    le_descrip->setAccessibleName( tr( "Description" ) );
    le_ph         = us_lineedit( QString::number( buffer->pH, 'f', 4 ) );
    le_ph->setAccessibleName( tr( "pH" ) );
 
    bn_modbuf->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
-   //bn_spacer->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    pb_accept->setEnabled( false );
    us_setReadOnly( le_descrip, true );
-   //us_setReadOnly( le_descrip, false );
 
    int row = 0;
    main->addWidget( bn_modbuf,       row++, 0, 1, 8 );
@@ -1987,10 +1957,7 @@ US_BufferGuiEdit::US_BufferGuiEdit( int *invID, int *select_db_disk,
    
    connect( le_descrip,   &QLineEdit::editingFinished, 
 	     this,        &US_BufferGuiEdit::description );
-   connect( le_ph,       &QLineEdit::editingFinished, 
-            this,        &US_BufferGuiEdit::ph );
-   // connect( pb_spectrum, SIGNAL( clicked()  ),
-   //          this,        SLOT  ( spectrum() ) );
+   connect( le_ph, &QLineEdit::editingFinished, this, &US_BufferGuiEdit::ph );
    connect( pb_spectrum, &QAbstractButton::clicked,
             this,        &US_BufferGuiEdit::spectrum_class );
    connect( pb_help,     &QAbstractButton::clicked,
@@ -2107,14 +2074,13 @@ DbgLv(1) << "BufE:SL:  edtAcc: DB  id" << buffer->bufferID;
 bool US_BufferGuiEdit::write_db()
 {
 DbgLv(1) << "BufE:SL: write_db()  bufID" << buffer->bufferID;
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
-   QString   error;
-   int       idBuf = buffer->saveToDB( &db, "1", &error );
+auto    db = US_DBProvider::open();
+QString error;
+int     idBuf = buffer->saveToDB( db.get(), "1", &error );
 
-   showBufferSaveError( this, idBuf, error );
-   // -6: the database save committed and only the local copy failed
-   return idBuf >= 0 || idBuf == -6;
+showBufferSaveError( this, idBuf, error );
+// -6: the database save committed and only the local copy failed
+return idBuf >= 0 || idBuf == -6;
 }
 
 // Write updated buffer to local disk file; true when the file was written
@@ -2128,7 +2094,7 @@ bool US_BufferGuiEdit::write_disk()
 
    if ( !buffer->writeToDisk( filename ) )
    {
-      QMessageBox::critical(
+      US_Notify::critical(
          this, tr( "Buffer Write Error" ), tr( "The buffer could not be saved to the local file:\n%1" ).arg( filename ) );
       return false;
    }
@@ -2239,7 +2205,6 @@ void US_BufferGuiSettings::assign_investigator( int invID )
 // Get buffer components from DB and write to */etc/bufferComponents.xml
 void US_BufferGuiSettings::synch_components( void )
 {
-   US_Passwd pw;
    QMap< QString, US_BufferComponent > component_list;
    qApp->processEvents();
 DbgLv(1) << "setB:synchc read to HD from DB";
@@ -2247,7 +2212,8 @@ DbgLv(1) << "setB:synchc read to HD from DB";
    // Read components from DB, write to HD
    component_list.clear();
    QString error;
-   if ( !US_BufferComponent::getAllFromDB( pw.getPasswd(), component_list, &error ) )
+   auto    db = US_DBProvider::open();
+   if ( !US_BufferComponent::getAllFromDB( *db, component_list, &error ) )
    {
       le_syncstat->setText( tr( "Not synchronized; the database could not be read: %1" ).arg( error ) );
       return;
@@ -2345,12 +2311,9 @@ void US_BufferGui::checkTab( int currentTab )
      editTab    ->init_buffer();
      if (editTab->edit_buffer_description == "")
        {
-	 QMessageBox::information( this,
-	 tr( "WARNING" ),
-	 tr( "No Buffer selected! Please select Buffer from the list" ) );
- 
-	 emit editBufAccepted();
-	 
+          US_Notify::information( this, tr( "WARNING" ), tr( "No Buffer selected! Please select Buffer from the list" ) );
+
+          emit editBufAccepted();
        }
    }
 }
@@ -2603,13 +2566,12 @@ void US_BufferComponentRequerster::accept(void) {
          }
    }
    if (exists_already){
-      QMessageBox::critical(this, tr("Duplicate error"),
-                            tr("A buffer component with the same name and range already exists.\n\n")+msg);
+      US_Notify::critical(
+         this, tr( "Duplicate error" ), tr( "A buffer component with the same name and range already exists.\n\n" ) + msg );
       return;
    }
    else {
-      QMessageBox::information(this, tr("Input error"),
-                            msg);
+      US_Notify::information( this, tr( "Input error" ), msg );
       return;
    }
    this->close();

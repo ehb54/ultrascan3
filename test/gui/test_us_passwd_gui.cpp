@@ -13,8 +13,12 @@
 #include <QPushButton>
 #include <QTimer>
 #include <functional>
+#include <utility>
 
 #include "us_credential_source.h"
+#include "us_db2.h"
+#include "us_db_provider.h"
+#include "us_notify.h"
 #include "us_passwd.h"
 #include "us_session.h"
 
@@ -112,19 +116,51 @@ DialogScript::Action fillSignoff( const QString& comment, const QString& passwor
       w->findChild<QDialogButtonBox*>()->button( QDialogButtonBox::Ok )->click();
    };
 }
+// Hands out the connection it was given and counts the calls.
+class HandingProvider : public IUS_DBProvider
+{
+   public:
+      explicit HandingProvider( IUS_DB2* db ) : db( db )
+      {
+      }
+
+      std::unique_ptr<IUS_DB2> open() override
+      {
+         opened++;
+         return std::unique_ptr<IUS_DB2>( std::exchange( db, nullptr ) );
+      }
+
+      IUS_DB2* db;
+      int      opened = 0;
+};
+
+class RecordingNotifier : public US_Notifier
+{
+   public:
+      void notify( Kind kind, QWidget*, const QString& title, const QString& text ) override
+      {
+         kinds << kind;
+         messages << title + ": " + text;
+      }
+
+      QList<Kind> kinds;
+      QStringList messages;
+};
 } // namespace
 
 class US_PasswdGuiTest : public QObject
 {
       Q_OBJECT
 
-      QSharedPointer<MemoryStore> store;
+      QSharedPointer<MemoryStore>         store;
+      std::unique_ptr<US_SessionOverride> session;
 
    private slots:
       void init()
       {
-         store                  = QSharedPointer<MemoryStore>( new MemoryStore );
-         US_Session::instance() = US_Session( store );
+         store = QSharedPointer<MemoryStore>( new MemoryStore );
+         session.reset();
+         session.reset( new US_SessionOverride( store ) );
          US_Settings::set_UltraScanPW( syntheticHash );
          qApp->setProperty( "us3_headless", QVariant() );
       }
@@ -183,6 +219,66 @@ class US_PasswdGuiTest : public QObject
          QCOMPARE( US_Passwd().getPasswd(), QString( "synthetic-master" ) );
          QCOMPARE( script.remaining(), 1 );
          qunsetenv( "US_PASSWD_GUI_TEST_SECRET" );
+      }
+
+#ifndef NO_DB
+      void anInstalledProviderIsUsedWithoutAPrompt()
+      {
+         // Locked: a provider that authenticates on its own needs no local
+         // master password, so no dialog is shown.
+         auto*                           connection = new US_DB2;
+         QSharedPointer<HandingProvider> provider( new HandingProvider( connection ) );
+         US_Session::instance().setProvider( provider );
+         DialogScript             script( { cancel() } );
+
+         std::unique_ptr<IUS_DB2> db = US_DBProvider::open();
+
+         QCOMPARE( db.get(), static_cast<IUS_DB2*>( connection ) );
+         QCOMPARE( provider->opened, 1 );
+         QCOMPARE( script.remaining(), 1 );
+         QVERIFY( store->value.isEmpty() );
+      }
+
+      void aCancelledUnlockFailsWithoutContactingTheServer()
+      {
+         // A saved profile pointing at a port nothing listens on: if the
+         // connection were attempted, the error would be the server's.
+         US_Settings::set_defaultDB(
+            { "Synthetic", "user", "db", "127.0.0.1:1", "00", "00", "a@example.invalid", "00", "00", "guid" } );
+         DialogScript             script( { cancel() } );
+
+         std::unique_ptr<IUS_DB2> db = US_DBProvider::open();
+
+         QVERIFY( db != nullptr );
+         QVERIFY( db->lastErrno() != IUS_DB2::OK );
+         QVERIFY2( db->lastError().contains( "master password was not entered" ), qPrintable( db->lastError() ) );
+         QCOMPARE( script.remaining(), 0 );
+         QVERIFY( store->value.isEmpty() );
+      }
+#endif
+
+      void notifierReplacesTheMessageBox()
+      {
+         QSharedPointer<RecordingNotifier> notifier( new RecordingNotifier );
+         US_Notify::setNotifier( notifier );
+         DialogScript script( { acknowledge() } );
+
+         US_Notify::warning( nullptr, "Connection Problem", "Could not connect" );
+         US_Notify::critical( nullptr, "Error", "Failed" );
+         US_Notify::setNotifier( {} );
+
+         QCOMPARE( notifier->messages, QStringList( { "Connection Problem: Could not connect", "Error: Failed" } ) );
+         QCOMPARE( notifier->kinds, QList<US_Notifier::Kind>( { US_Notifier::Kind::Warning, US_Notifier::Kind::Critical } ) );
+         QCOMPARE( script.remaining(), 1 );
+      }
+
+      void withoutANotifierAMessageBoxIsShown()
+      {
+         DialogScript script( { acknowledge() } );
+
+         US_Notify::information( nullptr, "Saved", "The buffer was saved." );
+
+         QCOMPARE( script.seen, QStringList( { "The buffer was saved." } ) );
       }
 
       void signoffReturnsTheFormWithoutThePassword()

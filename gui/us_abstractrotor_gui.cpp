@@ -1,14 +1,15 @@
 //! \file us_abstractrotor_gui.cpp
 
 #include "us_abstractrotor_gui.h"
-#include "us_settings.h"
-#include "us_license_t.h"
-#include "us_util.h"
 #include "us_db2.h"
-#include "us_widgets.h"
-#include "us_license.h"
+#include "us_db_provider.h"
 #include "us_gui_settings.h"
-#include "us_passwd.h"
+#include "us_license.h"
+#include "us_license_t.h"
+#include "us_notify.h"
+#include "us_settings.h"
+#include "us_util.h"
+#include "us_widgets.h"
 
 US_AbstractRotorGui::US_AbstractRotorGui(
      bool signal_wanted,
@@ -115,9 +116,7 @@ void US_AbstractRotorGui::source_changed( bool db )
 
    if ( db && ( DB.size() < 5 ) )
    {
-      QMessageBox::warning( this,
-         tr( "Attention" ),
-         tr( "There is no default database set." ) );
+      US_Notify::warning( this, tr( "Attention" ), tr( "There is no default database set." ) );
    }
 
    emit use_db( db );
@@ -137,21 +136,18 @@ bool US_AbstractRotorGui::loadAbstractRotors( void )
    // Get ID's for the abstract rotors we have
    if ( disk_controls->db() )
    {
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
-     
-      if ( db.lastErrno() != IUS_DB2::OK )
+      auto db = US_DBProvider::open();
+
+      if ( db->lastErrno() != IUS_DB2::OK )
       {
-         connect_error( db.lastError() );
+         connect_error( db->lastError() );
          return( false );
       }
      
       // Get information about all the abstract rotors
-      if ( US_Rotor::readAbstractRotorsDB( abstractRotorList, &db ) != US_Rotor::ROTOR_OK )
+      if ( US_Rotor::readAbstractRotorsDB( abstractRotorList, db.get() ) != US_Rotor::ROTOR_OK )
       {
-         QMessageBox::warning( this, tr( "Database Problem" ),
-            tr( "Could not read abstract rotor information \n" ) );
+         US_Notify::warning( this, tr( "Database Problem" ), tr( "Could not read abstract rotor information \n" ) );
          return( false );
       }
    }
@@ -162,8 +158,7 @@ bool US_AbstractRotorGui::loadAbstractRotors( void )
       // Add function to check the disk in us_rotor.
       if ( US_Rotor::readAbstractRotorsDisk( abstractRotorList ) == US_Rotor::NOT_FOUND )
       {
-         QMessageBox::warning( this, tr( "Local Disk Problem" ),
-            tr( "Could not read abstract rotor information\n" ) );
+         US_Notify::warning( this, tr( "Local Disk Problem" ), tr( "Could not read abstract rotor information\n" ) );
          return( false );
       }
    }
@@ -215,8 +210,8 @@ void US_AbstractRotorGui::select()
    // First double-check if the user has filled out name and serial
    if ( le_name->text().isEmpty() || le_serialNumber->text().isEmpty() )
    {
-      QMessageBox::warning( this, tr( "Please provide the missing information:" ),
-                        tr( "Please provide both a rotor name and serial number"));
+      US_Notify::warning(
+         this, tr( "Please provide the missing information:" ), tr( "Please provide both a rotor name and serial number" ) );
       return;
    }
 
@@ -235,8 +230,7 @@ void US_AbstractRotorGui::select()
 
 void US_AbstractRotorGui::connect_error( const QString& error )
 {
-   QMessageBox::warning( this, tr( "Connection Problem" ),
-         tr( "Could not connect to database \n" ) + error );
+   US_Notify::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) + error );
 }
 
 // Function to change the current rotor

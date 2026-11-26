@@ -21,7 +21,6 @@ unix {
   LIBS       += -L../../lib -lus_gui -lus_utils
   LIBS       += -lcrypto
   LIBS       += $$QWTLIB
-  ##LIBS       += -lqwtplot3d-qt4 -lGLU
   LIBS       += -lqwtplot3d -lGLU
   LIBS       += -L$$MYSQLDIR -lmysqlclient
   DEFINES    += INTEL LINUX
