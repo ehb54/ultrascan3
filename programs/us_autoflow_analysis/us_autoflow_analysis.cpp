@@ -3356,86 +3356,89 @@ bool US_Analysis_auto::loadData( QMap < QString, QString > & triple_information 
 bool US_Analysis_auto::loadModel( QMap < QString, QString > & triple_information )
 {
   US_Passwd   pw;
-  US_DB2 db( pw.getPasswd() );
-    
+  US_DB2      db( pw.getPasswd() );
+
   if ( db.lastErrno() != US_DB2::OK )
-    {
-      QApplication::restoreOverrideCursor();
-      QMessageBox::information( this,
-				tr( "DB Connection Problem" ),
-				tr( "There was an error connecting to the database:\n" )
-				+ db.lastError() );
-      
-      return false;
-    }
+  {
+     QApplication::restoreOverrideCursor();
+     QMessageBox::information(
+        this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db.lastError() );
+
+     return false;
+  }
 
   //first, get ModelIDs corresponding to editedDataID AND triple_stage && select latest one
   QStringList query;
   query << "get_modelDescsIDs" << triple_information[ "eID" ];
   db.query( query );
-  
+
   qDebug() << "In loadModel() Query: " << query;
 
   US_NewestRecord newest; // the stage's most recently updated model
 
   while ( db.next() )
-    {
-      QString  description         = db.value( 0 ).toString();
-      int         modelID             = db.value( 1 ).toInt();
-      QDateTime date               = db.value( 2 ).toDateTime();
+  {
+     QString     description = db.value( 0 ).toString();
+     int         modelID     = db.value( 1 ).toInt();
+     QDateTime   date        = db.value( 2 ).toDateTime();
 
-      QDateTime now = QDateTime::currentDateTime();
+     QDateTime   now = QDateTime::currentDateTime();
 
-      QStringList a_stage_types = triple_information[ "stage_name" ].split("-");
-      bool stage_identity = true;
-      for (const QString& sub : a_stage_types )
-	{
-	  if (!description.contains(sub))
-	    stage_identity = false; 
-	}
+     QStringList a_stage_types  = triple_information["stage_name"].split( "-" );
+     bool        stage_identity = true;
+     for ( const QString& sub : a_stage_types )
+     {
+        if ( !description.contains( sub ) )
+        {
+           stage_identity = false;
+        }
+     }
 
-      if ( stage_identity )
-	{
-	  if ( triple_information[ "stage_name" ] == "2DSA" )
-	    {
-	      if ( !description.contains("-FM_") && !description.contains("-IT_") && !description.contains("-MC_") && !description.contains("_mcN") )
-            newest.offer( modelID, date.secsTo( now ) );
-       }
-       else
-       {
-          newest.offer( modelID, date.secsTo( now ) );
-       }
-   }
-    }
+     if ( stage_identity )
+     {
+        if ( triple_information["stage_name"] == "2DSA" )
+        {
+           if ( !description.contains( "-FM_" ) && !description.contains( "-IT_" ) && !description.contains( "-MC_" ) &&
+                !description.contains( "_mcN" ) )
+           {
+              newest.offer( modelID, date.secsTo( now ) );
+           }
+        }
+        else
+        {
+           newest.offer( modelID, date.secsTo( now ) );
+        }
+     }
+  }
 
-    int mID = newest.id();
+  int mID = newest.id();
 
-    int rc = 0;
-    qDebug() << "ModelID to retrieve: -- " << mID;
-    rc = model.load( QString::number( mID ), &db );
-    qDebug() << "LdM:  model load rc" << rc;
-    if ( rc != US_DB2::OK )
-    {
-       QMessageBox::critical( this, tr( "Model Load Failed" ),
-                              tr( "Could not load model %1 for %2 (%3)." )
-                                 .arg( mID )
-                                 .arg( triple_information.value( "triple_name" ), triple_information.value( "stage_name" ) ) );
-       return false;
-    }
-    qApp->processEvents();
+  int rc = 0;
+  qDebug() << "ModelID to retrieve: -- " << mID;
+  rc = model.load( QString::number( mID ), &db );
+  qDebug() << "LdM:  model load rc" << rc;
+  if ( rc != US_DB2::OK )
+  {
+     QMessageBox::critical( this,
+                            tr( "Model Load Failed" ),
+                            tr( "Could not load model %1 for %2 (%3)." )
+                               .arg( mID )
+                               .arg( triple_information.value( "triple_name" ), triple_information.value( "stage_name" ) ) );
+     return false;
+  }
+  qApp->processEvents();
 
-    model_loaded = model; // Save model exactly as loaded
-    model_used   = model; // Make that the working model
-    is_dmga_mc   = ( model.monteCarlo && model.description.contains( "DMGA" ) && model.description.contains( "_mcN" ) );
-    qDebug() << "post-Load mC" << model.monteCarlo << "is_dmga_mc" << is_dmga_mc << "description" << model.description;
+  model_loaded = model; // Save model exactly as loaded
+  model_used   = model; // Make that the working model
+  is_dmga_mc   = ( model.monteCarlo && model.description.contains( "DMGA" ) && model.description.contains( "_mcN" ) );
+  qDebug() << "post-Load mC" << model.monteCarlo << "is_dmga_mc" << is_dmga_mc << "description" << model.description;
 
-    if ( model.components.size() == 0 )
-    {
-      QMessageBox::critical( this, tr( "Empty Model" ),
-			     tr( "Loaded model has ZERO components!" ) );
-      return false;
-    }
-  
+  if ( model.components.size() == 0 )
+  {
+     QMessageBox::critical( this, tr( "Empty Model" ), tr( "Loaded model has ZERO components!" ) );
+     return false;
+  }
+
   ti_noise.count = 0;
   ri_noise.count = 0;
   ti_noise.values.clear();
@@ -3492,9 +3495,18 @@ bool US_Analysis_auto::simulateModel()
   // Use the experiment speed steps if they cover the data; otherwise derive steps from the scans
   exp_steps = US_SimulationParameters::speedStepsCoverData( speed_steps, *edata );
   dat_steps = !exp_steps;
-  QString     tmst_fpath = US_Settings::resultDir() + "/" + FileName_parsed + "/" + FileName_parsed + ".time_state.tmst";
-  QStringList check_results = US_ModelSimulation::prepare(
-     dbP, invID, *edata, model, adv_vals, exp_steps, speed_steps, tmst_fpath, US_ModelSimulation::TimeState::Replace, simparams, *sdata );
+  QString     tmst_fpath    = US_Settings::resultDir() + "/" + FileName_parsed + "/" + FileName_parsed + ".time_state.tmst";
+  QStringList check_results = US_ModelSimulation::prepare( dbP,
+                                                           invID,
+                                                           *edata,
+                                                           model,
+                                                           adv_vals,
+                                                           exp_steps,
+                                                           speed_steps,
+                                                           tmst_fpath,
+                                                           US_ModelSimulation::TimeState::Replace,
+                                                           simparams,
+                                                           *sdata );
   if ( !check_results.isEmpty() )
   {
      QMessageBox msgBox( this );

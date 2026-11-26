@@ -139,7 +139,7 @@ class US_Analysis_auto : public US_Widgets
        */
       US_ModelSimulation*            simulation( void );
 
-      US_DataIO::RawData             wsdata;      /**< Raw data for the workspace. */
+      US_DataIO::RawData             wsdata; /**< Raw data for the workspace. */
 
       /**
          * @class ModelDesc

@@ -23,7 +23,12 @@ class US_UTIL_EXTERN US_ModelSimulation : public QObject
    public:
       explicit US_ModelSimulation( QObject* parent = nullptr );
 
-      enum class TimeState { Keep, Replace, Temporary };
+      enum class TimeState
+      {
+         Keep,
+         Replace,
+         Temporary
+      };
 
       //! \brief Set \a simparams and the time grid of \a sdata for simulating
       //! \a model against \a edata.

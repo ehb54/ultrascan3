@@ -77,9 +77,13 @@ bool US_AutoNoise::loadNoises( QMap<QString, QString>& triple_information )
       QDateTime now = QDateTime::currentDateTime();
 
       if ( noiseType.contains( "ti_" ) )
+      {
          newest_ti.offer( noiseID, date.secsTo( now ) );
+      }
       if ( noiseType.contains( "ri_" ) )
+      {
          newest_ri.offer( noiseID, date.secsTo( now ) );
+      }
    }
 
    int nID_ti = newest_ti.id();

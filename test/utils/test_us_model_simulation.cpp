@@ -787,9 +787,18 @@ Outcome runShared( SetupCase c, bool exp_steps, bool rewrite, const QTemporaryDi
    const QString           tmst = freshResults( root, name, c );
    US_DataIO::RawData      sdata;
    US_SimulationParameters simparams;
-   const QStringList       results = US_ModelSimulation::prepare(
-      nullptr, -1, c.edata, c.model, c.adv_vals, exp_steps, c.speed_steps, tmst,
-      rewrite ? US_ModelSimulation::TimeState::Replace : US_ModelSimulation::TimeState::Keep, simparams, sdata );
+   const QStringList       results =
+      US_ModelSimulation::prepare( nullptr,
+                                   -1,
+                                   c.edata,
+                                   c.model,
+                                   c.adv_vals,
+                                   exp_steps,
+                                   c.speed_steps,
+                                   tmst,
+                                   rewrite ? US_ModelSimulation::TimeState::Replace : US_ModelSimulation::TimeState::Keep,
+                                   simparams,
+                                   sdata );
    return { dumpParms( simparams, root.path() ), dumpData( sdata ), results.join( "|" ), dumpFiles( US_Settings::resultDir() ) };
 }
 
@@ -910,8 +919,8 @@ TEST_F( TestUSModelSimulation, TemporaryTimeStateUsesEachTriplesSpeedSteps )
    QTemporaryDir root;
    ASSERT_TRUE( root.isValid() );
    std::mt19937 rng( 1344 );
-   SetupCase covered = randomSetup( rng );
-   covered.timestate = 2;
+   SetupCase    covered = randomSetup( rng );
+   covered.timestate    = 2;
    US_SimulationParameters::computeSpeedSteps( &covered.edata.scanData, covered.speed_steps );
    ASSERT_TRUE( US_SimulationParameters::speedStepsCoverData( covered.speed_steps, covered.edata ) );
 
@@ -924,19 +933,27 @@ TEST_F( TestUSModelSimulation, TemporaryTimeStateUsesEachTriplesSpeedSteps )
    }
    ASSERT_FALSE( US_SimulationParameters::speedStepsCoverData( covered.speed_steps, uncovered.edata ) );
 
-   const QString saved = US_Settings::workBaseDir();
-   const QString tmst = freshResults( root, "temporary", covered );
-   const QString files = dumpFiles( US_Settings::resultDir() );
-   US_DataIO::RawData sdata;
+   const QString           saved = US_Settings::workBaseDir();
+   const QString           tmst  = freshResults( root, "temporary", covered );
+   const QString           files = dumpFiles( US_Settings::resultDir() );
+   US_DataIO::RawData      sdata;
    US_SimulationParameters simparams;
 
    // Reuse the parameters and the run path, as FEMatch does on a triple change.
    for ( bool exp_steps : { false, true, true, false } )
    {
       auto& c = exp_steps ? covered : uncovered;
-      US_ModelSimulation::prepare(
-         nullptr, -1, c.edata, c.model, c.adv_vals, exp_steps, covered.speed_steps, tmst,
-         US_ModelSimulation::TimeState::Temporary, simparams, sdata );
+      US_ModelSimulation::prepare( nullptr,
+                                   -1,
+                                   c.edata,
+                                   c.model,
+                                   c.adv_vals,
+                                   exp_steps,
+                                   covered.speed_steps,
+                                   tmst,
+                                   US_ModelSimulation::TimeState::Temporary,
+                                   simparams,
+                                   sdata );
       EXPECT_NE( simparams.tsobj, nullptr );
       EXPECT_FALSE( simparams.sim_speed_prof.isEmpty() );
       if ( !simparams.sim_speed_prof.isEmpty() )
@@ -964,7 +981,17 @@ TEST_F( TestUSModelSimulation, ThreadsMatchFeMatchsSplitAndSum )
       const US_Model          model = manyComponents( 26 * nthread + 1 );
       US_SimulationParameters simparams;
       US_DataIO::RawData      grid;
-      US_ModelSimulation::prepare( nullptr, -1, edata, model, adv, false, {}, root.path() + "/none.tmst", US_ModelSimulation::TimeState::Replace, simparams, grid );
+      US_ModelSimulation::prepare( nullptr,
+                                   -1,
+                                   edata,
+                                   model,
+                                   adv,
+                                   false,
+                                   {},
+                                   root.path() + "/none.tmst",
+                                   US_ModelSimulation::TimeState::Replace,
+                                   simparams,
+                                   grid );
 
       FrozenFeMatchThreads old;
       US_DataIO::RawData   oldData = grid;
@@ -1020,7 +1047,17 @@ TEST_F( TestUSModelSimulation, SimulatesInThisThreadWithTheOldSolvers )
       model.components[0].sigma = sigma;
       US_SimulationParameters simparams;
       US_DataIO::RawData      grid;
-      US_ModelSimulation::prepare( nullptr, -1, edata, model, adv, false, {}, root.path() + "/none.tmst", US_ModelSimulation::TimeState::Replace, simparams, grid );
+      US_ModelSimulation::prepare( nullptr,
+                                   -1,
+                                   edata,
+                                   model,
+                                   adv,
+                                   false,
+                                   {},
+                                   root.path() + "/none.tmst",
+                                   US_ModelSimulation::TimeState::Replace,
+                                   simparams,
+                                   grid );
 
       // The old code: a new solver of the same kind, given no buffer
       US_DataIO::RawData oldData = grid;
@@ -1070,7 +1107,17 @@ TEST_F( TestUSModelSimulation, WorkerThreadsEndWithTheSimulation )
    const US_Model          model = manyComponents( 2 * 26 + 1 );
    US_SimulationParameters simparams;
    US_DataIO::RawData      grid;
-   US_ModelSimulation::prepare( nullptr, -1, edata, model, adv, false, {}, root.path() + "/none.tmst", US_ModelSimulation::TimeState::Replace, simparams, grid );
+   US_ModelSimulation::prepare( nullptr,
+                                -1,
+                                edata,
+                                model,
+                                adv,
+                                false,
+                                {},
+                                root.path() + "/none.tmst",
+                                US_ModelSimulation::TimeState::Replace,
+                                simparams,
+                                grid );
 
    US_ModelSimulation sim;
    QEventLoop         loop;
@@ -1114,7 +1161,17 @@ TEST_F( TestUSModelSimulation, RefusedCoSedimentingSolverIsDeletedSafely )
    model.components[0].sigma    = 0.01;
    US_SimulationParameters simparams;
    US_DataIO::RawData      grid;
-   US_ModelSimulation::prepare( nullptr, -1, edata, model, adv, false, {}, root.path() + "/none.tmst", US_ModelSimulation::TimeState::Replace, simparams, grid );
+   US_ModelSimulation::prepare( nullptr,
+                                -1,
+                                edata,
+                                model,
+                                adv,
+                                false,
+                                {},
+                                root.path() + "/none.tmst",
+                                US_ModelSimulation::TimeState::Replace,
+                                simparams,
+                                grid );
 
    // Build the solver over memory that is not zero, as the stack can be
    alignas( US_LammAstfvm ) unsigned char storage[sizeof( US_LammAstfvm )];
@@ -1150,7 +1207,17 @@ TEST_F( TestUSModelSimulation, CoSedimentingModelUsesTheBuffer )
    model.components[0].signal_concentration = 0.5;
    US_SimulationParameters simparams;
    US_DataIO::RawData      grid;
-   US_ModelSimulation::prepare( nullptr, -1, edata, model, adv, false, {}, root.path() + "/none.tmst", US_ModelSimulation::TimeState::Replace, simparams, grid );
+   US_ModelSimulation::prepare( nullptr,
+                                -1,
+                                edata,
+                                model,
+                                adv,
+                                false,
+                                {},
+                                root.path() + "/none.tmst",
+                                US_ModelSimulation::TimeState::Replace,
+                                simparams,
+                                grid );
 
    US_Buffer          buffer;
    US_BufferComponent salt;
