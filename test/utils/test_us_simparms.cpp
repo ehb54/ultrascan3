@@ -7,6 +7,7 @@
 #include <QTemporaryDir>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
+#include <cstring>
 #include <gmock/gmock-matchers.h>
 
 using ::testing::_;
@@ -478,4 +479,17 @@ TEST_F( US_SimulationParametersTest, MergeTimeStateSteps_NoTimeStateStepsKeepsEx
    ASSERT_EQ( steps.size(), 1 );
    EXPECT_EQ( steps[0].rotorspeed, 40000 );
    EXPECT_EQ( steps[0].scans, 30 );
+}
+
+// Every field of a new simulation speed profile starts at zero or its
+// default, whatever the memory held before.
+TEST_F( US_SimulationParametersTest, SimSpeedProfStartsAtKnownValues )
+{
+   alignas( US_SimulationParameters::SimSpeedProf ) unsigned char storage[sizeof( US_SimulationParameters::SimSpeedProf )];
+   std::memset( storage, 0x5a, sizeof storage );
+   auto* ssp = new ( storage ) US_SimulationParameters::SimSpeedProf();
+   EXPECT_EQ( ssp->time_e_step, 0 );
+   EXPECT_EQ( ssp->time_l_scan, 0 );
+   EXPECT_EQ( ssp->acceleration, 400.0 );
+   ssp->~SimSpeedProf();
 }

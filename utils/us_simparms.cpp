@@ -124,7 +124,8 @@ US_SimulationParameters::SimSpeedProf::SimSpeedProf()
    time_e_accel      = 0;
    time_f_scan       = 0;
    time_l_scan       = 0;
-  // sim               = false ;
+   time_e_step       = 0;
+   // sim               = false ;
 }
 
 // Set simulation parameter values from an experimental RawData set.
