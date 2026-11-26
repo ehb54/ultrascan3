@@ -696,6 +696,7 @@ US_LammAstfvm::US_LammAstfvm( US_Model&                rmodel,
    : QObject( parent ), model( rmodel ), simparams( rsimparms )
 {
    comp_x   = 0;           // initial model component index
+   saltdata = nullptr;     // made only for a co-sedimenting model it solves
 
    dbg_level       = US_Settings::us_debug();
    stopFlag        = false;

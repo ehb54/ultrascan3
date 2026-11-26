@@ -18,13 +18,19 @@
 #include <QCryptographicHash>
 #include <QDir>
 #include <QDirIterator>
+#include <QElapsedTimer>
 #include <QEventLoop>
 #include <QFileInfo>
 #include <QTemporaryDir>
+#include <QThread>
 #include <QTimer>
 #include <cmath>
+#include <cstring>
 #include <memory>
 #include <random>
+#ifdef Q_OS_MACOS
+#include <mach/mach.h>
+#endif
 
 namespace
 {
@@ -793,6 +799,41 @@ void expectSame( const Outcome& a, const Outcome& b )
    EXPECT_EQ( a.files, b.files );
 }
 
+// The threads the process has now; -1 where the test cannot count them
+int processThreads()
+{
+#if defined( Q_OS_MACOS )
+   thread_act_array_t     list;
+   mach_msg_type_number_t count = 0;
+   if ( task_threads( mach_task_self(), &list, &count ) != KERN_SUCCESS )
+   {
+      return -1;
+   }
+   for ( mach_msg_type_number_t i = 0; i < count; i++ )
+   {
+      mach_port_deallocate( mach_task_self(), list[i] );
+   }
+   vm_deallocate( mach_task_self(), (vm_address_t) list, count * sizeof( thread_act_t ) );
+   return (int) count;
+#elif defined( Q_OS_LINUX )
+   QFile status( "/proc/self/status" );
+   if ( !status.open( QIODevice::ReadOnly ) )
+   {
+      return -1;
+   }
+   for ( const QByteArray& line : status.readAll().split( '\n' ) )
+   {
+      if ( line.startsWith( "Threads:" ) )
+      {
+         return line.mid( 8 ).trimmed().toInt();
+      }
+   }
+   return -1;
+#else
+   return -1;
+#endif
+}
+
 // A model of n ideal components with spread s values
 US_Model manyComponents( int n )
 {
@@ -965,5 +1006,83 @@ TEST_F( TestUSModelSimulation, SimulatesInThisThreadWithTheOldSolvers )
       EXPECT_EQ( buffer.manual, sigma != 0.0 );
       EXPECT_EQ( components, sigma == 0.0 ? 4 : 0 ); // once per component and once at the end
    }
+   US_Settings::set_workBaseDir( saved );
+}
+
+// The worker threads stop and are deleted once their results are added.
+TEST_F( TestUSModelSimulation, WorkerThreadsEndWithTheSimulation )
+{
+   if ( processThreads() < 0 )
+   {
+      GTEST_SKIP() << "no thread count on this platform";
+   }
+   const QString saved = US_Settings::workBaseDir();
+   QTemporaryDir root;
+   US_Settings::set_workBaseDir( root.path() );
+   std::mt19937            rng( 13 );
+   US_DataIO::EditedData   edata = makeEdited( rng, false );
+   QMap<QString, QString>  adv{ { "simpoints", "50" }, { "gridtype", "Moving" }, { "bandvolume", "0.015" } };
+   const US_Model          model = manyComponents( 2 * 26 + 1 );
+   US_SimulationParameters simparams;
+   US_DataIO::RawData      grid;
+   US_ModelSimulation::prepare( nullptr, edata, model, adv, false, {}, root.path() + "/none.tmst", true, simparams, grid );
+
+   US_ModelSimulation sim;
+   QEventLoop         loop;
+   QObject::connect( &sim, &US_ModelSimulation::finished, &loop, &QEventLoop::quit );
+   const int before = processThreads();
+   for ( int run = 0; run < 3; run++ )
+   {
+      US_DataIO::RawData data = grid;
+      US_Model           m    = model;
+      US_Buffer          buffer;
+      QTimer::singleShot( 300000, &loop, &QEventLoop::quit );
+      sim.start( m, simparams, data, buffer, 0.0, false, 2 );
+      loop.exec();
+   }
+   // Let finished threads end and deferred deletes run
+   QElapsedTimer wait;
+   wait.start();
+   while ( processThreads() > before && wait.elapsed() < 10000 )
+   {
+      QCoreApplication::sendPostedEvents( nullptr, QEvent::DeferredDelete );
+      QCoreApplication::processEvents( QEventLoop::AllEvents, 50 );
+      QThread::msleep( 20 );
+   }
+   EXPECT_LE( processThreads(), before ) << "six worker threads were started";
+   US_Settings::set_workBaseDir( saved );
+}
+
+// A co-sedimenting model whose first component also has sigma is refused
+// before the salt data is made; deleting the solver must not free the salt
+// data pointer it never set.
+TEST_F( TestUSModelSimulation, RefusedCoSedimentingSolverIsDeletedSafely )
+{
+   const QString saved = US_Settings::workBaseDir();
+   QTemporaryDir root;
+   US_Settings::set_workBaseDir( root.path() );
+   std::mt19937           rng( 17 );
+   US_DataIO::EditedData  edata = makeEdited( rng, false );
+   QMap<QString, QString> adv{ { "simpoints", "50" }, { "gridtype", "Moving" }, { "bandvolume", "0.015" } };
+   US_Model               model = manyComponents( 2 );
+   model.coSedSolute            = 0;
+   model.components[0].sigma    = 0.01;
+   US_SimulationParameters simparams;
+   US_DataIO::RawData      grid;
+   US_ModelSimulation::prepare( nullptr, edata, model, adv, false, {}, root.path() + "/none.tmst", true, simparams, grid );
+
+   // Build the solver over memory that is not zero, as the stack can be
+   alignas( US_LammAstfvm ) unsigned char storage[sizeof( US_LammAstfvm )];
+   std::memset( storage, 0x5a, sizeof storage );
+   US_LammAstfvm*     astfvm = new ( storage ) US_LammAstfvm( model, simparams );
+   US_DataIO::RawData data   = grid;
+   EXPECT_NE( astfvm->calculate( data ), 0 );
+   astfvm->~US_LammAstfvm();
+
+   // Through the shared code, in this thread
+   US_DataIO::RawData data2 = grid;
+   US_Buffer          buffer;
+   US_ModelSimulation sim;
+   sim.simulate( model, simparams, data2, buffer, 0.0, false, 0 );
    US_Settings::set_workBaseDir( saved );
 }

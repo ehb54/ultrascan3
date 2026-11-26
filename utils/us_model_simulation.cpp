@@ -141,19 +141,19 @@ void US_ModelSimulation::simulate( US_Model&                model,
 {
    if ( model.components[0].sigma == 0.0 && model.components[0].delta == 0.0 && model.coSedSolute < 0.0 && compress == 0.0 )
    {
-      US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
+      US_Astfem_RSA astfem_rsa( model, simparams );
 
-      connect( astfem_rsa, &US_Astfem_RSA::current_component, this, &US_ModelSimulation::component );
-      astfem_rsa->set_debug_flag( dbg_level );
+      connect( &astfem_rsa, &US_Astfem_RSA::current_component, this, &US_ModelSimulation::component );
+      astfem_rsa.set_debug_flag( dbg_level );
       buffer.compressibility = compress;
       buffer.manual          = manual;
 
-      astfem_rsa->calculate( sdata );
+      astfem_rsa.calculate( sdata );
    }
    else
    {
-      US_LammAstfvm* astfvm = new US_LammAstfvm( model, simparams );
-      astfvm->calculate( sdata );
+      US_LammAstfvm astfvm( model, simparams );
+      astfvm.calculate( sdata );
    }
 }
 
@@ -206,6 +206,10 @@ void US_ModelSimulation::start( US_Model&                model,
 
       connect( tworker, &US_ThreadWorker::work_progress, this, &US_ModelSimulation::thread_progress );
       connect( tworker, &US_ThreadWorker::work_complete, this, &US_ModelSimulation::thread_complete );
+      // Once its part is done, the thread stops; then it and its worker are deleted
+      connect( tworker, &US_ThreadWorker::work_complete, wthread, &QThread::quit );
+      connect( wthread, &QThread::finished, tworker, &QObject::deleteLater );
+      connect( wthread, &QThread::finished, wthread, &QObject::deleteLater );
 
       wthread->start();
    }
