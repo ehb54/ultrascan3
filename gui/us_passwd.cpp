@@ -1,7 +1,7 @@
 //! \file us_passwd.cpp
 #include "us_passwd.h"
-#include "us_global.h"
-#include "us_settings.h"
+#include "us_credential_source.h"
+#include "us_session.h"
 #include <QApplication>
 
 // Window to anchor (and center) the password dialogs against: the owner's
@@ -19,11 +19,70 @@ static QWidget* anchor_window( QWidget* self )
    return QApplication::activeWindow(); // may be nullptr -> centered on screen
 }
 
+namespace
+{
+// Asks for the master password with a dialog until one matches or the
+// person cancels.
+class DialogSource : public US_CredentialSource
+{
+   public:
+      explicit DialogSource( QWidget* anchor ) : anchor( anchor )
+      {
+      }
+
+      bool available() const override
+      {
+         return true;
+      }
+
+      Outcome request( const QString&, int, QString& secret ) override
+      {
+         bool ok = false;
+         secret  = QInputDialog::getText( anchor,
+                                         US_Passwd::tr( "Master Password" ),
+                                         US_Passwd::tr( "Please input your Master Password" ),
+                                         QLineEdit::Password,
+                                         QString(),
+                                         &ok );
+         return ok ? Outcome::Provided : Outcome::Cancelled;
+      }
+
+      void rejected() override
+      {
+         QMessageBox::information( anchor, US_Passwd::tr( "Password Error" ), US_Passwd::tr( "The password is incorrect." ) );
+      }
+
+      int maxAttempts() const override
+      {
+         return 0;
+      }
+
+   private:
+      QWidget* anchor;
+};
+} // namespace
+
 QString US_Passwd::getPasswd( void  )
 {
-  // If the pw is in global memory, return it
-  QString pw = g.passwd();
-  if ( ! pw.isEmpty() ) return pw;
+   US_Session& session = US_Session::instance();
+
+   // If the pw is in global memory, return it
+   if ( session.isUnlocked() )
+   {
+      return session.masterKey();
+   }
+
+   // A command-line tool that set prompt sources unlocks without a dialog.
+   if ( session.hasPromptSources() )
+   {
+      const US_Session::Result result = session.unlockWithPromptSources();
+      if ( result != US_Session::Result::Ok )
+      {
+         qWarning().noquote() << "Error:" << US_Session::describe( result );
+         return QString();
+      }
+      return session.masterKey();
+   }
 
   // A headless run has no one to answer the password dialog.
   if ( qApp != nullptr && qApp->property( "us3_headless" ).toBool() )
@@ -35,41 +94,21 @@ QString US_Passwd::getPasswd( void  )
   }
 
   // See if the master pasword has been set
-  QByteArray currentHash = US_Settings::UltraScanPW();
-
-  if ( currentHash.isEmpty() )
+  if ( !US_Session::isPasswordSet() )
   {
      QMessageBox::information( anchor_window( this ), tr( "Password Error" ), tr( "The Master Password has not been set." ) );
 
      return QString();
   }
 
-  // Ask the user to input the password
-  while ( true ) 
+  // Ask until the password matches or the user cancels; unlock caches it.
+  DialogSource dialog( anchor_window( this ) );
+  if ( session.unlock( dialog ) != US_Session::Result::Ok )
   {
-    bool ok;
-    pw = QInputDialog::getText( anchor_window( this ),
-                                tr( "Master Password" ),
-                                tr( "Please input your Master Password" ),
-                                QLineEdit::Password,
-                                QString(),
-                                &ok );
-
-    // If the user cancelled, return a null string
-    if ( ! ok ) return QString();
-    
-    // Check the hash
-    QByteArray hash =
-          QCryptographicHash::hash( pw.toLatin1(), QCryptographicHash::Sha1 );
-
-    if ( hash == currentHash ) break;
-
-    QMessageBox::information( anchor_window( this ), tr( "Password Error" ), tr( "The password is incorrect." ) );
+     return QString();
   }
 
-  // Save the password in global memory and return
-  g.setPasswd( pw );
-  return pw;
+  return session.masterKey();
 }
 
 
@@ -83,9 +122,7 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
   QString pw;
 
   // See if the master pasword has been set
-  QByteArray currentHash = US_Settings::UltraScanPW();
-
-  if ( currentHash.isEmpty() )
+  if ( !US_Session::isPasswordSet() )
   {
      QMessageBox::information( anchor_window( this ), tr( "Password Error" ), tr( "The Master Password has not been set." ) );
 
@@ -172,11 +209,12 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
 	// If the user didn't dismiss the dialog, do something with the fields
 	foreach(QLineEdit * lineEdit, fields)
 	  {
-	    if ( lineEdit->objectName() == "Master Password:" )
-	      {
-		pw = lineEdit->text();
-	      }
-         // Log field names only: values include the master password.
+        // The password is checked here and never returned to the caller.
+        if ( lineEdit->objectName() == "Master Password:" )
+        {
+           pw = lineEdit->text();
+           continue;
+        }
          qDebug() << "Audit form field:" << lineEdit->objectName();
 
          form_map[lineEdit->objectName()] = lineEdit->text();
@@ -199,14 +237,15 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
 
     //break if Cancelled
     if ( reject_chosen )
-      break;
-    
-    // Check the hash
-    QByteArray hash =
-          QCryptographicHash::hash( pw.toLatin1(), QCryptographicHash::Sha1 );
+       break;
 
-    if ( hash == currentHash && !form_map["Comment:"].isEmpty()  )
-      break;
+    // Check the password; a sign-off never uses or updates the cached unlock.
+    const bool pw_ok = US_Session::instance().confirm( title, pw ) == US_Session::Result::Ok;
+
+    if ( pw_ok && !form_map["Comment:"].isEmpty() )
+    {
+       break;
+    }
 
     QMessageBox::critical( anchor_window( this ),
                            tr( "No Comment and/or Password Error" ),

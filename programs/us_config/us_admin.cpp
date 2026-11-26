@@ -1,10 +1,11 @@
 //! \file us_admin.cpp
 #include "us_admin.h"
-#include "us_license_t.h"
-#include "us_help.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
 #include "us_crypto.h"
+#include "us_gui_settings.h"
+#include "us_help.h"
+#include "us_license_t.h"
+#include "us_session.h"
+#include "us_settings.h"
 
 US_Admin::US_Admin( QWidget* w, Qt::WindowFlags flags ) 
    : US_Widgets( true, w, flags )
@@ -18,11 +19,10 @@ US_Admin::US_Admin( QWidget* w, Qt::WindowFlags flags )
   
   QLabel* header = us_banner( "Change Master Password" );
   header->setMinimumHeight( buttonh * 3 / 2 );
-    
-  QString oldPass = US_Settings::UltraScanPW();
+
   QLabel* oldPW = NULL;
 
-  if ( ! oldPass.isEmpty() ) 
+  if ( US_Session::isPasswordSet() )
   {
     oldPW = us_label( "Old Password:" );
     oldPW->setMinimumHeight( buttonh );
@@ -66,7 +66,7 @@ US_Admin::US_Admin( QWidget* w, Qt::WindowFlags flags )
   passwords->addWidget( header, 0, 0, 1, 2 );
 
   int row = 1;
-  if ( ! oldPass.isEmpty() )
+  if ( oldPW != NULL )
   {
     passwords->addWidget( oldPW       , row,   0 );
     passwords->addWidget( le_oldPasswd, row++, 1 );
@@ -92,22 +92,16 @@ US_Admin::US_Admin( QWidget* w, Qt::WindowFlags flags )
 
 void US_Admin::save( void )
 {
-  QByteArray oldPW = US_Settings::UltraScanPW();
+   US_Session& session = US_Session::instance();
 
-  if ( ! oldPW.isEmpty() ) 
-  {
-    QByteArray calcsha1 = 
-      QCryptographicHash::hash( le_oldPasswd->text().toLatin1(), 
-          QCryptographicHash::Sha1 );
-
-    if ( calcsha1 != oldPW )
-    {
-      QMessageBox::information( this, 
-        tr( "Attention:" ), 
-        tr( "The old password is incorrect. Please re-input.\n" ) );
-      return;
-    }
-  }
+   if ( US_Session::isPasswordSet() )
+   {
+      if ( !session.matches( le_oldPasswd->text() ) )
+      {
+         QMessageBox::information( this, tr( "Attention:" ), tr( "The old password is incorrect. Please re-input.\n" ) );
+         return;
+      }
+   }
 
   if ( le_passwd1->text() != le_passwd2->text() )
   {
@@ -220,11 +214,6 @@ void US_Admin::save( void )
 
   /// commit updated settings
 
-  QByteArray sha1string =
-    QCryptographicHash::hash( newPW.toLatin1(), QCryptographicHash::Sha1 );
-
-  US_Settings::set_UltraScanPW( sha1string );
-
   if ( !defaultDB.empty() ) {
     US_Settings::set_defaultDB( defaultDB );
   }
@@ -232,8 +221,9 @@ void US_Admin::save( void )
   if ( !databases.empty() ) {
     US_Settings::set_databases( databases );
   }
-  
-  g.setPasswd( newPW );
+
+  // Store the new hash and cache the new password.
+  session.storeMasterPassword( newPW );
   close();
 }
 
