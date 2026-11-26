@@ -3451,7 +3451,7 @@ bool US_Analysis_auto::loadNoises( QMap < QString, QString > & triple_informatio
 }
 
 //Simulate Model
-void US_Analysis_auto::simulateModel( )
+bool US_Analysis_auto::simulateModel()
 {
   progress_msg->setLabelText( "Simulating model..." );
   progress_msg->setValue( 0 );
@@ -3514,7 +3514,7 @@ void US_Analysis_auto::simulateModel( )
      {
         QApplication::restoreOverrideCursor();
         qApp->processEvents();
-        return;
+        return false;
      }
   }
   sdata->cell        = rdata->cell;
@@ -3540,6 +3540,8 @@ void US_Analysis_auto::simulateModel( )
   }
   else
      simulation()->start( model, simparams, *sdata, solution_rec.buffer, compress, manual, nthread );
+
+  return true;
 }
 
 // The simulation runner, connected to the progress dialog and results
@@ -3979,10 +3981,15 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
   progress_msg->setValue( 5 );
   qApp->processEvents();
 
-  //Simulate Model
-  simulateModel();
+  //Simulate Model; Abort in the acceleration message ends the overlay the same way
+  if ( !simulateModel() )
+  {
+     progress_msg->close();
+     resplot_done(); // restart the update timer stopped above
+     return;
+  }
 
-  
+
   qDebug() << "Closing sim_msg-- ";
   //msg_sim->accept();
   progress_msg->finish();
