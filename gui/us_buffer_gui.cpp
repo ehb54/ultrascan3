@@ -1227,9 +1227,18 @@ void US_BufferGuiNew::init_buffer( void )
    }
    if ( from_db ) {
       QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-      auto       db = US_DBProvider::open();
-      QString    error;
-      const bool read = US_BufferComponent::getAllFromDB( *db, component_list, &error );
+      auto    db = US_DBProvider::open();
+      QString error;
+      bool    read = false;
+      // A refused login leaves the connection open, so check the login itself.
+      if ( db->lastErrno() != US_DB2::OK )
+      {
+         error = db->lastError();
+      }
+      else
+      {
+         read = US_BufferComponent::getAllFromDB( *db, component_list, &error );
+      }
       QApplication::restoreOverrideCursor();
       if ( !read )
       {

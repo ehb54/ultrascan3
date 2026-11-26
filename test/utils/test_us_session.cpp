@@ -892,6 +892,53 @@ TEST( US_TerminalCredentialSourcePty, CtrlZGivesTheTerminalBackAndThePromptResum
    EXPECT_EQ( code, JobPassed ) << ( code < 8 ? results[code] : "unexpected exit" );
 }
 
+// A session leader's process group is orphaned, so Ctrl+Z does not stop it;
+// the prompt goes on reading, and must do so with echo off.
+TEST( US_TerminalCredentialSourcePty, CtrlZThatCannotStopTheProgramLeavesEchoOff )
+{
+   PseudoTerminal tty;
+   ASSERT_TRUE( tty.valid() );
+   const std::string name = ptsname( tty.master );
+
+   const pid_t       child = fork();
+   ASSERT_GE( child, 0 );
+   if ( child == 0 )
+   {
+      const int fd = controllingTerminal( name.c_str() );
+      if ( fd < 0 )
+      {
+         _exit( 3 );
+      }
+      US_TerminalCredentialSource  source( fd );
+      QString                      secret;
+      US_CredentialSource::Outcome outcome = source.request( "Master password", 1, secret );
+      _exit( outcome == US_CredentialSource::Outcome::Provided && secret == "typed-after" ? 0 : 1 );
+   }
+
+   ASSERT_TRUE( tty.waitForEchoOff() );
+   tty.type( "\x1a" ); // Ctrl+Z
+   std::this_thread::sleep_for( std::chrono::milliseconds( 300 ) );
+   fcntl( tty.master, F_SETFL, fcntl( tty.master, F_GETFL ) | O_NONBLOCK );
+   char drained[256];
+   while ( read( tty.master, drained, sizeof drained ) > 0 )
+   {
+   }
+   tty.type( "typed-after\n" );
+
+   int status = 0;
+   ASSERT_TRUE( waitForChild( child, 0, status ) );
+   std::string shown;
+   ssize_t     got = 0;
+   while ( ( got = read( tty.master, drained, sizeof drained ) ) > 0 )
+   {
+      shown.append( drained, got );
+   }
+   ASSERT_TRUE( WIFEXITED( status ) );
+   EXPECT_NE( WEXITSTATUS( status ), 3 ) << "the child could not open the terminal";
+   EXPECT_EQ( WEXITSTATUS( status ), 0 ) << "the prompt did not go on reading";
+   EXPECT_EQ( shown.find( "typed-after" ), std::string::npos ) << "the password was echoed: " << shown;
+}
+
 // On Linux, Ctrl+D hands over a partly typed line and the next read waits,
 // so an interrupt can arrive mid-line; BSD terminals report end of input
 // there instead.

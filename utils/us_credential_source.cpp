@@ -54,6 +54,7 @@ volatile sig_atomic_t restore_pending = 0; // echo is off; restore_mode goes bac
 volatile sig_atomic_t interrupted     = 0; // a terminating signal arrived
 volatile sig_atomic_t echo_lost       = 0; // echo could not be turned off again
 volatile sig_atomic_t resumed         = 0; // the job was continued after a stop
+volatile sig_atomic_t continues       = 0; // how many times the job was continued
 int                   restore_fd      = -1;
 termios               restore_mode{};
 termios               quiet_mode{};
@@ -68,7 +69,59 @@ struct sigaction      previous_stop;
 struct sigaction      previous_continue;
 bool                  handling_stop = false;
 
-bool                  forwarded( int sig )
+// Blocks the signals the prompt handles in this thread for its lifetime, so
+// none arrives while echo and the handlers are being changed; one sent
+// meanwhile is delivered when the previous mask comes back.
+class PromptSignalsBlocked
+{
+   public:
+      PromptSignalsBlocked()
+      {
+         sigset_t prompt_signals;
+         sigemptyset( &prompt_signals );
+         for ( const int sig : ending_signals )
+         {
+            sigaddset( &prompt_signals, sig );
+         }
+         sigaddset( &prompt_signals, SIGTSTP );
+         sigaddset( &prompt_signals, SIGCONT );
+         pthread_sigmask( SIG_BLOCK, &prompt_signals, &previous );
+      }
+      ~PromptSignalsBlocked()
+      {
+         pthread_sigmask( SIG_SETMASK, &previous, nullptr );
+      }
+      PromptSignalsBlocked( const PromptSignalsBlocked& )            = delete;
+      PromptSignalsBlocked& operator=( const PromptSignalsBlocked& ) = delete;
+
+   private:
+      sigset_t previous;
+};
+
+// Turns echo off again after a stop, if this process may change the terminal.
+// Called from signal handlers.
+void quietTerminal( bool show_prompt )
+{
+   if ( !inForeground( restore_fd ) )
+   {
+      return;
+   }
+   termios now{};
+   if ( tcsetattr( restore_fd, TCSANOW, &quiet_mode ) != 0 || tcgetattr( restore_fd, &now ) != 0 || ( now.c_lflag & ECHO ) != 0 )
+   {
+      echo_lost = 1;
+      return;
+   }
+   restore_pending = 1;
+   if ( show_prompt )
+   {
+      ssize_t ignored = write( STDERR_FILENO, "\n", 1 );
+      ignored         = write( STDERR_FILENO, prompt_text, prompt_size );
+      static_cast<void>( ignored );
+   }
+}
+
+bool forwarded( int sig )
 {
    if ( pthread_equal( pthread_self(), reader ) )
    {
@@ -123,8 +176,15 @@ extern "C" void restoreTerminalAndStop( int sig )
    sigemptyset( &stop );
    sigaddset( &stop, SIGTSTP );
    pthread_sigmask( SIG_UNBLOCK, &stop, nullptr );
+   const sig_atomic_t continues_before = continues;
    raise( SIGTSTP ); // the process stops here until it is continued
    sigaction( SIGTSTP, &own, nullptr );
+   // An orphaned process group discards the stop, so nothing continues it;
+   // the prompt goes on, and echo goes off again.
+   if ( continues == continues_before )
+   {
+      quietTerminal( false );
+   }
    errno = saved_errno;
 }
 
@@ -139,21 +199,8 @@ extern "C" void quietTerminalAgain( int sig )
    }
    const int saved_errno = errno;
    resumed               = 1;
-   if ( inForeground( restore_fd ) )
-   {
-      termios now{};
-      if ( tcsetattr( restore_fd, TCSANOW, &quiet_mode ) != 0 || tcgetattr( restore_fd, &now ) != 0 || ( now.c_lflag & ECHO ) != 0 )
-      {
-         echo_lost = 1;
-      }
-      else
-      {
-         restore_pending = 1;
-         ssize_t ignored = write( STDERR_FILENO, "\n", 1 );
-         ignored         = write( STDERR_FILENO, prompt_text, prompt_size );
-         static_cast<void>( ignored );
-      }
-   }
+   continues             = continues + 1;
+   quietTerminal( true );
    errno = saved_errno;
 }
 #endif
@@ -188,6 +235,7 @@ class EchoOff
          fputs( prompt.constData(), stderr );
          fflush( stderr );
 #else
+         const PromptSignalsBlocked blocked;
          this->fd = fd;
          if ( tcgetattr( fd, &mode ) != 0 )
          {
@@ -263,16 +311,17 @@ class EchoOff
          SetConsoleMode( handle, mode );
          SetConsoleCtrlHandler( restoreConsole, FALSE );
 #else
-         if ( handling_stop )
-         {
-            sigaction( SIGTSTP, &previous_stop, nullptr );
-            sigaction( SIGCONT, &previous_continue, nullptr );
-         }
+         const PromptSignalsBlocked blocked;
          if ( restore_pending )
          {
             tcsetattr( fd, TCSANOW, &mode );
          }
          restore_pending = 0;
+         if ( handling_stop )
+         {
+            sigaction( SIGTSTP, &previous_stop, nullptr );
+            sigaction( SIGCONT, &previous_continue, nullptr );
+         }
          for ( size_t ii = 0; ii < ending_count; ii++ )
          {
             sigaction( ending_signals[ii], &previous_ending[ii], nullptr );
@@ -330,8 +379,17 @@ bool readSecret( int fd, QString& secret )
    bool       any = false;
    while ( true )
    {
+      // An interrupt whose handler returned may have arrived outside read().
+      if ( interrupted || echo_lost )
+      {
+         return false;
+      }
       char          ch  = 0;
       const ssize_t got = read( fd, &ch, 1 );
+      if ( interrupted || echo_lost )
+      {
+         return false;
+      }
       if ( got < 0 )
       {
          if ( errno == EINTR && !interrupted && !echo_lost )
