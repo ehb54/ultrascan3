@@ -88,12 +88,9 @@ QString US_ReportText::text_model( US_Model model, int width, bool mark_iterativ
       }
 
 
-      if ( stitle.contains( "-SL" ) )
+      if ( model.associations.size() > 1 )
       {
-         if ( model.associations.size() > 1 )
-         {
-            title = title + " (RA)";
-         }
+         title = title + " (RA)";
       }
 
       if ( model.global == US_Model::MENISCUS )
