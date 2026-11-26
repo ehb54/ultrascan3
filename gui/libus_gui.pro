@@ -52,6 +52,7 @@ HEADERS      = \
                us_load_auc.h            \
                us_loadable_noise.h      \
                us_auto_noise.h          \
+               us_distrib_stick.h          \
                us_minimize.h            \
                us_model_gui.h           \
                us_model_loader.h        \
@@ -119,6 +120,7 @@ SOURCES      = \
                us_load_auc.cpp            \
                us_loadable_noise.cpp      \
                us_auto_noise.cpp          \
+               us_distrib_stick.cpp          \
                us_minimize.cpp            \
                us_model_gui.cpp           \
                us_model_loader.cpp        \

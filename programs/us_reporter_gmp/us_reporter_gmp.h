@@ -590,7 +590,6 @@ class US_ReporterGMP : public US_Widgets
 
         QStringList scan_dbase_models(QStringList); //!< Scan database models
 
-        QString text_model(US_Model, int); //!< Convert model to text
         QString html_header(QString, QString, US_DataIO::EditedData*); //!< Generate HTML header
         QString html_header_abde(QString, QString, QString); //!< Generate HTML header
         QString distrib_info(QMap<QString, QString>&); //!< Generate distribution information
@@ -679,15 +678,6 @@ class US_ReporterGMP : public US_Widgets
         QMap<QString, QString> read_autoflowGMPReportEsign_record(QString); //!< Read autoflow GMP report electronic signature record
         void get_assigned_oper_revs(QJsonDocument, QStringList&); //!< Get assigned operator revisions
 
-        QString indent(int) const; //!< Generate indent
-        QString table_row(const QString&, const QString&) const; //!< Generate table row with 2 columns
-        QString table_row(const QString&, const QString&, const QString&) const; //!< Generate table row with 3 columns
-        QString table_row(const QString&, const QString&, const QString&, const QString&) const; //!< Generate table row with 4 columns
-        QString table_row(const QString&, const QString&, const QString&, const QString&, const QString&) const; //!< Generate table row with 5 columns
-        QString table_row(const QString&, const QString&, const QString&, const QString&, const QString&, const QString&) const; //!< Generate table row with 6 columns
-        QString table_row(const QString&, const QString&, const QString&, const QString&, const QString&, const QString&, const QString&) const; //!< Generate table row with 7 columns
-        QString table_row(const QString&, const QString&, const QString&, const QString&, const QString&, const QString&, const QString&, const QString&) const; //!< Generate table row with 8 columns
-        QString table_row(const QString&, const QString&, const QString&, const QString&, const QString&, const QString&, const QString&, const QString&, const QString&) const; //!< Generate table row with 9 columns
 
         /**
          * @brief Paint the page for the PDF report.

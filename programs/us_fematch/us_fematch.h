@@ -292,17 +292,6 @@ class US_FeMatch : public US_Widgets
       //! \param report The report string.
       void        write_dset_report( QString& report );
 
-      //! \brief Indent a string.
-      //! \param level The indentation level.
-      //! \return The indented string.
-      QString     indent( int level ) const;
-
-      //! \brief Get the text representation of a model.
-      //! \param model The model to convert to text.
-      //! \param level The indentation level.
-      //! \return The text representation of the model.
-      QString     text_model( US_Model model, int level );
-
       //! \brief Calculate the baseline.
       //! \param index The index value.
       //! \return The baseline value.
@@ -313,49 +302,6 @@ class US_FeMatch : public US_Widgets
 
       //! \brief Close all dialogs.
       void        close_all();
-
-      //! \brief Create a table row.
-      //! \param col1 The first column value.
-      //! \param col2 The second column value.
-      //! \return The table row string.
-      QString     table_row( const QString& col1, const QString& col2 ) const;
-
-      //! \brief Create a table row with three columns.
-      //! \param col1 The first column value.
-      //! \param col2 The second column value.
-      //! \param col3 The third column value.
-      //! \return The table row string.
-      QString     table_row( const QString& col1, const QString& col2, const QString& col3 ) const;
-
-      //! \brief Create a table row with five columns.
-      //! \param col1 The first column value.
-      //! \param col2 The second column value.
-      //! \param col3 The third column value.
-      //! \param col4 The fourth column value.
-      //! \param col5 The fifth column value.
-      //! \return The table row string.
-      QString     table_row( const QString& col1,
-                             const QString& col2,
-                             const QString& col3,
-                             const QString& col4,
-                             const QString& col5 ) const;
-
-      //! \brief Create a table row with seven columns.
-      //! \param col1 The first column value.
-      //! \param col2 The second column value.
-      //! \param col3 The third column value.
-      //! \param col4 The fourth column value.
-      //! \param col5 The fifth column value.
-      //! \param col6 The sixth column value.
-      //! \param col7 The seventh column value.
-      //! \return The table row string.
-      QString     table_row( const QString& col1,
-                             const QString& col2,
-                             const QString& col3,
-                             const QString& col4,
-                             const QString& col5,
-                             const QString& col6,
-                             const QString& col7 ) const;
 
       //! \brief Create HTML header.
       //! \param title The title.

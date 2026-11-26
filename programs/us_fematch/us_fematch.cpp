@@ -9,6 +9,7 @@
 #include "us_colorgradIO.h"
 #include "us_constants.h"
 #include "us_data_loader.h"
+#include "us_distrib_stick.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
 #include "us_investigator.h"
@@ -20,6 +21,7 @@
 #include "us_model_simulation.h"
 #include "us_passwd.h"
 #include "us_report.h"
+#include "us_report_text.h"
 #include "us_settings.h"
 #include "us_sim_residuals.h"
 #include "us_simparms.h"
@@ -30,6 +32,9 @@
 #include "us_time_state.h"
 #include "us_util.h"
 #include <QFileInfo>
+
+using US_ReportText::indent;
+using US_ReportText::table_row;
 
 
 // US_FeMatch class constructor
@@ -1017,8 +1022,8 @@ void US_FeMatch::save_data( void )
    int drow = lw_triples->currentRow();
    mkdir( US_Settings::reportDir(), edata->runID );
    QString tripnode  = QString( triples.at( drow ) ).replace( " / ", "" );
-   QString basename  = US_Settings::reportDir() + "/" + edata->runID + "/"
-      + text_model( model, 0 ) + "." + tripnode + ".";
+   QString basename =
+      US_Settings::reportDir() + "/" + edata->runID + "/" + US_ReportText::text_model( model, 0, false ) + "." + tripnode + ".";
    QString htmlFile  = basename + "report.html";
    QString dsinfFile = basename.section( "/", 0, -2 ) + "/dsinfo."
                        + tripnode + ".dataset_info.html";
@@ -1356,93 +1361,10 @@ void US_FeMatch::distrib_type( )
    }
 }
 
-// Do stick type distribution plot
+// Plot the model's distribution as sticks
 void US_FeMatch::distrib_plot_stick( int type )
 {
-   QString pltitle = tr( "Run " ) + edata->runID + tr( " :\nCell " )
-      + edata->cell + " (" + edata->wavelength + " nm)";
-   QString xatitle;
-   QString yatitle = tr( "Rel. Concentr." );
-
-   if ( type == 0 )
-   {
-      pltitle = pltitle + tr( "\ns20,W Distribution" );
-      xatitle = tr( "Corrected Sedimentation Coefficient" );
-   }
-
-   else if ( type == 1 )
-   {
-      pltitle = pltitle + tr( "\nMW Distribution" );
-      xatitle = tr( "Molecular Weight (Dalton)" );
-   }
-
-   else if ( type == 2 )
-   {
-      pltitle = pltitle + tr( "\nD20,W Distribution" );
-      xatitle = tr( "D20,W (cm^2/sec)" );
-   }
-
-   dataPlotClear( data_plot1 );
-
-   data_plot1->setTitle(                       pltitle );
-   data_plot1->setAxisTitle( QwtPlot::yLeft,   yatitle );
-   data_plot1->setAxisTitle( QwtPlot::xBottom, xatitle );
-
-   QwtPlotGrid*  data_grid = us_grid(  data_plot1 );
-   QwtPlotCurve* data_curv = us_curve( data_plot1, "distro" );
-
-
-   int     dsize  = model_used.components.size();
-   QVector< double > vecx( dsize );
-   QVector< double > vecy( dsize );
-   double* xx     = vecx.data();
-   double* yy     = vecy.data();
-   double  xmin   = 1.0e30;
-   double  xmax   = -1.0e30;
-   double  ymin   = 1.0e30;
-   double  ymax   = -1.0e30;
-   double  xval;
-   double  yval;
-   double  rdif;
-
-   for ( int jj = 0; jj < dsize; jj++ )
-   {
-      xval     = ( type == 0 ) ? model_used.components[ jj ].s :
-               ( ( type == 1 ) ? model_used.components[ jj ].mw :
-                                 model_used.components[ jj ].D );
-      yval     = model_used.components[ jj ].signal_concentration;
-      xx[ jj ] = xval;
-      yy[ jj ] = yval;
-      xmin     = qMin( xval, xmin );
-      xmax     = qMax( xval, xmax );
-      ymin     = qMin( yval, ymin );
-      ymax     = qMax( yval, ymax );
-   }
-
-   rdif   = ( xmax - xmin ) / 20.0;
-   xmin  -= rdif;
-   xmax  += rdif;
-   rdif   = ( ymax - ymin ) / 20.0;
-   ymin  -= rdif;
-   ymax  += rdif;
-   xmin   = ( type == 0 ) ? xmin : qMax( xmin, 0.0 );
-   ymin   = qMax( ymin, 0.0 );
-
-   data_grid->enableYMin ( true );
-   data_grid->enableY    ( true );
-   data_grid->setMajorPen(
-      QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
-
-   data_curv->setSamples( xx, yy, dsize );
-   data_curv->setPen    ( QPen( Qt::yellow, 3, Qt::SolidLine ) );
-   data_curv->setStyle  ( QwtPlotCurve::Sticks );
-
-   data_plot1->setAxisAutoScale( QwtPlot::xBottom );
-   data_plot1->setAxisAutoScale( QwtPlot::yLeft   );
-   data_plot1->setAxisScale( QwtPlot::xBottom, xmin, xmax );
-   data_plot1->setAxisScale( QwtPlot::yLeft,   ymin, ymax );
-
-   data_plot1->replot();
+   US_DistribStick::plot( this, data_plot1, edata, model_used, type );
 }
 
 // Do 2d type distribution plot
@@ -2243,10 +2165,10 @@ void US_FeMatch::comp_number( double cnbr )
 // Write the report HTML text stream
 void US_FeMatch::write_report( QTextStream& ts )
 {
-   ts << html_header( "US_Fematch", text_model( model, 2 ), edata );
-//   ts << run_details();
-//   ts << hydrodynamics();
-//   ts << scan_info();
+   ts << html_header( "US_Fematch", US_ReportText::text_model( model, 2, false ), edata );
+   //   ts << run_details();
+   //   ts << hydrodynamics();
+   //   ts << scan_info();
    ts << distrib_info();
    ts << "  </body>\n</html>\n";
 }
@@ -2291,95 +2213,6 @@ double US_FeMatch::calc_baseline( int drow ) const
    return ( bl / 11.0 );
 }
 
-// Model type text string
-QString US_FeMatch::text_model( US_Model model, int width )
-{
-   QString stitle = model.typeText();
-   QString title  = stitle;
-
-   if ( width != 0 )
-   {  // long title:  add any suffixes and check need to center
-      switch ( (int)model.analysis )
-      {
-         case (int)US_Model::TWODSA:
-         case (int)US_Model::TWODSA_MW:
-            title = tr( "2-Dimensional Spectrum Analysis" );
-            break;
-
-         case (int)US_Model::GA:
-         case (int)US_Model::GA_MW:
-            title = tr( "Genetic Algorithm Analysis" );
-            break;
-
-         case (int)US_Model::COFS:
-            title = tr( "C(s) Analysis" );
-            break;
-
-         case (int)US_Model::FE:
-            title = tr( "Finite Element Analysis" );
-            break;
-
-         case (int)US_Model::PCSA:
-            title = tr( "Parametrically Constrained Spectrum Analysis\n" );
-
-            if ( stitle.contains( "-SL" ) )
-               title += tr( "(Straight Line)" );
-
-            else if ( stitle.contains( "-IS" ) )
-               title += tr( "(Increasing Sigmoid)" );
-
-            else if ( stitle.contains( "-DS" ) )
-               title += tr( "(Decreasing Sigmoid)" );
-
-            else if ( stitle.contains( "-HL" ) )
-               title += tr( "(Horizontal Line)" );
-
-            else if ( stitle.contains( "-2O" ) )
-               title += tr( "(2nd-Order Power Law)" );
-
-            break;
-
-         case (int)US_Model::DMGA:
-            title = tr( "Discrete Model Genetic Algorithm" );
-            break;
-
-         case (int)US_Model::MANUAL:
-         default:
-            title = tr( "2-Dimensional Spectrum Analysis" );
-            break;
-      }
-
-
-            if ( stitle.contains( "-SL" ) )
-      if ( model.associations.size() > 1 )
-         title = title + " (RA)";
-
-      if ( model.global == US_Model::MENISCUS )
-         title = title + " (Menisc.)";
-
-      else if ( model.global == US_Model::GLOBAL )
-         title = title + " (Global)";
-
-      else if ( model.global == US_Model::SUPERGLOBAL )
-         title = title + " (S.Glob.)";
-
-      if ( model.monteCarlo )
-         title = title + " (MC)";
-
-      if ( width > title.length() )
-      {  // long title centered:  center it in fixed-length string
-         int lent = title.length();
-         int lenl = ( width - lent ) / 2;
-         int lenr = width - lent - lenl;
-         title    = QString( " " ).repeated( lenl ) + title
-                  + QString( " " ).repeated( lenr );
-      }
-   }
-
-   return title;
-}
-
-
 // Calculate residual absorbance values (data - sim - noise)
 void US_FeMatch::calc_residuals()
 {
@@ -2401,46 +2234,6 @@ void US_FeMatch::close_all()
       resplotd->close();
 
    close();
-}
-
-// String to accomplish line indentation
-QString US_FeMatch::indent( const int spaces ) const
-{
-   return ( QString( " " ).leftJustified( spaces, ' ' ) );
-}
-
-// Table row HTML with 2 columns
-QString US_FeMatch::table_row( const QString& s1, const QString& s2 ) const
-{
-   return( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td></tr>\n" );
-}
-
-// Table row HTML with 3 columns
-QString US_FeMatch::table_row( const QString& s1, const QString& s2,
-                               const QString& s3 ) const
-{
-   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>" + s3
-            + "</td></tr>\n" );
-}
-
-// Table row HTML with 5 columns
-QString US_FeMatch::table_row( const QString& s1, const QString& s2,
-                               const QString& s3, const QString& s4,
-                               const QString& s5 ) const
-{
-   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>" + s3
-            + "</td><td>" + s4 + "</td><td>" + s5 + "</td></tr>\n" );
-}
-
-// Table row HTML with 7 columns
-QString US_FeMatch::table_row( const QString& s1, const QString& s2,
-                               const QString& s3, const QString& s4,
-                               const QString& s5, const QString& s6,
-                               const QString& s7 ) const
-{
-   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>"
-            + s3 + "</td><td>" + s4 + "</td><td>" + s5 + "</td><td>"
-            + s6 + "</td><td>" + s7 + "</td></tr>\n" );
 }
 
 // Compose a report HTML header
