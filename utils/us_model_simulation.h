@@ -60,8 +60,8 @@ class US_UTIL_EXTERN US_ModelSimulation : public QObject
       //! solver for an ideal, non-co-sedimenting model without
       //! compressibility, otherwise the finite volume solver. Emits component()
       //! for finite element progress.
-      //! \param buffer Set to \a compress and \a manual for the finite element
-      //!               solver; neither solver is given it.
+      //! \param buffer Set to \a compress and \a manual; the finite volume
+      //!               solver is given it, as in the worker threads.
       void               simulate( US_Model&                model,
                                    US_SimulationParameters& simparams,
                                    US_DataIO::RawData&      sdata,

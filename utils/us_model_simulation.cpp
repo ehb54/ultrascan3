@@ -153,7 +153,11 @@ void US_ModelSimulation::simulate( US_Model&                model,
    }
    else
    {
+      // As the threaded path does: the buffer gives a co-sedimenting model its salt gradient
+      buffer.compressibility = compress;
+      buffer.manual          = manual;
       US_LammAstfvm astfvm( model, simparams );
+      astfvm.set_buffer( buffer );
       astfvm.calculate( sdata );
    }
 }

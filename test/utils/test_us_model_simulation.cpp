@@ -5,6 +5,7 @@
 #include "us_astfem_math.h"
 #include "us_astfem_rsa.h"
 #include "us_buffer.h"
+#include "us_constants.h"
 #include "us_dataIO.h"
 #include "us_db2.h"
 #include "us_lamm_astfvm.h"
@@ -1001,9 +1002,9 @@ TEST_F( TestUSModelSimulation, SimulatesInThisThreadWithTheOldSolvers )
       sim.simulate( model, simparams, newData, buffer, 0.0, false, 0 );
 
       EXPECT_EQ( dumpData( newData ), dumpData( oldData ) );
-      // The finite element path sets the buffer and reports each component
-      EXPECT_EQ( buffer.compressibility, sigma == 0.0 ? 0.0 : 9.0 );
-      EXPECT_EQ( buffer.manual, sigma != 0.0 );
+      // Both paths set the buffer; the finite element path reports each component
+      EXPECT_EQ( buffer.compressibility, 0.0 );
+      EXPECT_FALSE( buffer.manual );
       EXPECT_EQ( components, sigma == 0.0 ? 4 : 0 ); // once per component and once at the end
    }
    US_Settings::set_workBaseDir( saved );
@@ -1084,5 +1085,55 @@ TEST_F( TestUSModelSimulation, RefusedCoSedimentingSolverIsDeletedSafely )
    US_Buffer          buffer;
    US_ModelSimulation sim;
    sim.simulate( model, simparams, data2, buffer, 0.0, false, 0 );
+   US_Settings::set_workBaseDir( saved );
+}
+
+// In one thread, a co-sedimenting model is solved with the buffer's density
+// and viscosity coefficients, as the threaded path and the fit's solver give
+// them; without the buffer the salt gradient would have no effect.
+TEST_F( TestUSModelSimulation, CoSedimentingModelUsesTheBuffer )
+{
+   const QString saved = US_Settings::workBaseDir();
+   QTemporaryDir root;
+   US_Settings::set_workBaseDir( root.path() );
+   std::mt19937           rng( 19 );
+   US_DataIO::EditedData  edata = makeEdited( rng, false );
+   QMap<QString, QString> adv{ { "simpoints", "50" }, { "gridtype", "Moving" }, { "bandvolume", "0.015" } };
+   US_Model               model             = manyComponents( 2 );
+   model.coSedSolute                        = 0;
+   model.components[0].s                    = 1e-15; // the salt
+   model.components[0].D                    = 1.5e-5;
+   model.components[0].signal_concentration = 0.5;
+   US_SimulationParameters simparams;
+   US_DataIO::RawData      grid;
+   US_ModelSimulation::prepare( nullptr, -1, edata, model, adv, false, {}, root.path() + "/none.tmst", true, simparams, grid );
+
+   US_Buffer          buffer;
+   US_BufferComponent salt;
+   for ( int ii = 0; ii < 6; ii++ )
+   {
+      salt.dens_coeff[ii] = ( ii == 0 ) ? DENS_20W : 0.05 / ( ii + 1 );
+      salt.visc_coeff[ii] = ( ii == 0 ) ? VISC_20W : 0.08 / ( ii + 1 );
+   }
+   buffer.component << salt;
+   buffer.concentration << 0.5;
+
+   US_DataIO::RawData withBuffer = grid;
+   {
+      US_LammAstfvm astfvm( model, simparams );
+      astfvm.set_buffer( buffer );
+      ASSERT_EQ( astfvm.calculate( withBuffer ), 0 );
+   }
+   US_DataIO::RawData withoutBuffer = grid;
+   {
+      US_LammAstfvm astfvm( model, simparams );
+      ASSERT_EQ( astfvm.calculate( withoutBuffer ), 0 );
+   }
+   ASSERT_NE( dumpData( withBuffer ), dumpData( withoutBuffer ) ) << "this buffer must change the simulation";
+
+   US_DataIO::RawData data = grid;
+   US_ModelSimulation sim;
+   sim.simulate( model, simparams, data, buffer, 0.0, false, 0 );
+   EXPECT_EQ( dumpData( data ), dumpData( withBuffer ) );
    US_Settings::set_workBaseDir( saved );
 }
