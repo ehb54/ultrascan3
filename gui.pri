@@ -13,6 +13,9 @@ QT          += openglwidgets
 }
 
 CONFIG       += $$DEBUGORRELEASE qt thread warn widgets
+# The CMake builds require C++17 too; without this qmake uses the compiler's
+# default, which is C++14 for MSVC.
+CONFIG       += c++17
 
 unix {
   LIBS       += -L../../lib -lus_gui -lus_utils
