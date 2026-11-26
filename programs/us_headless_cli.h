@@ -7,6 +7,7 @@
 
 #include <QApplication>
 #include <QDebug>
+#include <QFileInfo>
 #include <QRandomGenerator>
 #include <QTextStream>
 
@@ -16,6 +17,7 @@
 #include "us_session.h"
 #include "us_settings.h"
 #include "us_sim_cli.h"
+#include "us_sim_input_loader.h"
 #include "us_util.h"
 #include "us_widgets.h"
 
@@ -138,17 +140,30 @@ inline void reportHeadlessLoadFailure( const QString& what,
    error_occured = true;
 }
 
+//! \brief Whether a model, buffer or rotor argument has to be looked up:
+//! anything but an existing file path or "c1:c2" rotor coefficients.
+inline bool simInputNeedsLookup( const US_SimCliArgs& args )
+{
+   double     coeff1 = 0.0;
+   double     coeff2 = 0.0;
+   const auto lookup = []( const QString& spec ) { return !spec.isEmpty() && !QFileInfo::exists( spec ); };
+   return lookup( args.model ) || lookup( args.buffer ) ||
+          ( !args.rotor.isEmpty() && !US_SimInputLoader::rotorCoefficients( args.rotor, coeff1, coeff2 ) );
+}
+
 //! \brief The connection the command line's model, buffer and rotor are read
-//! from: the database when that is the data location, else none (the local
-//! data folders). A failed connection is reported and returned, so each load
-//! then fails with its reason.
+//! from: the database unless the data location is the local disk, as the
+//! simulator's own data-source controls decide, else none (the local data
+//! folders). Opened only when an argument has to be looked up, so a run from
+//! files alone needs no master password. A failed connection is reported and
+//! returned, so each load then fails with its reason.
 inline std::unique_ptr<IUS_DB2> openSimInputDatabase( const US_SimCliArgs& args )
 {
-   if ( args.model.isEmpty() && args.buffer.isEmpty() && args.rotor.isEmpty() )
+   if ( !simInputNeedsLookup( args ) )
    {
       return nullptr;
    }
-   if ( US_Settings::default_data_location() != US_Disk_DB_Controls::DB )
+   if ( US_Settings::default_data_location() == US_Disk_DB_Controls::Disk )
    {
       return nullptr;
    }

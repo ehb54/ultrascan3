@@ -50,6 +50,18 @@ bool isReadableFile( const QString& spec )
    const QFileInfo info( spec );
    return info.exists() && info.isFile() && info.isReadable();
 }
+
+// A path that names something other than a readable file, such as a
+// directory; it is reported as such rather than looked up as an ID or GUID.
+bool unreadablePath( const QString& spec, const char* what, QString& error )
+{
+   if ( !QFileInfo::exists( spec ) || isReadableFile( spec ) )
+   {
+      return false;
+   }
+   error = QObject::tr( "the %1 file %2 is not a readable file" ).arg( QLatin1String( what ), spec );
+   return true;
+}
 } // namespace
 
 bool US_SimInputLoader::model( const QString& spec, IUS_DB2* db, int investigator, US_Model& model, QString& error )
@@ -60,6 +72,10 @@ bool US_SimInputLoader::model( const QString& spec, IUS_DB2* db, int investigato
       return false;
    }
 
+   if ( unreadablePath( spec, "model", error ) )
+   {
+      return false;
+   }
    if ( isReadableFile( spec ) )
    {
       US_Model loaded;
@@ -141,6 +157,10 @@ bool US_SimInputLoader::buffer( const QString& spec, IUS_DB2* db, int investigat
       return false;
    }
 
+   if ( unreadablePath( spec, "buffer", error ) )
+   {
+      return false;
+   }
    if ( isReadableFile( spec ) )
    {
       US_Buffer loaded;
@@ -190,15 +210,24 @@ bool US_SimInputLoader::buffer( const QString& spec, IUS_DB2* db, int investigat
    {
       return false;
    }
+   if ( investigator < 0 )
+   {
+      error = QObject::tr( "the investigator is not set" );
+      return false;
+   }
 
    // A buffer ID among the investigator's buffers, or a buffer GUID.
    QString id;
+   QString listed_description;
+   bool    listed = false;
    db->query( QStringList{ "get_buffer_desc", QString::number( investigator ) } );
    while ( db->next() )
    {
       if ( db->value( 0 ).toString() == spec )
       {
-         id = spec;
+         id                 = spec;
+         listed_description = db->value( 1 ).toString();
+         listed             = true;
          break;
       }
    }
@@ -222,6 +251,13 @@ bool US_SimInputLoader::buffer( const QString& spec, IUS_DB2* db, int investigat
       error =
          QObject::tr( "buffer %1 could not be read from the database: %2" )
             .arg( id, db->lastError().isEmpty() ? QObject::tr( "it or one of its components was not found" ) : db->lastError() );
+      return false;
+   }
+   // As the dialog checks that what it read is the buffer it listed.
+   if ( listed && loaded.description != listed_description )
+   {
+      error =
+         QObject::tr( "buffer %1 read back as \"%2\", not the listed \"%3\"" ).arg( id, loaded.description, listed_description );
       return false;
    }
    buffer = loaded;
@@ -322,6 +358,12 @@ bool US_SimInputLoader::rotor( const QString& spec, IUS_DB2* db, RotorChoice& ch
    {
       choice.rotor.saveDisk();
       db->query( QStringList{ "get_rotor_calibration_profiles", QString::number( rotorID ) } );
+      const int status = db->lastErrno();
+      if ( status != IUS_DB2::OK && status != IUS_DB2::NOROWS )
+      {
+         error = QObject::tr( "the calibration profiles of rotor %1 could not be read: %2" ).arg( rotorID ).arg( db->lastError() );
+         return false;
+      }
       if ( db->next() )
       {
          calibrationID = db->value( 0 ).toInt();
@@ -343,11 +385,18 @@ bool US_SimInputLoader::rotor( const QString& spec, IUS_DB2* db, RotorChoice& ch
       }
    }
 
+   // A rotor without a calibration profile simulates with zero stretch, as in
+   // the dialog; a profile that exists but cannot be read is an error.
    if ( calibrationID > 0 )
    {
       const US_Rotor::Status calibration_status =
          db != nullptr ? choice.calibration.readDB( calibrationID, db ) : choice.calibration.readDisk( calibrationID );
-      if ( calibration_status == US_Rotor::ROTOR_OK && db != nullptr )
+      if ( calibration_status != US_Rotor::ROTOR_OK )
+      {
+         error = QObject::tr( "calibration %1 of rotor %2 could not be read" ).arg( calibrationID ).arg( rotorID );
+         return false;
+      }
+      if ( db != nullptr )
       {
          choice.calibration.saveDisk();
       }

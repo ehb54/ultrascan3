@@ -18,6 +18,12 @@
 //! file path is loaded as such; otherwise the argument is looked for among
 //! the investigator's records. Pass an open connection to search the
 //! database, or none to search the local data folders.
+//!
+//! Where it differs from the dialogs: a database buffer may also be given
+//! by GUID; local rotors are listed from every lab's own folder (the dialog
+//! listed the current lab's rotors for each lab) and a lab without rotor
+//! files is skipped; and a path that is not a readable file, a rotor or
+//! calibration that cannot be read, are reported rather than ignored.
 class US_UTIL_EXTERN US_SimInputLoader
 {
    public:
