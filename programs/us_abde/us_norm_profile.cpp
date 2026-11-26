@@ -10,7 +10,7 @@
 
 namespace
 {
-bool valid_abde_percentages( const QString& text )
+bool valid_abde_percentages( const QString& text, const QStringList& without_ranges )
 {
    QJsonParseError error;
    const auto      document = QJsonDocument::fromJson( text.toUtf8(), &error );
@@ -50,6 +50,8 @@ bool valid_abde_percentages( const QString& text )
       const auto percents = channel.value( "percents" ).toObject();
       if ( percents.isEmpty() )
       {
+         if ( without_ranges.contains( it.key() ) && channel.value( "percents" ).isObject() )
+            continue;
          return false;
       }
       if ( percents.constBegin().value().isObject() )
@@ -653,7 +655,8 @@ bool US_Norm_Profile::load_data_auto_report( QMap<QString, QString>& protocol_de
 	   << abde_analysis_parms[ "xnorms_percents" ]
 	   << abde_analysis_parms[ "filename_blc" ];
 
-  if ( !valid_abde_percentages( abde_analysis_parms.value( "xnorms_percents" ) ) )
+  const auto without_ranges = protocol_details.value( "abde_channels_without_ranges" ).split( ';' );
+  if ( !valid_abde_percentages( abde_analysis_parms.value( "xnorms_percents" ), without_ranges ) )
   {
      return false;
   }
@@ -700,7 +703,7 @@ bool US_Norm_Profile::load_data_auto_report( QMap<QString, QString>& protocol_de
   }
   for ( const auto& channel : channList )
   {
-     if ( data_per_channel_ranges_percents_sample.value( channel ).isEmpty() )
+     if ( !without_ranges.contains( channel ) && data_per_channel_ranges_percents_sample.value( channel ).isEmpty() )
      {
         return false;
      }
@@ -988,7 +991,10 @@ void US_Norm_Profile::slt_loadAUC_auto_report(QMap<QString,QString> & protocol_d
   for (int i = 0; i < triples.size(); i++)
     {
       QStringList triple_n_list = triples[i].split(u'/');
-      channList << triple_n_list[0].trimmed() + triple_n_list[1].trimmed();
+      const QString channel = triple_n_list[0].trimmed() + triple_n_list[1].trimmed();
+      if ( !protocol_details.value( "abde_analyzed_channels" ).split( ';' ).contains( channel ) )
+         continue;
+      channList << channel;
       
       QStringList ccw = triples.at(i).split(u'/');
       US_DataIO::RawData rawData = allData.at(i);
@@ -1049,15 +1055,26 @@ void US_Norm_Profile::slt_loadAUC_auto( QMap<QString,QString> & protocol_details
   else //SWL
     dirName = protocol_details["directory_for_gmp"];
   
+  QStringList analyzed_channels;
+  for ( const auto& entry : channels_ranges.split( ';' ) )
+  {
+     if ( entry.contains( ':' ) )
+        analyzed_channels << entry.section( ':', 0, 0 );
+  }
+
   QDir runDir( dirName );
   QStringList fileList = runDir.entryList(QStringList() << "*.auc", QDir::Files, QDir::Name);
   QStringList fPath;
   for (int i=0; i<fileList.size(); ++i )
     {
+      const auto fields = fileList[i].split( '.' );
+      if ( fields.size() < 5 )
+         continue;
+      const QString channel = fields[2] + fields[3];
+      if ( !analyzed_channels.contains( channel ) )
+         continue;
       fPath << dirName + "/" + fileList[i];
-
-      QStringList file_n_list = fileList[i].split(".");
-      channList << file_n_list[2] + file_n_list[3];
+      channList << channel;
     }
   
   if (fPath.size() == 0)
@@ -1954,9 +1971,10 @@ void US_Norm_Profile::plotData(void){
 	    if ( chann_ranges_c_l[0] == channame )
 	      {
 		qDebug() << "channel " << channame << ", has range(s): "
-			 << chann_ranges_c_l[1];
-		qDebug() << "List -- " << chann_ranges_c_l[1].split(",");
-		c_ranges = chann_ranges_c_l[1].split(",");
+			 << chann_ranges_c_l.value( 1 );
+		qDebug() << "List -- " << chann_ranges_c_l.value( 1 ).split(",");
+		if ( !chann_ranges_c_l.value( 1 ).isEmpty() )
+                   c_ranges = chann_ranges_c_l[1].split(",");
 		break;
 	      }
 	  }
@@ -2503,7 +2521,13 @@ void US_Norm_Profile::save_auto( void )
        channels.insert( channel, record );
     }
     QString json_p = QString::fromUtf8( QJsonDocument( channels ).toJson( QJsonDocument::Compact ) );
-    if ( !valid_abde_percentages( json_p ) )
+    QStringList without_ranges;
+    for ( const auto& entry : channels_ranges.split( ';' ) )
+    {
+       if ( entry.endsWith( ':' ) )
+          without_ranges << entry.section( ':', 0, 0 );
+    }
+    if ( !valid_abde_percentages( json_p, without_ranges ) )
     {
        QMessageBox::warning(
           this, tr( "ABDE Analysis Incomplete" ), tr( "Analyze all channels and their integration ranges before saving." ) );

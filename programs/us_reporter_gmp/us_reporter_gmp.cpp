@@ -4842,6 +4842,30 @@ bool US_ReporterGMP::process_abde_plots( void )
    connect( sdiag_norm_profile, &US_Norm_Profile::pass_data_per_channel, this, &US_ReporterGMP::get_abde_data_per_channel );
    connect( sdiag_norm_profile, &US_Norm_Profile::pass_selected_signals_info, this, &US_ReporterGMP::get_abde_selected_signals );
 
+   QStringList analyzed_channels, without_ranges;
+   for ( int i = 0; i < chndescs_alt.size(); ++i )
+   {
+      if ( !analysis_runs.value( i ) )
+         continue;
+      const auto& description = chndescs_alt[i];
+      const auto channel = description.section( ':', 0, 0 );
+      analyzed_channels << channel;
+      const auto wavelengths = ch_wvls.value( description );
+      if ( wavelengths.isEmpty() )
+         continue;
+      const auto reports = ch_reports.value( description );
+      const auto report = reports.constFind( QString::number( wavelengths.first() ) );
+      if ( report == reports.constEnd() )
+         continue;
+      bool has_radius = false;
+      for ( const auto& item : report->reportItems )
+         has_radius |= item.type == "Radius";
+      if ( !has_radius )
+         without_ranges << channel;
+   }
+   prot_details_at_report["abde_analyzed_channels"] = analyzed_channels.join( ';' );
+   prot_details_at_report["abde_channels_without_ranges"] = without_ranges.join( ';' );
+
    if ( !sdiag_norm_profile->load_data_auto_report( prot_details_at_report ) )
    {
       abde_channList.clear();

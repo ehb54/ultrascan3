@@ -263,7 +263,7 @@ class US_ReporterGMP : public US_Widgets
         QPushButton* pb_gen_report;          //!< Generate report button
         QPushButton* pb_view_report;         //!< View report button
         QPushButton* pb_view_report_db;      //!< View report from DB button
-        QPushButton* pb_view_report_auto;    //!< View auto report button
+        QPushButton* pb_view_report_auto = nullptr;    //!< View auto report button
         QPushButton* pb_select_all;          //!< Select all button
         QPushButton* pb_unselect_all;        //!< Unselect all button
         QPushButton* pb_expand_all;          //!< Expand all button
@@ -273,7 +273,7 @@ class US_ReporterGMP : public US_Widgets
         QLineEdit* le_loaded_run;            //!< Loaded run line edit
         QLineEdit* le_loaded_run_db;         //!< Loaded run DB line edit
 
-        QTextEdit* te_fpath_info;            //!< File path info text edit
+        QTextEdit* te_fpath_info = nullptr;            //!< File path info text edit
         QTextEdit* te_fpath_info_db;         //!< File path info DB text edit
 
         QString AProfileGUID;                //!< Analysis profile GUID
