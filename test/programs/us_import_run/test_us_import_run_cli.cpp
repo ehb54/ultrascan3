@@ -104,6 +104,24 @@ class US_ImportRunCliTest : public QObject
          QVERIFY2( err.contains( option + " must be a positive integer" ), qPrintable( err ) );
       }
 
+      void passwordsAreRefusedOnTheCommandLine_data()
+      {
+         QTest::addColumn<QString>( "option" );
+
+         QTest::newRow( "database password" ) << "--password";
+         QTest::newRow( "investigator password" ) << "--investigator-password";
+      }
+
+      void passwordsAreRefusedOnTheCommandLine()
+      {
+         // The passwords come only from US_DB_PASSWORD and US_INV_PASSWORD.
+         QFETCH( QString, option );
+
+         QString err;
+         QCOMPARE( run( { "--dir", emptyRunDir( "pw" ), "--dry-run", "--work-dir", workParent(), option, "secret" }, err ), 1 );
+         QVERIFY2( err.contains( option.mid( 2 ) ), qPrintable( err ) );
+      }
+
       void aDryRunNeedsNoDatabase()
       {
          // Past the argument checks, so it fails on the empty run instead.

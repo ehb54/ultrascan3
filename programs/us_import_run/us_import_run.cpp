@@ -25,6 +25,7 @@
 
 #include "us_convert.h"
 #include "us_convertio.h"
+#include "us_credential_source.h"
 #include "us_dataIO.h"
 #include "us_db2.h"
 #include "us_defines.h"
@@ -86,6 +87,15 @@ bool parsePersonId( const QString& text, int& id )
    bool ok = false;
    id      = text.toInt( &ok );
    return ok && id > 0;
+}
+
+//! A secret from the environment, or empty when the variable is unset.
+QString environmentSecret( const QByteArray& variable )
+{
+   US_EnvironmentCredentialSource source( variable );
+   QString                        secret;
+   source.request( QString(), 1, secret );
+   return secret;
 }
 
 //! A chemistry record's filename prefix and staging directory.
@@ -590,11 +600,11 @@ int main( int argc, char* argv[] )
                                  "Database name. Required unless --dry-run is given, and refused unless it is one of " +
                                     allowedDatabases().join( ", " ) + " or --force is given",
                                  "name" );
-   QCommandLineOption       user_option( "user", "Database user", "user", "us3" );
-   QCommandLineOption       password_option( "password",
-                                       "Database password (default: $US3_DB_PASSWORD). Prefer the environment "
-                                             "variable: a command-line value is visible to other users",
-                                       "password" );
+   QCommandLineOption       user_option( "user",
+                                   "Database user. Its password is read from $US_DB_PASSWORD, never from "
+                                         "the command line",
+                                   "user",
+                                   "us3" );
    QCommandLineOption       investigator_option( "investigator-id",
                                            "personID recorded as the owner of everything created. Defaults to the "
                                                  "person the US3 credentials authenticate as. Another person's ID is "
@@ -603,12 +613,9 @@ int main( int argc, char* argv[] )
                                            "id" );
    QCommandLineOption       investigator_guid_option( "investigator-guid",
                                                 "personGUID of the US3 account to act as. Defaults to the investigator "
-                                                      "GUID in the experiment XML",
+                                                      "GUID in the experiment XML. Its US3 login password (not the "
+                                                      "database password) is read from $US_INV_PASSWORD",
                                                 "guid" );
-   QCommandLineOption       investigator_password_option( "investigator-password",
-                                                    "Password of that US3 account (default: $US3_INV_PASSWORD). This is "
-                                                          "the US3 login, not the MySQL password given by --password",
-                                                    "password" );
    QCommandLineOption       operator_option( "operator-id",
                                        "personID recorded as the instrument operator, who must hold a permit "
                                              "for the instrument. Defaults to the operator in the experiment XML, or "
@@ -639,10 +646,8 @@ int main( int argc, char* argv[] )
                         host_option,
                         db_option,
                         user_option,
-                        password_option,
                         investigator_option,
                         investigator_guid_option,
-                        investigator_password_option,
                         operator_option,
                         work_dir_option,
                         run_id_option,
@@ -780,12 +785,10 @@ int main( int argc, char* argv[] )
 
    // connectAuthenticated() takes the credentials as arguments, so no database
    // profile is written into the user's settings.
-   // The environment keeps the passwords out of the process list; an option
-   // given on the command line still wins.
-   const QString db_password =
-      parser.isSet( password_option ) ? parser.value( password_option ) : qEnvironmentVariable( "US3_DB_PASSWORD" );
-   const QString inv_password = parser.isSet( investigator_password_option ) ? parser.value( investigator_password_option )
-                                                                             : qEnvironmentVariable( "US3_INV_PASSWORD" );
+   // The passwords come only from the environment, which keeps them out of
+   // process listings and shell history.
+   const QString db_password  = environmentSecret( "US_DB_PASSWORD" );
+   const QString inv_password = environmentSecret( "US_INV_PASSWORD" );
 
    US_DB2        db;
    QString       db_error;
