@@ -2091,7 +2091,7 @@ bool US_ReporterGMP::read_protocol_and_reportMasks( void )
     {
       QMessageBox::warning( this, tr( "Connection Problem" ),
 			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
-      return true;
+      return false;
     }
 
 
