@@ -388,6 +388,10 @@ public:
     bool       statementRefused          = false;
     //! Set by rawQuery(): this statement ended the open transaction.
     bool       statementEndedTransaction = false;
+    //! The last statement whose results may still be unread. Reading them
+    //! brings the transaction status up to date, so a procedure that commits
+    //! after returning a result set is named when they are drained.
+    QString    pendingStatement;
 #ifndef NO_DB
     MYSQL*     db;
     MYSQL_RES* result;
@@ -430,6 +434,15 @@ public:
     //! \brief After a statement succeeds inside a transaction, records it if
     //!        the server no longer has the transaction open.
     void           noteTransactionEnd( const QString& sqlQuery );
+
+    //! \brief Reads the result sets \p sqlQuery still has pending, leaving
+    //!        `result` alone, then checks whether it ended the transaction.
+    //!        Sets statementEndedTransaction if it did.
+    void           finishResults( const QString& sqlQuery );
+
+    //! \brief After drainResults(): records whether the statement whose
+    //!        results were drained ended the transaction, naming it.
+    void           notePendingStatementEnd();
 
     //! \brief Escapes \p value for use inside a single-quoted SQL literal.
     static QString escapeLiteral( QString value );

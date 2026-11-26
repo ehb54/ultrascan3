@@ -535,7 +535,7 @@ bool US_DB2::commitTransaction( QString& transaction_error )
    // or roll back on its own.
    if ( transactionEndedEarly() )
    {
-      transaction_error = transactionEndedText();
+      transaction_error = transactionLost ? transactionLostText : transactionEndedText();
       return false;
    }
 
@@ -596,7 +596,7 @@ bool US_DB2::rollbackTransaction( QString& transaction_error )
 
    if ( ended_early )
    {
-      transaction_error = transactionEndedText();
+      transaction_error = transactionLost ? transactionLostText : transactionEndedText();
       return false;
    }
 
@@ -676,12 +676,14 @@ void US_DB2::rawQuery( const QString& sqlQuery )
    // Make sure that we clear out any unused
    //   result sets
    drainResults();
+   notePendingStatementEnd();
 
    if ( refuseAfterLostTransaction() )
    {
       return;
    }
 
+   pendingStatement = sqlQuery;
    if ( mysql_query( db, sqlQuery.toLatin1() ) != 0 )
    {
       error = QString( "MySQL error: " ) + mysql_error( db );
@@ -718,10 +720,10 @@ bool US_DB2::refuseAfterLostTransaction()
 
 void US_DB2::noteTransactionEnd( const QString& sqlQuery )
 {
-   // The status comes with the statement's last packet. A procedure that
-   // ends the transaction before returning a result set is caught here; one
-   // that returns a set first is caught by the next statement, or at the
-   // commit, which checks again.
+   // The status comes with the statement's last packet: query() and
+   // statusQuery() read every set first (finishResults()); results left for
+   // the caller are checked when the next statement drains them
+   // (notePendingStatementEnd()), and the commit checks again.
    if ( !inTransaction || transactionLost || ( db->server_status & SERVER_STATUS_IN_TRANS ) != 0 )
    {
       return;
@@ -732,6 +734,7 @@ void US_DB2::noteTransactionEnd( const QString& sqlQuery )
    if ( rolledBackByDeadlock )
    {
       transactionLostText = QObject::tr( serverRollbackMessage );
+      error               = transactionLostText;
       return;
    }
 
@@ -742,6 +745,43 @@ void US_DB2::noteTransactionEnd( const QString& sqlQuery )
    what                              = m.hasMatch() ? "CALL " + m.captured( 1 ) : what.left( 60 );
    transactionLostText               = QObject::tr( transactionEndedByMessage ).arg( what );
    error                             = transactionLostText;
+}
+
+void US_DB2::finishResults( const QString& sqlQuery )
+{
+   // A procedure's last packet carries the final transaction status; the
+   // autoflow procedures return a result set before their own COMMIT, so it
+   // is only seen once every set has been read.
+   int next = 0;
+   while ( ( next = mysql_next_result( db ) ) == 0 )
+   {
+      MYSQL_RES* extra = mysql_store_result( db );
+      if ( extra != NULL )
+      {
+         mysql_free_result( extra );
+      }
+   }
+   if ( next > 0 )
+   {
+      noteStatementError();
+   }
+   pendingStatement.clear();
+   noteTransactionEnd( sqlQuery );
+}
+
+void US_DB2::notePendingStatementEnd()
+{
+   if ( pendingStatement.isEmpty() )
+   {
+      return;
+   }
+   // The drained statement already returned to its caller; what it did is
+   // recorded so the statement about to run is refused, not blamed.
+   const QString drained          = pendingStatement;
+   const bool    ended_by_current = statementEndedTransaction;
+   pendingStatement.clear();
+   noteTransactionEnd( drained );
+   statementEndedTransaction = ended_by_current;
 }
 #endif
 
@@ -757,7 +797,7 @@ int US_DB2::statusQuery( const QString& sqlQuery )
    {
       return db_errno;
    }
-   const bool ended_transaction = statementEndedTransaction;
+   bool ended_transaction = statementEndedTransaction;
 
    // A statement the server refused itself -- a duplicate key, a wrong
    // argument count -- has its reason in the MySQL error rawQuery() kept.
@@ -774,6 +814,8 @@ int US_DB2::statusQuery( const QString& sqlQuery )
       db_errno     = atoi( row[ 0 ] );
       mysql_free_result( result );
       result = NULL;
+      finishResults( sqlQuery );
+      ended_transaction = ended_transaction || statementEndedTransaction;
    }
 
    if ( db_errno != 0 )
@@ -841,7 +883,7 @@ void US_DB2::query( const QString& sqlQuery )
       db_errno = DBERROR;
       return;
    }
-   const bool ended_transaction = statementEndedTransaction;
+   bool ended_transaction = statementEndedTransaction;
 
    // A statement the server refused outright leaves no result set, and
    // rawQuery() reports that only through `error`.  Without this, db_errno
@@ -886,6 +928,10 @@ void US_DB2::query( const QString& sqlQuery )
             {} // Error retrieving result set
          }
       }
+
+      // The data set is stored, so the rest can be read now.
+      finishResults( sqlQuery );
+      ended_transaction = ended_transaction || statementEndedTransaction;
    }
 
    // A procedure that returns before its status set -- an empty GUID, a
@@ -1023,8 +1069,13 @@ QVariant US_DB2::value( unsigned ){ return QVariant(); }
 #else
 QVariant US_DB2::value( unsigned index )
 {
-   if ( row && ( index < mysql_field_count( db ) ) )
-      return QVariant( QString( row[ index ] ) );
+   // The stored result's own width: the connection's field count describes
+   // whatever it read last, which after query() is the procedure's final
+   // packet.
+   if ( row && result && ( index < mysql_num_fields( result ) ) )
+   {
+      return QVariant( QString( row[index] ) );
+   }
 
    return QVariant();
 }
@@ -1123,6 +1174,7 @@ int US_DB2::writeBlobToDB( const QString& filename,
 
    // We can't use rawQuery() since it takes a QString
    drainResults();
+   notePendingStatementEnd();
 
    if ( refuseAfterLostTransaction() )
    {
@@ -1145,6 +1197,15 @@ int US_DB2::writeBlobToDB( const QString& filename,
 
    mysql_free_result( result );
    result = NULL;
+
+   statementEndedTransaction = false;
+   finishResults( "CALL " + procedure );
+   if ( statementEndedTransaction )
+   {
+      db_errno = DBERROR;
+      error    = transactionLostText;
+      return DBERROR;
+   }
 
    if ( db_errno == BAD_CHECKSUM )
    {
@@ -1207,6 +1268,7 @@ int US_DB2::readBlobFromDB( const QString& filename,
    // Make sure that we clear out any unused
    //   result sets
    drainResults();
+   notePendingStatementEnd();
 
    if ( refuseAfterLostTransaction() )
    {
@@ -1265,6 +1327,14 @@ int US_DB2::readBlobFromDB( const QString& filename,
          }
       }
 if(!error.isEmpty()) qDebug() << error;
+   }
+
+   statementEndedTransaction = false;
+   finishResults( "CALL " + procedure );
+   if ( statementEndedTransaction )
+   {
+      db_errno = DBERROR;
+      error    = transactionLostText;
    }
 
    return db_errno;

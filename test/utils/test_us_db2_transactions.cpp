@@ -46,9 +46,15 @@ const char* const failingProcedure = "us3_test_txn_fail";
 // as US3 procedures do on an empty GUID or a failed verify_user.
 const char* const silentProcedure = "us3_test_txn_silent";
 
-// Commits on its own, as 16 autoflow procedures do: START TRANSACTION commits
-// whatever the caller had open.
+// Commits on its own: START TRANSACTION commits whatever the caller had open.
 const char* const committingProcedure = "us3_test_txn_commits";
+
+// The shape of the autoflow procedures that commit: a status set, then their
+// own COMMIT, so the transaction is seen to end only after the set is read.
+const char* const committingAfterSetProcedure = "us3_test_txn_commits_after_set";
+
+// A status set then a data set, as most US3 read procedures return.
+const char* const dataProcedure = "us3_test_txn_data";
 
 struct LiveDb
 {
@@ -108,6 +114,12 @@ class US_DB2_LiveTransaction : public ::testing::Test
             QString( "CREATE PROCEDURE %1() BEGIN SELECT 0; SELECT * FROM us3_test_no_such_table; END" ).arg( failingProcedure ) );
          first->rawQuery( QString( "DROP PROCEDURE IF EXISTS %1" ).arg( committingProcedure ) );
          first->rawQuery( QString( "CREATE PROCEDURE %1() BEGIN START TRANSACTION; COMMIT; END" ).arg( committingProcedure ) );
+         first->rawQuery( QString( "DROP PROCEDURE IF EXISTS %1" ).arg( committingAfterSetProcedure ) );
+         first->rawQuery( QString( "CREATE PROCEDURE %1() BEGIN START TRANSACTION; SELECT 0 AS status; COMMIT; END" )
+                             .arg( committingAfterSetProcedure ) );
+         first->rawQuery( QString( "DROP PROCEDURE IF EXISTS %1" ).arg( dataProcedure ) );
+         first->rawQuery( QString( "CREATE PROCEDURE %1() BEGIN SELECT 0 AS status; SELECT 42 AS answer, 'forty-two' AS name; END" )
+                             .arg( dataProcedure ) );
          first->rawQuery( QString( "DROP PROCEDURE IF EXISTS %1" ).arg( silentProcedure ) );
          first->rawQuery( QString( "CREATE PROCEDURE %1( p INT ) BEGIN SET @US3_LAST_ERRNO = p; "
                                    "SET @US3_LAST_ERROR = CONCAT( 'silent status ', p ); END" )
@@ -125,9 +137,14 @@ class US_DB2_LiveTransaction : public ::testing::Test
 
          ASSERT_EQ( scalar( *first,
                             QString( "SELECT COUNT(*) FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = DATABASE() "
-                                     "AND ROUTINE_NAME IN ( '%1', '%2', '%3', '%4', 'last_errno', 'last_error' )" )
-                               .arg( rollbackProcedure, failingProcedure, silentProcedure, committingProcedure ) ),
-                    "6" )
+                                     "AND ROUTINE_NAME IN ( '%1', '%2', '%3', '%4', '%5', '%6', 'last_errno', 'last_error' )" )
+                               .arg( rollbackProcedure,
+                                     failingProcedure,
+                                     silentProcedure,
+                                     committingProcedure,
+                                     committingAfterSetProcedure,
+                                     dataProcedure ) ),
+                    "8" )
             << "the test user needs CREATE ROUTINE";
       }
 
@@ -140,6 +157,8 @@ class US_DB2_LiveTransaction : public ::testing::Test
             first->rawQuery( QString( "DROP PROCEDURE IF EXISTS %1" ).arg( failingProcedure ) );
             first->rawQuery( QString( "DROP PROCEDURE IF EXISTS %1" ).arg( silentProcedure ) );
             first->rawQuery( QString( "DROP PROCEDURE IF EXISTS %1" ).arg( committingProcedure ) );
+            first->rawQuery( QString( "DROP PROCEDURE IF EXISTS %1" ).arg( committingAfterSetProcedure ) );
+            first->rawQuery( QString( "DROP PROCEDURE IF EXISTS %1" ).arg( dataProcedure ) );
             if ( createdStatusFunctions )
             {
                first->rawQuery( "DROP FUNCTION IF EXISTS last_errno" );
@@ -268,6 +287,75 @@ TEST_F( US_DB2_LiveTransaction, AProcedureThatCommitsStopsTheTransactionThere )
    EXPECT_FALSE( first->rollbackTransaction( error ) );
 
    EXPECT_EQ( scalar( *second, QString( "SELECT v FROM %1 WHERE id = 1" ).arg( table ) ), "1" );
+   EXPECT_EQ( scalar( *second, QString( "SELECT v FROM %1 WHERE id = 2" ).arg( table ) ), "0" );
+}
+
+// query() reads a procedure's results to the end at once; the data set it
+// keeps stays readable, column by column, inside a transaction and out.
+TEST_F( US_DB2_LiveTransaction, QueryKeepsTheDataSetReadable )
+{
+   for ( const bool in_transaction : { false, true } )
+   {
+      QString error;
+      if ( in_transaction )
+      {
+         ASSERT_TRUE( first->beginTransaction( error ) ) << error.toStdString();
+      }
+      first->query( QString( "CALL %1()" ).arg( dataProcedure ) );
+      EXPECT_EQ( first->lastErrno(), IUS_DB2::OK ) << first->lastError().toStdString();
+      ASSERT_TRUE( first->next() );
+      EXPECT_EQ( first->value( 0 ).toString(), QString( "42" ) );
+      EXPECT_EQ( first->value( 1 ).toString(), QString( "forty-two" ) );
+      EXPECT_FALSE( first->value( 2 ).isValid() );
+      EXPECT_FALSE( first->next() );
+      if ( in_transaction )
+      {
+         EXPECT_TRUE( first->commitTransaction( error ) ) << error.toStdString();
+      }
+   }
+}
+
+// The autoflow shape: the procedure's status set comes before its COMMIT.
+// query() reads every set, so the call itself is reported, and nothing after
+// it runs outside the transaction.
+TEST_F( US_DB2_LiveTransaction, AProcedureThatCommitsAfterItsStatusSetStopsTheTransactionThere )
+{
+   QString error;
+   ASSERT_TRUE( first->beginTransaction( error ) ) << error.toStdString();
+   first->rawQuery( QString( "UPDATE %1 SET v = 1 WHERE id = 1" ).arg( table ) );
+
+   first->query( QString( "CALL %1()" ).arg( committingAfterSetProcedure ) );
+   EXPECT_EQ( first->lastErrno(), IUS_DB2::DBERROR );
+   EXPECT_TRUE( first->lastError().contains( QString( "CALL %1" ).arg( committingAfterSetProcedure ) ) )
+      << first->lastError().toStdString();
+
+   first->query( QString( "UPDATE %1 SET v = 1 WHERE id = 2" ).arg( table ) );
+   EXPECT_EQ( first->lastErrno(), IUS_DB2::DBERROR );
+   EXPECT_TRUE( first->lastError().contains( "were not run" ) ) << first->lastError().toStdString();
+
+   EXPECT_FALSE( first->commitTransaction( error ) );
+   EXPECT_TRUE( error.contains( QString( "CALL %1" ).arg( committingAfterSetProcedure ) ) ) << error.toStdString();
+   EXPECT_FALSE( first->rollbackTransaction( error ) );
+
+   EXPECT_EQ( scalar( *second, QString( "SELECT v FROM %1 WHERE id = 2" ).arg( table ) ), "0" );
+}
+
+// Called with rawQuery(), the procedure's results are left for the caller to
+// read. Draining them before the next statement shows the transaction ended,
+// so that statement is refused and the call is named.
+TEST_F( US_DB2_LiveTransaction, AStatementAfterAProcedureThatCommittedLaterIsRefused )
+{
+   QString error;
+   ASSERT_TRUE( first->beginTransaction( error ) ) << error.toStdString();
+   first->rawQuery( QString( "CALL %1()" ).arg( committingAfterSetProcedure ) );
+
+   first->query( QString( "UPDATE %1 SET v = 1 WHERE id = 2" ).arg( table ) );
+   EXPECT_EQ( first->lastErrno(), IUS_DB2::DBERROR );
+   EXPECT_TRUE( first->lastError().contains( QString( "CALL %1" ).arg( committingAfterSetProcedure ) ) )
+      << first->lastError().toStdString();
+   EXPECT_TRUE( first->lastError().contains( "were not run" ) ) << first->lastError().toStdString();
+
+   EXPECT_FALSE( first->rollbackTransaction( error ) );
    EXPECT_EQ( scalar( *second, QString( "SELECT v FROM %1 WHERE id = 2" ).arg( table ) ), "0" );
 }
 
