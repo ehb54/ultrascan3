@@ -273,6 +273,22 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       map < QString, double >             f_extc;
       // how a created file was made, written into its saved header line
       map < QString, QString >            f_header;
+      // the file a created curve was last saved as
+      map < QString, QString >            f_saved_as;
+
+      // "Save into data files" of the Concentrations and PSV/I(0) std dialogs:
+      // the data file a curve's values are written into (the .dat file it was loaded from or saved as), else empty
+      // with the reason in why
+      QString                             values_file( const QString & curve, QString & why );
+      // writes each curve's values (an empty one is not written) into the first line of its data file, after
+      // listing the files and asking; not_written: the curves already left out, with the reason. True if the
+      // files were written (or tried), false if there was none to write or the user did not go ahead
+      bool                                save_values_into_files( QWidget           * parent,
+                                                                  const QStringList & curves,
+                                                                  const QStringList & concs,
+                                                                  const QStringList & psvs,
+                                                                  const QStringList & I0ses,
+                                                                  QStringList         not_written );
 
       // the PSV and I0se of a curve made from one curve, or from several (the mean of those that have one)
       void                                copy_psv_I0se( const QString & to, const QString & from );

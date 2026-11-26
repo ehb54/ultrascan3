@@ -158,8 +158,9 @@ current directory are loaded. For example a pattern of <tt>lysozyme_%1_.*\.dat</
 <b><i>SAS</i></b> defaults when they have none or different ones (and says so), and both must be positive.
 The curves keep them as if they had been read from their headers: they are written as <b><i>PSV:</i></b> and
 <b><i>I0se:</i></b> into the header of each saved curve, passed on by <b><i>To SAS</i></b>, and kept by the
-curves made from them (see <a href="#Conc">Concentrations</a>). Save the curves to keep the values in their
-files.<p>
+curves made from them (see <a href="#Conc">Concentrations</a>).
+<b><i>Ok</i></b> sets the values; <b><i>Save into data files</i></b> sets them too and also writes them into the data
+files of the selected curves, as described under <a href="#SaveIntoFiles">Saving the values into the data files</a>.<p>
 <li>
 <b><i>Remove files</i></b> removes the selected curves from the module. If any of them were produced here
 and not yet written to disk, you are offered the chance to save them first.<p>
@@ -395,8 +396,11 @@ In a SEC-SAXS run the frames recorded before the void volume, before the first e
 often those after the signal has returned to baseline. <b><i>Buffer frames</i></b>, to the left of
 <b><i>Set buffer</i></b> and active with three or more curves selected, opens a window
 (<i>US-SOMO: SAXS Data Utility : Buffer frames</i>) that helps choose them among the selected frames.
-It opens no larger than the screen; its two plots share the height left by the fields and the text, three
-quarters for <i>I</i>(<i>t</i>) to start with, and dragging the handle between them changes how they share it:
+It opens no larger than the <b><i>Data Utility</i></b> window, nor than the screen. Its two plots and the regions'
+text below them share the height left by the fields: the text starts at three lines and scrolls, and the plots
+share the rest, three quarters for <i>I</i>(<i>t</i>) to start with. Dragging the handles between them changes how
+they share it. Making the window shorter or taller changes only the plots, until they are at their smallest, so
+the text keeps the height given to it:
 <p>
 <ul>
 <li>The upper plot shows <i>I</i>(<i>t</i>): each frame's mean intensity over the <i>q</i> range set at the top
@@ -829,6 +833,27 @@ Concentrations are needed for the <b><i>PSV</i></b> route to &alpha;, for <b><i>
 while edits are still pending. The window can be left open alongside this one.
 <p>
 
+<a name="SaveIntoFiles"></a>
+<b>Saving the values into the data files.</b>
+The <b><i>Data Utility</i></b> does not write the files it loaded: the values set here are written to a file when a
+curve made here is saved. <b><i>Save into data files</i></b>, in the <b><i>Solution Concentrations</i></b> window
+and in the <b><i>PSV/I(0) std</i></b> dialog, writes them into the data file of each curve instead: the
+<b>.dat</b> file it was loaded from, or the one it was last saved as.
+<ul>
+<li>Only the first line of the file changes, and in it only the values written: the concentration, as
+<b><i>Conc:</i></b>, from the <b><i>Solution Concentrations</i></b> window; the PSV and the <i>I</i>(0) standard,
+as <b><i>PSV:</i></b> and <b><i>I0se:</i></b>, from the <b><i>PSV/I(0) std</i></b> dialog. Each replaces the value
+of its keyword, or is added at the end of the line; when the file starts with its data, a header line is added
+before it. The values are read back when the file is loaded again, here or in the <b><i>SAS</i></b> window.<p>
+<li>The files are listed, and you are asked, before anything is written. Curves that have no such file (made here
+and not saved yet, or loaded from a file other than a <b>.dat</b> file), curves without a concentration, and
+curves that share one file with different values are listed as not written.<p>
+<li>The messages say what was written into each file, and a summary lists the files written and those that
+could not be.<p>
+</ul>
+The <b><i>SAS</i></b> window's concentrations dialog has the same button for the curves loaded there.
+<p>
+
 The <b><i>Data Utility</i></b> has three companion dialogs, each with its own page in this manual:
 <p>
 <ul>
@@ -923,7 +948,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on November 23, 2026
+Last modified on November 25, 2026
 </font>
 </body>
 </html>

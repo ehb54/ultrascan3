@@ -9,6 +9,7 @@
 #include <qwt_interval_symbol.h>
 #include "../include/us_hydrodyn_saxs_buffer_dilutions.h"
 #include "../include/us_hydrodyn_saxs_buffer_upturn.h"
+#include "../include/us_hydrodyn_saxs_conc.h"
 #if QT_VERSION >= 0x040000
 #include <qwt_scale_engine.h>
 //Added by qt3to4:
@@ -1630,6 +1631,7 @@ void US_Hydrodyn_Saxs_Buffer::clear_files( QStringList files )
          f_conc     .erase( lb_files->item( i )->text() );
          f_extc     .erase( lb_files->item( i )->text() );
          f_header   .erase( lb_files->item( i )->text() );
+         f_saved_as .erase( lb_files->item( i )->text() );
          delete lb_files->takeItem( i );
       }
    }
@@ -3516,7 +3518,8 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file, bool &cancel, bool &overw
                .arg( file )
                .arg( use_filename ) );
    created_files_not_saved.erase( file );
-   created_show_saved( file, QFileInfo( use_filename ).absoluteFilePath() );
+   f_saved_as[ file ] = QFileInfo( use_filename ).absoluteFilePath();
+   created_show_saved( file, f_saved_as[ file ] );
    return true;
 }
 
@@ -3707,21 +3710,31 @@ void US_Hydrodyn_Saxs_Buffer::psv_i0()
 
    QPushButton * pb_ok     = new QPushButton( us_tr( "Ok" ), &dialog );
    QPushButton * pb_cancel = new QPushButton( us_tr( "Cancel" ), &dialog );
+   QPushButton * pb_save_into_files = new QPushButton( us_tr( "Save into data files" ), &dialog );
    pb_ok->setObjectName( "pb_ok" );
-   for ( QPushButton * pb : { pb_ok, pb_cancel } )
+   pb_save_into_files->setObjectName( "pb_save_into_files" );
+   pb_save_into_files->setToolTip( us_tr( "Set the values, as Ok does, and also write them into the first line of the data file\n"
+                                          "each selected curve was loaded from or saved as, where they are read when the file\n"
+                                          "is loaded again. The files are listed before anything is written." ) );
+   for ( QPushButton * pb : { pb_ok, pb_cancel, pb_save_into_files } )
    {
       pb->setFont( font );
       pb->setPalette( PALET_PUSHB );
    }
    pb_ok->setDefault( true );
+   bool into_files = false;
    connect( pb_ok,     SIGNAL( clicked() ), &dialog, SLOT( accept() ) );
    connect( pb_cancel, SIGNAL( clicked() ), &dialog, SLOT( reject() ) );
+   connect( pb_save_into_files, &QPushButton::clicked, &dialog, [ & ]() { into_files = true; dialog.accept(); } );
 
    // both values must be positive numbers
    auto ok_enable = [ = ]()
    {
-      pb_ok->setEnabled( le_psv ->text().toDouble() > 0e0 && le_psv ->hasAcceptableInput() &&
-                         le_I0se->text().toDouble() > 0e0 && le_I0se->hasAcceptableInput() );
+      bool ok =
+         le_psv ->text().toDouble() > 0e0 && le_psv ->hasAcceptableInput() &&
+         le_I0se->text().toDouble() > 0e0 && le_I0se->hasAcceptableInput();
+      pb_ok->setEnabled( ok );
+      pb_save_into_files->setEnabled( ok );
    };
    connect( le_psv,  &QLineEdit::textChanged, &dialog, ok_enable );
    connect( le_I0se, &QLineEdit::textChanged, &dialog, ok_enable );
@@ -3735,6 +3748,7 @@ void US_Hydrodyn_Saxs_Buffer::psv_i0()
 
    QHBoxLayout * hbl = new QHBoxLayout;
    hbl->addWidget( pb_cancel );
+   hbl->addWidget( pb_save_into_files );
    hbl->addWidget( pb_ok );
 
    QVBoxLayout * vbl = new QVBoxLayout( &dialog );
@@ -3747,8 +3761,10 @@ void US_Hydrodyn_Saxs_Buffer::psv_i0()
       return;
    }
 
-   psv  = le_psv ->text().toDouble();
-   I0se = le_I0se->text().toDouble();
+   QString psv_text  = le_psv ->text().trimmed();
+   QString I0se_text = le_I0se->text().trimmed();
+   psv  = psv_text .toDouble();
+   I0se = I0se_text.toDouble();
 
    for ( int i = 0; i < (int) files.size(); ++i )
    {
@@ -3759,6 +3775,178 @@ void US_Hydrodyn_Saxs_Buffer::psv_i0()
                .arg( psv )
                .arg( I0se )
                .arg( files.size() ) );
+
+   if ( into_files )
+   {
+      QStringList none;
+      QStringList psvs;
+      QStringList I0ses;
+      for ( int i = 0; i < (int) files.size(); ++i )
+      {
+         none  << "";
+         psvs  << psv_text;
+         I0ses << I0se_text;
+      }
+      save_values_into_files( this, files, none, psvs, I0ses, QStringList() );
+   }
+}
+
+QString US_Hydrodyn_Saxs_Buffer::values_file( const QString & curve, QString & why )
+{
+   QString file;
+   if ( created_files_not_saved.count( curve ) )
+   {
+      why = us_tr( "not saved yet (Save writes its values with it)" );
+      return "";
+   }
+   if ( f_saved_as.count( curve ) )
+   {
+      file = f_saved_as[ curve ];
+   } else if ( f_name.count( curve ) ) {
+      file = f_name[ curve ];
+   } else {
+      why = us_tr( "no data file recorded for this curve" );
+      return "";
+   }
+   // the Data Utility reads the values from the first line of .dat files only
+   if ( QFileInfo( file ).suffix().toLower() != "dat" )
+   {
+      why = QString( us_tr( "%1: the values are read from .dat files only" ) ).arg( file );
+      return "";
+   }
+   return file;
+}
+
+bool US_Hydrodyn_Saxs_Buffer::save_values_into_files( QWidget           * parent,
+                                                      const QStringList & curves,
+                                                      const QStringList & concs,
+                                                      const QStringList & psvs,
+                                                      const QStringList & I0ses,
+                                                      QStringList         not_written )
+{
+   QString wtitle = parent->windowTitle();
+
+   // which file each curve's values go to
+   QStringList                    files;
+   map < QString, int >           file_row;
+   map < QString, QStringList >   file_curves;
+   map < QString, bool >          file_conflict;
+
+   for ( int i = 0; i < (int) curves.size(); ++i )
+   {
+      QString why;
+      QString file = values_file( curves[ i ], why );
+      if ( file.isEmpty() )
+      {
+         not_written << curves[ i ] + ": " + why;
+         continue;
+      }
+      file_curves[ file ] << curves[ i ];
+      if ( !file_row.count( file ) )
+      {
+         file_row[ file ] = i;
+         files << file;
+         continue;
+      }
+      // the same file for more than one curve: it can only hold one set of values
+      int j = file_row[ file ];
+      if ( concs[ i ] != concs[ j ] || psvs[ i ] != psvs[ j ] || I0ses[ i ] != I0ses[ j ] )
+      {
+         file_conflict[ file ] = true;
+      }
+   }
+
+   for ( auto it = file_conflict.begin(); it != file_conflict.end(); ++it )
+   {
+      files.removeAll( it->first );
+      not_written << file_curves[ it->first ].join( ", " ) + us_tr( ": the same file with different values: " ) + it->first;
+   }
+
+   if ( !files.size() )
+   {
+      QMessageBox::information( parent,
+                                wtitle,
+                                us_tr( "No data file can be written:\n\n" ) + US_Hydrodyn_Saxs_Conc::list_text( not_written ) );
+      return false;
+   }
+
+   {
+      QString msg =
+         QString( us_tr( "The values will be written into the first line of %1 data file%2:\n\n%3\n\n"
+                         "No other line is changed.\n" ) )
+         .arg( files.size() )
+         .arg( files.size() > 1 ? "s" : "" )
+         .arg( US_Hydrodyn_Saxs_Conc::list_text( files ) );
+      if ( not_written.size() )
+      {
+         msg += us_tr( "\nNot written:\n" ) + US_Hydrodyn_Saxs_Conc::list_text( not_written ) + "\n";
+      }
+      msg += us_tr( "\nContinue?" );
+      if ( QMessageBox::question( parent,
+                                  wtitle,
+                                  msg,
+                                  QMessageBox::Yes | QMessageBox::No,
+                                  QMessageBox::No ) != QMessageBox::Yes )
+      {
+         return false;
+      }
+   }
+
+   QStringList written;
+   QStringList failed;
+   for ( const QString & file : files )
+   {
+      int     i = file_row[ file ];
+      QString error;
+      if ( US_Hydrodyn_Saxs_Conc::write_values_into_file( file, concs[ i ], psvs[ i ], I0ses[ i ], error ) )
+      {
+         written << file;
+         QStringList what;
+         if ( !concs[ i ].isEmpty() )
+         {
+            what << QString( us_tr( "concentration %1" ) ).arg( concs[ i ] );
+         }
+         if ( !psvs[ i ].isEmpty() )
+         {
+            what << QString( us_tr( "PSV %1" ) ).arg( psvs[ i ] );
+         }
+         if ( !I0ses[ i ].isEmpty() )
+         {
+            what << QString( us_tr( "I0 standard %1" ) ).arg( I0ses[ i ] );
+         }
+         editor_msg( "black", QString( us_tr( "%1 written into %2" ) ).arg( what.join( ", " ) ).arg( file ) );
+         // the file's header now has them, as if it had been loaded with them
+         for ( const QString & curve : file_curves[ file ] )
+         {
+            if ( !concs[ i ].isEmpty() )
+            {
+               f_conc[ curve ] = concs[ i ].toDouble();
+            }
+         }
+      } else {
+         failed << file + ": " + error;
+         editor_msg( "red", QString( us_tr( "Not written: %1: %2" ) ).arg( file ).arg( error ) );
+      }
+   }
+
+   QString msg = QString( us_tr( "Values written into %1 data file%2.\n" ) )
+      .arg( written.size() )
+      .arg( written.size() == 1 ? "" : "s" );
+   if ( failed.size() )
+   {
+      msg += us_tr( "\nFailed:\n" ) + US_Hydrodyn_Saxs_Conc::list_text( failed ) + "\n";
+   }
+   if ( not_written.size() )
+   {
+      msg += us_tr( "\nNot written:\n" ) + US_Hydrodyn_Saxs_Conc::list_text( not_written ) + "\n";
+   }
+   if ( failed.size() )
+   {
+      QMessageBox::warning( parent, wtitle, msg );
+   } else {
+      QMessageBox::information( parent, wtitle, msg );
+   }
+   return true;
 }
 
 map < QString, double > US_Hydrodyn_Saxs_Buffer::current_concs( bool quiet )
@@ -5823,6 +6011,8 @@ void US_Hydrodyn_Saxs_Buffer::to_created( QString file )
       lb_created_files->scrollToItem( lb_created_files->item( lb_created_files->count() - 1 ) );
       created_files_not_saved[ file ] = true;
    }
+   // made again: the file it was saved as no longer holds it
+   f_saved_as.erase( file );
    created_show_saved( file, "" );
 }
 

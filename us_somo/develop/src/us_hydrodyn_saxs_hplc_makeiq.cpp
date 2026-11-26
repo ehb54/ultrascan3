@@ -9,6 +9,7 @@
 #include "../include/us_hydrodyn_saxs_hplc_fit_global.h"
 #include "../include/us_lm.h"
 #include <QThread>
+#include <QElapsedTimer>
 #include <atomic>
 #if QT_VERSION >= 0x040000
 #include <qwt_scale_engine.h>
@@ -3450,7 +3451,30 @@ bool US_Hydrodyn_Saxs_Hplc::initial_ggaussian_fit( QStringList & files, bool onl
 
    progress->setMaximum( files.size() * 1.2 );
    progress->setValue( 0 );
+
+   // the computation shows in the messages as it starts: in parallel or not, on how many threads and cores
+   QString curves_text = curves.size() == 1 ? us_tr( "1 curve" ) : QString( us_tr( "%1 curves" ) ).arg( curves.size() );
+   QString cores_text;
+   {
+      int cores = QThread::idealThreadCount();
+      cores_text = cores > 0 ? QString( us_tr( "%1 processor core%2" ) ).arg( cores ).arg( cores == 1 ? "" : "s" ) : us_tr( "processor cores unknown" );
+   }
+   if ( curves.size() ) {
+      if ( threads > 1 ) {
+         editor_msg( "dark blue", QString( us_tr( "Global Gaussians: parallel computation of the initial Gaussians of %1 on %2 threads (%3)" ) )
+                     .arg( curves_text )
+                     .arg( threads )
+                     .arg( cores_text ) );
+      } else {
+         editor_msg( "dark blue", QString( us_tr( "Global Gaussians: computation of the initial Gaussians of %1 on 1 thread, not in parallel (%2; %3)" ) )
+                     .arg( curves_text )
+                     .arg( curves.size() == 1 ? us_tr( "one curve" ) : us_tr( "Number of Threads is 1 in the SOMO configuration" ) )
+                     .arg( cores_text ) );
+      }
+   }
    qApp->processEvents();
+   QElapsedTimer elapsed;
+   elapsed.start();
 
    std::atomic < int > next( 0 );
    std::atomic < int > done( 0 );
@@ -3526,10 +3550,12 @@ bool US_Hydrodyn_Saxs_Hplc::initial_ggaussian_fit( QStringList & files, bool onl
    }
 
    if ( curves.size() ) {
-      editor_msg( "dark blue", QString( us_tr( "Initial Gaussians of %1 curves fitted on %2 %3" ) )
-                  .arg( curves.size() )
+      editor_msg( "dark blue", QString( us_tr( "Initial Gaussians of %1 fitted %2on %3 %4 in %5 s" ) )
+                  .arg( curves_text )
+                  .arg( threads > 1 ? us_tr( "in parallel " ) : QString( "" ) )
                   .arg( threads )
-                  .arg( threads == 1 ? us_tr( "thread" ) : us_tr( "threads" ) ) );
+                  .arg( threads == 1 ? us_tr( "thread" ) : us_tr( "threads" ) )
+                  .arg( QString::number( elapsed.elapsed() / 1000e0, 'f', 1 ) ) );
    }
    progress->setValue( files.size() - 1 );
 

@@ -140,27 +140,40 @@ US_Hydrodyn_Saxs_Buffer_Frames::US_Hydrodyn_Saxs_Buffer_Frames(
 
    global_Xpos += 30;
    global_Ypos += 30;
-   // no larger than the screen: the plots share the height left by the fields and the text
+   // no larger than the Data Utility window it is opened from, which is fitted to the part of the screen that is
+   // seen, nor than the screen: the plots share the height left by the fields and the text
    int want_w = 1050;
    int want_h = 860;
    int x0     = global_Xpos;
    int y0     = global_Ypos;
-   QScreen * screen = QGuiApplication::primaryScreen();
-   if ( screen )
    {
-      QRect avail = screen->availableGeometry();
-      int max_w = avail.width() - 40;
-      int max_h = avail.height() - 60;
-      if ( max_w > 400 && want_w > max_w )
+      QRect     du     = buffer->frameGeometry();
+      QScreen * screen = QGuiApplication::screenAt( du.center() );
+      if ( !screen )
       {
-         want_w = max_w;
+         screen = QGuiApplication::primaryScreen();
       }
-      if ( max_h > 200 && want_h > max_h )
+      if ( screen )
       {
-         want_h = max_h;
+         // room for this window's frame: about 20 pixels in width, 40 in height with its title
+         QRect area = screen->availableGeometry();
+         if ( buffer->isVisible() && du.width() > 400 && du.height() > 300 && area.intersects( du ) )
+         {
+            area = area.intersected( du );
+         }
+         int max_w = area.width() - 20;
+         int max_h = area.height() - 40;
+         if ( max_w > 400 && want_w > max_w )
+         {
+            want_w = max_w;
+         }
+         if ( max_h > 200 && want_h > max_h )
+         {
+            want_h = max_h;
+         }
+         x0 = qMax( area.x() + 10, qMin( x0, area.x() + area.width() - want_w - 10 ) );
+         y0 = qMax( area.y() + 30, qMin( y0, area.y() + area.height() - want_h - 10 ) );
       }
-      x0 = qMax( avail.x(), qMin( x0, avail.x() + avail.width() - want_w - 20 ) );
-      y0 = qMax( avail.y(), qMin( y0, avail.y() + avail.height() - want_h - 40 ) );
    }
    setGeometry( x0, y0, want_w, want_h );
 
@@ -343,7 +356,7 @@ void US_Hydrodyn_Saxs_Buffer_Frames::setupGUI()
    AUTFBACK( lbl_stats );
    lbl_stats->setFont( font );
    lbl_stats->setTextInteractionFlags( Qt::TextSelectableByMouse );
-   // the text scrolls when it is longer than the room left for it, from 3 to 10 lines
+   // the text scrolls: it starts at 3 lines, at least 2, and its height is set by the handle above it
    sa_stats = new QScrollArea( this );
    sa_stats->setWidget( lbl_stats );
    sa_stats->setWidgetResizable( true );
@@ -351,8 +364,8 @@ void US_Hydrodyn_Saxs_Buffer_Frames::setupGUI()
    sa_stats->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
    {
       int line = QFontMetrics( font ).lineSpacing();
-      sa_stats->setMinimumHeight( 3 * line + 4 );
-      sa_stats->setMaximumHeight( 10 * line + 4 );
+      sa_stats->setMinimumHeight( 2 * line + 4 );
+      stats_start_height = 3 * line + 4;
    }
 
    pb_help        = button( us_tr( "Help" ) );
@@ -401,14 +414,18 @@ void US_Hydrodyn_Saxs_Buffer_Frames::setupGUI()
    hbl_wheel->addWidget( qwtw_wheel, 1 );
    hbl_wheel->addWidget( pb_wheel_inc );
 
-   // the I(t) and chi^2 plots share their height, 3 to 1 to start with, by the handle between them
+   // the I(t) and chi^2 plots share their height, 3 to 1 to start with, by the handle between them; the regions'
+   // text below them keeps the height set by the handle above it, so that a shorter or taller window changes the
+   // plots only (until they are at their minimum)
    qs_plots = new QSplitter( Qt::Vertical, this );
    qs_plots->addWidget( plot );
    qs_plots->addWidget( plot_chi2 );
+   qs_plots->addWidget( sa_stats );
    qs_plots->setChildrenCollapsible( false );
    qs_plots->setStretchFactor( 0, 3 );
    qs_plots->setStretchFactor( 1, 1 );
-   qs_plots->setSizes( QList < int >() << 3000 << 1000 );
+   qs_plots->setStretchFactor( 2, 0 );
+   qs_plots->setSizes( QList < int >() << 3000 << 1000 << stats_start_height );
 
    QHBoxLayout * hbl_bottom = new QHBoxLayout; hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addWidget( pb_help );
@@ -422,7 +439,6 @@ void US_Hydrodyn_Saxs_Buffer_Frames::setupGUI()
    background->addLayout( gl_r );
    background->addLayout( hbl_wheel );
    background->addWidget( qs_plots, 1 );
-   background->addWidget( sa_stats );
    background->addLayout( hbl_bottom );
 }
 
