@@ -1962,10 +1962,14 @@ DbgLv(1) << "SimMdl: n) s D c"
    US_Passwd pw;
    US_DB2* dbP = dkdb_cntrls->db() ? new US_DB2( pw.getPasswd() ) : NULL;
 
+   // As the fit decided: a model fitted to this triple alone uses the experiment's
+   // steps if they cover this triple; a global model, if they cover every triple
+   const bool  global_fit    = ( model.global == US_Model::GLOBAL || model.global == US_Model::SUPERGLOBAL );
+   const bool  steps_cover   = global_fit ? exp_steps : US_SimulationParameters::speedStepsCoverData( speed_steps, *edata );
    // The time state is replaced only from the first triple
    QString     tmst_fpath = US_Settings::resultDir() + "/" + runID + "/" + runID + ".time_state.tmst";
    QStringList check_results = US_ModelSimulation::prepare(
-      dbP, -1, *edata, model, adv_vals, exp_steps, speed_steps, tmst_fpath, drow == 0, simparams, *sdata );
+      dbP, -1, *edata, model, adv_vals, steps_cover, speed_steps, tmst_fpath, drow == 0, simparams, *sdata );
    if ( !check_results.isEmpty() ) {
        QMessageBox msgBox( this );
        msgBox.setWindowTitle( tr( qPrintable( check_results[0] ) ) );
