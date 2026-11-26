@@ -209,7 +209,7 @@ US_RunDetails2::~US_RunDetails2()
       update( i );
       int status = US_GuiUtil::save_plot( filename, data_plot );
       if ( status != 0 )
-         qDebug() << filename << "plot not saved";
+         qWarning() << filename << "plot not saved";
    }
 
    // Don't need to restore original view because we're leaving

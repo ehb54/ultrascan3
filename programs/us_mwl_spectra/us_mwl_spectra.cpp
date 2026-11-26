@@ -1404,6 +1404,7 @@ DbgLv(1) << "Save Plot";
    QString fname3d = runID + ".SSpectra_3D.png";
    p3d_pltw        = ( p3d_ctld == NULL ) ? NULL : p3d_ctld->widget_3dplot();
    int nfiles      = ( p3d_pltw != NULL ) ? 2 : 1;
+   QStringList unsaved;
 
    if ( nfiles == 2 )
    {  // If there is a 3D window, first save a PNG of that window
@@ -1411,7 +1412,11 @@ DbgLv(1) << "Save Plot";
       p3d_pltw->replot( false );                // Do the plot
       QString fpath3d = savedir + fname3d;
 
-      p3d_pltw->save_plot( fpath3d, QString( "png" ) );
+      if ( !p3d_pltw->save_plot( fpath3d, QString( "png" ) ) )
+      {
+         qWarning() << fpath3d << "plot not saved";
+         unsaved << fpath3d;
+      }
    }
 
    // Always save a PNG of the 2-D plot
@@ -1419,7 +1424,16 @@ DbgLv(1) << "Save Plot";
    fname2d         = fname2d.replace( "RRRRR", rec_str );
    QString fpath2d = savedir + fname2d;
 
-   US_GuiUtil::save_png( fpath2d, data_plot );
+   if ( US_GuiUtil::save_png( fpath2d, data_plot ) != 0 )
+   {
+      qWarning() << fpath2d << "plot not saved";
+      unsaved << fpath2d;
+   }
+
+   if ( US_GuiUtil::warn_unsaved( this, unsaved ) )
+   {
+      return;
+   }
 
    // Report the file(s) saved
    QString mtitle  = ( nfiles == 1 )
@@ -1443,6 +1457,7 @@ DbgLv(1) << "Save 2D Movie";
    int krecs       = cb_pltrec->count();
    int svrec       = recx;                  // Save currently plotted record
    QStringList fnames;
+   QStringList unsaved;
    QString savedir = US_Settings::reportDir() + "/" + runID;
    QDir().mkpath( savedir );
    savedir         = savedir.replace( "\\", "/" ) + "/";
@@ -1461,12 +1476,21 @@ DbgLv(1) << "Save 2D Movie";
 
       le_status->setText( bstat + frm_str );
 
-      US_GuiUtil::save_png( fpath, data_plot );
+      if ( US_GuiUtil::save_png( fpath, data_plot ) != 0 )
+      {
+         qWarning() << fpath << "plot not saved";
+         unsaved << fpath;
+      }
       fnames << fname;
    }
 
    cb_pltrec->setCurrentIndex( svrec );     // Restore previous plot record
    qApp->processEvents();
+
+   if ( US_GuiUtil::warn_unsaved( this, unsaved ) )
+   {
+      return;
+   }
 
    QMessageBox::information( this, tr( "Frame Files Saved" ),
       tr( "In the directory\n     %1,\n\n%2 2-D movie frame files"
