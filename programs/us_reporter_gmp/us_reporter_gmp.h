@@ -548,14 +548,6 @@ class US_ReporterGMP : public US_Widgets
 
         US_SimulationParameters   simparams; //!< Simulation parameters
 
-        QStringList noiIDs; //!< Noise GUIDs list
-        QStringList noiEdIDs; //!< Noise edit GUIDs list
-        QStringList noiMoIDs; //!< Noise model GUIDs list
-        QStringList noiTypes; //!< Noise types list
-        QStringList modIDs; //!< Model GUIDs list
-        QStringList modEdIDs; //!< Model edit GUIDs list
-        QStringList modDescs; //!< Model descriptions list
-
 
         double density; //!< Density
         double viscosity; //!< Viscosity
@@ -591,13 +583,8 @@ class US_ReporterGMP : public US_Widgets
         void        report_generation_aborted();       //!< Tell the user the report was aborted and offer to generate it again
         bool loadData(QMap<QString, QString>&); //!< Load data
         bool loadModel(QMap<QString, QString>&); //!< Load model
-        bool loadNoises(QMap<QString, QString>&); //!< Load noises
-        void loadNoises_whenAbsent(void); //!< Load noises when absent
-        int count_noise_auto(US_DataIO::EditedData*, US_Model*, QStringList&, QStringList&); //!< Count noise automatically
+        bool        loadNoises( QMap<QString, QString>& ); //!< Load noises
 
-        int id_list_db_auto(QString); //!< Get ID list from DB automatically
-        int models_in_edit_auto(QString, QStringList&); //!< Get models in edit automatically
-        int noises_in_model_auto(QString, QStringList&); //!< Get noises in model automatically
         bool        simulateModel( QMap<QString, QString>& );    //!< Simulate model; false if the user aborts
         void adjustModel(void); //!< Adjust model
 

@@ -321,14 +321,6 @@ class US_Analysis_auto : public US_Widgets
 
       US_SimulationParameters               simparams; /**< Simulation parameters. */
 
-      QStringList                           noiIDs;   /**< List of noise IDs. */
-      QStringList                           noiEdIDs; /**< List of noise edit IDs. */
-      QStringList                           noiMoIDs; /**< List of noise model IDs. */
-      QStringList                           noiTypes; /**< List of noise types. */
-      QStringList                           modIDs;   /**< List of model IDs. */
-      QStringList                           modEdIDs; /**< List of model edit IDs. */
-      QStringList                           modDescs; /**< List of model descriptions. */
-
 
       double                                density;   /**< Density value. */
       double                                viscosity; /**< Viscosity value. */
@@ -567,44 +559,6 @@ class US_Analysis_auto : public US_Widgets
              * @return True if the noise data was loaded successfully, false otherwise.
              */
       bool                                  loadNoises( QMap<QString, QString>& );
-
-      /**
-             * @brief Loads the noises when they are absent.
-             */
-      void                                  loadNoises_whenAbsent( void );
-
-      /**
-             * @brief Counts the noise automatically.
-             * @param editData Pointer to the edited data.
-             * @param modelData Pointer to the model data.
-             * @param noiseIDs List of noise IDs.
-             * @param noiseTypes List of noise types.
-             * @return The number of noises counted.
-             */
-      int                                   count_noise_auto( US_DataIO::EditedData*, US_Model*, QStringList&, QStringList& );
-
-      /**
-             * @brief Retrieves the list of IDs from the database automatically.
-             * @param idType The type of ID to retrieve.
-             * @return The number of IDs retrieved.
-             */
-      int                                   id_list_db_auto( QString );
-
-      /**
-             * @brief Retrieves the models in the edit profile automatically.
-             * @param editID The edit ID.
-             * @param modelIDs List of model IDs.
-             * @return The number of models retrieved.
-             */
-      int                                   models_in_edit_auto( QString, QStringList& );
-
-      /**
-             * @brief Retrieves the noises in the model profile automatically.
-             * @param modelID The model ID.
-             * @param noiseIDs List of noise IDs.
-             * @return The number of noises retrieved.
-             */
-      int                                   noises_in_model_auto( QString, QStringList& );
 
       /**
              * @brief Retrieves the file name.
