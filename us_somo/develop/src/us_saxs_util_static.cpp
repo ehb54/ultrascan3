@@ -12120,3 +12120,40 @@ bool US_Saxs_Util::transpose_vvd(
 
    return true;
 }
+
+bool US_Saxs_Util::first_line_is_data( const vector < QString > & lines, int q_col, int min_cols )
+{
+   // the loaders' test for a data line
+   QRegularExpression rx_ok_line( "^(\\s+(-|)|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$" );
+   rx_ok_line.setPatternOptions( QRegularExpression::InvertedGreedinessOption );
+   auto numeric = [ & ]( const QString & line, double & v ) -> bool
+   {
+      if ( line.startsWith( "#" ) || !rx_ok_line.match( line ).hasMatch() )
+      {
+         return false;
+      }
+      QStringList tokens = line.trimmed().split( QRegularExpression( QStringLiteral( "\\s+" ) ), Qt::SkipEmptyParts );
+      if ( (int) tokens.size() < min_cols || q_col >= (int) tokens.size() )
+      {
+         return false;
+      }
+      bool ok = false;
+      v = tokens[ q_col ].toDouble( &ok );
+      return ok;
+   };
+
+   double q0;
+   if ( lines.empty() || !numeric( lines[ 0 ], q0 ) )
+   {
+      return false;
+   }
+   for ( int i = 1; i < (int) lines.size(); i++ )
+   {
+      double q1;
+      if ( numeric( lines[ i ], q1 ) )
+      {
+         return q1 > q0;
+      }
+   }
+   return true;
+}

@@ -62,7 +62,8 @@ namespace LM {
    const lm_control_struct lm_control_float = {
       1.e-7, 1.e-7, 1.e-7, 1.e-7, 100., 100, 0, 0 };
 
-   double (*lm_use_norm) ( int n, const double *x );
+   // set by the lmcurve_fit*() wrappers before each fit: one per thread, so that fits can run in parallel threads
+   thread_local double (*lm_use_norm) ( int n, const double *x );
 
    /*****************************************************************************/
    /*  set message texts (indexed by status.info)                               */
