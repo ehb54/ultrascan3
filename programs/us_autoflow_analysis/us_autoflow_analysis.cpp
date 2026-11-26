@@ -3356,15 +3356,15 @@ bool US_Analysis_auto::loadData( QMap < QString, QString > & triple_information 
 bool US_Analysis_auto::loadModel( QMap < QString, QString > & triple_information )
 {
   US_Passwd   pw;
-  US_DB2* db = new US_DB2( pw.getPasswd() );
+  US_DB2 db( pw.getPasswd() );
     
-  if ( db->lastErrno() != US_DB2::OK )
+  if ( db.lastErrno() != US_DB2::OK )
     {
       QApplication::restoreOverrideCursor();
       QMessageBox::information( this,
 				tr( "DB Connection Problem" ),
 				tr( "There was an error connecting to the database:\n" )
-				+ db->lastError() );
+				+ db.lastError() );
       
       return false;
     }
@@ -3372,17 +3372,17 @@ bool US_Analysis_auto::loadModel( QMap < QString, QString > & triple_information
   //first, get ModelIDs corresponding to editedDataID AND triple_stage && select latest one
   QStringList query;
   query << "get_modelDescsIDs" << triple_information[ "eID" ];
-  db->query( query );
+  db.query( query );
   
   qDebug() << "In loadModel() Query: " << query;
 
   US_NewestRecord newest; // the stage's most recently updated model
 
-  while ( db->next() )
+  while ( db.next() )
     {
-      QString  description         = db->value( 0 ).toString();
-      int         modelID             = db->value( 1 ).toInt();
-      QDateTime date               = db->value( 2 ).toDateTime();
+      QString  description         = db.value( 0 ).toString();
+      int         modelID             = db.value( 1 ).toInt();
+      QDateTime date               = db.value( 2 ).toDateTime();
 
       QDateTime now = QDateTime::currentDateTime();
 
@@ -3412,8 +3412,16 @@ bool US_Analysis_auto::loadModel( QMap < QString, QString > & triple_information
 
     int rc = 0;
     qDebug() << "ModelID to retrieve: -- " << mID;
-    rc = model.load( QString::number( mID ), db );
+    rc = model.load( QString::number( mID ), &db );
     qDebug() << "LdM:  model load rc" << rc;
+    if ( rc != US_DB2::OK )
+    {
+       QMessageBox::critical( this, tr( "Model Load Failed" ),
+                              tr( "Could not load model %1 for %2 (%3)." )
+                                 .arg( mID )
+                                 .arg( triple_information.value( "triple_name" ), triple_information.value( "stage_name" ) ) );
+       return false;
+    }
     qApp->processEvents();
 
     model_loaded = model; // Save model exactly as loaded
@@ -3486,7 +3494,7 @@ bool US_Analysis_auto::simulateModel()
   dat_steps = !exp_steps;
   QString     tmst_fpath = US_Settings::resultDir() + "/" + FileName_parsed + "/" + FileName_parsed + ".time_state.tmst";
   QStringList check_results = US_ModelSimulation::prepare(
-     dbP, invID, *edata, model, adv_vals, exp_steps, speed_steps, tmst_fpath, true, simparams, *sdata );
+     dbP, invID, *edata, model, adv_vals, exp_steps, speed_steps, tmst_fpath, US_ModelSimulation::TimeState::Replace, simparams, *sdata );
   if ( !check_results.isEmpty() )
   {
      QMessageBox msgBox( this );

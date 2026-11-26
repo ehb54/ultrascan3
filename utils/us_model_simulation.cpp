@@ -22,7 +22,7 @@ QStringList US_ModelSimulation::prepare( IUS_DB2*                               
                                          bool                                                  exp_steps,
                                          const QVector<US_SimulationParameters::SpeedProfile>& speed_steps,
                                          const QString&                                        tmst_fpath,
-                                         bool                                                  rewrite_timestate,
+                                         TimeState                                             time_state,
                                          US_SimulationParameters&                              simparams,
                                          US_DataIO::RawData&                                   sdata )
 {
@@ -86,9 +86,18 @@ QStringList US_ModelSimulation::prepare( IUS_DB2*                               
          simparams.speedstepsFromSSprof();
       }
 
+      else if ( time_state == TimeState::Temporary )
+      {
+         // Build the profile from this simulation's speed steps without changing the run files.
+         simparams.tsobj = nullptr;
+         if ( US_AstfemMath::timestate_from_speedsteps( simparams, sdata ) > 0 )
+         {
+            simparams.speedstepsFromSSprof();
+         }
+      }
       else
       { // Replace timestate with a new one that is at 1-second-intervals
-         if ( rewrite_timestate )
+         if ( time_state == TimeState::Replace )
          {
             QString tmst_fdefs = QString( tmst_fpath ).replace( ".tmst", ".xml" );
             QString tmst_fpsav = tmst_fpath + "-orig";

@@ -5625,6 +5625,14 @@ bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
 
   rc = model.load( QString::number( mID ), db.get() );
   qDebug() << "LdM:  model load rc" << rc;
+  if ( rc != US_DB2::OK )
+  {
+     QMessageBox::critical( this, tr( "Model Load Failed" ),
+                            tr( "Could not load model %1 for %2 (%3)." )
+                               .arg( mID )
+                               .arg( triple_information.value( "triple_name" ), triple_information.value( "stage_name" ) ) );
+     return false;
+  }
   qApp->processEvents();
 
   //EditDataUpdated for the model:
@@ -5709,7 +5717,7 @@ bool US_ReporterGMP::simulateModel( QMap<QString, QString>& tripleInfo )
   dat_steps = !exp_steps;
   QString     tmst_fpath = US_Settings::resultDir() + "/" + FileName_parsed + "/" + FileName_parsed + ".time_state.tmst";
   QStringList check_results = US_ModelSimulation::prepare(
-     dbP.get(), invID, *edata, model, adv_vals, exp_steps, speed_steps, tmst_fpath, true, simparams, *sdata );
+     dbP.get(), invID, *edata, model, adv_vals, exp_steps, speed_steps, tmst_fpath, US_ModelSimulation::TimeState::Replace, simparams, *sdata );
   dbP.reset();
   if ( !check_results.isEmpty() ) {
       QMessageBox msgBox( this );
