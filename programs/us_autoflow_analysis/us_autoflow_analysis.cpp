@@ -3375,15 +3375,13 @@ bool US_Analysis_auto::loadModel( QMap < QString, QString > & triple_information
   db->query( query );
   
   qDebug() << "In loadModel() Query: " << query;
-  
-  int latest_update_time = 1e100;
-  int mID=0;
-  
+
+  US_NewestRecord newest; // the stage's most recently updated model
+
   while ( db->next() )
     {
       QString  description         = db->value( 0 ).toString();
-      int      modelID             = db->value( 1 ).toInt();
-      //QString  date                = US_Util::toUTCDatetimeText( db->value( 3 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
+      int         modelID             = db->value( 1 ).toInt();
       QDateTime date               = db->value( 2 ).toDateTime();
 
       QDateTime now = QDateTime::currentDateTime();
@@ -3395,55 +3393,35 @@ bool US_Analysis_auto::loadModel( QMap < QString, QString > & triple_information
 	  if (!description.contains(sub))
 	    stage_identity = false; 
 	}
-      
-      //if ( description.contains( triple_information[ "stage_name" ] ) )
+
       if ( stage_identity )
 	{
 	  if ( triple_information[ "stage_name" ] == "2DSA" )
 	    {
 	      if ( !description.contains("-FM_") && !description.contains("-IT_") && !description.contains("-MC_") && !description.contains("_mcN") )
-		{
-		  int time_to_now = date.secsTo(now);
-		  if ( time_to_now < latest_update_time )
-		    {
-             latest_update_time = time_to_now;
-
-             qDebug() << "Model 2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
-
-             mID = modelID;
-          }
-      }
+            newest.offer( modelID, date.secsTo( now ) );
        }
        else
        {
-          int time_to_now = date.secsTo( now );
-          if ( time_to_now < latest_update_time )
-          {
-             latest_update_time = time_to_now;
-
-             qDebug() << "Model NON-2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
-
-             mID = modelID;
-          }
+          newest.offer( modelID, date.secsTo( now ) );
        }
    }
     }
-  
-  int  rc      = 0;
-  qDebug() << "ModelID to retrieve: -- " << mID;
-  rc   = model.load( QString::number( mID ), db );
-  qDebug() << "LdM:  model load rc" << rc;
-  qApp->processEvents();
 
-  model_loaded = model;   // Save model exactly as loaded
-  model_used   = model;   // Make that the working model
-  is_dmga_mc   = ( model.monteCarlo  &&
-		   model.description.contains( "DMGA" )  &&
-		   model.description.contains( "_mcN" ) );
-  qDebug() << "post-Load mC" << model.monteCarlo << "is_dmga_mc" << is_dmga_mc
-	   << "description" << model.description;
-  
-  if ( model.components.size() == 0 )
+    int mID = newest.id();
+
+    int rc = 0;
+    qDebug() << "ModelID to retrieve: -- " << mID;
+    rc = model.load( QString::number( mID ), db );
+    qDebug() << "LdM:  model load rc" << rc;
+    qApp->processEvents();
+
+    model_loaded = model; // Save model exactly as loaded
+    model_used   = model; // Make that the working model
+    is_dmga_mc   = ( model.monteCarlo && model.description.contains( "DMGA" ) && model.description.contains( "_mcN" ) );
+    qDebug() << "post-Load mC" << model.monteCarlo << "is_dmga_mc" << is_dmga_mc << "description" << model.description;
+
+    if ( model.components.size() == 0 )
     {
       QMessageBox::critical( this, tr( "Empty Model" ),
 			     tr( "Loaded model has ZERO components!" ) );
