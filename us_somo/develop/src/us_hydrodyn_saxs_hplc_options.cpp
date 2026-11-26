@@ -9,6 +9,9 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QVBoxLayout>
+#include <QScrollBar>
+#include <QScreen>
+#include <QGuiApplication>
 
 US_Hydrodyn_Saxs_Hplc_Options::US_Hydrodyn_Saxs_Hplc_Options(
                                                              map < QString, QString > * parameters,
@@ -29,7 +32,26 @@ US_Hydrodyn_Saxs_Hplc_Options::US_Hydrodyn_Saxs_Hplc_Options(
    global_Xpos += 30;
    global_Ypos += 30;
 
-   setGeometry( global_Xpos, global_Ypos, 0, 0 );
+   // as tall as its options, but never taller than the screen: the options then scroll
+   int sb_w   = sa_options->verticalScrollBar()->sizeHint().width();
+   sa_options->setMinimumWidth( sa_options->widget()->minimumSizeHint().width() + sb_w );
+   int want_w = sa_options->widget()->sizeHint().width() + sb_w;
+   int want_h = sa_options->widget()->sizeHint().height() + 2 * sa_options->frameWidth()
+      + qMax( pb_ok->minimumHeight(), pb_ok->sizeHint().height() );
+   int x0 = global_Xpos;
+   int y0 = global_Ypos;
+   QScreen * screen = QGuiApplication::primaryScreen();
+   if ( screen )
+   {
+      QRect avail = screen->availableGeometry();
+      int max_h = avail.height() - 60;
+      if ( max_h > 200 && want_h > max_h )
+      {
+         want_h = max_h;
+      }
+      y0 = qMax( avail.y(), qMin( y0, avail.y() + avail.height() - want_h - 40 ) );
+   }
+   setGeometry( x0, y0, want_w, want_h );
 
    update_enables();
 }
@@ -696,7 +718,12 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    pb_ok -> setPalette      ( PALET_PUSHB );
    connect( pb_ok, SIGNAL( clicked() ), SLOT( ok() ) );
 
-   QVBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
+   // the options go in a scroll area, the buttons below it
+   QWidget * w_options = new QWidget( this );
+   w_options->setPalette( PALET_FRAME );
+   AUTFBACK( w_options );
+
+   QVBoxLayout * background = new QVBoxLayout( w_options ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addWidget( lbl_title );
 
    background->addWidget( lbl_baseline );
@@ -876,7 +903,19 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    hbl_bottom->addWidget ( pb_quit );
    hbl_bottom->addWidget ( pb_ok );
 
-   background->addLayout ( hbl_bottom );
+   background->addStretch( 1 );
+
+   sa_options = new QScrollArea( this );
+   sa_options->setPalette( PALET_FRAME );
+   sa_options->setFrameShape( QFrame::NoFrame );
+   sa_options->setWidgetResizable( true );
+   sa_options->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
+   sa_options->setWidget( w_options );
+   sa_options->setMinimumHeight( 4 * minHeight1 );
+
+   QVBoxLayout * vbl_top = new QVBoxLayout( this ); vbl_top->setContentsMargins( 0, 0, 0, 0 ); vbl_top->setSpacing( 0 );
+   vbl_top->addWidget( sa_options, 1 );
+   vbl_top->addLayout( hbl_bottom );
 
    if ( !parameters->count( "expert_mode" ) )
    {

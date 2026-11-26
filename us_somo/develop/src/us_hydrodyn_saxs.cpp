@@ -2043,45 +2043,49 @@ void US_Hydrodyn_Saxs::setupGUI()
    j++;
 
 
+   // the buttons on three rows, so that the window is not wider than it needs to be: loading and clearing curves,
+   // the plot and its analysis, the other windows (and those of expert mode on a fourth row)
    QBoxLayout * hbl_load_saxs = new QHBoxLayout(); hbl_load_saxs->setContentsMargins( 0, 0, 0, 0 ); hbl_load_saxs->setSpacing( 0 );
    hbl_load_saxs->addWidget(pb_load_saxs_sans);
    hbl_load_saxs->addWidget(pb_load_gnom);
    hbl_load_saxs->addWidget(pb_load_plot_saxs);
    hbl_load_saxs->addWidget(pb_set_grid);
    hbl_load_saxs->addWidget(pb_clear_plot_saxs);
-   hbl_load_saxs->addWidget(pb_width);
-   hbl_load_saxs->addWidget(cb_eb);
-   hbl_load_saxs->addWidget(pb_rescale);
    background->addLayout( hbl_load_saxs , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+   j++;
+
+   QBoxLayout * hbl_plot_saxs_tools = new QHBoxLayout(); hbl_plot_saxs_tools->setContentsMargins( 0, 0, 0, 0 ); hbl_plot_saxs_tools->setSpacing( 0 );
+   hbl_plot_saxs_tools->addWidget(pb_width);
+   hbl_plot_saxs_tools->addWidget(cb_eb);
+   hbl_plot_saxs_tools->addWidget(pb_rescale);
+   hbl_plot_saxs_tools->addWidget(pb_guinier_analysis);
+   hbl_plot_saxs_tools->addWidget(pb_guinier_cs);
+   hbl_plot_saxs_tools->addWidget(pb_saxs_legend);
+   hbl_plot_saxs_tools->addWidget(pb_pp);
+   background->addLayout( hbl_plot_saxs_tools , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
    QBoxLayout * hbl_various_0 = new QHBoxLayout(); hbl_various_0->setContentsMargins( 0, 0, 0, 0 ); hbl_various_0->setSpacing( 0 );
    hbl_various_0->addWidget(pb_ift);
    hbl_various_0->addWidget(pb_saxs_search);
-   if ( started_in_expert_mode )
-   {
-      hbl_various_0->addWidget(pb_saxs_screen);
-   }
-
    hbl_various_0->addWidget(pb_saxs_buffer);
    hbl_various_0->addWidget(pb_dad);
    hbl_various_0->addWidget(pb_saxs_hplc);
    hbl_various_0->addWidget(pb_mals);
    hbl_various_0->addWidget(pb_mals_saxs);
+   background->addLayout( hbl_various_0 , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+   j++;
 
    if ( started_in_expert_mode )
    {
-      hbl_various_0->addWidget(pb_saxs_xsr);
-      hbl_various_0->addWidget(pb_saxs_1d);
-      hbl_various_0->addWidget(pb_saxs_2d);
+      QBoxLayout * hbl_various_expert = new QHBoxLayout(); hbl_various_expert->setContentsMargins( 0, 0, 0, 0 ); hbl_various_expert->setSpacing( 0 );
+      hbl_various_expert->addWidget(pb_saxs_screen);
+      hbl_various_expert->addWidget(pb_saxs_xsr);
+      hbl_various_expert->addWidget(pb_saxs_1d);
+      hbl_various_expert->addWidget(pb_saxs_2d);
+      background->addLayout( hbl_various_expert , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+      j++;
    }
-
-   hbl_various_0->addWidget(pb_guinier_analysis);
-   hbl_various_0->addWidget(pb_guinier_cs);
-   hbl_various_0->addWidget(pb_saxs_legend);
-   hbl_various_0->addWidget(pb_pp);
-   background->addLayout( hbl_various_0 , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
-   j++;
 
 
    QGridLayout * gl_plot_ctls = new QGridLayout( 0 ); gl_plot_ctls->setContentsMargins( 0, 0, 0, 0 ); gl_plot_ctls->setSpacing( 0 );
@@ -2179,16 +2183,20 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    background->addWidget( lbl_pr , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
+   // on two rows: loading and clearing distributions, and the plot
    QBoxLayout * hbl_plot_pr = new QHBoxLayout(); hbl_plot_pr->setContentsMargins( 0, 0, 0, 0 ); hbl_plot_pr->setSpacing( 0 );
    hbl_plot_pr->addWidget(pb_load_pr);
    hbl_plot_pr->addWidget(pb_load_plot_pr);
    hbl_plot_pr->addWidget(pb_clear_plot_pr);
-   hbl_plot_pr->addWidget(pb_pr_legend);
-   hbl_plot_pr->addWidget(pb_width2);
-   hbl_plot_pr->addWidget(cb_pr_eb);
-   hbl_plot_pr->addWidget(pb_pr_info);
-   hbl_plot_pr->addWidget(pb_pr_info2);
    background->addLayout( hbl_plot_pr , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+   j++;
+   QBoxLayout * hbl_plot_pr_tools = new QHBoxLayout(); hbl_plot_pr_tools->setContentsMargins( 0, 0, 0, 0 ); hbl_plot_pr_tools->setSpacing( 0 );
+   hbl_plot_pr_tools->addWidget(pb_pr_legend);
+   hbl_plot_pr_tools->addWidget(pb_width2);
+   hbl_plot_pr_tools->addWidget(cb_pr_eb);
+   hbl_plot_pr_tools->addWidget(pb_pr_info);
+   hbl_plot_pr_tools->addWidget(pb_pr_info2);
+   background->addLayout( hbl_plot_pr_tools , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    background->addWidget(lbl_bin_size, j, 0);
    background->addWidget(cnt_bin_size, j, 1);
@@ -6525,18 +6533,37 @@ void US_Hydrodyn_Saxs::saxs_buffer()
       ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_window->show();
    }
 
+   // a curve that never had a PSV or I0se holds the global defaults, so pass only values that differ from
+   // them; otherwise every transferred curve would be saved with the defaults written as if measured
+   auto differs = []( double a, double b )
+   {
+      return qAbs( a - b ) > 1e-6 + 1e-4 * qMax( qAbs( a ), qAbs( b ) );
+   };
+
    for ( unsigned int i = 0; i < plotted_q.size(); i++ )
    {
+      double this_conc;
+      double this_psv;
+      double this_I0se;
+      get_conc_csv_values( qsl_plotted_iq_names[ i ], this_conc, this_psv, this_I0se );
+      double pass_psv  = differs( this_psv,  our_saxs_options->psv    ) ? this_psv  : -1e0;
+      double pass_I0se = differs( this_I0se, our_saxs_options->I0_exp ) ? this_I0se : -1e0;
       if ( plotted_I_error[ i ].size() == plotted_I[ i ].size() )
       {
          ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_window->add_plot( qsl_plotted_iq_names[ i ],
                                                                      plotted_q[ i ],
                                                                      plotted_I[ i ],
-                                                                     plotted_I_error[ i ] );
+                                                                     plotted_I_error[ i ],
+                                                                     this_conc,
+                                                                     pass_psv,
+                                                                     pass_I0se );
       } else {
          ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_window->add_plot( qsl_plotted_iq_names[ i ],
                                                                      plotted_q[ i ],
-                                                                     plotted_I[ i ] );
+                                                                     plotted_I[ i ],
+                                                                     this_conc,
+                                                                     pass_psv,
+                                                                     pass_I0se );
       }
    }
 }
