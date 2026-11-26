@@ -36,6 +36,8 @@
 using US_ReportText::indent;
 using US_ReportText::table_row;
 
+static double baselineAverage( const US_DataIO::EditedData& ed );
+
 
 // US_FeMatch class constructor
 US_FeMatch::US_FeMatch() : US_Widgets()
@@ -823,15 +825,7 @@ void US_FeMatch::data_plot( void )
    US_Math2::data_correction( avgTemp, solution );
 
    dscan           = &edata->scanData.last();
-   int    point    = US_DataIO::index( dataList[ drow ].xvalues,
-                                       dataList[ drow ].baseline );
-   point           = ( point < 5 ) ? 5 : point;
-   double baseline = 0.0;
-
-   for ( int jj = point - 5; jj < point + 6; jj++ )
-      baseline       += dscan->rvalues[ jj ];
-
-   baseline       /= 11.0;
+   double baseline = baselineAverage( dataList[drow] );
 
    // Draw curves
    for ( int ii = 0; ii < scanCount; ii++ )
@@ -2182,18 +2176,35 @@ void US_FeMatch::write_dset_report( QString& dsfname )
    return;
 }
 
+// The average of the last scan's 11 readings around the baseline radius,
+// moved inside the data where the baseline lies near or past its ends
+static double baselineAverage( const US_DataIO::EditedData& ed )
+{
+   const QVector<double>& last  = ed.scanData.last().rvalues;
+   const int              count = last.size();
+   if ( count < 11 )
+   {
+      double sum = 0.0;
+      for ( double v : last )
+      {
+         sum += v;
+      }
+      return count > 0 ? sum / count : 0.0;
+   }
+   const int point = US_DataIO::index( ed.xvalues, ed.baseline );
+   const int first = qBound( 0, point - 5, count - 11 );
+   double    bl    = 0.0;
+   for ( int jj = first; jj < first + 11; jj++ )
+   {
+      bl += last[jj];
+   }
+   return ( bl / 11.0 );
+}
+
 // Calculate average baseline absorbance
 double US_FeMatch::calc_baseline( int drow ) const
 {
-   const US_DataIO::EditedData* dd = &dataList[ drow ];
-   const US_DataIO::Scan*       ss = &dd->scanData.last();
-   int     nn    = US_DataIO::index( dd->xvalues, dd->baseline );
-   double  bl    = 0.0;
-
-   for ( int jj = nn - 5; jj < nn + 6; jj++ )
-      bl += ss->rvalues[ jj ];
-
-   return ( bl / 11.0 );
+   return baselineAverage( dataList[drow] );
 }
 
 // Calculate residual absorbance values (data - sim - noise)
