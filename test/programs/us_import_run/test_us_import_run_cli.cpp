@@ -7,6 +7,7 @@
 
 #include <QFile>
 #include <QProcess>
+#include <QProcessEnvironment>
 
 #include "disk_run_fixture.h"
 #include "us_dataIO.h"
@@ -20,9 +21,13 @@ class US_ImportRunCliTest : public QObject
 
       // Run the importer; return its exit code and stderr, and its stdout in
       // out if given.
-      int           run( const QStringList& args, QString& err, QString* out = nullptr )
+      int           run( const QStringList&         args,
+                         QString&                   err,
+                         QString*                   out = nullptr,
+                         const QProcessEnvironment& env = QProcessEnvironment::systemEnvironment() )
       {
          QProcess importer;
+         importer.setProcessEnvironment( env );
          importer.start( US_IMPORT_RUN_EXE, args );
          if ( !importer.waitForFinished( 30000 ) )
          {
@@ -120,6 +125,28 @@ class US_ImportRunCliTest : public QObject
          QString err;
          QCOMPARE( run( { "--dir", emptyRunDir( "pw" ), "--dry-run", "--work-dir", workParent(), option, "secret" }, err ), 1 );
          QVERIFY2( err.contains( option.mid( 2 ) ), qPrintable( err ) );
+      }
+
+      void passwordsComeFromTheirEnvironmentVariables()
+      {
+         // Past the argument checks; fails reading the empty run, before
+         // connecting.
+         const QStringList   args{ "--dir", emptyRunDir( "env" ), "--database", "uslims3_test", "--work-dir", workParent() };
+         QProcessEnvironment unset = QProcessEnvironment::systemEnvironment();
+         unset.remove( "US_DB_PASSWORD" );
+         unset.remove( "US_INV_PASSWORD" );
+         QProcessEnvironment set = unset;
+         set.insert( "US_DB_PASSWORD", "synthetic-db" );
+         set.insert( "US_INV_PASSWORD", "synthetic-person" );
+
+         QString err;
+         QCOMPARE( run( args, err, nullptr, unset ), 2 );
+         QVERIFY2( err.contains( "US_DB_PASSWORD is not set" ), qPrintable( err ) );
+         QVERIFY2( err.contains( "US_INV_PASSWORD is not set" ), qPrintable( err ) );
+
+         QCOMPARE( run( args, err, nullptr, set ), 2 );
+         QVERIFY2( !err.contains( "is not set" ), qPrintable( err ) );
+         QVERIFY2( !err.contains( "synthetic-" ), qPrintable( err ) );
       }
 
       void aDryRunNeedsNoDatabase()

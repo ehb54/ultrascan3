@@ -1,5 +1,6 @@
 //! \file us_mwl_species_sim.cpp
 
+#include "us_notify.h"
 #include <QApplication>
 #include <QTemporaryFile>
 
@@ -8,6 +9,7 @@
 #include "us_buffer_gui.h"
 #include "us_convert.h"
 #include "us_data_loader.h"
+#include "us_db_provider.h"
 #include "us_experiment.h"
 #include "us_gui_settings.h"
 #include "us_hardware.h"
@@ -16,7 +18,6 @@
 #include "us_license_t.h"
 #include "us_math2.h"
 #include "us_mwl_species_sim.h"
-#include "us_passwd.h"
 #include "us_rotor_gui.h"
 #include "us_select_runs.h"
 #include "us_settings.h"
@@ -231,7 +232,6 @@ DbgLv(1) << "PlotData1:  tripx" << tripx;
 
    data_plot1->replot();
 
-//   te_desc->setText( rdata->description );
 
    return;
 }
@@ -363,7 +363,6 @@ void US_MwlSpeciesSim::select_models_auto( QString invID_passed, QStringList m_t
    // Get a set of descriptions for distribution data
    DbgLv( 1 ) << "  smdls: call ML dbload" << dbload << "mfilt" << mfilt << "pfilts" << pfilts;
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-   // US_ModelLoader dialog( dbload, mfilt, models, mdescs, pfilts );
    // No description filter here: the stage type (2DSA-IT / 2DSA-CG-IT) is
    // matched precisely in US_ModelLoader::accepted_multiple_auto().
    QString auto_filt;
@@ -451,24 +450,23 @@ void US_MwlSpeciesSim::select_models_auto( QString invID_passed, QStringList m_t
 // Select buffer (water) for VEL-MWL:GMP
 void US_MwlSpeciesSim::define_buffer_auto( int invID_p )
 {
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != IUS_DB2::OK )
+   if ( db->lastErrno() != IUS_DB2::OK )
    {
-      QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) + db.lastError() );
+      US_Notify::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
       return;
    }
 
    QStringList q;
    q << "get_buffer_desc" << QString::number( invID_p );
-   db.query( q );
+   db->query( q );
 
    QString buffID_w;
-   while ( db.next() )
+   while ( db->next() )
    {
-      QString buffID = db.value( 0 ).toString();
-      QString desc   = db.value( 1 ).toString();
+      QString buffID = db->value( 0 ).toString();
+      QString desc   = db->value( 1 ).toString();
 
       if ( QString::compare( desc, "water", Qt::CaseInsensitive ) == 0 )
       {
@@ -478,7 +476,7 @@ void US_MwlSpeciesSim::define_buffer_auto( int invID_p )
    }
 
    qDebug() << "[buffID_w] -- " << buffID_w;
-   buffer.readFromDB( &db, buffID_w );
+   buffer.readFromDB( db.get(), buffID_w );
    qDebug() << "[in us_mwl_sp_sim's define_buffer_auto()] : " << buffer.person << buffer.description << buffer.compressibility
             << buffer.density << buffer.viscosity;
 
@@ -531,7 +529,6 @@ void US_MwlSpeciesSim::sim_params_auto( QMap<QString, QString> run_params )
    // then accept
    dialog->accepted_auto();
 
-   // dialog->exec();
 
    emit stage_progress( "params", 1, 1 );
 }
@@ -619,7 +616,6 @@ void US_MwlSpeciesSim::select_rotor_auto( QStringList r_defs )
    connect( rotorInfo, &US_RotorGui::RotorCalibrationSelected, this, &US_MwlSpeciesSim::assign_rotor );
    rotorInfo->selectSimRotor( r_defs );
 
-   // rotorInfo->exec();
 
    emit stage_progress( "rotor", 1, 1 );
 }
@@ -732,7 +728,6 @@ DbgLv(1) << " sims: build from model" << model.description;
                        .arg( nmodels ).arg( jm + 1 ).arg( triple );
       te_status->setText( smsg );
       qApp->processEvents();
-//sleep( 3 );
       kmodels++;
       if ( stopFlag )
          break;
@@ -775,7 +770,7 @@ void US_MwlSpeciesSim::save_sims_auto( void )
    if ( orunid.isEmpty() )
    {
       qDebug() << "save_sims_auto: empty orunid -- nothing saved";
-      QMessageBox::warning( this, tr( "Save Simulations" ), tr( "No run ID is set; the simulations cannot be saved." ) );
+      US_Notify::warning( this, tr( "Save Simulations" ), tr( "No run ID is set; the simulations cannot be saved." ) );
       return;
    }
 
@@ -796,9 +791,9 @@ void US_MwlSpeciesSim::save_sims_auto( void )
          if ( !ok )
          {
             qDebug() << "save_sims_auto: could not delete stale entry" << fi.absoluteFilePath();
-            QMessageBox::warning( this,
-                                  tr( "Simulation Cleanup Failed" ),
-                                  tr( "A previous simulation file could not be deleted:\n%1" ).arg( fi.absoluteFilePath() ) );
+            US_Notify::warning( this,
+                                tr( "Simulation Cleanup Failed" ),
+                                tr( "A previous simulation file could not be deleted:\n%1" ).arg( fi.absoluteFilePath() ) );
             return;
          }
          nstale++;
@@ -820,7 +815,7 @@ void US_MwlSpeciesSim::save_sims( void )
    //  rather than leaving it waiting
    if ( !save_sims_to( savedir ) )
    {
-      QMessageBox::warning( this, tr( "Save Simulations" ), tr( "The simulations could not be saved to\n%1" ).arg( savedir ) );
+      US_Notify::warning( this, tr( "Save Simulations" ), tr( "The simulations could not be saved to\n%1" ).arg( savedir ) );
       return;
    }
 
@@ -2093,9 +2088,7 @@ DbgLv(1) << "AMATH: wrts: Unable to open" << tmst_fpath;
    {  // Accumulate the times at scans
       scantimes << sim_data.scanData[ ii ].seconds;
    }
-//DbgLv(1) << " writetimestate : no of scans" << nscans ;
 
-   //if ( simparams.sim == false )
    if ( spsim == false )
    {
       double d   = -2.0/3.0;
@@ -2113,8 +2106,7 @@ DbgLv(1) << "AMATH: wrts: Unable to open" << tmst_fpath;
       sp         = &simparams.speed_step[ 0 ];
       rate       = (double) sp->acceleration ;
       t_acc      = (int)qRound( sp->rotorspeed / rate );
-      rate       = (double)sp->rotorspeed / (double)t_acc;
-//DbgLv(1)<< " rate is given by user : t_acc from timestate" << t_acc << rate;
+      rate       = (double) sp->rotorspeed / (double) t_acc;
    }
 
    int d1     = 0;
@@ -2144,7 +2136,6 @@ DbgLv(1) << "AMATH: wrts: Unable to open" << tmst_fpath;
 
          d1          = (int)duration_prev + 1;
 
-         //if ( simparams.sim == false )
          if ( spsim == false )
             // Use calculated rate when user doesn't know it
             t_acc = ( int)qRound( double( qAbs( speed - prvs_speed ) ) / rate );

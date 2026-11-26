@@ -46,7 +46,7 @@ int main( int argc, char* argv[] )
    {
       application.setProperty( "us3_headless", true );
    }
-   useHeadlessPasswordSources( args );
+   useHeadlessServices( args );
 
    // Constructed after --no-db is applied, so it reads the overridden
    // data location.

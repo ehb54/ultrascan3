@@ -692,6 +692,25 @@ int main( int argc, char* argv[] )
       return 1;
    }
 
+   // The passwords come only from the environment, which keeps them out of
+   // process listings and shell history. Either may be empty for an account
+   // without one, so an unset variable is reported, not refused.
+   QString db_password;
+   QString inv_password;
+   if ( !dry_run )
+   {
+      db_password  = environmentSecret( "US_DB_PASSWORD" );
+      inv_password = environmentSecret( "US_INV_PASSWORD" );
+      if ( db_password.isEmpty() )
+      {
+         err() << "Note: US_DB_PASSWORD is not set; connecting without a database password." << Qt::endl;
+      }
+      if ( inv_password.isEmpty() )
+      {
+         err() << "Note: US_INV_PASSWORD is not set; authenticating the investigator without a password." << Qt::endl;
+      }
+   }
+
    int investigator_id = 0;
    if ( parser.isSet( investigator_option ) && !parsePersonId( parser.value( investigator_option ), investigator_id ) )
    {
@@ -785,11 +804,6 @@ int main( int argc, char* argv[] )
 
    // connectAuthenticated() takes the credentials as arguments, so no database
    // profile is written into the user's settings.
-   // The passwords come only from the environment, which keeps them out of
-   // process listings and shell history.
-   const QString db_password  = environmentSecret( "US_DB_PASSWORD" );
-   const QString inv_password = environmentSecret( "US_INV_PASSWORD" );
-
    US_DB2        db;
    QString       db_error;
    if ( !db.connectAuthenticated( parser.value( host_option ),

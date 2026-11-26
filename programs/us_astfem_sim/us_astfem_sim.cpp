@@ -1,5 +1,6 @@
 //! \file us_astfem_sim.cpp
 
+#include "us_notify.h"
 #include <QApplication>
 #include <QScopedPointer>
 #include <QTemporaryFile>
@@ -11,6 +12,7 @@
 #include "us_clipdata.h"
 #include "us_convert.h"
 #include "us_db2.h"
+#include "us_db_provider.h"
 #include "us_defines.h"
 #include "us_experiment.h"
 #include "us_gui_settings.h"
@@ -20,7 +22,6 @@
 #include "us_lamm_astfvm.h"
 #include "us_math2.h"
 #include "us_model_gui.h"
-#include "us_passwd.h"
 #include "us_rotor_gui.h"
 #include "us_settings.h"
 #include "us_sim_inputs.h"
@@ -303,12 +304,15 @@ int US_Astfem_Sim::init_from_args( const US_SimCliArgs& args )
          simparams.rotorcoeffs[1]   = coeff2;
          simparams.rotorCalID = QString::number( rotorInfo->currentCalibration.ID );
          {
-            // Built only for the DB case: holeCount() takes a plain
-            // IUS_DB2*, so the password prompt (a gui-layer concern) stays
-            // here rather than inside the utils-layer US_Rotor.
-            US_Passwd              pw;
-            QScopedPointer<US_DB2> holeDb( dbdisk == US_Disk_DB_Controls::DB ? new US_DB2( pw.getPasswd() ) : nullptr );
-            rotor_holes = US_Rotor::holeCount( this->rotor, holeDb.data() );
+            // Opened only for the DB case: holeCount() takes a plain
+            // IUS_DB2*, so unlocking (a gui-layer concern) stays here rather
+            // than inside the utils-layer US_Rotor.
+            std::unique_ptr<IUS_DB2> holeDb;
+            if ( dbdisk == US_Disk_DB_Controls::DB )
+            {
+               holeDb = US_DBProvider::open();
+            }
+            rotor_holes = US_Rotor::holeCount( this->rotor, holeDb.get() );
          }
          rotorInfo->close();
       }
@@ -829,10 +833,7 @@ DbgLv(1) << "==SimPar:MAIN:SetP";
    sim_data_all.channel     = sim_channel;
    sim_data_all.description = sim_description;
 
-   int points    = qRound( ( simparams.bottom - simparams.meniscus ) /
-                            simparams.radial_resolution ) + 1;
-   // int points    = qCeil( ( simparams.bottom - simparams.meniscus ) /
-   //                          simparams.radial_resolution ) + 1;
+   int points = qRound( ( simparams.bottom - simparams.meniscus ) / simparams.radial_resolution ) + 1;
 
    sim_data_all.xvalues.resize( points ); // Sets the size of radial grid points array
 
@@ -844,9 +845,6 @@ DbgLv(1) << "==SimPar:MAIN:SetP";
    DbgLv( 1 ) << "SimPar:MAIN:SetP:  points" << points << "rad0 radn" << sim_data_all.xvalues[0]
               << sim_data_all.xvalues[points - 1];
 
-   //   sim_data_all.xvalues[ points - 1 ] = simparams.bottom;
-   //DbgLv(1) << "SimPar:MAIN:SetP:  points" << points << "rad0 radn"
-   // << sim_data_all.xvalues[0] << sim_data_all.xvalues[points-1];
 
    // Fill in speed steps with scan times and omega^2t; build raw data
    double s_speed = 0.0;
@@ -1003,14 +1001,12 @@ double US_Astfem_Sim::stretch( double* rotorcoeffs, double speed )
 // Start simulation
 void US_Astfem_Sim::start_simulation( void )
 {
-   //DbgLv(1) << "start_simulation is called";
    sim_failed = false;
    interference_structure.clear(); // a new run draws its own fixed structure
 
    int           size_cv = system.components.size(); // Number of components in the system
    QVector<bool> reactVec( size_cv );                // Boolean array showing reaction case between system
 
-   //moviePlot->autoRefresh();
 
    moviePlot->replot();
    curve_count = 0;
@@ -1054,48 +1050,39 @@ DbgLv(1) << "start_simulation is called" << af_params.current_meniscus << af_par
  << "step=" << jd << simparams.speed_step[jd].rotorspeed;
 
       // Number of radial grid points on the experimental grid; number of scans
-      int points = qRound( ( af_params.current_bottom - af_params.current_meniscus ) /
-                           simparams.radial_resolution ) + 1;
-      // int points = qCeil( ( af_params.current_bottom - af_params.current_meniscus ) /
-      //                     simparams.radial_resolution ) + 1;
-      int nscans = simparams.speed_step[ jd ].scans;
+int points = qRound( ( af_params.current_bottom - af_params.current_meniscus ) / simparams.radial_resolution ) + 1;
+int nscans = simparams.speed_step[jd].scans;
 
-      sim_datas[ jd ].xvalues.resize( points ); // Sets the size of radial grid points array
+sim_datas[jd].xvalues.resize( points ); // Sets the size of radial grid points array
 
-      for ( int jp = 0; jp < points; jp++ )
-      {   // Calculate the radial grid points
-         sim_datas[ jd ].xvalues[ jp ] = af_params.current_meniscus
-                                         + jp * simparams.radial_resolution;
-//DbgLv(1) << "radial_values" << sim_datas[jd].xvalues[jp] << jd;
-      }
-DbgLv(1) << "astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[jd].xvalues[points-1]
- << af_params.current_meniscus << af_params.current_bottom << jd;
-//      sim_datas[ jd ].xvalues[ points - 1 ] = af_params.current_bottom;
+for ( int jp = 0; jp < points; jp++ )
+{ // Calculate the radial grid points
+   sim_datas[jd].xvalues[jp] = af_params.current_meniscus + jp * simparams.radial_resolution;
+}
+DbgLv( 1 ) << "astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[jd].xvalues[points - 1] << af_params.current_meniscus
+           << af_params.current_bottom << jd;
 
-      // Set the total size of scans for simulation
-      sim_datas[ jd ].scanData.resize( nscans );
+// Set the total size of scans for simulation
+sim_datas[jd].scanData.resize( nscans );
 
-      int terpsize    = ( points + 7 ) / 8;
+int terpsize = ( points + 7 ) / 8;
 
-      // For each scan set the informations for each scan on
-      // the experimental grid.
-      int scan_index = 0;
-      for ( int js = 0; js < nscans; js++ )
-      {
-         sim_datas[ jd ].scanData[ js ] = sim_data_all.scanData[ scan_index++ ];
-         sim_datas[ jd ].scanData[ js ].wavelength  = system.wavelength;
-         sim_datas[ jd ].scanData[ js ].plateau     = 0.0;
-         sim_datas[ jd ].scanData[ js ].delta_r     = simparams.radial_resolution;
-         sim_datas[ jd ].scanData[ js ].rvalues     .fill( 0.0, points   );
-         sim_datas[ jd ].scanData[ js ].interpolated.fill( 0,   terpsize );
-      }
+// For each scan set the informations for each scan on
+// the experimental grid.
+int scan_index = 0;
+for ( int js = 0; js < nscans; js++ )
+{
+   sim_datas[jd].scanData[js]            = sim_data_all.scanData[scan_index++];
+   sim_datas[jd].scanData[js].wavelength = system.wavelength;
+   sim_datas[jd].scanData[js].plateau    = 0.0;
+   sim_datas[jd].scanData[js].delta_r    = simparams.radial_resolution;
+   sim_datas[jd].scanData[js].rvalues.fill( 0.0, points );
+   sim_datas[jd].scanData[js].interpolated.fill( 0, terpsize );
+}
    }
 
-//for ( int i =0; i< sim_datas.scanData.size();i++ )
-// DbgLv(1)<<"time="<<sim_datas.scanData[i].seconds<<"omega2t="<< sim_datas.scanData[i].omega2t;
 
    lb_progress->setText( tr( "% Completed:" ) );
-//   progress->setRange( 1, system.components.size() );
    progress->reset();
    lcd_component->display( 0 );
 
@@ -1157,10 +1144,8 @@ DbgLv(1) << "astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[jd].
       connect( astfem, &US_Astfem_RSA::calc_done, this, &US_Astfem_Sim::calc_over );
 
       astfem->set_movie_flag( ck_movie->isChecked() );
-//      astfem->setStopFlag( stopFlag );
       astfem->set_buffer( buffer );
       astfem->set_debug_flag( dbg_level );
-//DbgLv(1) << "after_calculate" << sim_datas.size();
 
       double bottom_ar    = simparams.bottom_position;
       simparams.meniscus  = meniscus_ar;
@@ -1168,10 +1153,7 @@ DbgLv(1) << "astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[jd].
       int kscan           = sim_data_all.scanCount();
 
       // Set the radius values in data sets
-      int points          = qRound( ( simparams.bottom - simparams.meniscus ) /
-                                 simparams.radial_resolution ) + 1;
-      // int points          = qCeil( ( simparams.bottom - simparams.meniscus ) /
-      //                              simparams.radial_resolution ) + 1;
+      int points = qRound( ( simparams.bottom - simparams.meniscus ) / simparams.radial_resolution ) + 1;
       sim_data_all.xvalues.resize( points );
 
       // Initialize reading values to zero for all scans (all speeds), sized
@@ -1258,8 +1240,6 @@ void US_Astfem_Sim::finish( void )
          total_conc += system.components[ ii ].signal_concentration;
    }
 
-//DbgLv(1) << "FIN: comp size" << system.components.size();
-//DbgLv(1) << "FIN:  total_conc" << total_conc;
 
    // Seed after the solver so its random draws do not affect output noise.
    if ( noise_seed != 0 )
@@ -1280,7 +1260,6 @@ void US_Astfem_Sim::finish( void )
    // If we didn't interrupt, we need to set to 100 % complete at end of run
    if ( ! stopFlag )
    {
-      //update_progress( progress->maximum() );
       update_progress( ncomponent );
 DbgLv(1) << "FIN:  progress maxsize" << progress->maximum();
    }
@@ -1652,7 +1631,7 @@ DbgLv(1) << "ASIM:svscn: IN";
    QDir ultrascan_user_dir( US_Settings::workBaseDir() );
    // protect all ~/ultrascan/* locations
    if ( parent_target_dir.absolutePath() == ultrascan_user_dir.absolutePath() ) {
-      QMessageBox::critical( this, tr( "Error" ), tr( "Cannot save at this location." ) );
+      US_Notify::critical( this, tr( "Error" ), tr( "Cannot save at this location." ) );
       return;
    }
    if ( target_dir.exists() && !target_dir.isEmpty() ) {
@@ -2020,22 +1999,19 @@ void US_Astfem_Sim::save_csv_noise( US_CSV_Data &csv )
 void US_Astfem_Sim::update_progress( int component )
 {
    if ( component == -1 )
-   {  // -1 component flags reset to maximum
-//      progress->setValue( progress->maximum() );
+   { // -1 component flags reset to maximum
       lcd_component->setMode( QLCDNumber::Hex );
       lcd_component->display( "rA " );
    }
 
    else if ( component < 0 )
-   {  // other negative component flags set maximum
-//      progress->setRange( 1, -component );
+   { // other negative component flags set maximum
       lcd_component->setMode( QLCDNumber::Dec );
       lcd_component->display( 0 );
    }
 
    else
-   {  // normal call sets progress value
-//      progress->setValue( component );
+   { // normal call sets progress value
       icomponent         = component;
       lcd_component->setMode( QLCDNumber::Dec );
       lcd_component->display( icomponent );
@@ -2044,16 +2020,11 @@ void US_Astfem_Sim::update_progress( int component )
 
 bool US_Astfem_Sim::save_xla( const QString& dirname, US_DataIO::RawData sim_data, int i1, bool supress_dialog )
 {
-
-DbgLv(1) << "save_xla_is_called";
-//   double mrad      = simparams.meniscus;
-//   double brad      = simparams.bottom;
+   DbgLv( 1 ) << "save_xla_is_called";
    simparams.meniscus = meniscus_ar;
    simparams.bottom   = simparams.bottom_position;
 
-   adjust_limits( (double)simparams.speed_step[ i1 ].rotorspeed );
-//   double mrad      = sim_data.xvalues[ 0 ];
-//   double brad      = sim_data.xvalues[ sim_data.xvalues.size()-1 ];
+   adjust_limits( (double) simparams.speed_step[i1].rotorspeed );
 
    double mrad      = af_params.current_meniscus;
    double brad      = af_params.current_bottom;
@@ -2169,14 +2140,14 @@ DbgLv(1) << "Sim:SV: reset s1plat" << s1plat;
       // Report that some readings were threshold-limited
       if ( !supress_dialog )
       {
-         QMessageBox::information( this,
-                                   tr( "OD Values Limited to Threshold" ),
-                                   tr( "%1 readings in %2 scans were reset to the threshold "
-                                       "value of %3.\nThe maximum OD before thresholding was %4." )
-                                      .arg( nchange )
-                                      .arg( nmodscn )
-                                      .arg( dthresh )
-                                      .arg( maxc ) );
+         US_Notify::information( this,
+                                 tr( "OD Values Limited to Threshold" ),
+                                 tr( "%1 readings in %2 scans were reset to the threshold "
+                                     "value of %3.\nThe maximum OD before thresholding was %4." )
+                                    .arg( nchange )
+                                    .arg( nmodscn )
+                                    .arg( dthresh )
+                                    .arg( maxc ) );
       }
    }
 
@@ -2280,13 +2251,6 @@ DbgLv(1) << "Sim:SV: reset s1plat" << s1plat;
          }
 
          progress->setValue( ( js + 1 ) );
-         //DbgLv(2) << "WD:sc secs" << scan->seconds;
-         //if ( ii == 0 || (ii+1) == total_scans ) {
-         //DbgLv(2) << "WD:S0:c00" << scan->rvalues[0];
-         //DbgLv(2) << "WD:S0:c01" << scan->rvalues[1];
-         //DbgLv(2) << "WD:S0:c30" << scan->rvalues[30];
-         //DbgLv(2) << "WD:S0:cn1" << scan->rvalues[points-2];
-         //DbgLv(2) << "WD:S0:cnn" << scan->rvalues[points-1]; }
       }
    }
 
@@ -2364,7 +2328,7 @@ DbgLv(1) << "Sim:SV: after_write_rawdata" << ofname;
       }
       else
       {
-         QMessageBox::critical(
+         US_Notify::critical(
             this,
             tr( "Simulation Save Failed" ),
             tr( "The simulated data could not be written to\n%1\n\n%2" ).arg( ofname ).arg( US_DataIO::errorString( wstat ) ) );
@@ -2378,13 +2342,10 @@ DbgLv(1) << "Sim:SV: after_write_rawdata" << ofname;
 }
 
 
-//int   scan_count = exp_data[speed_step].scanCount();
-//          points     = exp_data[speed_step].pointCount();
 void US_Astfem_Sim::plot( int step )
 {
    QList< QColor > mcolors;
-   int nmcols     = plot2->map_colors( mcolors );
-  // dataPlotClear( scanPlot );
+   int             nmcols     = plot2->map_colors( mcolors );
    double min_y_axis = 0.0;
    double max_y_axis = total_conc * 2.0;
 
@@ -2496,10 +2457,7 @@ void US_Astfem_Sim::start_calc( int steps )
 // slot to set progress to maximum
 void US_Astfem_Sim::calc_over( void )
 {
-//   progress   ->setRange( 1, progress_maximum );
-//   progress   ->setValue  ( progress_value );
-   progress_value   = progress->maximum();
-   //progress_value   = ncomponent * 100;
+   progress_value = progress->maximum();
    progress   ->setValue  ( progress_value );
    lb_progress->setText( progress_text );
 DbgLv(1) << "ASIM: over: progmax" << progress_value << "progress_text" << progress_text;
@@ -2508,7 +2466,6 @@ DbgLv(1) << "ASIM: over: progmax" << progress_value << "progress_text" << progre
 // slot to update movie plot
 void US_Astfem_Sim::update_movie_plot( QVector< double >* x, double* c )
 {
-   //moviePlot->detachItems();
    double total_c = 0.0;
    double yscale  = 0.0;
 
@@ -2532,7 +2489,6 @@ void US_Astfem_Sim::update_movie_plot( QVector< double >* x, double* c )
    }
 
    moviePlot->setAxisScale( QwtPlot::yLeft, 0, yscale );
-   //moviePlot->setAxisAutoScale( QwtPlot::yLeft );
    moviePlot->setAxisAutoScale( QwtPlot::xBottom );
 
    double* r = new double [ x->size() ];
@@ -2560,14 +2516,9 @@ void US_Astfem_Sim::update_movie_plot( QVector< double >* x, double* c )
    }
 
    qApp->processEvents();
-//int k=x->size()-1;
-//int h=x->size()/2;
-//DbgLv(1) << "UpdMovie: r0 rh rn c0 ch cn" << r[0] << r[h] << r[k]
-//   << c[0] << c[h] << c[k];
 
    delete [] r;
    moviePlot->detachItems();
-
 }
 
 // slot to update movie plot
