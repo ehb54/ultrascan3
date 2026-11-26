@@ -974,6 +974,42 @@ void US_MPI_JobConfig::validate()
       warnings << QString( "debug_text SimCache \"%1\" is not on or off: the cache stays on" ).arg( sc_value );
    }
 
+   // debug_text SimFloat and SimFloatNNLS turn the float modes on (any value
+   //  but on, 1, true or yes leaves them off). They are read as
+   //  US_SimCache::float_sims() and US_SolveSim::float_nnls() read them:
+   //  the first entry whose name before "=" is the key, in any case
+   for ( const QString key : { QString( "SimFloat" ), QString( "SimFloatNNLS" ) } )
+   {
+      bool    sf_found = false;
+      QString sf_value;
+      QString sf_spaced; // an entry "key value", which the switch ignores
+
+      for ( const QString& entry : debug_text() )
+      {
+         const QString name = entry.section( "=", 0, 0 ).trimmed();
+         if ( name.compare( key, Qt::CaseInsensitive ) == 0 )
+         {
+            sf_found = true;
+            sf_value = entry.section( "=", 1, 1 ).trimmed();
+            break;
+         }
+         if ( sf_spaced.isEmpty() && !entry.contains( '=' ) && name.section( ' ', 0, 0 ).compare( key, Qt::CaseInsensitive ) == 0 )
+         {
+            sf_spaced = entry;
+         }
+      }
+
+      if ( sf_found &&
+           !QStringList( { "on", "off", "1", "0", "true", "false", "yes", "no" } ).contains( sf_value, Qt::CaseInsensitive ) )
+      {
+         warnings << QString( "debug_text %1 \"%2\" is not on or off: the fit stays in double precision" ).arg( key, sf_value );
+      }
+      else if ( !sf_found && !sf_spaced.isEmpty() )
+      {
+         warnings << QString( "debug_text \"%1\" is not %2=on or %2=off: the fit stays in double precision" ).arg( sf_spaced, key );
+      }
+   }
+
    // debug_text SimCachePolicy chooses what the full cache keeps
    const QString sp_value = debug_value( "SimCachePolicy", &sc_found );
    if ( sc_found && !QStringList( { "first", "recent" } ).contains( sp_value, Qt::CaseInsensitive ) )

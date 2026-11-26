@@ -275,6 +275,29 @@ class US_UTIL_EXTERN US_Math2
                           int                      itmax      = 0,
                           const std::atomic<bool>* abort_flag = nullptr );
 
+      /*! \brief NNLS as above, with A, B, X and the work space in float
+                 precision (half the memory of A)
+
+          The algorithm and its steps are those of the double version.  Its
+          scalars, sums and products are double:  each value written back
+          to A, B or the work space is computed in double and rounded once.
+          Near-dependence of a column is judged at float precision, the
+          precision of the data.  The double version is not changed:  it
+          gives the same bits as before.
+      */
+      static int    nnls( float*                   a,
+                          int                      a_dim1,
+                          int                      m,
+                          int                      n,
+                          float*                   b,
+                          float*                   x,
+                          double*                  rnorm      = nullptr,
+                          float*                   wp         = nullptr,
+                          float*                   zzp        = nullptr,
+                          int*                     indexp     = nullptr,
+                          int                      itmax      = 0,
+                          const std::atomic<bool>* abort_flag = nullptr );
+
       /*! \brief Remove high frequency noise from a signal
           \param array   Data to be smoothed.  This array will be modified.
           \param smooth  Number of values to smooth to be considered when 

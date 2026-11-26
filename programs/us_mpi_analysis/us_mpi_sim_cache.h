@@ -21,8 +21,9 @@
 //! in an MPI-3 shared-memory window allocated by the node's first rank.
 //!
 //! Layout of the window:  a header, a table of slots, and a data area of
-//! simulations serialized with US_SimCache::pack (so they are restored
-//! bit-exactly).  A slot is found by open addressing on the SHA-256 of the
+//! simulations serialized with US_SimCache::Sim::pack_bytes (so they are
+//! restored bit-exactly;  in float mode with their readings as floats, half
+//! the bytes).  A slot is found by open addressing on the SHA-256 of the
 //! simulation key and filled lock-free:  a rank claims an empty slot with a
 //! compare-and-swap, writes the key digest, appends the data and then marks
 //! the slot ready.  A slot being filled by another rank counts as a miss.
@@ -97,12 +98,18 @@ class US_MPI_NodeSimCache : public US_SimCache
       //!                   checks before the collective allocation that the
       //!                   window fits it and the node's memory:  otherwise
       //!                   no rank allocates and the cache is not valid().
+      //! \param floats     Float mode (the same on every rank of the node):
+      //!                   simulations are kept in the window with their
+      //!                   readings as floats (US_SimCache::Sim::pack_bytes)
+      //!                   and returned in float form;  solvers using the
+      //!                   cache round their simulations to float precision
       US_MPI_NodeSimCache( MPI_Comm node_comm,
                            qint64   max_bytes,
                            qint64   sim_bytes,
                            Policy   policy      = KEEP_FIRST,
                            qint64   room_bytes  = -1,
-                           qint64   space_bytes = -1 );
+                           qint64   space_bytes = -1,
+                           bool     floats      = false );
 
       //! \brief Bytes of the whole window of a cache (header, slot table and
       //!        data) of the given capacity
@@ -138,6 +145,11 @@ class US_MPI_NodeSimCache : public US_SimCache
 
       bool   fetch( const QByteArray& key, US_DataIO::RawData& simdat ) override;
       bool   store( const QByteArray& key, const US_DataIO::RawData& simdat, bool survivor ) override;
+      //! \brief Get a simulation (a copy out of the window:  a generation may
+      //!        be emptied after the read), in float form in float mode
+      bool   fetch_sim( const QByteArray& key, Sim& sim ) override;
+      //! \brief Store a simulation (in float mode as floats, rounded)
+      bool   store_sim( const QByteArray& key, const Sim& sim, bool survivor ) override;
       void   clear() override;
       Stats  stats() const override;
 
@@ -228,8 +240,8 @@ class US_MPI_NodeSimCache : public US_SimCache
       Slot*                   find( int gg, const QByteArray& digest, bool& found );
 
       // Get or store a simulation in generation gg (entered by this rank)
-      bool                    fetch_in( int gg, const QByteArray& digest, US_DataIO::RawData& simdat );
-      int                     store_in( int gg, const QByteArray& digest, const US_DataIO::RawData& simdat );
+      bool                    fetch_in( int gg, const QByteArray& digest, Sim& sim );
+      int                     store_in( int gg, const QByteArray& digest, const Sim& sim );
 
       // Announce and end this rank's use of generation gg.  enter() fails
       //  while the generation is being emptied.

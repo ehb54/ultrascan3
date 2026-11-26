@@ -276,6 +276,18 @@ TEST( MemLimitRules, SolveBytes )
    EXPECT_NEAR( (double) US_MPI_MemLimit::solve_bytes( -5, -5, -1 ), fixed, 1.0 );
 }
 
+// Float simulations and the float NNLS halve their parts of the factor:
+//  2.28 = 1 (A matrix) + 1 (simulations) + 0.28 (the rest)
+TEST( MemLimitRules, SolveBytesInFloatModes )
+{
+   const double fixed = 17.20 * MB;
+   const double data  = 100000.0 * 101 * 8; // 200 x 500 readings, 96 solutes, TI noise
+   EXPECT_EQ( US_MPI_MemLimit::solve_bytes( 100000, 96, 1, false, false ), US_MPI_MemLimit::solve_bytes( 100000, 96, 1 ) );
+   EXPECT_NEAR( (double) US_MPI_MemLimit::solve_bytes( 100000, 96, 1, true, false ), fixed + 1.78 * data, 1.0 );
+   EXPECT_NEAR( (double) US_MPI_MemLimit::solve_bytes( 100000, 96, 1, false, true ), fixed + 1.78 * data, 1.0 );
+   EXPECT_NEAR( (double) US_MPI_MemLimit::solve_bytes( 100000, 96, 1, true, true ), fixed + 1.28 * data, 1.0 );
+}
+
 // The cache and the peak times the margin stay below 75 % of the limit
 TEST( MemLimitRules, CacheRoom )
 {

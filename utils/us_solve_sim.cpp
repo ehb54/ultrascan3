@@ -33,6 +33,8 @@ US_SolveSim::US_SolveSim( QList< DataSet* >& data_sets, int thrnrank,
    dbg_level    = 0;         // Default: no debug prints
    dbg_timing   = false;     // Default: no debug timing prints
    simcache     = nullptr;   // Default: no simulation cache
+   simfloat     = US_SimCache::float_sims(); // Debug text "SimFloat=on"
+   nnlsfloat    = float_nnls();              // Debug text "SimFloatNNLS=on"
    banddthr     = false;     // Default: no bandform data_threshold
 
    // If band-forming, possibly read in threshold control values
@@ -96,51 +98,70 @@ US_SolveSim::Simulation::Simulation()
 // Fill an A column (from index ka on) with a simulation.  Where pb is given
 //  (OD limit substitutions in B), a point whose B value (from index bx on)
 //  is a substituted zero gets zero in A, and bx is advanced too.  The squares
-//  of the values go to norm_a and, if given, to norm_e.
-static void fill_a_column( const US_DataIO::RawData& simdat,
-                           const double*             pb,
-                           int&                      bx,
-                           QVector<double>&          nnls_a,
-                           int&                      ka,
-                           const int                 nscans,
-                           const int                 npoints,
-                           double&                   norm_a,
-                           double*                   norm_e )
+//  of the values go to norm_a and, if given, to norm_e.  The readings of a
+//  scan are doubles or (float form) floats, which convert exactly;  A and B
+//  hold doubles or (float NNLS) floats.
+template <class T, class TA>
+static void fill_a_scan( const T* sv, const TA* pb, int& bx, TA* pa, int& ka, const int npoints, double& norm_a, double* norm_e )
 {
-   double* pa = nnls_a.data();
+   // (The sums keep the order of the points:  the same bits as before)
+   if ( pb == nullptr && norm_e == nullptr )
+   { // No substitutions:  the plain copy (the hot path)
+      for ( int rr = 0; rr < npoints; rr++ )
+      {
+         const double sval = sv[rr];
+         pa[ka++]          = (TA) sval;
+         norm_a += sq( sval );
+      }
+      return;
+   }
 
-   for ( int ss = 0; ss < nscans; ss++ )
+   for ( int rr = 0; rr < npoints; rr++ )
    {
-      const double* sv = simdat.scanData.at( ss ).rvalues.constData();
-
-      // (The sums keep the order of the points:  the same bits as before)
-      if ( pb == nullptr && norm_e == nullptr )
-      { // No substitutions:  the plain copy (the hot path)
-         for ( int rr = 0; rr < npoints; rr++ )
-         {
-            const double sval = sv[rr];
-            pa[ka++]          = sval;
-            norm_a += sq( sval );
-         }
+      if ( pb != nullptr && pb[bx++] == 0.0 )
+      {
+         pa[ka++] = TA( 0 );
          continue;
       }
 
-      for ( int rr = 0; rr < npoints; rr++ )
+      const double sval = sv[rr];
+      pa[ka++]          = (TA) sval;
+      norm_a += sq( sval );
+
+      if ( norm_e != nullptr )
       {
-         if ( pb != nullptr && pb[bx++] == 0.0 )
-         {
-            pa[ka++] = 0.0;
-            continue;
-         }
+         *norm_e += sq( sval );
+      }
+   }
+}
 
-         const double sval = sv[rr];
-         pa[ka++]          = sval;
-         norm_a += sq( sval );
+template <class X> struct NoDeduce
+{
+      using type = X;
+};
 
-         if ( norm_e != nullptr )
-         {
-            *norm_e += sq( sval );
-         }
+template <class TA>
+static void fill_a_column( const US_SimCache::Sim&            sim,
+                           const typename NoDeduce<TA>::type* pb, // (TA from nnls_a)
+                           int&                               bx,
+                           QVector<TA>&                       nnls_a,
+                           int&                               ka,
+                           const int                          nscans,
+                           const int                          npoints,
+                           double&                            norm_a,
+                           double*                            norm_e )
+{
+   TA* pa = nnls_a.data();
+
+   for ( int ss = 0; ss < nscans; ss++ )
+   {
+      if ( sim.is_float() )
+      {
+         fill_a_scan( sim.fscan( ss ), pb, bx, pa, ka, npoints, norm_a, norm_e );
+      }
+      else
+      {
+         fill_a_scan( sim.dscan( ss ), pb, bx, pa, ka, npoints, norm_a, norm_e );
       }
    }
 }
@@ -148,12 +169,50 @@ static void fill_a_column( const US_DataIO::RawData& simdat,
 // Append the Tikhonov rows of one A column: ksolutes values, the alpha
 //  diagonal element at row colx.  The column length is ksolutes (the solutes
 //  count before any norm cut), as the rebuild after norm cuts assumes.
-static void append_tikhonov_rows( QVector<double>& nnls_a, int& ka, const int colx, const int ksolutes, const double alphad )
+template <class TA>
+static void append_tikhonov_rows( QVector<TA>& nnls_a, int& ka, const int colx, const int ksolutes, const double alphad )
 {
    for ( int aa = 0; aa < ksolutes; aa++ )
    {
-      nnls_a[ka++] = ( aa == colx ) ? alphad : 0.0;
+      nnls_a[ka++] = (TA) ( ( aa == colx ) ? alphad : 0.0 );
    }
+}
+
+// The A or B values as doubles (shared if they are)
+static QVector<double> as_doubles( const QVector<double>& vals )
+{
+   return vals;
+}
+
+static QVector<double> as_doubles( const QVector<float>& vals )
+{
+   QVector<double> dvals( vals.size() );
+
+   for ( int ii = 0; ii < vals.size(); ii++ )
+   {
+      dvals[ii] = vals[ii];
+   }
+
+   return dvals;
+}
+
+// Flag from debug text that the NNLS of calc_residuals is in float precision
+bool US_SolveSim::float_nnls()
+{
+   const QStringList dbgtxt = US_Settings::debug_text();
+
+   for ( const QString& dtext : dbgtxt )
+   {
+      QString name  = dtext.section( "=", 0, 0 ).trimmed();
+      QString value = dtext.section( "=", 1, 1 ).trimmed();
+
+      if ( name.compare( "SimFloatNNLS", Qt::CaseInsensitive ) == 0 )
+      {
+         return QStringList( { "on", "1", "true", "yes" } ).contains( value, Qt::CaseInsensitive );
+      }
+   }
+
+   return false;
 }
 
 // Static function to check the grid size implied by data and model
@@ -225,9 +284,30 @@ bool US_SolveSim::check_grid_size( double s_max, QString& smsg )
 }
 
 // Do the real work of a 2dsa/ga thread/processor:  simulation from solutes set
+//  (A, B and the NNLS in double, or in float with "SimFloatNNLS=on")
 void US_SolveSim::calc_residuals( int offset, int dataset_count, Simulation& sim_vals,
    bool padAB, QVector< double >* ASave, QVector< double >* BSave,
    QVector< double >* NSave )
+{
+   if ( nnlsfloat )
+   {
+      calc_residuals_t<float>( offset, dataset_count, sim_vals, padAB, ASave, BSave, NSave );
+   }
+   else
+   {
+      calc_residuals_t<double>( offset, dataset_count, sim_vals, padAB, ASave, BSave, NSave );
+   }
+}
+
+// calc_residuals with A, B and the concentrations of type T
+template <class T>
+void US_SolveSim::calc_residuals_t( int              offset,
+                                    int              dataset_count,
+                                    Simulation&      sim_vals,
+                                    bool             padAB,
+                                    QVector<double>* ASave,
+                                    QVector<double>* BSave,
+                                    QVector<double>* NSave )
 {
    QVector< double > sv_nnls_a;
    QVector< double > sv_nnls_b;
@@ -305,12 +385,11 @@ if(thrnrank<2) DbgLv(1) << "CR:zthr lthr mxod mfac"
 
    // Set up and clear work vectors
    int  navals   = narows * nsolutes;   // Size of "A" matrix
-DbgLv(1) << "   CR:na nb nx" << navals << narows << nsolutes
- << "  nt ns" << ntotal << nsolutes;
+   QVector<T> nnls_a( navals, T( 0 ) );
+   QVector<T> nnls_b( narows, T( 0 ) );
+   QVector<T> nnls_x( nsolutes, T( 0 ) );
+   DbgLv( 1 ) << "   CR:na nb nx" << navals << narows << nsolutes << "  nt ns" << ntotal << nsolutes;
 
-   QVector< double > nnls_a( navals,   0.0 );
-   QVector< double > nnls_b( narows,   0.0 );
-   QVector< double > nnls_x( nsolutes, 0.0 );
    QVector< double > tinvec( ntinois,  0.0 );
    QVector< double > rinvec( nrinois,  0.0 );
 
@@ -351,7 +430,7 @@ DebugTime("BEG:calcres");
       nscans         = edata->scanCount();
       double odlim   = edata->ODlimit;
 
-      double* pb = nnls_b.data();
+      T*     pb = nnls_b.data();
 
       for ( int ss = 0; ss < nscans; ss++ )
       {
@@ -376,7 +455,7 @@ DbgLv(1)<<"subha_OD limit exceeded for scan no " << ss << rr << odlim << kodl;
 #endif
 
             // Store the B value in a row for a dataset
-            pb[kb++] = evalue;
+            pb[kb++] = (T) evalue;
             norm_b        += sq( evalue );
 
          }  //"rr"-based for loop
@@ -398,10 +477,10 @@ DbgLv(1) << "   CR:B fill kodl" << kodl;
 
    if ( abort ) return;
 
-   QList< US_DataIO::RawData > simulations;       // All simulations, this run
+   QList<US_SimCache::Sim> simulations; // All simulations, this run
    simulations.reserve( static_cast<qsizetype>( nsolutes ) * dataset_count );
    QList<QByteArray>         simkeys; // Their cache keys (if any)
-   QList<US_DataIO::RawData> rawsims; // ... as simulated (shared
+   QList<US_SimCache::Sim>   rawsims; // ... as simulated (shared
                                       //  unless thresholded)
    dskeys.clear();                    // Renew cache data set keys
 
@@ -561,12 +640,9 @@ else
 //DebugTime("BEG: clcr-NA-astfem");
 DbgLv( 2 ) << "solve_sim_2: smeni sbott" << dset->simparams.meniscus << dset->simparams.bottom;
 DbgLv( 2 ) << "   CR:113  rss now" << US_Memory::rss_now() << "cc" << cc;
-QByteArray         simkey = simulate( model, dset, edata, simdat );
-US_DataIO::RawData rawsim; // As simulated, for cache
-if ( simcache != nullptr )
-{
-   rawsim = simdat; //  (shared unless modified)
-}
+US_SimCache::Sim sim;
+QByteArray       simkey = simulate( model, dset, edata, sim );
+US_SimCache::Sim rawsim = sim; // As simulated, for cache (shared)
 //DebugTime("END: clcr-NA-astfem");
 DbgLv( 2 ) << "   CR:114  rss now" << US_Memory::rss_now() << "cc" << cc;
 if ( abort )
@@ -577,7 +653,7 @@ if ( abort )
 
 if ( banddthr )
 { // If band forming, hold data within thresholds; skip if all-zero
-   if ( data_threshold( &simdat, zerothr, linethr, maxod, mfactor ) )
+   if ( threshold_sim( sim ) )
    {
       continue;
    }
@@ -585,13 +661,13 @@ if ( banddthr )
    ksols++;
 }
 
-            simulations << simdat;   // Save simulation (each dataset,solute)
+simulations << sim; // Save simulation (each dataset,solute)
 
-            if ( simcache != nullptr )
-            { // Keep key and simulation, to keep any survivor in the cache
-               simkeys << simkey;
-               rawsims << rawsim;
-            }
+if ( simcache != nullptr )
+{ // Keep key and simulation, to keep any survivor in the cache
+   simkeys << simkey;
+   rawsims << rawsim;
+}
 DbgLv(2) << "   CR:115  rss now" << US_Memory::rss_now() << "cc" << cc;
 
             // Populate the A matrix for the NNLS routine with simulation
@@ -601,7 +677,7 @@ DbgLv(1) << "   CR: A fill kodl" << kodl << "bndthr ksol" << banddthr << ksols
             if ( kodl == 0 )
             {  // Normal case of no ODlimit substitutions
 
-               fill_a_column( simdat, nullptr, bx, nnls_a, ka, nscans, npoints, norm_a, &norm_e );
+               fill_a_column( sim, nullptr, bx, nnls_a, ka, nscans, npoints, norm_a, &norm_e );
                DbgLv( 1 ) << " T0O0:norm_of_the_vector" << norm_a << sim_vals.solutes[cc].s << sim_vals.solutes[cc].k;
                //------------------------------------------------
 
@@ -617,7 +693,7 @@ DbgLv(1) << "   CR: A fill kodl" << kodl << "bndthr ksol" << banddthr << ksols
             {  // Special case where ODlimit substitutions are in B matrix
 DbgLv(1)<<"stype==0 but from else part";
 
-fill_a_column( simdat, nnls_b.constData(), bx, nnls_a, ka, nscans, npoints, norm_a, &norm_e );
+fill_a_column( sim, nnls_b.constData(), bx, nnls_a, ka, nscans, npoints, norm_a, &norm_e );
 DbgLv(1) << " T0O1:norm_of_the_vector" << norm_a << sim_vals.solutes[cc].s << sim_vals.solutes[cc].k;
             }
 
@@ -844,12 +920,9 @@ DbgLv(1) << "solve_sim_2: timestate file does not exist" << tmst_fpath << dset->
                }
             }
 
-            QByteArray         simkey = simulate( model, dset, edata, simdat );
-            US_DataIO::RawData rawsim; // As simulated, for cache
-            if ( simcache != nullptr )
-            {
-               rawsim = simdat; //  (shared unless modified)
-            }
+            US_SimCache::Sim sim;
+            QByteArray       simkey = simulate( model, dset, edata, sim );
+            US_SimCache::Sim rawsim = sim; // As simulated, for cache (shared)
 #if 0
 int nsc=simdat.scanCount();
 int npt=simdat.pointCount();
@@ -874,13 +947,15 @@ DbgLv(1) << "CR: sdat:"
 
             if ( banddthr )
             {  // If band forming, hold data within thresholds; skip if all-zero
-               if ( data_threshold( &simdat, zerothr, linethr, maxod, mfactor ) )
+               if ( threshold_sim( sim ) )
+               {
                   continue;
+               }
 
                ksols++;
             }
 
-            simulations << simdat;   // Save simulation (each datset,solute)
+            simulations << sim; // Save simulation (each datset,solute)
 
             if ( simcache != nullptr )
             { // Keep key and simulation, to keep any survivor in the cache
@@ -894,11 +969,11 @@ DbgLv(1) << "   CR: A-fill  bndthr" << banddthr << "kodl ksols" << kodl << ksols
 
             if ( kodl == 0 )
             {  // Normal case of no ODlimit substitutions
-               fill_a_column( simdat, nullptr, bx, nnls_a, ka, nscans, npoints, norm_a, nullptr );
+               fill_a_column( sim, nullptr, bx, nnls_a, ka, nscans, npoints, norm_a, nullptr );
             }
             else
             {  // Special case where ODlimit substitutions are in B matrix
-               fill_a_column( simdat, nnls_b.constData(), bx, nnls_a, ka, nscans, npoints, norm_a, nullptr );
+               fill_a_column( sim, nnls_b.constData(), bx, nnls_a, ka, nscans, npoints, norm_a, nullptr );
             }
 
 //DbgLv(1) << "CR: ks ka" << ks << ka
@@ -1039,12 +1114,9 @@ DbgLv(1) << "solve_sim_3: timestate file does not exist" << tmst_fpath << dset->
                }
             }
 
-            QByteArray         simkey = simulate( model, dset, edata, simdat );
-            US_DataIO::RawData rawsim; // As simulated, for cache
-            if ( simcache != 0 )
-            {
-               rawsim = simdat; //  (shared unless modified)
-            }
+            US_SimCache::Sim sim;
+            QByteArray       simkey = simulate( model, dset, edata, sim );
+            US_SimCache::Sim rawsim = sim; // As simulated, for cache (shared)
             if ( abort )
             {
                mark_failed_solve( sim_vals, dataset_count );
@@ -1053,13 +1125,15 @@ DbgLv(1) << "solve_sim_3: timestate file does not exist" << tmst_fpath << dset->
 
             if ( banddthr )
             {  // If band forming, hold data within thresholds; skip if all-zero
-               if ( data_threshold(&simdat, zerothr, linethr, maxod, mfactor) )
+               if ( threshold_sim( sim ) )
+               {
                   continue;
+               }
 
                ksols++;
             }
 
-            simulations << simdat;   // Save simulation (each datset,solute)
+            simulations << sim; // Save simulation (each datset,solute)
 
             if ( simcache != 0 )
             { // Keep key and simulation, to keep any survivor in the cache
@@ -1074,11 +1148,11 @@ int ks=ka;
             // Populate the A matrix for the NNLS routine with simulation
             if ( kodl == 0 )
             {  // Normal case of no ODlimit substitutions
-               fill_a_column( simdat, nullptr, bx, nnls_a, ka, nscans, npoints, norm_a, nullptr );
+               fill_a_column( sim, nullptr, bx, nnls_a, ka, nscans, npoints, norm_a, nullptr );
             }
             else
             {  // Special case where ODlimit substitutions are in B matrix
-               fill_a_column( simdat, nnls_b.constData(), bx, nnls_a, ka, nscans, npoints, norm_a, nullptr );
+               fill_a_column( sim, nnls_b.constData(), bx, nnls_a, ka, nscans, npoints, norm_a, nullptr );
             }
 DbgLv(1) << "CR: ks ka" << ks << ka
  << "nnA s...k" << nnls_a[ks] << nnls_a[ks+1]
@@ -1173,7 +1247,7 @@ DbgLv(1)<< " norm cuts for #solutes=" << ksolutes << ":  count_cut" << count_cut
          // Rebuild alpha-diagonal part of row
          for ( int aa = 0; aa < nsolutes; aa++ )
          {
-            nnls_a[ ka++ ] = ( aa == cc ) ? alphad : 0.0;
+            nnls_a[ka++] = (T) ( ( aa == cc ) ? alphad : 0.0 );
          }
 
          // Bump past old alpha-diagonal rows of input
@@ -1298,9 +1372,9 @@ DbgLv(2) << "   CR:210  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
          narows    = tikreg ? ( ntotal + nsolutes ) : ntotal;
          navals    = narows * nsolutes;
          nnls_a.resize( navals );
-         sv_nnls_a = nnls_a;
-         sv_nnls_b = nnls_b;
-DbgLv(1) << "no_ti_or_ri: CR: sv_nnls_a size" << sv_nnls_a.size() << nnls_a.size();
+         sv_nnls_a = as_doubles( nnls_a );
+         sv_nnls_b = as_doubles( nnls_b );
+         DbgLv( 1 ) << "no_ti_or_ri: CR: sv_nnls_a size" << sv_nnls_a.size() << nnls_a.size();
       }
 
 //DebugTime("BEG:clcr-nl");
@@ -1399,7 +1473,7 @@ if( lim_offs>1&&(thrnrank==1||thrnrank==11) )
 
             for ( int jx = sim_ix; jx < sim_lx; jx++ )
             {
-               simcache->store( simkeys[jx], rawsims[jx], true );
+               simcache->store_sim( simkeys[jx], rawsims[jx], true );
             }
          }
 if(soluval>1.0)
@@ -1410,7 +1484,7 @@ if(soluval>1.0)
          {
             // Input sims (ea.dset, ea.solute); out sims (sum.solute, ea.dset)
 //            int sim_ix  = cc * dataset_count + ee - offset;
-            US_DataIO::RawData*     idata = &simulations[ sim_ix ];
+            const US_SimCache::Sim* idata   = &simulations[sim_ix];
             US_DataIO::RawData*     sdata = &sim_vals.sim_data;
             int nscans  = idata->scanCount();
             int npoints = idata->pointCount();
@@ -1422,12 +1496,25 @@ if(soluval>1.0)
 
             for ( int ss = 0; ss < nscans; ss++, scnx++ )
             {
-               double*       sv = sdata->scanData[scnx].rvalues.data();
-               const double* iv = idata->scanData.at( ss ).rvalues.constData();
+               double* sv = sdata->scanData[scnx].rvalues.data();
 
-               for ( int rr = 0; rr < npoints; rr++ )
+               if ( idata->is_float() )
+               { // (Floats convert exactly:  the same sums as from doubles)
+                  const float* iv = idata->fscan( ss );
+
+                  for ( int rr = 0; rr < npoints; rr++ )
+                  {
+                     sv[rr] += ( soluval * (double) iv[rr] );
+                  }
+               }
+               else
                {
-                  sv[rr] += ( soluval * iv[rr] );
+                  const double* iv = idata->dscan( ss );
+
+                  for ( int rr = 0; rr < npoints; rr++ )
+                  {
+                     sv[rr] += ( soluval * iv[rr] );
+                  }
                }
             }
 DbgLv(2) << "   CR:231  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
@@ -1740,8 +1827,11 @@ void US_SolveSim::abort_work()
 
 // Remove noise means from the data rows of one vector (B or an A column):
 //  subtract the per-scan means (RI), then the per-radius means of the
-//  result (TI); return the removed means in v_tilde and v_bar
-static void remove_noise_means( double*    vals,
+//  result (TI); return the removed means in v_tilde and v_bar.  The values
+//  are doubles or (float NNLS) floats;  the means are double, and each
+//  value is computed in double and rounded once.
+template <class T>
+static void remove_noise_means( T*         vals,
                                 const int  nscans,
                                 const int  npoints,
                                 const bool calc_ti,
@@ -1755,8 +1845,8 @@ static void remove_noise_means( double*    vals,
 
       for ( int ss = 0; ss < nscans; ss++ )
       {
-         double* svals = vals + static_cast<size_t>( ss ) * npoints;
-         double  sum   = 0.0;
+         T*     svals = vals + static_cast<size_t>( ss ) * npoints;
+         double sum   = 0.0;
 
          for ( int rr = 0; rr < npoints; rr++ )
          {
@@ -1767,7 +1857,7 @@ static void remove_noise_means( double*    vals,
 
          for ( int rr = 0; rr < npoints; rr++ )
          {
-            svals[rr] -= v_tilde[ss];
+            svals[rr] = (T) ( svals[rr] - v_tilde[ss] );
          }
       }
    }
@@ -1783,7 +1873,7 @@ static void remove_noise_means( double*    vals,
 
       for ( int ss = 0; ss < nscans; ss++ )
       {
-         const double* svals = vals + static_cast<size_t>( ss ) * npoints;
+         const T* svals = vals + static_cast<size_t>( ss ) * npoints;
 
          for ( int rr = 0; rr < npoints; rr++ )
          {
@@ -1798,28 +1888,29 @@ static void remove_noise_means( double*    vals,
 
       for ( int ss = 0; ss < nscans; ss++ )
       {
-         double* svals = vals + static_cast<size_t>( ss ) * npoints;
+         T* svals = vals + static_cast<size_t>( ss ) * npoints;
 
          for ( int rr = 0; rr < npoints; rr++ )
          {
-            svals[rr] -= v_bar[rr];
+            svals[rr] = (T) ( svals[rr] - v_bar[rr] );
          }
       }
    }
 }
 
 // Compute concentrations by NNLS with TI and/or RI noise algebraically removed
-int US_SolveSim::nnls_noise( const int                noisflag,
-                             const QVector<int>&      nscans,
-                             const QVector<int>&      npoints,
-                             const int                nsolutes,
-                             const int                narows,
-                             QVector<double>&         nnls_a,
-                             QVector<double>&         nnls_b,
-                             QVector<double>&         nnls_x,
-                             QVector<double>&         tinvec,
-                             QVector<double>&         rinvec,
-                             const std::atomic<bool>* abort_flag )
+template <class T>
+static int nnls_noise_t( const int                noisflag,
+                         const QVector<int>&      nscans,
+                         const QVector<int>&      npoints,
+                         const int                nsolutes,
+                         const int                narows,
+                         QVector<T>&              nnls_a,
+                         QVector<T>&              nnls_b,
+                         QVector<T>&              nnls_x,
+                         QVector<double>&         tinvec,
+                         QVector<double>&         rinvec,
+                         const std::atomic<bool>* abort_flag )
 {
    const bool calc_ti = ( ( noisflag & 1 ) != 0 );
    const bool calc_ri = ( ( noisflag & 2 ) != 0 );
@@ -1928,6 +2019,37 @@ int US_SolveSim::nnls_noise( const int                noisflag,
    return rc;
 }
 
+int US_SolveSim::nnls_noise( const int                noisflag,
+                             const QVector<int>&      nscans,
+                             const QVector<int>&      npoints,
+                             const int                nsolutes,
+                             const int                narows,
+                             QVector<double>&         nnls_a,
+                             QVector<double>&         nnls_b,
+                             QVector<double>&         nnls_x,
+                             QVector<double>&         tinvec,
+                             QVector<double>&         rinvec,
+                             const std::atomic<bool>* abort_flag )
+{
+   return nnls_noise_t( noisflag, nscans, npoints, nsolutes, narows, nnls_a, nnls_b, nnls_x, tinvec, rinvec, abort_flag );
+}
+
+// (A, B and the concentrations in float precision)
+int US_SolveSim::nnls_noise( const int                noisflag,
+                             const QVector<int>&      nscans,
+                             const QVector<int>&      npoints,
+                             const int                nsolutes,
+                             const int                narows,
+                             QVector<float>&          nnls_a,
+                             QVector<float>&          nnls_b,
+                             QVector<float>&          nnls_x,
+                             QVector<double>&         tinvec,
+                             QVector<double>&         rinvec,
+                             const std::atomic<bool>* abort_flag )
+{
+   return nnls_noise_t( noisflag, nscans, npoints, nsolutes, narows, nnls_a, nnls_b, nnls_x, tinvec, rinvec, abort_flag );
+}
+
 // Variance and concentrations of a few solutes from the normal equations
 bool US_SolveSim::calc_variance_normal( int offset, int dataset_count, Simulation& sim_vals )
 {
@@ -1971,9 +2093,10 @@ bool US_SolveSim::calc_variance_normal( int offset, int dataset_count, Simulatio
    QVector<double>             cvec( dataset_count * nsolutes, 0.0 );
    QVector<double>             gram( dataset_count * ngram, 0.0 );
    QVector<int>                npts( dataset_count, 0 );
-   QVector<US_DataIO::RawData> sims( nsolutes * dataset_count );
+   QVector<US_SimCache::Sim>   sims( nsolutes * dataset_count );
    QVector<QByteArray>         simkeys( nsolutes * dataset_count );
    QVector<const double*>      sv( nsolutes );
+   QVector<double>             svrows; // Scan readings of float-form simulations
    US_Model                    model;
    model.components.resize( 1 );
 
@@ -2019,6 +2142,7 @@ bool US_SolveSim::calc_variance_normal( int offset, int dataset_count, Simulatio
       double* gm  = gram.data() + kd * ngram;
       double* cv  = cvec.data() + kd * nsolutes;
       double  bsq = 0.0;
+      svrows.resize( static_cast<qsizetype>( nsolutes ) * npoints );
 
       for ( int ss = 0; ss < nscans; ss++ )
       {
@@ -2026,7 +2150,24 @@ bool US_SolveSim::calc_variance_normal( int offset, int dataset_count, Simulatio
 
          for ( int cc = 0; cc < nsolutes; cc++ )
          {
-            sv[cc] = sims[kd * nsolutes + cc].scanData.at( ss ).rvalues.constData();
+            const US_SimCache::Sim& sim = sims[kd * nsolutes + cc];
+
+            if ( sim.is_float() )
+            { // The scan's readings as doubles (exactly)
+               const float* fv  = sim.fscan( ss );
+               double*      row = svrows.data() + static_cast<qsizetype>( cc ) * npoints;
+
+               for ( int rr = 0; rr < npoints; rr++ )
+               {
+                  row[rr] = fv[rr];
+               }
+
+               sv[cc] = row;
+            }
+            else
+            {
+               sv[cc] = sim.dscan( ss );
+            }
          }
 
          double bsqs = 0.0; // Per scan (pairwise-style summation)
@@ -2226,7 +2367,7 @@ bool US_SolveSim::calc_variance_normal( int offset, int dataset_count, Simulatio
          {
             for ( int kd = 0; kd < dataset_count; kd++ )
             {
-               simcache->store( simkeys[kd * nsolutes + cc], sims[kd * nsolutes + cc], true );
+               simcache->store_sim( simkeys[kd * nsolutes + cc], sims[kd * nsolutes + cc], true );
             }
          }
       }
@@ -2240,7 +2381,9 @@ bool US_SolveSim::calc_variance_normal( int offset, int dataset_count, Simulatio
 //  A cache hit skips US_Astfem_RSA::calculate and so its side effects on
 //  dset->simparams (timestate load, speed_step expansion, the sim flag);
 //  nothing after the simulation in calc_residuals may depend on them.
-QByteArray US_SolveSim::simulate( US_Model& model, DataSet* dset, US_DataIO::EditedData* edata, US_DataIO::RawData& simdat )
+//  With simfloat the simulation is in float form (rounded), shared with any
+//  cache in float mode:  neither a hit nor a store copies its readings.
+QByteArray US_SolveSim::simulate( US_Model& model, DataSet* dset, US_DataIO::EditedData* edata, US_SimCache::Sim& sim )
 {
    QByteArray simkey;
 
@@ -2279,13 +2422,14 @@ QByteArray US_SolveSim::simulate( US_Model& model, DataSet* dset, US_DataIO::Edi
 
       simkey = US_SimCache::sim_key( dskey->key, model.components[0] );
 
-      if ( simcache->fetch( simkey, simdat ) )
+      if ( simcache->fetch_sim( simkey, sim ) )
       {
          return simkey;
       }
    }
 
    // Initialize simulation data with the experiment's grid
+   US_DataIO::RawData simdat;
    US_AstfemMath::initSimData( simdat, *edata, 0.0 );
 
    US_Astfem_RSA astfem_rsa( model, dset->simparams );
@@ -2303,9 +2447,13 @@ QByteArray US_SolveSim::simulate( US_Model& model, DataSet* dset, US_DataIO::Edi
       return QByteArray();
    }
 
+   // Float form (rounded to float precision, as a cache in float mode stores
+   //  it) or double form (shared)
+   sim = US_SimCache::Sim::from_raw( simdat, simfloat );
+
    if ( simcache != 0 && rc == 0 )
    {
-      simcache->store( simkey, simdat, false );
+      simcache->store_sim( simkey, sim, false );
    }
 
    return simkey;
@@ -2336,6 +2484,21 @@ void US_SolveSim::DebugTime( QString mtext )
       qDebug() << "w" << thrnrank << "TM:" << mtext
                << startCalc.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
    }
+}
+
+// Band forming:  hold a simulation within the thresholds, as the double
+//  values the readings give (the simulation as computed stays unchanged,
+//  for the cache);  return flag if all-zero.  The thresholded simulation is
+//  in double form, also with "SimFloat=on":  band-forming fits keep the
+//  task's simulations in double memory (only the cache holds floats).
+bool US_SolveSim::threshold_sim( US_SimCache::Sim& sim )
+{
+   US_DataIO::RawData simdat;
+   sim.to_raw( simdat );
+
+   const bool allzero = data_threshold( &simdat, zerothr, linethr, maxod, mfactor );
+   sim                = US_SimCache::Sim::from_raw( simdat, false );
+   return allzero;
 }
 
 // Modify amplitude of data by thresholds and return flag if all-zero result
