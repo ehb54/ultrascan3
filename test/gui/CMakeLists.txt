@@ -24,3 +24,12 @@ us3_add_gui_test(test_us_distrib_stick_gui
         LABELS
             gui
         )
+
+us3_add_gui_test(test_us_newest_record_gui
+        SOURCES
+            test_us_newest_record_gui.cpp
+        LIBRARIES
+            UltraScan3::Gui_Static
+        LABELS
+            gui
+        )

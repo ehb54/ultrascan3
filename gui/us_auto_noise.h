@@ -8,6 +8,33 @@
 #include "us_noise.h"
 
 #include <QWidget>
+#include <limits>
+
+//! \brief The record updated most recently among those offered
+class US_GUI_EXTERN US_NewestRecord
+{
+   public:
+      //! \brief Offer record \a id, updated \a age seconds ago; it is kept if
+      //! it is newer than every record offered before.
+      void offer( int id, int age )
+      {
+         if ( age < newest_age )
+         {
+            newest_age = age;
+            newest_id  = id;
+         }
+      }
+
+      //! \brief The newest record's ID; 0 if none was offered.
+      int id() const
+      {
+         return newest_id;
+      }
+
+   private:
+      int newest_age = std::numeric_limits<int>::max();
+      int newest_id  = 0;
+};
 
 //! \brief The noise that autoflow analysis and the GMP reporter load for a
 //! model: the newest time- and radially-invariant noise of the model; if it

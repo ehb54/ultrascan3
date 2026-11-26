@@ -455,9 +455,10 @@ TEST_F( TestUSReportText, TableRowsMatchEveryOldOverload )
       EXPECT_EQ( table_row( c[0], c[1], c[2] ), re.table_row( c[0], c[1], c[2] ) );
       EXPECT_EQ( table_row( c[0], c[1], c[2], c[3] ), re.table_row( c[0], c[1], c[2], c[3] ) );
       EXPECT_EQ( table_row( c[0], c[1], c[2], c[3], c[4] ), re.table_row( c[0], c[1], c[2], c[3], c[4] ) );
-      // The reporter's six-cell row ends with an opened cell; its callers use table_row_unclosed
-      EXPECT_EQ( US_ReportText::table_row_unclosed( c[0], c[1], c[2], c[3], c[4], c[5] ),
-                 re.table_row( c[0], c[1], c[2], c[3], c[4], c[5] ) );
+      // The reporter's six-cell row ended with an opened cell; it now closes like the others
+      const QString six = table_row( c[0], c[1], c[2], c[3], c[4], c[5] );
+      EXPECT_TRUE( six.endsWith( "</td></tr>\n" ) );
+      EXPECT_EQ( six.chopped( 6 ) + "<td>\n", re.table_row( c[0], c[1], c[2], c[3], c[4], c[5] ) );
       EXPECT_EQ( table_row( c[0], c[1], c[2], c[3], c[4], c[5], c[6] ), re.table_row( c[0], c[1], c[2], c[3], c[4], c[5], c[6] ) );
       EXPECT_EQ( table_row( c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7] ),
                  re.table_row( c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7] ) );
@@ -499,8 +500,16 @@ TEST_F( TestUSReportText, ModelTitlesMatchBothCopies )
                      {
                         m.associations << US_Model::Association();
                      }
-                     EXPECT_EQ( US_ReportText::text_model( m, width, false ), fe.text_model( m, width ) );
-                     EXPECT_EQ( US_ReportText::text_model( m, width, true ), re.text_model( m, width ) );
+                     if ( nassoc == 0 || width == 0 )
+                     {
+                        EXPECT_EQ( US_ReportText::text_model( m, width, false ), fe.text_model( m, width ) );
+                        EXPECT_EQ( US_ReportText::text_model( m, width, true ), re.text_model( m, width ) );
+                     }
+                     else
+                     { // the old title left out " (RA)" unless the type ended in -SL
+                        EXPECT_TRUE( US_ReportText::text_model( m, width, false ).contains( " (RA)" ) );
+                        EXPECT_TRUE( US_ReportText::text_model( m, width, true ).contains( " (RA)" ) );
+                     }
                      compared++;
                   }
                }
@@ -509,4 +518,18 @@ TEST_F( TestUSReportText, ModelTitlesMatchBothCopies )
       }
    }
    EXPECT_GT( compared, 3000 );
+}
+
+// A model with reversible associations gets " (RA)" whatever its type
+TEST_F( TestUSReportText, AssociationsAreMarkedForEveryType )
+{
+   for ( US_Model::AnalysisType type : { US_Model::TWODSA, US_Model::GA, US_Model::PCSA, US_Model::DMGA } )
+   {
+      US_Model m;
+      m.analysis = type;
+      m.associations << US_Model::Association() << US_Model::Association();
+      EXPECT_TRUE( US_ReportText::text_model( m, 2, false ).contains( " (RA)" ) ) << type;
+      m.associations.clear();
+      EXPECT_FALSE( US_ReportText::text_model( m, 2, false ).contains( " (RA)" ) ) << type;
+   }
 }

@@ -23,9 +23,12 @@ class US_UTIL_EXTERN US_ModelSimulation : public QObject
    public:
       explicit US_ModelSimulation( QObject* parent = nullptr );
 
+      enum class TimeState { Keep, Replace, Temporary };
+
       //! \brief Set \a simparams and the time grid of \a sdata for simulating
       //! \a model against \a edata.
       //! \param db          Connection for the rotor and centerpiece, or null
+      //! \param invID       Investigator who owns the run; -1 for the current one
       //! \param edata       Experimental data
       //! \param model       The adjusted model; its first component decides the mesh
       //! \param adv_vals    Advanced settings: simpoints, gridtype, bandvolume
@@ -33,20 +36,21 @@ class US_UTIL_EXTERN US_ModelSimulation : public QObject
       //!                    the steps come from the data
       //! \param speed_steps The experiment's speed steps
       //! \param tmst_fpath  The run's time state file
-      //! \param rewrite_timestate Replace a time state that is not at
-      //!                    1-second intervals with one that is
+      //! \param time_state  How to handle an existing time state at other than
+      //!                    1-second intervals
       //! \param simparams   Set
       //! \param sdata       Set to the data's time grid, with no readings
       //! \return The acceleration check's title, text and details; empty if
       //! the acceleration is acceptable.
       static QStringList prepare( IUS_DB2*                                              db,
+                                  int                                                   invID,
                                   US_DataIO::EditedData&                                edata,
                                   const US_Model&                                       model,
                                   const QMap<QString, QString>&                         adv_vals,
                                   bool                                                  exp_steps,
                                   const QVector<US_SimulationParameters::SpeedProfile>& speed_steps,
                                   const QString&                                        tmst_fpath,
-                                  bool                                                  rewrite_timestate,
+                                  TimeState                                             time_state,
                                   US_SimulationParameters&                              simparams,
                                   US_DataIO::RawData&                                   sdata );
 
@@ -58,8 +62,8 @@ class US_UTIL_EXTERN US_ModelSimulation : public QObject
       //! solver for an ideal, non-co-sedimenting model without
       //! compressibility, otherwise the finite volume solver. Emits component()
       //! for finite element progress.
-      //! \param buffer Set to \a compress and \a manual for the finite element
-      //!               solver; neither solver is given it.
+      //! \param buffer Set to \a compress and \a manual; the finite volume
+      //!               solver is given it, as in the worker threads.
       void               simulate( US_Model&                model,
                                    US_SimulationParameters& simparams,
                                    US_DataIO::RawData&      sdata,

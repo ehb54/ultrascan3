@@ -15,13 +15,14 @@ US_ModelSimulation::US_ModelSimulation( QObject* parent ) : QObject( parent )
 }
 
 QStringList US_ModelSimulation::prepare( IUS_DB2*                                              db,
+                                         int                                                   invID,
                                          US_DataIO::EditedData&                                edata,
                                          const US_Model&                                       model,
                                          const QMap<QString, QString>&                         adv_vals,
                                          bool                                                  exp_steps,
                                          const QVector<US_SimulationParameters::SpeedProfile>& speed_steps,
                                          const QString&                                        tmst_fpath,
-                                         bool                                                  rewrite_timestate,
+                                         TimeState                                             time_state,
                                          US_SimulationParameters&                              simparams,
                                          US_DataIO::RawData&                                   sdata )
 {
@@ -30,7 +31,7 @@ QStringList US_ModelSimulation::prepare( IUS_DB2*                               
    double radhi = edata.radius( nconc - 1 );
 
    // Initialize simulation parameters using edited data information
-   simparams.initFromData( db, edata, !exp_steps );
+   simparams.initFromData( db, edata, !exp_steps, invID );
    simparams.simpoints         = adv_vals.value( "simpoints" ).toInt();
    simparams.meshType          = US_SimulationParameters::ASTFEM;
    simparams.gridType          = US_SimulationParameters::MOVING;
@@ -85,9 +86,18 @@ QStringList US_ModelSimulation::prepare( IUS_DB2*                               
          simparams.speedstepsFromSSprof();
       }
 
+      else if ( time_state == TimeState::Temporary )
+      {
+         // Build the profile from this simulation's speed steps without changing the run files.
+         simparams.tsobj = nullptr;
+         if ( US_AstfemMath::timestate_from_speedsteps( simparams, sdata ) > 0 )
+         {
+            simparams.speedstepsFromSSprof();
+         }
+      }
       else
       { // Replace timestate with a new one that is at 1-second-intervals
-         if ( rewrite_timestate )
+         if ( time_state == TimeState::Replace )
          {
             QString tmst_fdefs = QString( tmst_fpath ).replace( ".tmst", ".xml" );
             QString tmst_fpsav = tmst_fpath + "-orig";
@@ -152,7 +162,11 @@ void US_ModelSimulation::simulate( US_Model&                model,
    }
    else
    {
+      // As the threaded path does: the buffer gives a co-sedimenting model its salt gradient
+      buffer.compressibility = compress;
+      buffer.manual          = manual;
       US_LammAstfvm astfvm( model, simparams );
+      astfvm.set_buffer( buffer );
       astfvm.calculate( sdata );
    }
 }

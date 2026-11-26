@@ -4841,7 +4841,7 @@ void US_ReporterGMP::process_abde_plots( void )
   //Process all channels & capture plots
   QString subDirName  = runName + "-run" + runID;
   QString dirName     = US_Settings::reportDir() + "/" + subDirName;
-  //mkdir( US_Settings::reportDir(), subDirName );
+  mkdir( US_Settings::reportDir(), subDirName );
   const QString svgext( ".svgz" );
   const QString pngext( ".png" );
   const QString csvext( ".csv" );
@@ -5427,10 +5427,14 @@ bool US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
   
   US_Math2::data_correction( avgTemp, solution );
-  
+
 
   //Load Model (latest ) && noise(s)
-  loadModel( triple_info_map  );
+  // A model that cannot be used skips this triple and model, as missing data does
+  if ( !loadModel( triple_info_map ) )
+  {
+     return false;
+  }
 
   // triple_info_map[ "stage_name" ] = QString("2DSA-IT");
   // if ( !loadModel( triple_info_map  ) && !model_exists )
@@ -5621,6 +5625,14 @@ bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
 
   rc = model.load( QString::number( mID ), db.get() );
   qDebug() << "LdM:  model load rc" << rc;
+  if ( rc != US_DB2::OK )
+  {
+     QMessageBox::critical( this, tr( "Model Load Failed" ),
+                            tr( "Could not load model %1 for %2 (%3)." )
+                               .arg( mID )
+                               .arg( triple_information.value( "triple_name" ), triple_information.value( "stage_name" ) ) );
+     return false;
+  }
   qApp->processEvents();
 
   //EditDataUpdated for the model:
@@ -5704,8 +5716,8 @@ bool US_ReporterGMP::simulateModel( QMap<QString, QString>& tripleInfo )
   exp_steps = US_SimulationParameters::speedStepsCoverData( speed_steps, *edata );
   dat_steps = !exp_steps;
   QString     tmst_fpath = US_Settings::resultDir() + "/" + FileName_parsed + "/" + FileName_parsed + ".time_state.tmst";
-  QStringList check_results =
-     US_ModelSimulation::prepare( dbP.get(), *edata, model, adv_vals, exp_steps, speed_steps, tmst_fpath, true, simparams, *sdata );
+  QStringList check_results = US_ModelSimulation::prepare(
+     dbP.get(), invID, *edata, model, adv_vals, exp_steps, speed_steps, tmst_fpath, US_ModelSimulation::TimeState::Replace, simparams, *sdata );
   dbP.reset();
   if ( !check_results.isEmpty() ) {
       QMessageBox msgBox( this );
@@ -6723,12 +6735,12 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 			     "<table style=\"margin-left:10px\">"
 			   );
 
-      html_assembled += US_ReportText::table_row_unclosed( tr( "Parameter: " ),
-                                                           tr( "Target Value:" ),
-                                                           tr( "Tolerance:" ),
-                                                           tr( "Measured Value:" ),
-                                                           tr( "Std. Dev." ),
-                                                           tr( "PASSED ?" ) );
+      html_assembled += table_row( tr( "Parameter: " ),
+                                   tr( "Target Value:" ),
+                                   tr( "Tolerance:" ),
+                                   tr( "Measured Value:" ),
+                                   tr( "Std. Dev." ),
+                                   tr( "PASSED ?" ) );
 
 
       //Iterate over Time Stamp params...
@@ -6763,8 +6775,8 @@ void  US_ReporterGMP::assemble_run_details_html( void )
           QString                            val_measured_hh_mm = US_ReporterGmp::duration_hours_minutes( duration_check.value );
           val_passed                                            = duration_check.passed ? "YES" : "NO";
 
-          html_assembled += US_ReportText::table_row_unclosed(
-             tr( "Duration" ), val_target_hh_mm, QString::number( val_tol ) + "%", val_measured_hh_mm, "", val_passed );
+          html_assembled +=
+             table_row( tr( "Duration" ), val_target_hh_mm, QString::number( val_tol ) + "%", val_measured_hh_mm, "", val_passed );
        }
 
        //Temperature
@@ -6779,12 +6791,12 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 
           val_measured_stdd = davgs_stdd_first_scan[dkeys[i]]["Stdd"];
 
-          html_assembled += US_ReportText::table_row_unclosed( dkeys[i] + " (&#8451;)",
-                                                               QString::number( val_target ),
-                                                               "&#177;" + QString::number( val_tol ),
-                                                               QString::number( val_measured ),
-                                                               QString::number( val_measured_stdd ),
-                                                               val_passed );
+          html_assembled += table_row( dkeys[i] + " (&#8451;)",
+                                       QString::number( val_target ),
+                                       "&#177;" + QString::number( val_tol ),
+                                       QString::number( val_measured ),
+                                       QString::number( val_measured_stdd ),
+                                       val_passed );
 
           //Plot Temp. plot
           QString img01File = dirName + "/" + "RunDetails_Temperature" + svgext;
@@ -6803,12 +6815,12 @@ void  US_ReporterGMP::assemble_run_details_html( void )
           val_measured = check.value;
           val_passed   = check.passed ? "YES" : "NO";
 
-          html_assembled += US_ReportText::table_row_unclosed( "Speed (RPM)",
-                                                               QString::number( val_target ),
-                                                               "&#177;" + QString::number( val_tol ),
-                                                               QString::number( val_measured ),
-                                                               "",
-                                                               val_passed );
+          html_assembled += table_row( "Speed (RPM)",
+                                       QString::number( val_target ),
+                                       "&#177;" + QString::number( val_tol ),
+                                       QString::number( val_measured ),
+                                       "",
+                                       val_passed );
 
           //Plot Raw Speed plot
           QString img01File = dirName + "/" + "RunDetails_Speed" + svgext;
@@ -8361,16 +8373,10 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
    mstr += table_row( tr( "Analysed at:" ), analysis_time_abde + " (UTC)");
    mstr += indent( 2 ) + "</table>\n";
 
-   //if MWL-Deconv., add info on which analytes' ext. profiles have been used
-   bool mwl_abde = false;
-   for ( int ii = 0; ii < currProto.rpRange. nranges; ii++ )
-     {
-       if ( currProto.rpRange. chrngs[ii].wvlens.size() > 1 )
-	 {
-	   mwl_abde = true;
-	   break;
-	 }
-     }
+   // A mixed protocol can contain a channel with only one loaded signal.
+   // Use this channel's data, not another channel's wavelength count.
+   QMap<QString, QVector<QVector<double>>> abde_data = abde_data_per_channel.value( abde_channame );
+   const bool                              mwl_abde  = abde_data.value( "yvaluesN" ).size() > 1;
    //Hoisted out of the if(mwl_abde) block below so the Integration Results
    //section further down can reuse it to show human-readable analyte names
    //instead of the sanitized sample keys, without a second DB round-trip.
@@ -8416,7 +8422,6 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
      abde_dist_info = "Radial Pos., Sample Data (Norm.), Sample Integral (Norm.)";
    html_abde_s += abde_dist_info + "<br>";
 
-   QMap < QString, QVector<QVector<double>>> abde_data = abde_data_per_channel[abde_channame];
    const double *xp, *yp_dna, *yp_protein, *yp_int_dna, *yp_int_protein;
    xp = abde_data[ "xvalues" ].at(0).data();
    int xvals_size = abde_data[ "xvalues" ].at(0).size();
@@ -8803,16 +8808,7 @@ QString US_ReporterGMP::html_header_abde( QString title, QString runName,
   qDebug() << "[in html_header_abde()], title, runName, abde_chanName -- "
 	   << title << runName << abde_chanName;
 
-  //check if MWL-Doconv.
-  bool mwl_abde = false;
-  for ( int ii = 0; ii < currProto.rpRange. nranges; ii++ )
-    {
-      if ( currProto.rpRange. chrngs[ii].wvlens.size() > 1 )
-	{
-	  mwl_abde = true;
-	  break;
-	}
-    }
+  const bool mwl_abde   = abde_data_per_channel.value( abde_chanName ).value( "yvaluesN" ).size() > 1;
   QString etype_abde = mwl_abde ? " (MWL-DECONV.)" : "";
   
    QString s = QString( "<?xml version=\"1.0\"?>\n" );

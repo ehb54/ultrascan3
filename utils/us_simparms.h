@@ -37,12 +37,13 @@ class US_UTIL_EXTERN US_SimulationParameters
    void initFromData( IUS_DB2*, US_DataIO::RawData&, int,  bool = true,
 		      QString = "",  QString = "");
 
-   //! \brief A function to update the simulation parameters to match 
+   //! \brief A function to update the simulation parameters to match
    //! an experiment's edited data.
    //! \param db         Pointer to opened database connection or NULL
    //! \param editdata   Data structure of edited data that contains run info.
    //! \param incl_speed Flag to include speed steps in update
-   void initFromData( IUS_DB2*, US_DataIO::EditedData&, bool = true );
+   //! The run is looked up as investigator \a invID; -1 for the current investigator.
+   void                    initFromData( IUS_DB2*, US_DataIO::EditedData&, bool = true, int invID = -1 );
 
    //! \brief Read hardware files to update bottom and rotor coefficients array
    //! \param db     Pointer to opened database connection or NULL
@@ -113,8 +114,9 @@ class US_UTIL_EXTERN US_SimulationParameters
    //! \param speedsteps Speed steps recorded for the experiment
    //! \param editdata   Edited data whose first and last scan times are checked
    //! \returns          True if there is at least one step and the first and last
-   //!                    scans lie within every step's time range; false means the
-   //!                    speed steps should be derived from the data instead
+   //!                    scans lie within the run the steps describe, from the
+   //!                    first step's start to the last step's end; false means
+   //!                    the speed steps should be derived from the data instead
    static bool             speedStepsCoverData( const QVector<SpeedProfile>&, const US_DataIO::EditedData& );
 
    //! \brief A function to compute speed steps from all data scans

@@ -36,6 +36,8 @@
 using US_ReportText::indent;
 using US_ReportText::table_row;
 
+static double baselineAverage( const US_DataIO::EditedData& ed );
+
 
 // US_FeMatch class constructor
 US_FeMatch::US_FeMatch() : US_Widgets()
@@ -535,30 +537,13 @@ DbgLv(0) << "LD: newfile" << newfile << "idExp" << idExp
    int nssp       = speed_steps.count();
    int ntriples   = triples.size();
    DbgLv(1) << "LD: Load: no of speed steps" << nssp;
-   
-   if ( nssp > 0 )
-     {
-      for ( int ii = 0; ii < nssp; ii++ )
-      {
-         int stm1   = speed_steps[ ii ].time_first;
-         int stm2   = speed_steps[ ii ].time_last;
-         for ( int ds = 0; ds < ntriples; ds++ )
-         {   // Scan data time ranges and compare to experiment speed steps
-            edata      = &dataList[ ds ];
-            int lesc   = edata->scanCount() - 1;
-            int etm1   = edata->scanData[    0 ].seconds;
-            int etm2   = edata->scanData[ lesc ].seconds;
-DbgLv(1) << "LD:  ds" << ds << "step" << ii << "stimes" << stm1 << stm2
- << "etimes" << etm1 << etm2 << "lesc" << lesc;
 
-            if ( etm1 < stm1  ||  etm2 > stm2 )
-            {  // Data times beyond speed step ranges, so flag use of data ranges
-               nssp       = 0;
-               qDebug() << "Data is beyond range ex:" << etm1 << etm2 << "ss:" << stm1 << stm2;
-               //speed_steps.clear();
-               break;
-            }
-         }
+   // Data outside the run the experiment's steps describe takes its steps from the data
+   for ( int ds = 0; ds < ntriples && nssp > 0; ds++ )
+   {
+      if ( !US_SimulationParameters::speedStepsCoverData( speed_steps, dataList[ds] ) )
+      {
+         nssp = 0;
       }
    }
 
@@ -840,15 +825,7 @@ void US_FeMatch::data_plot( void )
    US_Math2::data_correction( avgTemp, solution );
 
    dscan           = &edata->scanData.last();
-   int    point    = US_DataIO::index( dataList[ drow ].xvalues,
-                                       dataList[ drow ].baseline );
-   point           = ( point < 5 ) ? 5 : point;
-   double baseline = 0.0;
-
-   for ( int jj = point - 5; jj < point + 6; jj++ )
-      baseline       += dscan->rvalues[ jj ];
-
-   baseline       /= 11.0;
+   double baseline = baselineAverage( dataList[drow] );
 
    // Draw curves
    for ( int ii = 0; ii < scanCount; ii++ )
@@ -1985,10 +1962,14 @@ DbgLv(1) << "SimMdl: n) s D c"
    US_Passwd pw;
    US_DB2* dbP = dkdb_cntrls->db() ? new US_DB2( pw.getPasswd() ) : NULL;
 
-   // The time state is replaced only from the first triple
+   // As the fit decided: a model fitted to this triple alone uses the experiment's
+   // steps if they cover this triple; a global model, if they cover every triple
+   const bool  global_fit    = ( model.global == US_Model::GLOBAL || model.global == US_Model::SUPERGLOBAL );
+   const bool  steps_cover   = global_fit ? exp_steps : US_SimulationParameters::speedStepsCoverData( speed_steps, *edata );
+   // Rebuild an older time state for this triple without changing the shared run files
    QString     tmst_fpath = US_Settings::resultDir() + "/" + runID + "/" + runID + ".time_state.tmst";
-   QStringList check_results =
-      US_ModelSimulation::prepare( dbP, *edata, model, adv_vals, exp_steps, speed_steps, tmst_fpath, drow == 0, simparams, *sdata );
+   QStringList check_results = US_ModelSimulation::prepare(
+      dbP, -1, *edata, model, adv_vals, steps_cover, speed_steps, tmst_fpath, US_ModelSimulation::TimeState::Temporary, simparams, *sdata );
    if ( !check_results.isEmpty() ) {
        QMessageBox msgBox( this );
        msgBox.setWindowTitle( tr( qPrintable( check_results[0] ) ) );
@@ -2199,18 +2180,35 @@ void US_FeMatch::write_dset_report( QString& dsfname )
    return;
 }
 
+// The average of the last scan's 11 readings around the baseline radius,
+// moved inside the data where the baseline lies near or past its ends
+static double baselineAverage( const US_DataIO::EditedData& ed )
+{
+   const QVector<double>& last  = ed.scanData.last().rvalues;
+   const int              count = last.size();
+   if ( count < 11 )
+   {
+      double sum = 0.0;
+      for ( double v : last )
+      {
+         sum += v;
+      }
+      return count > 0 ? sum / count : 0.0;
+   }
+   const int point = US_DataIO::index( ed.xvalues, ed.baseline );
+   const int first = qBound( 0, point - 5, count - 11 );
+   double    bl    = 0.0;
+   for ( int jj = first; jj < first + 11; jj++ )
+   {
+      bl += last[jj];
+   }
+   return ( bl / 11.0 );
+}
+
 // Calculate average baseline absorbance
 double US_FeMatch::calc_baseline( int drow ) const
 {
-   const US_DataIO::EditedData* dd = &dataList[ drow ];
-   const US_DataIO::Scan*       ss = &dd->scanData.last();
-   int     nn    = US_DataIO::index( dd->xvalues, dd->baseline );
-   double  bl    = 0.0;
-
-   for ( int jj = nn - 5; jj < nn + 6; jj++ )
-      bl += ss->rvalues[ jj ];
-
-   return ( bl / 11.0 );
+   return baselineAverage( dataList[drow] );
 }
 
 // Calculate residual absorbance values (data - sim - noise)
@@ -3523,29 +3521,12 @@ void US_FeMatch::auto_load_simulate( US_DataIO::RawData i_rdata,
    int ntriples   = triples.size();
    DbgLv(1) << "LD: Load: no of speed steps" << nssp;
 
-   if ( nssp > 0 )
+   // Data outside the run the experiment's steps describe takes its steps from the data
+   for ( int ds = 0; ds < ntriples && nssp > 0; ds++ )
    {
-      for ( int ii = 0; ii < nssp; ii++ )
+      if ( !US_SimulationParameters::speedStepsCoverData( speed_steps, dataList[ds] ) )
       {
-         int stm1   = speed_steps[ ii ].time_first;
-         int stm2   = speed_steps[ ii ].time_last;
-         for ( int ds = 0; ds < ntriples; ds++ )
-         {   // Scan data time ranges and compare to experiment speed steps
-            edata      = &dataList[ ds ];
-            int lesc   = edata->scanCount() - 1;
-            int etm1   = edata->scanData[    0 ].seconds;
-            int etm2   = edata->scanData[ lesc ].seconds;
-            DbgLv(1) << "LD:  ds" << ds << "step" << ii << "stimes" << stm1 << stm2
-                     << "etimes" << etm1 << etm2 << "lesc" << lesc;
-
-            if ( etm1 < stm1  ||  etm2 > stm2 )
-            {  // Data times beyond speed step ranges, so flag use of data ranges
-               nssp       = 0;
-               qDebug() << "Data is beyond range ex:" << etm1 << etm2 << "ss:" << stm1 << stm2;
-               //speed_steps.clear();
-               break;
-            }
-         }
+         nssp = 0;
       }
    }
 

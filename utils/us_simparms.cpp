@@ -124,7 +124,8 @@ US_SimulationParameters::SimSpeedProf::SimSpeedProf()
    time_e_accel      = 0;
    time_f_scan       = 0;
    time_l_scan       = 0;
-  // sim               = false ;
+   time_e_step       = 0;
+   // sim               = false ;
 }
 
 // Set simulation parameter values from an experimental RawData set.
@@ -466,8 +467,7 @@ DbgLv(2) << "SP:iFD: bottom" << bottom;
 }
 
 // Set simulation parameter values from an experimental EditedData set.
-void US_SimulationParameters::initFromData( IUS_DB2* db,
-   US_DataIO::EditedData& editdata, bool incl_speed )
+void US_SimulationParameters::initFromData( IUS_DB2* db, US_DataIO::EditedData& editdata, bool incl_speed, int invID )
 {
    SpeedProfile sp;
 
@@ -553,9 +553,7 @@ DbgLv(1) << "SP:iFD:    cp_id" << cp_id;
       int         cpIDsv   = cp_id;
 //DbgLv(2) << "Sim parms:runID" << editdata.runID;
 //DbgLv(2) << "Sim parms:invID" << US_Settings::us_inv_ID();
-      query << "get_experiment_info_by_runID"
-            << editdata.runID
-            << QString::number( US_Settings::us_inv_ID() );
+      query << "get_experiment_info_by_runID" << editdata.runID << QString::number( invID < 0 ? US_Settings::us_inv_ID() : invID );
       db->query( query );
       stat_db = db->lastErrno();
 //DbgLv(2) << "Sim parms:query() stat" << stat_db;
@@ -721,15 +719,8 @@ bool US_SimulationParameters::speedStepsCoverData( const QVector<SpeedProfile>& 
    const double first = editdata.scanData.first().seconds;
    const double last  = editdata.scanData.last().seconds;
 
-   for ( const SpeedProfile& step : speedsteps )
-   {
-      if ( first < step.time_first || last > step.time_last )
-      {
-         return false;
-      }
-   }
-
-   return true;
+   // The scans must lie within the run the steps describe
+   return first >= speedsteps.first().time_first && last <= speedsteps.last().time_last;
 }
 
 // Compute the speed steps vector from data scans

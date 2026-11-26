@@ -3356,15 +3356,15 @@ bool US_Analysis_auto::loadData( QMap < QString, QString > & triple_information 
 bool US_Analysis_auto::loadModel( QMap < QString, QString > & triple_information )
 {
   US_Passwd   pw;
-  US_DB2* db = new US_DB2( pw.getPasswd() );
+  US_DB2 db( pw.getPasswd() );
     
-  if ( db->lastErrno() != US_DB2::OK )
+  if ( db.lastErrno() != US_DB2::OK )
     {
       QApplication::restoreOverrideCursor();
       QMessageBox::information( this,
 				tr( "DB Connection Problem" ),
 				tr( "There was an error connecting to the database:\n" )
-				+ db->lastError() );
+				+ db.lastError() );
       
       return false;
     }
@@ -3372,19 +3372,17 @@ bool US_Analysis_auto::loadModel( QMap < QString, QString > & triple_information
   //first, get ModelIDs corresponding to editedDataID AND triple_stage && select latest one
   QStringList query;
   query << "get_modelDescsIDs" << triple_information[ "eID" ];
-  db->query( query );
+  db.query( query );
   
   qDebug() << "In loadModel() Query: " << query;
-  
-  int latest_update_time = 1e100;
-  int mID=0;
-  
-  while ( db->next() )
+
+  US_NewestRecord newest; // the stage's most recently updated model
+
+  while ( db.next() )
     {
-      QString  description         = db->value( 0 ).toString();
-      int      modelID             = db->value( 1 ).toInt();
-      //QString  date                = US_Util::toUTCDatetimeText( db->value( 3 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
-      QDateTime date               = db->value( 2 ).toDateTime();
+      QString  description         = db.value( 0 ).toString();
+      int         modelID             = db.value( 1 ).toInt();
+      QDateTime date               = db.value( 2 ).toDateTime();
 
       QDateTime now = QDateTime::currentDateTime();
 
@@ -3395,55 +3393,43 @@ bool US_Analysis_auto::loadModel( QMap < QString, QString > & triple_information
 	  if (!description.contains(sub))
 	    stage_identity = false; 
 	}
-      
-      //if ( description.contains( triple_information[ "stage_name" ] ) )
+
       if ( stage_identity )
 	{
 	  if ( triple_information[ "stage_name" ] == "2DSA" )
 	    {
 	      if ( !description.contains("-FM_") && !description.contains("-IT_") && !description.contains("-MC_") && !description.contains("_mcN") )
-		{
-		  int time_to_now = date.secsTo(now);
-		  if ( time_to_now < latest_update_time )
-		    {
-             latest_update_time = time_to_now;
-
-             qDebug() << "Model 2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
-
-             mID = modelID;
-          }
-      }
+            newest.offer( modelID, date.secsTo( now ) );
        }
        else
        {
-          int time_to_now = date.secsTo( now );
-          if ( time_to_now < latest_update_time )
-          {
-             latest_update_time = time_to_now;
-
-             qDebug() << "Model NON-2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
-
-             mID = modelID;
-          }
+          newest.offer( modelID, date.secsTo( now ) );
        }
    }
     }
-  
-  int  rc      = 0;
-  qDebug() << "ModelID to retrieve: -- " << mID;
-  rc   = model.load( QString::number( mID ), db );
-  qDebug() << "LdM:  model load rc" << rc;
-  qApp->processEvents();
 
-  model_loaded = model;   // Save model exactly as loaded
-  model_used   = model;   // Make that the working model
-  is_dmga_mc   = ( model.monteCarlo  &&
-		   model.description.contains( "DMGA" )  &&
-		   model.description.contains( "_mcN" ) );
-  qDebug() << "post-Load mC" << model.monteCarlo << "is_dmga_mc" << is_dmga_mc
-	   << "description" << model.description;
-  
-  if ( model.components.size() == 0 )
+    int mID = newest.id();
+
+    int rc = 0;
+    qDebug() << "ModelID to retrieve: -- " << mID;
+    rc = model.load( QString::number( mID ), &db );
+    qDebug() << "LdM:  model load rc" << rc;
+    if ( rc != US_DB2::OK )
+    {
+       QMessageBox::critical( this, tr( "Model Load Failed" ),
+                              tr( "Could not load model %1 for %2 (%3)." )
+                                 .arg( mID )
+                                 .arg( triple_information.value( "triple_name" ), triple_information.value( "stage_name" ) ) );
+       return false;
+    }
+    qApp->processEvents();
+
+    model_loaded = model; // Save model exactly as loaded
+    model_used   = model; // Make that the working model
+    is_dmga_mc   = ( model.monteCarlo && model.description.contains( "DMGA" ) && model.description.contains( "_mcN" ) );
+    qDebug() << "post-Load mC" << model.monteCarlo << "is_dmga_mc" << is_dmga_mc << "description" << model.description;
+
+    if ( model.components.size() == 0 )
     {
       QMessageBox::critical( this, tr( "Empty Model" ),
 			     tr( "Loaded model has ZERO components!" ) );
@@ -3473,7 +3459,7 @@ bool US_Analysis_auto::loadNoises( QMap < QString, QString > & triple_informatio
 }
 
 //Simulate Model
-void US_Analysis_auto::simulateModel( )
+bool US_Analysis_auto::simulateModel()
 {
   progress_msg->setLabelText( "Simulating model..." );
   progress_msg->setValue( 0 );
@@ -3507,8 +3493,8 @@ void US_Analysis_auto::simulateModel( )
   exp_steps = US_SimulationParameters::speedStepsCoverData( speed_steps, *edata );
   dat_steps = !exp_steps;
   QString     tmst_fpath = US_Settings::resultDir() + "/" + FileName_parsed + "/" + FileName_parsed + ".time_state.tmst";
-  QStringList check_results =
-     US_ModelSimulation::prepare( dbP, *edata, model, adv_vals, exp_steps, speed_steps, tmst_fpath, true, simparams, *sdata );
+  QStringList check_results = US_ModelSimulation::prepare(
+     dbP, invID, *edata, model, adv_vals, exp_steps, speed_steps, tmst_fpath, US_ModelSimulation::TimeState::Replace, simparams, *sdata );
   if ( !check_results.isEmpty() )
   {
      QMessageBox msgBox( this );
@@ -3536,7 +3522,7 @@ void US_Analysis_auto::simulateModel( )
      {
         QApplication::restoreOverrideCursor();
         qApp->processEvents();
-        return;
+        return false;
      }
   }
   sdata->cell        = rdata->cell;
@@ -3562,6 +3548,8 @@ void US_Analysis_auto::simulateModel( )
   }
   else
      simulation()->start( model, simparams, *sdata, solution_rec.buffer, compress, manual, nthread );
+
+  return true;
 }
 
 // The simulation runner, connected to the progress dialog and results
@@ -3988,17 +3976,28 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
   solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
   
   US_Math2::data_correction( avgTemp, solution );
-  
+
 
   //Load Model (latest ) && noise(s)
-  loadModel( triple_info_map  );
+  // A model that cannot be used ends the overlay as a failed data load does
+  if ( !loadModel( triple_info_map ) )
+  {
+     progress_msg->close();
+     resplot_done(); // restart the update timer stopped above
+     return;
+  }
   progress_msg->setValue( 5 );
   qApp->processEvents();
 
-  //Simulate Model
-  simulateModel();
+  //Simulate Model; Abort in the acceleration message ends the overlay the same way
+  if ( !simulateModel() )
+  {
+     progress_msg->close();
+     resplot_done(); // restart the update timer stopped above
+     return;
+  }
 
-  
+
   qDebug() << "Closing sim_msg-- ";
   //msg_sim->accept();
   progress_msg->finish();

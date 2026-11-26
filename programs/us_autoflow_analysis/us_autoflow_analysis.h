@@ -583,8 +583,9 @@ class US_Analysis_auto : public US_Widgets
 
       /**
              * @brief Simulates the model data.
+             * @return False if the simulation was aborted.
              */
-      void                                  simulateModel( void );
+      bool                                  simulateModel( void );
 
       /**
              * @brief Adjusts the model data.

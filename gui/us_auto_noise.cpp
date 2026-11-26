@@ -65,44 +65,25 @@ bool US_AutoNoise::loadNoises( QMap<QString, QString>& triple_information )
 
    qDebug() << "In loadNoises() Query: " << query;
 
-   int latest_update_time_ti = 1e100;
-   int latest_update_time_ri = 1e100;
-   int nID_ti                = 0;
-   int nID_ri                = 0;
+   US_NewestRecord newest_ti;
+   US_NewestRecord newest_ri;
 
    while ( db->next() )
    {
       int       noiseID   = db->value( 0 ).toInt();
       QString   noiseType = db->value( 1 ).toString();
-      //QString  date                = US_Util::toUTCDatetimeText( db->value( 2 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
       QDateTime date      = db->value( 2 ).toDateTime();
 
       QDateTime now = QDateTime::currentDateTime();
 
-      qDebug() << "Noises: noiseID, noiseType, date -- " << noiseID << noiseType << date;
-
       if ( noiseType.contains( "ti_" ) )
-      {
-         int time_to_now = date.secsTo( now );
-         if ( time_to_now < latest_update_time_ti )
-         {
-            latest_update_time_ti = time_to_now;
-
-            nID_ti = noiseID;
-         }
-      }
+         newest_ti.offer( noiseID, date.secsTo( now ) );
       if ( noiseType.contains( "ri_" ) )
-      {
-         int time_to_now = date.secsTo( now );
-         if ( time_to_now < latest_update_time_ri )
-         {
-            latest_update_time_ri = time_to_now;
-
-            nID_ri = noiseID;
-         }
-      }
+         newest_ri.offer( noiseID, date.secsTo( now ) );
    }
 
+   int nID_ti = newest_ti.id();
+   int nID_ri = newest_ri.id();
 
    //ALEXEY: treat the case when model (like -MC does not possess its own noises -- use latest available noises for prior model like -IT  )
    //int US_LoadableNoise::count_noise() in ../../gui/us_loadable_noise.cpp
