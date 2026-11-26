@@ -72,14 +72,6 @@ public:
                 (const QString& filename, const QString& procedure, const int tableID),
                 (override));
 
-    MOCK_METHOD(int, writeAucToDB,
-                (const QString& filename, int tableID),
-                (override));
-
-    MOCK_METHOD(int, readAucFromDB,
-                (const QString& filename, int tableID),
-                (override));
-
     // Utility methods
     MOCK_METHOD(unsigned long, mysqlEscapeString,
                 (QByteArray& to, QByteArray& from, unsigned long length),

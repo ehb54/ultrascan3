@@ -4,9 +4,8 @@
 #include "errmsg.h"
 #include "mysqld_error.h"
 #endif
-#include "us_settings.h"
 #include "us_crypto.h"
-#include "us_gzip.h"
+#include "us_settings.h"
 #include "us_util.h"
 
 #include <QRegularExpression>
@@ -1220,64 +1219,6 @@ unsigned long US_DB2::mysqlEscapeString( QByteArray& to, QByteArray& from, unsig
    // The trailing '\0' shouldn't be included in the size
    to.resize( to_length );
    return to_length;
-}
-#endif
-
-#ifdef NO_DB
-int US_DB2::writeAucToDB( const QString&, int ) { return 0; }
-#else
-int US_DB2::writeAucToDB( const QString& filename, int tableID ) 
-{
-   // First compress th file
-   US_Gzip gz;
-   int     retCode = gz.gzip( filename );
-   
-   QString fn = filename;
-
-   if ( retCode == 0 )
-   {  
-      fn  += ".gz";  // gzip renames the file
-      retCode = writeBlobToDB( fn, "upload_aucData", tableID );
-
-      // Now uncompress the file
-      gz.gzip( fn );
-   }
-
-   return retCode;
-}
-#endif
-
-#ifdef NO_DB
-int US_DB2::readAucFromDB( const QString&, int ) { return 0; }
-#else
-int US_DB2::readAucFromDB( const QString& filename, int tableID ) 
-{
-   QString fn = filename + ".gz";
-
-   int retCode = readBlobFromDB( fn, "download_aucData", tableID );
-
-   if ( retCode == OK )
-   {
-      // Check to see if it is a gzipped file
-      char  buf[ 2 ];
-      QFile t( fn );
-      t.open( QIODevice::ReadOnly );
-      t.peek( buf, 2 );
-      t.close();
-
-      // Look for gzip magic number
-      if ( buf[ 0 ] == '\037'  &&  buf[ 1 ] == '\213' )
-      {
-         US_Gzip gz;
-         retCode = gz.gunzip( fn );
-      }
-      else // not a gz file, jsut rename it
-      {
-         QFile::rename( fn, filename ); 
-      }
-   }
-
-   return retCode;
 }
 #endif
 

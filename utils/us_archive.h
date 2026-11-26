@@ -27,6 +27,13 @@ public:
     //! \return True if compression is completed, false otherwise.
     bool compress(const QStringList&, QString&);
 
+    //! \brief Method to compress a single file with gzip, without a tar or zip container.
+    //! \param sourcePath Path to the file to compress. It is left in place.
+    //! \param gzipPath   Path to the gzip file to write. An existing file is replaced only on success.
+    //! \param level      Compression level, 0 (none) to 9 (smallest). Any other value fails.
+    //! \return True if compression is completed, false otherwise.
+    bool    gzip( const QString&, const QString&, int level = 9 );
+
     //! \brief Method to receive the error string.
     //! \return Error string.
     QString getError();

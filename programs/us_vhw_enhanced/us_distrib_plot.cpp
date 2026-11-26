@@ -123,7 +123,10 @@ void US_DistribPlot::save_plots( QString& plot1File, QString& plot2File )
 
    plot_distrib();
 
-   US_GuiUtil::save_plot( plot1File, data_plot );
+   if ( US_GuiUtil::save_plot( plot1File, data_plot ) != 0 )
+   {
+      qWarning() << plot1File << "plot not saved";
+   }
 
    // Set up, generate combined histogram plot and save it to a file
    dataPlotClear( data_plot );
@@ -136,7 +139,10 @@ void US_DistribPlot::save_plots( QString& plot1File, QString& plot2File )
 
    plot_combined();
 
-   US_GuiUtil::save_plot( plot2File, data_plot );
+   if ( US_GuiUtil::save_plot( plot2File, data_plot ) != 0 )
+   {
+      qWarning() << plot2File << "plot not saved";
+   }
 
    QString runID = plot1File.section( "/", -2, -2 );
 

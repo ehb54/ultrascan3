@@ -362,19 +362,7 @@ QwtCounter* US_Widgets::us_counter( int buttons, double low, double high,
   counter->setAutoFillBackground( true );
 
   // Set min,curr width based on current value and high-value sizes
-  int          ncv       = 1;
-  const double magnitude = std::fabs( value );
-  if ( magnitude > 0.0 && std::isfinite( magnitude ) )
-  {
-     ncv = int( std::log10( magnitude ) ) + 1;
-     ncv = ( ncv > 0 ) ? ncv : ( 4 - ncv );
-  }
-  if ( value < 0.0 )
-  {
-     ++ncv;
-  }
-  ncv        = qBound( 1, ncv, 14 );
-  int widv   = fm.horizontalAdvance( QString( "12345678901234" ).left( ncv ) );
+  int widv = fm.horizontalAdvance( QString( "12345678901234" ).left( US_GuiUtil::counter_digits( value ) ) );
   counter->adjustSize();
   int mwidth = widv * 2 + totwid;
   counter->setMinimumWidth( mwidth );
@@ -745,7 +733,10 @@ QSpinBox* US_Widgets::us_spinbox( const int fontAdjust )
 
 void US_Widgets::write_plot( const QString& fname, const QwtPlot* plot )
 {
-   US_GuiUtil::save_plot( fname, plot );
+   if ( US_GuiUtil::save_plot( fname, plot ) != 0 )
+   {
+      qWarning() << fname << "plot not saved";
+   }
 }
 
 // Clean up install and work ./etc directories
