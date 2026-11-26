@@ -782,23 +782,13 @@ template <class Frozen> Outcome runFrozen( Frozen& f, SetupCase c, const QTempor
    return { dumpParms( f.simparams, root.path() ), dumpData( sdata ), results.join( "|" ), dumpFiles( US_Settings::resultDir() ) };
 }
 
-Outcome runShared( SetupCase c, bool exp_steps, bool rewrite, const QTemporaryDir& root, const QString& name )
+Outcome runShared( SetupCase c, bool exp_steps, const QTemporaryDir& root, const QString& name )
 {
    const QString           tmst = freshResults( root, name, c );
    US_DataIO::RawData      sdata;
    US_SimulationParameters simparams;
    const QStringList       results =
-      US_ModelSimulation::prepare( nullptr,
-                                   -1,
-                                   c.edata,
-                                   c.model,
-                                   c.adv_vals,
-                                   exp_steps,
-                                   c.speed_steps,
-                                   tmst,
-                                   rewrite ? US_ModelSimulation::TimeState::Replace : US_ModelSimulation::TimeState::Keep,
-                                   simparams,
-                                   sdata );
+      US_ModelSimulation::prepare( nullptr, -1, c.edata, c.model, c.adv_vals, exp_steps, c.speed_steps, tmst, simparams, sdata );
    return { dumpParms( simparams, root.path() ), dumpData( sdata ), results.join( "|" ), dumpFiles( US_Settings::resultDir() ) };
 }
 
@@ -872,11 +862,16 @@ TEST_F( TestUSModelSimulation, PrepareMatchesTheThreeOldCopies )
    const QString saved = US_Settings::workBaseDir();
    QTemporaryDir root;
    std::mt19937  rng( 1243 );
-   int           cases = 0, replaced = 0, rewriteSkipped = 0, finiteVolume = 0, checkMessages = 0;
+   int           cases = 0, finiteVolume = 0, checkMessages = 0;
    for ( int n = 0; n < 120; n++ )
    {
       SetupCase c = randomSetup( rng );
       SCOPED_TRACE( n );
+      // Older files now use temporary profiles and are covered separately.
+      if ( c.timestate == 2 )
+      {
+         continue;
+      }
       const bool         cover = US_SimulationParameters::speedStepsCoverData( c.speed_steps, c.edata );
 
       FrozenFeMatchSetup fe;
@@ -885,31 +880,27 @@ TEST_F( TestUSModelSimulation, PrepareMatchesTheThreeOldCopies )
       fe.exp_steps        = c.fematch_exp_steps;
       fe.dat_steps        = !c.fematch_exp_steps;
       const Outcome feOld = runFrozen( fe, c, root, QString( "fe-old-%1" ).arg( n ) );
-      const Outcome feNew = runShared( c, c.fematch_exp_steps, c.drow == 0, root, QString( "fe-new-%1" ).arg( n ) );
+      const Outcome feNew = runShared( c, c.fematch_exp_steps, root, QString( "fe-new-%1" ).arg( n ) );
       expectSame( feOld, feNew );
 
       FrozenAutoflowSetup au;
       au.FileName_parsed  = c.edata.runID;
       const Outcome auOld = runFrozen( au, c, root, QString( "au-old-%1" ).arg( n ) );
-      const Outcome auNew = runShared( c, cover, true, root, QString( "au-new-%1" ).arg( n ) );
+      const Outcome auNew = runShared( c, cover, root, QString( "au-new-%1" ).arg( n ) );
       expectSame( auOld, auNew );
 
       FrozenReporterSetup re;
       re.FileName_parsed  = c.edata.runID;
       const Outcome reOld = runFrozen( re, c, root, QString( "re-old-%1" ).arg( n ) );
-      const Outcome reNew = runShared( c, cover, true, root, QString( "re-new-%1" ).arg( n ) );
+      const Outcome reNew = runShared( c, cover, root, QString( "re-new-%1" ).arg( n ) );
       expectSame( reOld, reNew );
 
       cases++;
-      replaced += c.timestate == 2;
-      rewriteSkipped += c.timestate == 2 && c.drow != 0;
       finiteVolume += c.model.components[0].sigma != 0.0 || c.model.components[0].delta != 0.0;
       checkMessages += !auNew.results.isEmpty();
    }
    US_Settings::set_workBaseDir( saved );
-   EXPECT_EQ( cases, 120 );
-   EXPECT_GT( replaced, 20 );
-   EXPECT_GT( rewriteSkipped, 5 );
+   EXPECT_GT( cases, 60 );
    EXPECT_GT( finiteVolume, 10 );
    RecordProperty( "acceleration_messages", checkMessages );
 }
@@ -943,17 +934,8 @@ TEST_F( TestUSModelSimulation, TemporaryTimeStateUsesEachTriplesSpeedSteps )
    for ( bool exp_steps : { false, true, true, false } )
    {
       auto& c = exp_steps ? covered : uncovered;
-      US_ModelSimulation::prepare( nullptr,
-                                   -1,
-                                   c.edata,
-                                   c.model,
-                                   c.adv_vals,
-                                   exp_steps,
-                                   covered.speed_steps,
-                                   tmst,
-                                   US_ModelSimulation::TimeState::Temporary,
-                                   simparams,
-                                   sdata );
+      US_ModelSimulation::prepare(
+         nullptr, -1, c.edata, c.model, c.adv_vals, exp_steps, covered.speed_steps, tmst, simparams, sdata );
       EXPECT_NE( simparams.tsobj, nullptr );
       EXPECT_FALSE( simparams.sim_speed_prof.isEmpty() );
       if ( !simparams.sim_speed_prof.isEmpty() )
@@ -981,17 +963,7 @@ TEST_F( TestUSModelSimulation, ThreadsMatchFeMatchsSplitAndSum )
       const US_Model          model = manyComponents( 26 * nthread + 1 );
       US_SimulationParameters simparams;
       US_DataIO::RawData      grid;
-      US_ModelSimulation::prepare( nullptr,
-                                   -1,
-                                   edata,
-                                   model,
-                                   adv,
-                                   false,
-                                   {},
-                                   root.path() + "/none.tmst",
-                                   US_ModelSimulation::TimeState::Replace,
-                                   simparams,
-                                   grid );
+      US_ModelSimulation::prepare( nullptr, -1, edata, model, adv, false, {}, root.path() + "/none.tmst", simparams, grid );
 
       FrozenFeMatchThreads old;
       US_DataIO::RawData   oldData = grid;
@@ -1047,17 +1019,7 @@ TEST_F( TestUSModelSimulation, SimulatesInThisThreadWithTheOldSolvers )
       model.components[0].sigma = sigma;
       US_SimulationParameters simparams;
       US_DataIO::RawData      grid;
-      US_ModelSimulation::prepare( nullptr,
-                                   -1,
-                                   edata,
-                                   model,
-                                   adv,
-                                   false,
-                                   {},
-                                   root.path() + "/none.tmst",
-                                   US_ModelSimulation::TimeState::Replace,
-                                   simparams,
-                                   grid );
+      US_ModelSimulation::prepare( nullptr, -1, edata, model, adv, false, {}, root.path() + "/none.tmst", simparams, grid );
 
       // The old code: a new solver of the same kind, given no buffer
       US_DataIO::RawData oldData = grid;
@@ -1107,17 +1069,7 @@ TEST_F( TestUSModelSimulation, WorkerThreadsEndWithTheSimulation )
    const US_Model          model = manyComponents( 2 * 26 + 1 );
    US_SimulationParameters simparams;
    US_DataIO::RawData      grid;
-   US_ModelSimulation::prepare( nullptr,
-                                -1,
-                                edata,
-                                model,
-                                adv,
-                                false,
-                                {},
-                                root.path() + "/none.tmst",
-                                US_ModelSimulation::TimeState::Replace,
-                                simparams,
-                                grid );
+   US_ModelSimulation::prepare( nullptr, -1, edata, model, adv, false, {}, root.path() + "/none.tmst", simparams, grid );
 
    US_ModelSimulation sim;
    QEventLoop         loop;
@@ -1161,17 +1113,7 @@ TEST_F( TestUSModelSimulation, RefusedCoSedimentingSolverIsDeletedSafely )
    model.components[0].sigma    = 0.01;
    US_SimulationParameters simparams;
    US_DataIO::RawData      grid;
-   US_ModelSimulation::prepare( nullptr,
-                                -1,
-                                edata,
-                                model,
-                                adv,
-                                false,
-                                {},
-                                root.path() + "/none.tmst",
-                                US_ModelSimulation::TimeState::Replace,
-                                simparams,
-                                grid );
+   US_ModelSimulation::prepare( nullptr, -1, edata, model, adv, false, {}, root.path() + "/none.tmst", simparams, grid );
 
    // Build the solver over memory that is not zero, as the stack can be
    alignas( US_LammAstfvm ) unsigned char storage[sizeof( US_LammAstfvm )];
@@ -1207,17 +1149,7 @@ TEST_F( TestUSModelSimulation, CoSedimentingModelUsesTheBuffer )
    model.components[0].signal_concentration = 0.5;
    US_SimulationParameters simparams;
    US_DataIO::RawData      grid;
-   US_ModelSimulation::prepare( nullptr,
-                                -1,
-                                edata,
-                                model,
-                                adv,
-                                false,
-                                {},
-                                root.path() + "/none.tmst",
-                                US_ModelSimulation::TimeState::Replace,
-                                simparams,
-                                grid );
+   US_ModelSimulation::prepare( nullptr, -1, edata, model, adv, false, {}, root.path() + "/none.tmst", simparams, grid );
 
    US_Buffer          buffer;
    US_BufferComponent salt;

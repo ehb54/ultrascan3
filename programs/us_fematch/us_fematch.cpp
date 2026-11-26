@@ -1964,21 +1964,12 @@ DbgLv(1) << "SimMdl: n) s D c"
 
    // As the fit decided: a model fitted to this triple alone uses the experiment's
    // steps if they cover this triple; a global model, if they cover every triple
-   const bool  global_fit    = ( model.global == US_Model::GLOBAL || model.global == US_Model::SUPERGLOBAL );
-   const bool  steps_cover   = global_fit ? exp_steps : US_SimulationParameters::speedStepsCoverData( speed_steps, *edata );
+   const bool  global_fit  = ( model.global == US_Model::GLOBAL || model.global == US_Model::SUPERGLOBAL );
+   const bool  steps_cover = global_fit ? exp_steps : US_SimulationParameters::speedStepsCoverData( speed_steps, *edata );
    // Rebuild an older time state for this triple without changing the shared run files
-   QString     tmst_fpath    = US_Settings::resultDir() + "/" + runID + "/" + runID + ".time_state.tmst";
-   QStringList check_results = US_ModelSimulation::prepare( dbP,
-                                                            -1,
-                                                            *edata,
-                                                            model,
-                                                            adv_vals,
-                                                            steps_cover,
-                                                            speed_steps,
-                                                            tmst_fpath,
-                                                            US_ModelSimulation::TimeState::Temporary,
-                                                            simparams,
-                                                            *sdata );
+   QString     tmst_fpath  = US_Settings::resultDir() + "/" + runID + "/" + runID + ".time_state.tmst";
+   QStringList check_results =
+      US_ModelSimulation::prepare( dbP, -1, *edata, model, adv_vals, steps_cover, speed_steps, tmst_fpath, simparams, *sdata );
    if ( !check_results.isEmpty() ) {
        QMessageBox msgBox( this );
        msgBox.setWindowTitle( tr( qPrintable( check_results[0] ) ) );

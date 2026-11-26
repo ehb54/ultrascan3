@@ -23,13 +23,6 @@ class US_UTIL_EXTERN US_ModelSimulation : public QObject
    public:
       explicit US_ModelSimulation( QObject* parent = nullptr );
 
-      enum class TimeState
-      {
-         Keep,
-         Replace,
-         Temporary
-      };
-
       //! \brief Set \a simparams and the time grid of \a sdata for simulating
       //! \a model against \a edata.
       //! \param db          Connection for the rotor and centerpiece, or null
@@ -40,9 +33,7 @@ class US_UTIL_EXTERN US_ModelSimulation : public QObject
       //! \param exp_steps   Use \a speed_steps, the experiment's; otherwise
       //!                    the steps come from the data
       //! \param speed_steps The experiment's speed steps
-      //! \param tmst_fpath  The run's time state file
-      //! \param time_state  How to handle an existing time state at other than
-      //!                    1-second intervals
+      //! \param tmst_fpath  The run's time state file. Older files are rebuilt temporarily.
       //! \param simparams   Set
       //! \param sdata       Set to the data's time grid, with no readings
       //! \return The acceleration check's title, text and details; empty if
@@ -55,7 +46,6 @@ class US_UTIL_EXTERN US_ModelSimulation : public QObject
                                   bool                                                  exp_steps,
                                   const QVector<US_SimulationParameters::SpeedProfile>& speed_steps,
                                   const QString&                                        tmst_fpath,
-                                  TimeState                                             time_state,
                                   US_SimulationParameters&                              simparams,
                                   US_DataIO::RawData&                                   sdata );
 

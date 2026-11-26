@@ -5615,8 +5615,15 @@ bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
   //   }
 
 
-  int mID = Triple_to_ModelsDesc[ triple_information[ "triple_name" ] ] [ triple_information[ "stage_name" ] ].toInt();
-  
+    const QString triple = triple_information.value( "triple_name" );
+    const QString stage  = triple_information.value( "stage_name" );
+    const int     mID    = Triple_to_ModelsDesc.value( triple ).value( stage ).toInt();
+    if ( mID <= 0 )
+    {
+       QMessageBox::warning( this, tr( "No Stage Model" ), tr( "No model was found for %1 (%2)." ).arg( triple, stage ) );
+       return false;
+    }
+
   int  rc      = 0;
   qDebug() << "ModelID to retrieve for triple, stage: -- "
 	   << triple_information[ "triple_name" ]
@@ -5627,11 +5634,8 @@ bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
   qDebug() << "LdM:  model load rc" << rc;
   if ( rc != US_DB2::OK )
   {
-     QMessageBox::critical( this,
-                            tr( "Model Load Failed" ),
-                            tr( "Could not load model %1 for %2 (%3)." )
-                               .arg( mID )
-                               .arg( triple_information.value( "triple_name" ), triple_information.value( "stage_name" ) ) );
+     QMessageBox::critical(
+        this, tr( "Model Load Failed" ), tr( "Could not load model %1 for %2 (%3)." ).arg( mID ).arg( triple, stage ) );
      return false;
   }
   qApp->processEvents();
@@ -5717,17 +5721,8 @@ bool US_ReporterGMP::simulateModel( QMap<QString, QString>& tripleInfo )
   exp_steps = US_SimulationParameters::speedStepsCoverData( speed_steps, *edata );
   dat_steps = !exp_steps;
   QString     tmst_fpath    = US_Settings::resultDir() + "/" + FileName_parsed + "/" + FileName_parsed + ".time_state.tmst";
-  QStringList check_results = US_ModelSimulation::prepare( dbP.get(),
-                                                           invID,
-                                                           *edata,
-                                                           model,
-                                                           adv_vals,
-                                                           exp_steps,
-                                                           speed_steps,
-                                                           tmst_fpath,
-                                                           US_ModelSimulation::TimeState::Replace,
-                                                           simparams,
-                                                           *sdata );
+  QStringList check_results = US_ModelSimulation::prepare(
+     dbP.get(), invID, *edata, model, adv_vals, exp_steps, speed_steps, tmst_fpath, simparams, *sdata );
   dbP.reset();
   if ( !check_results.isEmpty() ) {
       QMessageBox msgBox( this );
