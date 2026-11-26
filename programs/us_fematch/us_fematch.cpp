@@ -5,31 +5,37 @@
 
 #include "us_fematch.h"
 #include "us_adv_dmgamc.h"
-#include "us_thread_worker.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_settings.h"
+#include "us_astfem_math.h"
+#include "us_colorgradIO.h"
+#include "us_constants.h"
+#include "us_data_loader.h"
+#include "us_distrib_stick.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
-#include "us_matrix.h"
-#include "us_constants.h"
-#include "us_solution_vals.h"
-#include "us_solution_gui.h"
-#include "us_passwd.h"
-#include "us_data_loader.h"
-#include "us_util.h"
 #include "us_investigator.h"
-#include "us_loadable_noise.h"
 #include "us_lamm_astfvm.h"
+#include "us_license.h"
+#include "us_license_t.h"
+#include "us_loadable_noise.h"
+#include "us_matrix.h"
+#include "us_model_simulation.h"
+#include "us_passwd.h"
 #include "us_report.h"
-#include "us_sleep.h"
-#include "us_astfem_math.h"
-#include "us_time_state.h"
+#include "us_report_text.h"
+#include "us_settings.h"
+#include "us_sim_residuals.h"
 #include "us_simparms.h"
-#include "us_colorgradIO.h"
+#include "us_sleep.h"
+#include "us_solution_gui.h"
+#include "us_solution_vals.h"
+#include "us_thread_worker.h"
+#include "us_time_state.h"
+#include "us_util.h"
 #include <QFileInfo>
 
-#define MIN_NTC   25
+using US_ReportText::indent;
+using US_ReportText::table_row;
+
 
 // US_FeMatch class constructor
 US_FeMatch::US_FeMatch() : US_Widgets()
@@ -1016,8 +1022,8 @@ void US_FeMatch::save_data( void )
    int drow = lw_triples->currentRow();
    mkdir( US_Settings::reportDir(), edata->runID );
    QString tripnode  = QString( triples.at( drow ) ).replace( " / ", "" );
-   QString basename  = US_Settings::reportDir() + "/" + edata->runID + "/"
-      + text_model( model, 0 ) + "." + tripnode + ".";
+   QString basename =
+      US_Settings::reportDir() + "/" + edata->runID + "/" + US_ReportText::text_model( model, 0, false ) + "." + tripnode + ".";
    QString htmlFile  = basename + "report.html";
    QString dsinfFile = basename.section( "/", 0, -2 ) + "/dsinfo."
                        + tripnode + ".dataset_info.html";
@@ -1355,93 +1361,10 @@ void US_FeMatch::distrib_type( )
    }
 }
 
-// Do stick type distribution plot
+// Plot the model's distribution as sticks
 void US_FeMatch::distrib_plot_stick( int type )
 {
-   QString pltitle = tr( "Run " ) + edata->runID + tr( " :\nCell " )
-      + edata->cell + " (" + edata->wavelength + " nm)";
-   QString xatitle;
-   QString yatitle = tr( "Rel. Concentr." );
-
-   if ( type == 0 )
-   {
-      pltitle = pltitle + tr( "\ns20,W Distribution" );
-      xatitle = tr( "Corrected Sedimentation Coefficient" );
-   }
-
-   else if ( type == 1 )
-   {
-      pltitle = pltitle + tr( "\nMW Distribution" );
-      xatitle = tr( "Molecular Weight (Dalton)" );
-   }
-
-   else if ( type == 2 )
-   {
-      pltitle = pltitle + tr( "\nD20,W Distribution" );
-      xatitle = tr( "D20,W (cm^2/sec)" );
-   }
-
-   dataPlotClear( data_plot1 );
-
-   data_plot1->setTitle(                       pltitle );
-   data_plot1->setAxisTitle( QwtPlot::yLeft,   yatitle );
-   data_plot1->setAxisTitle( QwtPlot::xBottom, xatitle );
-
-   QwtPlotGrid*  data_grid = us_grid(  data_plot1 );
-   QwtPlotCurve* data_curv = us_curve( data_plot1, "distro" );
-
-
-   int     dsize  = model_used.components.size();
-   QVector< double > vecx( dsize );
-   QVector< double > vecy( dsize );
-   double* xx     = vecx.data();
-   double* yy     = vecy.data();
-   double  xmin   = 1.0e30;
-   double  xmax   = -1.0e30;
-   double  ymin   = 1.0e30;
-   double  ymax   = -1.0e30;
-   double  xval;
-   double  yval;
-   double  rdif;
-
-   for ( int jj = 0; jj < dsize; jj++ )
-   {
-      xval     = ( type == 0 ) ? model_used.components[ jj ].s :
-               ( ( type == 1 ) ? model_used.components[ jj ].mw :
-                                 model_used.components[ jj ].D );
-      yval     = model_used.components[ jj ].signal_concentration;
-      xx[ jj ] = xval;
-      yy[ jj ] = yval;
-      xmin     = qMin( xval, xmin );
-      xmax     = qMax( xval, xmax );
-      ymin     = qMin( yval, ymin );
-      ymax     = qMax( yval, ymax );
-   }
-
-   rdif   = ( xmax - xmin ) / 20.0;
-   xmin  -= rdif;
-   xmax  += rdif;
-   rdif   = ( ymax - ymin ) / 20.0;
-   ymin  -= rdif;
-   ymax  += rdif;
-   xmin   = ( type == 0 ) ? xmin : qMax( xmin, 0.0 );
-   ymin   = qMax( ymin, 0.0 );
-
-   data_grid->enableYMin ( true );
-   data_grid->enableY    ( true );
-   data_grid->setMajorPen(
-      QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
-
-   data_curv->setSamples( xx, yy, dsize );
-   data_curv->setPen    ( QPen( Qt::yellow, 3, Qt::SolidLine ) );
-   data_curv->setStyle  ( QwtPlotCurve::Sticks );
-
-   data_plot1->setAxisAutoScale( QwtPlot::xBottom );
-   data_plot1->setAxisAutoScale( QwtPlot::yLeft   );
-   data_plot1->setAxisScale( QwtPlot::xBottom, xmin, xmax );
-   data_plot1->setAxisScale( QwtPlot::yLeft,   ymin, ymax );
-
-   data_plot1->replot();
+   US_DistribStick::plot( this, data_plot1, edata, model_used, type );
 }
 
 // Do 2d type distribution plot
@@ -1735,13 +1658,8 @@ void US_FeMatch::plotres( )
 // The data the residual plot shows: the current data, its simulation and noise
 US_ResidPlotInputs US_FeMatch::resplot_inputs()
 {
-   US_ResidPlotInputs inputs;
-   inputs.edited    = *edata;
-   inputs.simulated = *sdata;
-   inputs.excluded  = excludedScans;
-   inputs.ti_noise  = ti_noise;
-   inputs.ri_noise  = ri_noise;
-   inputs.bitmap    = rbmapd;
+   US_ResidPlotInputs inputs = US_ResidPlotInputs::of( *edata, *sdata, excludedScans, ti_noise, ri_noise );
+   inputs.bitmap             = rbmapd;
    return inputs;
 }
 
@@ -2067,124 +1985,10 @@ DbgLv(1) << "SimMdl: n) s D c"
    US_Passwd pw;
    US_DB2* dbP = dkdb_cntrls->db() ? new US_DB2( pw.getPasswd() ) : NULL;
 
-   simparams.initFromData( dbP, *edata, dat_steps );
-   simparams.simpoints         = adv_vals[ "simpoints" ].toInt();
-   simparams.meshType          = US_SimulationParameters::ASTFEM;
-   simparams.gridType          = US_SimulationParameters::MOVING;
-   simparams.radial_resolution = (double)( radhi - radlo ) / ( nconc - 1 );
-//   simparams.bottom            = simparams.bottom_position;
-DbgLv(1) << "SimMdl: simpoints" << simparams.simpoints
- << "rreso" << simparams.radial_resolution
- << "bottom_sim" << simparams.bottom << "bottom_dat" << edata->bottom;
-   //simparams.meniscus          = 5.8;
-
-   //sdata.scanData.resize( total_scans );
-   //int terpsize    = ( points + 7 ) / 8;
-
-   if ( exp_steps )
-      simparams.speed_step        = speed_steps;
-
-DbgLv(1) << "SimMdl: speed_steps:" << simparams.speed_step.size();
-
-   QString mtyp = adv_vals[ "meshtype"   ];
-   QString gtyp = adv_vals[ "gridtype"   ];
-   QString bvol = adv_vals[ "bandvolume" ];
-
-#if 0
-   if ( mtyp.contains( "Claverie" ) )
-      simparams.meshType = US_SimulationParameters::CLAVERIE;
-   else if ( mtyp.contains( "Moving Hat" ) )
-      simparams.meshType = US_SimulationParameters::MOVING_HAT;
-   else if ( mtyp.contains( "File:"      ) )
-      simparams.meshType = US_SimulationParameters::USER;
-   else if ( mtyp.contains( "ASTFVM"     ) )
-   {
-      simparams.meshType = US_SimulationParameters::ASTFVM;
-      qDebug() << "meshtype= fvm";
-   }
-#endif
-   if ( gtyp.contains( "Constant" ) )
-      simparams.gridType = US_SimulationParameters::FIXED;
-
-   if ( model.components[ 0 ].sigma == 0.0  &&
-        model.components[ 0 ].delta == 0.0)
-      simparams.meshType = US_SimulationParameters::ASTFEM;
-   else
-      simparams.meshType = US_SimulationParameters::ASTFVM;
-
-   simparams.firstScanIsConcentration = false;
-
-   double concval1      = 0.0;
-
-   if ( simparams.band_forming )
-   {
-      simparams.band_volume = bvol.toDouble();
-      //concval1              = 1.0;
-      //simparams.firstScanIsConcentration = true;
-   }
-   else
-      simparams.band_volume = 0.0;
-
-   // Make a simulation copy of the experimental data without actual readings
-
-   US_AstfemMath::initSimData( *sdata, *edata, concval1 );// Gets experimental time grid set
-
-   QString tmst_fpath = US_Settings::resultDir() + "/" + runID + "/"
-                        + runID + ".time_state.tmst";
-   QFileInfo check_file( tmst_fpath );
-   simparams.sim      = ( edata->channel == "S" );
-
-   if ( ( check_file.exists() ) && ( check_file.isFile() ) )
-   {
-      if ( US_AstfemMath::timestate_onesec( tmst_fpath, *sdata ) )
-      {  // Load timestate that is already at 1-second-intervals
-         simparams.simSpeedsFromTimeState( tmst_fpath );
-DbgLv(1) << "SimMdl: timestate file exists" << tmst_fpath << " timestateobject,count = "
- << simparams.tsobj << simparams.sim_speed_prof.count();
-         simparams.speedstepsFromSSprof();
-      }
-
-      else
-      {  // Replace timestate with a new one that is at 1-second-intervals
-         if ( drow == 0 )
-         {
-            QString tmst_fdefs = QString( tmst_fpath ).replace( ".tmst", ".xml" );
-            QString tmst_fpsav = tmst_fpath + "-orig";
-            QString tmst_fdsav = tmst_fdefs + "-orig";
-            simparams.sim      = ( edata->channel == "S" );
-
-            // Rename existing (non-1sec-intv) files
-            QFile::rename( tmst_fpath, tmst_fpsav );
-            QFile::rename( tmst_fdefs, tmst_fdsav );
-            // Create a new 1-second-interval file set
-            US_AstfemMath::writetimestate( tmst_fpath, simparams, *sdata );
-DbgLv(1) << "SimMdl: 1-sec-intv file created";
-         }
-
-         simparams.simSpeedsFromTimeState( tmst_fpath );
-         simparams.speedstepsFromSSprof();
-      }
-   }
-   else
-   {
-DbgLv(1) << "SimMdl: timestate file does not exist";
-      if ( ! simparams.sim )
-      {  // Compute acceleration rate for non-astfem_sim data
-         const double tfac = ( 4.0 / 3.0 );
-         double t2   = simparams.speed_step[ 0 ].time_first;
-         double w2t  = simparams.speed_step[ 0 ].w2t_first;
-         double om1t = simparams.speed_step[ 0 ].rotorspeed * M_PI / 30.0;
-         double w2   = sq( om1t );
-         double t1   = tfac * ( t2 - ( w2t / w2 ) );
-         int t_acc   = (int)qRound( t1 );
-         double rate = (double)( simparams.speed_step[ 0 ].rotorspeed )
-                       / (double)t_acc;
-DbgLv(1) << "SimMdl:  accel-calc:  t1 t2 w2t t_acc speed rate"
- << t1 << t2 << w2t << t_acc << simparams.speed_step[0].rotorspeed << rate;
-         simparams.speed_step[ 0 ].acceleration = (int)qRound( rate );
-      }
-   }
-   QStringList check_results = US_AstfemMath::check_acceleration(simparams.speed_step, edata->scanData);
+   // The time state is replaced only from the first triple
+   QString     tmst_fpath = US_Settings::resultDir() + "/" + runID + "/" + runID + ".time_state.tmst";
+   QStringList check_results =
+      US_ModelSimulation::prepare( dbP, *edata, model, adv_vals, exp_steps, speed_steps, tmst_fpath, drow == 0, simparams, *sdata );
    if ( !check_results.isEmpty() ) {
        QMessageBox msgBox( this );
        msgBox.setWindowTitle( tr( qPrintable( check_results[0] ) ) );
@@ -2225,137 +2029,31 @@ DbgLv(1) << "SimMdl:  accel-calc:  t1 t2 w2t t_acc speed rate"
    progress->setRange( 1, ncomp );
    progress->reset();
 
-   nthread    = US_Settings::threads();
-   int ntc    = ( ncomp + nthread - 1 ) / nthread;
-   nthread    = ( ntc > MIN_NTC ) ? nthread : 1;
-
-DbgLv(1) << "SimMdl: nthread" << nthread << "ncomp" << ncomp
- << "ntc" << ntc << "meshtype" << simparams.meshType;
+   nthread = US_ModelSimulation::threadCount( ncomp );
 
    // Do simulation by several possible ways: 1-/Multi-thread, ASTFEM/ASTFVM
    if ( nthread < 2 )
    {
-      if ( model.components[ 0 ].sigma == 0.0  &&
-           model.components[ 0 ].delta == 0.0  &&
-           model.coSedSolute           <  0.0  &&
-           compress                    == 0.0 )
-      {
-DbgLv(1) << "SimMdl: (fematch:)Finite Element Solver is called";
-//*DEBUG*
-for(int ii=0; ii<model.components.size(); ii++ )
-{
-DbgLv(1) << "SimMdl:   comp" << ii << "s D v"
- << model.components[ii].s
- << model.components[ii].D
- << model.components[ii].vbar20 << "  c"
- << model.components[ii].signal_concentration;
-}
-DbgLv(1) << "SimMdl: (fematch:)Sim Pars--";
-simparams.debug();
-//*DEBUG*
-         US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
-
-         connect( astfem_rsa, &US_Astfem_RSA::current_component,
-                  this,       &US_FeMatch::update_progress );
-         connect( astfem_rsa, &US_Astfem_RSA::current_component,
-                  this,       &US_FeMatch::astfem_cmp );
-         astfem_rsa->set_debug_flag( dbg_level );
-         solution_rec.buffer.compressibility = compress;
-         solution_rec.buffer.manual          = manual;
-         //astfem_rsa->set_buffer( solution_rec.buffer );
-
-         astfem_rsa->calculate( *sdata );
-//*DEBUG*
-int kpts=0;
-double trmsd=0.0;
-double tnoi=0.0;
-double rnoi=0.0;
-bool ftin=ti_noise.count > 0;
-bool frin=ri_noise.count > 0;
-for(int ss=0; ss<sdata->scanCount(); ss++)
-{
- rnoi = frin ? ri_noise.values[ss] : 0.0;
- for (int rr=0; rr<sdata->pointCount(); rr++)
- {
-  tnoi = ftin ? ti_noise.values[rr] : 0.0;
-  double rval=edata->value(ss,rr) - sdata->value(ss,rr) - rnoi - tnoi;
-  trmsd += sq( rval );
-  kpts++;
- }
-}
-trmsd = sqrt( trmsd / (float)kpts );
-DbgLv(1) << "SimMdl: (1)trmsd" << trmsd;
-//*DEBUG*
-      }
-      else
-      {
-DbgLv(1) << "SimMdl: (fematch:)Finite Volume Solver is called";
-         US_LammAstfvm *astfvm     = new US_LammAstfvm( model, simparams );
-         //connect( astfvm,  SIGNAL( comp_progress( int ) ), this,  SLOT(   update_progress(   int ) ) );
-         //solution_rec.buffer.compressibility = compress;
-         //solution_rec.buffer.manual          = manual;
-         //astfvm->set_buffer( solution_rec.buffer );
-         astfvm->calculate(     *sdata );
-      }
-      //-----------------------
-      //Simulation part is over
-      //-----------------------
-
+      simulation()->simulate( model, simparams, *sdata, solution_rec.buffer, compress, manual, dbg_level );
       show_results();
    }
-
    else
-   {  // Do multi-thread calculations
-      solution_rec.buffer.compressibility = compress;
-      solution_rec.buffer.manual          = manual;
-      tsimdats.clear();
-      tmodels .clear();
-      kcomps  .clear();
-      QList<US_ThreadWorker*> tworkers;
-      QList<US_ThreadEx*>     wthreads;
-
-      // Build models for each thread
-      for ( int ii = 0; ii < ncomp; ii++ )
-      {
-         if ( ii < nthread )
-         {  // First time through per thread:  get initial model and sim data
-            tmodels << model;
-            tmodels[ ii ].components.clear();
-            US_DataIO::RawData sdat = *sdata;
-            tsimdats << sdat;
-            kcomps   << 0;
-         }
-
-         // Partition thread models from round-robin fetch of components
-         int jj = ii % nthread;
-         tmodels[ jj ].components << model.components[ ii ];
-      }
-
-      thrdone   = 0;
-      solution_rec.buffer.manual = manual;
-
-      // Build worker threads and begin running
-      for ( int ii = 0; ii < nthread; ii++ )
-      {
-         US_ThreadWorker* tworker = new US_ThreadWorker( tmodels[ii], simparams, tsimdats[ii], solution_rec.buffer, ii );
-         US_ThreadEx*     wthread = new US_ThreadEx();
-
-         tworker->moveToThread( wthread );
-
-         tworkers << tworker;
-         wthreads << wthread;
-
-         connect( wthread, &QThread::started, tworker, &US_ThreadWorker::calc_simulation );
-
-         connect( tworker, &US_ThreadWorker::work_progress, this, &US_FeMatch::thread_progress );
-         connect( tworker, &US_ThreadWorker::work_complete, this, &US_FeMatch::thread_complete );
-
-         wthread->start();
-      }
-   }
-
+      simulation()->start( model, simparams, *sdata, solution_rec.buffer, compress, manual, nthread );
 }
 
+// The simulation runner, connected to the progress bar and results
+US_ModelSimulation* US_FeMatch::simulation()
+{
+   if ( simrun == nullptr )
+   {
+      simrun = new US_ModelSimulation( this );
+      connect( simrun, &US_ModelSimulation::component, this, &US_FeMatch::update_progress );
+      connect( simrun, &US_ModelSimulation::component, this, &US_FeMatch::astfem_cmp );
+      connect( simrun, &US_ModelSimulation::progress, this, [this]( int kcomp ) { progress->setValue( kcomp ); } );
+      connect( simrun, &US_ModelSimulation::finished, this, &US_FeMatch::show_results );
+   }
+   return simrun;
+}
 
 // Show simulation and residual when the simulation is complete
 void US_FeMatch::show_results( )
@@ -2464,41 +2162,13 @@ void US_FeMatch::comp_number( double cnbr )
 {
    component_values( (int)cnbr - 1 );
 }
-
-// Interpolate an sdata y (readings) value for a given x (radius)
-double US_FeMatch::interp_sval( double xv, double* sx, double* sy, int ssize )
-{
-   for ( int jj = 1; jj < ssize; jj++ )
-   {
-      if ( xv == sx[ jj ] )
-      {
-         return sy[ jj ];
-      }
-
-      if ( xv < sx[ jj ] )
-      {  // given x lower than array x: interpolate between point and previous
-         int    ii = jj - 1;
-         double dx = sx[ jj ] - sx[ ii ];
-         double dy = sy[ jj ] - sy[ ii ];
-         return ( sy[ ii ] + ( xv - sx[ ii ] ) * dy / dx );
-      }
-   }
-
-   // given x position not found:  interpolate using last two points
-   int    jj = ssize - 1;
-   int    ii = jj - 1;
-   double dx = sx[ jj ] - sx[ ii ];
-   double dy = sy[ jj ] - sy[ ii ];
-   return ( sy[ ii ] + ( xv - sx[ ii ] ) * dy / dx );
-}
-
 // Write the report HTML text stream
 void US_FeMatch::write_report( QTextStream& ts )
 {
-   ts << html_header( "US_Fematch", text_model( model, 2 ), edata );
-//   ts << run_details();
-//   ts << hydrodynamics();
-//   ts << scan_info();
+   ts << html_header( "US_Fematch", US_ReportText::text_model( model, 2, false ), edata );
+   //   ts << run_details();
+   //   ts << hydrodynamics();
+   //   ts << scan_info();
    ts << distrib_info();
    ts << "  </body>\n</html>\n";
 }
@@ -2543,174 +2213,12 @@ double US_FeMatch::calc_baseline( int drow ) const
    return ( bl / 11.0 );
 }
 
-// Model type text string
-QString US_FeMatch::text_model( US_Model model, int width )
-{
-   QString stitle = model.typeText();
-   QString title  = stitle;
-
-   if ( width != 0 )
-   {  // long title:  add any suffixes and check need to center
-      switch ( (int)model.analysis )
-      {
-         case (int)US_Model::TWODSA:
-         case (int)US_Model::TWODSA_MW:
-            title = tr( "2-Dimensional Spectrum Analysis" );
-            break;
-
-         case (int)US_Model::GA:
-         case (int)US_Model::GA_MW:
-            title = tr( "Genetic Algorithm Analysis" );
-            break;
-
-         case (int)US_Model::COFS:
-            title = tr( "C(s) Analysis" );
-            break;
-
-         case (int)US_Model::FE:
-            title = tr( "Finite Element Analysis" );
-            break;
-
-         case (int)US_Model::PCSA:
-            title = tr( "Parametrically Constrained Spectrum Analysis\n" );
-
-            if ( stitle.contains( "-SL" ) )
-               title += tr( "(Straight Line)" );
-
-            else if ( stitle.contains( "-IS" ) )
-               title += tr( "(Increasing Sigmoid)" );
-
-            else if ( stitle.contains( "-DS" ) )
-               title += tr( "(Decreasing Sigmoid)" );
-
-            else if ( stitle.contains( "-HL" ) )
-               title += tr( "(Horizontal Line)" );
-
-            else if ( stitle.contains( "-2O" ) )
-               title += tr( "(2nd-Order Power Law)" );
-
-            break;
-
-         case (int)US_Model::DMGA:
-            title = tr( "Discrete Model Genetic Algorithm" );
-            break;
-
-         case (int)US_Model::MANUAL:
-         default:
-            title = tr( "2-Dimensional Spectrum Analysis" );
-            break;
-      }
-
-
-            if ( stitle.contains( "-SL" ) )
-      if ( model.associations.size() > 1 )
-         title = title + " (RA)";
-
-      if ( model.global == US_Model::MENISCUS )
-         title = title + " (Menisc.)";
-
-      else if ( model.global == US_Model::GLOBAL )
-         title = title + " (Global)";
-
-      else if ( model.global == US_Model::SUPERGLOBAL )
-         title = title + " (S.Glob.)";
-
-      if ( model.monteCarlo )
-         title = title + " (MC)";
-
-      if ( width > title.length() )
-      {  // long title centered:  center it in fixed-length string
-         int lent = title.length();
-         int lenl = ( width - lent ) / 2;
-         int lenr = width - lent - lenl;
-         title    = QString( " " ).repeated( lenl ) + title
-                  + QString( " " ).repeated( lenr );
-      }
-   }
-
-   return title;
-}
-
-
 // Calculate residual absorbance values (data - sim - noise)
 void US_FeMatch::calc_residuals()
 {
-   int     dsize  = edata->pointCount();
-   int     ssize  = sdata->pointCount();
-   QVector< double > vecxx( dsize );
-   QVector< double > vecsx( ssize );
-   QVector< double > vecsy( ssize );
-   double* xx     = vecxx.data();
-   double* sx     = vecsx.data();
-   double* sy     = vecsy.data();
-   double  yval;
-   double  sval;
-   double  rmsd   = 0.0;
-   double  tnoi   = 0.0;
-   double  rnoi   = 0.0;
-   bool    ftin   = ti_noise.count > 0;
-   bool    frin   = ri_noise.count > 0;
-   bool    matchd = ( dsize == ssize );
-   int     kpts   = 0;
-DbgLv(1) << "CALC_RESID: matchd" << matchd << "dsize ssize" << dsize << ssize;
-int kexcls=0;
-
-   QVector< double > resscan;
-
-   resids .clear();
-   resscan.resize( dsize );
-
-   for ( int jj = 0; jj < dsize; jj++ )
-   {
-      xx[ jj ] = edata->radius( jj );
-   }
-
-   for ( int jj = 0; jj < ssize; jj++ )
-   {
-      sx[ jj ] = sdata->radius( jj );
-      if ( sx[ jj ] != xx[ jj ] )  matchd = false;
-   }
-
-   for ( int ii = 0; ii < scanCount; ii++ )
-   {
-      bool usescan = !excludedScans.contains( ii );
-if(!usescan) kexcls++;
-
-      rnoi     = frin ? ri_noise.values[ ii ] : 0.0;
-
-      for ( int jj = 0; jj < ssize; jj++ )
-      {
-         sy[ jj ] = sdata->value( ii, jj );
-      }
-
-      for ( int jj = 0; jj < dsize; jj++ )
-      { // Calculate the residuals and the RMSD
-         tnoi          = ftin ? ti_noise.values[ jj ] : 0.0;
-
-         if ( matchd )
-            sval          = sy[ jj ];
-         else
-            sval          = interp_sval( xx[ jj ], sx, sy, ssize );
-
-         yval          = edata->value( ii, jj ) - sval - rnoi - tnoi;
-
-         if ( usescan )
-         {
-            rmsd         += sq( yval );
-            kpts++;
-         }
-
-         resscan[ jj ] = yval;
-      }
-
-      resids << resscan;
-   }
-
-   rmsd  /= (double)( kpts );
-   le_variance->setText( QString::number( rmsd ) );
-   rmsd   = sqrt( rmsd );
-   le_rmsd    ->setText( QString::number( rmsd ) );
-DbgLv(1) << "CALC_RESID: matchd" << matchd << "kexcls" << kexcls << "rmsd" << rmsd;
+   double variance = US_SimResiduals::calculate( *edata, *sdata, ti_noise, ri_noise, excludedScans, scanCount, resids );
+   le_variance->setText( QString::number( variance ) );
+   le_rmsd->setText( QString::number( sqrt( variance ) ) );
 }
 
 // Slot to make sure all windows and dialogs get closed
@@ -2726,46 +2234,6 @@ void US_FeMatch::close_all()
       resplotd->close();
 
    close();
-}
-
-// String to accomplish line indentation
-QString US_FeMatch::indent( const int spaces ) const
-{
-   return ( QString( " " ).leftJustified( spaces, ' ' ) );
-}
-
-// Table row HTML with 2 columns
-QString US_FeMatch::table_row( const QString& s1, const QString& s2 ) const
-{
-   return( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td></tr>\n" );
-}
-
-// Table row HTML with 3 columns
-QString US_FeMatch::table_row( const QString& s1, const QString& s2,
-                               const QString& s3 ) const
-{
-   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>" + s3
-            + "</td></tr>\n" );
-}
-
-// Table row HTML with 5 columns
-QString US_FeMatch::table_row( const QString& s1, const QString& s2,
-                               const QString& s3, const QString& s4,
-                               const QString& s5 ) const
-{
-   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>" + s3
-            + "</td><td>" + s4 + "</td><td>" + s5 + "</td></tr>\n" );
-}
-
-// Table row HTML with 7 columns
-QString US_FeMatch::table_row( const QString& s1, const QString& s2,
-                               const QString& s3, const QString& s4,
-                               const QString& s5, const QString& s6,
-                               const QString& s7 ) const
-{
-   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>"
-            + s3 + "</td><td>" + s4 + "</td><td>" + s5 + "</td><td>"
-            + s6 + "</td><td>" + s7 + "</td></tr>\n" );
 }
 
 // Compose a report HTML header
@@ -3788,44 +3256,6 @@ void US_FeMatch::reportFilesToDB( QStringList& files )
    if ( st != US_DB2::OK )
    {
       qDebug() << "*ERROR* saveFileDocuments, status" << st;
-   }
-}
-
-// Update progress when thread reports
-void US_FeMatch::thread_progress( int thr, int icomp )
-{
-   int kcomp     = 0;
-   kcomps[ thr ] = icomp;
-   for ( int ii = 0; ii < nthread; ii++ )
-      kcomp += kcomps[ ii ];
-   progress->setValue( kcomp );
-DbgLv(1) << "THR PROGR thr icomp" << thr << icomp << "kcomp" << kcomp;
-}
-
-// Update count of threads completed and colate simulations when all are done
-void US_FeMatch::thread_complete( int thr )
-{
-   thrdone++;
-DbgLv(1) << "THR COMPL thr" << thr << "thrdone" << thrdone;
-
-   if ( thrdone >= nthread )
-   {  // All threads are done, so sum thread simulation data
-      for ( int ii = 0; ii < sdata->scanData.size(); ii++ )
-      {
-         for ( int jj = 0; jj < sdata->xvalues.size(); jj++ )
-         {
-            //double conc = 0.0;
-            double conc = sdata->value( ii, jj );
-
-            for ( int kk = 0; kk < nthread; kk++ )
-               conc += tsimdats[ kk ].value( ii, jj );
-
-            sdata->setValue( ii, jj, conc );
-         }
-      }
-
-      // Then show the results
-      show_results();
    }
 }
 

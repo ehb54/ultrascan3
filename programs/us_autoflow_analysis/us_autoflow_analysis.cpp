@@ -13,19 +13,21 @@
 #include <QXmlStreamReader>
 #include <QtNumeric>
 
+#include "us_auto_noise.h"
 #include "us_autoflow_analysis.h"
 #include "us_constants.h"
 #include "us_convertio.h"
 #include "us_edited_data_loaders.h"
 #include "us_gui_settings.h"
 #include "us_lamm_astfvm.h"
+#include "us_model_simulation.h"
 #include "us_protocol_util.h"
 #include "us_run_protocol.h"
 #include "us_settings.h"
+#include "us_sim_residuals.h"
 #include "us_solution_vals.h"
 #include "us_thread_worker.h"
 
-#define MIN_NTC   25
 
 const QColor colorRed       ( 210, 0, 0 );
 const QColor colorDarkGreen ( 2, 88, 57 );
@@ -3464,548 +3466,11 @@ bool US_Analysis_auto::loadModel( QMap < QString, QString > & triple_information
   return true;
 }
 
-//Load Noises
+// Load the noise of the model, as autoflow analysis and the GMP reporter choose it
 bool US_Analysis_auto::loadNoises( QMap < QString, QString > & triple_information )
 {
-  US_Passwd   pw;
-  US_DB2* db = new US_DB2( pw.getPasswd() );
-    
-  if ( db->lastErrno() != US_DB2::OK )
-    {
-      QApplication::restoreOverrideCursor();
-      QMessageBox::information( this,
-				tr( "DB Connection Problem" ),
-				tr( "There was an error connecting to the database:\n" )
-				+ db->lastError() );
-      
-      return false;
-    }
-
-  // get noiseIDs, types & lastUpd by modelID
-  QStringList query;
-  query << "get_noiseTypesIDs" << triple_information[ "mID" ];
-  db->query( query );
-  
-  qDebug() << "In loadNoises() Query: " << query;
-
-  int latest_update_time_ti = 1e100;
-  int latest_update_time_ri = 1e100;
-  int nID_ti=0;
-  int nID_ri=0;
-  
-  while ( db->next() )
-    {
-      int       noiseID        = db->value( 0 ).toInt();
-      QString   noiseType      = db->value( 1 ).toString();
-      //QString  date                = US_Util::toUTCDatetimeText( db->value( 2 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
-      QDateTime date          = db->value( 2 ).toDateTime();
-
-      QDateTime now = QDateTime::currentDateTime();
-
-      qDebug() << "Noises: noiseID, noiseType, date -- " << noiseID << noiseType << date; 
-      
-      if ( noiseType.contains( "ti_" ) ) 
-	{
-	  int time_to_now = date.secsTo(now);
-	  if ( time_to_now < latest_update_time_ti )
-	    {
-	      latest_update_time_ti = time_to_now;
-	      	      
-	      nID_ti       = noiseID;
-	    }
-	}
-      if ( noiseType.contains( "ri_" ) ) 
-	{
-	  int time_to_now = date.secsTo(now);
-	  if ( time_to_now < latest_update_time_ri )
-	    {
-	      latest_update_time_ri = time_to_now;
-	      	      
-	      nID_ri       = noiseID;
-	    }
-	}
-    }
-
-
-  //ALEXEY: treat the case when model (like -MC does not possess its own noises -- use latest available noises for prior model like -IT  )
-  //int US_LoadableNoise::count_noise() in ../../gui/us_loadable_noise.cpp
-  //void US_FeMatch::load_noise( ) in us_fematch.cpp
-  if ( !nID_ti && !nID_ri ) 
-    loadNoises_whenAbsent();
-  
-  //creare US_noise objects
-  if ( nID_ti )
-    {
-      ti_noise.load( QString::number( nID_ti ), db );
-      qDebug() << "loadNoises() NORMAL: ti_noise created: ID -- " << nID_ti;
-    }
-  if ( nID_ri )
-    {
-      ri_noise.load( QString::number( nID_ri ), db );
-      qDebug() << "loadNoises() NORMAL: ri_noise created: ID -- " << nID_ri;
-    }
-  
-  // noise loaded:  insure that counts jive with data
-  int ntinois = ti_noise.values.size();
-  int nrinois = ri_noise.values.size();
-  int nscans  = edata->scanCount();
-  int npoints = edata->pointCount();
-  int npadded = 0;
-
-
-  qDebug() << "ti_noise.count, ri_noise.count: " <<  ti_noise.count << ri_noise.count;
-  qDebug() << "ti_noise.values.size(), ri_noise.values.size(): " << ti_noise.values.size() << ri_noise.values.size();
-  
-  if ( ntinois > 0  &&  ntinois < npoints )
-    {  // pad out ti noise values to radius count
-      int jj      = ntinois;
-      while ( jj++ < npoints )
-	ti_noise.values << 0.0;
-      ti_noise.count = ti_noise.values.size();
-      npadded++;
-    }
-  
-  if ( nrinois > 0  &&  nrinois < nscans )
-    {  // pad out ri noise values to scan count
-      int jj      = nrinois;
-      while ( jj++ < nscans )
-	ri_noise.values << 0.0;
-      ri_noise.count = ri_noise.values.size();
-      npadded++;
-    }
-  
-  if ( npadded  > 0 )
-      {  // let user know that padding occurred
-	QString pmsg;
-	
-	if ( npadded == 1 )
-	  pmsg = tr( "The noise file was padded out with zeroes\n"
-		     "in order to match the data range." );
-	else
-	  pmsg = tr( "The noise files were padded out with zeroes\n"
-		     "in order to match the data ranges." );
-	
-	QMessageBox::information( this, tr( "Noise Padded Out" ), pmsg );
-      }
-
-  return true;
+   return US_AutoNoise::load( this, invID, triple_information, edata, model, ti_noise, ri_noise );
 }
-
-//Load Noises when absent for the model loaded (like -MC models)
-void US_Analysis_auto::loadNoises_whenAbsent( )
-{
-   QStringList mieGUIDs;  // list of GUIDs of models-in-edit
-   QStringList nieGUIDs;  // list of GUIDS:type:index of noises-in-edit
-   QString     editGUID  = edata->editGUID;         // loaded edit GUID
-   QString     modelGUID = model.modelGUID;         // loaded model GUID
-   
-   int noisdf  = US_Settings::noise_dialog();
-   int nenois  = count_noise_auto( edata, &model, mieGUIDs, nieGUIDs );
-
-   qDebug() << "load_noise_whenAbsent(): mieGUIDs, nieGUIDs, editGUID, modelGUID -- " <<  mieGUIDs << nieGUIDs << editGUID << modelGUID;
-   qDebug() << "load_noise_whenAbsent(): noisdf, nenois -- " << noisdf << nenois;
-
-   if ( nenois > 0 )
-   {  // There is/are noise(s):  ask user if she wants to load
-      US_Passwd pw;
-      US_DB2* dbP  = new US_DB2( pw.getPasswd() );
-
-      if ( nenois > 1  &&  noisdf == 0 )
-      {  // Noise exists and noise-dialog flag set to "Auto-load"
-         QString descn = nieGUIDs.at( 0 );
-         QString noiID = descn.section( ":", 0, 0 );
-         QString typen = descn.section( ":", 1, 1 );
-         QString mdlx1 = descn.section( ":", 2, 2 );
-
-         if ( typen == "ti" )
-	   {
-	     ti_noise.load( true, noiID, dbP );
-	     qDebug() << "load_noise_whenAbsent(): ti_noise created: ID -- " << noiID;
-	     qDebug() << "load_noise_whenAbsent(): ti_noise.count: -- " << ti_noise.count;
-	   }
-         else
-	   {
-	     ri_noise.load( true, noiID, dbP );
-	     qDebug() << "load_noise_whenAbsent(): ri_noise created: ID -- " << noiID;
-	     qDebug() << "load_noise_whenAbsent(): ri_noise.count: -- " << ri_noise.count;
-	   }
-	 
-         descn         = nieGUIDs.at( 1 );
-         QString mdlx2 = descn.section( ":", 2, 2 );
-         int kenois    = ( mdlx1 == mdlx2 ) ? 2 : 1;
-         if ( kenois == 2 )
-         {  // Second noise from same model:  g/et it, too
-            noiID         = descn.section( ":", 0, 0 );
-            typen         = descn.section( ":", 1, 1 );
-            if ( typen == "ti" )
-	      {
-		ti_noise.load( true, noiID, dbP );
-		qDebug() << "load_noise_whenAbsent(): Noise 2: noiID, loaded ti--" << noiID;
-		qDebug() << "load_noise_whenAbsent(): Noise 2: noiID, loaded ti_noise.count --" << ti_noise.count;
-	      }
-            else
-	      {
-		ri_noise.load( true, noiID, dbP );
-		qDebug() << "load_noise_whenAbsent(): Noise 2: noiID, loaded ri--" << noiID;
-		qDebug() << "load_noise_whenAbsent(): Noise 2: noiID, loaded ri_noise.count --" << ri_noise.count;
-	      }
-	 }
-
-      }
-      else
-      {  // only 1:  just load it
-         QString noiID = nieGUIDs.at( 0 );
-         QString typen = noiID.section( ":", 1, 1 );
-         noiID         = noiID.section( ":", 0, 0 );
-
-         if ( typen == "ti" )
-	   ti_noise.load( true, noiID, dbP );
-	 
-         else
-	   ri_noise.load( true, noiID, dbP );
-      }
-     
-   }
-      
-      
-}
-
-
-// Determine if edit/model related noise available and build lists
-int US_Analysis_auto::count_noise_auto( US_DataIO::EditedData* edata,
-					US_Model* model, QStringList& mieGUIDs, QStringList& nieGUIDs  )
-{
-   int noidiag = US_Settings::noise_dialog();
-
-   int nenois  = 0;       // number of edited-data-related noises
-   
-   if ( edata == NULL )
-     return nenois;
-
-   QStringList nimGUIDs;  // list of GUIDs:type:index of noises-in-models
-   QStringList tmpGUIDs;  // temporary noises-in-model list
-   QString     daEditGUID = edata->editGUID;        // loaded edit GUID
-   QString     modelGUID  = ( model == 0 ) ?        // loaded model GUID
-                           "" : model->modelGUID;
-   QString     lmodlGUID;                           // list model GUID
-   QString     lnoisGUID;                           // list noise GUID
-   QString     modelIndx;                           // "0001" style model index
-
-   id_list_db_auto  ( daEditGUID );
-
-   // Get a list of models-with-noise tied to the loaded edit
-   int nemods  = models_in_edit_auto ( daEditGUID, mieGUIDs );
-
-   if ( nemods == 0 )
-   {
-     //QApplication::restoreOverrideCursor();
-      return nemods;          // Go no further if no models-with-noise for edit
-   }
-
-   int latemx  = 0;   // Index to latest model-in-edit
-
-   // If no model is loaded, pick the model GUID of the latest noise
-   if ( model == 0 )
-      modelGUID   = mieGUIDs[ latemx ];
-
-   // Get a list of noises tied to the loaded model
-   int nmnois  = noises_in_model_auto( modelGUID, nimGUIDs );
-
-   // If the loaded model has no noise, try the latest model
-   if ( nmnois == 0 )
-   {
-      modelGUID   = mieGUIDs[ latemx ];
-      nmnois      = noises_in_model_auto( modelGUID, nimGUIDs );
-   }
-
-   // Insure that the loaded/latest model heads the model-in-edit list
-   if ( modelGUID != mieGUIDs[ 0 ] )
-   {
-      if ( ! mieGUIDs.removeOne( modelGUID ) )
-      {
-         qDebug( "*ERROR* Loaded/Latest model not in model-in-edit list!" );
-         QApplication::restoreOverrideCursor();
-         return 0;
-      }
-
-      mieGUIDs.insert( 0, modelGUID );
-   }
-
-
-   int kk = 0;                // running output models index
-
-   if ( nmnois > 0 )
-   {  // If loaded model has noise, put noise in list
-      nieGUIDs << nimGUIDs;   // initialize noise-in-edit list
-      kk++;
-   }
-
-   nenois      = nmnois;      // initial noise-in-edit count is noises in model
-
-   for ( int ii = 1; ii < nemods; ii++ )
-   {  // Search through models in edit
-      lmodlGUID  = mieGUIDs[ ii ];                    // this model's GUID
-      modelIndx  = QString::asprintf( "%4.4d", kk );  // models-in-edit index
-
-      // Find the noises tied to this model
-      int kenois = noises_in_model_auto( lmodlGUID, tmpGUIDs );
-
-      if ( kenois > 0 )
-      {  // if we have 1 or 2 noises, add to noise-in-edit list
-         nenois    += qMin( 2, kenois );
-         // adjust entry to have the right model-in-edit index
-         lnoisGUID  = tmpGUIDs.at( 0 ).section( ":", 0, 1 )
-            + ":" + modelIndx;
-         nieGUIDs << lnoisGUID;
-         if ( kenois > 1 )
-         {  // add a second noise to the list
-            lnoisGUID  = tmpGUIDs.at( 1 ).section( ":", 0, 1 )
-               + ":" + modelIndx;
-            nieGUIDs << lnoisGUID;
-         }
-	 
-         kk++;
-      }
-   }
-
-
-   if ( nenois > 0 )
-   {  // There is/are noise(s):  ask user if she wants to load
-      QMessageBox msgBox;
-      QString     amsg;
-      QString     msg;
-
-      if ( model == 0 )
-         amsg = tr( ", associated with the loaded edit.\n" );
-
-      else
-         amsg = tr( ", associated with the loaded edit/model.\n" );
-
-      if ( nenois > 1 )
-      {
-         msg  = tr( "There are noise files" ) + amsg
-              + tr( "Do you want to load some of them?" );
-      }
-
-      else
-      {  // Single noise file: check its value range versus experiment
-         QString noiID  = nieGUIDs.at( 0 ).section( ":", 0, 0 );
-         US_Noise i_noise;
-
-	 US_Passwd pw;
-	 US_DB2 db( pw.getPasswd() );
-	 i_noise.load( true, noiID, &db );
-         
-         double datmin  = edata->value( 0, 0 );
-         double datmax  = datmin;
-         double noimin  = 1.0e10;
-         double noimax  = -noimin;
-         int    npoint  = edata->pointCount();
-
-         for ( int ii = 0; ii < edata->scanData.size(); ii++ )
-         {
-            for ( int jj = 0; jj < npoint; jj++ )
-            {
-               double datval = edata->value( ii, jj );
-               datmin        = qMin( datmin, datval );
-               datmax        = qMax( datmax, datval );
-            }
-         }
-
-         for ( int ii = 0; ii < i_noise.values.size(); ii++ )
-         {
-            double noival = i_noise.values[ ii ];
-            noimin        = qMin( noimin, noival );
-            noimax        = qMax( noimax, noival );
-         }
-
-         if ( ( noimax - noimin ) > ( datmax - datmin ) )
-         {  // Insert a warning if noise appears corrupt or unusual
-            amsg = amsg
-               + tr( "\nBUT THE NOISE HAS AN UNUSUALLY LARGE DATA RANGE.\n\n" );
-         }
-
-         msg  = tr( "There is a noise file" ) + amsg
-              + tr( "Do you want to load it?" );
-      }
-
-DbgLv(2) << "LaNoi:noidiag  " << noidiag;
-      if ( noidiag > 0 )
-      {
-         msgBox.setWindowTitle( tr( "Edit/Model Associated Noise" ) );
-         msgBox.setText( msg );
-         msgBox.setStandardButtons( QMessageBox::No | QMessageBox::Yes );
-         msgBox.setDefaultButton( QMessageBox::Yes );
-
-         if ( msgBox.exec() != QMessageBox::Yes )
-         {  // user did not say "yes":  return zero count
-            nenois  = 0;       // number of edited-data-related noises
-         }
-      }
-
-      if ( kk < nemods )
-      {  // Models with noise were found, so truncate models list
-         for ( int ii = 0; ii < ( nemods - kk ); ii++ )
-            mieGUIDs.removeLast();
-      }
-   }
-
-   return nenois;
-}
-
-
-// build a list of noise(GUIDs) for a given model(GUID)
-int US_Analysis_auto::noises_in_model_auto( QString mGUID, QStringList& nGUIDs )
-{
-   QString xnGUID;
-   QString xmGUID;
-   QString xntype;
-
-   nGUIDs.clear();
-
-   for ( int ii = 0; ii < noiIDs.size(); ii++ )
-   {  // Examine noises list; Save to this list if model GUID matches
-      xnGUID = noiIDs  .at( ii );
-      xmGUID = noiMoIDs.at( ii );
-      xntype = noiTypes.at( ii );
-
-      xntype = xntype.contains( "ri_nois", Qt::CaseInsensitive ) ?
-	"ri" : "ti";
-     
-      if ( mGUID == xmGUID )
-	nGUIDs << xnGUID + ":" + xntype + ":0000";
-   }
-   
-   return nGUIDs.size();
-}
-
-// Build a list of models(GUIDs) for a given edit(GUID)
-int US_Analysis_auto::models_in_edit_auto( QString eGUID, QStringList& mGUIDs )
-{
-   QString xmGUID;
-   QString xeGUID;
-   QString xrGUID;
-   QStringList reGUIDs;
-
-   mGUIDs.clear();
-
-   for ( int ii = 0; ii < modIDs.size(); ii++ )
-   {  // Examine models list; Save to this list if edit GUID matches
-      xmGUID = modIDs.at( ii );
-      xeGUID = modEdIDs.at( ii );
-     
-      if ( eGUID == xeGUID )
-      {
-         mGUIDs << xmGUID;
-      }
-   }
-
-   return mGUIDs.size();
-}
-
-// Build lists of noise and model IDs for database
-int US_Analysis_auto::id_list_db_auto( QString daEditGUID )
-{
-   QStringList query;
-   
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
-
-   if ( db.lastErrno() != US_DB2::OK )
-      return 0;
-
-   query.clear();
-   query << "get_editID" << daEditGUID;
-   db.query( query );
-   db.next();
-   QString daEditID = db.value( 0 ).toString();
-DbgLv(1) << "LaNoi:idlDB:  daEdit ID GUID" << daEditID << daEditGUID;
-
-   noiIDs  .clear();
-   noiEdIDs.clear();
-   noiMoIDs.clear();
-   noiTypes.clear();
-   modIDs  .clear();
-   modEdIDs.clear();
-   modDescs.clear();
-
-   QStringList reqIDs;
-   QString     noiEdID;
-
-   // Build noise, edit, model ID lists for all noises
-   query.clear();
-   query << "get_noise_desc_by_editID" << QString::number( invID ) << daEditID;
-   db.query( query );
-
-   while ( db.next() )
-   {  // Accumulate lists from noise records
-      noiEdID   = db.value( 2 ).toString();
-
-      noiIDs   << db.value( 1 ).toString();
-      noiTypes << db.value( 4 ).toString();
-      noiMoIDs << db.value( 5 ).toString();
-   }
-
-DbgLv(1) << "LaNoi:idlDB: noiTypes size" << noiTypes.size();
-   // Build model, edit ID lists for all models
-   query.clear();
-   query << "get_model_desc_by_editID" << QString::number( invID ) << daEditID;
-   db.query( query );
-
-   while ( db.next() )
-   {  // Accumulate from db desc entries matching noise model IDs
-      QString modGUID = db.value( 1 ).toString();
-      QString modEdID = db.value( 6 ).toString();
-
-      if ( noiMoIDs.contains( modGUID )  &&   modEdID == daEditID )
-      {  // Only list models that have associated noise and match edit
-         modIDs   << modGUID;
-         modDescs << db.value( 2 ).toString();
-         modEdIDs << db.value( 5 ).toString();
-      }
-   }
-DbgLv(1) << "LaNoi:idlDB: modDescs size" << modDescs.size();
-
-   // Loop through models to edit out any extra monteCarlo models
-   for ( int ii = modIDs.size() - 1; ii >=0; ii-- )
-   {  // Work from the back so any removed records do not affect indexes
-      QString mdesc  = modDescs.at( ii );
-      QString asysID = mdesc.section( ".", -2, -2 );
-      bool    mCarlo = ( asysID.contains( "-MC" )  &&
-                         asysID.contains( "_mc" ) );
-      QString reqID  = asysID.section( "_", 0, -2 );
-
-      if ( mCarlo )
-      {  // Treat monte carlo in a special way (as single composite model)
-         if ( reqIDs.contains( reqID ) )
-         {  // already have this request GUID, so remove this model
-            modIDs  .removeAt( ii );
-            modDescs.removeAt( ii );
-            modEdIDs.removeAt( ii );
-         }
-
-         else
-         {  // This is the first time for this request, so save it in a list
-            reqIDs << reqID;
-         }
-      }
-   }
-
-   // Create list of edit GUIDs for noises
-   for ( int ii = 0; ii < noiTypes.size(); ii++ )
-   {
-      QString moGUID  = noiMoIDs.at( ii );
-      int     jj      = modIDs.indexOf( moGUID );
-DbgLv(2) << "LaNoi:idlDB: ii jj moGUID" << ii << jj << moGUID;
-
-      QString edGUID  = ( jj < 0 ) ? "" : modEdIDs.at( jj );
-
-      noiEdIDs << edGUID;
-   }
-
-   return noiIDs.size();
-}
-
 
 //Simulate Model
 void US_Analysis_auto::simulateModel( )
@@ -4041,143 +3506,39 @@ void US_Analysis_auto::simulateModel( )
   // Use the experiment speed steps if they cover the data; otherwise derive steps from the scans
   exp_steps = US_SimulationParameters::speedStepsCoverData( speed_steps, *edata );
   dat_steps = !exp_steps;
-  simparams.initFromData( dbP, *edata, dat_steps );
-  simparams.simpoints         = adv_vals[ "simpoints" ].toInt();
-  simparams.meshType          = US_SimulationParameters::ASTFEM;
-  simparams.gridType          = US_SimulationParameters::MOVING;
-  simparams.radial_resolution = (double)( radhi - radlo ) / ( nconc - 1 );
-  //   simparams.bottom            = simparams.bottom_position;
-  qDebug() << "SimMdl: simpoints" << simparams.simpoints
-	   << "rreso" << simparams.radial_resolution
-	   << "bottom_sim" << simparams.bottom << "bottom_dat" << edata->bottom;
-  //simparams.meniscus          = 5.8;
-  
-  //sdata.scanData.resize( total_scans );
-  //int terpsize    = ( points + 7 ) / 8;
-  
-  if ( exp_steps )
-    simparams.speed_step        = speed_steps;
-  
-  qDebug() << "SimMdl: speed_steps:" << simparams.speed_step.size();
-  
-  QString mtyp = adv_vals[ "meshtype"   ];
-  QString gtyp = adv_vals[ "gridtype"   ];
-  QString bvol = adv_vals[ "bandvolume" ];
-  
-  
-  if ( gtyp.contains( "Constant" ) )
-    simparams.gridType = US_SimulationParameters::FIXED;
-  
-  if ( model.components[ 0 ].sigma == 0.0  &&
-       model.components[ 0 ].delta == 0.0)
-    simparams.meshType = US_SimulationParameters::ASTFEM;
-  else
-    simparams.meshType = US_SimulationParameters::ASTFVM;
-  
-  simparams.firstScanIsConcentration = false;
-  
-  double concval1      = 0.0;
-  
-  if ( simparams.band_forming )
-    {
-      simparams.band_volume = bvol.toDouble();
-      //concval1              = 1.0;
-      //simparams.firstScanIsConcentration = true;
-    }
-  else
-    simparams.band_volume = 0.0;
-  
-  // Make a simulation copy of the experimental data without actual readings
+  QString     tmst_fpath = US_Settings::resultDir() + "/" + FileName_parsed + "/" + FileName_parsed + ".time_state.tmst";
+  QStringList check_results =
+     US_ModelSimulation::prepare( dbP, *edata, model, adv_vals, exp_steps, speed_steps, tmst_fpath, true, simparams, *sdata );
+  if ( !check_results.isEmpty() )
+  {
+     QMessageBox msgBox( this );
+     msgBox.setWindowTitle( tr( qPrintable( check_results[0] ) ) );
+     if ( check_results.size() > 1 )
+     {
+        msgBox.setTextFormat( Qt::RichText );
+        msgBox.setText( tr( qPrintable( check_results[1] ) ) );
+     }
+     if ( check_results.size() > 2 )
+     {
+        QString info = "";
+        for ( int i = 2; i < check_results.size(); i++ )
+        {
+           info += check_results[i] + "\n";
+        }
+        msgBox.setInformativeText( tr( qPrintable( info ) ) );
+     }
+     msgBox.addButton( tr( "Continue" ), QMessageBox::RejectRole );
+     QPushButton* bAbort = msgBox.addButton( tr( "Abort" ), QMessageBox::YesRole );
+     msgBox.setDefaultButton( bAbort );
+     msgBox.exec();
 
-  qDebug() << "SimulateModel: --- 1";
-  
-  US_AstfemMath::initSimData( *sdata, *edata, concval1 );// Gets experimental time grid set
-
-  qDebug() << "SimulateModel: --- 2";
-  
-  
-  QString tmst_fpath = US_Settings::resultDir() + "/" + FileName_parsed + "/"
-    + FileName_parsed + ".time_state.tmst";
-  QFileInfo check_file( tmst_fpath );
-  simparams.sim      = ( edata->channel == "S" );
-  
-  if ( ( check_file.exists() ) && ( check_file.isFile() ) )
-    {
-      if ( US_AstfemMath::timestate_onesec( tmst_fpath, *sdata ) )
-	{  // Load timestate that is already at 1-second-intervals
-	  simparams.simSpeedsFromTimeState( tmst_fpath );
-	  qDebug() << "SimMdl: timestate file exists" << tmst_fpath << " timestateobject,count = "
-		   << simparams.tsobj << simparams.sim_speed_prof.count();
-	  simparams.speedstepsFromSSprof();
-	}
-      
-      else
-	{  // Replace timestate with a new one that is at 1-second-intervals
-	  // if ( drow == 0 )
-	  //   {
-	  QString tmst_fdefs = QString( tmst_fpath ).replace( ".tmst", ".xml" );
-	  QString tmst_fpsav = tmst_fpath + "-orig";
-	  QString tmst_fdsav = tmst_fdefs + "-orig";
-	  simparams.sim      = ( edata->channel == "S" );
-	  
-	  // Rename existing (non-1sec-intv) files
-	  QFile::rename( tmst_fpath, tmst_fpsav );
-	  QFile::rename( tmst_fdefs, tmst_fdsav );
-	  // Create a new 1-second-interval file set
-	  US_AstfemMath::writetimestate( tmst_fpath, simparams, *sdata );
-	  qDebug() << "SimMdl: 1-sec-intv file created";
-	  // }
-	  
-	  simparams.simSpeedsFromTimeState( tmst_fpath );
-	  simparams.speedstepsFromSSprof();
-	}
-    }
-  else
-    {
-      qDebug() << "SimMdl: timestate file does not exist";
-      if ( ! simparams.sim )
-	{  // Compute acceleration rate for non-astfem_sim data
-	  const double tfac = ( 4.0 / 3.0 );
-	  double t2   = simparams.speed_step[ 0 ].time_first;
-	  double w2t  = simparams.speed_step[ 0 ].w2t_first;
-	  double om1t = simparams.speed_step[ 0 ].rotorspeed * M_PI / 30.0;
-	  double w2   = sq( om1t );
-	  double t1   = tfac * ( t2 - ( w2t / w2 ) );
-	  int t_acc   = (int)qRound( t1 );
-	  double rate = (double)( simparams.speed_step[ 0 ].rotorspeed )
-	    / (double)t_acc;
-	  qDebug() << "SimMdl:  accel-calc:  t1 t2 w2t t_acc speed rate"
-		   << t1 << t2 << w2t << t_acc << simparams.speed_step[0].rotorspeed << rate;
-	  simparams.speed_step[ 0 ].acceleration = (int)qRound( rate );
-	}
-    }
-	QStringList check_results = US_AstfemMath::check_acceleration(simparams.speed_step, edata->scanData);
-	if ( !check_results.isEmpty() ) {
-		QMessageBox msgBox( this );
-		msgBox.setWindowTitle( tr( qPrintable( check_results[0] ) ) );
-		if ( check_results.size() > 1 ) {
-			msgBox.setTextFormat( Qt::RichText );
-			msgBox.setText( tr( qPrintable( check_results[1] ) ) );
-		}
-		if ( check_results.size() > 2 ) {
-			QString info = "";
-			for ( int i = 2; i < check_results.size(); i++ ) {
-				info += check_results[i] + "\n";
-			}
-			msgBox.setInformativeText( tr( qPrintable( info ) ) );
-		}
-		msgBox.addButton( tr( "Continue" ), QMessageBox::RejectRole );
-		QPushButton* bAbort = msgBox.addButton( tr( "Abort" ),
-														QMessageBox::YesRole );
-		msgBox.setDefaultButton( bAbort );
-		msgBox.exec();
-
-		if ( msgBox.clickedButton() == bAbort ) {
-			QApplication::restoreOverrideCursor();
-			qApp->processEvents();
-			return;
-		}
-	}
+     if ( msgBox.clickedButton() == bAbort )
+     {
+        QApplication::restoreOverrideCursor();
+        qApp->processEvents();
+        return;
+     }
+  }
   sdata->cell        = rdata->cell;
   sdata->channel     = rdata->channel;
   sdata->description = rdata->description;
@@ -4190,138 +3551,30 @@ void US_Analysis_auto::simulateModel( )
   //compress   = le_compress->text().toDouble();
   progress_msg->setRange( 0, ncomp );
   // progress_msg->reset();
-  
-  nthread    = US_Settings::threads();
-  int ntc    = ( ncomp + nthread - 1 ) / nthread;
-  nthread    = ( ntc > MIN_NTC ) ? nthread : 1;
 
-  /*
-  //TEST
-  nthread = 10;
-  */
-  
-  qDebug() << "SimMdl: nthread" << nthread << "ncomp" << ncomp
-	   << "ntc" << ntc << "meshtype" << simparams.meshType;
-  
+  nthread = US_ModelSimulation::threadCount( ncomp );
+
   // Do simulation by several possible ways: 1-/Multi-thread, ASTFEM/ASTFVM
   if ( nthread < 2 )
-    {
-      if ( model.components[ 0 ].sigma == 0.0  &&
-	   model.components[ 0 ].delta == 0.0  &&
-	   model.coSedSolute           <  0.0  &&
-	   compress                    == 0.0 )
-	{
-	  qDebug() << "SimMdl: (fematch:)Finite Element Solver is called";
-	  //*DEBUG*
-	  for(int ii=0; ii<model.components.size(); ii++ )
-	    {
-	      qDebug() << "SimMdl:   comp" << ii << "s D v"
-		       << model.components[ii].s
-		       << model.components[ii].D
-		       << model.components[ii].vbar20 << "  c"
-		       << model.components[ii].signal_concentration;
-	    }
-	  qDebug() << "SimMdl: (fematch:)Sim Pars--";
-	  simparams.debug();
-	  //*DEBUG*
-	  US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
-	  
-	  connect( astfem_rsa, &US_Astfem_RSA::current_component,
-	   	   this,       &US_Analysis_auto::update_progress );
-	  astfem_rsa->set_debug_flag( dbg_level );
-	  solution_rec.buffer.compressibility = compress;
-	  solution_rec.buffer.manual          = manual;
-	  //astfem_rsa->set_buffer( solution_rec.buffer );
-	  
-	  astfem_rsa->calculate( *sdata );
-	  //*DEBUG*
-	  int kpts=0;
-	  double trmsd=0.0;
-	  double tnoi=0.0;
-	  double rnoi=0.0;
-	  bool ftin=ti_noise.count > 0;
-	  bool frin=ri_noise.count > 0;
-	  for(int ss=0; ss<sdata->scanCount(); ss++)
-	    {
-	      rnoi = frin ? ri_noise.values[ss] : 0.0;
-	      for (int rr=0; rr<sdata->pointCount(); rr++)
-		{
-		  tnoi = ftin ? ti_noise.values[rr] : 0.0;
-		  double rval=edata->value(ss,rr) - sdata->value(ss,rr) - rnoi - tnoi;
-		  trmsd += sq( rval );
-		  kpts++;
-		}
-	    }
-	  trmsd = sqrt( trmsd / (float)kpts );
-	  qDebug() << "SimMdl: (1)trmsd" << trmsd;
-	  //*DEBUG*
-	}
-      else
-	{
-	  qDebug() << "SimMdl: (fematch:)Finite Volume Solver is called";
-	  US_LammAstfvm *astfvm     = new US_LammAstfvm( model, simparams );
-	  astfvm->calculate(     *sdata );
-	}
-      //-----------------------
-      //Simulation part is over
-      //-----------------------
-      
-      show_results();
-    }
-  
+  {
+     simulation()->simulate( model, simparams, *sdata, solution_rec.buffer, compress, manual, dbg_level );
+     show_results();
+  }
   else
-    {  // Do multi-thread calculations
+     simulation()->start( model, simparams, *sdata, solution_rec.buffer, compress, manual, nthread );
+}
 
-      qDebug() << "Simulate Model: Multi-thread -- ";
-      
-      solution_rec.buffer.compressibility = compress;
-      solution_rec.buffer.manual          = manual;
-      tsimdats.clear();
-      tmodels .clear();
-      kcomps  .clear();
-      QList<US_ThreadWorker*> tworkers;
-      QList<US_ThreadEx*>     wthreads;
-
-      // Build models for each thread
-      for ( int ii = 0; ii < ncomp; ii++ )
-	{
-	  if ( ii < nthread )
-	    {  // First time through per thread:  get initial model and sim data
-	      tmodels << model;
-	      tmodels[ ii ].components.clear();
-	      US_DataIO::RawData sdat = *sdata;
-	      tsimdats << sdat;
-	      kcomps   << 0;
-	    }
-	  
-	  // Partition thread models from round-robin fetch of components
-	  int jj = ii % nthread;
-	  tmodels[ jj ].components << model.components[ ii ];
-	}
-      
-      thrdone   = 0;
-      solution_rec.buffer.manual = manual;
-      
-      // Build worker threads and begin running
-      for ( int ii = 0; ii < nthread; ii++ )
-	{
-      US_ThreadWorker* tworker = new US_ThreadWorker( tmodels[ii], simparams, tsimdats[ii], solution_rec.buffer, ii );
-      US_ThreadEx*     wthread = new US_ThreadEx();
-
-      tworker->moveToThread( wthread );
-
-      tworkers << tworker;
-      wthreads << wthread;
-
-      connect( wthread, &QThread::started, tworker, &US_ThreadWorker::calc_simulation );
-
-      connect( tworker, &US_ThreadWorker::work_progress, this, &US_Analysis_auto::thread_progress );
-      connect( tworker, &US_ThreadWorker::work_complete, this, &US_Analysis_auto::thread_complete );
-
-      wthread->start();
+// The simulation runner, connected to the progress dialog and results
+US_ModelSimulation* US_Analysis_auto::simulation()
+{
+   if ( simrun == nullptr )
+   {
+      simrun = new US_ModelSimulation( this );
+      connect( simrun, &US_ModelSimulation::component, this, &US_Analysis_auto::update_progress );
+      connect( simrun, &US_ModelSimulation::progress, this, [this]( int kcomp ) { progress_msg->setValue( kcomp ); } );
+      connect( simrun, &US_ModelSimulation::finished, this, &US_Analysis_auto::show_results );
    }
-    }
- 
+   return simrun;
 }
 
 // Update progress bar as each component is completed
@@ -4363,111 +3616,8 @@ void US_Analysis_auto::show_results( )
 // Calculate residual absorbance values (data - sim - noise)
 void US_Analysis_auto::calc_residuals()
 {
-   int     dsize  = edata->pointCount();
-   int     ssize  = sdata->pointCount();
-   QVector< double > vecxx( dsize );
-   QVector< double > vecsx( ssize );
-   QVector< double > vecsy( ssize );
-   double* xx     = vecxx.data();
-   double* sx     = vecsx.data();
-   double* sy     = vecsy.data();
-   double  yval;
-   double  sval;
-   double  rmsd   = 0.0;
-   double  tnoi   = 0.0;
-   double  rnoi   = 0.0;
-   bool    ftin   = ti_noise.count > 0;
-   bool    frin   = ri_noise.count > 0;
-   bool    matchd = ( dsize == ssize );
-   int     kpts   = 0;
-   qDebug() << "CALC_RESID: matchd" << matchd << "dsize ssize" << dsize << ssize;
-   int kexcls=0;
- 
-   QVector< double > resscan;
-
-   resids .clear();
-   resscan.resize( dsize );
-
-   for ( int jj = 0; jj < dsize; jj++ )
-   {
-      xx[ jj ] = edata->radius( jj );
-   }
-
-   for ( int jj = 0; jj < ssize; jj++ )
-   {
-      sx[ jj ] = sdata->radius( jj );
-      if ( sx[ jj ] != xx[ jj ] )  matchd = false;
-   }
-
-   for ( int ii = 0; ii < scanCount; ii++ )
-   {
-      bool usescan = !excludedScans.contains( ii );
-if(!usescan) kexcls++;
-
-      rnoi     = frin ? ri_noise.values[ ii ] : 0.0;
-
-      for ( int jj = 0; jj < ssize; jj++ )
-      {
-         sy[ jj ] = sdata->value( ii, jj );
-      }
-
-      for ( int jj = 0; jj < dsize; jj++ )
-      { // Calculate the residuals and the RMSD
-         tnoi          = ftin ? ti_noise.values[ jj ] : 0.0;
-
-         if ( matchd )
-            sval          = sy[ jj ];
-         else
-            sval          = interp_sval( xx[ jj ], sx, sy, ssize );
-
-         yval          = edata->value( ii, jj ) - sval - rnoi - tnoi;
-
-         if ( usescan )
-         {
-            rmsd         += sq( yval );
-            kpts++;
-         }
-
-         resscan[ jj ] = yval;
-      }
-
-      resids << resscan;
-   }
-
-   rmsd  /= (double)( kpts );
-   //le_variance->setText( QString::number( rmsd ) );
-   rmsd   = sqrt( rmsd );
-   //le_rmsd    ->setText( QString::number( rmsd ) );
-   qDebug() << "CALC_RESID: matchd" << matchd << "kexcls" << kexcls << "rmsd" << rmsd;
+   US_SimResiduals::calculate( *edata, *sdata, ti_noise, ri_noise, excludedScans, scanCount, resids );
 }
-
-// Interpolate an sdata y (readings) value for a given x (radius)
-double US_Analysis_auto::interp_sval( double xv, double* sx, double* sy, int ssize )
-{
-   for ( int jj = 1; jj < ssize; jj++ )
-   {
-      if ( xv == sx[ jj ] )
-      {
-         return sy[ jj ];
-      }
-
-      if ( xv < sx[ jj ] )
-      {  // given x lower than array x: interpolate between point and previous
-         int    ii = jj - 1;
-         double dx = sx[ jj ] - sx[ ii ];
-         double dy = sy[ jj ] - sy[ ii ];
-         return ( sy[ ii ] + ( xv - sx[ ii ] ) * dy / dx );
-      }
-   }
-
-   // given x position not found:  interpolate using last two points
-   int    jj = ssize - 1;
-   int    ii = jj - 1;
-   double dx = sx[ jj ] - sx[ ii ];
-   double dy = sy[ jj ] - sy[ ii ];
-   return ( sy[ ii ] + ( xv - sx[ ii ] ) * dy / dx );
-}
-
 // Open a residual plot dialog
 void US_Analysis_auto::plotres( )
 {
@@ -4477,13 +3627,8 @@ void US_Analysis_auto::plotres( )
    //    resplotd->close();
    // }
 
-   US_ResidPlotInputs inputs;
-   inputs.edited      = *edata;
-   inputs.simulated   = *sdata;
-   inputs.excluded    = excludedScans;
-   inputs.ti_noise    = ti_noise;
-   inputs.ri_noise    = ri_noise;
-   inputs.triple_info = tripleInfo;
+   US_ResidPlotInputs inputs = US_ResidPlotInputs::of( *edata, *sdata, excludedScans, ti_noise, ri_noise );
+   inputs.triple_info        = tripleInfo;
    resplotd           = new US_ResidPlotFem( inputs, US_ResidPlotFem::Analysis, this );
 
    //resplotd->move( rpd_pos );
@@ -4512,46 +3657,6 @@ void US_Analysis_auto::resplot_done()
     }
 }
 
-
-// Update progress when thread reports
-void US_Analysis_auto::thread_progress( int thr, int icomp )
-{
-  qDebug() <<  "Updating progress multiple threads, thr, icomp -- " << thr << icomp;
-   int kcomp     = 0;
-   kcomps[ thr ] = icomp;
-   for ( int ii = 0; ii < nthread; ii++ )
-      kcomp += kcomps[ ii ];
-   progress_msg->setValue( kcomp );
-   qDebug() << "THR PROGR thr icomp" << thr << icomp << "kcomp" << kcomp;
-}
-
-
-// Update count of threads completed and colate simulations when all are done
-void US_Analysis_auto::thread_complete( int thr )
-{
-   thrdone++;
-   qDebug() << "THR COMPL thr" << thr << "thrdone" << thrdone;
-
-   if ( thrdone >= nthread )
-   {  // All threads are done, so sum thread simulation data
-      for ( int ii = 0; ii < sdata->scanData.size(); ii++ )
-      {
-         for ( int jj = 0; jj < sdata->xvalues.size(); jj++ )
-         {
-            //double conc = 0.0;
-            double conc = sdata->value( ii, jj );
-
-            for ( int kk = 0; kk < nthread; kk++ )
-               conc += tsimdats[ kk ].value( ii, jj );
-
-            sdata->setValue( ii, jj, conc );
-         }
-      }
-
-      // Then show the results
-      show_results();
-   }
-}
 
 // Adjust model components based on buffer, vbar, and temperature
 void US_Analysis_auto::adjustModel( )

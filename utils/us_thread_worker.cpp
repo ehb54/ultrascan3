@@ -41,25 +41,25 @@ void US_ThreadWorker::calc_simulation()
 
    if ( model.components[0].sigma == 0.0 && model.components[0].delta == 0.0 && model.coSedSolute < 0.0 && compress == 0.0 )
    {
-      US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
+      US_Astfem_RSA astfem_rsa( model, simparams );
 
-      connect( astfem_rsa, &US_Astfem_RSA::current_component, this, &US_ThreadWorker::forward_progress );
+      connect( &astfem_rsa, &US_Astfem_RSA::current_component, this, &US_ThreadWorker::forward_progress );
 
       qint64 stim = QDateTime::currentDateTime().toMSecsSinceEpoch();
       DbgLv( 1 ) << " THRWRK:" << thrn << "calc START" << stim;
-      astfem_rsa->calculate( simdat );
+      astfem_rsa.calculate( simdat );
       qint64 etim = QDateTime::currentDateTime().toMSecsSinceEpoch();
       DbgLv( 1 ) << " THRWRK:" << thrn << "calc    END" << etim;
    }
 
    else
    {
-      US_LammAstfvm* astfvm = new US_LammAstfvm( model, simparams );
+      US_LammAstfvm astfvm( model, simparams );
 
-      connect( astfvm, &US_LammAstfvm::comp_progress, this, &US_ThreadWorker::forward_progress );
+      connect( &astfvm, &US_LammAstfvm::comp_progress, this, &US_ThreadWorker::forward_progress );
 
-      astfvm->set_buffer( buffer );
-      astfvm->calculate( simdat );
+      astfvm.set_buffer( buffer );
+      astfvm.calculate( simdat );
    }
 
    emit work_complete( thrn );

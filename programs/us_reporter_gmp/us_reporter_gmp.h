@@ -25,6 +25,8 @@
 #include "us_thread_worker.h"
 #include "us_widgets.h"
 
+class US_ModelSimulation;
+
 /**
  * @class US_ReporterGMP
  * @brief The US_ReporterGMP class provides functionality for generating GMP reports.
@@ -447,6 +449,9 @@ class US_ReporterGMP : public US_Widgets
         US_DataIO::EditedData* edata; //!< Edited data
         US_DataIO::RawData* rdata; //!< Raw data
         US_DataIO::RawData* sdata; //!< Simulation data
+
+        US_ModelSimulation*                            simrun = nullptr; //!< Simulation runner
+
         US_DataIO::RawData wsdata; //!< Workspace data
 
 
@@ -541,20 +546,8 @@ class US_ReporterGMP : public US_Widgets
         US_Math2::SolutionData solution; //!< Solution data
         QVector<QVector<double>> resids; //!< Residuals vector
 
-        US_SimulationParameters simparams; //!< Simulation parameters
-        QList<US_DataIO::RawData> tsimdats; //!< Simulation data list
-        QList<US_Model> tmodels; //!< Models list
-        QVector<int> kcomps; //!< Components vector
+        US_SimulationParameters   simparams; //!< Simulation parameters
 
-        QStringList noiIDs; //!< Noise GUIDs list
-        QStringList noiEdIDs; //!< Noise edit GUIDs list
-        QStringList noiMoIDs; //!< Noise model GUIDs list
-        QStringList noiTypes; //!< Noise types list
-        QStringList modIDs; //!< Model GUIDs list
-        QStringList modEdIDs; //!< Model edit GUIDs list
-        QStringList modDescs; //!< Model descriptions list
-
-        int thrdone; //!< Thread done flag
 
         double density; //!< Density
         double viscosity; //!< Viscosity
@@ -590,19 +583,13 @@ class US_ReporterGMP : public US_Widgets
         void        report_generation_aborted();       //!< Tell the user the report was aborted and offer to generate it again
         bool loadData(QMap<QString, QString>&); //!< Load data
         bool loadModel(QMap<QString, QString>&); //!< Load model
-        bool loadNoises(QMap<QString, QString>&); //!< Load noises
-        void loadNoises_whenAbsent(void); //!< Load noises when absent
-        int count_noise_auto(US_DataIO::EditedData*, US_Model*, QStringList&, QStringList&); //!< Count noise automatically
+        bool        loadNoises( QMap<QString, QString>& ); //!< Load noises
 
-        int id_list_db_auto(QString); //!< Get ID list from DB automatically
-        int models_in_edit_auto(QString, QStringList&); //!< Get models in edit automatically
-        int noises_in_model_auto(QString, QStringList&); //!< Get noises in model automatically
         bool        simulateModel( QMap<QString, QString>& );    //!< Simulate model; false if the user aborts
         void adjustModel(void); //!< Adjust model
 
         QStringList scan_dbase_models(QStringList); //!< Scan database models
 
-        QString text_model(US_Model, int); //!< Convert model to text
         QString html_header(QString, QString, US_DataIO::EditedData*); //!< Generate HTML header
         QString html_header_abde(QString, QString, QString); //!< Generate HTML header
         QString distrib_info(QMap<QString, QString>&); //!< Generate distribution information
@@ -623,9 +610,7 @@ class US_ReporterGMP : public US_Widgets
         
         QString get_filename(QString); //!< Get file name
 
-    public slots:
-        void thread_progress(int, int); //!< Slot for thread progress
-        void thread_complete(int); //!< Slot for thread completion
+     public slots:
         void resplot_done(void); //!< Slot for residuals plot done
         void update_progress(int); //!< Slot for updating progress
 
@@ -657,8 +642,7 @@ class US_ReporterGMP : public US_Widgets
         void calc_residuals(void); //!< Calculate residuals
         void assemble_distrib_html(QMap<QString, QString>&); //!< Assemble distribution HTML
         void assemble_distrib_ABDE_html( QString& ); //!< Assemble distribution HTML
-        void assemble_plots_html(QStringList, QString = QString("")); //!< Assemble plots HTML
-        double interp_sval(double, double*, double*, int); //!< Interpolate s-value
+        void                   assemble_plots_html( QStringList, QString = QString( "" ) ); //!< Assemble plots HTML
         void plotres(QMap<QString, QString>&); //!< Plot residuals
         void plot_pseudo3D(QString, QString); //!< Plot pseudo 3D
         //! VELOCITY-MWL: per-channel "VELOCITY-MWL Analysis" report section
@@ -694,15 +678,6 @@ class US_ReporterGMP : public US_Widgets
         QMap<QString, QString> read_autoflowGMPReportEsign_record(QString); //!< Read autoflow GMP report electronic signature record
         void get_assigned_oper_revs(QJsonDocument, QStringList&); //!< Get assigned operator revisions
 
-        QString indent(int) const; //!< Generate indent
-        QString table_row(const QString&, const QString&) const; //!< Generate table row with 2 columns
-        QString table_row(const QString&, const QString&, const QString&) const; //!< Generate table row with 3 columns
-        QString table_row(const QString&, const QString&, const QString&, const QString&) const; //!< Generate table row with 4 columns
-        QString table_row(const QString&, const QString&, const QString&, const QString&, const QString&) const; //!< Generate table row with 5 columns
-        QString table_row(const QString&, const QString&, const QString&, const QString&, const QString&, const QString&) const; //!< Generate table row with 6 columns
-        QString table_row(const QString&, const QString&, const QString&, const QString&, const QString&, const QString&, const QString&) const; //!< Generate table row with 7 columns
-        QString table_row(const QString&, const QString&, const QString&, const QString&, const QString&, const QString&, const QString&, const QString&) const; //!< Generate table row with 8 columns
-        QString table_row(const QString&, const QString&, const QString&, const QString&, const QString&, const QString&, const QString&, const QString&, const QString&) const; //!< Generate table row with 9 columns
 
         /**
          * @brief Paint the page for the PDF report.
