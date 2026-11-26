@@ -1323,7 +1323,7 @@ void US_Hydrodyn_Saxs_Buffer_Frames::help()
 {
    US_Help * online_help = new US_Help( this );
    online_help->show_URL( "file://" +
-                          QDir::toNativeSeparators( USglobal->config_list.help_dir + "/manual/somo/somo_saxs_buffer.html" ) +
+                          QDir::toNativeSeparators( USglobal->config_list.help_dir + "/manual/somo/somo_SAS_data_utility.html" ) +
                           "#Frames" );
 }
 
