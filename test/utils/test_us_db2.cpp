@@ -9,7 +9,9 @@
 #include "us_db2.h"
 #include "us_settings.h"
 
+#include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QString>
 #include <QStringList>
 #include <QTemporaryDir>
@@ -204,21 +206,48 @@ TEST( UsDb2BlobFile, AShortWriteIsAnErrorAndLeavesNoPartialFile )
 
 #if defined( LIBMARIADB ) && !defined( NO_DB )
 // Connector/C fails a CA file it cannot load with an unrelated queued OpenSSL
-// error, usually "no cipher match". The file is named before any connection.
-// The unit layout stages no etc/mysql, so the CA is missing here.
-TEST( UsDb2Tls, AMissingCaFileIsReportedByName )
+// error, usually "no cipher match". The file is named before any connection,
+// whether nothing or a directory is at its path. The unit layout stages no
+// etc/mysql, so the CA is missing here.
+TEST( UsDb2Tls, AMissingOrNonFileCaIsReportedByName )
 {
    const QString ca = US_Settings::appBaseDir() + "/etc/mysql/ca-cert.pem";
-   if ( QFile::exists( ca ) )
+   if ( QFileInfo::exists( ca ) )
    {
-      GTEST_SKIP() << "a CA file is present: " << ca.toStdString();
+      GTEST_SKIP() << "something is already at the CA path: " << ca.toStdString();
    }
+
+   const auto expectNamed = [&]( const char* what )
+   {
+      US_DB2  db;
+      QString error;
+      EXPECT_FALSE( db.connect( "127.0.0.1:1", "none", "none", "none", error ) ) << what;
+      EXPECT_TRUE( error.contains( "TLS CA file not found or unreadable" ) ) << what << ": " << error.toStdString();
+      EXPECT_TRUE( error.contains( ca ) ) << what << ": " << error.toStdString();
+      EXPECT_FALSE( error.contains( "cipher" ) ) << what << ": " << error.toStdString();
+   };
+
+   expectNamed( "missing" );
+
+   ASSERT_TRUE( QDir().mkpath( ca ) );
+   expectNamed( "directory" );
+   EXPECT_TRUE( QDir().rmdir( ca ) );
+   QDir().rmdir( QFileInfo( ca ).path() ); // etc/mysql, if this test made it
+}
+#endif
+
+#ifndef NO_DB
+// Without the master password nothing can be decrypted; the connection is
+// refused before the server is contacted (127.0.0.1:1 would be refused too,
+// but with a different message).
+TEST( UsDb2Connect, AnEmptyMasterPasswordIsRefusedBeforeConnecting )
+{
+   US_Settings::set_defaultDB( { "Synthetic", "user", "db", "127.0.0.1:1", "00", "00", "a@example.invalid", "00", "00", "guid" } );
 
    US_DB2  db;
    QString error;
-   EXPECT_FALSE( db.connect( "127.0.0.1:1", "none", "none", "none", error ) );
-   EXPECT_TRUE( error.contains( "TLS CA file not found or unreadable" ) ) << error.toStdString();
-   EXPECT_TRUE( error.contains( ca ) ) << error.toStdString();
-   EXPECT_FALSE( error.contains( "cipher" ) ) << error.toStdString();
+   EXPECT_FALSE( db.connect( QString(), error ) );
+   EXPECT_TRUE( error.contains( "master password was not entered" ) ) << error.toStdString();
+   EXPECT_EQ( db.lastErrno(), IUS_DB2::NOT_CONNECTED );
 }
 #endif

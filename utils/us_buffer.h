@@ -25,6 +25,8 @@ class US_UTIL_EXTERN US_BufferComponent
       //! \return False when the DB cannot be opened, the component list cannot be queried, or
       //!         none of the listed components can be read.
       static bool getAllFromDB( const QString&, QMap<QString, US_BufferComponent>&, QString* error = nullptr );
+      //! \brief As above, on an open connection.
+      static bool getAllFromDB( IUS_DB2&, QMap<QString, US_BufferComponent>&, QString* error = nullptr );
 
       //! Get all component data from the etc/buffer_comp.xml file
       //! \param componentList A reference to where the data should be placed.

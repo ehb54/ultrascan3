@@ -31,21 +31,6 @@
 namespace
 {
 #ifndef NO_DB
-class MemoryStore : public US_Session::Store
-{
-   public:
-      QString load() const override
-      {
-         return value;
-      }
-      void save( const QString& password ) override
-      {
-         value = password;
-      }
-
-      QString value;
-};
-
 class US_SessionDbConnectLive : public QtTestBase
 {
    protected:
@@ -80,7 +65,7 @@ class US_SessionDbConnectLive : public QtTestBase
                                        person.at( 1 ),
                                        person_guid } );
 
-         US_Session( QSharedPointer<US_Session::Store>( new MemoryStore ) ).storeMasterPassword( master );
+         US_Session( QSharedPointer<US_Session::Store>( new US_Session::MemoryStore ) ).storeMasterPassword( master );
          qputenv( variable, master.toUtf8() );
       }
 
@@ -95,28 +80,35 @@ class US_SessionDbConnectLive : public QtTestBase
 
 TEST_F( US_SessionDbConnectLive, UnlockedMasterPasswordOpensTheProfile )
 {
-   US_Session                     session( QSharedPointer<US_Session::Store>( new MemoryStore ) );
+   US_Session                     session( QSharedPointer<US_Session::Store>( new US_Session::MemoryStore ) );
    US_EnvironmentCredentialSource source( variable );
    ASSERT_EQ( session.unlock( source ), US_Session::Result::Ok );
 
-   US_DB2 db( session.masterKey() );
-   ASSERT_EQ( db.lastErrno(), US_DB2::OK ) << db.lastError().toStdString();
+   // The production path: the session's saved-profile provider.
+   std::unique_ptr<IUS_DB2> db = session.openDatabase();
+   ASSERT_EQ( db->lastErrno(), US_DB2::OK ) << db->lastError().toStdString();
 
-   db.rawQuery( "SELECT @US3_ID" );
-   ASSERT_TRUE( db.next() );
-   EXPECT_GT( db.value( 0 ).toInt(), 0 );
+   db->rawQuery( "SELECT @US3_ID" );
+   ASSERT_TRUE( db->next() );
+   EXPECT_GT( db->value( 0 ).toInt(), 0 );
 }
 
 TEST_F( US_SessionDbConnectLive, WrongMasterPasswordNeitherUnlocksNorConnects )
 {
    qputenv( variable, "wrong" );
-   US_Session                     session( QSharedPointer<US_Session::Store>( new MemoryStore ) );
+   US_Session                     session( QSharedPointer<US_Session::Store>( new US_Session::MemoryStore ) );
    US_EnvironmentCredentialSource source( variable );
    EXPECT_EQ( session.unlock( source ), US_Session::Result::Wrong );
 
-   // The stored passwords do not decrypt with another key.
-   US_DB2 db( "wrong" );
-   EXPECT_NE( db.lastErrno(), US_DB2::OK );
+   // Still locked, so the connection is refused without contacting the
+   // server.
+   std::unique_ptr<IUS_DB2> db = session.openDatabase();
+   EXPECT_NE( db->lastErrno(), US_DB2::OK );
+   EXPECT_TRUE( db->lastError().contains( "master password was not entered" ) ) << db->lastError().toStdString();
+
+   // A key that is not the master password does not decrypt the stored ones.
+   US_DB2 wrong( "wrong" );
+   EXPECT_NE( wrong.lastErrno(), US_DB2::OK );
 }
 #endif
 } // namespace

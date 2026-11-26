@@ -7,6 +7,7 @@
 #include <io.h>
 #include <windows.h>
 #else
+#include <csignal>
 #include <termios.h>
 #include <unistd.h>
 #endif
@@ -22,7 +23,47 @@ bool isTerminal( int fd )
 #endif
 }
 
-// Turns terminal echo off for its lifetime and restores the saved mode.
+#ifdef Q_OS_WIN
+// The console mode to put back if Ctrl+C or a close ends the prompt.
+HANDLE      restore_handle = nullptr;
+DWORD       restore_mode   = 0;
+
+BOOL WINAPI restoreConsole( DWORD )
+{
+   SetConsoleMode( restore_handle, restore_mode );
+   return FALSE; // let the default handler end the process
+}
+#else
+// The terminal mode to put back if a signal ends the prompt; one prompt runs
+// at a time. The handler restores it, puts back the action that was there
+// before the prompt, and raises the signal again so that action runs.
+volatile sig_atomic_t restore_pending = 0;
+int                   restore_fd      = -1;
+termios               restore_mode{};
+const int             caught_signals[] = { SIGINT, SIGTERM, SIGQUIT, SIGHUP };
+struct sigaction      previous_actions[sizeof caught_signals / sizeof caught_signals[0]];
+
+extern "C" void       restoreTerminalAndRaise( int sig )
+{
+   if ( restore_pending )
+   {
+      tcsetattr( restore_fd, TCSANOW, &restore_mode );
+      restore_pending = 0;
+   }
+   for ( size_t ii = 0; ii < sizeof caught_signals / sizeof caught_signals[0]; ii++ )
+   {
+      if ( caught_signals[ii] == sig )
+      {
+         sigaction( sig, &previous_actions[ii], nullptr );
+      }
+   }
+   raise( sig );
+}
+#endif
+
+// Turns terminal echo off for its lifetime and restores the saved mode,
+// including when a signal (POSIX) or a console event (Windows) ends the
+// process meanwhile. active() is false when echo could not be turned off.
 class EchoOff
 {
    public:
@@ -30,41 +71,89 @@ class EchoOff
       {
 #ifdef Q_OS_WIN
          handle = reinterpret_cast<HANDLE>( _get_osfhandle( fd ) );
-         saved  = GetConsoleMode( handle, &mode ) != 0;
-         if ( saved )
+         if ( handle == INVALID_HANDLE_VALUE || !GetConsoleMode( handle, &mode ) )
          {
-            SetConsoleMode( handle, mode & ~ENABLE_ECHO_INPUT );
+            return;
          }
+         restore_handle = handle;
+         restore_mode   = mode;
+         SetConsoleCtrlHandler( restoreConsole, TRUE );
+         DWORD quiet = 0;
+         if ( !SetConsoleMode( handle, mode & ~ENABLE_ECHO_INPUT ) || !GetConsoleMode( handle, &quiet ) ||
+              ( quiet & ENABLE_ECHO_INPUT ) != 0 )
+         {
+            SetConsoleMode( handle, mode );
+            SetConsoleCtrlHandler( restoreConsole, FALSE );
+            return;
+         }
+         active_ = true;
 #else
          this->fd = fd;
-         saved    = tcgetattr( fd, &mode ) == 0;
-         if ( saved )
+         if ( tcgetattr( fd, &mode ) != 0 )
          {
-            termios quiet = mode;
-            quiet.c_lflag &= ~static_cast<tcflag_t>( ECHO );
-            tcsetattr( fd, TCSAFLUSH, &quiet );
+            return;
          }
+
+         restore_fd   = fd;
+         restore_mode = mode;
+         struct sigaction action
+         {
+         };
+         action.sa_handler = restoreTerminalAndRaise;
+         sigemptyset( &action.sa_mask );
+         for ( size_t ii = 0; ii < sizeof caught_signals / sizeof caught_signals[0]; ii++ )
+         {
+            sigaction( caught_signals[ii], &action, &previous_actions[ii] );
+         }
+
+         // Echo goes off before the prompt is shown; typed-ahead input is
+         // discarded, as getpass() does.
+         termios quiet = mode;
+         quiet.c_lflag &= ~static_cast<tcflag_t>( ECHO );
+         restore_pending = 1;
+         termios now{};
+         if ( tcsetattr( fd, TCSAFLUSH, &quiet ) != 0 || tcgetattr( fd, &now ) != 0 || ( now.c_lflag & ECHO ) != 0 )
+         {
+            restore();
+            return;
+         }
+         active_ = true;
 #endif
       }
 
       ~EchoOff()
       {
-         if ( !saved )
+         if ( active_ )
          {
-            return;
+            restore();
          }
-#ifdef Q_OS_WIN
-         SetConsoleMode( handle, mode );
-#else
-         tcsetattr( fd, TCSAFLUSH, &mode );
-#endif
+      }
+
+      bool active() const
+      {
+         return active_;
       }
 
       EchoOff( const EchoOff& )            = delete;
       EchoOff& operator=( const EchoOff& ) = delete;
 
    private:
-      bool saved = false;
+      void restore()
+      {
+#ifdef Q_OS_WIN
+         SetConsoleMode( handle, mode );
+         SetConsoleCtrlHandler( restoreConsole, FALSE );
+#else
+         restore_pending = 0;
+         tcsetattr( fd, TCSANOW, &mode );
+         for ( size_t ii = 0; ii < sizeof caught_signals / sizeof caught_signals[0]; ii++ )
+         {
+            sigaction( caught_signals[ii], &previous_actions[ii], nullptr );
+         }
+#endif
+      }
+
+      bool active_ = false;
 #ifdef Q_OS_WIN
       HANDLE handle = nullptr;
       DWORD  mode   = 0;
@@ -75,7 +164,8 @@ class EchoOff
 };
 
 // Reads one line from fd, without its line ending.
-// Returns false at end of input with nothing read.
+// Returns false at end of input, or when a signal interrupts the read,
+// with nothing read.
 bool readLine( int fd, QByteArray& line )
 {
    line.clear();
@@ -148,12 +238,17 @@ US_CredentialSource::Outcome US_TerminalCredentialSource::request( const QString
    }
 
    QTextStream err( stderr );
-   err << prompt << ": " << Qt::flush;
-
-   QByteArray line;
-   bool       read_ok = false;
+   QByteArray  line;
+   bool        read_ok = false;
    {
       EchoOff quiet( input_fd );
+      if ( !quiet.active() )
+      {
+         // Never read a password the terminal would show.
+         err << "Cannot turn off echo on the terminal, so the password is not asked for." << Qt::endl;
+         return Outcome::Unavailable;
+      }
+      err << prompt << ": " << Qt::flush;
       read_ok = readLine( input_fd, line );
    }
    // The typed newline was not echoed.

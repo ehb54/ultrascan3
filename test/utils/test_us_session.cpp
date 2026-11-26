@@ -2,16 +2,33 @@
 // US_Session's master-password checks, caching and sources, without a GUI or
 // the user's shared memory: each case uses an in-memory store, and the test
 // runner isolates the settings the stored hash lives in.
+#include "mock_us_db2.h"
 #include "qt_test_base.h"
 #include "us_credential_source.h"
+#include "us_db2.h"
+#include "us_global.h"
 #include "us_session.h"
 #include "us_settings.h"
 
 #include <QByteArray>
+#include <QCryptographicHash>
 #include <QList>
 #include <QSharedPointer>
 #include <QString>
 #include <QTemporaryFile>
+#include <utility>
+
+#ifndef Q_OS_WIN
+#include <atomic>
+#include <chrono>
+#include <csignal>
+#include <fcntl.h>
+#include <pthread.h>
+#include <stdlib.h>
+#include <termios.h>
+#include <thread>
+#include <unistd.h>
+#endif
 
 namespace
 {
@@ -347,3 +364,295 @@ TEST_F( US_CredentialSourceTest, TerminalSourceRefusesInputThatIsNotATerminal )
    EXPECT_EQ( source.request( "Master password", 1, secret ), US_CredentialSource::Outcome::Unavailable );
    EXPECT_EQ( source.maxAttempts(), 3 );
 }
+
+namespace
+{
+// Hands out the connection it was given, once, and counts the calls.
+class HandingProvider : public IUS_DBProvider
+{
+   public:
+      explicit HandingProvider( IUS_DB2* db ) : db( db )
+      {
+      }
+
+      std::unique_ptr<IUS_DB2> open() override
+      {
+         opened++;
+         return std::unique_ptr<IUS_DB2>( std::exchange( db, nullptr ) );
+      }
+
+      IUS_DB2* db;
+      int      opened = 0;
+};
+} // namespace
+
+#ifndef NO_DB
+TEST_F( US_SessionTest, WithoutAProviderTheSavedProfileIsUsed )
+{
+   // No profile is saved in the isolated settings, so this fails before any
+   // network access, as a US_DB2 built with the master password does.
+   store->value               = "synthetic-master";
+   US_Session               s = session();
+
+   std::unique_ptr<IUS_DB2> db = s.openDatabase();
+   ASSERT_NE( db, nullptr );
+   EXPECT_NE( db->lastErrno(), IUS_DB2::OK );
+   EXPECT_TRUE( db->lastError().contains( "not configured" ) ) << db->lastError().toStdString();
+}
+
+TEST_F( US_SessionTest, AnInstalledProviderSuppliesTheConnection )
+{
+   US_Session                      s    = session();
+   auto*                           mock = new US_DB2_Mock;
+   QSharedPointer<HandingProvider> provider( new HandingProvider( mock ) );
+   s.setProvider( provider );
+
+   std::unique_ptr<IUS_DB2> db = s.openDatabase();
+   EXPECT_EQ( db.get(), mock );
+   EXPECT_EQ( provider->opened, 1 );
+
+   s.setProvider( {} );
+   EXPECT_NE( s.openDatabase().get(), mock );
+}
+#endif
+
+// The shared cache field: what one process writes, another reads back.
+TEST( US_GlobalPasswdField, NonAsciiPasswordsRoundTripAsLatin1 )
+{
+   char field[US_Global::PasswdBytes];
+   US_Global::encodePasswd( QString::fromUtf8( "caf\xc3\xa9" ), field );
+   EXPECT_EQ( static_cast<unsigned char>( field[3] ), 0xe9 );
+   EXPECT_EQ( US_Global::decodePasswd( field ), QString::fromUtf8( "caf\xc3\xa9" ) );
+}
+
+TEST( US_GlobalPasswdField, ReadsNeverPassTheField )
+{
+   // 64 bytes fill the field with no terminator; the bytes after it must not
+   // be read.
+   struct
+   {
+         char field[US_Global::PasswdBytes];
+         char after[8];
+   } memory;
+   memset( memory.after, 'X', sizeof memory.after );
+   const QString exact( US_Global::PasswdBytes, QChar( 'a' ) );
+   US_Global::encodePasswd( exact, memory.field );
+   EXPECT_EQ( US_Global::decodePasswd( memory.field ), exact );
+
+   US_Global::encodePasswd( exact + "bcdef", memory.field );
+   EXPECT_EQ( US_Global::decodePasswd( memory.field ), exact );
+
+   US_Global::encodePasswd( "short", memory.field );
+   EXPECT_EQ( US_Global::decodePasswd( memory.field ), QString( "short" ) );
+}
+
+namespace
+{
+// Keeps only what the shared field can hold, as the shared-memory store does.
+class FieldStore : public US_Session::Store
+{
+   public:
+      QString load() const override
+      {
+         return US_Global::decodePasswd( field );
+      }
+      void save( const QString& password ) override
+      {
+         US_Global::encodePasswd( password, field );
+      }
+
+   private:
+      char field[US_Global::PasswdBytes] = {};
+};
+
+} // namespace
+
+TEST_F( US_SessionTest, TheAcceptedPasswordIsUsedAsEnteredNotAsCached )
+{
+   US_Settings::set_UltraScanPW( cafeLatin1Hash );
+   US_Session     s( QSharedPointer<US_Session::Store>( new FieldStore ) );
+   ScriptedSource source( { provided( QString::fromUtf8( "caf\xc3\xa9" ) ) } );
+
+   ASSERT_EQ( s.unlock( source ), US_Session::Result::Ok );
+   EXPECT_EQ( s.masterKey(), QString::fromUtf8( "caf\xc3\xa9" ) );
+}
+
+TEST_F( US_SessionTest, APasswordLongerThanTheCacheIsKeptWhole )
+{
+   const QString longPassword( 70, QChar( 'p' ) );
+   US_Settings::set_UltraScanPW( QCryptographicHash::hash( longPassword.toLatin1(), QCryptographicHash::Sha1 ) );
+   US_Session     s( QSharedPointer<US_Session::Store>( new FieldStore ) );
+   ScriptedSource source( { provided( longPassword ) } );
+
+   ASSERT_EQ( s.unlock( source ), US_Session::Result::Ok );
+   EXPECT_EQ( s.masterKey(), longPassword );
+   s.lock();
+   EXPECT_FALSE( s.isUnlocked() );
+}
+
+TEST_F( US_SessionTest, InProcessUnlocksAreNotWrittenToTheSharedCache )
+{
+   US_Session s = session();
+   s.keepUnlockInProcess();
+   ScriptedSource source( { provided( "synthetic-master" ) } );
+
+   ASSERT_EQ( s.unlock( source ), US_Session::Result::Ok );
+   EXPECT_EQ( s.masterKey(), QString( "synthetic-master" ) );
+   EXPECT_TRUE( store->value.isEmpty() );
+   EXPECT_EQ( store->saves, 0 );
+}
+
+TEST_F( US_SessionTest, InProcessSessionsStillUseAnotherProcesssUnlock )
+{
+   store->value = "synthetic-master";
+   US_Session s = session();
+   s.keepUnlockInProcess();
+   ScriptedSource source( { provided( "never-asked" ) } );
+
+   EXPECT_TRUE( s.isUnlocked() );
+   EXPECT_EQ( s.unlock( source ), US_Session::Result::Ok );
+   EXPECT_TRUE( source.attempts.isEmpty() );
+}
+
+TEST_F( US_SessionTest, AnOverrideReplacesTheInstanceForItsLifetime )
+{
+   QSharedPointer<MemoryStore> outer_store( new MemoryStore );
+   US_SessionOverride          outer( outer_store );
+   EXPECT_EQ( &US_Session::instance(), &outer.session() );
+   {
+      US_SessionOverride inner( store );
+      EXPECT_EQ( &US_Session::instance(), &inner.session() );
+   }
+   EXPECT_EQ( &US_Session::instance(), &outer.session() );
+}
+
+#ifndef Q_OS_WIN
+namespace
+{
+// A private pseudoterminal: the prompt reads the slave, the test types on the
+// master.
+class PseudoTerminal
+{
+   public:
+      PseudoTerminal()
+      {
+         master = posix_openpt( O_RDWR | O_NOCTTY );
+         if ( master >= 0 && grantpt( master ) == 0 && unlockpt( master ) == 0 )
+         {
+            slave = open( ptsname( master ), O_RDWR | O_NOCTTY );
+         }
+      }
+      ~PseudoTerminal()
+      {
+         if ( slave >= 0 )
+         {
+            close( slave );
+         }
+         if ( master >= 0 )
+         {
+            close( master );
+         }
+      }
+      bool valid() const
+      {
+         return master >= 0 && slave >= 0;
+      }
+
+      bool echoing() const
+      {
+         termios mode{};
+         return tcgetattr( slave, &mode ) == 0 && ( mode.c_lflag & ECHO ) != 0;
+      }
+
+      // Waits until the prompt has turned echo off.
+      bool waitForEchoOff() const
+      {
+         for ( int ii = 0; ii < 500; ii++ )
+         {
+            if ( !echoing() )
+            {
+               return true;
+            }
+            std::this_thread::sleep_for( std::chrono::milliseconds( 10 ) );
+         }
+         return false;
+      }
+
+      void type( const char* text ) const
+      {
+         ASSERT_GT( write( master, text, strlen( text ) ), 0 );
+      }
+
+      int master = -1;
+      int slave  = -1;
+};
+
+// What the interrupted program's own SIGINT handler saw.
+int                   interrupt_slave     = -1;
+volatile sig_atomic_t interrupted         = 0;
+volatile sig_atomic_t echo_when_interrupt = 0;
+extern "C" void       recordInterrupt( int )
+{
+   termios mode{};
+   echo_when_interrupt = tcgetattr( interrupt_slave, &mode ) == 0 && ( mode.c_lflag & ECHO ) != 0;
+   interrupted         = 1;
+}
+} // namespace
+
+TEST( US_TerminalCredentialSourcePty, ReadsWithEchoOffAndRestoresIt )
+{
+   PseudoTerminal tty;
+   ASSERT_TRUE( tty.valid() );
+   ASSERT_TRUE( tty.echoing() );
+
+   US_TerminalCredentialSource source( tty.slave );
+   ASSERT_TRUE( source.available() );
+   QString                      secret;
+   US_CredentialSource::Outcome outcome = US_CredentialSource::Outcome::Unavailable;
+   std::thread                  reader( [&] { outcome = source.request( "Master password", 1, secret ); } );
+
+   const bool                   off = tty.waitForEchoOff();
+   tty.type( "synthetic-master\n" );
+   reader.join();
+
+   EXPECT_TRUE( off ) << "echo was never turned off";
+   EXPECT_EQ( outcome, US_CredentialSource::Outcome::Provided );
+   EXPECT_EQ( secret, QString( "synthetic-master" ) );
+   EXPECT_TRUE( tty.echoing() ) << "echo was not restored";
+}
+
+TEST( US_TerminalCredentialSourcePty, AnInterruptRestoresEchoBeforeTheProgramsHandlerRuns )
+{
+   PseudoTerminal tty;
+   ASSERT_TRUE( tty.valid() );
+   interrupt_slave     = tty.slave;
+   interrupted         = 0;
+   echo_when_interrupt = 0;
+
+   struct sigaction record
+   {
+   };
+   struct sigaction saved
+   {
+   };
+   record.sa_handler = recordInterrupt;
+   sigemptyset( &record.sa_mask );
+   sigaction( SIGINT, &record, &saved );
+
+   US_TerminalCredentialSource  source( tty.slave );
+   QString                      secret;
+   US_CredentialSource::Outcome outcome = US_CredentialSource::Outcome::Unavailable;
+   std::thread                  reader( [&] { outcome = source.request( "Master password", 1, secret ); } );
+
+   ASSERT_TRUE( tty.waitForEchoOff() );
+   pthread_kill( reader.native_handle(), SIGINT );
+   reader.join();
+   sigaction( SIGINT, &saved, nullptr );
+
+   EXPECT_EQ( interrupted, 1 ) << "the program's own handler did not run";
+   EXPECT_EQ( echo_when_interrupt, 1 ) << "echo was still off when the program's handler ran";
+   EXPECT_EQ( outcome, US_CredentialSource::Outcome::Cancelled );
+   EXPECT_TRUE( secret.isEmpty() );
+   EXPECT_TRUE( tty.echoing() );
+}
+#endif

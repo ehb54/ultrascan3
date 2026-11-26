@@ -4,6 +4,7 @@
 #include <QCryptographicHash>
 #include <QObject>
 
+#include "us_db2.h"
 #include "us_global.h"
 #include "us_settings.h"
 
@@ -25,12 +26,53 @@ class SharedMemoryStore : public US_Session::Store
    private:
       mutable US_Global global;
 };
+
+// Keeps its own unlock, falling back to another process's cached one;
+// never writes the shared cache.
+class InProcessStore : public US_Session::Store
+{
+   public:
+      explicit InProcessStore( QSharedPointer<US_Session::Store> shared ) : shared( shared )
+      {
+      }
+
+      QString load() const override
+      {
+         return value.isEmpty() ? shared->load() : value;
+      }
+      void save( const QString& password ) override
+      {
+         value = password;
+      }
+
+   private:
+      QSharedPointer<US_Session::Store> shared;
+      QString                           value;
+};
 } // namespace
+
+US_Session* US_Session::override_session = nullptr;
 
 US_Session& US_Session::instance()
 {
+   if ( override_session != nullptr )
+   {
+      return *override_session;
+   }
    static US_Session session( QSharedPointer<Store>( new SharedMemoryStore ) );
    return session;
+}
+
+US_SessionOverride::US_SessionOverride( QSharedPointer<US_Session::Store> store ) :
+    replacement( store ),
+    previous( US_Session::override_session )
+{
+   US_Session::override_session = &replacement;
+}
+
+US_SessionOverride::~US_SessionOverride()
+{
+   US_Session::override_session = previous;
 }
 
 US_Session::US_Session( QSharedPointer<Store> store ) : store( store )
@@ -62,7 +104,7 @@ QString US_Session::describe( Result result )
 
 bool US_Session::isUnlocked() const
 {
-   return !store->load().isEmpty();
+   return !masterKey().isEmpty();
 }
 
 US_Session::Result US_Session::unlock( US_CredentialSource& source )
@@ -92,6 +134,7 @@ US_Session::Result US_Session::unlock( US_CredentialSource& source )
 
       if ( matches( candidate ) )
       {
+         accepted = candidate;
          store->save( candidate );
          return Result::Ok;
       }
@@ -122,12 +165,15 @@ US_Session::Result US_Session::unlock( const QList<US_CredentialSource*>& source
 
 void US_Session::lock()
 {
+   accepted.clear();
    store->save( QString() );
 }
 
 QString US_Session::masterKey() const
 {
-   return store->load();
+   // The shared cache holds at most 64 Latin-1 bytes, so a password accepted
+   // here is used as entered rather than as read back.
+   return accepted.isEmpty() ? store->load() : accepted;
 }
 
 US_Session::Result US_Session::confirm( const QString& reason, const QString& candidate ) const
@@ -150,7 +196,13 @@ void US_Session::storeMasterPassword( const QString& password )
 {
    US_Settings::set_UltraScanPW( hashOf( password ) );
    US_Settings::set_UltraScanPWFormat( CurrentHashFormat );
+   accepted = password;
    store->save( password );
+}
+
+void US_Session::keepUnlockInProcess()
+{
+   store = QSharedPointer<Store>( new InProcessStore( store ) );
 }
 
 void US_Session::setPromptSources( const QList<QSharedPointer<US_CredentialSource>>& sources )
@@ -171,6 +223,26 @@ US_Session::Result US_Session::unlockWithPromptSources()
       sources << source.data();
    }
    return unlock( sources );
+}
+
+std::unique_ptr<IUS_DB2> US_Session::openDatabase()
+{
+   const QSharedPointer<IUS_DBProvider> current = provider;
+   if ( current )
+   {
+      return current->open();
+   }
+   return std::unique_ptr<IUS_DB2>( new US_DB2( masterKey() ) );
+}
+
+void US_Session::setProvider( QSharedPointer<IUS_DBProvider> provider )
+{
+   this->provider = provider;
+}
+
+bool US_Session::hasProvider() const
+{
+   return !provider.isNull();
 }
 
 QByteArray US_Session::hashOf( const QString& password )

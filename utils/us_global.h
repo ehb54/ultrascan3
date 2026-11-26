@@ -81,6 +81,19 @@ class US_UTIL_EXTERN US_Global
     */
     void setPasswd( const QString& );
 
+    //! \brief Size of the shared password field, in bytes.
+    static constexpr int PasswdBytes = 64;
+
+    /*! \brief Writes a password into the shared field as Latin-1, as many
+        bytes as fit; shorter passwords are zero-terminated.
+    */
+    static void          encodePasswd( const QString& pw, char ( &field )[PasswdBytes] );
+
+    /*! \brief Reads a password back from the shared field, never past its
+        end, as the Latin-1 text encodePasswd() wrote.
+    */
+    static QString       decodePasswd( const char ( &field )[PasswdBytes] );
+
     /*! \brief Only called by master program to schedule deleting of
         shared memory when killing child processes
     */
@@ -107,7 +120,7 @@ class US_UTIL_EXTERN US_Global
     {
       public:
       QPoint current_position;
-      char   passwd[64];
+      char   passwd[PasswdBytes];
       // Add other global values as necessary
     };
 
