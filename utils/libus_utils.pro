@@ -64,6 +64,7 @@ HEADERS      = us_ana_profile.h   \
                us_session.h       \
                us_settings.h      \
                us_sim_cli.h       \
+               us_sim_input_loader.h \
                us_sim_inputs.h    \
                us_sim_optics.h    \
                us_sim_record.h    \
@@ -128,6 +129,7 @@ SOURCES      = us_ana_profile.cpp   \
                us_run_protocol.cpp  \
                us_session.cpp       \
                us_settings.cpp      \
+               us_sim_input_loader.cpp \
                us_sim_cli.cpp       \
                us_sim_inputs.cpp    \
                us_sim_optics.cpp    \
