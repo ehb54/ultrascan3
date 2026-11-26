@@ -12,6 +12,8 @@
 #include <QFrame>
 #include <QLabel>
 #include <QVBoxLayout>
+#include <QMessageBox>
+#include <cmath>
 
 US_Hydrodyn_Saxs_Buffer_Conc::US_Hydrodyn_Saxs_Buffer_Conc(
                                                            csv &csv1,
@@ -186,6 +188,15 @@ void US_Hydrodyn_Saxs_Buffer_Conc::setupGUI()
    pb_save->setPalette( PALET_PUSHB );
    connect(pb_save, SIGNAL(clicked()), SLOT(save()));
 
+   pb_save_into_files = new QPushButton( us_tr( "Save into data files" ), this );
+   pb_save_into_files->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
+   pb_save_into_files->setMinimumHeight( minHeight1 );
+   pb_save_into_files->setPalette( PALET_PUSHB );
+   pb_save_into_files->setToolTip( us_tr( "Write each curve's concentration into the first line of the data file it was loaded from\n"
+                                          "or saved as, where it is read when the file is loaded again. The values are also applied.\n"
+                                          "The files are listed before anything is written." ) );
+   connect( pb_save_into_files, SIGNAL( clicked() ), SLOT( save_into_files() ) );
+
    pb_copy = new QPushButton(us_tr("Copy values"), this);
    pb_copy->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_copy->setMinimumHeight(minHeight1);
@@ -239,6 +250,8 @@ void US_Hydrodyn_Saxs_Buffer_Conc::setupGUI()
    hbl_load_save->addSpacing( 4 );
    hbl_load_save->addWidget ( pb_save );
    hbl_load_save->addSpacing( 4 );
+   hbl_load_save->addWidget ( pb_save_into_files );
+   hbl_load_save->addSpacing( 4 );
 
    QHBoxLayout * hbl_bottom = new QHBoxLayout; hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addSpacing(4);
@@ -273,6 +286,61 @@ void US_Hydrodyn_Saxs_Buffer_Conc::set_ok()
    *org_csv = current_csv();
    ((US_Hydrodyn_Saxs_Buffer *)saxs_buffer_window)->update_enables();
    close();
+}
+
+void US_Hydrodyn_Saxs_Buffer_Conc::save_into_files()
+{
+   US_Hydrodyn_Saxs_Buffer * buffer  = (US_Hydrodyn_Saxs_Buffer *)saxs_buffer_window;
+   csv                       tmp_csv = current_csv();
+
+   QStringList curves;
+   QStringList concs;
+   QStringList none;
+   QStringList not_written;
+   for ( unsigned int i = 0; i < tmp_csv.data.size(); i++ )
+   {
+      if ( tmp_csv.data[ i ].size() < 2 )
+      {
+         continue;
+      }
+      QString name  = tmp_csv.data[ i ][ 0 ];
+      QString value = tmp_csv.data[ i ][ 1 ].trimmed();
+      if ( value.isEmpty() )
+      {
+         not_written << name + us_tr( ": no concentration" );
+         continue;
+      }
+      // every value must be a number before anything is written
+      bool   ok;
+      double conc = value.toDouble( &ok );
+      if ( !ok || !std::isfinite( conc ) )
+      {
+         QMessageBox::warning( this,
+                               windowTitle(),
+                               QString( us_tr( "%1:\nthe concentration \"%2\" is not a number.\n\nNothing was written." ) )
+                               .arg( name )
+                               .arg( value ) );
+         return;
+      }
+      if ( conc == 0e0 )
+      {
+         not_written << name + us_tr( ": no concentration" );
+         continue;
+      }
+      curves << name;
+      concs  << value;
+      none   << "";
+   }
+
+   if ( !buffer->save_values_into_files( this, curves, concs, none, none, not_written ) )
+   {
+      return;
+   }
+
+   // the values are also applied, as with "Save values"
+   csv1     = tmp_csv;
+   *org_csv = tmp_csv;
+   buffer->update_enables();
 }
 
 void US_Hydrodyn_Saxs_Buffer_Conc::help()
@@ -405,6 +473,7 @@ void US_Hydrodyn_Saxs_Buffer_Conc::update_enables()
       pb_paste    ->setEnabled( selected && csv_copy.data.size() );
       pb_paste_all->setEnabled( csv_copy.data.size() );
       pb_save     ->setEnabled( csv1.data.size() );
+      pb_save_into_files->setEnabled( csv1.data.size() );
       pb_load     ->setEnabled( true );
       disable_updates = false;
    }

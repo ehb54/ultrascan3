@@ -122,6 +122,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer_Frames : public QFrame
       US_Plot *                       usp_plot_chi2;
       QLabel *                        lbl_stats;
       QScrollArea *                   sa_stats;
+      int                             stats_start_height;
       QPushButton *                   pb_help;
       QPushButton *                   pb_select_r1;
       QPushButton *                   pb_select_both;
