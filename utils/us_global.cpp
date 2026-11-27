@@ -152,19 +152,30 @@ QPoint US_Global::global_position( void )
   return global.current_position;
 }
 
+void US_Global::encodePasswd( const QString& pw, char ( &field )[PasswdBytes] )
+{
+   const QByteArray bytes = pw.toLatin1();
+   memset( field, 0, PasswdBytes );
+   memcpy( field, bytes.constData(), static_cast<size_t>( qMin<qsizetype>( bytes.size(), PasswdBytes ) ) );
+}
+
+QString US_Global::decodePasswd( const char ( &field )[PasswdBytes] )
+{
+   // A 64-byte password fills the field with no terminator.
+   return QString::fromLatin1( field, qstrnlen( field, PasswdBytes ) );
+}
+
 void US_Global::setPasswd( const QString& pw )
 {
   read_global();
-  strncpy( global.passwd, pw.toLatin1().constData(), sizeof global.passwd );
+  encodePasswd( pw, global.passwd );
   write_global();
 }
 
 QString US_Global::passwd( void )
 {
   read_global();
-  char pw[64];
-  strncpy( pw, global.passwd, sizeof global.passwd );
-  return QString( pw );
+  return decodePasswd( global.passwd );
 }
 
 void  US_Global::read_global( void )

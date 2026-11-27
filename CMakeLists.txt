@@ -977,8 +977,10 @@ endif()
 if(US3_BUILD_PROGRAMS)
     add_subdirectory(programs)
 elseif(BUILD_TESTING AND NOT US3_NO_DB)
-    # TEST: us_sim_inputs_gen needs only Utils, so build it for its CLI test.
+    # TEST: these command-line tools need only Utils, so build them for their
+    # CLI tests.
     add_subdirectory(programs/us_sim_inputs_gen)
+    add_subdirectory(programs/us_import_run)
 endif()
 
 if(US3_BUILD_PROGRAMS AND NOT US3_NO_DB)

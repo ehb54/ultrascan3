@@ -4,9 +4,42 @@
 
 #include "us_extern.h"
 
+#include <QMutex>
+#include <QSharedPointer>
+#include <QString>
+
 #ifndef DbgErr
 #define DbgErr(a) if(US_Util::ithTime(a))qDebug() //!< Ith time error qDebug()
 #endif
+
+//! \brief Where US_Util::new_guid() takes its GUIDs from.
+//! The default is random. Tests and reproducible data builds install a
+//! seeded source with US_Util::setGuidSource().
+class US_UTIL_EXTERN US_GuidSource
+{
+   public:
+      virtual ~US_GuidSource() = default;
+
+      //! \brief The next GUID, 36 characters in the standard uuid form.
+      virtual QString next() = 0;
+};
+
+//! \brief The same sequence of GUIDs for the same seed.
+//! Each GUID is a name-based (version 5) uuid of the seed and a counter, so
+//! a rebuild repeats its GUIDs only while it creates them in the same order;
+//! use US_SimRecord::guid() with explicit keys where the order may change.
+class US_UTIL_EXTERN US_SeededGuidSource : public US_GuidSource
+{
+   public:
+      explicit US_SeededGuidSource( const QString& seed );
+
+      QString next() override;
+
+   private:
+      QString seed;
+      QMutex  mutex;
+      quint64 counter = 0;
+};
 
 //! \brief General utilities for UltraScan
 //!
@@ -39,6 +72,10 @@ class US_UTIL_EXTERN US_Util
       //!
       //! \returns         New GUID 36-character string
       static QString new_guid( void );
+
+      //! \brief Install the source new_guid() uses; null restores random GUIDs.
+      //! Install it at startup, before other threads create GUIDs.
+      static void               setGuidSource( QSharedPointer<US_GuidSource> source );
 
       //! \brief Generates a string for a file with md5 hash and file size
       //!

@@ -114,6 +114,10 @@ class US_UTIL_EXTERN US_Settings
     static QByteArray  UltraScanPW( void );
     //! \brief Set the cryptographic hash of the master password
     static void        set_UltraScanPW( const QByteArray& );
+    //! \brief Get the format of the master password hash (1 when unrecorded)
+    static int                UltraScanPWFormat( void );
+    //! \brief Set the format of the master password hash
+    static void               set_UltraScanPWFormat( int );
 
     // Misc
     
