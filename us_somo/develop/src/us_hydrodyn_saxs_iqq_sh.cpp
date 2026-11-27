@@ -832,7 +832,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
                               cb_kratky ->isChecked() ?
                               (double *)&(q2I[0])           : (double *)&(plotted_I[p][0]),
                               q_points );
-      plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], pen_width, SolidLine));
+      plot_saxs->setCurvePen(Iq, QPen(iq_color( p ), pen_width, SolidLine));
 #else
       curve->setSamples(
                      cb_guinier->isChecked() ?
@@ -841,7 +841,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
                      (double *)&(q2I[0])           : (double *)&(plotted_I[p][0]),
                      q_points
                      );
-      curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
+      curve->setPen( QPen( iq_color( p ), pen_width, Qt::SolidLine ) );
       curve->attach( plot_saxs );
 #endif
       cb_user_range->setChecked(false);
@@ -1484,7 +1484,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh_bead_model()
                               cb_kratky ->isChecked() ?
                               (double *)&(q2I[0])           : (double *)&(plotted_I[p][0]),
                               q_points );
-      plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], pen_width, SolidLine));
+      plot_saxs->setCurvePen(Iq, QPen(iq_color( p ), pen_width, SolidLine));
 #else
       curve->setSamples(
                      cb_guinier->isChecked() ?
@@ -1493,7 +1493,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh_bead_model()
                      (double *)&(q2I[0])           : (double *)&(plotted_I[p][0]),
                      q_points
                      );
-      curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
+      curve->setPen( QPen( iq_color( p ), pen_width, Qt::SolidLine ) );
       curve->attach( plot_saxs );
 #endif
       cb_user_range->setChecked(false);

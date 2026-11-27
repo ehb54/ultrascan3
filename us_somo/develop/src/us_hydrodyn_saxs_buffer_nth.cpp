@@ -702,7 +702,7 @@ void US_Hydrodyn_Saxs_Buffer_Nth::help()
 {
    US_Help *online_help;
    online_help = new US_Help( this );
-   online_help->show_help("manual/somo/saxs_buffer_nth.html");
+   online_help->show_help("manual/somo/somo_SAS_data_utility_select.html");
 }
 
 void US_Hydrodyn_Saxs_Buffer_Nth::closeEvent( QCloseEvent *e )

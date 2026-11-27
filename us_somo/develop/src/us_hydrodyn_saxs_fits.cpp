@@ -1226,7 +1226,7 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
                                         // true,
                                         // true,
                                         // use_error.size(),
-                                        pen_width
+                                        pr_pen_width
                                         );
       saxs_residuals_window->show();
    }
@@ -1628,7 +1628,7 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
                                         // true,
                                         // true,
                                         // use_error.size(),
-                                        pen_width
+                                        pr_pen_width
                                         );
       saxs_residuals_window->show();
    }

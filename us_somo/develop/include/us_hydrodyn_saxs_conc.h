@@ -47,6 +47,18 @@ class US_EXTERN US_Hydrodyn_Saxs_Conc : public QDialog
       ~US_Hydrodyn_Saxs_Conc();
       void refresh( csv &csv1 );
 
+      // writes a curve's values into the first line of its data file, where the SAS window and the Data Utility
+      // read them when the file is loaded: each of conc, psv and I0se that is not empty replaces the value of its
+      // token (Conc:, PSV:, I0se:), or is added as one; nothing else in the file changes. Also used by the Data
+      // Utility's Concentrations and PSV/I(0) std dialogs
+      static bool    write_values_into_file( const QString & file,
+                                             const QString & conc,
+                                             const QString & psv,
+                                             const QString & I0se,
+                                             QString       & error );
+      // at most 15 lines of a list, for a message box
+      static QString list_text( const QStringList & qsl );
+
    private:
       csv           csv1;
       csv           *org_csv;
@@ -87,11 +99,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Conc : public QDialog
 
       void          reload_csv();
       void          set_file_tooltips();
-      bool          write_values_into_file( const QString & file,
-                                            const QString & conc,
-                                            const QString & psv,
-                                            const QString & I0se,
-                                            QString       & error );
 
    private slots:
 
