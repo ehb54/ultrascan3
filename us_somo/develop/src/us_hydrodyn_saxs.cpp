@@ -107,7 +107,8 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    guinier_cutoff = 0.2;
    last_used_mw = 0.0;
 
-   pen_width = 1;
+   pen_width    = 1;
+   pr_pen_width = 1;
 
    // the curves' colors as plotted, and the I(q) plot's axes: linear q, logarithmic intensity
    iq_color_offset = 0;
@@ -1041,6 +1042,8 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_width->setMinimumHeight(minHeight1);
    SET_WIDTH_FROM_TEXT_LEN( pb_width );
    pb_width->setPalette( PALET_PUSHB );
+   pb_width->setToolTip( us_tr( "Make the lines of the I(q) plot one pixel wider at each press, back to 1 pixel after 5.\n"
+                                "The P(r) plot has its own Width." ) );
    connect(pb_width, SIGNAL(clicked()), SLOT(set_width()));
    iq_widgets.push_back( pb_width );
 
@@ -1597,7 +1600,9 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_width2->setMinimumHeight(minHeight1);
    SET_WIDTH_FROM_TEXT_LEN( pb_width2 );
    pb_width2->setPalette( PALET_PUSHB );
-   connect(pb_width2, SIGNAL(clicked()), SLOT(set_width()));
+   pb_width2->setToolTip( us_tr( "Make the lines of the P(r) plot one pixel wider at each press, back to 1 pixel after 5.\n"
+                                 "The I(q) plot has its own Width." ) );
+   connect(pb_width2, SIGNAL(clicked()), SLOT(set_pr_width()));
    pr_widgets.push_back( pb_width2 );
 
    pb_pp_pr = new QPushButton( us_tr( "Save plots" ), this );
@@ -4236,7 +4241,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   (double *)&( pr[ 0 ] ),
                   (int)r.size()
                   );
-   curve->setPen( QPen( pr_color( p ), pen_width, Qt::SolidLine ) );
+   curve->setPen( QPen( pr_color( p ), pr_pen_width, Qt::SolidLine ) );
    curve->attach( plot_pr );
 
    if ( plot_pr_zoomer )
