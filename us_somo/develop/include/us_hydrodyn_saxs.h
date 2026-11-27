@@ -893,7 +893,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       bool compute_scale_excl_vol();
 
       void push_back_color_if_ok( QColor bg, QColor set );
-      unsigned int pen_width;
+      unsigned int pen_width;     // the I(q) plot's line width (its Width button)
+      unsigned int pr_pen_width;  // the P(r) plot's (its own Width button)
 
       bool load_check_csvs_compatible( QStringList filenames );
       QString unify_csv_files( QStringList filenames );
@@ -1073,6 +1074,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
    private slots:
 
       void set_width();
+      void set_pr_width();
       void setupGUI();
       void set_saxs_sans();
       void set_saxs_sans(int);

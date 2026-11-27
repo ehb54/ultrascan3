@@ -92,10 +92,11 @@ void US_Hydrodyn_Saxs::plot_one_pr(
                               (double *)&( pr[ 0 ] ),
                               (int)r.size()
                               );
-            curve->setPen( QPen( pr_color( p ), 6 + pen_width * 1, Qt::SolidLine ) );
+            curve->setPen( QPen( pr_color( p ), 6 + pr_pen_width * 1, Qt::SolidLine ) );
             QwtSymbol sym;
             sym.setStyle(QwtSymbol::Diamond);
-            sym.setSize( pen_width );
+            // 6 pixels whatever the line width, as the diamonds of the I(q) plot
+            sym.setSize( 6 );
             sym.setPen(QPen(pr_color( p )));
             sym.setBrush(Qt::white);
             curve->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
@@ -116,7 +117,7 @@ void US_Hydrodyn_Saxs::plot_one_pr(
                               (double *)&( eb_y[ 0 ] ),
                               2
                               );
-            curve->setPen( QPen( pr_color( p ), pen_width, Qt::SolidLine ) );
+            curve->setPen( QPen( pr_color( p ), pr_pen_width, Qt::SolidLine ) );
             curve->setItemAttribute( QwtPlotItem::Legend, false );
             curve->attach( plot_pr );
          }
@@ -129,7 +130,7 @@ void US_Hydrodyn_Saxs::plot_one_pr(
                            (double *)&( pr[ 0 ] ),
                            (int)r.size()
                            );
-         curve->setPen( QPen( pr_color( p ), pen_width, Qt::SolidLine ) );
+         curve->setPen( QPen( pr_color( p ), pr_pen_width, Qt::SolidLine ) );
          curve->attach( plot_pr );
       }
    }
@@ -1899,7 +1900,15 @@ void US_Hydrodyn_Saxs::set_width()
       pen_width = 1;
    }
    set_guinier();
+}
 
+void US_Hydrodyn_Saxs::set_pr_width() 
+{
+   pr_pen_width++;
+   if ( pr_pen_width > 5 )
+   {
+      pr_pen_width = 1;
+   }
    replot_pr();
 }
 
@@ -1915,7 +1924,7 @@ void US_Hydrodyn_Saxs::replot_pr()
          
       QwtPlotCurve* curve = (QwtPlotCurve*) plitem;
       QPen qp = curve->pen();
-      qp.setWidth( pen_width );
+      qp.setWidth( pr_pen_width );
       curve->setPen( qp );
    }
    
