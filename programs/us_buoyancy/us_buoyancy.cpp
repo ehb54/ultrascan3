@@ -6,18 +6,17 @@
 
 #include "us_buoyancy.h"
 
-#include "us_settings.h"
+#include "us_constants.h"
+#include "us_db2.h"
+#include "us_db_provider.h"
 #include "us_gui_settings.h"
 #include "us_investigator.h"
-#include "us_run_details2.h"
-#include "us_math2.h"
-#include "us_util.h"
 #include "us_load_auc.h"
-#include "us_passwd.h"
-#include "us_db2.h"
-#include "us_constants.h"
+#include "us_math2.h"
+#include "us_run_details2.h"
+#include "us_settings.h"
 #include "us_simparms.h"
-#include "us_constants.h"
+#include "us_util.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -1344,14 +1343,13 @@ void US_Buoyancy::load( void )
    }
    else
    {
-      US_Passwd pw;
-      US_DB2  db( pw.getPasswd() );
+      auto db = US_DBProvider::open();
       for ( int ii = 0; ii < triples.size(); ii++ )
       {  // Generate file names
          QString triple = QString( triples.at( ii ) ).replace( " / ", "." );
    	 QString file   = runID + "." + dataType + "." + triple + ".auc";
          files << file;
-         simparams[ii].initFromData( &db, allData[ii], true, runID, dataType);
+         simparams[ii].initFromData( db.get(), allData[ii], true, runID, dataType );
       }
    }
    QString file = workingDir + "/" + runID + "." + dataType + ".xml";
@@ -1379,13 +1377,11 @@ void US_Buoyancy::load( void )
 
    if ( expType.isEmpty()  &&  disk_controls->db() )
    {  // no experiment type yet and data read from DB:  try for DB exp type
-      US_Passwd pw;
-      US_DB2    db( pw.getPasswd() );
+      auto db = US_DBProvider::open();
 
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db->lastErrno() != US_DB2::OK )
       {
-         QMessageBox::warning( this, tr( "Connection Problem" ),
-           tr( "Could not connect to database \n" ) + db.lastError() );
+         QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
          return;
       }
 
@@ -1393,9 +1389,9 @@ void US_Buoyancy::load( void )
       query << "get_experiment_info_by_runID" << runID
             << QString::number( US_Settings::us_inv_ID() );
 
-      db.query( query );
-      db.next();
-      expType    = db.value( 8 ).toString();
+      db->query( query );
+      db->next();
+      expType = db->value( 8 ).toString();
    }
    else                      // insure Ulll... form, e.g., "Equilibrium"
    {
@@ -1405,8 +1401,7 @@ void US_Buoyancy::load( void )
    expIsBuoyancy = ( expType.compare( "Buoyancy", Qt::CaseInsensitive ) == 0 );
    if (expIsBuoyancy)
    {
-      US_Passwd pw;
-      US_DB2  db( pw.getPasswd() );
+      auto db = US_DBProvider::open();
       update_speedData();
       pick     ->disconnect();
 
@@ -1546,41 +1541,39 @@ QMap< QString, double > US_Buoyancy::get_data_conf_from_edit_profile ( QString r
   double centerpiece_angle = 0;
   
   // Check DB connection
-  US_Passwd pw;
-  QString masterPW = pw.getPasswd();
-  US_DB2 db( masterPW );
-  
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
-      return data_conf;
-    }
+  auto                    db = US_DBProvider::open();
+
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning(
+        this, tr( "Connection Problem" ), tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+     return data_conf;
+  }
 
   QStringList qry;
   qry.clear();
   qry << "get_rawDataID_from_GUID" << rawGUID_t;
-  db.query( qry );
+  db->query( qry );
 
-  db.next();
-  QString rawDataID_t = db.value( 0 ).toString();
-  QString expID       = db.value( 1 ).toString();
-  QString soluID      = db.value( 2 ).toString();
+  db->next();
+  QString         rawDataID_t = db->value( 0 ).toString();
+  QString         expID       = db->value( 1 ).toString();
+  QString         soluID      = db->value( 2 ).toString();
 
   //Get cell information from expID, and the centerpiece geometry
   QList<cellInfo> cells; 
   qry.clear();
   qry << "all_cell_experiments" << expID;
-  db.query( qry );
-  while ( db.next() )
-    {
-      struct cellInfo cell;
-      QString         letters = US_Util::channel_letters();
-      cell.cellName      = db. value( 2 ).toString();
-      cell.channelName   = QString( letters[ qMax( 0, db. value( 3 ).toInt() ) ] );
-      cell.centerpieceID = db. value( 4 ).toInt();
-      cells << cell;
-    }
+  db->query( qry );
+  while ( db->next() )
+  {
+     struct cellInfo cell;
+     QString         letters = US_Util::channel_letters();
+     cell.cellName           = db->value( 2 ).toString();
+     cell.channelName        = QString( letters[qMax( 0, db->value( 3 ).toInt() )] );
+     cell.centerpieceID      = db->value( 4 ).toInt();
+     cells << cell;
+  }
   //now match cell's & channel name to those of triple && prescribe centerpiece
   int centerpieceID = 0;
   QStringList tripleName = triple_n.split("/");
@@ -1605,30 +1598,30 @@ QMap< QString, double > US_Buoyancy::get_data_conf_from_edit_profile ( QString r
   //finally, get get_abstractCenterpiece_info
   qry.clear();
   qry << "get_abstractCenterpiece_info" << QString::number( centerpieceID );
-  db.query( qry );
+  db->query( qry );
   QString centerpiece_name;
-  while ( db.next() )
-    {
-      centerpiece_name  = db.value( 1 ).toString();
-      centerpiece_angle = db.value( 7 ).toDouble();
-    }
+  while ( db->next() )
+  {
+     centerpiece_name  = db->value( 1 ).toString();
+     centerpiece_angle = db->value( 7 ).toDouble();
+  }
   qDebug() << "Centerpiece name, angle -- " << centerpiece_name << centerpiece_angle;
   
   
   //now, get editDataID(s) for given rawDataID_t
   qry.clear();
   qry << "get_editedDataIDs" << rawDataID_t;
-  db.query( qry );
+  db->query( qry );
 
   QStringList editDataIDs;
   QStringList filenames;
-  
-  while ( db.next() )
-    {
-      editDataIDs << db.value( 0 ).toString();
-      filenames   << db.value( 2 ).toString();
-    }
-  
+
+  while ( db->next() )
+  {
+     editDataIDs << db->value( 0 ).toString();
+     filenames << db->value( 2 ).toString();
+  }
+
   if ( editDataIDs.size() == 0 )
     {
       QMessageBox::warning( this,
@@ -1642,7 +1635,7 @@ QMap< QString, double > US_Buoyancy::get_data_conf_from_edit_profile ( QString r
   //last eprofile
   int eID = editDataIDs.last().toInt();
   QString filename = workingDir + "/" + filenames.last();
-  db.readBlobFromDB( filename, "download_editData", eID );
+  db->readBlobFromDB( filename, "download_editData", eID );
 
   //read XML section && extract meniscus value
   QFile pfile( filename );
@@ -1679,63 +1672,63 @@ QMap< QString, double > US_Buoyancy::get_data_conf_from_edit_profile ( QString r
   qry.clear();
   qry << "get_solutionBuffer" << soluID;
   qDebug() << "Query for solutionBuffer -- " << qry;
-  db.query( qry );
-   
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      qry.clear();
-      qry << "get_solutionIDs" << expID;
-      db.query( qry );
-      db.next();
-      soluID = db.value( 0 ).toString();
-      
-      qry.clear();
-      qry << "get_solutionBuffer" << soluID;
-      db.query( qry );
+  db->query( qry );
 
-      if ( db.lastErrno() != US_DB2::OK )
-	{
-	  QMessageBox::warning( this, tr( "Connection Problem" ),
-			    tr( "Unable to get solutionBuffer from solution ID" ) + soluID + "\n"  + db.lastError() );
-	}
-    }
-  
-  db.next();
-  QString id       = db.value( 0 ).toString();
-  QString guid     = db.value( 1 ).toString();
-  QString desc     = db.value( 2 ).toString();
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     qry.clear();
+     qry << "get_solutionIDs" << expID;
+     db->query( qry );
+     db->next();
+     soluID = db->value( 0 ).toString();
+
+     qry.clear();
+     qry << "get_solutionBuffer" << soluID;
+     db->query( qry );
+
+     if ( db->lastErrno() != US_DB2::OK )
+     {
+        QMessageBox::warning( this,
+                              tr( "Connection Problem" ),
+                              tr( "Unable to get solutionBuffer from solution ID" ) + soluID + "\n" + db->lastError() );
+     }
+  }
+
+  db->next();
+  QString id   = db->value( 0 ).toString();
+  QString guid = db->value( 1 ).toString();
+  QString desc = db->value( 2 ).toString();
 
   qDebug() << "SolutionBuffer results: " << id << guid << desc;
 
-  QString bufId, bufGuid, bufDesc; 
-  if ( ! id.isEmpty() )
-    {
-      bufId         = id;
-      bufGuid       = guid.isEmpty() ? bufGuid : guid;
-      bufDesc       = desc.isEmpty() ? bufDesc : desc;
-      
-      qry.clear();
-      qry << "get_buffer_info" << bufId;
-      qDebug() << "Query for buffer info -- " << qry;
-      db.query( qry );
-      
-      if ( db.lastErrno() != US_DB2::OK )
-	{
+  QString bufId, bufGuid, bufDesc;
+  if ( !id.isEmpty() )
+  {
+     bufId   = id;
+     bufGuid = guid.isEmpty() ? bufGuid : guid;
+     bufDesc = desc.isEmpty() ? bufDesc : desc;
 
-	  QMessageBox::warning( this, tr( "Connection Problem" ),
-			    tr( "Unable to get buffer info from buffer ID" ) + bufId + "\n"  + db.lastError() );
-	  return data_conf;
-	}
-      
-      db.next();
-      QString ddesc = db.value( 1 ).toString();
-      QString dcomp = db.value( 2 ).toString();
-      QString dvisc = db.value( 4 ).toString();
-      QString ddens = db.value( 5 ).toString();
-      QString dmanu = db.value( 6 ).toString();
-      
-      buffer_density = ddens. toDouble();
-    }
+     qry.clear();
+     qry << "get_buffer_info" << bufId;
+     qDebug() << "Query for buffer info -- " << qry;
+     db->query( qry );
+
+     if ( db->lastErrno() != US_DB2::OK )
+     {
+        QMessageBox::warning(
+           this, tr( "Connection Problem" ), tr( "Unable to get buffer info from buffer ID" ) + bufId + "\n" + db->lastError() );
+        return data_conf;
+     }
+
+     db->next();
+     QString ddesc = db->value( 1 ).toString();
+     QString dcomp = db->value( 2 ).toString();
+     QString dvisc = db->value( 4 ).toString();
+     QString ddens = db->value( 5 ).toString();
+     QString dmanu = db->value( 6 ).toString();
+
+     buffer_density = ddens.toDouble();
+  }
   /////////////////////////////////////////////////////////////////////////////
 
   data_conf[ "meniscus" ]          = meniscus_p;

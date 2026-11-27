@@ -6,18 +6,18 @@
 #include <QVersionNumber>
 
 #include "us.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_settings.h"
+#include "us_db2.h"
+#include "us_db_provider.h"
+#include "us_defines.h"
 #include "us_gui_settings.h"
+#include "us_images.h"
+#include "us_license.h"
+#include "us_license_t.h"
+#include "us_revision.h"
+#include "us_settings.h"
+#include "us_sleep.h"
 #include "us_theme.h"
 #include "us_win_data.h"
-#include "us_defines.h"
-#include "us_revision.h"
-#include "us_sleep.h"
-#include "us_images.h"
-#include "us_passwd.h"
-#include "us_db2.h"
 
 #if 0
 #define EQUI_MENU
@@ -380,19 +380,18 @@ void US_Win::update_user_level( void ) {
    QStringList defaultDB      = US_Settings::defaultDB();
    if ( !DB_list.empty() && !defaultDB.isEmpty() )
    {
-      US_Passwd   pw;
-      US_DB2      db( pw.getPasswd() );
-      int last_error = db.lastErrno();
+      auto db         = US_DBProvider::open();
+      int  last_error = db->lastErrno();
 
       if ( last_error == IUS_DB2::OK ) {
          QStringList q( "get_user_info" );
-         db.query( q );
-         db.next();
+         db->query( q );
+         db->next();
 
-         int ID        = db.value( 0 ).toInt();
-         QString fname = db.value( 1 ).toString();
-         QString lname = db.value( 2 ).toString();
-         int     level = db.value( 5 ).toInt();
+         int     ID    = db->value( 0 ).toInt();
+         QString fname = db->value( 1 ).toString();
+         QString lname = db->value( 2 ).toString();
+         int     level = db->value( 5 ).toInt();
 
 
          US_Settings::set_us_inv_name ( lname + ", " + fname );
@@ -401,7 +400,7 @@ void US_Win::update_user_level( void ) {
       }
       else
       {
-         QString error_msg = db.lastError();
+         QString     error_msg = db->lastError();
          QMessageBox msgBox;
          msgBox.setWindowTitle ("ERROR: User Level Synchronization");
          msgBox.setText("Error making the DB connection! User-level cannot be synchronized.");

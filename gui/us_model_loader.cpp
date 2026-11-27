@@ -1,19 +1,19 @@
 //! \file us_model_loader.cpp
 
 #include "us_model_loader.h"
+#include "us_db2.h"
+#include "us_db_provider.h"
+#include "us_editor.h"
+#include "us_gui_settings.h"
+#include "us_investigator.h"
+#include "us_matrix.h"
 #include "us_select_edits.h"
 #include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_matrix.h"
-#include "us_investigator.h"
-#include "us_passwd.h"
-#include "us_db2.h"
-#include "us_editor.h"
 
 // Destructor: close the database connection that the dialog opened (if any)
 US_ModelLoader::~US_ModelLoader()
 {
-   delete dbP;
+   dbP_owned.reset();
    dbP = NULL;
 }
 
@@ -419,8 +419,8 @@ int US_ModelLoader::load_model( US_Model& model, int index )
    {
       if ( dbP == NULL )
       {
-         US_Passwd pw;
-         dbP         = new US_DB2( pw.getPasswd() );
+         dbP_owned = US_DBProvider::open();
+         dbP       = dbP_owned.get();
 
          if ( ( rc = dbP->lastErrno() ) != IUS_DB2::OK )
          {
@@ -504,7 +504,7 @@ void US_ModelLoader::select_diskdb()
    loadDB       = dkdb_cntrls->db();
    if ( !loadDB )
    { // Switching to disk: close the connection rather than just forgetting it
-      delete dbP;
+      dbP_owned.reset();
       dbP = NULL;
    }
    pb_investigator->setEnabled( loadDB && ( US_Settings::us_inv_level() > 2 ) );
@@ -601,8 +601,8 @@ qDebug() << "  listdesc listedit listsing" << listdesc << listedit << listsing;
    {  // Model list from DB
       if ( dbP == NULL )
       {
-         US_Passwd   pw;
-         dbP         = new US_DB2( pw.getPasswd() );
+         dbP_owned = US_DBProvider::open();
+         dbP       = dbP_owned.get();
 
          if ( dbP->lastErrno() != IUS_DB2::OK )
          {
@@ -1111,8 +1111,8 @@ qDebug() << "  listdesc listedit listsing" << listdesc << listedit << listsing;
    {  // Model list from DB
       if ( dbP == NULL )
       {
-         US_Passwd   pw;
-         dbP         = new US_DB2( pw.getPasswd() );
+         dbP_owned = US_DBProvider::open();
+         dbP       = dbP_owned.get();
 
          if ( dbP->lastErrno() != IUS_DB2::OK )
          {

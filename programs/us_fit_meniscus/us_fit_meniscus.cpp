@@ -8,6 +8,7 @@
 
 #include "us_convertio.h"
 #include "us_db2.h"
+#include "us_db_provider.h"
 #include "us_fit_meniscus.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
@@ -1257,9 +1258,8 @@ int US_FitMeniscus::read_autoflowAnalysisStages( const QString& requestID )
 {
   int status = 0;
 
-  US_Passwd pw;
-  US_DB2* db = new US_DB2( pw.getPasswd() );
-  
+  auto db = US_DBProvider::open();
+
   if ( db->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this, tr( "Connection Problem" ),
@@ -1284,9 +1284,8 @@ QMap< QString, QString> US_FitMeniscus::read_autoflowAnalysis_record( const QStr
 {
   QMap <QString, QString> analysis_details;
 
-  US_Passwd pw;
-  US_DB2* db = new US_DB2( pw.getPasswd() );
-  
+  auto                    db = US_DBProvider::open();
+
   if ( db->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this, tr( "Connection Problem" ),
@@ -2061,9 +2060,7 @@ DbgLv(1) << " call Remove Models";
 void US_FitMeniscus::revert_autoflow_analysis_stages_record( const QString& requestID )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -2189,11 +2186,9 @@ void US_FitMeniscus::get_editProfile_copy( QMap < QString, QString > & triple_in
   /* ALEXEY: we can use only triple_information[ "filename" ] (the editedData table's 'label' filed) 
      to extract all editProfiles for this runID (which is triple_information[ "filename" ] )
    */
-  
-  US_Passwd pw;
-  QString masterpw = pw.getPasswd();
-  US_DB2* db = new US_DB2( masterpw );
-  
+
+  auto                db = US_DBProvider::open();
+
   // To be extracted from editedData table ('filename' field)
   // QMap below - establish correspondence btw EditProfile filename && EditDataID
   // select filename, editedDataID from editedData where label='ISSF-KulkarniJ_NP1-pDNA-D2O-0_091020-run822-2A';
@@ -2402,7 +2397,7 @@ void US_FitMeniscus::scan_dbase()
 {
    QVector< ModelDesc > mDescrs;   // Vector of model description objects
    US_Passwd pw;                   // DB password
-   US_DB2 db( pw.getPasswd() );    // DB control
+   auto                 db = US_DBProvider::open(); // DB control
    QStringList query;              // DB query string list
    QStringList mfnams;             // List of FM model fit file names
    QStringList ufnams;             // List of unique model fit file names
@@ -2429,16 +2424,16 @@ void US_FitMeniscus::scan_dbase()
    le_status->setText(
          tr( "Scanning DB fit-meniscus models ..." ) );
    query << "get_model_desc" << invID;
-   db.query( query );
+   db->query( query );
 
-   while( db.next() )
+   while ( db->next() )
    {
       ModelDesc mdescr;
-      QString modelID    = db.value( 0 ).toString();
-      QString modelGUID  = db.value( 1 ).toString();
-      QString descript   = db.value( 2 ).toString();
-      QString editGUID   = db.value( 5 ).toString();
-      QString editID     = db.value( 6 ).toString();
+      QString   modelID   = db->value( 0 ).toString();
+      QString   modelGUID = db->value( 1 ).toString();
+      QString   descript  = db->value( 2 ).toString();
+      QString   editGUID  = db->value( 5 ).toString();
+      QString   editID    = db->value( 6 ).toString();
 
       if ( descript.length() == 80 )
       {  // Truncated description:  save ID and skip update for now
@@ -2449,10 +2444,10 @@ DbgLv(1) << "DbSc:     TRUNC: modelID" << modelID << "descr" << descript;
          continue;
       }
 
-      double  variance   = db.value( 3 ).toString().toDouble();
-      double  meniscus   = db.value( 4 ).toString().toDouble();
+      double    variance   = db->value( 3 ).toString().toDouble();
+      double    meniscus   = db->value( 4 ).toString().toDouble();
       double  bottom     = 0.0;
-      QDateTime lmtime   = db.value( 7 ).toDateTime();
+      QDateTime lmtime     = db->value( 7 ).toDateTime();
       lmtime.setTimeZone( QTimeZone::utc() );
       QString ansysID    = descript.section( '.', -2, -2 );
       QString iterID     = ansysID .section( '_', -1, -1 );
@@ -2513,15 +2508,18 @@ DbgLv(1) << "DbSc: tmodels size" << tmodels.size() << "ted sizes"
       QString modelID    = tmodels[ ii ];
       query.clear();
       query << "get_model_info" << modelID;
-      db.query( query );
+      db->query( query );
 
-      if ( db.lastErrno() != US_DB2::OK )  continue;
+      if ( db->lastErrno() != US_DB2::OK )
+      {
+         continue;
+      }
 
-      db.next();
+      db->next();
 
-      QString modelGUID  = db.value( 0 ).toString();
-      QString descript1  = db.value( 1 ).toString();
-      QString contents   = db.value( 2 ).toString();
+      QString modelGUID  = db->value( 0 ).toString();
+      QString descript1  = db->value( 1 ).toString();
+      QString contents   = db->value( 2 ).toString();
       int     jdx        = contents.indexOf( "description=" );
 //DbgLv(1) << "DbSc:    ii jdtx" << ii << jdtx << "modelID" << modelID
 //   << "  dsc1" << descript1 << " cont" << contents.left( 20 );
@@ -2530,12 +2528,12 @@ DbgLv(1) << "DbSc: tmodels size" << tmodels.size() << "ted sizes"
 
 //DbgLv(1) << "DbSc:      jdx lend" << jdx << lend;
       QString descript   = contents.mid( jdx ).section( '"', 1, 1 );
-      double  variance   = db.value( 3 ).toString().toDouble();
-      double  meniscus   = db.value( 4 ).toString().toDouble();
+      double    variance   = db->value( 3 ).toString().toDouble();
+      double    meniscus   = db->value( 4 ).toString().toDouble();
       QString editGUID   = tedGIDs[ ii ];
       QString editID     = tedIDs [ ii ];
 
-      QDateTime lmtime   = db.value( 6 ).toDateTime();
+      QDateTime lmtime = db->value( 6 ).toDateTime();
       lmtime.setTimeZone( QTimeZone::utc() );
       QString ansysID    = descript.section( '.', -2, -2 );
       QString iterID     = ansysID .section( '_', -1, -1 );
@@ -2596,7 +2594,7 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
       ModelDesc mdescr   = mDescrs[ jj ];
       QString modelID    = mdescr.modelID;
       US_Model wmodel;
-      wmodel.load( modelID, &db );
+      wmodel.load( modelID, db.get() );
       double bottom      = wmodel.bottom;
 
       if ( bottom < 1.0 )
@@ -2802,7 +2800,7 @@ void US_FitMeniscus::scan_dbase_auto( QMap <QString, QString> & triple_informati
 {
    QVector< ModelDesc > mDescrs;   // Vector of model description objects
    US_Passwd pw;                   // DB password
-   US_DB2 db( pw.getPasswd() );    // DB control
+   auto                 db = US_DBProvider::open(); // DB control
    QStringList query;              // DB query string list
    QStringList mfnams;             // List of FM model fit file names
    QStringList ufnams;             // List of unique model fit file names
@@ -2832,16 +2830,16 @@ void US_FitMeniscus::scan_dbase_auto( QMap <QString, QString> & triple_informati
    query << "get_model_desc_auto" << invID << triple_information[ "filename" ];
    // Make use of the description && '2DSA-FM'
    //query << "get_model_desc" << invID;
-   db.query( query );
+   db->query( query );
 
-   while( db.next() )
+   while ( db->next() )
    {
       ModelDesc mdescr;
-      QString modelID    = db.value( 0 ).toString();
-      QString modelGUID  = db.value( 1 ).toString();
-      QString descript   = db.value( 2 ).toString();
-      QString editGUID   = db.value( 5 ).toString();
-      QString editID     = db.value( 6 ).toString();
+      QString   modelID   = db->value( 0 ).toString();
+      QString   modelGUID = db->value( 1 ).toString();
+      QString   descript  = db->value( 2 ).toString();
+      QString   editGUID  = db->value( 5 ).toString();
+      QString   editID    = db->value( 6 ).toString();
 
       if ( descript.length() == 80 )
       {  // Truncated description:  save ID and skip update for now
@@ -2852,10 +2850,10 @@ DbgLv(1) << "DbSc:     TRUNC: modelID" << modelID << "descr" << descript;
          continue;
       }
 
-      double  variance   = db.value( 3 ).toString().toDouble();
-      double  meniscus   = db.value( 4 ).toString().toDouble();
+      double    variance   = db->value( 3 ).toString().toDouble();
+      double    meniscus   = db->value( 4 ).toString().toDouble();
       double  bottom     = 0.0;
-      QDateTime lmtime   = db.value( 7 ).toDateTime();
+      QDateTime lmtime     = db->value( 7 ).toDateTime();
       lmtime.setTimeZone( QTimeZone::utc() );
       QString ansysID    = descript.section( '.', -2, -2 );
       QString iterID     = ansysID .section( '_', -1, -1 );
@@ -2917,15 +2915,18 @@ DbgLv(1) << "DbSc: tmodels size" << tmodels.size() << "ted sizes"
       QString modelID    = tmodels[ ii ];
       query.clear();
       query << "get_model_info" << modelID;
-      db.query( query );
+      db->query( query );
 
-      if ( db.lastErrno() != US_DB2::OK )  continue;
+      if ( db->lastErrno() != US_DB2::OK )
+      {
+         continue;
+      }
 
-      db.next();
+      db->next();
 
-      QString modelGUID  = db.value( 0 ).toString();
-      QString descript1  = db.value( 1 ).toString();
-      QString contents   = db.value( 2 ).toString();
+      QString modelGUID  = db->value( 0 ).toString();
+      QString descript1  = db->value( 1 ).toString();
+      QString contents   = db->value( 2 ).toString();
       int     jdx        = contents.indexOf( "description=" );
 //DbgLv(1) << "DbSc:    ii jdtx" << ii << jdtx << "modelID" << modelID
 //   << "  dsc1" << descript1 << " cont" << contents.left( 20 );
@@ -2934,12 +2935,12 @@ DbgLv(1) << "DbSc: tmodels size" << tmodels.size() << "ted sizes"
 
 //DbgLv(1) << "DbSc:      jdx lend" << jdx << lend;
       QString descript   = contents.mid( jdx ).section( '"', 1, 1 );
-      double  variance   = db.value( 3 ).toString().toDouble();
-      double  meniscus   = db.value( 4 ).toString().toDouble();
+      double    variance   = db->value( 3 ).toString().toDouble();
+      double    meniscus   = db->value( 4 ).toString().toDouble();
       QString editGUID   = tedGIDs[ ii ];
       QString editID     = tedIDs [ ii ];
 
-      QDateTime lmtime   = db.value( 6 ).toDateTime();
+      QDateTime lmtime = db->value( 6 ).toDateTime();
       lmtime.setTimeZone( QTimeZone::utc() );
       QString ansysID    = descript.section( '.', -2, -2 );
       QString iterID     = ansysID .section( '_', -1, -1 );
@@ -3001,7 +3002,7 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
       ModelDesc mdescr   = mDescrs[ jj ];
       QString modelID    = mdescr.modelID;
       US_Model wmodel;
-      wmodel.load( modelID, &db );
+      wmodel.load( modelID, db.get() );
       double bottom      = wmodel.bottom;
 
       if ( bottom < 1.0 )
@@ -3218,20 +3219,19 @@ void US_FitMeniscus::update_db_edit( QString edtext, QString efilepath,
    int     esvx     = edtext.indexOf( "\"", elnx ) + 1;
    int     nvch     = edtext.indexOf( "\"", esvx ) - esvx;
    QString edGUID   = edtext.mid( esvx, nvch );
-DbgLv(1) << "updDbEd: edGUID" << edGUID;
+   DbgLv( 1 ) << "updDbEd: edGUID" << edGUID;
 
-   US_Passwd pw;
-   US_DB2 db( pw.getPasswd() );
+   auto        db = US_DBProvider::open();
    QStringList query;
    query << "get_editID" << edGUID;
-   db.query( query );
-   db.next();
-   idEdit           = db.value( 0 ).toString().toInt();
+   db->query( query );
+   db->next();
+   idEdit = db->value( 0 ).toString().toInt();
    DbgLv( 1 ) << "updDbEd: idEdit" << idEdit;
    // How the existing edit is found is unchanged; only the upload is shared.
    QString upload_error;
 
-   if ( US_ConvertIO::uploadEditedDataBlob( &db, idEdit, efilepath, upload_error ) != IUS_DB2::OK )
+   if ( US_ConvertIO::uploadEditedDataBlob( db.get(), idEdit, efilepath, upload_error ) != IUS_DB2::OK )
    {
       qDebug() << tr( "*ERROR* update_db_edit: " ) << upload_error;
       msg += tr( "*ERROR* update_db_edit: " );
@@ -3239,7 +3239,7 @@ DbgLv(1) << "updDbEd: edGUID" << edGUID;
       return;
    }
 
-DbgLv(1) << "updDbEd: nedtfs" << nedtfs << "applymwl" << ck_applymwl->isChecked();
+   DbgLv( 1 ) << "updDbEd: nedtfs" << nedtfs << "applymwl" << ck_applymwl->isChecked();
    if ( nedtfs == 1  ||  ! ck_applymwl->isChecked() )
    {
       if ( have3val )
@@ -3447,8 +3447,7 @@ DbgLv(1) << "RmvMod:  ix_setfit lkModx" << ix_setfit << lkModx;
 	}
       
       QString   edtID = QString::number( idEdit );
-      US_Passwd pw;
-      US_DB2 db( pw.getPasswd() );
+      auto        db    = US_DBProvider::open();
       QStringList query;
       QStringList modIDs;
 
@@ -3458,35 +3457,38 @@ DbgLv(1) << "RmvMod:  ix_setfit lkModx" << ix_setfit << lkModx;
       else
          query << "get_model_desc" << invID;
 
-DbgLv(1) << "RmvMod:  idEdit" << idEdit << "query" << query;
-      db.query( query );
+      DbgLv( 1 ) << "RmvMod:  idEdit" << idEdit << "query" << query;
+      db->query( query );
 
-      while( db.next() )
+      while ( db->next() )
       {
-         QString modelID    = db.value( 0 ).toString();
-         QString descript   = db.value( 2 ).toString();
-         QString runID      = descript.section( '.',  0, -4 );
+         QString modelID  = db->value( 0 ).toString();
+         QString descript = db->value( 2 ).toString();
+         QString runID    = descript.section( '.', 0, -4 );
          if ( runID == srchRun )
          {
             modIDs << modelID;
          }
       }
 
-DbgLv(1) << "RmvMod:  modIDs size" << modIDs.size();
+      DbgLv( 1 ) << "RmvMod:  modIDs size" << modIDs.size();
       for ( int ii = 0; ii < modIDs.size(); ii++ )
       {
          QString modelID    = modIDs.at( ii );
          query.clear();
          query << "get_model_info" << modelID;
-         db.query( query );
+         db->query( query );
 
-         if ( db.lastErrno() != US_DB2::OK )  continue;
+         if ( db->lastErrno() != US_DB2::OK )
+         {
+            continue;
+         }
 
-         db.next();
+         db->next();
 
-         QString modelGUID  = db.value( 0 ).toString();
-         QString descript1  = db.value( 1 ).toString();
-         QString contents   = db.value( 2 ).toString();
+         QString modelGUID      = db->value( 0 ).toString();
+         QString descript1      = db->value( 1 ).toString();
+         QString contents       = db->value( 2 ).toString();
          int jdtx           = contents.indexOf( "description=" );
 
          if ( jdtx < 1 )  continue;
@@ -3503,8 +3505,8 @@ DbgLv(1) << "RmvMod:  descript" << descript << "msetBase" << msetBase << "ii" <<
             continue;
          }
 
-         double  variance   = db.value( 3 ).toString().toDouble();
-         double  meniscus   = db.value( 4 ).toString().toDouble();
+         double  variance   = db->value( 3 ).toString().toDouble();
+         double  meniscus   = db->value( 4 ).toString().toDouble();
          QString runID      = descript.section( '.',  0, -4 );
          QString tripID     = descript.section( '.', -3, -3 );
          QString anRunID    = descript.section( '.', -2, -2 );
@@ -3791,8 +3793,7 @@ DbgLv(1) << "RmvMod: nlrmod ndrmod nlrnoi ndrnoi nlnois ndnois"
 
       if ( rmv_mdls )
       {
-         US_Passwd pw;
-         US_DB2* dbP = db_upd ? new US_DB2( pw.getPasswd() ) : NULL;
+         std::unique_ptr<IUS_DB2> dbP = db_upd ? US_DBProvider::open() : nullptr;
 
          QStringList query;
          QString recID;
@@ -3831,8 +3832,8 @@ else DbgLv(1) << "     DB record deleted";
 
          if ( dbP != NULL )
          {
-            delete dbP;
-            dbP   = NULL;
+            dbP.reset();
+            dbP = nullptr;
          }
 
          for ( int ii = 0; ii < rnoiIDs.size(); ii++ )
@@ -3938,8 +3939,7 @@ DbgLv(1) << "NIE:     noiFname" << noiFname;
 
    if ( db_upd )
    {
-      US_Passwd pw;
-      US_DB2 db( pw.getPasswd() );
+      auto        db = US_DBProvider::open();
       QStringList nIDs;
       QString invID = QString::number( US_Settings::us_inv_ID() );
 
@@ -3954,12 +3954,12 @@ DbgLv(1) << "NIE:     noiFname" << noiFname;
 
       query.clear();
       query << "all_editedDataIDs" << invID;
-      db.query( query );
+      db->query( query );
 
-      while( db.next() )
+      while ( db->next() )
       {
-         QString edtID    = db.value( 0 ).toString();
-         QString edtName  = db.value( 2 ).toString();
+         QString edtID   = db->value( 0 ).toString();
+         QString edtName = db->value( 2 ).toString();
 
          if ( edtName.startsWith( srchRun )  &&
               edtName.endsWith(   srchTrip ) )
@@ -3980,13 +3980,13 @@ if ( edtIDs.size() > 0 ) DbgLv(1) << "NIE: edtName0" << edtNams[0];
       else
          query << "get_noise_desc" << invID;
 
-      db.query( query );
+      db->query( query );
 
-      while( db.next() )
+      while ( db->next() )
       {
-         QString noiID    = db.value( 0 ).toString();
-         QString edtID    = db.value( 2 ).toString();
-DbgLv(1) << "NIE:  noiID edtID" << noiID << edtID;
+         QString noiID = db->value( 0 ).toString();
+         QString edtID = db->value( 2 ).toString();
+         DbgLv( 1 ) << "NIE:  noiID edtID" << noiID << edtID;
 
          if ( edtIDs.contains( edtID ) )
             nIDs << noiID;
@@ -3997,9 +3997,11 @@ DbgLv(1) << "NIE: nIDs-size" << nIDs.size() << "msetBase" << msetBase;
       {
          QString noiID      = nIDs[ ii ];
          US_Noise noise;
-      
-         if ( noise.load( noiID, &db ) != US_DB2::OK )
-            continue;    // Can't use if can't load
+
+         if ( noise.load( noiID, db.get() ) != US_DB2::OK )
+         {
+            continue; // Can't use if can't load
+         }
 
          QString noiDesc    = noise.description;
 DbgLv(1) << "NIE:  ii noiID noiDesc" << ii << noiID << noiDesc;

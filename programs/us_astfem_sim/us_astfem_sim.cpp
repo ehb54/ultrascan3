@@ -24,6 +24,7 @@
 #include "us_model_gui.h"
 #include "us_rotor_gui.h"
 #include "us_settings.h"
+#include "us_sim_input_loader.h"
 #include "us_sim_inputs.h"
 #include "us_sim_optics.h"
 #include "us_sim_params_gui.h"
@@ -227,38 +228,39 @@ int US_Astfem_Sim::init_from_args( const US_SimCliArgs& args )
    bool loaded_rotor     = true;
    int  rotor_holes      = -1;
    bool errors_to_cl     = args.errors_cl;
+   // Model, buffer and rotor come from the database or the local data
+   // folders, as the data location says, without any dialog.
+   const std::unique_ptr<IUS_DB2> inputs_db        = openSimInputDatabase( args );
    // load model
    if ( !args.model.isEmpty() )
    {
-      US_Model temp_model = US_Model();
-      QString      model_id   = args.model;
-      US_ModelGui* dialog = new US_ModelGui( system  );
-      bool success = dialog->load_model( model_id, temp_model );
-      dialog->close();
-      if ( !success ) {
-         reportHeadlessLoadFailure( "model", model_id, errors_to_cl, gui_needed, error_occured );
-         loaded_model = false;
-      }
-      else {
+      US_Model temp_model;
+      QString  load_error;
+      if ( US_SimInputLoader::model( args.model, inputs_db.get(), US_Settings::us_inv_ID(), temp_model, load_error ) )
+      {
          change_model( temp_model );
       }
-      delete dialog;
+      else
+      {
+         reportSimInputFailure( "model", args.model, load_error, errors_to_cl, gui_needed, error_occured );
+         loaded_model = false;
+      }
    }
    // load buffer
    if ( !args.buffer.isEmpty() )
    {
-      QString       load_id = args.buffer;
-      US_BufferGui* dialog = new US_BufferGui( true, buffer, US_Disk_DB_Controls::Default );
-      bool success = dialog->load_buffer( load_id, buffer );
-      dialog->close();
-      if ( !success ) {
-         reportHeadlessLoadFailure( "buffer", load_id, errors_to_cl, gui_needed, error_occured );
-         loaded_buffer = false;
-      }
-      else {
+      US_Buffer loaded;
+      QString   load_error;
+      if ( US_SimInputLoader::buffer( args.buffer, inputs_db.get(), US_Settings::us_inv_ID(), loaded, load_error ) )
+      {
+         buffer = loaded;
          change_buffer( buffer );
       }
-      delete dialog;
+      else
+      {
+         reportSimInputFailure( "buffer", args.buffer, load_error, errors_to_cl, gui_needed, error_occured );
+         loaded_buffer = false;
+      }
    }
    // load simulation parameters if needed
    if ( !args.simparams.isEmpty() )
@@ -282,47 +284,22 @@ int US_Astfem_Sim::init_from_args( const US_SimCliArgs& args )
    // load rotor if needed
    if ( !args.rotor.isEmpty() )
    {
-      US_Rotor::Rotor rotor;
-      US_Rotor::RotorCalibration calibration;
-      US_Disk_DB_Controls*    disk_controls;
-      QString                    rotor_id = args.rotor;
-      disk_controls     = new US_Disk_DB_Controls( US_Disk_DB_Controls::Default );
-      int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
-                                            : US_Disk_DB_Controls::Disk;
-      US_RotorGui* rotorInfo = new US_RotorGui( true,    // signal_wanted
-                                                 dbdisk,
-                                                 rotor, calibration );
-      double coeff1 = 0.0;
-      double coeff2 = 0.0;
-      bool status = rotorInfo->load_rotor( rotor_id, coeff1, coeff2 );
-
-      if ( status )
+      US_SimInputLoader::RotorChoice choice;
+      QString                        load_error;
+      if ( US_SimInputLoader::rotor( args.rotor, inputs_db.get(), choice, load_error ) )
       {
-         this->rotor = rotorInfo->currentRotor;
-         this->rotor_calibration = rotorInfo->currentCalibration;
-         simparams.rotorcoeffs[0]   = coeff1;
-         simparams.rotorcoeffs[1]   = coeff2;
-         simparams.rotorCalID = QString::number( rotorInfo->currentCalibration.ID );
-         {
-            // Opened only for the DB case: holeCount() takes a plain
-            // IUS_DB2*, so unlocking (a gui-layer concern) stays here rather
-            // than inside the utils-layer US_Rotor.
-            std::unique_ptr<IUS_DB2> holeDb;
-            if ( dbdisk == US_Disk_DB_Controls::DB )
-            {
-               holeDb = US_DBProvider::open();
-            }
-            rotor_holes = US_Rotor::holeCount( this->rotor, holeDb.get() );
-         }
-         rotorInfo->close();
+         this->rotor              = choice.rotor;
+         this->rotor_calibration  = choice.calibration;
+         simparams.rotorcoeffs[0] = choice.coeff1;
+         simparams.rotorcoeffs[1] = choice.coeff2;
+         simparams.rotorCalID     = QString::number( choice.calibration.ID );
+         rotor_holes              = US_Rotor::holeCount( this->rotor, inputs_db.get() );
       }
-      else {
-         rotorInfo->close();
-         reportHeadlessLoadFailure( "rotor", rotor_id, errors_to_cl, gui_needed, error_occured );
+      else
+      {
+         reportSimInputFailure( "rotor", args.rotor, load_error, errors_to_cl, gui_needed, error_occured );
          loaded_rotor = false;
       }
-      delete rotorInfo;
-      delete disk_controls;
    }
 
    // A centerpiece selects the row geometry and overrides the loaded bottom.

@@ -133,7 +133,10 @@ public:
        "the connection was lost during the commit, so whether it took effect is unknown: %1";
     static constexpr const char* serverRollbackMessage =
        "the server had already rolled the transaction back after a deadlock, so nothing written in it was kept "
-       "and anything run after that ran outside the transaction";
+       "and the statements after it were not run";
+    static constexpr const char* transactionEndedByMessage =
+       "the transaction ended during \"%1\", so the statements after it were not run; "
+       "some rows written in it may have been kept";
     static constexpr const char* transactionEndedMessage =
        "the transaction had already ended, by an implicit commit or a rollback by the server, "
        "so some rows written in it may have been kept";
@@ -375,6 +378,20 @@ public:
     bool       inTransaction        = false;
     //! A deadlock in the open transaction, after which the server rolled it back.
     bool       rolledBackByDeadlock = false;
+    //! The open transaction ended before the caller committed it (an implicit
+    //! commit, a procedure's own COMMIT or ROLLBACK, or a deadlock); later
+    //! statements are refused until the caller commits or rolls back.
+    bool       transactionLost      = false;
+    //! Why transactionLost was set, naming the statement that ended it.
+    QString    transactionLostText;
+    //! Set by rawQuery(): the statement was refused, not run.
+    bool       statementRefused          = false;
+    //! Set by rawQuery(): this statement ended the open transaction.
+    bool       statementEndedTransaction = false;
+    //! The last statement whose results may still be unread. Reading them
+    //! brings the transaction status up to date, so a procedure that commits
+    //! after returning a result set is named when they are drained.
+    QString    pendingStatement;
 #ifndef NO_DB
     MYSQL*     db;
     MYSQL_RES* result;
@@ -409,6 +426,23 @@ public:
     //! \brief Why the transaction ended before commit or rollback: the
     //!        deadlock if one was recorded, otherwise that rows may have been kept.
     QString        transactionEndedText() const;
+
+    //! \brief Refuses a statement after the open transaction was lost, with
+    //!        the reason in lastError(); sets statementRefused.
+    bool           refuseAfterLostTransaction();
+
+    //! \brief After a statement succeeds inside a transaction, records it if
+    //!        the server no longer has the transaction open.
+    void           noteTransactionEnd( const QString& sqlQuery );
+
+    //! \brief Reads the result sets \p sqlQuery still has pending, leaving
+    //!        `result` alone, then checks whether it ended the transaction.
+    //!        Sets statementEndedTransaction if it did.
+    void           finishResults( const QString& sqlQuery );
+
+    //! \brief After drainResults(): records whether the statement whose
+    //!        results were drained ended the transaction, naming it.
+    void           notePendingStatementEnd();
 
     //! \brief Escapes \p value for use inside a single-quoted SQL literal.
     static QString escapeLiteral( QString value );

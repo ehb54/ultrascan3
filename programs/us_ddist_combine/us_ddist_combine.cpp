@@ -3,6 +3,7 @@
 #include "us_ddist_combine.h"
 #include "qwt_legend.h"
 #include "us_constants.h"
+#include "us_db_provider.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
 #include "us_license.h"
@@ -10,7 +11,6 @@
 #include "us_math2.h"
 #include "us_matrix.h"
 #include "us_model.h"
-#include "us_passwd.h"
 #include "us_report.h"
 #include "us_select_rundd.h"
 #include "us_settings.h"
@@ -1526,8 +1526,7 @@ void US_DDistr_Combine::save( void )
 
       if ( dkdb_cntrls->db() )
       {
-         US_Passwd    pw;
-         US_DB2       db( pw.getPasswd() );
+         auto         db     = US_DBProvider::open();
          int          idEdit = 0;
          int          kl     = pdistrs.size() - 1;
 
@@ -1544,20 +1543,20 @@ void US_DDistr_Combine::save( void )
          // Query for the experiment ID matching the run ID
          QStringList  query;
          query << "get_experiment_info_by_runID" << runID << invID;
-         db.query( query );
-         db.next();
-         QString expID = db.value( 1 ).toString();
-DbgLv(1) << "SV:  runID expID" << runID << expID;
+         db->query( query );
+         db->next();
+         QString expID = db->value( 1 ).toString();
+         DbgLv( 1 ) << "SV:  runID expID" << runID << expID;
          // Query for the raw ID in experiment matching a triple
          QString rawID;
          query.clear();
          query << "get_rawDataIDs" << expID;
-         db.query( query );
-         while ( db.next() )
+         db->query( query );
+         while ( db->next() )
          {
-                    rawID  = db.value( 0 ).toString();
-            QString efname = db.value( 2 ).toString();
-DbgLv(1) << "SV:   rawID" << rawID << "efname" << efname << "trip1" << trip1;
+            rawID          = db->value( 0 ).toString();
+            QString efname = db->value( 2 ).toString();
+            DbgLv( 1 ) << "SV:   rawID" << rawID << "efname" << efname << "trip1" << trip1;
             // Save rawID when we have found a triple match
             if ( efname.contains( trip1 ) )
                break;
@@ -1565,11 +1564,11 @@ DbgLv(1) << "SV:   rawID" << rawID << "efname" << efname << "trip1" << trip1;
          // Query edit IDs for raw ID and look for triple match
          query.clear();
          query << "get_editedDataIDs" << rawID;
-         db.query( query );
-         while ( db.next() )
+         db->query( query );
+         while ( db->next() )
          {
-            QString aeditID = db.value( 0 ).toString();
-            QString efname  = db.value( 2 ).toString();
+            QString aeditID = db->value( 0 ).toString();
+            QString efname  = db->value( 2 ).toString();
             if ( eeditID.isEmpty() )
                eeditID      = aeditID;  // Save 1st valid from experiment
 DbgLv(1) << "SV:     editID" << eeditID << "raw exp trip1 fname"
@@ -1594,11 +1593,9 @@ DbgLv(1) << "SV: editID idEdit" << editID << idEdit << "  eeditID" << eeditID;
          // Add or update report documents in the database
          QStringList rfiles;
          rfiles << fnamsvg << fnampng << fnamdat << fnamlst;
-         int st = reportDocsFromFiles( runID, fdir, rfiles, &db,
-                                       idEdit, trdesc );
+         int st = reportDocsFromFiles( runID, fdir, rfiles, db.get(), idEdit, trdesc );
 
-DbgLv(1) << "SV:runID" << runID << "idEdit" << idEdit
- << "fnamlst" << fnamlst << "trdesc" << trdesc;
+         DbgLv( 1 ) << "SV:runID" << runID << "idEdit" << idEdit << "fnamlst" << fnamlst << "trdesc" << trdesc;
          if ( iruns == ( nruns - 1 ) )
          {  // Append message line after last run save
             if ( st == 0 )
@@ -1983,9 +1980,8 @@ DbgLv(1) << "FID:  ncomps" << ncomps;
    if ( ncomps == 0 )
    { // Model not yet loaded, so load it now.  This is the only place a
       //  database connection is needed; it is closed when the block exits.
-      US_Passwd              pw;
-      QScopedPointer<US_DB2> db( isDB ? new US_DB2( pw.getPasswd() ) : nullptr );
-      ddesc.model.load( isDB, ddesc.mGUID, db.data() );
+      std::unique_ptr<IUS_DB2> db = isDB ? US_DBProvider::open() : nullptr;
+      ddesc.model.load( isDB, ddesc.mGUID, db.get() );
 
       ncomps         = ddesc.model.components.size();   // Composite components
 DbgLv(1) << "FID:  (2)ncomps" << ncomps;

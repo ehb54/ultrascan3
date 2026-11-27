@@ -2,14 +2,16 @@
 #ifndef US_MRECS_LOAD_H
 #define US_MRECS_LOAD_H
 
-#include "us_extern.h"
-#include "us_widgets_dialog.h"
-#include "us_widgets.h"
+#include "ius_db2.h"
 #include "us_dataIO.h"
-#include "us_pcsa_modelrec.h"
-#include "us_model.h"
-#include "us_plot.h"
+#include "us_extern.h"
 #include "us_help.h"
+#include "us_model.h"
+#include "us_pcsa_modelrec.h"
+#include "us_plot.h"
+#include "us_widgets.h"
+#include "us_widgets_dialog.h"
+#include <memory>
 
 #define VEC_MRECS QVector< US_ModelRecord >
 
@@ -37,7 +39,8 @@ class US_MrecsLoader : public US_WidgetsDialog
       QString&             odescr;    // reference to description argument
       QString              editGUID;  // edit GUID to possibly match
       QString              runID;     // run ID to possibly limit local files
-      IUS_DB2*              dbP;       // pointer to a database connection
+      IUS_DB2*                 dbP;       // pointer to a database connection
+      std::unique_ptr<IUS_DB2> dbP_owned; // the connection dbP points to, when opened here
 
       US_Help showHelp;
 

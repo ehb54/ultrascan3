@@ -1,16 +1,16 @@
 //! \file us_data_loader.cpp
 
 #include "us_data_loader.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_matrix.h"
-#include "us_investigator.h"
-#include "us_passwd.h"
-#include "us_db2.h"
-#include "us_dataIO.h"
-#include "us_util.h"
-#include "us_editor.h"
 #include "us_constants.h"
+#include "us_dataIO.h"
+#include "us_db2.h"
+#include "us_db_provider.h"
+#include "us_editor.h"
+#include "us_gui_settings.h"
+#include "us_investigator.h"
+#include "us_matrix.h"
+#include "us_settings.h"
+#include "us_util.h"
 
 
 US_DataLoader::US_DataLoader(
@@ -464,17 +464,14 @@ qDebug() << "LdEd: selsz" << selections.size() << "dlabsz" << dlabels.size();
    }
 
    else                         // Load data from database
-   { 
-      US_Passwd   pw;
-      US_DB2      db( pw.getPasswd() );
+   {
+      auto db = US_DBProvider::open();
 
-      if ( db.lastErrno() != IUS_DB2::OK )
+      if ( db->lastErrno() != IUS_DB2::OK )
       {
          QApplication::restoreOverrideCursor();
-         QMessageBox::information( this,
-            tr( "DB Connection Problem" ),
-            tr( "There was an error connecting to the database:\n" )
-            + db.lastError() );
+         QMessageBox::information(
+            this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
 
          return false;
       }
@@ -551,13 +548,12 @@ qDebug() << "LdEd:  ii" << ii << "ndxii" << indexes[ii] << "triple" << triple;
 qDebug() << "LdEd: was-empty, aucID" << aucID << idAUC;
                query.clear();
                query << "get_rawData" << aucID;
-               db.query( query );
-qDebug() << "LdEd: w-e, num_rows" << db.numRows();
-               db.next();
-qDebug() << "LdEd: w-e, dberr" << db.lastErrno() << IUS_DB2::OK;
-               ddesc.acheck     = db.value( 8 ).toString() + " " +
-                                  db.value( 9 ).toString();
-qDebug() << "LdEd: was-empty, now acheck" << ddesc.acheck;
+               db->query( query );
+               qDebug() << "LdEd: w-e, num_rows" << db->numRows();
+               db->next();
+               qDebug() << "LdEd: w-e, dberr" << db->lastErrno() << IUS_DB2::OK;
+               ddesc.acheck = db->value( 8 ).toString() + " " + db->value( 9 ).toString();
+               qDebug() << "LdEd: was-empty, now acheck" << ddesc.acheck;
             }
 qDebug() << "LdEd: fcheck" << fcheck;
 qDebug() << "LdEd: acheck" << ddesc.acheck;
@@ -568,8 +564,8 @@ qDebug() << "LdEd: dnld_auc" << dnld_auc << "afn" << afn;
 
          if ( dnld_auc )
          {
-            db.readBlobFromDB( afn, "download_aucData", idAUC );
-qDebug() << "LdEd:  dnld_auc DONE" << dscfname << prvfname;
+            db->readBlobFromDB( afn, "download_aucData", idAUC );
+            qDebug() << "LdEd:  dnld_auc DONE" << dscfname << prvfname;
          }
 
          if ( dscfname != prvfname )
@@ -586,7 +582,7 @@ qDebug() << "LdEd:  dnld_auc DONE" << dscfname << prvfname;
 
 qDebug() << "LdEd: dnld_edt" << dnld_edt << "efn" << efn;
             if ( dnld_edt )
-               db.readBlobFromDB( efn, "download_editData", idRec );
+               db->readBlobFromDB( efn, "download_editData", idRec );
 qDebug() << "LdEd: dnld_edt DONE";
          }
 
@@ -605,8 +601,8 @@ qDebug() << "LdEd:TM:11: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
       qDebug() << "AFTER In LOAD auc/edited data: edtatafiles -- " << edatafiles;
       QString passed_edatafiles = edatafiles.join(",");
-      
-   }  // END: Load from DB
+
+   } // END: Load from DB
 
    QApplication::restoreOverrideCursor();
    double dt    = 0.0;
@@ -951,16 +947,13 @@ void US_DataLoader::accepted()
 // Scan database for edit sets
 void US_DataLoader::scan_dbase_edit()
 {
-qDebug() << "ScDB:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-   US_Passwd   pw;
-   US_DB2      db( pw.getPasswd() );
+   qDebug() << "ScDB:TM:00: " << QTime::currentTime().toString( "hh:mm:ss:zzzz" );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      QMessageBox::information( this,
-         tr( "DB Connection Problem" ),
-         tr( "There was an error connecting to the database:\n" )
-         + db.lastError() );
+      QMessageBox::information(
+         this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
       return;
    }
 
@@ -993,19 +986,19 @@ qDebug() << "ScDB:TM:01: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
        query << "get_rawData_desc" << invID;
        qDebug() << "Run Fitering false";
      }
-   db.query( query );
-qDebug() << "ScDB:TM:02: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+     db->query( query );
+     qDebug() << "ScDB:TM:02: " << QTime::currentTime().toString( "hh:mm:ss:zzzz" );
 
-   while( db.next() )
-   {  // Accumulate a mapping of AUC Filename to DB ID
-      QString rLabel    = db.value( 1 ).toString();
-      QString aFname    = db.value( 2 ).toString();
-      QString aucID     = db.value( 0 ).toString();
-      QString expID     = db.value( 3 ).toString();
-      QString aucGUID   = db.value( 7 ).toString();
-      aucIDs[ aFname ]  = aucID + "^" + aucGUID + "^" + expID + "^" + rLabel;
-//qDebug() << "ScDB:  aucIDs" << aucIDs[aFname] << "aF" << aFname;
-   }
+     while ( db->next() )
+     { // Accumulate a mapping of AUC Filename to DB ID
+        QString rLabel  = db->value( 1 ).toString();
+        QString aFname  = db->value( 2 ).toString();
+        QString aucID   = db->value( 0 ).toString();
+        QString expID   = db->value( 3 ).toString();
+        QString aucGUID = db->value( 7 ).toString();
+        aucIDs[aFname]  = aucID + "^" + aucGUID + "^" + expID + "^" + rLabel;
+        //qDebug() << "ScDB:  aucIDs" << aucIDs[aFname] << "aF" << aFname;
+     }
 
 qDebug() << "ScDB:TM:03: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    QStringList editpars;
@@ -1019,33 +1012,32 @@ qDebug() << "ScDB:TM:03: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
      query << "all_editedDataIDs" << invID;
 
    qDebug() << "Query for getting edits: " << query;
-   db.query( query );
-qDebug() << "ScDB:TM:04: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-qDebug() << "ScDB: tfilter etype_filt" << tfilter << etype_filt;
+   db->query( query );
+   qDebug() << "ScDB:TM:04: " << QTime::currentTime().toString( "hh:mm:ss:zzzz" );
+   qDebug() << "ScDB: tfilter etype_filt" << tfilter << etype_filt;
 
    // Edit record parameters from the DB are first accumulated,
    //  since we may need to download the content blob for some entries (MWL)
-   while ( db.next() )
+   while ( db->next() )
    {  // Accumulate edit record parameters from DB
-      QString etype    = db.value( 8 ).toString().toLower();
+      QString etype = db->value( 8 ).toString().toLower();
 
       qDebug() << "etype -- " << etype;
 
       if ( tfilter  &&  etype != etype_filt )                        //ALEXEY < --- HERE, etype != etype_filt (etype_filt == "velocity")
          continue;
 
-      QString recID    = db.value( 0 ).toString();
-      QString descrip  = db.value( 1 ).toString();
-      QString filename = db.value( 2 ).toString().replace( "\\", "/" );
+      QString recID    = db->value( 0 ).toString();
+      QString descrip  = db->value( 1 ).toString();
+      QString filename = db->value( 2 ).toString().replace( "\\", "/" );
       QString filebase = filename.section( "/", -1, -1 );
       QString runID    = descrip.isEmpty() ? filebase.section( ".", 0, -7 )
                          : descrip;
-      QString parID    = db.value( 3 ).toString();
-      QString date     = US_Util::toUTCDatetimeText( db.value( 5 )
-                         .toDateTime().toString( Qt::ISODate ), true );
-      QString cksum    = db.value( 6 ).toString();
-      QString recsize  = db.value( 7 ).toString();
-      QString recGUID  = db.value( 9 ).toString();
+      QString parID    = db->value( 3 ).toString();
+      QString date     = US_Util::toUTCDatetimeText( db->value( 5 ).toDateTime().toString( Qt::ISODate ), true );
+      QString cksum    = db->value( 6 ).toString();
+      QString recsize  = db->value( 7 ).toString();
+      QString recGUID  = db->value( 9 ).toString();
 
       edtIDs << recID;
       editpars << descrip;
@@ -1127,7 +1119,7 @@ qDebug() << "ScDB: nedit" << nedit;
          QString edtpath  =  tempdir + "/" + edtfname;
 
          // Read the XML contents from the edit DB record
-         db.readBlobFromDB( edtpath, "download_editData", idRec );
+         db->readBlobFromDB( edtpath, "download_editData", idRec );
          qApp->processEvents();
          QString elambda;
 
@@ -1372,16 +1364,13 @@ void US_DataLoader::scan_local_edit( void )
 // Scan database for runs
 void US_DataLoader::scan_dbase_runs()
 {
-qDebug() << "ScDB:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-   US_Passwd   pw;
-   US_DB2      db( pw.getPasswd() );
+   qDebug() << "ScDB:TM:00: " << QTime::currentTime().toString( "hh:mm:ss:zzzz" );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      QMessageBox::information( this,
-         tr( "DB Connection Problem" ),
-         tr( "There was an error connecting to the database:\n" )
-         + db.lastError() );
+      QMessageBox::information(
+         this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
       return;
    }
 
@@ -1398,8 +1387,8 @@ qDebug() << "ScDB:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 qDebug() << "ScDB:TM:01: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    query.clear();
    query << "get_experiment_desc" << invID;
-   db.query( query );
-qDebug() << "ScDB:TM:02: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+   db->query( query );
+   qDebug() << "ScDB:TM:02: " << QTime::currentTime().toString( "hh:mm:ss:zzzz" );
    ddesc.tripID     = "undetermined";    // Dummy edit description settings
    ddesc.editID     = "undetermined";
    ddesc.filename   = "undetermined";
@@ -1414,13 +1403,12 @@ qDebug() << "ScDB:TM:02: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    ddesc.isEdit     = false;
    ddesc.isLatest   = latest;
 
-   while( db.next() )
+   while ( db->next() )
    {  // Accumulate a mapping of data descriptions to runs
-      QString expID    = db.value( 0 ).toString();
-      QString runID    = db.value( 1 ).toString();
-      QString label    = db.value( 4 ).toString();
-      QString date     = US_Util::toUTCDatetimeText( db.value( 5 )
-                         .toDateTime().toString( Qt::ISODate ), true );
+      QString expID = db->value( 0 ).toString();
+      QString runID = db->value( 1 ).toString();
+      QString label = db->value( 4 ).toString();
+      QString date  = US_Util::toUTCDatetimeText( db->value( 5 ).toDateTime().toString( Qt::ISODate ), true );
 
       ddesc.runID      = runID;
       ddesc.label      = label;

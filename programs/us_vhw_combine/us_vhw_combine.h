@@ -179,7 +179,7 @@ class US_vHW_Combine : public US_Widgets
         void write_denv(QString&, int&);              //!< Write envelope data
         QString expandedTriple(QString);              //!< Expand triple
         QString collapsedTriple(QString);             //!< Collapse triple
-        int reportDocsFromFiles(QString&, QString&, QStringList&, US_DB2*, int&, QString&); //!< Report documents from files
+        int     reportDocsFromFiles( QString&, QString&, QStringList&, IUS_DB2*, int&, QString& ); //!< Report documents from files
 
         void help(void)
         {

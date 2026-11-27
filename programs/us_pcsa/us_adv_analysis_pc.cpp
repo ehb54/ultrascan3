@@ -5,7 +5,8 @@
 #include "us_mrecs_loader.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
-#include "us_passwd.h"
+
+#include "us_db_provider.h"
 
 // constructor:  enhanced plot control widget
 US_AdvAnalysisPc::US_AdvAnalysisPc( QVector< US_ModelRecord >* p_mrs,
@@ -1736,12 +1737,11 @@ void US_AdvAnalysisPc::bfm_model( void )
       model          = mrec.model;
 
       if ( ! mrec.modelGUID.isEmpty() )
-      {  // If possible, load the model referred to in best model record
-         US_Passwd pw;
+      { // If possible, load the model referred to in best model record
          bool loadDB    = dset0->requestID.contains( "DB" );
-         IUS_DB2* dbP    = loadDB ? new US_DB2( pw.getPasswd() ) : NULL;
+         std::unique_ptr<IUS_DB2> dbP       = loadDB ? US_DBProvider::open() : nullptr;
 
-         model.load( loadDB, mrec.modelGUID, dbP );
+         model.load( loadDB, mrec.modelGUID, dbP.get() );
 
          mrec.model     = model;
          mrecs[ 0 ]     = mrec;
@@ -1950,8 +1950,7 @@ DbgLv(1) << "AA:BI:  (5)inCompat" << inCompat;
 // Test procedures for handling pcsa_modelrecs table
 void US_AdvAnalysisPc::test_db_mrecs()
 {
-   US_Passwd pw;
-   US_DB2* dbP      = new US_DB2( pw.getPasswd() );
+   auto        dbP      = US_DBProvider::open();
    int     mrID1    = -1;
    QString invID    = QString::number( US_Settings::us_inv_ID() );
    QStringList qry;

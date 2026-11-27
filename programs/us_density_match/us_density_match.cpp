@@ -1,25 +1,25 @@
 //! \file us_density_match.cpp
 
+#include "us_db_provider.h"
 #include <QApplication>
 
+#include "qwt_legend.h"
+#include "us_constants.h"
 #include "us_density_match.h"
-#include "us_remove_models.h"
-#include "us_model_params.h"
-#include "us_select_runs.h"
-#include "us_model.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_solution_vals.h"
-#include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
+#include "us_license.h"
+#include "us_license_t.h"
 #include "us_math2.h"
 #include "us_matrix.h"
-#include "us_sleep.h"
-#include "us_passwd.h"
+#include "us_model.h"
+#include "us_model_params.h"
+#include "us_remove_models.h"
 #include "us_report.h"
-#include "us_constants.h"
-#include "qwt_legend.h"
+#include "us_select_runs.h"
+#include "us_settings.h"
+#include "us_sleep.h"
+#include "us_solution_vals.h"
 
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 
@@ -679,12 +679,11 @@ DbgLv(1) << "LD:  model:" << model.description;
 
    // Read in edit for this model
    US_DataIO::EditedData edata;
-   US_DB2* dbP       = NULL;
+   std::unique_ptr<IUS_DB2> dbP;
 
    if ( dkdb_cntrls->db() )
    {  // Set up to read from database
-      US_Passwd pw;
-      dbP               = new US_DB2( pw.getPasswd() );
+      dbP = US_DBProvider::open();
       QStringList qry;
       qry << "get_editID" << model.editGUID;
       dbP->query( qry );
@@ -723,12 +722,10 @@ DbgLv(1) << "LD:  edata: desc run cell chan"
    QString cmprss;
    QString bmanu;
    QString errmsg;
-DbgLv(1) << "LD:  solvals CALL";
-   US_SolutionVals::values( dbP, &edata,
-      soluID, cvbar20, bdens, bvisc, cmprss, bmanu, errmsg );
+   DbgLv( 1 ) << "LD:  solvals CALL";
+   US_SolutionVals::values( dbP.get(), &edata, soluID, cvbar20, bdens, bvisc, cmprss, bmanu, errmsg );
    tsys.bdensity = bdens.toDouble();
-DbgLv(1) << "LD:  solval: bdens soluID bdensity"
- << bdens << soluID << tsys.bdensity;
+   DbgLv( 1 ) << "LD:  solval: bdens soluID bdensity" << bdens << soluID << tsys.bdensity;
 
    int nsolmc  = model.components.size();
 

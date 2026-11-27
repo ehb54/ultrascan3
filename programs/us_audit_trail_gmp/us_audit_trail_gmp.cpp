@@ -1,3 +1,4 @@
+#include "us_db_provider.h"
 #include <QApplication>
 #include <QCollator>
 #include <QKeyEvent>
@@ -122,14 +123,13 @@ bool US_auditTrailGMP::eventFilter( QObject* obj, QEvent* event )
 void US_auditTrailGMP::refreshGMPReportsList( void )
 {
   US_Passwd pw( this );
-  US_DB2 db( pw.getPasswd() );
+  auto      db = US_DBProvider::open();
 
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
-			    tr( "Could not connect to database \n" ) + db.lastError() );
-      return;
-    }
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
+     return;
+  }
 
   QProgressDialog progress( tr( "<b>Please Wait</b><br>Loading GMP runs from database..." ),
 			     tr( "Cancel" ), 0, 0, pdiag_autoflow_db );
@@ -148,7 +148,7 @@ void US_auditTrailGMP::refreshGMPReportsList( void )
   // that cancelling mid-scan can't leave the already-open dialog's data
   // (and the cached list) in a truncated, half-refreshed state.
   QList< QStringList > freshReportsData;
-  list_all_gmp_reports_db( freshReportsData, &db, &progress );
+  list_all_gmp_reports_db( freshReportsData, db.get(), &progress );
 
   bool cancelled = progress.wasCanceled();
 
@@ -227,15 +227,15 @@ void US_auditTrailGMP::loadGMPReport( void )
   if ( gmpReportsDBdata.isEmpty() )
     {
       US_Passwd pw( this );
-      US_DB2 db( pw.getPasswd() );
-  
-      if ( db.lastErrno() != US_DB2::OK )
-	{
-	  QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
-				tr( "Could not connect to database \n" ) + db.lastError() );
-	  return;
-	}
-  
+      auto      db = US_DBProvider::open();
+
+      if ( db->lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::warning(
+            this, tr( "LIMS DB Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
+         return;
+      }
+
       // Show a busy progress dialog while the (potentially long) DB query runs.
       // Frameless + CustomizeWindowHint removes the title bar entirely, so there
       // are no close/minimize/maximize buttons and nothing for the user to grab
@@ -253,7 +253,7 @@ void US_auditTrailGMP::loadGMPReport( void )
       progress.move( this->frameGeometry().center() - progress.rect().center() );
       qApp->processEvents();
 
-      list_all_gmp_reports_db( gmpReportsDBdata, &db, &progress );
+      list_all_gmp_reports_db( gmpReportsDBdata, db.get(), &progress );
 
       // Make sure the bar visibly reaches 100% before it disappears
       progress.setValue( progress.maximum() );
@@ -328,8 +328,7 @@ void US_auditTrailGMP::loadGMPReport( void )
 }
 
 // Get .pdf GMP reports with assigned reviewers:
-int US_auditTrailGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsDBdata, US_DB2* db,
-						QProgressDialog* progress )
+int US_auditTrailGMP::list_all_gmp_reports_db( QList<QStringList>& gmpReportsDBdata, IUS_DB2* db, QProgressDialog* progress )
 {
   int nrecs        = 0;   
   gmpReportsDBdata.clear();
@@ -464,8 +463,8 @@ QMap< QString, QString> US_auditTrailGMP::read_autoflowGMPReportEsign_record( QS
   QMap< QString, QString> eSign_record;
   
   US_Passwd pw( this );
-  US_DB2* db = new US_DB2( pw.getPasswd() );
-  
+  auto                    db = US_DBProvider::open();
+
   if ( db->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
@@ -2143,18 +2142,18 @@ void US_auditTrailGMP::user_interactions_analysis_velmwl( QString              n
    QString species_txt, species_html, species_html_gui;
    {
       US_Passwd pw_sp( this );
-      US_DB2    db_sp( pw_sp.getPasswd() );
+      auto      db_sp = US_DBProvider::open();
 
-      if ( db_sp.lastErrno() == US_DB2::OK )
+      if ( db_sp->lastErrno() == US_DB2::OK )
       {
          QStringList qry_sp;
          qry_sp << "read_autoflowAnalysisVelMwl_record" << autoflowID_passed;
-         db_sp.query( qry_sp );
+         db_sp->query( qry_sp );
 
-         if ( db_sp.lastErrno() == US_DB2::OK && db_sp.next() )
+         if ( db_sp->lastErrno() == US_DB2::OK && db_sp->next() )
          {
-            QJsonObject dec = QJsonDocument::fromJson( db_sp.value( 0 ).toString().toUtf8() ).object(); // channels' decisions
-            QJsonObject sel = QJsonDocument::fromJson( db_sp.value( 2 ).toString().toUtf8() ).object(); // species selections
+            QJsonObject dec = QJsonDocument::fromJson( db_sp->value( 0 ).toString().toUtf8() ).object(); // channels' decisions
+            QJsonObject sel = QJsonDocument::fromJson( db_sp->value( 2 ).toString().toUtf8() ).object(); // species selections
 
             // All channels, whether decided (Approved/Rejected) or having a species
             // selection
@@ -2495,9 +2494,7 @@ void US_auditTrailGMP::user_interactions_analysis( QString name, QString analysi
 QMap< QString, QString>  US_auditTrailGMP::read_autoflow_record( int autoflowID  )
 {
    // Check DB connection
-   US_Passwd pw( this );
-   QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto                    db = US_DBProvider::open( this );
 
    QMap <QString, QString> protocol_details;
    
@@ -2568,26 +2565,25 @@ void US_auditTrailGMP::read_reportLists_from_aprofile( QStringList & dropped_tri
   
   // Check DB connection
   US_Passwd pw( this );
-  QString masterPW = pw.getPasswd();
-  US_DB2 db( masterPW );
-  
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
-      return;
-    }
+  auto                    db = US_DBProvider::open();
+
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning(
+        this, tr( "Connection Problem" ), tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+     return;
+  }
 
   qDebug() << "AProfGUID: " << AProfileGUID;
     
   QStringList qry;
   qry << "get_aprofile_info" << AProfileGUID;
-  db.query( qry );
-  
-  while ( db.next() )
-    {
-      aprofile_xml         = db.value( 2 ).toString();
-    }
+  db->query( qry );
+
+  while ( db->next() )
+  {
+     aprofile_xml = db->value( 2 ).toString();
+  }
 
   if ( !aprofile_xml.isEmpty() )
     {
@@ -2596,12 +2592,12 @@ void US_auditTrailGMP::read_reportLists_from_aprofile( QStringList & dropped_tri
     }
 
   //Now, construct list of dropped triples per optical system used:
-  dropped_triples_RI = buildDroppedTriplesList( &db, channame_to_reportIDs_RI );
-  dropped_triples_IP = buildDroppedTriplesList( &db, channame_to_reportIDs_IP );
+    dropped_triples_RI = buildDroppedTriplesList( db.get(), channame_to_reportIDs_RI );
+    dropped_triples_IP = buildDroppedTriplesList( db.get(), channame_to_reportIDs_IP );
 }
 
 //Build list of dropped triples out of channame_to_reportIDs QMap;
-QStringList US_auditTrailGMP::buildDroppedTriplesList ( US_DB2* dbP, QMap <QString, QString> channame_to_reportIDs )
+QStringList US_auditTrailGMP::buildDroppedTriplesList( IUS_DB2* dbP, QMap<QString, QString> channame_to_reportIDs )
 {
   QStringList dropped_triples_list;
   
@@ -2771,12 +2767,12 @@ void US_auditTrailGMP::read_autoflowStatus_record( QString& importRIJson,
    analysisVelMwlts.clear();
 
    US_Passwd pw( this );
-   US_DB2    db( pw.getPasswd() );
+   auto      db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      QMessageBox::warning( this, tr( "Connection Problem: Read autoflowStatus" ),
-			    tr( "Could not connect to database \n" ) +  db.lastError() );
+      QMessageBox::warning(
+         this, tr( "Connection Problem: Read autoflowStatus" ), tr( "Could not connect to database \n" ) + db->lastError() );
       return;
    }
 
@@ -2784,43 +2780,43 @@ void US_auditTrailGMP::read_autoflowStatus_record( QString& importRIJson,
   qry.clear();
   qry << "read_autoflow_status_record" << QString::number( autoflowStatusID );
   qDebug() << "In read_autoflowStatus_record(), qry -- " << qry;
-  
-  db.query( qry );
 
-  if ( db.lastErrno() == US_DB2::OK )    
-    {
-      while ( db.next() )
-	{
-	  importRIJson  = db.value( 0 ).toString();
-	  importRIts    = db.value( 1 ).toString();
-	  importIPJson  = db.value( 2 ).toString();
-	  importIPts    = db.value( 3 ).toString();
+  db->query( qry );
 
-	  editRIJson    = db.value( 4 ).toString();
-	  editRIts      = db.value( 5 ).toString();
-	  editIPJson    = db.value( 6 ).toString();
-	  editIPts      = db.value( 7 ).toString();
+  if ( db->lastErrno() == US_DB2::OK )
+  {
+     while ( db->next() )
+     {
+        importRIJson = db->value( 0 ).toString();
+        importRIts   = db->value( 1 ).toString();
+        importIPJson = db->value( 2 ).toString();
+        importIPts   = db->value( 3 ).toString();
 
-	  analysisJson  = db.value( 8 ).toString();
+        editRIJson = db->value( 4 ).toString();
+        editRIts   = db->value( 5 ).toString();
+        editIPJson = db->value( 6 ).toString();
+        editIPts   = db->value( 7 ).toString();
 
-	  stopOptimaJson = db.value( 9 ).toString();
-	  stopOptimats   = db.value( 10 ).toString();
+        analysisJson = db->value( 8 ).toString();
 
-	  skipOptimaJson = db.value( 11 ).toString();
-	  skipOptimats   = db.value( 12 ).toString();
+        stopOptimaJson = db->value( 9 ).toString();
+        stopOptimats   = db->value( 10 ).toString();
 
-	  analysisCancelJson = db.value( 13 ).toString();
+        skipOptimaJson = db->value( 11 ).toString();
+        skipOptimats   = db->value( 12 ).toString();
 
-	  createdGMPrunJson = db.value( 14 ).toString();
-	  createdGMPrunts   = db.value( 15 ).toString();
+        analysisCancelJson = db->value( 13 ).toString();
 
-	  analysisABDEJson = db.value( 16 ).toString();
-	  analysisABDEts   = db.value( 17 ).toString();
+        createdGMPrunJson = db->value( 14 ).toString();
+        createdGMPrunts   = db->value( 15 ).toString();
 
-     analysisVelMwlJson = db.value( 18 ).toString();
-     analysisVelMwlts   = db.value( 19 ).toString();
-   }
-    }
+        analysisABDEJson = db->value( 16 ).toString();
+        analysisABDEts   = db->value( 17 ).toString();
+
+        analysisVelMwlJson = db->value( 18 ).toString();
+        analysisVelMwlts   = db->value( 19 ).toString();
+     }
+  }
 
   qDebug() << "Read_autoflow_status: stopOptimaJson, skipOptimaJson -- "
 	   << stopOptimaJson

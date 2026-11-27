@@ -2,26 +2,22 @@
 
 #include <QApplication>
 
-#include "us_dmga_init.h"
+#include "us_associations_gui.h"
+#include "us_constants.h"
 #include "us_constraints_edit.h"
-#include "us_model_loader.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_settings.h"
+#include "us_db_provider.h"
+#include "us_dmga_init.h"
 #include "us_gui_settings.h"
+#include "us_investigator.h"
+#include "us_license.h"
+#include "us_license_t.h"
 #include "us_math2.h"
 #include "us_matrix.h"
-#include "us_constants.h"
-#include "us_passwd.h"
-#include "us_report.h"
-#include "us_investigator.h"
-#include "us_util.h"
-#include "us_passwd.h"
-#include "us_associations_gui.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_constants.h"
 #include "us_model.h"
+#include "us_model_loader.h"
+#include "us_report.h"
+#include "us_settings.h"
+#include "us_util.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -296,10 +292,9 @@ DbgLv(1) << "dGA:save_model";
 
    if ( dkdb_cntrls->db() )
    {  // Write to DB and local
-      US_Passwd pw;
-      US_DB2 db( pw.getPasswd() );
+      auto db = US_DBProvider::open();
 
-      code           = bmodel.write( &db );
+      code = bmodel.write( db.get() );
    }
    else
    {  // Write to local disk only
@@ -405,10 +400,9 @@ DbgLv(1) << "dGA:save_constraints";
 
    if ( dkdb_cntrls->db() )
    {
-      US_Passwd pw;
-      US_DB2 db( pw.getPasswd() );
+      auto db = US_DBProvider::open();
 
-      code           = cmodel.write( &db );
+      code = cmodel.write( db.get() );
    }
    else
    {
@@ -487,24 +481,23 @@ DbgLv(1) << "  Atype Man Cgr Dga" << atypeMan << atypeCgr << atypeDga;
 DbgLv(1) << " Timing(count_models)" << timer.elapsed();
    if ( dkdb_cntrls->db() )
    {  // Scan models in the database
-      US_Passwd   pw;
-      US_DB2      db( pw.getPasswd() );
+      auto        db = US_DBProvider::open();
       QStringList qry;
       qry << "count_models_by_editID" << invID << uaeditID;
-      numodel         = db.functionQuery( qry );
+      numodel = db->functionQuery( qry );
 
       if ( numodel > 0 )
       {  // If there are models unassigned to edits, scan them
          qry.clear();
          qry << "get_model_desc_by_editID" << invID << uaeditID;
-         db.query( qry );
+         db->query( qry );
 
-         while ( db.next() )
+         while ( db->next() )
          {
-            QString mdlID   = db.value( 0 ).toString();
-            QString mdesc   = db.value( 2 ).toString();
-            QString edtGID  = db.value( 5 ).toString();
-            int     edtID   = db.value( 6 ).toString().toInt();
+            QString mdlID  = db->value( 0 ).toString();
+            QString mdesc  = db->value( 2 ).toString();
+            QString edtGID = db->value( 5 ).toString();
+            int     edtID  = db->value( 6 ).toString().toInt();
 
             if ( !mdesc.contains( "Custom" ) )
             {
@@ -522,9 +515,9 @@ DbgLv(1) << " Timing(get_model_desc)" << timer.elapsed();
             QString mdlID   = mdlIDs[ ii ];
             qry.clear();
             qry << "get_model_info" << mdlID;
-            db.query( qry );
-            db.next();
-            QString xmlmdl  = db.value( 2 ).toString();
+            db->query( qry );
+            db->next();
+            QString xmlmdl  = db->value( 2 ).toString();
             int     jj      = xmlmdl.indexOf( "analysisType=" );
             QString atype   = xmlmdl.mid( jj, 40 ).section( "\"", 1, 1 );
 DbgLv(1) << "   mdlID" << mdlID << "atype" << atype << "jj" << jj;

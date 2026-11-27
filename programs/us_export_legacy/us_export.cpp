@@ -2,20 +2,20 @@
 
 #include <QApplication>
 
+#include "us_constants.h"
+#include "us_db_provider.h"
 #include "us_export.h"
-#include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
-#include "us_constants.h"
-#include "us_passwd.h"
-#include "us_load_auc.h"
-#include "us_util.h"
 #include "us_investigator.h"
-#include "us_report.h"
 #include "us_license.h"
 #include "us_license_t.h"
-#include "us_sleep.h"
+#include "us_load_auc.h"
 #include "us_matrix.h"
+#include "us_report.h"
+#include "us_settings.h"
+#include "us_sleep.h"
+#include "us_util.h"
 
 #define MIN_NTC   25
 
@@ -1081,17 +1081,18 @@ int US_ExportLegacy::getRIProfile( QVector< double >& RIProfile )
 
    if ( isDB )
    {  // Data from DB:  get any RIProfile from experiment record
-      US_Passwd pw;
-      US_DB2 db( pw.getPasswd() );
+      auto        db = US_DBProvider::open();
       QStringList query;
       query << "get_experiment_info_by_runID"
             << runID
             << QString::number( US_Settings::us_inv_ID() );
-      db.query( query );
-      if ( db.lastErrno() == US_DB2::NOROWS )
+      db->query( query );
+      if ( db->lastErrno() == US_DB2::NOROWS )
+      {
          return 0;
-      db.next();
-      ripxml   = db.value( 16 ).toString();
+      }
+      db->next();
+      ripxml = db->value( 16 ).toString();
    }
 
    else

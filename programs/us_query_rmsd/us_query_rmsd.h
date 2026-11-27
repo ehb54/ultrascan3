@@ -2,14 +2,15 @@
 #ifndef US_QUERY_RMSD_H
 #define US_QUERY_RMSD_H
 
-#include "us_widgets.h"
-#include "us_passwd.h"
-#include "us_db2.h"
-#include "us_model.h"
-#include "us_dataIO.h"
-#include "us_noise.h"
-#include "us_help.h"
 #include "../us_fematch/us_fematch.h"
+#include "us_dataIO.h"
+#include "us_db2.h"
+#include "us_help.h"
+#include "us_model.h"
+#include "us_noise.h"
+#include "us_passwd.h"
+#include "us_widgets.h"
+#include <memory>
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -55,7 +56,8 @@ class US_QueryRmsd : public US_Widgets {
         QTableWidget *tw_rmsd;         //!< Table widget for RMSD values
         QHeaderView *hheader;          //!< Header view for table
         US_Passwd pw;                  //!< Password object
-        US_DB2* dbCon;                 //!< Database connection
+        IUS_DB2*                         dbCon;               //!< Database connection
+        std::unique_ptr<IUS_DB2>         dbCon_owned;         //!< The connection dbCon points to
         US_Help showHelp;              //!< US_Help
         QVector<DataBundle> allData;   //!< Vector of all data bundles
         QVector<int> selIndex;         //!< Vector of selected indices

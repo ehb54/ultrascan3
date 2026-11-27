@@ -1,14 +1,14 @@
 //! \file us_experiment_gui.cpp
 
 #include "us_experiment_gui.h"
-#include "us_passwd.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
+#include "us_convertio.h"
 #include "us_db2.h"
+#include "us_db_provider.h"
+#include "us_gui_settings.h"
 #include "us_investigator.h"
 #include "us_project_gui.h"
 #include "us_rotor_gui.h"
-#include "us_convertio.h"
+#include "us_settings.h"
 
 US_ExperimentGui::US_ExperimentGui(
       bool  signal_wanted,
@@ -265,14 +265,12 @@ void US_ExperimentGui::reset( void )
 
       if ( disk_controls->db() )
       {
-         US_Passwd pw;
-         QString masterPW = pw.getPasswd();
-         US_DB2 db( masterPW );
+         auto db = US_DBProvider::open();
 
-         int       runIDStatus = db.lastErrno();
+         int  runIDStatus = db->lastErrno();
          if ( runIDStatus == US_DB2::OK )
          {
-            runIDStatus = expInfo.checkRunID( &db );
+            runIDStatus = expInfo.checkRunID( db.get() );
          }
 
          if ( runIDStatus != US_DB2::OK && runIDStatus != US_DB2::NOROWS )
@@ -281,7 +279,7 @@ void US_ExperimentGui::reset( void )
             QMessageBox::warning( this,
                                   tr( "Database Problem" ),
                                   tr( "Could not check whether run %1 is in the database:\n" ).arg( expInfo.runID ) +
-                                     db.lastError() );
+                                     db->lastError() );
             return;
          }
 
@@ -355,24 +353,22 @@ bool US_ExperimentGui::load( void )
 
    if ( disk_controls->db() )
    {
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
+      auto db = US_DBProvider::open();
 
       // When the labs cannot be read, the dialog opens with an empty
       //  lab list, Accept and rotor selection stay disabled in either
       //  data source, and the user can only cancel
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db->lastErrno() != US_DB2::OK )
       {
-         connect_error( db.lastError() );
+         connect_error( db->lastError() );
          return ( true );
       }
 
-      const US_Rotor::Status labStatus = US_Rotor::readLabsDB( labList, &db );
+      const US_Rotor::Status labStatus = US_Rotor::readLabsDB( labList, db.get() );
       if ( labStatus != US_Rotor::ROTOR_OK && labStatus != US_Rotor::NOT_FOUND )
       {
          QMessageBox::warning(
-            this, tr( "Database Problem" ), tr( "Could not read the labs from the database:\n" ) + db.lastError() );
+            this, tr( "Database Problem" ), tr( "Could not read the labs from the database:\n" ) + db->lastError() );
          return ( true );
       }
 
@@ -501,18 +497,18 @@ void US_ExperimentGui::getInvestigatorInfo( void )
 
    if ( disk_controls->db() )
    {
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
+      auto db = US_DBProvider::open();
 
-      if ( db.lastErrno() == US_DB2::OK )
+      if ( db->lastErrno() == US_DB2::OK )
       {
          QStringList q( "get_person_info" );
          q << QString::number( expInfo.invID );
-         db.query( q );
+         db->query( q );
 
-         if ( db.next() )
-            expInfo.invGUID   = db.value( 9 ).toString();
+         if ( db->next() )
+         {
+            expInfo.invGUID = db->value( 9 ).toString();
+         }
       }
    }
 }
@@ -830,24 +826,22 @@ void US_ExperimentGui::accept( void )
    // Update items from the DB after getting values from the form, if we can
    if ( disk_controls->db() )
    {
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
+      auto db = US_DBProvider::open();
 
-      if ( db.lastErrno() == US_DB2::OK )
+      if ( db->lastErrno() == US_DB2::OK )
       {
          QStringList q( "get_instrument_info" );
          q  << QString::number( expInfo.instrumentID );
-         db.query( q );
-         db.next();
-         expInfo.instrumentSerial = db.value( 1 ).toString();
+         db->query( q );
+         db->next();
+         expInfo.instrumentSerial = db->value( 1 ).toString();
 
          q.clear();
          q  << "get_person_info"
             << QString::number( expInfo.operatorID );
-         db.query( q );
-         db.next();
-         expInfo.operatorGUID = db.value( 9 ).toString();
+         db->query( q );
+         db->next();
+         expInfo.operatorGUID = db->value( 9 ).toString();
       }
    }
 

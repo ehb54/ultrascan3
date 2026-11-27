@@ -314,6 +314,21 @@ TEST( BufferComponentListDb, AConnectionThatIsNotOpenFailsWithItsError )
    EXPECT_TRUE( components.isEmpty() );
 }
 
+TEST( BufferComponentListDb, AConnectionWhoseLastQueryFoundNoRowsIsStillUsed )
+{
+   // The buffer panel passes the connection it saved the buffer with.
+   NiceMock<US_DB2_Mock> db;
+   ON_CALL( db, isConnected() ).WillByDefault( Return( true ) );
+   ON_CALL( db, lastErrno() ).WillByDefault( Return( IUS_DB2::NOROWS ) );
+   EXPECT_CALL( db, query( Matcher<const QStringList&>( Eq( QStringList{ "get_buffer_component_desc" } ) ) ) );
+   ON_CALL( db, next() ).WillByDefault( Return( false ) );
+
+   QMap<QString, US_BufferComponent> components;
+   QString                           error;
+   EXPECT_TRUE( US_BufferComponent::getAllFromDB( db, components, &error ) ) << qPrintable( error );
+   EXPECT_TRUE( components.isEmpty() );
+}
+
 TEST( BufferComponentListDb, AComponentThatCannotBeReadFailsTheList )
 {
    NiceMock<US_DB2_Mock> db;

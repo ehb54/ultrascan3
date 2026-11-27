@@ -4,6 +4,7 @@
 #include <QApplication>
 #include <QDomDocument>
 #include <QTimer>
+#include <memory>
 
 #include "us_extern.h"
 #include "us_widgets.h"
@@ -359,7 +360,8 @@ class US_Edit : public US_Widgets
 
       double             odlimit;
 
-      IUS_DB2*           dbP;
+      IUS_DB2*                                    dbP;
+      std::unique_ptr<IUS_DB2>                    dbP_owned; // the connection dbP points to, when opened here
 
       QVector< double >  expd_radii;
       QVector< int >     expi_wvlns;

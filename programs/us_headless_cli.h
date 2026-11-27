@@ -7,14 +7,21 @@
 
 #include <QApplication>
 #include <QDebug>
+#include <QFileInfo>
 #include <QRandomGenerator>
 #include <QTextStream>
 
 #include "us_credential_source.h"
+#include "us_db_provider.h"
 #include "us_notify.h"
 #include "us_session.h"
+#include "us_settings.h"
 #include "us_sim_cli.h"
+#include "us_sim_input_loader.h"
 #include "us_util.h"
+#include "us_widgets.h"
+
+#include <memory>
 
 //! \brief Use Qt's offscreen platform when no window will be shown, so
 //! headless runs need no display.
@@ -131,6 +138,55 @@ inline void reportHeadlessLoadFailure( const QString& what,
    }
    gui_needed    = true;
    error_occured = true;
+}
+
+//! \brief Whether a model, buffer or rotor argument has to be looked up:
+//! anything but an existing file path or "c1:c2" rotor coefficients.
+inline bool simInputNeedsLookup( const US_SimCliArgs& args )
+{
+   double     coeff1 = 0.0;
+   double     coeff2 = 0.0;
+   const auto lookup = []( const QString& spec ) { return !spec.isEmpty() && !QFileInfo::exists( spec ); };
+   return lookup( args.model ) || lookup( args.buffer ) ||
+          ( !args.rotor.isEmpty() && !US_SimInputLoader::rotorCoefficients( args.rotor, coeff1, coeff2 ) );
+}
+
+//! \brief The connection the command line's model, buffer and rotor are read
+//! from: the database unless the data location is the local disk, as the
+//! simulator's own data-source controls decide, else none (the local data
+//! folders). Opened only when an argument has to be looked up, so a run from
+//! files alone needs no master password. A failed connection is reported and
+//! returned, so each load then fails with its reason.
+inline std::unique_ptr<IUS_DB2> openSimInputDatabase( const US_SimCliArgs& args )
+{
+   if ( !simInputNeedsLookup( args ) )
+   {
+      return nullptr;
+   }
+   if ( US_Settings::default_data_location() == US_Disk_DB_Controls::Disk )
+   {
+      return nullptr;
+   }
+   std::unique_ptr<IUS_DB2> db = US_DBProvider::open();
+   if ( db->lastErrno() != IUS_DB2::OK )
+   {
+      US_Notify::warning(
+         nullptr, QObject::tr( "Connection Problem" ), QObject::tr( "Could not connect to database \n" ) + db->lastError() );
+   }
+   return db;
+}
+
+//! \brief Report why a command-line input could not be loaded, then handle
+//! the failure as reportHeadlessLoadFailure() does.
+inline void reportSimInputFailure( const QString& what,
+                                   const QString& id,
+                                   const QString& reason,
+                                   bool           errors_to_cl,
+                                   bool&          gui_needed,
+                                   bool&          error_occured )
+{
+   US_Notify::warning( nullptr, QObject::tr( "Could not load the %1" ).arg( what ), reason );
+   reportHeadlessLoadFailure( what, id, errors_to_cl, gui_needed, error_occured );
 }
 
 //! \brief Show the GUI if the headless run could not finish.

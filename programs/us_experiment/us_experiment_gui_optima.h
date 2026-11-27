@@ -999,8 +999,8 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       void    submitExperiment_confirm_protDev( void );  // Submit the experiment when US_ProtDev
   void    submitExperiment_confirm_dataDisk( void );
       void    clearData_protDev( void );
- 
-      void    read_optima_machines( US_DB2* = 0 );
+
+      void    read_optima_machines( IUS_DB2* = 0 );
       void    submitExperiment( void );  // Submit the experiment
       void    submitExperiment_protDev( void );  // Submit the experiment when US_ProtDev
       void    submitExperiment_dataDisk( void );  
@@ -1009,7 +1009,7 @@ class US_ExperGuiUpload : public US_WidgetsDialog
 
       void    saveReports ( US_AnaProfile* );  // Save the Reports
       int     writeReportToDB( QString, US_ReportGMP ); //Write ReportItems && Parent Report
-      int     writeReportItemToDB( US_DB2*, QString, int, US_ReportGMP::ReportItem ); 
+      int     writeReportItemToDB( IUS_DB2*, QString, int, US_ReportGMP::ReportItem );
 
       void    saveAnalysisProfile ( void );  // Save the Analysis Profile
   

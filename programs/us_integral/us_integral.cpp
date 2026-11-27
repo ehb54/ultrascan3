@@ -5,13 +5,13 @@
 #include "qwt_plot_curve.h"
 #include "qwt_symbol.h"
 #include "us_constants.h"
+#include "us_db_provider.h"
 #include "us_delete_models.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
 #include "us_math2.h"
 #include "us_matrix.h"
 #include "us_model.h"
-#include "us_passwd.h"
 #include "us_report.h"
 #include "us_select_runs.h"
 #include "us_settings.h"
@@ -768,12 +768,11 @@ DbgLv(1) << "LD:  model:" << model.description;
    /****
    // Read in edit for this model
    US_DataIO::EditedData edata;
-   US_DB2* dbP       = NULL;
+   std::unique_ptr<IUS_DB2> dbP;
 
    if ( dkdb_cntrls->db() )
    {  // Set up to read from database
-      US_Passwd pw;
-      dbP               = new US_DB2( pw.getPasswd() );
+      dbP = US_DBProvider::open();
       QStringList qry;
       qry << "get_editID" << model.editGUID;
       dbP->query( qry );
@@ -805,7 +804,7 @@ DbgLv(1) << "LD:  edata: desc run cell chan"
            + efname.section(".",-5,-2) + " " + tsys.method + ")" + "[" + QString::number( alldis.size() ) + "]";
 
    ****/
-     
+
    //a new label
    QString m_desc      = model.description;
    QStringList m_desc_list = m_desc.split(".");
@@ -857,12 +856,11 @@ DbgLv(1) << "LD: RETURN";
 // US_ModelLoader, which would first list ALL of the investigator's models.
 int US_Integral::load_distro_auto( const QString& /*invID*/, const QStringList& modelGUIDs )
 {
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      qDebug() << "load_distro_auto: DB connection failed:" << db.lastError();
+      qDebug() << "load_distro_auto: DB connection failed:" << db->lastError();
       return 0;
    }
 
@@ -876,7 +874,7 @@ int US_Integral::load_distro_auto( const QString& /*invID*/, const QStringList& 
       const QString guid = modelGUIDs[ii].trimmed();
       US_Model      model;
 
-      int           rc = model.load( true, guid, &db );
+      int           rc = model.load( true, guid, db.get() );
 
       // load_db() does not check that get_modelID returned a row, so
       // verify that what came back really is the requested model

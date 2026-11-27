@@ -1,11 +1,12 @@
 //! \file us_investigator.cpp
 
 #include "us_investigator.h"
-#include "us_gui_settings.h"
-#include "us_settings.h"
-#include "us_db2.h"
 #include "us_crypto.h"
+#include "us_db2.h"
+#include "us_db_provider.h"
+#include "us_gui_settings.h"
 #include "us_passwd.h"
+#include "us_settings.h"
 
 /*! Construct a new US_Investigator interface.
 */
@@ -482,50 +483,47 @@ void US_Investigator::override_permit( bool is_enab )
 
 void US_Investigator::queryDB( void )
 {
-   US_Passwd   pw;
-   QString     masterPW  = pw.getPasswd();
-   US_DB2      db( masterPW );  // New constructor
+   auto db = US_DBProvider::open(); // New constructor
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
       // Error message here
-      QMessageBox::information( this,
-         tr( "DB Connection Problem" ),
-         tr( "There was an error connecting to the database:\n" ) 
-             + db.lastError() );
+      QMessageBox::information(
+         this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
       return;
    } 
 
    lw_names->clear();
 
    QStringList query;
-   query << "get_people" << "%" + le_search->text() + "%"; 
+   query << "get_people" << "%" + le_search->text() + "%";
 
-   db.query( query );
+   db->query( query );
 
    US_InvestigatorData data;
    int inv = US_Settings::us_inv_ID();
    int lev = US_Settings::us_inv_level();
-qDebug() << "INV:qDB: inv" << inv << "lev" << lev;
+   qDebug() << "INV:qDB: inv" << inv << "lev" << lev;
 
-   while ( db.next() )
+   while ( db->next() )
    {
-      data.invID     = db.value( 0 ).toInt();
-      data.lastName  = db.value( 1 ).toString();
-      data.firstName = db.value( 2 ).toString();
+      data.invID     = db->value( 0 ).toInt();
+      data.lastName  = db->value( 1 ).toString();
+      data.firstName = db->value( 2 ).toString();
 
       // Only add to investigator list if admin login or login-inv match
       // if ( !user_permit  &&  lev < 3  &&  inv != data.invID )
       //    continue;
 
-      if ( !user_permit  &&  lev < 3  &&  inv != data.invID && !us_inv_auto_mode )
-	continue;
+      if ( !user_permit && lev < 3 && inv != data.invID && !us_inv_auto_mode )
+      {
+         continue;
+      }
 
       investigators << data;
 
-      lw_names->addItem( new QListWidgetItem( 
-         "InvID: (" + QString::number( data.invID ) + "), " + 
-         data.lastName + ", " + data.firstName ) );
+      lw_names->addItem(
+         new QListWidgetItem( "InvID: (" + QString::number( data.invID ) + "), " + data.lastName + ", " + data.firstName ) );
    }
 }
 
@@ -551,18 +549,24 @@ void US_Investigator::update( void )
 
    if ( response == QMessageBox::Ok )
    {
-      US_Passwd   pw;
-      QString     masterPW  = pw.getPasswd();
-      US_DB2      db( masterPW );  // New constructor
-      
-      if ( db.lastErrno() != US_DB2::OK )
+      auto db = US_DBProvider::open( this );
+
+      if ( db->lastErrno() != US_DB2::OK )
       {
-         QMessageBox::warning( this,
-            tr( "Database Error" ),   
-            tr( "US_Investigator::connectDB: Could not open DB\n" ) +
-                db.lastError() );
+         QMessageBox::warning(
+            this, tr( "Database Error" ), tr( "US_Investigator::connectDB: Could not open DB\n" ) + db->lastError() );
          return;
-      } 
+      }
+
+      // Unlocked by the connection above, so this does not ask again unless
+      // another program locked it meanwhile. Without it the saved password
+      // cannot be decrypted, and the update would set an empty one.
+      US_Passwd   pw;
+      QString     masterPW = pw.getPasswd();
+      if ( masterPW.isEmpty() )
+      {
+         return;
+      }
 
       QStringList info = US_Settings::defaultDB();
       
@@ -586,7 +590,7 @@ void US_Investigator::update( void )
       query << userPW;
 
       // Error check
-      int status = db.statusQuery( query );
+      int status = db->statusQuery( query );
 
       if ( status == US_DB2::OK )
       {
@@ -596,10 +600,8 @@ void US_Investigator::update( void )
       }
       else
       {
-         QMessageBox::warning( this,
-            tr( "Database Error" ),   
-            tr( "US_Investigator::update_person: Could not update DB\n" ) +
-                db.lastError() );
+         QMessageBox::warning(
+            this, tr( "Database Error" ), tr( "US_Investigator::update_person: Could not update DB\n" ) + db->lastError() );
       }
    }
 }
@@ -630,36 +632,32 @@ void US_Investigator::get_inv_data( QListWidgetItem* item )
    int     right = entry.indexOf( ')' );
    QString invID = entry.mid( left, right - left );
 
-   US_Passwd   pw;
-   QString     masterPW  = pw.getPasswd();
-   US_DB2      db( masterPW ); 
+   auto    db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      QMessageBox::information( this,
-         tr( "DB Connection Problem" ),
-         tr( "There was an error connecting to the database:\n" ) 
-             + db.lastError() );
+      QMessageBox::information(
+         this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
       return;
    } 
 
    QStringList query;
-   query << "get_person_info" << invID; 
-      
-   db.query( query );
-   db.next();
+   query << "get_person_info" << invID;
+
+   db->query( query );
+   db->next();
 
    info.invID        = invID.toInt();
-   info.firstName    = db.value( 0 ).toString();
-   info.lastName     = db.value( 1 ).toString();
-   info.address      = db.value( 2 ).toString();
-   info.city         = db.value( 3 ).toString();
-   info.state        = db.value( 4 ).toString();
-   info.zip          = db.value( 5 ).toString();
-   info.phone        = db.value( 6 ).toString();
-   info.organization = db.value( 7 ).toString();
-   info.email        = db.value( 8 ).toString();
-   info.invGuid      = db.value( 9 ).toString();
+   info.firstName    = db->value( 0 ).toString();
+   info.lastName     = db->value( 1 ).toString();
+   info.address      = db->value( 2 ).toString();
+   info.city         = db->value( 3 ).toString();
+   info.state        = db->value( 4 ).toString();
+   info.zip          = db->value( 5 ).toString();
+   info.phone        = db->value( 6 ).toString();
+   info.organization = db->value( 7 ).toString();
+   info.email        = db->value( 8 ).toString();
+   info.invGuid      = db->value( 9 ).toString();
 
    //le_lname  ->disconnect();
    le_lname  ->setText( info.lastName  ); 

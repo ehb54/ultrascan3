@@ -1,12 +1,12 @@
 //! \us_failed_gmp_run_gui.cpp
 
 #include "us_failed_gmp_run_gui.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_passwd.h"
-#include "us_help.h"
 #include "us_crypto.h"
 #include "us_db2.h"
+#include "us_db_provider.h"
+#include "us_gui_settings.h"
+#include "us_help.h"
+#include "us_settings.h"
 
 US_FailedRunGui::US_FailedRunGui( QMap <QString, QString> run_details ) : US_Widgets()
 {
@@ -102,10 +102,9 @@ void US_FailedRunGui::save_new( void )
   qDebug() << "Setting Info for FAILED run: stage, reason -- " << f_stage << f_reason;
 
   int autoflowFailedID = 0;
-  
-  US_Passwd pw;
-  IUS_DB2* db = new US_DB2( pw.getPasswd() );
-   
+
+  auto        db = US_DBProvider::open();
+
   QStringList qry;
   qry << "new_autoflow_failed_record"
       << autoflowID

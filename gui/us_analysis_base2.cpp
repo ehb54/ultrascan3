@@ -8,11 +8,11 @@
 #include "us_buffer_gui.h"
 #include "us_data_loader.h"
 #include "us_db2.h"
+#include "us_db_provider.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
 #include "us_loadable_noise.h"
 #include "us_noise_loader.h"
-#include "us_passwd.h"
 #include "us_report.h"
 #include "us_run_details2.h"
 #include "us_settings.h"
@@ -334,12 +334,9 @@ void US_AnalysisBase2::update( int selection )
    QString bcomp  = "";
    QString bmanu  = "0";
    QString errmsg = "";
-   US_Passwd pw;
-   US_DB2*   dbP  = ( disk_controls->db() ) ?
-                    new US_DB2( pw.getPasswd() ) : nullptr;
+   std::unique_ptr<IUS_DB2> dbP    = ( disk_controls->db() ) ? US_DBProvider::open() : nullptr;
 
-   bool    bufin  = US_SolutionVals::values( dbP, d, solID, svbar, bdens,
-                                             bvisc, bcomp, bmanu, errmsg );
+   bool                     bufin = US_SolutionVals::values( dbP.get(), d, solID, svbar, bdens, bvisc, bcomp, bmanu, errmsg );
 
    qDebug() << "[US_AnalysisBase2][DBG] update: selection" << selection << "runID" << runID << "SolVals ok" << bufin
             << "db" << ( dbP != nullptr ) << "invID" << inv_ID() << "solID" << solID << "dataGUID" << d->dataGUID
@@ -367,7 +364,7 @@ void US_AnalysisBase2::update( int selection )
 
       else if ( solID.length() < 36  &&  dbP != nullptr )
       {  // Have DB solution ID
-         solstat = solution_rec.readFromDB( solID.toInt(), dbP );
+         solstat = solution_rec.readFromDB( solID.toInt(), dbP.get() );
          solerr  = dbP->lastError();
       }
 
@@ -423,7 +420,7 @@ void US_AnalysisBase2::update( int selection )
        {
          dbP->next();
          idExp              = dbP->value( 1 ).toInt();
-         US_SimulationParameters::speedstepsFromDB( dbP, idExp, speed_profiles );
+         US_SimulationParameters::speedstepsFromDB( dbP.get(), idExp, speed_profiles );
 
          DbgLv(1)<< "2dsa_load: speed step count" << speed_profiles.count() << "idExp" << idExp;
          if ( speed_profiles.count()>0 )
@@ -435,7 +432,7 @@ void US_AnalysisBase2::update( int selection )
          QString tmst_fpath = US_Settings::resultDir() + "/" + runID + "/"
                               + runID + ".time_state.tmst";
 
-         bool newfile       = US_TimeState::dbSyncToLF( dbP, tmst_fpath, idExp );
+         bool newfile = US_TimeState::dbSyncToLF( dbP.get(), tmst_fpath, idExp );
          DbgLv(0) << "2DS:LD: newfile" << newfile << "idExp" << idExp
           << "tmst_fpath" << tmst_fpath;
        }
@@ -467,7 +464,7 @@ void US_AnalysisBase2::update( int selection )
          xfi.close();
        }
    }
-   simulationParameters.initFromData( dbP, *d, speed_profiles.count() == 0 );
+   simulationParameters.initFromData( dbP.get(), *d, speed_profiles.count() == 0 );
    if (speed_profiles.count() > 0)
    {
      simulationParameters.speed_step = speed_profiles;
@@ -499,7 +496,7 @@ void US_AnalysisBase2::update( int selection )
 
    if ( dbP != nullptr )
    {
-      delete dbP;
+      dbP.reset();
    }
 
    data_plot();
@@ -1372,8 +1369,7 @@ void US_AnalysisBase2::load_noise( int index )
 
    if ( nenois > 0 )
    {  // There is/are noise(s):  ask user if she wants to load
-      US_Passwd pw;
-      US_DB2* dbP  = local ? nullptr : new US_DB2( pw.getPasswd() );
+      std::unique_ptr<IUS_DB2> dbP = local ? nullptr : US_DBProvider::open();
 
       if ( nenois > 1  &&  noisdf == 0 )
       {  // Noise exists and noise-dialog flag set to "Auto-load"
@@ -1383,10 +1379,10 @@ void US_AnalysisBase2::load_noise( int index )
          QString mdlx1 = descn.section( ":", 2, 2 );
 
          if ( typen == "ti" )
-            ti_noise.load( loadDB, noiID, dbP );
+            ti_noise.load( loadDB, noiID, dbP.get() );
 
          else
-            ri_noise.load( loadDB, noiID, dbP );
+            ri_noise.load( loadDB, noiID, dbP.get() );
 
          descn         = nieGUIDs.at( 1 );
          QString mdlx2 = descn.section( ":", 2, 2 );
@@ -1398,17 +1394,16 @@ void US_AnalysisBase2::load_noise( int index )
             typen         = descn.section( ":", 1, 1 );
 
             if ( typen == "ti" )
-               ti_noise.load( loadDB, noiID, dbP );
+               ti_noise.load( loadDB, noiID, dbP.get() );
 
             else
-               ri_noise.load( loadDB, noiID, dbP );
+               ri_noise.load( loadDB, noiID, dbP.get() );
          }
       }
 
       else if ( nenois > 1  &&  noisdf > 0 )
       {  // more than 1:  get choice from noise loader dialog
-         US_NoiseLoader* nldiag = new US_NoiseLoader( dbP,
-            mieGUIDs, nieGUIDs, ti_noise, ri_noise, edata );
+         US_NoiseLoader* nldiag = new US_NoiseLoader( dbP.get(), mieGUIDs, nieGUIDs, ti_noise, ri_noise, edata );
          nldiag->move( this->pos() + QPoint( 200, 200 ) );
          nldiag->exec();
          qApp->processEvents();
@@ -1423,10 +1418,10 @@ void US_AnalysisBase2::load_noise( int index )
          noiID         = noiID.section( ":", 0, 0 );
 
          if ( typen == "ti" )
-            ti_noise.load( loadDB, noiID, dbP );
+            ti_noise.load( loadDB, noiID, dbP.get() );
 
          else
-            ri_noise.load( loadDB, noiID, dbP );
+            ri_noise.load( loadDB, noiID, dbP.get() );
       }
 
       // noise loaded:  insure that counts jive with data
@@ -1496,7 +1491,7 @@ void US_AnalysisBase2::load_noise( int index )
 
       if ( dbP != nullptr )
       {
-         delete dbP;
+         dbP.reset();
       }
    }  // End:  query for desired noise
 
@@ -1517,15 +1512,14 @@ void US_AnalysisBase2::get_solution()
 
    if ( disk_controls->db() )
    {
-      US_Passwd pw;
-      US_DB2 db( pw.getPasswd() );
+      auto        db = US_DBProvider::open();
       QStringList query( "get_experiment_info_by_runID" );
       query << l_runID << QString::number( inv_ID() );
-      db.query( query );
-      if ( db.lastErrno() != US_DB2::NOROWS )
+      db->query( query );
+      if ( db->lastErrno() != US_DB2::NOROWS )
       {
-         db.next();
-         expID = db.value( 1 ).toString().toInt();
+         db->next();
+         expID = db->value( 1 ).toString().toInt();
       }
    }
 
@@ -1555,11 +1549,9 @@ void US_AnalysisBase2::updateSolution( US_Solution solution_sel )
 
    if ( disk_controls->db() )
    {
-      US_Passwd pw;
-      US_DB2 db( pw.getPasswd() );
+      auto db = US_DBProvider::open();
 
-      US_SolutionVals::bufvals_db( &db, sbufID, bufGUID, bufDesc,
-            bdens, bvisc, bcmpr, bmanu, errmsg );
+      US_SolutionVals::bufvals_db( db.get(), sbufID, bufGUID, bufDesc, bdens, bvisc, bcmpr, bmanu, errmsg );
    }
 
    else
@@ -1619,9 +1611,8 @@ void US_AnalysisBase2::back_out_noise( const int index )
 // Copy report files to the database
 void US_AnalysisBase2::reportFilesToDB( QStringList& files )
 {
-   US_Passwd   pw;
-   US_DB2      db( pw.getPasswd() );
-   US_DB2*     dbP  = &db;
+   auto                         db  = US_DBProvider::open();
+   IUS_DB2*                     dbP = db.get();
    QStringList query;
    const US_DataIO::EditedData* edata = &dataList[ lw_triples->currentRow() ];
    const QString tripdesc = edata->description;
@@ -1629,9 +1620,9 @@ void US_AnalysisBase2::reportFilesToDB( QStringList& files )
 
    // Get the ID of the EditedData DB record associated with the report
    query << "get_editID" << edata->editGUID;
-   db.query( query );
-   db.next();
-   const int     idEdit = db.value( 0 ).toString().toInt();
+   db->query( query );
+   db->next();
+   const int idEdit = db->value( 0 ).toString().toInt();
 
    // Set the runID for the report
    US_Report freport;
@@ -1696,16 +1687,17 @@ bool US_AnalysisBase2::has_intensity_profile( const QString& run_id,
 
    if ( in_db )
    {  // Data from DB:  get any RIProfile from experiment record
-      US_Passwd pw;
-      US_DB2 db( pw.getPasswd() );
+      auto        db = US_DBProvider::open();
       QStringList query;
       query << "get_experiment_info_by_runID" << run_id
             << QString::number( inv_ID() );
-      db.query( query );
-      if ( db.lastErrno() == US_DB2::NOROWS )
-         return false;                      // No DB records means no profile
-      db.next();
-      ripxml   = db.value( 16 ).toString(); // Otherwise get profile text
+      db->query( query );
+      if ( db->lastErrno() == US_DB2::NOROWS )
+      {
+         return false; // No DB records means no profile
+      }
+      db->next();
+      ripxml = db->value( 16 ).toString(); // Otherwise get profile text
    }
 
    else

@@ -1,14 +1,14 @@
 //! \file us_xpnhost.cpp
 
-#include "us_xpnhost_db.h"
 #include "us_newxpnhost_db.h"
-#include "us_xpn_data.h"
-#include "us_gui_settings.h"
-#include "us_settings.h"
-#include "us_passwd.h"
-#include "us_help.h"
 #include "us_crypto.h"
 #include "us_db2.h"
+#include "us_db_provider.h"
+#include "us_gui_settings.h"
+#include "us_help.h"
+#include "us_settings.h"
+#include "us_xpn_data.h"
+#include "us_xpnhost_db.h"
 
 
 #define def_desc QString("place-holder")
@@ -776,18 +776,16 @@ void US_NewXpnHostDB::save_new( void )
   
 
   // Check for instrument name, port & host duplications:
-  US_Passwd pw;
-  US_DB2* db = use_db ? new US_DB2( pw.getPasswd() ) : NULL;
-  QStringList instrumentNames( "" );
-  QStringList q( "" );
-  QList< int > instrumentIDs;
-  q.clear();
-  q  << QString( "get_instrument_names" )
-     << QString::number( 1 );                    //ALEXEY '1' for the (only) labID
+    std::unique_ptr<IUS_DB2> db = use_db ? US_DBProvider::open() : nullptr;
+    QStringList              instrumentNames( "" );
+    QStringList              q( "" );
+    QList<int>               instrumentIDs;
+    q.clear();
+    q << QString( "get_instrument_names" ) << QString::number( 1 ); //ALEXEY '1' for the (only) labID
 
-  db->query( q );
-  
-  while ( db->next() )
+    db->query( q );
+
+    while ( db->next() )
     {
       QString name = db->value( 1 ).toString();
       instrumentNames << name;

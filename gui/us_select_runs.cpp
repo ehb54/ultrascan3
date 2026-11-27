@@ -1,16 +1,16 @@
 //! \file us_select_runs.cpp
 
 #include "us_select_runs.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_matrix.h"
-#include "us_investigator.h"
-#include "us_passwd.h"
-#include "us_db2.h"
-#include "us_dataIO.h"
-#include "us_util.h"
-#include "us_editor.h"
 #include "us_constants.h"
+#include "us_dataIO.h"
+#include "us_db2.h"
+#include "us_db_provider.h"
+#include "us_editor.h"
+#include "us_gui_settings.h"
+#include "us_investigator.h"
+#include "us_matrix.h"
+#include "us_settings.h"
+#include "us_util.h"
 
 // Main constructor with flags for edit, latest-edit and local-data
 
@@ -247,14 +247,13 @@ qDebug() << "Acpt: runIDs size" << runIDs.size();
 qDebug() << "Acpt: runIDs" << runIDs;
 if(sel_db)
 {
-US_Passwd pw;
-US_DB2 db( pw.getPasswd() );
-QString invID=QString::number( US_Settings::us_inv_ID() );
-QStringList query;
-query.clear();
-query << "count_models_by_runID" << invID << runIDs[0];
-int nmodl= db.functionQuery(query);
-qDebug() << "Acpt: runID" << runIDs[0] << "count_models_by_runID" << nmodl;
+   auto        db    = US_DBProvider::open();
+   QString     invID = QString::number( US_Settings::us_inv_ID() );
+   QStringList query;
+   query.clear();
+   query << "count_models_by_runID" << invID << runIDs[0];
+   int nmodl = db->functionQuery( query );
+   qDebug() << "Acpt: runID" << runIDs[0] << "count_models_by_runID" << nmodl;
 }
 
    accept();        // Signal that selection was accepted
@@ -264,16 +263,13 @@ qDebug() << "Acpt: runID" << runIDs[0] << "count_models_by_runID" << nmodl;
 // Scan database for run sets
 void US_SelectRuns::scan_dbase_run()
 {
-//qDebug() << "ScDB:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-   US_Passwd   pw;
-   US_DB2      db( pw.getPasswd() );
+   //qDebug() << "ScDB:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      QMessageBox::information( this,
-         tr( "DB Connection Problem" ),
-         tr( "There was an error connecting to the database:\n" )
-         + db.lastError() );
+      QMessageBox::information(
+         this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
       return;
    }
 
@@ -286,16 +282,14 @@ void US_SelectRuns::scan_dbase_run()
    query.clear();
    query << "get_experiment_desc" << invID;
 
-   db.query( query );
+   db->query( query );
 
-   while ( db.next() )
+   while ( db->next() )
    {
-      QString expID    = db.value( 0 ).toString();
-      QString runID    = db.value( 1 ).toString();
-      QString label    = db.value( 4 ).toString();
-      QString date     = US_Util::toUTCDatetimeText( db.value( 5 )
-                         .toDateTime().toString( Qt::ISODate ), true )
-                         .section( " ", 0, 0 );
+      QString expID = db->value( 0 ).toString();
+      QString runID = db->value( 1 ).toString();
+      QString label = db->value( 4 ).toString();
+      QString date  = US_Util::toUTCDatetimeText( db->value( 5 ).toDateTime().toString( Qt::ISODate ), true ).section( " ", 0, 0 );
 
       rdesc.runID      = runID;
       rdesc.label      = label;

@@ -3,18 +3,18 @@
 #include <QApplication>
 
 #include "us_combine_models.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
 #include "us_constants.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_passwd.h"
-#include "us_editor.h"
-#include "us_select_runs.h"
-#include "us_model_loader.h"
 #include "us_db2.h"
-#include "us_util.h"
+#include "us_db_provider.h"
+#include "us_editor.h"
+#include "us_gui_settings.h"
+#include "us_license.h"
+#include "us_license_t.h"
+#include "us_model_loader.h"
+#include "us_select_runs.h"
+#include "us_settings.h"
 #include "us_sleep.h"
+#include "us_util.h"
 
 // main program
 int main( int argc, char* argv[] )
@@ -348,17 +348,16 @@ qDebug() << "SAVE:     (2)cmodel_name" << cmodel_name;
    // Output the combined model
    if ( dkdb_cntrls->db() )
    {
-      US_Passwd pw;
-      US_DB2 db( pw.getPasswd() );
-      const bool    connected = ( db.lastErrno() == US_DB2::OK );
-      const QString dberror   = db.lastError();
+      auto          db        = US_DBProvider::open();
+      const bool    connected = ( db->lastErrno() == US_DB2::OK );
+      const QString dberror   = db->lastError();
       // Without a connection, write() saves only the local copy.
-      if ( cmodel.write( connected ? &db : nullptr ) != IUS_DB2::OK )
+      if ( cmodel.write( connected ? db.get() : nullptr ) != IUS_DB2::OK )
       {
          QMessageBox::warning(
             this,
             tr( "Model Not Saved to the Database" ),
-            tr( "The combined model \"%1\" %2.\n%3" ).arg( cmodel_name, cmodel.message, connected ? db.lastError() : dberror ) );
+            tr( "The combined model \"%1\" %2.\n%3" ).arg( cmodel_name, cmodel.message, connected ? db->lastError() : dberror ) );
       }
 qDebug() << "SAVE:      DB";
    }

@@ -30,7 +30,7 @@ class US_CombineModels : public US_Widgets
         QList<US_Model> models; //!< List of selected models.
         QStringList mdescs; //!< List of descriptions of models.
         US_Help showHelp; //!< Help object.
-        US_DB2* dbP; //!< Pointer to the database object.
+        IUS_DB2*             dbP;      //!< Pointer to the database object.
 
         QPushButton* pb_prefilt; //!< Button to apply pre-filter.
         QPushButton* pb_add; //!< Button to add models.

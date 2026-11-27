@@ -25,7 +25,7 @@ class US_SyncExperiment : public QObject
           \param    a_db     A pointer to an open database connection
           \param    parent   Pointer to parent QWidget.
       */
-      US_SyncExperiment( US_DB2*, QWidget* = 0 );
+      US_SyncExperiment( IUS_DB2*, QWidget* = 0 );
 
       /*! \brief    Synchronize database and local experiment records
 
@@ -40,7 +40,7 @@ class US_SyncExperiment : public QObject
       int synchronize( US_DataModel::DataDesc& );
 
    private:
-      US_DB2*     db;
+      IUS_DB2*      db;
 
       QStringList expIDs;
       QStringList runIDs;

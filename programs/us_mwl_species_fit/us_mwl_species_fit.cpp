@@ -16,6 +16,8 @@
 
 #include "qwt_picker_machine.h"
 #include <qwt_scale_div.h>
+
+#include "us_db_provider.h"
 #define AXISSCALEDIV(a)    (QwtScaleDiv*)&data_plot->axisScaleDiv(a)
 #define dPlotClearAll(a) a->detachItems(QwtPlotItem::Rtti_PlotItem,true)
 
@@ -424,13 +426,12 @@ bool US_MwlSpeciesFit::record_velmwl_channel_decision( QString  chann,
       return true;
    }
 
-   US_Passwd pw;
-   US_DB2*   db = new US_DB2( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
    {
       QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database: \n" ) + db->lastError() );
-      delete db;
+      db.reset();
       return true;
    }
 
@@ -472,7 +473,7 @@ bool US_MwlSpeciesFit::record_velmwl_channel_decision( QString  chann,
    if ( db->lastErrno() != US_DB2::OK )
    {
       qDebug() << "[Mwl-Fit] Failed to save VEL-MWL channel decision to DB; status =" << db->lastErrno();
-      delete db;
+      db.reset();
       return true; // ALEXEY: same fallback as above -- couldn't get a real answer
                    // from the DB.
    }
@@ -510,7 +511,7 @@ bool US_MwlSpeciesFit::record_velmwl_channel_decision( QString  chann,
                << recorded_decisionByName << "at" << recorded_decisionTs << ") -- this click was not recorded.";
    }
 
-   delete db;
+   db.reset();
    return newly_recorded;
 }
 
@@ -1243,17 +1244,15 @@ bool US_MwlSpeciesFit::read_protocol(QStringList& msg_to_user)
 
   // //clear QMap of channels to radial ranges
   // channels_to_radial_ranges. clear();
-  
-  US_Passwd pw;
-  QString masterPW = pw.getPasswd();
-  US_DB2 db( masterPW );
-  
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
-      return false;
-    }
+
+  auto db = US_DBProvider::open();
+
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning(
+        this, tr( "Connection Problem" ), tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+     return false;
+  }
 
   QString ProtocolName_auto = protocol_details[ "protocolName" ];
   int invID_p           = protocol_details[ "invID_passed" ].toInt();
@@ -1261,7 +1260,7 @@ bool US_MwlSpeciesFit::read_protocol(QStringList& msg_to_user)
   currAProf         = US_AnaProfile();
   
   QString xmlstr( "" );
-  US_ProtocolUtil::read_record_auto( ProtocolName_auto, invID_p,  &xmlstr, NULL, &db );
+  US_ProtocolUtil::read_record_auto( ProtocolName_auto, invID_p, &xmlstr, NULL, db.get() );
   QXmlStreamReader xmli( xmlstr );
   currProto. fromXml( xmli );
 
@@ -1343,90 +1342,89 @@ bool US_MwlSpeciesFit::read_protocol(QStringList& msg_to_user)
 	  int solutionID = sol_id.toInt();
 
 	  int status = US_DB2::OK;
-	  status = solution->readFromDB  ( solutionID, &db );
-	  // Error reporting
-	  if ( status == US_DB2::NO_BUFFER )
-	    {
-	      QMessageBox::information( this,
-					tr( "Attention" ),
-					tr( "The buffer this solution refers to was not found.\n"
-					    "Please restore and try again.\n" ) );
-	      return false;
-	    }
-	  
-	  else if ( status == US_DB2::NO_ANALYTE )
-	    {
-	      QMessageBox::information( this,
-					tr( "Attention" ),
-					tr( "One of the analytes this solution refers to was not found.\n"
-					    "Please restore and try again.\n" ) );
-	      return false;
-	    }
-	  
-	  else if ( status != US_DB2::OK )
-	    {
-	      QMessageBox::warning( this, tr( "Database Problem" ),
-				    tr( "Database returned the following error: \n" ) +  db.lastError() );
-	      return false;
-	    }
-	  //End of reading Solution:
+     status                = solution->readFromDB( solutionID, db.get() );
+     // Error reporting
+     if ( status == US_DB2::NO_BUFFER )
+     {
+        QMessageBox::information( this,
+                                  tr( "Attention" ),
+                                  tr( "The buffer this solution refers to was not found.\n"
+                                      "Please restore and try again.\n" ) );
+        return false;
+     }
 
-	  //Reading Analytes
-	  int num_analytes = solution->analyteInfo.size();
-	  for (int i=0; i < num_analytes; ++i )
-	    {
-	      US_Analyte analyte = solution->analyteInfo[ i ].analyte;
-	      QString a_name     = analyte.description;
-	      QString a_ID       = analyte.analyteID;
-	      QString a_GUID     = analyte.analyteGUID;
+     else if ( status == US_DB2::NO_ANALYTE )
+     {
+        QMessageBox::information( this,
+                                  tr( "Attention" ),
+                                  tr( "One of the analytes this solution refers to was not found.\n"
+                                      "Please restore and try again.\n" ) );
+        return false;
+     }
 
-	      qDebug() << "Solution "  << solution->solutionDesc
-		       << ", (GUID)Analyte " << "(" << a_GUID << ")" << a_name
-		       << ", (ID)Analyte " << "(" << a_ID << ")" << a_name;
+     else if ( status != US_DB2::OK )
+     {
+        QMessageBox::warning( this, tr( "Database Problem" ), tr( "Database returned the following error: \n" ) + db->lastError() );
+        return false;
+     }
+     //End of reading Solution:
 
-	      analyte.extinction.clear();
-	      analyte.load( true, a_GUID, &db );
+     //Reading Analytes
+     int num_analytes = solution->analyteInfo.size();
+     for ( int i = 0; i < num_analytes; ++i )
+     {
+        US_Analyte analyte = solution->analyteInfo[i].analyte;
+        QString    a_name  = analyte.description;
+        QString    a_ID    = analyte.analyteID;
+        QString    a_GUID  = analyte.analyteGUID;
 
-	      //QMap <double, double> extinction[ wavelength ] <=> value
-	      qDebug() << "[Analyte]Extinction Profile wvls: " 
-		       << analyte.extinction.keys();
+        qDebug() << "Solution " << solution->solutionDesc << ", (GUID)Analyte " << "(" << a_GUID << ")" << a_name
+                 << ", (ID)Analyte " << "(" << a_ID << ")" << a_name;
 
-	      //Check if ext. profile: (1) exists; (2) in range of specs channel-wvls.
-	      QString a_desc = "ANALYTE: " + a_name;
-	      if ( !validExtinctionProfile( a_desc, all_wvls, analyte.extinction.keys(), msg_to_user ) )
-		all_profiles_exist = false;
+        analyte.extinction.clear();
+        analyte.load( true, a_GUID, db.get() );
 
-	      //fill in the QMap of ext. profiles
-	      extinction_profiles_per_channel[ channel_s ][ a_name ] = analyte.extinction;
-	    }
-	  //End of reading Analytes
+        //QMap <double, double> extinction[ wavelength ] <=> value
+        qDebug() << "[Analyte]Extinction Profile wvls: " << analyte.extinction.keys();
 
-	  //Reading Buffers
-	  if ( buff_req ) //only if buffer spectrum required
-	    {
-	      US_Buffer buffer = solution->buffer;
-	      QString b_name   = buffer.description;
-	      QString b_ID     = buffer.bufferID;
-	      qDebug() << "Solution "  << solution->solutionDesc
-		       << ", (ID)Buffer " << "(" << b_ID << ")" << b_name;
-	      
-	      buffer.extinction.clear();
-	      buffer.readFromDB( &db, b_ID );
-	      
-	      //QMap <double, double> extinction[ wavelength ] <=> value
-	      qDebug() << "[Buffer]Extinction Profile wvls: " 
-		       << buffer.extinction.keys();
+        //Check if ext. profile: (1) exists; (2) in range of specs channel-wvls.
+        QString a_desc = "ANALYTE: " + a_name;
+        if ( !validExtinctionProfile( a_desc, all_wvls, analyte.extinction.keys(), msg_to_user ) )
+        {
+           all_profiles_exist = false;
+        }
 
-	      //Check if ext. profile: (1) exists; (2) in range of specs channel-wvls.
-	      QString b_desc = "BUFFER: " + b_name;
-	      if ( !validExtinctionProfile( b_desc, all_wvls, buffer.extinction.keys(), msg_to_user ) )
-		all_profiles_exist = false;
+        //fill in the QMap of ext. profiles
+        extinction_profiles_per_channel[channel_s][a_name] = analyte.extinction;
+     }
+     //End of reading Analytes
 
-	      //fill in the QMap of ext. profiles
-	      extinction_profiles_per_channel[ channel_s ][ b_name ] = buffer.extinction;
-	    }
-	  //End of reading Buffers
-	}
+     //Reading Buffers
+     if ( buff_req ) //only if buffer spectrum required
+     {
+        US_Buffer buffer = solution->buffer;
+        QString   b_name = buffer.description;
+        QString   b_ID   = buffer.bufferID;
+        qDebug() << "Solution " << solution->solutionDesc << ", (ID)Buffer " << "(" << b_ID << ")" << b_name;
+
+        buffer.extinction.clear();
+        buffer.readFromDB( db.get(), b_ID );
+
+        //QMap <double, double> extinction[ wavelength ] <=> value
+        qDebug() << "[Buffer]Extinction Profile wvls: " << buffer.extinction.keys();
+
+        //Check if ext. profile: (1) exists; (2) in range of specs channel-wvls.
+        QString b_desc = "BUFFER: " + b_name;
+        if ( !validExtinctionProfile( b_desc, all_wvls, buffer.extinction.keys(), msg_to_user ) )
+        {
+           all_profiles_exist = false;
+        }
+
+        //fill in the QMap of ext. profiles
+        extinction_profiles_per_channel[channel_s][b_name] = buffer.extinction;
+     }
+     //End of reading Buffers
+   }
     }
 
   return all_profiles_exist;

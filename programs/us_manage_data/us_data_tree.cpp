@@ -1,12 +1,12 @@
 //! \file us_data_tree.cpp
 
 #include "us_data_tree.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
 #include "us_constants.h"
-#include "us_passwd.h"
+#include "us_db_provider.h"
 #include "us_editor.h"
+#include "us_gui_settings.h"
 #include "us_noise.h"
+#include "us_settings.h"
 #include "us_util.h"
 
 const QColor colorRed(   240,   0,   0 );
@@ -67,9 +67,8 @@ void US_DataTree::build_dtree( )
    QBrush  fbru( colorBrown );
    QBrush  bbru( colorWhite );
    QTreeWidgetItem* pitems[4];
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
-   US_DB2*   dbP = &db;
+   auto             db  = US_DBProvider::open();
+   IUS_DB2*         dbP = db.get();
 
    da_process = (US_DataProcess*)da_model->procobj();
 
@@ -876,23 +875,23 @@ bool US_DataTree::is_modelIDs_from_autoflow( QString mID )
 {
   QStringList modelInfos_autoflow;
   QStringList modelIDs_autoflow;
-  
-  US_Passwd pw;
-  US_DB2    db( pw.getPasswd() );
 
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( parentw, tr( "Connection Problem" ),
-			    tr( "Could not connect to database \n" ) + db.lastError() );
-      return false;
-    }
-  
+  auto        db = US_DBProvider::open();
+
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning( parentw, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
+     return false;
+  }
+
   QStringList q;
   q << "get_modelIDs_for_autoflow";
-  db.query( q );
-  
-  while ( db.next() )
-    modelInfos_autoflow << db. value( 0 ).toString();
+  db->query( q );
+
+  while ( db->next() )
+  {
+     modelInfos_autoflow << db->value( 0 ).toString();
+  }
 
   return parse_models_desc_json ( modelInfos_autoflow, mID ); 
 }
@@ -953,9 +952,8 @@ bool US_DataTree::check_filename_for_autoflow( QString rFilename )
 {
   bool isRequired = false;
   int  autoflowNumber = 0;
-  
-  US_Passwd pw;
-  US_DB2* db = new US_DB2( pw.getPasswd() );
+
+  auto        db = US_DBProvider::open();
 
   QStringList q;
   q  << QString( "check_filename_for_autoflow" ) //for now, both GMP and R&D
@@ -1217,8 +1215,7 @@ DbgLv(1) << "acrow:  narows nrrows" << actrows.size() << rawrows.size();
 }
 
 // Check model or noise for significant differences
-bool US_DataTree::significant_diffs( US_DataModel::DataDesc ddesc,
-      US_DB2* dbP )
+bool US_DataTree::significant_diffs( US_DataModel::DataDesc ddesc, IUS_DB2* dbP )
 {
    bool differs = true;   // Assume significant differences unless model,noise
    const double dtoler = 5.0e-5;

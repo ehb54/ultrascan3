@@ -2,13 +2,15 @@
 #ifndef US_MODEL_LOAD_H
 #define US_MODEL_LOAD_H
 
-#include "us_extern.h"
-#include "us_widgets_dialog.h"
-#include "us_widgets.h"
+#include "ius_db2.h"
 #include "us_dataIO.h"
+#include "us_extern.h"
+#include "us_help.h"
 #include "us_model.h"
 #include "us_plot.h"
-#include "us_help.h"
+#include "us_widgets.h"
+#include "us_widgets_dialog.h"
+#include <memory>
 
 /*! \brief A dialog class to select a model and load its distribution data
 */
@@ -83,7 +85,8 @@ class US_GUI_EXTERN US_ModelLoader : public US_WidgetsDialog
       QStringList&         runIDs;    // input runIDs list argument
       bool                 multi;     // flag if multiple models can be selected
       QString              editGUID;  // edit GUID to possibly match
-      IUS_DB2*             dbP;       // pointer to a database connection
+      IUS_DB2*                 dbP;       // pointer to a database connection
+      std::unique_ptr<IUS_DB2> dbP_owned; // the connection dbP points to, when opened here
 
       US_Help showHelp;
 

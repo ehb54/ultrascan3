@@ -1,29 +1,29 @@
+#include "us_xpn_viewer_gui.h"
+#include "qwt_legend.h"
+#include "qwt_picker_machine.h"
+#include "us_colorgradIO.h"
+#include "us_constants.h"
+#include "us_crypto.h"
+#include "us_db2.h"
+#include "us_db_provider.h"
+#include "us_editor.h"
+#include "us_gui_settings.h"
+#include "us_gui_util.h"
+#include "us_images.h"
+#include "us_investigator.h"
+#include "us_license.h"
+#include "us_license_t.h"
+#include "us_math2.h"
+#include "us_passwd.h"
+#include "us_plot.h"
+#include "us_report.h"
+#include "us_settings.h"
+#include "us_tmst_plot.h"
+#include "us_util.h"
+#include "us_xpn_export.h"
 #include <QApplication>
 #include <QtSql>
 #include <qwt_scale_div.h>
-#include "us_xpn_viewer_gui.h"
-#include "us_xpn_export.h"
-#include "us_tmst_plot.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_util.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_plot.h"
-#include "us_math2.h"
-#include "us_db2.h"
-#include "us_passwd.h"
-#include "us_investigator.h"
-#include "us_constants.h"
-#include "us_report.h"
-#include "us_gui_util.h"
-#include "us_util.h"
-#include "us_crypto.h"
-#include "us_editor.h"
-#include "us_images.h"
-#include "us_colorgradIO.h"
-#include "qwt_legend.h"
-#include "qwt_picker_machine.h"
 
 #define AXISSCALEDIV(a)    (QwtScaleDiv*)&data_plot->axisScaleDiv(a)
 #define dPlotClearAll(a) a->detachItems(QwtPlotItem::Rtti_PlotItem,true)
@@ -284,10 +284,9 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    ElapsedTimeOffset = 0;
 
    //ALEXEY: new way
-   US_Passwd pw;
-   US_DB2*   dbP = new US_DB2( pw.getPasswd() );
+   auto dbP = US_DBProvider::open();
    if ( dbP != NULL )
-     read_optima_machines( dbP );
+      read_optima_machines( dbP.get() );
 
    // for ( int ii = 0; ii < instruments.count(); ii++ )
    //   sl_optimas << QString::number( instruments[ ii ].ID )
@@ -948,10 +947,9 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
    lb_optima_connected->setBuddy( le_optima_connected );
 
    //ALEXEY: new way <--------------------------------------------- //New
-   US_Passwd pw;
-   US_DB2*   dbP = new US_DB2( pw.getPasswd() );
+   auto dbP = US_DBProvider::open();
    if ( dbP != NULL )
-     read_optima_machines( dbP );
+      read_optima_machines( dbP.get() );
 
    qDebug() << "After opt. machines 2";
    
@@ -1384,7 +1382,7 @@ void US_XpnDataViewer::reset_auto( void )
 }
 
 // Slot to read all Optima machines <------------------------------- // New
-void US_XpnDataViewer::read_optima_machines( US_DB2* db )
+void US_XpnDataViewer::read_optima_machines( IUS_DB2* db )
 {
   QStringList q( "" );
   q.clear();
@@ -1885,9 +1883,7 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
 void US_XpnDataViewer::update_autoflow_runId_timeStarted( void )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -1910,9 +1906,7 @@ void US_XpnDataViewer::update_autoflow_runId_timeStarted( void )
 int US_XpnDataViewer::read_timeElapsed_offset( void )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto db = US_DBProvider::open();
 
    int time_offset = 0;
    
@@ -1940,9 +1934,7 @@ int US_XpnDataViewer::read_timeElapsed_offset( void )
 void US_XpnDataViewer::delete_autoflow_record( void )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -2014,9 +2006,7 @@ void US_XpnDataViewer::updateautoflow_record_atLiveUpdate( void )
    details_at_live_update[ "runID" ] = RunID_to_retrieve;
   
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -2103,9 +2093,7 @@ int US_XpnDataViewer::read_autoflow_stages_record( int autoflowID  )
    int status = 0;
   
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -2130,9 +2118,7 @@ int US_XpnDataViewer::read_autoflow_stages_record( int autoflowID  )
 void US_XpnDataViewer::revert_autoflow_stages_record( int autoflowID )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -2194,60 +2180,60 @@ void US_XpnDataViewer::stop_optima( void )
       // 	  return;
       // 	}
 
-      US_Passwd   pw;
-      QString     masterPW  = pw.getPasswd();
-      US_DB2      db( masterPW );  
-      QStringList qry;
-      qry <<  QString( "get_user_info" );
-      db.  query( qry );
-      db. next();
-      int u_ID        = db. value( 0 ).toInt();
-      QString u_fname = db. value( 1 ).toString();
-      QString u_lname = db. value( 2 ).toString();
-      int u_lev       = db. value( 5 ).toInt();
-      
-      QString user_stop = u_lname + ", " + u_fname;
-      
-      US_Passwd   pw_at;
-      QMap< QString, QString > gmp_stopOptima_map; 
-      gmp_stopOptima_map  = pw_at.getPasswd_auditTrail( "GMP Stop Optima Form", "Please fill out GMP Stop Optima form:", user_stop );
-      
-      int gmp_stopOptima_map_size = gmp_stopOptima_map.keys().size();
-      qDebug() << "stopOptima map: " << gmp_stopOptima_map.keys() << gmp_stopOptima_map.keys().size() << gmp_stopOptima_map_size
-               << gmp_stopOptima_map.keys().isEmpty() << gmp_stopOptima_map["User:"] << gmp_stopOptima_map["Comment:"];
+   auto        db = US_DBProvider::open();
+   QStringList qry;
+   qry << QString( "get_user_info" );
+   db->query( qry );
+   db->next();
+   int                    u_ID    = db->value( 0 ).toInt();
+   QString                u_fname = db->value( 1 ).toString();
+   QString                u_lname = db->value( 2 ).toString();
+   int                    u_lev   = db->value( 5 ).toInt();
 
-      if ( gmp_stopOptima_map_size == 0 ||  gmp_stopOptima_map.keys().isEmpty() ) 
-	return;
-      ///////////////////////////////////////
-      
-      qDebug() << "[GMP]STOPPING Optima...";
-      link->stopOptima();
+   QString                user_stop = u_lname + ", " + u_fname;
 
-      // And switch
-      // Do we need to do anything ??
-      // IF status "0", it will switch to IMPORT and will ask what to do with data
-      // IF status "0" && no data collected yet - what then ? Needs testing...
-      // **************  if ( link->tot_scans.toInt() == 0 ) ???
+   US_Passwd              pw_at;
+   QMap<QString, QString> gmp_stopOptima_map;
+   gmp_stopOptima_map = pw_at.getPasswd_auditTrail( "GMP Stop Optima Form", "Please fill out GMP Stop Optima form:", user_stop );
 
-      // if ( combinedOptics )
-      // 	{
-      // 	  if ( opsys_auto.count() < 2 ) //combo-run && just 1 ootics collected (so far)
-      // 	    {
-      // 	      QString optics_failed    = (runType == "RI" ) ? "Interference" : "Absorbance";
-      // 	      QString optics_processed = (runType == "RI" ) ? "Absorbance" : "Interference";
-	      
-      // 	      opticsFailed     = true;
-      // 	      opticsFailed_type = (runType == "RI" ) ? "IP" : "RI";
-      // 	    }
-      // 	}
-      
-      
-      //Now, create OR update (if exists due to clicking "Skip Stage") autoflowStatus record: 
-      /* We can (or even should) do it here - NOT at the time of switching to 3. IMPORT,    */
-      /* since this will accurately reflect time when it was STOPPED                        */
-      experimentAborted_remotely = true;
-      //record_live_update_status( "STOP", comment_text );
-      record_live_update_status( "STOP", gmp_stopOptima_map[ "Comment:" ] );
+   int gmp_stopOptima_map_size = gmp_stopOptima_map.keys().size();
+   qDebug() << "stopOptima map: " << gmp_stopOptima_map.keys() << gmp_stopOptima_map.keys().size() << gmp_stopOptima_map_size
+            << gmp_stopOptima_map.keys().isEmpty() << gmp_stopOptima_map["User:"] << gmp_stopOptima_map["Comment:"];
+
+   if ( gmp_stopOptima_map_size == 0 || gmp_stopOptima_map.keys().isEmpty() )
+   {
+      return;
+   }
+   ///////////////////////////////////////
+
+   qDebug() << "[GMP]STOPPING Optima...";
+   link->stopOptima();
+
+   // And switch
+   // Do we need to do anything ??
+   // IF status "0", it will switch to IMPORT and will ask what to do with data
+   // IF status "0" && no data collected yet - what then ? Needs testing...
+   // **************  if ( link->tot_scans.toInt() == 0 ) ???
+
+   // if ( combinedOptics )
+   // 	{
+   // 	  if ( opsys_auto.count() < 2 ) //combo-run && just 1 ootics collected (so far)
+   // 	    {
+   // 	      QString optics_failed    = (runType == "RI" ) ? "Interference" : "Absorbance";
+   // 	      QString optics_processed = (runType == "RI" ) ? "Absorbance" : "Interference";
+
+   // 	      opticsFailed     = true;
+   // 	      opticsFailed_type = (runType == "RI" ) ? "IP" : "RI";
+   // 	    }
+   // 	}
+
+
+   //Now, create OR update (if exists due to clicking "Skip Stage") autoflowStatus record:
+   /* We can (or even should) do it here - NOT at the time of switching to 3. IMPORT,    */
+   /* since this will accurately reflect time when it was STOPPED                        */
+   experimentAborted_remotely = true;
+   //record_live_update_status( "STOP", comment_text );
+   record_live_update_status( "STOP", gmp_stopOptima_map["Comment:"] );
     }
   else if (msgBox.clickedButton() == Cancel)
     {
@@ -2293,42 +2279,42 @@ void US_XpnDataViewer::skip_optima_stage( void )
       // 	  return;
       // 	}
 
-      US_Passwd   pw;
-      QString     masterPW  = pw.getPasswd();
-      US_DB2      db( masterPW );  
-      QStringList qry;
-      qry <<  QString( "get_user_info" );
-      db.  query( qry );
-      db. next();
-      int u_ID        = db. value( 0 ).toInt();
-      QString u_fname = db. value( 1 ).toString();
-      QString u_lname = db. value( 2 ).toString();
-      int u_lev       = db. value( 5 ).toInt();
-      
-      QString user_stop = u_lname + ", " + u_fname;
-      
-      US_Passwd   pw_at;
-      QMap< QString, QString > gmp_stopOptima_map; 
-      gmp_stopOptima_map  = pw_at.getPasswd_auditTrail( "GMP Skip Stage Optima Form", "Please fill out GMP Skip Stage Optima form:", user_stop );
-      
-      int gmp_stopOptima_map_size = gmp_stopOptima_map.keys().size();
-      qDebug() << "skipOptima map: " << gmp_stopOptima_map.keys() << gmp_stopOptima_map.keys().size() << gmp_stopOptima_map_size
-               << gmp_stopOptima_map.keys().isEmpty() << gmp_stopOptima_map["User:"] << gmp_stopOptima_map["Comment:"];
+   auto        db = US_DBProvider::open();
+   QStringList qry;
+   qry << QString( "get_user_info" );
+   db->query( qry );
+   db->next();
+   int                    u_ID    = db->value( 0 ).toInt();
+   QString                u_fname = db->value( 1 ).toString();
+   QString                u_lname = db->value( 2 ).toString();
+   int                    u_lev   = db->value( 5 ).toInt();
 
-      if ( gmp_stopOptima_map_size == 0 ||  gmp_stopOptima_map.keys().isEmpty() ) 
-	return;
-      ///////////////////////////////////////
-      
-      
-      qDebug() << "[GMP]SKIPPING EXP. STAGE...";
-      link->skipOptimaStage();
-      
-      //Now, create OR update (if exists due to clicking "Stop Optima") autoflowStatus record: 
-      /* We can (or even should) do it here - NOT at the time of switching to 3. IMPORT,    */
-      /* since this will accurately reflect time when it was SKIPPED                        */
-      //record_live_update_status( "SKIP", comment_text );
-      record_live_update_status( "SKIP", gmp_stopOptima_map[ "Comment:" ] );
-      
+   QString                user_stop = u_lname + ", " + u_fname;
+
+   US_Passwd              pw_at;
+   QMap<QString, QString> gmp_stopOptima_map;
+   gmp_stopOptima_map =
+      pw_at.getPasswd_auditTrail( "GMP Skip Stage Optima Form", "Please fill out GMP Skip Stage Optima form:", user_stop );
+
+   int gmp_stopOptima_map_size = gmp_stopOptima_map.keys().size();
+   qDebug() << "skipOptima map: " << gmp_stopOptima_map.keys() << gmp_stopOptima_map.keys().size() << gmp_stopOptima_map_size
+            << gmp_stopOptima_map.keys().isEmpty() << gmp_stopOptima_map["User:"] << gmp_stopOptima_map["Comment:"];
+
+   if ( gmp_stopOptima_map_size == 0 || gmp_stopOptima_map.keys().isEmpty() )
+   {
+      return;
+   }
+   ///////////////////////////////////////
+
+
+   qDebug() << "[GMP]SKIPPING EXP. STAGE...";
+   link->skipOptimaStage();
+
+   //Now, create OR update (if exists due to clicking "Stop Optima") autoflowStatus record:
+   /* We can (or even should) do it here - NOT at the time of switching to 3. IMPORT,    */
+   /* since this will accurately reflect time when it was SKIPPED                        */
+   //record_live_update_status( "SKIP", comment_text );
+   record_live_update_status( "SKIP", gmp_stopOptima_map["Comment:"] );
     }
   else if (msgBox.clickedButton() == Cancel)
     {
@@ -2345,10 +2331,8 @@ void US_XpnDataViewer::record_live_update_status( QString o_type, QString commen
   QString skipOptima_Json;
 
   // Check DB connection
-  US_Passwd pw;
-  QString masterpw = pw.getPasswd();
-  US_DB2* db = new US_DB2( masterpw );
-  
+  auto    db = US_DBProvider::open();
+
   if ( db->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this, tr( "Connection Problem" ),

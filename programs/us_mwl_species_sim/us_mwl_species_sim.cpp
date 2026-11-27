@@ -21,6 +21,7 @@
 #include "us_rotor_gui.h"
 #include "us_select_runs.h"
 #include "us_settings.h"
+#include "us_sim_input_loader.h"
 #include "us_sim_inputs.h"
 #include "us_sim_optics.h"
 #include "us_sim_params_gui.h"
@@ -878,22 +879,24 @@ int US_MwlSpeciesSim::init_from_args( const US_SimCliArgs& args )
       }
    }
 
+   // Buffer and rotor come from the database or the local data folders, as
+   // the data location says, without any dialog.
+   const std::unique_ptr<IUS_DB2> inputs_db = openSimInputDatabase( args );
+
    if ( !args.buffer.isEmpty() )
    {
-      QString       load_id = args.buffer;
-      US_BufferGui* dialog  = new US_BufferGui( true, buffer, US_Disk_DB_Controls::Default );
-      bool          success = dialog->load_buffer( load_id, buffer );
-      dialog->close();
-      if ( !success )
+      US_Buffer loaded;
+      QString   load_error;
+      if ( US_SimInputLoader::buffer( args.buffer, inputs_db.get(), US_Settings::us_inv_ID(), loaded, load_error ) )
       {
-         reportHeadlessLoadFailure( "buffer", load_id, errors_to_cl, gui_needed, error_occured );
-         loaded_buffer = false;
+         buffer = loaded;
+         change_buffer( buffer );
       }
       else
       {
-         change_buffer( buffer );
+         reportSimInputFailure( "buffer", args.buffer, load_error, errors_to_cl, gui_needed, error_occured );
+         loaded_buffer = false;
       }
-      delete dialog;
    }
 
    if ( !args.simparams.isEmpty() )
@@ -927,33 +930,21 @@ int US_MwlSpeciesSim::init_from_args( const US_SimCliArgs& args )
 
    if ( !args.rotor.isEmpty() )
    {
-      US_Rotor::Rotor            rotorval;
-      US_Rotor::RotorCalibration calibration;
-      QString                    rotor_id      = args.rotor;
-      US_Disk_DB_Controls*       disk_controls = new US_Disk_DB_Controls( US_Disk_DB_Controls::Default );
-      int                        dbdisk        = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB : US_Disk_DB_Controls::Disk;
-      US_RotorGui*               rotorInfo     = new US_RotorGui( true, dbdisk, rotorval, calibration );
-      double                     coeff1        = 0.0;
-      double                     coeff2        = 0.0;
-      bool                       status        = rotorInfo->load_rotor( rotor_id, coeff1, coeff2 );
-
-      if ( status )
+      US_SimInputLoader::RotorChoice choice;
+      QString                        load_error;
+      if ( US_SimInputLoader::rotor( args.rotor, inputs_db.get(), choice, load_error ) )
       {
-         rotor                    = rotorInfo->currentRotor;
-         rotor_calib              = rotorInfo->currentCalibration;
-         simparams.rotorcoeffs[0] = coeff1;
-         simparams.rotorcoeffs[1] = coeff2;
-         simparams.rotorCalID     = QString::number( rotorInfo->currentCalibration.ID );
-         rotorInfo->close();
+         rotor                    = choice.rotor;
+         rotor_calib              = choice.calibration;
+         simparams.rotorcoeffs[0] = choice.coeff1;
+         simparams.rotorcoeffs[1] = choice.coeff2;
+         simparams.rotorCalID     = QString::number( choice.calibration.ID );
       }
       else
       {
-         rotorInfo->close();
-         reportHeadlessLoadFailure( "rotor", rotor_id, errors_to_cl, gui_needed, error_occured );
+         reportSimInputFailure( "rotor", args.rotor, load_error, errors_to_cl, gui_needed, error_occured );
          loaded_rotor = false;
       }
-      delete rotorInfo;
-      delete disk_controls;
    }
 
    {

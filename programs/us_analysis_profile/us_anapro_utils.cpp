@@ -29,16 +29,17 @@
 //       savePanel();        (subclasses)
 //       status();           (subclasses)
 
-#include "us_analysis_profile.h"
 #include "us_ana_profile.h"
-#include "us_table.h"
-#include "us_xpn_data.h"
+#include "us_analysis_profile.h"
+#include "us_crypto.h"
+#include "us_db2.h"
+#include "us_db_provider.h"
 #include "us_license.h"
 #include "us_license_t.h"
 #include "us_sleep.h"
+#include "us_table.h"
 #include "us_util.h"
-#include "us_crypto.h"
-#include "us_db2.h"
+#include "us_xpn_data.h"
 
 #define setCbCurrentText(a,b)  a->setCurrentText(b)
 
@@ -796,10 +797,9 @@ void US_AnaprofPanGen::check_runname()
 // Update the investigator
 void US_AnaprofPanGen::update_inv( void )
 {
-   US_Passwd   pw;
-   US_DB2      db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
 //qDebug() << "USCFG: UpdInv: ERROR connect";
       QMessageBox::information( this,
@@ -810,13 +810,13 @@ void US_AnaprofPanGen::update_inv( void )
    }
 
    QStringList q( "get_user_info" );
-   db.query( q );
-   db.next();
+   db->query( q );
+   db->next();
 
-   int ID        = db.value( 0 ).toInt();
-   QString fname = db.value( 1 ).toString();
-   QString lname = db.value( 2 ).toString();
-   int     level = db.value( 5 ).toInt();
+   int     ID    = db->value( 0 ).toInt();
+   QString fname = db->value( 1 ).toString();
+   QString lname = db->value( 2 ).toString();
+   int     level = db->value( 5 ).toInt();
 
    qDebug() << "USCFG: UpdInv: ID,name,lev" << ID << fname << lname << level;
 //if(ID<1) return;

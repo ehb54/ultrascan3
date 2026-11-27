@@ -29,6 +29,8 @@
 #include "us_astfem_math.h"
 #include "us_protocol_util.h"
 
+#include "us_db_provider.h"
+
 #ifdef Q_OS_WIN
 #include <float.h>
 #ifndef isnan
@@ -1452,17 +1454,13 @@ void US_ConvertGui::download_data_auto( QMap < QString, QString > & details_at_l
      details_at_live_update[ "filename" ] : filenameProtDevDataDisk;
 
    // Verify connectivity
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
-     {
-       QMessageBox::information( this,
-				 tr( "Error" ),
-				 tr( "Error making the DB connection.\n" ) );
-       return;
-     }
+   if ( db->lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::information( this, tr( "Error" ), tr( "Error making the DB connection.\n" ) );
+      return;
+   }
 
    // We have runID from a call to a load dialog; let's copy the DB info to HD
    QDir        readDir( US_Settings::importDir() );
@@ -1471,8 +1469,7 @@ void US_ConvertGui::download_data_auto( QMap < QString, QString > & details_at_l
    qDebug() << "[Prot_DEV: download_data_auto() ], Loading data from DB (Experiment) : runID -- "
 	    << runID;
 
-   QString status = US_ConvertIO::readDBExperiment( runID, dirname, &db,
-                                                    speedsteps, invID_fromProt );
+   QString status = US_ConvertIO::readDBExperiment( runID, dirname, db.get(), speedsteps, invID_fromProt );
    if ( status  != QString( "" ) )
      {
        QMessageBox::information( this, tr( "Error" ), status + "\n" );
@@ -3023,11 +3020,9 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
    if ( disk_controls->db() )
    {
       // Verify connectivity
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
+      auto db = US_DBProvider::open();
 
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db->lastErrno() != US_DB2::OK )
       {
          count++;
          lw_todoinfo->addItem( QString::number( count ) +
@@ -3037,8 +3032,8 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
 
       // Information is there, but we need to see if the runID exists in the
       // DB. If we didn't load it from there, then we shouldn't be able to sync
-      const bool connected = ( db.lastErrno() == US_DB2::OK );
-      int recStatus = ExpData.checkRunID( &db );
+      const bool connected = ( db->lastErrno() == US_DB2::OK );
+      int        recStatus = ExpData.checkRunID( db.get() );
 
       // A failed lookup on a working connection leaves it unknown
       //  whether the runID is stored, so saving waits for a retry
@@ -3048,7 +3043,7 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
          lw_todoinfo->addItem( QString::number( count ) +
                                tr( ": Retry; the database could not be"
                                    " checked for this runID: " ) +
-                               db.lastError() );
+                               db->lastError() );
          completed = false;
       }
 
@@ -3165,11 +3160,9 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
    if ( disk_controls->db() )
    {
       // Verify connectivity
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
+      auto db = US_DBProvider::open();
 
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db->lastErrno() != US_DB2::OK )
       {
          count++;
          lw_todoinfo->addItem( QString::number( count ) +
@@ -3273,17 +3266,15 @@ void US_ConvertGui::runIDChanged( void )
 void US_ConvertGui::readProtocol_auto( void )
 {
   // Check DB connection
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-   
-   if ( db.lastErrno() != US_DB2::OK )
-     {
-       QMessageBox::warning( this, tr( "Connection Problem" ),
-			     tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
-       return;
-     }
-   
+  auto db = US_DBProvider::open();
+
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning(
+        this, tr( "Connection Problem" ), tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+     return;
+  }
+
    //QString pname = "CHorne-NanR_3r-DNA-MW_50K_111318";       // invID = 23   (Chris, H)          in uslims3_CHH
    //QString pname = "DemchukA_exosomes40K_111418";            // invID = 25   (Aubrey, Demchuk)   in uslims3_CHH
    //QString pname = "test1_alexey";                             // invID = 12   (Alexey, S)         in uslims3_CHH  
@@ -3294,8 +3285,8 @@ void US_ConvertGui::readProtocol_auto( void )
 
    qDebug() << "IN READ PROTOCOL --";
    qDebug() << "ProtocolName_auto, ExpData.invID -- " << ProtocolName_auto << ExpData.invID;
-   
-   int idProtocol_read = US_ProtocolUtil::read_record_auto( ProtocolName_auto, ExpData.invID,  &xmlstr, NULL, &db );
+
+   int idProtocol_read = US_ProtocolUtil::read_record_auto( ProtocolName_auto, ExpData.invID, &xmlstr, NULL, db.get() );
 
    qDebug() << "idProtocol_read -- " << idProtocol_read;
    qDebug() << "Protocol READ !!! ";
@@ -3515,16 +3506,13 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
   qApp->processEvents();
 
   // Check DB connection
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
+  auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
-     {
-       QMessageBox::warning( this, tr( "Connection Problem" ),
-			     tr( "Could not connect to database \n" ) + db.lastError() );
-       return;
-     }
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) + db->lastError() );
+     return;
+  }
 
 
    //Investigator
@@ -3532,23 +3520,25 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    ExpData.name  = US_Settings::us_inv_name();
 
    qDebug() << "Investigator ID: " <<  ExpData.invID;
-   
-   if ( db.lastErrno() == US_DB2::OK )
-     {
-       QStringList q( "get_person_info" );
-       q << QString::number( ExpData.invID );
-       db.query( q );
-       
-       if ( db.next() )
-	 ExpData.invGUID   = db.value( 9 ).toString();
-     }
-   
+
+   if ( db->lastErrno() == US_DB2::OK )
+   {
+      QStringList q( "get_person_info" );
+      q << QString::number( ExpData.invID );
+      db->query( q );
+
+      if ( db->next() )
+      {
+         ExpData.invGUID = db->value( 9 ).toString();
+      }
+   }
+
    //Lab
    QVector< US_Rotor::Lab > labList_auto;
 
-   if ( db.lastErrno() == US_DB2::OK && US_Rotor::readLabsDB( labList_auto, &db ) != US_Rotor::ROTOR_OK )
+   if ( db->lastErrno() == US_DB2::OK && US_Rotor::readLabsDB( labList_auto, db.get() ) != US_Rotor::ROTOR_OK )
    {
-      QMessageBox::warning( this, tr( "Database Problem" ), tr( "Could not read lab information\n" ) + db.lastError() );
+      QMessageBox::warning( this, tr( "Database Problem" ), tr( "Could not read lab information\n" ) + db->lastError() );
    }
 
    int currentLab_auto = 0;
@@ -3563,43 +3553,43 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    	   ExpData.labID = labList_auto[ii].ID;
    	 }
      }
-   
-   // US_Rotor::Lab lab_auto;
-   // int labID = ProtInfo.ProtRotor.labID;
-   // lab_auto.readDB( labID, &db );
-   // ExpData.labID = lab_auto.ID;
-     
-   qDebug() << "LabID  READ!!! ";
 
-   //Rotor
-   US_Rotor::Rotor rotor_auto;
-   US_Rotor::RotorCalibration calibration_auto;
+     // US_Rotor::Lab lab_auto;
+     // int labID = ProtInfo.ProtRotor.labID;
+     // lab_auto.readDB( labID, &db );
+     // ExpData.labID = lab_auto.ID;
 
-   //ALEXEY change these to what passed from protocol
-   int rotorID       = ProtInfo.ProtRotor.rotID;        // <-- rotor table;
-   int calibrationID = ProtInfo.ProtRotor.calID;        // <-- rotorCalibration table;
-   
-   rotor_auto.readDB( rotorID, &db );
-   calibration_auto.readDB( calibrationID, &db );
-   
-   ExpData.rotorID       = rotor_auto.ID;
-   ExpData.rotorGUID     = rotor_auto.GUID;
-   ExpData.rotorSerial   = rotor_auto.serialNumber;
-   ExpData.rotorName     = rotor_auto.name;
-   ExpData.labID         = rotor_auto.labID;
-   ExpData.calibrationID = calibration_auto.ID;
-   ExpData.rotorCoeff1   = calibration_auto.coeff1;
-   ExpData.rotorCoeff2   = calibration_auto.coeff2;
-   ExpData.rotorUpdated  = calibration_auto.lastUpdated;
+     qDebug() << "LabID  READ!!! ";
 
-   qDebug() << "RotorID/CalID  READ!!! ";
-   
-   // Instrument
-   QList<US_Rotor::Instrument> instruments;
-   if ( currentLab_auto < labList_auto.size() )
-   {
-      instruments = labList_auto[currentLab_auto].instruments;
-   }
+     //Rotor
+     US_Rotor::Rotor            rotor_auto;
+     US_Rotor::RotorCalibration calibration_auto;
+
+     //ALEXEY change these to what passed from protocol
+     int                        rotorID       = ProtInfo.ProtRotor.rotID; // <-- rotor table;
+     int                        calibrationID = ProtInfo.ProtRotor.calID; // <-- rotorCalibration table;
+
+     rotor_auto.readDB( rotorID, db.get() );
+     calibration_auto.readDB( calibrationID, db.get() );
+
+     ExpData.rotorID       = rotor_auto.ID;
+     ExpData.rotorGUID     = rotor_auto.GUID;
+     ExpData.rotorSerial   = rotor_auto.serialNumber;
+     ExpData.rotorName     = rotor_auto.name;
+     ExpData.labID         = rotor_auto.labID;
+     ExpData.calibrationID = calibration_auto.ID;
+     ExpData.rotorCoeff1   = calibration_auto.coeff1;
+     ExpData.rotorCoeff2   = calibration_auto.coeff2;
+     ExpData.rotorUpdated  = calibration_auto.lastUpdated;
+
+     qDebug() << "RotorID/CalID  READ!!! ";
+
+     // Instrument
+     QList<US_Rotor::Instrument> instruments;
+     if ( currentLab_auto < labList_auto.size() )
+     {
+        instruments = labList_auto[currentLab_auto].instruments;
+     }
    US_Rotor::Instrument currentInstrument_auto; 
    foreach ( US_Rotor::Instrument instrument, instruments )
      {
@@ -3632,7 +3622,7 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 
    //ALEXEY change this to what passed from protocol
    int projectID = ProtInfo.projectID;                   // projectID
-   project_auto.readFromDB ( projectID, &db );
+   project_auto.readFromDB( projectID, db.get() );
    ExpData.project = project_auto;
    
    qDebug() << "PROJEC_ID:    " <<  ExpData.project.projectID;
@@ -3648,18 +3638,18 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    
    // ReadCenterpieces
    QStringList q( "get_abstractCenterpiece_names" );
-   db.query( q );
-   
-   QList<listInfo> cent_options;
-   while ( db.next() )
-     {
-       struct listInfo option;
-       option.ID      = db.value( 0 ).toString();
-       option.text    = db.value( 1 ).toString();
-       cent_options << option;
-     }
+   db->query( q );
 
-   
+   QList<listInfo> cent_options;
+   while ( db->next() )
+   {
+      struct listInfo option;
+      option.ID   = db->value( 0 ).toString();
+      option.text = db->value( 1 ).toString();
+      cent_options << option;
+   }
+
+
    //Solutions / Triple / Centerpiece Descriptions
    int solutionID;  // ALEXEY change to protocol's solution IDs
 
@@ -3743,122 +3733,121 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
          //Solution
 	 //solutionID = ProtInfo.ProtSolutions.chsols[ i ].sol_id.toInt();
 	solutionID = ProtInfo.ProtSolutions.chsols[ index_curr ].sol_id.toInt();
-	solution_auto.readFromDB(solutionID, &db);
+   solution_auto.readFromDB( solutionID, db.get() );
 
-	   qDebug() << "SOLS 0";
+   qDebug() << "SOLS 0";
 
-	   out_chaninfo[ i ].solution = solution_auto;
+   out_chaninfo[i].solution = solution_auto;
 
-	   qDebug() << "SOLS 0a";
-	   qDebug() << "out_chandatx[ i ] + cb_lambplot->currentIndex() " <<  out_chandatx[ i ] << " + " <<  cb_lambplot->currentIndex() << out_chandatx[ i ] + cb_lambplot->currentIndex();
-	   
-	   //out_tripinfo[ out_chandatx[ i ] + cb_lambplot->currentIndex() ].solution = solution_auto; // ALEXEY <-- BUG
-	   qDebug() << "SOLS 1";
-	   
-	   //DUPL
-	   all_tripinfo[ i ].solution = solution_auto;  
-	   //all_tripinfo[ out_chandatx[ i ] + cb_lambplot->currentIndex() ].solution = solution_auto;
+   qDebug() << "SOLS 0a";
+   qDebug() << "out_chandatx[ i ] + cb_lambplot->currentIndex() " << out_chandatx[i] << " + " << cb_lambplot->currentIndex()
+            << out_chandatx[i] + cb_lambplot->currentIndex();
 
-	   //Centerpiece
-	   // if ( i < nchans-1 && i%2 == 0 ) //every second channel, or other # ?
-	   //   {
-	   //     cellnumber = i / 2;
-	   //     for ( int aa = 0; aa < cent_options.size(); ++aa )
-	   // 	 if (ProtInfo.ProtCells.cells_used[ cellnumber ].centerpiece == cent_options[aa].text)
-	   // 	   {
-	   // 	     cpID   = cent_options[aa].ID.toInt();
-	   // 	     cpName = cent_options[aa].text;
-	   // 	   }
-	   //   }
+   //out_tripinfo[ out_chandatx[ i ] + cb_lambplot->currentIndex() ].solution = solution_auto; // ALEXEY <-- BUG
+   qDebug() << "SOLS 1";
 
-	   qDebug() << "SOLS 2";
-	   
-	   cellnumber = i / num_cent_holes;
-	   for ( int aa = 0; aa < cent_options.size(); ++aa )
-	     {
-	       if (ProtInfo.ProtCells.cells_used[ cellnumber ].centerpiece == cent_options[aa].text)
-		 {
-		   cpID   = cent_options[aa].ID.toInt();
-		   cpName = cent_options[aa].text;
-		 }
-	     }
-	   	   
-	    qDebug() << "SOLS 3";
-	    
-	   //ALEXEY abstractCenterpieceIDs inferred from cent. name passed from protocol
-	   out_chaninfo[ i ]   .centerpiece     = cpID;
-	   out_chaninfo[ i ]   .centerpieceName = cpName;
+   //DUPL
+   all_tripinfo[i].solution = solution_auto;
+   //all_tripinfo[ out_chandatx[ i ] + cb_lambplot->currentIndex() ].solution = solution_auto;
 
-	   //DUPL
-	   all_tripinfo[ i ] .centerpiece     = cpID;
-	   all_tripinfo[ i ] .centerpieceName = cpName;
-	   	   
-	   // For MWL, duplicate solution & centerpices to all triples of the channel
-	   int idax   = out_chandatx[ i ];
-	   int ldax   = i + 1;
-	   
-	   ldax       = ldax < out_chandatx.size()
-			       ? out_chandatx[ ldax ]
-			       : out_tripinfo.size();
+   //Centerpiece
+   // if ( i < nchans-1 && i%2 == 0 ) //every second channel, or other # ?
+   //   {
+   //     cellnumber = i / 2;
+   //     for ( int aa = 0; aa < cent_options.size(); ++aa )
+   // 	 if (ProtInfo.ProtCells.cells_used[ cellnumber ].centerpiece == cent_options[aa].text)
+   // 	   {
+   // 	     cpID   = cent_options[aa].ID.toInt();
+   // 	     cpName = cent_options[aa].text;
+   // 	   }
+   //   }
 
-	   int diff_ldax_idax = ldax - idax;
-	   
-	   while ( idax < ldax )
-	     {
-	       int jj = idax++;
-	       //Solution
-	       out_tripinfo[ jj ].solution = solution_auto;
-	       //qDebug() << "CGui: updSol: dax" << jj << "s.desc s.id" << solution_auto.solutionDesc << solution_auto.solutionID << solution_auto.solutionGUID;
+   qDebug() << "SOLS 2";
 
-	       //Centerpiece
-	       out_tripinfo[ jj ].centerpiece = cpID;  //ALEXEY abstractCenterpieceIDs passed from protocol
-	       //qDebug() << "Centerpiece: " << i << ", " << jj << ", " << out_tripinfo[ jj ].centerpiece;
+   cellnumber = i / num_cent_holes;
+   for ( int aa = 0; aa < cent_options.size(); ++aa )
+   {
+      if ( ProtInfo.ProtCells.cells_used[cellnumber].centerpiece == cent_options[aa].text )
+      {
+         cpID   = cent_options[aa].ID.toInt();
+         cpName = cent_options[aa].text;
+      }
+   }
 
-	       //Centerpiece Name
-	       out_tripinfo[ jj ].centerpieceName = cpName;
+   qDebug() << "SOLS 3";
 
-	       //DUPL
-	       all_tripinfo[ jj ].solution        = solution_auto;
-	       all_tripinfo[ jj ].centerpiece     = cpID;
-	       all_tripinfo[ jj ].centerpieceName = cpName;
-	     }
+   //ALEXEY abstractCenterpieceIDs inferred from cent. name passed from protocol
+   out_chaninfo[i].centerpiece     = cpID;
+   out_chaninfo[i].centerpieceName = cpName;
 
-	    qDebug() << "SOLS 4";
-	    
-	   // Description
-	   //triple_desc = ProtInfo.ProtSolutions.chsols[ i ].ch_comment;  //channel's comment from protocol
-	    triple_desc = ProtInfo.ProtSolutions.chsols[ index_curr ].ch_comment;  //channel's comment from protocol
-	    
-	   //ALEXEY: a problem here
-	   //outData[ out_chandatx[ i ] + cb_lambplot->currentIndex() ]->description = triple_desc;  // ALEXEY : REplicate for all triple in the same channel
+   //DUPL
+   all_tripinfo[i].centerpiece     = cpID;
+   all_tripinfo[i].centerpieceName = cpName;
+
+   //DUPL
+   int idax = out_chandatx[i];
+   int ldax = i + 1;
+
+   ldax = ldax < out_chandatx.size() ? out_chandatx[ldax] : out_tripinfo.size();
+
+   int diff_ldax_idax = ldax - idax;
+
+   while ( idax < ldax )
+   {
+      int jj                    = idax++;
+      //Solution
+      out_tripinfo[jj].solution = solution_auto;
+      //qDebug() << "CGui: updSol: dax" << jj << "s.desc s.id" << solution_auto.solutionDesc << solution_auto.solutionID << solution_auto.solutionGUID;
+
+      //Centerpiece
+      out_tripinfo[jj].centerpiece = cpID; //ALEXEY abstractCenterpieceIDs passed from protocol
+      //qDebug() << "Centerpiece: " << i << ", " << jj << ", " << out_tripinfo[ jj ].centerpiece;
+
+      //Centerpiece Name
+      out_tripinfo[jj].centerpieceName = cpName;
+
+      //DUPL
+      all_tripinfo[jj].solution        = solution_auto;
+      all_tripinfo[jj].centerpiece     = cpID;
+      all_tripinfo[jj].centerpieceName = cpName;
+   }
+
+   qDebug() << "SOLS 4";
+
+   // Description
+   //triple_desc = ProtInfo.ProtSolutions.chsols[ i ].ch_comment;  //channel's comment from protocol
+   triple_desc = ProtInfo.ProtSolutions.chsols[index_curr].ch_comment; //channel's comment from protocol
+
+   //ALEXEY: a problem here
+   //outData[ out_chandatx[ i ] + cb_lambplot->currentIndex() ]->description = triple_desc;  // ALEXEY : REplicate for all triple in the same channel
 
 
-	   //Propagate description to all triples of channel
-	   out_chaninfo[ i ].description   = triple_desc;
+   //Propagate description to all triples of channel
+   out_chaninfo[i].description = triple_desc;
 
-	   //DUPL
-	   //allData[ out_chandatx[ i ] + cb_lambplot->currentIndex() ].description = triple_desc;
-	   //ALEXEY: Cause a problem when out_chandatx[ i ] + cb_lambplot->currentIndex() > allData.size(), or out_triples .count()
+   //DUPL
+   //allData[ out_chandatx[ i ] + cb_lambplot->currentIndex() ].description = triple_desc;
+   //ALEXEY: Cause a problem when out_chandatx[ i ] + cb_lambplot->currentIndex() > allData.size(), or out_triples .count()
 
-	   all_tripinfo[ i ].description   = triple_desc;
-	   
-	   int trxs        = out_chandatx[ i ];
-	   //int trxe        = trxs + nlambda;   //ALEXEY: here was a problem!!
-	   int trxe        = trxs + diff_ldax_idax;
-	   
-	   qDebug() << "Channel " << i << ": diff_ldax_idax, trxs, trxe: " << diff_ldax_idax << ", " << trxs << ", "  << trxe;
-	   
-	   for ( int trx = trxs; trx < trxe; trx++ )
-	     {
-	       outData[ trx ]->description = triple_desc;
-	       qDebug() << "Triple Description for channel #: " << i << ", " << trx << ", " << triple_desc;
+   all_tripinfo[i].description = triple_desc;
 
-	       //DUPL
-	       allData[ trx ].description = triple_desc;
-	     }
+   int trxs = out_chandatx[i];
+   //int trxe        = trxs + nlambda;   //ALEXEY: here was a problem!!
+   int trxe = trxs + diff_ldax_idax;
 
-	   qDebug() << "Triples Replicated !!";
-	 }
+   qDebug() << "Channel " << i << ": diff_ldax_idax, trxs, trxe: " << diff_ldax_idax << ", " << trxs << ", " << trxe;
+
+   for ( int trx = trxs; trx < trxe; trx++ )
+   {
+      outData[trx]->description = triple_desc;
+      qDebug() << "Triple Description for channel #: " << i << ", " << trx << ", " << triple_desc;
+
+      //DUPL
+      allData[trx].description = triple_desc;
+   }
+
+   qDebug() << "Triples Replicated !!";
+      }
      }
    else
      {
@@ -3891,75 +3880,77 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	       //Solution
 	       solutionID = ProtInfo.ProtSolutions.chsols[ index_curr ].sol_id.toInt();
 
-	       // if ( runType == "IP" &&  ProtInfo.ProtSolutions.chsols[ i ].channel. contains( "reference [left]") )
-	       // 	 continue;
-	       
-	       //solutionID = ProtInfo.ProtSolutions.chsols[ i ].sol_id.toInt();
-	       
-	       solution_auto.readFromDB(solutionID, &db);
-	       out_chaninfo[ i ].solution = solution_auto;
-	       out_tripinfo[ i ].solution = solution_auto;
+          // if ( runType == "IP" &&  ProtInfo.ProtSolutions.chsols[ i ].channel. contains( "reference [left]") )
+          // 	 continue;
 
-	       
-	       //DUPL
-	       all_tripinfo[ i ].solution = solution_auto;  
-	       
-	       //Description
-	       //triple_desc = ProtInfo.ProtSolutions.chsols[ index_curr ].ch_comment;  //channel's comment from protocol
-	       triple_desc = ProtInfo.ProtSolutions.chsols[ index_curr ].ch_comment;  //channel's comment from protocol
+          //solutionID = ProtInfo.ProtSolutions.chsols[ i ].sol_id.toInt();
 
-	       if ( !us_import_ssf_abde )
-		 outData[ i ]->description = triple_desc;
+          solution_auto.readFromDB( solutionID, db.get() );
+          out_chaninfo[i].solution = solution_auto;
+          out_tripinfo[i].solution = solution_auto;
 
-	       //DUPL
-	       allData[ i ].description = triple_desc;
 
-	       qDebug() << "Triple_desc: " << triple_desc << ", Solution_desc: " <<  out_chaninfo[ i ].solution.solutionDesc;
+          //DUPL
+          all_tripinfo[i].solution = solution_auto;
 
-	       
-	       //Centerpiece
-	       // if ( i < ntrips-1 && i%2 == 0 ) //every second channel
-	       // 	 {
-	       // 	   cellnumber = i / 2;
-	       // 	   for ( int aa = 0; aa < cent_options.size(); ++aa )
-	       // 	     if (ProtInfo.ProtCells.cells_used[ cellnumber ].centerpiece == cent_options[aa].text)
-	       // 	       {
-	       // 		 cpID = cent_options[aa].ID.toInt();
-	       // 		 cpName = cent_options[aa].text;
-	       // 	       }
-	       // 	 }
+          //Description
+          //triple_desc = ProtInfo.ProtSolutions.chsols[ index_curr ].ch_comment;  //channel's comment from protocol
+          triple_desc = ProtInfo.ProtSolutions.chsols[index_curr].ch_comment; //channel's comment from protocol
 
-	       //ALEXEY: HERE BUG - crashed on Hexal
-	       qDebug() << " Test HEXAL 1" ;
-	       
-	       cellnumber = i / num_cent_holes;
-	       qDebug() << "cellnumber, i, num_cent_holes, ProtInfo.ProtCells.cells_used.keys(), cent_options.keys()  -- "
-			<< cellnumber <<  i <<  num_cent_holes << ProtInfo.ProtCells.cells_used.size() << cent_options.size();
-	       
-	       qDebug() << " Test HEXAL 2" ;
-	       for ( int aa = 0; aa < cent_options.size(); ++aa )
-		 {
-		   if (ProtInfo.ProtCells.cells_used[ cellnumber ].centerpiece == cent_options[aa].text)
-		     {
-		       cpID = cent_options[aa].ID.toInt();
-		       cpName = cent_options[aa].text;
-		     }
-		 }
-	       qDebug() << " Test HEXAL 3" ;
-	       
-	       out_chaninfo[ i ].centerpiece     = cpID;    //ALEXEY abstractCenterpieceIDs passed from protocol
-	       out_tripinfo[ i ].centerpiece     = cpID;    //ALEXEY abstractCenterpieceIDs passed from protocol
-	       out_chaninfo[ i ].centerpieceName = cpName;
+          if ( !us_import_ssf_abde )
+          {
+             outData[i]->description = triple_desc;
+          }
 
-	       qDebug() << " Test HEXAL 4" ;
+          //DUPL
+          allData[i].description = triple_desc;
 
-	       //DUPL
-	       all_tripinfo[ i ].centerpiece     = cpID;
-	       all_tripinfo[ i ].centerpieceName = cpName;
+          qDebug() << "Triple_desc: " << triple_desc << ", Solution_desc: " << out_chaninfo[i].solution.solutionDesc;
 
-	       qDebug() << " Test HEXAL 5" ;
-	     }
-	 }
+
+          //Centerpiece
+          // if ( i < ntrips-1 && i%2 == 0 ) //every second channel
+          // 	 {
+          // 	   cellnumber = i / 2;
+          // 	   for ( int aa = 0; aa < cent_options.size(); ++aa )
+          // 	     if (ProtInfo.ProtCells.cells_used[ cellnumber ].centerpiece == cent_options[aa].text)
+          // 	       {
+          // 		 cpID = cent_options[aa].ID.toInt();
+          // 		 cpName = cent_options[aa].text;
+          // 	       }
+          // 	 }
+
+          //ALEXEY: HERE BUG - crashed on Hexal
+          qDebug() << " Test HEXAL 1";
+
+          cellnumber = i / num_cent_holes;
+          qDebug() << "cellnumber, i, num_cent_holes, ProtInfo.ProtCells.cells_used.keys(), cent_options.keys()  -- " << cellnumber
+                   << i << num_cent_holes << ProtInfo.ProtCells.cells_used.size() << cent_options.size();
+
+          qDebug() << " Test HEXAL 2";
+          for ( int aa = 0; aa < cent_options.size(); ++aa )
+          {
+             if ( ProtInfo.ProtCells.cells_used[cellnumber].centerpiece == cent_options[aa].text )
+             {
+                cpID   = cent_options[aa].ID.toInt();
+                cpName = cent_options[aa].text;
+             }
+          }
+          qDebug() << " Test HEXAL 3";
+
+          out_chaninfo[i].centerpiece     = cpID; //ALEXEY abstractCenterpieceIDs passed from protocol
+          out_tripinfo[i].centerpiece     = cpID; //ALEXEY abstractCenterpieceIDs passed from protocol
+          out_chaninfo[i].centerpieceName = cpName;
+
+          qDebug() << " Test HEXAL 4";
+
+          //DUPL
+          all_tripinfo[i].centerpiece     = cpID;
+          all_tripinfo[i].centerpieceName = cpName;
+
+          qDebug() << " Test HEXAL 5";
+        }
+    }
        else
 	 {
 	   //ALEXEY: put that other case of #triples noeq #channels here...
@@ -3977,59 +3968,61 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	       //solutionID = ProtInfo.ProtSolutions.chsols[ i ].sol_id.toInt();
 
 	       solutionID = ProtInfo.ProtSolutions.chsols[ index_curr ].sol_id.toInt();
-	       solution_auto.readFromDB(solutionID, &db);  
-	   
-	       //Description
-	       triple_desc = ProtInfo.ProtSolutions.chsols[ i ].ch_comment;  //channel's comment from protocol
-	       //outData[ i ]->description = triple_desc;
+          solution_auto.readFromDB( solutionID, db.get() );
 
-	       //Centerpiece
-	       cellnumber = i / num_cent_holes;
-	       for ( int aa = 0; aa < cent_options.size(); ++aa )
-		 {
-		   if (ProtInfo.ProtCells.cells_used[ cellnumber ].centerpiece == cent_options[aa].text)
-		     {
-		       cpID   = cent_options[aa].ID.toInt();
-		       cpName = cent_options[aa].text;
-		     }
-		 }
+          //Description
+          triple_desc = ProtInfo.ProtSolutions.chsols[i].ch_comment; //channel's comment from protocol
+                                                                     //outData[ i ]->description = triple_desc;
 
-	       
-	       for (int j=0; j < ntrips; ++j)
-		 {		   
-		   if ( out_triples[ j ].section( "/", 0, 0 ).simplified() == out_channels[ i ].section( "/", 0, 0 ).simplified() )
-		     {
-		       qDebug() << "Triple. #: " << out_triples[ j ].section( "/", 0, 0 ).simplified()
-				<< ", Cell. #: "   << out_channels[ i ].section( "/", 0, 0 ).simplified()
-				<< ", Centerpiece Name: " << cpName << ", CenterpieceID: " << cpID;
-		       
-		       out_chaninfo[ j ].centerpiece     = cpID;   
-		       out_tripinfo[ j ].centerpiece     = cpID;   
-		       out_chaninfo[ j ].centerpieceName = cpName;
+          //Centerpiece
+          cellnumber = i / num_cent_holes;
+          for ( int aa = 0; aa < cent_options.size(); ++aa )
+          {
+             if ( ProtInfo.ProtCells.cells_used[cellnumber].centerpiece == cent_options[aa].text )
+             {
+                cpID   = cent_options[aa].ID.toInt();
+                cpName = cent_options[aa].text;
+             }
+          }
 
-		       //DUPL
-		       all_tripinfo[ j ].centerpiece     = cpID;
-		       all_tripinfo[ j ].centerpieceName = cpName;
-		     }
-		   
-		   if ( out_triples[ j ].section( "/", 0, 1 ).simplified() == out_channels[ i ] )
-		     {
-		       qDebug() << "Triple. NAME: " << out_triples[ j ] << "Channel. NAME: " << out_channels[ i ];
-		       out_chaninfo[ j ].solution = solution_auto;
-		       out_tripinfo[ j ].solution = solution_auto;
-		       if ( !us_import_ssf_abde )
-			 outData[ j ]->description = triple_desc;
 
-		       //DUPL
-		       all_tripinfo[ j ].solution = solution_auto;
-		       if ( !us_import_ssf_abde )
-			 allData[ j ].description = triple_desc;
+          for ( int j = 0; j < ntrips; ++j )
+          {
+             if ( out_triples[j].section( "/", 0, 0 ).simplified() == out_channels[i].section( "/", 0, 0 ).simplified() )
+             {
+                qDebug() << "Triple. #: " << out_triples[j].section( "/", 0, 0 ).simplified()
+                         << ", Cell. #: " << out_channels[i].section( "/", 0, 0 ).simplified() << ", Centerpiece Name: " << cpName
+                         << ", CenterpieceID: " << cpID;
 
-		       
-		     }
-		 }
-	     }
-	 }
+                out_chaninfo[j].centerpiece     = cpID;
+                out_tripinfo[j].centerpiece     = cpID;
+                out_chaninfo[j].centerpieceName = cpName;
+
+                //DUPL
+                all_tripinfo[j].centerpiece     = cpID;
+                all_tripinfo[j].centerpieceName = cpName;
+             }
+
+             if ( out_triples[j].section( "/", 0, 1 ).simplified() == out_channels[i] )
+             {
+                qDebug() << "Triple. NAME: " << out_triples[j] << "Channel. NAME: " << out_channels[i];
+                out_chaninfo[j].solution = solution_auto;
+                out_tripinfo[j].solution = solution_auto;
+                if ( !us_import_ssf_abde )
+                {
+                   outData[j]->description = triple_desc;
+                }
+
+                //DUPL
+                all_tripinfo[j].solution = solution_auto;
+                if ( !us_import_ssf_abde )
+                {
+                   allData[j].description = triple_desc;
+                }
+             }
+          }
+        }
+    }
      }
 
    qDebug() << "ALL Solutions read !!";
@@ -4554,11 +4547,9 @@ DbgLv(1) << "CGui: ldUS3DB: IN";
    qApp->processEvents();
 
    // Verify connectivity
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
       QMessageBox::information( this,
           tr( "Error" ),
@@ -4574,8 +4565,7 @@ DbgLv(1) << "CGui: ldUS3DB: call rdDBExp";
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    le_status->setText( tr( "Loading data from DB (Experiment) ..." ) );
    qApp->processEvents();
-   QString status = US_ConvertIO::readDBExperiment( runID, dirname, &db,
-                                                    speedsteps );
+   QString status = US_ConvertIO::readDBExperiment( runID, dirname, db.get(), speedsteps );
    QApplication::restoreOverrideCursor();
 
    if ( status  != QString( "" ) )
@@ -4612,11 +4602,9 @@ DbgLv(1) << "CGui: gExpInf: IN";
    if ( disk_controls->db() )
    {
       // Then we're working in DB, so verify connectivity
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
+      auto db = US_DBProvider::open();
 
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db->lastErrno() != US_DB2::OK )
       {
          QMessageBox::information( this,
                 tr( "Error" ),
@@ -4626,7 +4614,7 @@ DbgLv(1) << "CGui: gExpInf: IN";
 
       // Check if the run ID already exists in the DB
       //int recStatus = ExpData.checkRunID( &db );
-      int recStatus = ExpData.checkRunID_auto( ExpData.invID, &db );
+      int recStatus = ExpData.checkRunID_auto( ExpData.invID, db.get() );
 
       qDebug() << "IN getExpInfo_auto( void ) !";
       // if saveStatus == BOTH, then we are editing the record from the database
@@ -4746,11 +4734,9 @@ DbgLv(1) << "CGui: gExpInf: IN";
    if ( disk_controls->db() )
    {
       // Then we're working in DB, so verify connectivity
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
+      auto db = US_DBProvider::open();
 
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db->lastErrno() != US_DB2::OK )
       {
          QMessageBox::information( this,
                 tr( "Error" ),
@@ -4759,7 +4745,7 @@ DbgLv(1) << "CGui: gExpInf: IN";
       }
 
       // Check if the run ID already exists in the DB
-      int recStatus = ExpData.checkRunID( &db );
+      int recStatus = ExpData.checkRunID( db.get() );
 
       if ( recStatus != US_DB2::OK && recStatus != US_DB2::NOROWS )
       {
@@ -4767,7 +4753,7 @@ DbgLv(1) << "CGui: gExpInf: IN";
                                tr( "Database Problem" ),
                                tr( "Could not check whether the current runID is in"
                                    " the database:\n" ) +
-                                  db.lastError() );
+                                  db->lastError() );
          return;
       }
 
@@ -6963,30 +6949,28 @@ void US_ConvertGui::read_aprofile_data_from_aprofile()
   QString aprofile_xml;
   
   // Check DB connection
-  US_Passwd pw;
-  QString masterPW = pw.getPasswd();
-  US_DB2 db( masterPW );
-  
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
-      return;
-    }
+  auto    db = US_DBProvider::open();
+
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     QMessageBox::warning(
+        this, tr( "Connection Problem" ), tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+     return;
+  }
 
   qDebug() << "AProfGUID: " << AProfileGUID;
 
     
   QStringList qry;
   qry << "get_aprofile_info" << AProfileGUID;
-  db.query( qry );
-  
-  while ( db.next() )
-    {
-      //currProf.aprofID     = db.value( 0 ).toInt();
-      //currProf.aprofname   = db.value( 1 ).toString();
-      aprofile_xml         = db.value( 2 ).toString();
-    }
+  db->query( qry );
+
+  while ( db->next() )
+  {
+     //currProf.aprofID     = db.value( 0 ).toInt();
+     //currProf.aprofname   = db.value( 1 ).toString();
+     aprofile_xml = db->value( 2 ).toString();
+  }
 
   //qDebug() << "aprofile_xml: " <<  aprofile_xml;
   
@@ -7375,9 +7359,7 @@ int US_ConvertGui::read_autoflow_stages_record( int autoflowID  )
    int status = 0;
   
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -7402,9 +7384,7 @@ int US_ConvertGui::read_autoflow_stages_record( int autoflowID  )
 void US_ConvertGui::revert_autoflow_stages_record( int autoflowID )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -7427,9 +7407,7 @@ void US_ConvertGui::revert_autoflow_stages_record( int autoflowID )
 QMap< QString, QString> US_ConvertGui::read_autoflow_record( int autoflowID  )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto                    db = US_DBProvider::open();
 
    QMap <QString, QString> protocol_details;
    
@@ -7487,15 +7465,14 @@ bool US_ConvertGui::runInDB_auto( void )
 {
    ExpData.runID = le_runID->text();
 
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
       return false;
    }
 
-   return ( ExpData.checkRunID_auto( ExpData.invID, &db ) == US_DB2::OK );
+   return ( ExpData.checkRunID_auto( ExpData.invID, db.get() ) == US_DB2::OK );
 }
 
 bool US_ConvertGui::isSaved_auto( void )
@@ -7507,11 +7484,9 @@ bool US_ConvertGui::isSaved_auto( void )
    if ( disk_controls->db() )
    {
       // Then we're working in DB, so verify connectivity
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
+      auto db = US_DBProvider::open();
 
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db->lastErrno() != US_DB2::OK )
       {
          QMessageBox::information( this,
                 tr( "Error" ),
@@ -7520,8 +7495,8 @@ bool US_ConvertGui::isSaved_auto( void )
       }
 
       // Check if the run ID already exists in the DB
-      int recStatus = ExpData.checkRunID_auto( ExpData.invID, &db );
-      
+      int recStatus = ExpData.checkRunID_auto( ExpData.invID, db.get() );
+
       //if saveStatus == BOTH, then we are editing the record from the database
       if ( ( recStatus == US_DB2::OK ) && ( saveStatus != BOTH ) )
       	isDataSaved = true;
@@ -7662,36 +7637,34 @@ void US_ConvertGui::saveUS3( void )
   if ( us_convert_auto_mode )
     {
       // Determine if we are using the database
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 dbP( masterPW );
-      
-      if ( dbP.lastErrno() != US_DB2::OK )
-	{
-	  QMessageBox::warning( this, tr( "Connection Problem" ),
-				tr( "Could not connect to database: \n" ) + dbP.lastError() );
-	  return;
-	}
+      auto dbP = US_DBProvider::open();
+
+      if ( dbP->lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database: \n" ) + dbP->lastError() );
+         return;
+      }
 
       //Submitter Form with MP:
       if ( !usmode && gmpRun_bool )
 	{
 	  QStringList qry1;
 	  qry1 <<  QString( "get_user_info" );
-	  dbP. query( qry1 );
-	  dbP. next();
-	  int u_ID        = dbP. value( 0 ).toInt();
-	  QString u_fname = dbP. value( 1 ).toString();
-	  QString u_lname = dbP. value( 2 ).toString();
-	  int u_lev       = dbP. value( 5 ).toInt();
-	  
-	  QString user_submitter = u_lname + ", " + u_fname;
-	  
-	  gmp_submitter_map.clear();
-	  US_Passwd   pw_at;
-	  gmp_submitter_map  = pw_at.getPasswd_auditTrail( "GMP Run IMPORT Form", "Please fill out GMP run IMPORT form:", user_submitter );
-	  
-	  int gmp_submitter_map_size = gmp_submitter_map.keys().size();
+     dbP->query( qry1 );
+     dbP->next();
+     int     u_ID    = dbP->value( 0 ).toInt();
+     QString u_fname = dbP->value( 1 ).toString();
+     QString u_lname = dbP->value( 2 ).toString();
+     int     u_lev   = dbP->value( 5 ).toInt();
+
+     QString user_submitter = u_lname + ", " + u_fname;
+
+     gmp_submitter_map.clear();
+     US_Passwd pw_at;
+     gmp_submitter_map =
+        pw_at.getPasswd_auditTrail( "GMP Run IMPORT Form", "Please fill out GMP run IMPORT form:", user_submitter );
+
+     int gmp_submitter_map_size = gmp_submitter_map.keys().size();
      qDebug() << "Submitter map: " << gmp_submitter_map.keys() << gmp_submitter_map.keys().size() << gmp_submitter_map_size
               << gmp_submitter_map.keys().isEmpty() << gmp_submitter_map["User:"] << gmp_submitter_map["Comment:"];
 
@@ -7721,50 +7694,47 @@ void US_ConvertGui::saveUS3( void )
 
 	      QStringList qry;
 	      qry << "get_report_info_by_id" << rID;
-	      dbP.query( qry );
-  
-	      if ( dbP.lastErrno() == US_DB2::OK )      
-		{
-		  while ( dbP.next() )
-		    {
-		      Wavelength  = dbP.value( 5 ).toString();
-		    }
-		}
+         dbP->query( qry );
 
-	      qDebug() << "GMP Report read: qry, wavelength  -- " << qry << ", " << Wavelength;
-	      
-	      //Now that we know triple-report's channel name && wavelength, go over excluded triples and update corresponding autoflowReport records.. 
-	      for ( int trx = 0; trx < all_tripinfo.count(); trx++ )
-		{
-		  if ( all_tripinfo[ trx ].excluded )
-		    {
-		      QString triple_desc   = all_tripinfo[ trx ].tripleDesc;
-		      triple_desc.replace(" / ","");
-		      qDebug() << "Dropped triple -- " << triple_desc << "; Report's channel & Wvl " <<  chan_key << " & " << Wavelength;
+         if ( dbP->lastErrno() == US_DB2::OK )
+         {
+            while ( dbP->next() )
+            {
+               Wavelength = dbP->value( 5 ).toString();
+            }
+         }
 
-		      if ( triple_desc.contains( chan_key ) && triple_desc.contains( Wavelength ) && !Wavelength.isEmpty() )
-			{
-			  //Update 'tripleDropped' to 'YES' in autoflowReport record for reportID == rID:
+         qDebug() << "GMP Report read: qry, wavelength  -- " << qry << ", " << Wavelength;
 
-			  qry.clear();
-			  qry << "update_autoflow_report_at_import"
-			      << rID
-			      << QString("YES");
+         //Now that we know triple-report's channel name && wavelength, go over excluded triples and update corresponding autoflowReport records..
+         for ( int trx = 0; trx < all_tripinfo.count(); trx++ )
+         {
+            if ( all_tripinfo[trx].excluded )
+            {
+               QString triple_desc = all_tripinfo[trx].tripleDesc;
+               triple_desc.replace( " / ", "" );
+               qDebug() << "Dropped triple -- " << triple_desc << "; Report's channel & Wvl " << chan_key << " & " << Wavelength;
 
-			  qDebug() << "Updating autoflowReport record: query, rID -- " << qry << rID;
-			  dbP.query( qry );
-			}
-		    }
-		}
-	    }
-	}
+               if ( triple_desc.contains( chan_key ) && triple_desc.contains( Wavelength ) && !Wavelength.isEmpty() )
+               {
+                  //Update 'tripleDropped' to 'YES' in autoflowReport record for reportID == rID:
+
+                  qry.clear();
+                  qry << "update_autoflow_report_at_import" << rID << QString( "YES" );
+
+                  qDebug() << "Updating autoflowReport record: query, rID -- " << qry << rID;
+                  dbP->query( qry );
+               }
+            }
+         }
+       }
+   }
 
       /***************************************************************/
       //return; //for testing!!!
 
 
-      
-      /**********  OLD way to treat autoflowReports per channel basis:
+   /**********  OLD way to treat autoflowReports per channel basis:
       QMap<QString, bool>::iterator dr;
       for ( dr = channels_to_drop.begin(); dr != channels_to_drop.end(); ++dr )
 	{
@@ -7802,14 +7772,12 @@ void US_ConvertGui::saveUS3( void )
       // Iterate over reports (by reportIDs -- from AnalysisProfile) && update 'triples_dropped' filed as per above:
 
       // Determine if we are using the database
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 dbP( masterPW );
+      auto dbP = US_DBProvider::open();
       
-      if ( dbP.lastErrno() != US_DB2::OK )
+      if ( dbP->lastErrno() != US_DB2::OK )
 	{
 	  QMessageBox::warning( this, tr( "Connection Problem" ),
-				tr( "Could not connect to database: \n" ) + dbP.lastError() );
+				tr( "Could not connect to database: \n" ) + dbP->lastError() );
 	  return;
 	}
        
@@ -7835,7 +7803,7 @@ void US_ConvertGui::saveUS3( void )
 		  << reportID
 		  << QString("all");
 
-	      dbP.query( qry );
+	      dbP->query( qry );
 	    }
 	  else
 	    {
@@ -7851,7 +7819,7 @@ void US_ConvertGui::saveUS3( void )
 		      << reportID
 		      << DroppedTriplesString;
 
-		  dbP.query( qry );
+		  dbP->query( qry );
 		}
 	      else
 		//nothing dropped; by default, "none" is in the autoflowReport's "triples_dropped" field
@@ -8249,10 +8217,8 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
   QString importIP_Json;
   
   // Check DB connection
-  US_Passwd pw;
-  QString masterpw = pw.getPasswd();
-  US_DB2* db = new US_DB2( masterpw );
-  
+  auto    db = US_DBProvider::open();
+
   if ( db->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this, tr( "Connection Problem" ),
@@ -8498,9 +8464,7 @@ void US_ConvertGui::update_autoflow_record_atLimsImport( void )
    details_at_editing[ "filename" ] = filename_toDB;
   
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != US_DB2::OK )
      {
@@ -8590,9 +8554,7 @@ void US_ConvertGui::update_autoflow_record_atLimsImport( void )
 void US_ConvertGui::delete_autoflow_record( void )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   auto db = US_DBProvider::open();
 
    if ( db->lastErrno() != IUS_DB2::OK )
      {
@@ -8889,11 +8851,9 @@ bool US_ConvertGui::saveUS3DB( void )
 {
  
    // Verify connectivity
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
       QMessageBox::information( this,
              tr( "Error" ),
@@ -8960,10 +8920,10 @@ DbgLv(1) << "DBSv:     tripleGUID       "
    int status;
 
    if ( us_convert_auto_mode )
-     status = US_ConvertIO::checkDiskData_auto( ExpData, out_tripinfo, &db );
+      status = US_ConvertIO::checkDiskData_auto( ExpData, out_tripinfo, db.get() );
    else
-     status = US_ConvertIO::checkDiskData( ExpData, out_tripinfo, &db );
-   
+      status = US_ConvertIO::checkDiskData( ExpData, out_tripinfo, db.get() );
+
    qDebug() << "AFTER checkDiskData(): ExpData.invID = " << ExpData.invID;
    
    qDebug() << "Status from SaveUs3DB" << status;
@@ -9018,9 +8978,7 @@ DbgLv(1) << "DBSv:     dset tripleID    " << out_tripinfo[0].tripleID;
    if ( status != US_DB2::OK && status != US_DB2::NO_RAWDATA )
    {
       // US_DB2::OK means we're updating; US_DB2::NO_RAWDATA means it's new
-      QMessageBox::information( this,
-            tr( "Error" ),
-            db.lastError() + " (" + QString::number( db.lastErrno() ) + ")\n" );
+      QMessageBox::information( this, tr( "Error" ), db->lastError() + " (" + QString::number( db->lastErrno() ) + ")\n" );
       return false;
    }
 
@@ -9075,7 +9033,7 @@ DbgLv(1) << "DBSv:  files count" << files.size();
       return false;
    }
 
-   if ( ExpData.checkRunID( &db ) == US_DB2::OK && ( saveStatus != BOTH ) )
+   if ( ExpData.checkRunID( db.get() ) == US_DB2::OK && ( saveStatus != BOTH ) )
    {
      if ( us_convert_auto_mode ) //When in autoflow, return to Manage Optima Runs
        {
@@ -9116,12 +9074,12 @@ DbgLv(1) << "DBSv:  files count" << files.size();
    if ( us_convert_auto_mode ) //ALEXEY: copy of the method with the ExpData.invID set as the owner (not US_Settings::us_inv_ID() )...
      {
        qDebug() << "SAVE to DB - CALLING AUTO method!!! ExpData.invID = " << ExpData.invID;
-       status = ExpData.saveToDB_auto( ( saveStatus == BOTH ), &db, speedsteps, ExpData.invID );
+       status = ExpData.saveToDB_auto( ( saveStatus == BOTH ), db.get(), speedsteps, ExpData.invID );
      }
    else
      {
        qDebug() << "SAVE to DB - CALLING DEFAULT method!!!";;
-       status = ExpData.saveToDB( ( saveStatus == BOTH ), &db, speedsteps );
+       status = ExpData.saveToDB( ( saveStatus == BOTH ), db.get(), speedsteps );
      }
    QApplication::restoreOverrideCursor();
 
@@ -9150,16 +9108,15 @@ DbgLv(1) << "DBSv:  files count" << files.size();
                             tr( "Problem saving experiment information" ),
                             tr( "The experiment could not be saved to the database.\n"
                                 "For RI data, the RI profile XML may be invalid.\n" ) +
-                               db.lastError() );
+                               db->lastError() );
       return false;
    }
 
    else if ( status != US_DB2::OK )
    {
       QMessageBox::warning( this,
-         tr( "Problem saving experiment information" ),
-         tr( "MySQL Error : " ) + db.lastError() + " ("
-         + QString::number( status ) + ")" );
+                            tr( "Problem saving experiment information" ),
+                            tr( "MySQL Error : " ) + db->lastError() + " (" + QString::number( status ) + ")" );
       return false;
    }
 
@@ -9172,8 +9129,7 @@ DbgLv(1) << "DBSv:  files count" << files.size();
    le_status->setText( tr( "Writing raw data to DB ..." ) );
    qApp->processEvents();
 
-   QString writeStatus =
-      US_ConvertIO::writeRawDataToDB( ExpData, out_tripinfo, dir, &db );
+   QString writeStatus = US_ConvertIO::writeRawDataToDB( ExpData, out_tripinfo, dir, db.get() );
 
    QApplication::restoreOverrideCursor();
 
@@ -9226,11 +9182,9 @@ void US_ConvertGui::saveReportsToDB( void )
       return;
 
    // Verify connectivity
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
       QMessageBox::information( this,
              tr( "Error" ),
@@ -9285,18 +9239,17 @@ void US_ConvertGui::saveReportsToDB( void )
       if ( us_convert_auto_mode )
 	{
 	  qDebug() << "SAVING Reports in AUTO mode !!";
-	  status = myReport.saveDocumentFromFile_auto( ExpData.invID, dir, file, &db, 1, description );
-	}
+     status = myReport.saveDocumentFromFile_auto( ExpData.invID, dir, file, db.get(), 1, description );
+   }
       else
-	status = myReport.saveDocumentFromFile( dir, file, &db, 1, description );
-      
-      
+         status = myReport.saveDocumentFromFile( dir, file, db.get(), 1, description );
+
+
       if ( status != US_Report::REPORT_OK )
       {
          errorMsg += file + " was not saved to report database; error code: "
                           + QString::number( status ) + "\n";
-         qDebug() << "US_ConvertGui.saveDocumentFromFile error: "
-                  << db.lastError() << db.lastErrno();
+         qDebug() << "US_ConvertGui.saveDocumentFromFile error: " << db->lastError() << db->lastErrno();
       }
    }
    QApplication::restoreOverrideCursor();
@@ -9645,11 +9598,9 @@ DbgLv(1) << "CGui: centpInfo: db" << disk_controls->db();
 bool US_ConvertGui::centerpieceInfoDB( void )
 {
    // Verify connectivity
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
       QMessageBox::information( this,
              tr( "Error" ),
@@ -9659,14 +9610,14 @@ bool US_ConvertGui::centerpieceInfoDB( void )
    }
 
    QStringList q( "get_abstractCenterpiece_names" );
-   db.query( q );
+   db->query( q );
 
    QList<listInfo> options;
-   while ( db.next() )
+   while ( db->next() )
    {
       struct listInfo option;
-      option.ID      = db.value( 0 ).toString();
-      option.text    = db.value( 1 ).toString();
+      option.ID   = db->value( 0 ).toString();
+      option.text = db->value( 1 ).toString();
       options << option;
    }
 
@@ -11058,12 +11009,11 @@ DbgLv(1) << "wTS: use_exstsf" << use_exstsf << "ntimes nmscans nvalues"
 int US_ConvertGui::writeTimeStateDB()
 {
    int status           = 0;
-   US_Passwd pw;
-   US_DB2 db( pw.getPasswd() );
+   auto db               = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-DbgLv(1) << "wTSdb: connect" << db.lastErrno() << db.lastError();
+      DbgLv( 1 ) << "wTSdb: connect" << db->lastErrno() << db->lastError();
       return -99;
    }
 //DbgLv(1) << "wTSdb: connect" << db.lastErrno() << db.lastError();
@@ -11075,27 +11025,25 @@ DbgLv(1) << "wTSdb: connect" << db.lastErrno() << db.lastError();
    QString tmst_fbase   = runID + ".time_state.tmst";
    QString tmst_fname   = tmst_fdir + tmst_fbase;
    QString tmst_cksm    = US_Util::md5sum_file( tmst_fname );
-DbgLv(1) << "wTSdb: fname " << tmst_fname << "cksm" << tmst_cksm<< "fbase" << tmst_fbase;
+   DbgLv( 1 ) << "wTSdb: fname " << tmst_fname << "cksm" << tmst_cksm << "fbase" << tmst_fbase;
 
    // Create a new TimeState DB record, if need be. If one already exists,
    //  it may be updated or it may be deleted and recreated.
-   int timestateID = US_TimeState::dbCreate( &db, ExpData.expID, tmst_fname );
-DbgLv(1) << "wTSdb: post-create timestateID" << timestateID;
+   int timestateID = US_TimeState::dbCreate( db.get(), ExpData.expID, tmst_fname );
+   DbgLv( 1 ) << "wTSdb: post-create timestateID" << timestateID;
 
    // If a TimeState DB record now exists, check for binary data in it.
    //  If need be, upload binary TMST data
    if ( timestateID > 0 )
-   {  // A record has been created/updated/affirmed, so check for data blob
+   { // A record has been created/updated/affirmed, so check for data blob
       QString cksum;
-      status            = US_TimeState::dbExamine( &db, &timestateID, NULL,
-                                                   NULL, NULL, &cksum, NULL );
-DbgLv(1) << "wTSdb:  examine status" << status << "cksum-db" << cksum;
+      status = US_TimeState::dbExamine( db.get(), &timestateID, NULL, NULL, NULL, &cksum, NULL );
+      DbgLv( 1 ) << "wTSdb:  examine status" << status << "cksum-db" << cksum;
 
-      if ( status == US_DB2::OK  &&  cksum != tmst_cksm )
-      {  // No or mismatched blob in DB, so upload it
-         status            = US_TimeState::dbUpload( &db, timestateID,
-                                                     tmst_fname );
-DbgLv(1) << "wTSdb:   upload status" << status;
+      if ( status == US_DB2::OK && cksum != tmst_cksm )
+      { // No or mismatched blob in DB, so upload it
+         status = US_TimeState::dbUpload( db.get(), timestateID, tmst_fname );
+         DbgLv( 1 ) << "wTSdb:   upload status" << status;
       }
    }
    else
@@ -11114,40 +11062,42 @@ DbgLv(1) << "wTSdb:   upload status" << status;
       qWarning() << "writeTimeStateDB: time state not saved to the DB, status" << status;
       le_status->setText( tr( "Time State was not saved to the DB (status %1)." ).arg( status ) );
    }
-DbgLv(1) << "wTSdb:  Timestate from DB is used";
+   DbgLv( 1 ) << "wTSdb:  Timestate from DB is used";
    return status;
 }
 
 // Build lambda controls
 void US_ConvertGui::build_lambda_ctrl()
 {
-   if ( ! isMwl )
+   if ( !isMwl )
+   {
       return;
+   }
 
    // For MWL, rebuild wavelength controls
-   int ntrip    = out_tripinfo.count();
-DbgLv(1) << "BldLCtr: ntrip" << ntrip;
-   int ccx      = out_tripinfo[ 0 ].channelID - 1;
-DbgLv(1) << "BldLCtr:  st ccx" << ccx;
-   int wvx      = 0;
-   int ccxo     = 0;
+   int ntrip = out_tripinfo.count();
+   DbgLv( 1 ) << "BldLCtr: ntrip" << ntrip;
+   int ccx = out_tripinfo[0].channelID - 1;
+   DbgLv( 1 ) << "BldLCtr:  st ccx" << ccx;
+   int wvx  = 0;
+   int ccxo = 0;
    exp_lambdas.clear();
 
    for ( int trx = 0; trx < ntrip; trx++ )
-   {  // Loop to add non-excluded wavelengths
-      int ichan    = out_tripinfo[ trx ].channelID - 1;
-      int iwavl    = out_triples [ trx ].section( " / ", 2, 2 ).toInt();
-DbgLv(1) << "BldLCtr: trx ichan ccx iwavl" << trx << ichan << ccx << iwavl;
+   { // Loop to add non-excluded wavelengths
+      int ichan = out_tripinfo[trx].channelID - 1;
+      int iwavl = out_triples[trx].section( " / ", 2, 2 ).toInt();
+      DbgLv( 1 ) << "BldLCtr: trx ichan ccx iwavl" << trx << ichan << ccx << iwavl;
 
       if ( ichan != ccx )
-      {  // If a new channel, store the previous channel's lambda list
+      { // If a new channel, store the previous channel's lambda list
          mwl_data.set_lambdas( exp_lambdas, ccxo );
-DbgLv(1) << "BldLCtr:   trx ichan ccx ccxo iwavl nlam" << trx << ichan << ccx
- << ccxo << iwavl << exp_lambdas.count() << wvx;
-         wvx       = 0;
+         DbgLv( 1 ) << "BldLCtr:   trx ichan ccx ccxo iwavl nlam" << trx << ichan << ccx << ccxo << iwavl << exp_lambdas.count()
+                    << wvx;
+         wvx = 0;
          exp_lambdas.clear();
 
-         ccx       = ichan;
+         ccx = ichan;
          ccxo++;
       }
 
@@ -11157,21 +11107,20 @@ DbgLv(1) << "BldLCtr:   trx ichan ccx ccxo iwavl nlam" << trx << ichan << ccx
 
    // Store the last channel's lambdas
    mwl_data.set_lambdas( exp_lambdas, ccxo );
-DbgLv(1) << "BldLCtr:    ccxo nlam" << ccxo << exp_lambdas.count();
+   DbgLv( 1 ) << "BldLCtr:    ccxo nlam" << ccxo << exp_lambdas.count();
    mwl_connect( false );
 
    // Set controls for the currently selected cell/channel in the list
-   tripListx    = lw_triple->currentRow();
-   nlambda      = mwl_data.lambdas( exp_lambdas, tripListx );
-   slambda      = exp_lambdas[ 0 ];
-   elambda      = exp_lambdas[ nlambda - 1 ];
+   tripListx = lw_triple->currentRow();
+   nlambda   = mwl_data.lambdas( exp_lambdas, tripListx );
+   slambda   = exp_lambdas[0];
+   elambda   = exp_lambdas[nlambda - 1];
 
-DbgLv(1) << "BldLCtr:     ccx nlam" << 0 << exp_lambdas.count();
+   DbgLv( 1 ) << "BldLCtr:     ccx nlam" << 0 << exp_lambdas.count();
    cb_lambstrt->setCurrentIndex( all_lambdas.indexOf( slambda ) );
    cb_lambstop->setCurrentIndex( all_lambdas.indexOf( elambda ) );
    cb_lambplot->setCurrentIndex( nlambda / 2 );
    mwl_connect( true );
 
-   reset_lambdas();      // Make sure internal MWL lambdas are right
-
+   reset_lambdas(); // Make sure internal MWL lambdas are right
 }

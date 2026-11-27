@@ -1,16 +1,16 @@
 //! \file us_select_edits.cpp
 
 #include "us_select_edits.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_matrix.h"
-#include "us_investigator.h"
-#include "us_passwd.h"
-#include "us_db2.h"
-#include "us_dataIO.h"
-#include "us_util.h"
-#include "us_editor.h"
 #include "us_constants.h"
+#include "us_dataIO.h"
+#include "us_db2.h"
+#include "us_db_provider.h"
+#include "us_editor.h"
+#include "us_gui_settings.h"
+#include "us_investigator.h"
+#include "us_matrix.h"
+#include "us_settings.h"
+#include "us_util.h"
 
 // Main constructor with flags for edit, latest-edit and local-data
 
@@ -263,16 +263,13 @@ qDebug() << "Acpt: editIDs" << editIDs;
 // Scan database for edit sets
 void US_SelectEdits::scan_dbase_edit()
 {
-//qDebug() << "ScDB:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-   US_Passwd   pw;
-   US_DB2      db( pw.getPasswd() );
+   //qDebug() << "ScDB:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      QMessageBox::information( this,
-         tr( "DB Connection Problem" ),
-         tr( "There was an error connecting to the database:\n" )
-         + db.lastError() );
+      QMessageBox::information(
+         this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
       return;
    }
 
@@ -285,12 +282,12 @@ void US_SelectEdits::scan_dbase_edit()
    query.clear();
    query << "get_experiment_desc" << invID;
 
-   db.query( query );
+   db->query( query );
 
-   while ( db.next() )
+   while ( db->next() )
    {
-      QString expID    = db.value( 0 ).toString();
-      QString label    = db.value( 4 ).toString();
+      QString expID    = db->value( 0 ).toString();
+      QString label    = db->value( 4 ).toString();
       explabs[ expID ] = label;
    }
 qDebug() << "ScDB: explabs size" << explabs.size();
@@ -300,20 +297,18 @@ qDebug() << "ScDB: explabs size" << explabs.size();
    query << "all_editedDataIDs" << invID;
 
 //qDebug() << "ScDB:TM:01: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-   db.query( query );
+   db->query( query );
 
-   while ( db.next() )
+   while ( db->next() )
    {
-      QString recID    = db.value( 0 ).toString();
+      QString recID = db->value( 0 ).toString();
 
-//qDebug() << "ScDB:TM:03: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-      QString descrip  = db.value( 1 ).toString();
-      QString filename = db.value( 2 ).toString().replace( "\\", "/" );
-      QString expID    = db.value( 4 ).toString();
-      QString date     = US_Util::toUTCDatetimeText( db.value( 5 )
-                         .toDateTime().toString( Qt::ISODate ), true )
-                         .section( " ", 0, 0 );
-      QString recGUID  = db.value( 9 ).toString();
+      //qDebug() << "ScDB:TM:03: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+      QString descrip  = db->value( 1 ).toString();
+      QString filename = db->value( 2 ).toString().replace( "\\", "/" );
+      QString expID    = db->value( 4 ).toString();
+      QString date = US_Util::toUTCDatetimeText( db->value( 5 ).toDateTime().toString( Qt::ISODate ), true ).section( " ", 0, 0 );
+      QString recGUID  = db->value( 9 ).toString();
       QString filebase = filename.section( "/", -1, -1 );
       QString runID    = descrip.isEmpty() ? filebase.section( ".", 0, -7 )
                          : descrip;

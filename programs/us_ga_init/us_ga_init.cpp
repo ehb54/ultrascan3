@@ -13,20 +13,20 @@
 #include <QSignalBlocker>
 #include <qwt_plot_spectrogram.h>
 
+#include "qwt_picker_machine.h"
+#include "us_constants.h"
+#include "us_db_provider.h"
 #include "us_ga_init.h"
-#include "us_select_runs.h"
-#include "us_model_loader.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
+#include "us_license.h"
+#include "us_license_t.h"
 #include "us_math2.h"
 #include "us_matrix.h"
-#include "us_constants.h"
-#include "us_passwd.h"
+#include "us_model_loader.h"
 #include "us_report.h"
-#include "qwt_picker_machine.h"
+#include "us_select_runs.h"
+#include "us_settings.h"
 #include "us_solutedata.h"
 #define canvasBackground() canvasBackground().color();
 
@@ -637,15 +637,14 @@ DbgLv(1) << "SAVE call reportMC";
 
       if ( dkdb_cntrls->db() )
       {  // Write statistics report to database
-         US_Passwd   pw;
-         US_DB2      db( pw.getPasswd() );
-         US_DB2*     dbP = &db;
+         auto        db  = US_DBProvider::open();
+         IUS_DB2*    dbP = db.get();
          QStringList query;
 
          query << "get_editID" << editGUID;
-         db.query( query );
-         db.next();
-         int         idEdit = db.value( 0 ).toString().toInt();
+         db->query( query );
+         db->next();
+         int         idEdit = db->value( 0 ).toString().toInt();
          US_Report   freport;
          freport.runID      = runid;
 

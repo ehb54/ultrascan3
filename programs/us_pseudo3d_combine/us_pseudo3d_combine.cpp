@@ -19,6 +19,8 @@
 #include "us_report.h"
 #include "us_constants.h"
 
+#include "us_db_provider.h"
+
 #define PA_TMDIS_MS 0   // default Plotall time per distro in milliseconds
 
 // LessThan method for S_Solute sort
@@ -656,20 +658,18 @@ DbgLv(2) << "(3)   need_save sv_plot" << need_save << sv_plot;
 
       if ( dkdb_cntrls->db()  &&  !ck_locsave->isChecked() )
       {  // Save a copy to the database
-QDateTime time0=QDateTime::currentDateTime();
-         US_Passwd   pw;
-         US_DB2      db( pw.getPasswd() );
+         QDateTime   time0 = QDateTime::currentDateTime();
+         auto        db    = US_DBProvider::open();
          QStringList query;
          query << "get_editID" << tsys->editGUID;
-         db.query( query );
-         db.next();
-         int         idEdit   = db.value( 0 ).toString().toInt();
-         US_Report   freport;
-         freport.runID        = runid;
-         freport.saveDocumentFromFile( ofdir, ofname, &db, idEdit );
-QDateTime time1=QDateTime::currentDateTime();
-qDebug() << "DB-save: currdist" << curr_distr
- << "svtime:" << time0.msecsTo(time1);
+         db->query( query );
+         db->next();
+         int       idEdit = db->value( 0 ).toString().toInt();
+         US_Report freport;
+         freport.runID = runid;
+         freport.saveDocumentFromFile( ofdir, ofname, db.get(), idEdit );
+         QDateTime time1 = QDateTime::currentDateTime();
+         qDebug() << "DB-save: currdist" << curr_distr << "svtime:" << time0.msecsTo( time1 );
          dtext          = dtext + tr( " and DB" );
       }
    }

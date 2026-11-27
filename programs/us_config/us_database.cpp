@@ -1,12 +1,13 @@
 //! \file us_database.cpp
 #include "us_database.h"
-#include "us_gui_settings.h"
-#include "us_settings.h"
-#include "us_passwd.h"
-#include "us_help.h"
 #include "us_crypto.h"
 #include "us_db2.h"
+#include "us_db_provider.h"
+#include "us_gui_settings.h"
+#include "us_help.h"
 #include "us_local_server.h"
+#include "us_passwd.h"
+#include "us_settings.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
@@ -197,9 +198,7 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
 int US_Database::get_autoflow_records( )
 {
    // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   IUS_DB2* db = new US_DB2( masterpw );
+   auto db = US_DBProvider::open();
 
    int record_number = 0;
    
@@ -299,10 +298,9 @@ void US_Database::select_db( QListWidgetItem* entry )
 
 void US_Database::update_inv( )
 {
-   US_Passwd   pw;
-   US_DB2      db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != IUS_DB2::OK )
+   if ( db->lastErrno() != IUS_DB2::OK )
    {
 //qDebug() << "USCFG: UpdInv: ERROR connect";
       QMessageBox::information( this,
@@ -313,15 +311,15 @@ void US_Database::update_inv( )
    }
 
    QStringList q( "get_user_info" );
-   db.query( q );
-   db.next();
+   db->query( q );
+   db->next();
 
-   int ID        = db.value( 0 ).toInt();
-   QString fname = db.value( 1 ).toString();
-   QString lname = db.value( 2 ).toString();
-   int     level = db.value( 5 ).toInt();
-//qDebug() << "USCFG: UpdInv: ID,name,lev" << ID << fname << lname << level;
-//if(ID<1) return;
+   int     ID    = db->value( 0 ).toInt();
+   QString fname = db->value( 1 ).toString();
+   QString lname = db->value( 2 ).toString();
+   int     level = db->value( 5 ).toInt();
+   //qDebug() << "USCFG: UpdInv: ID,name,lev" << ID << fname << lname << level;
+   //if(ID<1) return;
 
    US_Settings::set_us_inv_name ( lname + ", " + fname );
    US_Settings::set_us_inv_ID   ( ID );

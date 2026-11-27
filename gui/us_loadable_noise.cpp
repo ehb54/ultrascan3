@@ -1,15 +1,15 @@
 //! \file us_loadable_noise.cpp
 
 #include "us_loadable_noise.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_passwd.h"
 #include "us_db2.h"
-#include "us_noise.h"
-#include "us_util.h"
+#include "us_db_provider.h"
+#include "us_gui_settings.h"
 #include "us_investigator.h"
+#include "us_license.h"
+#include "us_license_t.h"
+#include "us_noise.h"
+#include "us_settings.h"
+#include "us_util.h"
 
 
 // Null  constructor
@@ -159,9 +159,8 @@ for (int jj=0;jj<nenois;jj++)
             i_noise.load( false, noiID, NULL );
          else
          {
-            US_Passwd pw;
-            US_DB2 db( pw.getPasswd() );
-            i_noise.load( true, noiID, &db );
+            auto db = US_DBProvider::open();
+            i_noise.load( true, noiID, db.get() );
          }
 
          double datmin  = edata->value( 0, 0 );
@@ -280,18 +279,19 @@ int US_LoadableNoise::id_list_db( QString daEditGUID )
    QStringList query;
    QString     invID  = QString::number( US_Settings::us_inv_ID() );
 
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
+   auto        db = US_DBProvider::open();
 
-   if ( db.lastErrno() != IUS_DB2::OK )
+   if ( db->lastErrno() != IUS_DB2::OK )
+   {
       return 0;
+   }
 
    query.clear();
    query << "get_editID" << daEditGUID;
-   db.query( query );
-   db.next();
-   QString daEditID = db.value( 0 ).toString();
-DbgLv(2) << "LaNoi:idlDB:  daEdit ID GUID" << daEditID << daEditGUID;
+   db->query( query );
+   db->next();
+   QString daEditID = db->value( 0 ).toString();
+   DbgLv( 2 ) << "LaNoi:idlDB:  daEdit ID GUID" << daEditID << daEditGUID;
 
    noiIDs  .clear();
    noiEdIDs.clear();
@@ -307,33 +307,33 @@ DbgLv(2) << "LaNoi:idlDB:  daEdit ID GUID" << daEditID << daEditGUID;
    // Build noise, edit, model ID lists for all noises
    query.clear();
    query << "get_noise_desc_by_editID" << invID << daEditID;
-   db.query( query );
+   db->query( query );
 
-   while ( db.next() )
+   while ( db->next() )
    {  // Accumulate lists from noise records
-      noiEdID   = db.value( 2 ).toString();
+      noiEdID = db->value( 2 ).toString();
 
-      noiIDs   << db.value( 1 ).toString();
-      noiTypes << db.value( 4 ).toString();
-      noiMoIDs << db.value( 5 ).toString();
+      noiIDs << db->value( 1 ).toString();
+      noiTypes << db->value( 4 ).toString();
+      noiMoIDs << db->value( 5 ).toString();
    }
 
 DbgLv(2) << "LaNoi:idlDB: noiTypes size" << noiTypes.size();
    // Build model, edit ID lists for all models
    query.clear();
    query << "get_model_desc_by_editID" << invID << daEditID;
-   db.query( query );
+   db->query( query );
 
-   while ( db.next() )
+   while ( db->next() )
    {  // Accumulate from db desc entries matching noise model IDs
-      QString modGUID = db.value( 1 ).toString();
-      QString modEdID = db.value( 6 ).toString();
+      QString modGUID = db->value( 1 ).toString();
+      QString modEdID = db->value( 6 ).toString();
 
       if ( noiMoIDs.contains( modGUID )  &&   modEdID == daEditID )
       {  // Only list models that have associated noise and match edit
          modIDs   << modGUID;
-         modDescs << db.value( 2 ).toString();
-         modEdIDs << db.value( 5 ).toString();
+         modDescs << db->value( 2 ).toString();
+         modEdIDs << db->value( 5 ).toString();
       }
    }
 DbgLv(2) << "LaNoi:idlDB: modDescs size" << modDescs.size();

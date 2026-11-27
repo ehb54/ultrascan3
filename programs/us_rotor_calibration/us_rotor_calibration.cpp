@@ -1,20 +1,20 @@
 //! \file us_rotor_calibration.cpp
-#include <qwt_scale_div.h>
-#include "us_rotor.h"
 #include "us_rotor_calibration.h"
-#include "us_rotor_gui.h"
 #include "us_abstractrotor_gui.h"
-#include "us_settings.h"
-#include "us_license_t.h"
-#include "us_math2.h"
-#include "us_util.h"
 #include "us_db2.h"
-#include "us_license.h"
+#include "us_db_provider.h"
+#include "us_get_dbexp.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
+#include "us_license.h"
+#include "us_license_t.h"
+#include "us_math2.h"
+#include "us_rotor.h"
+#include "us_rotor_gui.h"
 #include "us_run_details2.h"
-#include "us_passwd.h"
-#include "us_get_dbexp.h"
+#include "us_settings.h"
+#include "us_util.h"
+#include <qwt_scale_div.h>
 
 //! \brief Main program for US_RotorCalibration. Loads translators and starts
 //         the class US_FitMeniscus.
@@ -398,11 +398,9 @@ void US_RotorCalibration::loadDisk(void)
 
 void US_RotorCalibration::loadDB(void)
 {
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db(masterPW);
+   auto db = US_DBProvider::open();
    wavelengths.clear();
-   if (db.lastErrno() != US_DB2::OK)
+   if ( db->lastErrno() != US_DB2::OK )
    {
       QMessageBox::information(this,
              tr("Error"),
@@ -426,15 +424,15 @@ void US_RotorCalibration::loadDB(void)
    // Get the rawDataID's that correspond to this experiment
    QStringList q("get_rawDataIDs");
    q  << expID;
-   db.query(q);
+   db->query( q );
 
    QStringList rawDataIDs;
    QStringList filenames;
 
-   while (db.next())
+   while ( db->next() )
    {
-      rawDataIDs << db.value(0).toString();
-      filenames  << db.value(2).toString();
+      rawDataIDs << db->value( 0 ).toString();
+      filenames << db->value( 2 ).toString();
    }
 
    if (rawDataIDs.size() < 1)
@@ -494,13 +492,10 @@ void US_RotorCalibration::loadDB(void)
    for (int i = 0; i < rawDataIDs.size(); i++)
    {
       QString filename = tempdir + filenames[i];
-      int readStatus = db.readBlobFromDB(filename, QString("download_aucData"), rawDataIDs[i].toInt());
+      int     readStatus = db->readBlobFromDB( filename, QString( "download_aucData" ), rawDataIDs[i].toInt() );
       if (readStatus != US_DB2::OK)
       {
-         QMessageBox::warning(this,
-            tr("Error"),
-            tr("Error downloading the data.\n")
-            + db.lastError() + "\n" + filename);
+         QMessageBox::warning( this, tr( "Error" ), tr( "Error downloading the data.\n" ) + db->lastError() + "\n" + filename );
          return;
       }
 
@@ -1683,11 +1678,9 @@ void US_RotorCalibration::save(void)
 
    // Let's verify that the experiment GUID is in the db
    // and matches the current runID
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db(masterPW);
+   auto db = US_DBProvider::open();
 
-   if (db.lastErrno() != US_DB2::OK)
+   if ( db->lastErrno() != US_DB2::OK )
    {
       QMessageBox::information(this,
              tr("Error"),
@@ -1700,9 +1693,9 @@ void US_RotorCalibration::save(void)
    QStringList q("get_experiment_info_by_runID");
    q << runID
      << QString::number(US_Settings::us_inv_ID());
-   db.query(q);
+   db->query( q );
 
-   if (db.lastErrno() == US_DB2::NOROWS)
+   if ( db->lastErrno() == US_DB2::NOROWS )
    {
       QMessageBox::information(this,
              tr("Error"),
@@ -1712,17 +1705,17 @@ void US_RotorCalibration::save(void)
    }
 
    // Ok, let's get more info
-   db.next();
-   current.calibrationExperimentID   = db.value(1).toString().toInt();
-   current.calibrationExperimentGUID = db.value(2).toString();
-   current.rotorID                   = db.value(6).toString().toInt();
+   db->next();
+   current.calibrationExperimentID   = db->value( 1 ).toString().toInt();
+   current.calibrationExperimentGUID = db->value( 2 ).toString();
+   current.rotorID                   = db->value( 6 ).toString().toInt();
 
    q.clear();
    q  << "get_rotor_info"
       << QString::number(current.rotorID);
-   db.query(q);
-   db.next();
-   current.rotorGUID                 = db.value(0).toString();
+   db->query( q );
+   db->next();
+   current.rotorGUID = db->value( 0 ).toString();
 
    US_RotorGui* rotorDialog = new US_RotorGui(
                               current,                    // calibration data

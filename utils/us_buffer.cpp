@@ -28,6 +28,8 @@ bool US_BufferComponent::getAllFromDB( const QString& masterPW, QMap<QString, US
 
 bool US_BufferComponent::getAllFromDB( IUS_DB2& db, QMap<QString, US_BufferComponent>& componentList, QString* error )
 {
+   // The connection may be shared, so whatever its last statement returned
+   // does not matter here; only whether it is open.
    if ( !db.isConnected() )
    {
       if ( error != nullptr )

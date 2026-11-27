@@ -1882,19 +1882,19 @@ void US_BufferGuiNew::newAccepted()
 // Write new buffer to database; true when the database holds the buffer
 bool US_BufferGuiNew::write_db()
 {
-DbgLv(1) << "BufN:SL: write_db()  bufID" << buffer->bufferID;
-auto    db = US_DBProvider::open();
-QString error;
-int     idBuf = buffer->saveToDB( db.get(), "1", &error );
-// saveToDB manages bufferID: rollback restores the old ID, while a disk
-// copy failure (-6) retains the committed ID. Never store an error as an ID.
+   DbgLv( 1 ) << "BufN:SL: write_db()  bufID" << buffer->bufferID;
+   auto    db = US_DBProvider::open();
+   QString error;
+   int     idBuf = buffer->saveToDB( db.get(), "1", &error );
+   // saveToDB manages bufferID: rollback restores the old ID, while a disk
+   // copy failure (-6) retains the committed ID. Never store an error as an ID.
 
-showBufferSaveError( this, idBuf, error );
+   showBufferSaveError( this, idBuf, error );
 
-qDebug() << "BufferID: " << buffer->bufferID << ", Description: " << buffer->description
-         << ", Extintcion key #: " << buffer->extinction.keys().count();
-// -6: the database save committed and only the local copy failed
-return idBuf >= 0 || idBuf == -6;
+   qDebug() << "BufferID: " << buffer->bufferID << ", Description: " << buffer->description
+            << ", Extintcion key #: " << buffer->extinction.keys().count();
+   // -6: the database save committed and only the local copy failed
+   return idBuf >= 0 || idBuf == -6;
 }
 
 // Write new buffer to local disk file; true when the file was written
@@ -2082,14 +2082,14 @@ DbgLv(1) << "BufE:SL:  edtAcc: DB  id" << buffer->bufferID;
 // Write updated buffer to database; true when the database holds the edit
 bool US_BufferGuiEdit::write_db()
 {
-DbgLv(1) << "BufE:SL: write_db()  bufID" << buffer->bufferID;
-auto    db = US_DBProvider::open();
-QString error;
-int     idBuf = buffer->saveToDB( db.get(), "1", &error );
+   DbgLv( 1 ) << "BufE:SL: write_db()  bufID" << buffer->bufferID;
+   auto    db = US_DBProvider::open();
+   QString error;
+   int     idBuf = buffer->saveToDB( db.get(), "1", &error );
 
-showBufferSaveError( this, idBuf, error );
-// -6: the database save committed and only the local copy failed
-return idBuf >= 0 || idBuf == -6;
+   showBufferSaveError( this, idBuf, error );
+   // -6: the database save committed and only the local copy failed
+   return idBuf >= 0 || idBuf == -6;
 }
 
 // Write updated buffer to local disk file; true when the file was written

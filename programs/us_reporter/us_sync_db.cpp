@@ -1,14 +1,14 @@
 //! \file us_sync_db.cpp
 
 #include "us_sync_db.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_matrix.h"
-#include "us_investigator.h"
-#include "us_passwd.h"
-#include "us_db2.h"
-#include "us_util.h"
 #include "us_constants.h"
+#include "us_db2.h"
+#include "us_db_provider.h"
+#include "us_gui_settings.h"
+#include "us_investigator.h"
+#include "us_matrix.h"
+#include "us_settings.h"
+#include "us_util.h"
 
 // Main constructor
 
@@ -120,16 +120,13 @@ qDebug() << "NEWONLY";
 // Scan database for reports
 void US_SyncWithDB::scan_db_reports()
 {
-//qDebug() << "ScDB:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-   US_Passwd   pw;
-   US_DB2      db( pw.getPasswd() );
+   //qDebug() << "ScDB:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      QMessageBox::information( this,
-         tr( "DB Connection Problem" ),
-         tr( "There was an error connecting to the database:\n" )
-         + db.lastError() );
+      QMessageBox::information(
+         this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
       return;
    }
 
@@ -151,8 +148,8 @@ void US_SyncWithDB::scan_db_reports()
 
    query.clear();
    query << "count_reports" << invID;
-   int nreports = db.functionQuery( query );
-qDebug() << "Reports count" << nreports;
+   int nreports = db->functionQuery( query );
+   qDebug() << "Reports count" << nreports;
    desc         = desc + "<br/>&nbsp;&nbsp;&nbsp;";
    int nbdchr   = desc.length();
    desc         = desc.left( nbdchr )
@@ -168,7 +165,7 @@ qDebug() << "Reports count" << nreports;
 
    query.clear();
    query << "get_report_desc" << invID;
-   db.query( query );
+   db->query( query );
    QStringList runids;
    int kreports = 0;
    int jreports = 0;
@@ -176,14 +173,14 @@ qDebug() << "Reports count" << nreports;
    QString rptdir = US_Settings::reportDir() + "/";
    QDir dirrpt( rptdir );
 
-   while ( db.next() )
+   while ( db->next() )
    {
-      QString runid    = db.value( 4 ).toString();
+      QString runid = db->value( 4 ).toString();
       jreports++;
       if ( resruns.contains( runid ) )
       {
          runids   << runid;
-qDebug() << "  report id" << db.value(0).toString() << "runID" << runid;
+         qDebug() << "  report id" << db->value( 0 ).toString() << "runID" << runid;
          kreports++;
       }
    }
@@ -201,7 +198,7 @@ qDebug() << "Report descs count" << kreports;
       QString runresd  = resdir + runid;
 
       US_Report freport;
-      freport.readDB( runid, &db );
+      freport.readDB( runid, db.get() );
 
       int ntriples     = freport.triples.count();
 qDebug() << "  Report" << ii << "triples count" << ntriples << "runID" << runid;
@@ -257,7 +254,7 @@ qDebug() << "      Doc" << kk << "filename" << fname << "ID" << doc->documentID;
                ndocadd++;
             }
 
-            int st = doc->readDB( rundir, &db );
+            int st = doc->readDB( rundir, db.get() );
 
             if ( st != US_DB2::OK )
             {

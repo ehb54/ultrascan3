@@ -54,7 +54,7 @@ class US_DataModel : public QObject
 
         //! \brief Set the database connection
         //! \param db Database connection pointer
-        void setDatabase( US_DB2* db );
+        void          setDatabase( IUS_DB2* db );
 
         //! \brief Set the progress bar and status label
         //! \param progress Progress bar
@@ -84,7 +84,7 @@ class US_DataModel : public QObject
 
         //! \brief Get the database connection
         //! \return Database connection pointer
-        US_DB2* dbase( void );
+        IUS_DB2*      dbase( void );
 
         //! \brief Get investigator text
         //! \return Investigator text
@@ -154,39 +154,39 @@ class US_DataModel : public QObject
         int recCountLoc( void );
 
     private:
-        US_DB2*       db;               //!< Pointer to opened DB connection
-        QProgressBar* progress;         //!< Progress bar on main window
-        QLabel*       lb_status;        //!< Status label on main window
-        QWidget*      parentw;          //!< Parent widget (main window)
+       IUS_DB2*          db;        //!< Pointer to opened DB connection
+       QProgressBar*     progress;  //!< Progress bar on main window
+       QLabel*           lb_status; //!< Status label on main window
+       QWidget*          parentw;   //!< Parent widget (main window)
 
-        QTreeWidget*        tw_recs;    //!< Tree widget
-        QTreeWidgetItem*    tw_item;    //!< Current tree widget item
+       QTreeWidget*      tw_recs; //!< Tree widget
+       QTreeWidgetItem*  tw_item; //!< Current tree widget item
 
-        DataDesc            cdesc;      //!< Current record description
-        QVector< DataDesc > ddescs;     //!< DB descriptions
-        QVector< DataDesc > ldescs;     //!< Local-disk descriptions
-        QVector< DataDesc > adescs;     //!< All (merged) descriptions
-        QVector< int >      chgrows;    //!< Changed rows
+       DataDesc          cdesc;   //!< Current record description
+       QVector<DataDesc> ddescs;  //!< DB descriptions
+       QVector<DataDesc> ldescs;  //!< Local-disk descriptions
+       QVector<DataDesc> adescs;  //!< All (merged) descriptions
+       QVector<int>      chgrows; //!< Changed rows
 
-        QObject*            ob_process; //!< Data processor
-        QObject*            ob_tree;    //!< Data tree handler
-        QObject*            ob_exper;   //!< Experiment synchronizer
+       QObject*          ob_process; //!< Data processor
+       QObject*          ob_tree;    //!< Data tree handler
+       QObject*          ob_exper;   //!< Experiment synchronizer
 
-        US_Buffer     buffer;           //!< Buffer object
-        US_Analyte    analyte;          //!< Analyte object
+       US_Buffer         buffer;  //!< Buffer object
+       US_Analyte        analyte; //!< Analyte object
 
-        int           personID;         //!< Person ID
-        int           dbg_level;        //!< Debug level
-        int           maxdlen;          //!< Maximum data length
+       int               personID;  //!< Person ID
+       int               dbg_level; //!< Debug level
+       int               maxdlen;   //!< Maximum data length
 
-        QString       invID;            //!< Investigator ID
-        QString       run_name;         //!< Run name
-        QString       cell;             //!< Cell
-        QString       filt_run;         //!< Filter run
-        QString       filt_triple;      //!< Filter triple
-        QString       filt_source;      //!< Filter source
+       QString           invID;       //!< Investigator ID
+       QString           run_name;    //!< Run name
+       QString           cell;        //!< Cell
+       QString           filt_run;    //!< Filter run
+       QString           filt_triple; //!< Filter triple
+       QString           filt_source; //!< Filter source
 
-        QPoint        cur_pos;          //!< Current position
+       QPoint            cur_pos; //!< Current position
 
     private slots:
         //! \brief Slot to scan database

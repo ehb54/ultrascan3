@@ -1,16 +1,16 @@
 //! \file us_select_runid.cpp
 
 #include "us_select_runid.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_matrix.h"
-#include "us_investigator.h"
-#include "us_passwd.h"
-#include "us_db2.h"
-#include "us_util.h"
-#include "us_editor.h"
 #include "us_constants.h"
+#include "us_db2.h"
+#include "us_db_provider.h"
+#include "us_editor.h"
+#include "us_gui_settings.h"
+#include "us_investigator.h"
+#include "us_matrix.h"
 #include "us_report.h"
+#include "us_settings.h"
+#include "us_util.h"
 
 // Main constructor with flags for edit, latest-edit and local-data
 
@@ -207,18 +207,15 @@ DbgLv(1) << "SE: runID" << runIDs[0];
 // Scan database for edit sets
 void US_SelectRunid::scan_dbase_runs()
 {
-   US_Passwd   pw;
-   US_DB2      db( pw.getPasswd() );
+   auto db    = US_DBProvider::open();
    count_allr = 0;
    count_list = 0;
    count_seld = 0;
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      QMessageBox::information( this,
-         tr( "DB Connection Problem" ),
-         tr( "There was an error connecting to the database:\n" )
-         + db.lastError() );
+      QMessageBox::information(
+         this, tr( "DB Connection Problem" ), tr( "There was an error connecting to the database:\n" ) + db->lastError() );
       return;
    }
 
@@ -230,12 +227,12 @@ void US_SelectRunid::scan_dbase_runs()
 
    query.clear();
    query << "get_report_desc" << invID;
-   db.query( query );
+   db->query( query );
 
-   while ( db.next() )
+   while ( db->next() )
    {  // Build list of runIDs with documents
-      runid            = db.value( 4 ).toString();
-DbgLv(1) << "ScDB:     report runid" << runid;
+      runid = db->value( 4 ).toString();
+      DbgLv( 1 ) << "ScDB:     report runid" << runid;
 
       if ( ! docruns.contains( runid ) )
       {
@@ -245,16 +242,16 @@ DbgLv(1) << "ScDB:     report runid" << runid;
 
    query.clear();
    query << "get_experiment_desc" << invID;
-   db.query( query );
+   db->query( query );
 
-   while ( db.next() )
+   while ( db->next() )
    {  // Map dates to runIDs with documents
-      runid            = db.value( 1 ).toString();
+      runid = db->value( 1 ).toString();
       count_allr++;
 
       if ( docruns.contains( runid ) )
       {
-         QString rdate    = db.value( 5 ).toDateTime().toString( "yyMMddhhmm" );
+         QString rdate    = db->value( 5 ).toDateTime().toString( "yyMMddhhmm" );
          mRDates[ runid ] = rdate;   // Save mapping of date to runID
       }
    }
@@ -265,7 +262,7 @@ DbgLv(1) << "ScDB: nreps" << nreps;
    {
       runid      = docruns[ ii ];
       US_Report freport;
-      freport.readDB( runid, &db );
+      freport.readDB( runid, db.get() );
       int ntrip  = freport.triples.count();
 DbgLv(1) << "ScDB:  ntrip" << ntrip;
       int ndats  = 0;
