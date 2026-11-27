@@ -3,7 +3,13 @@
 #include "us_memory.h"
 #include "us_settings.h"
 
+#include <atomic>
+#include <cstdio>
 #include <cstring>
+
+#ifdef Q_OS_LINUX
+#include <sys/mman.h>
+#endif
 
 // Default memory cap:  this share of available memory, within limits (MB)
 static const double            DEF_SHARE  = 0.25;
@@ -33,8 +39,9 @@ static void add_string( QByteArray& key, const QString& text )
 }
 
 // Create a cache with a memory cap in bytes
-US_SimCache::US_SimCache( qint64 max_bytes ) :
+US_SimCache::US_SimCache( qint64 max_bytes, bool floats ) :
     max_bytes( qMax( (qint64) 0, max_bytes ) ),
+    floats( floats ),
     nbytes( 0 ),
     nsurvivors( 0 ),
     nstored( 0 ),
@@ -68,7 +75,41 @@ US_SimCache* US_SimCache::create_default()
 {
    qint64 cap = default_max_bytes();
 
-   return ( cap > 0 ) ? new US_SimCache( cap ) : nullptr;
+   return ( cap > 0 ) ? new US_SimCache( cap, float_sims() ) : nullptr;
+}
+
+// Flag from debug text that simulations are rounded to float precision
+bool US_SimCache::float_sims()
+{
+   const QStringList dbgtxt = US_Settings::debug_text();
+
+   for ( const QString& dtext : dbgtxt )
+   {
+      QString name  = dtext.section( "=", 0, 0 ).trimmed();
+      QString value = dtext.section( "=", 1, 1 ).trimmed();
+
+      if ( name.compare( "SimFloat", Qt::CaseInsensitive ) == 0 )
+      {
+         return QStringList( { "on", "1", "true", "yes" } ).contains( value, Qt::CaseInsensitive );
+      }
+   }
+
+   return false;
+}
+
+// Round the readings of a simulation to float precision
+void US_SimCache::round_to_float( US_DataIO::RawData& simdat )
+{
+   for ( US_DataIO::Scan& scan : simdat.scanData )
+   {
+      double*   vals  = scan.rvalues.data();
+      const int nvals = scan.rvalues.size();
+
+      for ( int ii = 0; ii < nvals; ii++ )
+      {
+         vals[ii] = (double) (float) vals[ii];
+      }
+   }
 }
 
 // Default memory cap from debug text or available memory (0 for no cache)
@@ -307,18 +348,199 @@ QByteArray US_SimCache::sim_key( const QByteArray& dskey, const US_Model::Simula
    return key;
 }
 
-// Approximate bytes a simulation takes in the cache
-qint64 US_SimCache::sim_bytes( const US_DataIO::RawData& simdat )
+// Approximate cache bytes of a simulation's scans (headers, any readings
+//  they hold) and of nfloats float readings with their scan offsets
+static qint64 cache_bytes( const US_DataIO::RawData& simdat, qint64 nfloats )
 {
-   qint64 bytes = 256; // Entry, key and hash overhead
+   const qint64 obytes = ( nfloats > 0 ) ? (qint64) sizeof( qsizetype ) : 0;
+   qint64       bytes  = 256 + nfloats * (qint64) sizeof( float ); // Entry, key and hash overhead
 
    for ( const US_DataIO::Scan& scan : simdat.scanData )
    {
-      bytes += (qint64) sizeof( US_DataIO::Scan ) + 32 + (qint64) scan.rvalues.size() * (qint64) sizeof( double ) +
+      bytes += (qint64) sizeof( US_DataIO::Scan ) + 32 + obytes + (qint64) scan.rvalues.size() * (qint64) sizeof( double ) +
                scan.interpolated.size();
    }
 
    return bytes;
+}
+
+// Approximate bytes a simulation takes in the cache
+qint64 US_SimCache::sim_bytes( const US_DataIO::RawData& simdat, bool floats )
+{
+   if ( !floats )
+   {
+      return cache_bytes( simdat, 0 );
+   }
+
+   // As cache_bytes of the float form:  the scans without their readings
+   //  and the readings as floats
+   qint64 nvals = 0;
+
+   for ( const US_DataIO::Scan& scan : simdat.scanData )
+   {
+      nvals += scan.rvalues.size();
+   }
+
+   return cache_bytes( simdat, nvals ) - nvals * (qint64) sizeof( double );
+}
+
+#ifdef Q_OS_LINUX
+// Most float blocks mapped at once:  a quarter of the kernel's limit of
+//  mappings of a process (vm.max_map_count, 65530 by default), so the
+//  blocks leave room for the libraries, threads and malloc's own mappings
+//  and a full cache of any size never reaches the limit
+static qint64 max_float_maps()
+{
+   static const qint64 cap = []()
+   {
+      long long limit = 65530;
+      FILE*     file  = fopen( "/proc/sys/vm/max_map_count", "r" );
+
+      if ( file != nullptr )
+      {
+         long long value = 0;
+
+         if ( fscanf( file, "%lld", &value ) == 1 && value > 0 )
+         {
+            limit = value;
+         }
+
+         fclose( file );
+      }
+
+      return (qint64) ( limit / 4 );
+   }();
+
+   return cap;
+}
+
+// Float blocks mapped now
+static std::atomic<qint64> float_maps{ 0 };
+#endif
+
+// A block for n float readings.  On Linux a large block is mapped from the
+//  system, and unmapped when the last copy goes:  glibc's malloc raises its
+//  mmap threshold as large blocks are freed, so it would put later blocks in
+//  its arenas, where freed memory stays resident (measured:  ~1 GB more peak
+//  memory in a us_2dsa fit with float simulations of 500 scans).  Beyond
+//  max_float_maps() blocks are taken from malloc.
+static std::shared_ptr<float> alloc_floats( qsizetype count )
+{
+#ifdef Q_OS_LINUX
+   const size_t bytes = static_cast<size_t>( count ) * sizeof( float );
+
+   if ( bytes >= 128 * 1024 && float_maps.fetch_add( 1 ) < max_float_maps() )
+   {
+      void* block = mmap( nullptr, bytes, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0 );
+
+      if ( block != MAP_FAILED )
+      {
+         // Should munmap fail (it can need a new mapping, to split one the
+         //  kernel merged with a neighbour), the pages are still freed and
+         //  only the address range stays, counted as mapped
+         auto unmap = [bytes]( float* ptr )
+         {
+            if ( munmap( ptr, bytes ) == 0 )
+            {
+               float_maps.fetch_sub( 1 );
+            }
+            else
+            {
+               madvise( ptr, bytes, MADV_DONTNEED );
+            }
+         };
+
+         return std::shared_ptr<float>( static_cast<float*>( block ), unmap );
+      }
+   }
+
+   if ( bytes >= 128 * 1024 )
+   {
+      float_maps.fetch_sub( 1 ); // Not mapped
+   }
+#endif
+
+   return std::shared_ptr<float>( new float[qMax( count, (qsizetype) 1 )], std::default_delete<float[]>() );
+}
+
+// A simulation in float form (readings rounded) or double form (shared)
+US_SimCache::Sim US_SimCache::Sim::from_raw( const US_DataIO::RawData& simdat, bool floats )
+{
+   Sim sim;
+   sim.simdat = simdat; // Shared
+   sim.floats = floats;
+
+   if ( floats )
+   { // Readings of all scans as floats, the scans without them
+      qsizetype nvals = 0;
+
+      for ( const US_DataIO::Scan& scan : simdat.scanData )
+      {
+         nvals += scan.rvalues.size();
+      }
+
+      std::shared_ptr<float> block = alloc_floats( nvals );
+      sim.fvalues                  = block;
+      sim.nfloats                  = nvals;
+      sim.offsets.reserve( simdat.scanData.size() );
+      float*    fv   = block.get();
+      qsizetype offs = 0;
+
+      for ( US_DataIO::Scan& scan : sim.simdat.scanData )
+      {
+         const double* dv = scan.rvalues.constData();
+         const int     nv = scan.rvalues.size();
+
+         for ( int ii = 0; ii < nv; ii++ )
+         {
+            fv[offs + ii] = (float) dv[ii];
+         }
+
+         sim.offsets << offs;
+         offs += nv;
+         scan.rvalues = QVector<double>();
+      }
+   }
+
+   return sim;
+}
+
+// The simulation (in float form, its readings from the floats)
+void US_SimCache::Sim::to_raw( US_DataIO::RawData& raw ) const
+{
+   raw = simdat; // Shared
+
+   if ( !floats )
+   {
+      return;
+   }
+
+   for ( int ss = 0; ss < raw.scanData.size(); ss++ )
+   {
+      const qsizetype  offs  = offsets.at( ss );
+      const qsizetype  nvals = ( ( ss + 1 < offsets.size() ) ? offsets.at( ss + 1 ) : nfloats ) - offs;
+      const float*     fv    = fvalues.get() + offs;
+      QVector<double>& rvals = raw.scanData[ss].rvalues;
+      rvals.resize( nvals );
+      double* dv = rvals.data();
+
+      for ( qsizetype ii = 0; ii < nvals; ii++ )
+      {
+         dv[ii] = (double) fv[ii];
+      }
+   }
+}
+
+// This simulation in float form
+US_SimCache::Sim US_SimCache::Sim::to_float() const
+{
+   return floats ? *this : from_raw( simdat, true );
+}
+
+// Approximate bytes the simulation takes in the cache
+qint64 US_SimCache::Sim::bytes() const
+{
+   return cache_bytes( simdat, nfloats );
 }
 
 // Serialize a simulation:  every field of the data and its scans
@@ -453,8 +675,161 @@ bool US_SimCache::unpack( const char* data, qint64 size, US_DataIO::RawData& sim
    return in.ok && in.ptr == in.end;
 }
 
+// Mark of a serialized float-form simulation (a pack() of a double-form one
+//  starts with the data type, two letters, and the raw GUID)
+static const char FLOAT_SIM_MARK[8] = { 'U', 'S', 'S', 'I', 'M', 'F', '0', '1' };
+
+// Serialize a simulation:  the float form as its mark, the pack() of the
+//  scans without readings, the scans' reading offsets and the floats;  the
+//  double form as pack()
+QByteArray        US_SimCache::Sim::pack_bytes() const
+{
+   if ( !floats )
+   {
+      return US_SimCache::pack( simdat );
+   }
+
+   const QByteArray scans = US_SimCache::pack( simdat );
+   QByteArray       data;
+   data.reserve( sizeof( FLOAT_SIM_MARK ) + scans.size() + ( offsets.size() + 3 ) * 8 + nfloats * (qsizetype) sizeof( float ) );
+   data.append( FLOAT_SIM_MARK, sizeof( FLOAT_SIM_MARK ) );
+   add_bytes( data, (qint64) scans.size() );
+   data.append( scans );
+   add_bytes( data, (qint64) offsets.size() );
+
+   for ( const qsizetype offs : offsets )
+   {
+      add_bytes( data, (qint64) offs );
+   }
+
+   add_bytes( data, (qint64) nfloats );
+   data.append( reinterpret_cast<const char*>( fvalues.get() ), nfloats * (qsizetype) sizeof( float ) );
+   return data;
+}
+
+// Restore a simulation serialized by pack_bytes() or pack()
+bool US_SimCache::Sim::unpack( const char* data, qint64 size, Sim& sim )
+{
+   sim = Sim();
+
+   if ( size < (qint64) sizeof( FLOAT_SIM_MARK ) || memcmp( data, FLOAT_SIM_MARK, sizeof( FLOAT_SIM_MARK ) ) != 0 )
+   { // Double form
+      return US_SimCache::unpack( data, size, sim.simdat );
+   }
+
+   Unpacker in( data + sizeof( FLOAT_SIM_MARK ), size - (qint64) sizeof( FLOAT_SIM_MARK ) );
+   qint64   nscan_bytes = 0;
+   in.get( nscan_bytes );
+
+   if ( !in.ok || nscan_bytes < 0 || in.end - in.ptr < nscan_bytes || !US_SimCache::unpack( in.ptr, nscan_bytes, sim.simdat ) )
+   {
+      return false;
+   }
+
+   in.ptr += nscan_bytes;
+   qint64 noffsets = 0;
+   in.get( noffsets );
+
+   if ( !in.ok || noffsets != sim.simdat.scanData.size() || ( in.end - in.ptr ) / 8 < noffsets )
+   {
+      return false;
+   }
+
+   sim.offsets.resize( noffsets );
+
+   for ( qint64 ss = 0; ss < noffsets; ss++ )
+   {
+      qint64 offs = 0;
+      in.get( offs );
+      sim.offsets[ss] = offs;
+   }
+
+   qint64 nvals = 0;
+   in.get( nvals );
+
+   if ( !in.ok || nvals < 0 || ( in.end - in.ptr ) / (qint64) sizeof( float ) != nvals ||
+        ( in.end - in.ptr ) % (qint64) sizeof( float ) != 0 )
+   {
+      return false;
+   }
+
+   for ( qint64 ss = 0; ss < noffsets; ss++ )
+   { // Offsets ascending within the readings
+      const qint64 next = ( ss + 1 < noffsets ) ? sim.offsets[ss + 1] : nvals;
+
+      if ( sim.offsets[ss] < 0 || sim.offsets[ss] > next )
+      {
+         return false;
+      }
+   }
+
+   std::shared_ptr<float> block = alloc_floats( nvals );
+   memcpy( block.get(), in.ptr, nvals * sizeof( float ) );
+   sim.fvalues = block;
+   sim.nfloats = nvals;
+   sim.floats  = true;
+   return true;
+}
+
 // Get a simulation
 bool US_SimCache::fetch( const QByteArray& key, US_DataIO::RawData& simdat )
+{
+   Sim sim;
+
+   if ( !fetch_stored( key, sim ) )
+   {
+      return false;
+   }
+
+   sim.to_raw( simdat ); // Shared;  in float mode the readings converted
+   return true;
+}
+
+// Store a simulation, or mark a stored one as a survivor
+bool US_SimCache::store( const QByteArray& key, const US_DataIO::RawData& simdat, bool survivor )
+{
+   return store_stored( key, Sim::from_raw( simdat, false ), survivor );
+}
+
+// Get a simulation as the cache keeps it:  in float mode from this class's
+//  storage (shared, in float form);  otherwise through fetch() (which a
+//  subclass may override), in double form
+bool US_SimCache::fetch_sim( const QByteArray& key, Sim& sim )
+{
+   if ( floats )
+   {
+      return fetch_stored( key, sim );
+   }
+
+   US_DataIO::RawData simdat;
+
+   if ( !fetch( key, simdat ) )
+   {
+      return false;
+   }
+
+   sim = Sim::from_raw( simdat, false ); // Shared
+   return true;
+}
+
+// Store a simulation as the cache keeps it:  in float mode in this class's
+//  storage (in float form, shared if it is);  otherwise through store()
+//  (which a subclass may override)
+bool US_SimCache::store_sim( const QByteArray& key, const Sim& sim, bool survivor )
+{
+   if ( floats )
+   {
+      return store_stored( key, sim, survivor );
+   }
+
+   US_DataIO::RawData simdat;
+   sim.to_raw( simdat );
+   return store( key, simdat, survivor );
+}
+
+// Get a simulation from this class's storage:  a shared copy, made under
+//  the lock (converting it is left to the caller, outside the lock)
+bool US_SimCache::fetch_stored( const QByteArray& key, Sim& sim )
 {
    if ( lru )
    { // Least-recently-used mode:  note the use
@@ -463,7 +838,7 @@ bool US_SimCache::fetch( const QByteArray& key, US_DataIO::RawData& simdat )
 
       if ( it != sims.end() )
       {
-         simdat              = it.value().simdat;
+         sim                 = it.value().sim;
          it.value().last_use = ++use_clock;
          nhits++;
          return true;
@@ -475,8 +850,8 @@ bool US_SimCache::fetch( const QByteArray& key, US_DataIO::RawData& simdat )
       auto        it = sims.constFind( key );
 
       if ( it != sims.constEnd() )
-      { // Implicitly shared copy:  values are copied only if modified
-         simdat = it.value().simdat;
+      {
+         sim = it.value().sim;
          nhits++;
          return true;
       }
@@ -486,8 +861,10 @@ bool US_SimCache::fetch( const QByteArray& key, US_DataIO::RawData& simdat )
    return false;
 }
 
-// Store a simulation, or mark a stored one as a survivor
-bool US_SimCache::store( const QByteArray& key, const US_DataIO::RawData& simdat, bool survivor )
+// Store a simulation in this class's storage, or mark a stored one as a
+//  survivor.  In float mode it is kept in float form:  converted (rounded)
+//  only when it is new and in double form.
+bool US_SimCache::store_stored( const QByteArray& key, const Sim& sim, bool survivor )
 {
    QWriteLocker wlock( &lock );
    auto         it = sims.find( key );
@@ -500,7 +877,9 @@ bool US_SimCache::store( const QByteArray& key, const US_DataIO::RawData& simdat
          return true;
       }
 
-      qint64 bytes = sim_bytes( simdat );
+      Entry entry;
+      entry.sim    = floats ? sim.to_float() : sim;
+      qint64 bytes = entry.sim.bytes();
 
       if ( bytes > max_bytes )
       {
@@ -513,8 +892,6 @@ bool US_SimCache::store( const QByteArray& key, const US_DataIO::RawData& simdat
          evict_lru( bytes );
       }
 
-      Entry entry;
-      entry.simdat   = simdat;
       entry.bytes    = bytes;
       entry.survivor = false;
       entry.last_use = ++use_clock;
@@ -534,7 +911,9 @@ bool US_SimCache::store( const QByteArray& key, const US_DataIO::RawData& simdat
       return true;
    }
 
-   qint64 bytes = sim_bytes( simdat );
+   Entry entry;
+   entry.sim    = floats ? sim.to_float() : sim;
+   qint64 bytes = entry.sim.bytes();
 
    if ( survivor )
    {
@@ -547,8 +926,6 @@ bool US_SimCache::store( const QByteArray& key, const US_DataIO::RawData& simdat
       return false;
    }
 
-   Entry entry;
-   entry.simdat   = simdat;
    entry.bytes    = bytes;
    entry.survivor = survivor;
    sims.insert( key, entry );
@@ -655,6 +1032,7 @@ US_SimCache::Stats US_SimCache::stats() const
    st.survivors = nsurvivors;
    st.bytes     = nbytes;
    st.max_bytes = max_bytes;
+   st.floats    = floats;
    return st;
 }
 
@@ -666,7 +1044,7 @@ QString US_SimCache::stats_text() const
    double hitpc  = ( nfetch > 0 ) ? ( 100.0 * st.hits / (double) nfetch ) : 0.0;
 
    return QObject::tr( "Simulation cache:  %1 of %2 simulations reused (%3%);"
-                       " %4 stored (%5 survivors) in %6 of %7 MB; %8 evicted, %9 rejected" )
+                       " %4 stored (%5 survivors) in %6 of %7 MB%10; %8 evicted, %9 rejected" )
       .arg( st.hits )
       .arg( nfetch )
       .arg( hitpc, 0, 'f', 1 )
@@ -675,5 +1053,6 @@ QString US_SimCache::stats_text() const
       .arg( (double) st.bytes / (double) MB, 0, 'f', 1 )
       .arg( st.max_bytes / MB )
       .arg( st.evicted )
-      .arg( st.rejected );
+      .arg( st.rejected )
+      .arg( st.floats ? QObject::tr( " (floats)" ) : QString() );
 }

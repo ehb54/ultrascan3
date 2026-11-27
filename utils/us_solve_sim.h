@@ -132,6 +132,27 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
                            QVector<double>&         rinvec,
                            const std::atomic<bool>* abort_flag = nullptr );
 
+    //! \brief nnls_noise with A, B and the concentrations in float precision
+    //!        (the float NNLS of US_Math2;  see SimFloatNNLS).  The noise
+    //!        means and the noise are computed in double;  each projected
+    //!        A and B value is computed in double and rounded once.
+    static int  nnls_noise( int                      noisflag,
+                            const QVector<int>&      nscans,
+                            const QVector<int>&      npoints,
+                            int                      nsolutes,
+                            int                      narows,
+                            QVector<float>&          nnls_a,
+                            QVector<float>&          nnls_b,
+                            QVector<float>&          nnls_x,
+                            QVector<double>&         tinvec,
+                            QVector<double>&         rinvec,
+                            const std::atomic<bool>* abort_flag = nullptr );
+
+    //! \brief Flag from debug text "SimFloatNNLS=on":  calc_residuals builds
+    //!        A and B and solves the NNLS in float precision (half the memory
+    //!        of A).  Independent of "SimFloat" (float simulations).
+    static bool float_nnls();
+
  public slots:
 
     //! \brief Static function to check if implied grid size is beyond limits
@@ -156,6 +177,10 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     //! \param ASave          Optional pointer for saving A matrix
     //! \param BSave          Optional pointer for saving B matrix
     //! \param NSave          Optional pointer for saving norm vector
+    //!
+    //! With debug text "SimFloatNNLS=on" (see float_nnls) A, B and the
+    //! concentrations are floats and the NNLS is the float one;  sim_data,
+    //! the residuals, the noise and the variance are computed in double.
     void calc_residuals( int, int, Simulation&, bool = false,
                          QVector< double >* = 0, QVector< double >*  = 0,
                          QVector< double >* = 0 );
@@ -194,10 +219,17 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
 
     //! \brief Reuse simulations from a cache, and store new ones in it
     //! \param cache  Cache shared with other threads (or 0, the default,
-    //!               for none); it must outlive the calc_residuals calls
+    //!               for none); it must outlive the calc_residuals calls.
+    //!               A cache in float mode turns on the rounding of
+    //!               simulations to float precision, as it stores them.
     void        set_sim_cache( US_SimCache* cache )
     {
        simcache = cache;
+
+       if ( cache != nullptr && cache->float_mode() )
+       {
+          simfloat = true;
+       }
     }
 
   signals:
@@ -225,6 +257,12 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     QDateTime          startCalc;     // Start calc time for elapsed time prints
 
     US_SimCache*       simcache; // Simulation cache (or 0)
+    bool                    simfloat; // Flag to round simulations to float precision
+    bool                    nnlsfloat; // Flag to solve the NNLS in float precision
+
+    // calc_residuals with A, B and the concentrations of type T (double, or
+    //  float for nnlsfloat)
+    template <class T> void calc_residuals_t( int, int, Simulation&, bool, QVector<double>*, QVector<double>*, QVector<double>* );
 
     // Data set key of the simulation cache, kept with the parameter values
     // that the simulator may change (so the key is renewed when they do)
@@ -242,8 +280,13 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     QList<DsetKey> dskeys; // Data set keys of a calc_residuals
 
     // Simulate a single-component model for a data set, or get the
-    //  simulation from the cache; returns the cache key (if any)
-    QByteArray     simulate( US_Model&, DataSet*, US_DataIO::EditedData*, US_DataIO::RawData& );
+    //  simulation from the cache (in float form with simfloat);  returns
+    //  the cache key (if any)
+    QByteArray     simulate( US_Model&, DataSet*, US_DataIO::EditedData*, US_SimCache::Sim& );
+
+    // Band forming:  hold a simulation within the thresholds (it becomes a
+    //  simulation of its own, in double form);  returns flag if all-zero
+    bool           threshold_sim( US_SimCache::Sim& );
 
     // Mark the results invalid (NaN variance, one NaN variance per data
     //  set) if a simulation failed

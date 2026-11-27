@@ -7,6 +7,7 @@
 #include <QString>
 #include <QTime>
 #include <QVector>
+#include <atomic>
 #include <cmath>
 #include <limits>
 #include <random>
@@ -795,4 +796,189 @@ TEST_F( TestUSMath2Unit, NnlsIterationLimitReturnsLastFeasibleSolution )
    }
 
    EXPECT_GT( nlimit, 0 );
+}
+
+// Residual b - A x (in double) of a float problem and its solution
+static QVector<double> float_residual( const QVector<float>& amat, const QVector<float>& bvec, const QVector<float>& xvec )
+{
+   const int       mrows = bvec.size();
+   QVector<double> resid( mrows );
+   for ( int ii = 0; ii < mrows; ii++ )
+   {
+      resid[ii] = bvec[ii];
+   }
+   for ( int jj = 0; jj < xvec.size(); jj++ )
+   {
+      for ( int ii = 0; ii < mrows; ii++ )
+      {
+         resid[ii] -= (double) amat[jj * mrows + ii] * xvec[jj];
+      }
+   }
+   return resid;
+}
+
+TEST_F( TestUSMath2Unit, NnlsFloatSatisfiesKuhnTuckerConditions )
+{
+   // The float NNLS on random problems:  x >= 0, a zero gradient for
+   //  positive x and a non-positive dual for zero x (at float precision),
+   //  and the optimum of the double NNLS on the same (float) values
+   std::mt19937                           gen( 20261124 );
+   std::uniform_real_distribution<double> uni( -1.0, 1.0 );
+
+   for ( int trial = 0; trial < 300; trial++ )
+   {
+      int            mrows = 2 + trial % 11;
+      int            ncols = 1 + ( trial / 11 ) % 10;
+      QVector<float> amat( mrows * ncols );
+      QVector<float> bvec( mrows );
+      for ( float& val : amat )
+      {
+         val = (float) uni( gen );
+      }
+      for ( float& val : bvec )
+      {
+         val = (float) uni( gen );
+      }
+      QVector<float> awork = amat; // nnls overwrites A and b
+      QVector<float> bwork = bvec;
+      QVector<float> xvec( ncols, -1.0f );
+      double         rnorm = -1.0;
+
+      ASSERT_EQ( US_Math2::nnls( awork.data(), mrows, mrows, ncols, bwork.data(), xvec.data(), &rnorm ), 0 ) << "trial " << trial;
+
+      const QVector<double> resid  = float_residual( amat, bvec, xvec );
+      double                rsumsq = 0.0;
+      for ( const double val : resid )
+      {
+         rsumsq += val * val;
+      }
+      EXPECT_NEAR( rnorm, sqrt( rsumsq ), 1e-5 ) << "trial " << trial;
+
+      for ( int jj = 0; jj < ncols; jj++ )
+      {
+         double dual = 0.0;
+         for ( int ii = 0; ii < mrows; ii++ )
+         {
+            dual += amat[jj * mrows + ii] * resid[ii];
+         }
+
+         EXPECT_GE( xvec[jj], 0.0f ) << "trial " << trial << " col " << jj;
+         if ( xvec[jj] > 0.0f )
+         {
+            EXPECT_NEAR( dual, 0.0, 1e-4 ) << "trial " << trial << " col " << jj;
+         }
+         else
+         {
+            EXPECT_LE( dual, 1e-4 ) << "trial " << trial << " col " << jj;
+         }
+      }
+
+      // The double NNLS of the same values:  the same optimum
+      QVector<double> adbl( amat.size() ), bdbl( mrows ), xdbl( ncols );
+      for ( int ii = 0; ii < amat.size(); ii++ )
+      {
+         adbl[ii] = amat[ii];
+      }
+      for ( int ii = 0; ii < mrows; ii++ )
+      {
+         bdbl[ii] = bvec[ii];
+      }
+      double rdbl = 0.0;
+      ASSERT_EQ( US_Math2::nnls( adbl.data(), mrows, mrows, ncols, bdbl.data(), xdbl.data(), &rdbl ), 0 );
+      EXPECT_NEAR( rnorm, rdbl, 1e-5 * ( 1.0 + rdbl ) ) << "trial " << trial;
+   }
+}
+
+TEST_F( TestUSMath2Unit, NnlsFloatFitsNearlyCollinearColumns )
+{
+   // Columns as in a 2DSA:  sigmoid boundaries of finely spaced positions
+   //  and widths, nearly collinear.  The float NNLS reaches the fit of the
+   //  double NNLS (the solutions may differ in which near-equal columns
+   //  they use) without hitting the iteration limit.
+   const int                        mrows = 600;
+   const int                        ncols = 60;
+   std::mt19937                     gen( 20261125 );
+   std::normal_distribution<double> noise( 0.0, 0.002 );
+   QVector<double>                  amat( mrows * ncols );
+
+   for ( int jj = 0; jj < ncols; jj++ )
+   {
+      const double center = 0.2 + 0.6 * ( jj % 20 ) / 19.0;
+      const double width  = 0.01 + 0.004 * ( jj / 20 );
+      for ( int ii = 0; ii < mrows; ii++ )
+      {
+         const double rr       = (double) ii / ( mrows - 1 );
+         amat[jj * mrows + ii] = 0.5 * erfc( ( center - rr ) / width );
+      }
+   }
+
+   QVector<double> bvec( mrows, 0.0 );
+   const int       truth[3] = { 5, 27, 48 };
+   const double    conc[3]  = { 0.3, 0.5, 0.2 };
+   for ( int kk = 0; kk < 3; kk++ )
+   {
+      for ( int ii = 0; ii < mrows; ii++ )
+      {
+         bvec[ii] += conc[kk] * amat[truth[kk] * mrows + ii];
+      }
+   }
+   for ( double& val : bvec )
+   {
+      val += noise( gen );
+   }
+
+   // Both solvers on the float values of A and b
+   QVector<float>  afl( amat.size() ), bfl( mrows ), xfl( ncols );
+   QVector<double> adbl( amat.size() ), bdbl( mrows ), xdbl( ncols );
+   for ( int ii = 0; ii < amat.size(); ii++ )
+   {
+      afl[ii]  = (float) amat[ii];
+      adbl[ii] = afl[ii];
+   }
+   for ( int ii = 0; ii < mrows; ii++ )
+   {
+      bfl[ii]  = (float) bvec[ii];
+      bdbl[ii] = bfl[ii];
+   }
+   const QVector<float> asave = afl;
+   const QVector<float> bsave = bfl;
+   double               rfl   = 0.0;
+   double               rdbl  = 0.0;
+
+   ASSERT_EQ( US_Math2::nnls( afl.data(), mrows, mrows, ncols, bfl.data(), xfl.data(), &rfl ), 0 );
+   ASSERT_EQ( US_Math2::nnls( adbl.data(), mrows, mrows, ncols, bdbl.data(), xdbl.data(), &rdbl ), 0 );
+
+   const QVector<double> resid  = float_residual( asave, bsave, xfl );
+   double                rsumsq = 0.0;
+   double                total  = 0.0;
+   for ( const double val : resid )
+   {
+      rsumsq += val * val;
+   }
+   for ( int jj = 0; jj < ncols; jj++ )
+   {
+      EXPECT_GE( xfl[jj], 0.0f ) << "col " << jj;
+      total += xfl[jj];
+   }
+
+   EXPECT_NEAR( rfl, sqrt( rsumsq ), 1e-4 * rdbl );
+   EXPECT_LE( sqrt( rsumsq ), rdbl * ( 1.0 + 1e-4 ) );
+   EXPECT_NEAR( total, 1.0, 0.02 ); // The concentrations sum up as in the data
+}
+
+TEST_F( TestUSMath2Unit, NnlsFloatAbortFlagStopsWithFeasibleSolution )
+{
+   // As the double NNLS:  a raised abort flag returns 3 with x = 0
+   float             amat[12] = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0 };
+   float             bvec[4]  = { 1, 2, 3, 4 };
+   float             xvec[3]  = { -1, -1, -1 };
+   double            rnorm    = -1.0;
+   std::atomic<bool> abort_flag{ true };
+
+   EXPECT_EQ( US_Math2::nnls( amat, 4, 4, 3, bvec, xvec, &rnorm, NULL, NULL, NULL, 0, &abort_flag ), 3 );
+   for ( int jj = 0; jj < 3; jj++ )
+   {
+      EXPECT_EQ( xvec[jj], 0.0f );
+   }
+   EXPECT_NEAR( rnorm, sqrt( 30.0 ), 1e-6 );
 }
