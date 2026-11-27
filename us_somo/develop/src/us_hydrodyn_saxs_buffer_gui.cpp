@@ -186,7 +186,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_avg->setContextMenuPolicy( Qt::CustomContextMenu );
    connect( pb_avg, SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( avg_options_menu( const QPoint & ) ) );
 
-   pb_normalize = new QPushButton(us_tr("N"), this);
+   pb_normalize = new QPushButton(us_tr("Normalize"), this);
    pb_normalize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_normalize->setMinimumHeight(minHeight1);
    pb_normalize->setPalette( PALET_PUSHB );
@@ -806,8 +806,17 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    cb_eb->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    cb_eb->setPalette( PALET_NORMAL );
    AUTFBACK( cb_eb );
-   cb_eb->setToolTip( us_tr( "Show the sd of the plotted curves as bars" ) );
+   cb_eb->setToolTip( us_tr( "Show the plotted curves that have sd as points (diamonds) with their sd as bars;\n"
+                             "curves without sd stay lines" ) );
    connect( cb_eb, SIGNAL( clicked() ), SLOT( set_eb() ) );
+
+   pb_width = new QPushButton( us_tr( "Width" ), this );
+   pb_width->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   pb_width->setMinimumHeight( minHeight1 );
+   pb_width->setPalette( PALET_PUSHB );
+   pb_width->setToolTip( us_tr( "Make the plotted lines wider; after five steps they go back to the thinnest.\n"
+                                "Curves shown as points with Err are not changed." ) );
+   connect( pb_width, SIGNAL( clicked() ), SLOT( set_width() ) );
 
    cb_guinier = new QCheckBox(this);
    cb_guinier->setText(us_tr(" Guinier"));
@@ -1036,6 +1045,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_plot_buttons->addWidget( pb_legend );
 
    QBoxLayout * hbl_plot_buttons_2 = new QHBoxLayout(); hbl_plot_buttons_2->setContentsMargins( 0, 0, 0, 0 ); hbl_plot_buttons_2->setSpacing( 0 );
+   hbl_plot_buttons_2->addWidget( pb_width );
    hbl_plot_buttons_2->addWidget( cb_eb );
    hbl_plot_buttons_2->addWidget( cb_guinier );
    hbl_plot_buttons_2->addWidget( lbl_guinier );

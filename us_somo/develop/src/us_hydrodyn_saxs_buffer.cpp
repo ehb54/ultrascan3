@@ -7,6 +7,7 @@
 #include "../include/us_plot_util.h"
 #include <qwt_plot_intervalcurve.h>
 #include <qwt_interval_symbol.h>
+#include <qwt_symbol.h>
 #include "../include/us_hydrodyn_saxs_buffer_dilutions.h"
 #include "../include/us_hydrodyn_saxs_buffer_upturn.h"
 #include "../include/us_hydrodyn_saxs_conc.h"
@@ -75,6 +76,7 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    running = false;
    axis_y_log = true;
    axis_x_log = false;
+   pen_width  = 1;
    pb_axis_y->setText( axis_y_log ? us_tr( "Lin Y" ) : us_tr( "Log Y" ) );
    pb_axis_x->setText( axis_x_log ? us_tr( "Lin X" ) : us_tr( "Log X" ) );
    join_adjust_lowq = true;
@@ -138,6 +140,7 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
       pbs.push_back( pb_normalize );
 
       pbs.push_back( pb_legend );
+      pbs.push_back( pb_width );
       pbs.push_back( pb_axis_x );
       pbs.push_back( pb_axis_y );
       pbs.push_back( pb_wheel_cancel );
@@ -1368,6 +1371,7 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
                                     );
    pb_legend           ->setEnabled( lb_files->count() && files_selected_count <= 20 );
    pb_axis_x           ->setEnabled( lb_files->count() );
+   pb_width            ->setEnabled( lb_files->count() );
    pb_axis_y           ->setEnabled( lb_files->count() );
    pb_color_rotate     ->setEnabled( true );
    // cb_guinier          ->setEnabled( files_selected_count );
@@ -2109,7 +2113,7 @@ bool US_Hydrodyn_Saxs_Buffer::plot_file( QString file,
                                (double *)&( f_Is[ file ][ 0 ] ),
                                q_points
                                );
-      plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], 1, SolidLine));
+      plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], pen_width, SolidLine));
 #else
       curve->setSamples(
                      /* cb_guinier->isChecked() ?
@@ -2119,7 +2123,7 @@ bool US_Hydrodyn_Saxs_Buffer::plot_file( QString file,
                      q_points
                      );
 
-      curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
+      curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], pen_width, Qt::SolidLine ) );
       curve->attach( plot_dist );
 #endif
    } else {
@@ -2141,7 +2145,7 @@ bool US_Hydrodyn_Saxs_Buffer::plot_file( QString file,
                                (double *)&( I[ 0 ] ),
                                q_points
                                );
-      plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], 1, SolidLine));
+      plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], pen_width, SolidLine));
 #else
       curve->setSamples(
                      /* cb_guinier->isChecked() ?
@@ -2151,10 +2155,39 @@ bool US_Hydrodyn_Saxs_Buffer::plot_file( QString file,
                      q_points
                      );
 
-      curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
+      curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], pen_width, Qt::SolidLine ) );
       curve->attach( plot_dist );
 #endif
    }
+#if QT_VERSION >= 0x040000
+   // Err: a curve with sd as points (diamonds with a white fill, as in the SAS window), its sd as bars (plot_eb(),
+   // drawn below the points); a curve without sd stays a line
+   bool as_points =
+      cb_eb->isChecked() &&
+      f_errors.count( file ) &&
+      f_errors[ file ].size() == f_qs[ file ].size() &&
+      f_Is[ file ].size() == f_qs[ file ].size();
+   if ( as_points )
+   {
+      as_points = false;
+      for ( double e : f_errors[ file ] )
+      {
+         if ( e > 0e0 )
+         {
+            as_points = true;
+            break;
+         }
+      }
+   }
+   if ( as_points )
+   {
+      curve->setStyle( QwtPlotCurve::NoCurve );
+      curve->setSymbol( new QwtSymbol( QwtSymbol::Diamond,
+                                       QBrush( Qt::white ),
+                                       QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], 1, Qt::SolidLine ),
+                                       QSize( 6, 6 ) ) );
+   }
+#endif
    plot_eb( file );
    return true;
 }
@@ -4996,6 +5029,17 @@ void US_Hydrodyn_Saxs_Buffer::set_eb()
    plot_files();
 }
 
+// Width: the plotted lines one pixel wider, back to 1 after 5
+void US_Hydrodyn_Saxs_Buffer::set_width()
+{
+   pen_width++;
+   if ( pen_width > 5 )
+   {
+      pen_width = 1;
+   }
+   plot_files();
+}
+
 // SEC-SAXS buffer frames: I(t) of the selected curves and the choice of stable buffer frames
 void US_Hydrodyn_Saxs_Buffer::frames()
 {
@@ -7686,9 +7730,9 @@ void US_Hydrodyn_Saxs_Buffer::wheel_cancel()
         f_pos.count( wheel_file ) )
    {
 #if QT_VERSION < 0x040000
-      plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size()], 1, SolidLine));
+      plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size()], pen_width, SolidLine));
 #else
-      plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
+      plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size() ], pen_width, Qt::SolidLine ) );
 #endif
    }
 
@@ -7696,9 +7740,9 @@ void US_Hydrodyn_Saxs_Buffer::wheel_cancel()
         f_pos.count( join_file ) )
    {
 #if QT_VERSION < 0x040000
-      plot_dist->setCurvePen( plotted_curves[ join_file ], QPen( plot_colors[ f_pos[ join_file ] % plot_colors.size()], 1, SolidLine));
+      plot_dist->setCurvePen( plotted_curves[ join_file ], QPen( plot_colors[ f_pos[ join_file ] % plot_colors.size()], pen_width, SolidLine));
 #else
-      plotted_curves[ join_file ]->setPen( QPen( plot_colors[ f_pos[ join_file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
+      plotted_curves[ join_file ]->setPen( QPen( plot_colors[ f_pos[ join_file ] % plot_colors.size() ], pen_width, Qt::SolidLine ) );
 #endif
    }
 
@@ -7853,6 +7897,7 @@ void US_Hydrodyn_Saxs_Buffer::disable_all()
    pb_crop_undo          ->setEnabled( false );
    pb_crop_right         ->setEnabled( false ); 
    pb_legend             ->setEnabled( false );
+   pb_width              ->setEnabled( false );
    pb_axis_x             ->setEnabled( false );
    pb_axis_y             ->setEnabled( false );
    pb_add_files          ->setEnabled( false );

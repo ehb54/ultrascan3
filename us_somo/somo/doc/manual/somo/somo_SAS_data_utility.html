@@ -21,36 +21,58 @@
 <hr>
 <center>
 <h2>
-SOMO - SAXS/SANS (SAS) Module: Data Utility (Buffer subtraction, joining and averaging)</h2>
+SOMO - SAXS/SANS (SAS) Module: Data Utility</h2><p>
+<h3>
+<table>
+<tr>
+<td style="line-height: 0.8">
+<center>
+Set sample concentration, <i>PSV</i>, <i>I</i>(0)standard<p>
+Data averaging (with and without concentration normalization), data joining<p>
+Check for concentration scaling, low-<i>q</i> upturn correction, data cropping<p>
+SEC-SAXS buffer region identification and subtraction<p>
+Advanced buffer subtraction utility<p>
+</td>
+</tr>
+</center>
+</table>
+</h3>
 <p>
 <h3><center>Last updated: November 2026</center></h3><p>
 </center>
 
 <hr>
 
+<p>
 <a name="Overview"></a>
 <h3>Overview</h3>
 
-The <b><i>Data Utility</i></b> module (window title <i>US-SOMO: SAXS: Data Utility</i>) is opened from the
+The <b><i>Data Utility</i></b> module is opened from the
 <b><i>Data</i></b> button in the <i>I(q)</i> panel of the
-<a href=somo_saxs.html><b><i>SAS</i></b></a> module. It is a general-purpose workbench for
-<i>I</i>(<i>q</i>) vs. <i>q</i> curves that are <i>not</i> part of a chromatography or kinetics run
-(for time-resolved data see the <a href=somo_saxs_hplc.html><b><i>HPLC/KIN</i></b></a> module instead). It provides:
+<a href=somo_saxs.html><b><i>SAS</i></b></a> module.<p>
+<center>
+<img SRC="SAS_buttons.png" ALT="New SAS buttons" width="700">
+</center>
+<p>
+It is a general-purpose workbench for
+<i>I</i>(<i>q</i>) vs. <i>q</i> curves, including a buffer subtraction utility for chromatography or kinetics runs
+(for the complete treatment of time-resolved data see the <a href=somo_saxs_hplc.html><b><i>HPLC/KIN</i></b></a> module instead). It provides:
 <p>
 <ul>
-<li><b>Buffer (and blank/capillary) subtraction</b>, with either a directly specified scaling factor or one
-computed from the solute partial specific volume and concentration, with full propagation of the standard deviations,
-and the buffer <b>division</b>, which shows how well a buffer matches a solution;<p>
-<li><b>Joining</b> of two curves measured over different <i>q</i> ranges (for example a
-<i>small-angle</i> and a <i>wide-angle</i> detector configuration, or two different sample-to-detector distances)
-into a single curve, with interactive scaling and an automatic scaling fit;<p>
+<li><b>Setting</b> the <b>concentration</b>, the <b>partial specific volume (<i>PSV</i>)</b> and the <b><i>I</i>(0) of a standard scatterer</b> for selected data files, optionally saving them in the files' headers;<p>
 <li><b>Averaging</b>, <b>concentration-normalized averaging</b>, <b>concentration normalization</b> and
 <b>weighted summation</b> of sets of curves;<p>
-<li><b>Checking dilutions</b>: the concentrations a series' intensities imply, compared with the stated ones;<p>
+<li><b>Checking dilutions</b>: the concentrations that a series' intensities imply, compared with the stated ones;<p>
 <li><b>Upturn correction</b>: fitting and subtracting a low-<i>q</i> upturn from large scatterers;<p>
 <li><b>Buffer frames</b> of a SEC-SAXS run: the <i>I</i>(<i>t</i>) of the frames, to choose stable buffer frames to average and subtract;<p>
 <li><b>Cropping and trimming</b> tools to bring curves onto a common <i>q</i> grid, remove
 unreliable low- or high-<i>q</i> points, or drop non-positive intensities;<p>
+<li><b>Joining</b> of two curves measured over different <i>q</i> ranges (for example a
+<i>small-angle</i> and a <i>wide-angle</i> detector configuration, or two different sample-to-detector distances)
+into a single curve, with interactive scaling and an automatic scaling fit;<p>
+<li><b>An advanced buffer (and blank/capillary) subtraction</b>, with either a directly specified scaling factor or one
+computed from the solute partial specific volume and concentration, with full propagation of the standard deviations,
+and the buffer <b>division</b>, which shows how well a buffer matches a solution;<p>
 <li><b>Bookkeeping</b> of concentrations, of the curves produced, and of what has and has not been written to disk.<p>
 </ul>
 
@@ -59,14 +81,14 @@ Curves already plotted in the <b><i>SAS</i></b> module <i>I(q)</i> panel are han
 <b><i>Data files</i></b> and the <a href="#Produced"><b><i>Produced Data</i></b></a> lists, since they do not
 yet exist on disk as far as this module is concerned, and any character that is awkward in a file name
 (whitespace, quotes, slashes, periods) is replaced by an underscore. Each curve keeps the concentration the
-<b><i>SAS</i></b> module holds for it, and its PSV and <i>I</i>(0) standard when these differ from the
+<b><i>SAS</i></b> module holds for it, and its <i>PSV</i> and <i>I</i>(0) standard when these differ from the
 <b><i>SAS</i></b> defaults (a curve that never had them is not given the defaults as if they were measured).
-A curve sent back keeps its concentration, PSV and <i>I</i>(0) standard, and takes the defaults only
+A curve sent back keeps its concentration, <i>PSV</i> and <i>I</i>(0) standard, and takes the defaults only
 for those it does not have. Conversely, any curve held in the
 <b><i>Data Utility</i></b> can be sent to the <i>I(q)</i> panel with the <b><i>To SAS</i></b> button.
 <p>
 
-Opening the module brings up the main window described below. The
+Opening the module brings up the main window described below. The advanced
 <a href="#Subtraction">buffer subtraction</a> controls are in a small companion window titled
 <i>US-SOMO: SAXS: Data Utility : Fitting</i>, opened with the <b><i>Adv. buffer subtraction</i></b> button (it is
 no longer opened together with the main window). The companion window stays above the main window, and
@@ -92,7 +114,6 @@ closing the main window closes both.
 </ul>
 
 <hr>
-
 <a name="Loading"></a>
 <h3>Loading data</h3>
 
@@ -101,7 +122,10 @@ shown; clicking on it opens a directory navigator. When the path is too long for
 shown, and resting the mouse on it shows the whole path. Checking the <b><i>Lock</i></b> checkbox next to it
 keeps that directory as the default instead of following whichever directory you last loaded from.
 <p>
-
+<center>
+<img SRC="Data_utility_main.png" ALT="SOMO Data Main empty" width="900">
+</center>
+<p>
 <ul>
 <li>
 <b><i>Add files</i></b> opens a file selector. Recognized extensions are <b>.dat</b>, <b>.int</b>,
@@ -153,7 +177,7 @@ current directory are loaded. For example a pattern of <tt>lysozyme_%1_.*\.dat</
 <li>
 <b><i>Concentrations</i></b> opens the <a href="#Conc"><b><i>Solution Concentrations</i></b></a> window.<p>
 <li>
-<b><i>PSV/I(0) std</i></b>, active with curves selected, sets the PSV (in cm<sup>3</sup>/g) and the
+<b><i>PSV/I(0) std</i></b>, active with curves selected, sets the <i>PSV</i> (in cm<sup>3</sup>/g) and the
 <i>I</i>(0) standard (in a.u.) of the selected curves. It shows the values the selected curves share, or the
 <b><i>SAS</i></b> defaults when they have none or different ones (and says so), and both must be positive.
 The curves keep them as if they had been read from their headers: they are written as <b><i>PSV:</i></b> and
@@ -173,10 +197,16 @@ and not yet written to disk, you are offered the chance to save them first.<p>
 
 Curves are selected in the <b><i>Data files</i></b> list with the usual click, shift-click and
 control-click; the line below the list reports how many of how many are selected. Every selected curve is
-plotted in the graph on the right. The buttons immediately below the list are:
+plotted in the graph on the right. 
 <p>
+<center>
+<img SRC="Data_load_buffer.png" ALT="Loading and displaying buffer frames I(q)" width="900">
+<p>
+Shown are buffer data collected at the SWING beamline of the Synchrotron SOLEIL (Gif-sur-Yvette, France) in July 2021.<p>
+</center>
+The buttons immediately below the list are:
 <ul>
-<li><b><i>Select all</i></b> and <b><i>Invert</i></b> act on the whole list.<p>
+<li><b><i>Select all</i></b> and <b><i>Invert</i></b> act on the whole list. <b><i>Select all</i></b> selects all loaded files. <b><i>Invert</i></b> deselects currently selected data and selects all currently not-selected data.<p>
 <li><b><i>Select</i></b> opens the <a href=somo_SAS_data_utility_select.html><b><i>Select curves</i></b></a> dialog
 (active when more than two curves are loaded), which can select every <i>N</i>th curve within a range of list
 positions, select by a substring of the name, or select by total integrated intensity above or below a
@@ -195,8 +225,12 @@ adjacent ones happen to receive similar colors.<p>
 <li><b><i>Rescale</i></b> resets the plot limits to the extent of the selected curves and clears any zoom.<p>
 <li><b><i>Legend</i></b>, below the plot, toggles the curve legend; it is disabled when more than
 twenty curves are selected, where a legend would be unreadable.<p>
-<li><b><i>Err</i></b>, below the plot, shows the standard deviations of the plotted curves as bars; on a logarithmic
-intensity axis, only the bars that stay positive are drawn. The bars are not listed in the legend.<p>
+<li><b><i>Width</i></b>, below the plot, makes the plotted lines one step wider each time it is pressed; after five
+steps they go back to the thinnest. Curves shown as points with <b><i>Err</i></b> are not changed.<p>
+<li><b><i>Err</i></b>, next to it, shows each plotted curve that has standard deviations as points (diamonds), with
+its standard deviations as bars, as in the <a href=somo_saxs.html><b><i>SAS</i></b></a> module; curves without
+standard deviations stay lines. On a logarithmic intensity axis, only the bars that stay positive are drawn. The bars
+are not listed in the legend.<p>
 </ul>
 
 The plot supports rubber-band zooming with the left mouse button, and the resulting zoom rectangle is
@@ -228,6 +262,12 @@ deviations, and well above 1 when they differ by more than that, <i>e.g.</i> thr
 Otherwise a plain unweighted mean is used, and its standard deviation is estimated from the scatter of the curves,
 their sample standard deviation divided by &radic;<i>n</i>; with few curves this estimate is itself very uncertain.
 Which of the two was applied is always stated in the <b><i>Messages</i></b> area.
+<p>
+<center>
+<img SRC="Loaded_buffer_log_log_with_ave_options.png" ALT="Displaying buffer frames log-log I(q) with averaging options" width="900">
+<p>
+The same buffer frames shown above after selecting Log X scale. The averaging options pop-up is also shown.
+</center>
 <p>
 Right-clicking <b><i>Average</i></b> (or <b><i>Concentration normalized average</i></b>, while the button is
 active) opens a menu with two options, which apply to both buttons and to the averages made in the
@@ -264,7 +304,7 @@ concentration, whose normalized curves are less noisy, count more. The standard 
 multiplied by the mean concentration like the curve. The PSV and <i>I</i>(0) standard of the result
 are taken as for <b><i>Average</i></b>.<p>
 <li>
-<b><i>N</i></b> (normalize) produces, for each selected curve, a copy divided by its own concentration; the
+<b><i>Normalize</i></b> produces, for each selected curve, a copy divided by its own concentration; the
 standard deviations are divided by the same factor and the concentration of the result is set to 1; the
 PSV and <i>I</i>(0) standard are kept. Like the previous button, it requires all the selected curves to have a non-zero concentration.<p>
 <li>
@@ -277,7 +317,7 @@ and <i>I</i>(0) standard are taken as for <b><i>Average</i></b>. This button is 
 </ul>
 
 The buffer and the blank, if assigned, are excluded from
-<b><i>Concentration normalized average</i></b> and <b><i>N</i></b>.
+<b><i>Concentration normalized average</i></b> and <b><i>Normalize</i></b>.
 <p>
 
 The row below holds <a href="#Dilutions"><b><i>Check dilutions</i></b></a>,
@@ -793,7 +833,7 @@ when their names differ only by a frame number, and otherwise the files themselv
 standard deviation the average has; the points left out as spikes and the frames they came from; and any cropping
 (for the concentration normalized average, also the concentrations);
 <li>weighted sum: the files and their weights;
-<li><b><i>N</i></b> normalization: the source curve and its concentration;
+<li><b><i>Normalize</i></b>: the source curve and its concentration;
 <li>join and the interactive join: the two curves, the join point and, for the interactive join, the scaling
 and the offset.
 </ul>
@@ -824,7 +864,7 @@ times its concentration for a weighted sum. The PSV and <i>I</i>(0) standard are
 from the solution for a subtraction or a division, from the source for a normalized curve or a copy, from the
 curve that is not scaled for a join, and as the mean over the curves that have one for an average, a
 concentration normalized average or a weighted sum. They are written into the header of each saved curve.
-Concentrations are needed for the <b><i>PSV</i></b> route to &alpha;, for <b><i>N</i></b> and for
+Concentrations are needed for the <b><i>PSV</i></b> route to &alpha;, for <b><i>Normalize</i></b> and for
 <b><i>Concentration normalized average</i></b>, and are written into the header of each saved curve.
 <p>
 
@@ -948,7 +988,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on November 25, 2026
+Last modified on November 27, 2026
 </font>
 </body>
 </html>

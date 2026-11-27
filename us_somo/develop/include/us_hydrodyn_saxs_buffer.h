@@ -227,6 +227,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QPushButton   *pb_crop_undo;
       QPushButton   *pb_crop_right;
       QPushButton   *pb_legend;
+      // the width of the plotted lines (Width), 1 to 5
+      QPushButton   *pb_width;
+      int            pen_width;
       QPushButton   *pb_axis_x;
       QPushButton   *pb_axis_y;
       QCheckBox     *cb_eb;
@@ -503,6 +506,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void view();
       void frames();
       void set_eb();
+      void set_width();
       void rescale();
       void avg();
       void asum();
