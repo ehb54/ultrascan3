@@ -137,8 +137,9 @@ US_MPI_NodeSimCache::US_MPI_NodeSimCache( MPI_Comm node_comm,
                                           qint64   sim_bytes,
                                           Policy   policy,
                                           qint64   room_bytes,
-                                          qint64   space_bytes ) :
-    US_SimCache( 0 ),
+                                          qint64   space_bytes,
+                                          bool     floats ) :
+    US_SimCache( 0, floats ),
     comm( node_comm ),
     window( MPI_WIN_NULL ),
     base( nullptr ),
@@ -400,17 +401,37 @@ void US_MPI_NodeSimCache::leave( int gg )
 }
 
 // Get a simulation from generation gg
-bool US_MPI_NodeSimCache::fetch_in( int gg, const QByteArray& digest, US_DataIO::RawData& simdat )
+bool US_MPI_NodeSimCache::fetch_in( int gg, const QByteArray& digest, Sim& sim )
 {
    bool  found = false;
    Slot* slot  = find( gg, digest, found );
 
    return ( found && slot->state.load( std::memory_order_acquire ) == READY &&
-            unpack( data + gg * gen_size + slot->offset, slot->size, simdat ) );
+            Sim::unpack( data + gg * gen_size + slot->offset, slot->size, sim ) );
 }
 
-// Get a simulation
+// Get a simulation (double form)
 bool US_MPI_NodeSimCache::fetch( const QByteArray& key, US_DataIO::RawData& simdat )
+{
+   Sim sim;
+
+   if ( !fetch_sim( key, sim ) )
+   {
+      return false;
+   }
+
+   sim.to_raw( simdat );
+   return true;
+}
+
+// Store a simulation (given in double form)
+bool US_MPI_NodeSimCache::store( const QByteArray& key, const US_DataIO::RawData& simdat, bool survivor )
+{
+   return store_sim( key, Sim::from_raw( simdat, false ), survivor );
+}
+
+// Get a simulation, as the window keeps it (float form in float mode)
+bool US_MPI_NodeSimCache::fetch_sim( const QByteArray& key, Sim& sim )
 {
    QByteArray digest = QCryptographicHash::hash( key, QCryptographicHash::Sha256 );
    int        cur    = header->current.load( std::memory_order_acquire );
@@ -424,7 +445,7 @@ bool US_MPI_NodeSimCache::fetch( const QByteArray& key, US_DataIO::RawData& simd
          continue;
       }
 
-      bool hit = fetch_in( gg, digest, simdat );
+      bool hit = fetch_in( gg, digest, sim );
       leave( gg );
 
       if ( hit )
@@ -434,7 +455,7 @@ bool US_MPI_NodeSimCache::fetch( const QByteArray& key, US_DataIO::RawData& simd
          if ( gg != cur && store_on.load( std::memory_order_relaxed ) )
          { // Keep a simulation of the previous generation in use (after
             //  leaving it:  the copy may empty it)
-            store( key, simdat, true );
+            store_sim( key, sim, true );
          }
 
          return true;
@@ -447,7 +468,7 @@ bool US_MPI_NodeSimCache::fetch( const QByteArray& key, US_DataIO::RawData& simd
 
 // Store a simulation in generation gg, unless it is stored (or being stored)
 //  already
-int US_MPI_NodeSimCache::store_in( int gg, const QByteArray& digest, const US_DataIO::RawData& simdat )
+int US_MPI_NodeSimCache::store_in( int gg, const QByteArray& digest, const Sim& sim )
 {
    Generation&  gen  = header->gen[gg];
    const qint64 room = header->room.load( std::memory_order_relaxed );
@@ -486,7 +507,26 @@ int US_MPI_NodeSimCache::store_in( int gg, const QByteArray& digest, const US_Da
       memcpy( slot->digest, digest.constData(), sizeof( slot->digest ) );
       slot->state.store( FILLING, std::memory_order_release );
 
-      QByteArray   packed = pack( simdat );
+      // Float form in float mode (rounded if given in double form);  double
+      //  form otherwise
+      QByteArray packed;
+
+      if ( float_mode() )
+      {
+         packed = sim.to_float().pack_bytes();
+      }
+      else if ( sim.is_float() )
+      {
+         US_DataIO::RawData simdat;
+         sim.to_raw( simdat );
+         packed = pack( simdat );
+      }
+      else
+      {
+         packed = sim.pack_bytes();
+      }
+
+
       const qint64 size   = packed.size();
       const qint64 need   = align8( size );
       qint64       offset = gen.data_used.load( std::memory_order_relaxed );
@@ -526,7 +566,7 @@ int US_MPI_NodeSimCache::store_in( int gg, const QByteArray& digest, const US_Da
 // Store a simulation.  US_SolveSim offers each simulation it computes first
 //  as a non-survivor, and a surviving one again:  only the first offer counts
 //  as rejected when there is no room.
-bool US_MPI_NodeSimCache::store( const QByteArray& key, const US_DataIO::RawData& simdat, bool survivor )
+bool US_MPI_NodeSimCache::store_sim( const QByteArray& key, const Sim& sim, bool survivor )
 {
    if ( !store_on.load( std::memory_order_relaxed ) )
    {
@@ -568,7 +608,7 @@ bool US_MPI_NodeSimCache::store( const QByteArray& key, const US_DataIO::RawData
          break;
       }
 
-      int result = store_in( gg, digest, simdat );
+      int result = store_in( gg, digest, sim );
       leave( gg );
 
       if ( result != NO_ROOM )
@@ -930,6 +970,7 @@ US_SimCache::Stats US_MPI_NodeSimCache::stats() const
    st.survivors = 0;
    st.bytes     = 0;
    st.max_bytes = room();
+   st.floats    = float_mode();
 
    for ( int gg = 0; gg < ngens; gg++ )
    {

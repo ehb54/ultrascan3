@@ -979,6 +979,60 @@ TEST_F( TestUSSolveSimCalcResiduals, ConstantOffsetIsAbsorbedByFittedNoise )
    }
 }
 
+TEST_F( TestUSSolveSimCalcResiduals, FloatNnlsMatchesDoubleFit )
+{
+   // "SimFloatNNLS=on":  A, B and the NNLS in float precision.  The fit of
+   //  noisy data (no noise fitted, TI+RI noise, and with regularization)
+   //  matches the double fit to float precision:  the variance, the fitted
+   //  concentrations and the noise
+   US_SolveSim::Simulation input;
+   for ( double sval : { 2.0, 4.0, 6.0 } )
+   {
+      for ( double kval : { 1.2, 2.0 } )
+      {
+         input.solutes << US_Solute( sval * 1.0e-13, kval );
+      }
+   }
+   std::sort( input.solutes.begin(), input.solutes.end() );
+
+   QVector<double> amatrix = basis( input );
+   ASSERT_EQ( amatrix.size(), input.solutes.size() * NTOTAL );
+   QVector<double> conc = { 0.3, 0.0, 0.5, 0.0, 0.0, 0.2 };
+   QVector<double> tinoi, rinoi;
+   makeNoise( tinoi, rinoi );
+   setData( amatrix, conc, tinoi, rinoi );
+   std::mt19937                     gen( 29 );
+   std::normal_distribution<double> gauss( 0.0, 0.003 );
+   for ( int ss = 0; ss < NSCANS; ss++ )
+   {
+      for ( int rr = 0; rr < NPOINTS; rr++ )
+      {
+         dset.run_data.scanData[ss].rvalues[rr] += gauss( gen );
+      }
+   }
+
+   const QStringList saved = US_Settings::debug_text();
+   for ( int noisflag : { 0, 3 } )
+   {
+      for ( double alpha : { 0.0, 0.1 } )
+      {
+         SCOPED_TRACE( QString( "noisflag %1 alpha %2" ).arg( noisflag ).arg( alpha ).toStdString() );
+         US_Settings::set_debug_text( QStringList() );
+         US_SolveSim::Simulation dsim = fit( input, noisflag, alpha );
+         US_Settings::set_debug_text( QStringList() << "SimFloatNNLS=on" );
+         US_SolveSim::Simulation fsim = fit( input, noisflag, alpha );
+         US_Settings::set_debug_text( saved );
+
+         EXPECT_NE( fsim.variance, dsim.variance ); // (The float NNLS ran)
+         EXPECT_NEAR( fsim.variance, dsim.variance, 1e-5 * dsim.variance );
+         EXPECT_LT( maxDiff( fittedConc( input.solutes, fsim.solutes ), fittedConc( input.solutes, dsim.solutes ) ), 1e-4 );
+         EXPECT_LT( maxDiff( fsim.ti_noise, dsim.ti_noise ), 1e-5 );
+         EXPECT_LT( maxDiff( fsim.ri_noise, dsim.ri_noise ), 1e-5 );
+         ASSERT_EQ( fsim.residuals.scanData.size(), dsim.residuals.scanData.size() );
+      }
+   }
+}
+
 TEST_F( TestUSSolveSimCalcResiduals, TikhonovWithNoiseKeepsColumnsAligned )
 {
    // Regularization rows lengthen each A column; the noise removal must
@@ -1241,12 +1295,12 @@ class TestUSSolveSimCache : public TestUSSolveSimCalcResiduals
       }
 
       // Expect the outputs with a cache to equal those without, bitwise
-      void expectSameFit( qint64 max_bytes, bool threads )
+      void expectSameFit( qint64 max_bytes, bool threads, bool floats = false )
       {
          const QVector<double> expected = fit2dsa( nullptr, false );
          ASSERT_GT( expected.size(), 0 );
 
-         US_SimCache           cache( max_bytes );
+         US_SimCache           cache( max_bytes, floats );
          const QVector<double> cached = fit2dsa( &cache, threads );
          const int             diffx  = firstDifference( cached, expected );
          EXPECT_EQ( diffx, -1 ) << "sizes " << cached.size() << " " << expected.size() << ";  " << cache.stats_text().toStdString();
@@ -1292,6 +1346,129 @@ TEST_F( TestUSSolveSimCache, FitIsUnchangedByCacheInThreads )
 {
    noisflag = 3;
    expectSameFit( 1024LL * 1024 * 1024, true );
+}
+
+TEST_F( TestUSSolveSimCache, FloatFitIsUnchangedByFloatCache )
+{
+   // Simulations rounded to float precision ("SimFloat=on") and cached as
+   //  floats:  the same fit as without a cache, and not the double fit
+   const QStringList saved = US_Settings::debug_text();
+   US_Settings::set_debug_text( QStringList() );
+   const QVector<double> dblfit = fit2dsa( nullptr, false );
+   US_Settings::set_debug_text( QStringList() << "SimFloat=on" );
+   noisflag = 3;
+   expectSameFit( 1024LL * 1024 * 1024, true, true );
+   const bool floats            = lastStats.floats;
+   noisflag                     = 0;
+   const QVector<double> fltfit = fit2dsa( nullptr, false );
+   US_Settings::set_debug_text( saved );
+
+   EXPECT_TRUE( floats );
+   EXPECT_NE( firstDifference( fltfit, dblfit ), -1 );
+}
+
+TEST_F( TestUSSolveSimCache, FloatFitIsUnchangedByDoubleCache )
+{
+   // "SimFloat=on" with a cache not in float mode (as the MPI caches):  the
+   //  misses are float-form simulations, the hits double-form ones of the
+   //  same (rounded) values;  the fit is bitwise the one without a cache
+   const QStringList saved = US_Settings::debug_text();
+   US_Settings::set_debug_text( QStringList() << "SimFloat=on" );
+   noisflag = 3;
+   expectSameFit( 1024LL * 1024 * 1024, true, false );
+   const bool floats = lastStats.floats;
+   US_Settings::set_debug_text( saved );
+
+   EXPECT_FALSE( floats );
+}
+
+TEST_F( TestUSSolveSimCache, FloatNnlsFitIsUnchangedByCache )
+{
+   // "SimFloatNNLS=on", with double simulations and with float ones (and a
+   //  float cache):  the same fit with and without a cache, bitwise
+   const QStringList saved = US_Settings::debug_text();
+   noisflag                = 3;
+   US_Settings::set_debug_text( QStringList() << "SimFloatNNLS=on" );
+   expectSameFit( 1024LL * 1024 * 1024, true, false );
+   US_Settings::set_debug_text( QStringList() << "SimFloatNNLS=on" << "SimFloat=on" );
+   expectSameFit( 1024LL * 1024 * 1024, true, true );
+   US_Settings::set_debug_text( saved );
+}
+
+TEST_F( TestUSSolveSimCache, BandFormingFloatFitIsUnchangedByCache )
+{
+   // Band forming with thresholded simulations (etc/bandform.config present):
+   //  US_SolveSim thresholds a copy of each simulation in double form and
+   //  keeps the simulation as computed for the cache.  The fit is the same
+   //  with and without a cache, in double and with both float switches, and
+   //  the float fit stays close to the double one.  The config is written
+   //  into the test layout for this test only.
+   const QString cfgpath = US_Settings::appBaseDir() + "/etc/bandform.config";
+   if ( QFile::exists( cfgpath ) )
+   {
+      GTEST_SKIP() << "a bandform.config exists already: " << cfgpath.toStdString();
+   }
+
+   dset.simparams.band_forming = true;
+   dset.simparams.band_volume  = 0.015;
+   dset.simparams.cp_width     = 1.0; // Sim multiply factor (negative:  thresholds off)
+   base                        = dset.run_data;
+   noisflag                    = 0;
+
+   // Without the config the simulations are not thresholded
+   const QStringList saved = US_Settings::debug_text();
+   US_Settings::set_debug_text( QStringList() );
+   const QVector<double> plainfit = fit2dsa( nullptr, false );
+
+   ASSERT_TRUE( QDir().mkpath( US_Settings::appBaseDir() + "/etc" ) );
+   {
+      QFile cfg( cfgpath );
+      ASSERT_TRUE( cfg.open( QIODevice::WriteOnly | QIODevice::Text ) );
+      cfg.write( "0.002  # zero threshold\n0.01  # linear threshold\n1.5  # maximum OD\n"
+                 "0.005  # minimum non-zero\n1.0  # sim multiply factor\n1.0  # exp multiply factor\n" );
+   }
+   struct RemoveConfig
+   {
+         QString path;
+         ~RemoveConfig()
+         {
+            QFile::remove( path );
+         }
+   } remove_config{ cfgpath };
+
+   expectSameFit( 1024LL * 1024 * 1024, true, false );
+   const QVector<double> dblfit = fit2dsa( nullptr, false );
+   EXPECT_NE( firstDifference( dblfit, plainfit ), -1 ); // The thresholds were applied
+   US_Settings::set_debug_text( QStringList() << "SimFloat=on" << "SimFloatNNLS=on" );
+   expectSameFit( 1024LL * 1024 * 1024, true, true );
+   const QVector<double> fltfit = fit2dsa( nullptr, false );
+   US_Settings::set_debug_text( saved );
+
+   ASSERT_EQ( fltfit.size(), dblfit.size() );
+   double maxrel = 0.0;
+   for ( int ii = 0; ii < dblfit.size(); ii++ )
+   {
+      // (Relative, or absolute to 1e-2 for small values:  residuals, noise)
+      maxrel = qMax( maxrel, fabs( fltfit[ii] - dblfit[ii] ) / qMax( fabs( dblfit[ii] ), 1.0e-2 ) );
+   }
+   EXPECT_GT( maxrel, 0.0 );    // The float path ran
+   EXPECT_LT( maxrel, 1.0e-3 ); // ... and stays close to double
+}
+
+TEST_F( TestUSSolveSimCache, FloatCacheRoundsWithoutDebugText )
+{
+   // A cache in float mode alone makes the solvers round their simulations,
+   //  so the fit is the "SimFloat=on" fit without a cache
+   const QStringList saved = US_Settings::debug_text();
+   US_Settings::set_debug_text( QStringList() << "SimFloat=on" );
+   const QVector<double> expected = fit2dsa( nullptr, false );
+   US_Settings::set_debug_text( QStringList() );
+   US_SimCache           cache( 1024LL * 1024 * 1024, true );
+   const QVector<double> cached = fit2dsa( &cache, false );
+   US_Settings::set_debug_text( saved );
+
+   EXPECT_EQ( firstDifference( cached, expected ), -1 ) << cache.stats_text().toStdString();
+   EXPECT_GT( cache.stats().hits, 0 );
 }
 
 // The same fit in threads without a cache:  solves in threads must not share
@@ -1511,6 +1688,64 @@ TEST_F( TestUSSolveSimNormal, ReusesTheCache )
 
    EXPECT_EQ( first.variance, plain.variance );
    EXPECT_EQ( second.variance, plain.variance );
+}
+
+TEST_F( TestUSSolveSimNormal, ReusesAFloatCacheExactly )
+{
+   // A cache in float mode makes the solver round its simulations (with no
+   //  "SimFloat=on" in the debug text):  a hit gives the variance of a miss
+   const QStringList saved = US_Settings::debug_text();
+   US_Settings::set_debug_text( QStringList() );
+   const QVector<US_Solute> solutes = { US_Solute( 2.4e-13, 1.3 ), US_Solute( 4.6e-13, 1.55 ) };
+   US_SimCache              cache( 1024LL * 1024 * 1024, true );
+   US_SolveSim::Simulation  first, second;
+   first.solutes = second.solutes = solutes;
+
+   US_SolveSim solvesim( dsets, 1, false );
+   solvesim.set_sim_cache( &cache );
+   const bool firstok  = solvesim.calc_variance_normal( 0, 1, first );
+   const bool secondok = solvesim.calc_variance_normal( 0, 1, second );
+   US_Settings::set_debug_text( saved );
+
+   ASSERT_TRUE( firstok );
+   ASSERT_TRUE( secondok );
+   EXPECT_EQ( cache.stats().hits, 2 );
+   EXPECT_EQ( second.variance, first.variance );
+}
+
+TEST_F( TestUSSolveSimNormal, FloatAndDoubleFormsGiveTheSameVariance )
+{
+   // "SimFloat=on":  float-form simulations (a float cache, or misses) and
+   //  double-form ones of the same rounded values (hits of a double cache)
+   //  give bitwise the same variance and concentrations
+   const QStringList saved = US_Settings::debug_text();
+   US_Settings::set_debug_text( QStringList() << "SimFloat=on" );
+   const QVector<US_Solute> solutes = { US_Solute( 2.4e-13, 1.3 ), US_Solute( 4.6e-13, 1.55 ) };
+   US_SimCache              fcache( 1024LL * 1024 * 1024, true );
+   US_SimCache              dcache( 1024LL * 1024 * 1024, false );
+   US_SolveSim::Simulation  plain, floats, dmiss, dhit;
+   plain.solutes = floats.solutes = dmiss.solutes = dhit.solutes = solutes;
+
+   US_SolveSim nocache( dsets, 1, false );
+   US_SolveSim fsolve( dsets, 1, false );
+   fsolve.set_sim_cache( &fcache );
+   US_SolveSim dsolve( dsets, 1, false );
+   dsolve.set_sim_cache( &dcache );
+   const bool ok = nocache.calc_variance_normal( 0, 1, plain ) && fsolve.calc_variance_normal( 0, 1, floats ) &&
+                   dsolve.calc_variance_normal( 0, 1, dmiss ) && dsolve.calc_variance_normal( 0, 1, dhit );
+   US_Settings::set_debug_text( saved );
+
+   ASSERT_TRUE( ok );
+   EXPECT_EQ( dcache.stats().hits, 2 );
+   for ( const US_SolveSim::Simulation* sim : { &floats, &dmiss, &dhit } )
+   {
+      EXPECT_EQ( sim->variance, plain.variance );
+      ASSERT_EQ( sim->solutes.size(), plain.solutes.size() );
+      for ( int cc = 0; cc < plain.solutes.size(); cc++ )
+      {
+         EXPECT_EQ( sim->solutes[cc].c, plain.solutes[cc].c ) << cc;
+      }
+   }
 }
 
 TEST_F( TestUSSolveSimNormal, ZeroDataGiveNoSolutes )

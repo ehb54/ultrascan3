@@ -848,6 +848,627 @@ double US_Math2::erfc( double x )
 }
 #endif
 
+// The NNLS of Lawson & Hanson for a matrix of doubles or floats (T).  Scalars,
+//  sums and products are double;  each value written back to A, B or the
+//  work space is computed in double and rounded to T once.  For T = double
+//  every expression is that of the original double code (the casts are
+//  no-ops), so the double NNLS gives the same bits as before.
+
+/*****************************************************************************
+ *
+ *  Compute orthogonal rotation matrix:
+ *    (C, S) so that (C, S)(A) = ( sqrt( A**2 + B**2 ) )
+ *    (-S,C)         (-S,C)(B)   ( 0                 )
+ *  Compute sig = sqrt(A**2+B**2):
+ *    sig is computed last to allow for the possibility that sig may be in
+ *    the same location as A or B.
+ */
+static void nnls_givens( double a, double b, double* cterm, double* sterm, double* sig )
+{
+   double d1;
+   double xr;
+   double yr;
+
+   if ( fabs( a ) > fabs( b ) )
+   {
+      xr     = b / a;
+      d1     = xr;
+      yr     = sqrt( d1 * d1 + 1.0 );
+      d1     = 1.0 / yr;
+      *cterm = ( a >= 0.0 ? fabs( d1 ) : -fabs( d1 ) );
+      *sterm = ( *cterm ) * xr;
+      *sig   = fabs( a ) * yr;
+   }
+   else if ( b != 0.0 )
+   {
+      xr     = a / b;
+      d1     = xr;
+      yr     = sqrt( d1 * d1 + 1.0 );
+      d1     = 1.0 / yr;
+      *sterm = ( b >= 0.0 ? fabs( d1 ) : -fabs( d1 ) );
+      *cterm = ( *sterm ) * xr;
+      *sig   = fabs( b ) * yr;
+   }
+   else
+   {
+      *sig   = 0.0;
+      *cterm = 0.0;
+      *sterm = 1.0;
+   }
+}
+
+/*****************************************************************************
+ *
+ *  Construction and/or application of a single Householder transformation:
+ *           Q = I + U*(U**T)/B
+ *
+ *  Function returns 0 if succesful, or >0 in case of erroneous parameters.
+ *
+ *  mode=1 to construct and apply a Householder transformation, or
+ *  mode=2 to apply a previously constructed transformation.  lpivot is the
+ *  index of the pivot element;  the transformation is constructed to zero
+ *  elements indexed from l1 to m.  With mode=1, on entry, u[] must contain
+ *  the pivot vector;  on exit, u[] and up contain quantities defining the
+ *  vector u[] of the transformation.  With mode=2, u[] and up hold those
+ *  quantities and are not modified.  u_dim1 is the storage increment between
+ *  elements of u[].  cm[] holds the ncv vectors to which the transformation
+ *  is applied (ice:  increment between elements, icv:  between vectors);
+ *  if ncv<=0, no operations are done on cm[].
+ */
+template <class T>
+static int nnls_householder( int mode, int lpivot, int l1, int m, T* u, int u_dim1, double* up, T* cm, int ice, int icv, int ncv )
+{
+   double d1, d2, b, clinv, cl, sm;
+   int    incr, k, j, i2, i3, i4;
+
+   /* Check parameters */
+   if ( mode != 1 && mode != 2 )
+   {
+      return 1;
+   }
+
+   if ( m < 1 || u == NULL || u_dim1 < 1 || cm == NULL )
+   {
+      return 2;
+   }
+
+   if ( lpivot < 0 || lpivot >= l1 || l1 >= m )
+   {
+      return 0;
+   }
+
+   /* Function Body */
+   cl = ( d1 = u[lpivot * u_dim1], fabs( d1 ) );
+
+   if ( mode == 2 ) // Apply transformation I+U*(U**T)/B to cm[]
+   {
+      if ( cl <= 0.0 )
+      {
+         return 0;
+      }
+   }
+   else // Construct the transformation
+   {
+      for ( j = l1; j < m; j++ )
+      { /* Computing MAX */
+         d2 = ( d1 = u[j * u_dim1], fabs( d1 ) );
+         if ( d2 > cl )
+         {
+            cl = d2;
+         }
+      }
+
+      if ( cl <= 0.0 )
+      {
+         return 0;
+      }
+
+      clinv = 1.0 / cl;
+
+      /* Computing 2nd power */
+      d1 = u[lpivot * u_dim1] * clinv;
+      sm = d1 * d1;
+
+      for ( j = l1; j < m; j++ )
+      {
+         d1 = u[j * u_dim1] * clinv;
+         sm += d1 * d1;
+      }
+
+      cl *= sqrt( sm );
+      if ( u[lpivot * u_dim1] > 0.0 )
+      {
+         cl = -cl;
+      }
+
+      *up                = u[lpivot * u_dim1] - cl;
+      u[lpivot * u_dim1] = (T) cl;
+   }
+
+   if ( ncv <= 0 )
+   {
+      return 0;
+   }
+
+   b = ( *up ) * u[lpivot * u_dim1];
+
+   /* b must be nonpositive here; if b>=0., then return */
+   if ( b >= 0.0 )
+   {
+      return 0;
+   }
+
+   b    = 1.0 / b;
+   i2   = 1 - icv + ice * lpivot;
+   incr = ice * ( l1 - lpivot );
+
+   for ( j = 0; j < ncv; j++ )
+   {
+      i2 += icv;
+      i3 = i2 + incr;
+      i4 = i3;
+      sm = cm[i2 - 1] * ( *up );
+
+      for ( k = l1; k < m; k++ )
+      {
+         sm += (double) cm[i3 - 1] * u[k * u_dim1];
+         i3 += ice;
+      }
+
+      if ( sm != 0.0 )
+      {
+         sm *= b;
+         cm[i2 - 1] = (T) ( cm[i2 - 1] + sm * ( *up ) );
+
+         for ( k = l1; k < m; k++ )
+         {
+            cm[i4 - 1] = (T) ( cm[i4 - 1] + sm * u[k * u_dim1] );
+            i4 += ice;
+         }
+      }
+   }
+
+   return 0;
+}
+
+// The Lawson & Hanson NNLS (see US_Math2::nnls)
+template <class T>
+static int nnls_core( T*                       a,
+                      int                      a_dim1,
+                      int                      m,
+                      int                      n,
+                      T*                       b,
+                      T*                       x,
+                      double*                  rnorm,
+                      T*                       wp,
+                      T*                       zzp,
+                      int*                     indexp,
+                      int                      itmax,
+                      const std::atomic<bool>* abort_flag )
+{
+   int    pfeas, ret = 0, iz, jz;
+   double d1, sm, up, ss;
+   int    k, j = 0, l, izmax = 0, ii, jj = 0, ip;
+   double temp, wmax, t, alpha, asave, unorm, ztest, cc, sig;
+   T      dummy;
+
+   /* Check the parameters and data */
+   if ( m <= 0 || n <= 0 || a == NULL || b == NULL || x == NULL )
+   {
+      return 2;
+   }
+
+   /* Allocate memory for working space, if required */
+   QVector<T>   wVec;
+   QVector<T>   zVec;
+   QVector<int> iVec;
+
+   T*           w;
+   T*           zz;
+   int*         index;
+
+   if ( wp != NULL )
+   {
+      w = wp;
+   }
+   else
+   {
+      wVec.fill( T( 0 ), n );
+      w = wVec.data();
+   }
+
+   if ( zzp != NULL )
+   {
+      zz = zzp;
+   }
+   else
+   {
+      zVec.fill( T( 0 ), m );
+      zz = zVec.data();
+   }
+
+   if ( indexp != NULL )
+   {
+      index = indexp;
+   }
+   else
+   {
+      iVec.fill( 0, n );
+      index = iVec.data();
+   }
+
+   if ( w == NULL || zz == NULL || index == NULL )
+   {
+      return 2;
+   }
+
+   /* Initialize the arrays index[] and x[] */
+   for ( int k = 0; k < n; k++ )
+   {
+      x[k]     = T( 0 );
+      index[k] = k;
+   }
+
+   int iz2   = n - 1;
+   int iz1   = 0;
+   int nsetp = 0;
+   int npp1  = 0;
+
+   /* Main loop; quit if all coeffs are already in the solution or */
+   /* if M cols of A have been triangularized */
+
+   int iter = 0;
+   int ja_dim1;
+
+   if ( itmax <= 0 )
+   {
+      itmax = n * 3;
+   }
+
+   while ( iz1 <= iz2 && nsetp < m )
+   {
+      /* Quit with the current (feasible) X if an abort was requested */
+      if ( abort_flag && abort_flag->load( std::memory_order_relaxed ) )
+      {
+         ret = 3;
+         break;
+      }
+
+      /* Compute components of the dual (negative gradient) vector W[] */
+      for ( iz = iz1; iz <= iz2; iz++ )
+      {
+         j       = index[iz];
+         ja_dim1 = j * a_dim1;
+         sm      = 0.0;
+
+         for ( l = npp1; l < m; l++ )
+         {
+            sm += (double) a[l + ja_dim1] * b[l];
+         }
+
+         w[j] = (T) sm;
+      }
+
+      while ( true )
+      {
+         /* Find largest positive W[j] */
+         for ( wmax = 0.0, iz = iz1; iz <= iz2; iz++ )
+         {
+            j = index[iz];
+            if ( w[j] > wmax )
+            {
+               wmax  = w[j];
+               izmax = iz;
+            }
+         }
+
+         /* Terminate if wmax <= 0.0; */
+         /* it indicates satisfaction of the Kuhn-Tucker conditions */
+         if ( wmax <= 0.0 )
+         {
+            break;
+         }
+
+         iz = izmax;
+         j  = index[iz];
+
+         /* The sign of W[ j ] is ok for j to be moved to set P. */
+         /* Begin the transformation and check new diagonal element to avoid */
+         /* near linear dependence. */
+
+         ja_dim1 = j * a_dim1;
+         asave   = a[npp1 + ja_dim1];
+         nnls_householder( 1, npp1, npp1 + 1, m, &a[ja_dim1], 1, &up, &dummy, 1, 1, 0 );
+
+         unorm = 0.0;
+
+         if ( nsetp != 0 )
+         {
+            for ( l = 0; l < nsetp; l++ )
+            {
+               d1 = a[l + ja_dim1];
+               unorm += d1 * d1;
+            }
+         }
+
+         unorm = sqrt( unorm );
+
+         /* The new diagonal element must count beside the column's part in
+            set P at the precision of A. Doubles use the classic factor 0.01
+            (the diagonal must exceed about 50 ulps of that part). Floats use
+            1: a column is rejected only when its diagonal is below about half
+            an ulp of that part (0.25-0.5 FLT_EPSILON of it), i.e. dependent
+            to within the floats' rounding. With 0.01 (25-50 FLT_EPSILON) the
+            float solve rejected columns that the double solve accepts, and on
+            fine grids (128 x 128 and more) settled on a different solute set;
+            0.1 still did so on grids of 1024 columns and more. With 1 the
+            float solve gives the same sets as this test evaluated in double */
+         d1                    = a[npp1 + ja_dim1];
+         const double dfact    = ( sizeof( T ) < sizeof( double ) ) ? 1.0 : 0.01;
+         const T      tunorm   = (T) unorm;
+         const T      tdiagmax = (T) ( tunorm + (T) ( fabs( d1 ) * dfact ) );
+
+         if ( ( tdiagmax - tunorm ) > 0.0 )
+         {
+            /* Col j is sufficiently independent. Copy B into ZZ, update ZZ
+               and solve for ztest ( = proposed new value for X[ j ] ) */
+
+            for ( l = 0; l < m; l++ )
+            {
+               zz[l] = b[l];
+            }
+
+            nnls_householder( 2, npp1, npp1 + 1, m, &a[ja_dim1], 1, &up, zz, 1, 1, 1 );
+
+            ztest = (double) zz[npp1] / a[npp1 + ja_dim1];
+
+            /* See if ztest is positive */
+            if ( ztest > 0.0 )
+            {
+               break;
+            }
+         }
+
+         /* Reject j as a candidate to be moved from set Z to set P. Restore */
+         /* A[npp1,j], set W[j]=0., and loop back to test dual coeffs again */
+         a[npp1 + ja_dim1] = (T) asave;
+         w[j]              = T( 0 );
+
+      } // while( true )
+
+      if ( wmax <= 0.0 )
+      {
+         break;
+      }
+
+      /* Index j = index[ iz ] has been selected to be moved from set Z to set P.
+         Update B and indices, apply householder transformations to cols in
+         new set Z, zero subdiagonal elts in col j, set W[j]=0. */
+
+      for ( l = 0; l < m; ++l )
+      {
+         b[l] = zz[l];
+      }
+
+      index[iz]  = index[iz1];
+      index[iz1] = j;
+      iz1++;
+      nsetp = npp1 + 1;
+      npp1++;
+
+      if ( iz1 <= iz2 )
+      {
+         for ( jz = iz1; jz <= iz2; jz++ )
+         {
+            jj = index[jz];
+            nnls_householder( 2, nsetp - 1, npp1, m, &a[ja_dim1], 1, &up, &a[jj * a_dim1], 1, a_dim1, 1 );
+         }
+      }
+
+      if ( nsetp != m )
+      {
+         for ( l = npp1; l < m; l++ )
+         {
+            a[l + ja_dim1] = T( 0 );
+         }
+      }
+
+      w[j] = T( 0 );
+
+      /* Solve the triangular system; store the solution temporarily in Z[] */
+      for ( l = 0; l < nsetp; l++ )
+      {
+         ip = nsetp - ( l + 1 );
+
+         if ( l != 0 )
+         {
+            for ( ii = 0; ii <= ip; ii++ )
+            {
+               zz[ii] = (T) ( zz[ii] - (double) a[ii + jj * a_dim1] * zz[ip + 1] );
+            }
+         }
+
+         jj     = index[ip];
+         zz[ip] = (T) ( zz[ip] / (double) a[ip + jj * a_dim1] );
+      }
+
+      /* Secondary loop begins here */
+      /* (at most itmax iterations, as in Lawson & Hanson) */
+      while ( ++iter <= itmax )
+      {
+         /* See if all new constrained coeffs are feasible;
+            if not, compute alpha */
+
+         for ( alpha = 2.0, ip = 0; ip < nsetp; ip++ )
+         {
+            l = index[ip];
+            if ( zz[ip] <= 0.0 )
+            {
+               t = -(double) x[l] / ( (double) zz[ip] - x[l] );
+               if ( alpha > t )
+               {
+                  alpha = t;
+                  jj    = ip - 1;
+               }
+            }
+         }
+
+         /* If all new constrained coeffs are feasible then still alpha==2. */
+         /* If so, then exit from the secondary loop to main loop */
+
+         if ( alpha == 2.0 )
+         {
+            break;
+         }
+
+         /* Use alpha ( 0.0 < alpha < 1.0 ) to interpolate between old
+          * X and new ZZ */
+
+         for ( ip = 0; ip < nsetp; ip++ )
+         {
+            l    = index[ip];
+            x[l] = (T) ( x[l] + alpha * ( (double) zz[ip] - x[l] ) );
+         }
+
+         /* Modify A and B and the INDEX arrays to move coefficient i */
+         /* from set P to set Z. */
+
+         k     = index[jj + 1];
+         pfeas = 1;
+
+         do
+         {
+            x[k] = T( 0 );
+            if ( jj != ( nsetp - 1 ) )
+            {
+               jj++;
+               for ( j = jj + 1; j < nsetp; j++ )
+               {
+                  ii           = index[j];
+                  int iia_dim1 = ii * a_dim1;
+                  index[j - 1] = ii;
+
+                  nnls_givens( a[j - 1 + iia_dim1], a[j + iia_dim1], &cc, &ss, &sig );
+                  a[j - 1 + iia_dim1] = (T) sig;
+
+                  for ( a[j + iia_dim1] = T( 0 ), l = 0; l < n; l++ )
+                  {
+                     if ( l != ii )
+                     {
+                        int jla_dim1    = j + l * a_dim1;
+                        /* Apply procedure G2 (CC,SS,A(J-1,L),A(J,L)) */
+                        temp            = a[jla_dim1 - 1];
+                        a[jla_dim1 - 1] = (T) ( cc * temp + ss * a[jla_dim1] );
+                        a[jla_dim1]     = (T) ( -ss * temp + cc * a[jla_dim1] );
+                     }
+                  }
+
+                  /* Apply procedure G2 (CC,SS,B(J-1),B(J)) */
+                  temp     = b[j - 1];
+                  b[j - 1] = (T) ( cc * temp + ss * b[j] );
+                  b[j]     = (T) ( -ss * temp + cc * b[j] );
+               }
+            }
+
+            npp1 = nsetp - 1;
+            nsetp--;
+            iz1--;
+            index[iz1] = k;
+
+            /* See if the remaining coeffs in set P are feasible; they should */
+            /* be because of the way alpha was determined. If any are */
+            /* infeasible it is due to round-off error. Any that are */
+            /* nonpositive will be set to zero and moved from set P to set Z */
+            for ( jj = 0, pfeas = 1; jj < nsetp; jj++ )
+            {
+               k = index[jj];
+               if ( x[k] <= 0.0 )
+               { /* Leave jj one below the position of k, as set above */
+                  pfeas = 0;
+                  jj--;
+                  break;
+               }
+            }
+         } while ( pfeas == 0 );
+
+         /* Copy b[] into zz[], then solve again and loop back */
+         for ( k = 0; k < m; k++ )
+         {
+            zz[k] = b[k];
+         }
+
+         for ( l = 0; l < nsetp; l++ )
+         {
+            ip = nsetp - ( l + 1 );
+            if ( l != 0 )
+            {
+               for ( ii = 0; ii <= ip; ii++ )
+               {
+                  zz[ii] = (T) ( zz[ii] - (double) a[ii + jj * a_dim1] * zz[ip + 1] );
+               }
+            }
+
+            jj     = index[ip];
+            zz[ip] = (T) ( zz[ip] / (double) a[ip + jj * a_dim1] );
+         }
+      } /* end of secondary loop */
+
+      if ( iter > itmax )
+      { /* Iteration limit:  quit with the last feasible X */
+         ret = 1;
+         break;
+      }
+
+      for ( ip = 0; ip < nsetp; ip++ )
+      {
+         k    = index[ip];
+         x[k] = zz[ip];
+      }
+   } /* end of main loop */
+
+   /* Compute the norm of the final residual vector */
+
+   sm = 0.0;
+
+   if ( npp1 < m )
+   {
+      for ( k = npp1; k < m; k++ )
+      {
+         sm += ( (double) b[k] * b[k] );
+      }
+   }
+   else
+   {
+      for ( j = 0; j < n; j++ )
+      {
+         w[j] = T( 0 );
+      }
+   }
+
+   if ( ret == 1 )
+   { /* At the iteration limit X does not solve the triangular system */
+      /* of set P:  add its residual in the first nsetp rows */
+      for ( ii = 0; ii < nsetp; ii++ )
+      {
+         d1 = b[ii];
+
+         for ( l = ii; l < nsetp; l++ )
+         {
+            d1 -= (double) a[ii + index[l] * a_dim1] * x[index[l]];
+         }
+
+         sm += d1 * d1;
+      }
+   }
+
+   if ( rnorm != NULL )
+   {
+      *rnorm = sqrt( sm );
+   }
+
+   return ret;
+}
+
 // Non-negative least-squares matrix solution
 int US_Math2::nnls( double*                  a,
                     int                      a_dim1,
@@ -875,520 +1496,47 @@ int US_Math2::nnls( double*                  a,
    qDebug() << "BF-NNLS: Using regular nnls";
 #endif
 
-   int pfeas, ret = 0, iz, jz;
-   double d1, d2, sm, up, ss;
-   int k, j=0, l, izmax=0, ii, jj=0, ip;
-   double temp, wmax, t, alpha, asave, dummy, unorm, ztest, cc;
-
-   /* Check the parameters and data */
-   if ( m <= 0 || n <= 0 || a == NULL || b == NULL || x == NULL ) return 2;
-
-   /* Allocate memory for working space, if required */
-   QVector< double > wVec;
-   QVector< double > zVec;
-   QVector< int >    iVec;
-
-   double* w;
-   double* zz;
-   int*    index;
-
-   if ( wp != NULL )
-      w     = wp;
-   else
-   {
-      wVec.fill( 0.0, n );
-      w     = wVec.data();
-   }
-
-   if ( zzp != NULL )
-      zz    = zzp;
-   else
-   {
-      zVec.fill( 0.0, m );
-      zz    = zVec.data();
-   }
-
-   if ( indexp != NULL )
-      index = indexp;
-   else
-   {
-      iVec.fill( 0, n );
-      index = iVec.data();
-   }
-
-   if ( w == NULL || zz == NULL || index == NULL ) return 2;
-
-   /* Initialize the arrays index[] and x[] */
-   for( int k = 0; k < n; k++ ) 
-   {
-      x    [ k ] = 0.0; 
-      index[ k ] = k;
-   }
-
-   int iz2   = n - 1; 
-   int iz1   = 0; 
-   int nsetp = 0; 
-   int npp1  = 0;
-
-   /* Main loop; quit if all coeffs are already in the solution or */
-   /* if M cols of A have been triangularized */
-
-   int iter = 0;
-   int ja_dim1;
-
-   if ( itmax <= 0 )
-   {
-      itmax = n * 3;
-   }
-
-   while ( iz1 <= iz2 && nsetp < m )
-   {
-      /* Quit with the current (feasible) X if an abort was requested */
-      if ( abort_flag && abort_flag->load( std::memory_order_relaxed ) )
-      {
-         ret = 3;
-         break;
-      }
-
-      /* Compute components of the dual (negative gradient) vector W[] */
-      for ( iz = iz1; iz <= iz2; iz++ ) 
-      {
-         j  = index[ iz ]; 
-         ja_dim1 = j * a_dim1;
-         sm = 0.0; 
-         
-         for( l = npp1; l < m; l++ ) 
-            sm += a[ l + ja_dim1 ] * b[ l ];
-
-         w[ j ] = sm;
-      }
-
-      while ( true ) 
-      {
-         /* Find largest positive W[j] */
-         for ( wmax = 0.0, iz = iz1; iz <= iz2; iz++ ) 
-         {
-            j = index[ iz ]; 
-            if ( w[ j ] > wmax ) 
-            {
-               wmax  = w[ j ]; 
-               izmax = iz;
-            }
-         }
-
-         /* Terminate if wmax <= 0.0; */
-         /* it indicates satisfaction of the Kuhn-Tucker conditions */
-         if ( wmax <= 0.0 ) break;
-         
-         iz = izmax; 
-         j  = index[ iz ];
-
-         /* The sign of W[ j ] is ok for j to be moved to set P. */
-         /* Begin the transformation and check new diagonal element to avoid */
-         /* near linear dependence. */
-
-         ja_dim1 = j * a_dim1;
-         asave = a[ npp1 + ja_dim1 ];
-         _nnls_h12( 1, npp1, npp1 + 1, m, &a[ ja_dim1 ], 
-                    1, &up, &dummy, 1, 1, 0 );
-         
-         unorm = 0.0;
-
-         if ( nsetp != 0 ) 
-            for ( l = 0; l < nsetp; l++ ) 
-            { 
-               d1     = a[ l + ja_dim1 ]; 
-               unorm += d1 * d1;
-            }
-
-         unorm = sqrt( unorm );
-
-         d2 = unorm + ( d1 = a[ npp1 + ja_dim1 ], fabs( d1 ) ) * 0.01;
-         
-         if ( ( d2 - unorm ) > 0.0 ) 
-         {
-            /* Col j is sufficiently independent. Copy B into ZZ, update ZZ 
-               and solve for ztest ( = proposed new value for X[ j ] ) */
-
-            for ( l = 0; l < m; l++ ) zz[ l ] =b[ l ];
-
-            _nnls_h12( 2, npp1, npp1 + 1, m, &a[ ja_dim1 ], 
-                       1, &up, zz, 1, 1, 1 );
-
-            ztest = zz[ npp1 ] / a[ npp1 + ja_dim1 ];
-
-            /* See if ztest is positive */
-            if ( ztest > 0.0 ) break;
-         }
-
-         /* Reject j as a candidate to be moved from set Z to set P. Restore */
-         /* A[npp1,j], set W[j]=0., and loop back to test dual coeffs again */
-         a[ npp1 + ja_dim1 ] = asave; 
-         w[ j ]              = 0.0;
-
-      } // while( true )
-      
-      if ( wmax <= 0.0 ) break;
-
-      /* Index j = index[ iz ] has been selected to be moved from set Z to set P.
-         Update B and indices, apply householder transformations to cols in 
-         new set Z, zero subdiagonal elts in col j, set W[j]=0. */
-      
-      for ( l = 0; l < m; ++l ) b[ l ] =zz[ l ];
-
-      index[ iz  ] = index[ iz1 ]; 
-      index[ iz1 ] = j; 
-      iz1++; 
-      nsetp        = npp1 + 1; 
-      npp1++;
-
-      if ( iz1 <= iz2 ) 
-         for ( jz = iz1; jz <= iz2; jz++ ) 
-         {
-            jj = index[ jz ];
-            _nnls_h12( 2, nsetp - 1, npp1, m, &a[ ja_dim1 ], 
-                       1, &up, &a[ jj * a_dim1 ], 1, a_dim1, 1 );
-         }
-
-      if ( nsetp !=m ) 
-         for ( l = npp1; l < m; l++ ) 
-            a[ l + ja_dim1 ] = 0.0;
-
-      w[ j ]= 0.0;
-
-      /* Solve the triangular system; store the solution temporarily in Z[] */
-      for ( l = 0; l < nsetp; l++ ) 
-      {
-         ip = nsetp - ( l + 1 );
-         
-         if ( l != 0 ) 
-            for ( ii = 0; ii <= ip; ii++ ) 
-               zz[ ii ] -= a[ ii + jj * a_dim1 ] * zz[ ip + 1 ];
-
-         jj        = index[ ip ]; 
-         zz[ ip ] /= a[ ip + jj *a_dim1 ];
-      }
-
-      /* Secondary loop begins here */
-      /* (at most itmax iterations, as in Lawson & Hanson) */
-      while ( ++iter <= itmax )
-      {
-         /* See if all new constrained coeffs are feasible; 
-            if not, compute alpha */
-         
-         for ( alpha = 2.0, ip = 0; ip < nsetp; ip++ ) 
-         {
-            l = index[ ip ];
-            if ( zz[ ip ] <= 0.0 ) 
-            {
-               t = -x[ l ] / ( zz[ ip ] - x[ l ]); 
-               if ( alpha > t ) 
-               {
-                  alpha = t; 
-                  jj = ip - 1;
-               }
-            }
-         }
-
-         /* If all new constrained coeffs are feasible then still alpha==2. */
-         /* If so, then exit from the secondary loop to main loop */
-         
-         if ( alpha == 2.0 ) break;
-
-         /* Use alpha ( 0.0 < alpha < 1.0 ) to interpolate between old 
-          * X and new ZZ */
-         
-         for ( ip = 0; ip < nsetp; ip++ ) 
-         {
-            l       = index[ ip ]; 
-            x[ l ] += alpha * ( zz[ ip ] - x[ l ] );
-         }
-
-         /* Modify A and B and the INDEX arrays to move coefficient i */
-         /* from set P to set Z. */
-         
-         k     = index[ jj + 1 ]; 
-         pfeas = 1;
-
-         do 
-         {
-            x[ k ] = 0.0;
-            if ( jj != ( nsetp - 1 ) ) 
-            {
-               jj++;
-               for ( j = jj + 1; j < nsetp; j++ ) 
-               {
-                  ii             = index[ j ];
-                  int  iia_dim1  = ii * a_dim1;
-                  index[ j - 1 ] = ii;
-
-                  _nnls_g1( a [ j - 1 + iia_dim1 ], a[ j + iia_dim1 ], 
-                            &cc, &ss, &a[ j - 1 + iia_dim1 ] );
-
-                  for ( a[ j + iia_dim1 ] = 0.0, l = 0; l < n; l++ ) 
-                     if ( l != ii ) 
-                     {
-                        int  jla_dim1  = j + l * a_dim1;
-                        /* Apply procedure G2 (CC,SS,A(J-1,L),A(J,L)) */
-                        temp = a[ jla_dim1 - 1 ];
-                        a[ jla_dim1 - 1 ] =  cc * temp + ss * a[ jla_dim1 ];
-                        a[ jla_dim1     ] = -ss * temp + cc * a[ jla_dim1 ];
-                     }
-
-                  /* Apply procedure G2 (CC,SS,B(J-1),B(J)) */
-                  temp       =  b[ j - 1 ]; 
-                  b[ j - 1 ] =  cc * temp + ss * b[ j ]; 
-                  b[ j     ] = -ss * temp + cc * b[ j ];
-               }
-            }
-
-            npp1 = nsetp - 1; 
-            nsetp--; 
-            iz1--; 
-            index[ iz1 ] = k;
-
-            /* See if the remaining coeffs in set P are feasible; they should */
-            /* be because of the way alpha was determined. If any are */
-            /* infeasible it is due to round-off error. Any that are */
-            /* nonpositive will be set to zero and moved from set P to set Z */
-            for ( jj = 0, pfeas = 1; jj < nsetp; jj++ )
-            {
-               k = index[jj];
-               if ( x[k] <= 0.0 )
-               { /* Leave jj one below the position of k, as set above */
-                  pfeas = 0;
-                  jj--;
-                  break;
-               }
-            }
-         } while ( pfeas == 0 );
-
-         /* Copy b[] into zz[], then solve again and loop back */
-         for ( k = 0; k < m; k++ ) 
-            zz[ k ] = b[ k ];
-
-         for ( l = 0; l < nsetp; l++ ) 
-         {
-            ip = nsetp - ( l + 1 );
-            if ( l != 0 ) 
-               for ( ii = 0; ii <= ip; ii++ ) 
-                  zz[ ii ] -= a[ ii + jj * a_dim1 ] * zz[ ip + 1 ];
-
-            jj        = index[ ip ]; 
-            zz[ ip ] /= a[ ip + jj * a_dim1 ];
-         }
-      } /* end of secondary loop */
-
-      if ( iter > itmax )
-      { /* Iteration limit:  quit with the last feasible X */
-         ret = 1; 
-         break;
-      }
-
-      for ( ip = 0; ip < nsetp; ip++ ) 
-      {
-         k      = index[ ip ]; 
-         x[ k ] = zz   [ ip ];
-      }
-   } /* end of main loop */
-
-   /* Compute the norm of the final residual vector */
-   
-   sm = 0.0;
-
-   if ( npp1 < m ) 
-      for ( k = npp1; k < m; k++ ) 
-         sm += ( b[ k ] * b[ k ] );
-   else 
-      for( j = 0; j < n; j++ ) 
-         w[ j ] = 0.0;
-
-   if ( ret == 1 )
-   { /* At the iteration limit X does not solve the triangular system */
-      /* of set P:  add its residual in the first nsetp rows */
-      for ( ii = 0; ii < nsetp; ii++ )
-      {
-         d1 = b[ii];
-
-         for ( l = ii; l < nsetp; l++ )
-         {
-            d1 -= a[ii + index[l] * a_dim1] * x[index[l]];
-         }
-
-         sm += d1 * d1;
-      }
-   }
-
-   if ( rnorm != NULL ) *rnorm = sqrt( sm );
-
-   return ret;
+   return nnls_core( a, a_dim1, m, n, b, x, rnorm, wp, zzp, indexp, itmax, abort_flag );
 }
 
-/*****************************************************************************
- *
- *  Compute orthogonal rotation matrix:
- *    (C, S) so that (C, S)(A) = ( sqrt( A**2 + B**2 ) )
- *    (-S,C)         (-S,C)(B)   ( 0                 )
- *  Compute sig = sqrt(A**2+B**2):
- *    sig is computed last to allow for the possibility that sig may be in
- *    the same location as A or B.
- */
-void US_Math2::_nnls_g1( double  a,     double  b, double* cterm, 
-                         double* sterm, double* sig )
+// Non-negative least-squares matrix solution, in float precision
+int US_Math2::nnls( float*                   a,
+                    int                      a_dim1,
+                    int                      m,
+                    int                      n,
+                    float*                   b,
+                    float*                   x,
+                    double*                  rnorm,
+                    float*                   wp,
+                    float*                   zzp,
+                    int*                     indexp,
+                    int                      itmax,
+                    const std::atomic<bool>* abort_flag )
 {
-   double d1;
-   double xr;
-   double yr;
+   return nnls_core( a, a_dim1, m, n, b, x, rnorm, wp, zzp, indexp, itmax, abort_flag );
+}
 
-   if ( fabs( a ) > fabs( b ) ) 
-   {
-      xr = b / a; 
-      d1 = xr; 
-      yr = sqrt( d1 * d1 + 1.0 ); 
-      d1 = 1.0 / yr;
-      *cterm = ( a >= 0.0 ? fabs( d1 ) : -fabs( d1 ) );
-      *sterm = ( *cterm ) * xr; 
-      *sig   = fabs( a ) * yr;
-   } 
-   else if ( b != 0.0 ) 
-   {
-      xr = a / b; 
-      d1 = xr; 
-      yr = sqrt( d1*d1 + 1.0 ); 
-      d1 = 1.0 / yr;
-      *sterm = ( b >= 0.0 ? fabs( d1 ) : -fabs( d1 ) );
-      *cterm = ( *sterm ) * xr; 
-      *sig   = fabs( b ) * yr;
-   } 
-   else 
-   {
-      *sig   = 0.0; 
-      *cterm = 0.0; 
-      *sterm = 1.0;
-   }
-} /* _nnls_g1 */
-
-
-/*****************************************************************************
- *
- *  Construction and/or application of a single Householder transformation:
- *           Q = I + U*(U**T)/B
- *
- *  Function returns 0 if succesful, or >0 in case of erroneous parameters.
- *
- */
-int US_Math2::_nnls_h12 (
-              int mode,
-              /* mode=1 to construct and apply a Householder transformation, or
-                 mode=2 to apply a previously constructed transformation */
-              int lpivot,     /* Index of the pivot element */
-              int l1, 
-              int m,
-              /* Transformation is constructed to zero elements indexed from l1 to M */
-              double* u, 
-              int     u_dim1, 
-              double* up,
-              /* With mode=1: On entry, u[] must contain the pivot vector.
-                 On exit, u[] and up contain quantities defining the vector u[] of
-                 the Householder transformation. */
-              /* With mode=2: On entry, u[] and up should contain quantities previously
-                 computed with mode=1. These will not be modified. */
-              /* u_dim1 is the storage increment between elements. */
-              double* cm,
-              /* On entry, cm[] must contain the matrix (set of vectors) to which the
-                 Householder transformation is to be applied. On exit, cm[] will contain
-                 the set of transformed vectors */
-              int ice,        /* Storage increment between elements of vectors in cm[] */
-              int icv,        /* Storage increment between vectors in cm[] */
-              int ncv         /* Nr of vectors in cm[] to be transformed;
-                                 if ncv<=0, then no operations will be done on cm[] */
-              ) 
+// Givens rotation of the NNLS (see nnls_givens)
+void US_Math2::_nnls_g1( double a, double b, double* cterm, double* sterm, double* sig )
 {
-   double d1, d2, b, clinv, cl, sm;
-   int    incr, k, j, i2, i3, i4;
+   nnls_givens( a, b, cterm, sterm, sig );
+}
 
-   /* Check parameters */
-   if ( mode != 1 && mode != 2 ) return 1;
-
-   if ( m < 1 || u == NULL || u_dim1 < 1 || cm == NULL ) return 2;
-
-   if ( lpivot < 0 || lpivot >= l1 || l1 >= m ) return 0;
-
-   /* Function Body */
-   cl = ( d1 = u[ lpivot * u_dim1 ], fabs( d1 ) );
-
-   if ( mode == 2 ) // Apply transformation I+U*(U**T)/B to cm[]
-   { 
-      if ( cl <= 0.0 ) return 0;
-   } 
-   else // Construct the transformation
-   { 
-      for ( j = l1; j < m; j++ ) 
-      { /* Computing MAX */
-         d2 = ( d1 = u[ j * u_dim1 ], fabs( d1 ) ); 
-         if ( d2 > cl ) cl=d2;
-      }
-
-      if ( cl <= 0.0 ) return 0;
-
-      clinv = 1.0 / cl;
-
-      /* Computing 2nd power */
-      d1 = u[ lpivot * u_dim1 ] * clinv; 
-      sm = d1 * d1;
-      
-      for( j = l1; j < m; j++ ) 
-      {
-         d1  = u[ j * u_dim1 ] * clinv; 
-         sm += d1 * d1;
-      }
-      
-      cl *= sqrt( sm ); 
-      if ( u[ lpivot * u_dim1 ] > 0.0 ) cl = -cl;
-
-      *up                  = u[ lpivot * u_dim1 ] - cl; 
-      u[ lpivot * u_dim1 ] = cl;
-   }
-
-   if ( ncv <= 0 ) return 0;
-
-   b = (*up) * u[ lpivot * u_dim1 ];
-   
-   /* b must be nonpositive here; if b>=0., then return */
-   if ( b >= 0.0 ) return 0;
-   
-   b    = 1.0 / b; 
-   i2   = 1 -icv + ice * lpivot; 
-   incr = ice * ( l1 - lpivot );
-   
-   for ( j = 0; j < ncv; j++ ) 
-   {
-      i2 += icv; 
-      i3  = i2 + incr; 
-      i4  = i3; 
-      sm  = cm[ i2 - 1 ] * (*up);
-
-      for ( k = l1; k < m; k++ ) 
-      {
-         sm += cm[ i3 - 1 ] * u[ k * u_dim1 ]; 
-         i3 += ice;
-      }
-
-      if ( sm != 0.0 ) 
-      {
-         sm           *= b; 
-         cm[ i2 - 1 ] += sm * (*up);
-
-         for ( k = l1; k < m; k++ ) 
-         {
-            cm[ i4 - 1 ] += sm * u[ k * u_dim1 ]; 
-            i4           += ice;
-         }
-      }
-   }
-
-   return 0;
-} /* _nnls_h12 */
+// Householder transformation of the NNLS (see nnls_householder)
+int US_Math2::_nnls_h12( int     mode,
+                         int     lpivot,
+                         int     l1,
+                         int     m,
+                         double* u,
+                         int     u_dim1,
+                         double* up,
+                         double* cm,
+                         int     ice,
+                         int     icv,
+                         int     ncv )
+{
+   return nnls_householder( mode, lpivot, l1, m, u, u_dim1, up, cm, ice, icv, ncv );
+}
 
 void US_Math2::gaussian_smoothing( QVector< double >& array, int smooth )
 {
