@@ -924,7 +924,8 @@ void US_MPI_Analysis::montecarlo_pcsa()
    for ( int ii = 1; ii <= my_workers; ii++ )
    {
       worker_depth [ ii ] = ii;
-      worker_status[ ii ] = READY;
+      // NEWDATA is followed by a worker READY; consume it before dispatch.
+      worker_status[ii]   = INIT;
    }
 
    worknext         = 1;
@@ -1087,7 +1088,8 @@ void US_MPI_Analysis::montecarlo_pcsa()
             }
 
             send_udp( progress );
-            worker_status[ worker ] = READY;
+            // RESULTS_MC does not consume the following READY message.
+            // Keep this worker busy until that message permits another job.
             break;
 
          case MPI_Job::RESULTS: // Return solute data (unused worker?)
@@ -1125,8 +1127,22 @@ void US_MPI_Analysis::montecarlo_pcsa()
 
       max_rss();
       DbgLv( 1 ) << " masterMC loop-BOTTOM";
-      if ( kci_send > 0  &&  kci_recv >= kci_send )
+      // Drain each worker's final READY before shutdown, including workers
+      // that received NEWDATA but no Monte Carlo iteration.
+      // Ignore the master's slot and any spare slots in worker_status.
+      bool all_workers_ready = true;
+      for ( int ii = 1; ii <= my_workers; ii++ )
+      {
+         if ( worker_status[ii] != READY )
+         {
+            all_workers_ready = false;
+            break;
+         }
+      }
+      if ( job_queue.isEmpty() && kci_send > 0 && kci_recv >= kci_send && all_workers_ready )
+      {
          break;
+      }
    }
    DbgLv( 1 ) << " masterMC  loop-FALLTHRU mc_iter mc_iters kci_send kci_recv" << mc_iteration << mc_iterations << kci_send
               << kci_recv;
