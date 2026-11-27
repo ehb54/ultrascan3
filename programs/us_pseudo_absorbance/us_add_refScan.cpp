@@ -1,5 +1,8 @@
 #include "us_add_refScan.h"
 #include <QTextStream>
+#include <QSignalBlocker>
+#include <QDialogButtonBox>
+#include <QScrollArea>
 
 US_AddRefScan::US_AddRefScan() : US_Widgets()
 {
@@ -8,7 +11,7 @@ US_AddRefScan::US_AddRefScan() : US_Widgets()
 
     // Put the Run Info across the entire window
     QLabel* lb_run = us_banner(tr("Load the Run(s)"));
-    pb_import = us_pushbutton(tr("Import Data"));
+    pb_import = us_pushbutton(tr("Add / Load Data"));
     pb_reset = us_pushbutton(tr("Reset"), false);
     QHBoxLayout* import_lyt = new QHBoxLayout();
     import_lyt->addWidget(pb_import);
@@ -357,74 +360,86 @@ US_AddRefScan::US_AddRefScan() : US_Widgets()
 //***SLOTS***//
 
 void US_AddRefScan::slt_import(){
-    QFileDialog* fdialog;
-    QStringList dir_list;
-    fdialog = new QFileDialog(this, Qt::Dialog);
-    fdialog->setDirectory(US_Settings::importDir());
-    fdialog->setOption( QFileDialog::ShowDirsOnly, true );
-    fdialog->setOption(QFileDialog::DontUseNativeDialog, true);
-    fdialog->resize(800, 600);
-    fdialog->setWindowTitle("Choose Directories Containing AUC Data");
-
-    QListView* fview = fdialog->findChild<QListView*>("");
-    if (fview)
-        fview->setSelectionMode(QAbstractItemView::MultiSelection);
-    QTreeView* tview = fdialog->findChild<QTreeView*>();
-    if (tview)
-        tview->setSelectionMode(QAbstractItemView::MultiSelection);
-    if (fdialog->exec())
-        dir_list = fdialog->selectedFiles();
-    delete fdialog;
-    if (dir_list.size() > 1){
-        QFileInfo dinfo(dir_list.at(1));
-        if (dinfo.path() == dir_list.at(0))
-            dir_list.removeAt(0);
-    }
-
-    if (dir_list.size() == 0)
+    const QString directory = QFileDialog::getExistingDirectory(
+        this, tr("Choose a Folder Containing AUC Data"), US_Settings::importDir());
+    if (directory.isEmpty())
         return;
-    pb_import->setDisabled(true);
-    this->setCursor(QCursor(Qt::BusyCursor));
-    QString dir_name;
-    QDir dir;
+    QDir dir(directory);
     dir.setSorting(QDir::Name);
     dir.setFilter(QDir::Files);
     dir.setNameFilters(QStringList("*.auc"));
     QStringList files_path;
-    runIDs.clear();
+    QMap<QString, QStringList> cellChannelFiles;
+    for (const QFileInfo& info : dir.entryInfoList()){
+        const QString path = info.canonicalFilePath();
+        if (importedFiles.contains(path))
+            continue;
+        const QString name = info.fileName();
+        const QString cellChannel = tr("Cell %1 / Channel %2")
+            .arg(name.section(".", -4, -4), name.section(".", -3, -3));
+        cellChannelFiles[cellChannel].append(path);
+        files_path.append(path);
+    }
 
-    bool runID_changed = false;
+    if (cellChannelFiles.size() > 1){
+        QDialog dialog(this);
+        dialog.setWindowTitle(tr("Select Cells and Channels"));
+        QVBoxLayout* layout = new QVBoxLayout(&dialog);
+        layout->addWidget(new QLabel(tr("Select the cells/channels to add:"), &dialog));
+        QScrollArea* scroll = new QScrollArea(&dialog);
+        scroll->setWidgetResizable(true);
+        QWidget* choices = new QWidget(scroll);
+        QVBoxLayout* choicesLayout = new QVBoxLayout(choices);
+        QMap<QString, QCheckBox*> checkboxes;
+        for (auto it = cellChannelFiles.cbegin(); it != cellChannelFiles.cend(); ++it){
+            QCheckBox* checkbox = new QCheckBox(it.key(), choices);
+            checkbox->setChecked(true);
+            choicesLayout->addWidget(checkbox);
+            checkboxes.insert(it.key(), checkbox);
+        }
+        scroll->setWidget(choices);
+        layout->addWidget(scroll);
+        QDialogButtonBox* buttons = new QDialogButtonBox(
+            QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+        buttons->button(QDialogButtonBox::Ok)->setText(tr("Add / Load Data"));
+        layout->addWidget(buttons);
+        connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+        connect(buttons, &QDialogButtonBox::accepted, &dialog, [&](){
+            for (QCheckBox* checkbox : checkboxes){
+                if (checkbox->isChecked()){
+                    dialog.accept();
+                    return;
+                }
+            }
+            QMessageBox::information(&dialog, tr("Select Cells and Channels"),
+                tr("Select at least one cell/channel to add."));
+        });
+        dialog.resize(360, 300);
+        if (dialog.exec() != QDialog::Accepted)
+            return;
+        files_path.clear();
+        for (auto it = checkboxes.cbegin(); it != checkboxes.cend(); ++it){
+            if (it.value()->isChecked())
+                files_path.append(cellChannelFiles.value(it.key()));
+        }
+    }
+
+    pb_import->setDisabled(true);
+    this->setCursor(QCursor(Qt::BusyCursor));
+    QStringList importedRunIDs = runIDs;
     QString status;
     QStringList runID_old, runID_new;
-    QStringList runTypeList;
-    for (int i = 0; i < dir_list.size(); ++i){
-        dir_name = dir_list.at(i);
-        dir.setPath(dir_name);
-        dir.makeAbsolute();
-        QFileInfoList f_info = dir.entryInfoList();
-        for (int j = 0; j < f_info.size(); ++j){
-            files_path << f_info.at(j).absoluteFilePath();
-            QString fname = f_info.at(j).fileName();
-            QString rtp = fname.section(".", -5, -5);
-            QString rid = fname.section(".", 0, -6);
-            QString rido = fname.section(".", 0, -6);
-            QRegularExpression re( "[^A-Za-z0-9_-]" );
-            int reIdx = rid.indexOf(re, 0);
-            if (reIdx >= 0) runID_changed = true;
-            while (reIdx >= 0){
-                rid = rid.replace(reIdx, 1, "_");
-                reIdx = rid.indexOf(re, reIdx);
-            }
-            if (runID_changed)
-                if (!runID_new.contains(rid)){
-                    runID_new << rid;
-                    runID_old << rido;
-                }
-            if (!runIDs.contains(rid))
-                runIDs << rid;
-            if (!runTypeList.contains(rtp))
-                runTypeList << rtp;
+    for (const QString& path : files_path){
+        const QString fname = QFileInfo(path).fileName();
+        const QString originalID = fname.section(".", 0, -6);
+        QString rid = originalID;
+        rid.replace(QRegularExpression("[^A-Za-z0-9_-]"), "_");
+        if (rid != originalID && !runID_new.contains(rid)){
+            runID_new << rid;
+            runID_old << originalID;
         }
+        if (!importedRunIDs.contains(rid))
+            importedRunIDs << rid;
     }
 
     if (runID_new.size() > 0){
@@ -437,23 +452,13 @@ void US_AddRefScan::slt_import(){
     }
 
     if (files_path.size() == 0){
-        QMessageBox::warning( this, tr( "Error" ), tr("AUC file(s) not found !"));
+        QMessageBox::warning( this, tr( "Error" ), tr("No new AUC files found in the selected folder."));
         status = "Error: AUC file(s) not found !";
         le_status->setText(status);
         pb_import->setEnabled(true);
         this->setCursor(QCursor(Qt::ArrowCursor));
         return;
     }
-
-    if (runTypeList.size() > 1){
-        QMessageBox::warning( this, tr( "Error" ), tr("Multiple run types found !"));
-        status = "Error: multiple run types found !";
-        le_status->setText(status);
-        pb_import->setEnabled(true);
-        this->setCursor(QCursor(Qt::ArrowCursor));
-        return;
-    }else
-        runType = runTypeList.at(0);
 
     if (! parse_files(files_path)){
         le_status->setText("Wrong files");
@@ -462,22 +467,41 @@ void US_AddRefScan::slt_import(){
         return;
     }
 
+    runIDs = importedRunIDs;
+    importedFiles.append(files_path);
+    // Recompute processing results for the combined set of scans.
+    const QSignalBlocker clusterBlocker(ckb_cluster);
+    const QSignalBlocker alignBlocker(ckb_align);
+    const QSignalBlocker bandwidthBlocker(ct_bws);
+    const QSignalBlocker windowBlocker(ct_winlen);
+    ckb_cluster->setChecked(false);
+    ckb_align->setChecked(false);
+    ckb_bws_all->setChecked(false);
+    winlen = winlen_dflt;
+    slt_cluster(cls_state::OFF);
+    clusterIDs.clear();
+    clusterRng.clear();
+    scanWavl_S.clear();
+    wavlScid_S.clear();
+    wavlBw.clear();
+    wavlBwS.clear();
     mean_rmsd();
     estimate_bw();
     status = "wavelengths= %1, Scans= %2";
     le_status->setText(status.arg(n_wavls).arg(n_scans));
     lb_runIDs->setText(runIDs.join(", "));
 
-    connect(ckb_cluster,   US_CB_STATE_CHANGED, this, &US_AddRefScan::slt_cls_state);
-    connect(ckb_align,     US_CB_STATE_CHANGED, this, &US_AddRefScan::slt_aln_state);
-    connect(this,          &US_AddRefScan::sig_cluster,  this, &US_AddRefScan::slt_cluster);
-    connect(ct_bws,        &QwtCounter::valueChanged, this, &US_AddRefScan::slt_new_bws);
-    connect(pb_find_merge, &QAbstractButton::clicked,            this, &US_AddRefScan::slt_find_merge);
-    connect(ct_winlen,     &QwtCounter::valueChanged, this, &US_AddRefScan::slt_new_wlen);
-    connect(pb_reset_bws,  &QAbstractButton::clicked,            this, &US_AddRefScan::slt_reset_bws);
+    connect(ckb_cluster,   US_CB_STATE_CHANGED, this, &US_AddRefScan::slt_cls_state, Qt::UniqueConnection);
+    connect(ckb_align,     US_CB_STATE_CHANGED, this, &US_AddRefScan::slt_aln_state, Qt::UniqueConnection);
+    connect(this,          &US_AddRefScan::sig_cluster,  this, &US_AddRefScan::slt_cluster, Qt::UniqueConnection);
+    connect(ct_bws,        &QwtCounter::valueChanged, this, &US_AddRefScan::slt_new_bws, Qt::UniqueConnection);
+    connect(pb_find_merge, &QAbstractButton::clicked,            this, &US_AddRefScan::slt_find_merge, Qt::UniqueConnection);
+    connect(ct_winlen,     &QwtCounter::valueChanged, this, &US_AddRefScan::slt_new_wlen, Qt::UniqueConnection);
+    connect(pb_reset_bws,  &QAbstractButton::clicked,            this, &US_AddRefScan::slt_reset_bws, Qt::UniqueConnection);
 
     set_wavl_ctrl();
     hasData = true;
+    pb_import->setEnabled(true);
     pb_reset->setEnabled(true);
     ckb_CA_state->setEnabled(true);
     ckb_CA_local->setEnabled(true);
@@ -512,6 +536,7 @@ void US_AddRefScan::slt_reset(){
     n_wavls = 0;
     n_points = 0;
     runIDs.clear();
+    importedFiles.clear();
     runType.clear();
     winlen = winlen_dflt;
     wavelength.clear();
@@ -1377,26 +1402,39 @@ bool US_AddRefScan::parse_files(QStringList files_path){
     int n_files = files_path.size();
     QString status = "Parsing Files: %1 %2";
     QString percent;
-    xvalues.clear();
+    // Stage the combined data so a rejected file leaves the loaded scans intact.
+    QVector<double> xvalues = this->xvalues;
+    QVector<QVector<double>> scanRvalues = this->scanRvalues;
+    QVector<int> scanWavl = this->scanWavl;
+    QVector<int> wavelength = this->wavelength;
+    QVector<QVector<int>> wavlScid;
+    QString expectedType = runType;
+    int n_points = this->n_points;
     QVector<double> xval;
     int min_x = -1, max_x = -1;
     bool flag_check_xval = true;
     for (int i = 0; i < n_files; ++i){
         US_DataIO::RawData raw_data;
-        US_DataIO::readRawData(files_path.at(i), raw_data);
+        if (US_DataIO::readRawData(files_path.at(i), raw_data) != US_DataIO::OK ||
+            raw_data.xvalues.isEmpty() || raw_data.scanData.isEmpty()){
+            QMessageBox::warning(this, tr("Error"),
+                tr("Unable to read AUC data from:\n%1").arg(files_path.at(i)));
+            return false;
+        }
+        const QString fileType = QString(QChar(raw_data.type[0]))
+            + QChar(raw_data.type[1]);
+        if (expectedType.isEmpty())
+            expectedType = fileType;
+        if (fileType != expectedType){
+            QMessageBox::warning(this, tr("AUC Type Mismatch"),
+                tr("The file has AUC type %1, but the loaded data has type %2.\n"
+                   "No files were added.\n\n%3")
+                    .arg(fileType, expectedType, files_path.at(i)));
+            return false;
+        }
         percent = QString::number(100.0 * (i + 1) / n_files, 'f', 1);
         le_status->setText(status.arg(percent).arg(QChar(37)));
         qApp->processEvents();
-        QString rawT;
-        rawT.append(raw_data.type[0]).append(raw_data.type[1]);
-        if (rawT != runType){
-            QMessageBox::information( this,
-                                      tr( "Error" ), tr("The run type of the following binary data "
-                                                        "does not match the filename !\n%1").arg(
-                                                        files_path.at(0)));
-            return false;
-        }
-
         if (flag_check_xval){
             int x1 = qRound(raw_data.xvalues.first() * 1000);
             int x2 = qRound(raw_data.xvalues.last() * 1000);
@@ -1498,8 +1536,8 @@ bool US_AddRefScan::parse_files(QStringList files_path){
     }
 
     std::sort(wavelength.begin(), wavelength.end());
-    n_scans = scanWavl.size();
-    n_wavls = wavelength.size();
+    const int n_scans = scanWavl.size();
+    const int n_wavls = wavelength.size();
     QVector<int> ids_wl_i;
     for (int i = 0; i < n_wavls; ++i){
         ids_wl_i.clear();
@@ -1508,6 +1546,15 @@ bool US_AddRefScan::parse_files(QStringList files_path){
                 ids_wl_i.append(j);
         wavlScid << ids_wl_i;
     }
+    this->xvalues = xvalues;
+    this->scanRvalues = scanRvalues;
+    this->scanWavl = scanWavl;
+    this->wavelength = wavelength;
+    this->wavlScid = wavlScid;
+    this->n_points = n_points;
+    this->n_scans = n_scans;
+    this->n_wavls = n_wavls;
+    runType = expectedType;
     return true;
 }
 

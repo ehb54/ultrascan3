@@ -211,6 +211,7 @@ class US_AddRefScan : public US_Widgets
         US_Passwd pw; ///< Password object
         US_DB2* dbCon; ///< Database connection
 
+        QStringList importedFiles; ///< Paths of already imported AUC files
         QStringList runIDs; ///< List of run IDs
         QString runType; ///< Run type
         int wavl_id; ///< Wavelength ID
