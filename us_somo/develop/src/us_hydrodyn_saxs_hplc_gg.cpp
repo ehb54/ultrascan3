@@ -832,16 +832,30 @@ bool US_Hydrodyn_Saxs_Hplc::pvalue( const QString & file, double &P, QString &er
       return false;
    }
 
+   return pvalue_s( file, f_qs[ file ], f_Is[ file ], f_gaussians[ file ],
+                    le_gauss_fit_start->text().toDouble(), le_gauss_fit_end->text().toDouble(),
+                    gaussian_type, gaussian_type_size, dist1_active, dist2_active,
+                    usu, &compute_gaussian_sum_partials, P, errormsg );
+}
+
+bool US_Hydrodyn_Saxs_Hplc::pvalue_s( const QString & file,
+                                      const vector < double > & fq,
+                                      const vector < double > & fI,
+                                      const vector < double > & g,
+                                      double q_start, double q_end,
+                                      int gtype, int gtype_size, bool d1_active, bool d2_active,
+                                      US_Saxs_Util * u,
+                                      vector < vector < double > > * partials,
+                                      double &P, QString &errormsg ) {
+   errormsg = "";
+
    // trim to fit
 
    vector < double > q;
    vector < double > I;
 
-   double q_start = le_gauss_fit_start->text().toDouble();
-   double q_end   = le_gauss_fit_end  ->text().toDouble();
-
-   int qsize = (int) f_qs[ file ].size();
-   int Isize = (int) f_Is[ file ].size();
+   int qsize = (int) fq.size();
+   int Isize = (int) fI.size();
 
    if ( qsize != Isize ) {
       errormsg = QString( "Internal error: pvalue() %1 differing I & q sizes" ).arg( file );
@@ -851,10 +865,10 @@ bool US_Hydrodyn_Saxs_Hplc::pvalue( const QString & file, double &P, QString &er
    vector < vector < double > > Icm( 2 );
 
    for ( int i = 0; i < qsize; ++i ) {
-      if ( f_qs[ file ][ i ] >= q_start 
-           && f_qs[ file ][ i ] <= q_end ) {
-         q.push_back( f_qs[ file ][ i ] );
-         Icm[0].push_back( f_Is[ file ][ i ] );
+      if ( fq[ i ] >= q_start 
+           && fq[ i ] <= q_end ) {
+         q.push_back( fq[ i ] );
+         Icm[0].push_back( fI[ i ] );
       }
    }
          
@@ -870,10 +884,10 @@ bool US_Hydrodyn_Saxs_Hplc::pvalue( const QString & file, double &P, QString &er
       int                          S;
       int                          C;
 
-      Icm[ 1 ] = compute_gaussian_sum( q, f_gaussians[ file ] );
+      Icm[ 1 ] = compute_gaussian_sum_s( q, g, gtype, gtype_size, d1_active, d2_active, partials );
 
-      if ( !usu->cormap( q, Icm, rkl, N, S, C, P ) ) {
-         errormsg = usu->errormsg;
+      if ( !u->cormap( q, Icm, rkl, N, S, C, P ) ) {
+         errormsg = u->errormsg;
          return false;
       }
    }

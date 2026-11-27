@@ -20,6 +20,7 @@
 #include <qwt_wheel.h>
 #include <qtimer.h>
 #include <qmutex.h>
+#include <qsplitter.h>
 
 #include "qwt/scrollbar.h"
 #include "qwt/scrollzoomer.h"
@@ -129,6 +130,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       friend class US_Hydrodyn_SasOptionsSaxs;
 
       friend class US_Hydrodyn_Saxs_Iqq_Residuals;
+      friend class US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot;
       friend class US_Hydrodyn;
       friend class US_Hydrodyn_Dad;
       friend class US_Hydrodyn_Dad_Conc;
@@ -276,6 +278,13 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_pr_info2;
       QPushButton *pb_rescale;
       QPushButton *pb_rescale_y;
+      // the I(q) plot's axes, linear or logarithmic, and the colors of its curves; the colors and the Save plots of
+      // the P(r) section
+      QPushButton *pb_axis_x;
+      QPushButton *pb_axis_y;
+      QPushButton *pb_color;
+      QPushButton *pb_pp_pr;
+      QPushButton *pb_color_pr;
 
       QwtCounter *cnt_bin_size;
       QwtCounter *cnt_smooth;
@@ -338,6 +347,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void usp_config_plot_resid( const QPoint & );
       void           resid_zoomed( const QRect & );
       void           resid_resized();
+      void           qs_plots_moved();
 
    public:
       // --- gui_script entry points (see the "sas" command in us_hydrodyn_script.cpp) ---
@@ -400,6 +410,19 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       vector < vector <PDB_atom> >                    bead_models;
       vector < unsigned int >                         selected_models;
       vector < QColor >                               plot_colors;
+      // the color of the I(q) or P(r) curve at a position: plot_colors from its position, shifted by the Color
+      // button of its section
+      QColor                                          iq_color( int i );
+      QColor                                          pr_color( int p );
+      int                                             iq_color_offset;
+      int                                             pr_color_offset;
+      // the I(q) plot's axes as chosen with Log X / Lin X and Log Y / Lin Y; the Guinier plots are always linear in
+      // q^2 and logarithmic in intensity
+      bool                                            iq_axis_x_log;
+      bool                                            iq_axis_y_log;
+      // the I(q) and residuals plots' axis titles and scales, from the plot's mode and these choices, and the axis
+      // buttons' state (not available in the Guinier plots)
+      void                                            set_iq_axes();
       vector < QwtPlotCurve * >                       plotted_Iq;
 
       vector < double >                               exact_q;
@@ -527,6 +550,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QBoxLayout * qbl_plots;
       QBoxLayout * qbl_resid;
+      QSplitter  * qs_plots;
+      bool         qs_plots_user_sized;
 
       void replot_pr();
 
@@ -814,6 +839,53 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
                           vector < double > q,
                           QString filename );
 
+      // Add a finished extrapolated curve to the plot (its name is made unique at this point),
+      // record its concentration tag / psv / i0se and, when offer_save is set, ask where to save it.
+      // Called at the end of do_extrap_c0(), or later by the per-q fit viewer when the user keeps the
+      // curve. hdr_extra is appended to the saved file's header line; msg_tail completes the
+      // "Added zero-concentration curve" log line. Returns the name the curve was plotted under.
+      QString extrap_c0_commit( QString           base_name,
+                                vector < double > q,
+                                vector < double > I,
+                                vector < double > I_err,
+                                double            conc_tag,
+                                double            psv,
+                                double            i0se,
+                                QString           hdr_extra,
+                                bool              offer_save,
+                                QString           msg_tail );
+
+      // ---- extrapolate-to-zero-concentration scripting (us3_somo -g "saxs_extrap_c0 <ctrl>") ----
+      // Non-interactive driver + state: when extrap_c0_script is set, load_iqq_csv() and
+      // do_extrap_c0() skip their two modal dialogs and read every choice from these members,
+      // reproducing the exact GUI computation and writing the extrapolated curve to a file for
+      // regression testing / validation of all option combinations.
+      void saxs_extrap_c0_script( QString controlfile );  // parse ctrl, drive the whole run
+      bool extrap_c0_script = false;                       // master gate for the dialog bypass
+      QString extrap_c0_script_out;                        // output .dat path for the result curve
+      map < QString, double > extrap_c0_script_conc;       // optional per-curve concentration overrides
+      int    extrap_c0_script_model          = 0;          // 0 additive (default), 1 reciprocal, 2 2nd-virial
+      bool   extrap_c0_script_ref_scale      = false;      // output on reference (max-conc) absolute scale
+      bool   extrap_c0_script_merge_ref      = false;      // splice reference curve above merge q
+      bool   extrap_c0_script_sd_weights     = true;       // 1/sigma^2 weighting of the regressions
+      int    extrap_c0_script_fit_broaden    = 0;          // additive fit-broadening q-window (0 = off)
+      bool   extrap_c0_script_recompute_in   = false;      // transiently reassess input SDs before fit
+      int    extrap_c0_script_recompute_mode = 0;          // 0 constant, 1 non-constant, 2 intensity
+      int    extrap_c0_script_sd_mode        = 0;          // post-fit SD reassess: 0 off,1 C,2 N,3 I
+      bool   extrap_c0_script_discard        = false;      // auto-discard one outlier concentration
+      double extrap_c0_script_outlier_sigma  = 3e0;        // outlier magnitude threshold
+      double extrap_c0_script_outlier_chi2   = 1.5e0;      // required pooled chi^2 gain to confirm drop
+      int    extrap_c0_script_outlier_max    = 1;          // max curves the QC may discard (1 = original)
+      bool   extrap_c0_script_outlier_leverage = true;     // studentize nomination residual by sqrt(1-h)
+      QString extrap_c0_script_reference;                  // explicit reference curve (name or conc); "" = max conc
+      double  extrap_c0_script_merge_q       = 0e0;        // manual splice switchover q; 0 = automatic
+      bool    extrap_c0_script_merge_sd_join = false;      // scale spliced reference SDs to join the extrapolation's
+      bool    extrap_c0_script_se_repair     = true;       // low-q SD correction of the output errors
+      double  extrap_c0_script_se_repair_sigma = 3e0;      // ...only for points > this many sd off the trend
+      bool    extrap_c0_script_spike_reject  = false;      // drop single-point spikes (test along q, <= 1 per q)
+      double  extrap_c0_script_spike_sigma   = 6e0;        // ...points > this many sd off their own curve's neighbours
+      bool    extrap_c0_script_ref_scatter   = false;      // splice the curve whose point scatter best matches
+
       bool iq_plot_experimental_and_calculated_present();
       bool iq_plot_only_experimental_present();
       void clear_plot_saxs_and_replot_experimental();
@@ -873,7 +945,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       bool compute_scale_excl_vol();
 
       void push_back_color_if_ok( QColor bg, QColor set );
-      unsigned int pen_width;
+      unsigned int pen_width;     // the I(q) plot's line width (its Width button)
+      unsigned int pr_pen_width;  // the P(r) plot's (its own Width button)
 
       bool load_check_csvs_compatible( QStringList filenames );
       QString unify_csv_files( QStringList filenames );
@@ -1053,6 +1126,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
    private slots:
 
       void set_width();
+      void set_pr_width();
       void setupGUI();
       void set_saxs_sans();
       void set_saxs_sans(int);
@@ -1081,6 +1155,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void clear_plot_pr( bool full_clear = false );
       void cancel();
       void pp();
+      void pp_pr();
+      void iq_axis_x();
+      void iq_axis_y();
+      void iq_color_rotate();
+      void pr_color_rotate();
       void help();
       void options();
       void stop();

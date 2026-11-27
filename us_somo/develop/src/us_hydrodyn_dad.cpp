@@ -3382,6 +3382,11 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
 
    QRegularExpression rx_ok_line("^(\\s+(-|)|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
    rx_ok_line.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
+   // a file without a header line starts with its first point (the SAS window's loader reads it so too)
+   if ( row_offset == 1 && US_Saxs_Util::first_line_is_data( qv, q_offset, I_offset + 1 ) )
+   {
+      row_offset = 0;
+   }
    for ( int i = row_offset; i < (int) qv.size(); i++ )
    {
       QRegularExpressionMatch rx_ok_line_m = rx_ok_line.match( qv[i] );

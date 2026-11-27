@@ -1620,15 +1620,15 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_GAUSS( our_vector *v )
    double center;
    double width;
 
-   for ( unsigned int i = 0; i < ( unsigned int ) HFIT::param_fixed.size(); )
+   for ( unsigned int i = 0; i < ( unsigned int ) HFIT::cur->param_fixed.size(); )
    {
-      if ( HFIT::param_fixed[ i ] )
+      if ( HFIT::cur->param_fixed[ i ] )
       {
-         height = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+         height = HFIT::cur->fixed_params[ HFIT::cur->param_pos[ i ] ];
       } else {
-         height = v->d[ HFIT::param_pos[ i ] ];
-         if ( height < HFIT::param_min[ HFIT::param_pos[ i ] ] ||
-              height > HFIT::param_max[ HFIT::param_pos[ i ] ] )
+         height = v->d[ HFIT::cur->param_pos[ i ] ];
+         if ( height < HFIT::cur->param_min[ HFIT::cur->param_pos[ i ] ] ||
+              height > HFIT::cur->param_max[ HFIT::cur->param_pos[ i ] ] )
          {
             return 1e99;
          }
@@ -1636,13 +1636,13 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_GAUSS( our_vector *v )
 
       i++;
 
-      if ( HFIT::param_fixed[ i ] )
+      if ( HFIT::cur->param_fixed[ i ] )
       {
-         center = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+         center = HFIT::cur->fixed_params[ HFIT::cur->param_pos[ i ] ];
       } else {
-         center = v->d[ HFIT::param_pos[ i ] ];
-         if ( center < HFIT::param_min[ HFIT::param_pos[ i ] ] ||
-              center > HFIT::param_max[ HFIT::param_pos[ i ] ] )
+         center = v->d[ HFIT::cur->param_pos[ i ] ];
+         if ( center < HFIT::cur->param_min[ HFIT::cur->param_pos[ i ] ] ||
+              center > HFIT::cur->param_max[ HFIT::cur->param_pos[ i ] ] )
          {
             return 1e99;
          }
@@ -1650,13 +1650,13 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_GAUSS( our_vector *v )
 
       i++;
 
-      if ( HFIT::param_fixed[ i ] )
+      if ( HFIT::cur->param_fixed[ i ] )
       {
-         width = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+         width = HFIT::cur->fixed_params[ HFIT::cur->param_pos[ i ] ];
       } else {
-         width = v->d[ HFIT::param_pos[ i ] ];
-         if ( width < HFIT::param_min[ HFIT::param_pos[ i ] ] ||
-              width > HFIT::param_max[ HFIT::param_pos[ i ] ] )
+         width = v->d[ HFIT::cur->param_pos[ i ] ];
+         if ( width < HFIT::cur->param_min[ HFIT::cur->param_pos[ i ] ] ||
+              width > HFIT::cur->param_max[ HFIT::cur->param_pos[ i ] ] )
          {
             return 1e99;
          }
@@ -1696,15 +1696,15 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMG( our_vector *v )
    double width;
    double dist1;
 
-   for ( unsigned int i = 0; i < ( unsigned int ) HFIT::param_fixed.size(); )
+   for ( unsigned int i = 0; i < ( unsigned int ) HFIT::cur->param_fixed.size(); )
    {
-      if ( HFIT::param_fixed[ i ] )
+      if ( HFIT::cur->param_fixed[ i ] )
       {
-         height = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+         height = HFIT::cur->fixed_params[ HFIT::cur->param_pos[ i ] ];
       } else {
-         height = v->d[ HFIT::param_pos[ i ] ];
-         if ( height < HFIT::param_min[ HFIT::param_pos[ i ] ] ||
-              height > HFIT::param_max[ HFIT::param_pos[ i ] ] )
+         height = v->d[ HFIT::cur->param_pos[ i ] ];
+         if ( height < HFIT::cur->param_min[ HFIT::cur->param_pos[ i ] ] ||
+              height > HFIT::cur->param_max[ HFIT::cur->param_pos[ i ] ] )
          {
             return 1e99;
          }
@@ -1712,13 +1712,13 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMG( our_vector *v )
 
       i++;
 
-      if ( HFIT::param_fixed[ i ] )
+      if ( HFIT::cur->param_fixed[ i ] )
       {
-         center = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+         center = HFIT::cur->fixed_params[ HFIT::cur->param_pos[ i ] ];
       } else {
-         center = v->d[ HFIT::param_pos[ i ] ];
-         if ( center < HFIT::param_min[ HFIT::param_pos[ i ] ] ||
-              center > HFIT::param_max[ HFIT::param_pos[ i ] ] )
+         center = v->d[ HFIT::cur->param_pos[ i ] ];
+         if ( center < HFIT::cur->param_min[ HFIT::cur->param_pos[ i ] ] ||
+              center > HFIT::cur->param_max[ HFIT::cur->param_pos[ i ] ] )
          {
             return 1e99;
          }
@@ -1726,13 +1726,13 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMG( our_vector *v )
 
       i++;
 
-      if ( HFIT::param_fixed[ i ] )
+      if ( HFIT::cur->param_fixed[ i ] )
       {
-         width = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+         width = HFIT::cur->fixed_params[ HFIT::cur->param_pos[ i ] ];
       } else {
-         width = v->d[ HFIT::param_pos[ i ] ];
-         if ( width < HFIT::param_min[ HFIT::param_pos[ i ] ] ||
-              width > HFIT::param_max[ HFIT::param_pos[ i ] ] )
+         width = v->d[ HFIT::cur->param_pos[ i ] ];
+         if ( width < HFIT::cur->param_min[ HFIT::cur->param_pos[ i ] ] ||
+              width > HFIT::cur->param_max[ HFIT::cur->param_pos[ i ] ] )
          {
             return 1e99;
          }
@@ -1740,18 +1740,18 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMG( our_vector *v )
 
       i++;
 
-      if ( HFIT::param_fixed[ i ] )
+      if ( HFIT::cur->param_fixed[ i ] )
       {
-         if ( HFIT::comm_backref.count( i ) )
+         if ( HFIT::cur->comm_backref.count( i ) )
          {
-            dist1 = v->d              [ HFIT::comm_backref[ i ] ];
+            dist1 = v->d              [ HFIT::cur->comm_backref[ i ] ];
          } else {
-            dist1 = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+            dist1 = HFIT::cur->fixed_params[ HFIT::cur->param_pos[ i ] ];
          }               
       } else {
-         dist1 = v->d         [ HFIT::param_pos[ i ] ];
-         if ( dist1 < HFIT::param_min[ HFIT::param_pos[ i ] ] ||
-              dist1 > HFIT::param_max[ HFIT::param_pos[ i ] ] )
+         dist1 = v->d         [ HFIT::cur->param_pos[ i ] ];
+         if ( dist1 < HFIT::cur->param_min[ HFIT::cur->param_pos[ i ] ] ||
+              dist1 > HFIT::cur->param_max[ HFIT::cur->param_pos[ i ] ] )
          {
             return 1e99;
          }
@@ -1853,15 +1853,15 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_GMG( our_vector *v )
    double width;
    double dist1;
 
-   for ( unsigned int i = 0; i < ( unsigned int ) HFIT::param_fixed.size(); )
+   for ( unsigned int i = 0; i < ( unsigned int ) HFIT::cur->param_fixed.size(); )
    {
-      if ( HFIT::param_fixed[ i ] )
+      if ( HFIT::cur->param_fixed[ i ] )
       {
-         height = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+         height = HFIT::cur->fixed_params[ HFIT::cur->param_pos[ i ] ];
       } else {
-         height = v->d[ HFIT::param_pos[ i ] ];
-         if ( height < HFIT::param_min[ HFIT::param_pos[ i ] ] ||
-              height > HFIT::param_max[ HFIT::param_pos[ i ] ] )
+         height = v->d[ HFIT::cur->param_pos[ i ] ];
+         if ( height < HFIT::cur->param_min[ HFIT::cur->param_pos[ i ] ] ||
+              height > HFIT::cur->param_max[ HFIT::cur->param_pos[ i ] ] )
          {
             return 1e99;
          }
@@ -1869,13 +1869,13 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_GMG( our_vector *v )
 
       i++;
 
-      if ( HFIT::param_fixed[ i ] )
+      if ( HFIT::cur->param_fixed[ i ] )
       {
-         center = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+         center = HFIT::cur->fixed_params[ HFIT::cur->param_pos[ i ] ];
       } else {
-         center = v->d[ HFIT::param_pos[ i ] ];
-         if ( center < HFIT::param_min[ HFIT::param_pos[ i ] ] ||
-              center > HFIT::param_max[ HFIT::param_pos[ i ] ] )
+         center = v->d[ HFIT::cur->param_pos[ i ] ];
+         if ( center < HFIT::cur->param_min[ HFIT::cur->param_pos[ i ] ] ||
+              center > HFIT::cur->param_max[ HFIT::cur->param_pos[ i ] ] )
          {
             return 1e99;
          }
@@ -1883,13 +1883,13 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_GMG( our_vector *v )
 
       i++;
 
-      if ( HFIT::param_fixed[ i ] )
+      if ( HFIT::cur->param_fixed[ i ] )
       {
-         width = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+         width = HFIT::cur->fixed_params[ HFIT::cur->param_pos[ i ] ];
       } else {
-         width = v->d[ HFIT::param_pos[ i ] ];
-         if ( width < HFIT::param_min[ HFIT::param_pos[ i ] ] ||
-              width > HFIT::param_max[ HFIT::param_pos[ i ] ] )
+         width = v->d[ HFIT::cur->param_pos[ i ] ];
+         if ( width < HFIT::cur->param_min[ HFIT::cur->param_pos[ i ] ] ||
+              width > HFIT::cur->param_max[ HFIT::cur->param_pos[ i ] ] )
          {
             return 1e99;
          }
@@ -1897,18 +1897,18 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_GMG( our_vector *v )
 
       i++;
 
-      if ( HFIT::param_fixed[ i ] )
+      if ( HFIT::cur->param_fixed[ i ] )
       {
-         if ( HFIT::comm_backref.count( i ) )
+         if ( HFIT::cur->comm_backref.count( i ) )
          {
-            dist1 = v->d              [ HFIT::comm_backref[ i ] ];
+            dist1 = v->d              [ HFIT::cur->comm_backref[ i ] ];
          } else {
-            dist1 = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+            dist1 = HFIT::cur->fixed_params[ HFIT::cur->param_pos[ i ] ];
          }               
       } else {
-         dist1 = v->d         [ HFIT::param_pos[ i ] ];
-         if ( dist1 < HFIT::param_min[ HFIT::param_pos[ i ] ] ||
-              dist1 > HFIT::param_max[ HFIT::param_pos[ i ] ] )
+         dist1 = v->d         [ HFIT::cur->param_pos[ i ] ];
+         if ( dist1 < HFIT::cur->param_min[ HFIT::cur->param_pos[ i ] ] ||
+              dist1 > HFIT::cur->param_max[ HFIT::cur->param_pos[ i ] ] )
          {
             return 1e99;
          }
@@ -1980,15 +1980,15 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMGGMG( our_vector *v )
    double dist1;
    double dist2;
 
-   for ( unsigned int i = 0; i < ( unsigned int ) HFIT::param_fixed.size(); )
+   for ( unsigned int i = 0; i < ( unsigned int ) HFIT::cur->param_fixed.size(); )
    {
-      if ( HFIT::param_fixed[ i ] )
+      if ( HFIT::cur->param_fixed[ i ] )
       {
-         height = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+         height = HFIT::cur->fixed_params[ HFIT::cur->param_pos[ i ] ];
       } else {
-         height = v->d[ HFIT::param_pos[ i ] ];
-         if ( height < HFIT::param_min[ HFIT::param_pos[ i ] ] ||
-              height > HFIT::param_max[ HFIT::param_pos[ i ] ] )
+         height = v->d[ HFIT::cur->param_pos[ i ] ];
+         if ( height < HFIT::cur->param_min[ HFIT::cur->param_pos[ i ] ] ||
+              height > HFIT::cur->param_max[ HFIT::cur->param_pos[ i ] ] )
          {
             return 1e99;
          }
@@ -1996,13 +1996,13 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMGGMG( our_vector *v )
 
       i++;
 
-      if ( HFIT::param_fixed[ i ] )
+      if ( HFIT::cur->param_fixed[ i ] )
       {
-         center = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+         center = HFIT::cur->fixed_params[ HFIT::cur->param_pos[ i ] ];
       } else {
-         center = v->d[ HFIT::param_pos[ i ] ];
-         if ( center < HFIT::param_min[ HFIT::param_pos[ i ] ] ||
-              center > HFIT::param_max[ HFIT::param_pos[ i ] ] )
+         center = v->d[ HFIT::cur->param_pos[ i ] ];
+         if ( center < HFIT::cur->param_min[ HFIT::cur->param_pos[ i ] ] ||
+              center > HFIT::cur->param_max[ HFIT::cur->param_pos[ i ] ] )
          {
             return 1e99;
          }
@@ -2010,18 +2010,18 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMGGMG( our_vector *v )
 
       i++;
 
-      if ( HFIT::param_fixed[ i ] )
+      if ( HFIT::cur->param_fixed[ i ] )
       {
-         if ( HFIT::comm_backref.count( i ) )
+         if ( HFIT::cur->comm_backref.count( i ) )
          {
-            width = v->d              [ HFIT::comm_backref[ i ] ] * HFIT::conc_ratios_map[ i ];
+            width = v->d              [ HFIT::cur->comm_backref[ i ] ] * HFIT::cur->conc_ratios_map[ i ];
          } else {
-            width = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+            width = HFIT::cur->fixed_params[ HFIT::cur->param_pos[ i ] ];
          }
       } else {
-         width = v->d[ HFIT::param_pos[ i ] ];
-         if ( width < HFIT::param_min[ HFIT::param_pos[ i ] ] ||
-              width > HFIT::param_max[ HFIT::param_pos[ i ] ] )
+         width = v->d[ HFIT::cur->param_pos[ i ] ];
+         if ( width < HFIT::cur->param_min[ HFIT::cur->param_pos[ i ] ] ||
+              width > HFIT::cur->param_max[ HFIT::cur->param_pos[ i ] ] )
          {
             return 1e99;
          }
@@ -2029,18 +2029,18 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMGGMG( our_vector *v )
 
       i++;
 
-      if ( HFIT::param_fixed[ i ] )
+      if ( HFIT::cur->param_fixed[ i ] )
       {
-         if ( HFIT::comm_backref.count( i ) )
+         if ( HFIT::cur->comm_backref.count( i ) )
          {
-            dist1 = v->d              [ HFIT::comm_backref[ i ] ];
+            dist1 = v->d              [ HFIT::cur->comm_backref[ i ] ];
          } else {
-            dist1 = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+            dist1 = HFIT::cur->fixed_params[ HFIT::cur->param_pos[ i ] ];
          }               
       } else {
-         dist1 = v->d         [ HFIT::param_pos[ i ] ];
-         if ( dist1 < HFIT::param_min[ HFIT::param_pos[ i ] ] ||
-              dist1 > HFIT::param_max[ HFIT::param_pos[ i ] ] )
+         dist1 = v->d         [ HFIT::cur->param_pos[ i ] ];
+         if ( dist1 < HFIT::cur->param_min[ HFIT::cur->param_pos[ i ] ] ||
+              dist1 > HFIT::cur->param_max[ HFIT::cur->param_pos[ i ] ] )
          {
             return 1e99;
          }
@@ -2048,18 +2048,18 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMGGMG( our_vector *v )
 
       i++;
 
-      if ( HFIT::param_fixed[ i ] )
+      if ( HFIT::cur->param_fixed[ i ] )
       {
-         if ( HFIT::comm_backref.count( i ) )
+         if ( HFIT::cur->comm_backref.count( i ) )
          {
-            dist2 = v->d              [ HFIT::comm_backref[ i ] ];
+            dist2 = v->d              [ HFIT::cur->comm_backref[ i ] ];
          } else {
-            dist2 = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+            dist2 = HFIT::cur->fixed_params[ HFIT::cur->param_pos[ i ] ];
          }               
       } else {
-         dist2 = v->d         [ HFIT::param_pos[ i ] ];
-         if ( dist2 < HFIT::param_min[ HFIT::param_pos[ i ] ] ||
-              dist2 > HFIT::param_max[ HFIT::param_pos[ i ] ] )
+         dist2 = v->d         [ HFIT::cur->param_pos[ i ] ];
+         if ( dist2 < HFIT::cur->param_min[ HFIT::cur->param_pos[ i ] ] ||
+              dist2 > HFIT::cur->param_max[ HFIT::cur->param_pos[ i ] ] )
          {
             return 1e99;
          }

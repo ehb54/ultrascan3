@@ -397,7 +397,7 @@ void US_Hydrodyn_Saxs::guinier_frame_plot( const QString & title, const QStringL
          i < plotted_Iq.size();
          i++ )
    {
-      QColor tmp = plot_colors[ i % plot_colors.size() ];
+      QColor tmp = iq_color( i );
       color_index.push_back( (double) ( tmp.red() * 256 + tmp.green() ) * 256 + tmp.blue() );
       parameters[ QString( "%1-name" ).arg( i ) ]  = qsl_plotted_iq_names[ i ];
    }
@@ -1562,7 +1562,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
          guinier_removed.push_back( empty_removed );
       }         
    }
-   editor_msg( plot_colors[i % plot_colors.size()], plot_saxs->canvasBackground().color(), report );
+   editor_msg( iq_color( i ), plot_saxs->canvasBackground().color(), report );
    if ( ( (US_Hydrodyn *) us_hydrodyn )->gui_script )
    {
       // nobody at the keyboard: the editor is invisible, echo the report
@@ -1694,7 +1694,24 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
          gsp.maxpts = pointsmax > 0 ? pointsmax : 0;
          gsp.qrgmax = sRgmaxlimit;
          gsp.usesd  = use_SD_weighting ? -1 : 0;
-         if ( !usu.guinier_search( "data", gsp, gsr ) )
+         // guinier_search() forms the CS Guinier plot itself, so it gets I(q), not the q I(q) in "data"
+         usu.wave[ "data_I" ].q.clear( );
+         usu.wave[ "data_I" ].r.clear( );
+         usu.wave[ "data_I" ].s.clear( );
+         for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
+         {
+            if ( plotted_q[ i ][ j ] >= our_saxs_options->qstart &&
+                 plotted_q[ i ][ j ] <= our_saxs_options->qend )
+            {
+               usu.wave[ "data_I" ].q.push_back( plotted_q[ i ][ j ] );
+               usu.wave[ "data_I" ].r.push_back( plotted_I[ i ][ j ] );
+               if ( use_SD_weighting )
+               {
+                  usu.wave[ "data_I" ].s.push_back( plotted_I_error[ i ][ j ] );
+               }
+            }
+         }
+         if ( !usu.guinier_search( "data_I", gsp, gsr ) )
          {
             editor->append( QString( "Error performing CS Guinier analysis on %1\n" + gsr.errormsg + "\n" )
                             .arg( qsl_plotted_iq_names[ i ] ) );
@@ -1713,7 +1730,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
          sRgmin    = gsr.qrgmin;
          sRgmax    = gsr.qrgmax;
          chi2      = gsr.chi2_red;
-         plotted_guinier_pts_removed.erase( i );
+         plotted_cs_guinier_pts_removed.erase( i );
          {
             QString msg =
                QString( us_tr( "Robust range search for %1: quality %2, %3 windows, low-q z %4%5" ) )
@@ -2208,7 +2225,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
          guinier_removed.push_back( empty_removed );
       }         
    }
-   editor_msg( plot_colors[i % plot_colors.size()], plot_saxs->canvasBackground().color(), report );
+   editor_msg( iq_color( i ), plot_saxs->canvasBackground().color(), report );
    if ( ( (US_Hydrodyn *) us_hydrodyn )->gui_script )
    {
       // nobody at the keyboard: the editor is invisible, echo the report
@@ -2343,7 +2360,24 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
          gsp.maxpts = pointsmax > 0 ? pointsmax : 0;
          gsp.qrgmax = sRgmaxlimit;
          gsp.usesd  = use_SD_weighting ? -1 : 0;
-         if ( !usu.guinier_search( "data", gsp, gsr ) )
+         // guinier_search() forms the TV Guinier plot itself, so it gets I(q), not the q^2 I(q) in "data"
+         usu.wave[ "data_I" ].q.clear( );
+         usu.wave[ "data_I" ].r.clear( );
+         usu.wave[ "data_I" ].s.clear( );
+         for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
+         {
+            if ( plotted_q[ i ][ j ] >= our_saxs_options->qstart &&
+                 plotted_q[ i ][ j ] <= our_saxs_options->qend )
+            {
+               usu.wave[ "data_I" ].q.push_back( plotted_q[ i ][ j ] );
+               usu.wave[ "data_I" ].r.push_back( plotted_I[ i ][ j ] );
+               if ( use_SD_weighting )
+               {
+                  usu.wave[ "data_I" ].s.push_back( plotted_I_error[ i ][ j ] );
+               }
+            }
+         }
+         if ( !usu.guinier_search( "data_I", gsp, gsr ) )
          {
             editor->append( QString( "Error performing TV Guinier analysis on %1\n" + gsr.errormsg + "\n" )
                             .arg( qsl_plotted_iq_names[ i ] ) );
@@ -2362,7 +2396,7 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
          sRgmin    = gsr.qrgmin;
          sRgmax    = gsr.qrgmax;
          chi2      = gsr.chi2_red;
-         plotted_guinier_pts_removed.erase( i );
+         plotted_Rt_guinier_pts_removed.erase( i );
          {
             QString msg =
                QString( us_tr( "Robust range search for %1: quality %2, %3 windows, low-q z %4%5" ) )
@@ -2856,7 +2890,7 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
          guinier_removed.push_back( empty_removed );
       }         
    }
-   editor_msg( plot_colors[i % plot_colors.size()], plot_saxs->canvasBackground().color(), report );
+   editor_msg( iq_color( i ), plot_saxs->canvasBackground().color(), report );
    if ( ( (US_Hydrodyn *) us_hydrodyn )->gui_script )
    {
       // nobody at the keyboard: the editor is invisible, echo the report
@@ -2957,7 +2991,7 @@ void US_Hydrodyn_Saxs::set_guinier()
                                           cb_Rt_guinier->isChecked() ) ? (double *)&(pI[ 0 ]) : (double *)&(plotted_I[p][0]) ),
                                       q_points
                                       );
-      plotted_Iq[ p ]->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
+      plotted_Iq[ p ]->setPen( QPen( iq_color( p ), pen_width, Qt::SolidLine ) );
       plotted_Iq[ p ]->attach( plot_saxs );
    }
 
@@ -3061,7 +3095,7 @@ void US_Hydrodyn_Saxs::set_guinier()
             QwtSymbol sym;
             sym.setStyle(QwtSymbol::Diamond);
             sym.setSize( POINT_PEN_WIDTH );
-            sym.setPen(QPen(plot_colors[i % plot_colors.size()]));
+            sym.setPen(QPen(iq_color( i )));
             sym.setBrush(Qt::white);
             plotted_Iq[ i ]->setStyle( QwtPlotCurve::Lines );
             plotted_Iq[ i ]->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
@@ -3116,7 +3150,7 @@ void US_Hydrodyn_Saxs::set_guinier()
                QwtSymbol sym;
                sym.setStyle(QwtSymbol::Diamond);
                sym.setSize( POINT_PEN_WIDTH );
-               sym.setPen(QPen(plot_colors[i % plot_colors.size()]));
+               sym.setPen(QPen(iq_color( i )));
                sym.setBrush(Qt::white);
                plotted_Iq[ i ]->setStyle( QwtPlotCurve::Lines );
                plotted_Iq[ i ]->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
@@ -3169,7 +3203,7 @@ void US_Hydrodyn_Saxs::set_guinier()
                QwtSymbol sym;
                sym.setStyle(QwtSymbol::Diamond);
                sym.setSize( POINT_PEN_WIDTH );
-               sym.setPen(QPen(plot_colors[i % plot_colors.size()]));
+               sym.setPen(QPen(iq_color( i )));
                sym.setBrush(Qt::white);
                // plotted_Iq[ i ]->setStyle( QwtPlotCurve::Lines );
                plotted_Iq[ i ]->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
@@ -3207,7 +3241,7 @@ void US_Hydrodyn_Saxs::set_guinier()
          sym.setStyle(QwtSymbol::NoSymbol);
          plotted_Iq[ i ]->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
          // plotted_Iq[ i ]->setStyle( QwtPlotCurve::Lines );
-         plotted_Iq[ i ]->setPen( QPen( plot_colors[ i % plot_colors.size() ], pen_width, Qt::SolidLine ) );
+         plotted_Iq[ i ]->setPen( QPen( iq_color( i ), pen_width, Qt::SolidLine ) );
       }
 
       {
@@ -3262,21 +3296,8 @@ void US_Hydrodyn_Saxs::set_guinier()
       }
    }
 
-   plot_saxs->setAxisTitle  ( QwtPlot::xBottom, 
-                              cb_guinier->isChecked() ? 
-                              us_tr( "q^2 (1/Angstrom^2)" ) : us_tr( "q (1/Angstrom)" ) );
-   plot_resid->setAxisTitle( QwtPlot::xBottom, plot_saxs->axisTitle( QwtPlot::xBottom ) );
-
-   plot_saxs->setAxisTitle  ( QwtPlot::yLeft,   
-                              cb_kratky ->isChecked() ? 
-                              us_tr( " q^2 * I(q)"        ) : 
-                              ( cb_guinier->isChecked() && cb_cs_guinier->isChecked() ? us_tr( "q*I(q) (log scale)" ) : 
-                                ( cb_guinier->isChecked() && cb_Rt_guinier->isChecked() ? us_tr( "q^2*I(q) (log scale)" ) : us_tr( "I(q) (log scale)" ) ) )
-                              );
-   plot_saxs->setAxisScaleEngine(QwtPlot::yLeft, 
-                                 cb_kratky->isChecked() ?
-                                 new QwtLogScaleEngine(10) :  // fix this
-                                 new QwtLogScaleEngine(10));
+   // the axes' titles and scales, linear or logarithmic as chosen (the Guinier plots: linear q^2, log intensity)
+   set_iq_axes();
    if ( plot_saxs_zoomer )
    {
       delete plot_saxs_zoomer;
@@ -3375,7 +3396,7 @@ void US_Hydrodyn_Saxs::set_guinier_eb()
                                           cb_Rt_guinier->isChecked() ) ? (double *)&(pI[ 0 ]) : (double *)&(plotted_I[p][0]) ),
                                       q_points
                                       );
-      // plotted_Iq[ p ]->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
+      // plotted_Iq[ p ]->setPen( QPen( iq_color( p ), pen_width, Qt::SolidLine ) );
       plotted_Iq[ p ]->attach( plot_saxs );
    }
 
@@ -3491,7 +3512,7 @@ void US_Hydrodyn_Saxs::set_guinier_eb()
             QwtSymbol sym;
             sym.setStyle(QwtSymbol::Diamond);
             sym.setSize( POINT_PEN_WIDTH );
-            sym.setPen(QPen(plot_colors[i % plot_colors.size()]));
+            sym.setPen(QPen(iq_color( i )));
             sym.setBrush(Qt::white);
             plotted_Iq[ i ]->setStyle( QwtPlotCurve::Lines );
             plotted_Iq[ i ]->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
@@ -3546,7 +3567,7 @@ void US_Hydrodyn_Saxs::set_guinier_eb()
                QwtSymbol sym;
                sym.setStyle(QwtSymbol::Diamond);
                sym.setSize( POINT_PEN_WIDTH );
-               sym.setPen(QPen(plot_colors[i % plot_colors.size()]));
+               sym.setPen(QPen(iq_color( i )));
                sym.setBrush(Qt::white);
                plotted_Iq[ i ]->setStyle( QwtPlotCurve::Lines );
                plotted_Iq[ i ]->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
@@ -3599,7 +3620,7 @@ void US_Hydrodyn_Saxs::set_guinier_eb()
                QwtSymbol sym;
                sym.setStyle(QwtSymbol::Diamond);
                sym.setSize( POINT_PEN_WIDTH );
-               sym.setPen(QPen(plot_colors[i % plot_colors.size()]));
+               sym.setPen(QPen(iq_color( i )));
                sym.setBrush(Qt::white);
                // plotted_Iq[ i ]->setStyle( QwtPlotCurve::Lines );
                plotted_Iq[ i ]->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
@@ -3637,7 +3658,7 @@ void US_Hydrodyn_Saxs::set_guinier_eb()
          sym.setStyle(QwtSymbol::NoSymbol);
          plotted_Iq[ i ]->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
          // plotted_Iq[ i ]->setStyle( QwtPlotCurve::Lines );
-         plotted_Iq[ i ]->setPen( QPen( plot_colors[ i % plot_colors.size() ], pen_width, Qt::SolidLine ) );
+         plotted_Iq[ i ]->setPen( QPen( iq_color( i ), pen_width, Qt::SolidLine ) );
       }
 
       {
@@ -3732,7 +3753,7 @@ void US_Hydrodyn_Saxs::set_guinier_eb()
             }
          }
 
-         symbol.setPen  ( QPen( plot_colors[ i % plot_colors.size() ], useable_errors ? POINT_SYMBOL_WIDTH : use_line_width, Qt::SolidLine ) );
+         symbol.setPen  ( QPen( iq_color( i ), useable_errors ? POINT_SYMBOL_WIDTH : use_line_width, Qt::SolidLine ) );
 
          symbol.setStyle( useable_errors ? QwtSymbol::Diamond : QwtSymbol::NoSymbol );
          plotted_Iq[ i ]->setStyle( useable_errors ? QwtPlotCurve::NoCurve : QwtPlotCurve::Lines );
@@ -3752,7 +3773,7 @@ void US_Hydrodyn_Saxs::set_guinier_eb()
                y[ 1 ] = pEhigh[ k ];
                QwtPlotCurve * curve = new QwtPlotCurve( UPU_EB_PREFIX + qsl_plotted_iq_names[ i ] );
                curve->setStyle( QwtPlotCurve::Lines );
-               curve->setPen  ( QPen( plot_colors[ i % plot_colors.size() ], ERRORBAR_WIDTH, Qt::SolidLine ) );
+               curve->setPen  ( QPen( iq_color( i ), ERRORBAR_WIDTH, Qt::SolidLine ) );
                curve->setSamples ( x, y, 2 );
                curve->setItemAttribute( QwtPlotItem::Legend, false );
                curve->setZ    (-1);
@@ -3762,21 +3783,8 @@ void US_Hydrodyn_Saxs::set_guinier_eb()
       }
    }
 
-   plot_saxs->setAxisTitle  ( QwtPlot::xBottom, 
-                              cb_guinier->isChecked() ? 
-                              us_tr( "q^2 (1/Angstrom^2)" ) : us_tr( "q (1/Angstrom)" ) );
-   plot_resid->setAxisTitle( QwtPlot::xBottom, plot_saxs->axisTitle( QwtPlot::xBottom ) );
-
-   plot_saxs->setAxisTitle  ( QwtPlot::yLeft,   
-                              cb_kratky ->isChecked() ? 
-                              us_tr( " q^2 * I(q)"        ) : 
-                              ( cb_guinier->isChecked() && cb_cs_guinier->isChecked() ? us_tr( "q*I(q) (log scale)" ) : 
-                                ( cb_guinier->isChecked() && cb_Rt_guinier->isChecked() ? us_tr( "q^2*I(q) (log scale)" ) : us_tr( "I(q) (log scale)" ) ) )
-                              );
-   plot_saxs->setAxisScaleEngine(QwtPlot::yLeft, 
-                                 cb_kratky->isChecked() ?
-                                 new QwtLogScaleEngine(10) :  // fix this
-                                 new QwtLogScaleEngine(10));
+   // the axes' titles and scales, linear or logarithmic as chosen (the Guinier plots: linear q^2, log intensity)
+   set_iq_axes();
    if ( plot_saxs_zoomer )
    {
       delete plot_saxs_zoomer;
@@ -4061,7 +4069,7 @@ void US_Hydrodyn_Saxs::plot_guinier_error_bars( int i, bool cs, bool Rt )
                                                        (double *)&(x[0]),
                                                        (double *)&(y[0]),
                                                        2 );
-            plotted_guinier_error_bars.back()->setPen( QPen( plot_colors[ i % plot_colors.size() ], pen_width, Qt::SolidLine ) );
+            plotted_guinier_error_bars.back()->setPen( QPen( iq_color( i ), pen_width, Qt::SolidLine ) );
             plotted_guinier_error_bars.back()->attach( plot_saxs );
          }
       }
@@ -4084,7 +4092,7 @@ void US_Hydrodyn_Saxs::plot_guinier_error_bars( int i, bool cs, bool Rt )
                                                           (double *)&(x[0]),
                                                           (double *)&(y[0]),
                                                           2 );
-               plotted_guinier_error_bars.back()->setPen( QPen( plot_colors[ i % plot_colors.size() ], pen_width, Qt::SolidLine ) );
+               plotted_guinier_error_bars.back()->setPen( QPen( iq_color( i ), pen_width, Qt::SolidLine ) );
                plotted_guinier_error_bars.back()->attach( plot_saxs );
             }
          }
@@ -4107,7 +4115,7 @@ void US_Hydrodyn_Saxs::plot_guinier_error_bars( int i, bool cs, bool Rt )
                                                           (double *)&(x[0]),
                                                           (double *)&(y[0]),
                                                           2 );
-               plotted_guinier_error_bars.back()->setPen( QPen( plot_colors[ i % plot_colors.size() ], pen_width, Qt::SolidLine ) );
+               plotted_guinier_error_bars.back()->setPen( QPen( iq_color( i ), pen_width, Qt::SolidLine ) );
                plotted_guinier_error_bars.back()->attach( plot_saxs );
             }
          }

@@ -24,7 +24,7 @@
 SOMO - SAXS/SANS (SAS) and MALS Data Processing and Simulation Module:</h2>
 <p>
 <p>
-<h3><center>Last updated: June 2024 </center></h3><p>
+<h3><center>Last updated: November 2026 </center></h3><p>
 
 <center><span style="color:#CC0000">NOTICE: portions of this help file are taken from the Supplementary Materials of "Brookes et al. Fibrinogen species as resolved by HPLC-SAXS data processing within the UltraScan SOlution MOdeler (US SOMO) enhanced SAS module," J. Appl. Cryst., 46:1823-1833 (2013).</span>
 </center>
@@ -50,7 +50,7 @@ The <b>SAS module</b> panel is divided in two sections, <b><i>SAS I(q) Functions
 <p>
 
 <b><i>SAS I(q) Functions:</i></b>
-The first series of buttons in the "SAS I(q) Functions" section deals with operations on previously computed or experimental data.<br>
+The first series of buttons in the "SAS I(q) Functions" section deals with operations on previously computed or experimental data. The buttons are on three rows: loading and clearing curves (<b><i>Load SAXS Curve</i></b>, <b><i>Load GNOM File</i></b>, <b><i>Load Plotted</i></b>, <b><i>Set Grid</i></b> and <b><i>Clear SAXS Curve</i></b>); the plot and its analysis (<b><i>Guinier</i></b>, <b><i>Legend</i></b>, <b><i>Save plots</i></b>, <b><i>Log X</i></b>, <b><i>Log Y</i></b>, <b><i>Color</i></b>, <b><i>Width</i></b> and <b><i>Err</i></b>); and the other modules opened from here (<b><i>IFT</i></b>, <b><i>Search</i></b>, <b><i>Data</i></b>, <b><i>UV-Vis</i></b>, <b><i>HPLC/KIN</i></b>, <b><i>MALS</i></b> and <b><i>MALS+SAXS</i></b>), with those of expert mode on a fourth row.<br>
 <ul>
 <li>
 Loading is done with the <b><i>Load SAXS (SANS)</i></b> button (the SAXS/SANS label will switch depending on whether SAXS or SANS operations have been chosen, see below). If one or more curves are already present in the graphics window, rescaling of the new entry is possible by selecting the target curve in a pop-up window. Multiple entries can be selected for loading. If no previous file had been uploaded, the multiple selections will not be scaled, otherwise a reference dataset for scaling can be chosen.<br>
@@ -118,7 +118,7 @@ For instance, setting a grid is quite useful when computing a SAXS/SANS <i>I(q)<
 <li>
 <b><i>Clear SAXS (SANS) Curve</i></b> will instead sequentially remove the data from the graphics window.<p>
 <li>
-<b><i>Width</i></b> Each time this button is pressed, it increments the data line size of the plots. After five steps, it goes back to the initial value. Data represented as symbols with error bars (see below) are not affected.<p>
+<b><i>Width</i></b> Each time this button is pressed, it increments the data line size of the I(q) plot. After five steps, it goes back to the initial value. Data represented as symbols with error bars (see below) are not affected. The <i>P</i>(<i>r</i>) plot has its own <b><i>Width</i></b> button (see below).<p>
 <li>
 Selecting the <b><i>Err</i></b> checkbox, active when up to 10 files are selected, will switch their representation from the dots connected with a line mode to symbols (diamonds) with their associated SDs represented as error bars mode, as shown in the image below:<p>
 
@@ -133,7 +133,7 @@ Selecting the <b><i>Err</i></b> checkbox, active when up to 10 files are selecte
 <li>
 <b><i>Search</i></b> will open up a dialog box where buffer electron density, excluded volume scaling, and the excluded volume of explict waters can be automatically varied and fit against experimental data (see <a href=somo_SAXS_search.html>here</a>).<p>
 <li>
-<b><i>Data</i></b> will open a module containing various utilities for primary and processed data treatment, with the ability to perform buffer subtractions, normalization and curve joining (see <a href=somo_saxs_buffer.html>here</a>).<p>
+<b><i>Data</i></b> will open a module containing various utilities for primary and processed data treatment, with the ability to perform buffer subtractions, normalization and curve joining (see <a href=somo_SAS_data_utility.html>here</a>). The plotted curves are handed over to it with their concentrations, and with their PSV and <i>I</i>(0) standard error when these differ from the defaults.<p>
 <li>
 <b><span style="color:#CC0000">Available from the July 2024 release, several new features have been added.</b></span><p>
 <li>
@@ -149,7 +149,11 @@ The <b><i>Guinier</i></b> button will allow the manual or semi-automated computa
 <li>
 <b><i>Legend</i></b> will toggle on and off the names of the files plotted and their associated line colours.<p>
 <li>
-<b><i>Save plots</i></b>. Finally, the data shown in any of the plots currently visualized can be saved in csv-formatted files by pressing the <b><i>Save plots</i></b> button. This will open a pop-up dialogue window where the location and the root filename for the cvs files can be set.<p>
+<b><i>Log X</i></b> / <b><i>Lin X</i></b> and <b><i>Log Y</i></b> / <b><i>Lin Y</i></b> switch the <i>q</i> axis and the intensity axis of the plot between linear and logarithmic; each button shows the scale it switches to, and the axis title says "(log scale)" when an axis is logarithmic. The plot starts with a linear <i>q</i> axis and a logarithmic intensity axis. The residuals plot below follows the <i>q</i> axis. On a logarithmic <i>q</i> axis the plot starts at the smallest positive <i>q</i>; on a logarithmic intensity axis its range is set from the positive intensities, and on a linear one from all of them, negative ones included. These buttons apply to the <i>I(q)</i> and Kratky plots: in the Guinier plots (<i>Guinier</i>, <i>CS</i> and <i>TV</i>), which are linear in <i>q<sup>2</sup></i> and logarithmic in intensity, they are not available, and the chosen scales come back when the Guinier plot is left.<p>
+<li>
+<b><i>Color</i></b> changes the colors of the <i>I(q)</i> curves: each curve takes the next color of the list, and its fits and residuals keep its color. The <i>P(r)</i> curves are not changed (their section has its own <b><i>Color</i></b>).<p>
+<li>
+<b><i>Save plots</i></b>. Finally, the data shown in the <i>I(q)</i> plot, in its residuals plot and in the <i>I(q)</i> residuals windows can be saved in csv-formatted files by pressing the <b><i>Save plots</i></b> button. This will open a pop-up dialogue window where the location and the root filename for the cvs files can be set. The <i>P(r)</i> plot is saved by the <b><i>Save plots</i></b> button of its own section.<p>
 </ul>
 Clicking on the <i>Guinier</i> (and, for rod-like or disk-like macromolecules Guinier analysis, on the <i>CS</i> or <i>TV</i> checkboxes), the Guinier plots, ln[<i>I(q)</i>] vs. <i>q<sup>2</sup></i>, ln[<i>q I(q)</i>] vs. <i>q<sup>2</sup></i> (CS), and ln[<i>q<sup>2</sup>I(q)</i>] vs. <i>q<sup>2</sup></i> (TV), respectively, can be shown, and their display <i>q<sup>2</sup></i> ranges can be modified by entering values in the corresponding fields. <p>
 
@@ -158,7 +162,7 @@ Clicking on the <i>Guinier</i> (and, for rod-like or disk-like macromolecules Gu
 <img SRC="somo-SAXS_SANS_Guinier_analysis.png" ALT="SOMO SAXS I(q) Guinier analysis plot"><p>
 </center>
 <p>
-The fit residuals can be shown by selecting the <i>Show residuals</i> checkbox at the bottom of the graph. The residuals can be weighted by the SD associated with the data by selecting the <i>Use standard deviations</i> checkbox. In the example shown above, the outliers rejection routine (see <a href=somo_saxs_options.html>here</a>) was set at 2 SD, resulting in the rejection of the four data points marked with red crosses, better seen in the residuals plot. The residuals can also be shown in % mode by selecting the <i>By percent</i> checkbox. Irrespective of the visualization of the residuals graph, the SD associated with the data can be shown in the Guinier plot by selecting the <i>SD error bars</i> checkbox. <br>
+The fit residuals can be shown by selecting the <i>Show residuals</i> checkbox at the bottom of the graph. The residuals plot starts at one fifth of the height, and dragging the divider between it and the Guinier plot makes it taller or shorter. The residuals can be weighted by the SD associated with the data by selecting the <i>Use standard deviations</i> checkbox. In the example shown above, the outliers rejection routine (see <a href=somo_saxs_options.html>here</a>) was set at 2 SD, resulting in the rejection of the four data points marked with red crosses, better seen in the residuals plot. Each cross marks a point rejected by the latest fit of its curve, and clearing the plot removes them. The residuals can also be shown in % mode by selecting the <i>By percent</i> checkbox. Irrespective of the visualization of the residuals graph, the SD associated with the data can be shown in the Guinier plot by selecting the <i>SD error bars</i> checkbox. <br>
 The results of the Guinier analysis are shown in the progress window:
 <p>
 <center>
@@ -275,8 +279,8 @@ The same residuals can by also plotted using a log scale by clicking on the <i>P
 <img SRC="somo-SAXS_SANS_Pr_panel_new.png" ALT="SOMO SAXS P(r) Simulation  Panel">
 </center>
 <p>
-In the <b>P(r) vs. r Plotting Functions</b> section, a previously-generated or experimentally-derived <i>P</i>(<i>r</i>) vs. <i>r</i> curve can be uploaded in the graphics window by pressing the <b><i>Load P(r) Distribution</i></b> button, and the graphics window can be cleared by pressing the <b><i>Clear P(r) Distribution</i></b> button.<br>
-As for the <b>I(q) vs. q</b> window, <b><i>Load Plotted</i></b> will open up open a new window allowing several operations to be performed on the data which were currently showed in the graphics window (see <a href=somo_saxs_load_csv.html>here</a>), and <b><i>Legend</i></b> will display the names of the files plotted and their associated line colours. Each time <b><i>Width</i></b> is pressed, it increments the data line size of the plots; after five steps, it goes back to the initial value. Starting from the <span style="color:#CC0000">March 2023 release</span>, SD associated with <i>P</i>(<i>r</i>) vs. <i>r</i> data can now be displayed in this module by selecting the <b><i>Err</b></i> checkbox, and they can be used in NNLS fitting operations (see <a href=somo_saxs_load_csv.html>here</a>).<p>
+In the <b>P(r) vs. r Plotting Functions</b> section the buttons are on two rows: loading and clearing distributions (<b><i>Load P(r) Distribution</i></b>, <b><i>Load Plotted P(r)</i></b> and <b><i>Clear P(r) Distribution</i></b>), and the plot (<b><i>Legend</i></b>, <b><i>Save plots</i></b>, <b><i>Color</i></b>, <b><i>Width</i></b> and <b><i>Err</i></b>). Its <b><i>Save plots</i></b> saves the data of the <i>P(r)</i> plot, and of its residuals window when it is open, in csv-formatted files named from a root filename, as the one of the <i>I(q)</i> section does for its plots; its <b><i>Color</i></b> changes the colors of the <i>P(r)</i> curves only. In this section, a previously-generated or experimentally-derived <i>P</i>(<i>r</i>) vs. <i>r</i> curve can be uploaded in the graphics window by pressing the <b><i>Load P(r) Distribution</i></b> button, and the graphics window can be cleared by pressing the <b><i>Clear P(r) Distribution</i></b> button.<br>
+As for the <b>I(q) vs. q</b> window, <b><i>Load Plotted</i></b> will open up open a new window allowing several operations to be performed on the data which were currently showed in the graphics window (see <a href=somo_saxs_load_csv.html>here</a>), and <b><i>Legend</i></b> will display the names of the files plotted and their associated line colours. Each time <b><i>Width</i></b> is pressed, it increments the data line size of the <i>P</i>(<i>r</i>) plot, independently of the <b><i>Width</i></b> of the I(q) plot; after five steps, it goes back to the initial value. Starting from the <span style="color:#CC0000">March 2023 release</span>, SD associated with <i>P</i>(<i>r</i>) vs. <i>r</i> data can now be displayed in this module by selecting the <b><i>Err</b></i> checkbox, and they can be used in NNLS fitting operations (see <a href=somo_saxs_load_csv.html>here</a>). With <b><i>Err</b></i> selected, the data that have SD are shown as diamonds of fixed size, as in the I(q) plot, with their SD as bars; <b><i>Width</i></b> then changes the bars only.<p>
 For the P(r) vs. r computation from an atomic-level structure or a bead model, two fields control the <b><i>Bin size (Angstrom)</i></b> and a <b><i>Smoothing</i></b> window (optional), respectively. <p>
 
 The <i>P(r)</i> vs. <i>r</i> function can be computed in either "<b>Raw</b>", "<b>SAXS</b>", or "<b>SANS</b>" modes, as
@@ -350,7 +354,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on June 14, 2024
+Last modified on November 26, 2026
 </font>
 </body>
 </html>

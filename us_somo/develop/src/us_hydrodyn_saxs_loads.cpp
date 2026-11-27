@@ -1151,9 +1151,19 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
    bool clear_plot_first    = true;
    bool extrapolate_c0      = false;
 
-   US_Hydrodyn_Saxs_Iqq_Load_Csv *hslc =
-      new US_Hydrodyn_Saxs_Iqq_Load_Csv(
-                                        "Select models to load\n" + header_tag + 
+   if ( extrap_c0_script )
+   {
+      // scripted extrapolation-to-c0 run: skip the modal selection dialog and select every
+      // available curve for the extrapolation (see saxs_extrap_c0_script()).
+      qsl_sel_names   = qsl_names;
+      extrapolate_c0  = true;
+      clear_plot_first = false;
+   }
+   else
+   {
+      US_Hydrodyn_Saxs_Iqq_Load_Csv *hslc =
+         new US_Hydrodyn_Saxs_Iqq_Load_Csv(
+                                        "Select models to load\n" + header_tag +
                                         (bin_msg.isEmpty() ? "" : "\n" + bin_msg),
                                         &qsl_names,
                                         &qsl_sel_names,
@@ -1177,11 +1187,12 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                                         1 || U_EXPT,
                                         us_hydrodyn
                                         );
-   US_Hydrodyn::fixWinButtons( hslc );
-   hslc->exec();
-   
-   delete hslc;
-   
+      US_Hydrodyn::fixWinButtons( hslc );
+      hslc->exec();
+
+      delete hslc;
+   }
+
    this->isVisible() ? this->raise() : this->show();
    
    if ( qsl_sel_names.size() && clear_plot_first ) {
@@ -1212,10 +1223,10 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
    // check for scaling target
 
    QString scaling_target = "";
-   if ( qsl_sel_names.size() && !run_ift )
+   if ( qsl_sel_names.size() && !run_ift && !extrap_c0_script )
    {
       set_scaling_target( scaling_target );
-   }         
+   }
    
    // setup for average & stdev
    vector < double > sum_iq(q.size());
@@ -2053,6 +2064,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
       // try to read Conc:/PSV:/I0se: from the file's header comment line, same
       // convention & regexes as US_Hydrodyn_Saxs_Hplc::load_file()
       bool   has_conc = false;
+      bool   has_psv_I0se = false;
       double this_conc = 0e0;
       double this_psv  = our_saxs_options->psv;
       double this_I0se = our_saxs_options->I0_exp;
@@ -2071,11 +2083,13 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
          QRegularExpressionMatch rx_psv_m = rx_psv.match( qv[ 0 ] );
          if ( rx_psv_m.hasMatch() )
          {
+            has_psv_I0se = true;
             this_psv = rx_psv_m.captured( 1 ).toDouble();
          }
          QRegularExpressionMatch rx_I0se_m = rx_I0se.match( qv[ 0 ] );
          if ( rx_I0se_m.hasMatch() )
          {
+            has_psv_I0se = true;
             this_I0se = rx_I0se_m.captured( 1 ).toDouble();
          }
       }
@@ -2519,9 +2533,10 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
             {
                plotted_iq_names_to_file[ plot_name ] = QFileInfo( filename ).absoluteFilePath();
             }
-            if ( has_conc )
+            // a PSV or I0se without a Conc: is kept too, with the default concentration
+            if ( has_conc || has_psv_I0se )
             {
-               update_conc_csv( plot_name, this_conc, this_psv, this_I0se );
+               update_conc_csv( plot_name, has_conc ? this_conc : our_saxs_options->conc, this_psv, this_I0se );
             }
          }
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear( );
@@ -4139,7 +4154,7 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
                                           )
 {
    vector < double > I2;
-   QColor plot_color = plot_colors[ plotted_q.size() % plot_colors.size() ];
+   QColor plot_color = iq_color( plotted_q.size() );
    rescale_iqq_curve( scaling_target, q, I, I2, plot_color, do_plot_residuals );
 }
 
@@ -4160,7 +4175,7 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
                                           vector < double > &I2,
                                           bool do_plot_residuals)
 {
-   QColor plot_color = plot_colors[ plotted_q.size() % plot_colors.size() ];
+   QColor plot_color = iq_color( plotted_q.size() );
    rescale_iqq_curve( scaling_target, q, I, I2, plot_color, do_plot_residuals );
 }
 
@@ -4701,6 +4716,7 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
       // try to read Conc:/PSV:/I0se: from the file's header comment line, same
       // convention & regexes as US_Hydrodyn_Saxs_Hplc::load_file()
       bool   has_conc = false;
+      bool   has_psv_I0se = false;
       double this_conc = 0e0;
       double this_psv  = our_saxs_options->psv;
       double this_I0se = our_saxs_options->I0_exp;
@@ -4719,11 +4735,13 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
          QRegularExpressionMatch rx_psv_m = rx_psv.match( qv[ 0 ] );
          if ( rx_psv_m.hasMatch() )
          {
+            has_psv_I0se = true;
             this_psv = rx_psv_m.captured( 1 ).toDouble();
          }
          QRegularExpressionMatch rx_I0se_m = rx_I0se.match( qv[ 0 ] );
          if ( rx_I0se_m.hasMatch() )
          {
+            has_psv_I0se = true;
             this_I0se = rx_I0se_m.captured( 1 ).toDouble();
          }
       }
@@ -5033,9 +5051,10 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
             {
                plotted_iq_names_to_file[ plot_name ] = QFileInfo( filename ).absoluteFilePath();
             }
-            if ( has_conc )
+            // a PSV or I0se without a Conc: is kept too, with the default concentration
+            if ( has_conc || has_psv_I0se )
             {
-               update_conc_csv( plot_name, this_conc, this_psv, this_I0se );
+               update_conc_csv( plot_name, has_conc ? this_conc : our_saxs_options->conc, this_psv, this_I0se );
             }
          }
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear( );

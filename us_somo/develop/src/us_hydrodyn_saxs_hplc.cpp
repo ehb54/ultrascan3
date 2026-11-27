@@ -2601,56 +2601,23 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
       {
          // cout << "multiple gaussians\n";
 
-         QString           this_gaussian;
+         // the file's Gaussians, file by file
          QRegularExpression           rx_gname( "^(?:Gauss|EMG\\+GMG|EMG|GMG) (.*)$" ); 
-         vector < double > g;
-         unsigned int      loaded  = 0;
-         unsigned int      skipped = 0;
-
-         vector < map < int, set < double > > > check_common;
+         QStringList                  set_names;
+         vector < vector < double > > set_gaussians;
 
          for ( i = 2; i < (int) qv.size(); i++ )
          {
             QRegularExpressionMatch rx_gname_m = rx_gname.match( qv[ i ] );
             if ( rx_gname_m.hasMatch() )
             {
-               // cout << QString( "mg: found %1\n" ).arg( rx_gname_m.captured( 1 ) );
-               // new file specific gaussian
-               if ( g.size() && !this_gaussian.isEmpty() )
-               {
-                  f_gaussians[ this_gaussian ] = g;
-                  gaussians = g;
-
-                  int this_gn_count = (int)( g.size() / gaussian_type_size );
-                  if ( (int) check_common.size() < this_gn_count )
-                  {
-                     check_common.resize( this_gn_count );
-                  }
-                  for ( int gn = 0; gn < this_gn_count; ++gn )
-                  {
-                     int pos = gn * gaussian_type_size;
-                     for ( int k = 0; k < gaussian_type_size; ++k )
-                     {
-                        check_common[ gn ][ k ].insert( g[ pos + k ] );
-                     }
-                  }
-
-                  loaded++;
-               }
-               g.clear( );
-               this_gaussian = rx_gname_m.captured( 1 );
-               if ( !f_qs.count( this_gaussian ) )
-               {
-                  skipped++;
-                  editor_msg( "red", QString( us_tr( "%1 for file %2 present but the file is not loaded, please load the file first" ) ).arg( gaussian_type_tag ).arg( this_gaussian ) );
-                  this_gaussian = "";
-               }
+               set_names << rx_gname_m.captured( 1 );
+               set_gaussians.push_back( vector < double >() );
                continue;
             }
 
-            if ( !this_gaussian.isEmpty() )
+            if ( set_names.size() )
             {
-               // tokens = (qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ),""));
                {
                   QString qs = qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
                   tokens = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
@@ -2664,14 +2631,117 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
 
                for ( int k = 0; k < gaussian_type_size; k++ )
                {
-                  g.push_back( tokens[ k ].toDouble() );
+                  set_gaussians.back().push_back( tokens[ k ].toDouble() );
                }
             }
          }
-         if ( g.size() && !this_gaussian.isEmpty() )
+
+         // the sets of loaded files are used for them; the others, e.g. after the data were reprocessed and their
+         // names changed, can be imported for the files of the same I(t) q, or one of them as the starting Gaussians
+         vector < int > matched;
+         vector < int > unmatched;
+         for ( int s = 0; s < (int) set_names.size(); ++s )
          {
-            f_gaussians[ this_gaussian ] = g;
-            gaussians = g;
+            if ( !set_gaussians[ s ].size() )
+            {
+               continue;
+            }
+            if ( f_qs.count( set_names[ s ] ) )
+            {
+               matched.push_back( s );
+            } else {
+               unmatched.push_back( s );
+            }
+         }
+
+         map < int, QString > q_match;   // unmatched set -> the file of the same I(t) q
+         bool from_selected = false;
+         if ( unmatched.size() )
+         {
+            // the candidates are the selected files, if any, else the loaded ones, without a set of their own; a q
+            // that two candidates, or two sets, have in common is not matched
+            QRegularExpression rx_q( "_It_q(\\d+_\\d+)" );
+            QStringList candidates = all_selected_files();
+            from_selected = candidates.size() > 0;
+            if ( !from_selected )
+            {
+               for ( map < QString, vector < double > >::iterator it = f_qs.begin(); it != f_qs.end(); ++it )
+               {
+                  candidates << it->first;
+               }
+            }
+            map < QString, QStringList > files_by_q;
+            for ( int k = 0; k < (int) candidates.size(); ++k )
+            {
+               QRegularExpressionMatch m = rx_q.match( candidates[ k ] );
+               if ( m.hasMatch() && !set_names.contains( candidates[ k ] ) )
+               {
+                  files_by_q[ m.captured( 1 ) ] << candidates[ k ];
+               }
+            }
+            map < QString, int > sets_by_q;
+            for ( int s : unmatched )
+            {
+               QRegularExpressionMatch m = rx_q.match( set_names[ s ] );
+               if ( m.hasMatch() )
+               {
+                  sets_by_q[ m.captured( 1 ) ]++;
+               }
+            }
+            for ( int s : unmatched )
+            {
+               QRegularExpressionMatch m = rx_q.match( set_names[ s ] );
+               if ( m.hasMatch() &&
+                    sets_by_q[ m.captured( 1 ) ] == 1 &&
+                    files_by_q.count( m.captured( 1 ) ) &&
+                    files_by_q[ m.captured( 1 ) ].size() == 1 )
+               {
+                  q_match[ s ] = files_by_q[ m.captured( 1 ) ][ 0 ];
+               }
+            }
+         }
+
+         enum { IMPORT_SKIP, IMPORT_SAME_Q, IMPORT_START } import_choice = IMPORT_SKIP;
+         if ( unmatched.size() )
+         {
+            QString msg =
+               QString( us_tr( "%1 of the %2 %3 sets in %4 are for files that are not loaded.\n"
+                               "After the data are reprocessed (e.g. a different buffer subtraction or a baseline correction), "
+                               "the files' names differ.\n\n" ) )
+               .arg( unmatched.size() )
+               .arg( matched.size() + unmatched.size() )
+               .arg( gaussian_type_tag )
+               .arg( QFileInfo( filename ).fileName() );
+            if ( q_match.size() )
+            {
+               msg += QString( us_tr( "%1 of them are for an I(t) of the same q as one of the %2 files.\n\n" ) )
+                  .arg( q_match.size() )
+                  .arg( from_selected ? us_tr( "selected" ) : us_tr( "loaded" ) );
+            } else {
+               msg += QString( us_tr( "None of them is for an I(t) of the same q as one of the %1 files.\n\n" ) )
+                  .arg( from_selected ? us_tr( "selected" ) : us_tr( "loaded" ) );
+            }
+            msg += us_tr( "Their centers, widths, skewness and amplitudes can be imported anyway. They were fitted to differently "
+                          "processed data: check them carefully against the current I(t) before using them. "
+                          "Global Gaussians can then re-optimize them, or use them as they are." );
+
+            QMessageBox mb( QMessageBox::Warning, windowTitle(), msg, QMessageBox::NoButton, this );
+            QPushButton * pb_same_q = q_match.size() ? mb.addButton( us_tr( "Import for the files of the same q" ), QMessageBox::AcceptRole ) : (QPushButton *) 0;
+            QPushButton * pb_start  = mb.addButton( us_tr( "Import one set as the starting Gaussians" ), QMessageBox::AcceptRole );
+            QPushButton * pb_skip   = mb.addButton( us_tr( "Skip them" ), QMessageBox::RejectRole );
+            mb.setDefaultButton( pb_same_q ? pb_same_q : pb_start );
+            mb.setEscapeButton( pb_skip );
+            mb.exec();
+            if ( pb_same_q && mb.clickedButton() == pb_same_q )
+            {
+               import_choice = IMPORT_SAME_Q;
+            } else if ( mb.clickedButton() == pb_start ) {
+               import_choice = IMPORT_START;
+            }
+         }
+
+         vector < map < int, set < double > > > check_common;
+         auto add_common = [ & ]( const vector < double > & g ) {
             int this_gn_count = (int)( g.size() / gaussian_type_size );
             if ( (int) check_common.size() < this_gn_count )
             {
@@ -2685,11 +2755,62 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
                   check_common[ gn ][ k ].insert( g[ pos + k ] );
                }
             }
-            loaded++;
-            g.clear( );
+         };
+
+         unsigned int loaded   = 0;
+         unsigned int skipped  = 0;
+         unsigned int imported = 0;
+         for ( int s = 0; s < (int) set_names.size(); ++s )
+         {
+            const vector < double > & g = set_gaussians[ s ];
+            if ( !g.size() )
+            {
+               continue;
+            }
+            if ( f_qs.count( set_names[ s ] ) )
+            {
+               f_gaussians[ set_names[ s ] ] = g;
+               gaussians = g;
+               add_common( g );
+               loaded++;
+               continue;
+            }
+            if ( import_choice == IMPORT_SAME_Q && q_match.count( s ) )
+            {
+               f_gaussians[ q_match[ s ] ] = g;
+               gaussians = g;
+               add_common( g );
+               imported++;
+               editor_msg( "dark blue", QString( us_tr( "%1 of %2 imported for %3 (the same q)" ) ).arg( gaussian_type_tag ).arg( set_names[ s ] ).arg( q_match[ s ] ) );
+               continue;
+            }
+            if ( import_choice == IMPORT_START )
+            {
+               continue;
+            }
+            skipped++;
+            editor_msg( "red", QString( us_tr( "%1 for file %2 present but the file is not loaded, please load the file first" ) ).arg( gaussian_type_tag ).arg( set_names[ s ] ) );
+         }
+         if ( import_choice == IMPORT_START )
+         {
+            gaussians = set_gaussians[ unmatched[ 0 ] ];
+            editor_msg( "dark blue", QString( us_tr( "%1 %2 of %3 imported as the starting %4; the other %5 sets for files that are not loaded were not used" ) )
+                        .arg( gaussians.size() / gaussian_type_size )
+                        .arg( gaussian_type_tag )
+                        .arg( set_names[ unmatched[ 0 ] ] )
+                        .arg( gaussian_type_tag )
+                        .arg( unmatched.size() - 1 ) );
          }
          ggauss_msg_common( check_common );
          editor_msg( "black", QString( "%1 for %2 files loaded from %3" ).arg( gaussian_type_tag ).arg( loaded ).arg( filename ) );
+         if ( imported )
+         {
+            editor_msg( "dark red", QString( us_tr( "%1 for %2 files of the same q imported from %3: check them against the current I(t)" ) ).arg( gaussian_type_tag ).arg( imported ).arg( filename ) );
+         }
+         if ( import_choice == IMPORT_START )
+         {
+            editor_msg( "dark red", QString( us_tr( "The starting %1 were imported from %2: check them against the current I(t)" ) ).arg( gaussian_type_tag ).arg( filename ) );
+         }
          if ( skipped )
          {
             editor_msg( "red" , QString( "WARNING: %1 for %2 files SKIPPED from %3" ).arg( gaussian_type_tag ).arg( skipped ).arg( filename ) );
@@ -2752,6 +2873,11 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
 
    QRegularExpression rx_ok_line("^(\\s+(-|)|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
    rx_ok_line.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
+   // a file without a header line starts with its first point (the SAS window's loader reads it so too)
+   if ( row_offset == 1 && US_Saxs_Util::first_line_is_data( qv, q_offset, I_offset + 1 ) )
+   {
+      row_offset = 0;
+   }
    for ( int i = row_offset; i < (int) qv.size(); i++ )
    {
       QRegularExpressionMatch rx_ok_line_m = rx_ok_line.match( qv[i] );
@@ -3887,62 +4013,75 @@ bool US_Hydrodyn_Saxs_Hplc::get_peak( QString file, double &peak, double &pos, b
       return false;
    }
       
-   peak = f_Is[ file ][ 0 ];
-   pos = f_qs[ file ][ 0 ];
-
-   double start_pos = le_gauss_fit_start->text().toDouble();
-   double end_pos   = le_gauss_fit_end  ->text().toDouble();
-   
-   if ( le_gauss_fit_start->text().isEmpty() ||
-        le_gauss_fit_start->text().toDouble() < f_qs[ file ][ 0 ] )
-   {
-      start_pos = f_qs[ file ][ 0 ];
+   int found = get_peak_s( f_qs[ file ], f_Is[ file ],
+                           le_gauss_fit_start->text().isEmpty(), le_gauss_fit_start->text().toDouble(),
+                           le_gauss_fit_end  ->text().isEmpty(), le_gauss_fit_end  ->text().toDouble(),
+                           full, peak, pos );
+   if ( found == 2 ) {
+      editor_msg( "red", QString( us_tr( "Warning: get_peak: file %1 has no points between the fitting start and end range" ) ).arg( file ) );
    }
-   if ( le_gauss_fit_end->text().isEmpty() ||
-        le_gauss_fit_end->text().toDouble() > f_qs[ file ].back() )
+   return found == 0;
+}
+
+int US_Hydrodyn_Saxs_Hplc::get_peak_s( const vector < double > & q, const vector < double > & I,
+                                       bool start_empty, double start, bool end_empty, double end,
+                                       bool full, double &peak, double &pos )
+{
+   peak = I[ 0 ];
+   pos = q[ 0 ];
+
+   double start_pos = start;
+   double end_pos   = end;
+   
+   if ( start_empty ||
+        start < q[ 0 ] )
    {
-      end_pos = f_qs[ file ].back();
+      start_pos = q[ 0 ];
+   }
+   if ( end_empty ||
+        end > q.back() )
+   {
+      end_pos = q.back();
    }
 
    if ( full ) {
-      start_pos = f_qs[ file ][ 0 ];
-      end_pos   = f_qs[ file ].back();
+      start_pos = q[ 0 ];
+      end_pos   = q.back();
    }
 
    if ( end_pos <= start_pos ) {
-      return false;
+      return 1;
    }
 
    // get 1st
    bool found_first = false;
    unsigned int i = 0;
-   for ( ; i < ( unsigned int ) f_Is[ file ].size(); ++i ) {
-      double this_pos = f_qs[ file ][ i ];
+   for ( ; i < ( unsigned int ) I.size(); ++i ) {
+      double this_pos = q[ i ];
       if ( this_pos >= start_pos &&
            this_pos <= end_pos ) {
          found_first = true;
-         peak = f_Is[ file ][ i ];
+         peak = I[ i ];
          pos  = this_pos;
          break;
       }
    }
 
    if ( !found_first ) {
-      editor_msg( "red", QString( us_tr( "Warning: get_peak: file %1 has no points between the fitting start and end range" ) ).arg( file ) );
-      return false;
+      return 2;
    }
 
-   for ( ; i < ( unsigned int ) f_Is[ file ].size(); i++ )
+   for ( ; i < ( unsigned int ) I.size(); i++ )
    {
-      double this_pos = f_qs[ file ][ i ];
+      double this_pos = q[ i ];
       if ( this_pos <= end_pos ) {
-         if ( peak < f_Is[ file ][ i ] ) {
-            peak = f_Is[ file ][ i ];
+         if ( peak < I[ i ] ) {
+            peak = I[ i ];
             pos  = this_pos;
          }
       }
    }
-   return true;
+   return 0;
 }
 
 void US_Hydrodyn_Saxs_Hplc::smooth( QStringList files )
@@ -6292,14 +6431,16 @@ void US_Hydrodyn_Saxs_Hplc::add_plot( QString           name,
                                       vector < double > I,
                                       bool              is_time,
                                       bool              replot,
-                                      double            conc )
+                                      double            conc,
+                                      double            psv,
+                                      double            I0se )
 {
    vector < double > errors( I.size() );
    for ( unsigned int i = 0; i < ( unsigned int ) errors.size(); i++ )
    {
       errors[ i ] = 0e0;
    }
-   add_plot( name, q, I, errors, is_time, replot, conc );
+   add_plot( name, q, I, errors, is_time, replot, conc, psv, I0se );
 }
 
 void US_Hydrodyn_Saxs_Hplc::add_plot( QString           name,
@@ -6308,7 +6449,9 @@ void US_Hydrodyn_Saxs_Hplc::add_plot( QString           name,
                                       vector < double > errors,
                                       bool              is_time,
                                       bool              replot,
-                                      double            conc )
+                                      double            conc,
+                                      double            psv,
+                                      double            I0se )
 {
    name.replace( QRegularExpression( "(\\s+|\"|'|\\/|\\.)" ), "_" );
    if ( q.size() != I.size() )
@@ -6355,6 +6498,14 @@ void US_Hydrodyn_Saxs_Hplc::add_plot( QString           name,
    f_errors    [ bsub_name ] = errors;
    f_is_time   [ bsub_name ] = is_time;
    f_conc      [ bsub_name ] = conc >= 0e0 ? conc : ( f_conc.count( bsub_name ) ? f_conc[ bsub_name ] : 0e0 );
+   if ( psv > 0e0 )
+   {
+      f_psv    [ bsub_name ] = psv;
+   }
+   if ( I0se > 0e0 )
+   {
+      f_I0se   [ bsub_name ] = I0se;
+   }
    {
       vector < double > tmp;
       f_gaussians  [ bsub_name ] = tmp;
@@ -8071,24 +8222,37 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q()
 
 vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian_sum( vector < double > t, vector < double > g )
 {
+   return compute_gaussian_sum_s( t, g, gaussian_type, gaussian_type_size, dist1_active, dist2_active, &compute_gaussian_sum_partials );
+}
+
+vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian_sum_s( const vector < double > & t, const vector < double > & g,
+                                                                  int gtype, int gtype_size, bool d1_active, bool d2_active,
+                                                                  vector < vector < double > > * partials )
+{
    vector < double > result( t.size() );
    for ( unsigned int i = 0; i < ( unsigned int ) result.size(); i++ )
    {
       result[ i ] = 0e0;
    }
 
-   vector < double > g_use( gaussian_type_size );
+   vector < double > g_use( gtype_size );
    vector < double > result_partial;
-   compute_gaussian_sum_partials.clear( );
-
-   for ( unsigned int j = 0; j < ( unsigned int ) g.size(); j += gaussian_type_size )
+   if ( partials )
    {
-      for ( int i = 0; i < (int) gaussian_type_size; ++i )
+      partials->clear( );
+   }
+
+   for ( unsigned int j = 0; j < ( unsigned int ) g.size(); j += gtype_size )
+   {
+      for ( int i = 0; i < (int) gtype_size; ++i )
       {
          g_use[ i ] = g[ i + j ];
       }
-      result_partial = compute_gaussian( t, g_use );
-      compute_gaussian_sum_partials.push_back( result_partial );
+      result_partial = compute_gaussian_s( t, g_use, gtype, d1_active, d2_active );
+      if ( partials )
+      {
+         partials->push_back( result_partial );
+      }
       for ( unsigned int i = 0; i < ( unsigned int ) t.size(); i++ )
       {
          result[ i ] += result_partial[ i ];
@@ -8101,6 +8265,12 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian_sum( vector < double >
 
 vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian( vector < double > t, vector < double > g )
 {
+   return compute_gaussian_s( t, g, gaussian_type, dist1_active, dist2_active );
+}
+
+vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian_s( const vector < double > & t, const vector < double > & g,
+                                                              int gtype, bool d1_active, bool d2_active )
+{
    vector < double > result( t.size() );
 
    double height = g[ 0 ];
@@ -8112,17 +8282,17 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian( vector < double > t, 
       width = 1e-3;
    }
 
-   gaussian_types use_gt = gaussian_type;
+   gaussian_types use_gt = (gaussian_types) gtype;
 
-   double dist1 = dist1_active ? g[ 3 ] : 0e0;
-   double dist2 = dist2_active ? g[ 4 ] : 0e0;
+   double dist1 = d1_active ? g[ 3 ] : 0e0;
+   double dist2 = d2_active ? g[ 4 ] : 0e0;
 
    /*
    cout << QString( "compute_gaussian use_qt is %1 dist1 %2 %3 dist2 %4 %5\n" )
       .arg( use_gt )
-      .arg( dist1_active ? "active" : "not active" )
+      .arg( d1_active ? "active" : "not active" )
       .arg( dist1 )
-      .arg( dist2_active ? "active" : "not active" )
+      .arg( d2_active ? "active" : "not active" )
       .arg( dist2 )
       ;
    */
@@ -8146,7 +8316,7 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian( vector < double > t, 
    }
 
    unsigned int q_size = ( unsigned int ) t.size();
-   double * q = &( t[ 0 ] );
+   const double * q = &( t[ 0 ] );
 
    switch( use_gt )
    {
@@ -8375,10 +8545,18 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian( vector < double > t, 
 double US_Hydrodyn_Saxs_Hplc::compute_gaussian_peak( QString file, vector < double > g )
 {
    // cout << QString( "gaussian peak file %1 current type %2\n" ).arg( file ).arg( gaussian_type );
-   vector < double > gs = compute_gaussian_sum( f_qs[ file ], g );
+   return compute_gaussian_peak_s( f_qs[ file ], g,
+                                   le_gauss_fit_start->text().toDouble(), le_gauss_fit_end->text().toDouble(),
+                                   gaussian_type, gaussian_type_size, dist1_active, dist2_active,
+                                   &compute_gaussian_sum_partials );
+}
 
-   double start_pos = le_gauss_fit_start->text().toDouble();
-   double end_pos   = le_gauss_fit_end  ->text().toDouble();
+double US_Hydrodyn_Saxs_Hplc::compute_gaussian_peak_s( const vector < double > & q, const vector < double > & g,
+                                                       double start_pos, double end_pos,
+                                                       int gtype, int gtype_size, bool d1_active, bool d2_active,
+                                                       vector < vector < double > > * partials )
+{
+   vector < double > gs = compute_gaussian_sum_s( q, g, gtype, gtype_size, d1_active, d2_active, partials );
 
    double gmax = gs[ 0 ];
 
@@ -8387,7 +8565,7 @@ double US_Hydrodyn_Saxs_Hplc::compute_gaussian_peak( QString file, vector < doub
    unsigned int i = 0;
 
    for ( ; i < ( unsigned int ) gs.size(); i++ ) {
-      double this_pos = f_qs[ file ][ i ];
+      double this_pos = q[ i ];
       if ( this_pos >= start_pos &&
            this_pos <= end_pos ) {
          // found_first = true;
@@ -8399,7 +8577,7 @@ double US_Hydrodyn_Saxs_Hplc::compute_gaussian_peak( QString file, vector < doub
 
    for (; i < ( unsigned int ) gs.size(); i++ )
    {
-      double this_pos = f_qs[ file ][ i ];
+      double this_pos = q[ i ];
       if ( this_pos <= end_pos ) {
          if ( gmax < gs[ i ] ) {
             gmax = gs[ i ];
