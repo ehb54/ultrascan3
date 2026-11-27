@@ -209,3 +209,29 @@ foreach(variant "off;SimCache=off" "small;SimCacheMB=1" "recent;SimCacheMB=1,Sim
         TIMEOUT 600
         RESOURCE_LOCK mpi_analysis)
 endforeach()
+
+# The same in the float modes (float simulations, a node cache holding floats,
+#  the float NNLS):  the cache must not change the fit either.  Their results
+#  differ from the double baselines by float rounding, so each case is compared
+#  with its own run in the float modes without a cache variant (for 2DSA and
+#  PCSA:  without a cache).
+set(US_MPI_FLOAT_MODES "SimFloat=on,SimFloatNNLS=on")
+
+foreach(variant "small;SimCacheMB=1" "recent;SimCacheMB=1,SimCachePolicy=recent"
+                "nodes;NodeSplit=2,SimCacheLimitMB=4096" "stress;SimCacheStress=1,SimCacheLimitMB=4096")
+    list(GET variant 0 tag)
+    list(GET variant 1 dtext)
+    add_test(NAME mpi_analysis_simcache_float_${tag}
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/us_mpi_regression.py
+            check ${US_MPI_CACHE_CASES}
+            --debug-text ${US_MPI_FLOAT_MODES},${dtext}
+            --reference-debug-text ${US_MPI_FLOAT_MODES}
+            --program $<TARGET_FILE:us_mpi_analysis>
+            --testdata $<TARGET_FILE:us_mpi_testdata>
+            --mpirun ${MPIEXEC_EXECUTABLE}
+            --workdir ${CMAKE_CURRENT_BINARY_DIR}/work_simcache_float_${tag})
+    set_tests_properties(mpi_analysis_simcache_float_${tag} PROPERTIES
+        LABELS "mpi;regression;simcache"
+        TIMEOUT 900
+        RESOURCE_LOCK mpi_analysis)
+endforeach()

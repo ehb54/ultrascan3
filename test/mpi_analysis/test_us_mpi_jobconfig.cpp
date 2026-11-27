@@ -463,6 +463,33 @@ TEST( US_MPI_JobConfig, SimulationCacheKnobsAreChecked )
    EXPECT_TRUE( bad.errors.isEmpty() );
 }
 
+TEST( US_MPI_JobConfig, FloatSwitchesAreChecked )
+{
+   Config ok = validated( GRID_2DSA + "<debug_text value=\"SimFloat=on,SimFloatNNLS=off\"/>" );
+   EXPECT_TRUE( ok.warnings.isEmpty() ) << all_of( ok );
+
+   // A misspelt value leaves the fit in double:  warned
+   Config bad = validated( GRID_2DSA + "<debug_text value=\"SimFloat=onn,SimFloatNNLS\"/>" );
+   ASSERT_EQ( bad.warnings.size(), 2 ) << all_of( bad );
+   EXPECT_TRUE( bad.warnings[0].contains( "SimFloat \"onn\"" ) ) << all_of( bad );
+   EXPECT_TRUE( bad.warnings[1].contains( "SimFloatNNLS \"\"" ) ) << all_of( bad );
+   EXPECT_TRUE( bad.errors.isEmpty() );
+
+   // Read as the switches read them:  split at "=", the key in any case
+   Config spaced_eq = validated( GRID_2DSA + "<debug_text value=\"SimFloat = on,simfloatnnls=ON\"/>" );
+   EXPECT_TRUE( spaced_eq.warnings.isEmpty() ) << all_of( spaced_eq );
+
+   Config lower = validated( GRID_2DSA + "<debug_text value=\"simfloat=onn\"/>" );
+   ASSERT_EQ( lower.warnings.size(), 1 ) << all_of( lower );
+   EXPECT_TRUE( lower.warnings[0].contains( "SimFloat \"onn\"" ) ) << all_of( lower );
+
+   // "key value" leaves the switch off:  warned
+   Config no_eq = validated( GRID_2DSA + "<debug_text value=\"SimFloat on,SimFloatNNLS on\"/>" );
+   ASSERT_EQ( no_eq.warnings.size(), 2 ) << all_of( no_eq );
+   EXPECT_TRUE( no_eq.warnings[0].contains( "\"SimFloat on\" is not SimFloat=on" ) ) << all_of( no_eq );
+   EXPECT_TRUE( no_eq.warnings[1].contains( "\"SimFloatNNLS on\" is not SimFloatNNLS=on" ) ) << all_of( no_eq );
+}
+
 TEST( US_MPI_JobConfig, UnknownMethod )
 {
    Config config = validated( GRID_2DSA, "2DXA" );

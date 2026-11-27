@@ -1104,6 +1104,11 @@ def main():
     parser.add_argument("--debug-text", dest="debug_text", default="",
                         help="debug_text entries added to every case,"
                              " e.g. SimCache=off or SimCacheMB=1")
+    parser.add_argument("--reference-debug-text", dest="reference_debug_text", default="",
+                        help="check: compare each fit case with a run of it"
+                             " with this debug_text instead of the stored"
+                             " baseline (e.g. a float mode, SimFloat=on, as"
+                             " the reference of its cache variants)")
     args = parser.parse_args()
 
     if args.command == "list":
@@ -1160,6 +1165,23 @@ def main():
                 print("%s: OK" % name)
             continue
         summary = run_case(name, CASES[name], args)
+        if args.reference_debug_text and args.command == "check":
+            # Compare with a run of the same case with the reference debug
+            #  text (e.g. a float mode without cache variant), not with the
+            #  stored baseline
+            ref_args = argparse.Namespace(**vars(args))
+            ref_args.debug_text = args.reference_debug_text
+            reference = run_case(name + "_ref", CASES[name], ref_args)
+            tol = dict(DEFAULT_TOL, **CASE_TOL.get(name, {}))
+            errors = compare(name, reference, summary, tol)
+            if errors:
+                failed += 1
+                print("%s: FAIL (vs reference %s)" % (name, args.reference_debug_text))
+                for err in errors[:40]:
+                    print("   " + err)
+            else:
+                print("%s: OK" % name)
+            continue
         # A case with "baseline" must equal that case's result
         shared = CASES[name].get("baseline")
         path = BASELINE_DIR / ("%s.json" % (shared or name))
