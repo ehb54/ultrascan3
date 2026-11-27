@@ -29,15 +29,15 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::ga_fitness( ga_individual & individual )
    cout << QString( "entering ga_fitness individual size %1\n" ).arg( individual.v.size() ) << fflush;
 #endif
 
-   our_vector *vi = new_our_vector( HFIT::init_params.size() );
-   for ( unsigned int i = 0; i < HFIT::init_params.size(); i++ )
+   our_vector *vi = new_our_vector( HFIT::cur->init_params.size() );
+   for ( unsigned int i = 0; i < HFIT::cur->init_params.size(); i++ )
    {
       vi->d[ i ] = individual.v[ i ];
    }
 
    individual.fitness = gsm_f( vi );
 
-   for ( unsigned int i = 0; i < HFIT::init_params.size(); i++ )
+   for ( unsigned int i = 0; i < HFIT::cur->init_params.size(); i++ )
    {
        individual.v[ i ] = vi->d[ i ];
    }
@@ -62,14 +62,14 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::ga_run( double & nrmsd )
    list < ga_individual > pop;
    ga_individual          individual;
 
-   individual.v.resize( HFIT::init_params.size() );
+   individual.v.resize( HFIT::cur->init_params.size() );
 
    // init population
    for ( unsigned int i = 0; i < control_parameters[ "population" ].toUInt(); i++ )
    {
-      for ( unsigned int j = 0; j < HFIT::init_params.size(); j++ )
+      for ( unsigned int j = 0; j < HFIT::cur->init_params.size(); j++ )
       {
-         individual.v[ j ] = HFIT::param_min[ j ] + ( HFIT::param_max[ j ] - HFIT::param_min[ j ] ) * drand48();
+         individual.v[ j ] = HFIT::cur->param_min[ j ] + ( HFIT::cur->param_max[ j ] - HFIT::cur->param_min[ j ] ) * drand48();
       }
       ga_fitness( individual );
       pop.push_back( individual );
@@ -150,8 +150,8 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::ga_run( double & nrmsd )
          {
             // cout << "mutate\n";
             individual = last_pop[ pop_selection( last_pop.size() ) ];
-            unsigned int pos = ( unsigned int )( drand48() * HFIT::init_params.size() );
-            individual.v[ pos ] = HFIT::param_min[ pos ] + ( HFIT::param_max[ pos ] - HFIT::param_min[ pos ] ) * drand48();
+            unsigned int pos = ( unsigned int )( drand48() * HFIT::cur->init_params.size() );
+            individual.v[ pos ] = HFIT::cur->param_min[ pos ] + ( HFIT::cur->param_max[ pos ] - HFIT::cur->param_min[ pos ] ) * drand48();
             ga_fitness( individual );
             pop.push_back( individual );
             mutate_count++;
@@ -164,8 +164,8 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::ga_run( double & nrmsd )
             // cout << "crossover\n";
             individual                    = last_pop[ pop_selection( last_pop.size() ) ];
             ga_individual individual2 = last_pop[ pop_selection( last_pop.size() ) ];
-            unsigned int pos = ( unsigned int )( drand48() * HFIT::init_params.size() );
-            for ( unsigned int j = pos; j < HFIT::init_params.size() ; j++ )
+            unsigned int pos = ( unsigned int )( drand48() * HFIT::cur->init_params.size() );
+            for ( unsigned int j = pos; j < HFIT::cur->init_params.size() ; j++ )
             {
                individual.v[ j ] = individual2.v[ j ];
             }
@@ -178,9 +178,9 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::ga_run( double & nrmsd )
          unsigned int pos = pop_selection( last_pop.size() );
          if ( has_been_duplicated.count( pos ) )
          {
-            for ( unsigned int j = 0; j < HFIT::init_params.size(); j++ )
+            for ( unsigned int j = 0; j < HFIT::cur->init_params.size(); j++ )
             {
-               individual.v[ j ] = HFIT::param_min[ j ] + ( HFIT::param_max[ j ] - HFIT::param_min[ j ] ) * drand48();
+               individual.v[ j ] = HFIT::cur->param_min[ j ] + ( HFIT::cur->param_max[ j ] - HFIT::cur->param_min[ j ] ) * drand48();
             }
             ga_fitness( individual );
             pop.push_back( individual );
@@ -216,9 +216,9 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::ga_run( double & nrmsd )
    pop.sort();
    pop.unique();
 
-   for ( unsigned int i = 0; i < HFIT::init_params.size(); i++ )
+   for ( unsigned int i = 0; i < HFIT::cur->init_params.size(); i++ )
    {
-      HFIT::init_params[ i ] = pop.front().v[ i ];
+      HFIT::cur->init_params[ i ] = pop.front().v[ i ];
    }
 
    nrmsd = pop.front().fitness;

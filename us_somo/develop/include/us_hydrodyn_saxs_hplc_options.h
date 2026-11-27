@@ -6,6 +6,7 @@
 //Added by qt3to4:
 #include <QLabel>
 #include <QCloseEvent>
+#include <QScrollArea>
 
 using namespace std;
 
@@ -143,6 +144,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
       QPushButton  *                          pb_quit;
       QPushButton  *                          pb_help;
       QPushButton  *                          pb_ok;
+
+      QScrollArea  *                          sa_options;    // the options, which scroll when the screen is too short
 
       QCheckBox *                             cb_makeiq_cutmax_pct;
       QLineEdit *                             le_makeiq_cutmax_pct;

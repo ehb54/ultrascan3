@@ -21,6 +21,7 @@
 //standard C and C++ defs:
 
 #include <map>
+#include <set>
 #include <vector>
 #include <string.h>
 #include <stdlib.h>
@@ -40,6 +41,94 @@ using namespace std;
 #endif
 
 
+namespace HFIT 
+{
+   // the state of a fit: the GUI thread's own, or that of a thread fitting in parallel (cur points at it)
+   struct state
+   {
+      vector < double       > init_params;    // variable param initial values
+      vector < double       > base_params;    // variable param base values
+      vector < double       > last_params;    // variable param initial values
+
+      vector < double       > fixed_params;   // the fixed params
+      vector < unsigned int > param_pos;      // index into fixed params or variable params
+      vector < bool         > param_fixed;    
+      vector < double       > param_min;      // minimum values for variable params
+      vector < double       > param_max;      // maximum values for variable params
+
+      map < unsigned int, unsigned int > comm_backref; // back reference to variable param position of 1st usage
+
+      bool                    conc_test = false;
+      vector < double >       conc_ratios;
+      map < unsigned int,  double >  conc_ratios_map;
+
+      bool                    use_relative_center = false;
+      vector < double >       relative_centers;
+      map < unsigned int,  double >  relative_center_map;
+
+      vector < double       > errors;
+      vector < unsigned int > errors_index;
+
+      bool                    use_errors = false;
+
+      double (*compute_gaussian_f)( double t, const double *par ) = 0;
+   };
+
+   // the calling thread's state: the GUI thread's unless the thread set its own
+   extern thread_local state * cur;
+
+   // what setting up a fit reads from the fit window, so that a fit can also be set up without it
+   struct settings
+   {
+      int                     gaussian_type;       // US_Hydrodyn_Saxs_Hplc::gaussian_types
+      int                     gaussian_type_size;
+      bool                    dist1_active;
+      bool                    dist2_active;
+      bool                    use_errors;
+
+      bool                    conc_test;
+      bool                    fix_relative_centers;
+      vector < double >       conc_ratios;
+      vector < double >       relative_centers;
+      vector < bool >         fix_curves;
+
+      bool                    fix_amplitude;
+      bool                    fix_center;
+      bool                    fix_width;
+      bool                    fix_dist1;
+      bool                    fix_dist2;
+      bool                    comm_dist1;
+      bool                    comm_dist2;
+
+      bool                    pct_amplitude;
+      bool                    pct_center;
+      bool                    pct_width;
+      bool                    pct_dist1;
+      bool                    pct_dist2;
+      double                  pct_amplitude_value;
+      double                  pct_center_value;
+      double                  pct_width_value;
+      double                  pct_dist1_value;
+      double                  pct_dist2_value;
+      bool                    pct_amplitude_from_init;
+      bool                    pct_center_from_init;
+      bool                    pct_width_from_init;
+      bool                    pct_dist1_from_init;
+      bool                    pct_dist2_from_init;
+
+      double                  ampl_min;
+      double                  ampl_width_min;
+      double                  gauss_max_height;
+      double                  dist_max;
+      bool                    lock_min_retry;
+      double                  lock_min_retry_mult;
+      bool                    maxfpk_restart;
+      double                  maxfpk_restart_pct;
+   };
+
+   void list_params();
+};
+
 class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
 {
    Q_OBJECT
@@ -54,6 +143,21 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
                                 const char *name = 0
                                 );
       ~US_Hydrodyn_Saxs_Hplc_Fit();
+
+      // the parts of an LM fit that do not use the window, on the calling thread's HFIT::cur:
+      // set up its parameters from the Gaussians (false: nothing to fit)
+      static bool   fit_setup( const HFIT::settings & s,
+                               const vector < double > & gaussians,
+                               const vector < vector < double > > & gaussians_undo );
+      // the curves to fix after a fit, with zero amplitudes or widths (false: none, or not enabled)
+      static bool   fit_lock_zeros( const HFIT::settings & s,
+                                    const vector < double > & gaussians,
+                                    const vector < double > & par,
+                                    set < unsigned int > & to_lock );
+      // raise the largest free peak for a restart (false: not enabled, or no free peak)
+      static bool   fit_max_free_peak_delta( const HFIT::settings & s,
+                                             vector < double > & gaussians,
+                                             const vector < double > & par );
 
    private:
       US_Hydrodyn_Saxs_Hplc *hplc_win;
@@ -201,6 +305,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
       bool          lock_zeros( vector < double > & par );
       bool          max_free_peak_delta( vector < double > & par );
 
+      HFIT::settings fit_settings();
+
       double        hplc_ampl_width_min;
       double        hplc_ampl_min;
       bool          hplc_lock_min_retry;
@@ -235,33 +341,33 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
    
 };
 
-namespace HFIT 
+// the fit window's LM fit (lm()) without the window, for fitting curves in parallel threads: the window's
+// settings, Gaussians and undo list, the curve's data and the fitting range are its own, and the fit is done on
+// the calling thread's HFIT::cur, so that it gives what the window's fit gives for the same curve
+
+class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit_Lm
 {
-   extern vector < double       > init_params;    // variable param initial values
-   extern vector < double       > base_params;    // variable param base values
+   public:
+      HFIT::settings                  s;               // the window's settings; the fit changes them as the window's
+      vector < double >               gaussians;       // the window's hplc_win->gaussians
+      vector < vector < double > >    gaussians_undo;
+      double                          epsilon;         // the window's epsilon, iterations and population
+      int                             iterations;
+      int                             population;
+      double                          fit_start;       // the fitting range, as the HPLC/KIN window's start and end
+      double                          fit_end;
+      const vector < double >       * q;               // the curve: its frames (or times), I and sd
+      const vector < double >       * I;
+      const vector < double >       * e;
 
-   extern vector < double       > fixed_params;   // the fixed params
-   extern vector < unsigned int > param_pos;      // index into fixed params or variable params
-   extern vector < bool         > param_fixed;    
-   extern vector < double       > param_min;      // minimum values for variable params
-   extern vector < double       > param_max;      // maximum values for variable params
+      void                            lm( bool max_free_peak_delta_run = false, double prev_rmsd = 0e0 );
 
-   extern map < unsigned int, unsigned int > comm_backref; // back reference to variable param position of 1st usage
-
-   extern map < unsigned int,  double >  conc_ratios_map;
-
-   extern map < unsigned int,  double >  relative_center_map;
-
-   extern bool                    use_errors;
-
-   extern vector < double       > errors;
-   extern vector < unsigned int > errors_index;
-
-   extern bool                    use_relative_center;
-
-   extern double (*compute_gaussian_f)( double t, const double *par );
-
-   void list_params();
+   private:
+      bool                            setup();
+      bool                            update_enables();  // what enables the window's LM button
+      void                            update_common();
+      void                            undo();
+      bool                            lock_zeros( vector < double > & par );
 };
 
 #ifdef WIN32

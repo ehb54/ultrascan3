@@ -276,6 +276,13 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_pr_info2;
       QPushButton *pb_rescale;
       QPushButton *pb_rescale_y;
+      // the I(q) plot's axes, linear or logarithmic, and the colors of its curves; the colors and the Save plots of
+      // the P(r) section
+      QPushButton *pb_axis_x;
+      QPushButton *pb_axis_y;
+      QPushButton *pb_color;
+      QPushButton *pb_pp_pr;
+      QPushButton *pb_color_pr;
 
       QwtCounter *cnt_bin_size;
       QwtCounter *cnt_smooth;
@@ -400,6 +407,19 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       vector < vector <PDB_atom> >                    bead_models;
       vector < unsigned int >                         selected_models;
       vector < QColor >                               plot_colors;
+      // the color of the I(q) or P(r) curve at a position: plot_colors from its position, shifted by the Color
+      // button of its section
+      QColor                                          iq_color( int i );
+      QColor                                          pr_color( int p );
+      int                                             iq_color_offset;
+      int                                             pr_color_offset;
+      // the I(q) plot's axes as chosen with Log X / Lin X and Log Y / Lin Y; the Guinier plots are always linear in
+      // q^2 and logarithmic in intensity
+      bool                                            iq_axis_x_log;
+      bool                                            iq_axis_y_log;
+      // the I(q) and residuals plots' axis titles and scales, from the plot's mode and these choices, and the axis
+      // buttons' state (not available in the Guinier plots)
+      void                                            set_iq_axes();
       vector < QwtPlotCurve * >                       plotted_Iq;
 
       vector < double >                               exact_q;
@@ -1081,6 +1101,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void clear_plot_pr( bool full_clear = false );
       void cancel();
       void pp();
+      void pp_pr();
+      void iq_axis_x();
+      void iq_axis_y();
+      void iq_color_rotate();
+      void pr_color_rotate();
       void help();
       void options();
       void stop();

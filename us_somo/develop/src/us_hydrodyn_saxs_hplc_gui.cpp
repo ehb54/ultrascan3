@@ -859,7 +859,10 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    plot_ref->hide();
    plot_ref->setSizePolicy(QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding)); 
 //   plot_errors = new QwtPlot( this );
-   usp_plot_errors = new US_Plot( plot_errors, "", "", "", this );
+   // in the plots' splitter, just below the main plot, so that it can be resized against it
+   usp_plot_errors = new US_Plot( plot_errors, "", "", "", qs_plots );
+   qs_plots->insertWidget( qs_plots->indexOf( plot_dist ) + 1, plot_errors );
+   plot_errors_shown = false;
    connect( (QWidget *)plot_errors->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_errors( const QPoint & ) ) );
    ((QWidget *)plot_errors->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
    connect( (QWidget *)plot_errors->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_errors( const QPoint & ) ) );
@@ -915,6 +918,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    connect(((QObject*)plot_dist  ->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_plot_errors, SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
    connect(((QObject*)plot_errors->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_plot_dist  , SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
+   // the left axes of the main and residual plots keep the same width, so that their x axes line up
+   connect(((QObject*)plot_dist  ->axisWidget(QwtPlot::yLeft)) , SIGNAL(scaleDivChanged () ), SLOT(align_plot_errors () ), Qt::UniqueConnection );
+   connect(((QObject*)plot_errors->axisWidget(QwtPlot::yLeft)) , SIGNAL(scaleDivChanged () ), SLOT(align_plot_errors () ), Qt::UniqueConnection );
 
    cb_plot_errors_rev = new QCheckBox(this);
    cb_plot_errors_rev->setText(us_tr("Reverse"));
@@ -964,7 +970,6 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    cb_plot_errors_group->setChecked( true );
 
    l_plot_errors = new QVBoxLayout( 0 );
-   l_plot_errors->addWidget( plot_errors );
    l_plot_errors->addLayout( hbl_plot_errors_buttons );
 
    plot_errors_widgets.push_back( plot_errors );
@@ -5301,7 +5306,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
                                     plot_dist_zoomer && 
                                     plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase()
                                     );
-   pb_legend           ->setEnabled( lb_files->count() && files_selected_count <= 20 && !cb_eb->isChecked() );
+   pb_legend           ->setEnabled( lb_files->count() && files_selected_count <= 20 );
    pb_axis_x           ->setEnabled( lb_files->count() );
    pb_axis_y           ->setEnabled( lb_files->count() );
 

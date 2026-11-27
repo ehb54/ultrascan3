@@ -511,6 +511,11 @@ static QString conc_list_text( const QStringList & qsl )
    return text;
 }
 
+QString US_Hydrodyn_Saxs_Conc::list_text( const QStringList & qsl )
+{
+   return conc_list_text( qsl );
+}
+
 // a line of numbers only (data, not a header)
 static bool conc_is_data_line( const QString & line )
 {
@@ -574,8 +579,13 @@ bool US_Hydrodyn_Saxs_Conc::write_values_into_file( const QString & file,
    const QString values  [ 3 ] = { psv,                      I0se,                      conc };
    const QString names   [ 3 ] = { "PSV",                    "I0se",                    "Conc" };
 
+   // an empty value is not written: its token, if there is one, keeps its value
    for ( int i = 0; i < 3; ++i )
    {
+      if ( values[ i ].isEmpty() )
+      {
+         continue;
+      }
       QRegularExpressionMatch m = QRegularExpression( rx_texts[ i ] ).match( line );
       if ( m.hasMatch() )
       {
@@ -589,6 +599,10 @@ bool US_Hydrodyn_Saxs_Conc::write_values_into_file( const QString & file,
    // the loader must read back exactly these values
    for ( int i = 0; i < 3; ++i )
    {
+      if ( values[ i ].isEmpty() )
+      {
+         continue;
+      }
       QRegularExpressionMatch m = QRegularExpression( rx_texts[ i ] ).match( line );
       if ( !m.hasMatch() || m.captured( 1 ) != values[ i ] )
       {
