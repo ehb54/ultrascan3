@@ -91,12 +91,15 @@ jobs:
         shell: bash
         env:
           TARGET: ${{ inputs.target }}
+          PROFILE: ${{ inputs.profile }}
         run: |
           set -euo pipefail
           python3 - <<'PY' >> "$GITHUB_OUTPUT"
           import json, os, sys
 
           target = os.environ["TARGET"]
+          if os.environ["PROFILE"] == "HPC" and target not in ("ubuntu2404-x64", "oraclelinux8-x64"):
+              sys.exit("the HPC profile (us_mpi_analysis) is built only on Linux targets")
           lock = json.load(open("buildsys/toolchain.lock.json"))
           pin = lock["targets"].get(target)
           if pin is None:
