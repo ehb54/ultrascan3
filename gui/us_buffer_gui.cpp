@@ -2341,7 +2341,6 @@ void US_BufferGui::checkTab( int currentTab )
           US_Notify::information( this, tr( "WARNING" ), tr( "No Buffer selected! Please select Buffer from the list" ) );
 
           emit editBufAccepted();
-	 
        }
    }
 }
