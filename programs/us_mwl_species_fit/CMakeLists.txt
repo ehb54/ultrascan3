@@ -30,7 +30,6 @@ target_include_directories(us_mwl_species_fit_lib PUBLIC
 # Qt DataVisualization is critical for this program
 target_link_libraries(us_mwl_species_fit_lib PUBLIC
         us_program_common
-        us_analysis_profile_lib
         Qt::DataVisualization
         )
 

@@ -2,11 +2,11 @@
 #ifndef US_ANALYSIS_AUTO_H
 #define US_ANALYSIS_AUTO_H
 
-#include "../us_analysis_profile/us_analysis_profile.h"
 #include "../us_fit_meniscus/us_fit_meniscus.h"
 #include "../us_mwl_species_fit/us_load_run_noise.h"
 #include "../us_mwl_species_fit/us_mwl_sf_plot3d.h"
 #include "../us_mwl_species_fit/us_mwl_species_fit.h"
+#include "us_ana_profile_loader.h"
 #include "us_convert.h"
 #include "us_convert_gui.h"
 #include "us_convertio.h"
@@ -60,16 +60,15 @@ class US_Analysis_auto : public US_Widgets
          */
         US_Analysis_auto();
 
-        US_MwlSpeciesFit* sdiag;
+        US_MwlSpeciesFit*                sdiag = nullptr;
         US_ConvertGui*    sdiag_convert;
-        US_Norm_Profile*  sdiag_norm_profile;
-        US_MwlSpeciesSim*                sdiag_mwlsim;
+        US_Norm_Profile*                 sdiag_norm_profile;
         US_Edit*                         sdiag_edit;
-        bool                             velmwl_fit_open;
-        US_2dsa*                         sdiag_2dsa;  //!< Current channel's headless 2DSA-IT widget
-                                                      //!< (VEL-MWL post-processing).
-        bool                             twodsa_open; //!< True while sdiag_2dsa is live (mirrors
-                                                      //!< velmwl_fit_open).
+        bool                             velmwl_fit_open = false;
+        US_2dsa*                         sdiag_2dsa      = nullptr; //!< Current channel's headless 2DSA-IT widget
+                                                                    //!< (VEL-MWL post-processing).
+        bool                             twodsa_open     = false;   //!< True while sdiag_2dsa is live (mirrors
+                                                                    //!< velmwl_fit_open).
 
         QTreeWidget     *treeWidget;                             /**< Tree widget for displaying analysis data. */
         QMap<QString, QTreeWidgetItem *> topItem;                /**< Top-level items in the tree widget. */
@@ -123,6 +122,11 @@ class US_Analysis_auto : public US_Widgets
                    indication that 2DSA-IT processing is under way. */
 
      private:
+        friend class US_AutoflowProfileRefusalTest;
+
+        void                             abort_profile_setup( bool initializing );
+        bool                             twodsa_profile_ready = false;
+
         QVector< US_DataIO::RawData > rawData;                   /**< Vector of raw data. */
         QVector< US_DataIO::EditedData > editedData;             /**< Vector of edited data. */
         QVector< SP_SPEEDPROFILE > speed_steps;                  /**< Vector of speed profiles. */
@@ -255,8 +259,7 @@ class US_Analysis_auto : public US_Widgets
             //! \brief This run's 2DSA Analysis-Profile settings (grid
             //! limits/points per channel) -- loaded once in process_
             //! velmwl_after_all_channels_decided() via the same
-            //! US_AnalysisProfileGui::inherit_protocol() pattern
-            //! US_ReporterGMP uses (constructed, never shown), and
+            //! US_AnaProfileLoader US_ReporterGMP uses, and
             //! consulted per-channel by start_next_2dsa_channel() to
             //! populate protocol_details_at_analysis_2dsa's s_min/s_max/
             //! s_grpts/k_min/k_max/k_grpts before each channel's US_2dsa

@@ -1005,6 +1005,8 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       void    submitExperiment_protDev( void );  // Submit the experiment when US_ProtDev
       void    submitExperiment_dataDisk( void );  
       bool    saveRunProtocol ( void );  // Save the Run Protocol
+      //! \brief Whether the profile can be saved; shows a message if not
+      bool    check_aprofile();
       bool    readAProfileBasicParms( QXmlStreamReader&, QMap<QString, QString>& );
 
       void    saveReports ( US_AnaProfile* );  // Save the Reports
@@ -1238,6 +1240,9 @@ class US_ExperimentMain : public US_Widgets
       void enable_data_disk_only();
 
       US_AnaProfile* get_aprofile( void );
+      //! \brief Whether the profile belongs to the current protocol
+      bool                    aprofile_usable();
+      void                    aprofile_saved_as( const US_RunProtocol& previous );
       US_AnaProfile* get_aprofile_loaded( void );
       void set_loadAProf ( US_AnaProfile );
       QMap< QString, QString> get_all_solution_names( void );

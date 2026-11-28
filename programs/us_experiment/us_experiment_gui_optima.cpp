@@ -289,6 +289,21 @@ US_AnaProfile* US_ExperimentMain::get_aprofile( )
   return &(epanAProfile->sdiag->currProf);
 }
 
+bool US_ExperimentMain::aprofile_usable()
+{
+   if ( usmode && !epanAProfile->sdiag->profileUsableFor( currProto ) )
+   {
+      // R&D mode has no analysis profile tab to visit before saving.
+      epanAProfile->initPanel();
+   }
+   return epanAProfile->sdiag->profileUsableFor( currProto );
+}
+
+void US_ExperimentMain::aprofile_saved_as( const US_RunProtocol& previous )
+{
+   epanAProfile->sdiag->profileSavedAs( previous, currProto );
+}
+
 US_AnaProfile* US_ExperimentMain::get_aprofile_loaded( )
 {
   return &(epanAProfile->sdiag->loadProf);
@@ -7560,10 +7575,30 @@ DbgLv(1) << "EGAp:svAP:  new DB:  ID" << aprof->aprofID
    return;
 }
 
+// The profile shown can be that of another protocol
+bool US_ExperGuiUpload::check_aprofile()
+{
+   if ( !mainw->aprofile_usable() )
+   {
+      QMessageBox::critical( this,
+                             tr( "Analysis Profile" ),
+                             tr( "The protocol cannot be saved or submitted: \n"
+                                 "Review the analysis profile for the current protocol and try again." ) );
+      return false;
+   }
+   return true;
+}
+
 // Slot to save the current Run Protocol
 bool US_ExperGuiUpload::saveRunProtocol()
 {
   bool save_aborted = false;
+
+  if ( !check_aprofile() )
+  {
+     save_aborted = true;
+     return save_aborted;
+  }
 
   qDebug() << "in saveRunProtoocl(): proto_svd, rps_differ -- " << proto_svd << rps_differ;
   if ( proto_svd && !rps_differ )
@@ -7670,6 +7705,7 @@ DbgLv(1) << "EGUp:svRP:   prnames" << prnames;
 
 
    // Save the new name and compose the XML representing the protocol
+   const US_RunProtocol previous_protocol = *currProto;
    protoname           = newpname;
 DbgLv(1) << "EGUp:svRP:   NEW protoname" << protoname;
 DbgLv(1) << "EGUp:svRP:   currProto previous guid" << currProto->protoGUID;
@@ -7753,7 +7789,8 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
    prentry << protoname << pdate << protid << pguid;
 
    qDebug() << "Updated proto list: " << prentry;
-   
+
+   mainw->aprofile_saved_as( previous_protocol );
    mainw->updateProtos( prentry );            // Update existing protocols list
    proto_svd           = true;
    ck_prot_svd->setChecked( true );
@@ -7842,6 +7879,11 @@ void US_ExperGuiUpload::read_optima_machines( US_DB2* db )
 //Confirm the Data Disk submission
 void US_ExperGuiUpload::submitExperiment_confirm_dataDisk()
 {
+   if ( !check_aprofile() )
+   {
+      return;
+   }
+
   if ( mainw->automode && rps_differ )
     {
       if ( saveRunProtocol() )
@@ -7971,6 +8013,11 @@ void US_ExperGuiUpload::submitExperiment_confirm_dataDisk()
 //Confirm the Optima machine an experiemnt is submitted to.
 void US_ExperGuiUpload::submitExperiment_confirm()
 {
+   if ( !check_aprofile() )
+   {
+      return;
+   }
+
   // //DEBUG
 
   // qDebug() << "InvestigatorID into autolfow -- " << QString::number(US_Settings::us_inv_ID());
@@ -8434,6 +8481,11 @@ bool US_ExperGuiUpload::readAProfileBasicParms( QXmlStreamReader& xmli, QMap<QSt
 //Confirm submission for EDIT & ANALYIS: US_ProtDev
 void US_ExperGuiUpload::submitExperiment_confirm_protDev()
 {
+   if ( !check_aprofile() )
+   {
+      return;
+   }
+
   qDebug() << "IN submitExperiment_confirm_protDev() -- "
 	   << "mainw->automode, have_run, rps_differ "
 	   << mainw->automode <<  have_run <<  rps_differ;

@@ -185,3 +185,7 @@ add_custom_target(test_individual_discovery
         DEPENDS test_us_utils
         COMMENT "Test individual test discovery"
         )
+
+# Profiles recorded from the analysis profile window
+target_compile_definitions(test_us_utils PRIVATE
+        PROFILE_FIXTURE_DIR="${CMAKE_SOURCE_DIR}/test/programs/us_analysis_profile/fixtures")

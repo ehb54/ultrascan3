@@ -2,17 +2,18 @@
 
 #include <QApplication>
 
-#include "us_mwl_species_fit.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_util.h"
-#include "us_data_loader.h"
-#include "us_load_run_noise.h"
-#include "us_passwd.h"
-#include "us_images.h"
+#include "us_ana_profile_load_gui.h"
 #include "us_csv_loader.h"
+#include "us_data_loader.h"
+#include "us_gui_settings.h"
+#include "us_images.h"
+#include "us_license.h"
+#include "us_license_t.h"
+#include "us_load_run_noise.h"
+#include "us_mwl_species_fit.h"
+#include "us_passwd.h"
+#include "us_settings.h"
+#include "us_util.h"
 
 #include "qwt_picker_machine.h"
 #include <qwt_scale_div.h>
@@ -119,17 +120,14 @@ US_MwlSpeciesFit::US_MwlSpeciesFit( QMap<QString, QString>&                     
    data_plot1->setMinimumSize( 600, 300 );
    data_plot2->setMinimumSize( 600, 300 );
 
-   // load
-   load();
-
-   // pass edata BC
-   protocol_details_p["baseline_corrections"] = this->protocol_details["baseline_corrections"];
-   protocol_details_p["meniscus_info"]        = this->protocol_details["meniscus_info"];
-
    // read protocol & check (once more) extinction profiles
    QStringList msg_to_user;
    if ( !read_protocol( msg_to_user ) )
    {
+      if ( msg_to_user.isEmpty() )
+      {
+         return; // The protocol/profile warning was already shown.
+      }
       msg_to_user.removeDuplicates();
       QMessageBox::critical( this,
                              tr( "ATTENTION: Invalid Extinction Profiles (ABDE)" ),
@@ -143,6 +141,14 @@ US_MwlSpeciesFit::US_MwlSpeciesFit( QMap<QString, QString>&                     
    }
    else // continue
    {
+      load();
+      if ( !dataLoaded )
+      {
+         return;
+      }
+      protocol_details_p["baseline_corrections"] = this->protocol_details["baseline_corrections"];
+      protocol_details_p["meniscus_info"]        = this->protocol_details["meniscus_info"];
+
       /*
     //debug
     QStringList ext_keys = extinction_profiles_per_channel.keys();
@@ -265,6 +271,7 @@ US_MwlSpeciesFit::US_MwlSpeciesFit( QMap<QString, QString>&                     
       protocol_details_p["rmsds_for_gmp"] = rmsd_for_gmp;
       qDebug() << "RMDSs -- " << rmsd_for_gmp;
       qDebug() << "SSF DIR -- " << protocol_details_p["ssf_dir_name"];
+      ready = true;
    }
 }
 
@@ -1044,11 +1051,16 @@ void US_MwlSpeciesFit::load( void )
        // 				   description, protocol_details, "none" );
        dialog = new US_DataLoader( true, dbdisk, rawList, dataList, triples,
 				   description, protocol_details, "none" );
-              
-       QString dir_gmp = description;
-       qDebug() << "[AFTER data_load: description ]: -- " << description;
-       protocol_details[ "directory_for_gmp" ] = US_Settings::resultDir() + "/" + dir_gmp.split(";")[1];
-       
+
+       const QString run_directory = description.section( ';', 1, 1 );
+       if ( dataList.isEmpty() || run_directory.isEmpty() )
+       {
+          delete dialog;
+          QMessageBox::warning( this, tr( "Analysis Data" ), tr( "Could not load edited data for the run." ) );
+          return;
+       }
+       protocol_details["directory_for_gmp"] = US_Settings::resultDir() + "/" + run_directory;
+
        //editedData: chann - to - baseline corr: && meniscus info
        QString triples_bc;
        QMap<QString, QString> chans_meniscus; 
@@ -1259,18 +1271,22 @@ bool US_MwlSpeciesFit::read_protocol(QStringList& msg_to_user)
   int invID_p           = protocol_details[ "invID_passed" ].toInt();
   currProto         = US_RunProtocol();
   currAProf         = US_AnaProfile();
-  
-  QString xmlstr( "" );
-  US_ProtocolUtil::read_record_auto( ProtocolName_auto, invID_p,  &xmlstr, NULL, &db );
-  QXmlStreamReader xmli( xmlstr );
-  currProto. fromXml( xmli );
+
+  if ( !US_AnaProfileLoader::readProtocol( ProtocolName_auto, invID_p, db, currProto ) )
+  {
+     QMessageBox::warning( this, tr( "Analysis Profile" ), tr( "Could not read the run protocol." ) );
+     return false;
+  }
 
   //read AProfile to later pass ranges
-  sdiag_aprof = new US_AnalysisProfileGui;
-  sdiag_aprof->progress_cb = aprof_progress_cb; // report DB reading of reports/reportItems
-  sdiag_aprof->inherit_protocol( &currProto );
-  sdiag_aprof->progress_cb = nullptr;
-  currAProf   = sdiag_aprof->currProf;
+  US_AnaProfileLoader::Options options;
+  options.progress                         = aprof_progress_cb; // report DB reading of reports/reportItems
+  const US_AnaProfileLoader::Result loaded = US_AnaProfileLoader::load( currProto, &db, options );
+  if ( !US_AnaProfileLoadGui::usable( this, loaded ) )
+  {
+     return false;
+  }
+  currAProf              = loaded.profile;
   //Channel reports
   ch_reports             = currAProf.ch_reports;
   //Channel descriptions

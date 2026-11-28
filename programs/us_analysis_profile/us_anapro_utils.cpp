@@ -327,431 +327,77 @@ DbgLv(1) << "AP:sP: pP return";
 // Initialize a General panel, especially after clicking on its tab
 void US_AnaprofPanGen::initPanel()
 {
-#if 0
-use_db=false;
-#endif
-
- AProfIsIntiated = false;
-
-//Setting ref report && DEBUG: check how current ch_reports looks like
- QMap< QString, QMap < QString, US_ReportGMP > >::iterator ri;
- QMap < QString, US_ReportGMP > triple_reports_ref;
- QString chan_desc_ref;
- QString wvl_ref;
- 
-  for ( ri = currProf->ch_reports.begin(); ri != currProf->ch_reports.end(); ++ri )
-    {
-      QString chan_desc = ri.key();
-
-      qDebug() << "[BEGIN]US_AnaprofPanGen::initPanel(): chan_desc:::  " << chan_desc;
-
-      //if chan_desc contains "(unspecified)", save this ch_report as the refrence one..
-      //copy it to all other channels
-      
-      if ( chan_desc.contains("(unspecified)") )
-	{
-	  triple_reports_ref = ri.value();
-	  chan_desc_ref      = chan_desc;
-	  wvl_ref            = triple_reports_ref.keys()[ 0 ];
-	  qDebug() << "Reference report name, wvls, #wvl -- "
-		   << chan_desc << triple_reports_ref.keys() << triple_reports_ref.keys().size();
-	  continue;
-	}
-      
-      QMap < QString, US_ReportGMP > triple_reports = ri.value();
-      QMap < QString, US_ReportGMP >::iterator tri;
-      for ( tri = triple_reports.begin(); tri != triple_reports.end(); ++tri )
-	{
-	  QString c_wvl = tri.key();
-
-	  //if ref_report was not replaced yet, substitute all channels' reports witht the ref. one...
-	  if ( !triple_reports_ref.isEmpty() )
-	    {
-          // but before, remember exp. duraiton:
-          double exp_dur_                                            = currProf->ch_reports[chan_desc][c_wvl].experiment_duration;
-          currProf->ch_reports[chan_desc][c_wvl]                     = triple_reports_ref[wvl_ref];
-          currProf->ch_reports[chan_desc][c_wvl].experiment_duration = exp_dur_;
-       }
-       else //check if some channel's report still contain 's'/'2DSA' etc. (caused by adding/removing wvl(s)/channels)
-       {
-          if ( mainw->abde_mode_aprofile )
-          {
-             for ( int ii = 0; ii < currProf->ch_reports[chan_desc][c_wvl].reportItems.size(); ++ii )
-             {
-                US_ReportGMP::ReportItem initItem = currProf->ch_reports[chan_desc][c_wvl].reportItems[ii];
-                if ( initItem.type == 's' && initItem.method.contains( "2DSA" ) )
-                {
-                   //if attempts to insert reportItem from Velocity-type, replace with ABDE-type
-                   currProf->ch_reports[chan_desc][c_wvl].reportItems[ii].type       = QString( "Radius" );
-                   currProf->ch_reports[chan_desc][c_wvl].reportItems[ii].method     = QString( "raw" );
-                   currProf->ch_reports[chan_desc][c_wvl].reportItems[ii].range_low  = 5.8;
-                   currProf->ch_reports[chan_desc][c_wvl].reportItems[ii].range_high = 7.0;
-                }
-             }
-          }
-       }
-     //&& debug 
-	  for(int ii=0; ii< currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems.size(); ++ii)
-	    {
-	      
-	      US_ReportGMP::ReportItem initItem = currProf->ch_reports[ chan_desc ] [ c_wvl ].reportItems[ ii ];
-	      
-	      qDebug() << "wvl, type, method, lo, hi -- "
-		       << c_wvl
-		       << initItem.type
-		       << initItem.method
-		       << initItem.range_low
-		       << initItem.range_high ;
-	      
-	    }
-	}
-    }
-
-  //wvls:
-  //QMap< QString, QList< double > > ch_wvls;
-  QMap< QString, QList < double > >::iterator wi;
-  for ( wi = currProf->ch_wvls.begin(); wi != currProf->ch_wvls.end(); ++wi )
-    {
-      QString chan_desc = wi.key();
-      qDebug() << "[BEGIN]US_AnaprofPanGen::initPanel(): chan_desc [ch_wvls]:::  " << chan_desc;
-      qDebug() << "Wvls -- " << wi.value();
-
-      //still present from "1A:UV/vis.:(unspecified)" channel....
-      
-    }
-  //END DEBUG
- 
-
-//TESTING
-   QMap < QString, US_ReportGMP* > ch_report_map;
-   US_ReportGMP* reportGMP_1 = new US_ReportGMP();
-   US_ReportGMP* reportGMP_2 = new US_ReportGMP();
-   US_ReportGMP* reportGMP_3 = new US_ReportGMP();
-   US_ReportGMP* reportGMP_4 = new US_ReportGMP();
-   ch_report_map.insert ( QString( "280" ), reportGMP_1 ); 
-   ch_report_map.insert ( QString( "290" ), reportGMP_2 );
-   ch_report_map.insert ( QString( "300" ), reportGMP_3 ); 
-   ch_report_map.insert ( QString( "310" ), reportGMP_4 );
-
-//END of TESTING
- 
-  
-   // Populate GUI settings from protocol,analysis controls
-   le_protname   ->setText( currProf->protoname );
-   le_aproname   ->setText( currProf->aprofname );
-DbgLv(1) << "APGe: inP: aname pname" << currProf->aprofname << currProf->protoname;
-
-// DbgLv(1) << "APGe: inP: CALL check_user_level()";
-//    check_user_level();
-// DbgLv(1) << "APGe: inP:  RTN check_user_level()";
-
-   int nchan      = currProf->pchans.count();
-DbgLv(1) << "APGe: inP: nchan" << nchan;
-   sl_chnsel.clear();
-
-   //get Rotor's ra_data_type var.
-  
-   
-   // Recompose the list of channel descriptions from protocol
-   for ( int ii = 0; ii < nchan; ii++ )
+   US_AnaProfile                 profile = *currProf;
+   US_AnaProfileLoader::Channels channels;
+   const QString                 error = US_AnaProfileLoader::prepare( profile, mainw->abde_mode_aprofile, channels );
+   if ( !error.isEmpty() )
    {
-      QString chann  = currProf->pchans  [ ii ];
-      //QString chdesc_alt = currProf->chndescs_alt[ ii ];
-      QString chdesc = currProf->chndescs[ ii ];
-      QString chopts = QString( chdesc ).section( ":", 1, 1 );
-      QString chname = QString( chdesc ).section( ":", 0, 0 )
-                                        .section( ",", 0, 0 );
-
-      // Skip adding this channel if Optics is unspecified
-      // or not installed or if channel B of Interference
-      if ( ( chopts.contains( tr( "(unspecified)"   ) ) )  ||
-           ( chopts.contains( tr( "(not installed)" ) ) )  ||
-           ( chopts.contains( "nterf" )  &&
-             chname.contains( "B" ) ) )
-	{
-	  
-	  continue;
-	}
-      
-      // Otherwise, recompose "channel:optics:solution" and add
-      QString chsolu = QString( chdesc ).section( ":", 2, 2 );
-      QString chnsel = chname + ":" + chopts + ":" + chsolu;
-
-      sl_chnsel << chnsel;
-DbgLv(1) << "APGe: inP:  ch" << ii << "chdesc" << chdesc
- << "chnsel" << chnsel;
+      QMessageBox::warning( this, tr( "Analysis Profile" ), error );
+      return;
    }
-
-    // //ALEXEY: now exclude channels for B:Interf. from the following QLists/QMaps:
-    QStringList      chndescs_alt_copy;
-    chndescs_alt_copy.clear();
-   
-    for ( int ii = 0; ii < nchan; ii++ )
-      {
-        QString chann_desc = currProf->chndescs_alt[ ii ];
-        if ( chann_desc.contains("B:Interf") )
-    	 continue;
-     
-        chndescs_alt_copy <<  currProf->chndescs_alt[ ii ];
-      }
-
-    qDebug() << "chndescs_alt_copy  -- " << chndescs_alt_copy ;
-        
-   
-//*DEBUG*
-QObject* pwidg=le_aproname->parent();
-QList<QObject*> allObjects=pwidg->children();
-for ( int ii=0; ii<allObjects.count(); ii++ )
-{ QObject* child  = allObjects[ ii ];
-  QString objname = child->objectName();
-DbgLv(1) << "APGe: inP:   ox" << ii << "oName" << objname;
+   *currProf = profile;
+   showProfile( channels );
+   savePanel();
+   check_user_level();
 }
-//*DEBUG*
+
+// Show the profile, with the values of its Run and Report boxes
+void US_AnaprofPanGen::showProfile( const US_AnaProfileLoader::Channels& channels )
+{
+   le_protname->setText( currProf->protoname );
+   le_aproname->setText( currProf->aprofname );
+
+   values    = channels;
+   sl_chnsel = US_AnaProfileLoader::channels( *currProf );
 
    // Reset layout
    delete genL;
-   genL            = new QGridLayout();
+   genL = new QGridLayout();
    genL->setObjectName( "GeneralLayout" );
+   build_general_layout();
 
-   // Build the General Layout if need be
-DbgLv(1) << "APGe: inP: 0)tol,dae size" << currProf->lv_tolers.count() << currProf->data_ends.count();
-DbgLv(1) << "APGe: inP: 0)le_chn,lcr size" << le_channs.count() << le_lcrats.count();
-   build_general_layout( );
-   nchan          = le_channs.count();
-DbgLv(1) << "APGe: inP: 1)tol,dae size" << currProf->lv_tolers.count() << currProf->data_ends.count();
-DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.count()
- << "nchan_gui" << nchan;
+   internal_reports = currProf->ch_reports;
 
-   //Clear internal_reports QMap
-   internal_reports.clear();
-   ref_numbers_list. clear();
- 
-   if ( le_lcrats.count() == nchan )
-   { // Reset General channel parameter gui elements
-      for ( int ii = 0; ii < nchan; ii++ )
+   for ( int ii = 0; ii < le_channs.count(); ii++ )
+   {
+      le_channs[ii]->setText( sl_chnsel[ii] );
+      le_lcrats[ii]->setText( QString::number( currProf->lc_ratios[ii] ) );
+      le_lctols[ii]->setText( QString::number( currProf->lc_tolers[ii] ) );
+      le_ldvols[ii]->setText( QString::number( currProf->l_volumes[ii] ) );
+      le_lvtols[ii]->setText( QString::number( currProf->lv_tolers[ii] ) );
+      le_daends[ii]->setText( QString::number( currProf->data_ends[ii] ) );
+      //abde
+      le_dens0s[ii]->setText( QString::number( currProf->ld_dens_0s[ii] ) );
+      le_vbars[ii]->setText( QString::number( currProf->gm_vbars[ii] ) );
+      le_MWs[ii]->setText( QString::number( currProf->gm_mws[ii] ) );
+
+      sb_repl_groups[ii]->setValue( currProf->replicates[ii] );
+
+      // Wavelength to edit, and wavelengths that are not analyzed
+      const QList<QRadioButton*> buttons = gr_mwvbox[ii]->findChildren<QRadioButton*>();
+      const QList<QCheckBox*>    boxes   = gr_mwvbox[ii]->findChildren<QCheckBox*>();
+      const QStringList          not_run = currProf->wvl_not_run[ii].split( ":" );
+      const int                  edit    = values.edit[ii];
+      buttons[edit]->setChecked( true );
+      buttons[edit]->click();
+      boxes[edit]->setEnabled( false );
+      for ( QCheckBox* box : boxes )
       {
-	qDebug() <<  "currProf->analysis_run.size(): " << currProf->analysis_run.count();
-	qDebug() <<  "currProf->scan_excl_begin.size(): " << currProf->scan_excl_begin.count();
-	qDebug() <<  "currProf->scan_excl_end.size(): " << currProf->scan_excl_end.count();
-	
-	//ALEXEY: the next 5 following QLists/QMaps must be stripped of the enties associated with B:Interf. channels!!!
-	qDebug() <<  "currProf->wvl_edit.size(): "     << currProf->wvl_edit.count();
-	qDebug() <<  "currProf->wvl_not_run.size(): "  << currProf->wvl_not_run.count();
-	qDebug() <<  "currProf->ch_wvls.size(): "      << currProf->ch_wvls.count();
-	qDebug() <<  "currProf->ch_reports.size():   "  << currProf->ch_reports.count();
-	
-	qDebug() <<  "currProf->chndescs_alt.size(): " << currProf->chndescs_alt.count();
-	
-	qDebug() <<  "nchan, sl_chnsel.size(): " << nchan << sl_chnsel.count();
-	qDebug() << "ch_wvls for --  " << currProf->chndescs_alt[ ii ] << currProf->ch_wvls[ currProf->chndescs_alt[ ii  ] ];
-
-	qDebug() << "scan_beg, scan_end for -- " << currProf->chndescs_alt[ ii ] << currProf->scan_excl_begin[ ii  ]  << currProf->scan_excl_end[ ii  ];
-	
-	 int kk          = qMin( ii, sl_chnsel.count() - 1 );
-         le_channs[ ii ]->setText( sl_chnsel[ kk ] );
-         kk              = qMin( ii, currProf->lc_ratios.count() - 1 );
-         le_lcrats[ ii ]->setText( QString::number( currProf->lc_ratios[ kk ] ) );
-         kk              = qMin( ii, currProf->lc_tolers.count() - 1 );
-         le_lctols[ ii ]->setText( QString::number( currProf->lc_tolers[ kk ] ) );
-         kk              = qMin( ii, currProf->l_volumes.count() - 1 );
-         le_ldvols[ ii ]->setText( QString::number( currProf->l_volumes[ kk ] ) );
-         kk              = qMin( ii, currProf->lv_tolers.count() - 1 );
-         le_lvtols[ ii ]->setText( QString::number( currProf->lv_tolers[ kk ] ) );
-         kk              = qMin( ii, currProf->data_ends.count() - 1 );
-         le_daends[ ii ]->setText( QString::number( currProf->data_ends[ kk ] ) );
-	 //abde
-	 kk              = qMin( ii, currProf->ld_dens_0s.count() - 1 );
-         le_dens0s[ ii ]->setText( QString::number( currProf->ld_dens_0s[ kk ] ) );
-	 kk              = qMin( ii, currProf->gm_vbars.count() - 1 );
-         le_vbars[ ii ]->setText( QString::number( currProf->gm_vbars[ kk ] ) );
-	 kk              = qMin( ii, currProf->gm_mws.count() - 1 );
-         le_MWs[ ii ]->setText( QString::number( currProf->gm_mws[ kk ] ) );
-
-	 kk              = qMin( ii, currProf->analysis_run.count() - 1 );
-
-	 qDebug() << "kk out of currProf->analysis_run: " << kk;
-
-	 //Analysis run
-	 if ( currProf->analysis_run[ kk ] )
-	   ck_runs[ ii ] ->setChecked( true  );
-	 else
-	   ck_runs[ ii ] ->setChecked( false  );
-
-	 //Replicates
-	 sb_repl_groups[ ii ]->setValue( currProf->replicates[ kk ] );
-	 
-	 //Report run
-	 if ( currProf->report_run[ kk ] )
-	   ck_report_runs[ ii ] ->setChecked( true  );
-	 else
-	   ck_report_runs[ ii ] ->setChecked( false  );
-
-	 //ABDE: ref, use_ref
-	 //sb_ref_chs[ ii ]     ->setValue( currProf->ref_channels[ kk ] );
-	 ( currProf->ref_channels[ kk ] > 0 ) ?
-	   le_ref_chs[ ii ]     ->setText( "Ref:" + QString::number( currProf->ref_channels[ kk ]) ) :
-	   le_ref_chs[ ii ]     ->setText( "" );
-	 ref_numbers_list << currProf->ref_channels[ kk ];
-	 sb_use_ref_chs[ ii ] ->setValue( currProf->ref_use_channels[ kk ] );
-
-	 qDebug() << "Init APfor::Gen: currProf->ref_use_channels[ kk ] -- " <<  currProf->ref_use_channels[ kk ];
-	 qDebug() << "Init APfor::Gen: ref_numbers_list -- " <<  ref_numbers_list;
-	 
-	 DbgLv(1) << "APGe: inP:    ii kk" << ii << kk << "chann" << sl_chnsel[kk] << "lvtol daend dae[kk]"
-		  << currProf->lv_tolers[ii] << currProf->data_ends[ii] << currProf->data_ends[kk]
-		  << "currProf->analysis_run[ ii] currProf->analysis_run[ kk ]" << currProf->analysis_run[ ii ] << currProf->analysis_run[ kk ];
-
-       
-	 //ALEXEY: also set info on wvl for edit 
-	 kk              = qMin( ii, currProf->wvl_edit.count() - 1 );
-
-	 qDebug() << "ii kk currProf->wvl_edit[ ii] currProf->wvl_edit[ kk ]" << ii << kk << currProf->wvl_edit[ ii ] << currProf->wvl_edit[ kk ];
-
-	 QScrollArea *sa = gr_mwvbox[ ii ];
-	 foreach (QRadioButton *button, sa->findChildren<QRadioButton*>())
-	   {
-	     int wvl_to_edit = (button->objectName()).split(":")[2].toInt();
-
-	     qDebug() << "currProf->wvl_edit[ kk ] == wvl_to_edit -- " << currProf->wvl_edit[ kk ] <<  " = " <<  wvl_to_edit;
-	     
-	     if ( currProf->wvl_edit[ kk ] == wvl_to_edit )  // <-- NOT FULFILLED ????????
-	       {
-		 button->setChecked( true );
-		 button->click();
-		 qDebug() << "US_AnaprofPanGen::initPanel(): wvl_to_edit " <<  wvl_to_edit << " for channel " << ii; 
-		 break;
-	       }
-	   }
-
-	 //ALEXEY: set ReportGMP per channel
-	 kk              = qMin( ii, currProf->chndescs_alt.count() - 1 );
-	 qDebug() << "US_AnaprofPanGen::initPanel(): ReportGMP kk, ii currProf->chndescs_alt.count() " << kk <<  ii << currProf->chndescs_alt.count();
-	 
-	 //QString chdesc_alt = currProf->chndescs_alt[ kk ];
-	 QString chdesc_alt = chndescs_alt_copy[ ii ]; 
-	 qDebug() << "US_AnaprofPanGen::initPanel(): chdesc_alt " << chdesc_alt;
-
-	 //ALEXEY_NEW_REPORT: there will be cycle over wvls:
-	 // QList of currProf->ch_wvls[ chdesc_alt ] -> current_wvl:
-	 // internal_reports[ chdesc_alt ][ wvl ] = currProf->ch_reports[ chdesc_alt ] [ wvl ];
-
-	 //TESTING
-	 //report_map[ chdesc_alt ] = ch_report_map;
-	 //END_OF_TESTING
-
-	 QList < double > ch_wavelengths = currProf->ch_wvls[ chdesc_alt ];
-	 for ( int w=0; w<ch_wavelengths.size(); ++w )
-	   {
-	     QString curr_w = QString::number ( ch_wavelengths[ w ] );
-	     internal_reports[ chdesc_alt ][ curr_w ] = currProf->ch_reports[ chdesc_alt ] [ curr_w ];
-	     internal_reports[ chdesc_alt ][ curr_w ].wavelength = ch_wavelengths[ w ];
-	     //internal_reports[ chdesc_alt ][ curr_w ].experiment_duration = currProf->ch_reports[ chdesc_alt ] [ curr_w ].experiment_duration;
-
-	     qDebug() << "US_AnaprofPanGen::initPanel(): ch_wavelengths[ w ] --  " << ch_wavelengths[ w ];
-
-	     qDebug() << "[ANAPROF->Gen->initPanel()]; internal_reports[ chdesc_alt ][ curr_w ].wavelength, currProf->ch_reports[ chdesc_alt ] [ curr_w ].experiment_duration, internal_reports[ chdesc_alt ][ curr_w ].experiment_duration -- "
-		      << internal_reports[ chdesc_alt ][ curr_w ].wavelength
-		      << currProf->ch_reports[ chdesc_alt ] [ curr_w ].experiment_duration
-		      << internal_reports[ chdesc_alt ][ curr_w ].experiment_duration;
-	     qDebug() << "[ANAPROF->Gen->initPanel()]; channames -- "
-		      << currProf->ch_reports[ chdesc_alt ] [ curr_w ].channel_name << ", "
-		      << internal_reports[ chdesc_alt ][ curr_w ].channel_name;
-	   }
-	 
-	 //internal_reports[ chdesc_alt ] = currProf->ch_reports[ chdesc_alt ];
-	 qDebug() << "US_AnaprofPanGen::initPanel(): internal_reports[ chdesc_alt ].size() -- " << internal_reports.size();
-	 qDebug() << "US_AnaprofPanGen::initPanel(): internal_reports[ chdesc_alt ][ QString::number ( ch_wavelengths[ 0 ] )] -- "
-		  << internal_reports[ chdesc_alt ][ QString::number ( ch_wavelengths[ 0 ] )].tot_conc
-		  << internal_reports[ chdesc_alt ][ QString::number ( ch_wavelengths[ 0 ] )].wavelength
-		  << internal_reports[ chdesc_alt ][ QString::number ( ch_wavelengths[ 0 ] )].experiment_duration;
-	
-
-	 // //ALEXEY_NEW_REPORT: this .wavelength needs to be properly set for each triple
-	 // internal_reports[ chdesc_alt ].wavelength = currProf->wvl_edit[ kk ];
-	 // qDebug() << "US_AnaprofPanGen::initPanel(): internal_reports[ chdesc_alt ].wavelength, currProf->wvl_edit.size() -- "
-	 // 	  << internal_reports[ chdesc_alt ].wavelength
-	 // 	  << currProf->wvl_edit.size();
-
-	 ///////////////////////////////////////////////////////////
-	 
-	 
-
-	 //Also, important to re-insert correct-order chndescs_alt!!!
-	 currProf->chndescs_alt[ ii ] = chdesc_alt;
-	 
-	 //ALEXEY: also set info on wvl not to be analyzed 
-	 kk              = qMin( ii, currProf->wvl_not_run.count() - 1 );
-
-	 //ALEXEY: this string caused crash
-	 //qDebug() << "currProf->wvl_not_run[ ii] currProf->wvl_not_run[ kk ]" << currProf->wvl_not_run[ ii ] << currProf->wvl_not_run[ kk ];
-
-	 foreach (QCheckBox *ckbox, sa->findChildren<QCheckBox*>())
-	   {
-	     QString wvl_not_to_run = (ckbox->objectName()).split(":")[2];
-	     
-	     if ( currProf->wvl_not_run[ kk ].contains( wvl_not_to_run ) )
-	       {
-		 ckbox->setChecked( false );
-		 
-		 qDebug() << "US_AnaprofPanGen::initPanel(): wvl_not_to_run " <<  wvl_not_to_run << " for channel " << ii; 
-	       }
-	   }
+         if ( not_run.contains( box->objectName().split( ":" )[2] ) )
+         {
+            box->setChecked( false );
+         }
       }
    }
-else
- DbgLv(1) << "APGe: inP:  lcrats count, nchan" << le_lcrats.count() << nchan;
+
+   showChannels();
+   if ( values.run.contains( 0 ) )
+   {
+      showTabs();
+   }
 
    //Also show MWL prefs for the first channel to fill the space
-   if ( ck_runs[ 0 ] ->isChecked( ) )
-     ck_mwv[ 0 ] ->setChecked( true  );
-   else
-     ck_mwv[ 0 ] ->setChecked( false  );
-
-   //ABDE: for ref./use ref fields, set the 1st B-chann, to a reference
-   //ABDE: IF NO refs. set at all
-   AProfIsIntiated = true;
-   if ( mainw->abde_mode_aprofile )
-     {
-       bool all_reps_run = true;
-       for( int rr=0; rr<currProf->report_run.size(); ++rr)
-	 if ( currProf->report_run[rr] == 0  )
-	   all_reps_run = false;
-
-       if ( all_reps_run )
-	 {
-	   for( int rr=0; rr<currProf->chndescs_alt.size(); ++rr )
-	     {
-	       QString ch_name = currProf->chndescs_alt[rr];
-	       if( ch_name.split(":")[0].contains("B") )
-		 {
-		   ck_runs[ rr ] -> setChecked( false );
-		   break;
-		 }
-	     }
-	 }
-       else //boud max for sb_use_ref_chs counters
-	 {
-	   int ref_number_max = 0;
-	   for (int rn=0; rn<ref_numbers_list.size(); ++rn )
-	     if (ref_numbers_list[rn] > ref_number_max )
-	       ref_number_max = ref_numbers_list[rn];
-
-	   for ( int i=0; i<sb_use_ref_chs.size(); ++i)
-	     sb_use_ref_chs[ i ]->setMaximum( ref_number_max );
-	 }
-     }
-
-   // Save to update Gui
-   qDebug() << "US_AnaprofPanGen::initPanel(): before save: currProf->chndescs_alt, size() -- " << currProf->chndescs_alt << currProf->chndescs_alt.size();
-   savePanel();
-
-   DbgLv(1) << "APGe: FROM initAprfile:General - inP: CALL check_user_level()";
-      check_user_level();
-   DbgLv(1) << "APGe: inP:  FROM initAprfile:General - RTN check_user_level()";
-
-   
-   //if expTyp "ABDE": modify AProfile's GUI
-   
+   ck_mwv[0]->setChecked( ck_runs[0]->isChecked() );
 }
 
 
@@ -876,352 +522,68 @@ DbgLv(1) << "APGe:ckul: level" << US_Settings::us_inv_level();
 // Save panel controls when about to leave the panel
 void US_AnaprofPanGen::savePanel()
 {
-DbgLv(1) << "APGe: svP: IN";
    // Populate protocol controls from GUI settings
-   currProf->protoname  = le_protname->text();
-   currProf->aprofname  = le_aproname->text();
-   int nchan       = le_lcrats.count();
-   nchan           = qMin( nchan, le_lctols.count() );
-   nchan           = qMin( nchan, le_ldvols.count() );
-   nchan           = qMin( nchan, le_lvtols.count() );
-   nchan           = qMin( nchan, le_daends.count() );
+   currProf->protoname = le_protname->text();
+   currProf->aprofname = le_aproname->text();
 
-   nchan           = qMin( nchan, ck_runs.count() );
-   
-DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
- << le_lcrats.count() << le_lctols.count() << le_ldvols.count()
- << le_lvtols.count() << le_daends.count() << "nchan" << nchan;
+   currProf->lc_ratios.clear();
+   currProf->lc_tolers.clear();
+   currProf->l_volumes.clear();
+   currProf->lv_tolers.clear();
+   currProf->data_ends.clear();
+   currProf->ld_dens_0s.clear();
+   currProf->gm_vbars.clear();
+   currProf->gm_mws.clear();
+   currProf->ref_use_channels.clear();
+   currProf->replicates.clear();
+   currProf->wvl_edit.clear();
+   currProf->wvl_not_run.clear();
+   currProf->ch_reports.clear();
 
+   currProf->analysis_run = values.run;
+   currProf->report_run   = values.report;
+   currProf->ref_channels = values.ref;
 
-//DEBUG[1] ///////////////////////////////////////////
- for ( int ii_c = 0; ii_c < nchan; ii_c++ )
+   for ( int ii = 0; ii < ck_runs.count(); ii++ )
    {
-     QMap < QString, US_ReportGMP>::iterator ri;
-     QString chdesc_a = currProf->chndescs_alt[ ii_c ];
-     qDebug() << "[1]SaveGen(): channel: " << chdesc_a;
-     for ( ri = internal_reports[ chdesc_a ].begin(); ri != internal_reports[ chdesc_a ].end(); ++ri )
-       {
-	 QString wvl = ri.key();
-	 qDebug() << "wvl: " << wvl;
-	 
-	 US_ReportGMP report_d = internal_reports[ chdesc_a ][ wvl];
-	 qDebug() << "[1]report_d. channel_name -- " << report_d. channel_name;
-
-	 int ri_size = report_d.reportItems.size();
-	 qDebug() << "[1]chdesc_a, wvl, item# -- " << chdesc_a << ", " << wvl << ", " << ri_size;
-	 for (int i_ri=0; i_ri<ri_size; ++i_ri)
-	   {
-	     US_ReportGMP::ReportItem curr_item = report_d.reportItems[ i_ri ];
-	     qDebug() << "type, method -- " << curr_item.type << ", " << curr_item.method;
-	   }
-       }
-   }
- ////////////////////////////////////////////////////
-
- 
-// if ( currProf->pchans.count() == nchan )       <--- ALEXEY: BUG commented: very important to re-generate GUI (e.g. when Optics chenged by adding/removing Interfrence)
-// Otherwise, with Interfence, no changes are saved from the Geb tab GUI && no changes written to Aprofile DB !!
-    { // Reset General channel parameter gui elements
-      currProf->lc_ratios.clear( );
-      currProf->lc_tolers.clear( );
-      currProf->l_volumes.clear( );
-      currProf->lv_tolers.clear( );
-      currProf->data_ends.clear( );
-
+      currProf->lc_ratios << le_lcrats[ii]->text().toDouble();
+      currProf->lc_tolers << le_lctols[ii]->text().toDouble();
+      currProf->l_volumes << le_ldvols[ii]->text().toDouble();
+      currProf->lv_tolers << le_lvtols[ii]->text().toDouble();
+      currProf->data_ends << le_daends[ii]->text().toDouble();
       //abde
-      currProf->ld_dens_0s.clear( );
-      currProf->gm_vbars.clear( );
-      currProf->gm_mws.clear( );
-      currProf->ref_channels.clear( );
-      currProf->ref_use_channels.clear( );
-      
-      currProf->analysis_run .clear( );
-      currProf->report_run   .clear( );
-      currProf->wvl_edit     .clear( );
-      currProf->wvl_not_run  .clear( );
+      currProf->ld_dens_0s << le_dens0s[ii]->text().toDouble();
+      currProf->gm_vbars << le_vbars[ii]->text().toDouble();
+      currProf->gm_mws << le_MWs[ii]->text().toDouble();
+      currProf->ref_use_channels << sb_use_ref_chs[ii]->value();
+      currProf->replicates << sb_repl_groups[ii]->value();
 
-      currProf->ch_reports.clear();
-
-      currProf->replicates                         .clear();
-      currProf->replicates_to_channdesc_main       .clear();
-      currProf->channdesc_to_overlapping_wvls_main .clear();
-
-      // currProf->ch_report_ids.clear();
-      // currProf->ch_report_guids.clear();
-
-      //ALEXEY: here -- for replicate groups -- we need to process internal_reports:
-      //1. group channel_descriptions by replicate group #, e.g. QMap< repl_group_number, QStringList ( chdesc_alt ) >;
-      //   1a. if repl_group_number == 0 (default), OR QStringList.size() == 1 : not really a group, so continue / skip;
-      //2. internal_report corresponding to QStringList[ 0 ] - is a primary ReportGMP; make it to be all other reports in a group  
-      QMap< int, QStringList >     replicates_to_channdesc;
-      QMap< QString, QStringList > channdesc_to_overlapping_wvls;
-
-      for ( int ii = 0; ii < nchan; ii++ )
-	{
-	  if ( sb_repl_groups[ ii ]->isEnabled() )
-	    {
-	      int replicate_group_number   = sb_repl_groups[ ii ]->value();
-	      QString chdesc_alt           = currProf->chndescs_alt[ ii ];
-	      replicates_to_channdesc[ replicate_group_number ] << chdesc_alt;
-
-	      currProf->replicates_to_channdesc_main [ replicate_group_number ] << chdesc_alt;
-	      qDebug() << "replicate_group_number, chdesc_alt -- "
-		       << replicate_group_number << chdesc_alt;
-	    }
-	}
-      QMap< int, QStringList >::iterator rgi;
-      for ( rgi = replicates_to_channdesc.begin(); rgi != replicates_to_channdesc.end(); ++rgi )
-	{
-	  int group_number           = rgi.key();
-	  QStringList group_channels = rgi.value();
-
-	  qDebug() << "[1]group_number, group_channels -- "
-		   << group_number << group_channels;
-	  
-	  // if( group_number == 0 || group_channels.size() == 1 )
-	  //   continue;
-
-	  if( group_number == 0 )
-	     continue;
-
-	  qDebug() << "[2]group_number, group_channels -- "
-		   << group_number << group_channels;
-
-	  //do copying US_ReportGMPs here:
-	  // internal_reports IS map-of-maps: QMap < chann_desc, QMap< wvl_number,  US_ReportGMP >>:
-	  // So, what do we consider the primary ReportGMP?
-	  //          -- 1st channel | 1st wavelength ?
-	  //          -- e.g.: 1st wavelength:
-	  //                   QList < QString > ch_wavelengths = internal_reports[ group_channels[0] ].keys();
-	  //          -- e.g.: US_ReportGMP primary_report = internal_reports[ group_channels[0] ] [ ch_wavelengths[0] ] ?
-	  //
-
-	  //Go over all reference reports (triple reports in the 1st channel of the replicate group): 
-	  QList < QString > reference_ch_wvls = internal_reports[ group_channels[0] ].keys();
-
-	  qDebug() << "reference_ch_wvls -- " << reference_ch_wvls;
-
-	  for( int rgj = 0; rgj < reference_ch_wvls.size(); ++rgj )
-	    {
-	      US_ReportGMP reference_group_report = internal_reports[ group_channels[0] ] [ reference_ch_wvls[ rgj ] ];
-
-	      //When replica group contains only 1 channel
-	      if ( group_channels.size() == 1 )
-		{
-		  QString ref_triple   = group_channels[ 0 ].split(":")[0] + "." + reference_ch_wvls[ rgj ];
-		  qDebug() << "group_chans==1; ref_triple -- " << ref_triple;
-		  channdesc_to_overlapping_wvls[ group_channels [0] ]                << ref_triple;
-		  currProf->channdesc_to_overlapping_wvls_main [ group_channels[0] ] << ref_triple;
-		}
-	      
-	      //Now, go over the reports for other channels in a group (per-triple basis)
-	      for( int i = 1; i < group_channels.size(); ++i )
-		{
-		  QList < QString > other_group_ch_wvls = internal_reports[ group_channels[i] ].keys();
-
-		  for( int j = 0; j < other_group_ch_wvls.size(); ++j )
-		    {
-		      //If other channel's wvl is the same to the reference channel's wvl, copy Report's params
-		      if ( other_group_ch_wvls[ j ] == reference_ch_wvls[ rgj ] )
-			{
-			  //QMap of the overlapping replicate group wavelengths (all overlapping triples):
-			  QString ref_triple   = group_channels[ 0 ].split(":")[0] + "." + reference_ch_wvls[ rgj ];
-			  QString other_triple = group_channels[ i ].split(":")[0] + "." + other_group_ch_wvls[ j ];
-
-			  qDebug() << "group_chans>1; ref_triple, other_triple  -- " << ref_triple << other_triple;
-			  
-			  channdesc_to_overlapping_wvls[ group_channels [0] ]                << ref_triple << other_triple;
-			  currProf->channdesc_to_overlapping_wvls_main [ group_channels[0] ] << ref_triple << other_triple;
-
-			  //Modify the report with the reference one:
-			  US_ReportGMP *other_group_report_to_change = &(internal_reports[ group_channels[ i ] ] [ other_group_ch_wvls[ j ] ]);
-
-			  other_group_report_to_change->tot_conc                 = reference_group_report.tot_conc;
-			  other_group_report_to_change->tot_conc_tol             = reference_group_report.tot_conc_tol;
-			  
-			  other_group_report_to_change->rmsd_limit               = reference_group_report.rmsd_limit;
-			  other_group_report_to_change->av_intensity             = reference_group_report.av_intensity;
-			  
-			  other_group_report_to_change->experiment_duration      = reference_group_report.experiment_duration;
-			  other_group_report_to_change->experiment_duration_tol  = reference_group_report.experiment_duration_tol;
-
-			  other_group_report_to_change->tot_conc_mask            = reference_group_report.tot_conc_mask;
-			  other_group_report_to_change->rmsd_limit_mask          = reference_group_report.rmsd_limit_mask;
-			  other_group_report_to_change->av_intensity_mask        = reference_group_report.av_intensity_mask;
-			  other_group_report_to_change->experiment_duration_mask = reference_group_report.experiment_duration_mask;
-			  other_group_report_to_change->integration_results_mask = reference_group_report.integration_results_mask;
-			  other_group_report_to_change->plots_mask               = reference_group_report.plots_mask;
-
-			  other_group_report_to_change->pseudo3d_2dsait_s_ff0  = reference_group_report.pseudo3d_2dsait_s_ff0  ;
-			  other_group_report_to_change->pseudo3d_2dsait_s_d    = reference_group_report.pseudo3d_2dsait_s_d    ;
-			  other_group_report_to_change->pseudo3d_2dsait_mw_ff0 = reference_group_report.pseudo3d_2dsait_mw_ff0 ;
-			  other_group_report_to_change->pseudo3d_2dsait_mw_d   = reference_group_report.pseudo3d_2dsait_mw_d   ;
-			  other_group_report_to_change->pseudo3d_2dsamc_s_ff0  = reference_group_report.pseudo3d_2dsamc_s_ff0  ;
-			  other_group_report_to_change->pseudo3d_2dsamc_s_d    = reference_group_report.pseudo3d_2dsamc_s_d    ;
-			  other_group_report_to_change->pseudo3d_2dsamc_mw_ff0 = reference_group_report.pseudo3d_2dsamc_mw_ff0 ;
-			  other_group_report_to_change->pseudo3d_2dsamc_mw_d   = reference_group_report.pseudo3d_2dsamc_mw_d   ;
-			  other_group_report_to_change->pseudo3d_pcsa_s_ff0    = reference_group_report.pseudo3d_pcsa_s_ff0    ;
-			  other_group_report_to_change->pseudo3d_pcsa_s_d      = reference_group_report.pseudo3d_pcsa_s_d      ;
-			  other_group_report_to_change->pseudo3d_pcsa_mw_ff0   = reference_group_report.pseudo3d_pcsa_mw_ff0   ;
-			  other_group_report_to_change->pseudo3d_pcsa_mw_d     = reference_group_report.pseudo3d_pcsa_mw_d     ;
-
-			  other_group_report_to_change->pseudo3d_mask          = reference_group_report.pseudo3d_mask          ;
-			  
-			  //now, clear rerortItems && fill with reference ReportGMP:
-			  other_group_report_to_change->reportItems.clear();
-			  
-			  for ( int ic = 0; ic < reference_group_report.reportItems.size(); ++ic )
-			    other_group_report_to_change->reportItems.push_back( reference_group_report.reportItems[ ic ] );
-			}
-		    }
-		}
-	    }
-	}
-      
-      QMap< QString, QStringList >::iterator wvl_overlap;
-      for ( wvl_overlap = channdesc_to_overlapping_wvls.begin(); wvl_overlap != channdesc_to_overlapping_wvls.end(); ++wvl_overlap )
-	{
-	  wvl_overlap.value().removeDuplicates();
-	  qDebug() << "Reference Channel: " << wvl_overlap.key() << ", list of overlapping wvls: " << wvl_overlap.value();
-	}
-      //repeat duplicates removal for upper-level currPof->channdesc_to_overlapping_wvls_main:
-      for ( wvl_overlap = currProf->channdesc_to_overlapping_wvls_main.begin(); wvl_overlap != currProf->channdesc_to_overlapping_wvls_main.end(); ++wvl_overlap )
-	{
-	  wvl_overlap.value().removeDuplicates();
-	   qDebug() << "Reference Channel MAIN: " << wvl_overlap.key() << ", list of overlapping wvls: " << wvl_overlap.value();
-	}
-      // END of copying reference RpeortGMP per replicate group   //////////////////////////////////////////////////////////
-
- //DEBUG[2] /////////////////////
- for ( int ii_c = 0; ii_c < nchan; ii_c++ )
-   {
-     QMap < QString, US_ReportGMP>::iterator ri;
-     QString chdesc_a = currProf->chndescs_alt[ ii_c ];
-     qDebug() << "[2]SaveGen(): channel: " << chdesc_a;
-     for ( ri = internal_reports[ chdesc_a ].begin(); ri != internal_reports[ chdesc_a ].end(); ++ri )
-       {
-	 QString wvl = ri.key();
-	 qDebug() << "wvl: " << wvl;
-	 
-	 US_ReportGMP report_d = internal_reports[ chdesc_a ][ wvl];
-	 qDebug() << "[2]report_d. channel_name -- " << report_d. channel_name;
-
-	 int ri_size = report_d.reportItems.size();
-	 qDebug() << "[2]chdesc_a, wvl, item# -- " << chdesc_a << ", " << wvl << ", " << ri_size;
-	 for (int i_ri=0; i_ri<ri_size; ++i_ri)
-	   {
-	     US_ReportGMP::ReportItem curr_item = report_d.reportItems[ i_ri ];
-	     qDebug() << "[2]type, method -- " << curr_item.type << ", " << curr_item.method;
-	   }
-       }
-   }
- ////////////////////////////////////  
-      
-      for ( int ii = 0; ii < nchan; ii++ )
+      // Wavelength to edit, and wavelengths that are not analyzed
+      QScrollArea* sa = gr_mwvbox[ii];
+      foreach ( QRadioButton* button, sa->findChildren<QRadioButton*>() )
       {
-         currProf->lc_ratios << le_lcrats[ ii ]->text().toDouble();
-         currProf->lc_tolers << le_lctols[ ii ]->text().toDouble();
-         currProf->l_volumes << le_ldvols[ ii ]->text().toDouble();
-         currProf->lv_tolers << le_lvtols[ ii ]->text().toDouble();
-         currProf->data_ends << le_daends[ ii ]->text().toDouble();
-
-	 //abde
-	 currProf->ld_dens_0s << le_dens0s[ ii ]->text().toDouble();
-	 currProf->gm_vbars   << le_vbars[ ii ]->text().toDouble();
-	 currProf->gm_mws     << le_MWs[ ii ]->text().toDouble();
-	 //currProf->ref_channels << sb_ref_chs[ ii ]->value();
-	 ( le_ref_chs[ ii ]->text().isEmpty() ) ?
-	   currProf->ref_channels << 0 : currProf->ref_channels << le_ref_chs[ ii ]->text().split(":")[1].toInt();
-	 currProf->ref_use_channels << sb_use_ref_chs[ ii ]->value();
-	 qDebug() << "in SavePanel() AProf_Gen: chann, sb_use_ref_chs[ ii ]->value() -- " << ii << sb_use_ref_chs[ ii ]->value();
-
-	 //ALEXEY: add additional field for channels to be or not to be analysed
-	 if ( ck_runs[ ii ]->isChecked() ) 
-	   currProf->analysis_run << 1;
-	 else
-	   currProf->analysis_run << 0;
-
-	 qDebug() << "APGR: SAVE: run channel analysis -- " << ii << int(ck_runs[ ii ]->isChecked());
-
-
-	 //Replicates
-	 currProf->replicates << sb_repl_groups[ ii ]->value();
-
-	 
-	 //ALEXEY: add additional field for channels' reports
-	 if ( ck_report_runs[ ii ]->isChecked() ) 
-	   currProf->report_run << 1;
-	 else
-	   currProf->report_run << 0;
-
-	 
-	 qDebug() << "APGR: SAVE: run channel report -- " << ii << int(ck_report_runs[ ii ]->isChecked());
-	 
-
-	 //ALEXEY: also save info on wvl for edit 
-	 QScrollArea *sa = gr_mwvbox[ ii ];
-	 foreach (QRadioButton *button, sa->findChildren<QRadioButton*>())
-	   {
-	     if ( button->isChecked() )
-	       {
-		 int wvl_to_edit = (button->objectName()).split(":")[2].toInt();
-		 qDebug() << "US_AnaprofPanGen::savePanel(): wvl_to_edit " <<  wvl_to_edit << " for channel " << ii; 
-		 
-		 currProf->wvl_edit << wvl_to_edit;
-		 break;
-	       }
-	   }
-
-	 //ALEXEY: also save ReportGMP per channel
-	 QString chdesc_alt = currProf->chndescs_alt[ ii ];
-	 qDebug() << "US_AnaprofPanGen::savePanel(): chdesc_alt -- " << chdesc_alt;
-
-
-	 
-	 //ALEXEY_NEW_REPORT: will be a cycle over wvl
-	 // QMap internal_reports[ chdesc_alt ]:: keys(); --> all channel's wvls
-	 // currProf->ch_reports[ chdesc_alt ] [ wvl ] = internal_reports[ chdesc_alt ][ wvl ]; 
-	 QList < QString > ch_wavelengths = internal_reports[ chdesc_alt ].keys();
-	 qDebug() << "internal_reports[ chdesc_alt ].keys()   -- " << internal_reports[ chdesc_alt ].keys();
-	 qDebug() << "internal_reports[ chdesc_alt ][ ch_wavelengths[0] ] -- "
-		  << internal_reports[ chdesc_alt ][ ch_wavelengths[0] ].tot_conc
-		  << internal_reports[ chdesc_alt ][ ch_wavelengths[0] ].wavelength;
-	 
-	 for ( int w=0; w<ch_wavelengths.size(); ++w )
-	   {
-	     QString curr_w = ch_wavelengths[ w ];
-	     qDebug() << "curr_w -- " << curr_w;
-
-	     qDebug() << "In Save ana gen: internal_reports[ chdesc_alt ][ curr_w ] "
-		      << internal_reports[ chdesc_alt ][ curr_w ].channel_name;
-	     
-	     currProf->ch_reports[ chdesc_alt ][ curr_w ] = internal_reports[ chdesc_alt ][ curr_w ];
-	     qDebug() << "After insertion..";
-	   }
-	 
-	 //currProf->ch_reports[ chdesc_alt ] = internal_reports[ chdesc_alt ];	 
-	 
-	 // //ALEXEY: fill QMap relating chdesc_alt to future reportID or reportGUID
-	 // currProf->ch_report_ids[ chdesc_alt ]   = 0;
-	 // currProf->ch_report_guids[ chdesc_alt ] = QString( "00000000-0000-0000-0000-000000000000" );
-	 
-	 //ALEXEY: also save info on wvl not to be analyzed
-	 QString wvl_list_not_run;
-	 foreach (QCheckBox *ckbox, sa->findChildren<QCheckBox*>())
-	   {
-	     if ( !ckbox->isChecked() )
-	       {
-		 qDebug() << "US_AnaprofPanGen::savePanel(): wvl_not_to_run " <<  (ckbox->objectName()).split(":")[2] << " for channel " << ii;
-
-		 wvl_list_not_run += (ckbox->objectName()).split(":")[2] + ":";
-	       }
-	   }
-	 wvl_list_not_run.chop(1);
-	 currProf->wvl_not_run << wvl_list_not_run;
-	 
+         if ( button->isChecked() )
+         {
+            currProf->wvl_edit << button->objectName().split( ":" )[2].toInt();
+            break;
+         }
       }
+      QStringList not_run;
+      foreach ( QCheckBox* ckbox, sa->findChildren<QCheckBox*>() )
+      {
+         if ( !ckbox->isChecked() )
+         {
+            not_run << ckbox->objectName().split( ":" )[2];
+         }
+      }
+      currProf->wvl_not_run << not_run.join( ":" );
+
+      const QString channel         = currProf->chndescs_alt[ii];
+      currProf->ch_reports[channel] = internal_reports[channel];
    }
-DbgLv(1) << "APGe: svP:  done";
+
+   US_AnaProfileLoader::finish( *currProf );
+   internal_reports = currProf->ch_reports;
 }
 
 // Get a specific panel string value

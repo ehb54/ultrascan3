@@ -1,12 +1,13 @@
 //! \file us_analysis_profile.cp
 
 #include "us_analysis_profile.h"
-#include "us_table.h"
-#include "us_license.h"
+#include "us_ana_profile_load_gui.h"
 #include "us_datafiles.h"
-#include "us_sleep.h"
-#include "us_util.h"
+#include "us_license.h"
 #include "us_report_gmp.h"
+#include "us_sleep.h"
+#include "us_table.h"
+#include "us_util.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -147,7 +148,8 @@ DbgLv(1) << "MAIN:  Resetting internal protocol...";
    initPanels();                      //if commented and nothing else done causes crash
 
    ap_xml.clear();
-   
+   profile_usable        = false;
+   have_profile_snapshot = false;
 }
 
 // Set auto mode (comes from ComProject or Experiment)
@@ -171,1048 +173,84 @@ void US_AnalysisProfileGui::auto_name_passed( QString& p_protname, QString& p_ap
 DbgLv(1) << "APG: pass_names" << p_protname << p_aproname;
 }
 
+static bool sameProfileProtocol( const US_RunProtocol& a, const US_RunProtocol& b )
+{
+   return a.protoGUID == b.protoGUID && a.protoID == b.protoID && a.protoname == b.protoname &&
+          a.rpAprof.aprofGUID == b.rpAprof.aprofGUID && a.rpAprof.aprofname == b.rpAprof.aprofname;
+}
+
+static bool sameProfileInputs( const US_RunProtocol& a, const US_RunProtocol& b )
+{
+   return sameProfileProtocol( a, b ) && a.rpSpeed == b.rpSpeed && a.rpSolut == b.rpSolut && a.rpOptic == b.rpOptic &&
+          a.rpRange == b.rpRange;
+}
+
+bool US_AnalysisProfileGui::profileUsableFor( const US_RunProtocol& protocol ) const
+{
+   return profile_usable && profile_abde == abde_mode_aprofile && sameProfileInputs( profile_protocol, protocol );
+}
+
+// A successful Save As gives the already reviewed profile a new identity.
+void US_AnalysisProfileGui::profileSavedAs( const US_RunProtocol& previous, const US_RunProtocol& saved )
+{
+   if ( profileUsableFor( previous ) )
+   {
+      profile_protocol = saved;
+      ap_xml           = saved.rpAprof.ap_xml;
+   }
+}
+
 // Update analysis profile based on inherited protocol
 void US_AnalysisProfileGui::inherit_protocol( US_RunProtocol* iProto )
 {
-   int kchn        = currProf.pchans.count();
-   QStringList sl_chns;
-   QStringList sl_sols;
-   QStringList sl_opts;
-   int nchs        = iProto->rpSolut.chsols.count();
-   int ncho        = iProto->rpOptic.chopts.count();
+   profile_usable                             = false;
+   const US_RunProtocol         requested     = *iProto;
+   const bool                   same_protocol = have_profile_snapshot && sameProfileProtocol( profile_protocol, requested );
+   // Re-read the saved profile on a protocol switch or when there is no cached XML.
+   const bool                   read_saved    = ap_xml.isEmpty() || !same_protocol;
+   US_Passwd                    pw;
+   QScopedPointer<US_DB2>       db;
 
-   //ALEXEY: pass scanCount && scanCount_global from protocol
-   // scanCount     = iProto->scanCount;
-   // scanCount_int = iProto->scanCount_int;
-   scanCount     = iProto->rpSpeed.ssteps[ 0 ].scancount;
-   scanCount_int = iProto->rpSpeed.ssteps[ 0 ].scancount_int;
-
-   qDebug() << "In inherit: ScanCounts : "
-	    << iProto->scanCount
-	    << iProto->scanCount_int
-	    << iProto->rpSpeed.ssteps[ 0 ].scancount
-	    << iProto->rpSpeed.ssteps[ 0 ].scancount_int;
-   
-
-DbgLv(1) << "APG00: ipro: kchn nchs ncho" << kchn << nchs << ncho;
-
-//currProf.ch_wvls.clear();
-      
-   if ( nchs < 1  ||  ncho < 1 )
-     return;
-
-   currProf.ch_wvls.clear();
-   
-   int nchn        = 0;
-DbgLv(1) << "APG: ipro: kchn nchs ncho" << kchn << nchs << ncho;
-if(iProto->rpOptic.chopts.count()>0)
-DbgLv(1) << "APG: ipro: 0)ch s1 s2 s3"
- << iProto->rpOptic.chopts[0].channel
- << iProto->rpOptic.chopts[0].scan1
- << iProto->rpOptic.chopts[0].scan2
- << iProto->rpOptic.chopts[0].scan3;
-if(iProto->rpOptic.chopts.count()>1)
-DbgLv(1) << "APG: ipro: 1)ch s1 s2 s3"
- << iProto->rpOptic.chopts[1].channel
- << iProto->rpOptic.chopts[1].scan1
- << iProto->rpOptic.chopts[1].scan2
- << iProto->rpOptic.chopts[1].scan3;
-
-   for ( int ii = 0; ii < nchs; ii++ )
-   {  // Examine protocol's channel solutions
-      QString chname  = iProto->rpSolut.chsols[ ii ].channel;
-      QString sodesc  = iProto->rpSolut.chsols[ ii ].solution;
-      
-      chname          = QString( chname ).section( ":", 0, 0 )
-                                         .section( ",", 0, 0 )
-                                         .replace( " / ", "" );
-      sl_chns << chname;
-      sl_sols << sodesc;
-DbgLv(1) << "APG: ipro:  s:ii" << ii << "chname" << chname << "sodesc" << sodesc;
-   }
-
-   for ( int ii = 0; ii < ncho; ii++ )
-   {  // Examine protocol's channel optics
-
-      QString chname  = iProto->rpOptic.chopts[ ii ].channel;
-      QString scan1   = iProto->rpOptic.chopts[ ii ].scan1;
-      QString scan2   = iProto->rpOptic.chopts[ ii ].scan2;
-      QString scan3   = iProto->rpOptic.chopts[ ii ].scan3;
-DbgLv(1) << "APG: ipro:  o.ii" << ii << "chname" << chname
- << "scan1 scan2 scan3" << scan1 << scan2 << scan3;
-      if ( scan1.isEmpty()  &&
-           scan2.isEmpty()  &&
-           scan3.isEmpty() )  continue;
-
-      QStringList ods;       // Optics descriptions, this channel
-      chname          = QString( chname ).section( ":", 0, 0 )
-                                         .section( ",", 0, 0 )
-                                         .replace( " / ", "" );
-      if ( ! scan1.isEmpty() )
-         ods << scan1;       // First optics
-      if ( ! scan2.isEmpty() )
-         ods << scan2;       // Additional optics
-      if ( ! scan3.isEmpty() )
-         ods << scan3;       // Additional optics
-      int chx         = sl_chns.indexOf( chname );
-      if ( chx < 0 )          continue;
-
-      QString sodesc  = sl_sols[ chx ];  // Channel's solution
-      
-      //ALEXEY: also Ranges
-      QList< double > wvls;
-      for ( int ch_r = 0; ch_r < iProto->rpRange.chrngs.size(); ++ch_r )
-	{
-	  QString chdesc_from_ranges = (iProto->rpRange.chrngs[ ch_r ].channel).split(",")[0];
-	  chdesc_from_ranges.replace(" / ","");
-
-	  qDebug() << " chdesc_from_ranges, chname_rpOptics  -- " << chdesc_from_ranges << chname;
-
-	  if ( chname.contains(chdesc_from_ranges) )
-	    {
-	      //QList< double > wvls = iProto->rpRange.chrngs[ ii ].wvlens;
-	      wvls = iProto->rpRange.chrngs[ ch_r ].wvlens;
-
-	      qDebug() << " wvls -- " << wvls;
-	    }
-	}
-
-      // //ALEXEY: also US_ReportGMP (blank/default for now)
-      // US_ReportGMP reportGMP = US_ReportGMP();
-      
-      
-      for ( int jj = 0; jj < ods.count(); jj++ )
-      {  // Create a channel entry for each optics type of this channel
-         QString opdesc  = ods[ jj ];
-         opdesc          = opdesc.replace( "visible", "vis." );
-         opdesc          = opdesc.replace( "Rayleigh Interference", "Interf." );
-         opdesc          = opdesc.replace( "Fluorescence", "Fluor." );
-         QString chentr  = chname + ":" + opdesc + ":" + sodesc;
-DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
-
-        //ALEXEY: chname for currProf.ch_wvls:
-        QString sodesc_cut  = QString( chentr ).section( ":", 2, 2 );
-        QString chentr_wvls = chname + ":" + opdesc + ":" + sodesc_cut;
-	
-	
-         if ( nchn < kchn )
-         {  // Replace channel and channel description
-
-	   qDebug() << "inheritprotocol, Replacing channel..";
-	   qDebug() << "currProf.chndescs_alt[ nchn ], chentr_wvls -- "
-		    << currProf.chndescs_alt[ nchn ] << chentr_wvls;
-
-	   qDebug() << "Old wvl -- " << currProf.ch_wvls[ currProf.chndescs_alt[ nchn ] ];
-	    QString old_desc = currProf.chndescs_alt[ nchn ];
-	    QString old_wvl;
-	    
-	    //DEBUG: check how current ch_reports looks like
-	    QMap< QString, QMap < QString, US_ReportGMP > >::iterator ri;
-	    for ( ri = currProf.ch_reports.begin(); ri != currProf.ch_reports.end(); ++ri )
-	      {
-		QString chan_desc = ri.key();
-
-		qDebug() << "Old ch_reports: chan_desc:: " << chan_desc;
-		
-		QMap < QString, US_ReportGMP > triple_reports = ri.value();
-		QMap < QString, US_ReportGMP >::iterator tri;
-		for ( tri = triple_reports.begin(); tri != triple_reports.end(); ++tri )
-		  {
-		    old_wvl = tri.key();
-		    
-		    for(int ii=0; ii< currProf.ch_reports[ chan_desc ] [ old_wvl ].reportItems.size(); ++ii)
-		      {
-			US_ReportGMP::ReportItem initItem = currProf.ch_reports[ chan_desc ] [ old_wvl ].reportItems[ ii ];
-			qDebug() << "wvl: type, method, lo, hi -- "
-				 << old_wvl << ": " 
-				 << initItem.type
-				 << initItem.method
-				 << initItem.range_low
-				 << initItem.range_high ;
-			
-		      }
-		  }
-	      }
-	    //END DEBUG
-	    
-            currProf.pchans  [ nchn ] = chname;
-            currProf.chndescs[ nchn ] = chentr;
-	    currProf.chndescs_alt[ nchn ] = chentr_wvls;
-
-	    // //Fill out Excl. Scans QMap:
-	    // QStringList scan_ranges = { "0", "0" };
-	    // currProf.ch_scans_excl[ chentr_wvls ] = scan_ranges;
-
-	    //ALEXEY: also ranges for each channel
-	    if ( opdesc.contains("vis.") )
-	      currProf.ch_wvls[ chentr_wvls ] = wvls;
-	    if ( opdesc.contains("Interf.") )
-	      {
-		QList< double > wvl_interf = { 660 };
-		currProf.ch_wvls[ chentr_wvls ] = wvl_interf;
-	      }
-	    qDebug() << "In inherit_prot: [new] wvl, wvls.size() for channel -- "
-		     << currProf.ch_wvls[ chentr_wvls ]
-		     << currProf.ch_wvls[ chentr_wvls ].size() << " for " << chentr_wvls;
-
-	    // //ALEXEY: insert ch_reports here
-	    // //currProf.ch_reports[ chentr_wvls ] = reportGMP;
-	    // currProf.ch_reports[ chentr_wvls ] = currProf.ch_reports[ currProf.chndescs_alt[ nchn ] ];
-	    // currProf.ch_reports[ chentr_wvls ].channel_name = chentr_wvls;
-
-	    //ALEXEY_NEW_REPORT: move these 2 lines below setting currProf.ch_wvls[ chentr_wvls ]
-	    //Next, iterate over wvls & fill QMap< QString, QMap < QString( wvls[i]), US_ReportGMP > > currProf.ch_reports[ chentr_wvls ][wvl]  
-	    QList< double > ch_wavelengths = currProf.ch_wvls[ chentr_wvls ];
-
-	    for ( int i=0; i<ch_wavelengths.size(); ++i )
-	      {
-		QString c_wvl = QString::number ( ch_wavelengths[ i ] );
-		currProf.ch_reports[ chentr_wvls ][ c_wvl ] = currProf.ch_reports[ currProf.chndescs_alt[ nchn ] ][ c_wvl ];
-		
-		//currProf.ch_reports[ chentr_wvls ][ c_wvl ] = currProf.ch_reports[ old_desc ][ old_wvl ];
-		currProf.ch_reports[ chentr_wvls ][ c_wvl ].channel_name = chentr_wvls;
-
-		qDebug() << "nchn < kchn: Filling currProf.ch_reports -- ";
-		qDebug() << "chentr_wvls, c_wvl -- " << chentr_wvls << ", " << c_wvl;
-		
-		//set different default params for Interf. reportGMP
-		if ( chentr_wvls.contains("Interf.") )
-		  {
-		    if ( currProf.ch_reports[ chentr_wvls ][ c_wvl ].DBread || currProf.ch_reports[ chentr_wvls ][ c_wvl ].interf_report_changed )
-		      {
-			qDebug() << "nchn < kchn: IP Report: read from DB";
-		      }
-		    else
-		      {
-			currProf.ch_reports[ chentr_wvls ][ c_wvl ].tot_conc = 3.0;
-			currProf.ch_reports[ chentr_wvls ][ c_wvl ].reportItems.clear();
-		      }
-		  }
-
-		double tot_time_exp = iProto->rpSpeed.ssteps[0].duration + iProto->rpSpeed.ssteps[0].delay_stage;
-
-		if ( currProf.ch_reports[ chentr_wvls ][ c_wvl ].DBread || currProf.ch_reports[ chentr_wvls ][ c_wvl ].exp_time_changed )
-		  {
-		  }
-		else
-		  currProf.ch_reports[ chentr_wvls ][ c_wvl ].experiment_duration = tot_time_exp;      // <== 1st speed step!!!
-
-		qDebug() << "Exp. Duraiton -- " << tot_time_exp;
-
-	      }
-		
-	    chx             = currProf.lc_ratios.count() - 1;
-	    if ( chx < nchn )
-	      {
-		currProf.lc_ratios << currProf.lc_ratios[ chx ];
-               currProf.lc_tolers << currProf.lc_tolers[ chx ];
-               currProf.l_volumes << currProf.l_volumes[ chx ];
-               currProf.lv_tolers << currProf.lv_tolers[ chx ];
-               currProf.data_ends << currProf.data_ends[ chx ];
-
-	       //abde
-	       currProf.ld_dens_0s << currProf.ld_dens_0s[ chx ];
-	       currProf.gm_vbars   << currProf.gm_vbars[ chx ];
-	       currProf.gm_mws     << currProf.gm_mws[ chx ];
-	       currProf.ref_channels << currProf.ref_channels[ chx ];
-	       currProf.ref_use_channels << currProf.ref_use_channels[ chx ];
-
-	       currProf.analysis_run << currProf.analysis_run[ chx ];
-	       currProf.report_run   << currProf.report_run[ chx ];
-	       currProf.wvl_edit     << currProf.wvl_edit[ chx ];
-	       currProf.wvl_not_run  << currProf.wvl_not_run[ chx ];
-
-	       currProf.scan_excl_begin  << currProf.scan_excl_begin[ chx ];
-	       currProf.scan_excl_end    << currProf.scan_excl_end[ chx ];
-	       currProf.scan_excl_nth    << currProf.scan_excl_nth[ chx ];
-	       
-	       currProf.replicates << currProf.replicates[ chx ];
-	      }
-DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
-	 << "dae size" << currProf.data_ends.count() << "chentr" << chentr
-	 << "currProf.analysis_run[ chx ]" << currProf.analysis_run[ chx ]
-	 << "currProf.scan_excl_begin[ chx ]" << currProf.scan_excl_begin[ chx ]
-	 << "currProf.scan_excl_end[ chx ]" << currProf.scan_excl_end[ chx ]
-	 << "currProf.scan_excl_nth[ chx ]" << currProf.scan_excl_nth[ chx ];
-
-
-         }
-         else
-         {  // Append channel and channel description
-
-	   qDebug() << "inheritprotocol, Appending channels..";
-            currProf.pchans   << chname;
-            currProf.chndescs << chentr;
-	    currProf.chndescs_alt << chentr_wvls;
-	    
-	    
-	    //ALEXEY: also ranges for each channel
-	    if ( opdesc.contains("vis.") )
-	      currProf.ch_wvls[ chentr_wvls ] = wvls;
-	    if ( opdesc.contains("Interf.") )
-	      {
-		QList< double > wvl_interf = { 660 };
-		currProf.ch_wvls[ chentr_wvls ] = wvl_interf;
-	      }
-	    qDebug() << "In inherit_prot: wvls.size() for channel -- " << currProf.ch_wvls[ chentr_wvls ].size() << " for " << chentr_wvls;
-
-	    
-	    // //ALEXEY: insert ch_reports here
-	    // //currProf.ch_reports[ chentr_wvls ] = reportGMP;
-	    // currProf.ch_reports[ chentr_wvls ] = currProf.ch_reports[ currProf.chndescs_alt.last() ];
-	    // currProf.ch_reports[ chentr_wvls ].channel_name = chentr_wvls;
-
-	    //ALEXEY_NEW_REPORT: move these 2 lines below setting currProf.ch_wvls[ chentr_wvls ]
-	    //Next, iterate over wvls & fill QMap< QString, QMap < QString( wvls[i]), US_ReportGMP > > currProf.ch_reports[ chentr_wvls ][wvl]  
-	    QList< double > ch_wavelengths = currProf.ch_wvls[ chentr_wvls ];
-	    
-	    for ( int i=0; i<ch_wavelengths.size(); ++i )
-	      {
-		QString c_wvl = QString::number ( ch_wavelengths[ i ] );
-		currProf.ch_reports[ chentr_wvls ][ c_wvl ] = currProf.ch_reports[ currProf.chndescs_alt[ nchn ] ][ c_wvl ];
-		//currProf.ch_reports[ chentr_wvls ][ c_wvl ] = currProf.ch_reports[ currProf.chndescs_alt[ nchn - 1 ] ][ old_wvl ];
-		currProf.ch_reports[ chentr_wvls ][ c_wvl ].channel_name = chentr_wvls;
-
-		qDebug() << "nchn > kchn: Filling currProf.ch_reports -- ";
-		qDebug() << "chentr_wvls, c_wvl -- " << chentr_wvls << ", " << c_wvl;
-
-		//set different default params for Interf. reportGMP
-		if ( chentr_wvls.contains("Interf.") )
-		  {
-		    if ( currProf.ch_reports[ chentr_wvls ][ c_wvl ].DBread || currProf.ch_reports[ chentr_wvls ][ c_wvl ].interf_report_changed )
-		      {
-			qDebug() << "nchn > kchn: IP Report: read from DB";
-		      }
-		    else
-		      {
-			currProf.ch_reports[ chentr_wvls ][ c_wvl ].tot_conc = 3.0;
-			currProf.ch_reports[ chentr_wvls ][ c_wvl ].reportItems.clear();
-		      }
-		  }
-		
-		
-		double tot_time_exp = iProto->rpSpeed.ssteps[0].duration + iProto->rpSpeed.ssteps[0].delay_stage;
-
-		if ( currProf.ch_reports[ chentr_wvls ][ c_wvl ].DBread || currProf.ch_reports[ chentr_wvls ][ c_wvl ].exp_time_changed )
-		  {
-		  }
-		else
-		  currProf.ch_reports[ chentr_wvls ][ c_wvl ].experiment_duration = tot_time_exp;      // <== 1st speed step!!! 
-
-		qDebug() << "Exp. Duraiton -- " << tot_time_exp;
-
-	      }
-	    	    
-	    
-	    
-            int lch         = nchn - 1;
-            // Duplicate previous parameter values
-            currProf.lc_ratios << currProf.lc_ratios[ lch ];
-            currProf.lc_tolers << currProf.lc_tolers[ lch ];
-            currProf.l_volumes << currProf.l_volumes[ lch ];
-            currProf.lv_tolers << currProf.lv_tolers[ lch ];
-            currProf.data_ends << currProf.data_ends[ lch ];
-
-	    //abde
-	    currProf.ld_dens_0s << currProf.ld_dens_0s[ lch ];
-	    currProf.gm_vbars   << currProf.gm_vbars[ lch ];
-	    currProf.gm_mws     << currProf.gm_mws[ lch ];
-	    currProf.ref_channels << currProf.ref_channels[ lch ];
-	    currProf.ref_use_channels << currProf.ref_use_channels[ lch ];
-	    
-	    currProf.analysis_run << currProf.analysis_run[ lch ];
-	    currProf.report_run   << currProf.report_run[ lch ];
-	    currProf.wvl_edit     << currProf.wvl_edit[ lch ];
-	    currProf.wvl_not_run  << currProf.wvl_not_run[ lch ];
-
-	    currProf.scan_excl_begin  << currProf.scan_excl_begin[ lch ];
-	    currProf.scan_excl_end    << currProf.scan_excl_end[ lch ];
-	    currProf.scan_excl_nth    << currProf.scan_excl_nth[ lch ];
-	    
-	    currProf.replicates << currProf.replicates[ lch ];
-	    	    
-	    DbgLv(1) << "APG: ipro:     lch" << lch << "lv_tol da_end"
-		     << currProf.lv_tolers[ lch ] << currProf.data_ends[ lch ]
-		     << "dae size" << currProf.data_ends.count()
-		     << "currProf.analysis_run[ lch ]" << currProf.analysis_run[ lch ]
-		     << "currProf.scan_excl_begin[ lch ]" << currProf.scan_excl_begin[ lch ]
-		     << "currProf.scan_excl_end[ lch ]" << currProf.scan_excl_end[ lch ]
-		     << "currProf.scan_excl_nth[ lch ]" << currProf.scan_excl_nth[ lch ];
-
-         }
-         nchn++;
-      }
-   }
-
-   //ALEXEY:Debug
-   qDebug() << "In inherit_prot: size of currProf.ch_wvls QMap -- " << currProf.ch_wvls.count();
-   //////////////
-
-   kchn            = currProf.pchans.count();
-   qDebug() <<  "In inherit 1: pchans -- " << currProf.pchans;
-
-   if ( kchn > nchn )
-   {  // Drop any Profile channel values left over from previous
-      for ( int ii = nchn; ii < kchn; ii++ )
-      {
-         currProf.pchans   .removeLast();
-         currProf.chndescs .removeLast();
-	 currProf.chndescs_alt .removeLast();
-         currProf.lc_ratios.removeLast();
-         currProf.lc_tolers.removeLast();
-         currProf.l_volumes.removeLast();
-         currProf.lv_tolers.removeLast();
-         currProf.data_ends.removeLast();
-
-	 qDebug() << "In inherit 1: ii, nchn, kchn " << ii << nchn << kchn;
-	 
-	 //abde
-	 currProf.ld_dens_0s.removeLast();
-	 currProf.gm_vbars.removeLast(); 
-	 currProf.gm_mws .removeLast();
-	 currProf.ref_channels.removeLast();
-	 currProf.ref_use_channels.removeLast();
-
-	 qDebug() << "In inherit 2: ii, nchn, kchn " << ii << nchn << kchn;
-
-	 currProf.analysis_run .removeLast();
-	 currProf.report_run   .removeLast();
-	 currProf.wvl_edit     .removeLast();
-	 currProf.wvl_not_run  .removeLast();
-
-	 qDebug() << "In inherit 3: ii, nchn, kchn " << ii << nchn << kchn;
-	 
-	 currProf.scan_excl_begin .removeLast();
-	 currProf.scan_excl_end   .removeLast();
-	 currProf.scan_excl_nth   .removeLast();
-
-	 qDebug() << "In inherit 4: ii, nchn, kchn " << ii << nchn << kchn;
-	 currProf.replicates   .removeLast();
-	 qDebug() << "In inherit 5: ii, nchn, kchn " << ii << nchn << kchn;
-	 //currProf.ch_wvls.removeLast();  //ALEXEY: needed?
-      }
-   }
-
-DbgLv(1) << "APG: ipro: name" << iProto->protoname
- << "cPname" << currProf.aprofname << "xml len" << ap_xml.length()
- << "GUID" << currProf.aprofGUID << iProto->rpAprof.aprofGUID;
-
-   QString aprsrc( "currProf" );
-   bool need_rec        = ap_xml.isEmpty();
-   need_rec             = ( currProf.aprofname == iProto->rpAprof.aprofname )
-                          ? need_rec : true;
-   currProf.aprofGUID   = iProto->rpAprof.aprofGUID = iProto->protoGUID;
-   currProf.aprofname   = iProto->rpAprof.aprofname = iProto->protoname;
-DbgLv(1) << "APG: ipro: name GUID" << currProf.aprofname << currProf.aprofGUID;
-
- qDebug() << "APG: ipro: currProf.aprofname, iProto->rpAprof.aprofname, need_rec -- " << currProf.aprofname << iProto->rpAprof.aprofname << need_rec;
-
-   // Load Analysis Profile from database or local file
-   if ( need_rec )
+   US_AnaProfileLoader::Options options;
+   options.abde       = abde_mode_aprofile;
+   options.read_saved = read_saved;
+   options.start      = same_protocol || !have_profile_snapshot ? &currProf : nullptr;
+   options.progress   = progress_cb;
+   options.xml        = same_protocol ? ap_xml : QString();
+   options.connect    = [&]() -> IUS_DB2*
    {
-      bool use_db          = ( US_Settings::default_data_location() < 2 );
-      bool fromdisk        = US_Settings::debug_match( "protocolFromDisk" );
-      bool load_db         = fromdisk ? false : use_db;
-      US_Passwd  pw;
-      QScopedPointer<US_DB2> db_holder( load_db ? new US_DB2( pw.getPasswd() ) : NULL );
-      US_DB2*                dbP = db_holder.data();
-      load_db              = ( dbP != NULL );
+      db.reset( new US_DB2( pw.getPasswd() ) );
+      return db.data();
+   };
 
-      QString reportMask_DB;
-      QString combinedPlotsParms_DB;
-      
-      if ( load_db )
-      {  // Get AProfile XML from the database
-//load_db=false;
-	 
-         int status           = US_DB2::OK;
-         QStringList qry;
-         qry << "get_aprofile_info" << currProf.aprofGUID;
-         dbP->query( qry );
-         status               = dbP->lastErrno();
-         int numrow           = dbP->numRows();
-DbgLv(1) << "APG: ipro:  db stat nrow" << status << numrow << "lerr" << dbP->lastError();
-         if ( status != US_DB2::OK  ||  numrow < 1 )
-         {
-            load_db              = false;
-DbgLv(1) << "APG: ipro:   load_db" << load_db;
-         }
-         else
-         {
-            while ( dbP->next() )
-            {
-               currProf.aprofID     = dbP->value( 0 ).toInt();
-               currProf.aprofname   = dbP->value( 1 ).toString();
-               ap_xml               = dbP->value( 2 ).toString();
-
-	       reportMask_DB         = dbP->value( 4 ).toString();
-	       combinedPlotsParms_DB = dbP->value( 5 ).toString();
-            }
-            aprsrc               = QString( "readDB" );
-DbgLv(1) << "APG: ipro:  ap ID,name,lnxml" << currProf.aprofID
- << currProf.aprofname << ap_xml.length();
-
-	 }
-      }
-
-      // The profile has been read:  close the connection now, not at scope exit
-      db_holder.reset();
-      dbP = NULL;
-
-      DbgLv( 1 ) << "APG: ipro:  load_db" << load_db;
-      if ( !load_db )
-      {  // Get AProfile XML from local disk
-         bool new_file        = false;
-         QString dapath       = US_Settings::dataDir() + "/projects";
-         QString xmlipath     = US_DataFiles::get_filename( dapath, currProf.aprofGUID,
-                                   "A", "analysis_profile", "guid", new_file );
-
-DbgLv(1) << "APG: ipro:   new_file" << new_file << "xmlipath" << xmlipath
- << "guid" << currProf.aprofGUID;
-         if ( new_file )
-         {  // No local file, so clear XML
-            ap_xml.clear();
-            currProf.aprofID     = 0;
-         }
-         else
-         {  // Read XML from local file
-            QFile xifile( xmlipath );
-            if ( xifile.open( QIODevice::ReadOnly | QIODevice::Text ) )
-            {
-               QTextStream xitext( &xifile );
-               ap_xml               = xitext.readAll();
-               xifile.close();
-               aprsrc               = QString( "readLocf" );
-               currProf.aprofID     = -( QString( xmlipath ).section( "/", -1, -1 )
-                                                            .section( ".", -2, -2 )
-                                                            .mid( 1 ).toInt() );
-DbgLv(1) << "APG: ipro:    aprofID" << currProf.aprofID;
-            }
-         }
-      }
-
-      //Get reportMask (if not empty)
-      if ( ! reportMask_DB.isEmpty() )
-	currProf.report_mask = reportMask_DB;
-
-      //Get combinedPlotsParms (if not empty)
-      if ( ! combinedPlotsParms_DB.isEmpty() )
-	currProf.combPlots_parms = combinedPlotsParms_DB;
-	
-      // Get AnalysisProfile from XML
-DbgLv(1) << "APG: ipro:  ap_xml isEmpty" << ap_xml.isEmpty();
-      if ( !ap_xml.isEmpty() )
-      {
-DbgLv(1) << "APG: ipro:  ap_xml length" << ap_xml.length();
-         QXmlStreamReader xmli( ap_xml );
-         currProf.fromXml( xmli );
-	 
-	 DbgLv(1) << "APG: ipro:   2kparm pkparm" << currProf.ap2DSA.parms.count() << currProf.apPCSA.parms.count()
-		  << "kpchan" << currProf.pchans.count();
-	 //         initPanels();
-
-	 //Check here if ch_report_ids[ channel_alt_desc ] and/or ch_report_guids[ channel_alt_desc ] are not empty
-	 //Also check if ch_report_ids.values() - the IDs - are not 0!!!
-
-	 //ALEXEY_NEW_REPORT:
-	 // currProf.ch_report_ids IS QMap< QString, QList < int > >:
-	 // 
-	 
-	 // QList< int > reportIDs_list  = currProf.ch_report_ids.values();
-	 // bool null_reportID = false;
-	 // for (int i=0; i<reportIDs_list.size(); ++i)
-	 //   {
-	 //     if( reportIDs_list[i] <= 0 ) //reportid is -1 or 0, so no report associated with the channel
-	 //       {
-	 // 	 null_reportID = true;
-	 // 	 break;
-	 //       }
-	 //   }
-	 
-	 // if ( currProf.ch_report_ids.size() && !null_reportID )
-	 if ( currProf.ch_report_ids.size() )
-	   {
-	     //fill in currProf->ch_reports[ chdesc_alt ] by reading ReportIDs from ch_report_ids[ chdesc_alt ]
-	     
-	     //Also, clean  currProf->ch_reports first  (since it will be re-created form DB here )
-	     currProf.ch_reports.clear();  // <-- Will this cause crash - as this omits "B:Interf." cannels ??
-
-        // Progress bookkeeping: each report counts as 100 units, split
-        // across its items
-        int rep_total = 0, rep_done = 0;
-        for ( auto it = currProf.ch_report_ids.constBegin(); it != currProf.ch_report_ids.constEnd(); ++it )
-        {
-           rep_total += it.value().size();
-        }
-        const int RUNITS = 100;
-
-        // ONE DB connection for all reports (was: a new connection per
-        // report)
-        US_Passwd rpw;
-        US_DB2    rdb( rpw.getPasswd() );
-        bool      db_ok = true;
-        if ( rdb.lastErrno() != US_DB2::OK )
-        {
-           QMessageBox::warning(
-              this, tr( "Connection Problem" ), tr( "Reading Report: Could not connect to database: \n" ) + rdb.lastError() );
-           db_ok = false;
-        }
-
-        if ( progress_cb && rep_total > 0 && db_ok )
-        {
-           progress_cb( 0, rep_total * RUNITS, tr( "Reading reports from DB..." ) );
-        }
-
-        // iterate over QMap ch_report_ids[ chdesc_alt ]
-        QMap<QString, QList<int>>::iterator ri;
-        for ( ri = currProf.ch_report_ids.begin(); db_ok && ri != currProf.ch_report_ids.end(); ++ri )
-        {
-           QString    channel_alt_desc = ri.key();
-           // int     reportID         = ri.value();
-
-           QList<int> reportIDs = ri.value();
-
-           // ALEXEY_NEW_REPORT: here ri.value() will be QList/QVector of
-           // reportIDs for a given channel next will be cycle over this
-           // QList...
-
-           QString    wvl_read_abde;
-           for ( int rid = 0; rid < reportIDs.size(); ++rid )
-           {
-              int reportID = reportIDs[rid];
-              qDebug() << "Reading reportItems form DB: channel_alt_desc, "
-                          "reportID  -- "
-                       << channel_alt_desc << ", " << reportID;
-
-              // retrieve report from DB
-              QString rep_detail =
-                 tr( "Reading report %1 of %2 (%3)..." ).arg( rep_done + 1 ).arg( rep_total ).arg( channel_alt_desc );
-              if ( progress_cb )
-              {
-                 progress_cb( rep_done * RUNITS, rep_total * RUNITS, rep_detail );
-              }
-
-              std::function<void( int, int )> item_cb;
-              if ( progress_cb )
-              {
-                 item_cb = [&]( int idone, int itotal )
-                 {
-                    if ( itotal <= 0 )
-                    {
-                       return;
-                    }
-                    progress_cb( rep_done * RUNITS + ( RUNITS * idone ) / itotal,
-                                 rep_total * RUNITS,
-                                 tr( "%1 item %2 of %3" ).arg( rep_detail ).arg( idone ).arg( itotal ) );
-                 };
-              }
-
-              US_ReportGMP* reportFromDB = new US_ReportGMP();
-              get_report_by_ID( reportFromDB, reportID, &rdb, item_cb );
-
-              // ALEXEY_NEW_REPORT: here the QMap< QString, QMap <
-              // QString(wvl), US_ReportGMP > > currProf.ch_reports will be
-              // filled Something like currProf.ch_reports[ channel_alt_desc
-              // ][ wvl ] -- where wvl == *reportFromDB->wavelength;
-              //  OR  wvl is returned from get_report_by_ID( reportFromDB,
-              //  reportID );
-
-              QString wvl_read = QString::number( reportFromDB->wavelength );
-
-              if ( reportIDs.size() == 1 )
-              {
-                 wvl_read_abde = wvl_read;
-              }
-
-              // assign retieved report to currProf.ch_reports[
-              // channel_alt_desc ];
-              currProf.ch_reports[channel_alt_desc][wvl_read] = *reportFromDB;
-              delete reportFromDB; // was leaked
-              ++rep_done;
-
-              qDebug() << "Filling currProf.ch_reports from DB: "
-                          "channel_alt_desc, wvl_read -- "
-                       << channel_alt_desc << ", " << wvl_read;
-           }
-
-           // In case of ABDE: the above loop would contain only 1 report
-           // (in DB: 1 report per channel [1st wvl]) For internal
-           // consistency, we need to populate (COPY) reports for the rest
-           // of wvls in the channel (will not be used)
-           QList<double> ch_wavelengths = currProf.ch_wvls[channel_alt_desc];
-           if ( abde_mode_aprofile && reportIDs.size() == 1 && ch_wavelengths.size() > 1 && !wvl_read_abde.isEmpty() )
-           {
-              qDebug() << "AProfile[ABDE]: reading from DB: replicating reports "
-                          "for MWL based on the 1st channel's wvl -- ";
-              for ( int i = 0; i < ch_wavelengths.size(); ++i )
-              {
-                 QString c_wvl = QString::number( ch_wavelengths[i] );
-                 if ( c_wvl == wvl_read_abde )
-                 {
-                    qDebug() << "Skipping 1st wvl: wvl = " << wvl_read_abde;
-                    continue;
-                 }
-
-                 qDebug() << "Filling wvl = " << c_wvl << ", with ref_wvl = " << wvl_read_abde;
-                 currProf.ch_reports[channel_alt_desc][c_wvl] = currProf.ch_reports[channel_alt_desc][wvl_read_abde];
-              }
-           }
-           // END of replicating ch_reports for ABDE
-        }
-        if ( progress_cb && rep_total > 0 )
-        {
-           progress_cb( rep_total * RUNITS, rep_total * RUNITS, QString() );
-        }
-      }
-      }
+   const US_AnaProfileLoader::Result result = US_AnaProfileLoader::load( requested, nullptr, options );
+   if ( !US_AnaProfileLoadGui::usable( this, result, false ) || !sameProfileInputs( requested, *iProto ) ||
+        options.abde != abde_mode_aprofile )
+   {
+      return;
    }
 
-   //DEBUG: check currProf.ch_reports map
-   
-   //END debug
-
-   apanGeneral->initPanel();
-
-   // If currProf purely from upstream profile, insure proper channel descriptions
-   if ( aprsrc == "currProf" )
+   iProto->rpAprof.aprofGUID = iProto->protoGUID;
+   iProto->rpAprof.aprofname = iProto->protoname;
+   if ( read_saved )
    {
-      QStringList sl_chnsel_g = childLValue( "general", "channels" );
-      QStringList sl_chnsel_2 = childLValue( "2dsa",    "channels" );
-      QStringList sl_chnsel_p = childLValue( "pcsa",    "channels" );
-      QStringList pa_chnsel_p;
-      QStringList pa_chnsel_2;
-      int nchan_g     = sl_chnsel_g.count();
-      int nchan_2     = sl_chnsel_2.count();
-      int nchan_p     = sl_chnsel_p.count();
-      int nchan_p2    = currProf.ap2DSA.parms.count();
-      int nchan_pp    = currProf.apPCSA.parms.count();
-      bool need_reset = false;
-      if ( nchan_g == nchan_2  &&  nchan_g == nchan_p )
-      {  // Channels same size, so check contents
-         for ( int ii = 0; ii < nchan_g; ii++ )
-         {
-            if ( sl_chnsel_g[ ii ] != sl_chnsel_2[ ii ]  ||
-                 sl_chnsel_g[ ii ] != sl_chnsel_p[ ii ] )
-               need_reset      = true;
-         }
-      }
-      else
-      {  // Channels size difference, so mark need to reset
-         need_reset      = true;
-         //   and effectively resize the string lists
-         if ( nchan_2 < nchan_g )
-         {
-            QString chann_2 = sl_chnsel_2[ nchan_2 - 1];
-            for ( int ii = nchan_2; ii < nchan_g; ii++ )
-               sl_chnsel_2 << chann_2;
-         }
-         else if ( nchan_2 > nchan_g )
-         {
-            for ( int ii = nchan_g; ii < nchan_2; ii++ )
-               sl_chnsel_2.removeLast();
-         }
-         if ( nchan_p < nchan_g )
-         {
-            QString chann_p = sl_chnsel_p[ nchan_p - 1];
-            for ( int ii = nchan_p; ii < nchan_g; ii++ )
-               sl_chnsel_p << chann_p;
-         }
-         else if ( nchan_p > nchan_g )
-         {
-            for ( int ii = nchan_g; ii < nchan_p; ii++ )
-               sl_chnsel_p.removeLast();
-         }
-      }
-
-      if ( need_reset )
-      {  // Reset channel descriptions for 2DSA,PCSA
-         for ( int ii = 0; ii < nchan_g; ii++ )
-         {
-            sl_chnsel_2[ ii ] = sl_chnsel_g[ ii ];
-            sl_chnsel_p[ ii ] = sl_chnsel_g[ ii ];
-         }
-
-         apan2DSA->sl_chnsel  = sl_chnsel_2;
-         apanPCSA->sl_chnsel  = sl_chnsel_p;
-         nchan_2         = nchan_g;
-         nchan_p         = nchan_g;
-      }
-
-      // Test need to reset 2DSA,PCSA parms channels
-      need_reset      = false;
-      if ( nchan_p2 == nchan_2  &&  nchan_pp == nchan_p )
-      {  // Channels same size, so check contents
-         for ( int ii = 0; ii < nchan_g; ii++ )
-         {
-            if ( currProf.ap2DSA.parms[ ii ].channel != sl_chnsel_2[ ii ]  ||
-                 currProf.ap2DSA.parms[ ii ].channel != sl_chnsel_p[ ii ] )
-               need_reset      = true;
-         }
-      }
-      else
-      {  // Channels size difference, so mark need to reset
-         need_reset      = true;
-      }
-      if ( need_reset )
-      {  // Reset channel descriptions for 2DSA,PCSA parms
-         currProf.ap2DSA.parms.resize( nchan_2 );
-         currProf.apPCSA.parms.resize( nchan_p );
-         int lch_p2      = nchan_p2 - 1;
-         int lch_pp      = nchan_pp - 1;
-
-         for ( int ii = 0; ii < nchan_g; ii++ )
-         {
-            if ( ii >= nchan_p2 )
-            {
-               currProf.ap2DSA.parms[ ii ] = currProf.ap2DSA.parms[ lch_p2 ];
-            }
-            if ( ii >= nchan_pp )
-            {
-               currProf.apPCSA.parms[ ii ] = currProf.apPCSA.parms[ lch_pp ];
-            }
-            currProf.ap2DSA.parms[ ii ].channel = sl_chnsel_g[ ii ];
-            currProf.apPCSA.parms[ ii ].channel = sl_chnsel_g[ ii ];
-         }
-
-         nchan_p2        = nchan_g;
-         nchan_pp        = nchan_g;
-      }
-   } // END: aprsrc == "currProf"
-DbgLv(1) << "APG: ipro: Aprof source: " << aprsrc;
-DbgLv(1) << "APG: ipro: nchn" << nchn << "call pGen iP";
-
-    // //ALEXEY: make copies of original currProf.ap2DSA && currProf.apPCSA objects for further editing (analysis -- o run or not to run)
-    // qDebug() << "Inherit: BEFORE copying..";
-    // currProf_copy.ap2DSA = currProf.ap2DSA;
-    // currProf_copy.apPCSA = currProf.apPCSA;
-
-    // qDebug() << "Inherit: AFTER copying..";
-
-
- qDebug() << "Size, Keys of currProf.ch_reports -- " << currProf.ch_reports.size() << ", " <<  currProf.ch_reports.keys();
-}
-
-//retrieve Report by ID from DB into ReportGMP structure
-void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP*                          reportFromDB,
-                                              int                                    reportID,
-                                              US_DB2*                                db_in,
-                                              const std::function<void( int, int )>& item_cb )
-{
-   // Use caller's open connection if given; else connect here (and clean up on
-   // exit)
-   QScopedPointer<US_DB2> db_own;
-   US_DB2*                db = db_in;
-   if ( !db )
-   {
-      US_Passwd pw;
-      db_own.reset( new US_DB2( pw.getPasswd() ) );
-      db = db_own.data();
-      if ( db->lastErrno() != US_DB2::OK )
-      {
-         QMessageBox::warning(
-            this, tr( "Connection Problem" ), tr( "Reading Report: Could not connect to database: \n" ) + db->lastError() );
-         return;
-      }
+      ap_xml = result.xml;
    }
+   scanCount     = requested.rpSpeed.ssteps.first().scancount;
+   scanCount_int = requested.rpSpeed.ssteps.first().scancount_int;
+   currProf      = result.profile;
+   apanGeneral->showProfile( result.values );
+   profile_protocol      = *iProto;
+   profile_abde          = options.abde;
+   have_profile_snapshot = true;
+   profile_usable        = true;
 
-   //Read parent Report
-   QStringList qry;
-   qry << "get_report_info_by_id" << QString::number( reportID );
-   qDebug() << "In get_report_by_ID(): query -- " << qry;
-   db->query( qry );
-
-   QString reportMaskJson;
-
-   if ( db->lastErrno() == US_DB2::OK )
+   // A profile that was not saved has its channels from the General panel
+   if ( !result.was_saved )
    {
-      while ( db->next() )
-	{
-	  reportFromDB->channel_name            = db->value( 0 ).toString();  
-	  reportFromDB->tot_conc                = db->value( 1 ).toString().toDouble();  
-	  reportFromDB->rmsd_limit              = db->value( 2 ).toString().toDouble();
-	  reportFromDB->av_intensity            = db->value( 3 ).toString().toDouble();
-	  reportFromDB->experiment_duration     = db->value( 4 ).toString().toDouble();
-	  reportFromDB->wavelength              = db->value( 5 ).toString().toDouble();
-
-	  reportFromDB->tot_conc_tol            = db->value( 6 ).toString().toDouble();
-	  reportFromDB->experiment_duration_tol = db->value( 7 ).toString().toDouble();
-
-	  reportMaskJson                        = db->value( 8 ).toString();
-	}
-
-      qDebug() << "report's channelname, wvl -- " << reportFromDB->channel_name << reportFromDB->wavelength;
-      qDebug() << "reportMaskJson form DB -- " << reportMaskJson;
-      //process report Mask Json into US_ReportGMP fields:
-      QJsonDocument jsonDoc = QJsonDocument::fromJson( reportMaskJson.toUtf8() );
-      if (!jsonDoc.isObject())
-	{
-	  qDebug() << "All Doc: NOT a JSON Doc !!";
-	}
-      QJsonObject rootObj = jsonDoc.object();
-      if (
-          rootObj.contains("tot_conc") &&
-          rootObj.contains("rmsd_lim") &&
-          rootObj.contains("intensity") &&
-          rootObj.contains("exp_dur") &&
-          rootObj.contains("integration") &&
-	  rootObj.contains("plots")
-	  )
-	{
-	  rootObj["tot_conc"].toString().toInt() ? reportFromDB->tot_conc_mask   = true : reportFromDB->tot_conc_mask   = false;
-	  rootObj["rmsd_lim"].toString().toInt() ? reportFromDB->rmsd_limit_mask = true : reportFromDB->rmsd_limit_mask = false;
-	  rootObj["intensity"].toString().toInt() ? reportFromDB->av_intensity_mask = true : reportFromDB->av_intensity_mask = false;
-	  rootObj["exp_dur"].toString().toInt() ? reportFromDB->experiment_duration_mask = true : reportFromDB->experiment_duration_mask = false;
-	  rootObj["integration"].toString().toInt() ? reportFromDB->integration_results_mask = true : reportFromDB->integration_results_mask = false;
-	  rootObj["plots"].toString().toInt() ? reportFromDB->plots_mask = true : reportFromDB->plots_mask = false;
-	}
-      else
-	{
-	  qDebug() << "No json mask set for report !\n";
-	}
-      if (
-          rootObj.contains("pseudo3d_2dsait_s_ff0") &&
-          rootObj.contains("pseudo3d_2dsait_s_d") &&
-	  rootObj.contains("pseudo3d_2dsait_mw_ff0") &&
-	  rootObj.contains("pseudo3d_2dsait_mw_d") &&
-	  rootObj.contains("pseudo3d_2dsamc_s_ff0") &&
-          rootObj.contains("pseudo3d_2dsamc_s_d") &&
-	  rootObj.contains("pseudo3d_2dsamc_mw_ff0") &&
-	  rootObj.contains("pseudo3d_2dsamc_mw_d") &&
-	  rootObj.contains("pseudo3d_pcsa_s_ff0") &&
-          rootObj.contains("pseudo3d_pcsa_s_d") &&
-	  rootObj.contains("pseudo3d_pcsa_mw_ff0") &&
-	  rootObj.contains("pseudo3d_pcsa_mw_d") &&
-	  rootObj.contains("pseudo3d_mask") 
-	  )
-	{
-	  rootObj["pseudo3d_2dsait_s_ff0"].toString().toInt() ? reportFromDB->pseudo3d_2dsait_s_ff0   = true : reportFromDB-> pseudo3d_2dsait_s_ff0  = false;
-	  rootObj["pseudo3d_2dsait_s_d"].toString().toInt() ? reportFromDB->pseudo3d_2dsait_s_d   = true : reportFromDB-> pseudo3d_2dsait_s_d  = false;
-	  rootObj["pseudo3d_2dsait_mw_ff0"].toString().toInt() ? reportFromDB->pseudo3d_2dsait_mw_ff0   = true : reportFromDB-> pseudo3d_2dsait_mw_ff0  = false;
-	  rootObj["pseudo3d_2dsait_mw_d"].toString().toInt() ? reportFromDB->pseudo3d_2dsait_mw_d   = true : reportFromDB-> pseudo3d_2dsait_mw_d  = false;
-
-	  rootObj["pseudo3d_2dsamc_s_ff0"].toString().toInt() ? reportFromDB->pseudo3d_2dsamc_s_ff0   = true : reportFromDB-> pseudo3d_2dsamc_s_ff0  = false;
-	  rootObj["pseudo3d_2dsamc_s_d"].toString().toInt() ? reportFromDB->pseudo3d_2dsamc_s_d   = true : reportFromDB-> pseudo3d_2dsamc_s_d  = false;
-	  rootObj["pseudo3d_2dsamc_mw_ff0"].toString().toInt() ? reportFromDB->pseudo3d_2dsamc_mw_ff0   = true : reportFromDB-> pseudo3d_2dsamc_mw_ff0  = false;
-	  rootObj["pseudo3d_2dsamc_mw_d"].toString().toInt() ? reportFromDB->pseudo3d_2dsamc_mw_d   = true : reportFromDB-> pseudo3d_2dsamc_mw_d  = false;	  
-
-	  rootObj["pseudo3d_pcsa_s_ff0"].toString().toInt() ? reportFromDB->pseudo3d_pcsa_s_ff0   = true : reportFromDB-> pseudo3d_pcsa_s_ff0  = false;
-	  rootObj["pseudo3d_pcsa_s_d"].toString().toInt() ? reportFromDB->pseudo3d_pcsa_s_d   = true : reportFromDB-> pseudo3d_pcsa_s_d  = false;
-	  rootObj["pseudo3d_pcsa_mw_ff0"].toString().toInt() ? reportFromDB->pseudo3d_pcsa_mw_ff0   = true : reportFromDB-> pseudo3d_pcsa_mw_ff0  = false;
-	  rootObj["pseudo3d_pcsa_mw_d"].toString().toInt() ? reportFromDB->pseudo3d_pcsa_mw_d   = true : reportFromDB-> pseudo3d_pcsa_mw_d  = false;
-
-	  rootObj["pseudo3d_mask"].toString().toInt() ? reportFromDB->pseudo3d_mask   = true : reportFromDB-> pseudo3d_mask  = false;
-	  
-	}
-      else
-	{
-	  qDebug() << "No json Pseudo3D plots mask set for report !\n";
-	}
-      
-      
-      //was read from DB
-      reportFromDB->DBread = true;
+      apan2DSA->sl_chnsel = childLValue( "general", "channels" );
+      apanPCSA->sl_chnsel = apan2DSA->sl_chnsel;
    }
-
-  //Read children: reportItems-by-reportID && insert them to parent report
-  reportFromDB->reportItems.clear();
-  
-  qry.clear();
-  qry << "get_report_items_ids_by_report_id" << QString::number( reportID );
-  qDebug() << "In get_report_by_ID() 1: query -- " << qry;
-  db->query( qry );
-  
-  if ( db->lastErrno() == US_DB2::OK )      // If not, no ReportItem(s) are associated with the parent Report in DB!!
-    {
-      QList< int > reportItemsIDs;
-      
-      while ( db->next() )
-	{
-	  int ID = db->value( 0 ).toString().toInt();
-	  reportItemsIDs << ID;
-	  
-	  qDebug() << "ReportItemID: " << ID;
-	}
-      
-      // reportItem information
-   const int n_items = reportItemsIDs.size();
-   int       i_item  = 0;
-   if ( item_cb )
-   {
-      item_cb( 0, n_items );
-   }
-   foreach ( int ID, reportItemsIDs )
-   {
-      qry.clear();
-      qry << QString( "get_report_item_info_by_id" ) << QString::number( ID );
-      db->query( qry );
-      db->next();
-
-      US_ReportGMP::ReportItem reportItem_read;
-
-      reportItem_read.type              = db->value( 0 ).toString();
-      reportItem_read.method            = db->value( 1 ).toString();
-      reportItem_read.range_low         = db->value( 2 ).toString().toDouble();
-      reportItem_read.range_high        = db->value( 3 ).toString().toDouble();
-      reportItem_read.integration_val   = db->value( 4 ).toString().toDouble();
-      reportItem_read.tolerance         = db->value( 5 ).toString().toDouble();
-      reportItem_read.total_percent     = db->value( 6 ).toString().toDouble();
-      reportItem_read.combined_plot     = db->value( 7 ).toString().toInt();
-      reportItem_read.ind_combined_plot = db->value( 8 ).toString().toInt();
-
-      reportItem_read.integration_val_sim = -1;
-      reportItem_read.total_percent_sim   = -1;
-      reportItem_read.passed              = QString( "N/A" );
-
-      reportFromDB->reportItems.push_back( reportItem_read );
-
-      if ( item_cb )
-      {
-         item_cb( ++i_item, n_items );
-      }
-   }
-    }
-  else //No reportItem(s) for report in the DB: push default rpeortItem structure??
-    {
-      qDebug() << "Adding plain reportItem to channel -- " ;
-      //Add plain ReportItem
-      US_ReportGMP::ReportItem initItem;
-
-      if ( !abde_mode_aprofile )
-	{
-	  initItem.type             = QString("s");
-	  initItem.method           = QString("2DSA-IT");
-	  initItem.range_low        = 3.2;
-	  initItem.range_high       = 3.7;
-	  initItem.integration_val  = 0.57;
-	  initItem.tolerance        = 10; 
-	  initItem.total_percent    = 0.58;
-	  initItem.combined_plot    = 1;
-	  initItem.ind_combined_plot  = 1;
-	  
-	  initItem.integration_val_sim   = -1;
-	  initItem.total_percent_sim     = -1;
-	  initItem.passed                = QString("N/A");
-	}
-      else
-	{
-	  initItem.type             = QString("Radius");
-	  initItem.method           = QString("raw");
-	  initItem.range_low        = 5.8;
-	  initItem.range_high       = 7.0;
-	  initItem.integration_val  = 0.57;
-	  initItem.tolerance        = 10; 
-	  initItem.total_percent    = 0.58;
-	  initItem.combined_plot    = 1;
-	  initItem.ind_combined_plot  = 1;
-	  
-	  initItem.integration_val_sim   = -1;
-	  initItem.total_percent_sim     = -1;
-	  initItem.passed                = QString("N/A");
-	}
-      
-      if ( !reportFromDB->channel_name.contains("Interf.") ) 
-	reportFromDB->reportItems.push_back( initItem );
-    }
 }
 
 // Reset parameters to their defaults
@@ -1685,8 +723,7 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       sb_use_ref_ch  = us_spinbox();
       sb_use_ref_ch ->setObjectName( stchan + "RefUseChan --chann_name--" + schan );
       sb_use_ref_ch->setAccessibleName( tr( "Use Reference Channel" ) );
-      sb_use_ref_ch ->setMinimum( 0 );
-      sb_use_ref_ch ->setMaximum( int(nchn/2.0) );
+      sb_use_ref_ch->setMinimum( 0 );
       sb_use_ref_ch -> setEnabled( false );
 
       le_dens0s  << le_dens_0;
@@ -1775,7 +812,7 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       sb_repl_group  = us_spinbox();
       sb_repl_group->setObjectName( strow + ": Replicate --chann_name--" + schan );
       sb_repl_group->setAccessibleName( tr( "Replicate Group (Channel %1)" ).arg( schan ) );
-      sb_repl_group ->setMaximum( nchn );
+      sb_repl_group->setMaximum( values.group_max );
       genL->addWidget( sb_repl_group,  row,  11, 1, 1, Qt::AlignHCenter );
       // connect( sb_repl_group, SIGNAL( clicked     ( ) ),
       //          this,        SLOT  ( setReplicate( ) ) );
@@ -2064,17 +1101,7 @@ QGroupBox * US_AnaprofPanGen::createGroup( QString & triple_name, QList< double 
       ck_run ->setAutoFillBackground( true );
       ck_run ->setChecked( true );
       ck_run ->setObjectName( strow + ":triple_run:" + QString::number (wvls[ii]) );
-      genL->addWidget( ck_run,  row++,  2, 1, 1, Qt::AlignHCenter );
-
-      if ( ii == int(wvls.size()/2) )
-	{
-	  rb_edit->setChecked( true );
-	  ck_run ->setChecked( true );
-	  ck_run ->setEnabled( false );
-
-	  //currProf->wvl_edit <<  wvls[ ii ]; 
-	}
-
+      genL->addWidget( ck_run, row++, 2, 1, 1, Qt::AlignHCenter );
     }
 
   //Disable radiobtn && checkbox if Interf.
@@ -2202,415 +1229,70 @@ void US_AnaprofPanGen::rbEditClicked ( QString arg_passed )
 //Togle Report Run checkbox
 void US_AnaprofPanGen::reportRunChecked( bool checked )
 {
-  QObject* sobj       = sender();      // Sender object
-  QString oname       = sobj->objectName();
-  int irow            = oname.section( ":", 0, 0 ).toInt();
-
-  QString channel_name = sl_chnsel[ irow ];
-  qDebug() << "Report to RUN: Checked: " << channel_name << " : " << checked;
-    
-  QString report_oname = QString::number( irow ) + ": Report";
-  qDebug() << "report_oname -- " << report_oname;
-
-  QString replicate_oname = QString::number( irow ) + ": Replicate";
-  qDebug() << "replicate_oname -- " << replicate_oname;
-
-  QString use_ch_oname = QString::number( irow ) + ": RefChan --chann_name--" + channel_name;
-  qDebug() << "use_ch_oname -- " << use_ch_oname;
-   
-  QString use_ref_ch_oname = QString::number( irow ) + ": RefUseChan --chann_name--" + channel_name;
-  qDebug() << "use_ref_ch_oname -- " << use_ref_ch_oname;
-
-  //old ref_numbers_list
-  QList<int> ref_numbers_list_old = ref_numbers_list;
-  
-   
-  //if not checked, disable Report btn && otherwise:
-   if ( !checked )
-     {
-       //Report
-       for ( int i=0; i < pb_reports.size(); ++i )
-	 {
-	   if ( pb_reports[ i ]->objectName().contains( report_oname ) )
-	     {
-	       pb_reports[ i ] -> setEnabled( false );
-	       break;
-	     }
-	 }
-       //Replicate
-       for ( int i=0; i < sb_repl_groups.size(); ++i )
-	 {
-	   if ( sb_repl_groups[ i ]->objectName().contains( replicate_oname ) )
-	     {
-	       sb_repl_groups[ i ] -> setEnabled( false );
-	       break;
-	     }
-	 }
-
-       //if runReport unChecked:
-       int ref_number = 0; // will be largest of all in ref_numbers_list;
-       for ( int i=0; i<le_ref_chs.size(); ++i)
-       	 {
-       	   if ( le_ref_chs[ i ]->objectName().contains( use_ch_oname ) )
-       	     {
-	       QString ref_text = "Ref:";
-	       	       
-	       for (int rn=0; rn<ref_numbers_list.size(); ++rn )
-		 if (ref_numbers_list[rn] > ref_number )
-		   ref_number = ref_numbers_list[rn];
-	       ++ref_number;
-	       // ( ref_numbers_list.size() > 0 ) ?
-	       // 	 ref_number = ref_numbers_list[ ref_numbers_list.size() - 1 ] + 1 :
-	       // 	 ref_number = 1 ;
-
-	       qDebug() << "reportUnChkd: ref_number -- " << ref_number;
-	       ref_numbers_list[ i ] = ref_number;
-	       ref_text += QString::number( ref_number );
-       	       le_ref_chs[ i ] -> setText( ref_text );
-       	       break;
-       	     }
-       	 }
-
-       
-       qDebug() << "Old/Updated ref_numbers_list_old,  ref_numbers_list -- "
-		<< ref_numbers_list_old << ref_numbers_list
-		<< ", SAME? " << ( ref_numbers_list_old == ref_numbers_list );
-       
-       //Use Reference#
-       for ( int i=0; i<sb_use_ref_chs.size(); ++i)
-	 {
-	   if ( sb_use_ref_chs[ i ]->objectName().contains( use_ref_ch_oname ) )
-	     {
-	       sb_use_ref_chs[ i ] -> setEnabled( false );
-	       sb_use_ref_chs[ i ] -> setValue( sb_use_ref_chs[ i ]-> minimum() );
-	       //break;
-	     }
-	   else //check the rest of chnns: if runReport unchecked, set false, otherwise true
-	     {
-	       ( ck_report_runs[ i ]->isChecked() ) ?
-		 sb_use_ref_chs[ i ] -> setEnabled( true ) : sb_use_ref_chs[ i ] -> setEnabled( false ) ;
-
-	       //ONLY when AProf->Gen initialized:
-	       if ( AProfIsIntiated )
-		 {
-		   //and re-set maxValue to to the max in ref_numbers_list:
-		   sb_use_ref_chs[ i ]->setMaximum( ref_number );
-		   
-		   //finnally, re-set to min (0) if there are more than 1 ref_numbers_list != 0
-		   //&& ref_numbers_list changed
-		   int ref_chann_number = 0;
-		   for (int rn=0; rn<ref_numbers_list.size(); ++rn )
-		     if ( ref_numbers_list[rn] > 0 )
-		       ++ref_chann_number;
-		   if ( ref_chann_number > 1 && ref_numbers_list_old != ref_numbers_list ) 
-		     sb_use_ref_chs[ i ] -> setValue( sb_use_ref_chs[ i ]->minimum() );
-		   else if ( ref_chann_number == 1 )
-		     sb_use_ref_chs[ i ] -> setValue( 1 );
-		 }
-	     }
-	 }
-     }
-   else
-     {
-       //Report
-       for ( int i=0; i < pb_reports.size(); ++i )
-	 {
-	   if ( pb_reports[ i ]->objectName().contains( report_oname ) )
-	     {
-	       pb_reports[ i ] -> setEnabled( true );
-	       break;
-	     }
-	 }
-       //Replicate
-       for ( int i=0; i < sb_repl_groups.size(); ++i )
-	 {
-	   if ( sb_repl_groups[ i ]->objectName().contains( replicate_oname ) )
-	     {
-	       sb_repl_groups[ i ] -> setEnabled( true );
-	       break;
-	     }
-	 }
-
-       //Reference? (set #) disable...//if runReport Checked back: 
-       for ( int i=0; i<le_ref_chs.size(); ++i)
-       	 {
-       	   if ( le_ref_chs[ i ]->objectName().contains( use_ch_oname ) )
-       	     {
-	       int curr_ref_number = le_ref_chs[ i ] -> text().split(":")[1].toInt();
-	       //reset properly all other ref_numbers
-	       for (int rn=0; rn<ref_numbers_list.size(); ++rn )
-		 if ( ref_numbers_list[rn] > curr_ref_number )
-		   {
-		     --ref_numbers_list[ rn ];
-		     le_ref_chs[ rn ] -> setText("Ref:" + QString::number( ref_numbers_list[ rn ] ));
-		   }
-	       
-	       ref_numbers_list[ i ] = 0;
-	       le_ref_chs[ i ] -> setText("");
-       	       break;
-       	     }
-       	 }
-
-       //find new max ref_#
-       int ref_number_max = 0;
-       for (int rn=0; rn<ref_numbers_list.size(); ++rn )
-	 if (ref_numbers_list[rn] > ref_number_max )
-	   ref_number_max = ref_numbers_list[rn];
-       
-       //Use Reference?
-       for ( int i=0; i<sb_use_ref_chs.size(); ++i)
-       	 {
-       	   if ( sb_use_ref_chs[ i ]->objectName().contains( use_ref_ch_oname ) )
-       	     {
-       	       sb_use_ref_chs[ i ] -> setEnabled( true );
-       	       //break;
-       	     }
-	   else//check the rest of chnns: if runReport unchecked, set false, otherwise true
-	     {
-	       ( ck_report_runs[ i ]->isChecked() ) ?
-		 sb_use_ref_chs[ i ] -> setEnabled( true ) : sb_use_ref_chs[ i ] -> setEnabled( false ) ;
-	     
-	       //ONLY when AProf->Gen initialized:
-	       if ( AProfIsIntiated )
-		 {
-		   //and re-set maxValue to to the max in ref_numbers_list:
-		   sb_use_ref_chs[ i ]->setMaximum( ref_number_max );
-
-		   //finnally, re-set to min (0) if there are more than 1 ref_numbers_list != 0
-		   // //&& ref_numbers_list changed
-		   int ref_chann_number = 0;
-		   for (int rn=0; rn<ref_numbers_list.size(); ++rn )
-		     if ( ref_numbers_list[rn] > 0 )
-		       ++ref_chann_number;
-		   if ( ref_chann_number > 1 && ref_numbers_list_old != ref_numbers_list ) 
-		     sb_use_ref_chs[ i ] -> setValue( sb_use_ref_chs[ i ]->minimum() );
-		   else if ( ref_chann_number == 1 && ck_report_runs[ i ]->isChecked() )
-		     sb_use_ref_chs[ i ] -> setValue( 1 );
-		 }
-	     }
-	 }
-     }
-
-   //check if ALL runReport checkboxes ARE checked, then disable ALL "Use Reference?"
-   bool all_reports_run  = true;
-   for ( int ii = 0; ii < sl_chnsel.size(); ii++ )
-     {
-       if ( !ck_report_runs[ ii ]->isChecked() )
-	 {
-	   all_reports_run = false;
-	   break;
-	 }
-     }
-
-   if ( all_reports_run )
-     {
-       for ( int i=0; i<sb_use_ref_chs.size(); ++i)
-       	 {
-	   sb_use_ref_chs[ i ] -> setEnabled( false );
-	   sb_use_ref_chs[ i ] -> setValue( sb_use_ref_chs[ i ]-> minimum() );
-
-	   // sb_ref_chs[ i ] -> setEnabled( false );
-	   // sb_ref_chs[ i ] -> setValue( sb_ref_chs[ i ]-> minimum() );
-
-	   ref_numbers_list[ i ] = 0;
-	   le_ref_chs[ i ] -> setText("");
-	 }
-     }
-
-   // //Reset use_ref maximum() based on max # references
-   // int max_ref = 0;
-   // for (int rn=0; rn<ref_numbers_list.size(); ++rn )
-   //   if (ref_numbers_list[rn] > max_ref )
-   //     max_ref = ref_numbers_list[rn];
-
-   // qDebug() << "MAX_REF -- " << max_ref;
-
-   // for ( int i=0; i<sb_use_ref_chs.size(); ++i)
-   //   if ( ck_report_runs[ i ]->isChecked() )
-   // 	 sb_use_ref_chs[ i ] -> setMaximum( max_ref );
+   const int row = sender()->objectName().section( ":", 0, 0 ).toInt();
+   for ( int ii = 0; ii < values.use.size(); ii++ )
+   {
+      values.use[ii] = sb_use_ref_chs[ii]->value();
+   }
+   values.setReport( row, checked );
+   showChannels();
 }
 
 //Togle Analysis Run checkbox
 void US_AnaprofPanGen::runChecked( bool checked )
 {
-   QObject* sobj       = sender();      // Sender object
-   QString oname       = sobj->objectName();
-   int irow            = oname.section( ":", 0, 0 ).toInt();
+   const int row = sender()->objectName().section( ":", 0, 0 ).toInt();
+   for ( int ii = 0; ii < values.use.size(); ii++ )
+   {
+      values.use[ii] = sb_use_ref_chs[ii]->value();
+   }
+   values.setRun( row, checked, mainw->abde_mode_aprofile );
+   showChannels();
 
-   QString channel_name = sl_chnsel[ irow ];
-   qDebug() << "Channel name to RUN: Checked: " << channel_name << " : " << checked;
+   showTabs();
+}
 
-   QString mwv_oname = QString::number( irow ) + ": MWV";
-   qDebug() << "mwv_oname -- " << mwv_oname;
-
-   QString report_oname = QString::number( irow ) + ": Report";
-   qDebug() << "report_oname -- " << report_oname;
-
-   QString run_report_oname = QString::number( irow ) + ": RunReport";
-   qDebug() << "run_report_oname -- " << run_report_oname;
-   
-   QString replicate_oname = QString::number( irow ) + ": Replicate";
-   qDebug() << "replicate_oname -- " << replicate_oname;
-
-   QString use_ch_oname = QString::number( irow ) + ": RefChan --chann_name--";
-   qDebug() << "use_ch_oname -- " << use_ch_oname;
-   
-   QString use_ref_ch_oname = QString::number( irow ) + ": RefUseChan --chann_name--";
-   qDebug() << "use_ref_ch_oname -- " << use_ref_ch_oname;
-   
-   //if not checked, disable Report btn && MWV checkbox, and otherwise:
-   if ( !checked )
-     {
-
-       //Run Report
-       for ( int i=0; i < ck_report_runs.size(); ++i )
-	 {
-	   if ( ck_report_runs[ i ]->objectName().contains( run_report_oname ) )
-	     {
-	       ck_report_runs[ i ] -> setChecked( false );
-	       ck_report_runs[ i ] -> setEnabled( false );
-	       break;
-	     }
-	 }
-
-              
-       // //Report: No need for Report btn since it's bound now to Run Report checkbox...
-       // for ( int i=0; i < pb_reports.size(); ++i )
-       // 	 {
-       // 	   if ( pb_reports[ i ]->objectName().contains( report_oname ) )
-       // 	     {
-       // 	       pb_reports[ i ] -> setEnabled( false );
-       // 	       break;
-       // 	     }
-       // 	 }
-       
-
-       //Replicates
-       for ( int i=0; i < sb_repl_groups.size(); ++i )
-	 {
-	   if ( sb_repl_groups[ i ]->objectName().contains( replicate_oname ) )
-	     {
-	       sb_repl_groups[ i ] -> setEnabled( false );
-	       break;
-	     }
-	 }
-
-       
-       //MWV
-       for ( int i=0; i<ck_mwv.size(); ++i )
-	 {
-	   if ( ck_mwv[ i ]->objectName() == mwv_oname )
-	     {
-	       gr_mwvbox[ i ]->setVisible( false );
-	       ck_mwv[ i ]   ->setChecked( false );
-	       ck_mwv[ i ]   ->setEnabled( false );
-	       break;
-	     }
-	 }
-
-       // //Reference? (set #) enable first...
-       // for ( int i=0; i<sb_ref_chs.size(); ++i)
-       // 	 {
-       // 	   if ( sb_ref_chs[ i ]->objectName().contains( use_ch_oname ) )
-       // 	     {
-       // 	       sb_ref_chs[ i ] -> setEnabled( true );
-       // 	       break;
-       // 	     }
-       // 	 }
-       
-       
-       // //Use Reference#
-       // for ( int i=0; i<sb_use_ref_chs.size(); ++i)
-       // 	 {
-       // 	   if ( sb_use_ref_chs[ i ]->objectName().contains( use_ref_ch_oname ) )
-       // 	     {
-       // 	       sb_use_ref_chs[ i ] -> setEnabled( false );
-       // 	       break;
-       // 	     }
-       // 	 }
-     }
+// 2DSA and PCSA tabs are available if any channel is analyzed
+void US_AnaprofPanGen::showTabs( void )
+{
+   if ( values.run.contains( 1 ) )
+   {
+      emit set_tabs_buttons_active();
+   }
    else
-     {
-       //Run Report
-       for ( int i=0; i < ck_report_runs.size(); ++i )
-	 {
-	   if ( ck_report_runs[ i ]->objectName().contains( run_report_oname ) )
-	     {
-	       ck_report_runs[ i ] -> setEnabled( true );
-	       //if abde, also set checked
-	       if ( mainw->abde_mode_aprofile )
-		 ck_report_runs[ i ] -> setChecked( true );
-	       break;
-	     }
-	 }
-       
-       // //Report: No need for Report btn since it's bound now to Run Report checkbox...
-       // for ( int i=0; i < pb_reports.size(); ++i )
-       // 	 {
-       // 	   if ( pb_reports[ i ]->objectName().contains( report_oname ) )
-       // 	     {
-       // 	       pb_reports[ i ] -> setEnabled( true );
-       // 	       break;
-       // 	     }
-       // 	 }
+   {
+      emit set_tabs_buttons_inactive();
+   }
+}
 
-       // //Replicates: No need for Report btn since it's bound now to Run Report checkbox...
-       // for ( int i=0; i < sb_repl_groups.size(); ++i )
-       // 	 {
-       // 	   if ( sb_repl_groups[ i ]->objectName().contains( replicate_oname ) )
-       // 	     {
-       // 	       sb_repl_groups[ i ] -> setEnabled( true );
-       // 	       break;
-       // 	     }
-       // 	 }
-       
-       //MWV
-       for ( int i=0; i<ck_mwv.size(); ++i )
-	 {
-	   if ( ck_mwv[ i ]->objectName() == mwv_oname )
-	     {
-	       ck_mwv[ i ]->setEnabled( true );
-	       break;
-	     }
-	 }
-       
-       // //Reference? (set #) disable...
-       // for ( int i=0; i<sb_ref_chs.size(); ++i)
-       // 	 {
-       // 	   if ( sb_ref_chs[ i ]->objectName().contains( use_ch_oname ) )
-       // 	     {
-       // 	       sb_ref_chs[ i ] -> setEnabled( false );
-       // 	       break;
-       // 	     }
-       // 	 }
-       
-       
-       // //Use Reference?
-       // for ( int i=0; i<sb_use_ref_chs.size(); ++i)
-       // 	 {
-       // 	   if ( sb_use_ref_chs[ i ]->objectName().contains( use_ref_ch_oname ) )
-       // 	     {
-       // 	       sb_use_ref_chs[ i ] -> setEnabled( true );
-       // 	       break;
-       // 	     }
-       // 	 }
-     }
+// Show the values of the Run and Report boxes, and what they enable
+void US_AnaprofPanGen::showChannels( void )
+{
+   const bool all_reports = !values.report.contains( 0 );
+   for ( int ii = 0; ii < values.run.size(); ii++ )
+   {
+      const bool           run    = values.run[ii] != 0;
+      const bool           report = values.report[ii] != 0;
+      const QSignalBlocker block_run( ck_runs[ii] );
+      const QSignalBlocker block_report( ck_report_runs[ii] );
 
-   //ALEXEY: check what's unselected -- if all triples then disable 2DSA && PCSA tabs
-   int run_sum = 0;
-   for ( int ii = 0; ii < sl_chnsel.size(); ii++ )
-     {
-       run_sum += int(ck_runs[ ii ]->isChecked()); 
-     }
+      ck_runs[ii]->setChecked( run );
+      ck_report_runs[ii]->setChecked( report );
+      ck_report_runs[ii]->setEnabled( run );
+      pb_reports[ii]->setEnabled( report );
+      sb_repl_groups[ii]->setEnabled( report );
+      le_ref_chs[ii]->setText( values.ref[ii] > 0 ? "Ref:" + QString::number( values.ref[ii] ) : QString() );
+      sb_use_ref_chs[ii]->setMaximum( values.use_max[ii] );
+      sb_use_ref_chs[ii]->setValue( values.use[ii] );
+      sb_use_ref_chs[ii]->setEnabled( report && !all_reports );
 
-   if ( run_sum )
-     {
-       emit set_tabs_buttons_active();
-     }
-   else
-     {
-       emit set_tabs_buttons_inactive();
-     }
+      if ( !run )
+      {
+         gr_mwvbox[ii]->setVisible( false );
+         ck_mwv[ii]->setChecked( false );
+      }
+      ck_mwv[ii]->setEnabled( run );
+   }
 }
 
 //Report Btn clicked

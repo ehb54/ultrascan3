@@ -27,7 +27,6 @@ target_include_directories(us_reporter_gmp_lib PUBLIC
 target_link_libraries(us_reporter_gmp_lib PUBLIC
         us_program_common
         us_abde_lib
-        us_analysis_profile_lib
         us_ddist_combine_lib
         us_edited_data_loaders_lib
         us_integral_lib

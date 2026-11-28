@@ -43,6 +43,7 @@ HEADERS      = \
                us_failed_gmp_run_gui.h  \
                us_get_run.h             \
                us_gui_settings.h        \
+               us_ana_profile_load_gui.h \
                us_gui_util.h            \
                us_help.h                \
                us_images.h              \

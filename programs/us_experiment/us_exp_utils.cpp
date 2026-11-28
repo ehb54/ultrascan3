@@ -3961,27 +3961,23 @@ DbgLv(1) << "EGAp:inP: protoname" << protoname << "aprofname" << aprofname;
       aprofname       = protoname;
 DbgLv(1) << "EGAp:inP:  protoname" << protoname << "aprofname" << aprofname;
 DbgLv(1) << "EGAp:inP:  sdiag" << sdiag;
-   sdiag->auto_name_passed( protoname, aprofname );
-
-
-   //sdiag->reset();
-
-   sdiag->currProf.aprofname  = aprofname;
-   sdiag->currProf.protoname  = protoname;
-   sdiag->currProf.protoGUID  = mainw->currProto.protoGUID;
-   sdiag->currProf.protoID    = mainw->currProto.protoID;
-DbgLv(1) << "EGAp:inP:  sdiag inherit" << "proto GUID ID"
- << mainw->currProto.protoGUID << mainw->currProto.protoID;
-sdiag->progress_cb = mainw->aprof_progress_cb; // set only while a protocol is being loaded
+sdiag->progress_cb = mainw->aprof_progress_cb;
 sdiag->inherit_protocol( currProto );
 sdiag->progress_cb = nullptr;
-DbgLv(1) << "EGAp:inP:  sdiag initPanels()";
-   mainw->currAProf           = sdiag->currProf;
-   sdiag->initPanels();
-   mainw->currAProf           = sdiag->currProf;
+if ( !sdiag->profileUsableFor( *currProto ) )
+{
+   mainw->currAProf = US_AnaProfile();
+   return;
+}
+
+sdiag->auto_name_passed( protoname, aprofname );
+sdiag->currProf.protoGUID = currProto->protoGUID;
+sdiag->currProf.protoID   = currProto->protoID;
+sdiag->initPanels();
+mainw->currAProf = sdiag->currProf;
 
 
-   qDebug() << "EXP_APROFILE_GUI -- initPanel(): sdiag->currProf.aprofname -- " << sdiag->currProf.aprofname;
+qDebug() << "EXP_APROFILE_GUI -- initPanel(): sdiag->currProf.aprofname -- " << sdiag->currProf.aprofname;
 }
 
 void US_ExperGuiAProfile::reset_sdiag( void )
@@ -3994,6 +3990,10 @@ void US_ExperGuiAProfile::reset_sdiag( void )
 
 void US_ExperGuiAProfile::savePanel()
 {
+   if ( !sdiag->profileUsableFor( mainw->currProto ) )
+   {
+      return;
+   }
 DbgLv(1) << "EGAp:svP:  sdiag savePanels()";
    sdiag->savePanels();
    mainw->currAProf = sdiag->currProf;
