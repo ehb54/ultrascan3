@@ -10,7 +10,9 @@
 #include <QRandomGenerator>
 #include <QTextStream>
 
+#include "us_credential_source.h"
 #include "us_notify.h"
+#include "us_session.h"
 #include "us_sim_cli.h"
 
 //! \brief Use Qt's offscreen platform when no window will be shown, so
@@ -60,13 +62,29 @@ inline bool parseSimCli( US_SimCli::Tool tool, US_SimCliArgs& args, int& exit_co
    return true;
 }
 
-//! \brief Route headless messages to the console; interactive runs keep their dialogs.
+//! \brief Apply the process-wide choices the command line makes.
+//! A headless (--errors-cl) run routes notifications to
+//! the console, and the master password comes from US_MASTER_PASSWORD or,
+//! when that is unset, a no-echo prompt on the terminal, asked for only when
+//! a load first needs the database. Never from the command line: it would
+//! show in process listings and shell history. A headless run uses an
+//! unlock the desktop has cached but never writes its own into that cache.
+//! Call once at startup, before any other thread runs.
 inline void useHeadlessServices( const US_SimCliArgs& args )
 {
-   if ( args.errors_cl )
+   if ( !args.errors_cl )
    {
-      US_Notify::setNotifier( QSharedPointer<US_Notifier>( new US_ConsoleNotifier ) );
+      return;
    }
+   US_Notify::setNotifier( QSharedPointer<US_Notifier>( new US_ConsoleNotifier ) );
+   if ( args.no_db )
+   {
+      return;
+   }
+   US_Session& session = US_Session::instance();
+   session.keepUnlockInProcess();
+   session.setPromptSources( { QSharedPointer<US_CredentialSource>( new US_EnvironmentCredentialSource( "US_MASTER_PASSWORD" ) ),
+                               QSharedPointer<US_CredentialSource>( new US_TerminalCredentialSource ) } );
 }
 
 //! \brief Give a started run without --noise-seed a fresh seed, and print it.

@@ -170,7 +170,13 @@ const QVector<Option>& options()
         "",
         "",
         flag( &US_SimCliArgs::no_db ) },
-      { All, { "errors-cl" }, "Write errors to the console without opening the GUI", "", "", flag( &US_SimCliArgs::errors_cl ) },
+      { All,
+        { "errors-cl" },
+        "Write errors to the console without opening the GUI. Database inputs then take the master "
+        "password from US_MASTER_PASSWORD, or prompt on the terminal when it is unset",
+        "",
+        "",
+        flag( &US_SimCliArgs::errors_cl ) },
       { All,
         { "runtype" },
         "Two-character optical data type to tag the output with (" + US_SimCli::runTypes().join( ", " ) +
