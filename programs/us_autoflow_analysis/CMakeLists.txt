@@ -1,69 +1,47 @@
 # us_autoflow_analysis
 
-# Main program sources from us_autoflow_analysis directory
+# Program sources from us_autoflow_analysis directory, without us_autoflow_analysis_main.cpp
 set(AUTOFLOW_SOURCES
-        us_autoflow_analysis_main.cpp
         us_autoflow_analysis.cpp
-        ../us_edited_data_loaders.cpp
         )
 
 set(AUTOFLOW_HEADERS
         us_autoflow_analysis.h
-        ../us_edited_data_loaders.h
         )
 
-# Cross-directory sources exactly as specified in .pro file
-set(CROSS_DIR_SOURCES
-        ../us_2dsa/us_2dsa.cpp
-        ../us_2dsa/us_2dsa_process.cpp
-        ../us_2dsa/us_adv_analysis_2d.cpp
-        ../us_2dsa/us_analysis_control_2d.cpp
-        ../us_2dsa/us_plot_control_2d.cpp
-        ../us_2dsa/us_resplot_2d.cpp
-        ../us_2dsa/us_show_norm.cpp
-        ../us_2dsa/us_worker_2d.cpp
-        ../us_2dsa/us_worker_calcnorm.cpp
-        ../us_abde/us_norm_profile.cpp
-        ../us_analysis_profile/us_analysis_profile.cpp
-        ../us_edit/us_edit.cpp
-        ../us_edit/us_edit_scan.cpp
-        ../us_edit/us_exclude_profile.cpp
-        ../us_edit/us_get_edit.cpp
-        ../us_edit/us_ri_noise.cpp
-        ../us_edit/us_select_lambdas.cpp
-        ../us_fit_meniscus/us_fit_meniscus.cpp
-        ../us_mwl_species_fit/us_load_run_noise.cpp
-        ../us_mwl_species_fit/us_mwl_sf_plot3d.cpp
-        ../us_mwl_species_fit/us_mwl_species_fit.cpp
-        ../us_mwl_species_sim/us_mwl_species_sim.cpp
-        ../us_analysis_profile/us_anapro_utils.cpp
+# Everything but main(), which other programs use too, goes into us_programs_gmp.
+add_library(us_autoflow_analysis_lib STATIC
+        ${AUTOFLOW_SOURCES}
+        ${AUTOFLOW_HEADERS}
         )
 
-# Cross-directory headers from .pro file
-set(CROSS_DIR_HEADERS
-        ../us_2dsa/us_2dsa.h
-        ../us_2dsa/us_2dsa_process.h
-        ../us_2dsa/us_adv_analysis_2d.h
-        ../us_2dsa/us_analysis_control_2d.h
-        ../us_2dsa/us_plot_control_2d.h
-        ../us_2dsa/us_resplot_2d.h
-        ../us_2dsa/us_show_norm.h
-        ../us_2dsa/us_worker_2d.h
-        ../us_2dsa/us_worker_calcnorm.h
-        ../us_abde/us_norm_profile.h
-        ../us_analysis_profile/us_analysis_profile.h
-        ../us_edit/us_edit.h
-        ../us_edit/us_edit_scan.h
-        ../us_edit/us_exclude_profile.h
-        ../us_edit/us_get_edit.h
-        ../us_edit/us_ri_noise.h
-        ../us_edit/us_select_lambdas.h
-        ../us_fit_meniscus/us_fit_meniscus.h
-        ../us_mwl_species_fit/us_load_run_noise.h
-        ../us_mwl_species_fit/us_mwl_sf_plot3d.h
-        ../us_mwl_species_fit/us_mwl_species_fit.h
-        ../us_mwl_species_sim/us_mwl_species_sim.h
+set_target_properties(us_autoflow_analysis_lib PROPERTIES
+        AUTOMOC_MOC_OPTIONS "--no-notes"
         )
+
+target_include_directories(us_autoflow_analysis_lib PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        )
+
+target_link_libraries(us_autoflow_analysis_lib PUBLIC
+        us_program_common
+        us_2dsa_lib
+        us_abde_lib
+        us_analysis_profile_lib
+        us_edit_lib
+        us_edited_data_loaders_lib
+        us_fit_meniscus_lib
+        us_mwl_species_fit_lib
+        us_mwl_species_sim_lib
+        Qt::DataVisualization
+        )
+
+target_link_libraries(us_programs_gmp INTERFACE us_autoflow_analysis_lib)
+
+# win32:LIBS += -lpsapi  (from the .pro file)
+if(WIN32)
+  target_link_libraries(us_autoflow_analysis_lib PUBLIC psapi)
+endif()
 
 # Find UI and resource files
 file(GLOB AUTOFLOW_FORMS "*.ui")
@@ -71,10 +49,7 @@ file(GLOB AUTOFLOW_RESOURCES "*.qrc")
 
 # Create the executable
 add_executable(us_autoflow_analysis
-        ${AUTOFLOW_SOURCES}
-        ${AUTOFLOW_HEADERS}
-        ${CROSS_DIR_SOURCES}
-        ${CROSS_DIR_HEADERS}
+        us_autoflow_analysis_main.cpp
         ${AUTOFLOW_FORMS}
         ${AUTOFLOW_RESOURCES}
         )
@@ -89,28 +64,11 @@ set_target_properties(us_autoflow_analysis PROPERTIES
         AUTOMOC_MOC_OPTIONS "--no-notes"
         )
 
-# Include directories for all the cross-directory headers
-target_include_directories(us_autoflow_analysis PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_2dsa
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_abde
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_analysis_profile
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_edit
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_fit_meniscus
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_mwl_species_fit
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_mwl_species_sim
-        )
-
 # Link libraries
 target_link_libraries(us_autoflow_analysis PRIVATE
         us_program_common
-        Qt::DataVisualization
+        us_programs_gmp
         )
-
-# win32:LIBS += -lpsapi  (from the .pro file)
-if(WIN32)
-  target_link_libraries(us_autoflow_analysis PRIVATE psapi)
-endif()
 
 # Install
 install(TARGETS us_autoflow_analysis

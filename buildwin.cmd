@@ -4,6 +4,15 @@ nmake -nologo -f Makefile.Release
 cd ..\gui
 nmake -nologo -f Makefile.Release
 
+rem Build shared program libraries before the programs that link them.
+cd ..\programlibs
+for %%A in (data results analysis experiment gmp comproject) do (
+  pushd %%A
+  nmake -nologo -f Makefile.Release
+  if errorlevel 1 exit /b 1
+  popd
+)
+
 cd ..\programs\us
 nmake -nologo -f Makefile.Release
 

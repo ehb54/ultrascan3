@@ -1,42 +1,44 @@
 # us_reporter_gmp
 
-# Main program sources from us_reporter_gmp directory
+# Program sources from us_reporter_gmp directory, without us_reporter_gmp_main.cpp
 set(REPORTER_GMP_SOURCES
-        us_reporter_gmp_main.cpp
         us_reporter_gmp.cpp
-        ../us_edited_data_loaders.cpp
         )
 
 set(REPORTER_GMP_HEADERS
         us_reporter_gmp.h
         us_reporter_gmp_duration.h
-        ../us_edited_data_loaders.h
         )
 
-# Cross-directory sources as specified in .pro file
-set(CROSS_DIR_SOURCES
-        ../us_abde/us_norm_profile.cpp
-        ../us_analysis_profile/us_analysis_profile.cpp
-        ../us_analysis_profile/us_anapro_utils.cpp
-        ../us_ddist_combine/us_ddist_combine.cpp
-        ../us_ddist_combine/us_select_rundd.cpp
-        ../us_integral/us_delete_models.cpp
-        ../us_integral/us_integral.cpp
-        ../us_pseudo3d_combine/us_pseudo3d_combine.cpp
-        ../us_pseudo3d_combine/us_remove_distros.cpp
+# Everything but main(), which other programs use too, goes into us_programs_gmp.
+add_library(us_reporter_gmp_lib STATIC
+        ${REPORTER_GMP_SOURCES}
+        ${REPORTER_GMP_HEADERS}
         )
 
-# Cross-directory headers from .pro file
-set(CROSS_DIR_HEADERS
-        ../us_abde/us_norm_profile.h
-        ../us_analysis_profile/us_analysis_profile.h
-        ../us_ddist_combine/us_ddist_combine.h
-        ../us_ddist_combine/us_select_rundd.h
-        ../us_integral/us_delete_models.h
-        ../us_integral/us_integral.h
-        ../us_pseudo3d_combine/us_pseudo3d_combine.h
-        ../us_pseudo3d_combine/us_remove_distros.h
+set_target_properties(us_reporter_gmp_lib PROPERTIES
+        AUTOMOC_MOC_OPTIONS "--no-notes"
         )
+
+target_include_directories(us_reporter_gmp_lib PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        )
+
+target_link_libraries(us_reporter_gmp_lib PUBLIC
+        us_program_common
+        us_abde_lib
+        us_analysis_profile_lib
+        us_ddist_combine_lib
+        us_edited_data_loaders_lib
+        us_integral_lib
+        us_pseudo3d_combine_lib
+        Qt::DataVisualization
+        )
+
+# dependency on revision.h in programs/us
+add_dependencies(us_reporter_gmp_lib us_version_headers)
+
+target_link_libraries(us_programs_gmp INTERFACE us_reporter_gmp_lib)
 
 # Find UI and resource files
 file(GLOB REPORTER_GMP_FORMS "*.ui")
@@ -44,16 +46,10 @@ file(GLOB REPORTER_GMP_RESOURCES "*.qrc")
 
 # Create the executable
 add_executable(us_reporter_gmp
-        ${REPORTER_GMP_SOURCES}
-        ${REPORTER_GMP_HEADERS}
-        ${CROSS_DIR_SOURCES}
-        ${CROSS_DIR_HEADERS}
+        us_reporter_gmp_main.cpp
         ${REPORTER_GMP_FORMS}
         ${REPORTER_GMP_RESOURCES}
         )
-
-# dependency on revision.h in programs/us
-add_dependencies(us_reporter_gmp us_version_headers)
 
 # Set target properties
 set_target_properties(us_reporter_gmp PROPERTIES
@@ -65,20 +61,10 @@ set_target_properties(us_reporter_gmp PROPERTIES
         AUTOMOC_MOC_OPTIONS "--no-notes"
         )
 
-# Include directories for all the cross-directory headers
-target_include_directories(us_reporter_gmp PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_abde
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_analysis_profile
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_ddist_combine
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_integral
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_pseudo3d_combine
-        )
-
 # Link libraries
 target_link_libraries(us_reporter_gmp PRIVATE
         us_program_common
-        Qt::DataVisualization
+        us_programs_gmp
         )
 
 # Install

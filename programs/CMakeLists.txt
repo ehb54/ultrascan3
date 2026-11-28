@@ -208,7 +208,47 @@ if(WIN32)
 endif()
 
 # --------------------------------------------------------------------------
-# 4) Add all per-program subdirectories (APP path)
+# 4) Area libraries: program sources that several programs use
+#
+# Each program directory compiles its sources once, into a static library of its
+# own, and adds that to its area. A program links its area, which brings the
+# areas it needs; the linker takes only the objects it uses. A directory has its
+# own library because CMake compiles the moc code of a library as one object.
+# With one archive per area, a reference to one class's moc code pulls in
+# the other directories' moc code and the methods it references.
+# programlibs/ has the same areas for qmake; keep them and their dependencies the
+# same in both (scripts/check-program-libraries.py).
+# --------------------------------------------------------------------------
+function(us3_add_program_area name)
+    add_library(${name} INTERFACE)
+    target_link_libraries(${name} INTERFACE ${ARGN} us_program_common)
+endfunction()
+
+us3_add_program_area(us_programs_data)
+us3_add_program_area(us_programs_results)
+us3_add_program_area(us_programs_analysis)
+us3_add_program_area(us_programs_experiment us_programs_analysis)
+us3_add_program_area(us_programs_gmp
+        us_programs_experiment
+        us_programs_analysis
+        us_programs_results
+        us_programs_data
+        )
+# us_protocol_dev has classes with the same names as these, so it links gmp only.
+# macOS builds no program that uses it.
+if(NOT APPLE)
+    us3_add_program_area(us_programs_comproject us_programs_gmp)
+endif()
+
+add_library(us_edited_data_loaders_lib STATIC
+        us_edited_data_loaders.cpp
+        us_edited_data_loaders.h
+        )
+target_link_libraries(us_edited_data_loaders_lib PUBLIC us_program_common)
+target_link_libraries(us_programs_data INTERFACE us_edited_data_loaders_lib)
+
+# --------------------------------------------------------------------------
+# 5) Add all per-program subdirectories (APP path)
 # --------------------------------------------------------------------------
 if(NOT ENABLE_MPI)
     set(EXCLUDED_PROGRAMS us_mpi_analysis CMakeFiles generated)

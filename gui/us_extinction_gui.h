@@ -5,13 +5,13 @@
 //#include <QApplication>
 //#include <QtGui>
 
-#include "us_widgets.h"
-#include "us_plot.h"
-#include "us_minimize.h"
-#include "us_extinctfitter_gui.h"
-#include "us_analyte_gui.h"
+#include "us_analyte.h"
 #include "us_csv_loader.h"
+#include "us_extinctfitter_gui.h"
 #include "us_help.h"
+#include "us_minimize.h"
+#include "us_plot.h"
+#include "us_widgets.h"
 
 //! \class CustomListWidgetItem
 //! \brief Custom list widget item with comparison operator.

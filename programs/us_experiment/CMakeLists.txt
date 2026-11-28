@@ -1,8 +1,7 @@
 # us_experiment
 
-# Main program sources from us_experiment directory
+# Program sources from us_experiment directory, without us_experiment_main.cpp
 set(EXPERIMENT_SOURCES
-        us_experiment_main.cpp
         us_experiment_gui_optima.cpp
         us_exp_utils.cpp
         us_proto_ranges.cpp
@@ -12,21 +11,26 @@ set(EXPERIMENT_HEADERS
         us_experiment_gui_optima.h
         )
 
-# Cross-directory sources as specified in .pro file
-set(CROSS_DIR_SOURCES
-        # us_analysis_profile
-        ../us_analysis_profile/us_analysis_profile.cpp
-        ../us_analysis_profile/us_anapro_utils.cpp
-
-        # us_esigner_gmp
-        ../us_esigner_gmp/us_esigner_gmp.cpp
+# Everything but main(), which other programs use too, goes into us_programs_experiment.
+add_library(us_experiment_lib STATIC
+        ${EXPERIMENT_SOURCES}
+        ${EXPERIMENT_HEADERS}
         )
 
-# Cross-directory headers from .pro file
-set(CROSS_DIR_HEADERS
-        ../us_analysis_profile/us_analysis_profile.h
-        ../us_esigner_gmp/us_esigner_gmp.h
+set_target_properties(us_experiment_lib PROPERTIES
+        AUTOMOC_MOC_OPTIONS "--no-notes"
         )
+
+target_include_directories(us_experiment_lib PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        )
+
+target_link_libraries(us_experiment_lib PUBLIC
+        us_program_common
+        us_analysis_profile_lib
+        )
+
+target_link_libraries(us_programs_experiment INTERFACE us_experiment_lib)
 
 # Find UI and resource files
 file(GLOB EXPERIMENT_FORMS "*.ui")
@@ -34,10 +38,7 @@ file(GLOB EXPERIMENT_RESOURCES "*.qrc")
 
 # Create the executable
 add_executable(us_experiment
-        ${EXPERIMENT_SOURCES}
-        ${EXPERIMENT_HEADERS}
-        ${CROSS_DIR_SOURCES}
-        ${CROSS_DIR_HEADERS}
+        us_experiment_main.cpp
         ${EXPERIMENT_FORMS}
         ${EXPERIMENT_RESOURCES}
         )
@@ -52,16 +53,10 @@ set_target_properties(us_experiment PROPERTIES
         AUTOMOC_MOC_OPTIONS "--no-notes"
         )
 
-# Include directories for all the cross-directory headers
-target_include_directories(us_experiment PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_analysis_profile
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_esigner_gmp
-        )
-
 # Link libraries
 target_link_libraries(us_experiment PRIVATE
         us_program_common
+        us_programs_experiment
         )
 
 # Install
