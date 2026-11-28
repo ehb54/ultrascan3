@@ -350,6 +350,9 @@ def input_case(base, **changes):
 #   within      boxes (s_min, s_max, f/f0_min, f/f0_max; s in S): every solute
 #               must lie inside one of them
 #   leaves      boxes:  at least one solute must lie outside all of them
+#   mc_models   number of models in the single Monte Carlo model file
+#   mc_models_per_file  list of model counts, one per Monte Carlo model file
+#                       (file order does not matter)
 #   has_noise   the result must hold noise vectors
 #   log_distinct  (regex, n): at least n matches, all different
 #   log_agree   (regex, regex, rel. tol.): the first numbers each matches
@@ -358,6 +361,20 @@ def input_case(base, **changes):
 # reported as XFAIL while it fails and as an error once it passes, so that
 # the marker gets removed.
 INPUT_CASES = {
+    # #1316: RESULTS_MC must not leave a final READY queued at shutdown.
+    "input_pcsa_mc_shutdown": input_case(
+        "pcsa_sl", params=lambda p: dict(p, mc_iterations="3"),
+        expect={"finite": True, "mc_models": 3}),
+    "input_pcsa_mc_shutdown_uneven": input_case(
+        "pcsa_sl", np=3, params=lambda p: dict(p, mc_iterations="5"),
+        expect={"finite": True, "mc_models": 5}),
+    "input_pcsa_mc_shutdown_idle": input_case(
+        "pcsa_sl", np=4, params=lambda p: dict(p, mc_iterations="2"),
+        expect={"finite": True, "mc_models": 2}),
+    "input_pcsa_mc_shutdown_pmasters": input_case(
+        "pcsa_sl", datasets=[DS_A, DS_B], np=6, mgroupcount=2,
+        params=lambda p: dict(p, mc_iterations="3"),
+        expect={"finite": True, "mc_models_per_file": [3, 3]}),
     # A9: an abort before the inputs are read archives and removes the
     #     files of the work directory (the job's input files)
     "input_hpcxml_missing": input_case(
@@ -1048,6 +1065,16 @@ def check_input_case(name, case, args, reference):
         got = job_statistics(results).get(key)
         if got != value:
             errors.append("job_statistics %s=%s, expected %s" % (key, got, value))
+    if "mc_models" in expect or "mc_models_per_file" in expect:
+        counts = {filename: len(models)
+                  for filename, models in summary["models"].items()
+                  if ".mcN" in filename}
+        expected_counts = (expect["mc_models_per_file"]
+                           if "mc_models_per_file" in expect
+                           else [expect["mc_models"]])
+        if sorted(counts.values()) != sorted(expected_counts):
+            errors.append("Monte Carlo model counts %s, expected %s"
+                          % (counts, expected_counts))
     errors += check_fit(summary, expect)
     if expect.get("has_noise") and not summary["noises"]:
         errors.append("result holds no noise")
@@ -1077,6 +1104,11 @@ def main():
     parser.add_argument("--debug-text", dest="debug_text", default="",
                         help="debug_text entries added to every case,"
                              " e.g. SimCache=off or SimCacheMB=1")
+    parser.add_argument("--reference-debug-text", dest="reference_debug_text", default="",
+                        help="check: compare each fit case with a run of it"
+                             " with this debug_text instead of the stored"
+                             " baseline (e.g. a float mode, SimFloat=on, as"
+                             " the reference of its cache variants)")
     args = parser.parse_args()
 
     if args.command == "list":
@@ -1133,6 +1165,23 @@ def main():
                 print("%s: OK" % name)
             continue
         summary = run_case(name, CASES[name], args)
+        if args.reference_debug_text and args.command == "check":
+            # Compare with a run of the same case with the reference debug
+            #  text (e.g. a float mode without cache variant), not with the
+            #  stored baseline
+            ref_args = argparse.Namespace(**vars(args))
+            ref_args.debug_text = args.reference_debug_text
+            reference = run_case(name + "_ref", CASES[name], ref_args)
+            tol = dict(DEFAULT_TOL, **CASE_TOL.get(name, {}))
+            errors = compare(name, reference, summary, tol)
+            if errors:
+                failed += 1
+                print("%s: FAIL (vs reference %s)" % (name, args.reference_debug_text))
+                for err in errors[:40]:
+                    print("   " + err)
+            else:
+                print("%s: OK" % name)
+            continue
         # A case with "baseline" must equal that case's result
         shared = CASES[name].get("baseline")
         path = BASELINE_DIR / ("%s.json" % (shared or name))

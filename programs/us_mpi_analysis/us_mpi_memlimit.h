@@ -123,7 +123,13 @@ class US_MPI_MemLimit
       //! \param readings     Readings (scans times points) of the data
       //! \param solutes      Solutes solved at once
       //! \param noise_terms  1 for TI noise, 2 for RI noise, 3 for both
-      static qint64      solve_bytes( qint64 readings, qint64 solutes, int noise_terms );
+      //! \param float_sims   Simulations kept as floats ("SimFloat=on")
+      //! \param float_nnls   A matrix of the NNLS in floats ("SimFloatNNLS=on")
+      static qint64      solve_bytes( qint64 readings,
+                                      qint64 solutes,
+                                      int    noise_terms,
+                                      bool   float_sims = false,
+                                      bool   float_nnls = false );
 
       //! \brief Bytes the cache may hold while the job's own use peaks at
       //!        job_peak:  the cache and the peak times margin stay below the
