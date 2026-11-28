@@ -1,12 +1,13 @@
 //! \file us_rotor_gui.cpp
 
-#include "us_rotor.h"
 #include "us_rotor_gui.h"
-#include "us_settings.h"
-#include "us_util.h"
 #include "us_db2.h"
 #include "us_gui_settings.h"
+#include "us_notify.h"
 #include "us_passwd.h"
+#include "us_rotor.h"
+#include "us_settings.h"
+#include "us_util.h"
 
 US_RotorGui::US_RotorGui(
      US_Rotor::RotorCalibration& calibration,
@@ -23,10 +24,10 @@ US_RotorGui::US_RotorGui(
 
    if ( savingCalibration )
    {
-      QMessageBox::information( this,
-         tr( "Attention" ),
-         tr( "Please enter the calibration name, omega2t, "
-             "and click Save Calibration Data, or Close" ) );
+      US_Notify::information( this,
+                              tr( "Attention" ),
+                              tr( "Please enter the calibration name, omega2t, "
+                                  "and click Save Calibration Data, or Close" ) );
 
       // The rotor calibration data was passed, so let's fill in the rotor data
       int rotorID = currentCalibration.rotorID;
@@ -140,8 +141,7 @@ bool US_RotorGui::load_rotor(QString& load_init, double& coeff1, double& coeff2)
       // Get information about all the labs
       if ( US_Rotor::readLabsDB( labList, &db ) != US_Rotor::ROTOR_OK )
       {
-         QMessageBox::warning( this, tr( "Database Problem" ),
-            tr( "Could not read lab information \n" ) );
+         US_Notify::warning( this, tr( "Database Problem" ), tr( "Could not read lab information \n" ) );
 
          return false;
       }
@@ -153,8 +153,7 @@ bool US_RotorGui::load_rotor(QString& load_init, double& coeff1, double& coeff2)
       // Get information about all the labs
       if ( US_Rotor::readLabsDisk( labList ) == US_Rotor::NOT_FOUND )
       {
-         QMessageBox::warning( this, tr( "Disk Problem" ),
-            tr( "Could not read lab information \n" ) );
+         US_Notify::warning( this, tr( "Disk Problem" ), tr( "Could not read lab information \n" ) );
 
          return false;
       }
@@ -197,8 +196,7 @@ bool US_RotorGui::load_rotor(QString& load_init, double& coeff1, double& coeff2)
 
          if ( US_Rotor::readRotorsFromDisk( rotors, labID ) == US_Rotor::NOT_FOUND )
          {
-            QMessageBox::warning( this, tr( "Disk Problem" ),
-               tr( "Could not read rotor information \n" ) );
+            US_Notify::warning( this, tr( "Disk Problem" ), tr( "Could not read rotor information \n" ) );
             return( false );
          }
 
@@ -545,8 +543,7 @@ void US_RotorGui::newRotor( void )
 
 void US_RotorGui::db_error( const QString &error )
 {
-   QMessageBox::warning( this, tr( "Database Problem" ),
-         tr( "Database returned the following error: \n" ) + error );
+   US_Notify::warning( this, tr( "Database Problem" ), tr( "Database returned the following error: \n" ) + error );
 }
 
 void US_RotorGui::selectRotor( QListWidgetItem *item )
@@ -654,9 +651,7 @@ void US_RotorGui::deleteRotor( void )
 
    else
    {
-      QMessageBox::warning( this,
-         tr( "Attention" ),
-         tr( "Deleting rotors on the local disk is not implemented yet." ) );
+      US_Notify::warning( this, tr( "Attention" ), tr( "Deleting rotors on the local disk is not implemented yet." ) );
       return;
    }
 
@@ -707,8 +702,7 @@ bool US_RotorGui::readCalibrationProfiles( int rotorID )
 
       if ( US_Rotor::readCalibrationProfilesDisk( rc, rotorID ) == US_Rotor::NOT_FOUND )
       {
-         QMessageBox::warning( this, tr( "Disk Problem" ),
-            tr( "Could not find rotor calibration profiles \n" ) );
+         US_Notify::warning( this, tr( "Disk Problem" ), tr( "Could not find rotor calibration profiles \n" ) );
          return( false );
       }
 
@@ -847,9 +841,7 @@ void US_RotorGui::deleteCalibration( void )
 
    else
    {
-      QMessageBox::warning( this,
-         tr( "Attention" ),
-         tr( "Deleting rotor calibrations on the local disk is not implemented yet." ) );
+      US_Notify::warning( this, tr( "Attention" ), tr( "Deleting rotor calibrations on the local disk is not implemented yet." ) );
       return;
    }
 
@@ -903,9 +895,7 @@ void US_RotorGui::saveCalibration()
 
          reset();
 
-         QMessageBox::information( this,
-            tr( "Attention" ),
-            tr( "Calibration was saved to the DB." ) );
+         US_Notify::information( this, tr( "Attention" ), tr( "Calibration was saved to the DB." ) );
       }
    }
 
@@ -915,9 +905,7 @@ void US_RotorGui::saveCalibration()
 
       reset();
 
-      QMessageBox::information( this,
-         tr( "Attention" ),
-         tr( "Calibration was saved to the Disk." ) );
+      US_Notify::information( this, tr( "Attention" ), tr( "Calibration was saved to the Disk." ) );
    }
 
    // Now that we've saved the calibration, convert to regular mode
@@ -1000,9 +988,7 @@ void US_RotorGui::source_changed( bool db )
 
    if ( db && ( DB.size() < 5 ) )
    {
-      QMessageBox::warning( this,
-         tr( "Attention" ),
-         tr( "There is no default database set." ) );
+      US_Notify::warning( this, tr( "Attention" ), tr( "There is no default database set." ) );
    }
 
    load();
@@ -1053,8 +1039,7 @@ bool US_RotorGui::load( void )
       // Get information about all the labs
       if ( US_Rotor::readLabsDB( labList, &db ) != US_Rotor::ROTOR_OK )
       {
-         QMessageBox::warning( this, tr( "Database Problem" ),
-            tr( "Could not read lab information \n" ) );
+         US_Notify::warning( this, tr( "Database Problem" ), tr( "Could not read lab information \n" ) );
 
          return false;
       }
@@ -1066,9 +1051,8 @@ bool US_RotorGui::load( void )
       // Get information about all the labs
       if ( US_Rotor::readLabsDisk( labList ) == US_Rotor::NOT_FOUND )
       {
-         QMessageBox::warning( this, tr( "Disk Problem" ),
-            tr( "Could not read lab information \n" ) );
-         
+         US_Notify::warning( this, tr( "Disk Problem" ), tr( "Could not read lab information \n" ) );
+
          return false;
       }
 
@@ -1162,8 +1146,7 @@ bool US_RotorGui::loadRotors( const int labID )
 
       if ( US_Rotor::readRotorsFromDisk( rotors, labID ) == US_Rotor::NOT_FOUND )
       {
-         QMessageBox::warning( this, tr( "Disk Problem" ),
-            tr( "Could not read rotor information \n" ) );
+         US_Notify::warning( this, tr( "Disk Problem" ), tr( "Could not read rotor information \n" ) );
          return( false );
       }
 
@@ -1181,8 +1164,7 @@ bool US_RotorGui::loadRotors( const int labID )
 
 void US_RotorGui::connect_error( const QString& error )
 {
-   QMessageBox::warning( this, tr( "Connection Problem" ),
-         tr( "Could not connect to database \n" ) + error );
+   US_Notify::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) + error );
 }
 
 // For VEL-MWL: GMP

@@ -16,6 +16,7 @@
 #include "us_license_t.h"
 #include "us_math2.h"
 #include "us_mwl_species_sim.h"
+#include "us_notify.h"
 #include "us_passwd.h"
 #include "us_rotor_gui.h"
 #include "us_select_runs.h"
@@ -456,7 +457,7 @@ void US_MwlSpeciesSim::define_buffer_auto( int invID_p )
 
    if ( db.lastErrno() != IUS_DB2::OK )
    {
-      QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) + db.lastError() );
+      US_Notify::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) + db.lastError() );
       return;
    }
 
@@ -775,7 +776,7 @@ void US_MwlSpeciesSim::save_sims_auto( void )
    if ( orunid.isEmpty() )
    {
       qDebug() << "save_sims_auto: empty orunid -- nothing saved";
-      QMessageBox::warning( this, tr( "Save Simulations" ), tr( "No run ID is set; the simulations cannot be saved." ) );
+      US_Notify::warning( this, tr( "Save Simulations" ), tr( "No run ID is set; the simulations cannot be saved." ) );
       return;
    }
 
@@ -796,9 +797,9 @@ void US_MwlSpeciesSim::save_sims_auto( void )
          if ( !ok )
          {
             qDebug() << "save_sims_auto: could not delete stale entry" << fi.absoluteFilePath();
-            QMessageBox::warning( this,
-                                  tr( "Simulation Cleanup Failed" ),
-                                  tr( "A previous simulation file could not be deleted:\n%1" ).arg( fi.absoluteFilePath() ) );
+            US_Notify::warning( this,
+                                tr( "Simulation Cleanup Failed" ),
+                                tr( "A previous simulation file could not be deleted:\n%1" ).arg( fi.absoluteFilePath() ) );
             return;
          }
          nstale++;
@@ -820,7 +821,7 @@ void US_MwlSpeciesSim::save_sims( void )
    //  rather than leaving it waiting
    if ( !save_sims_to( savedir ) )
    {
-      QMessageBox::warning( this, tr( "Save Simulations" ), tr( "The simulations could not be saved to\n%1" ).arg( savedir ) );
+      US_Notify::warning( this, tr( "Save Simulations" ), tr( "The simulations could not be saved to\n%1" ).arg( savedir ) );
       return;
    }
 

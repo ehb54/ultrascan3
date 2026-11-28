@@ -1,14 +1,15 @@
 //! \file us_model_gui.cpp
 
 #include "us_model_gui.h"
-#include "us_gui_settings.h"
-#include "us_settings.h"
-#include "us_constants.h"
-#include "us_properties.h"
-#include "us_investigator.h"
-#include "us_util.h"
-#include "us_passwd.h"
 #include "us_associations_gui.h"
+#include "us_constants.h"
+#include "us_gui_settings.h"
+#include "us_investigator.h"
+#include "us_notify.h"
+#include "us_passwd.h"
+#include "us_properties.h"
+#include "us_settings.h"
+#include "us_util.h"
 
 US_ModelGui::US_ModelGui( US_Model& current_model )
    : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), model( current_model )
@@ -203,9 +204,7 @@ bool US_ModelGui::load_model( const QString& load_init, US_Model& modelIn )
             QString path;
             if ( ! US_Model::model_path( path ) )
             {
-               QMessageBox::information( this,
-                  tr( "Model Path Error" ),
-                  tr( "The model path is not set." ) );
+               US_Notify::information( this, tr( "Model Path Error" ), tr( "The model path is not set." ) );
                return false;
             }
 
@@ -258,9 +257,7 @@ bool US_ModelGui::load_model( const QString& load_init, US_Model& modelIn )
             {
                if ( investigator < 0 )
                {
-                  QMessageBox::information( this,
-                     tr( "Investigator not set" ),
-                     tr( "Please select an investigator first." ) );
+                  US_Notify::information( this, tr( "Investigator not set" ), tr( "Please select an investigator first." ) );
                   return false;
                }
 
@@ -562,12 +559,13 @@ qDebug() << "SelMdl:  index modlx" << index << modlx << "mdesc" << mdesc;
      {
        qDebug() << "Select:: Model GMP/autolfow-generated!";
 
-       QMessageBox::information( this, tr( "Selected Model GMP produced!" ),
-       				 tr( "Selected Model:\n\n"
-       				     "\"%1\"\n\n"
-       				     "was generated within GMP framework!\n\n"
-				     "It can NOT be deleted or altered...")
-       				 .arg( mdesc ) );
+       US_Notify::information( this,
+                               tr( "Selected Model GMP produced!" ),
+                               tr( "Selected Model:\n\n"
+                                   "\"%1\"\n\n"
+                                   "was generated within GMP framework!\n\n"
+                                   "It can NOT be deleted or altered..." )
+                                  .arg( mdesc ) );
 
        pb_save      ->setEnabled( false );
        pb_delete    ->setEnabled( false );
@@ -697,9 +695,7 @@ void US_ModelGui::delete_model( void )
       q << "delete_model" << md.DB_id;
 
       if ( status_query( q ) )
-         QMessageBox::information( this,
-            tr( "Model Deleted" ),
-            tr( "The model has been deleted from the database." ) );
+         US_Notify::information( this, tr( "Model Deleted" ), tr( "The model has been deleted from the database." ) );
    }
 }
 
@@ -727,9 +723,7 @@ void US_ModelGui::check_db( void )
 
       if ( DB.size() < 5 )
       {
-         QMessageBox::warning( this,
-            tr( "Attention" ),
-            tr( "There is no default database set." ) );
+         US_Notify::warning( this, tr( "Attention" ), tr( "There is no default database set." ) );
       }
    }
 
@@ -744,24 +738,20 @@ void US_ModelGui::check_db( void )
 
 void US_ModelGui::connect_error( const QString& error )
 {
-   QMessageBox::warning( this, 
-      tr( "Connection Problem" ),
-      tr( "Could not connect to database\n" ) + error );
+   US_Notify::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database\n" ) + error );
 }
 
 // A failed load leaves the previously loaded model shown and selected.
 void US_ModelGui::load_error( const QString& mdesc, const QString& reason )
 {
-   QMessageBox::warning( this, tr( "Model Load Error" ), tr( "Could not load the model\n\"%1\"\n\n%2" ).arg( mdesc, reason ) );
+   US_Notify::warning( this, tr( "Model Load Error" ), tr( "Could not load the model\n\"%1\"\n\n%2" ).arg( mdesc, reason ) );
 }
 
 bool US_ModelGui::database_ok( IUS_DB2& db )
 {
    if ( db.lastErrno() == US_DB2::OK ) return true;
 
-   QMessageBox::information( this, 
-      tr( "Database Error" ),
-      tr( "The following error was returned:\n" ) + db.lastError() );
+   US_Notify::information( this, tr( "Database Error" ), tr( "The following error was returned:\n" ) + db.lastError() );
 
    return false;
 }
@@ -787,10 +777,10 @@ qDebug() << "MngCmp: index" << index;
 
    if ( index < 0 )
    {
-      QMessageBox::information( this,
-         tr( "Model not selected" ),
-         tr( "Please select a model first.\n" 
-             "If necessary, create a new model." ) );
+      US_Notify::information( this,
+                              tr( "Model not selected" ),
+                              tr( "Please select a model first.\n"
+                                  "If necessary, create a new model." ) );
       return;
    }
 
@@ -829,19 +819,19 @@ void US_ModelGui::associations( void )
 
    if ( index < 0 )
    {
-      QMessageBox::information( this,
-         tr( "Model not selected" ),
-         tr( "Please select a model first.\n" 
-             "If necessary, create a new model." ) );
+      US_Notify::information( this,
+                              tr( "Model not selected" ),
+                              tr( "Please select a model first.\n"
+                                  "If necessary, create a new model." ) );
       return;
    }
 
    if ( model.components.size() < 2 )
    {
-      QMessageBox::information( this,
-         tr( "Model Incomplete" ),
-         tr( "There must be at least two analytes in the selected\n" 
-             "model to specify associations." ) );
+      US_Notify::information( this,
+                              tr( "Model Incomplete" ),
+                              tr( "There must be at least two analytes in the selected\n"
+                                  "model to specify associations." ) );
       return;
    }
 
@@ -942,9 +932,7 @@ qDebug() << "MdlSv:  fn" << fn;
 
       QString save_type = newFile ? "saved" : "updated";
 
-      QMessageBox::information( this,
-         tr( "Model Saved" ),
-         tr( "The model has been %1 in the disk." ).arg( save_type ) );
+      US_Notify::information( this, tr( "Model Saved" ), tr( "The model has been %1 in the disk." ).arg( save_type ) );
 
       working_model = model;
    }
@@ -961,18 +949,14 @@ qDebug() << "MdlSv:  fn" << fn;
 
       if ( model.write( &db ) == US_DB2::OK )
       {
-         QMessageBox::information( this,
-            tr( "Model Written" ),
-            tr( "The model has been %1 in the database." ).arg( model.message ) );
+         US_Notify::information( this, tr( "Model Written" ), tr( "The model has been %1 in the database." ).arg( model.message ) );
 
          working_model = model;
          le_guid->setText( model.modelGUID   );
       }
       else
       {
-         QMessageBox::information( this,
-            tr( "Database Error" ),
-            tr( "The model could not be saved:\n" ) + model.message );
+         US_Notify::information( this, tr( "Database Error" ), tr( "The model could not be saved:\n" ) + model.message );
          return;
       }
    }
@@ -984,20 +968,18 @@ bool US_ModelGui::verify_model( void )
 {
    if ( model.components.size() == 0 )
    {
-      QMessageBox::information( this,
-            tr( "Model Error" ),
-            tr( "The model has no components." ) );
+      US_Notify::information( this, tr( "Model Error" ), tr( "The model has no components." ) );
       return false;
    }
 
    if ( model.description.size()    == 0  ||  
         model.description.trimmed() == "New Model" )
    {
-      QMessageBox::information( this,
-            tr( "Model Name Error" ),
-            tr( "The model does not have an acceptable name.\n"
-                "Enter a non-blank, non-\"New Model\" name in the\n"
-                "Model Description field. You may then save the model." ) );
+      US_Notify::information( this,
+                              tr( "Model Name Error" ),
+                              tr( "The model does not have an acceptable name.\n"
+                                  "Enter a non-blank, non-\"New Model\" name in the\n"
+                                  "Model Description field. You may then save the model." ) );
       return false;
    }
 
@@ -1110,9 +1092,7 @@ qDebug() << "LsMdl: path" << path;
       {
          if ( investigator < 0 )
          {
-            QMessageBox::information( this,
-               tr( "Investigator not set" ),
-               tr( "Please select an investigator first." ) );
+            US_Notify::information( this, tr( "Investigator not set" ), tr( "Please select an investigator first." ) );
             return;
          }
 
