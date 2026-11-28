@@ -9,6 +9,7 @@
 #include "us_license.h"
 #include "us_license_t.h"
 #include "us_mwl_species_sim.h"
+#include "us_notify.h"
 #include "us_settings.h"
 
 //! \brief Load translators and start US_MwlSpeciesSim.
@@ -44,7 +45,7 @@ int main( int argc, char* argv[] )
    }
    if ( args.errors_cl )
    {
-      application.setProperty( "us3_headless", true );
+      application.setProperty( US_Notify::HeadlessProperty, true );
    }
 
    // Constructed after --no-db is applied: the constructor reads dbload

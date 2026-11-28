@@ -20,6 +20,7 @@
 #include "us_lamm_astfvm.h"
 #include "us_math2.h"
 #include "us_model_gui.h"
+#include "us_notify.h"
 #include "us_passwd.h"
 #include "us_rotor_gui.h"
 #include "us_settings.h"
@@ -1652,7 +1653,7 @@ DbgLv(1) << "ASIM:svscn: IN";
    QDir ultrascan_user_dir( US_Settings::workBaseDir() );
    // protect all ~/ultrascan/* locations
    if ( parent_target_dir.absolutePath() == ultrascan_user_dir.absolutePath() ) {
-      QMessageBox::critical( this, tr( "Error" ), tr( "Cannot save at this location." ) );
+      US_Notify::critical( this, tr( "Error" ), tr( "Cannot save at this location." ) );
       return;
    }
    if ( target_dir.exists() && !target_dir.isEmpty() ) {
@@ -2169,14 +2170,14 @@ DbgLv(1) << "Sim:SV: reset s1plat" << s1plat;
       // Report that some readings were threshold-limited
       if ( !supress_dialog )
       {
-         QMessageBox::information( this,
-                                   tr( "OD Values Limited to Threshold" ),
-                                   tr( "%1 readings in %2 scans were reset to the threshold "
-                                       "value of %3.\nThe maximum OD before thresholding was %4." )
-                                      .arg( nchange )
-                                      .arg( nmodscn )
-                                      .arg( dthresh )
-                                      .arg( maxc ) );
+         US_Notify::information( this,
+                                 tr( "OD Values Limited to Threshold" ),
+                                 tr( "%1 readings in %2 scans were reset to the threshold "
+                                     "value of %3.\nThe maximum OD before thresholding was %4." )
+                                    .arg( nchange )
+                                    .arg( nmodscn )
+                                    .arg( dthresh )
+                                    .arg( maxc ) );
       }
    }
 
@@ -2364,7 +2365,7 @@ DbgLv(1) << "Sim:SV: after_write_rawdata" << ofname;
       }
       else
       {
-         QMessageBox::critical(
+         US_Notify::critical(
             this,
             tr( "Simulation Save Failed" ),
             tr( "The simulated data could not be written to\n%1\n\n%2" ).arg( ofname ).arg( US_DataIO::errorString( wstat ) ) );
