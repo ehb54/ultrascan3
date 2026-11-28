@@ -2,17 +2,18 @@
 
 #include <QApplication>
 
-#include "us_mwl_species_fit.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_util.h"
-#include "us_data_loader.h"
-#include "us_load_run_noise.h"
-#include "us_passwd.h"
-#include "us_images.h"
+#include "us_ana_profile_load_gui.h"
 #include "us_csv_loader.h"
+#include "us_data_loader.h"
+#include "us_gui_settings.h"
+#include "us_images.h"
+#include "us_license.h"
+#include "us_license_t.h"
+#include "us_load_run_noise.h"
+#include "us_mwl_species_fit.h"
+#include "us_passwd.h"
+#include "us_settings.h"
+#include "us_util.h"
 
 #include "qwt_picker_machine.h"
 #include <qwt_scale_div.h>
@@ -121,14 +122,12 @@ US_MwlSpeciesFit::US_MwlSpeciesFit( QMap<QString, QString>&                     
 
    // read protocol & check (once more) extinction profiles
    QStringList msg_to_user;
-   const bool  protocol_read = read_protocol( msg_to_user );
-   if ( !profile_usable )
+   if ( !read_protocol( msg_to_user ) )
    {
-      // Its message was shown
-   }
-   else if ( !protocol_read )
-   {
-      profile_usable = false;
+      if ( msg_to_user.isEmpty() )
+      {
+         return; // The protocol/profile warning was already shown.
+      }
       msg_to_user.removeDuplicates();
       QMessageBox::critical( this,
                              tr( "ATTENTION: Invalid Extinction Profiles (ABDE)" ),
@@ -145,7 +144,6 @@ US_MwlSpeciesFit::US_MwlSpeciesFit( QMap<QString, QString>&                     
       load();
       if ( !dataLoaded )
       {
-         profile_usable = false;
          return;
       }
       protocol_details_p["baseline_corrections"] = this->protocol_details["baseline_corrections"];
@@ -273,6 +271,7 @@ US_MwlSpeciesFit::US_MwlSpeciesFit( QMap<QString, QString>&                     
       protocol_details_p["rmsds_for_gmp"] = rmsd_for_gmp;
       qDebug() << "RMDSs -- " << rmsd_for_gmp;
       qDebug() << "SSF DIR -- " << protocol_details_p["ssf_dir_name"];
+      ready = true;
    }
 }
 
@@ -1283,17 +1282,8 @@ bool US_MwlSpeciesFit::read_protocol(QStringList& msg_to_user)
   US_AnaProfileLoader::Options options;
   options.progress                         = aprof_progress_cb; // report DB reading of reports/reportItems
   const US_AnaProfileLoader::Result loaded = US_AnaProfileLoader::load( currProto, &db, options );
-  for ( const US_AnaProfileLoader::Message& message : loaded.messages )
+  if ( !US_AnaProfileLoadGui::usable( this, loaded ) )
   {
-     QMessageBox::warning( this, message.title, message.text );
-  }
-  profile_usable = loaded.loaded && loaded.has_channels;
-  if ( !profile_usable )
-  {
-     if ( loaded.loaded )
-     {
-        QMessageBox::warning( this, tr( "Analysis Profile" ), tr( "The run protocol has no analysis channels." ) );
-     }
      return false;
   }
   currAProf              = loaded.profile;

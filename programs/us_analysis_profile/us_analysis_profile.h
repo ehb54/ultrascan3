@@ -474,8 +474,8 @@ class US_AnalysisProfileGui : public US_Widgets
   //! Empty by default, so other users of this class are unaffected.
   std::function<void( int, int, const QString& )> progress_cb;
 
-  int                                             scanCount;
-  int                                             scanCount_int;
+  int                                             scanCount     = 0;
+  int                                             scanCount_int = 0;
 
   private:
      bool               profile_usable        = false;

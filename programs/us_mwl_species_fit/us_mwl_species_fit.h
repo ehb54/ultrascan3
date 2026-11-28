@@ -36,7 +36,11 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
                              std::function<void( int, int, const QString& )>() );
 
         bool us_gmp_auto_mode;
-        bool                                                     profile_usable = false; //!< The analysis profile could be loaded
+        //! The requested run's data, profile and extinction profiles are ready for fitting.
+        bool isReady() const
+        {
+           return ready;
+        }
         QMap<QString, QString> protocol_details;
         US_RunProtocol                                           currProto;         //!< Current run protocol
         std::function<void( int, int, const QString& )>          aprof_progress_cb; //!< Analysis-profile read progress (optional)
@@ -174,6 +178,9 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
                                                                     QString& recorded_decisionByName,
                                                                     QString& recorded_decisionTs,
                                                                     QString& recorded_filename );
+
+     private:
+        bool ready = false;
 
      private slots:
         //! \brief Write report to a text stream

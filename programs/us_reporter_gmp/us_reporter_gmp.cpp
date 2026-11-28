@@ -13,6 +13,7 @@
 #include <memory>
 
 #include "../us/us_revision.h"
+#include "us_ana_profile_load_gui.h"
 #include "us_calc_matching.h"
 #include "us_calc_range.h"
 #include "us_calc_replicate.h"
@@ -2104,20 +2105,8 @@ bool US_ReporterGMP::read_protocol_and_reportMasks( void )
      QMessageBox::warning( this, tr( "Analysis Profile" ), tr( "Could not read the run protocol." ) );
      return false;
   }
-  currProto = protocol;
   progress_msg->setValue( 3 );
   qApp->processEvents();
-  
-  //Debug: protocol
-  qDebug() << "Protocols' details: -- "
-	   << currProto.investigator
-	   << currProto.runname
-	   << currProto.protoname
-	   << currProto.protoID
-	   << currProto.project
-	   << currProto.temperature
-	   << currProto.temeq_delay
-	   << currProto.exp_label;
 
   //read AProfile into US_AnaProfile structure
   US_AnaProfileLoader::Options options;
@@ -2146,11 +2135,7 @@ bool US_ReporterGMP::read_protocol_and_reportMasks( void )
      qApp->processEvents();
   };
 
-  const US_AnaProfileLoader::Result loaded = US_AnaProfileLoader::load( currProto, &db, options );
-  for ( const US_AnaProfileLoader::Message& message : loaded.messages )
-  {
-     QMessageBox::warning( this, message.title, message.text );
-  }
+  const US_AnaProfileLoader::Result loaded = US_AnaProfileLoader::load( protocol, &db, options );
 
   if ( in_subrange ) // restore the stage's own scale
   {
@@ -2160,17 +2145,14 @@ bool US_ReporterGMP::read_protocol_and_reportMasks( void )
   progress_msg->setValue( 4 );
   qApp->processEvents();
 
-  if ( !loaded.loaded || !loaded.has_channels )
+  if ( !US_AnaProfileLoadGui::usable( this, loaded ) )
   {
-     if ( loaded.loaded )
-     {
-        QMessageBox::warning( this, tr( "Analysis Profile" ), tr( "The run protocol has no analysis channels." ) );
-     }
      return false;
   }
 
   qDebug() << "After Inheriting Protocol -- ";
 
+  currProto                     = protocol;
   currAProf                     = loaded.profile;
   currAProf.protoGUID    = currProto.protoGUID;
   currAProf.protoID      = currProto.protoID;
@@ -3711,6 +3693,10 @@ void US_ReporterGMP::reset_report_panel ( void )
     {
        pb_gen_report->setEnabled( false );
        pb_view_report->setEnabled( false );
+       pb_select_all->setEnabled( false );
+       pb_unselect_all->setEnabled( false );
+       pb_expand_all->setEnabled( false );
+       pb_collapse_all->setEnabled( false );
        te_fpath_info->setText( "" );
        le_loaded_run_db->setText( "" );
        te_fpath_info_db->setText( "" );

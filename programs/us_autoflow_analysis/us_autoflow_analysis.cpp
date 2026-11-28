@@ -13,6 +13,7 @@
 #include <QXmlStreamReader>
 #include <QtNumeric>
 
+#include "us_ana_profile_load_gui.h"
 #include "us_autoflow_analysis.h"
 #include "us_constants.h"
 #include "us_convertio.h"
@@ -124,6 +125,8 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   setMinimumSize( 950, 450 );
   adjustSize();
 
+  timer_update          = new QTimer( this );
+  timer_end_process     = new QTimer( this );
   in_gui_update = false;
   in_reload_end_process = false;
   all_processed = true;
@@ -229,73 +232,43 @@ static QSet<QString> us_statusJsonStages( const QString& status_json )
 //init correct # of us_labels rows based on passed # stages from AProfile
 void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 {
-  //Clear TreeWidget
-  treeWidget->clear();
-  Array_of_triples.clear();
-  Array_of_analysis.clear();
-  Array_of_analysis_by_requestID.clear();
-  Channel_to_requestIDs.clear();
-  channels_all.clear();
+   timer_update->stop();
+   disconnect( timer_update, &QTimer::timeout, this, &US_Analysis_auto::gui_update );
+   reset_auto();
 
-  Completed_triples.clear();
-  Failed_triples.clear();
-  Canceled_triples.clear();
-  Manual_update.clear();
-  History_read.clear();
-  Process_2dsafm.clear();
+   AProfileGUID      = protocol_details["aprofileguid"];
+   ProtocolName_auto = protocol_details["protocolName"];
+   invID             = protocol_details["invID_passed"].toInt();
 
-  TriplesArray.clear();
+   FileName = protocol_details["filename"];
 
-  AProfileGUID       = protocol_details[ "aprofileguid" ];
-  ProtocolName_auto  = protocol_details[ "protocolName" ];
-  invID              = protocol_details[ "invID_passed" ].toInt();
+   analysisIDs = protocol_details["analysisIDs"];
 
-  FileName           = protocol_details[ "filename" ];
-   
-  analysisIDs        = protocol_details[ "analysisIDs" ];
+   autoflowStatusID  = protocol_details["statusID"].toInt();
+   autoflowID_passed = protocol_details["autoflowID"].toInt();
 
-  autoflowStatusID   = protocol_details[ "statusID" ].toInt();
-  autoflowID_passed  = protocol_details[ "autoflowID" ].toInt();
+   sim_msg_pos_x = protocol_details["sim_msg_pos_x"].toInt();
+   sim_msg_pos_y = protocol_details["sim_msg_pos_y"].toInt();
 
-  sim_msg_pos_x      = protocol_details[ "sim_msg_pos_x" ].toInt();
-  sim_msg_pos_y      = protocol_details[ "sim_msg_pos_y" ].toInt();
+   autoflow_expType = protocol_details["expType"];
+   dataSource       = protocol_details["dataSource"];
 
-  autoflow_expType   = protocol_details[ "expType" ];
-  dataSource         = protocol_details[ "dataSource" ];
+   cleanup_velmwl_fit_widget();
+   cleanup_2dsa_widget();
+   twodsa_profile_ready  = false;
+   twodsa_chan_idx       = -1;
+   twodsa_nchannels      = 0;
+   twodsa_nspecies_total = 0;
 
-  velmwl_fit_open = false;
-
-  // ALEXEY: sdiag was never initialized here, so on the very first
-  // VEL-MWL channel of a run cleanup_velmwl_fit_widget()'s `if (!sdiag)`
-  // guard was testing an indeterminate/garbage pointer value rather than
-  // a real null -- when that garbage happened to be non-zero, close()
-  // dereferenced it and crashed. Initializing it here makes the guard
-  // correct for that first call.
-  sdiag = nullptr;
-
-  sdiag_2dsa            = nullptr;
-  twodsa_open           = false;
-  twodsa_chan_idx       = -1;
-  twodsa_nchannels      = 0;
-  twodsa_nspecies_total = 0;
-  progress_msg_2dsa     = nullptr; // ALEXEY: see progress_msg_mwlsim's own
-                                   // construction site (process_velmwl_
-                                   // after_all_channels_decided()) -- kept
-                                   // explicitly null until then, same as
-                                   // sdiag above, rather than left
-                                   // indeterminate.
-
-  //hide if ABDE, close message
-  if ( autoflow_expType == "ABDE")
-    {
+   // Hide the velocity controls during ABDE analysis.
+   if ( autoflow_expType == "ABDE" )
+   {
       qDebug() << "[ABDE] - ANALYSIS!";
-      //emit close_analysissetup_msg();
-
       lb_hdr1     ->hide();
       pb_show_all ->hide();
       pb_hide_all ->hide();
       treeWidget  ->hide();
-    }
+   }
   else
     {
       sdiag_norm_profile->hide();
@@ -316,6 +289,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
     if ( db.lastErrno() != US_DB2::OK )
     {
        QMessageBox::warning( this, tr( "Connection Problem" ), tr( "Could not connect to database \n" ) + db.lastError() );
+       abort_profile_setup( true );
        return;
     }
 
@@ -351,42 +325,24 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       QString abde_etype = abde_analysis_details["etype"];
       qDebug() << "ABDE_exp_type: " << abde_etype;
 
-      if ( abde_etype == "MWL" )
-	{
-	  protocol_details_at_analysis["abde_etype"] = "MWL";
-	  
-	  //Pre-process data (decomposition for MWL); build alt. GUI (to integrate and manually normalize);
-	  sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis );
-     if ( !sdiag->profile_usable )
-     {
-        cleanup_velmwl_fit_widget();
-        emit close_analysissetup_msg();
-        emit analysis_back_to_initAutoflow();
-        return;
-     }
-     //sdiag -> show(); //for debug
+      if ( abde_etype == "MWL" || abde_etype == "SWL" )
+      {
+         protocol_details_at_analysis["abde_etype"] = abde_etype;
+         sdiag                                      = new US_MwlSpeciesFit( protocol_details_at_analysis );
+         if ( !sdiag->isReady() )
+         {
+            abort_profile_setup( true );
+            return;
+         }
 
-     qDebug() << "SSF-Dir: " << protocol_details_at_analysis["ssf_dir_name"];
-
-     //now save ssf-produced-data to DB
-     sdiag_convert = new US_ConvertGui( "AUTO" );
-     sdiag_convert->import_ssf_data_auto( protocol_details_at_analysis );
-     //sdiag_convert -> show(); //for debug
-   }
-      else if ( abde_etype == "SWL" )
-	{
-	  protocol_details_at_analysis["abde_etype"] = "SWL";
-	  sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis );
-     if ( !sdiag->profile_usable )
-     {
-        cleanup_velmwl_fit_widget();
-        emit close_analysissetup_msg();
-        emit analysis_back_to_initAutoflow();
-        return;
-     }
-
-     qDebug() << "Dir for GMP: " << protocol_details_at_analysis["directory_for_gmp"];
-   }
+         if ( abde_etype == "MWL" )
+         {
+            // Save the decomposed data to the database before normalization.
+            QScopedPointer<US_ConvertGui> converter( new US_ConvertGui( "AUTO" ) );
+            converter->import_ssf_data_auto( protocol_details_at_analysis );
+         }
+         cleanup_velmwl_fit_widget();
+      }
 
       //Build channel -> {"Analyte #1:":pretty, ...} map (same lookup
       //US_ReporterGMP uses) so this Analysis-stage norm-profile plot's
@@ -622,9 +578,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 
   treeWidget->header()->resizeSection(0, max_width );
 
-  //TEST: QTimer for GroupBoxes' GUI update
-  timer_end_process = new QTimer;
-  timer_update      = new QTimer;
+  // Poll for analysis updates after initialization succeeds.
   connect(timer_update, &QTimer::timeout, this, &US_Analysis_auto::gui_update);
   timer_update->start(5000);     // 5 sec
 
@@ -1888,14 +1842,9 @@ void US_Analysis_auto::get_ssf_dir_and_saveDB( QString& ssf_dir )
       }
    };
    sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis_velmwl, aprof_progress );
-   if ( !sdiag->profile_usable )
+   if ( !sdiag->isReady() )
    {
-      cleanup_velmwl_fit_widget();
-      if ( progress_msg_mwlsim )
-      {
-         progress_msg_mwlsim->hide();
-      }
-      emit analysis_back_to_initAutoflow();
+      abort_profile_setup( false );
       return;
    }
    update_mwlsim_progress( "fit", 1, 1 );
@@ -2062,17 +2011,16 @@ void US_Analysis_auto::start_next_velmwl_channel( void )
       m_c_r_id << stage_n_c << ch_name_c << f_name_c << mod_id_c;
       qDebug() << "[Post-Analysis], m_t_r_id -- " << m_c_r_id;
 
-      // now call sim. contructor
-      sdiag_mwlsim = new US_MwlSpeciesSim();
+      QScopedPointer<US_MwlSpeciesSim> simulation( new US_MwlSpeciesSim() );
 
-      connect( sdiag_mwlsim, &US_MwlSpeciesSim::pass_editID_fromLoad, this, &US_Analysis_auto::get_editID );
+      connect( simulation.data(), &US_MwlSpeciesSim::pass_editID_fromLoad, this, &US_Analysis_auto::get_editID );
 
-      connect( sdiag_mwlsim, &US_MwlSpeciesSim::pass_ssf_dir, this, &US_Analysis_auto::get_ssf_dir_and_saveDB );
+      connect( simulation.data(), &US_MwlSpeciesSim::pass_ssf_dir, this, &US_Analysis_auto::get_ssf_dir_and_saveDB );
 
       // ALEXEY: Feed this channel's stage progress into the centralized dialog
-      connect( sdiag_mwlsim, &US_MwlSpeciesSim::stage_progress, this, &US_Analysis_auto::update_mwlsim_progress );
+      connect( simulation.data(), &US_MwlSpeciesSim::stage_progress, this, &US_Analysis_auto::update_mwlsim_progress );
 
-      sdiag_mwlsim->select_models_auto( QString::number( invID ), m_c_r_id );
+      simulation->select_models_auto( QString::number( invID ), m_c_r_id );
 
       /**
        -- Next: define buffer
@@ -2084,11 +2032,11 @@ void US_Analysis_auto::start_next_velmwl_channel( void )
        -- Next: Start Simulation
        sdiag_mwlsim -> start_sims_auto
     **/
-      sdiag_mwlsim->define_buffer_auto( invID );
+      simulation->define_buffer_auto( invID );
 
       QMap<QString, QString> run_params = read_run_params( f_name_c );
       qDebug() << "run_params[bottom]=" << run_params["bottom"];
-      sdiag_mwlsim->sim_params_auto( run_params );
+      simulation->sim_params_auto( run_params );
 
       /**
        Although we will select 'Default (Simulation)' rotor,
@@ -2098,10 +2046,10 @@ void US_Analysis_auto::start_next_velmwl_channel( void )
     **/
       QStringList rotor_defs;
       rotor_defs << "Default" << "(Simulation)";
-      sdiag_mwlsim->select_rotor_auto( rotor_defs );
+      simulation->select_rotor_auto( rotor_defs );
 
       /** Run Simulations **/
-      sdiag_mwlsim->start_sims_auto();
+      simulation->start_sims_auto();
 
       /**
        After Sims completed, save to Disk & re-use US_Convrt && US_Edit to save
@@ -2109,9 +2057,8 @@ void US_Analysis_auto::start_next_velmwl_channel( void )
        which constructs & shows THIS channel's US_MwlSpeciesFit dialog and
        then returns control back here.
      **/
-      sdiag_mwlsim->save_sims_auto();
-
       mwlsim_chan_idx = ca;
+      simulation->save_sims_auto();
 
       // ALEXEY: Stop -- do not advance to the next channel. This
       // channel's fit dialog is now up, waiting on the user's Accept/
@@ -2267,7 +2214,8 @@ void US_Analysis_auto::finalize_velmwl_analysis_if_complete( void )
 // analysis_complete_auto() once the list is exhausted.
 void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
 {
-   cAP2_2dsa = US_AnaProfile::AnaProf2DSA();
+   twodsa_profile_ready = false;
+   cAP2_2dsa            = US_AnaProfile::AnaProf2DSA();
 
    qDebug() << "[US_Autoflow_analysis] process_velmwl_after_all_channels_decided(): "
                "claiming run-wide VEL-MWL completion, then starting 2DSA-IT "
@@ -2427,15 +2375,10 @@ void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
       US_Passwd pw_ap;
       US_DB2         db_ap( pw_ap.getPasswd() );
       US_RunProtocol protocol;
-      const auto     refuse = [this]()
-      {
-         progress_msg_2dsa->hide();
-         emit analysis_back_to_initAutoflow();
-      };
       if ( db_ap.lastErrno() != US_DB2::OK || !US_AnaProfileLoader::readProtocol( ProtocolName_auto, invID, db_ap, protocol ) )
       {
          QMessageBox::warning( this, tr( "Analysis Profile" ), tr( "Could not read the run protocol for 2DSA analysis." ) );
-         refuse();
+         abort_profile_setup( false );
          return;
       }
 
@@ -2453,17 +2396,9 @@ void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
          progress_msg_2dsa->setValue( qBound( 0, qRound( 100.0 * done / total ), 100 ) );
       };
       const US_AnaProfileLoader::Result loaded = US_AnaProfileLoader::load( protocol, &db_ap, options );
-      for ( const US_AnaProfileLoader::Message& message : loaded.messages )
+      if ( !US_AnaProfileLoadGui::usable( this, loaded ) )
       {
-         QMessageBox::warning( this, message.title, message.text );
-      }
-      if ( !loaded.loaded || !loaded.has_channels )
-      {
-         if ( loaded.loaded )
-         {
-            QMessageBox::warning( this, tr( "Analysis Profile" ), tr( "The run protocol has no analysis channels." ) );
-         }
-         refuse();
+         abort_profile_setup( false );
          return;
       }
       cAP2_2dsa = loaded.profile.ap2DSA;
@@ -2495,6 +2430,7 @@ void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
     }
   **/
 
+   twodsa_profile_ready = true;
    start_next_2dsa_channel();
 }
 
@@ -2510,10 +2446,16 @@ void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
 // US_SolveSim on a real thread).
 void US_Analysis_auto::start_next_2dsa_channel( void )
 {
+   if ( !twodsa_profile_ready )
+   {
+      return;
+   }
+
    ++twodsa_chan_idx;
 
    if ( twodsa_chan_idx >= channels_2dsa_approved.size() )
    {
+      twodsa_profile_ready = false;
       // All Approved channels processed -- the VEL-MWL run is complete.
       // Every channel's US_2dsa auto-fit (run_2dsa_auto()) already loops
       // over that channel's species (S1, S2, ...) itself before firing
@@ -5519,6 +5461,40 @@ void US_Analysis_auto::triple_analysis_processed ( void )
   emit analysis_back_to_initAutoflow( );
 }
 
+// Stop this attempt locally, preserving the database state for re-attachment.
+void US_Analysis_auto::abort_profile_setup( bool initializing )
+{
+   twodsa_profile_ready = false;
+   in_gui_update        = false;
+   timer_update->stop();
+   disconnect( timer_update, &QTimer::timeout, this, &US_Analysis_auto::gui_update );
+
+   cleanup_velmwl_fit_widget();
+   cleanup_2dsa_widget();
+   sdiag_norm_profile->hide();
+
+   if ( progress_msg_mwlsim )
+   {
+      progress_msg_mwlsim->finish();
+   }
+   if ( progress_msg_2dsa )
+   {
+      progress_msg_2dsa->finish();
+   }
+
+   cAP2_2dsa = US_AnaProfile::AnaProf2DSA();
+   channels_2dsa_approved.clear();
+   channels_2dsa_filenames.clear();
+   protocol_details_at_analysis_2dsa.clear();
+   reset_auto();
+
+   if ( initializing )
+   {
+      emit close_analysissetup_msg();
+   }
+   emit analysis_back_to_initAutoflow();
+}
+
 //reset Analysis GUI: stopping all update processes
 void US_Analysis_auto::reset_analysis_panel_public( )
 {
@@ -5628,8 +5604,9 @@ bool US_Analysis_auto::check_fitmen_status( const QString& requestID, const QStr
 //reset Analysis GUI: stopping all update processes
 void US_Analysis_auto::reset_analysis_panel( )
 {
-  if ( autoflow_expType != "ABDE" || autoflow_expType == "VELOCITY" )
-    {
+   twodsa_profile_ready = false;
+   if ( autoflow_expType != "ABDE" || autoflow_expType == "VELOCITY" )
+   {
       //Stop  timer if active
       if ( timer_update -> isActive() ) 
 	{
@@ -5650,7 +5627,7 @@ void US_Analysis_auto::reset_analysis_panel( )
                      "substage...";
          cleanup_velmwl_fit_widget();
       }
-    }
+   }
   else
     {
       //add clearing ABDE-norm. GUI when switching btw. runs

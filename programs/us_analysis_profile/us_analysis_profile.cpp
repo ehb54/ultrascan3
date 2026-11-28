@@ -1,12 +1,13 @@
 //! \file us_analysis_profile.cp
 
 #include "us_analysis_profile.h"
-#include "us_table.h"
-#include "us_license.h"
+#include "us_ana_profile_load_gui.h"
 #include "us_datafiles.h"
-#include "us_sleep.h"
-#include "us_util.h"
+#include "us_license.h"
 #include "us_report_gmp.h"
+#include "us_sleep.h"
+#include "us_table.h"
+#include "us_util.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -202,16 +203,10 @@ void US_AnalysisProfileGui::profileSavedAs( const US_RunProtocol& previous, cons
 // Update analysis profile based on inherited protocol
 void US_AnalysisProfileGui::inherit_protocol( US_RunProtocol* iProto )
 {
-   if ( !iProto->rpSpeed.ssteps.isEmpty() )
-   {
-      scanCount     = iProto->rpSpeed.ssteps[0].scancount;
-      scanCount_int = iProto->rpSpeed.ssteps[0].scancount_int;
-   }
-
-   // Reuse saved XML only for the same protocol. Keep current edits for reloads of that protocol.
    profile_usable                             = false;
    const US_RunProtocol         requested     = *iProto;
    const bool                   same_protocol = have_profile_snapshot && sameProfileProtocol( profile_protocol, requested );
+   // Re-read the saved profile on a protocol switch or when there is no cached XML.
    const bool                   read_saved    = ap_xml.isEmpty() || !same_protocol;
    US_Passwd                    pw;
    QScopedPointer<US_DB2>       db;
@@ -229,11 +224,8 @@ void US_AnalysisProfileGui::inherit_protocol( US_RunProtocol* iProto )
    };
 
    const US_AnaProfileLoader::Result result = US_AnaProfileLoader::load( requested, nullptr, options );
-   for ( const US_AnaProfileLoader::Message& message : result.messages )
-   {
-      QMessageBox::warning( this, message.title, message.text );
-   }
-   if ( !result.loaded || !result.has_channels || !sameProfileInputs( requested, *iProto ) )
+   if ( !US_AnaProfileLoadGui::usable( this, result, false ) || !sameProfileInputs( requested, *iProto ) ||
+        options.abde != abde_mode_aprofile )
    {
       return;
    }
@@ -244,7 +236,9 @@ void US_AnalysisProfileGui::inherit_protocol( US_RunProtocol* iProto )
    {
       ap_xml = result.xml;
    }
-   currProf = result.profile;
+   scanCount     = requested.rpSpeed.ssteps.first().scancount;
+   scanCount_int = requested.rpSpeed.ssteps.first().scancount_int;
+   currProf      = result.profile;
    apanGeneral->showProfile( result.values );
    profile_protocol      = *iProto;
    profile_abde          = options.abde;

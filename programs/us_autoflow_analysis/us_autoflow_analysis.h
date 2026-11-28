@@ -60,16 +60,15 @@ class US_Analysis_auto : public US_Widgets
          */
         US_Analysis_auto();
 
-        US_MwlSpeciesFit* sdiag;
+        US_MwlSpeciesFit*                sdiag = nullptr;
         US_ConvertGui*    sdiag_convert;
-        US_Norm_Profile*  sdiag_norm_profile;
-        US_MwlSpeciesSim*                sdiag_mwlsim;
+        US_Norm_Profile*                 sdiag_norm_profile;
         US_Edit*                         sdiag_edit;
-        bool                             velmwl_fit_open;
-        US_2dsa*                         sdiag_2dsa;  //!< Current channel's headless 2DSA-IT widget
-                                                      //!< (VEL-MWL post-processing).
-        bool                             twodsa_open; //!< True while sdiag_2dsa is live (mirrors
-                                                      //!< velmwl_fit_open).
+        bool                             velmwl_fit_open = false;
+        US_2dsa*                         sdiag_2dsa      = nullptr; //!< Current channel's headless 2DSA-IT widget
+                                                                    //!< (VEL-MWL post-processing).
+        bool                             twodsa_open     = false;   //!< True while sdiag_2dsa is live (mirrors
+                                                                    //!< velmwl_fit_open).
 
         QTreeWidget     *treeWidget;                             /**< Tree widget for displaying analysis data. */
         QMap<QString, QTreeWidgetItem *> topItem;                /**< Top-level items in the tree widget. */
@@ -123,6 +122,11 @@ class US_Analysis_auto : public US_Widgets
                    indication that 2DSA-IT processing is under way. */
 
      private:
+        friend class US_AutoflowProfileRefusalTest;
+
+        void                             abort_profile_setup( bool initializing );
+        bool                             twodsa_profile_ready = false;
+
         QVector< US_DataIO::RawData > rawData;                   /**< Vector of raw data. */
         QVector< US_DataIO::EditedData > editedData;             /**< Vector of edited data. */
         QVector< SP_SPEEDPROFILE > speed_steps;                  /**< Vector of speed profiles. */
