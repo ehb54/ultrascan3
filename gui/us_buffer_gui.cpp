@@ -691,18 +691,18 @@ DbgLv(1) << "BufS-info:  ii" << ii << "waveln extinc" << waveln << extinc;
 // Display a spectrum dialog for list/manage
 void US_BufferGuiSelect::spectrum( void )
 {
-  qDebug() << buffer->extinction;
-  
-  if (buffer->extinction.isEmpty())
-    {
-       US_Notify::information( this, tr( "WARNING" ), tr( "Buffer does not have spectrum data!" ) );
-    }
-  else
-    {
-      US_ViewSpectrum *w = new US_ViewSpectrum(buffer->extinction);
-      w->setParent(this, Qt::Window);
+   qDebug() << buffer->extinction;
+
+   if ( buffer->extinction.isEmpty() )
+   {
+      US_Notify::information( this, tr( "WARNING" ), tr( "Buffer does not have spectrum data!" ) );
+   }
+   else
+   {
+      US_ViewSpectrum* w = new US_ViewSpectrum( buffer->extinction );
+      w->setParent( this, Qt::Window );
       w->show();
-    }
+   }
 }
 
 // Remove a selected buffer
@@ -1455,10 +1455,8 @@ void US_BufferGuiNew::create_new_buffer_component() {
 
    if ( db.lastErrno() != IUS_DB2::OK )
    {
-//qDebug() << "USCFG: UpdInv: ERROR connect";
-US_Notify::information( this, tr( "Error" ), tr( "Error making the DB connection.\n" ) );
-
-return;
+      US_Notify::information( this, tr( "Error" ), tr( "Error making the DB connection.\n" ) );
+      return;
    }
 
    QStringList q( "get_user_info" );

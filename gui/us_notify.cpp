@@ -1,23 +1,49 @@
 //! \file us_notify.cpp
 #include "us_notify.h"
 
+#include <QApplication>
 #include <QMessageBox>
+#include <QMutex>
+#include <QMutexLocker>
 #include <QTextStream>
+#include <QVariant>
 
 namespace
 {
-QSharedPointer<US_Notifier>& current()
+struct TestOverride
 {
-   static QSharedPointer<US_Notifier> notifier;
-   return notifier;
+      QMutex                      mutex;
+      QSharedPointer<US_Notifier> notifier;
+};
+
+TestOverride& testOverride()
+{
+   static TestOverride override;
+   return override;
+}
+
+QSharedPointer<US_Notifier> notifierForTests()
+{
+   TestOverride& state = testOverride();
+   QMutexLocker  locked( &state.mutex );
+   return state.notifier;
 }
 
 void send( US_Notifier::Kind kind, QWidget* parent, const QString& title, const QString& text )
 {
-   const QSharedPointer<US_Notifier> notifier = current();
+   const QSharedPointer<US_Notifier> notifier = notifierForTests();
    if ( notifier )
    {
       notifier->notify( kind, parent, title, text );
+      return;
+   }
+
+   QCoreApplication* app = QCoreApplication::instance();
+   if ( qobject_cast<QApplication*>( app ) == nullptr || app->property( US_Notify::HeadlessProperty ).toBool() )
+   {
+      const char* label =
+         kind == US_Notifier::Kind::Information ? "Note" : ( kind == US_Notifier::Kind::Warning ? "Warning" : "Error" );
+      QTextStream( stderr ) << label << ": " << title << ": " << text.simplified() << Qt::endl;
       return;
    }
 
@@ -36,15 +62,11 @@ void send( US_Notifier::Kind kind, QWidget* parent, const QString& title, const 
 }
 } // namespace
 
-void US_ConsoleNotifier::notify( Kind kind, QWidget*, const QString& title, const QString& text )
+void US_Notify::setNotifierForTests( QSharedPointer<US_Notifier> notifier )
 {
-   const char* label = kind == Kind::Information ? "Note" : ( kind == Kind::Warning ? "Warning" : "Error" );
-   QTextStream( stderr ) << label << ": " << title << ": " << QString( text ).replace( '\n', ' ' ).simplified() << Qt::endl;
-}
-
-void US_Notify::setNotifier( QSharedPointer<US_Notifier> notifier )
-{
-   current() = notifier;
+   TestOverride& state = testOverride();
+   QMutexLocker  locked( &state.mutex );
+   state.notifier.swap( notifier );
 }
 
 void US_Notify::information( QWidget* parent, const QString& title, const QString& text )

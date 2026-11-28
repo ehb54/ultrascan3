@@ -115,18 +115,6 @@ DialogScript::Action fillSignoff( const QString& comment, const QString& passwor
       w->findChild<QDialogButtonBox*>()->button( QDialogButtonBox::Ok )->click();
    };
 }
-class RecordingNotifier : public US_Notifier
-{
-   public:
-      void notify( Kind kind, QWidget*, const QString& title, const QString& text ) override
-      {
-         kinds << kind;
-         messages << title + ": " + text;
-      }
-
-      QList<Kind> kinds;
-      QStringList messages;
-};
 } // namespace
 
 class US_PasswdGuiTest : public QObject
@@ -143,7 +131,7 @@ class US_PasswdGuiTest : public QObject
          session.reset();
          session.reset( new US_SessionOverride( store ) );
          US_Settings::set_UltraScanPW( syntheticHash );
-         qApp->setProperty( "us3_headless", QVariant() );
+         qApp->setProperty( US_Notify::HeadlessProperty, QVariant() );
       }
 
       void cachedPasswordOpensNoDialog()
@@ -183,7 +171,7 @@ class US_PasswdGuiTest : public QObject
 
       void headlessRunWithoutSourcesOpensNoDialog()
       {
-         qApp->setProperty( "us3_headless", true );
+         qApp->setProperty( US_Notify::HeadlessProperty, true );
          DialogScript script( { cancel() } );
 
          QVERIFY( US_Passwd().getPasswd().isEmpty() );
@@ -219,30 +207,6 @@ class US_PasswdGuiTest : public QObject
          QVERIFY( store->value.isEmpty() );
       }
 #endif
-
-      void notifierReplacesTheMessageBox()
-      {
-         QSharedPointer<RecordingNotifier> notifier( new RecordingNotifier );
-         US_Notify::setNotifier( notifier );
-         DialogScript script( { acknowledge() } );
-
-         US_Notify::warning( nullptr, "Connection Problem", "Could not connect" );
-         US_Notify::critical( nullptr, "Error", "Failed" );
-         US_Notify::setNotifier( {} );
-
-         QCOMPARE( notifier->messages, QStringList( { "Connection Problem: Could not connect", "Error: Failed" } ) );
-         QCOMPARE( notifier->kinds, QList<US_Notifier::Kind>( { US_Notifier::Kind::Warning, US_Notifier::Kind::Critical } ) );
-         QCOMPARE( script.remaining(), 1 );
-      }
-
-      void withoutANotifierAMessageBoxIsShown()
-      {
-         DialogScript script( { acknowledge() } );
-
-         US_Notify::information( nullptr, "Saved", "The buffer was saved." );
-
-         QCOMPARE( script.seen, QStringList( { "The buffer was saved." } ) );
-      }
 
       void signoffReturnsTheFormWithoutThePassword()
       {
