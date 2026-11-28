@@ -4,6 +4,8 @@
 #include "us_settings.h"
 #include "us_util.h"
 #include <QDir>
+#include <QRegularExpression>
+#include <QSet>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -396,4 +398,62 @@ TEST_F(US_UtilEdgeCaseTest, ListlistWithSpecialCharacters) {
     EXPECT_EQ(parseCount, 2);
     EXPECT_THAT(parsedList[0][0], QStringEq("hello world"));
     EXPECT_THAT(parsedList[1][1], QStringEq("symbol @#$"));
+}
+
+namespace
+{
+// Restores random GUIDs however the test ends.
+struct GuidSourceReset
+{
+      ~GuidSourceReset()
+      {
+         US_Util::setGuidSource( {} );
+      }
+};
+
+bool isGuid( const QString& guid )
+{
+   static const QRegularExpression form( "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$" );
+   return form.match( guid ).hasMatch();
+}
+} // namespace
+
+TEST( US_UtilGuidSource, ASeedRepeatsItsSequence )
+{
+   GuidSourceReset reset;
+   US_Util::setGuidSource( QSharedPointer<US_GuidSource>( new US_SeededGuidSource( "seed-a" ) ) );
+   const QStringList first = { US_Util::new_guid(), US_Util::new_guid(), US_Util::new_guid() };
+
+   US_Util::setGuidSource( QSharedPointer<US_GuidSource>( new US_SeededGuidSource( "seed-a" ) ) );
+   const QStringList again = { US_Util::new_guid(), US_Util::new_guid(), US_Util::new_guid() };
+
+   EXPECT_EQ( first, again );
+   EXPECT_EQ( QSet<QString>( first.begin(), first.end() ).size(), 3 );
+   for ( const QString& guid : first )
+   {
+      EXPECT_TRUE( isGuid( guid ) ) << guid.toStdString();
+   }
+}
+
+TEST( US_UtilGuidSource, DifferentSeedsGiveDifferentGuids )
+{
+   GuidSourceReset reset;
+   US_Util::setGuidSource( QSharedPointer<US_GuidSource>( new US_SeededGuidSource( "seed-a" ) ) );
+   const QString a = US_Util::new_guid();
+   US_Util::setGuidSource( QSharedPointer<US_GuidSource>( new US_SeededGuidSource( "seed-b" ) ) );
+   EXPECT_NE( US_Util::new_guid(), a );
+}
+
+TEST( US_UtilGuidSource, ClearingTheSourceRestoresRandomGuids )
+{
+   GuidSourceReset reset;
+   US_Util::setGuidSource( QSharedPointer<US_GuidSource>( new US_SeededGuidSource( "seed-a" ) ) );
+   const QString seeded = US_Util::new_guid();
+   US_Util::setGuidSource( {} );
+
+   const QString first  = US_Util::new_guid();
+   const QString second = US_Util::new_guid();
+   EXPECT_TRUE( isGuid( first ) );
+   EXPECT_NE( first, second );
+   EXPECT_NE( first, seeded );
 }

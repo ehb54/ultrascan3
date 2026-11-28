@@ -2,9 +2,9 @@
 
 #include "us_rotor_gui.h"
 #include "us_db2.h"
+#include "us_db_provider.h"
 #include "us_gui_settings.h"
 #include "us_notify.h"
-#include "us_passwd.h"
 #include "us_rotor.h"
 #include "us_settings.h"
 #include "us_util.h"
@@ -128,18 +128,16 @@ bool US_RotorGui::load_rotor(QString& load_init, double& coeff1, double& coeff2)
    if ( disk_controls->db() )
    {
       // Find out what labs we have
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
+      auto db = US_DBProvider::open();
 
-      if ( db.lastErrno() != IUS_DB2::OK )
+      if ( db->lastErrno() != IUS_DB2::OK )
       {
-         connect_error( db.lastError() );
+         connect_error( db->lastError() );
          return( false );
       }
 
       // Get information about all the labs
-      if ( US_Rotor::readLabsDB( labList, &db ) != US_Rotor::ROTOR_OK )
+      if ( US_Rotor::readLabsDB( labList, db.get() ) != US_Rotor::ROTOR_OK )
       {
          US_Notify::warning( this, tr( "Database Problem" ), tr( "Could not read lab information \n" ) );
 
@@ -166,24 +164,22 @@ bool US_RotorGui::load_rotor(QString& load_init, double& coeff1, double& coeff2)
       if ( disk_controls->db() )
       {
          // Find out what rotors we have
-         US_Passwd pw;
-         QString masterPW = pw.getPasswd();
-         US_DB2 db( masterPW );
+         auto db = US_DBProvider::open();
 
-         if ( db.lastErrno() != IUS_DB2::OK )
+         if ( db->lastErrno() != IUS_DB2::OK )
          {
-            connect_error( db.lastError() );
+            connect_error( db->lastError() );
             return( false );
          }
 
          QStringList q( "get_rotor_names" );
          q << QString::number( lab.ID );     // find rotors from this lab
-         db.query( q );
+         db->query( q );
 
-         while ( db.next() )
+         while ( db->next() )
          {
-            QString rotorID   = db.value( 0 ).toString();
-            QString rotorDesc = db.value( 1 ).toString();
+            QString rotorID   = db->value( 0 ).toString();
+            QString rotorDesc = db->value( 1 ).toString();
             rotorList << ( rotorID + ":" + rotorDesc + ":" + QString::number( lab.ID ) );
          }
 
@@ -504,25 +500,23 @@ void US_RotorGui::newRotor( void )
 
    if ( disk_controls->db() )
    {
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
-   
-      if ( db.lastErrno() != IUS_DB2::OK )
+      auto db = US_DBProvider::open();
+
+      if ( db->lastErrno() != IUS_DB2::OK )
       {
-         db_error( db.lastError() );
+         db_error( db->lastError() );
          return;
       }
 
-      int status = currentRotor.addRotorDB( &db );
+      int status = currentRotor.addRotorDB( db.get() );
       if ( status != IUS_DB2::OK )
-         db_error( db.lastError() );
+         db_error( db->lastError() );
 
       else
       {
-         int rotorID = db.lastInsertID();
+         int rotorID                = db->lastInsertID();
          currentCalibration.rotorID = rotorID;
-         currentCalibration.saveDB( rotorID, &db );
+         currentCalibration.saveDB( rotorID, db.get() );
       }
 
    }
@@ -588,18 +582,16 @@ US_Rotor::Status US_RotorGui::readRotor( int disk_db, int rotorID )
       return( US_Rotor::NOT_FOUND );
 
    if ( disk_db == US_Disk_DB_Controls::DB )
-   {                         
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
-   
-      if ( db.lastErrno() != IUS_DB2::OK )
+   {
+      auto db = US_DBProvider::open();
+
+      if ( db->lastErrno() != IUS_DB2::OK )
       {
-         connect_error( db.lastError() );
+         connect_error( db->lastError() );
          return( US_Rotor::CONNECT_ERROR );
       }
-   
-      status = currentRotor.readDB( rotorID, &db );
+
+      status = currentRotor.readDB( rotorID, db.get() );
 
       // Since there is no save rotor button, save any that is
       // selected to disk automatically
@@ -624,17 +616,15 @@ void US_RotorGui::deleteRotor( void )
 
    if ( disk_controls->db() )
    {
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
-   
-      if ( db.lastErrno() != IUS_DB2::OK )
+      auto db = US_DBProvider::open();
+
+      if ( db->lastErrno() != IUS_DB2::OK )
       {
-         connect_error( db.lastError() );
+         connect_error( db->lastError() );
          return;
       }
 
-      int status = US_Rotor::Rotor::deleteRotorDB( rotorID, &db );
+      int status = US_Rotor::Rotor::deleteRotorDB( rotorID, db.get() );
       if ( status == IUS_DB2::ROTOR_IN_USE )
       {
          QString error = tr( "This rotor is in use, and can't be deleted" );
@@ -644,7 +634,7 @@ void US_RotorGui::deleteRotor( void )
 
       else if ( status != IUS_DB2::OK )
       {
-         db_error( db.lastError() );
+         db_error( db->lastError() );
          return;
       }
    }
@@ -669,27 +659,25 @@ bool US_RotorGui::readCalibrationProfiles( int rotorID )
    if ( disk_controls->db() )
    {
       // Find out what rotor calibrations we have
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
-      
-      if ( db.lastErrno() != IUS_DB2::OK )
+      auto db = US_DBProvider::open();
+
+      if ( db->lastErrno() != IUS_DB2::OK )
       {
-         connect_error( db.lastError() );
+         connect_error( db->lastError() );
          return( false );
       }
       
       QStringList q( "get_rotor_calibration_profiles" );
       q  << QString::number( rotorID );
-      db.query( q );
-      
+      db->query( q );
+
       lw_calibrations->clear();
-      while ( db.next() )
+      while ( db->next() )
       {
-         QString ID   = db.value( 0 ).toString();
-         QStringList dateParts = db.value( 1 ).toString().split( " " );
+         QString     ID          = db->value( 0 ).toString();
+         QStringList dateParts   = db->value( 1 ).toString().split( " " );
          QDate dateUpdated = QDate::fromString( dateParts[ 0 ], "yyyy-MM-dd"  );
-         QString label = db.value( 2 ).toString();
+         QString     label       = db->value( 2 ).toString();
          calibrationDescriptions << ( ID + ": " + label + dateUpdated.toString( " (d MMMM yyyy)" ) );
       }
 
@@ -766,18 +754,16 @@ US_Rotor::Status US_RotorGui::readCalibration( int disk_db, int calibrationID )
       return( US_Rotor::NOT_FOUND );
 
    if ( disk_db == US_Disk_DB_Controls::DB )
-   {                         
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
-   
-      if ( db.lastErrno() != IUS_DB2::OK )
+   {
+      auto db = US_DBProvider::open();
+
+      if ( db->lastErrno() != IUS_DB2::OK )
       {
-         connect_error( db.lastError() );
+         connect_error( db->lastError() );
          return( US_Rotor::CONNECT_ERROR );
       }
-   
-      status = currentCalibration.readDB( calibrationID, &db );
+
+      status = currentCalibration.readDB( calibrationID, db.get() );
 
       // Since there is no save rotor calibration button, save any that is
       // selected to disk automatically
@@ -814,17 +800,15 @@ void US_RotorGui::deleteCalibration( void )
 
    if ( disk_controls->db() )
    {
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
-   
-      if ( db.lastErrno() != IUS_DB2::OK )
+      auto db = US_DBProvider::open();
+
+      if ( db->lastErrno() != IUS_DB2::OK )
       {
-         connect_error( db.lastError() );
+         connect_error( db->lastError() );
          return;
       }
 
-      int status = US_Rotor::RotorCalibration::deleteCalibrationDB( calibrationID, &db );
+      int status = US_Rotor::RotorCalibration::deleteCalibrationDB( calibrationID, db.get() );
       if ( status == IUS_DB2::CALIB_IN_USE )
       {
          QString error = tr( "This rotor calibration is in use, and can't be deleted" );
@@ -834,7 +818,7 @@ void US_RotorGui::deleteCalibration( void )
 
       else if ( status != IUS_DB2::OK )
       {
-         db_error( QString::number( status ) + ": " + db.lastError() );
+         db_error( QString::number( status ) + ": " + db->lastError() );
          return;
       }
    }
@@ -878,17 +862,15 @@ void US_RotorGui::saveCalibration()
    // Save the calibration info
    if ( disk_controls->db() )
    {
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
-   
-      if ( db.lastErrno() != US_DB2::OK )
+      auto db = US_DBProvider::open();
+
+      if ( db->lastErrno() != US_DB2::OK )
       {
-         connect_error( db.lastError() );
+         connect_error( db->lastError() );
          return;
       }
-   
-      int status = currentCalibration.saveDB( rotorID, &db );
+
+      int status = currentCalibration.saveDB( rotorID, db.get() );
       if ( status == US_DB2::OK )
       {
          replaceDummyCalibration();
@@ -936,18 +918,16 @@ void US_RotorGui::replaceDummyCalibration( void )
       return;
    }
 
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-   
-   if ( db.lastErrno() != US_DB2::OK )
+   auto db = US_DBProvider::open();
+
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      connect_error( db.lastError() );
+      connect_error( db->lastError() );
       return;
    }
 
    int oldCalibrationID = -1;                   // To return the dummy's ID in
-   int status = currentCalibration.replaceDummyDB( oldCalibrationID, &db );
+   int status           = currentCalibration.replaceDummyDB( oldCalibrationID, db.get() );
 
    if ( status == US_DB2::NO_CALIB )
    {
@@ -956,9 +936,9 @@ void US_RotorGui::replaceDummyCalibration( void )
       return;
    }
 
-   else if ( db.lastErrno() != US_DB2::OK )
+   else if ( db->lastErrno() != US_DB2::OK )
    {
-      db_error( db.lastError() );
+      db_error( db->lastError() );
       return;
    }
 
@@ -967,7 +947,7 @@ void US_RotorGui::replaceDummyCalibration( void )
       return;
 
    // If we get here then a dummy calibration was found and replaced without error
-   status = US_Rotor::RotorCalibration::deleteCalibrationDB( oldCalibrationID, &db );
+   status = US_Rotor::RotorCalibration::deleteCalibrationDB( oldCalibrationID, db.get() );
    if ( status == US_DB2::CALIB_IN_USE )
    {
       QString error = tr( "The database shows the dummy calibration is still in use, and can't be deleted" );
@@ -977,7 +957,7 @@ void US_RotorGui::replaceDummyCalibration( void )
 
    else if ( status != US_DB2::OK )
    {
-      db_error( QString::number( status ) + ": " + db.lastError() );
+      db_error( QString::number( status ) + ": " + db->lastError() );
       return;
    }
 }
@@ -1026,18 +1006,16 @@ bool US_RotorGui::load( void )
    if ( disk_controls->db() )
    {
       // Find out what labs we have
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
-      
-      if ( db.lastErrno() != US_DB2::OK )
+      auto db = US_DBProvider::open();
+
+      if ( db->lastErrno() != US_DB2::OK )
       {
-         connect_error( db.lastError() );
+         connect_error( db->lastError() );
          return( false );
       }
       
       // Get information about all the labs
-      if ( US_Rotor::readLabsDB( labList, &db ) != US_Rotor::ROTOR_OK )
+      if ( US_Rotor::readLabsDB( labList, db.get() ) != US_Rotor::ROTOR_OK )
       {
          US_Notify::warning( this, tr( "Database Problem" ), tr( "Could not read lab information \n" ) );
 
@@ -1116,24 +1094,22 @@ bool US_RotorGui::loadRotors( const int labID )
    if ( disk_controls->db() )
    {
       // Find out what rotors we have
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
-   
-      if ( db.lastErrno() != US_DB2::OK )
+      auto db = US_DBProvider::open();
+
+      if ( db->lastErrno() != US_DB2::OK )
       {
-         connect_error( db.lastError() );
+         connect_error( db->lastError() );
          return( false );
       }
    
       QStringList q( "get_rotor_names" );
       q << QString::number( labID );     // find rotors from this lab
-      db.query( q );
-   
-      while ( db.next() )
+      db->query( q );
+
+      while ( db->next() )
       {
-         QString rotorID   = db.value( 0 ).toString();
-         QString rotorDesc = db.value( 1 ).toString();
+         QString rotorID   = db->value( 0 ).toString();
+         QString rotorDesc = db->value( 1 ).toString();
          rotorDescriptions << ( rotorID + ": " + rotorDesc );
       }
 
@@ -1188,5 +1164,4 @@ void US_RotorGui::selectSimRotor( QStringList rotor_defs )
             << currentCalibration.rotorID;
 
    emit RotorCalibrationSelected( currentRotor, currentCalibration );
-   // close();
 }

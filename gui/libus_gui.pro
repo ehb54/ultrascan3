@@ -55,6 +55,7 @@ HEADERS      = \
                us_mwl_data.h            \
                us_new_spectrum.h        \
                us_noise_loader.h        \
+               us_db_provider.h         \
                us_notify.h              \
                us_passwd.h              \
                us_plot.h                \
@@ -122,6 +123,7 @@ SOURCES      = \
                us_mwl_data.cpp            \
                us_new_spectrum.cpp        \
                us_noise_loader.cpp        \
+               us_db_provider.cpp         \
                us_notify.cpp              \
                us_passwd.cpp              \
                us_plot.cpp                \

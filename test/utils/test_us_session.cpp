@@ -2,8 +2,10 @@
 // US_Session's master-password checks, caching and sources, without a GUI or
 // the user's shared memory: each case uses an in-memory store, and the test
 // runner isolates the settings the stored hash lives in.
+#include "mock_us_db2.h"
 #include "qt_test_base.h"
 #include "us_credential_source.h"
+#include "us_db2.h"
 #include "us_global.h"
 #include "us_session.h"
 #include "us_settings.h"
@@ -366,6 +368,57 @@ TEST_F( US_CredentialSourceTest, TerminalSourceRefusesInputThatIsNotATerminal )
    EXPECT_EQ( source.request( "Master password", 1, secret ), US_CredentialSource::Outcome::Unavailable );
    EXPECT_EQ( source.maxAttempts(), 3 );
 }
+
+namespace
+{
+// Hands out the connection it was given, once, and counts the calls.
+class HandingProvider : public IUS_DBProvider
+{
+   public:
+      explicit HandingProvider( IUS_DB2* db ) : db( db )
+      {
+      }
+
+      std::unique_ptr<IUS_DB2> open() override
+      {
+         opened++;
+         return std::unique_ptr<IUS_DB2>( std::exchange( db, nullptr ) );
+      }
+
+      IUS_DB2* db;
+      int      opened = 0;
+};
+} // namespace
+
+#ifndef NO_DB
+TEST_F( US_SessionTest, WithoutAProviderTheSavedProfileIsUsed )
+{
+   // No profile is saved in the isolated settings, so this fails before any
+   // network access, as a US_DB2 built with the master password does.
+   store->value               = "synthetic-master";
+   US_Session               s = session();
+
+   std::unique_ptr<IUS_DB2> db = s.openDatabase();
+   ASSERT_NE( db, nullptr );
+   EXPECT_NE( db->lastErrno(), IUS_DB2::OK );
+   EXPECT_TRUE( db->lastError().contains( "not configured" ) ) << db->lastError().toStdString();
+}
+
+TEST_F( US_SessionTest, AnInstalledProviderSuppliesTheConnection )
+{
+   US_Session                      s    = session();
+   auto*                           mock = new US_DB2_Mock;
+   QSharedPointer<HandingProvider> provider( new HandingProvider( mock ) );
+   s.setProvider( provider );
+
+   std::unique_ptr<IUS_DB2> db = s.openDatabase();
+   EXPECT_EQ( db.get(), mock );
+   EXPECT_EQ( provider->opened, 1 );
+
+   s.setProvider( {} );
+   EXPECT_NE( s.openDatabase().get(), mock );
+}
+#endif
 
 // The shared cache field: what one process writes, another reads back.
 TEST( US_GlobalPasswdField, NonAsciiPasswordsRoundTripAsLatin1 )

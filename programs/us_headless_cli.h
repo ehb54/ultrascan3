@@ -14,6 +14,7 @@
 #include "us_notify.h"
 #include "us_session.h"
 #include "us_sim_cli.h"
+#include "us_util.h"
 
 //! \brief Use Qt's offscreen platform when no window will be shown, so
 //! headless runs need no display.
@@ -63,7 +64,8 @@ inline bool parseSimCli( US_SimCli::Tool tool, US_SimCliArgs& args, int& exit_co
 }
 
 //! \brief Apply the process-wide choices the command line makes.
-//! A headless (--errors-cl) run routes notifications to
+//! --guid-seed makes every GUID the run creates reproducible, not only the
+//! keyed ones. A headless (--errors-cl) run needs no dialogs: messages go to
 //! the console, and the master password comes from US_MASTER_PASSWORD or,
 //! when that is unset, a no-echo prompt on the terminal, asked for only when
 //! a load first needs the database. Never from the command line: it would
@@ -72,6 +74,10 @@ inline bool parseSimCli( US_SimCli::Tool tool, US_SimCliArgs& args, int& exit_co
 //! Call once at startup, before any other thread runs.
 inline void useHeadlessServices( const US_SimCliArgs& args )
 {
+   if ( !args.guid_seed.isEmpty() )
+   {
+      US_Util::setGuidSource( QSharedPointer<US_GuidSource>( new US_SeededGuidSource( args.guid_seed ) ) );
+   }
    if ( !args.errors_cl )
    {
       return;

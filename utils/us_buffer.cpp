@@ -23,6 +23,20 @@ bool US_BufferComponent::getAllFromDB( const QString& masterPW, QMap<QString, US
       return false;
    }
 
+   return getAllFromDB( db, componentList, error );
+}
+
+bool US_BufferComponent::getAllFromDB( IUS_DB2& db, QMap<QString, US_BufferComponent>& componentList, QString* error )
+{
+   if ( !db.isConnected() )
+   {
+      if ( error != nullptr )
+      {
+         *error = db.lastError();
+      }
+      return false;
+   }
+
    QStringList q( "get_buffer_component_desc" );
    db.query( q );
    const int status = db.lastErrno();

@@ -6,6 +6,7 @@
 #include <QSharedPointer>
 #include <QString>
 
+#include "ius_db_provider.h"
 #include "us_credential_source.h"
 #include "us_extern.h"
 
@@ -17,7 +18,7 @@
 //! Candidates come from a US_CredentialSource: the GUI passes a dialog,
 //! command-line tools the environment or the terminal.
 //!
-//! The process-wide settings (store and prompt sources) are made at
+//! The process-wide settings (store, prompt sources, provider) are made at
 //! startup, before other threads use the session; tests replace the whole
 //! session with US_SessionOverride.
 class US_UTIL_EXTERN US_Session
@@ -125,6 +126,19 @@ class US_UTIL_EXTERN US_Session
       //! \brief unlock() with the prompt sources.
       [[nodiscard]] Result     unlockWithPromptSources();
 
+      //! \brief A database connection from the current provider; never null.
+      //! Without an installed provider, connects with the saved profile and
+      //! the master password; when none was entered that fails at once,
+      //! without contacting the server.
+      std::unique_ptr<IUS_DB2> openDatabase();
+
+      //! \brief Install the provider openDatabase() uses, at startup; null
+      //! restores the saved-profile provider.
+      void                     setProvider( QSharedPointer<IUS_DBProvider> provider );
+
+      //! \brief Whether a provider has been installed.
+      bool                     hasProvider() const;
+
       //! \brief The format of the stored password hash.
       //! 1 is an unsalted SHA-1 of the Latin-1 bytes, also assumed when no
       //! format has been recorded.
@@ -134,6 +148,7 @@ class US_UTIL_EXTERN US_Session
       QSharedPointer<Store>                      store;
       QString                                    accepted; // as entered in this process
       QList<QSharedPointer<US_CredentialSource>> prompt_sources;
+      QSharedPointer<IUS_DBProvider>             provider;
 
       static QByteArray                          hashOf( const QString& password );
 
