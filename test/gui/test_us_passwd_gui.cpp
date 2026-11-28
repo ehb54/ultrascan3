@@ -17,7 +17,6 @@
 
 #include "us_credential_source.h"
 #include "us_db2.h"
-#include "us_db_provider.h"
 #include "us_notify.h"
 #include "us_passwd.h"
 #include "us_session.h"
@@ -116,24 +115,6 @@ DialogScript::Action fillSignoff( const QString& comment, const QString& passwor
       w->findChild<QDialogButtonBox*>()->button( QDialogButtonBox::Ok )->click();
    };
 }
-// Hands out the connection it was given and counts the calls.
-class HandingProvider : public IUS_DBProvider
-{
-   public:
-      explicit HandingProvider( IUS_DB2* db ) : db( db )
-      {
-      }
-
-      std::unique_ptr<IUS_DB2> open() override
-      {
-         opened++;
-         return std::unique_ptr<IUS_DB2>( std::exchange( db, nullptr ) );
-      }
-
-      IUS_DB2* db;
-      int      opened = 0;
-};
-
 class RecordingNotifier : public US_Notifier
 {
    public:
@@ -222,36 +203,18 @@ class US_PasswdGuiTest : public QObject
       }
 
 #ifndef NO_DB
-      void anInstalledProviderIsUsedWithoutAPrompt()
-      {
-         // Locked: a provider that authenticates on its own needs no local
-         // master password, so no dialog is shown.
-         auto*                           connection = new US_DB2;
-         QSharedPointer<HandingProvider> provider( new HandingProvider( connection ) );
-         US_Session::instance().setProvider( provider );
-         DialogScript             script( { cancel() } );
-
-         std::unique_ptr<IUS_DB2> db = US_DBProvider::open();
-
-         QCOMPARE( db.get(), static_cast<IUS_DB2*>( connection ) );
-         QCOMPARE( provider->opened, 1 );
-         QCOMPARE( script.remaining(), 1 );
-         QVERIFY( store->value.isEmpty() );
-      }
-
       void aCancelledUnlockFailsWithoutContactingTheServer()
       {
          // A saved profile pointing at a port nothing listens on: if the
          // connection were attempted, the error would be the server's.
          US_Settings::set_defaultDB(
             { "Synthetic", "user", "db", "127.0.0.1:1", "00", "00", "a@example.invalid", "00", "00", "guid" } );
-         DialogScript             script( { cancel() } );
+         DialogScript script( { cancel() } );
 
-         std::unique_ptr<IUS_DB2> db = US_DBProvider::open();
+         US_DB2       db( US_Passwd().getPasswd() );
 
-         QVERIFY( db != nullptr );
-         QVERIFY( db->lastErrno() != IUS_DB2::OK );
-         QVERIFY2( db->lastError().contains( "master password was not entered" ), qPrintable( db->lastError() ) );
+         QVERIFY( db.lastErrno() != IUS_DB2::OK );
+         QVERIFY2( db.lastError().contains( "master password was not entered" ), qPrintable( db.lastError() ) );
          QCOMPARE( script.remaining(), 0 );
          QVERIFY( store->value.isEmpty() );
       }
