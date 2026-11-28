@@ -37,7 +37,6 @@
 
 #include "us_settings.h"
 #include "us_solution_vals.h"
-#include "us_tar.h"
 #include "us_tmst_plot.h"
 
 #define MIN_NTC   25
@@ -3967,9 +3966,17 @@ void US_ReporterGMP::generate_report( void )
   mkdir( US_Settings::reportDir(), subDirName );
   QStringList f_exts = QStringList() <<  "*.*"; 
   remove_files_by_mask( dirName, f_exts );
+  // The earlier report is gone; View Generated Report waits for this one.
+  pb_view_report->setEnabled( false );
+  // Only the interactive window has the report path field.
+  if ( te_fpath_info != nullptr )
+  {
+     te_fpath_info->clear();
+  }
   ///////////////////////////////////////////////////
 
   report_aborted = false;
+  unsaved_plots.clear();
 
   int msg_range = currProto.rpSolut.nschan + 5;
 
@@ -4412,11 +4419,18 @@ void US_ReporterGMP::generate_report( void )
           "Reviwer(s) of the current GMP report will be notified." )
          .arg( filePath ) );
 
+   if ( !unsaved_plots.isEmpty() )
+   {
+      msgBox_a.setInformativeText( msgBox_a.informativeText() + "\n\n" +
+                                   tr( "%n plot file(s) could not be written:", "", static_cast<int>( unsaved_plots.size() ) ) +
+                                   "\n" + unsaved_plots.mid( 0, 10 ).join( "\n" ) + ( unsaved_plots.size() > 10 ? "\n..." : "" ) );
+   }
+
    msgBox_a.setWindowTitle( tr( "Report Generation Complete" ) );
    QPushButton* Open = msgBox_a.addButton( tr( "View Report" ), QMessageBox::YesRole );
    //QPushButton *Cancel  = msgBox_a.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
 
-   msgBox_a.setIcon( QMessageBox::Information );
+   msgBox_a.setIcon( unsaved_plots.isEmpty() ? QMessageBox::Information : QMessageBox::Warning );
    msgBox_a.exec();
 
    if ( msgBox_a.clickedButton() == Open )
@@ -11486,11 +11500,26 @@ bool US_ReporterGMP::mkdir( const QString& baseDir, const QString& subdir )
 
    if ( folder.mkdir( subdir ) ) return true;
 
+   // Shown in autoflow too: without its folder the report cannot be written
    QMessageBox::warning( this,
       tr( "File error" ),
       tr( "Could not create the directory:\n" ) + baseDir + "/" + subdir );
 
    return false;
+}
+
+// An autoflow report is generated unattended, so the failure is logged and shown in
+// the message at the end instead of stopping the report with a dialog.
+void US_ReporterGMP::plot_not_saved( const QString& filename )
+{
+   if ( auto_mode )
+   {
+      qWarning() << "Unable to write file" << filename;
+      unsaved_plots << QFileInfo( filename ).fileName();
+      return;
+   }
+
+   QMessageBox::warning( this, tr( "File Write Error" ), tr( "Unable to write file:\n%1" ).arg( filename ) );
 }
 
 // Write out a plot
@@ -11499,8 +11528,9 @@ void US_ReporterGMP::write_plot( const QString& filename, const QwtPlot* plot )
    if ( filename.contains( ".svg" ) )
    {  // Save an SVG file and a PNG copy
       if ( US_GuiUtil::save_plot( filename, plot ) != 0 )
-         QMessageBox::warning( this, tr( "File Write Error" ),
-            tr( "Unable to write file" ) + filename );
+      {
+         plot_not_saved( filename );
+      }
    }
 
 
@@ -11526,16 +11556,18 @@ void US_ReporterGMP::write_plot( const QString& filename, const QwtPlot* plot )
  #endif
 
        if ( ! ok )
-          QMessageBox::warning( this, tr( "File Write Error" ),
-             tr( "Unable to write file" ) + filename );
+       {
+          plot_not_saved( filename );
+       }
     }
 
    else if ( filename.endsWith( ".png" ) )
    {  // General case of PNG
      qDebug() << "SAVING PNGs!!!!";
       if ( US_GuiUtil::save_png( filename, plot ) != 0 )
-         QMessageBox::warning( this, tr( "File Write Error" ),
-            tr( "Unable to write file" ) + filename );
+      {
+         plot_not_saved( filename );
+      }
    }
 }
 
@@ -13266,37 +13298,7 @@ void US_ReporterGMP::write_pdf_report( void )
       file_exts << "*.svgz" << "*.html" << "*.txt";                // retain *pngs (BUT remove *html) for further assembly at e-Signing
       remove_files_by_mask( dirName, file_exts );
 
-      
-      //Archive using US_Tar [does NOT work for filename lengths >=100 char]
-      /****************************************************************************
-      QDir odir( dirName );
-      QStringList fileList = odir.entryList( QStringList( "*.pdf" ), QDir::Files );
 
-      QStringList fileList_fullPath;
-      for (int i=0; i<fileList.size(); ++i )
-       	{
-       	  fileList_fullPath << dirName + "/" + fileList[i];
-       	  qDebug() << "Files -- " << dirName + "/" + fileList[i];
-       	}
-      
-      US_Tar tar;
-      int result;
-       QString tarFilename = dirName + "/" + subDirName + ".tar.gz";
-       QStringList list_t;
-       //result = tar.create( tarFilename, dirName, &list_t );
-       result = tar.create( tarFilename, fileList_fullPath, &list_t );
-       
-       if ( result != TAR_OK )
-	 {
-	   QString errormsg = QString("Error: Problem creating tar archive %1").arg( tarFilename );
-	   
-	   QMessageBox::warning( this, tr( "Error with creating .TAR" ),
-				 errormsg );
-	   
-	   return;
-	 }
-      ***************************************************************************/
-      
       //Archive using system TAR: do NOT use gZip (.tgz, .tar.gz)!!! 
       //<------ TESTING!!!! ***************************************************************
       // QString tarFilename_t = subDirName + "_GMP_DB.tgz";

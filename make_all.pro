@@ -30,7 +30,8 @@ for(area, PROGRAM_LIBS){
 lib_name = programlib_$${area}
 SUBDIRS += $$lib_name
 $$val_escape(lib_name).depends = qwtplot3d utils gui
-$$val_escape(lib_name).subdir = programlibs/$$val_escape(area)
+$$val_escape(lib_name).file = programlibs/$${area}/us_programs_$${area}.pro
+$$val_escape(lib_name).makefile = Makefile
 PROGRAM_LIB_TARGETS += $$lib_name
 }
 

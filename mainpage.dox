@@ -24,7 +24,6 @@
     - \ref US_ExtProfile
     - \ref US_GetUrl
     - \ref US_Global
-    - \ref US_Gzip
     - \ref US_Hardware
       - \ref US_AbstractCenterpiece
     - \ref US_HttpPost
@@ -51,7 +50,6 @@
     - \ref US_SolutionVals
     - \ref US_SolveSim
     - \ref US_StiffBase
-    - \ref US_Tar
     - \ref US_TimeState
     - \ref US_Timer
     - \ref US_Util

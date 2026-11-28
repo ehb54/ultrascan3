@@ -222,18 +222,11 @@ jobs:
           if [ "$FORCE_ALL" = "true" ] || [ "$COMMON_CHANGED" = "true" ] || [ "$LIBS_CHANGED" = "true" ]; then
             echo "Global rebuild with all programs"
             echo "." >> build_targets.txt
-          else
+          elif [ -n "$CHANGED_FILES" ]; then
             echo "Calculate changed programs"
-            for file in $CHANGED_FILES; do
-              dir=$(echo $file | awk -F/ '{print $1"/"$2}')
-
-              if [ -d "$dir" ]; then
-                # add the directory itself
-                echo "$dir" >> build_targets.txt
-                # Derive transitive dependents from the qmake area graph.
-                python3 scripts/check-program-libraries.py --affected-programs "$dir" >> build_targets.txt
-              fi
-            done
+            read -r -a changed_files <<< "$CHANGED_FILES"
+            # Resolve program paths and transitive dependents from the qmake area graph.
+            python3 scripts/check-program-libraries.py --affected-programs "${changed_files[@]}" >> build_targets.txt
           fi
           # sort and deduplicate
           SORTED_TARGETS=$(cat build_targets.txt | sort -u | tr '\n' ' ')

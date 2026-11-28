@@ -1,9 +1,8 @@
-#include "us_mpi_analysis.h"
-#include "us_math2.h"
-#include "us_settings.h"
-#include "us_tar.h"
-#include "us_sleep.h"
 #include "mpi.h"
+#include "us_math2.h"
+#include "us_mpi_analysis.h"
+#include "us_settings.h"
+#include "us_sleep.h"
 
 // Analysis jobs with Supervisor and 2 or more Master+Workers parallel groups
 void US_MPI_Analysis::pmasters_start()

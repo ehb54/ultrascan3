@@ -524,6 +524,47 @@ TEST_P( AnalyteXml, WriterPreservesDistinctSpectrumFrequencies )
    EXPECT_EQ( 3, a.extinction.size() );
 }
 
+TEST_P( AnalyteXml, WriterUsesShortestRoundTripFrequencyText )
+{
+   US_Analyte a;
+   a.analyteGUID  = "fixture";
+   a.extinction   = { { 280.2, 1.0 }, { 280.24, 2.0 }, { 0.1 + 0.2, 3.0 }, { 280.0, 4.0 } };
+   a.refraction   = a.extinction;
+   a.fluorescence = a.extinction;
+   QByteArray bytes;
+   ASSERT_NO_FATAL_FAILURE( write( a, bytes ) );
+   QXmlStreamReader           xml( bytes );
+   QMap<QString, QStringList> texts;
+   while ( !xml.atEnd() )
+   {
+      xml.readNext();
+      const QString name = xml.name().toString();
+      if ( xml.isStartElement() && ( name == "extinction" || name == "refraction" || name == "fluorescence" ) )
+      {
+         texts[name] << xml.attributes().value( "frequency" ).toString();
+      }
+   }
+   EXPECT_FALSE( xml.hasError() );
+   for ( const QString& name : { QString( "extinction" ), QString( "refraction" ), QString( "fluorescence" ) } )
+   {
+      // 0.1 + 0.2 is not 0.3, so it needs 17 digits to read back; a whole
+      // number has no decimal point.
+      EXPECT_EQ( ( QStringList{ "0.30000000000000004", "280", "280.2", "280.24" } ), texts.value( name ) );
+   }
+
+   // Every frequency reads back to the same key.  The reader also adds the
+   // { 0, 0 } extinction entry it always holds.
+   US_Analyte b;
+   ASSERT_NO_FATAL_FAILURE( read( b, bytes ) );
+   for ( auto it = a.extinction.cbegin(); it != a.extinction.cend(); ++it )
+   {
+      ASSERT_TRUE( b.extinction.contains( it.key() ) ) << it.key();
+      EXPECT_EQ( it.value(), b.extinction.value( it.key() ) );
+   }
+   EXPECT_EQ( a.refraction, b.refraction );
+   EXPECT_EQ( a.fluorescence, b.fluorescence );
+}
+
 TEST_P( AnalyteXml, WriterEscapesUnicodeAndOmitsMemoryOnlyFields )
 {
    US_Analyte a;

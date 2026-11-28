@@ -5,7 +5,9 @@ include( ../programlib.pri )
 TARGET        = us_programs_analysis
 QT           += xml sql svg opengl printsupport datavisualization
 
-HEADERS      = ../../programs/us_analysis_profile/us_analysis_profile.h \
+HEADERS      = ../../programs/us_abde/us_norm_profile.h                  \
+               ../../programs/us_buoyancy/us_buoyancy.h                  \
+               ../../programs/us_analysis_profile/us_analysis_profile.h \
                ../../programs/us_2dsa/us_2dsa.h                         \
                ../../programs/us_2dsa/us_2dsa_process.h                 \
                ../../programs/us_2dsa/us_adv_analysis_2d.h              \
@@ -25,7 +27,9 @@ HEADERS      = ../../programs/us_analysis_profile/us_analysis_profile.h \
                ../../programs/us_mwl_species_fit/us_mwl_species_fit.h   \
                ../../programs/us_mwl_species_sim/us_mwl_species_sim.h
 
-SOURCES      = ../../programs/us_analysis_profile/us_analysis_profile.cpp \
+SOURCES      = ../../programs/us_abde/us_norm_profile.cpp                \
+               ../../programs/us_buoyancy/us_buoyancy.cpp                \
+               ../../programs/us_analysis_profile/us_analysis_profile.cpp \
                ../../programs/us_analysis_profile/us_anapro_utils.cpp     \
                ../../programs/us_2dsa/us_2dsa.cpp                         \
                ../../programs/us_2dsa/us_2dsa_process.cpp                 \

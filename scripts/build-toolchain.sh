@@ -167,6 +167,11 @@ for PROFILE in $PROFILES; do
     # Separate install trees prevent profiles from pruning each other's packages.
     "--x-install-root=${US3_VCPKG_ROOT}/installed-toolchain-${PROFILE}"
   )
+  # build.sh TEST uses the APP features plus test (GoogleTest), so the APP
+  # install caches GoogleTest too.
+  if [ "$PROFILE" = "APP" ]; then
+    ARGS+=("--x-feature=test")
+  fi
   [ -d "$OVERLAY_PORTS" ] && ARGS+=("--overlay-ports=${OVERLAY_PORTS}")
 
   "$US3_VCPKG_ROOT/vcpkg" install "${ARGS[@]}"
