@@ -11,7 +11,6 @@
 #include <QTextStream>
 
 #include "us_credential_source.h"
-#include "us_notify.h"
 #include "us_session.h"
 #include "us_sim_cli.h"
 #include "us_util.h"
@@ -63,27 +62,19 @@ inline bool parseSimCli( US_SimCli::Tool tool, US_SimCliArgs& args, int& exit_co
    return true;
 }
 
-//! \brief Apply the process-wide choices the command line makes.
-//! --guid-seed makes every GUID the run creates reproducible, not only the
-//! keyed ones. A headless (--errors-cl) run needs no dialogs: messages go to
-//! the console, and the master password comes from US_MASTER_PASSWORD or,
-//! when that is unset, a no-echo prompt on the terminal, asked for only when
-//! a load first needs the database. Never from the command line: it would
-//! show in process listings and shell history. A headless run uses an
-//! unlock the desktop has cached but never writes its own into that cache.
-//! Call once at startup, before any other thread runs.
-inline void useHeadlessServices( const US_SimCliArgs& args )
+//! \brief Apply the optional GUID seed before creating simulator inputs.
+inline void useSimulatorGuidSeed( const US_SimCliArgs& args )
 {
    if ( !args.guid_seed.isEmpty() )
    {
       US_Util::setGuidSource( QSharedPointer<US_GuidSource>( new US_SeededGuidSource( args.guid_seed ) ) );
    }
-   if ( !args.errors_cl )
-   {
-      return;
-   }
-   US_Notify::setNotifier( QSharedPointer<US_Notifier>( new US_ConsoleNotifier ) );
-   if ( args.no_db )
+}
+
+//! \brief Configure the password sources for a headless simulator with database inputs.
+inline void useHeadlessCredentials( const US_SimCliArgs& args )
+{
+   if ( !args.errors_cl || args.no_db )
    {
       return;
    }

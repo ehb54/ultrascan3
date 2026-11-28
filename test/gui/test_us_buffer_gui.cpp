@@ -104,7 +104,7 @@ class US_BufferGuiTest : public QObject
          US_SessionOverride session( QSharedPointer<MemoryStore>( new MemoryStore ) );
          US_Session::instance().setProvider( QSharedPointer<HandingProvider>( new HandingProvider( new RefusedLogin ) ) );
          QSharedPointer<RecordingNotifier> notifier( new RecordingNotifier );
-         US_Notify::setNotifier( notifier );
+         US_Notify::setNotifierForTests( notifier );
 
          int             investigator = 1;
          int             from_db      = 1;
@@ -112,7 +112,7 @@ class US_BufferGuiTest : public QObject
          US_BufferGuiNew panel( &investigator, &from_db, &buffer );
          panel.init_buffer();
 
-         US_Notify::setNotifier( {} );
+         US_Notify::setNotifierForTests( {} );
          US_Session::instance().setProvider( {} );
 
          QCOMPARE( notifier->messages.size(), 1 );

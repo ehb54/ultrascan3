@@ -1,6 +1,7 @@
 //! \file us_passwd.cpp
 #include "us_passwd.h"
 #include "us_credential_source.h"
+#include "us_notify.h"
 #include "us_session.h"
 #include <QApplication>
 
@@ -85,7 +86,7 @@ QString US_Passwd::getPasswd( void  )
    }
 
   // A headless run has no one to answer the password dialog.
-  if ( qApp != nullptr && qApp->property( "us3_headless" ).toBool() )
+  if ( qApp != nullptr && qApp->property( US_Notify::HeadlessProperty ).toBool() )
   {
      qWarning() << "Error: the master password is not available to this "
                    "headless run; start UltraScan to unlock the database, "
