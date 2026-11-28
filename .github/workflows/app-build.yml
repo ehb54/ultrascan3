@@ -177,6 +177,26 @@ jobs:
           ref: ${{ inputs.ref || 'main' }}
           fetch-depth: 0
 
+      - name: Pin CMake for macOS arm64
+        if: runner.os == 'macOS' && runner.arch == 'ARM64'
+        shell: bash
+        run: |
+          # Keep vcpkg's CMake ABI input compatible with the pinned arm64 cache.
+          set -euo pipefail
+          dir="$(mktemp -d "$RUNNER_TEMP/cmake-4.5.0.XXXXXX")"
+          archive="$dir/cmake.tar.gz"
+          curl -fsSL --retry 3 \
+            https://github.com/Kitware/CMake/releases/download/v4.5.0/cmake-4.5.0-macos-universal.tar.gz \
+            -o "$archive"
+          printf '%s  %s\n' \
+            a645d69fd21e521759cc0c64e7c60462d43faf0c7214ac05f75c80f7c5037dde \
+            "$archive" | shasum -a 256 -c -
+          tar -xzf "$archive" -C "$dir"
+          cmake="$(find "$dir" -path '*/CMake.app/Contents/bin/cmake' -print -quit)"
+          test -x "$cmake"
+          "$cmake" --version
+          dirname "$cmake" >> "$GITHUB_PATH"
+
       - uses: ./.github/actions/build-package
         with:
           profile: ${{ inputs.profile }}
