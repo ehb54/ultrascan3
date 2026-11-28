@@ -33,7 +33,7 @@ class US_GUI_EXTERN US_Notifier
 namespace US_Notify
 {
 //! \brief Application property that routes notifications to standard error.
-constexpr char     HeadlessProperty[] = "us3_headless";
+constexpr char     HeadlessProperty[] = "us_headless";
 
 //! \brief Override delivery for a test; null restores normal routing.
 US_GUI_EXTERN void setNotifierForTests( QSharedPointer<US_Notifier> notifier );
