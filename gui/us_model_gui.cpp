@@ -3,10 +3,10 @@
 #include "us_model_gui.h"
 #include "us_associations_gui.h"
 #include "us_constants.h"
+#include "us_db_provider.h"
 #include "us_gui_settings.h"
 #include "us_investigator.h"
 #include "us_notify.h"
-#include "us_passwd.h"
 #include "us_properties.h"
 #include "us_settings.h"
 #include "us_util.h"
@@ -86,9 +86,8 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    // Pushbuttons
    QBoxLayout* buttonbox   = new QHBoxLayout;
    QPushButton* pb_help    = us_pushbutton( tr( "Help") );
-   QPushButton* pb_close   = us_pushbutton( tr( "Cancel") );
-   //QPushButton* pb_accept  = us_pushbutton( tr( "Accept") );
-                pb_accept  = us_pushbutton( tr( "Accept") );
+   QPushButton* pb_close    = us_pushbutton( tr( "Cancel" ) );
+   pb_accept                = us_pushbutton( tr( "Accept" ) );
    buttonbox->addWidget( pb_help );
    buttonbox->addWidget( pb_close );
    buttonbox->addWidget( pb_accept );
@@ -261,28 +260,27 @@ bool US_ModelGui::load_model( const QString& load_init, US_Model& modelIn )
                   return false;
                }
 
-               US_Passwd pw;
-               US_DB2    db( pw.getPasswd() );
+               auto db = US_DBProvider::open();
 
-               if ( db.lastErrno() != IUS_DB2::OK )
+               if ( db->lastErrno() != IUS_DB2::OK )
                {
-                  connect_error( db.lastError() );
+                  connect_error( db->lastError() );
                   return false;
                }
 
                QStringList q;
                q << "get_model_desc" << QString::number( investigator );
 
-               db.query( q );
+               db->query( q );
 
-               while ( db.next() )
+               while ( db->next() )
                {
                   ModelDesc md;
 
-                  md.DB_id       = db.value( 0 ).toString();
-                  md.modelGUID   = db.value( 1 ).toString();
-                  md.description = db.value( 2 ).toString();
-                  md.editGUID    = db.value( 5 ).toString();
+                  md.DB_id       = db->value( 0 ).toString();
+                  md.modelGUID   = db->value( 1 ).toString();
+                  md.description = db->value( 2 ).toString();
+                  md.editGUID    = db->value( 5 ).toString();
                   md.filename.clear();
 
                   model_descriptions << md;
@@ -295,18 +293,17 @@ bool US_ModelGui::load_model( const QString& load_init, US_Model& modelIn )
                {
                   if ( dkdb_cntrls->db() )
                   {  // Load from database
-                     US_Passwd pw;
-                     US_DB2    db( pw.getPasswd() );
+                     auto db = US_DBProvider::open();
 
-                     if ( db.lastErrno() != IUS_DB2::OK )
+                     if ( db->lastErrno() != IUS_DB2::OK )
                      {
-                        connect_error( db.lastError() );
+                        connect_error( db->lastError() );
                         return false;
                      }
 
                      QString modelID = model_description.DB_id;
                      modelID_global = modelID;
-                     if ( modelIn.load( modelID, &db ) == IUS_DB2::OK )
+                     if ( modelIn.load( modelID, db.get() ) == IUS_DB2::OK )
                      {
                         result = true;
                         loaded = true;
@@ -492,21 +489,20 @@ qDebug() << "SelMdl:  index modlx" << index << modlx << "mdesc" << mdesc;
 
    if ( dkdb_cntrls->db() )
    {  // Load from database
-      US_Passwd pw;
-      US_DB2    db( pw.getPasswd() );
+      auto db = US_DBProvider::open();
 
-      if ( db.lastErrno() != IUS_DB2::OK )
+      if ( db->lastErrno() != IUS_DB2::OK )
       {
-         connect_error( db.lastError() );
+         connect_error( db->lastError() );
          return;
       }
 
       QString modelID = model_descriptions[ modlx ].DB_id;
-      const int status  = model.load( modelID, &db );
+      const int status  = model.load( modelID, db.get() );
 
       if ( status != IUS_DB2::OK )
       {
-         load_error( mdesc, tr( "Database status %1\n" ).arg( status ) + db.lastError() );
+         load_error( mdesc, tr( "Database status %1\n" ).arg( status ) + db->lastError() );
          item->listWidget()->setCurrentRow( recent_row );
          return;
       }
@@ -568,8 +564,7 @@ qDebug() << "SelMdl:  index modlx" << index << modlx << "mdesc" << mdesc;
                                   .arg( mdesc ) );
 
        pb_save      ->setEnabled( false );
-       pb_delete    ->setEnabled( false );
-       //pb_accept  ->setEnabled( false );
+       pb_delete->setEnabled( false );
        pb_components->setEnabled( false );
        pb_associations ->setEnabled( false );
      }
@@ -579,22 +574,23 @@ bool US_ModelGui::is_modelIDs_from_autoflow( QString mID )
 {
   QStringList modelInfos_autoflow;
   QStringList modelIDs_autoflow;
-  
-  US_Passwd pw;
-  US_DB2    db( pw.getPasswd() );
 
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      connect_error( db.lastError() );
-      return false;
-    }
-  
+  auto        db = US_DBProvider::open();
+
+  if ( db->lastErrno() != US_DB2::OK )
+  {
+     connect_error( db->lastError() );
+     return false;
+  }
+
   QStringList q;
   q << "get_modelIDs_for_autoflow";
-  db.query( q );
-  
-  while ( db.next() )
-    modelInfos_autoflow << db. value( 0 ).toString();
+  db->query( q );
+
+  while ( db->next() )
+  {
+     modelInfos_autoflow << db->value( 0 ).toString();
+  }
 
   return parse_models_desc_json ( modelInfos_autoflow, mID ); 
 }
@@ -614,35 +610,29 @@ bool US_ModelGui::parse_models_desc_json( QStringList modelInfos_autoflow, QStri
       foreach(const QString& key, json_obj.keys())
 	{
 	  QJsonValue value = json_obj.value(key);
-	  
-	  if ( key == "2DSA_IT" || key == "2DSA_MC" || key == "PCSA" ) 
-	    {
-	      //qDebug() << "ModelsDesc key, value: " << key << value;
-	      
-	      QJsonArray json_array = value.toArray();
-	      for (int i=0; i < json_array.size(); ++i )
-		{
-		  foreach(const QString& array_key, json_array[i].toObject().keys())
-		    {
-		      //by modelID
-		      if ( array_key == "modelID" )
-			{
-			  QString c_modelID = json_array[i].toObject().value(array_key).toString();
-			  // qDebug() << "modelDescJson Map: -- model, property, value: "
-			  // 	   << key
-			  // 	   << array_key
-			  // 	   << c_modelID;
-			  
-			  if ( c_modelID == mID )
-			    {
-			      qDebug() << "Model to affect [delete:update], ID=" << mID << " IS autoflow produced!!!";
-			      return true;
-			    }
-			}
-		    }
-		}
-	    }
-	}
+
+     if ( key == "2DSA_IT" || key == "2DSA_MC" || key == "PCSA" )
+     {
+        QJsonArray json_array = value.toArray();
+        for ( int i = 0; i < json_array.size(); ++i )
+        {
+           foreach ( const QString& array_key, json_array[i].toObject().keys() )
+           {
+              //by modelID
+              if ( array_key == "modelID" )
+              {
+                 QString c_modelID = json_array[i].toObject().value( array_key ).toString();
+
+                 if ( c_modelID == mID )
+                 {
+                    qDebug() << "Model to affect [delete:update], ID=" << mID << " IS autoflow produced!!!";
+                    return true;
+                 }
+              }
+           }
+        }
+     }
+   }
     }
 
   return false;
@@ -657,25 +647,10 @@ void US_ModelGui::delete_model( void )
    QString mdesc = lw_models->item( row )->text();
    int     modlx = modelIndex( mdesc, model_descriptions );
    ModelDesc md  = model_descriptions.takeAt( modlx );
-   
-   // //Check if the model was generated via autoflow framework
-   // qDebug() << "in delete_model(): modelID -- " << md.DB_id;
-   // if ( is_modelIDs_from_autoflow( md.DB_id ) )
-   //   {
-   //     qDebug() << "Model can NOT be deleted, autolfow-generated!";
 
-   //     QMessageBox::information( this, tr( "Selected Model Cannot be Deleted" ),
-   // 				 tr( "The Model:\n\n"
-   // 				     "\"%1\"\n\n"
-   // 				     "can NOT be deleted since it was generated within GMP framework!" )
-   // 				 .arg( mdesc ) );
 
-   //     return;
-   //   }
-   // //END of checking for autoflow
-   
-   show_model_desc();  // must be AFTER check!!!
-     
+   show_model_desc();
+
    // Delete from DB or disk
    if ( ! dkdb_cntrls->db() )
    {
@@ -701,18 +676,17 @@ void US_ModelGui::delete_model( void )
 
 bool US_ModelGui::status_query( const QStringList& q )
 {
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
+   auto db = US_DBProvider::open();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != US_DB2::OK )
    {
-      connect_error( db.lastError() );
+      connect_error( db->lastError() );
       return false;
    }
 
-   db.statusQuery( q );
+   db->statusQuery( q );
 
-   return database_ok( db );
+   return database_ok( *db );
 }
 
 void US_ModelGui::check_db( void )
@@ -881,25 +855,13 @@ void US_ModelGui::accept_model( void )
 
 void US_ModelGui::save_model( void )
 {
-  //Check is model ganerated with GMP
-  int     row   = lw_models->currentRow();
-  if ( row < 0 ) return;
+   int row = lw_models->currentRow();
+   if ( row < 0 )
+   {
+      return;
+   }
 
-  // QString mdesc = lw_models->item( row )->text();
-  // int     modlx = modelIndex( mdesc, model_descriptions );
-  // ModelDesc md  = model_descriptions.takeAt( modlx );
-  // if ( is_modelIDs_from_autoflow( md.DB_id ) )
-  //   {
-  //     qDebug() << "Model can NOT be save/updated, autolfow-generated!";
 
-  //     QMessageBox::information( this, tr( "Selected Model Cannot be Saved/Updated" ),
-  // 				tr( "The Model:\n\n"
-  // 				    "\"%1\"\n\n"
-  // 				    "can NOT be saved/updated since it was generated within GMP framework!" )
-  // 				 .arg( mdesc ) );
-  //     return;
-  //   }
-  
    if ( ! verify_model() ) return;
 
    model.wavelength = le_wavelength->text().toDouble();
@@ -938,16 +900,15 @@ qDebug() << "MdlSv:  fn" << fn;
    }
    else // Save/update in DB
    {
-      US_Passwd pw;
-      US_DB2    db( pw.getPasswd() );
+      auto db = US_DBProvider::open();
 
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db->lastErrno() != US_DB2::OK )
       {
-         connect_error( db.lastError() );
+         connect_error( db->lastError() );
          return;
       }
 
-      if ( model.write( &db ) == US_DB2::OK )
+      if ( model.write( db.get() ) == US_DB2::OK )
       {
          US_Notify::information( this, tr( "Model Written" ), tr( "The model has been %1 in the database." ).arg( model.message ) );
 
@@ -1096,28 +1057,27 @@ qDebug() << "LsMdl: path" << path;
             return;
          }
 
-         US_Passwd pw;
-         US_DB2    db( pw.getPasswd() );
+         auto db = US_DBProvider::open();
 
-         if ( db.lastErrno() != US_DB2::OK )
+         if ( db->lastErrno() != US_DB2::OK )
          {
-            connect_error( db.lastError() );
+            connect_error( db->lastError() );
             return;
          }
 
          QStringList q;
          q << "get_model_desc" << QString::number( investigator );
 
-         db.query( q );
+         db->query( q );
 
-         while ( db.next() )
+         while ( db->next() )
          {
             ModelDesc md;
 
-            md.DB_id       = db.value( 0 ).toString();
-            md.modelGUID   = db.value( 1 ).toString();
-            md.description = db.value( 2 ).toString();
-            md.editGUID    = db.value( 5 ).toString();
+            md.DB_id       = db->value( 0 ).toString();
+            md.modelGUID   = db->value( 1 ).toString();
+            md.description = db->value( 2 ).toString();
+            md.editGUID    = db->value( 5 ).toString();
             md.filename.clear();
 
             model_descriptions << md;

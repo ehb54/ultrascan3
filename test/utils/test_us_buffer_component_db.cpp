@@ -11,10 +11,12 @@ using ::testing::Eq;
 using ::testing::InSequence;
 using ::testing::Invoke;
 using ::testing::Matcher;
+using ::testing::NiceMock;
 using ::testing::Return;
 using ::testing::StrictMock;
 
-// getAllFromDB opens its own DB connection and is not unit tested.
+// getAllFromDB is tested here on a given connection; the master-password
+// overload, which opens its own, is in test_us_buffer_component_live.cpp.
 
 namespace
 {
@@ -296,4 +298,38 @@ TEST_F( BufferComponentDb, MalformedCoefficientsKeepTheComponent )
       ASSERT_TRUE( ::testing::Mock::VerifyAndClearExpectations( &db ) );
    }
 }
+}
+
+TEST( BufferComponentListDb, AConnectionThatIsNotOpenFailsWithItsError )
+{
+   NiceMock<US_DB2_Mock> db;
+   ON_CALL( db, isConnected() ).WillByDefault( Return( false ) );
+   ON_CALL( db, lastError() ).WillByDefault( Return( QString( "Connect open error: refused" ) ) );
+   EXPECT_CALL( db, query( Matcher<const QStringList&>( _ ) ) ).Times( 0 );
+
+   QMap<QString, US_BufferComponent> components;
+   QString                           error;
+   EXPECT_FALSE( US_BufferComponent::getAllFromDB( db, components, &error ) );
+   EXPECT_EQ( error, QString( "Connect open error: refused" ) );
+   EXPECT_TRUE( components.isEmpty() );
+}
+
+TEST( BufferComponentListDb, AComponentThatCannotBeReadFailsTheList )
+{
+   NiceMock<US_DB2_Mock> db;
+   ON_CALL( db, isConnected() ).WillByDefault( Return( true ) );
+   const QStringList list{ "get_buffer_component_desc" };
+   const QStringList info{ "get_buffer_component_info", "73" };
+   EXPECT_CALL( db, query( Matcher<const QStringList&>( Eq( list ) ) ) );
+   EXPECT_CALL( db, query( Matcher<const QStringList&>( Eq( info ) ) ) );
+   EXPECT_CALL( db, lastErrno() )
+      .WillOnce( Return( IUS_DB2::OK ) )      // the list
+      .WillOnce( Return( IUS_DB2::NOROWS ) ); // the component's row
+   EXPECT_CALL( db, next() ).WillOnce( Return( true ) ).WillOnce( Return( false ) );
+   EXPECT_CALL( db, value( 0 ) ).WillOnce( Return( QVariant( "73" ) ) );
+
+   QMap<QString, US_BufferComponent> components;
+   QString                           error;
+   EXPECT_FALSE( US_BufferComponent::getAllFromDB( db, components, &error ) );
+   EXPECT_TRUE( error.contains( "none of the 1 buffer components" ) ) << error.toStdString();
 }

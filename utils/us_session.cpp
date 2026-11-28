@@ -6,6 +6,7 @@
 #include <QMutexLocker>
 #include <QObject>
 
+#include "us_db2.h"
 #include "us_global.h"
 #include "us_settings.h"
 
@@ -247,6 +248,26 @@ US_Session::Result US_Session::unlockWithPromptSources()
       sources << source.data();
    }
    return unlock( sources );
+}
+
+std::unique_ptr<IUS_DB2> US_Session::openDatabase()
+{
+   const QSharedPointer<IUS_DBProvider> current = provider;
+   if ( current )
+   {
+      return current->open();
+   }
+   return std::unique_ptr<IUS_DB2>( new US_DB2( masterKey() ) );
+}
+
+void US_Session::setProvider( QSharedPointer<IUS_DBProvider> provider )
+{
+   this->provider = provider;
+}
+
+bool US_Session::hasProvider() const
+{
+   return !provider.isNull();
 }
 
 QByteArray US_Session::hashOf( const QString& password )

@@ -13,6 +13,7 @@
 #include "us_credential_source.h"
 #include "us_session.h"
 #include "us_sim_cli.h"
+#include "us_util.h"
 
 //! \brief Use Qt's offscreen platform when no window will be shown, so
 //! headless runs need no display.
@@ -59,6 +60,15 @@ inline bool parseSimCli( US_SimCli::Tool tool, US_SimCliArgs& args, int& exit_co
    }
    QTextStream( exit_code == 0 ? stdout : stderr ) << output << Qt::endl;
    return true;
+}
+
+//! \brief Apply the optional GUID seed before creating simulator inputs.
+inline void useSimulatorGuidSeed( const US_SimCliArgs& args )
+{
+   if ( !args.guid_seed.isEmpty() )
+   {
+      US_Util::setGuidSource( QSharedPointer<US_GuidSource>( new US_SeededGuidSource( args.guid_seed ) ) );
+   }
 }
 
 //! \brief Configure the password sources for a headless simulator with database inputs.

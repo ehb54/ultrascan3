@@ -6,6 +6,7 @@
 #include <QSharedPointer>
 #include <QString>
 
+#include "ius_db_provider.h"
 #include "us_credential_source.h"
 #include "us_extern.h"
 
@@ -17,7 +18,7 @@
 //! Candidates come from a US_CredentialSource: the GUI passes a dialog,
 //! command-line tools the environment or the terminal.
 //!
-//! The process-wide settings (store and prompt sources) are made at
+//! The process-wide settings (store, prompt sources, provider) are made at
 //! startup, before other threads use the session; tests replace the whole
 //! session with US_SessionOverride.
 class US_UTIL_EXTERN US_Session
@@ -67,25 +68,25 @@ class US_UTIL_EXTERN US_Session
       explicit US_Session( QSharedPointer<Store> store );
 
       //! \brief Whether a master password has been set on this install.
-      static bool          isPasswordSet();
+      static bool              isPasswordSet();
 
       //! \brief A sentence describing a result, for messages and logs.
-      static QString       describe( Result result );
+      static QString           describe( Result result );
 
       //! \brief Whether a master password has been accepted, here or by
       //! another process sharing the cache.
-      bool                 isUnlocked() const;
+      bool                     isUnlocked() const;
 
       //! \brief Use the cached password, else ask the source until one matches.
       //! The accepted password is cached. A source that gives up after
       //! maxAttempts() wrong candidates yields Wrong.
-      [[nodiscard]] Result unlock( US_CredentialSource& source );
+      [[nodiscard]] Result     unlock( US_CredentialSource& source );
 
       //! \brief As unlock( source ), asking the first available source.
-      [[nodiscard]] Result unlock( const QList<US_CredentialSource*>& sources );
+      [[nodiscard]] Result     unlock( const QList<US_CredentialSource*>& sources );
 
       //! \brief Clear the cached password.
-      void                 lock();
+      void                     lock();
 
       //! \brief The accepted password, or empty when locked.
       //! The cache decides: when another process locks or changes the
@@ -93,47 +94,61 @@ class US_UTIL_EXTERN US_Session
       //! what this process accepted, the password is returned exactly as
       //! entered (the cache keeps only 64 Latin-1 bytes).
       //! Callers use it to decrypt the stored database credentials.
-      QString              masterKey() const;
+      QString                  masterKey() const;
 
       //! \brief Check a candidate for a signature or audited action.
       //! Never uses or changes the cache: the person enters it every time.
       //! \param reason What is being confirmed, e.g. the form's title
       //! \param candidate The password the person entered
-      [[nodiscard]] Result confirm( const QString& reason, const QString& candidate ) const;
+      [[nodiscard]] Result     confirm( const QString& reason, const QString& candidate ) const;
 
       //! \brief Whether a candidate matches the stored master password.
-      [[nodiscard]] bool   matches( const QString& candidate ) const;
+      [[nodiscard]] bool       matches( const QString& candidate ) const;
 
       //! \brief Store a new master password and cache it.
       //! The caller has already checked the old one and re-encrypted what
       //! depends on it.
-      void                 storeMasterPassword( const QString& password );
+      void                     storeMasterPassword( const QString& password );
 
       //! \brief Keep later unlocks in this process only.
       //! An unlock another process cached is still used, but nothing this
       //! process accepts is written to the shared cache. For headless runs,
       //! so a scripted password never lands in the desktop's cache.
-      void                 keepUnlockInProcess();
+      void                     keepUnlockInProcess();
 
       //! \brief Use these sources when unlock is needed but no dialog can be
       //! shown. Command-line tools set them at startup.
-      void                 setPromptSources( const QList<QSharedPointer<US_CredentialSource>>& sources );
+      void                     setPromptSources( const QList<QSharedPointer<US_CredentialSource>>& sources );
 
       //! \brief Whether prompt sources have been set.
-      bool                 hasPromptSources() const;
+      bool                     hasPromptSources() const;
 
       //! \brief unlock() with the prompt sources.
-      [[nodiscard]] Result unlockWithPromptSources();
+      [[nodiscard]] Result     unlockWithPromptSources();
+
+      //! \brief A database connection from the current provider; never null.
+      //! Without an installed provider, connects with the saved profile and
+      //! the master password; when none was entered that fails at once,
+      //! without contacting the server.
+      std::unique_ptr<IUS_DB2> openDatabase();
+
+      //! \brief Install the provider openDatabase() uses, at startup; null
+      //! restores the saved-profile provider.
+      void                     setProvider( QSharedPointer<IUS_DBProvider> provider );
+
+      //! \brief Whether a provider has been installed.
+      bool                     hasProvider() const;
 
       //! \brief The format of the stored password hash.
       //! 1 is an unsalted SHA-1 of the Latin-1 bytes, also assumed when no
       //! format has been recorded.
-      static constexpr int CurrentHashFormat = 1;
+      static constexpr int     CurrentHashFormat = 1;
 
    private:
       QSharedPointer<Store>                      store;
       QString                                    accepted; // as entered in this process
       QList<QSharedPointer<US_CredentialSource>> prompt_sources;
+      QSharedPointer<IUS_DBProvider>             provider;
 
       static QByteArray                          hashOf( const QString& password );
 

@@ -2,11 +2,11 @@
 
 #include "us_abstractrotor_gui.h"
 #include "us_db2.h"
+#include "us_db_provider.h"
 #include "us_gui_settings.h"
 #include "us_license.h"
 #include "us_license_t.h"
 #include "us_notify.h"
-#include "us_passwd.h"
 #include "us_settings.h"
 #include "us_util.h"
 #include "us_widgets.h"
@@ -136,18 +136,16 @@ bool US_AbstractRotorGui::loadAbstractRotors( void )
    // Get ID's for the abstract rotors we have
    if ( disk_controls->db() )
    {
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
-     
-      if ( db.lastErrno() != IUS_DB2::OK )
+      auto db = US_DBProvider::open();
+
+      if ( db->lastErrno() != IUS_DB2::OK )
       {
-         connect_error( db.lastError() );
+         connect_error( db->lastError() );
          return( false );
       }
      
       // Get information about all the abstract rotors
-      if ( US_Rotor::readAbstractRotorsDB( abstractRotorList, &db ) != US_Rotor::ROTOR_OK )
+      if ( US_Rotor::readAbstractRotorsDB( abstractRotorList, db.get() ) != US_Rotor::ROTOR_OK )
       {
          US_Notify::warning( this, tr( "Database Problem" ), tr( "Could not read abstract rotor information \n" ) );
          return( false );

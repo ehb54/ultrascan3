@@ -35,8 +35,42 @@ QString US_Util::getToken( QString& s, const QString& separator )
 }
 
 // Generate a new GUID value and return it in QString form
+namespace
+{
+QSharedPointer<US_GuidSource>& guidSource()
+{
+   static QSharedPointer<US_GuidSource> source;
+   return source;
+}
+} // namespace
+
+US_SeededGuidSource::US_SeededGuidSource( const QString& seed ) : seed( seed )
+{
+}
+
+QString US_SeededGuidSource::next()
+{
+   // A namespace of its own, so these never collide with US_SimRecord's.
+   static const QUuid ns( QString( "{6f4c1b0e-2d7a-4f63-9a4e-1c5b8e2f7d31}" ) );
+
+   QMutexLocker       lock( &mutex );
+   const QString      name = seed + "/" + QString::number( counter++ );
+   return QUuid::createUuidV5( ns, name.toUtf8() ).toString().mid( 1, 36 );
+}
+
+void US_Util::setGuidSource( QSharedPointer<US_GuidSource> source )
+{
+   guidSource() = source;
+}
+
 QString US_Util::new_guid( void )
 {
+   // One copy, so the source cannot change between the check and the call.
+   const QSharedPointer<US_GuidSource> source = guidSource();
+   if ( source )
+   {
+      return source->next();
+   }
    return QUuid::createUuid().toString().mid( 1, 36 );
 }
 
@@ -255,8 +289,7 @@ QString US_Util::bool_string( const bool boolval )
 //   separates the stringlist substrings.
 int US_Util::listlistBuild( QList< QStringList >& lsl, QString& llstring )
 {
-   int nlelem      = lsl.count();
-//qDebug() << "llB: nlelem" << nlelem;
+   int nlelem = lsl.count();
 
    if ( nlelem == 0 )
       return nlelem;
@@ -269,13 +302,11 @@ int US_Util::listlistBuild( QList< QStringList >& lsl, QString& llstring )
    QStringList delims;
    delims << "^" << ":" << "$" << "+" << "=" << "*" << "&" << "%"
           << "#" << "@" << ";" << ",";
-//qDebug() << "llB:  delims" << delims;
 
    // Search the strings in the list of string lists for each delimeter
    for ( int ii = 0; ii < delims.count(); ii++ )
    {
-      const QString& delim   = delims[ ii ];
-//qDebug() << "llB:   ii delim" << ii << delim;
+      const QString& delim       = delims[ii];
       int kfound      = 0;
 
       for ( int jj = 0; jj < nlelem; jj++ )
@@ -291,12 +322,10 @@ int US_Util::listlistBuild( QList< QStringList >& lsl, QString& llstring )
          if ( kfound > 0 )
             break;
       }
-//qDebug() << "llB:     kbound" << kfound;
 
       if ( kfound == 0 )
       {  // This delimeter not found:  use it for one of the two
          ndelimf++;
-//qDebug() << "llB:      ndelimf" << ndelimf << "delim" << delim;
          if ( ndelimf == 1 )
          {
             delim1          = delim;
@@ -312,7 +341,6 @@ int US_Util::listlistBuild( QList< QStringList >& lsl, QString& llstring )
          break;
    }
 
-//qDebug() << "llB: ndelimf" << ndelimf << "delim1" << delim1 << "delim2" << delim2;
    if ( ndelimf < 2 )
    {  // Ouch!!! Couldn't find two delimeters to use
       llstring        = QString( "" );
@@ -326,8 +354,7 @@ int US_Util::listlistBuild( QList< QStringList >& lsl, QString& llstring )
    // Build outer strings for each QStringList
    for ( int ii = 0; ii < nlelem; ii++ )
    {
-      const QStringList& sl  = lsl[ ii ];
-//qDebug() << "llB:  ii" << ii << "sl" << sl;
+      const QStringList& sl          = lsl[ii];
       int nslelem     = sl.count();
       int lastjj      = nslelem - 1;
       QString inner( "" );
@@ -342,8 +369,7 @@ int US_Util::listlistBuild( QList< QStringList >& lsl, QString& llstring )
          if ( jj < lastjj )
             inner          += delim2;
       }
-//qDebug() << "llB:    inner" << inner;
-      
+
       // Concatenate a string
       llstring       += inner;
       
@@ -351,8 +377,7 @@ int US_Util::listlistBuild( QList< QStringList >& lsl, QString& llstring )
       if ( ii < lastii )
          llstring       += delim1;
    }
-//qDebug() << "llB: llstring" << llstring;
-      
+
    return nlelem;          // Return the count of QList elements
 }
 
@@ -365,8 +390,7 @@ int US_Util::listlistParse( QList< QStringList >& lsl, QString& llstring )
 {
    int nlelem      = 0;
    QString delim1  = QString( llstring ).left( 1 );   // Outer delimeter (ch 1)
-   QString delim2  = QString( llstring ).mid( 1, 1 ); // Inner delimeter (ch 2)
-//qDebug() << "llP: delim1" << delim1 << "delim2" << delim2;
+   QString delim2      = QString( llstring ).mid( 1, 1 ); // Inner delimeter (ch 2)
 
    if ( delim1.isEmpty()  ||  delim2.isEmpty() )
    {  // Ouch!!  Input string doesn't even have delimeters
@@ -375,10 +399,7 @@ int US_Util::listlistParse( QList< QStringList >& lsl, QString& llstring )
    }
 
    // Get the list of formatted outer level strings
-//qDebug() << "llP: llstring" << llstring;
-//qDebug() << "llP: llstringM" << QString(llstring).mid(2);
    QStringList out = QString( llstring ).mid( 2 ).split( delim1 );
-//qDebug() << "llP: out count" << out.count();
    nlelem          = out.count();    // List count
    lsl.clear();                      // Initialize output
 
