@@ -2,7 +2,7 @@
 
 set(src_dir ${CMAKE_CURRENT_SOURCE_DIR})
 
-# Everything but main(), which other programs use too, goes into us_programs_results.
+# Everything but main(), which other programs use too, goes into us_programs_analysis.
 add_library(us_abde_lib STATIC
         ${src_dir}/us_norm_profile.cpp
         )
@@ -17,7 +17,7 @@ target_include_directories(us_abde_lib
         ${src_dir}
         )
 
-target_link_libraries(us_programs_results INTERFACE us_abde_lib)
+target_link_libraries(us_programs_analysis INTERFACE us_abde_lib)
 
 add_executable(us_abde
         ${src_dir}/us_abde_main.cpp
@@ -26,5 +26,5 @@ add_executable(us_abde
 target_link_libraries(us_abde
         PRIVATE
         us_program_common
-        us_programs_results
+        us_programs_analysis
         )

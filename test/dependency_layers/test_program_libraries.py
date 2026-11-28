@@ -56,6 +56,7 @@ VALID = {
         "SOURCES = ../../programs/us_alpha/us_alpha.cpp \\\n"
         "          ../../programs/us_alpha/us_dot.cpp   \\\n"
         "          ../../programs/us_shared.cpp\n"
+        "HEADERS = ../../programs/us_shared.h\n"
     ),
     "programlibs/high/us_programs_high.pro": "SOURCES = ../../programs/us_beta/us_beta.cpp\n",
 }
@@ -98,6 +99,18 @@ class ProgramLibrariesTest(unittest.TestCase):
         code, output = run_checker(VALID, "--affected-programs", "programs/us_alpha")
         self.assertEqual(code, 0, output)
         self.assertEqual(output.splitlines(), ["programs/us_alpha", "programs/us_beta", "programs/us_gamma"])
+
+    def test_affected_programs_from_root_level_source_or_header(self):
+        dependents = ["programs/us_alpha", "programs/us_beta", "programs/us_gamma"]
+        for shared in ("programs/us_shared.cpp", "programs/us_shared.h"):
+            with self.subTest(shared=shared):
+                code, output = run_checker(VALID, "--affected-programs", shared)
+                self.assertEqual(code, 0, output)
+                self.assertEqual(output.splitlines(), dependents)
+
+                code, output = run_checker(VALID, "--affected-programs", shared, "programs/us_delta/us_delta.cpp")
+                self.assertEqual(code, 0, output)
+                self.assertEqual(output.splitlines(), sorted(dependents + ["programs/us_delta"]))
 
     def test_affected_programs_do_not_include_dependencies(self):
         code, output = run_checker(VALID, "--affected-programs", "programs/us_beta")

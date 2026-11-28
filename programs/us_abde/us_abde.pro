@@ -1,6 +1,6 @@
 include( ../../gui.pri )
 
-PROGRAM_LIBS  = results
+PROGRAM_LIBS  = analysis
 include( ../../programlibs/link.pri )
 
 TARGET        = us_abde

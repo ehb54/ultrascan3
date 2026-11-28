@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check the area libraries of program sources that several programs use.
 
-usage: check-program-libraries.py [--root <dir>] [--affected-programs <directory> ...]
+usage: check-program-libraries.py [--root <dir>] [--affected-programs <path> ...]
 
 A source that several programs use is in the library of its area,
 us_programs_<area>, and is compiled once. CMake declares the libraries in
@@ -113,6 +113,7 @@ class Build:
     def __init__(self):
         self.needs = {}  # area -> areas it needs directly
         self.sources = {}  # area -> program sources, relative to programs/
+        self.headers = {}  # area -> qmake headers, relative to programs/
         self.links = {}  # program directory -> areas it links
 
 
@@ -154,9 +155,10 @@ def qmake_build(root, directories):
     top = os.path.join(root, "programlibs")
     for area in sorted(os.listdir(top)) if os.path.isdir(top) else []:
         for path in pro_files(root, "programlibs/" + area):
-            sources = qmake_list(read_qmake(root, path), "SOURCES")
+            text = read_qmake(root, path)
             folder = posixpath.join("programlibs", area)
-            build.sources[area] = {posixpath.relpath(posixpath.join(folder, s), "programs") for s in sources}
+            build.sources[area] = {posixpath.relpath(posixpath.join(folder, s), "programs") for s in qmake_list(text, "SOURCES")}
+            build.headers[area] = {posixpath.relpath(posixpath.join(folder, h), "programs") for h in qmake_list(text, "HEADERS")}
             build.needs.setdefault(area, set())
     for match in re.finditer(
         r"contains\(\s*PROGRAM_LIBS\s*,\s*(\w+)\s*\)\s*:\s*PROGRAM_LIBS\s*\+=(.*)", read_qmake(root, "programlibs/link.pri")
@@ -234,15 +236,19 @@ def check_includes(root, directories, build):
 
 
 def affected_programs(root, changed):
-    """Programs whose own directory or linked area contains a changed directory."""
+    """Programs affected by changed paths under programs/."""
     top = os.path.join(root, "programs")
     directories = [d for d in sorted(os.listdir(top)) if os.path.isdir(os.path.join(top, d))]
     build = qmake_build(root, directories)
     changed = {posixpath.normpath(path).removeprefix("programs/") for path in changed}
-    areas = {area for area, sources in build.sources.items()
-             if any(posixpath.dirname(source) in changed for source in sources)}
+    changed_dirs = {path.split("/", 1)[0] for path in changed} & set(directories)
+    areas = set()
+    for area, sources in build.sources.items():
+        files = sources | build.headers[area]
+        if files & changed or any(path.split("/", 1)[0] in changed_dirs for path in files):
+            areas.add(area)
     return ["programs/" + directory for directory in directories
-            if directory in changed or closure(build.needs, build.links.get(directory, ())) & areas]
+            if directory in changed_dirs or closure(build.needs, build.links.get(directory, ())) & areas]
 
 
 def check(root):
@@ -258,7 +264,7 @@ def check(root):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--root", default=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    parser.add_argument("--affected-programs", nargs="+", metavar="DIRECTORY")
+    parser.add_argument("--affected-programs", nargs="+", metavar="PATH")
     args = parser.parse_args()
 
     if not os.path.isdir(os.path.join(args.root, "programs")):
