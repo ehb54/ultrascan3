@@ -5,9 +5,15 @@ include( ../programlib.pri )
 TARGET        = us_programs_gmp
 QT           += xml sql svg opengl network printsupport datavisualization
 
-# us_reporter_gmp.cpp includes the revision header. programs/us writes it too,
-# but is built after this library.
-!exists( ../../programs/us/us_revision.h ): system( cd ../../programs/us && sh revision.sh )
+# Generate the header before qmake scans the reporter's includes in a clean tree.
+# Refresh it before compilation so an incremental build sees the current revision.
+unix {
+    revision.target = ../../programs/us/us_revision.h
+    revision.commands = cd ../../programs/us && sh revision.sh
+    revision.depends = FORCE
+    !exists( $$revision.target ): system( $$revision.commands )
+    QMAKE_EXTRA_TARGETS += revision
+}
 
 HEADERS      = ../../programs/us_esigner_gmp/us_esigner_gmp.h             \
                ../../programs/us_reporter_gmp/us_reporter_gmp.h           \

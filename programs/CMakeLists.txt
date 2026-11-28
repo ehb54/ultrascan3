@@ -214,6 +214,8 @@ endif()
 # own, and adds that to its area. A program links its area, which brings the
 # areas it needs; the linker takes only the objects it uses. A directory has its
 # own library because CMake compiles the moc code of a library as one object.
+# With one archive per area, a reference to one class's moc code pulls in
+# the other directories' moc code and the methods it references.
 # programlibs/ has the same areas for qmake; keep them and their dependencies the
 # same in both (scripts/check-program-libraries.py).
 # --------------------------------------------------------------------------

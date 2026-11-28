@@ -1,6 +1,6 @@
 # us_2dsa
 
-# Program sources, as listed in SOURCES of us_2dsa.pro, without us_2dsa_main.cpp
+# Shared 2DSA sources in the analysis area, also listed in us_programs_analysis.pro.
 set(TWODSA_SOURCES
         us_2dsa.cpp
         us_plot_control_2d.cpp
@@ -13,7 +13,7 @@ set(TWODSA_SOURCES
         us_worker_calcnorm.cpp
         )
 
-# Program headers, as listed in HEADERS of us_2dsa.pro (needed by AUTOMOC)
+# Shared 2DSA headers for AUTOMOC, also listed in us_programs_analysis.pro.
 set(TWODSA_HEADERS
         us_2dsa.h
         us_plot_control_2d.h

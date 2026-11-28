@@ -209,8 +209,10 @@ jobs:
         run: |
           cp admin/codeql/docker/local.pri.gui local.pri
           qmake
+          make -j4 qmake_all
       - name: Calculate Build Targets
         id: calc-targets
+        shell: bash
         env:
           CHANGED_FILES: ${{ needs.changed-files.outputs.changed_programs }}
           LIBS_CHANGED: ${{ needs.changed-files.outputs.utils == 'true' || needs.changed-files.outputs.qwtplot3d == 'true' || needs.changed-files.outputs.gui == 'true' }}

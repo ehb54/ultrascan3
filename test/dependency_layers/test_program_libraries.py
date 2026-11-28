@@ -37,6 +37,7 @@ VALID = {
         "set(BETA_SOURCES\n    us_beta.cpp\n    )\n"
         "add_library(us_beta_lib STATIC ${BETA_SOURCES})\n"
         "target_link_libraries(us_programs_high INTERFACE us_beta_lib)\n"
+        "target_link_libraries(us_beta_lib PUBLIC us_alpha_lib)\n"
         "add_executable(us_beta us_beta_main.cpp)\n"
         "target_link_libraries(us_beta PRIVATE us_programs_high)\n"
     ),
@@ -215,6 +216,13 @@ class ProgramLibrariesTest(unittest.TestCase):
             "programs/us_delta/us_delta.cpp: includes a header of us_beta, but does not link us_programs_high",
             "programs/us_delta/us_delta.cpp",
             '#include "../us_beta/us_beta.h"\n',
+        )
+
+    def test_an_upward_cmake_member_link_is_rejected(self):
+        self.assertRejected(
+            "us_alpha_lib: links us_beta_lib, but low does not depend on high",
+            "programs/us_alpha/CMakeLists.txt",
+            "target_link_libraries(us_alpha_lib PUBLIC us_beta_lib)\n",
         )
 
     def test_an_upward_include_between_areas_is_rejected(self):

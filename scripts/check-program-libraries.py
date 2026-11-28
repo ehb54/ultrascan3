@@ -13,6 +13,7 @@ programlibs/<area>.
     directory. programs/CMakeLists.txt may list the sources directly in programs/.
   * Each library must have the same sources and need the same libraries in CMake
     and in qmake, and a program directory must link the same libraries in both.
+    Direct links between CMake member libraries must follow the area graph.
   * A program directory must not include a header of an area whose library it
     neither belongs to nor links, directly or through another library. This
     checks relative cross-directory includes ("../us_x/header.h") only; bare
@@ -115,6 +116,8 @@ class Build:
         self.sources = {}  # area -> program sources, relative to programs/
         self.headers = {}  # area -> qmake headers, relative to programs/
         self.links = {}  # program directory -> areas it links
+        self.member_areas = {}  # CMake static target -> its area
+        self.member_links = {}  # CMake static target -> targets it links
 
 
 def cmake_build(root, directories):
@@ -134,13 +137,16 @@ def cmake_build(root, directories):
                 libraries[arguments[0]] = {
                     posixpath.normpath(posixpath.join(directory, normal(word, variables))) for word in words if word.endswith(".cpp")
                 }
-        for arguments in call_arguments(text, "target_link_libraries"):
-            area = AREA.fullmatch(arguments[0]) if arguments else None
-            for argument in arguments[1:]:
-                linked = AREA.fullmatch(argument)
-                if area:
-                    build.sources.setdefault(area.group(1), set()).update(libraries.get(argument, ()))
-                elif linked and directory:
+        for target, *links in call_arguments(text, "target_link_libraries"):
+            area = AREA.fullmatch(target)
+            if target in libraries:
+                build.member_links.setdefault(target, set()).update(links)
+            for link in links:
+                linked = AREA.fullmatch(link)
+                if area and link in libraries:
+                    build.member_areas[link] = area.group(1)
+                    build.sources.setdefault(area.group(1), set()).update(libraries[link])
+                elif not area and linked and directory:
                     build.links.setdefault(directory, set()).add(linked.group(1))
     return build
 
@@ -210,6 +216,17 @@ def check_same(cmake, qmake, directories_with_both):
     return problems
 
 
+def check_cmake_member_links(build):
+    problems = []
+    for target, area in sorted(build.member_areas.items()):
+        allowed = closure(build.needs, [area])
+        for link in sorted(build.member_links.get(target, ())):
+            other = build.member_areas.get(link)
+            if other is not None and other not in allowed:
+                problems.append(f"{target}: links {link}, but {area} does not depend on {other}")
+    return problems
+
+
 def check_includes(root, directories, build):
     owners = {}
     for area, paths in build.sources.items():
@@ -258,7 +275,12 @@ def check(root):
         d for d in directories if pro_files(root, "programs/" + d) and os.path.isfile(os.path.join(top, d, "CMakeLists.txt"))
     ]
     cmake, qmake = cmake_build(root, directories), qmake_build(root, directories)
-    return check_outside_sources(root, directories) + check_same(cmake, qmake, both) + check_includes(root, directories, cmake)
+    return (
+        check_outside_sources(root, directories)
+        + check_same(cmake, qmake, both)
+        + check_cmake_member_links(cmake)
+        + check_includes(root, directories, cmake)
+    )
 
 
 def main():
