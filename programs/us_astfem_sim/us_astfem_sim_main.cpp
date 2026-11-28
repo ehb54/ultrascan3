@@ -9,6 +9,7 @@
 #include "us_headless_cli.h"
 #include "us_license.h"
 #include "us_license_t.h"
+#include "us_notify.h"
 #include "us_settings.h"
 
 //! \brief Main program for US_Astfem_Sim.  Loads translators and starts
@@ -44,9 +45,8 @@ int main( int argc, char* argv[] )
    }
    if ( args.errors_cl )
    {
-      application.setProperty( "us3_headless", true );
+      application.setProperty( US_Notify::HeadlessProperty, true );
    }
-   useHeadlessServices( args );
 
    // Constructed after --no-db is applied, so it reads the overridden
    // data location.

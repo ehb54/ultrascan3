@@ -33,3 +33,12 @@ us3_add_gui_test(test_us_widgets_counter
         LABELS
             gui
         )
+
+us3_add_gui_test(test_us_notify_gui
+        SOURCES
+            test_us_notify_gui.cpp
+        LIBRARIES
+            UltraScan3::Gui_Static
+        LABELS
+            gui
+        )

@@ -10,7 +10,6 @@
 #include <QRandomGenerator>
 #include <QTextStream>
 
-#include "us_notify.h"
 #include "us_sim_cli.h"
 
 //! \brief Use Qt's offscreen platform when no window will be shown, so
@@ -58,15 +57,6 @@ inline bool parseSimCli( US_SimCli::Tool tool, US_SimCliArgs& args, int& exit_co
    }
    QTextStream( exit_code == 0 ? stdout : stderr ) << output << Qt::endl;
    return true;
-}
-
-//! \brief Route headless messages to the console; interactive runs keep their dialogs.
-inline void useHeadlessServices( const US_SimCliArgs& args )
-{
-   if ( args.errors_cl )
-   {
-      US_Notify::setNotifier( QSharedPointer<US_Notifier>( new US_ConsoleNotifier ) );
-   }
 }
 
 //! \brief Give a started run without --noise-seed a fresh seed, and print it.

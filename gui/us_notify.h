@@ -28,20 +28,15 @@ class US_GUI_EXTERN US_Notifier
       virtual void notify( Kind kind, QWidget* parent, const QString& title, const QString& text ) = 0;
 };
 
-//! \brief Prints messages to standard error, for runs without a GUI.
-class US_GUI_EXTERN US_ConsoleNotifier : public US_Notifier
-{
-   public:
-      void notify( Kind kind, QWidget* parent, const QString& title, const QString& text ) override;
-};
-
 //! \brief The notifier in use, and the calls that replace
 //! QMessageBox::information(), warning() and critical() with OK only.
 namespace US_Notify
 {
-//! \brief Install a notifier at startup, before other threads notify;
-//! null restores message boxes.
-US_GUI_EXTERN void setNotifier( QSharedPointer<US_Notifier> notifier );
+//! \brief Application property that routes notifications to standard error.
+constexpr char     HeadlessProperty[] = "us3_headless";
+
+//! \brief Override delivery for a test; null restores normal routing.
+US_GUI_EXTERN void setNotifierForTests( QSharedPointer<US_Notifier> notifier );
 
 US_GUI_EXTERN void information( QWidget* parent, const QString& title, const QString& text );
 US_GUI_EXTERN void warning( QWidget* parent, const QString& title, const QString& text );
