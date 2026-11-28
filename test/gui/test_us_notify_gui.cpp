@@ -75,7 +75,7 @@ class US_NotifyGuiTest : public QObject
          const char* childKey = "US3_NOTIFY_TEST_CHILD";
          if ( qEnvironmentVariableIsSet( childKey ) )
          {
-            qApp->setProperty( US_Notify::HeadlessProperty, true );
+            qApp->setProperty( "us_headless", true );
             US_Notify::information( nullptr, "Saved", "Saved the buffer" );
             US_Notify::warning( nullptr, "Connection Problem", "Could not\n  connect" );
             US_Notify::critical( nullptr, "Error", "Failed" );
