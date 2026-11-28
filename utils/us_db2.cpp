@@ -221,6 +221,18 @@ bool US_DB2::connect( const QString& masterPW, QString& err )
        return false;
    }
 
+   // Without the master password the stored passwords cannot be decrypted,
+   // and an empty login would only be refused by the server -- or, for an
+   // account that authenticates through PAM, be asked for again on the
+   // terminal, which a headless run never answers.
+   if ( masterPW.isEmpty() )
+   {
+      db_errno = NOT_CONNECTED;
+      error    = QObject::tr( "US_DB2 error: the master password was not entered" );
+      err      = error;
+      return false;
+   }
+
    QString user     = defaultDB.at( 1 );
    QString dbname   = defaultDB.at( 2 );
    QString host     = defaultDB.at( 3 );

@@ -47,6 +47,7 @@ int main( int argc, char* argv[] )
    {
       application.setProperty( US_Notify::HeadlessProperty, true );
    }
+   useHeadlessCredentials( args );
 
    // Constructed after --no-db is applied, so it reads the overridden
    // data location.

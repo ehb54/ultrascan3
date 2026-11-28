@@ -6,6 +6,7 @@
 
 #include "qt_test_base.h"
 #include "us_db2.h"
+#include "us_settings.h"
 
 #include <QFile>
 #include <QString>
@@ -197,5 +198,21 @@ TEST( UsDb2BlobFile, AShortWriteIsAnErrorAndLeavesNoPartialFile )
    EXPECT_EQ( status, IUS_DB2::DBERROR );
    EXPECT_TRUE( error.contains( "65536" ) ) << error.toStdString();
    EXPECT_FALSE( QFile::exists( path ) );
+}
+#endif
+
+#ifndef NO_DB
+// Without the master password nothing can be decrypted; the connection is
+// refused before the server is contacted (127.0.0.1:1 would be refused too,
+// but with a different message).
+TEST( UsDb2Connect, AnEmptyMasterPasswordIsRefusedBeforeConnecting )
+{
+   US_Settings::set_defaultDB( { "Synthetic", "user", "db", "127.0.0.1:1", "00", "00", "a@example.invalid", "00", "00", "guid" } );
+
+   US_DB2  db;
+   QString error;
+   EXPECT_FALSE( db.connect( QString(), error ) );
+   EXPECT_TRUE( error.contains( "master password was not entered" ) ) << error.toStdString();
+   EXPECT_EQ( db.lastErrno(), IUS_DB2::NOT_CONNECTED );
 }
 #endif

@@ -6,6 +6,9 @@ include( local.pri )
 
 TEMPLATE     = lib
 CONFIG      += $$DEBUGORRELEASE qt thread warn
+# The CMake builds require C++17 too; without this qmake uses the compiler's
+# default, which is C++14 for MSVC.
+CONFIG      += c++17
 VERSION      = 10.0
 VER          = 10
 MOC_DIR      = ./moc

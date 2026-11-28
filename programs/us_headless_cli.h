@@ -10,6 +10,8 @@
 #include <QRandomGenerator>
 #include <QTextStream>
 
+#include "us_credential_source.h"
+#include "us_session.h"
 #include "us_sim_cli.h"
 
 //! \brief Use Qt's offscreen platform when no window will be shown, so
@@ -57,6 +59,19 @@ inline bool parseSimCli( US_SimCli::Tool tool, US_SimCliArgs& args, int& exit_co
    }
    QTextStream( exit_code == 0 ? stdout : stderr ) << output << Qt::endl;
    return true;
+}
+
+//! \brief Configure the password sources for a headless simulator with database inputs.
+inline void useHeadlessCredentials( const US_SimCliArgs& args )
+{
+   if ( !args.errors_cl || args.no_db )
+   {
+      return;
+   }
+   US_Session& session = US_Session::instance();
+   session.keepUnlockInProcess();
+   session.setPromptSources( { QSharedPointer<US_CredentialSource>( new US_EnvironmentCredentialSource( "US_MASTER_PASSWORD" ) ),
+                               QSharedPointer<US_CredentialSource>( new US_TerminalCredentialSource ) } );
 }
 
 //! \brief Give a started run without --noise-seed a fresh seed, and print it.

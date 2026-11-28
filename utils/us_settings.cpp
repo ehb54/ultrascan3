@@ -305,6 +305,19 @@ void US_Settings::set_UltraScanPW( const QByteArray& hash )
   settings.setValue( "UltraScanPW", hash );
 }
 
+// Hashes stored before the format was recorded are format 1.
+int US_Settings::UltraScanPWFormat( void )
+{
+   US_SettingsStore settings;
+   return settings.value( "UltraScanPWFormat", 1 ).toInt();
+}
+
+void US_Settings::set_UltraScanPWFormat( int format )
+{
+   US_SettingsStore settings;
+   settings.setValue( "UltraScanPWFormat", format );
+}
+
 // Temperature Tolerance
 double US_Settings::tempTolerance( void )
 {

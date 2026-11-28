@@ -32,6 +32,7 @@ HEADERS      = us_ana_profile.h   \
                us_convert.h       \
                us_convertio.h     \
                us_crc.h           \
+               us_credential_source.h \
                us_csv_data.h      \
                us_dataIO.h        \
                us_datafiles.h     \
@@ -60,6 +61,7 @@ HEADERS      = us_ana_profile.h   \
                us_report_gmp.h    \
                us_rotor.h         \
                us_run_protocol.h  \
+               us_session.h       \
                us_settings.h      \
                us_sim_cli.h       \
                us_sim_inputs.h    \
@@ -95,6 +97,7 @@ SOURCES      = us_ana_profile.cpp   \
                us_convert.cpp       \
                us_convertio.cpp     \
                us_crc.cpp           \
+               us_credential_source.cpp \
                us_csv_data.cpp      \
                us_dataIO.cpp        \
                us_datafiles.cpp     \
@@ -123,6 +126,7 @@ SOURCES      = us_ana_profile.cpp   \
                us_report_gmp.cpp    \
                us_rotor.cpp         \
                us_run_protocol.cpp  \
+               us_session.cpp       \
                us_settings.cpp      \
                us_sim_cli.cpp       \
                us_sim_inputs.cpp    \
