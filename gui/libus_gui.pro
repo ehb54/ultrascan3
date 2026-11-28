@@ -1,9 +1,7 @@
 include ( ../library.pri )
 
 QT            += opengl
-greaterThan( QT_VERSION, 4.99 ) {
 QT            += printsupport
-}
 
 unix:   TARGET = us_gui
 macx:   LIBS  += -L../lib -lus_utils
